@@ -1,8 +1,89 @@
 {
   "version": 1,
-  "projects": {},
+  "projects": {
+    "file-service": {
+      "root": "apps/file-service",
+      "sourceRoot": "apps/file-service/src",
+      "projectType": "application",
+      "prefix": "file-service",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "webpackConfig": "apps/file-service/webpack.config.js",
+            "outputPath": "dist/apps/file-service",
+            "main": "apps/file-service/src/main.ts",
+            "tsConfig": "apps/file-service/tsconfig.app.json",
+            "assets": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "file-service:build",
+            "port": 7770
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:lint",
+          "options": {
+            "linter": "eslint",
+            "tsConfig": [
+              "apps/file-service/tsconfig.app.json",
+              "apps/file-service/tsconfig.spec.json"
+            ],
+            "exclude": ["**/node_modules/**", "!apps/file-service/**/*"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/file-service/jest.config.js",
+            "tsConfig": "apps/file-service/tsconfig.spec.json",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "core-common": {
+      "root": "libs/core-common",
+      "sourceRoot": "libs/core-common/src",
+      "projectType": "library",
+      "schematics": {},
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:lint",
+          "options": {
+            "linter": "eslint",
+            "tsConfig": [
+              "libs/core-common/tsconfig.lib.json",
+              "libs/core-common/tsconfig.spec.json"
+            ],
+            "exclude": ["**/node_modules/**", "!libs/core-common/**/*"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "libs/core-common/jest.config.js",
+            "tsConfig": "libs/core-common/tsconfig.spec.json",
+            "passWithNoTests": true
+          }
+        }
+      }
+    }
+  },
   "cli": {
-    "defaultCollection": "@nrwl/workspace"
+    "defaultCollection": "@nrwl/express"
   },
   "schematics": {
     "@nrwl/workspace": {
@@ -62,5 +143,6 @@
         "linter": "eslint"
       }
     }
-  }
+  },
+  "defaultProject": "file-service"
 }

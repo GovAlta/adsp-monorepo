@@ -15,7 +15,9 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@core-services/core-common": ["libs/core-common/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }
