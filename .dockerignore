@@ -1,0 +1,8 @@
+/.compose
+/.openshift
+/.vscode
+/data
+/dist
+/coverage
+/node_modules
+/tmp

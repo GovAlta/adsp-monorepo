@@ -1,0 +1,36 @@
+version: '3.2'
+services:
+  file-service-mongo:
+    image: mongo:3.6
+    expose:
+      - 27017
+  file-service-av:
+    build: ../apps/file-service/av-scanner
+    volumes: 
+      - ../data/file-av:/store
+    expose:
+      - 3310
+  file-service:
+    build: 
+      context: ../
+      dockerfile: .compose/service/Dockerfile
+      args:
+        - SERVICE=file-service
+    depends_on:
+      - file-service-mongo
+      - file-service-av
+    ports:
+      - 3337:3337
+    expose: 
+      - 3337
+    volumes:
+      - ../data/file:/data/file
+    environment:
+      - AV_HOST=file-service-av
+      - AV_PORT=3310
+      - AV_PROVIDER=none
+      - KEYCLOAK_ROOT_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=Master
+      - MONGO_URI=mongodb://file-service-mongo:27017
+      - MONGO_DB=file
+      - FILE_PATH=data/file/
