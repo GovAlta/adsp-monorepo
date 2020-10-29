@@ -83,7 +83,8 @@ Promise.all([
     } else if (err instanceof InvalidOperationError) {
       res.status(400).send(err.message);
     } else {
-      next(err);
+      logger.warn(`Unexpected error encountered in handler: ${err}`);
+      res.sendStatus(500);
     }
   });
   

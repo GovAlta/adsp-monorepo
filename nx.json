@@ -37,6 +37,9 @@
     },
     "tenant-management-api": {
       "tags": []
+    },
+    "value-service": {
+      "tags": []
     }
   }
 }

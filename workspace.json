@@ -253,6 +253,66 @@
           }
         }
       }
+    },
+    "value-service": {
+      "root": "apps/value-service",
+      "sourceRoot": "apps/value-service/src",
+      "projectType": "application",
+      "prefix": "value-service",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "webpackConfig": "apps/value-service/webpack.config.js",
+            "outputPath": "dist/apps/value-service",
+            "main": "apps/value-service/src/main.ts",
+            "tsConfig": "apps/value-service/tsconfig.app.json",
+            "assets": [
+              "apps/value-service/src/assets",
+              {
+                "glob": "apps/value-service/migrations",
+                "input": ".",
+                "output": "migrations"
+              }
+            ]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "value-service:build",
+            "port": 7771
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:lint",
+          "options": {
+            "linter": "eslint",
+            "tsConfig": [
+              "apps/value-service/tsconfig.app.json",
+              "apps/value-service/tsconfig.spec.json"
+            ],
+            "exclude": ["**/node_modules/**", "!apps/value-service/**/*"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/value-service/jest.config.js",
+            "tsConfig": "apps/value-service/tsconfig.spec.json",
+            "passWithNoTests": true
+          }
+        }
+      }
     }
   },
   "cli": {
