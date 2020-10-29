@@ -1,0 +1,15 @@
+version: '3.2'
+services:
+  tenant-management-api:
+    build: 
+      context: ../
+      dockerfile: .compose/service/Dockerfile
+      args:
+        - SERVICE=tenant-management-api
+    ports:
+      - 3338:3338
+    expose: 
+      - 3338
+    volumes:
+      - ../data/file:/data/file
+

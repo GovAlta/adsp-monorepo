@@ -5,7 +5,7 @@ The tenant management api is an api for managing tenant information. It will ser
 ### Running the service
 Start the service using:
 ```
-nx run tenant-management-api:server
+nx run tenant-management-api:serve
 ```
 Health endpoint at /health
 
