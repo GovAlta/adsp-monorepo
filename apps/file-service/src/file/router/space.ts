@@ -172,7 +172,7 @@ export const createSpaceRouter = ({
    *     description: Creates or updates a file space.
    *     parameters:
    *     - name: space
-   *       description: ID of the space to retrieve.
+   *       description: ID of the space to create or update.
    *       in: path
    *       required: true
    *       schema:

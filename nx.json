@@ -27,6 +27,9 @@
     },
     "core-common": {
       "tags": []
+    },
+    "value-service": {
+      "tags": []
     }
   }
 }
