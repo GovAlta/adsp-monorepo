@@ -12,7 +12,7 @@ pipeline {
       steps {
         checkout scm
         sh "npm install"
-        sh "npm audit fix"
+        sh "npm audit fix --force"
         script {
           if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT){
             baseCommand = "--base=${GIT_PREVIOUS_SUCCESSFUL_COMMIT}"
