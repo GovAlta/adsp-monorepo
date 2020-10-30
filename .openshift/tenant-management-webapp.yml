@@ -17,22 +17,16 @@ items:
       metadata:
         labels:
           app: tenant-management-webapp
-      spec:
-        volumes:
-        - name: file-volume
-          persistentVolumeClaim:
-            claimName: file-service-files
-
     triggers:
       - type: ConfigChange
       - type: ImageChange
         imageChangeParams:
           automatic: true
           containerNames:
-            - file-service
+            - tenant-management-webapp
           from:
             kind: ImageStreamTag
-            name: file-service:latest
+            name: tenant-management-webapp:latest
 - apiVersion: v1
   kind: Service
   metadata:
