@@ -3,10 +3,10 @@ import * as passport from 'passport';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as helmet from 'helmet';
-import { 
-  createLogger, 
-  createKeycloakStrategy, 
-  UnauthorizedError, 
+import {
+  createLogger,
+  createKeycloakStrategy,
+  UnauthorizedError,
   NotFoundError,
   InvalidOperationError,
   DomainEventService
@@ -17,7 +17,7 @@ import { createRepositories } from './mongo';
 import { createEventService } from './amqp';
 
 const logger = createLogger(
-  'file-service', 
+  'file-service',
   environment.LOG_LEVEL || 'info'
 );
 
@@ -46,8 +46,8 @@ app.use('/file', passport.authenticate(['jwt', 'anonymous'], { session: false })
 Promise.all([
   createRepositories({...environment, logger}),
   (
-    environment.AMQP_HOST ? 
-      createEventService({...environment, logger}) : 
+    environment.AMQP_HOST ?
+      createEventService({...environment, logger}) :
       Promise.resolve<DomainEventService>({
         send: (event) => logger.debug(
           `Event sink received event '${event.namespace}:${event.name}'`
@@ -56,26 +56,26 @@ Promise.all([
       })
   )
 ]).then(([repositories, eventService]) => {
-  
-  applyFileMiddleware(app, { 
-    logger, 
+
+  applyFileMiddleware(app, {
+    logger,
     rootStoragePath: environment.FILE_PATH,
     avProvider: environment.AV_PROVIDER,
     avHost: environment.AV_HOST,
     avPort: environment.AV_PORT,
-    eventService, 
-    ...repositories 
+    eventService,
+    ...repositories
   });
 
   app.get(
-    '/health', 
+    '/health',
     (req, res) => res.json({
       db: repositories.isConnected(),
       msg: eventService.isConnected()
     })
   );
-  
-  app.use((err, req, res, next) => {
+
+  app.use((err, req, res) => {
     if (err instanceof UnauthorizedError) {
       res.status(401).send(err.message);
     } else if (err instanceof NotFoundError) {
@@ -87,12 +87,12 @@ Promise.all([
       res.sendStatus(500);
     }
   });
-  
+
   const port = environment.PORT || 3337;
-  
+
   const server = app.listen(port, () => {
     logger.info(`Listening at http://localhost:${port}`);
   });
-  server.on('error', 
+  server.on('error',
     (err) => logger.error(`Error encountered in server: ${err}`));
 });
