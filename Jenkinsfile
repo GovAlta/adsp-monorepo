@@ -4,7 +4,7 @@ def affectedApps = []
 pipeline {
   agent {
     node {
-      label "node12" 
+      label "node12"
     }
   }
   stages {
@@ -12,6 +12,7 @@ pipeline {
       steps {
         checkout scm
         sh "npm install"
+        sh "npm audit fix"
         script {
           if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT){
             baseCommand = "--base=${GIT_PREVIOUS_SUCCESSFUL_COMMIT}"
@@ -47,7 +48,7 @@ pipeline {
             openshift.withProject() {
               affectedApps.each { affected ->
                 def bc = openshift.selector("bc", affected)
-                
+
                 if ( bc.exists() ) {
                   bc.startBuild("--from-dir=.", "--wait")
                 }
@@ -66,7 +67,7 @@ pipeline {
           openshift.withCluster() {
             openshift.withProject() {
               affectedApps.each { affected ->
-                openshift.tag("${affected}:latest", "${affected}:dev") 
+                openshift.tag("${affected}:latest", "${affected}:dev")
               }
             }
           }
@@ -75,7 +76,7 @@ pipeline {
           openshift.withCluster() {
             openshift.withProject("core-services-dev") {
               affectedApps.each { affected ->
-                def dc = openshift.selector("dc", "${affected}")                
+                def dc = openshift.selector("dc", "${affected}")
                 if ( dc.exists() ) {
                   dc.rollout().latest()
                 }

@@ -1,7 +1,7 @@
 version: '3.2'
 services:
   value-service-timescale:
-    image:  timescale/timescaledb:latest-pg12
+    image: timescale/timescaledb:1.7.1-pg12-bitnami
     expose:
       - 5432
     ports:
