@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      app: tenant-management-webapp
+    name: tenant-management-webapp
+  spec:
+    replicas: 1
+    selector:
+      app: tenant-management-webapp
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          app: tenant-management-webapp
+      spec:
+        volumes:
+        - name: file-volume
+          persistentVolumeClaim:
+            claimName: file-service-files
+
+    triggers:
+      - type: ConfigChange
+      - type: ImageChange
+        imageChangeParams:
+          automatic: true
+          containerNames:
+            - file-service
+          from:
+            kind: ImageStreamTag
+            name: file-service:latest
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: tenant-management-webapp
+    name: tenant-management-webapp
+  spec:
+    ports:
+    - name: http
+      port: 3333
+      targetPort: 3333
+    selector:
+      app: tenant-management-webapp
+- apiVersion: v1
+  kind: Route
+  metadata:
+    labels:
+      app: tenant-management-webapp
+    name: tenant-management-webapp
+  spec:
+    port:
+      targetPort: http
+    tls:
+      termination: edge
+    to:
+      kind: Service
+      name: tenant-management-webapp
