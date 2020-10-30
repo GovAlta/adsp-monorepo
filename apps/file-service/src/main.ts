@@ -75,7 +75,9 @@ Promise.all([
     })
   );
 
-  app.use((err, req, res) => {
+  /*eslint-disable */
+  app.use((err, req, res, next) => {
+    /*eslint-enable */
     if (err instanceof UnauthorizedError) {
       res.status(401).send(err.message);
     } else if (err instanceof NotFoundError) {
