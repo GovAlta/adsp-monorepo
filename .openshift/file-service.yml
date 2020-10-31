@@ -25,7 +25,7 @@ items:
       git:
         uri: https://gitlab.gov.ab.ca/dio/core/core-services.git
         ref: CS-211
-      contextDir: .
+      contextDir: apps/file-service
       type: Git
     strategy:
       sourceStrategy:
