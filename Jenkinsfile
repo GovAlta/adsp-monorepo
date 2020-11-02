@@ -44,6 +44,7 @@ pipeline {
         sh "npx nx affected --target=build ${baseCommand} --parallel"
         sh "npm prune --production"
         sh "ls -la dist/apps"
+        sh "ls -la dist/apps/tenant-management-webapp"
         script {
           openshift.withCluster() {
             openshift.withProject() {
