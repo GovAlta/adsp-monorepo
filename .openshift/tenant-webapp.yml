@@ -2,6 +2,29 @@ apiVersion: v1
 kind: List
 items:
 - apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      app: tenant-management-webapp
+    name: tenant-management-webapp
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: tenant-management-webapp:latest
+    source:
+      git:
+        uri: https://gitlab.gov.ab.ca/dio/core/core-services.git
+        ref: tenant-management-webapp
+      contextDir: apps/tentant-management-webapp
+      sourceSecret:
+        name: tenant-management-webapp-gitlab
+      type: Git
+    strategy:
+      type: Docker
+    triggers:
+    - type: ConfigChange
+- apiVersion: v1
   kind: DeploymentConfig
   metadata:
     name: tenant-management-webapp

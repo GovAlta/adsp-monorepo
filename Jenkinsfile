@@ -13,11 +13,11 @@ pipeline {
         checkout scm
         sh "npm install"
         sh "npm audit fix --force"
-        script {
-          if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT){
-            baseCommand = "--base=${GIT_PREVIOUS_SUCCESSFUL_COMMIT}"
-          }
-        }
+        // script {
+        //   if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT){
+        //     baseCommand = "--base=${GIT_PREVIOUS_SUCCESSFUL_COMMIT}"
+        //   }
+        // }
         script {
           affectedApps = sh (
             script: "npx nx affected:apps --plain ${baseCommand}",
@@ -43,6 +43,7 @@ pipeline {
       steps {
         sh "npx nx affected --target=build ${baseCommand} --parallel"
         sh "npm prune --production"
+        sh "ls -la dist/apps"
         script {
           openshift.withCluster() {
             openshift.withProject() {
