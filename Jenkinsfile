@@ -49,9 +49,9 @@ pipeline {
               affectedApps.each { affected ->
                 def bc = openshift.selector("bc", affected)
 
-                if ( bc.exists() ) {
-                  bc.startBuild("--from-dir=.", "--wait")
-                }
+                // if ( bc.exists() ) {
+                //   bc.startBuild("--from-dir=.", "--wait")
+                // }
               }
             }
           }
