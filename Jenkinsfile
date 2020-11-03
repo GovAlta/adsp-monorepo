@@ -67,21 +67,21 @@ pipeline {
       steps {
         script {
           openshift.withCluster() {
-            openshift.withProject() {
-              affectedApps.each { affected ->
-                openshift.tag("${affected}:latest", "${affected}:dev")
-              }
-            }
-          }
-        }
-        script {
-          openshift.withCluster() {
             openshift.withProject("core-services-dev") {
               affectedApps.each { affected ->
                 def dc = openshift.selector("dc", "${affected}")
                 if ( dc.exists() ) {
                   dc.rollout().latest()
                 }
+              }
+            }
+          }
+        }
+        script {
+          openshift.withCluster() {
+            openshift.withProject() {
+              affectedApps.each { affected ->
+                openshift.tag("${affected}:latest", "${affected}:dev")
               }
             }
           }
