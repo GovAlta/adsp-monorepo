@@ -10,6 +10,7 @@ pipeline {
   stages {
     stage("Prepare") {
       steps {
+        openshift.verbose()
         checkout scm
         sh "npm install"
         sh "npm audit fix --force"
