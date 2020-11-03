@@ -8,29 +8,6 @@ items:
       app: file-service
     name: file-av-scanner
 - apiVersion: v1
-  kind: BuildConfig
-  metadata:
-    labels:
-      app: file-service
-    name: file-av-scanner
-  spec:
-    output:
-      to:
-        kind: ImageStreamTag
-        name: file-av-scanner:latest
-    source:
-      git:
-        uri: https://gitlab.gov.ab.ca/dio/core/core-services.git
-        ref: file-service-prototype
-      contextDir: apps/file-service/av-scanner
-      sourceSecret:
-        name: file-service-gitlab
-      type: Git
-    strategy:
-      type: Docker
-    triggers:
-    - type: ConfigChange
-- apiVersion: v1
   kind: PersistentVolumeClaim
   metadata:
     name: file-av-db
