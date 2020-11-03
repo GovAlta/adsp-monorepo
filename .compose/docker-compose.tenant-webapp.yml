@@ -5,7 +5,7 @@ services:
       context: ../
       dockerfile: .compose/service/Dockerfile
       args:
-        - SERVICE=tenant-management-webapp
+        - SERVICE=tenant-management-webappx
     ports:
       - 4010:4010
     expose:
