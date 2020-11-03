@@ -57,9 +57,9 @@ pipeline {
                   sh "echo build config exists"
                 }
 
-                // if ( bc.exists() ) {
-                //   bc.startBuild("--from-dir=.", "--wait")
-                // }
+                if ( bc.exists() ) {
+                  bc.startBuild("--from-dir=apps/${affected}", "--wait")
+                }
               }
             }
           }
@@ -74,12 +74,9 @@ pipeline {
         script {
           openshift.verbose()
           openshift.withCluster() {
-            openshift.withProject("core-services-dev") {
+            openshift.withProject() {
               affectedApps.each { affected ->
-                def dc = openshift.selector("dc", "${affected}")
-                if ( dc.exists() ) {
-                  dc.rollout().latest()
-                }
+                openshift.tag("${affected}:latest", "${affected}:dev")
               }
             }
           }
@@ -87,9 +84,12 @@ pipeline {
         script {
           openshift.verbose()
           openshift.withCluster() {
-            openshift.withProject() {
+            openshift.withProject("core-services-dev") {
               affectedApps.each { affected ->
-                openshift.tag("${affected}:latest", "${affected}:dev")
+                def dc = openshift.selector("dc", "${affected}")
+                if ( dc.exists() ) {
+                  dc.rollout().latest()
+                }
               }
             }
           }
