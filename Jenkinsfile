@@ -57,7 +57,7 @@ pipeline {
                   sh "echo build config exists"
                 }
 
-                if ( bc.exists() ) {
+                if ( bc.exists()  &&  affected !== 'value-service') {
                   bc.startBuild("--from-dir=apps/${affected}", "--wait")
                 }
               }
