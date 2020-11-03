@@ -54,7 +54,6 @@ pipeline {
                 if ( bc.exists() ) {
                   sh "echo ${affected}"
                   sh "echo build config exists"
-                  sh "echo ${bc}"
                 }
 
                 // if ( bc.exists() ) {

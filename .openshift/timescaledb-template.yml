@@ -2,7 +2,7 @@ kind: Template
 apiVersion: v1
 metadata:
   name: timescaledb
-  annotations: 
+  annotations:
     openshift.io/display-name: "TimescaleDB"
     description: "Timescale DB database service."
     tags: "database,postgresql,timescale"
@@ -83,7 +83,7 @@ objects:
     sessionAffinity: None
     selector:
       name: ${DATABASE_SERVICE_NAME}
-    ports: 
+    ports:
     - name: postgresql
       protocol: TCP
       port: 5432
@@ -103,7 +103,7 @@ objects:
         storage: ${VOLUME_CAPACITY}
 - kind: DeploymentConfig
   apiVersion: v1
-  metadata: 
+  metadata:
     name: ${DATABASE_SERVICE_NAME}
   spec:
     strategy:
@@ -135,12 +135,12 @@ objects:
           env:
           - name: POSTGRESQL_PASSWORD
             valueFrom:
-              secretKeyRef: 
+              secretKeyRef:
                 name: ${DATABASE_SERVICE_NAME}
                 key: database-password
           - name: POSTGRESQL_DATABASE
             valueFrom:
-              secretKeyRef: 
+              secretKeyRef:
                 name: ${DATABASE_SERVICE_NAME}
                 key: database-name
           resources:
