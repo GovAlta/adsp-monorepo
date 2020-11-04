@@ -41,6 +41,11 @@ pipeline {
         expression { return affectedApps }
       }
       steps {
+        sh "*******************************************"
+        sh "*******************************************"
+        sh "echo ${affected}"
+        sh "*******************************************"
+        sh "*******************************************"
         sh "npx nx affected --target=build ${baseCommand} --parallel"
         sh "npm prune --production"
         sh "ls -la dist/apps"
