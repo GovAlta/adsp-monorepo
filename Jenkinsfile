@@ -37,9 +37,9 @@ pipeline {
       }
     }
     stage("Build") {
-      when {
-        expression { return affectedApps }
-      }
+      //when {
+        //expression { return affectedApps }
+      //}
       steps {
         sh "*******************************************"
         sh "*******************************************"
