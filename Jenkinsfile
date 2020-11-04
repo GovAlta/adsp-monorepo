@@ -37,9 +37,9 @@ pipeline {
       }
     }
     stage("Build") {
-      //when {
-        //expression { return affectedApps }
-      //}
+      when {
+        expression { return affectedApps }
+      }
       steps {
         sh "npx nx affected --target=build ${baseCommand} --parallel"
         sh "npm prune --production"
