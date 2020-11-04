@@ -48,16 +48,16 @@ pipeline {
         script {
           openshift.verbose()
 
-          openshift.withCluster() {
-            openshift.withProject() {
-              def builds = openshift.selector("bc", affectedApps).related('builds')
-              timeout(5) {
-                builds.untilEach(1) {
-                  return (it.object().status.phase == "Complete")
-                }
-              }
-            }
-          }
+          // openshift.withCluster() {
+          //   openshift.withProject() {
+          //     def builds = openshift.selector("bc", affectedApps).related('builds')
+          //     timeout(5) {
+          //       builds.untilEach(1) {
+          //         return (it.object().status.phase == "Complete")
+          //       }
+          //     }
+          //   }
+          // }
 
           openshift.withCluster() {
             openshift.withProject() {
@@ -71,7 +71,7 @@ pipeline {
                 }
 
                 if ( bc && affected != 'value-service' && affected != 'file-service') {
-                  bc.startBuild("--from-dir=apps/${affected}", "--wait")
+                  bc.startBuild("--from-dir=dist/apps/${affected}", "--wait")
                 }
               }
             }
