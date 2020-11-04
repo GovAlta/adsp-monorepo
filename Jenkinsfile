@@ -55,6 +55,7 @@ pipeline {
                 builds.untilEach(1) {
                   return (it.object().status.phase == "Complete")
                 }
+              }
             }
           }
 
