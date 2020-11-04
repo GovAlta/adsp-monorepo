@@ -70,7 +70,7 @@ pipeline {
                   sh "echo build config exists"
                 }
 
-                if ( bc && affected != 'value-service' && affected != 'file-service') {
+                if ( bc != 'value-service' && affected != 'file-service') {
                   bc.startBuild("--from-dir=dist/apps/${affected}", "--wait")
                 }
               }
