@@ -51,8 +51,8 @@ pipeline {
             openshift.withProject() {
               affectedApps.each { affected ->
                 def bc = openshift.selector("bc", affected)
-                sh "echo xx ${affected}"
-                sh "echo bc.exists() ${bc.exists()}"
+                sh "echo uuuuu ${affected}"
+                sh "echo --> bc.exists()"
 
                 if ( bc.exists() ) {
                   sh "echo ${affected}"
