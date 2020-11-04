@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      app: file-service
+    name: file-av-scanner
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      app: file-service
+    name: file-av-scanner
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: file-av-scanner:latest
+    source:
+      git:
+        uri: https://gitlab.gov.ab.ca/dio/core/core-services.git
+        ref: file-service-prototype
+      contextDir: apps/file-service/av-scanner
+      sourceSecret:
+        name: file-service-gitlab
+      type: Git
+    strategy:
+      type: Docker
+    triggers:
+    - type: ConfigChange
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: file-av-db
+  spec:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 250Mi
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      app: file-service
+    name: file-av-scanner
+  spec:
+    replicas: 1
+    selector:
+      app: file-av-scanner
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          app: file-av-scanner
+      spec:
+        volumes:
+        - name: file-av-db-volume
+          persistentVolumeClaim:
+            claimName: file-av-db
+        containers:
+        - image: file-av-scanner
+          imagePullPolicy: IfNotPresent
+          name: file-av-scanner
+          ports:
+          - containerPort: 3310
+            name: tcp
+            protocol: TCP
+          volumeMounts:
+          - mountPath: /store
+            name: file-av-db-volume
+    triggers:
+      - type: ConfigChange
+      - type: ImageChange
+        imageChangeParams:
+          containerNames:
+            - file-av-scanner
+          from:
+            kind: ImageStreamTag
+            name: file-av-scanner:latest
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: file-service
+    name: file-av-scanner
+  spec:
+    ports:
+    - name: tcp
+      port: 3310
+      targetPort: 3310
+    selector:
+      app: file-av-scanner
