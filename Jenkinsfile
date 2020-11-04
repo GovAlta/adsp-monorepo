@@ -70,9 +70,11 @@ pipeline {
                   sh "echo build config exists"
                 }
 
-                if ( bc != 'value-service' && affected != 'file-service') {
+                if ( bc != 'value-service' affected != 'value-service' && affected != 'file-service') {
                   bc.startBuild("--from-dir=dist/apps/${affected}", "--wait")
                 }
+                for( each in bc){
+                  sh "echo what is in bc: ${each}"
               }
             }
           }
