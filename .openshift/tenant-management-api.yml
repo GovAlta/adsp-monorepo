@@ -31,7 +31,7 @@ items:
       type: Source
     triggers:
     - type: ConfigChange
-- apiVersion: v1
+  apiVersion: apps.openshift.io/v1
   kind: DeploymentConfig
   metadata:
     name: tenant-management-api
@@ -45,6 +45,25 @@ items:
       metadata:
         labels:
           name: tenant-management-api
+      spec:
+        containers:
+          - env:
+            - name: PORT
+              value: '3333'
+            - name: AV_HOST
+              value: 'http://vnn4457.gov.ab.ca'
+            - name: AV_PORT
+              value: '8008'
+            - name: AV_PROVIDER
+              value: meta
+            - name: AMQP_HOST
+            image: tenant-management-api
+            imagePullPolicy: IfNotPresent
+            name: tenant-management-api
+            ports:
+              - containerPort: 3333
+                name: http
+                protocol: TCP
     triggers:
       - type: ConfigChange
       - type: ImageChange

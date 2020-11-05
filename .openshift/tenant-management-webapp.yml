@@ -45,6 +45,18 @@ items:
       metadata:
         labels:
           name: tenant-management-webapp
+      spec:
+        containers:
+          - env:
+            - name: PORT
+              value: '3333'
+            image: tenant-management-webapp
+            imagePullPolicy: IfNotPresent
+            name: tenant-management-webapp
+            ports:
+              - containerPort: 3333
+                name: http
+                protocol: TCP
     triggers:
       - type: ConfigChange
       - type: ImageChange
