@@ -5,20 +5,20 @@ items:
   kind: ImageStream
   metadata:
     labels:
-      app: tenant-management-webapp
-    name: tenant-management-webapp
+      app: tenant-management-api
+    name: tenant-management-api
   spec: {}
 - apiVersion: v1
   kind: BuildConfig
   metadata:
     labels:
-      app: tenant-management-webapp
-    name: tenant-management-webapp
+      app: tenant-management-api
+    name: tenant-management-api
   spec:
     output:
       to:
         kind: ImageStreamTag
-        name: tenant-management-webapp:latest
+        name: tenant-management-api:latest
     source:
       binary: {}
       type: Binary
@@ -34,46 +34,46 @@ items:
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
-    name: tenant-management-webapp
+    name: tenant-management-api
   spec:
     replicas: 1
     selector:
-      app: tenant-management-webapp
+      app: tenant-management-api
     strategy:
       type: Recreate
     template:
       metadata:
         labels:
-          name: tenant-management-webapp
+          name: tenant-management-api
     triggers:
       - type: ConfigChange
       - type: ImageChange
         imageChangeParams:
           automatic: true
           containerNames:
-            - tenant-management-webapp
+            - tenant-management-api
           from:
             kind: ImageStreamTag
-            name: tenant-management-webapp:latest
+            name: tenant-management-api:latest
 - apiVersion: v1
   kind: Service
   metadata:
     labels:
-      app: tenant-management-webapp
-    name: tenant-management-webapp
+      app: tenant-management-api
+    name: tenant-management-api
   spec:
     ports:
     - name: http
       port: 3333
       targetPort: 3333
     selector:
-      app: tenant-management-webapp
+      app: tenant-management-api
 - apiVersion: v1
   kind: Route
   metadata:
     labels:
-      app: tenant-management-webapp
-    name: tenant-management-webapp
+      app: tenant-management-api
+    name: tenant-management-api
   spec:
     port:
       targetPort: http
@@ -81,4 +81,4 @@ items:
       termination: edge
     to:
       kind: Service
-      name: tenant-management-webapp
+      name: tenant-management-api
