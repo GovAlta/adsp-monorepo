@@ -9,6 +9,16 @@ items:
     name: tenant-management-webapp
   spec: {}
 - apiVersion: v1
+  kind: ImageStream
+  metadata:
+    name: nginx-image-runtime
+  spec:
+    tags:
+    - name: latest
+      from:
+        kind: DockerImage
+        name: 'centos/nginx-112-centos7:latest'
+- apiVersion: v1
   kind: BuildConfig
   metadata:
     labels:
@@ -26,7 +36,7 @@ items:
       sourceStrategy:
         from:
           kind: ImageStreamTag
-          name: nodejs:12
+          name: nginx-image-runtime:latest
         incremental: true
       type: Source
     triggers:
