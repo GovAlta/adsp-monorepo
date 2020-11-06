@@ -46,6 +46,7 @@ pipeline {
         sh "ls -la dist/apps"
         sh "ls -la dist/apps/tenant-management-webapp"
         script {
+          openshift.verbose()
           openshift.withCluster() {
             openshift.withProject() {
               affectedApps.each { affected ->
@@ -72,6 +73,7 @@ pipeline {
       }
       steps {
         script {
+          openshift.verbose()
           openshift.withCluster() {
             openshift.withProject() {
               affectedApps.each { affected ->
@@ -81,6 +83,7 @@ pipeline {
           }
         }
         script {
+          openshift.verbose()
           openshift.withCluster() {
             openshift.withProject("core-services-dev") {
               affectedApps.each { affected ->
