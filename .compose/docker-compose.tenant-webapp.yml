@@ -3,7 +3,7 @@ services:
   tenant-management-webapp:
     build:
       context: ../
-      dockerfile: .compose/service/Dockerfile
+      dockerfile: .compose/service/DockerfileReact
       args:
         - SERVICE=tenant-management-webapp
     ports:

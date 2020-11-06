@@ -1,0 +1,7 @@
+FROM https://github.com/nodeshift/ubi8-s2i-web-app
+
+ARG SERVICE
+COPY . .
+
+ENV SERVICE ${SERVICE}
+CMD npm run -d service dist/apps/${SERVICE}/main.js
