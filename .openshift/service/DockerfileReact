@@ -1,4 +1,4 @@
-FROM https://github.com/nodeshift/ubi8-s2i-web-app:12.x
+FROM https://github.com/nodeshift/ubi8-s2i-web-app
 
 ARG SERVICE
 COPY . .
