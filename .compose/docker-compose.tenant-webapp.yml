@@ -7,9 +7,8 @@ services:
       args:
         - SERVICE=tenant-management-webapp
     ports:
-      - 4010:4010
+      - 4020:4020
     expose:
-      - 4010
+      - 4020
     volumes:
-      - ../data/file:/data/file
-
+      - ../data/webapp:/webapp/file

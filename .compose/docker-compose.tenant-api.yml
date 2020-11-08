@@ -1,5 +1,4 @@
-
-   version: '3.2'
+version: '3.2'
 services:
   tenant-management-api:
     build:
@@ -12,5 +11,5 @@ services:
     expose:
       - 3338
     volumes:
-      - ../data/file:/data/file
+      - ../data/api:/api/file
 
