@@ -59,7 +59,7 @@ pipeline {
                 }
 
                 if ( bc.exists() ) {
-                  bc.startBuild("--from-dir=.", "--wait")
+                  bc.startBuild("--from-dir=apps/${affected}", "--wait")
                 }
               }
             }

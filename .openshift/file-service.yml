@@ -7,7 +7,20 @@ items:
     labels:
       app: file-service
     name: file-service
-  spec: {}
+  spec:
+    tags:
+      - annotations: null
+        generation: 2
+        importPolicy: {}
+        name: dev
+        referencePolicy:
+          type: Source
+      - annotations: null
+        generation: 3
+        importPolicy: {}
+        name: latest
+        referencePolicy:
+          type: Source
 - apiVersion: v1
   kind: BuildConfig
   metadata:
