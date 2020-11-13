@@ -38,7 +38,7 @@ items:
     output:
       to:
         kind: ImageStreamTag
-        name: 'file-service:dev'
+        name: 'file-service:latest'
     postCommit: {}
     resources: {}
     runPolicy: Serial

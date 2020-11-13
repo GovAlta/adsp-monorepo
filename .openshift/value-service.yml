@@ -17,3 +17,35 @@ items:
   spec:
     lookupPolicy:
       local: false
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      app: value-service
+    name: value-service
+    namespace: core-services-infra
+    selfLink: >-
+      /apis/build.openshift.io/v1/namespaces/core-services-infra/buildconfigs/value-service
+  spec:
+    failedBuildsHistoryLimit: 5
+    nodeSelector: null
+    output:
+      to:
+        kind: ImageStreamTag
+        name: 'value-service:latest'
+    postCommit: {}
+    resources: {}
+    runPolicy: Serial
+    source:
+      binary: {}
+      type: Binary
+    strategy:
+      dockerStrategy:
+        buildArgs:
+          - name: SERVICE
+            value: value-service
+        dockerfilePath: .openshift/service/Dockerfile
+      type: Docker
+    successfulBuildsHistoryLimit: 5
+    triggers:
+    - type: ConfigChange
