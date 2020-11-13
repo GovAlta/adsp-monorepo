@@ -85,44 +85,36 @@ items:
             - name: NPM_RUN
               value: 'service'
             - name: KEYCLOAK_ROOT_URL
-              value: ''
+              value: 'https://access-uat.alpha.alberta.ca'
             - name: KEYCLOAK_REALM
-              value: ''
+              value: 'core'
             - name: MONGO_DB
               valueFrom:
                 secretKeyRef:
                   key: database_name
-                  name: ''
+                  name: mongodb-persistent-xmhxh-credentials-05jw8
             - name: MONGO_USER
               valueFrom:
                 secretKeyRef:
                   key: username
-                  name: ''
+                  name: mongodb-persistent-xmhxh-credentials-05jw8
             - name: MONGO_PASSWORD
               valueFrom:
                 secretKeyRef:
                   key: password
-                  name: ''
+                  name: mongodb-persistent-xmhxh-credentials-05jw8
             - name: MONGO_URI
               valueFrom:
                 secretKeyRef:
                   key: uri
-                  name: ''
-            - name: AMQP_USER
-              valueFrom:
-                secretKeyRef:
-                  key: username
-                  name: ''
-            - name: AMQP_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: password
-                  name: ''
+                  name: mongodb-persistent-xmhxh-credentials-05jw8
+            - name: AV_HOST
+              value: 'http://vnn4457.gov.ab.ca'
+            - name: AV_PORT
+              value: '8008'
+            - name: AV_PROVIDER
+              value: meta
             - name: AMQP_HOST
-              valueFrom:
-                secretKeyRef:
-                  key: host
-                  name: ''
             - name: LOG_LEVEL
               value: info
             - name: PORT
