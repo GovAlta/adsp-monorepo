@@ -19,6 +19,39 @@ items:
         kind: DockerImage
         name: 'centos/nginx-112-centos7:latest'
 - apiVersion: v1
+  kind: ImageStream
+  metadata:
+    name: web-app-builder-runtime
+  spec:
+    tags:
+    - name: latest
+      from:
+        kind: DockerImage
+        name: nodeshift/ubi8-s2i-web-app:10.x
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      app: tenant-management-webapp-builder
+    name: tenant-management-webapp-builder
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: tenant-management-webapp:latest
+    source:
+      binary: {}
+      type: Binary
+    strategy:
+      sourceStrategy:
+        from:
+          kind: ImageStreamTag
+          name: nginx-image-runtime:latest
+        incremental: true
+      type: Source
+    triggers:
+    - type: ConfigChange
+- apiVersion: v1
   kind: BuildConfig
   metadata:
     labels:
