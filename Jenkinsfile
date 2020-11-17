@@ -12,6 +12,7 @@ pipeline {
       steps {
         checkout scm
         sh "npm install"
+        sh "npm install -g @nrwl/cli"
         sh "npm audit fix --force"
         // script {
         //   if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT){
