@@ -43,7 +43,7 @@ pipeline {
       }
       steps {
         sh "npx nx affected --target=build ${baseCommand} --parallel"
-        sh "npm prune --production"
+       // sh "npm prune --production"
         sh "ls -la dist/apps"
         sh "ls -la dist/apps/tenant-management-webapp"
         script {
