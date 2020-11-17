@@ -1,5 +1,5 @@
 #FROM https://github.com/nodeshift/ubi8-s2i-web-app:12.x
-
+FROM https://hub.docker.com/r/centos/nginx-112-centos7
 ARG SERVICE
 COPY . .
 
