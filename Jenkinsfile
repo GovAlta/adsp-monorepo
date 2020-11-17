@@ -11,7 +11,7 @@ pipeline {
     stage("Prepare") {
       steps {
         checkout scm
-        sh "npm install"
+        sh "npm install -D"
         sh "npm install -g @nrwl/cli"
         sh "npm audit fix --force"
         // script {
@@ -25,7 +25,7 @@ pipeline {
             returnStdout: true
           ).split()
         }
-      }
+      } 
     }
     stage("Lint"){
       steps {

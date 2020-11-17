@@ -97,7 +97,13 @@
             "tsConfig": "apps/tenant-management-webapp/tsconfig.app.json",
             "assets": [
               "apps/tenant-management-webapp/src/favicon.ico",
-              "apps/tenant-management-webapp/src/assets"
+              "apps/tenant-management-webapp/src/assets",
+              {
+                "glob": "nginx.conf",
+                "input": "./apps/tenant-management-webapp",
+                "output": "./"
+              }
+
             ],
             "styles": ["apps/tenant-management-webapp/src/styles.scss"],
             "scripts": [],
