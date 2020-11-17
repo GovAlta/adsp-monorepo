@@ -1,4 +1,5 @@
-FROM https://github.com/nodeshift/ubi8-s2i-web-app:12.x
+#FROM https://github.com/nodeshift/ubi8-s2i-web-app:12.x
+FROM registry.access.redhat.com/ubi8/nginx-116
 
 ARG SERVICE
 COPY . .
