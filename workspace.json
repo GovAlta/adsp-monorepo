@@ -100,7 +100,7 @@
               "apps/tenant-management-webapp/src/assets",
               {
                 "glob": "nginx.conf",
-                "input": "./apps/tenant-management-webapp",
+                "input": "./",
                 "output": "./"
               }
 
