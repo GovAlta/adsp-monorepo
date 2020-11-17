@@ -7,4 +7,5 @@ COPY . .
 COPY ./nginx.conf /etc/nginx/nginx.conf
 
 ENV SERVICE ${SERVICE}
-CMD npm run -d service dist/apps/${SERVICE}/main.js
+# CMD npm run -d service dist/apps/${SERVICE}/main.js
+CMD npm run -d nx serve tenant-management-webapp
