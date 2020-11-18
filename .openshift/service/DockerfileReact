@@ -5,4 +5,4 @@ COPY . .
 
 ENV SERVICE ${SERVICE}
 # CMD npm run -d service dist/apps/${SERVICE}/main.js
-# CMD npm run -d ./node_modules/.bin/nx serve tenant-management-webapp
+CMD npm run -d ./node_modules/.bin/nx serve tenant-management-webapp
