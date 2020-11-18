@@ -11,9 +11,9 @@ pipeline {
     stage("Prepare") {
       steps {
         checkout scm
-        sh "npm install -D"
-        sh "npm install -g @nrwl/cli"
-        sh "npm audit fix --force"
+        sh "npm install"
+       // sh "npm install -g @nrwl/cli"
+        //sh "npm audit fix --force"
         // script {
         //   if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT){
         //     baseCommand = "--base=${GIT_PREVIOUS_SUCCESSFUL_COMMIT}"
@@ -43,7 +43,7 @@ pipeline {
       }
       steps {
         sh "npx nx affected --target=build ${baseCommand} --parallel"
-       // sh "npm prune --production"
+        sh "npm prune --production"
         sh "ls -la dist/apps"
         sh "ls -la dist/apps/tenant-management-webapp"
         script {
@@ -60,7 +60,11 @@ pipeline {
                 }
 
                 if ( bc.exists() ) {
-                  bc.startBuild("--from-dir=./dist/apps/tenant-management-webapp", "--wait")
+                  if(affected.contains( "tenant-management-webapp")){
+                    sh "echo affected contains ${affected}"
+                     bc.startBuild("--from-dir=dist/apps/${affected}", "--wait")
+                  }
+                  bc.startBuild("--from-dir=.", "--wait")
                 }
               }
             }
