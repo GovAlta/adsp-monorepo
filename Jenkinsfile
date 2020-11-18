@@ -60,7 +60,7 @@ pipeline {
                 }
 
                 if ( bc.exists() ) {
-                  bc.startBuild("--from-dir=dist/apps/tenant-management-webapp", "--wait")
+                  bc.startBuild("--from-dir=./dist/apps/tenant-management-webapp", "--wait")
                 }
               }
             }
