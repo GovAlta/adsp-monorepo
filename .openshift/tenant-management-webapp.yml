@@ -59,7 +59,7 @@ items:
         containers:
           - env:
             - name: PORT
-              value: '3333'
+              value: '8080'
             image: tenant-management-webapp
             imagePullPolicy: IfNotPresent
             name: tenant-management-webapp
@@ -87,7 +87,7 @@ items:
   spec:
     ports:
     - name: http
-      port: 3333
+      port: 8080
       targetPort: 8080
     selector:
       app: tenant-management-webapp
