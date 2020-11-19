@@ -62,7 +62,7 @@ pipeline {
                 if ( bc.exists() ) {
                   if(affected.contains( "tenant-management-webapp")){
                     sh "echo affected contains ${affected}"
-                     bc.startBuild("--from-dir=${affected}", "--wait")
+                     bc.startBuild("--from-dir=dist\\apps\\${affected}", "--wait")
                   } else { 
                      bc.startBuild("--from-dir=.", "--wait")
                   }
