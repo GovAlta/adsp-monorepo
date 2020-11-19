@@ -95,6 +95,7 @@ pipeline {
               affectedApps.each { affected ->
                 def dc = openshift.selector("dc", "${affected}")
                 if ( dc.exists() ) {
+                  sh "echo in the last step deploy ${affected}"
                   dc.rollout().latest()
                 }
               }
