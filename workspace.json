@@ -81,6 +81,185 @@
         }
       }
     },
+    "tenant-management-webapp": {
+      "root": "apps/tenant-management-webapp",
+      "sourceRoot": "apps/tenant-management-webapp/src",
+      "projectType": "application",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@nrwl/web:build",
+          "options": {
+            "outputPath": "dist/apps/tenant-management-webapp",
+            "index": "apps/tenant-management-webapp/src/index.html",
+            "main": "apps/tenant-management-webapp/src/main.tsx",
+            "polyfills": "apps/tenant-management-webapp/src/polyfills.ts",
+            "tsConfig": "apps/tenant-management-webapp/tsconfig.app.json",
+            "assets": [
+              "apps/tenant-management-webapp/src/favicon.ico",
+              "apps/tenant-management-webapp/src/assets",
+              {
+                "glob": "nginx.conf",
+                "input": "./",
+                "output": "./"
+              }
+
+            ],
+            "styles": ["apps/tenant-management-webapp/src/styles.scss"],
+            "scripts": [],
+            "webpackConfig": "@nrwl/react/plugins/webpack"
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "apps/tenant-management-webapp/src/environments/environment.ts",
+                  "with": "apps/tenant-management-webapp/src/environments/environment.prod.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "extractCss": true,
+              "namedChunks": false,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/web:dev-server",
+          "options": {
+            "buildTarget": "tenant-management-webapp:build",
+            "proxyConfig": "apps/tenant-management-webapp/proxy.conf.json"
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "tenant-management-webapp:build:production"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:lint",
+          "options": {
+            "linter": "eslint",
+            "tsConfig": [
+              "apps/tenant-management-webapp/tsconfig.app.json",
+              "apps/tenant-management-webapp/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**",
+              "!apps/tenant-management-webapp/**/*"
+            ]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/tenant-management-webapp/jest.config.js",
+            "tsConfig": "apps/tenant-management-webapp/tsconfig.spec.json",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "tenant-management-webapp-e2e": {
+      "root": "apps/tenant-management-webapp-e2e",
+      "sourceRoot": "apps/tenant-management-webapp-e2e/src",
+      "projectType": "application",
+      "architect": {
+        "e2e": {
+          "builder": "@nrwl/cypress:cypress",
+          "options": {
+            "cypressConfig": "apps/tenant-management-webapp-e2e/cypress.json",
+            "tsConfig": "apps/tenant-management-webapp-e2e/tsconfig.e2e.json",
+            "devServerTarget": "tenant-management-webapp:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "tenant-management-webapp:serve:production"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:lint",
+          "options": {
+            "linter": "eslint",
+            "tsConfig": ["apps/tenant-management-webapp-e2e/tsconfig.e2e.json"],
+            "exclude": [
+              "**/node_modules/**",
+              "!apps/tenant-management-webapp-e2e/**/*"
+            ]
+          }
+        }
+      }
+    },
+    "tenant-management-api": {
+      "root": "apps/tenant-management-api",
+      "sourceRoot": "apps/tenant-management-api/src",
+      "projectType": "application",
+      "prefix": "tenant-management-api",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "outputPath": "dist/apps/tenant-management-api",
+            "main": "apps/tenant-management-api/src/main.ts",
+            "tsConfig": "apps/tenant-management-api/tsconfig.app.json",
+            "assets": ["apps/tenant-management-api/src/assets"]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/tenant-management-api/src/environments/environment.ts",
+                  "with": "apps/tenant-management-api/src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "tenant-management-api:build"
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:lint",
+          "options": {
+            "linter": "eslint",
+            "tsConfig": [
+              "apps/tenant-management-api/tsconfig.app.json",
+              "apps/tenant-management-api/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**",
+              "!apps/tenant-management-api/**/*"
+            ]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/tenant-management-api/jest.config.js",
+            "tsConfig": "apps/tenant-management-api/tsconfig.spec.json",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
     "value-service": {
       "root": "apps/value-service",
       "sourceRoot": "apps/value-service/src",
@@ -158,13 +337,19 @@
     },
     "@nrwl/react": {
       "application": {
-        "linter": "eslint"
+        "style": "scss",
+        "linter": "eslint",
+        "babel": true
       },
       "library": {
+        "style": "scss",
         "linter": "eslint"
       },
       "storybook-configuration": {
         "linter": "eslint"
+      },
+      "component": {
+        "style": "scss"
       }
     },
     "@nrwl/next": {

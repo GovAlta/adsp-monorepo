@@ -24,13 +24,13 @@ export const createAdministrationRouter = ({
 }: AdministrationRouterProps): Router => {
 
   const administrationRouter = Router();
-  
+
   /**
    * @swagger
    *
    * /value-admin/v1/{namespace}/definitions:
    *   get:
-   *     tags: 
+   *     tags:
    *     - Value Administration
    *     description: Retrieves value definitions in a namespace.
    *     parameters:
@@ -50,9 +50,9 @@ export const createAdministrationRouter = ({
    *               items:
    *                 type: object
    *                 properties:
-   *                   namespace: 
+   *                   namespace:
    *                     type: string
-   *                   name: 
+   *                   name:
    *                     type: string
    *                   description:
    *                     type: string
@@ -62,7 +62,7 @@ export const createAdministrationRouter = ({
    *                     type: object
    *                   readRoles:
    *                     type: array
-   *                     items: 
+   *                     items:
    *                       type: string
    *                   writeRoles:
    *                     type: array
@@ -75,16 +75,18 @@ export const createAdministrationRouter = ({
     (req, res, next) => {
       const user = req.user as User;
       const namespace = req.params.namespace;
+      /*eslint-disable */
       valueRepository.getNamespace(user, namespace)
-      .then((entity) => 
+      .then((entity) =>
         res.send(
           Object.entries(entity.definitions)
-          .map(([_, definition]) => 
+          .map(([_,definition]) =>
             mapValueDefinition(namespace, definition)
           )
         )
       )
       .catch(err => next(err));
+      /*eslint-enable */
     }
   );
 
@@ -93,7 +95,7 @@ export const createAdministrationRouter = ({
    *
    * /value-admin/v1/{namespace}/definitions:
    *   post:
-   *     tags: 
+   *     tags:
    *     - Value Administration
    *     description: Creates a new value definitions in a namespace.
    *     parameters:
@@ -110,7 +112,7 @@ export const createAdministrationRouter = ({
    *           schema:
    *             type: object
    *             properties:
-   *               name: 
+   *               name:
    *                 type: string
    *               description:
    *                 type: string
@@ -120,7 +122,7 @@ export const createAdministrationRouter = ({
    *                 type: object
    *               readRoles:
    *                 type: array
-   *                 items: 
+   *                 items:
    *                   type: string
    *               writeRoles:
    *                 type: array
@@ -136,9 +138,9 @@ export const createAdministrationRouter = ({
    *               items:
    *                 type: object
    *                 properties:
-   *                   namespace: 
+   *                   namespace:
    *                     type: string
-   *                   name: 
+   *                   name:
    *                     type: string
    *                   description:
    *                     type: string
@@ -148,7 +150,7 @@ export const createAdministrationRouter = ({
    *                     type: object
    *                   readRoles:
    *                     type: array
-   *                     items: 
+   *                     items:
    *                       type: string
    *                   writeRoles:
    *                     type: array
@@ -168,10 +170,10 @@ export const createAdministrationRouter = ({
         }
         return entity;
       })
-      .then((entity) => 
+      .then((entity) =>
         entity.addDefinition(user, req.body)
       )
-      .then((entity) => 
+      .then((entity) =>
         res.send(mapValueDefinition(namespace, entity))
       )
       .catch(err => next(err));
@@ -183,7 +185,7 @@ export const createAdministrationRouter = ({
    *
    * /value-admin/v1/{namespace}/definitions/{definition}:
    *   post:
-   *     tags: 
+   *     tags:
    *     - Value Administration
    *     description: Updates a value definitions in a namespace.
    *     parameters:
@@ -214,7 +216,7 @@ export const createAdministrationRouter = ({
    *                 type: object
    *               readRoles:
    *                 type: array
-   *                 items: 
+   *                 items:
    *                   type: string
    *               writeRoles:
    *                 type: array
@@ -230,9 +232,9 @@ export const createAdministrationRouter = ({
    *               items:
    *                 type: object
    *                 properties:
-   *                   namespace: 
+   *                   namespace:
    *                     type: string
-   *                   name: 
+   *                   name:
    *                     type: string
    *                   description:
    *                     type: string
@@ -242,7 +244,7 @@ export const createAdministrationRouter = ({
    *                     type: object
    *                   readRoles:
    *                     type: array
-   *                     items: 
+   *                     items:
    *                       type: string
    *                   writeRoles:
    *                     type: array
@@ -263,10 +265,10 @@ export const createAdministrationRouter = ({
         }
         return entity;
       })
-      .then((entity) => 
+      .then((entity) =>
         entity.updateDefinition(user, name, req.body)
       )
-      .then((entity) => 
+      .then((entity) =>
         res.send(mapValueDefinition(namespace, entity))
       )
       .catch(err => next(err));

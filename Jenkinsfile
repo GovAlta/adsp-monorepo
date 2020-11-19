@@ -4,7 +4,7 @@ def affectedApps = []
 pipeline {
   agent {
     node {
-      label "node12" 
+      label "node12"
     }
   }
   stages {
@@ -12,18 +12,20 @@ pipeline {
       steps {
         checkout scm
         sh "npm install"
-        script {
-          if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT){
-            baseCommand = "--base=${GIT_PREVIOUS_SUCCESSFUL_COMMIT}"
-          }
-        }
+       // sh "npm install -g @nrwl/cli"
+        //sh "npm audit fix --force"
+        // script {
+        //   if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT){
+        //     baseCommand = "--base=${GIT_PREVIOUS_SUCCESSFUL_COMMIT}"
+        //   }
+        // }
         script {
           affectedApps = sh (
             script: "npx nx affected:apps --plain ${baseCommand}",
             returnStdout: true
           ).split()
         }
-      }
+      } 
     }
     stage("Lint"){
       steps {
@@ -42,14 +44,28 @@ pipeline {
       steps {
         sh "npx nx affected --target=build ${baseCommand} --parallel"
         sh "npm prune --production"
+        sh "ls -la dist/apps"
+        sh "ls -la dist/apps/tenant-management-webapp"
         script {
+          openshift.verbose()
           openshift.withCluster() {
             openshift.withProject() {
               affectedApps.each { affected ->
                 def bc = openshift.selector("bc", affected)
-                
+                sh "echo uuuuu ${affected}"
+
                 if ( bc.exists() ) {
-                  bc.startBuild("--from-dir=.", "--wait")
+                  sh "echo ${affected}"
+                  sh "echo build config exists"
+                }
+
+                if ( bc.exists() ) {
+                  if(affected.contains( "tenant-management-webapp")){
+                    sh "echo affected contains ${affected}"
+                     bc.startBuild("--from-dir=dist\\apps\\${affected}", "--wait")
+                  } else { 
+                     bc.startBuild("--from-dir=.", "--wait")
+                  }
                 }
               }
             }
@@ -63,19 +79,21 @@ pipeline {
       }
       steps {
         script {
+          openshift.verbose()
           openshift.withCluster() {
             openshift.withProject() {
               affectedApps.each { affected ->
-                openshift.tag("${affected}:latest", "${affected}:dev") 
+                openshift.tag("${affected}:latest", "${affected}:dev")
               }
             }
           }
         }
         script {
+          openshift.verbose()
           openshift.withCluster() {
             openshift.withProject("core-services-dev") {
               affectedApps.each { affected ->
-                def dc = openshift.selector("dc", "${affected}")                
+                def dc = openshift.selector("dc", "${affected}")
                 if ( dc.exists() ) {
                   dc.rollout().latest()
                 }

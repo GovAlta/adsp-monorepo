@@ -1,0 +1,15 @@
+version: '3.2'
+services:
+  tenant-management-webapp:
+    build:
+      context: ../
+      dockerfile: .compose/service/DockerfileReact
+      args:
+        - SERVICE=tenant-management-webapp
+    ports:
+      - 4010:4010
+    expose:
+      - 4010
+    volumes:
+      - ../data/file:/data/file
+
