@@ -64,7 +64,7 @@ items:
             imagePullPolicy: IfNotPresent
             name: tenant-management-webapp
             ports:
-              - containerPort: 3333
+              - containerPort: 8080
                 name: http
                 protocol: TCP
     triggers:
@@ -88,7 +88,7 @@ items:
     ports:
     - name: http
       port: 3333
-      targetPort: 3333
+      targetPort: 8080
     selector:
       app: tenant-management-webapp
 - apiVersion: v1
