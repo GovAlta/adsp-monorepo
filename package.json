@@ -5,9 +5,7 @@
   "scripts": {
     "nx": "nx",
     "start": "nx serve",
-    "tenant-fd" : "nx serve tenant-management-webapp",
     "build": "nx build",
-    "build:tenant-fd": "nx build tenant-management-webapp",
     "test": "nx test",
     "lint": "nx workspace-lint && nx lint",
     "e2e": "nx e2e",

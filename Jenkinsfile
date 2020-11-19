@@ -12,8 +12,6 @@ pipeline {
       steps {
         checkout scm
         sh "npm install"
-       // sh "npm install -g @nrwl/cli"
-        //sh "npm audit fix --force"
         // script {
         //   if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT){
         //     baseCommand = "--base=${GIT_PREVIOUS_SUCCESSFUL_COMMIT}"
@@ -44,24 +42,15 @@ pipeline {
       steps {
         sh "npx nx affected --target=build ${baseCommand} --parallel"
         sh "npm prune --production"
-        sh "ls -la dist/apps"
-        sh "ls -la dist/apps/tenant-management-webapp"
         script {
           openshift.verbose()
           openshift.withCluster() {
             openshift.withProject() {
               affectedApps.each { affected ->
                 def bc = openshift.selector("bc", affected)
-                sh "echo uuuuu ${affected}"
-
-                if ( bc.exists() ) {
-                  sh "echo ${affected}"
-                  sh "echo build config exists"
-                }
 
                 if ( bc.exists() ) {
                   if(affected.contains( "tenant-management-webapp")){
-                   
                      bc.startBuild("--from-dir=dist/apps/${affected}", "--wait")
                   } else { 
                      bc.startBuild("--from-dir=.", "--wait")
