@@ -1,3 +1,7 @@
 FROM registry.access.redhat.com/ubi8/nginx-118
 
-CMD nginx -g "daemon off;"
+ARG SERVICE
+COPY . .
+
+ENV SERVICE ${SERVICE}
+# CMD npm run -d service dist/apps/${SERVICE}/main.js

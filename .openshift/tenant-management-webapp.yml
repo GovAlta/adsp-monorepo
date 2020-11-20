@@ -52,7 +52,57 @@ items:
     triggers:
     - type: ConfigChange
 - apiVersion: v1
-  kind: BuildConfig
+  kind: DeploymentConfig
+  metadata:
+    name: tenant-management-webapp
+  spec:
+    replicas: 1
+    selector:
+      name: tenant-management-webapp
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          name: tenant-management-webapp
+      spec:
+        containers:
+          - env:
+            - name: PORT
+              value: '8080'
+            image: tenant-management-webapp
+            imagePullPolicy: IfNotPresent
+            name: tenant-management-webapp
+            ports:
+              - containerPort: 8080
+                name: http
+                protocol: TCP
+    triggers:
+      - type: ConfigChange
+      - type: ImageChange
+        imageChangeParams:
+          automatic: true
+          containerNames:
+            - tenant-management-webapp
+          from:
+            kind: ImageStreamTag
+            name: tenant-management-webapp:dev'
+            namespace: core-services-infra
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: tenant-management-webapp
+    name: tenant-management-webapp
+  spec:
+    ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+    selector:
+      app: tenant-management-webapp
+- apiVersion: v1
+  kind: Route
   metadata:
     labels:
       app: tenant-management-webapp
