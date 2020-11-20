@@ -1,7 +1,6 @@
-FROM registry.access.redhat.com/ubi8/nginx-118
+FROM https://github.com/nodeshift/ubi8-s2i-web-app:12.x
 
 ARG SERVICE
 COPY . .
 
 ENV SERVICE ${SERVICE}
-# CMD npm run -d service dist/apps/${SERVICE}/main.js
