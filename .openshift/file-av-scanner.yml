@@ -40,57 +40,32 @@ items:
     resources:
       requests:
         storage: 250Mi
-- apiVersion: v1
-  kind: DeploymentConfig
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
   metadata:
+    annotations:
+      slave-label: node12
+    creationTimestamp: '2020-11-09T05:29:46Z'
+    generation: 1
     labels:
-      app: file-service
-    name: file-av-scanner
+      role: jenkins-slave
+    name: jenkins-agent-node12
+    namespace: core-services-infra
+    resourceVersion: '145866744'
+    selfLink: >-
+      /apis/image.openshift.io/v1/namespaces/core-services-infra/imagestreams/jenkins-agent-node12
+    uid: 942d5e66-224c-11eb-9888-00505698a8f1
   spec:
-    replicas: 1
-    selector:
-      app: file-av-scanner
-    strategy:
-      type: Recreate
-    template:
-      metadata:
-        labels:
-          app: file-av-scanner
-      spec:
-        volumes:
-        - name: file-av-db-volume
-          persistentVolumeClaim:
-            claimName: file-av-db
-        containers:
-        - image: file-av-scanner
-          imagePullPolicy: IfNotPresent
-          name: file-av-scanner
-          ports:
-          - containerPort: 3310
-            name: tcp
-            protocol: TCP
-          volumeMounts:
-          - mountPath: /store
-            name: file-av-db-volume
-    triggers:
-      - type: ConfigChange
-      - type: ImageChange
-        imageChangeParams:
-          containerNames:
-            - file-av-scanner
-          from:
-            kind: ImageStreamTag
-            name: file-av-scanner:latest
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      app: file-service
-    name: file-av-scanner
-  spec:
-    ports:
-    - name: tcp
-      port: 3310
-      targetPort: 3310
-    selector:
-      app: file-av-scanner
+    lookupPolicy:
+      local: false
+  status:
+    dockerImageRepository: 'docker-registry.default.svc:5000/core-services-infra/jenkins-agent-node12'
+    tags:
+      - items:
+          - created: '2020-11-09T23:47:23Z'
+            dockerImageReference: >-
+              docker-registry.default.svc:5000/core-services-infra/jenkins-agent-node12@sha256:2755cba069b94dbf3f06bb1e04618705dabdbfc5939ad59f8ea1aebd406f778e
+            generation: 1
+            image: >-
+              sha256:2755cba069b94dbf3f06bb1e04618705dabdbfc5939ad59f8ea1aebd406f778e
+        tag: latest

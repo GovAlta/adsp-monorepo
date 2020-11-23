@@ -1,0 +1,6 @@
+FROM https://github.com/nodeshift/ubi8-s2i-web-app:12.x
+
+ARG SERVICE
+COPY . .
+
+ENV SERVICE ${SERVICE}

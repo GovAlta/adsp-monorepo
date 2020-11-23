@@ -12,7 +12,7 @@ services:
     volumes:
       - ../data/value:/bitnami/postgresql
   value-service:
-    build: 
+    build:
       context: ../
       dockerfile: .compose/service/Dockerfile
       args:
@@ -21,7 +21,7 @@ services:
       - value-service-timescale
     ports:
       - 3336:3336
-    expose: 
+    expose:
       - 3336
     environment:
       - KEYCLOAK_ROOT_URL=http://keycloak:8080
