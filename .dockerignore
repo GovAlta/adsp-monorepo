@@ -1,5 +1,8 @@
 /.compose
+/.deployconfig
+/.deploydsecrets
 /.openshift
+/.services
 /.vscode
 /data
 /dist
