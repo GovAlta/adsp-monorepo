@@ -1,23 +1,11 @@
-import { assertAuthenticatedHandler, NotFoundError, User } from '@core-services/core-common';
+import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError, User } from '@core-services/core-common';
 import { Router } from 'express';
 import { ValuesRepository } from '../repository';
-import { ValueDefinition } from '../types';
+import { mapValueDefinition } from './mappers';
 
 interface AdministrationRouterProps {
   valueRepository: ValuesRepository
 }
-
-const mapValueDefinition = (
-  namespace: string, definition: ValueDefinition
-) => ({
-  namespace,
-  name: definition.name,
-  description: definition.description,
-  type: definition.type,
-  jsonSchema: definition.jsonSchema,
-  readRoles: definition.readRoles,
-  writeRoles: definition.writeRoles
-})
 
 export const createAdministrationRouter = ({
   valueRepository
@@ -75,8 +63,16 @@ export const createAdministrationRouter = ({
     (req, res, next) => {
       const user = req.user as User;
       const namespace = req.params.namespace;
-      /*eslint-disable */
-      valueRepository.getNamespace(user, namespace)
+      
+      valueRepository.getNamespace(namespace)
+      .then((entity) => {
+        if (!entity) {
+          throw new NotFoundError('Value Namespace', namespace);
+        } else if (!entity.canAccess(user)) {
+          throw new UnauthorizedError('User not authorized to access namespace.');
+        }
+        return entity;
+      })
       .then((entity) =>
         res.send(
           Object.entries(entity.definitions)
@@ -86,7 +82,6 @@ export const createAdministrationRouter = ({
         )
       )
       .catch(err => next(err));
-      /*eslint-enable */
     }
   );
 
@@ -163,10 +158,12 @@ export const createAdministrationRouter = ({
     (req, res, next) => {
       const user = req.user as User;
       const namespace = req.params.namespace;
-      valueRepository.getNamespace(user, namespace)
+      valueRepository.getNamespace(namespace)
       .then((entity) => {
         if (!entity) {
-          throw new NotFoundError('Namespace', namespace);
+          throw new NotFoundError('Value Namespace', namespace);
+        } else if (!entity.canAccess(user)) {
+          throw new UnauthorizedError('User not authorized to access namespace.');
         }
         return entity;
       })
@@ -258,10 +255,12 @@ export const createAdministrationRouter = ({
       const user = req.user as User;
       const namespace = req.params.namespace;
       const name = req.params.name;
-      valueRepository.getNamespace(user, namespace)
+      valueRepository.getNamespace(namespace)
       .then((entity) => {
-        if(!entity) {
-          throw new NotFoundError('Namespace', namespace);
+        if (!entity) {
+          throw new NotFoundError('Value Namespace', namespace);
+        } else if (!entity.canAccess(user)) {
+          throw new UnauthorizedError('User not authorized to access namespace.');
         }
         return entity;
       })

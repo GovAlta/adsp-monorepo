@@ -23,7 +23,7 @@ pipeline {
             returnStdout: true
           ).split()
         }
-      } 
+      }
     }
     stage("Lint"){
       steps {
@@ -43,17 +43,16 @@ pipeline {
         sh "npx nx affected --target=build ${baseCommand} --parallel"
         sh "npm prune --production"
         script {
-          openshift.verbose()
           openshift.withCluster() {
             openshift.withProject() {
               affectedApps.each { affected ->
                 def bc = openshift.selector("bc", affected)
-
+                
                 if ( bc.exists() ) {
-                  if(affected.contains( "tenant-management-webapp")){
-                     bc.startBuild("--from-dir=dist/apps/${affected}", "--wait")
+                  if(affected.endsWith("app")){
+                     bc.startBuild("--from-dir=dist/apps/${affected}", "--wait", "--follow")
                   } else { 
-                     bc.startBuild("--from-dir=.", "--wait")
+                     bc.startBuild("--from-dir=.", "--wait", "--follow")
                   }
                 }
               }
@@ -68,23 +67,20 @@ pipeline {
       }
       steps {
         script {
-          openshift.verbose()
           openshift.withCluster() {
             openshift.withProject() {
               affectedApps.each { affected ->
-                openshift.tag("${affected}:latest", "${affected}:dev")
+                openshift.tag("${affected}:latest", "${affected}:dev") 
               }
             }
           }
         }
         script {
-          openshift.verbose()
           openshift.withCluster() {
             openshift.withProject("core-services-dev") {
               affectedApps.each { affected ->
                 def dc = openshift.selector("dc", "${affected}")
                 if ( dc.exists() ) {
-                  sh "echo in the last step deploy ${affected}"
                   dc.rollout().latest()
                 }
               }

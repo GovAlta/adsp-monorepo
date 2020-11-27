@@ -1,10 +1,10 @@
-import { Results, User } from '@core-services/core-common';
+import { Results } from '@core-services/core-common';
 import { NamespaceEntity, ValueDefinitionEntity } from '../model';
 import { Metric, MetricValue, Value, ValueCriteria, MetricCriteria } from '../types';
 
 export interface ValuesRepository {
-  getNamespace(user: User, name: string): Promise<NamespaceEntity>
-  getNamespaces(user: User, top: number, after: string): Promise<Results<NamespaceEntity>>
+  getNamespace(name: string): Promise<NamespaceEntity>
+  getNamespaces(top: number, after: string): Promise<Results<NamespaceEntity>>
   
   save(entity: NamespaceEntity): Promise<NamespaceEntity>
   saveDefinition(definitionEntity: ValueDefinitionEntity): Promise<ValueDefinitionEntity>

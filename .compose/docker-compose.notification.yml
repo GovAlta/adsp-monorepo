@@ -1,0 +1,31 @@
+version: '3.2'
+services:
+  notification-service-mongo:
+    image: mongo:3.6
+    expose:
+      - 27017
+  notification-service:
+    build: 
+      context: ../
+      dockerfile: .compose/service/Dockerfile
+      args:
+        - SERVICE=notification-service
+    depends_on:
+      - notification-service-mongo
+    ports:
+      - 3335:3335
+    expose: 
+      - 3335
+    environment:
+      - KEYCLOAK_ROOT_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=master
+      - KEYCLOAK_CLIENT_ID=notification-service
+      - KEYCLOAK_CLIENT_SECRET=notification-service
+      - MONGO_URI=mongodb://notification-service-mongo:27017
+      - MONGO_DB=notification
+      - AMQP_HOST=rabbitmq
+      - AMQP_USER=guest
+      - AMQP_PASSWORD=guest
+      - SMTP_USER=37c00d28ed3e47
+      - SMTP_PASSWORD=4618d2b7f6dd50
+      - EVENT_SERVICE_URL=http://event-service:3334

@@ -42,7 +42,7 @@ export const createValueRouter = ({
       const user = req.user as User;
       const namespace = req.params.namespace;
       
-      valueRepository.getNamespace(user, namespace)
+      valueRepository.getNamespace(namespace)
       .then(entity =>{
         if (!entity) {
           throw new NotFoundError('namespace', namespace);
@@ -144,7 +144,7 @@ export const createValueRouter = ({
           new Date(criteriaParam.timestampMin) : null
       }
       
-      valueRepository.getNamespace(user, namespace)
+      valueRepository.getNamespace(namespace)
       .then(entity =>
         entity && entity.definitions[name]
       )
@@ -237,7 +237,7 @@ export const createValueRouter = ({
           new Date(criteriaParam.intervalMin) : null
       }
 
-      valueRepository.getNamespace(user, namespace)
+      valueRepository.getNamespace(namespace)
       .then(entity =>
         entity && entity.definitions[name]
       )
@@ -313,7 +313,7 @@ export const createValueRouter = ({
       const user = req.user as User;
       const namespace = req.params.namespace;
       const name = req.params.name;
-      valueRepository.getNamespace(user, namespace)
+      valueRepository.getNamespace(namespace)
       .then(entity =>
         entity && entity.definitions[name]
       )

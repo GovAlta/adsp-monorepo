@@ -5,7 +5,15 @@ services:
     expose:
       - 8080
     ports:
-      - 8090:8080
+      - 8080:8080
     environment:
       - KEYCLOAK_USER=admin
       - KEYCLOAK_PASSWORD=admin
+      - KEYCLOAK_FRONTEND_URL=''
+  rabbitmq:
+    hostname: rabbitmq
+    image: rabbitmq:3-management
+    expose:
+      - 5672
+    ports:
+      - 5672:5672
