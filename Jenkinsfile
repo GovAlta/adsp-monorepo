@@ -93,5 +93,73 @@ pipeline {
         }
       }
     }
+    stage("Promote to Test") {
+      options {
+        timeout(time: 3, unit: "HOURS")
+      }
+      
+      input{
+        message "Promote to Test?"
+        ok "Yes"
+        //submitter "david.spedzia"
+      }
+      when {
+        expression { return affectedApps }
+      }
+      steps {   
+        script {
+          Exception caughtException = null
+          catchError(buildResult: 'SUCCESS', stageResult: 'ABORTED'){
+            try {
+              openshift.verbose()
+              openshift.withCluster() {
+                openshift.withProject() {
+                  affectedApps.each { affected ->
+                    openshift.tag("${affected}:latest", "${affected}:test")
+                  }
+                }
+              }
+            }
+            catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e) {
+              error "Caught ${e.toString()}"
+            }
+            catch (Throwable e) {
+              caughtException = e
+            }
+            if (caughtException){
+              error caughtException.message
+            }
+          }          
+        }
+        script {
+          Exception caughtException = null
+          catchError(buildResult: 'SUCCESS', stageResult: 'ABORTED'){
+            try {
+              openshift.verbose()
+              openshift.withCluster() {
+                openshift.withProject("core-services-test") {
+                  affectedApps.each { affected ->
+                    def dc = openshift.selector("dc", "${affected}")
+                    if ( dc.exists() ) {
+                      sh "echo in the last step deploy ${affected}"
+                      dc.rollout().latest()
+                    }
+                  }
+                }
+              }                      
+            }
+            catch(org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e){
+              error "Caught ${e.toString()}"
+            }
+            catch(Throwable e){
+              error caughtException.message
+            }
+            if (caughtException){
+              error caughtException.message
+            }
+          }
+        }
+      }       
+    }  
   }
 }

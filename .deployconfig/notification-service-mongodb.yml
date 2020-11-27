@@ -1,0 +1,112 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  annotations:
+    template.alpha.openshift.io/wait-for-ready: 'true'
+  labels:
+    app: notification-service
+    template: mongodb-persistent-template
+  name: notification-service-mongodb
+  namespace: core-services-test
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    name: notification-service-mongodb
+  strategy:
+    activeDeadlineSeconds: 21600
+    recreateParams:
+      timeoutSeconds: 600
+    resources: {}
+    type: Recreate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        name: notification-service-mongodb
+    spec:
+      containers:
+        - env:
+            - name: MONGODB_USER
+              valueFrom:
+                secretKeyRef:
+                  key: database-user
+                  name: notification-service-mongodb
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: database-password
+                  name: notification-service-mongodb
+            - name: MONGODB_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: database-admin-password
+                  name: notification-service-mongodb
+            - name: MONGODB_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  key: database-name
+                  name: notification-service-mongodb
+          image: >-
+            docker-registry.default.svc:5000/openshift/mongodb@sha256:0ae3ed26f8d97ec3cee857416bf6391068b033f10d6ac2609b7c64dcccae89ee
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 27017
+            timeoutSeconds: 1
+          name: mongodb
+          ports:
+            - containerPort: 27017
+              protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - '-i'
+                - '-c'
+                - >-
+                  mongo 127.0.0.1:27017/$MONGODB_DATABASE -u $MONGODB_USER -p
+                  $MONGODB_PASSWORD --eval="quit()"
+            failureThreshold: 3
+            initialDelaySeconds: 3
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              memory: 512Mi
+          securityContext:
+            capabilities: {}
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /var/lib/mongodb/data
+              name: notification-service-mongodb-data
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: notification-service-mongodb-data
+          persistentVolumeClaim:
+            claimName: notification-service-mongodb
+  test: false
+  triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+          - mongodb
+        from:
+          kind: ImageStreamTag
+          name: 'mongodb:3.2'
+          namespace: openshift
+        lastTriggeredImage: >-
+          docker-registry.default.svc:5000/openshift/mongodb@sha256:0ae3ed26f8d97ec3cee857416bf6391068b033f10d6ac2609b7c64dcccae89ee
+      type: ImageChange
+    - type: ConfigChange

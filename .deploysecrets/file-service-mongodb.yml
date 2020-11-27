@@ -1,0 +1,10 @@
+apiVersion: v1
+data:
+  database-admin-password: 
+  database-password: 
+  database-name: 
+  database-user: 
+kind: Secret
+metadata:
+  name: file-service-mongodb
+type: Opaque

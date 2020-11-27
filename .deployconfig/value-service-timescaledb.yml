@@ -1,0 +1,75 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  labels:
+    app: value-service
+    template: timescaledb-template
+  name: value-service-timescaledb
+  namespace: core-services-test
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    name: value-service-timescaledb
+  strategy:
+    activeDeadlineSeconds: 21600
+    recreateParams:
+      timeoutSeconds: 600
+    resources: {}
+    type: Recreate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        name: value-service-timescaledb
+    spec:
+      containers:
+        - env:
+            - name: POSTGRESQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: database-password
+                  name: value-service-timescaledb
+            - name: POSTGRESQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  key: database-name
+                  name: value-service-timescaledb
+          image:
+            timescale/timescaledb@sha256:9bef967f47127c2cf7a14116a5ceb5addc48b44650418f50b83eaa2f5700ad5b
+          imagePullPolicy: IfNotPresent
+          name: timescaledb
+          ports:
+            - containerPort: 5432
+              protocol: TCP
+          resources:
+            limits:
+              memory: 512Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /bitnami/postgresql
+              name: value-service-timescaledb-data
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: value-service-timescaledb-data
+          persistentVolumeClaim:
+            claimName: value-service-db
+  test: false
+  triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+          - timescaledb
+        from:
+          kind: ImageStreamTag
+          name: 'timescaledb:1.7.1-pg12-bitnami'
+          namespace: core-services-test
+        lastTriggeredImage:
+          timescale/timescaledb@sha256:9bef967f47127c2cf7a14116a5ceb5addc48b44650418f50b83eaa2f5700ad5b
+      type: ImageChange
+    - type: ConfigChange

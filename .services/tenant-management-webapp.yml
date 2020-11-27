@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: tenant-management-webapp
+  name: tenant-management-webapp
+  namespace: core-services-test
+spec:
+  ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: tenant-management-webapp
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
