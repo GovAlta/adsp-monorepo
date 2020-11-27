@@ -1,0 +1,54 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  labels:
+    app: tenant-management
+  name: tenant-management-webapp
+  namespace: core-services-test
+spec:
+  replicas: 1
+  selector:
+    app: tenant-management-webapp
+  strategy:
+    activeDeadlineSeconds: 21600
+    recreateParams:
+      timeoutSeconds: 600
+    resources: {}
+    type: Recreate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: tenant-management-webapp
+    spec:
+      containers:
+        - image: 
+            docker-registry.default.svc:5000/core-services-infra/tenant-management-webapp@sha256:2a2df74e97bc512e4aabacc9577717e7132bb00a795317dbf4fd99508328ea4f
+          imagePullPolicy: IfNotPresent
+          name: tenant-management-webapp
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+  test: false
+  triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+          - tenant-management-webapp
+        from:
+          kind: ImageStreamTag
+          name: 'tenant-management-webapp:latest'
+          namespace: core-services-infra
+        lastTriggeredImage:
+          docker-registry.default.svc:5000/core-services-infra/tenant-management-webapp@sha256:2a2df74e97bc512e4aabacc9577717e7132bb00a795317dbf4fd99508328ea4f
+      type: ImageChange
+    - type: ConfigChange

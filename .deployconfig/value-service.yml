@@ -1,0 +1,81 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  labels:
+    app: value-service
+  name: value-service
+  namespace: core-services-test
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    app: value-service
+  strategy:
+    activeDeadlineSeconds: 21600
+    recreateParams:
+      timeoutSeconds: 600
+    resources: {}
+    type: Recreate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: value-service
+    spec:
+      containers:
+        - env:
+            - name: KEYCLOAK_ROOT_URL
+              value: 'https://access-uat.alpha.alberta.ca'
+            - name: KEYCLOAK_REALM
+              value: core
+            - name: DB_HOST
+              value: value-service-timescaledb
+            - name: DB_PORT
+              value: '5432'
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  key: database-user
+                  name: value-service-timescaledb
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: database-password
+                  name: value-service-timescaledb
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  key: database-name
+                  name: value-service-timescaledb
+            - name: LOG_LEVEL
+              value: info
+            - name: PORT
+              value: '3333'
+          image: >-
+            docker-registry.default.svc:5000/core-services-infra/value-service@sha256:eaa33f923a355bcb11862f2dd4cb94da2f98b7f14f44d4ecf120f7a67e8d78c0
+          imagePullPolicy: IfNotPresent
+          name: value-service
+          ports:
+            - containerPort: 3333
+              name: http
+              protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+  test: false
+  triggers:
+    - imageChangeParams:
+        containerNames:
+          - value-service
+        from:
+          kind: ImageStreamTag
+          name: 'value-service:test'
+          namespace: core-services-infra
+        lastTriggeredImage: >-
+          docker-registry.default.svc:5000/core-services-infra/value-service@sha256:eaa33f923a355bcb11862f2dd4cb94da2f98b7f14f44d4ecf120f7a67e8d78c0
+      type: ImageChange

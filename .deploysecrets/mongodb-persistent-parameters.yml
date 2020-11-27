@@ -1,0 +1,7 @@
+apiVersion: v1
+data:
+  parameters: 
+kind: Secret
+metadata:
+  name: mongodb-persistent-parameters
+type: Opaque
