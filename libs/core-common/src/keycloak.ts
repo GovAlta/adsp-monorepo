@@ -6,6 +6,24 @@ interface KeycloakStrategyProps {
   KEYCLOAK_REALM: string
 }
 
+
+export interface TokenRequestProps {
+  url: string
+  clientId: string
+  clientSecret: string
+}
+
+export const getKeycloakTokenRequestProps = ({ 
+  KEYCLOAK_ROOT_URL, 
+  KEYCLOAK_REALM,
+  KEYCLOAK_CLIENT_ID,
+  KEYCLOAK_CLIENT_SECRET
+}): TokenRequestProps => ({
+  url: `${KEYCLOAK_ROOT_URL}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token`,
+  clientId: KEYCLOAK_CLIENT_ID,
+  clientSecret: KEYCLOAK_CLIENT_SECRET
+})
+
 export const createKeycloakStrategy = ({ 
   KEYCLOAK_ROOT_URL, 
   KEYCLOAK_REALM

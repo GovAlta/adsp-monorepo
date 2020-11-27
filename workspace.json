@@ -319,6 +319,112 @@
           }
         }
       }
+    },
+    "notification-service": {
+      "root": "apps/notification-service",
+      "sourceRoot": "apps/notification-service/src",
+      "projectType": "application",
+      "prefix": "notification-service",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "webpackConfig": "apps/notification-service/webpack.config.js",
+            "outputPath": "dist/apps/notification-service",
+            "main": "apps/notification-service/src/main.ts",
+            "tsConfig": "apps/notification-service/tsconfig.app.json",
+            "assets": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "notification-service:build",
+            "port": 7772
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:lint",
+          "options": {
+            "linter": "eslint",
+            "tsConfig": [
+              "apps/notification-service/tsconfig.app.json",
+              "apps/notification-service/tsconfig.spec.json"
+            ],
+            "exclude": ["**/node_modules/**", "!apps/notification-service/**/*"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/notification-service/jest.config.js",
+            "tsConfig": "apps/notification-service/tsconfig.spec.json",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "event-service": {
+      "root": "apps/event-service",
+      "sourceRoot": "apps/event-service/src",
+      "projectType": "application",
+      "prefix": "event-service",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "webpackConfig": "apps/event-service/webpack.config.js",
+            "outputPath": "dist/apps/event-service",
+            "main": "apps/event-service/src/main.ts",
+            "tsConfig": "apps/event-service/tsconfig.app.json",
+            "assets": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "event-service:build",
+            "port": 7773
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:lint",
+          "options": {
+            "linter": "eslint",
+            "tsConfig": [
+              "apps/event-service/tsconfig.app.json",
+              "apps/event-service/tsconfig.spec.json"
+            ],
+            "exclude": ["**/node_modules/**", "!apps/event-service/**/*"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/event-service/jest.config.js",
+            "tsConfig": "apps/event-service/tsconfig.spec.json",
+            "passWithNoTests": true
+          }
+        }
+      }
     }
   },
   "cli": {

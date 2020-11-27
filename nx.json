@@ -40,6 +40,12 @@
     },
     "value-service": {
       "tags": []
+    },
+    "notification-service": {
+      "tags": []
+    },
+    "event-service": {
+      "tags": []
     }
   }
 }

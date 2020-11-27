@@ -9,16 +9,13 @@ export class TimescaleValuesRepository implements ValuesRepository {
   constructor(private knex: Knex) {
   }
 
-  getNamespaces(
-    user: User, top: number, after: string
-  ): Promise<Results<NamespaceEntity>> {
+  getNamespaces(top: number, after: string): Promise<Results<NamespaceEntity>> {
     const skip = decodeAfter(after);
     return this.knex<Namespace>('namespaces')
     .limit(top)
     .offset(skip)
     .then(rows => ({
-      results: rows.map(row => new NamespaceEntity(this, row))
-        .filter(entity => entity.canAccess(user)),
+      results: rows.map(row => new NamespaceEntity(this, row)),
       page: {
         after,
         next: encodeNext(rows.length, top, skip),
@@ -27,7 +24,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
     }));
   }
   
-  getNamespace(user: User, name: string): Promise<NamespaceEntity> {
+  getNamespace(name: string): Promise<NamespaceEntity> {
     return Promise.all([
       this.knex<Namespace>('namespaces')
       .where('name', name)
@@ -43,10 +40,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
           )
         }) : 
         null
-    }).then(result => 
-      (result && result.canAccess(user)) ? 
-        result : null
-    );
+    });
   }
 
   save(entity: NamespaceEntity): Promise<NamespaceEntity> {
