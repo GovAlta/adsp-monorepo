@@ -4,13 +4,19 @@ import { Link } from 'react-router-dom';
 
 import person from '../assets/person.jpg';
 
+enum ServiceLevel {
+  Alpha = "Alpha",
+  Beta = "Beta",
+  Live = "Live",
+}
+
 function Header({url, urlName}) {
   return (
     <div>
       <header style={{flex: 1, display: 'flex', justifyContent: 'center', flexDirection: 'column'}}>
         <div style={{display:'flex', flexDirection: 'row'}}>
           <div style={{width: 'calc(100vw - 140px)'}}>
-            <GoaHeader serviceHome="/" serviceLevel="Live" />
+            <GoaHeader serviceHome="/" serviceLevel={ServiceLevel.Live} serviceName="" />
           </div>
           <div style={{flex: 1, flexDirection: 'column', width: '130px'}}>
             <div style={{flexDirection: 'row', backgroundColor: '#f1f1f1', height: '27px', marginTop: '-5px'}}>

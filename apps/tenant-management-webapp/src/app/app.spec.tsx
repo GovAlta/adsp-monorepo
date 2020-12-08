@@ -23,6 +23,6 @@ describe('App', () => {
       </BrowserRouter>
     );
 
-    expect(getByText('Welcome to tenant-management-webapp!')).toBeTruthy();
+    expect(getByText('A platform built for government services')).toBeTruthy();
   });
 });
