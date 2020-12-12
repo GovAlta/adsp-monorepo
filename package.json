@@ -28,7 +28,7 @@
   },
   "private": true,
   "dependencies": {
-    "@abgov/react-components": "^0.7.26",
+    "@abgov/react-components": "^0.7.29",
     "ajv": "^6.12.6",
     "amqplib": "^0.6.0",
     "app-root-path": "^3.0.0",
