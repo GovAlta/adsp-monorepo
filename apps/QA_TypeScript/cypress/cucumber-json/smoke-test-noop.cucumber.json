@@ -22,7 +22,7 @@
             "name": "smk we want a simple pass",
             "result": {
               "status": "passed",
-              "duration": 103000000
+              "duration": 118000000
             }
           },
           {
@@ -32,7 +32,7 @@
             "name": "smk we are testing cicd",
             "result": {
               "status": "passed",
-              "duration": 4000000
+              "duration": 5000000
             }
           },
           {
@@ -42,7 +42,7 @@
             "name": "smk it should pass",
             "result": {
               "status": "passed",
-              "duration": 8000000
+              "duration": 11000000
             }
           }
         ]

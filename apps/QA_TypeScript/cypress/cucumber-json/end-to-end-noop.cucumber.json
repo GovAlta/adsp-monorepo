@@ -22,7 +22,7 @@
             "name": "e2e we want a simple pass",
             "result": {
               "status": "passed",
-              "duration": 85000000
+              "duration": 205000000
             }
           },
           {
@@ -32,7 +32,7 @@
             "name": "e2e we are testing cicd",
             "result": {
               "status": "passed",
-              "duration": 5000000
+              "duration": 6000000
             }
           },
           {
@@ -42,7 +42,7 @@
             "name": "e2e it should pass",
             "result": {
               "status": "passed",
-              "duration": 9000000
+              "duration": 12000000
             }
           }
         ]

@@ -14,21 +14,12 @@
       "eslint:recommended",
       "plugin:@typescript-eslint/eslint-recommended",  
       "plugin:@typescript-eslint/recommended",  
-      "prettier",  
+      "prettier", 
       "prettier/@typescript-eslint",
-      "google",
       "plugin:cypress/recommended"   
     ],
 
   "rules": {
-    "linebreak-style": 0,
-        "indent": ["warn", 4],
-        "max-len": ["warn", 500],
-        "require-jsdoc" : 0,
-        "no-var": 0,
-        "space-before-function-paren": 0,
-        "new-cap": ["error", { "capIsNewExceptions": ["Before", "After", "Given", "When", "Then"] }],
-
         "@typescript-eslint/explicit-member-accessibility": "off",
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/no-parameter-properties": "off",
