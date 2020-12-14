@@ -1,0 +1,45 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+
+    "plugins": [
+      "@typescript-eslint", "cypress"
+    ],
+
+    "parserOptions": { 
+      "sourceType": "module",
+      "ecmaVersion": 2018
+   },
+    "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/eslint-recommended",  
+      "plugin:@typescript-eslint/recommended",  
+      "prettier",  
+      "prettier/@typescript-eslint",
+      "google",
+      "plugin:cypress/recommended"   
+    ],
+
+  "rules": {
+    "linebreak-style": 0,
+        "indent": ["warn", 4],
+        "max-len": ["warn", 500],
+        "require-jsdoc" : 0,
+        "no-var": 0,
+        "space-before-function-paren": 0,
+        "new-cap": ["error", { "capIsNewExceptions": ["Before", "After", "Given", "When", "Then"] }],
+
+        "@typescript-eslint/explicit-member-accessibility": "off",
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/no-parameter-properties": "off",
+        "@typescript-eslint/explicit-module-boundary-types": "off",   
+        "@typescript-eslint/no-unused-vars": [
+          "warn",
+          {
+            "argsIgnorePattern": "^_",
+            "varsIgnorePattern": "^_"
+          }
+        ]  
+    
+  }
+  }
