@@ -22,7 +22,7 @@
             "name": "I am a user",
             "result": {
               "status": "passed",
-              "duration": 88000000
+              "duration": 85000000
             }
           },
           {
@@ -42,7 +42,7 @@
             "name": "I get something",
             "result": {
               "status": "passed",
-              "duration": 177000000
+              "duration": 178000000
             }
           }
         ]
