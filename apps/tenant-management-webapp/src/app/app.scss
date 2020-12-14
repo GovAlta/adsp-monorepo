@@ -28,12 +28,32 @@
   border-bottom: 2px solid #ececec;
 }
 
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+  color: #0081a2 !important;
+  background-color: #dcdcdc !important;
+}
+
 .goa-admin-side {
   border-right: 1px solid #ececec;
   padding-left: '25px';
   min-height: 100vh !important;
-  box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.1);
+
+  // a:hover, a:active{
+  //   background-color: cyan;
+  // }
 }
+// .goa-admin-side-menu {
+//   background-color: 'green';
+// }
+
+// .goa-admin-side-menu li {
+//   background-color: #555;
+// }
+
+// .goa-admin-side-menu li a {
+//   background-color: #ff0000;
+// }
 
 div.goa-socialconnect {
   box-sizing: border-box;

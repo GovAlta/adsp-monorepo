@@ -1,6 +1,5 @@
 import React from 'react';
-import { Container, Row, Col } from 'react-bootstrap';
-import Header from '../../../header';
+import { Container } from 'react-bootstrap';
 
 function Administration() {
   return (

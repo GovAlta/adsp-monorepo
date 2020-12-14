@@ -4,7 +4,7 @@ import { Container, Row, Col } from 'react-bootstrap';
 import Sidebar from './sidebar';
 import Dashboard from './dashboard';
 import { Route, Switch } from 'react-router-dom';
-import Adminstration from './adminstration';
+import Adminstration from './administration';
 const TenantManagement = () => {
   return (
     <div>
