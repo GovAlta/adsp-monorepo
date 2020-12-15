@@ -35,26 +35,38 @@
 }
 
 .goa-admin-side {
+  position: fixed;
   border-right: 1px solid #ececec;
-  padding-left: '25px';
+  padding: '25px 0 0';
+  top: 0;
+  bottom: 0;
+  left: 0;
   min-height: 100vh !important;
-
-  // a:hover, a:active{
-  //   background-color: cyan;
-  // }
 }
-// .goa-admin-side-menu {
-//   background-color: 'green';
-// }
 
-// .goa-admin-side-menu li {
-//   background-color: #555;
-// }
-
-// .goa-admin-side-menu li a {
-//   background-color: #ff0000;
-// }
-
+.goa-admin-sidebar-col {
+  min-height: 100vh !important;
+  width: 100vw;
+  margin-left: -1rem;
+  -webkit-transition: margin 0.25s ease-out;
+  -moz-transition: margin 0.25s ease-out;
+  -o-transition: margin 0.25s ease-out;
+  transition: margin 0.25s ease-out;
+}
+.goa-admin-content-col {
+  min-width: 0;
+  width: 100%;
+}
+@media only screen and (max-width: 1200px) {
+  .goa-admin-side {
+    border-right: 0px solid #ececec;
+    padding: '0';
+  }
+  .goa-admin-content-col {
+    min-width: 0;
+    width: 100%;
+  }
+}
 div.goa-socialconnect {
   box-sizing: border-box;
   display: inline-block;

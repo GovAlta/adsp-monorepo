@@ -7,7 +7,7 @@ import { Route, Switch } from 'react-router-dom';
 import Adminstration from './administration';
 const TenantManagement = () => {
   return (
-    <div>
+    <div style={{ overflowX: 'hidden' }}>
       <div className="goa-admin-header">
         <Header
           url={'/login'}
@@ -17,10 +17,10 @@ const TenantManagement = () => {
       </div>
       <Container fluid style={{ paddingLeft: '25px' }}>
         <Row>
-          <Col xs={12} md={6} lg={2}>
+          <Col xs={2} className="goa-admin-sidebar-col">
             <Sidebar />
           </Col>
-          <Col xs={12} md={6} lg={10}>
+          <Col xs={10} className="goa-admin-content-col">
             <Switch>
               <Route exact path="/tenant-admin/">
                 <Dashboard />
