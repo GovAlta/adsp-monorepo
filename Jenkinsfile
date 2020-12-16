@@ -63,8 +63,8 @@ pipeline {
     }
     stage("Smoke Test"){
       steps {
-        sh "ls ./*"
-        //sh "cd ./apps/QA && npm run ci:somekeTest --silent"
+        //sh "ls ./*"
+        sh "cd ./apps/QA/ && npm run ci:somekeTest --silent"
       }
     }
     stage("Promote to Dev") {
