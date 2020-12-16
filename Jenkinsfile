@@ -65,6 +65,7 @@ pipeline {
       steps {
         // sh "ls ./*"
         // sh "cd ./apps/QA/ && npm run ci:smokeTest --silent"
+        sh "cd ./apps/QA/ && npm ci"
         sh "cd ./apps/QA/ && npm run ci:smokeTest"
       }
     }
