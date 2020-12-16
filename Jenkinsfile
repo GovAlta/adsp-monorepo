@@ -61,6 +61,11 @@ pipeline {
         }
       }
     }
+    stage("Smoke Test"){
+      steps {
+        sh "cd QA && npm run ci:somekeTest --silent"
+      }
+    }
     stage("Promote to Dev") {
       when {
         expression { return affectedApps }
@@ -159,3 +164,8 @@ pipeline {
     }  
   }
 }
+
+
+  stage('Smoke Test') {
+    sh 'cd qa && npm run ci:smokeTest --silent'
+  }
