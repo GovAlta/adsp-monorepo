@@ -36,16 +36,15 @@
 
 .goa-admin-side {
   position: fixed;
-  border-right: 1px solid #ececec;
   padding: '25px 0 0';
   top: 0;
   bottom: 0;
   left: 0;
-  min-height: 100vh !important;
 }
 
 .goa-admin-sidebar-col {
   min-height: 100vh !important;
+  border-right: 1px solid #ececec;
   width: 100vw;
   margin-left: -1rem;
   -webkit-transition: margin 0.25s ease-out;
@@ -58,13 +57,13 @@
   width: 100%;
 }
 @media only screen and (max-width: 1200px) {
-  .goa-admin-side {
+  .goa-admin-sidebar-col {
     border-right: 0px solid #ececec;
-    padding: '0';
   }
-  .goa-admin-content-col {
-    min-width: 0;
-    width: 100%;
+  @media screen and (max-width: 992px) {
+    #dashboard {
+      padding-top: 30px;
+    }
   }
 }
 div.goa-socialconnect {

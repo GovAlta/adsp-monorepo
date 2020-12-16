@@ -16,10 +16,9 @@ const Side = () => {
     <div className="col-md-12 goa-admin-side" id="sidebar">
       <Navbar collapseOnSelect expanded={expanded} sticky="top" expand="lg">
         <Navbar.Toggle
-          aria-controls="basi c-navbar-nav"
+          aria-controls="basic-navbar-nav"
           onClick={toggleClicked}
         />
-
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav
             variant="pills"
