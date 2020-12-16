@@ -1,0 +1,12 @@
+*.bat
+*.feature
+*.json
+README.md
+
+# Ignore test report
+cypress/results/*
+cypress/videos/*
+cypress/cucumber-json/*
+
+#Ignore powershell utilities
+*.ps1
