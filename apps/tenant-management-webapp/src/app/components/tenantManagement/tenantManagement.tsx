@@ -15,7 +15,7 @@ const TenantManagement = () => {
           serviceName="Alberta Digital Service Platform - Tenant Management"
         />
       </div>
-      <Container fluid style={{ paddingLeft: '25px' }}>
+      <Container fluid style={{ padding: '0 0 25px 20px' }}>
         <Row>
           <Col xs={1} sm={2} className="goa-admin-sidebar-col">
             <Sidebar />
