@@ -1,0 +1,32 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  labels:
+    app: jenkins-agent-node12-cypress
+	  build: jenkins-agent-node12-cypress-build
+  name: jenkins-agent-node12-cypress-build
+  namespace: core-services-infra
+spec:
+  failedBuildsHistoryLimit: 2
+  nodeSelector: null
+  output:
+    to:
+      kind: ImageStreamTag
+      name: 'jenkins-agent-node12-cypress:latest'
+  postCommit: {}
+  resources: {}
+  runPolicy: Serial
+  source:
+    contextDir: .openshift/jenkins-node-12-cypress
+    git:
+      ref: samKothariDevelopment
+      uri: 'git@gitlab.gov.ab.ca:dio/core/core-services.git'
+    sourceSecret:
+      name: core-services-gitlab
+    type: Git
+  strategy:
+    dockerStrategy: {}
+    type: Docker
+  successfulBuildsHistoryLimit: 2
+  triggers:
+    - type: ConfigChange

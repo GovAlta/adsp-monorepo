@@ -2,7 +2,7 @@ FROM quay.io/openshift/origin-jenkins-agent-base:v4.0
 
 LABEL maintainer="David Spedzia <david.spedzia@gov.ab.ca>""
 
-ENV NODEJS_VERSION=14 \
+ENV NODEJS_VERSION=12 \
     NPM_CONFIG_PREFIX=$HOME/.npm-global \
     PATH=$HOME/node_modules/.bin/:$HOME/.npm-global/bin/:$PATH \
     BASH_ENV=/usr/local/bin/scl_enable \
@@ -10,7 +10,6 @@ ENV NODEJS_VERSION=14 \
     PROMPT_COMMAND=". /usr/local/bin/scl_enable" \
     LANG=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8
-
 COPY contrib/bin/scl_enable /usr/local/bin/scl_enable
 COPY contrib/bin/configure-agent /usr/local/bin/configure-agent
 
@@ -22,14 +21,13 @@ RUN curl http://mirror.centos.org/centos-7/7/os/x86_64/RPM-GPG-KEY-CentOS-7 -o /
     ln -s /usr/lib/node_modules/nodemon/bin/nodemon.js /usr/bin/nodemon && \
     yum $DISABLES install -y --setopt=tsflags=nodocs --disableplugin=subscription-manager $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
-    curl -sL https://rpm.nodesource.com/setup_14.x | bash - && \
+    curl -sL https://rpm.nodesource.com/setup_12.x | bash - && \
     yum $DISABLES install -y --setopt=tsflags=nodocs --disableplugin=subscription-manager nodejs && \
     rpm -V nodejs && \
-    wget --no-verbose https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm && \
-    yum $DISABLES install -y --setopt=tsflags=nodocs --disableplugin=subscription-manager ./google-chrome-stable_current_*.rpm && \
-    yum clean all -y     
+    yum clean all -y 
 
 RUN chown -R 1001:0 $HOME && \
     chmod -R g+rw $HOME
 
 USER 1001
+
