@@ -4,15 +4,14 @@ def affectedApps = []
 pipeline {
   agent {
     node {
-      label "node12"
+      label "node12-cypress"
     }
   }
   stages {
     stage("Prepare") {
       steps {
         checkout scm
-        sh "npm install"
-        sh "yum install -y xorg-x11-server-Xvfb gtk2-devel gtk3-devel libnotify-devel GConf2 nss libXScrnSaver alsa-lib"
+        sh "npm install"      
         // script {
         //   if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT){
         //     baseCommand = "--base=${GIT_PREVIOUS_SUCCESSFUL_COMMIT}"
