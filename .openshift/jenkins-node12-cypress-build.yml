@@ -3,7 +3,6 @@ kind: BuildConfig
 metadata:
   labels:
     app: jenkins-agent-node12-cypress
-	  build: jenkins-agent-node12-cypress-build
   name: jenkins-agent-node12-cypress-build
   namespace: core-services-infra
 spec:
