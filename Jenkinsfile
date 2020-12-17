@@ -12,11 +12,13 @@ pipeline {
       steps {
         checkout scm
         sh "npm install"
+        sh "yum install -y xorg-x11-server-Xvfb gtk2-devel gtk3-devel libnotify-devel GConf2 nss libXScrnSaver alsa-lib"
         // script {
         //   if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT){
         //     baseCommand = "--base=${GIT_PREVIOUS_SUCCESSFUL_COMMIT}"
         //   }
         // }
+        sh "echo 'Installed prerecs!'"
         script {
           affectedApps = sh (
             script: "npx nx affected:apps --plain ${baseCommand}",
@@ -65,6 +67,7 @@ pipeline {
       steps {
         // sh "ls ./*"
         // sh "cd ./apps/QA/ && npm run ci:smokeTest --silent"
+        // sh "yum install -y xorg-x11-server-Xvfb gtk2-devel gtk3-devel libnotify-devel GConf2 nss libXScrnSaver alsa-lib"
         sh "cd ./apps/QA/ && npm ci"
         sh "cd ./apps/QA/ && npm run ci:smokeTest"
       }
