@@ -66,7 +66,7 @@ pipeline {
       steps {
         sh "cd ./apps/QA/ && npm ci"
         sh "ls ./apps/QA/* -R"
-        sh "find / -name smoke-test"
+        sh "sudo find / -name smoke-test"
         sh "cd ./apps/QA/ && npm run ci:smokeTest-headless"
       }
     }
