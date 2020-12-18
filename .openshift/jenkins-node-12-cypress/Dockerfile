@@ -1,6 +1,6 @@
 FROM quay.io/openshift/origin-jenkins-agent-base:v4.0
 
-LABEL maintainer="David Spedzia <david.spedzia@gov.ab.ca>""
+LABEL maintainer="Haipeng (Paul) Li <paul.li@gov.ab.ca>"
 
 ENV NODEJS_VERSION=12 \
     NPM_CONFIG_PREFIX=$HOME/.npm-global \
