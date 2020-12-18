@@ -65,7 +65,8 @@ pipeline {
     stage("Smoke Test"){
       steps {
         sh "cd ./apps/QA/ && npm ci"
-        sh "ls ./*"
+        //sh "ls ./*"
+        sh "find / -name smoke-test"
         sh "cd ./apps/QA/ && npm run ci:smokeTest-headless"
       }
     }
