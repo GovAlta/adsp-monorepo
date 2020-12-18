@@ -64,11 +64,8 @@ pipeline {
     }
     stage("Smoke Test"){
       steps {
-        // sh "ls ./*"
-        // sh "cd ./apps/QA/ && npm run ci:smokeTest --silent"
-        // sh "yum install -y xorg-x11-server-Xvfb gtk2-devel gtk3-devel libnotify-devel GConf2 nss libXScrnSaver alsa-lib"
         sh "cd ./apps/QA/ && npm ci"
-        sh "cd ./apps/QA/ && npm run ci:smokeTest --headless"
+        sh "cd ./apps/QA/ && npm run ci:smokeTest-headless"
       }
     }
     stage("Promote to Dev") {
@@ -169,8 +166,3 @@ pipeline {
     }  
   }
 }
-
-
-  stage('Smoke Test') {
-    sh 'cd qa && npm run ci:smokeTest --silent'
-  }
