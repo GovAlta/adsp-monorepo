@@ -1,11 +1,8 @@
-
 import React from 'react';
 
 import './app.scss';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@abgov/react-components/react-components.esm.css';
-
-
 
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 import LandingPage from './components/landingPage';
@@ -17,6 +14,7 @@ import AppStatus from './components/appStatus';
 import Integration from './components/integration';
 import SignUp from './components/signUp';
 import Notifications from './components/notifications';
+import TenantManagement from './components/tenantManagement';
 
 export const App = () => {
   return (
@@ -52,11 +50,12 @@ export const App = () => {
               <Route path="/integration">
                 <Integration />
               </Route>
-
+              <Route path="/tenant-admin">
+                <TenantManagement />
+              </Route>
             </Switch>
           </div>
         </Router>
-
       </main>
     </div>
   );
