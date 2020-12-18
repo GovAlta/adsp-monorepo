@@ -1,6 +1,6 @@
 apiVersion: v1
 data:
-  ssh-privatekey: >-
+  ssh-privatekey:
     SSH_PRIVATE_KEY_ALL_ON_THIS_ONE_LINE_REPLACING_THIS_STRING
 kind: Secret
 metadata:
