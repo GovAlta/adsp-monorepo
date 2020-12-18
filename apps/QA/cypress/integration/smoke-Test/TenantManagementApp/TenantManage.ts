@@ -1,11 +1,5 @@
 /// <reference types="cypress" />
-import {
-  Before,
-  After,
-  Given,
-  When,
-  Then,
-} from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 //declare const Given, When, Then;
 
 Given(/^I am a user$/, () => {
