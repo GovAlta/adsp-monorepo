@@ -21,7 +21,7 @@ spec:
       ref: samKothariDevelopment
       uri: 'git@gitlab.gov.ab.ca:dio/core/core-services.git'
     sourceSecret:
-      name: core-services-gitlab
+      name: core-services-gitlab-ssh
     type: Git
   strategy:
     dockerStrategy: {}
@@ -29,3 +29,17 @@ spec:
   successfulBuildsHistoryLimit: 2
   triggers:
     - type: ConfigChange
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  annotations:
+    slave-label: node12-cypress
+  generation: 1
+  labels:
+    app: jenkins-agent-node12-cypress
+    role: jenkins-slave
+  name: jenkins-agent-node12-cypress
+  namespace: core-services-infra
+spec:
+  lookupPolicy:
+    local: false

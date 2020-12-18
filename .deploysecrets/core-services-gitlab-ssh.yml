@@ -1,0 +1,9 @@
+apiVersion: v1
+data:
+  ssh-privatekey: >-
+    SSH_PRIVATE_KEY_ALL_ON_THIS_ONE_LINE_REPLACING_THIS_STRING
+kind: Secret
+metadata:
+  name: core-services-gitlab-ssh
+  namespace: core-services-infra
+type: kubernetes.io/ssh-auth
