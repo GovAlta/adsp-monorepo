@@ -5,7 +5,7 @@ import Header from '../../header';
 function SignUp() {
   return (
     <div>
-      <Header url={'/'} urlName="Home" />
+      <Header url={'/'} urlName="Home" serviceName="" />
       <Container>
         <h2>Future signup page</h2>
       </Container>
