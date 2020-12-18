@@ -12,11 +12,6 @@ pipeline {
       steps {
         checkout scm
         sh "npm install"      
-        // script {
-        //   if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT){
-        //     baseCommand = "--base=${GIT_PREVIOUS_SUCCESSFUL_COMMIT}"
-        //   }
-        // }
         sh "echo 'Installed prerecs!'"
         script {
           affectedApps = sh (
