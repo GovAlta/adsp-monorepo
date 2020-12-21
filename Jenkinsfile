@@ -4,19 +4,15 @@ def affectedApps = []
 pipeline {
   agent {
     node {
-      label "node12"
+      label "node12-cypress"
     }
   }
   stages {
     stage("Prepare") {
       steps {
         checkout scm
-        sh "npm install"
-        // script {
-        //   if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT){
-        //     baseCommand = "--base=${GIT_PREVIOUS_SUCCESSFUL_COMMIT}"
-        //   }
-        // }
+        sh "npm install"      
+        sh "echo 'Installed prerecs!'"
         script {
           affectedApps = sh (
             script: "npx nx affected:apps --plain ${baseCommand}",
@@ -59,6 +55,12 @@ pipeline {
             }
           }
         }
+      }
+    }
+    stage("Smoke Test"){
+      steps {
+        sh "cd ./apps/QA/ && npm ci"
+        sh "cd ./apps/QA/ && npm run ci:smokeTest-headless"
       }
     }
     stage("Promote to Dev") {
