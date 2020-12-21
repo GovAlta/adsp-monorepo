@@ -31,7 +31,7 @@
     "ci:endToEnd": "npm run chromeTest -- --headless --spec \"cypress/integration/end-to-end/*\"",
     "ci:currentSprint": "npm run chromeTest -- --headless --spec \"cypress/integration/current-sprint/*\"",
     "ci:regression": "npm run chromeTest -- --headless --spec \"cypress/integration/regression/*\"",
-    "ci:smokeTest-headless": "npm run cypressRun -- --headless --spec \"cypress/integration/smoke-test/*\""
+    "ci:smokeTest-headless": "npm run cypressRun -- --headless --spec \"cypress/integration/smoke-Test/*\""
   },
   "author": "samKothari",
   "license": "ISC",
