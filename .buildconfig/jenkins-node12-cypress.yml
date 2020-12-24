@@ -21,7 +21,7 @@ items:
     source:
       contextDir: .openshift/jenkins-node-12-cypress
       git:
-        ref: samKothariDevelopment
+        ref: master
         uri: 'https://gitlab.gov.ab.ca/dio/core/core-services.git'
       sourceSecret:
         name: core-services-gitlab
