@@ -50,9 +50,8 @@ class CreateErrorPage extends React.Component{
                       <div className="signin-title mb-5">
                           <h1 style={{fontWeight: 'bold'}}>Unfortunately, there was an activation error.</h1>
                       </div>
-                      <Col md={{ size: 8, offset: 2 }}>
-                          <div className="mb-5" style={{fontSize: '23px'}}>We appologize for the inconvenience, but we could not successfully activate your tenant. Please try again.</div>
-                      </Col>
+
+                      <div className="mb-5" style={{fontSize: '23px'}}>We appologize for the inconvenience, but we could not successfully activate your tenant. Please try again.</div>
                       <div style={{margin: '35px 0 0 11px'}}><GoAButton onClick={this.onAddClientRole}>Activate Tenant</GoAButton></div>
                   </div>
               </Container>
