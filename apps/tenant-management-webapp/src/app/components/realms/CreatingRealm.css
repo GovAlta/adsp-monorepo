@@ -1,0 +1,51 @@
+.carousel-control-next {
+    padding-left: 0px;
+    margin-left: 0px;
+}
+
+
+h3 {
+    font-size: 23px !important;
+}
+
+.carousel-indicators {
+    padding-top: 30px;
+    justify-content: left !important;
+}
+
+.carousel-indicators li {
+    height: 10px !important;
+    width: 10px !important;
+    border-radius: 15px !important;
+  }
+
+.carousel-indicators .active {
+  background-color: #0070c4 !important;
+  border-radius: 15px !important;
+}
+
+.leftCarouselIcon {
+  color: grey;
+  margin: 0 5px 0 147px;
+}
+
+.rightCarouselIcon {
+  color: grey;
+  margin: 0 147px 0 5px;
+}
+
+@media only screen and (max-width: 670px) {
+  .leftCarouselIcon {
+    margin: 0 5px 0 5px;
+  }
+
+  .rightCarouselIcon {
+    margin: 0 5px 0 5px;
+  }
+}
+
+@media only screen and (max-width: 767px) {
+  .smallScreenCarouselAddPadding {
+    padding-bottom: 5px;
+  }
+}

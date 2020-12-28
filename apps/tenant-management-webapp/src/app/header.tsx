@@ -1,6 +1,7 @@
 import React from 'react';
 import { GoaHeader } from '@abgov/react-components';
 import { Link } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import person from '../assets/person.jpg';
 
@@ -10,7 +11,11 @@ enum ServiceLevel {
   Live = 'Live',
 }
 
-function Header({ url, urlName, serviceName }) {
+function Header({ serviceName}) {
+  const location = useLocation();
+  const url = location.pathname === '/' ? '/login' : '/';
+  const urlName = location.pathname === '/' ? 'Sign In' : 'Home';
+
   return (
     <div>
       <header

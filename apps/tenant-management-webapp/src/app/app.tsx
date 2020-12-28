@@ -15,6 +15,12 @@ import Integration from './components/integration';
 import SignUp from './components/signUp';
 import Notifications from './components/notifications';
 import TenantManagement from './components/tenantManagement';
+import CreateRealm from './components/realms/CreateRealm';
+import CreatingRealm from './components/realms/CreatingRealm';
+import AddClientRole from './components/realms/AddClientRole';
+import CreateErrorPage from './components/realms/CreateErrorPage';
+import ActivateErrorPage from './components/realms/ActivateErrorPage';
+import Realms from './components/realms/Realms';
 
 export const App = () => {
   return (
@@ -53,6 +59,12 @@ export const App = () => {
               <Route path="/tenant-admin">
                 <TenantManagement />
               </Route>
+              <Route path="/Realms" exact component={Realms}/>
+              <Route path="/Realms/CreateRealm" exact component={CreateRealm}/>
+              <Route path="/Realms/CreatingRealm" exact component={CreatingRealm}/>
+              <Route path="/Realms/AddClientRole" exact component={AddClientRole}/>
+              <Route path="/Realms/CreateErrorPage" exact component={CreateErrorPage}/>
+              <Route path="/Realms/ActivateErrorPage" exact component={ActivateErrorPage}/>
             </Switch>
           </div>
         </Router>
