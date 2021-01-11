@@ -1,5 +1,8 @@
 # Dependency directories
 /node_modules/
 
-qa/cypress/cucumber-json/*.json
-qa/cypress/videos/*.mp4
+cypress/cucumber-json/
+cypress/videos/
+cypress/screenshots/
+cypress/results/
+
