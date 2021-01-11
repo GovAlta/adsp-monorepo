@@ -1,6 +1,7 @@
 {
   "testFiles": "**/*.feature",
   "chromeWebSecurity": false,
+  "baseUrl": "https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca",
 
   "env": {
     "TenantManagementApp": "https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca/tenant-admin",
