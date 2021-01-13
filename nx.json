@@ -35,6 +35,10 @@
       "tags": [],
       "implicitDependencies": ["tenant-management-webapp"]
     },
+    "QA": {
+      "tags": [],
+      "implicitDependencies": ["tenant-management-webapp"]
+    },
     "tenant-management-api": {
       "tags": []
     },

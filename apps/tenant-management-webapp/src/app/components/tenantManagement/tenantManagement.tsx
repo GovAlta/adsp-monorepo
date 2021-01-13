@@ -9,11 +9,7 @@ const TenantManagement = () => {
   return (
     <div style={{ overflowX: 'hidden' }}>
       <div className="goa-admin-header">
-        <Header
-          url={'/login'}
-          urlName="Sign In"
-          serviceName="Alberta Digital Service Platform - Tenant Management"
-        />
+        <Header serviceName="Alberta Digital Service Platform - Tenant Management" />
       </div>
       <Container fluid style={{ padding: '0 0 25px 20px' }}>
         <Row>
