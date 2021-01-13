@@ -160,4 +160,12 @@ pipeline {
       }       
     }  
   }
+  post { 
+    success {
+      slackSend color: "good", message: "Core Services pipeline ${env.BUILD_NUMBER} Completed."
+    }
+    failure { 
+      slackSend color: "bad", message: "Core Services pipeline ${env.BUILD_NUMBER} Failed: ${env.BUILD_URL}"
+    }
+  }
 }

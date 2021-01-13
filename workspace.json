@@ -103,7 +103,6 @@
                 "input": "./",
                 "output": "./"
               }
-
             ],
             "styles": ["apps/tenant-management-webapp/src/styles.scss"],
             "scripts": [],
@@ -197,6 +196,34 @@
               "**/node_modules/**",
               "!apps/tenant-management-webapp-e2e/**/*"
             ]
+          }
+        }
+      }
+    },
+    "QA": {
+      "root": "apps/QA",
+      "sourceRoot": "apps/QA/cypress",
+     
+      "architect": {
+        "e2e": {
+          "builder": "@nrwl/cypress:cypress",
+          "options": {
+            "cypressConfig": "apps/QA/cypress.json",
+            "tsConfig": "apps/QA/tsconfig.json",
+            "devServerTarget": "tenant-management-webapp:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "tenant-management-webapp:serve:production"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:lint",
+          "options": {
+            "linter": "eslint",
+            "tsConfig": ["apps/QA/tsconfig.json"],
+            "exclude": ["**/node_modules/**", "!apps/QA/**/*"]
           }
         }
       }

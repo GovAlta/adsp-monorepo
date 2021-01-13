@@ -27,7 +27,7 @@ const LandingPage = () => {
   const history = useHistory();
   return (
     <div>
-      <Header url={'/login'} urlName="Sign In" serviceName="" />
+      <Header serviceName="" />
       <div className="contain-text">
         <GoaHeroBanner
           title="A platform built for government services"
