@@ -1,4 +1,4 @@
-def baseCommand = "--all"
+def baseCommand = '--all'
 def affectedApps = []
 
 pipeline {
@@ -11,14 +11,17 @@ pipeline {
     stage("Prepare") {
       steps {
         checkout scm
-        sh "npm install"      
-        sh "echo 'Installed prerecs!'"
+        sh "npm install"
         script {
+          if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT) {
+            baseCommand = "--base=${env.GIT_PREVIOUS_SUCCESSFUL_COMMIT}"
+          }
           affectedApps = sh (
             script: "npx nx affected:apps --plain ${baseCommand}",
             returnStdout: true
           ).split()
         }
+        echo "Building with base ${baseCommand} and affected apps: ${affectedApps.join(', ')}"
       }
     }
     stage("Lint"){
@@ -57,12 +60,6 @@ pipeline {
         }
       }
     }
-    stage("Smoke Test"){
-      steps {
-        sh "cd ./apps/QA/ && npm ci"
-        sh "cd ./apps/QA/ && npm run ci:smokeTest-headless"
-      }
-    }
     stage("Promote to Dev") {
       when {
         expression { return affectedApps }
@@ -83,11 +80,27 @@ pipeline {
               affectedApps.each { affected ->
                 def dc = openshift.selector("dc", "${affected}")
                 if ( dc.exists() ) {
-                  dc.rollout().latest()
+                  def rm = dc.rollout()
+                  rm.latest()
+                  rm.status()
                 }
               }
             }
           }
+        }
+      }
+    }
+    stage("Smoke Test"){
+      steps {
+        sh "cd ./apps/QA/ && npm ci"
+        sh "cd ./apps/QA/ && npm run ci:smokeTest-headless"
+      }
+      post { 
+        success {
+          slackSend(
+            color: "good", 
+            message: "Core Services pipeline ${env.BUILD_NUMBER} ready for promotion to Test: ${env.BUILD_URL}"
+          )
         }
       }
     }
