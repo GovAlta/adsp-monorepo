@@ -1,7 +1,7 @@
 import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
-import dashboardPage from './dashboard.page';
+import tenantAdminPage from './tenant-admin.page';
 
-const dashboardObj = new dashboardPage();
+const tenantAdminObj = new tenantAdminPage();
 
 When('the user visits the tenant management webapp', function () {
   cy.visit('/tenant-admin');
@@ -9,15 +9,15 @@ When('the user visits the tenant management webapp', function () {
 
 Then('the landing page is displayed', function () {
   cy.url().should('include', '/tenant-admin');
-  dashboardObj.title().contains('Tenant Management');
-  dashboardObj.servicesMenuCategory();
+  tenantAdminObj.dashboardTitle().contains('Tenant Management');
+  tenantAdminObj.dashboardServicesMenuCategory();
 });
 
 Given('the user is in the tenant management webapp', function () {
   cy.visit('/tenant-admin');
   cy.url().should('include', '/tenant-admin');
-  dashboardObj.title().contains('Tenant Management');
-  dashboardObj.servicesMenuCategory();
+  tenantAdminObj.dashboardTitle().contains('Tenant Management');
+  tenantAdminObj.dashboardServicesMenuCategory();
 });
 
 Then('the {string} landing page is displayed', function (type) {
@@ -44,5 +44,5 @@ When('the user selects the {string} menu item', function (menuItem) {
       break;
   }
 
-  dashboardObj.menuItem(menuItemSelector).click();
+  tenantAdminObj.dashboardMenuItem(menuItemSelector).click();
 });
