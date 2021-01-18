@@ -24,6 +24,22 @@ spec:
     spec:
       containers:
         - env:
+            - name: KEYCLOAK_ROOT_URL
+              value: 'https://access-dev.os99.gov.ab.ca/auth'
+            - name: KEYCLOAK_REALM
+              value: master
+            - name: KEYCLOAK_CLIENT_ID
+              value: 'admin-cli'
+            - name: KC_REALM_ADMIN_USERNAME
+                valueFrom:
+                  secretKeyRef:
+                    key: username
+                    name: keycloak-admin-credential-dev
+            - name: KC_REALM_ADMIN_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    key: password
+                    name: keycloak-admin-credential-dev
             - name: PORT
               value: '3333'
           image:
@@ -53,4 +69,4 @@ spec:
           namespace: core-services-infra
         lastTriggeredImage:
           docker-registry.default.svc:5000/core-services-infra/tenant-management-api@sha256:679d99d81bb7c3547247aed7902cb2e29c71377cc4945758c2071e73f6cda9be
-      type: ImageChange
+      type: ImageChange
