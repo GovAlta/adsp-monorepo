@@ -29,6 +29,7 @@
   "private": true,
   "dependencies": {
     "@abgov/react-components": "^0.7.29",
+    "@abgov/core-css": "^0.6.15",
     "@fortawesome/fontawesome-svg-core": "^1.2.32",
     "@fortawesome/free-solid-svg-icons": "^5.15.1",
     "@fortawesome/react-fontawesome": "^0.1.14",
@@ -73,7 +74,8 @@
     "shortid": "^2.2.15",
     "unique-filename": "^1.1.1",
     "valid-filename": "^3.1.0",
-    "winston": "^3.3.3"
+    "winston": "^3.3.3",
+    "react-redux": "^7.2.2"
   },
   "devDependencies": {
     "@babel/core": "7.9.6",
