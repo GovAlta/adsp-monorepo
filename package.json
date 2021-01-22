@@ -74,8 +74,7 @@
     "shortid": "^2.2.15",
     "unique-filename": "^1.1.1",
     "valid-filename": "^3.1.0",
-    "winston": "^3.3.3",
-    "react-redux": "^7.2.2"
+    "winston": "^3.3.3"
   },
   "devDependencies": {
     "@babel/core": "7.9.6",
