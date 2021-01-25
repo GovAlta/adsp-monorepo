@@ -29,6 +29,7 @@
   "private": true,
   "dependencies": {
     "@abgov/react-components": "^0.7.29",
+    "@abgov/core-css": "^0.6.15",
     "@fortawesome/fontawesome-svg-core": "^1.2.32",
     "@fortawesome/free-solid-svg-icons": "^5.15.1",
     "@fortawesome/react-fontawesome": "^0.1.14",

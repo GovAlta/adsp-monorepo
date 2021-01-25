@@ -1,9 +1,8 @@
 import React from 'react';
 
 import './app.scss';
-import 'bootstrap/dist/css/bootstrap.min.css';
 import '@abgov/react-components/react-components.esm.css';
-
+import 'bootstrap/dist/css/bootstrap.min.css';
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 import LandingPage from './components/landingPage';
 import Login from './components/login/';
@@ -21,6 +20,7 @@ import AddClientRole from './components/realms/AddClientRole';
 import CreateErrorPage from './components/realms/CreateErrorPage';
 import ActivateErrorPage from './components/realms/ActivateErrorPage';
 import Realms from './components/realms/Realms';
+import '@abgov/core-css/goa-core.css';
 
 export const App = () => {
   return (
