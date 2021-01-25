@@ -13,6 +13,7 @@ services:
       args:
         - SERVICE=event-service
     depends_on:
+      - rabbitmq
       - event-service-mongo
     ports:
       - 3334:3334
@@ -20,9 +21,9 @@ services:
       - 3334
     environment:
       - KEYCLOAK_ROOT_URL=http://keycloak:8080
-      - KEYCLOAK_REALM=master
+      - KEYCLOAK_REALM=core
       - KEYCLOAK_CLIENT_ID=event-service
-      - KEYCLOAK_CLIENT_SECRET=event-service
+      - KEYCLOAK_CLIENT_SECRET=8c535ae3-ecd5-4a21-92bd-7025ce319d23
       - MONGO_URI=mongodb://event-service-mongo:27017
       - MONGO_DB=event
       - AMQP_HOST=rabbitmq

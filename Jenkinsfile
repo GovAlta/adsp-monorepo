@@ -69,7 +69,10 @@ pipeline {
           openshift.withCluster() {
             openshift.withProject() {
               affectedApps.each { affected ->
-                openshift.tag("${affected}:latest", "${affected}:dev") 
+                def is = openshift.selector("is", "${affected}")
+                if ( is.exists() ) {
+                  openshift.tag("${affected}:latest", "${affected}:dev") 
+                }
               }
             }
           }
@@ -126,7 +129,10 @@ pipeline {
               openshift.withCluster() {
                 openshift.withProject() {
                   affectedApps.each { affected ->
-                    openshift.tag("${affected}:latest", "${affected}:test")
+                    def is = openshift.selector("is", "${affected}")
+                    if ( is.exists() ) {
+                      openshift.tag("${affected}:dev", "${affected}:test")
+                    }
                   }
                 }
               }

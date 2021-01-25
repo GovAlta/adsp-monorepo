@@ -11,6 +11,7 @@ services:
       args:
         - SERVICE=notification-service
     depends_on:
+      - rabbitmq
       - notification-service-mongo
     ports:
       - 3335:3335
@@ -18,9 +19,9 @@ services:
       - 3335
     environment:
       - KEYCLOAK_ROOT_URL=http://keycloak:8080
-      - KEYCLOAK_REALM=master
+      - KEYCLOAK_REALM=core
       - KEYCLOAK_CLIENT_ID=notification-service
-      - KEYCLOAK_CLIENT_SECRET=notification-service
+      - KEYCLOAK_CLIENT_SECRET=98216839-8b7a-4af9-ad39-86823714ecfd
       - MONGO_URI=mongodb://notification-service-mongo:27017
       - MONGO_DB=notification
       - AMQP_HOST=rabbitmq
