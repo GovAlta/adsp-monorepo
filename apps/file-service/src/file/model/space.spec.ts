@@ -1,7 +1,7 @@
 import * as mkdirp from 'mkdirp';
 import { Mock, It } from 'moq.ts';
 import { User, UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
-import { FileSpace } from '../types';
+import { FileSpace, ServiceUserRoles } from '../types';
 import { FileSpaceRepository } from '../repository';
 import { FileTypeEntity } from './type';
 import { FileSpaceEntity } from './space';
@@ -15,7 +15,7 @@ describe('File Space Entity', () => {
     name: 'testy',
     email: 'test@testco.org',
     organizationId: null,
-    roles: ['file-service-admin']
+    roles: [ServiceUserRoles.Admin]
   }
 
   const space: FileSpace = {

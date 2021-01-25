@@ -4,9 +4,7 @@ This project was generated using [Nx](https://nx.dev).
 [Tenant Management Frontend WebApp](./apps/tenant-management-webapp/README.md)
 [Tenant Management Backend API](./apps/tenant-management-api/README.md)
 
-
-To build in openshift/minishift
--------------------------------
+# To build in openshift/minishift
 
 Log into oc using credentials at https://console.os99.gov.ab.ca:8443/
 
@@ -29,17 +27,14 @@ or you can export from openshift:
 
 important: you will have to export secrets regardless
 
-Create core-services-dev project
---------------------------------
+## Create core-services-dev project
 import core-services-dev.yaml and dev-secrets.yaml into your project
 
-Create core-services-infra project
-----------------------------------
-import  core-services-infra.yaml and infra-secrets.yaml into your project
+## Create core-services-infra project
+import core-services-infra.yaml and infra-secrets.yaml into your project
 
 
-Additional changes required 
----------------------------
+## Additional changes required
 
 go to Storage in core-services-infra
 
@@ -70,3 +65,24 @@ for both core-services-infra / core-services-dev
 
 
 then you can start the pipeline
+
+# To run in Docker Compose
+```
+docker-compose \
+-f .compose/docker-compose.infra.yml \
+-f .compose/docker-compose.event.yml
+up
+```
+
+*Include additional files to run more services.*
+
+**Note regarding startup order**
+
+Some services are dependent on readiness of rabbitmq or other services and currently readiness wait scripts are not included in the containers. In practice, this means some services will
+fail on a clean start and need to be restarted.
+
+**Note regarding Keycloak**
+
+When `KEYCLOAK_FRONTEND_URL` is not set, Keycloak uses the request to determine the root of the URL for things like Issuer (i.e. a token requested from the host accessing via http://localhost:8080 will have a different `iss` than a token requested from inside the compose network). However, when `KEYCLOAK_FRONTEND_URL` is set to http://keycloak:8080/auth the Administration Console will not be accessible from the host.
+
+Realm can be configured via files under .compose/realms instead.

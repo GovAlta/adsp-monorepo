@@ -50,6 +50,9 @@
     },
     "event-service": {
       "tags": []
+    },
+    "push-service": {
+      "tags": []
     }
   }
 }

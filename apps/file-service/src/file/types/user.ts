@@ -1,2 +1,3 @@
-export type FileServiceUserRoles = 
-  'file-service-admin'
+export enum ServiceUserRoles {
+  Admin = 'file-service-admin'
+}

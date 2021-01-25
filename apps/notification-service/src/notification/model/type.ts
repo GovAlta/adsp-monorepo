@@ -71,7 +71,7 @@ export class NotificationTypeEntity implements NotificationType {
     return user &&
       user.roles &&
       (
-        user.roles.includes(ServiceUserRoles.admin) ||
+        user.roles.includes(ServiceUserRoles.Admin) ||
         user.roles.includes(this.space.spaceAdminRole)
       );
   }

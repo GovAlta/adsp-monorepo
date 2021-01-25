@@ -2,8 +2,8 @@ import * as path from 'path';
 import * as mkdirp from 'mkdirp';
 import { IsNotEmpty } from 'class-validator';
 import * as validFilename from 'valid-filename';
-import { User, UnauthorizedError, Update, InvalidOperationError, New } from '@core-services/core-common';
-import { FileSpace, FileType, FileServiceUserRoles } from '../types';
+import { User, UnauthorizedError, Update, InvalidOperationError, New, AssertRole } from '@core-services/core-common';
+import { FileSpace, FileType, ServiceUserRoles } from '../types';
 import { FileSpaceRepository } from '../repository';
 import { FileTypeEntity } from './type';
 
@@ -17,15 +17,12 @@ export class FileSpaceEntity implements FileSpace {
     [id: string]: FileTypeEntity
   };
 
+  @AssertRole('create file space', ServiceUserRoles.Admin)
   static create(
-    user: User<FileServiceUserRoles>, 
+    user: User, 
     repository: FileSpaceRepository, 
     space: Omit<FileSpace, 'types'>
   ) {
-    if (!user || !user.roles.includes('file-service-admin')) {
-      throw new UnauthorizedError('User not authorized to create space.');
-    }
-
     const entity = new FileSpaceEntity(repository, {types: {}, ...space});
     return repository.save(entity);
   }
@@ -97,14 +94,14 @@ export class FileSpaceEntity implements FileSpace {
 
   canAccess(user: User) {
     return user && (
-      user.roles.includes('file-service-admin') ||
+      user.roles.includes(ServiceUserRoles.Admin) ||
       user.roles.includes(this.spaceAdminRole)
     );
   }
 
   canUpdate(user: User) {
     return user &&  (
-      user.roles.includes('file-service-admin') ||
+      user.roles.includes(ServiceUserRoles.Admin) ||
       user.roles.includes(this.spaceAdminRole)
     );
   }

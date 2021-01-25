@@ -1,4 +1,4 @@
-import { New } from '@core-services/core-common';
+import { New, UnauthorizedError, Update, User } from '@core-services/core-common';
 import { SubscriptionRepository } from '../repository';
 import { Subscriber, Channel } from '../types';
 
@@ -25,5 +25,28 @@ export class SubscriberEntity implements Subscriber {
     this.userId = subscriber.userId;
     this.addressAs = subscriber.addressAs;
     this.channels = subscriber.channels || [];
+  }
+
+  canUpdate(user: User) {
+    return user &&
+      (
+        this.userId && user.id === this.userId
+      )
+  }
+
+  update(user: User, update: Update<Subscriber>) {
+    if (!this.canUpdate(user)) {
+      throw new UnauthorizedError('User not authorized to update subscriber.');
+    }
+
+    if (update.channels) {
+      this.channels = update.channels;
+    }
+
+    if (update.addressAs) {
+      this.addressAs = update.addressAs;
+    }
+
+    return this.repository.saveSubscriber(this);
   }
 }

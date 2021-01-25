@@ -13,7 +13,7 @@ export class MongoNotificationSpaceRepository implements NotificationSpaceReposi
   private model;
   
   constructor() {
-    this.model = model('notificationspace', spaceSchema);
+    this.model = model('space', spaceSchema);
   }
 
   find(top: number, after: string): Promise<Results<NotificationSpaceEntity>> {

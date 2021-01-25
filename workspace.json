@@ -452,6 +452,58 @@
           }
         }
       }
+    },
+    "push-service": {
+      "root": "apps/push-service",
+      "sourceRoot": "apps/push-service/src",
+      "projectType": "application",
+      "prefix": "push-service",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "outputPath": "dist/apps/push-service",
+            "main": "apps/push-service/src/main.ts",
+            "tsConfig": "apps/push-service/tsconfig.app.json",
+            "assets": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "push-service:build",
+            "port": 7774
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:lint",
+          "options": {
+            "linter": "eslint",
+            "tsConfig": [
+              "apps/push-service/tsconfig.app.json",
+              "apps/push-service/tsconfig.spec.json"
+            ],
+            "exclude": ["**/node_modules/**", "!apps/push-service/**/*"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/push-service/jest.config.js",
+            "tsConfig": "apps/push-service/tsconfig.spec.json",
+            "passWithNoTests": true
+          }
+        }
+      }
     }
   },
   "cli": {
