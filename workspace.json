@@ -241,7 +241,8 @@
             "outputPath": "dist/apps/tenant-management-api",
             "main": "apps/tenant-management-api/src/main.ts",
             "tsConfig": "apps/tenant-management-api/tsconfig.app.json",
-            "assets": ["apps/tenant-management-api/src/assets"]
+            "assets": ["apps/tenant-management-api/src/assets"],
+            "webpackConfig": "apps/tenant-management-api/webpack.config.js"
           },
           "configurations": {
             "production": {
