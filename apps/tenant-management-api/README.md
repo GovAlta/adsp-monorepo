@@ -10,3 +10,11 @@ nx run tenant-management-api:serve
 Health endpoint at /health
 
 API doc endpoint at /swagger/docs/v1
+
+### Environment Variables
+[Dotenv](https://www.npmjs.com/package/dotenv) is used to manage the envrionment variables. The .env.sample file provides the schema of the environment variables used for local developloment.
+```
+mv .env.sample .env
+```
+
+Please do not commit .env to the repository.

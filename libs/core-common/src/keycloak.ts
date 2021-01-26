@@ -1,7 +1,7 @@
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import * as jwksRsa from 'jwks-rsa';
 
-interface KeycloakStrategyProps {
+export interface KeycloakStrategyProps {
   KEYCLOAK_ROOT_URL: string
   KEYCLOAK_REALM: string
 }
