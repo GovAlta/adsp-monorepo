@@ -12,9 +12,6 @@ module.exports = (config) => {
         apis: [
           'apps/tenant-management-api/src/app/api/**/*.ts'
         ]
-      }),
-      new Dotenv({
-        path: 'apps/tenant-management-api/.env'
       })
     ]
   }
