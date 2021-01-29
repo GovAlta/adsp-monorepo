@@ -7,6 +7,13 @@ pipeline {
       label "node12-cypress"
     }
   }
+  parameters {
+    string(
+      name: 'baseCommand', 
+      defaultValue: '--all', 
+      description: 'Base command for nx affected; use --base={Commit SHA} or --all.'
+    )
+  }
   stages {
     stage("Prepare") {
       steps {
@@ -163,7 +170,7 @@ pipeline {
                     }
                   }
                 }
-              }                      
+              }
             }
             catch(org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e){
               error "Caught ${e.toString()}"
