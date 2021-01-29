@@ -1,4 +1,5 @@
 def baseCommand = '--all'
+def affectedBase = '';
 def affectedApps = []
 
 pipeline {
@@ -9,8 +10,8 @@ pipeline {
   }
   parameters {
     string(
-      name: 'baseCommand', 
-      defaultValue: '--all', 
+      name: 'affectedBase', 
+      defaultValue: '', 
       description: 'Base command for nx affected; use --base={Commit SHA} or --all.'
     )
   }
@@ -20,9 +21,12 @@ pipeline {
         checkout scm
         sh "npm install"
         script {
-          if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT) {
+          if (affectedBase) {
+            baseCommand = affectedBase
+          } else if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT) {
             baseCommand = "--base=${env.GIT_PREVIOUS_SUCCESSFUL_COMMIT}"
           }
+          
           affectedApps = sh (
             script: "npx nx affected:apps --plain ${baseCommand}",
             returnStdout: true
