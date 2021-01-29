@@ -1,5 +1,4 @@
 def baseCommand = '--all'
-def affectedBase = '';
 def affectedApps = []
 
 pipeline {
@@ -21,7 +20,7 @@ pipeline {
         checkout scm
         sh "npm install"
         script {
-          if (affectedBase) {
+          if (params.affectedBase) {
             baseCommand = affectedBase
           } else if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT) {
             baseCommand = "--base=${env.GIT_PREVIOUS_SUCCESSFUL_COMMIT}"
