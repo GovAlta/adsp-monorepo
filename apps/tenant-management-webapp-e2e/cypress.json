@@ -1,4 +1,8 @@
 {
+  "env": {
+    "TAGS": ""
+  },
+  "baseUrl": "http://localhost:4200/",
   "fileServerFolder": ".",
   "fixturesFolder": "./src/fixtures",
   "integrationFolder": "./src/integration",
@@ -8,5 +12,8 @@
   "video": true,
   "videosFolder": "../../dist/cypress/apps/tenant-management-webapp-e2e/videos",
   "screenshotsFolder": "../../dist/cypress/apps/tenant-management-webapp-e2e/screenshots",
-  "chromeWebSecurity": false
+  "chromeWebSecurity": false,
+  "testFiles": "**/*.feature",
+  "ignoreTestFiles": "*.js",
+  "videoUploadOnPasses":false
 }

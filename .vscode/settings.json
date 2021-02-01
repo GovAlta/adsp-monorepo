@@ -1,0 +1,10 @@
+{
+  "cucumberautocomplete.steps": [
+    "apps/tenant-management-webapp-e2e/src/integration/**/*.ts",
+    "apps/QA/cypress/integration/**/*.ts"
+  ],
+  "cucumberautocomplete.syncfeatures": "apps/tenant-management-webapp-e2e/src/integration/**/*.feature",
+  "cucumberautocomplete.strictGherkinCompletion": false,
+  "cucumberautocomplete.smartSnippets": true,
+  "cucumberautocomplete.stepsInvariants": true
+}
