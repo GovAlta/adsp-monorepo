@@ -1,9 +1,7 @@
-import React, { Component } from 'react';
-import { withRouter } from 'react-router-dom'
-import { Container, Row, Col } from 'react-bootstrap';
+import React from 'react';
+import { Container } from 'react-bootstrap';
 import { GoAButton } from '@abgov/react-components';
 import Tools from './img/tools.png';
-import axios from 'axios';
 import Header from '../../header';
 
 import './SignIn.css';
@@ -36,7 +34,7 @@ class CreateErrorPage extends React.Component{
               <Container className="signin-body mt-5">
                   <div style={{textAlign: 'center'}}>
                       <div className="mb-5">
-                          <img src={Tools} style={{width: '125px'}}></img>
+                          <img src={Tools} alt="Tools" style={{width: '125px'}}></img>
                       </div>
                       <div className="signin-title mb-5">
                           <h1 style={{fontWeight: 'bold'}}>Unfortunately, there was a problem creating your tenant</h1>

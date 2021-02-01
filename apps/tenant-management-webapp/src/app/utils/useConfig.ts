@@ -1,4 +1,3 @@
-import { config } from 'process';
 import { useEffect, useState } from 'react';
 
 export const configUrl = '/config/config.json';

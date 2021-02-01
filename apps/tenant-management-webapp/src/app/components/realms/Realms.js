@@ -8,13 +8,6 @@ import '@abgov/react-components/react-components.esm.css';
 import Header from '../../header';
 
 class Home extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      statu: '',
-    };
-  }
-
   onEnterCreateRealm = () => {
     this.props.history.push('/realms/CreateRealm');
   };
@@ -24,7 +17,6 @@ class Home extends React.Component {
   };
 
   render() {
-    const { statu } = this.state;
     return (
       <div>
         <Header url={'/'} urlName="Home" serviceName="" />

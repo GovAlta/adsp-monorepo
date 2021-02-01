@@ -1,5 +1,4 @@
-import React, { Component } from 'react';
-import { withRouter } from 'react-router-dom';
+import React from 'react';
 import { Container, Row, Col } from 'reactstrap';
 import { GoAButton } from '@abgov/react-components';
 import axios from 'axios';
