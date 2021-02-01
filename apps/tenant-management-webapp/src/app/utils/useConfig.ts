@@ -1,3 +1,4 @@
+import { config } from 'process';
 import { useEffect, useState } from 'react';
 
 export const configUrl = '/config/config.json';
@@ -10,6 +11,9 @@ export const configKey = 'config-key';
 interface Config {
   notificationServiceUrl: string;
   keyCloakUrl: string;
+  tenantManagementApi: string;
+  accessManagementApi: string;
+  uiComponentUrl: string;
 }
 
 /**
@@ -49,6 +53,9 @@ export function useConfig(): [Config, State, string] {
 // Private
 
 async function fetchConfig(): Promise<Config> {
+  if (process.env.NODE_ENV === 'development') {
+    return null;
+  }
   let cached = localStorage.getItem(configKey);
   if (!cached) {
     const res = await fetch(configUrl);
