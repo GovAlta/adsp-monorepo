@@ -12,7 +12,10 @@ import {
 } from '@core-services/core-common';
 import KcAdminClient from 'keycloak-admin';
 
+import * as cors from 'cors';
+
 const app = express();
+app.use(cors())
 
 /* create realm */
 let kcAdminClient = null;

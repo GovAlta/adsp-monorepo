@@ -203,7 +203,7 @@
     "QA": {
       "root": "apps/QA",
       "sourceRoot": "apps/QA/cypress",
-     
+
       "architect": {
         "e2e": {
           "builder": "@nrwl/cypress:cypress",

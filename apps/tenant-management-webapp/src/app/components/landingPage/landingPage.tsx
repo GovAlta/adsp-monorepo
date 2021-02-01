@@ -13,15 +13,10 @@ import { useHistory } from 'react-router-dom';
 
 import { Container, Row, Col } from 'react-bootstrap';
 import numberFormatter from '../../utils/numberFormatter';
+import env from '../../../env';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@abgov/react-components/react-components.esm.css';
-
-const env = {
-  REACT_APP_UI_COMPONENTS_URL:
-    'https://ui-components-ui-components-dev.os99.gov.ab.ca/',
-  REACT_APP_KEYCLOAK_URL: 'https://access-dev.os99.gov.ab.ca/auth/',
-};
 
 const LandingPage = () => {
   const history = useHistory();
@@ -182,7 +177,7 @@ const LandingPage = () => {
                     buttonType="primary"
                     buttonSize="normal"
                     onClick={() =>
-                      (window.location.href = `${env.REACT_APP_UI_COMPONENTS_URL}react/`)
+                      (window.location.href = `${env().uiComponentUrl}react/`)
                     }
                   >
                     React
@@ -193,7 +188,7 @@ const LandingPage = () => {
                     buttonType="primary"
                     buttonSize="normal"
                     onClick={() =>
-                      (window.location.href = `${env.REACT_APP_UI_COMPONENTS_URL}angular/`)
+                      (window.location.href = `${env().uiComponentUrl}angular/`)
                     }
                   >
                     Angular
@@ -204,7 +199,7 @@ const LandingPage = () => {
                     buttonType="primary"
                     buttonSize="normal"
                     onClick={() =>
-                      (window.location.href = `${env.REACT_APP_UI_COMPONENTS_URL}vue/`)
+                      (window.location.href = `${env().uiComponentUrl}vue/`)
                     }
                   >
                     Vue
@@ -224,7 +219,7 @@ const LandingPage = () => {
                   buttonType="primary"
                   buttonSize="normal"
                   onClick={() =>
-                    (window.location.href = env.REACT_APP_KEYCLOAK_URL)
+                    (window.location.href = env().accessManagementApi)
                   }
                 >
                   Learn More
