@@ -1,0 +1,28 @@
+[
+  {
+    "name": "ccds",
+    "services": [
+      {
+        "service": "subsidy-application",
+        "host": "childcare-subsidy.alberta.ca"
+      }
+    ]
+  },
+  {
+    "name": "platform",
+    "services": [
+      {
+        "service": "file-service",
+        "host": "file-service-core-services-dev.os99.gov.ab.ca"
+      },
+      {
+        "service": "notify-service",
+        "host": "notify-service-core-services-dev.os99.gov.ab.ca"
+      },
+      {
+        "service": "event-service",
+        "host": "event-service-core-services-dev.os99.gov.ab.ca"
+      }
+    ]
+  }
+]
