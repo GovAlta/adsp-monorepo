@@ -107,6 +107,7 @@ pipeline {
       steps {
         // sh "cd ./apps/QA/ && npm ci"
         // sh "cd ./apps/QA/ && npm run ci:smokeTest-headless"
+        sh "npm ci"
         sh "npm run tmw-e2e:smoke 'https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca/'"
       }
       post {
@@ -195,6 +196,7 @@ pipeline {
     }
     stage("Regression Test"){
       steps {
+        sh "npm ci"
         sh "npm run tmw-e2e:regression 'https://tenant-management-webapp-test.os99.int.alberta.ca/'"
       }
       post {
