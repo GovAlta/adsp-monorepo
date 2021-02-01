@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { withRouter } from 'react-router-dom';
-import { Container, Row, Col } from 'reactstrap';
+import { Container, Col } from 'reactstrap';
 import Carousel from 'react-bootstrap/Carousel';
-import { GoAButton } from '@abgov/react-components';
 import { faArrowCircleRight } from '@fortawesome/free-solid-svg-icons';
 import { faArrowCircleLeft } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -16,7 +14,6 @@ import 'bootstrap/dist/css/bootstrap.css';
 import 'react-bootstrap-carousel/dist/react-bootstrap-carousel.css';
 
 function CreatingRealm(props) {
-  const [errorMsg, setErrorMsg] = useState('');
   const [name, setName] = useState('');
   const [index, setIndex] = useState(0);
 
@@ -88,11 +85,13 @@ function CreatingRealm(props) {
                   <img
                     src={CreatingRealmCarousel0}
                     style={{ width: '50%' }}
+                    alt="Access Service"
                   ></img>
                 </div>
                 <img
                   src={white}
                   style={{ width: '100%', height: '339px' }}
+                  alt="Access Service"
                 ></img>
 
                 <Carousel.Caption>
@@ -117,11 +116,13 @@ function CreatingRealm(props) {
                   <img
                     src={CreatingRealmCarousel1}
                     style={{ width: '40%' }}
+                    alt="User Update"
                   ></img>
                 </div>
                 <img
                   src={white}
                   style={{ width: '100%', height: '277px' }}
+                  alt="User Update"
                 ></img>
 
                 <Carousel.Caption>

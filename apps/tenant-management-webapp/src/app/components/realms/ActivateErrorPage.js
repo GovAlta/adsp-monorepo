@@ -42,7 +42,7 @@ class CreateErrorPage extends React.Component {
         <Container className="signin-body mt-5">
           <div style={{ textAlign: 'center' }}>
             <div className="mb-5">
-              <img src={Tools} style={{ width: '125px' }}></img>
+              <img src={Tools} alt="Tools" style={{ width: '125px' }}></img>
             </div>
             <div className="signin-title mb-5">
               <h1 style={{ fontWeight: 'bold' }}>

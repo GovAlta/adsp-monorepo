@@ -1,6 +1,4 @@
 import {
-  Before,
-  After,
   Given,
   When,
   Then,
