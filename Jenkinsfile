@@ -112,7 +112,9 @@ pipeline {
       }
       post {
         always {
-          sh "npm run tmw-e2e:html-report"
+          dir("${WORKSPACE}/apps/tenant-management-webapp-e2e/src/support") {
+            sh "npm run tmw-e2e:html-report"
+          }
           archiveArtifacts artifacts: './dist/cypress/**/*.*'
         }
         success {
@@ -201,7 +203,9 @@ pipeline {
       }
       post {
         always {
-          sh "npm run tmw-e2e:html-report"
+          dir("${WORKSPACE}/apps/tenant-management-webapp-e2e/src/support") {
+            sh "npm run tmw-e2e:html-report"
+          }
           archiveArtifacts artifacts: './dist/cypress/**/*.*'
         }
       }
