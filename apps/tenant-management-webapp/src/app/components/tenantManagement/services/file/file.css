@@ -55,6 +55,8 @@
 .file-link-title {
   font-size: 18px;
   font-weight: bold;
+  color: #333333;
+  display: inline-block;
 }
 
 .file-disable-btn {
@@ -63,6 +65,7 @@
   border-width: 0px;
   margin-top: 28px;
   padding-left: 14px;
+  font-weight: 700px;
 }
 
 a:link {
@@ -84,8 +87,8 @@ a:focus {
   outline-offset: 0px;
 }
 
-.myClass .nav-tabs .nav-lin {
-  border: 200px solid transparent;
-  border-top-left-radius: 0.25rem;
-  border-top-right-radius: 0.25rem;
+.external-link {
+  width: 22px;
+  color: #333333;
+  display: inline-block;
 }
