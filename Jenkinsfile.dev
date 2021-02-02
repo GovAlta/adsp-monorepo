@@ -14,13 +14,13 @@ pipeline {
   }
   parameters {
     string(
-      name: 'source_repo', 
-      defaultValue: 'https://gitlab.gov.ab.ca/dio/core/core-services.git', 
+      name: 'source_repo',
+      defaultValue: 'https://gitlab.gov.ab.ca/dio/core/core-services.git',
       description: 'Repo url.'
     )
     string(
-      name: 'source_ref', 
-      defaultValue: 'refs/heads/master', 
+      name: 'source_ref',
+      defaultValue: 'refs/heads/master',
       description: 'Ref to build.'
     )
   }
@@ -46,15 +46,15 @@ pipeline {
       steps {
         checkout(
           [
-            $class: 'GitSCM', 
+            $class: 'GitSCM',
             branches: [[
               name: push_sha ?: source_ref
-            ]], 
-            doGenerateSubmoduleConfigurations: false, 
-            extensions: [], 
-            submoduleCfg: [], 
+            ]],
+            doGenerateSubmoduleConfigurations: false,
+            extensions: [],
+            submoduleCfg: [],
             userRemoteConfigs: [[
-              credentialsId: 'core-services-infra-core-services-gitlab', 
+              credentialsId: 'core-services-infra-core-services-gitlab',
               url: "${source_repo}"
             ]]
           ]
@@ -78,9 +78,23 @@ pipeline {
         sh "npx nx affected --target=build ${baseCommand} --parallel"
       }
     }
+    stage("Smoke Test"){
+      steps {
+        sh "npm ci"
+        sh "npm run tmw-e2e:smoke 'https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca/'"
+      }
+      post {
+        always {
+          dir("${WORKSPACE}/apps/tenant-management-webapp-e2e/src/support") {
+            sh "npm run tmw-e2e:html-report"
+          }
+          archiveArtifacts artifacts: './dist/cypress/**/*.*'
+        }
+      }
+    }
   }
   post {
-    failure { 
+    failure {
       slackSend color: "bad", message: "Core Services branch ${source_ref} build ${env.BUILD_NUMBER} Failed: ${env.BUILD_URL}"
     }
   }
