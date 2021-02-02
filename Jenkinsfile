@@ -112,9 +112,7 @@ pipeline {
       }
       post {
         always {
-          dir("${WORKSPACE}/apps/tenant-management-webapp-e2e/src/support") {
-            sh "npm run tmw-e2e:html-report"
-          }
+          sh "node ./apps/tenant-management-webapp-e2e/src/support/multiple-cucumber-html-reporter.js"
           archiveArtifacts artifacts: './dist/cypress/**/*.*'
         }
         success {
@@ -203,9 +201,7 @@ pipeline {
       }
       post {
         always {
-          dir("${WORKSPACE}/apps/tenant-management-webapp-e2e/src/support") {
-            sh "npm run tmw-e2e:html-report"
-          }
+          sh "node ./apps/tenant-management-webapp-e2e/src/support/multiple-cucumber-html-reporter.js"
           archiveArtifacts artifacts: './dist/cypress/**/*.*'
         }
       }
