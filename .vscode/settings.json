@@ -6,5 +6,24 @@
   "cucumberautocomplete.syncfeatures": "apps/tenant-management-webapp-e2e/src/integration/**/*.feature",
   "cucumberautocomplete.strictGherkinCompletion": false,
   "cucumberautocomplete.smartSnippets": true,
-  "cucumberautocomplete.stepsInvariants": true
+  "cucumberautocomplete.stepsInvariants": true,
+  "editor.formatOnSave": true,
+  "editor.trimAutoWhitespace": true,
+  "editor.tabSize": 2,
+  "files.trimTrailingWhitespace": true,
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  }
 }
