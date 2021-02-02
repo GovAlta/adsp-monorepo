@@ -1,11 +1,19 @@
-import React from 'react';
+import React, { useContext, useEffect } from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
 import Sidebar from './sidebar';
 import Dashboard from './dashboard';
 import { Route, Switch } from 'react-router-dom';
 import Adminstration from './administration';
+import { HeaderCtx } from '../../baseApp';
 
 const TenantManagement = () => {
+
+  const { setTitle } = useContext(HeaderCtx)
+
+  useEffect(() => {
+    setTitle('Alberta Digital Service Platform - Tenant Management')
+  }, []);
+
   return (
     <Container fluid style={{ padding: '0 0 25px 20px' }}>
       <Row>
