@@ -56,7 +56,7 @@ const getUrlResponse = (services, component) => {
 
 export const discovery = async (urn) => {
   //reslove the urn to object
-  logger.info('starting discover URL ...');
+  logger.info(`Starting discover URL for urn ${urn}`);
   const component: URNComponent = {};
   const urnArray = urn.split(URN_SEPARATOR);
 
@@ -67,10 +67,9 @@ export const discovery = async (urn) => {
     component.service = urnArray[3];
     component.apiVersion = urnArray[4];
     try {
-      const directory: DirectoryMap[] = await Directory.find({
-        name: component.core,
-      });
-      logger.info('Directory in mongodb  : ' + directory);
+      logger.info("Access mongo db to check if dirctory in db");
+      let directory: DirectoryMap[] = await Directory.find();
+      logger.info(`Directory in mongodb  : ${directory}`);
 
       if (!directory || directory.length === 0) {
         logger.info(
@@ -86,12 +85,14 @@ export const discovery = async (urn) => {
         const services = getName(directoryJson, component.core);
         return getUrlResponse(services, component);
       }
+
       // get url from mongo
       logger.info('Will get URL from mongo db.....');
-
+      directory = await Directory.find({name:component.core});
       const services = directory[0]['services'];
 
       return getUrlResponse(services, component);
+
     } catch (err) {
       return new ApiError(
         HttpStatusCodes.BAD_REQUEST,
@@ -107,6 +108,7 @@ export const discovery = async (urn) => {
 };
 
 export const getDirectories = async () => {
+  logger.info('Starting get directory from mongo db...');
   try {
     const directory: DirectoryMap[] = await Directory.find({});
 
@@ -120,6 +122,7 @@ export const getDirectories = async () => {
 };
 
 export const addUpdateDirectory = async (directoryJson) => {
+  logger.info("directory service add updateDirectory");
   try {
     const directory: DirectoryMap[] = await Directory.find({
       name: directoryJson['name'],
