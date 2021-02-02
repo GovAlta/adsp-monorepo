@@ -5,6 +5,7 @@ import { Container, Row, Col } from 'react-bootstrap';
 import './file.css';
 import { GoAButton } from '@abgov/react-components';
 import styled from 'styled-components';
+import externalLinkIcon from '../../../../../assets/external-link.svg'; // Tell webpack this JS file uses this image
 
 // TODO: need to move the code to core later
 const GOAWrapper = styled.a`
@@ -46,13 +47,17 @@ const HelpLink = () => {
       <br />
       <GOAWrapper>
         <a>File Services Support</a>
+        <img
+          src={externalLinkIcon}
+          className="external-link"
+          alt="file-service-support"
+        />
       </GOAWrapper>
     </div>
   );
 };
 
 const OverviewContent = () => {
-
   return (
     <Container>
       <Row>
@@ -67,10 +72,9 @@ const OverviewContent = () => {
             condimentum sed, elementum vel diam.
           </p>
         </Col>
+        <Col md={1} />
 
-        <Col md={2}></Col>
-
-        <Col md={3}>
+        <Col md={4}>
           <HelpLink />
         </Col>
       </Row>
@@ -84,7 +88,7 @@ export default function FileOverview() {
     <div>
       <OverviewContent />
 
-      <div className={active ? 'd-none' : ''} >
+      <div className={active ? 'd-none' : ''}>
         <OverviewBtn />
       </div>
     </div>
