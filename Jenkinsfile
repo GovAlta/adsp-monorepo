@@ -113,7 +113,7 @@ pipeline {
       post {
         always {
           sh "node ./apps/tenant-management-webapp-e2e/src/support/multiple-cucumber-html-reporter.js"
-          archiveArtifacts artifacts: './dist/cypress/**/*.*'
+          archiveArtifacts artifacts: 'dist/cypress/**/*.*'
         }
         success {
           slackSend(
@@ -202,7 +202,7 @@ pipeline {
       post {
         always {
           sh "node ./apps/tenant-management-webapp-e2e/src/support/multiple-cucumber-html-reporter.js"
-          archiveArtifacts artifacts: './dist/cypress/**/*.*'
+          archiveArtifacts artifacts: 'dist/cypress/**/*.*'
         }
       }
     }
