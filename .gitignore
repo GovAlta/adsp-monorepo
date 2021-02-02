@@ -43,4 +43,4 @@ Thumbs.db
 /data
 
 # env file
-/tenant-management-api/apps/tenant-management-api/.env
+/apps/tenant-management-api/.env

@@ -2,7 +2,7 @@ const env = process.env;
 
 export const environment = {
   MONGO_URI: 'mongodb://localhost:27017',
-  MONGO_DB: 'directory',
+  MONGO_DB: 'tenantDb',
   MONGO_USER: null,
   MONGO_PASSWORD: null,
 
