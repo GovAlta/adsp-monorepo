@@ -5,13 +5,7 @@ import { useLocation } from 'react-router-dom';
 
 import person from '../assets/person.jpg';
 
-enum ServiceLevel {
-  Alpha = 'Alpha',
-  Beta = 'Beta',
-  Live = 'Live',
-}
-
-function Header({ serviceName }) {
+function Header({serviceName}) {
   const location = useLocation();
   const url = location.pathname === '/' ? '/login' : '/';
   const urlName = location.pathname === '/' ? 'Sign In' : 'Home';
@@ -30,7 +24,7 @@ function Header({ serviceName }) {
           <div style={{ width: 'calc(100vw - 140px)' }}>
             <GoaHeader
               serviceHome="/"
-              serviceLevel={ServiceLevel.Live}
+              serviceLevel='live'
               serviceName={serviceName}
             />
           </div>

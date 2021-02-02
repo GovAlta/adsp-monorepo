@@ -1,11 +1,11 @@
 import React from 'react';
-import BaseApp from '../../baseApp';
+import { Container } from 'react-bootstrap';
 
 function AppStatus() {
   return (
-    <BaseApp>
+    <Container>
       <h2>Future app status</h2>
-    </BaseApp>
+    </Container>
   );
 }
 

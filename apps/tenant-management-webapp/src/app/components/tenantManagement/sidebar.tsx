@@ -43,6 +43,8 @@ const Side = () => {
               Access
             </Nav.Link>
             <Nav.Link href="/tenant-admin/services/file">File Services</Nav.Link>
+            <Nav.Link href="/access">Access</Nav.Link>
+            <Nav.Link href="/file-service">File Services</Nav.Link>
             <Nav.Link href="/notifications">Notifications</Nav.Link>
             <Nav.Link href="/app-status">App Status</Nav.Link>
           </Nav>
