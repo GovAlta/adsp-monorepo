@@ -1,5 +1,4 @@
 import React from 'react';
-import { Container } from 'react-bootstrap';
 import Header from './header';
 import useConfig from './utils/useConfig';
 
@@ -11,7 +10,7 @@ function BaseApp({ children }) {
       <Header serviceName="" />
       {state === 'loading' && <div>Loading...</div>}
       {state === 'error' && <div>{error}</div>}
-      {state === 'loaded' && <Container>{children}</Container>}
+      {state === 'loaded' && <div>{children}</div>}
     </div>
   );
 }
