@@ -91,4 +91,7 @@ a:focus {
   width: 22px;
   color: #333333;
   display: inline-block;
+  margin-left: 4px;
+  position: relative;
+  top: -2px;
 }
