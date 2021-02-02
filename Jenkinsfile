@@ -113,7 +113,8 @@ pipeline {
       post {
         always {
           sh "node ./apps/tenant-management-webapp-e2e/src/support/multiple-cucumber-html-reporter.js"
-          archiveArtifacts artifacts: 'dist/cypress/**/*.*'
+          zip zipFile: 'cypress-smoke-test-html-report.zip', archive: false, dir: 'dist/cypress'
+          archiveArtifacts artifacts: 'cypress-smoke-test-html-report.zip'
         }
         success {
           slackSend(
@@ -202,7 +203,8 @@ pipeline {
       post {
         always {
           sh "node ./apps/tenant-management-webapp-e2e/src/support/multiple-cucumber-html-reporter.js"
-          archiveArtifacts artifacts: 'dist/cypress/**/*.*'
+          zip zipFile: 'cypress-regression-test-html-report.zip', archive: false, dir: 'dist/cypress'
+          archiveArtifacts artifacts: 'cypress-regression-test-html-report.zip'
         }
       }
     }
