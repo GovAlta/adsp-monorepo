@@ -78,20 +78,6 @@ pipeline {
         sh "npx nx affected --target=build ${baseCommand} --parallel"
       }
     }
-    stage("Smoke Test"){
-      steps {
-        sh "npm ci"
-        sh "npm run tmw-e2e:smoke 'https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca/'"
-      }
-      post {
-        always {
-          dir("${WORKSPACE}/apps/tenant-management-webapp-e2e/src/support") {
-            sh "npm run tmw-e2e:html-report"
-          }
-          archiveArtifacts artifacts: './dist/cypress/**/*.*'
-        }
-      }
-    }
   }
   post {
     failure {
