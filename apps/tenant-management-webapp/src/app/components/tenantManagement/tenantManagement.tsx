@@ -5,6 +5,8 @@ import Sidebar from './sidebar';
 import Dashboard from './dashboard';
 import { Route, Switch } from 'react-router-dom';
 import Adminstration from './administration';
+import File from './services/file';
+
 const TenantManagement = () => {
   return (
     <div style={{ overflowX: 'hidden' }}>
@@ -23,6 +25,10 @@ const TenantManagement = () => {
               </Route>
               <Route exact path="/tenant-admin/admin">
                 <Adminstration />
+              </Route>
+
+              <Route exact path="/tenant-admin/services/file">
+                <File />
               </Route>
             </Switch>
           </Col>
