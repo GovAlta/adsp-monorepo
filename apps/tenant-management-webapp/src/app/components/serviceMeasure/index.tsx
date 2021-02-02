@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import BaseApp from '../../baseApp';
-import { connect } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { getUptime } from '../../../actions';
 import { useSelector } from 'react-redux'
 
-function ServiceMeasure({ dispatch}) {
+function ServiceMeasure() {
   const tenantManagement = useSelector(state => state.tenantManagement);
+  const dispatch = useDispatch();
 
   return (
     <BaseApp>
@@ -16,4 +17,4 @@ function ServiceMeasure({ dispatch}) {
   );
 }
 
-export default connect(null)(ServiceMeasure);
+export default ServiceMeasure;

@@ -1,6 +1,9 @@
 import * as fs from 'fs';
 import * as express from 'express';
 import * as healthCheck from 'express-healthcheck';
+import { connectMongo, disconnect } from './mongo/index';
+import directoryRouter from './app/router/directory';
+
 import { FileTenantController } from './app/api/controllers/file-tenanent.controller';
 import * as swaggerUi from 'swagger-ui-express';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
@@ -8,13 +11,17 @@ import * as passport from 'passport';
 import { useExpressServer } from 'routing-controllers';
 import {
   createKeycloakStrategy,
-  KeycloakStrategyProps
+  KeycloakStrategyProps,
 } from '@core-services/core-common';
 import KcAdminClient from 'keycloak-admin';
+import { logger } from './middleware/logger';
 
 import * as cors from 'cors';
 
 const app = express();
+app.use(express.json());
+/* Connect to mongo db */
+connectMongo();
 app.use(cors())
 
 /* create realm */
@@ -36,13 +43,12 @@ app.post('/createRealm', async (req, res) => {
       clientId: process.env.KEYCLOAK_CLIENT_ID,
     });
   }
-
   let data = { status: 'ok', message: 'Create Realm Success!' };
   const realmName = req.query.realm;
 
   if (!realmName) {
     data = { status: 'error', message: 'Please Input Realm name' };
-    res.status(400)
+    res.status(400);
   } else {
     const realm = await kcAdminClient.realms.create({
       id: realmName,
@@ -79,8 +85,9 @@ app.get('/welcome', (req, res) => {
   res.send({ message: 'Welcome to tenant-management-api!' });
 });
 
-app.use('/health', healthCheck());
+app.use('/api/discovery', directoryRouter);
 
+app.use('/health', healthCheck());
 
 app.use(
   '/swagger/docs',
@@ -100,6 +107,12 @@ const port = process.env.PORT || 3333;
 
 const server = app.listen(port, () => {
   console.log(`Listening at http://localhost:${port}/api`);
+});
+
+process.on('SIGINT', async () => {
+  await disconnect();
+  logger.info('Tenant management api exit, Byte');
+  process.exit();
 });
 
 server.on('error', console.error);

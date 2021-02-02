@@ -9,3 +9,8 @@ export const WinstonLogger = (req, res, next) => {
 
   next();
 };
+
+export const logger = createLogger(
+  'tenant-management-api',
+  process.env.LOG_LEVEL || 'info'
+);

@@ -1,11 +1,11 @@
 import * as Knex from 'knex';
-import { decodeAfter, encodeNext, InvalidOperationError, Results, User } from '@core-services/core-common';
+import { decodeAfter, encodeNext, InvalidOperationError, Results } from '@core-services/core-common';
 import { Value, ValueDefinition, ValueCriteria, ValueDefinitionEntity, ValuesRepository, Namespace, NamespaceEntity, MetricValue, Metric, MetricCriteria } from '../values';
 
 type ValueRecord = Value & { namespace: string, name: string}
 
 export class TimescaleValuesRepository implements ValuesRepository {
-  
+
   constructor(private knex: Knex) {
   }
 
@@ -23,7 +23,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
       }
     }));
   }
-  
+
   getNamespace(name: string): Promise<NamespaceEntity> {
     return Promise.all([
       this.knex<Namespace>('namespaces')
@@ -34,11 +34,11 @@ export class TimescaleValuesRepository implements ValuesRepository {
     ]).then(([namespace, definitions]) => {
       return (namespace) ?
         new NamespaceEntity(this, {
-          ...namespace, 
+          ...namespace,
           definitions: definitions.reduce(
             (defs, def) => ({...defs, [def.name]: def}), {}
           )
-        }) : 
+        }) :
         null
     });
   }
@@ -63,8 +63,8 @@ export class TimescaleValuesRepository implements ValuesRepository {
         .returning('*')
     ).then((rows) => {
       const row = rows[0];
-      return row ? 
-        new NamespaceEntity(this, row) : 
+      return row ?
+        new NamespaceEntity(this, row) :
         null;
     });
   }
@@ -98,17 +98,17 @@ export class TimescaleValuesRepository implements ValuesRepository {
         .returning('*')
     ).then((rows) => {
       const row = rows[0];
-      return row ? 
+      return row ?
         new ValueDefinitionEntity(
-          this, 
-          entity.validationService, 
-          entity.namespace, 
+          this,
+          entity.validationService,
+          entity.namespace,
           row
-        ) : 
+        ) :
         null;
     })
   }
-  
+
   writeValue(definition: ValueDefinitionEntity, value: Value): Promise<Value> {
     return this.knex<ValueRecord>('values')
     .insert({
@@ -127,7 +127,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
       value: row.value
     }));
   }
-  
+
   readValues(definition: ValueDefinitionEntity, criteria: ValueCriteria): Promise<Value[]> {
     let query = this.knex<ValueRecord>('values')
     .where({
@@ -146,9 +146,9 @@ export class TimescaleValuesRepository implements ValuesRepository {
     if (criteria.timestampMin) {
       query = query.where('timestamp', '>=', criteria.timestampMin)
     }
-    
+
     return query.orderBy('timestamp', 'desc')
-    .then(rows => 
+    .then(rows =>
       rows.map(row => ({
         timestamp: row.timestamp,
         correlationId: row.correlationId,
@@ -159,8 +159,8 @@ export class TimescaleValuesRepository implements ValuesRepository {
   }
 
   readMetric(
-    definition: ValueDefinitionEntity, 
-    metric: string, 
+    definition: ValueDefinitionEntity,
+    metric: string,
     criteria: MetricCriteria
   ): Promise<Metric> {
 
@@ -205,9 +205,9 @@ export class TimescaleValuesRepository implements ValuesRepository {
   }
 
   writeMetric(
-    definition: ValueDefinitionEntity, 
-    metric: string, 
-    timestamp: Date, 
+    definition: ValueDefinitionEntity,
+    metric: string,
+    timestamp: Date,
     value: number
   ): Promise<MetricValue> {
     return this.knex<MetricValue>('metrics')
