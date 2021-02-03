@@ -3,7 +3,7 @@ import * as express from 'express';
 import * as compression from 'compression';
 import * as helmet from 'helmet';
 import { createLogger } from '@core-services/core-common';
-import { environment } from './environments/environment';
+import { environment } from '../environments/environment';
 import { applyConfigMiddleware } from './configuration';
 import { createRepositories } from './mongo';
 

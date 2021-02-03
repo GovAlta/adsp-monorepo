@@ -14,4 +14,6 @@ export const environment = {
   ...env,
   production: env.NODE_ENV === 'production',
   LOG_LEVEL: 'debug',
+
+  CONFIG_SRV_PORT: 3340,
 };
