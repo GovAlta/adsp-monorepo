@@ -15,6 +15,7 @@ export interface URNComponent {
 }
 export interface Response {
   url?: string;
+  urn?: string;
 }
 const URN_SEPARATOR = ':';
 const HTTPS = 'https://';
@@ -28,6 +29,13 @@ const getName = (directory, core: string) => {
   return null;
 };
 
+const getUrn = (component: URNComponent) => {
+  const urn = `${component.scheme}:${component.nic}:${component.core}:${component.service}`;
+  return component.apiVersion ? `${urn}:${component.apiVersion}` : urn;
+};
+const isStartWithHttp = (service: string) => {
+  return service.toLowerCase().startsWith('http');
+};
 const getUrlResponse = (services, component) => {
   let host = null;
   if (services) {
@@ -42,7 +50,7 @@ const getUrlResponse = (services, component) => {
   //construct returned url
   if (host) {
     const discoveryRes: Response = {};
-
+    discoveryRes.urn = getUrn(component);
     discoveryRes.url = component.apiVersion
       ? `${HTTPS}${host}/application/${component.apiVersion}`
       : `${HTTPS}${host}`;
@@ -67,19 +75,11 @@ export const discovery = async (urn) => {
     component.service = urnArray[3];
     component.apiVersion = urnArray[4];
     try {
-      logger.info("Access mongo db to check if dirctory in db");
       let directory: DirectoryMap[] = await Directory.find();
-      logger.info(`Directory in mongodb  : ${directory}`);
 
       if (!directory || directory.length === 0) {
-        logger.info(
-          'There is no directory in mongo db will get url from json file'
-        );
         // No directory in mongo db will read from json file.
-        // read directory from json file
         const directoryJson = (data as any).default;
-        //create directory collection and put into mongo
-
         createDirectory(directoryJson);
 
         const services = getName(directoryJson, component.core);
@@ -87,12 +87,10 @@ export const discovery = async (urn) => {
       }
 
       // get url from mongo
-      logger.info('Will get URL from mongo db.....');
-      directory = await Directory.find({name:component.core});
+      directory = await Directory.find({ name: component.core });
       const services = directory[0]['services'];
 
       return getUrlResponse(services, component);
-
     } catch (err) {
       return new ApiError(
         HttpStatusCodes.BAD_REQUEST,
@@ -110,9 +108,31 @@ export const discovery = async (urn) => {
 export const getDirectories = async () => {
   logger.info('Starting get directory from mongo db...');
   try {
-    const directory: DirectoryMap[] = await Directory.find({});
+    let response = [];
 
-    return directory;
+    const directories: DirectoryMap[] = await Directory.find({});
+    if (directories && directories.length > 0) {
+      for (const directory of directories) {
+        const services = directory['services'];
+        for (const service of services) {
+          let element: Response = {};
+          const component: URNComponent = {
+            scheme: 'urn',
+            nic: 'ads',
+            core: directory['name'],
+            service: service['service'],
+          };
+
+          element.urn = getUrn(component);
+          const serviceName: string = service['host'].toString();
+          element.url = isStartWithHttp(serviceName)
+            ? serviceName
+            : `${HTTPS}${serviceName}`;
+          response.push(element);
+        }
+      }
+    }
+    return response;
   } catch (err) {
     return new ApiError(
       HttpStatusCodes.BAD_REQUEST,
@@ -122,14 +142,13 @@ export const getDirectories = async () => {
 };
 
 export const addUpdateDirectory = async (directoryJson) => {
-  logger.info("directory service add updateDirectory");
+  logger.info('directory service add updateDirectory');
   try {
     const directory: DirectoryMap[] = await Directory.find({
       name: directoryJson['name'],
     });
 
     if (directory && directory.length > 0) {
-      logger.info(`Start update diretory :  ${directoryJson['name']}...`);
       // Update
       await Directory.findOneAndUpdate(
         { name: directoryJson['name'] },
@@ -138,7 +157,6 @@ export const addUpdateDirectory = async (directoryJson) => {
       );
       return HttpStatusCodes.CREATED;
     }
-    logger.info(`Start create diretory :  ${directoryJson['name']}...`);
     // Create
     await Directory.create(directoryJson);
     return HttpStatusCodes.CREATED;
