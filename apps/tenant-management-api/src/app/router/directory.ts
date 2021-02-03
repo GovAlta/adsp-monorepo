@@ -42,15 +42,17 @@ directoryRouter.post(
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res
-        .status(HttpStatusCodes.BAD_REQUEST)
+        .sendStatus(HttpStatusCodes.BAD_REQUEST)
         .json({ errors: errors.array() });
     }
     if (req.body) {
-      return res.send(await addUpdateDirectory(req.body));
+      return res
+        .status(HttpStatusCodes.CREATED)
+        .json({ successfulCode: await addUpdateDirectory(req.body) });
     }
     logger.error('post add/update error');
     return res
-      .status(HttpStatusCodes.BAD_REQUEST)
+      .sendStatus(HttpStatusCodes.BAD_REQUEST)
       .json({ errors: 'There is no context in post' });
   }
 );
@@ -65,7 +67,9 @@ directoryRouter.delete(
         .status(HttpStatusCodes.BAD_REQUEST)
         .json({ errors: errors.array() });
     }
-    return res.send(await deleteDirectory(req.body.name));
+    return res
+      .status(HttpStatusCodes.ACCEPTED)
+      .json({ successfulCode: await deleteDirectory(req.body.name) });
   }
 );
 
