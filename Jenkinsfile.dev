@@ -78,6 +78,19 @@ pipeline {
         sh "npx nx affected --target=build ${baseCommand} --parallel"
       }
     }
+    stage("Cypress Test"){
+      steps {
+        sh "npm ci"
+        sh "nx e2e tenant-management-webapp-e2e --dev-server-target='' --headless=true --env.'TAGS'='@smoke-test or @dev-build' --baseUrl 'https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca/'"
+      }
+      post {
+        always {
+          sh "node ./apps/tenant-management-webapp-e2e/src/support/multiple-cucumber-html-reporter.js"
+          zip zipFile: 'cypress-smoke-test-html-report.zip', archive: false, dir: 'dist/cypress'
+          archiveArtifacts artifacts: 'cypress-smoke-test-html-report.zip'
+        }
+      }
+    }
   }
   post {
     failure {
