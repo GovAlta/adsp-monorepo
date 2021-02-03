@@ -108,14 +108,14 @@ export const discovery = async (urn) => {
 export const getDirectories = async () => {
   logger.info('Starting get directory from mongo db...');
   try {
-    let response = [];
+    const response = [];
 
     const directories: DirectoryMap[] = await Directory.find({});
     if (directories && directories.length > 0) {
       for (const directory of directories) {
         const services = directory['services'];
         for (const service of services) {
-          let element: Response = {};
+          const element: Response = {};
           const component: URNComponent = {
             scheme: 'urn',
             nic: 'ads',
