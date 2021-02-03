@@ -24,10 +24,10 @@ export class MongoTenantConfigurationRepository implements TenantConfigurationRe
     );
   }
   
-  get(id: string): Promise<TenantConfigEntity> {
+  get(name: string): Promise<TenantConfigEntity> {
     return new Promise<TenantConfigEntity>((resolve, reject) => 
       this.tenantConfigModel.findOne(
-        { _id: id }, 
+        { realmName: name }, 
         null,
         { lean: true }, 
         (err, doc) => err ?

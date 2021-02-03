@@ -1,5 +1,5 @@
 import { Doc } from '@core-services/core-common';
-import { model } from 'mongoose';
+import { model, Types, Mongoose } from 'mongoose';
 import { ServiceConfigurationRepository, ServiceOptionEntity, ServiceOption } from '../configuration';
 import { serviceOptionSchema } from './schema';
 
@@ -10,7 +10,7 @@ export class MongoServiceOptionRepository implements ServiceConfigurationReposit
   constructor() {
     this.serviceModel = model('serviceOption', serviceOptionSchema);
   }
-  
+    
   getConfigOption(service: string): Promise<ServiceOptionEntity> {
     return new Promise<ServiceOptionEntity>((resolve, reject) => 
       this.serviceModel.findOne(
@@ -24,10 +24,10 @@ export class MongoServiceOptionRepository implements ServiceConfigurationReposit
     );
   }
   
-  get(id: string): Promise<ServiceOptionEntity> {
+  get(name: string): Promise<ServiceOptionEntity> {
     return new Promise<ServiceOptionEntity>((resolve, reject) => 
       this.serviceModel.findOne(
-        { _id: id }, 
+        { service: name }, 
         null,
         { lean: true }, 
         (err, doc) => err ?
@@ -40,7 +40,7 @@ export class MongoServiceOptionRepository implements ServiceConfigurationReposit
   save(entity: ServiceOptionEntity): Promise<ServiceOptionEntity> {
     return new Promise<ServiceOptionEntity>((resolve, reject) => 
       this.serviceModel.findOneAndUpdate(
-        { _id: entity.id }, 
+        { _id: entity.id || new Types.ObjectId}, 
         this.toDoc(entity), 
         { upsert: true, new: true, lean: true },
         (err, doc) => {
@@ -57,7 +57,7 @@ export class MongoServiceOptionRepository implements ServiceConfigurationReposit
   delete(entity: ServiceOptionEntity): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => 
       this.serviceModel.findOneAndDelete(
-        {_id: entity.id},
+        {service: entity.service},
         (err, doc) => err ? 
           reject(err) : 
           resolve(!!doc)

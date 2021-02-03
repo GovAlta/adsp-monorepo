@@ -1,21 +1,21 @@
 import { Request, Response, Router } from 'express';
 import { Logger } from 'winston';
-import { ServiceConfigurationRepository } from '../repository';
-import { mapServiceOption } from './mappers';
-import { ServiceOptionEntity } from '../model';
+import { TenantConfigurationRepository } from '../repository';
+import { mapTenantConfig } from './mappers';
+import { TenantConfigEntity } from '../model';
 import {  NotFoundError } from '@core-services/core-common';
 
-interface ServiceOptionRouterProps {
+interface TenantConfigRouterProps {
   logger: Logger,
-  serviceConfigurationRepository: ServiceConfigurationRepository;
+  tenantConfigurationRepository: TenantConfigurationRepository;
 }
 
-export const createConfigurationRouter = ({
+export const createTenantConfigurationRouter = ({
   logger: Logger,
-  serviceConfigurationRepository,
-}: ServiceOptionRouterProps) => {
-  const serviceOptionRouter = Router();
-  
+  tenantConfigurationRepository,
+}: TenantConfigRouterProps) => {
+  const tenantConfigRouter = Router();
+    
   /**
    * @swagger
    *
@@ -36,21 +36,21 @@ export const createConfigurationRouter = ({
    *       200:
    *         description: Service options succesfully retrieved.
    */
-  serviceOptionRouter.get(
-    '/serviceOptions/:service',
+  tenantConfigRouter.get(
+    '/tenantConfig/:realmName',
 
     (req, res, next) => {
 
-      const { service } = req.params;
+      const { realmName } = req.params;
 
-      serviceConfigurationRepository
-        .get(service)
-        .then((serviceOptionEntity) => {
+      tenantConfigurationRepository
+        .get(realmName)
+        .then((tenantConfigEntity) => {
           
-          if (!serviceOptionEntity) {
-            throw new NotFoundError('Service Options', service);
+          if (!tenantConfigEntity) {
+            throw new NotFoundError('Tenant Config', realmName);
           } else {
-            res.json(mapServiceOption(serviceOptionEntity));
+            res.json(mapTenantConfig(tenantConfigEntity));
           }
         })
         .catch((err) => next(err));
@@ -77,39 +77,39 @@ export const createConfigurationRouter = ({
    *       200:
    *         description: Subscriptions succesfully retrieved.
    */
-  serviceOptionRouter.post(
-    '/serviceOptions/',
+  tenantConfigRouter.post(
+    '/tenantConfig/',
     (req: Request, res: Response, next) => {
-      const { service } = req.params;
+      const { realmName } = req.params;
       const data = req.body;
 
-      serviceConfigurationRepository
-        .get(service)
-        .then((serviceOptionEntity) => {
-          if (!serviceOptionEntity) {
-            ServiceOptionEntity.delete(serviceConfigurationRepository, {
+      tenantConfigurationRepository
+        .get(realmName)
+        .then((tenantConfigEntity) => {
+          if (!tenantConfigEntity) {
+            TenantConfigEntity.delete(tenantConfigurationRepository, {
               ...data,
               config: data
             });
 
-            return ServiceOptionEntity.create(serviceConfigurationRepository, {
+            return TenantConfigEntity.create(tenantConfigurationRepository, {
               ...data,
-              serviceOption: data
+              tenantConfig: data
             });
           } else {
-            return ServiceOptionEntity.create(serviceConfigurationRepository, {
+            return TenantConfigEntity.create(tenantConfigurationRepository, {
               ...data,
-              serviceOption: serviceOptionEntity,
+              tenantConfig: data,
             });
           }
         })
         .then((entity) => {
-          res.send(mapServiceOption(entity));
+          res.send(mapTenantConfig(entity));
           return entity;
         })
         .catch((err) => next(err));
     }
   );
   
-  return serviceOptionRouter;
+  return tenantConfigRouter;
 };

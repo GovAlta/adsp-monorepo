@@ -7,7 +7,8 @@ export const serviceOptionSchema = new Schema({
   },
   service: { 
     type: String,
-    required: true
+    required: true,
+    unique: true
   },
   version: {
     type: String
@@ -20,7 +21,8 @@ export const serviceOptionSchema = new Schema({
 export const tenantConfigSchema = new Schema({
   realmName: { 
     type: String,
-    required: true
+    required: true,
+    unique: true
   },
   configurationSettingsList: {
     type: String

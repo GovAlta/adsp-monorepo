@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { Application } from 'express';
 import { Repositories } from './repository';
-import { createConfigurationRouter } from './router';
+import { createConfigurationRouter, createTenantConfigurationRouter } from './router';
 import { Logger } from 'winston';
 
 export * from './types';
@@ -26,10 +26,17 @@ export const applyConfigMiddleware = (
     serviceConfigurationRepository    
   }
 
-  const serviceConfigRouter = createConfigurationRouter(serviceConfigRouterProps);
+  const tenantConfigRouterProps = {
+    logger,
+    tenantConfigurationRepository    
+  }
 
-  app.use('/configuration/v1/', serviceConfigRouter);
-  
+  const serviceConfigRouter = createConfigurationRouter(serviceConfigRouterProps);
+  const tenantConfigRouter = createTenantConfigurationRouter(tenantConfigRouterProps);
+
+  app.use('/api/configuration/v1/', serviceConfigRouter);
+  app.use('/api/configuration/v1/', tenantConfigRouter);
+
   let swagger = null;
   app.use('/swagger/docs/v1', (req, res) => {
     if (swagger) {

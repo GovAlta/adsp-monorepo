@@ -17,8 +17,6 @@ export class ServiceOptionEntity implements ServiceOption{
     this.version = serviceOption.version;
     this.configOptions = serviceOption.configOptions;
   }
-
-  @AssertRole('create service configuration option', ServiceUserRoles.admin)
   static create(
     repository: ServiceConfigurationRepository, 
     serviceOption: ServiceOption
@@ -28,23 +26,13 @@ export class ServiceOptionEntity implements ServiceOption{
     return repository.save(entity);
   }
 
-  update(user: User, update: Update<ServiceOption>) {
-    if (!this.canUpdate(user)) {
-      throw new UnauthorizedError('User not authorized to updated service config.');
-    }
+  static delete(
+    repository: ServiceConfigurationRepository, 
+    serviceOption: ServiceOption
+  ) {
+    
+    const entity = new ServiceOptionEntity(repository, serviceOption);
 
-    return this.repository.save(this);
-  }
-
-  canAccess(user: User) {
-    return user && (
-      user.roles.includes(ServiceUserRoles.admin)
-    );
-  }
-
-  canUpdate(user: User) {
-    return user &&  (
-      user.roles.includes(ServiceUserRoles.admin)
-    );
+    return repository.delete(entity);
   }
 }

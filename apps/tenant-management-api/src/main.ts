@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as express from 'express';
 import * as healthCheck from 'express-healthcheck';
 import { environment } from './environments/environment';
+import { createConfigService} from './configuration-management';
 
 const app = express();
 
@@ -61,6 +62,8 @@ app.use('/swagger/docs/v1', (req, res) => {
     });
   }
 });
+
+createConfigService(app);
 
 const port = process.env.port || 3333;
 const server = app.listen(port, () => {

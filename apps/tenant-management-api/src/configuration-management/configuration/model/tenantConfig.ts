@@ -14,9 +14,7 @@ export class TenantConfigEntity implements TenantConfig{
     this.configurationSettingsList = config.configurationSettingsList;
   }
 
-  @AssertRole('create tenant configuration', ServiceUserRoles.admin)
   static create(
-    user: User, 
     repository: TenantConfigurationRepository, 
     config: TenantConfig
   ) {
@@ -25,23 +23,13 @@ export class TenantConfigEntity implements TenantConfig{
     return repository.save(entity);
   }
 
-  update(user: User, update: Update<TenantConfig>) {
-    if (!this.canUpdate(user)) {
-      throw new UnauthorizedError('User not authorized to updated tenant config.');
-    }
+  static delete(
+    repository: TenantConfigurationRepository, 
+    config: TenantConfig
+  ) {
+    
+    const entity = new TenantConfigEntity(repository, config);
 
-    return this.repository.save(this);
-  }
-
-  canAccess(user: User) {
-    return user && (
-      user.roles.includes(ServiceUserRoles.admin)
-    );
-  }
-
-  canUpdate(user: User) {
-    return user &&  (
-      user.roles.includes(ServiceUserRoles.admin)
-    );
+    return repository.delete(entity);
   }
 }
