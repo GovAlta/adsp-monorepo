@@ -112,7 +112,7 @@ pipeline {
       }
       post {
         always {
-          cucumber 'dist/cypress/apps/tenant-mangement-webapp-e2e/cucumber-json/*.json'
+          cucumber '**/cucumber-json/*.json'
           sh "node ./apps/tenant-management-webapp-e2e/src/support/multiple-cucumber-html-reporter.js"
           zip zipFile: 'cypress-smoke-test-html-report.zip', archive: false, dir: 'dist/cypress'
           archiveArtifacts artifacts: 'cypress-smoke-test-html-report.zip'
@@ -203,7 +203,7 @@ pipeline {
       }
       post {
         always {
-          cucumber 'dist/cypress/apps/tenant-mangement-webapp-e2e/cucumber-json/*.json'
+          cucumber '**/cucumber-json/*.json'
           sh "node ./apps/tenant-management-webapp-e2e/src/support/multiple-cucumber-html-reporter.js"
           zip zipFile: 'cypress-regression-test-html-report.zip', archive: false, dir: 'dist/cypress'
           archiveArtifacts artifacts: 'cypress-regression-test-html-report.zip'
