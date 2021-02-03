@@ -3,7 +3,7 @@ import { Logger } from 'winston';
 import { ServiceConfigurationRepository } from '../repository';
 import { mapServiceOption } from './mappers';
 import { ServiceOptionEntity } from '../model';
-import {  NotFoundError } from '@core-services/core-common';
+import { NotFoundError } from '@core-services/core-common';
 
 interface ServiceOptionRouterProps {
   logger: Logger,
@@ -15,7 +15,7 @@ export const createConfigurationRouter = ({
   serviceConfigurationRepository,
 }: ServiceOptionRouterProps) => {
   const serviceOptionRouter = Router();
-  
+
   /**
    * @swagger
    *
@@ -46,7 +46,7 @@ export const createConfigurationRouter = ({
       serviceConfigurationRepository
         .get(service)
         .then((serviceOptionEntity) => {
-          
+
           if (!serviceOptionEntity) {
             throw new NotFoundError('Service Options', service);
           } else {
@@ -63,19 +63,18 @@ export const createConfigurationRouter = ({
    * /configuration/v1/serviceOptions/{service}:
    *   post:
    *     tags:
-   *     - Subscription
+   *     - ServiceOption
    *     description: Creates a service option configuration.
-   *     parameters:
-   *     - name: service
-   *       description: Service option.
-   *       in: path
+   *     requestBody:
    *       required: true
-   *       schema:
-   *         type: string
-   * 
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *
    *     responses:
    *       200:
-   *         description: Subscriptions succesfully retrieved.
+   *         description: Service options succesfully created.
    */
   serviceOptionRouter.post(
     '/serviceOptions/',
@@ -110,6 +109,6 @@ export const createConfigurationRouter = ({
         .catch((err) => next(err));
     }
   );
-  
+
   return serviceOptionRouter;
 };

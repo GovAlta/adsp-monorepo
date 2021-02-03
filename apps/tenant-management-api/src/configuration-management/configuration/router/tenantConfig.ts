@@ -3,7 +3,7 @@ import { Logger } from 'winston';
 import { TenantConfigurationRepository } from '../repository';
 import { mapTenantConfig } from './mappers';
 import { TenantConfigEntity } from '../model';
-import {  NotFoundError } from '@core-services/core-common';
+import { NotFoundError } from '@core-services/core-common';
 
 interface TenantConfigRouterProps {
   logger: Logger,
@@ -15,18 +15,18 @@ export const createTenantConfigurationRouter = ({
   tenantConfigurationRepository,
 }: TenantConfigRouterProps) => {
   const tenantConfigRouter = Router();
-    
+
   /**
    * @swagger
    *
-   * /configuration/v1/serviceOptions/{service}:
+   * /configuration/v1/tenantConfig/{realmName}:
    *   get:
    *     tags:
    *     - Subscription
-   *     description: Retrieves service options for a service type.
+   *     description: Retrieves tenant configuation for a realm.
    *     parameters:
-   *     - name: service
-   *       description: Service type.
+   *     - name: realmName
+   *       description: Name of the realm.
    *       in: path
    *       required: true
    *       schema:
@@ -34,7 +34,7 @@ export const createTenantConfigurationRouter = ({
    *
    *     responses:
    *       200:
-   *         description: Service options succesfully retrieved.
+   *         description: Tenant configuration succesfully retrieved.
    */
   tenantConfigRouter.get(
     '/tenantConfig/:realmName',
@@ -46,7 +46,7 @@ export const createTenantConfigurationRouter = ({
       tenantConfigurationRepository
         .get(realmName)
         .then((tenantConfigEntity) => {
-          
+
           if (!tenantConfigEntity) {
             throw new NotFoundError('Tenant Config', realmName);
           } else {
@@ -60,22 +60,21 @@ export const createTenantConfigurationRouter = ({
   /**
    * @swagger
    *
-   * /configuration/v1/serviceOptions/{service}:
+   * /configuration/v1/tenantConfig/:
    *   post:
    *     tags:
-   *     - Subscription
-   *     description: Creates a service option configuration.
-   *     parameters:
-   *     - name: service
-   *       description: Service option.
-   *       in: path
+   *     - TenantConfig
+   *     description: Creates a tenant realm configuration.
+   *     requestBody:
    *       required: true
-   *       schema:
-   *         type: string
-   * 
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+
    *     responses:
    *       200:
-   *         description: Subscriptions succesfully retrieved.
+   *         description: Tenant Configuration succesfully created.
    */
   tenantConfigRouter.post(
     '/tenantConfig/',
@@ -110,6 +109,6 @@ export const createTenantConfigurationRouter = ({
         .catch((err) => next(err));
     }
   );
-  
+
   return tenantConfigRouter;
 };
