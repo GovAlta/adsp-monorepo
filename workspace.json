@@ -203,7 +203,7 @@
     "QA": {
       "root": "apps/QA",
       "sourceRoot": "apps/QA/cypress",
-     
+
       "architect": {
         "e2e": {
           "builder": "@nrwl/cypress:cypress",
@@ -241,19 +241,15 @@
             "outputPath": "dist/apps/tenant-management-api",
             "main": "apps/tenant-management-api/src/main.ts",
             "tsConfig": "apps/tenant-management-api/tsconfig.app.json",
-            "assets": ["apps/tenant-management-api/src/assets"]
+            "assets": ["apps/tenant-management-api/src/assets"],
+            "webpackConfig": "apps/tenant-management-api/webpack.config.js"
           },
           "configurations": {
             "production": {
               "optimization": true,
               "extractLicenses": true,
               "inspect": false,
-              "fileReplacements": [
-                {
-                  "replace": "apps/tenant-management-api/src/environments/environment.ts",
-                  "with": "apps/tenant-management-api/src/environments/environment.prod.ts"
-                }
-              ]
+              "fileReplacements": []
             }
           }
         },
@@ -448,6 +444,58 @@
           "options": {
             "jestConfig": "apps/event-service/jest.config.js",
             "tsConfig": "apps/event-service/tsconfig.spec.json",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "push-service": {
+      "root": "apps/push-service",
+      "sourceRoot": "apps/push-service/src",
+      "projectType": "application",
+      "prefix": "push-service",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "outputPath": "dist/apps/push-service",
+            "main": "apps/push-service/src/main.ts",
+            "tsConfig": "apps/push-service/tsconfig.app.json",
+            "assets": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "push-service:build",
+            "port": 7774
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:lint",
+          "options": {
+            "linter": "eslint",
+            "tsConfig": [
+              "apps/push-service/tsconfig.app.json",
+              "apps/push-service/tsconfig.spec.json"
+            ],
+            "exclude": ["**/node_modules/**", "!apps/push-service/**/*"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/push-service/jest.config.js",
+            "tsConfig": "apps/push-service/tsconfig.spec.json",
             "passWithNoTests": true
           }
         }

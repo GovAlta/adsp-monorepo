@@ -1,5 +1,5 @@
 import React from 'react';
-import BaseApp from '../../baseApp';
+import { Container } from 'react-bootstrap';
 import useConfig from '../../utils/useConfig';
 
 function Notifications() {
@@ -7,10 +7,10 @@ function Notifications() {
   const [config,,] = useConfig();
 
   return (
-    <BaseApp>
+    <Container>
       <h2>Future notifications</h2>
       {config && `Notification Url: ${config.notificationServiceUrl}`}
-    </BaseApp>
+    </Container>
   );
 }
 

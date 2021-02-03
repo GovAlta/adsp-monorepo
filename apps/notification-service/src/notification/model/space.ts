@@ -8,7 +8,7 @@ export class NotificationSpaceEntity implements NotificationSpace {
   spaceAdminRole: string;
   subscriberAdminRole: string;
   
-  @AssertRole('create notification space', ServiceUserRoles.admin)
+  @AssertRole('create notification space', ServiceUserRoles.Admin)
   static create(
     user: User, 
     repository: NotificationSpaceRepository, 
@@ -50,14 +50,14 @@ export class NotificationSpaceEntity implements NotificationSpace {
 
   canAccess(user: User) {
     return user && (
-      user.roles.includes('file-service-admin') ||
+      user.roles.includes(ServiceUserRoles.Admin) ||
       user.roles.includes(this.spaceAdminRole)
     );
   }
 
   canUpdate(user: User) {
     return user &&  (
-      user.roles.includes('file-service-admin') ||
+      user.roles.includes(ServiceUserRoles.Admin) ||
       user.roles.includes(this.spaceAdminRole)
     );
   }

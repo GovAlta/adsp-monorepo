@@ -1,7 +1,6 @@
 import { IsNotEmpty } from 'class-validator';
 import { User, UserRole, Update, AssertRole, UnauthorizedError, InvalidOperationError, NotFoundError } from '@core-services/core-common';
-import { ServiceUserRole } from '../../types';
-import { Namespace, EventDefinition } from '../types';
+import { Namespace, EventDefinition, ServiceUserRoles } from '../types';
 import { EventRepository } from '../repository';
 import { EventDefinitionEntity } from './eventDefinition';
 import { AjvValidationService, ValidationService } from '../validation';
@@ -15,7 +14,7 @@ export class NamespaceEntity implements Namespace {
   public definitions: { [name: string]: EventDefinitionEntity };
   public adminRole: UserRole;
 
-  @AssertRole('create namespace', ServiceUserRole.EventAdmin)
+  @AssertRole('create namespace', ServiceUserRoles.Admin)
   static create(
     user: User, 
     repository: EventRepository, 
@@ -146,13 +145,13 @@ export class NamespaceEntity implements Namespace {
 
   canAccess(user: User) {
     return user && 
-      (user.roles.includes(ServiceUserRole.EventAdmin) ||
+      (user.roles.includes(ServiceUserRoles.Admin) ||
       user.roles.includes(this.adminRole));
   }
 
   canUpdate(user: User) {
     return user &&
-      (user.roles.includes(ServiceUserRole.EventAdmin) ||
+      (user.roles.includes(ServiceUserRoles.Admin) ||
       user.roles.includes(this.adminRole));
   }
 }

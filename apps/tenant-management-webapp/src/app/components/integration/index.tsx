@@ -1,11 +1,11 @@
 import React from 'react';
-import BaseApp from '../../baseApp';
+import { Container } from 'react-bootstrap';
 
 function Integration() {
   return (
-    <BaseApp>
+    <Container>
       <h2>Integration help coming soon</h2>
-    </BaseApp>
+    </Container>
   );
 }
 

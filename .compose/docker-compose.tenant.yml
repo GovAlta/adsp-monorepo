@@ -1,0 +1,36 @@
+version: '3.2'
+services:
+  tenant-management-mongo:
+    image: mongo:3.6
+    expose:
+      - 27017
+  tenant-management-webapp:
+    build:
+      context: ../
+      dockerfile: .compose/service/DockerfileReact
+      args:
+        - SERVICE=tenant-management-webapp
+    ports:
+      - 4020:4020
+    expose:
+      - 4020
+    volumes:
+      - ../data/webapp:/webapp/file    
+  tenant-management-api:
+    build:
+      context: ../
+      dockerfile: .compose/service/Dockerfile
+      args:
+        - SERVICE=tenant-management-api
+      depends_on:
+      - tenant-management-mongodb  
+    ports:
+      - 3338:3338
+    expose:
+      - 3338
+    volumes:
+      - ../data/api:/api/file
+    environment:
+      - MONGO_URI=mongodb://tenant-management-mongodb:27017
+      - MONGO_DB=tenantDb
+      

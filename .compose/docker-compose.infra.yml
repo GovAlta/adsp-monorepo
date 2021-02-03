@@ -2,6 +2,8 @@ version: '3.2'
 services:
   keycloak:
     image: jboss/keycloak:latest
+    volumes:
+      - ./realms:/opt/jboss/keycloak/realms
     expose:
       - 8080
     ports:
@@ -10,6 +12,7 @@ services:
       - KEYCLOAK_USER=admin
       - KEYCLOAK_PASSWORD=admin
       - KEYCLOAK_FRONTEND_URL=''
+      - KEYCLOAK_IMPORT='/opt/jboss/keycloak/realms/core.json'
   rabbitmq:
     hostname: rabbitmq
     image: rabbitmq:3-management
@@ -17,3 +20,4 @@ services:
       - 5672
     ports:
       - 5672:5672
+      - 15672:15672

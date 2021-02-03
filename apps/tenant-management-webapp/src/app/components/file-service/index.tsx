@@ -1,11 +1,11 @@
 import React from 'react';
-import BaseApp from '../../baseApp';
+import { Container } from 'react-bootstrap';
 
 function FileService() {
   return (
-    <BaseApp>
+    <Container>
       <h2>Future file service</h2>
-    </BaseApp>
+    </Container>
   );
 }
 

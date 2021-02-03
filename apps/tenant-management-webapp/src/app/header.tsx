@@ -11,10 +11,12 @@ enum ServiceLevel {
   Live = 'Live',
 }
 
+
 function Header({ serviceName }) {
   const location = useLocation();
   const url = location.pathname === '/' ? '/login' : '/';
   const urlName = location.pathname === '/' ? 'Sign In' : 'Home';
+
 
   return (
     <div>

@@ -21,23 +21,25 @@ import CreateErrorPage from './components/realms/CreateErrorPage';
 import ActivateErrorPage from './components/realms/ActivateErrorPage';
 import Realms from './components/realms/Realms';
 import '@abgov/core-css/goa-core.css';
+import BaseApp from './baseApp'
 
 export const App = () => {
   return (
     <div>
       <main>
         <Router>
-          <div>
-            <Switch>
-              <Route exact path="/">
-                <LandingPage />
-              </Route>
-              <Route path="/login">
-                <Login />
-              </Route>
-              <Route path="/sign-up">
-                <SignUp />
-              </Route>
+          <Switch>
+            <Route exact path="/">
+              <LandingPage />
+            </Route>
+            <Route path="/login">
+              <Login />
+            </Route>
+            <Route path="/sign-up">
+              <SignUp />
+            </Route>
+
+            <BaseApp>
               <Route path="/case-study">
                 <CaseStudy />
               </Route>
@@ -59,14 +61,15 @@ export const App = () => {
               <Route path="/tenant-admin">
                 <TenantManagement />
               </Route>
-              <Route path="/Realms" exact component={Realms}/>
-              <Route path="/Realms/CreateRealm" exact component={CreateRealm}/>
-              <Route path="/Realms/CreatingRealm" exact component={CreatingRealm}/>
-              <Route path="/Realms/AddClientRole" exact component={AddClientRole}/>
-              <Route path="/Realms/CreateErrorPage" exact component={CreateErrorPage}/>
-              <Route path="/Realms/ActivateErrorPage" exact component={ActivateErrorPage}/>
-            </Switch>
-          </div>
+              <Route path="/Realms" exact component={Realms} />
+              <Route path="/Realms/CreateRealm" exact component={CreateRealm} />
+              <Route path="/Realms/CreatingRealm" exact component={CreatingRealm} />
+              <Route path="/Realms/AddClientRole" exact component={AddClientRole} />
+              <Route path="/Realms/CreateErrorPage" exact component={CreateErrorPage} />
+              <Route path="/Realms/ActivateErrorPage" exact component={ActivateErrorPage} />
+            </BaseApp>
+
+          </Switch>
         </Router>
       </main>
     </div>

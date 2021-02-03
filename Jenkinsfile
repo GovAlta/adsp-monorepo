@@ -7,15 +7,25 @@ pipeline {
       label "node12-cypress"
     }
   }
+  parameters {
+    string(
+      name: 'affectedBase',
+      defaultValue: '',
+      description: 'Base command for nx affected; use --base={Commit SHA} or --all.'
+    )
+  }
   stages {
     stage("Prepare") {
       steps {
         checkout scm
         sh "npm install"
         script {
-          if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT) {
+          if (params.affectedBase) {
+            baseCommand = affectedBase
+          } else if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT) {
             baseCommand = "--base=${env.GIT_PREVIOUS_SUCCESSFUL_COMMIT}"
           }
+
           affectedApps = sh (
             script: "npx nx affected:apps --plain ${baseCommand}",
             returnStdout: true
@@ -46,11 +56,11 @@ pipeline {
             openshift.withProject() {
               affectedApps.each { affected ->
                 def bc = openshift.selector("bc", affected)
-                
+
                 if ( bc.exists() ) {
                   if(affected.endsWith("app")){
                      bc.startBuild("--from-dir=dist/apps/${affected}", "--wait", "--follow")
-                  } else { 
+                  } else {
                      bc.startBuild("--from-dir=.", "--wait", "--follow")
                   }
                 }
@@ -69,7 +79,10 @@ pipeline {
           openshift.withCluster() {
             openshift.withProject() {
               affectedApps.each { affected ->
-                openshift.tag("${affected}:latest", "${affected}:dev") 
+                def is = openshift.selector("is", "${affected}")
+                if ( is.exists() ) {
+                  openshift.tag("${affected}:latest", "${affected}:dev")
+                }
               }
             }
           }
@@ -92,13 +105,20 @@ pipeline {
     }
     stage("Smoke Test"){
       steps {
-        sh "cd ./apps/QA/ && npm ci"
-        sh "cd ./apps/QA/ && npm run ci:smokeTest-headless"
+        // sh "cd ./apps/QA/ && npm ci"
+        // sh "cd ./apps/QA/ && npm run ci:smokeTest-headless"
+        sh "npm ci"
+        sh "npm run tmw-e2e:smoke 'https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca/'"
       }
-      post { 
+      post {
+        always {
+          sh "node ./apps/tenant-management-webapp-e2e/src/support/multiple-cucumber-html-reporter.js"
+          zip zipFile: 'cypress-smoke-test-html-report.zip', archive: false, dir: 'dist/cypress'
+          archiveArtifacts artifacts: 'cypress-smoke-test-html-report.zip'
+        }
         success {
           slackSend(
-            color: "good", 
+            color: "good",
             message: "Core Services pipeline ${env.BUILD_NUMBER} ready for promotion to Test: ${env.BUILD_URL}"
           )
         }
@@ -108,7 +128,7 @@ pipeline {
       options {
         timeout(time: 3, unit: "HOURS")
       }
-      
+
       input{
         message "Promote to Test?"
         ok "Yes"
@@ -117,7 +137,7 @@ pipeline {
       when {
         expression { return affectedApps }
       }
-      steps {   
+      steps {
         script {
           Exception caughtException = null
           catchError(buildResult: 'SUCCESS', stageResult: 'ABORTED'){
@@ -126,7 +146,10 @@ pipeline {
               openshift.withCluster() {
                 openshift.withProject() {
                   affectedApps.each { affected ->
-                    openshift.tag("${affected}:latest", "${affected}:test")
+                    def is = openshift.selector("is", "${affected}")
+                    if ( is.exists() ) {
+                      openshift.tag("${affected}:dev", "${affected}:test")
+                    }
                   }
                 }
               }
@@ -140,7 +163,7 @@ pipeline {
             if (caughtException){
               error caughtException.message
             }
-          }          
+          }
         }
         script {
           Exception caughtException = null
@@ -157,7 +180,7 @@ pipeline {
                     }
                   }
                 }
-              }                      
+              }
             }
             catch(org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e){
               error "Caught ${e.toString()}"
@@ -170,14 +193,27 @@ pipeline {
             }
           }
         }
-      }       
-    }  
+      }
+    }
+    stage("Regression Test"){
+      steps {
+        sh "npm ci"
+        sh "npm run tmw-e2e:regression 'https://tenant-management-webapp-test.os99.int.alberta.ca/'"
+      }
+      post {
+        always {
+          sh "node ./apps/tenant-management-webapp-e2e/src/support/multiple-cucumber-html-reporter.js"
+          zip zipFile: 'cypress-regression-test-html-report.zip', archive: false, dir: 'dist/cypress'
+          archiveArtifacts artifacts: 'cypress-regression-test-html-report.zip'
+        }
+      }
+    }
   }
-  post { 
+  post {
     success {
       slackSend color: "good", message: "Core Services pipeline ${env.BUILD_NUMBER} Completed."
     }
-    failure { 
+    failure {
       slackSend color: "bad", message: "Core Services pipeline ${env.BUILD_NUMBER} Failed: ${env.BUILD_URL}"
     }
   }

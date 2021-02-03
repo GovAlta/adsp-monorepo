@@ -1,5 +1,5 @@
-export interface Repository<E extends object, V> {
+export interface Repository<E extends object, V, I = string> {
   delete(entity: E): Promise<boolean>
-  get(id: string): Promise<E>
+  get(id: I): Promise<E>
   save(entity: E): Promise<E>
 }

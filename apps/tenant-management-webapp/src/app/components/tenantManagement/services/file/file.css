@@ -1,0 +1,97 @@
+.file-header {
+  display: inline;
+}
+
+.file-header-div {
+  margin-top: 58px;
+  margin-bottom: 26px;
+}
+
+.file-header-tag-active {
+  font-size: 14px;
+  border-radius: 4px;
+  background: #00853f 0% 0% no-repeat padding-box;
+  padding-left: 6px;
+  padding-right: 6px;
+  padding-bottom: 4px;
+  padding-top: 3px;
+  margin-left: 29px;
+  position: relative;
+  top: -10px;
+  color: white;
+}
+
+.file-header-tag-inactive {
+  font-size: 14px;
+  border-radius: 4px;
+  background: #feba35 0% 0% no-repeat padding-box;
+  padding-left: 6px;
+  padding-right: 6px;
+  padding-bottom: 4px;
+  padding-top: 3px;
+  margin-left: 29px;
+  position: relative;
+  top: -10px;
+}
+
+.file-header-tag-disabled {
+  font-size: 14px;
+  color: white;
+  border-radius: 4px;
+  background: red 0% 0% no-repeat padding-box;
+  padding-left: 6px;
+  padding-right: 6px;
+  padding-bottom: 4px;
+  padding-top: 3px;
+  margin-left: 29px;
+  position: relative;
+  top: -10px;
+}
+
+.file-tab {
+  border: 0px;
+}
+
+.file-link-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333333;
+  display: inline-block;
+}
+
+.file-disable-btn {
+  color: red;
+  border-color: white;
+  border-width: 0px;
+  margin-top: 28px;
+  padding-left: 14px;
+  font-weight: 700px;
+}
+
+a:link {
+  color: #0070c4;
+}
+
+a:visited {
+  color: #756693;
+}
+
+a:hover {
+  color: #004f84;
+}
+
+a:focus {
+  outline-width: thin;
+  outline-style: solid;
+  outline-color: #004f84;
+  outline-offset: 0px;
+}
+
+.external-link {
+  width: 22px;
+  color: #333333;
+  display: inline-block;
+  margin-left: 4px;
+  position: relative;
+  top: -2px;
+}
