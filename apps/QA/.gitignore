@@ -1,8 +1,0 @@
-# Dependency directories
-/node_modules/
-
-cypress/cucumber-json/
-cypress/videos/
-cypress/screenshots/
-cypress/results/
-

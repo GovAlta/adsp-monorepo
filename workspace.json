@@ -200,34 +200,6 @@
         }
       }
     },
-    "QA": {
-      "root": "apps/QA",
-      "sourceRoot": "apps/QA/cypress",
-
-      "architect": {
-        "e2e": {
-          "builder": "@nrwl/cypress:cypress",
-          "options": {
-            "cypressConfig": "apps/QA/cypress.json",
-            "tsConfig": "apps/QA/tsconfig.json",
-            "devServerTarget": "tenant-management-webapp:serve"
-          },
-          "configurations": {
-            "production": {
-              "devServerTarget": "tenant-management-webapp:serve:production"
-            }
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:lint",
-          "options": {
-            "linter": "eslint",
-            "tsConfig": ["apps/QA/tsconfig.json"],
-            "exclude": ["**/node_modules/**", "!apps/QA/**/*"]
-          }
-        }
-      }
-    },
     "tenant-management-api": {
       "root": "apps/tenant-management-api",
       "sourceRoot": "apps/tenant-management-api/src",
