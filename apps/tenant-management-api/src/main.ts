@@ -1,13 +1,10 @@
 import * as fs from 'fs';
 import * as express from 'express';
 import * as healthCheck from 'express-healthcheck';
-<<<<<<< apps/tenant-management-api/src/main.ts
 import { environment } from './environments/environment';
 import { createConfigService} from './configuration-management';
-=======
 import { connectMongo, disconnect } from './mongo/index';
 import directoryRouter from './app/router/directory';
-
 import { FileTenantController } from './app/api/controllers/file-tenanent.controller';
 import * as swaggerUi from 'swagger-ui-express';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
@@ -21,7 +18,7 @@ import KcAdminClient from 'keycloak-admin';
 import { logger } from './middleware/logger';
 
 import * as cors from 'cors';
->>>>>>> apps/tenant-management-api/src/main.ts
+
 
 const app = express();
 app.use(express.json());
@@ -104,7 +101,6 @@ app.get('/swagger/json/v1', (req, res) => {
   res.json(JSON.parse(swaggerDocument));
 });
 
-<<<<<<< apps/tenant-management-api/src/main.ts
 createConfigService(app);
 
 const port = process.env.port || 3333;
@@ -113,7 +109,6 @@ useExpressServer(app, {
   routePrefix: '/api',
   controllers: [FileTenantController],
 });
-const port = process.env.PORT || 3333;
 
 createConfigService(app);
 

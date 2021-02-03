@@ -10,7 +10,7 @@ import { createRepositories } from './mongo';
 export const createConfigService = ({
 })=> {
 const logger = createLogger(
-  'configuration-management-service', 
+  'configuration-management-service',
   environment.LOG_LEVEL || 'info'
 );
 
@@ -24,23 +24,23 @@ Promise.all([
 createRepositories({...environment, logger})
 ]).then(([repositories]) => {
   app.get(
-    '/health', 
+    '/health',
     (req, res) => res.json({
       db: repositories.isConnected(),
     })
   );
-  
+
   applyConfigMiddleware(
-    app, 
-    { 
+    app,
+    {
       ...repositories,
-      logger,  
+      logger,
     }
   );
 }
 );
-    
-const port = process.env.port || 3335;
+
+const port = process.env.port || 3340;
 const server = app.listen(port, () => {
   console.log(`Listening at http://localhost:${port}/api`);
 });
