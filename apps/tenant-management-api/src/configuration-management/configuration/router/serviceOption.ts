@@ -1,28 +1,24 @@
 import { Router } from 'express';
 import { Logger } from 'winston';
-import {
-  ServiceConfigurationRepository,
-  TenantConfigurationRepository,
-} from '../repository';
+import { ServiceConfigurationRepository } from '../repository';
 import { mapServiceOption } from './mappers';
-import { ServiceOptionEntity, TenantConfigEntity } from '../model';
-import {
-  assertAuthenticatedHandler,
-  User,
-  UnauthorizedError,
-  NotFoundError,
-} from '@core-services/core-common';
+import { ServiceOptionEntity } from '../model';
+import {  NotFoundError } from '@core-services/core-common';
 
 interface ServiceOptionRouterProps {
-  logger: Logger;
-  serviceConfigRepository: ServiceConfigurationRepository;
+  logger: Logger,
+  serviceConfigurationRepository: ServiceConfigurationRepository;
 }
 
 export const createConfigurationRouter = ({
-  logger,
-  serviceConfigRepository,
+  logger: Logger,
+  serviceConfigurationRepository,
 }: ServiceOptionRouterProps) => {
   const serviceOptionRouter = Router();
+
+  serviceOptionRouter.get('/serviceOptions', (req, res) => {
+    res.send('{message: Get Test Complete}');
+  });
 
   /**
    * @swagger
@@ -46,20 +42,16 @@ export const createConfigurationRouter = ({
    */
   serviceOptionRouter.get(
     '/serviceOptions/:service',
-    assertAuthenticatedHandler,
+
     (req, res, next) => {
-      const user = req.user as User;
+
       const { service } = req.params;
 
-      serviceConfigRepository
+      serviceConfigurationRepository
         .get(service)
         .then((serviceOptionEntity) => {
           if (!serviceOptionEntity) {
             throw new NotFoundError('Service Options', service);
-          } else if (!serviceOptionEntity.canAccess(user)) {
-            throw new UnauthorizedError(
-              'User not authorized to access service option.'
-            );
           } else {
             res.json(mapServiceOption(serviceOptionEntity));
           }
@@ -90,23 +82,17 @@ export const createConfigurationRouter = ({
    */
   serviceOptionRouter.post(
     '/serviceOptions/:service',
-    assertAuthenticatedHandler,
     (req, res, next) => {
-      const user = req.user as User;
       const { service } = req.params;
       const data = req.body;
 
-      serviceConfigRepository
+      serviceConfigurationRepository
         .get(service)
         .then((serviceOptionEntity) => {
           if (!serviceOptionEntity) {
             throw new NotFoundError('Service Options', service);
-          } else if (!serviceOptionEntity.canAccess(user)) {
-            throw new UnauthorizedError(
-              'User not authorized to access service option.'
-            );
           } else {
-            return ServiceOptionEntity.create(serviceConfigRepository, {
+            return ServiceOptionEntity.create(serviceConfigurationRepository, {
               ...data,
               serviceOption: service,
             });
@@ -119,7 +105,6 @@ export const createConfigurationRouter = ({
         .catch((err) => next(err));
     }
   );
-
   
   return serviceOptionRouter;
 };
