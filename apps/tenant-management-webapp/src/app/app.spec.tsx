@@ -1,28 +1,29 @@
 import React from 'react';
-import { render } from '@testing-library/react';
+import { screen, render, waitFor } from '@testing-library/react';
 
 import { BrowserRouter } from 'react-router-dom';
 
 import App from './app';
+import { act } from 'react-test-renderer';
+import { stubConfig } from './utils/useConfig';
 
 describe('App', () => {
-  it('should render successfully', () => {
-    const { baseElement } = render(
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    );
 
-    expect(baseElement).toBeTruthy();
-  });
+  beforeEach(() => {
+    stubConfig();
+  })
 
-  it('should have a greeting as the title', () => {
-    const { getByText } = render(
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    );
+  it('should render successfully', async () => {
+    act(() => {
+      render(
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      );
+    })
 
-    expect(getByText('A platform built for government services')).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText('A platform built for government services')).toBeTruthy()
+    });
   });
 });

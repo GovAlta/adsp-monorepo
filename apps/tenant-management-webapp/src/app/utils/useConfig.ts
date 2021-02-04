@@ -50,6 +50,15 @@ export function useConfig(): [Config, State, string] {
   return [config, state, error];
 }
 
+/**
+ * Test helper method to stub out config data,
+ * allowing the hook to respond with a `loaded` state
+ */
+export function stubConfig(config?: Config) {
+  const data = config ? JSON.stringify(config) : '{}';
+  localStorage.setItem('config-key', data);
+}
+
 // Private
 
 async function fetchConfig(): Promise<Config> {
