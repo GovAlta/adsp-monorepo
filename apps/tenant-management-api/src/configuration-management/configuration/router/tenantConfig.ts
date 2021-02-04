@@ -1,17 +1,14 @@
 import { Request, Response, Router } from 'express';
-import { Logger } from 'winston';
 import { TenantConfigurationRepository } from '../repository';
 import { mapTenantConfig } from './mappers';
 import { TenantConfigEntity } from '../model';
 import { NotFoundError } from '@core-services/core-common';
 
 interface TenantConfigRouterProps {
-  logger: Logger,
   tenantConfigurationRepository: TenantConfigurationRepository;
 }
 
 export const createTenantConfigurationRouter = ({
-  logger: Logger,
   tenantConfigurationRepository,
 }: TenantConfigRouterProps) => {
   const tenantConfigRouter = Router();
@@ -37,7 +34,7 @@ export const createTenantConfigurationRouter = ({
    *         description: Tenant configuration succesfully retrieved.
    */
   tenantConfigRouter.get(
-    '/tenantConfig/:realmName',
+    '/:realmName',
 
     (req, res, next) => {
 
@@ -77,7 +74,7 @@ export const createTenantConfigurationRouter = ({
    *         description: Tenant Configuration succesfully created.
    */
   tenantConfigRouter.post(
-    '/tenantConfig/',
+    '/',
     (req: Request, res: Response, next) => {
       const { realmName } = req.params;
       const data = req.body;

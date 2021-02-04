@@ -101,8 +101,6 @@ app.get('/swagger/json/v1', (req, res) => {
   res.json(JSON.parse(swaggerDocument));
 });
 
-createConfigService(app);
-
 const port = process.env.port || 3333;
 
 useExpressServer(app, {
@@ -110,7 +108,7 @@ useExpressServer(app, {
   controllers: [FileTenantController],
 });
 
-createConfigService(app);
+createConfigService(app, environment);
 
 const server = app.listen(port, () => {
   console.log(`Listening at http://localhost:${port}/api`);

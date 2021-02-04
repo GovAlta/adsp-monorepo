@@ -1,4 +1,4 @@
-import { Repository, Results } from '@core-services/core-common';
+import { Repository } from '@core-services/core-common';
 import { TenantConfigEntity } from '../model';
 import { TenantConfig} from '../types';
 

@@ -1,17 +1,14 @@
 import { Request, Response, Router } from 'express';
-import { Logger } from 'winston';
 import { ServiceConfigurationRepository } from '../repository';
 import { mapServiceOption } from './mappers';
 import { ServiceOptionEntity } from '../model';
 import { NotFoundError } from '@core-services/core-common';
 
 interface ServiceOptionRouterProps {
-  logger: Logger,
   serviceConfigurationRepository: ServiceConfigurationRepository;
 }
 
 export const createConfigurationRouter = ({
-  logger: Logger,
   serviceConfigurationRepository,
 }: ServiceOptionRouterProps) => {
   const serviceOptionRouter = Router();
@@ -37,14 +34,14 @@ export const createConfigurationRouter = ({
    *         description: Service options succesfully retrieved.
    */
   serviceOptionRouter.get(
-    '/serviceOptions/:service',
+    '/:service',
 
     (req, res, next) => {
 
       const { service } = req.params;
 
       serviceConfigurationRepository
-        .get(service)
+        .getConfigOption(service)
         .then((serviceOptionEntity) => {
 
           if (!serviceOptionEntity) {
@@ -60,7 +57,7 @@ export const createConfigurationRouter = ({
   /**
    * @swagger
    *
-   * /configuration/v1/serviceOptions/{service}:
+   * /configuration/v1/serviceOptions/:
    *   post:
    *     tags:
    *     - ServiceOption
@@ -77,25 +74,22 @@ export const createConfigurationRouter = ({
    *         description: Service options succesfully created.
    */
   serviceOptionRouter.post(
-    '/serviceOptions/',
+    '/',
     (req: Request, res: Response, next) => {
       const { service } = req.params;
       const data = req.body;
 
       serviceConfigurationRepository
-        .get(service)
+        .getConfigOption(service)
         .then((serviceOptionEntity) => {
-          if (!serviceOptionEntity) {
-            ServiceOptionEntity.delete(serviceConfigurationRepository, {
-              ...data,
-              config: data
-            });
+          res.send(serviceOptionEntity.id);
 
-            return ServiceOptionEntity.create(serviceConfigurationRepository, {
-              ...data,
-              serviceOption: data
-            });
+          if (!serviceOptionEntity) {
+            return serviceOptionEntity.update(data);
           } else {
+
+            res.send(data);
+
             return ServiceOptionEntity.create(serviceConfigurationRepository, {
               ...data,
               serviceOption: serviceOptionEntity,

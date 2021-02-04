@@ -1,4 +1,4 @@
-import { Repository, Results } from '@core-services/core-common';
+import { Repository } from '@core-services/core-common';
 import { ServiceOptionEntity } from '../model';
 import { ServiceOption} from '../types';
 

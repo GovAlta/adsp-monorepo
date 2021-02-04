@@ -1,15 +1,15 @@
-import { AssertRole, UnauthorizedError, Update, User } from '@core-services/core-common';
+import { Update } from '@core-services/core-common';
 import { ServiceConfigurationRepository } from '../repository';
-import { ServiceOption, ServiceUserRoles } from '../types';
+import { ServiceOption } from '../types';
 
-export class ServiceOptionEntity implements ServiceOption{
+export class ServiceOptionEntity implements ServiceOption {
   service: string;
   id: string
   version: string;
   configOptions: string;
 
   constructor(
-    private repository: ServiceConfigurationRepository, 
+    private repository: ServiceConfigurationRepository,
     serviceOption: ServiceOption
   ) {
     this.service = serviceOption.service;
@@ -18,7 +18,7 @@ export class ServiceOptionEntity implements ServiceOption{
     this.configOptions = serviceOption.configOptions;
   }
   static create(
-    repository: ServiceConfigurationRepository, 
+    repository: ServiceConfigurationRepository,
     serviceOption: ServiceOption
   ) {
     const entity = new ServiceOptionEntity(repository, serviceOption);
@@ -26,13 +26,27 @@ export class ServiceOptionEntity implements ServiceOption{
     return repository.save(entity);
   }
 
-  static delete(
-    repository: ServiceConfigurationRepository, 
-    serviceOption: ServiceOption
-  ) {
-    
-    const entity = new ServiceOptionEntity(repository, serviceOption);
+  update(
+    update: Update<ServiceOption>) {
 
-    return repository.delete(entity);
+    if (update.service) {
+      this.service = update.service;
+    }
+
+    if (update.version) {
+      this.version = update.version;
+    }
+
+    if (update.configOptions) {
+      this.configOptions = update.configOptions;
+    }
+
+    return this.repository.save(this);
+  }
+
+  delete(serviceOption: ServiceOption) {
+    const entity = new ServiceOptionEntity(this.repository, serviceOption);
+
+    return this.repository.delete(entity);
   }
 }

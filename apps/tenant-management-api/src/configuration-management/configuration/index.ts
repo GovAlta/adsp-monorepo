@@ -23,19 +23,19 @@ export const applyConfigMiddleware = (
 
   const serviceConfigRouterProps = {
     logger,
-    serviceConfigurationRepository    
+    serviceConfigurationRepository
   }
 
   const tenantConfigRouterProps = {
     logger,
-    tenantConfigurationRepository    
+    tenantConfigurationRepository
   }
 
   const serviceConfigRouter = createConfigurationRouter(serviceConfigRouterProps);
   const tenantConfigRouter = createTenantConfigurationRouter(tenantConfigRouterProps);
 
-  app.use('/api/configuration/v1/', serviceConfigRouter);
-  app.use('/api/configuration/v1/', tenantConfigRouter);
+  app.use('/api/configuration/v1/serviceOptions/', serviceConfigRouter);
+  app.use('/api/configuration/v1/tenantConfig/', tenantConfigRouter);
 
   let swagger = null;
   app.use('/swagger/docs/v1', (req, res) => {
@@ -50,6 +50,6 @@ export const applyConfigMiddleware = (
           res.json(swagger);
         }
       });
-    } 
+    }
   });
 }
