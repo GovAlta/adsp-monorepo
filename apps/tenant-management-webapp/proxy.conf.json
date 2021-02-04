@@ -4,6 +4,11 @@
     "secure": false,
     "changeOrigin": true
   },
+  "/config/*": {
+    "target": "https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca",
+    "secure": true,
+    "changeOrigin": true
+  },
   "/health": {
     "target": "http://localhost:3333",
     "secure": false,

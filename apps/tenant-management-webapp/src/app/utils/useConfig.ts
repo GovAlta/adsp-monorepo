@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 
-export const configUrl = '/config/config.json';
-export const configKey = 'config-key';
+const configUrl = '/config/config.json';
+const configKey = 'config-key';
 
 /**
  * Interface of the properties contained within the config.json file
  * returned from the API
  */
 interface Config {
+  eventServiceUrl: string,
   notificationServiceUrl: string;
   keyCloakUrl: string;
   tenantManagementApi: string;
@@ -52,9 +53,6 @@ export function useConfig(): [Config, State, string] {
 // Private
 
 async function fetchConfig(): Promise<Config> {
-  if (process.env.NODE_ENV === 'development') {
-    return null;
-  }
   let cached = localStorage.getItem(configKey);
   if (!cached) {
     const res = await fetch(configUrl);
