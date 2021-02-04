@@ -12,7 +12,7 @@
     "start:tenant-management-webapp": "nx run tenant-management-webapp:serve",
     "affected:apps": "nx affected:apps",
     "affected:libs": "nx affected:libs",
-    "affected:build": "nx affected:build",
+    "affected:build": "nx affected:build:production",
     "affected:e2e": "nx affected:e2e",
     "affected:test": "nx affected:test",
     "affected:lint": "nx affected:lint",
