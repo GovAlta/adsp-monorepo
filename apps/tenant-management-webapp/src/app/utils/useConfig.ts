@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
-const configUrl = '/config/config.json';
-const configKey = 'config-key';
+export const configUrl = '/config/config.json';
+export const configKey = 'config-key';
 
 /**
  * Interface of the properties contained within the config.json file
