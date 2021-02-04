@@ -80,8 +80,7 @@ pipeline {
     }
     stage("Cypress Test"){
       steps {
-        sh "npm ci"
-        sh "nx e2e tenant-management-webapp-e2e --dev-server-target='' --headless=true --env.'TAGS'='@smoke-test or @dev-build' --baseUrl 'https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca/'"
+        sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --headless=true --env.'TAGS'='@smoke-test or @dev-build' --baseUrl 'https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca/'"
       }
       post {
         always {

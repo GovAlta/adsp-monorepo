@@ -105,14 +105,10 @@ pipeline {
     }
     stage("Smoke Test"){
       steps {
-        // sh "cd ./apps/QA/ && npm ci"
-        // sh "cd ./apps/QA/ && npm run ci:smokeTest-headless"
-        sh "npm ci"
         sh "npm run tmw-e2e:smoke 'https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca/'"
       }
       post {
         always {
-          cucumber '**/cucumber-json/*.json'
           sh "node ./apps/tenant-management-webapp-e2e/src/support/multiple-cucumber-html-reporter.js"
           zip zipFile: 'cypress-smoke-test-html-report.zip', archive: false, dir: 'dist/cypress'
           archiveArtifacts artifacts: 'cypress-smoke-test-html-report.zip'
@@ -122,6 +118,10 @@ pipeline {
             color: "good",
             message: "Core Services pipeline ${env.BUILD_NUMBER} ready for promotion to Test: ${env.BUILD_URL}"
           )
+        }
+        failure {
+          // only publish smoke test results when smoke test fails. Otherwise, test results for the later stage, i.e. regression, will be published.
+          cucumber '**/cucumber-json/*.json'
         }
       }
     }
@@ -198,7 +198,6 @@ pipeline {
     }
     stage("Regression Test"){
       steps {
-        sh "npm ci"
         sh "npm run tmw-e2e:regression 'https://tenant-management-webapp-test.os99.int.alberta.ca/'"
       }
       post {
