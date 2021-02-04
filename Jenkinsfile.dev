@@ -1,6 +1,7 @@
 // This Jenskins file is used for builds of branches.
 // The pipeline does not use SCM and this file maintained here for reference only.
 def baseCommand = "--base=origin/master --head=HEAD"
+def affectedApps = []
 def push_sha
 
 pipeline {
@@ -9,7 +10,7 @@ pipeline {
   }
   agent {
     node {
-      label "node12"
+      label "node12-cypress"
     }
   }
   parameters {
@@ -22,6 +23,16 @@ pipeline {
       name: 'source_ref',
       defaultValue: 'refs/heads/master',
       description: 'Ref to build.'
+    )
+    booleanParam(
+      name: 'deploy_branch',
+      defaultValue: false,
+      description: 'Flag indicating if the branch deployment should be created.'
+    )
+    booleanParam(
+      name: 'run_cypress',
+      defaultValue: false,
+      description: 'Flag indicating if the cypress e2e tests should be run.'
     )
   }
   triggers {
@@ -75,21 +86,84 @@ pipeline {
     }
     stage("Build") {
       steps {
-        sh "npx nx affected --target=build ${baseCommand} --parallel"
+        sh "npx nx affected --target=build --configuration=production ${baseCommand} --parallel"
       }
     }
     stage("Cypress Test"){
+      when {
+        expression { return params.run_cypress }
+      }
       steps {
         sh "npm ci"
         sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --headless=true --env.'TAGS'='@smoke-test or @dev-build' --baseUrl 'https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca/'"
       }
       post {
         always {
-          junit '**/results/*.xml'
-          cucumber '**/cucumber-json/*.json'
+          junit "**/results/*.xml"
+          cucumber "**/cucumber-json/*.json"
           sh "node ./apps/tenant-management-webapp-e2e/src/support/multiple-cucumber-html-reporter.js"
           zip zipFile: 'cypress-smoke-test-html-report.zip', archive: false, dir: 'dist/cypress'
           archiveArtifacts artifacts: 'cypress-smoke-test-html-report.zip'
+        }
+      }
+    }
+    stage("Deploy Branch") {
+      when {
+        expression {
+          return params.deploy_branch
+        }
+      }
+      steps {
+        script {
+          affectedApps = sh (
+            script: "npx nx affected:apps --plain ${baseCommand}",
+            returnStdout: true
+          ).tokenize()
+
+          def deployBranch = params.source_ref.split('/').last()
+
+          openshift.withCluster() {
+            openshift.withProject('core-services-dev') {
+              affectedApps.each { deployApp ->
+
+                // Check for managed deployment file.
+                def managedDeployFile = ".openshift/managed/${deployApp}.yml"
+                if (fileExists(file: managedDeployFile)) {
+                  echo "Applying managed deployment: ${deployApp} ..."
+
+                  // Filtering by label is handled in groovy because the label selector on
+                  // openshift.apply does not appear to work properly with a list.
+                  def deployment = openshift.process(
+                    readYaml(file: managedDeployFile),
+                    "-p",
+                    "NAME_SUFFIX=-${deployBranch}",
+                    "BUILD_TAG=b-${deployBranch}",
+                    "DEPLOY_TAG=b-${deployBranch}",
+                    "ROUTE_HOST=${deployApp}-${deployBranch}.os99.gov.ab.ca"
+                  )
+                  .findAll{ it.metadata.labels["apply-branch"] == 'true' }
+
+                  def deployed = openshift.apply(deployment)
+
+                  def bc = deployed.narrow('bc')
+                  if ( bc.exists() ) {
+                    if(deployApp.endsWith("app")){
+                      bc.startBuild("--from-dir=dist/apps/${deployApp}", "--wait", "--follow")
+                    } else {
+                      bc.startBuild("--from-dir=.", "--wait", "--follow")
+                    }
+                  }
+
+                  def dc = deployed.narrow('dc')
+                  if ( dc.exists() ) {
+                    def rm = dc.rollout()
+                    rm.latest()
+                    rm.status()
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }

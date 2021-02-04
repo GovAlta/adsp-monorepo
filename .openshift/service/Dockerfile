@@ -5,3 +5,4 @@ COPY . .
 
 ENV SERVICE ${SERVICE}
 CMD npm run -d service dist/apps/${SERVICE}/main.js
+

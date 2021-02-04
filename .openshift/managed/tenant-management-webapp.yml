@@ -1,0 +1,194 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: tenant-management-webapp
+  annotations:
+    tags: core-services, tenant-management
+    template.openshift.io/provider-display-name: platform team
+    description: Tenant Management Web App
+labels:
+  application: tenant-management
+parameters:
+  - name: INFRA_NAMESPACE
+    description: Name of the infrastructure project.
+    displayName: Infra Namespace
+    value: core-services-infra
+    required: true
+  - name: NAME_SUFFIX
+    description: Suffix applied to the names of the objects created.
+    displayName: Name Suffix
+    value: ""
+  - name: BUILD_TAG
+    description: Name of the ImageStreamTag to build.
+    displayName: Build Tag
+    value: latest
+  - name: DEPLOY_TAG
+    description: Name of the ImageStreamTag to deploy.
+    displayName: Deploy Tag
+    value: latest
+  - name: ROUTE_HOST
+    description: Host for the route.
+    displayName: Route Host
+    value: ""
+objects:
+  # ImageStream is here for reference.
+  # There is a single ImageStream created in the infra project.
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      labels:
+        app: tenant-management
+        component: app
+        apply-infra: "true"
+      name: tenant-management-webapp
+      namespace: ${INFRA_NAMESPACE}
+    spec: {}
+
+  # BuildConfig is created for the primary pipeline as well as branch deployment.
+  # NOTE: Each instance should publish a unique Tag to the common ImageStream in infra.
+  - apiVersion: v1
+    kind: BuildConfig
+    metadata:
+      labels:
+        app: tenant-management${NAME_SUFFIX}
+        component: app
+        apply-infra: "true"
+        apply-branch: "true"
+      name: tenant-management-webapp${NAME_SUFFIX}
+    spec:
+      output:
+        to:
+          kind: ImageStreamTag
+          name: tenant-management-webapp:${BUILD_TAG}
+          namespace: ${INFRA_NAMESPACE}
+      source:
+        binary: {}
+        type: Binary
+      strategy:
+        sourceStrategy:
+          from:
+            kind: ImageStreamTag
+            name: nginx:latest
+            namespace: openshift
+        type: Source
+
+  # ConfigMap is here for reference.
+  # ConfigMap is required but not created automatically; needs manual configuration.
+  # - apiVersion: v1
+  #   kind: ConfigMap
+  #   metadata:
+  #     labels:
+  #       app: tenant-management
+  #       component: app
+  #     name: tenant-management-webapp
+  #   data:
+  #     configuration: |-
+  #       {
+  #           "eventServiceApiUrl": "https://event-service-core-services-dev.os99.gov.ab.ca",
+  #           "notificationServiceUrl": "https://notification-service-core-services-dev.os99.gov.ab.ca",
+  #           "keycloakUrl": "https://access-uat.alpha.alberta.ca",
+  #           "tenantManagementApi": "https://tenant-management-api-core-services-dev.os99.gov.ab.ca",
+  #           "accessManagementApi": "https://access-dev.os99.gov.ab.ca/auth",
+  #           "uiComponentUrl": "https://ui-components-ui-components-dev.os99.gov.ab.ca"
+  #       }
+
+  # DeploymentConfig (and Service and Route) is created in each environment of the
+  # primary pipline as well as branch deployment.
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      labels:
+        app: tenant-management${NAME_SUFFIX}
+        component: app
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: tenant-management-webapp${NAME_SUFFIX}
+    spec:
+      replicas: 1
+      selector:
+        app: tenant-management${NAME_SUFFIX}
+        component: app
+      strategy:
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            app: tenant-management${NAME_SUFFIX}
+            component: app
+        spec:
+          containers:
+            - env:
+                - name: PORT
+                  value: "8080"
+              imagePullPolicy: IfNotPresent
+              name: tenant-management-webapp
+              ports:
+                - containerPort: 8080
+                  name: http
+                  protocol: TCP
+              volumeMounts:
+                - mountPath: /opt/app-root/src/config
+                  name: config-volume
+          volumes:
+            - configMap:
+                defaultMode: 420
+                items:
+                  - key: configuration
+                    path: config.json
+                name: tenant-management-webapp
+              name: config-volume
+      triggers:
+        - type: ImageChange
+          imageChangeParams:
+            containerNames:
+              - tenant-management-webapp
+            from:
+              kind: ImageStreamTag
+              name: tenant-management-webapp:${DEPLOY_TAG}
+              namespace: ${INFRA_NAMESPACE}
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: tenant-management${NAME_SUFFIX}
+        component: app
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: tenant-management-webapp${NAME_SUFFIX}
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          targetPort: 8080
+      selector:
+        app: tenant-management${NAME_SUFFIX}
+        component: app
+  - apiVersion: v1
+    kind: Route
+    metadata:
+      labels:
+        app: tenant-management${NAME_SUFFIX}
+        component: app
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: tenant-management-webapp${NAME_SUFFIX}
+    spec:
+      host: ${ROUTE_HOST}
+      port:
+        targetPort: http
+      tls:
+        termination: edge
+      to:
+        kind: Service
+        name: tenant-management-webapp${NAME_SUFFIX}
+        weight: 100
+      wildcardPolicy: None
