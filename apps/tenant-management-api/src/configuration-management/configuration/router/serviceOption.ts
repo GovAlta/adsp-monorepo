@@ -82,14 +82,10 @@ export const createConfigurationRouter = ({
       serviceConfigurationRepository
         .getConfigOption(service)
         .then((serviceOptionEntity) => {
-          res.send(serviceOptionEntity.id);
 
           if (!serviceOptionEntity) {
             return serviceOptionEntity.update(data);
           } else {
-
-            res.send(data);
-
             return ServiceOptionEntity.create(serviceConfigurationRepository, {
               ...data,
               serviceOption: serviceOptionEntity,
