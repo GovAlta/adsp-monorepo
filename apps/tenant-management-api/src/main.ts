@@ -108,7 +108,7 @@ app.get('/swagger/json/v1', (req, res) => {
 
 const port = process.env.port || 3333;
 
-createConfigService(app, environment);
+createConfigService(app);
 
 const server = app.listen(port, () => {
   console.log(`Listening at http://localhost:${port}/api`);
