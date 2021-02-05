@@ -8,6 +8,7 @@ export const configKey = 'config-key';
  * returned from the API
  */
 interface Config {
+  eventServiceUrl: string,
   notificationServiceUrl: string;
   keyCloakUrl: string;
   tenantManagementApi: string;
@@ -49,12 +50,18 @@ export function useConfig(): [Config, State, string] {
   return [config, state, error];
 }
 
+/**
+ * Test helper method to stub out config data,
+ * allowing the hook to respond with a `loaded` state
+ */
+export function stubConfig(config?: Config) {
+  const data = config ? JSON.stringify(config) : '{}';
+  localStorage.setItem('config-key', data);
+}
+
 // Private
 
 async function fetchConfig(): Promise<Config> {
-  if (process.env.NODE_ENV === 'development') {
-    return null;
-  }
   let cached = localStorage.getItem(configKey);
   if (!cached) {
     const res = await fetch(configUrl);

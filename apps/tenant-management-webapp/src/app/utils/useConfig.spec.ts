@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react-hooks';
-import { useConfig, configUrl, configKey } from './useConfig';
+import { useConfig, configUrl, configKey, stubConfig } from './useConfig';
 
 describe('useConfig', () => {
   it('fetches the config settings', async () => {
@@ -46,4 +46,35 @@ describe('useConfig', () => {
       expect(config).toBeNull()
     }))
   });
+
+  it('stubs the config with default data', async () => {
+    stubConfig()
+
+    let _config;
+    await act(async () => renderHook(() => {
+      const [config,] = useConfig()
+      _config = config
+    }));
+    expect(_config).toEqual({});
+  })
+
+  it('stubs the config with custom data', async () => {
+    const config = {
+      accessManagementApi: 'am',
+      eventServiceUrl: 'es',
+      keyCloakUrl: 'kc',
+      notificationServiceUrl: 'ns',
+      tenantManagementApi: 'tm',
+      uiComponentUrl: 'ui'
+    };
+
+    stubConfig(config)
+
+    let _config;
+    await act(async () => renderHook(() => {
+      const [config,] = useConfig()
+      _config = config
+    }));
+    expect(_config).toEqual(config);
+  })
 });
