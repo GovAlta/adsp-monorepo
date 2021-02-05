@@ -32,6 +32,8 @@ export const createConfigurationRouter = ({
    *     responses:
    *       200:
    *         description: Service options succesfully retrieved.
+   *       404:
+   *         description: Service not found.
    */
   serviceOptionRouter.get(
     '/:service',
@@ -59,15 +61,14 @@ export const createConfigurationRouter = ({
    *
    * /configuration/v1/serviceOptions/:
    *   post:
-   *     tags:
-   *     - ServiceOption
+   *     tags: [ServiceOption]
    *     description: Creates a service option configuration.
    *     requestBody:
    *       required: true
    *       content:
    *         application/json:
    *           schema:
-   *             type: object
+   *             $ref: '#.../model/ServiceOptionEntity'
    *
    *     responses:
    *       200:
@@ -85,7 +86,7 @@ export const createConfigurationRouter = ({
           return ServiceOptionEntity.create(serviceConfigurationRepository, {
             ...data,
             serviceOption: serviceOptionEntity,
-            });
+          });
         })
         .then((entity) => {
           res.json(mapServiceOption(entity));
@@ -95,6 +96,26 @@ export const createConfigurationRouter = ({
     }
   );
 
+  /**
+   * @swagger
+   *
+   * /configuration/v1/serviceOptions/:
+   *   put:
+   *     tags: [ServiceOption]
+   *     description: Updates a service option configuration.
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#.../model/ServiceOptionEntity'
+   *
+   *     responses:
+   *       200:
+   *         description: Service options succesfully Updated.
+   *       404:
+   *         description: Service not found.
+   */
   serviceOptionRouter.put(
     '/',
     (req: Request, res: Response, next) => {
@@ -106,7 +127,7 @@ export const createConfigurationRouter = ({
         .then((serviceOptionEntity) => {
           if (!serviceOptionEntity) {
             res.status(404).json({ error: `Service Options ${service} not found` })
-          }else{
+          } else {
             return serviceOptionEntity.update(data);
           }
         })

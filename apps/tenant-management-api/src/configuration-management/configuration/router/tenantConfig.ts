@@ -18,8 +18,7 @@ export const createTenantConfigurationRouter = ({
    *
    * /configuration/v1/tenantConfig/{realmName}:
    *   get:
-   *     tags:
-   *     - Subscription
+   *     tags: [TenantConfig]
    *     description: Retrieves tenant configuation for a realm.
    *     parameters:
    *     - name: realmName
@@ -27,11 +26,13 @@ export const createTenantConfigurationRouter = ({
    *       in: path
    *       required: true
    *       schema:
-   *         type: string
+   *         $ref: '#.../model/TenantConfigEntity'
    *
    *     responses:
    *       200:
    *         description: Tenant configuration succesfully retrieved.
+   *       404:
+   *         description: Tenant Configuration not found.
    */
   tenantConfigRouter.get(
     '/:realmName',
@@ -58,16 +59,14 @@ export const createTenantConfigurationRouter = ({
    *
    * /configuration/v1/tenantConfig/:
    *   post:
-   *     tags:
-   *     - TenantConfig
+   *     tags: [TenantConfig]
    *     description: Creates a tenant realm configuration.
    *     requestBody:
    *       required: true
    *       content:
    *         application/json:
    *           schema:
-   *             type: object
-
+   *             $ref: '#.../model/TenantConfigEntity'
    *     responses:
    *       200:
    *         description: Tenant Configuration succesfully created.
@@ -101,19 +100,19 @@ export const createTenantConfigurationRouter = ({
    *
    * /configuration/v1/tenantConfig/:
    *   put:
-   *     tags:
-   *     - TenantConfig
+   *     tags: [TenantConfig]
    *     description: Updates a tenant realm configuration.
    *     requestBody:
    *       required: true
    *       content:
    *         application/json:
    *           schema:
-   *             type: object
-
+   *             $ref: '#.../model/TenantConfigEntity'
    *     responses:
    *       200:
    *         description: Tenant Configuration succesfully created.
+   *       404:
+   *         description: Tenant Configuration not found.
    */
   tenantConfigRouter.put(
     '/',
