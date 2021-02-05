@@ -14,7 +14,6 @@ export function* getServerStatus() {
 }
 
 const callTenantApi = () => {
-  console.log('we get here right');
   return Promise.resolve(
     tenantManagementApi('health').then(function (data) {
       return data;
