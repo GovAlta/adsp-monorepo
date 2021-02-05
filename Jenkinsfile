@@ -106,7 +106,7 @@ pipeline {
     stage("Smoke Test"){
       steps {
         sh "npm ci"
-        sh "npm run tmw-e2e:smoke 'https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca/'"
+        sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --headless=true --env.'TAGS'='@smoke-test' --baseUrl 'https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca/'"
       }
       post {
         always {
@@ -122,6 +122,7 @@ pipeline {
         }
         failure {
           // only publish smoke test results when smoke test fails. Otherwise, test results for the later stage, i.e. regression, will be published.
+          junit '**/results/*.xml'
           cucumber '**/cucumber-json/*.json'
         }
       }
@@ -199,11 +200,12 @@ pipeline {
     }
     stage("Regression Test"){
       steps {
-       sh "npm ci"
-        sh "npm run tmw-e2e:regression 'https://tenant-management-webapp-test.os99.int.alberta.ca/'"
+        sh "npm ci"
+        sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --headless=true --env.'TAGS'='@regression' --baseUrl 'https://tenant-management-webapp-test.os99.int.alberta.ca/'"
       }
       post {
         always {
+          junit '**/results/*.xml'
           cucumber '**/cucumber-json/*.json'
           sh "node ./apps/tenant-management-webapp-e2e/src/support/multiple-cucumber-html-reporter.js"
           zip zipFile: 'cypress-regression-test-html-report.zip', archive: false, dir: 'dist/cypress'
