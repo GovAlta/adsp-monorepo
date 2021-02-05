@@ -1,7 +1,7 @@
 import { TenantConfigurationRepository } from '../repository';
 import { TenantConfig } from '../types';
 
-export class TenantConfigEntity implements TenantConfig{
+export class TenantConfigEntity implements TenantConfig {
   realmName: string;
   configurationSettingsList: string;
 
@@ -22,13 +22,16 @@ export class TenantConfigEntity implements TenantConfig{
     return repository.save(entity);
   }
 
-  static delete(
-    repository: TenantConfigurationRepository,
-    config: TenantConfig
-  ) {
+  update(update: TenantConfig) {
 
-    const entity = new TenantConfigEntity(repository, config);
+    if (update.configurationSettingsList) {
+      this.configurationSettingsList = update.configurationSettingsList;
+    }
 
-    return repository.delete(entity);
+    return this.repository.save(this);
+  }
+
+  delete(config: TenantConfig) {
+    return this.repository.delete(this);
   }
 }

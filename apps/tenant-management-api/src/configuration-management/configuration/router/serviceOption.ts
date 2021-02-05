@@ -82,14 +82,32 @@ export const createConfigurationRouter = ({
       serviceConfigurationRepository
         .getConfigOption(service)
         .then((serviceOptionEntity) => {
-
-          if (!serviceOptionEntity) {
-            return serviceOptionEntity.update(data);
-          } else {
-            return ServiceOptionEntity.create(serviceConfigurationRepository, {
-              ...data,
-              serviceOption: serviceOptionEntity,
+          return ServiceOptionEntity.create(serviceConfigurationRepository, {
+            ...data,
+            serviceOption: serviceOptionEntity,
             });
+        })
+        .then((entity) => {
+          res.send(mapServiceOption(entity));
+          return entity;
+        })
+        .catch((err) => next(err));
+    }
+  );
+
+  serviceOptionRouter.put(
+    '/',
+    (req: Request, res: Response, next) => {
+      const data = req.body;
+      const service = data.service;
+      
+      serviceConfigurationRepository
+        .getConfigOption(service)
+        .then((serviceOptionEntity) => {
+          if (!serviceOptionEntity) {
+            throw new NotFoundError('Service Option', service);
+          }else{
+            return serviceOptionEntity.update(data);
           }
         })
         .then((entity) => {

@@ -43,7 +43,6 @@ export const createTenantConfigurationRouter = ({
       tenantConfigurationRepository
         .get(realmName)
         .then((tenantConfigEntity) => {
-
           if (!tenantConfigEntity) {
             throw new NotFoundError('Tenant Config', realmName);
           } else {
@@ -83,20 +82,52 @@ export const createTenantConfigurationRouter = ({
         .get(realmName)
         .then((tenantConfigEntity) => {
           if (!tenantConfigEntity) {
-            TenantConfigEntity.delete(tenantConfigurationRepository, {
-              ...data,
-              config: data
-            });
-
-            return TenantConfigEntity.create(tenantConfigurationRepository, {
-              ...data,
-              tenantConfig: data
-            });
-          } else {
             return TenantConfigEntity.create(tenantConfigurationRepository, {
               ...data,
               tenantConfig: data,
             });
+          }
+        })
+        .then((entity) => {
+          res.send(mapTenantConfig(entity));
+          return entity;
+        })
+        .catch((err) => next(err));
+    }
+  );
+
+  /**
+   * @swagger
+   *
+   * /configuration/v1/tenantConfig/:
+   *   put:
+   *     tags:
+   *     - TenantConfig
+   *     description: Updates a tenant realm configuration.
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+
+   *     responses:
+   *       200:
+   *         description: Tenant Configuration succesfully created.
+   */
+  tenantConfigRouter.put(
+    '/',
+    (req: Request, res: Response, next) => {
+      const data = req.body;
+      const realmName = data.realmName;
+
+      tenantConfigurationRepository
+        .get(realmName)
+        .then((tenantConfigEntity) => {
+          if (!tenantConfigEntity) {
+            throw new NotFoundError('Tenant Config', realmName);
+          } else {
+            return tenantConfigEntity.update(data);
           }
         })
         .then((entity) => {

@@ -26,12 +26,7 @@ export class ServiceOptionEntity implements ServiceOption {
     return repository.save(entity);
   }
 
-  update(
-    update: Update<ServiceOption>) {
-
-    if (update.service) {
-      this.service = update.service;
-    }
+  update(update: ServiceOption) {
 
     if (update.version) {
       this.version = update.version;
