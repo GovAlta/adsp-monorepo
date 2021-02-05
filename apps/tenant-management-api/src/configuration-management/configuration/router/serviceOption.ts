@@ -18,8 +18,7 @@ export const createConfigurationRouter = ({
    *
    * /configuration/v1/serviceOptions/{service}:
    *   get:
-   *     tags:
-   *     - Subscription
+   *     tags: [ServiceOption]
    *     description: Retrieves service options for a service type.
    *     parameters:
    *     - name: service
