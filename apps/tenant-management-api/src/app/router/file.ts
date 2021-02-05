@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import * as HttpStatusCodes from 'http-status-codes';
-import { logger } from '../../middleware/logger';
 import { check, validationResult } from 'express-validator/check';
 const fileRouter = Router();
 import * as fileService from '../services/file';
