@@ -35,7 +35,7 @@ export function useConfig(): [Config, State, string] {
       try {
         setConfig(await fetchConfig());
         setState('loaded')
-      } catch(e) {
+      } catch (e) {
         setState('error')
         if (e instanceof Error) {
           setError((e as Error).message)
@@ -59,12 +59,16 @@ export function stubConfig(config?: Config) {
   localStorage.setItem('config-key', data);
 }
 
-// Private
+/**
+ * Public - envs needs to be accessible outside of react JSX,
+ * so saga can use them when performing operations
+ */
 
-async function fetchConfig(): Promise<Config> {
+export async function fetchConfig(): Promise<Config> {
   let cached = localStorage.getItem(configKey);
   if (!cached) {
     const res = await fetch(configUrl);
+
     if (!res.ok) {
       throw new Error('failed to fetch config settings');
     }
