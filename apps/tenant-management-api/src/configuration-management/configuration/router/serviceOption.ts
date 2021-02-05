@@ -2,7 +2,6 @@ import { Request, Response, Router } from 'express';
 import { ServiceConfigurationRepository } from '../repository';
 import { mapServiceOption } from './mappers';
 import { ServiceOptionEntity } from '../model';
-import { NotFoundError } from '@core-services/core-common';
 
 interface ServiceOptionRouterProps {
   serviceConfigurationRepository: ServiceConfigurationRepository;

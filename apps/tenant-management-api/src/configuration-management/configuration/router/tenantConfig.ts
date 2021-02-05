@@ -2,7 +2,6 @@ import { Request, Response, Router } from 'express';
 import { TenantConfigurationRepository } from '../repository';
 import { mapTenantConfig } from './mappers';
 import { TenantConfigEntity } from '../model';
-import { NotFoundError } from '@core-services/core-common';
 
 interface TenantConfigRouterProps {
   tenantConfigurationRepository: TenantConfigurationRepository;
