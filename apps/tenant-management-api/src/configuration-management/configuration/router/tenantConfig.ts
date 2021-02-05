@@ -44,7 +44,7 @@ export const createTenantConfigurationRouter = ({
         .get(realmName)
         .then((tenantConfigEntity) => {
           if (!tenantConfigEntity) {
-            throw new NotFoundError('Tenant Config', realmName);
+            res.status(404).json({ error: `Tenant Config for Realm ${realmName} not found` })
           } else {
             res.json(mapTenantConfig(tenantConfigEntity));
           }
@@ -89,7 +89,7 @@ export const createTenantConfigurationRouter = ({
           }
         })
         .then((entity) => {
-          res.send(mapTenantConfig(entity));
+          res.json(mapTenantConfig(entity));
           return entity;
         })
         .catch((err) => next(err));
@@ -125,13 +125,13 @@ export const createTenantConfigurationRouter = ({
         .get(realmName)
         .then((tenantConfigEntity) => {
           if (!tenantConfigEntity) {
-            throw new NotFoundError('Tenant Config', realmName);
+            res.status(404).json({ error: `Tenant Config for Realm ${realmName} not found` })
           } else {
             return tenantConfigEntity.update(data);
           }
         })
         .then((entity) => {
-          res.send(mapTenantConfig(entity));
+          res.json(mapTenantConfig(entity));
           return entity;
         })
         .catch((err) => next(err));

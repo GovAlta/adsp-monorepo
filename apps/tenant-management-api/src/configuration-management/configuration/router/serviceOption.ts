@@ -45,7 +45,7 @@ export const createConfigurationRouter = ({
         .then((serviceOptionEntity) => {
 
           if (!serviceOptionEntity) {
-            throw new NotFoundError('Service Options', service);
+            res.status(404).json({ error: `Service Options ${service} not found` })
           } else {
             res.json(mapServiceOption(serviceOptionEntity));
           }
@@ -88,7 +88,7 @@ export const createConfigurationRouter = ({
             });
         })
         .then((entity) => {
-          res.send(mapServiceOption(entity));
+          res.json(mapServiceOption(entity));
           return entity;
         })
         .catch((err) => next(err));
@@ -100,18 +100,18 @@ export const createConfigurationRouter = ({
     (req: Request, res: Response, next) => {
       const data = req.body;
       const service = data.service;
-      
+
       serviceConfigurationRepository
         .getConfigOption(service)
         .then((serviceOptionEntity) => {
           if (!serviceOptionEntity) {
-            throw new NotFoundError('Service Option', service);
+            res.status(404).json({ error: `Service Options ${service} not found` })
           }else{
             return serviceOptionEntity.update(data);
           }
         })
         .then((entity) => {
-          res.send(mapServiceOption(entity));
+          res.json(mapServiceOption(entity));
           return entity;
         })
         .catch((err) => next(err));
