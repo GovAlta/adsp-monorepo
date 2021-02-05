@@ -6,7 +6,7 @@ import { environment } from '../environments/environment';
 
 export const createConfigService = (
   app: Application,
-  {_
+  {
   }) => {
   const logger = createLogger(
     'configuration-management-service',

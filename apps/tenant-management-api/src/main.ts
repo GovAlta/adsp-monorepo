@@ -5,11 +5,10 @@ import { environment } from './environments/environment';
 import { createConfigService} from './configuration-management';
 import { connectMongo, disconnect } from './mongo/index';
 import directoryRouter from './app/router/directory';
-import { FileTenantController } from './app/api/controllers/file-tenanent.controller';
+import fileRouter from './app/router/file';
 import * as swaggerUi from 'swagger-ui-express';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as passport from 'passport';
-import { useExpressServer } from 'routing-controllers';
 import {
   createKeycloakStrategy,
   KeycloakStrategyProps,
@@ -89,6 +88,12 @@ app.get('/welcome', (req, res) => {
 
 app.use('/api/discovery', directoryRouter);
 
+app.use('/api/v1/tenant/file',
+  [
+    passport.authenticate(['jwt'], { session: false }),
+    fileRouter
+  ]);
+
 app.use('/health', healthCheck());
 
 app.use(
@@ -102,11 +107,6 @@ app.get('/swagger/json/v1', (req, res) => {
 });
 
 const port = process.env.port || 3333;
-
-useExpressServer(app, {
-  routePrefix: '/api',
-  controllers: [FileTenantController],
-});
 
 createConfigService(app, environment);
 
