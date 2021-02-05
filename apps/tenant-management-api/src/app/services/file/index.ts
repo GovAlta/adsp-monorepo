@@ -1,7 +1,6 @@
-import { logger } from 'apps/tenant-management-api/src/middleware/logger';
+import { logger } from '../../../middleware/logger'
 import * as request from 'request';
-import * as _ from 'lodash'
-import { resolve } from 'url';
+import * as _ from 'lodash';
 
 const FILE_SERVICE_HOST = process.env.FILE_SERVICE_HOST || 'localhost:3337';
 
