@@ -41,7 +41,10 @@
               "apps/file-service/tsconfig.app.json",
               "apps/file-service/tsconfig.spec.json"
             ],
-            "exclude": ["**/node_modules/**", "!apps/file-service/**/*"]
+            "exclude": [
+              "**/node_modules/**",
+              "!apps/file-service/**/*"
+            ]
           }
         },
         "test": {
@@ -68,7 +71,10 @@
               "libs/core-common/tsconfig.lib.json",
               "libs/core-common/tsconfig.spec.json"
             ],
-            "exclude": ["**/node_modules/**", "!libs/core-common/**/*"]
+            "exclude": [
+              "**/node_modules/**",
+              "!libs/core-common/**/*"
+            ]
           }
         },
         "test": {
@@ -104,7 +110,9 @@
                 "output": "./"
               }
             ],
-            "styles": ["apps/tenant-management-webapp/src/styles.scss"],
+            "styles": [
+              "apps/tenant-management-webapp/src/styles.scss"
+            ],
             "scripts": [],
             "webpackConfig": "@nrwl/react/plugins/webpack"
           },
@@ -191,7 +199,9 @@
           "builder": "@nrwl/linter:lint",
           "options": {
             "linter": "eslint",
-            "tsConfig": ["apps/tenant-management-webapp-e2e/tsconfig.e2e.json"],
+            "tsConfig": [
+              "apps/tenant-management-webapp-e2e/tsconfig.e2e.json"
+            ],
             "exclude": [
               "**/node_modules/**",
               "!apps/tenant-management-webapp-e2e/**/*"
@@ -213,7 +223,9 @@
             "outputPath": "dist/apps/tenant-management-api",
             "main": "apps/tenant-management-api/src/main.ts",
             "tsConfig": "apps/tenant-management-api/tsconfig.app.json",
-            "assets": ["apps/tenant-management-api/src/assets"],
+            "assets": [
+              "apps/tenant-management-api/src/assets"
+            ],
             "webpackConfig": "apps/tenant-management-api/webpack.config.js"
           },
           "configurations": {
@@ -302,7 +314,10 @@
               "apps/value-service/tsconfig.app.json",
               "apps/value-service/tsconfig.spec.json"
             ],
-            "exclude": ["**/node_modules/**", "!apps/value-service/**/*"]
+            "exclude": [
+              "**/node_modules/**",
+              "!apps/value-service/**/*"
+            ]
           }
         },
         "test": {
@@ -355,7 +370,10 @@
               "apps/notification-service/tsconfig.app.json",
               "apps/notification-service/tsconfig.spec.json"
             ],
-            "exclude": ["**/node_modules/**", "!apps/notification-service/**/*"]
+            "exclude": [
+              "**/node_modules/**",
+              "!apps/notification-service/**/*"
+            ]
           }
         },
         "test": {
@@ -408,7 +426,10 @@
               "apps/event-service/tsconfig.app.json",
               "apps/event-service/tsconfig.spec.json"
             ],
-            "exclude": ["**/node_modules/**", "!apps/event-service/**/*"]
+            "exclude": [
+              "**/node_modules/**",
+              "!apps/event-service/**/*"
+            ]
           }
         },
         "test": {
@@ -460,7 +481,10 @@
               "apps/push-service/tsconfig.app.json",
               "apps/push-service/tsconfig.spec.json"
             ],
-            "exclude": ["**/node_modules/**", "!apps/push-service/**/*"]
+            "exclude": [
+              "**/node_modules/**",
+              "!apps/push-service/**/*"
+            ]
           }
         },
         "test": {
