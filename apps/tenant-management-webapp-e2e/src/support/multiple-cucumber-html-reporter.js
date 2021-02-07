@@ -44,7 +44,7 @@ function getCucumberReportMaps() {
 }
 
 function addScreenshots() {
-  /* Credits: 
+  /* Credits:
     https://gist.github.com/kethinov/6658166#gistcomment-3178557
     https://gist.github.com/Phenomite/038c57cdaf95b8b8383a0fd522919662
   */
@@ -119,7 +119,7 @@ function addScreenshots() {
             myStep.embeddings = [];
             myStep.embeddings.push({
               data: base64Image,
-              mimeType: 'image/png',
+              mime_type: 'image/png',
             });
             foundFailedStep = true;
           }
