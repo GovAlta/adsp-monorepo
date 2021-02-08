@@ -7,7 +7,7 @@ export const configKey = 'config-key';
  * Interface of the properties contained within the config.json file
  * returned from the API
  */
-interface Config {
+export interface Config {
   eventServiceUrl: string;
   notificationServiceUrl: string;
   keyCloakUrl: string;
@@ -19,13 +19,13 @@ interface Config {
 /**
  * Config states
  */
-type State = 'loading' | 'error' | 'loaded';
+export type State = 'loading' | 'error' | 'loaded';
 
 /**
  * React hook that fetches the environment specific configuration
  */
 export function useConfig(): [Config, State, string] {
-  const [config, setConfig] = useState<Config>();
+  const [config, setConfig] = useState<Config>(null);
   const [error, setError] = useState<string>();
   const [state, setState] = useState<State>('loading');
 
@@ -34,9 +34,9 @@ export function useConfig(): [Config, State, string] {
       setState('loading');
       try {
         setConfig(await fetchConfig());
-        setState('loaded')
+        setState('loaded');
       } catch (e) {
-        setState('error')
+        setState('error');
         if (e instanceof Error) {
           setError((e as Error).message);
         } else {
@@ -46,6 +46,7 @@ export function useConfig(): [Config, State, string] {
     };
     _getConfig();
   }, []);
+
 
   return [config, state, error];
 }
@@ -77,7 +78,11 @@ export async function fetchConfig(): Promise<Config> {
     cached = text;
   }
 
-  return cached && JSON.parse(cached);
+  try {
+    return cached && JSON.parse(cached);
+  } catch (e) {
+    throw new Error('failed to parse json')
+  }
 }
 
 export default useConfig;
