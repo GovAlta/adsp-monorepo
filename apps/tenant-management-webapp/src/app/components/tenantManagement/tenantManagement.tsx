@@ -7,14 +7,11 @@ import Adminstration from './administration';
 import { HeaderCtx } from '../../baseApp';
 import File from './services/file';
 
-
-
 const TenantManagement = () => {
-
-  const { setTitle } = useContext(HeaderCtx)
+  const { setTitle } = useContext(HeaderCtx);
 
   useEffect(() => {
-    setTitle('Alberta Digital Service Platform - Tenant Management')
+    setTitle('Alberta Digital Service Platform - Tenant Management');
   }, []);
 
   return (
@@ -39,7 +36,6 @@ const TenantManagement = () => {
             <Route exact path="/tenant-admin/services/file">
               <File />
             </Route>
-
           </Switch>
         </Col>
       </Row>

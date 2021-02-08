@@ -34,7 +34,58 @@ pipeline {
         echo "Building with base ${baseCommand} and affected apps: ${affectedApps.join(', ')}"
       }
     }
-    stage("Lint"){
+    stage("Manage Environments") {
+      steps {
+        script {
+          def affectedFiles = sh (
+            script: "git diff --name-only HEAD ${env.GIT_PREVIOUS_SUCCESSFUL_COMMIT}",
+            returnStdout: true
+          )
+          .tokenize()
+          .findAll{ it.startsWith('.openshift/managed/') }
+
+          affectedFiles.each { affected ->
+
+            echo "Updating environment based on ${affected} ..."
+            def template = readYaml(file: affected)
+
+            openshift.withCluster() {
+              openshift.withProject('core-services-infra') {
+                def deployment = openshift.process(
+                  template,
+                  "-p",
+                  "BUILD_TAG=latest"
+                )
+                .findAll{ it.metadata.labels["apply-infra"] == 'true' }
+
+                openshift.apply(deployment)
+              }
+              openshift.withProject('core-services-dev') {
+                def deployment = openshift.process(
+                  template,
+                  "-p",
+                  "DEPLOY_TAG=dev"
+                )
+                .findAll{ it.metadata.labels["apply-dev"] == 'true' }
+
+                openshift.apply(deployment)
+              }
+              openshift.withProject('core-services-test') {
+                def deployment = openshift.process(
+                  template,
+                  "-p",
+                  "DEPLOY_TAG=test"
+                )
+                .findAll{ it.metadata.labels["apply-test"] == 'true' }
+
+                openshift.apply(deployment)
+              }
+            }
+          }
+        }
+      }
+    }
+    stage("Lint") {
       steps {
         sh "npx nx affected --target=lint ${baseCommand} --parallel"
       }
@@ -198,15 +249,15 @@ pipeline {
         }
       }
     }
-    stage("Regression Test"){
+    stage("Regression Test") {
       steps {
         sh "npm ci"
         sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --headless=true --env.'TAGS'='@regression' --baseUrl 'https://tenant-management-webapp-test.os99.int.alberta.ca/'"
       }
       post {
         always {
-          junit '**/results/*.xml'
-          cucumber '**/cucumber-json/*.json'
+          junit "**/results/*.xml"
+          cucumber "**/cucumber-json/*.json"
           sh "node ./apps/tenant-management-webapp-e2e/src/support/multiple-cucumber-html-reporter.js"
           zip zipFile: 'cypress-regression-test-html-report.zip', archive: false, dir: 'dist/cypress'
           archiveArtifacts artifacts: 'cypress-regression-test-html-report.zip'
