@@ -2,6 +2,9 @@ def baseCommand = '--all'
 def affectedApps = []
 
 pipeline {
+  options {
+    timeout(time: 3, unit: "HOURS")
+  }
   agent {
     node {
       label "node12-cypress"
@@ -101,7 +104,6 @@ pipeline {
       }
       steps {
         sh "npx nx affected --target=build ${baseCommand} --parallel"
-        sh "npm prune --production"
         script {
           openshift.withCluster() {
             openshift.withProject() {
@@ -156,7 +158,6 @@ pipeline {
     }
     stage("Smoke Test"){
       steps {
-        sh "npm ci"
         sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --headless=true --env.'TAGS'='@smoke-test' --baseUrl 'https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca/'"
       }
       post {
@@ -179,71 +180,38 @@ pipeline {
       }
     }
     stage("Promote to Test") {
-      options {
-        timeout(time: 3, unit: "HOURS")
-      }
 
       input{
         message "Promote to Test?"
         ok "Yes"
-        //submitter "david.spedzia"
       }
       when {
         expression { return affectedApps }
       }
       steps {
         script {
-          Exception caughtException = null
-          catchError(buildResult: 'SUCCESS', stageResult: 'ABORTED'){
-            try {
-              openshift.verbose()
-              openshift.withCluster() {
-                openshift.withProject() {
-                  affectedApps.each { affected ->
-                    def is = openshift.selector("is", "${affected}")
-                    if ( is.exists() ) {
-                      openshift.tag("${affected}:dev", "${affected}:test")
-                    }
-                  }
+          openshift.withCluster() {
+            openshift.withProject() {
+              affectedApps.each { affected ->
+                def is = openshift.selector("is", "${affected}")
+                if ( is.exists() ) {
+                  openshift.tag("${affected}:dev", "${affected}:test")
                 }
               }
-            }
-            catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e) {
-              error "Caught ${e.toString()}"
-            }
-            catch (Throwable e) {
-              caughtException = e
-            }
-            if (caughtException){
-              error caughtException.message
             }
           }
         }
         script {
-          Exception caughtException = null
-          catchError(buildResult: 'SUCCESS', stageResult: 'ABORTED'){
-            try {
-              openshift.verbose()
-              openshift.withCluster() {
-                openshift.withProject("core-services-test") {
-                  affectedApps.each { affected ->
-                    def dc = openshift.selector("dc", "${affected}")
-                    if ( dc.exists() ) {
-                      sh "echo in the last step deploy ${affected}"
-                      dc.rollout().latest()
-                    }
-                  }
+          openshift.withCluster() {
+            openshift.withProject("core-services-test") {
+              affectedApps.each { affected ->
+                def dc = openshift.selector("dc", "${affected}")
+                if ( dc.exists() ) {
+                  def rm = dc.rollout()
+                  rm.latest()
+                  rm.status()
                 }
               }
-            }
-            catch(org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e){
-              error "Caught ${e.toString()}"
-            }
-            catch(Throwable e){
-              error caughtException.message
-            }
-            if (caughtException){
-              error caughtException.message
             }
           }
         }
@@ -251,7 +219,6 @@ pipeline {
     }
     stage("Regression Test") {
       steps {
-        sh "npm ci"
         sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --headless=true --env.'TAGS'='@regression' --baseUrl 'https://tenant-management-webapp-test.os99.int.alberta.ca/'"
       }
       post {
