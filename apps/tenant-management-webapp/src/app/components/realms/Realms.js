@@ -22,14 +22,14 @@ class Home extends React.Component {
           <Col>
             <h1 style={{ fontWeight: 'bold' }}>Welcome Platformer!</h1>
             <div className="mb-5 mt-4">
-              Creating and activating your own tenant requires a few steps.
-              You must start by creating a tenant. Once the tenant has been
-              created, you will be asked to activate the tenant.
-              </div>
+              Creating and activating your own tenant requires a few steps. You
+              must start by creating a tenant. Once the tenant has been created,
+              you will be asked to activate the tenant.
+            </div>
           </Col>
         </Row>
         <Row style={{ display: 'flex' }}>
-          <Col sm={12} md={6} className="mb-4">
+          <Col sm={12} md={6} className="mb-">
             <div
               style={{
                 padding: '25px',
@@ -42,56 +42,26 @@ class Home extends React.Component {
             >
               <h1 className="mb-3">1. Create Tenant</h1>
               <div className="mb-3">
-                Before you start, please ensure these guidelines have been
-                met:
-                </div>
+                Before you start, please ensure these guidelines have been met:
+              </div>
               <p className="mb-2">
                 <FontAwesomeIcon
                   style={{ color: 'green', margin: '0 5px 0 0' }}
                   icon={faCheckCircle}
                 />
-                  You have not created a tenant with your current account
-                </p>
+                You have not created a tenant with your current account
+              </p>
               <div className="mb-4">
                 <FontAwesomeIcon
                   style={{ color: 'green', margin: '0 5px 0 0' }}
                   icon={faCheckCircle}
                 />
-                  This is for ministry approved projects.
-                </div>
+                This is for ministry approved projects.
+              </div>
               <div className="mt-5">
                 <GoAButton onClick={this.onEnterCreateRealm}>
                   Create Tenant
-                  </GoAButton>
-              </div>
-            </div>
-          </Col>
-
-          <Col sm={12} md={6} className="mb-4">
-            <div
-              style={{
-                padding: '25px',
-                borderStyle: 'solid',
-                borderColor: 'grey',
-                borderWidth: '1px',
-                boxShadow: '1px 2px #888888',
-                height: '100%',
-              }}
-            >
-              <h1 className="mb-3">2. Activate tenant</h1>
-                Please proceed with the activation if you have received an email
-                confirmation that your tenant has been approved and created.
-                <p className="mb-4">
-                If you have created a tenant and have not received an email,
-                refer to 'this page' for help
-                </p>
-              <div className="mt-5">
-                <GoAButton
-                  buttonType="secondary"
-                  onClick={this.onEnterAddClientRole}
-                >
-                  Activate Tenant
-                  </GoAButton>
+                </GoAButton>
               </div>
             </div>
           </Col>

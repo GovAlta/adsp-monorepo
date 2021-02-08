@@ -1,5 +1,5 @@
 import { uptimeFetch } from './serviceMeasure';
-import { fork, all, takeEvery } from "redux-saga/effects";
+import { fork, all, takeEvery } from 'redux-saga/effects';
 import { UPTIME_FETCH } from '../actions/types';
 
 export function* watchSagas() {
