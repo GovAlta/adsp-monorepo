@@ -331,6 +331,7 @@ const LandingPage = () => {
                     justifyContent: 'center',
                     flexDirection: 'column',
                   }}
+                  className="pb-2 pt-2"
                 >
                   <div
                     style={{

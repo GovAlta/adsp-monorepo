@@ -8,7 +8,7 @@ export const configKey = 'config-key';
  * returned from the API
  */
 interface Config {
-  eventServiceUrl: string,
+  eventServiceUrl: string;
   notificationServiceUrl: string;
   keyCloakUrl: string;
   tenantManagementApi: string;
@@ -31,14 +31,14 @@ export function useConfig(): [Config, State, string] {
 
   useEffect(() => {
     const _getConfig = async () => {
-      setState('loading')
+      setState('loading');
       try {
         setConfig(await fetchConfig());
         setState('loaded')
       } catch (e) {
         setState('error')
         if (e instanceof Error) {
-          setError((e as Error).message)
+          setError((e as Error).message);
         } else {
           setError('failed to fetch config');
         }

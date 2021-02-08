@@ -5,9 +5,9 @@ import { faArrowCircleRight } from '@fortawesome/free-solid-svg-icons';
 import { faArrowCircleLeft } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import axios from 'axios';
-import CreatingRealmCarousel0 from './img/creatingRealmCarousel0.png';
-import CreatingRealmCarousel1 from './img/creatingRealmCarousel1.png';
-import white from './img/white.png';
+import CreatingRealmCarousel0 from '../../../assets/creatingRealmCarousel0.png';
+import CreatingRealmCarousel1 from '../../../assets/creatingRealmCarousel1.png';
+import white from '../../../assets/white.png';
 import './CreatingRealm.css';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'react-bootstrap-carousel/dist/react-bootstrap-carousel.css';
@@ -21,9 +21,11 @@ function CreatingRealm(props) {
   };
 
   const onCreateRealm = async () => {
-    const url = '/createRealm?realm=' + name;
+    const realmRequest = { realm: name };
+    const url = '/api/realm';
+
     console.log('url = ' + url);
-    const res = await axios.get(url);
+    const res = await axios.post(url, realmRequest);
 
     console.log(res.data.Msg);
     alert(res.data.Msg);
@@ -43,11 +45,11 @@ function CreatingRealm(props) {
         <Col xs={12} md={{ size: 12 }}>
           <h1 style={{ fontWeight: 'bold' }}>
             Currently creating your tenant.
-            </h1>
+          </h1>
           <div className="mb-5">
             This should not take long, please explore our features while you
             wait.
-            </div>
+          </div>
         </Col>
         <Col
           sx={12}
@@ -94,7 +96,7 @@ function CreatingRealm(props) {
               <Carousel.Caption>
                 <h3 style={{ fontWeight: 'bold', textAlign: 'left' }}>
                   Introducing our Access Service
-                  </h3>
+                </h3>
                 <p
                   style={{
                     color: '#000',
@@ -102,10 +104,10 @@ function CreatingRealm(props) {
                     textAlign: 'left',
                   }}
                 >
-                  Quickly provide your project with a secure, robust and easy
-                  to use authentication system that supports Government of
-                  Alberta, Microsoft and Google credentials out of the box
-                  </p>
+                  Quickly provide your project with a secure, robust and easy to
+                  use authentication system that supports Government of Alberta,
+                  Microsoft and Google credentials out of the box
+                </p>
               </Carousel.Caption>
             </Carousel.Item>
             <Carousel.Item>
@@ -125,7 +127,7 @@ function CreatingRealm(props) {
               <Carousel.Caption>
                 <h3 style={{ fontWeight: 'bold', textAlign: 'left' }}>
                   Update your users
-                  </h3>
+                </h3>
                 <p
                   style={{
                     color: '#000',
@@ -136,7 +138,7 @@ function CreatingRealm(props) {
                   Through our notification service, we make it easy to send
                   personalized messages from a single template, for SMS or
                   email. You do not need technical knowledge to use it. Yay!
-                  </p>
+                </p>
               </Carousel.Caption>
             </Carousel.Item>
           </Carousel>

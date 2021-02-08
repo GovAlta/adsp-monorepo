@@ -79,7 +79,10 @@ export const discovery = async (urn) => {
 
       if (!directory || directory.length === 0) {
         // No directory in mongo db will read from json file.
+
+        // eslint-disable-next-line
         const directoryJson = (data as any).default;
+
         createDirectory(directoryJson);
 
         const services = getName(directoryJson, component.core);

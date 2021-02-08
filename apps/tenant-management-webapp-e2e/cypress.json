@@ -15,7 +15,7 @@
   "chromeWebSecurity": false,
   "testFiles": "**/*.feature",
   "ignoreTestFiles": "*.js",
-  "videoUploadOnPasses":false,
+  "videoUploadOnPasses": false,
   "reporter": "junit",
   "reporterOptions": {
     "mochaFile": "../../dist/cypress/apps/tenant-management-webapp-e2e/results/results-[hash].xml"
