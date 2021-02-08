@@ -86,7 +86,7 @@ describe('useConfig', () => {
     const expectedConfig = {
       accessManagementApi: 'am',
       eventServiceUrl: 'es',
-      keyCloakUrl: 'kc',
+      keycloakUrl: 'kc',
       notificationServiceUrl: 'ns',
       tenantManagementApi: 'tm',
       uiComponentUrl: 'ui',

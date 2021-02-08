@@ -6,6 +6,7 @@ import { Route, Switch } from 'react-router-dom';
 import Adminstration from './administration';
 import { HeaderCtx } from '../../baseApp';
 import File from './services/file';
+import AccessPage from './services/access/access';
 
 const TenantManagement = () => {
   const { setTitle } = useContext(HeaderCtx);
@@ -27,6 +28,9 @@ const TenantManagement = () => {
             </Route>
             <Route exact path="/tenant-admin/admin">
               <Adminstration />
+            </Route>
+            <Route path="/tenant-admin/access">
+              <AccessPage />
             </Route>
 
             <Route exact path="/tenant-admin/admin">
