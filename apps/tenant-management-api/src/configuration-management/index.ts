@@ -8,6 +8,7 @@ export const createConfigService = (
   app: Application,
 
   ) => {
+
   const logger = createLogger(
     'configuration-management-service',
     environment.LOG_LEVEL || 'info'

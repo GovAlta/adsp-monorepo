@@ -2,6 +2,7 @@ import { Request, Response, Router } from 'express';
 import { ServiceConfigurationRepository } from '../repository';
 import { mapServiceOption } from './mappers';
 import { ServiceOptionEntity } from '../model';
+import HttpException from '../errorHandlers/httpException';
 
 interface ServiceOptionRouterProps {
   serviceConfigurationRepository: ServiceConfigurationRepository;
@@ -11,6 +12,35 @@ export const createConfigurationRouter = ({
   serviceConfigurationRepository,
 }: ServiceOptionRouterProps) => {
   const serviceOptionRouter = Router();
+
+  /**
+   * @swagger
+   *
+   * /configuration/v1/serviceOptions/:
+   *   get:
+   *     tags: [ServiceOption]
+   *     description: Retrieves all service options
+   *
+   *     responses:
+   *       200:
+   *         description: Service options succesfully retrieved.
+   */
+  serviceOptionRouter.get(
+    '/',
+    (req: Request, res: Response, next) => {
+      const { top, after } = req.query;
+
+      serviceConfigurationRepository.find(
+        parseInt((top as string) || '10', 10),
+        after as string
+      ).then((entities) => {
+        res.json({
+          page: entities.page,
+          results: entities.results.map(mapServiceOption)
+        })
+      }).catch((err) => next(err));
+    }
+  );
 
   /**
    * @swagger
@@ -34,18 +64,18 @@ export const createConfigurationRouter = ({
    *         description: Service not found.
    */
   serviceOptionRouter.get(
-    '/:service',
+    '/:id',
 
     (req, res, next) => {
 
-      const { service } = req.params;
+      const { id } = req.params;
 
       serviceConfigurationRepository
-        .getConfigOption(service)
+        .get(id)
         .then((serviceOptionEntity) => {
 
           if (!serviceOptionEntity) {
-            res.status(404).json({ error: `Service Options ${service} not found` })
+            throw new HttpException(404, `Service Options was not found`)
           } else {
             res.json(mapServiceOption(serviceOptionEntity));
           }
@@ -75,22 +105,34 @@ export const createConfigurationRouter = ({
   serviceOptionRouter.post(
     '/',
     (req: Request, res: Response, next) => {
-      const { service } = req.params;
       const data = req.body;
+      const { service, version, configOptions } = data;
 
-      serviceConfigurationRepository
-        .getConfigOption(service)
-        .then((serviceOptionEntity) => {
-          return ServiceOptionEntity.create(serviceConfigurationRepository, {
-            ...data,
-            serviceOption: serviceOptionEntity,
-          });
-        })
-        .then((entity) => {
-          res.json(mapServiceOption(entity));
-          return entity;
-        })
-        .catch((err) => next(err));
+      try {
+        if (!service || !version || !configOptions) {
+          throw new HttpException(400, 'Service, Version, and ConfigOptions are required.');
+        }
+
+        serviceConfigurationRepository
+          .getConfigOptionByVersion(service, version)
+          .then((serviceOptionEntity) => {
+            if (serviceOptionEntity) {
+              throw new HttpException(400, `Service Options ${service} version ${version} already exists`);
+            } else {
+              return ServiceOptionEntity.create(serviceConfigurationRepository, {
+                ...data,
+                serviceOption: serviceOptionEntity,
+              });
+            }
+          })
+          .then((entity) => {
+            res.json(mapServiceOption(entity));
+            return entity;
+          })
+          .catch((err) => next(err));
+      } catch (err) {
+        next(err);
+      }
     }
   );
 
@@ -118,21 +160,71 @@ export const createConfigurationRouter = ({
     '/',
     (req: Request, res: Response, next) => {
       const data = req.body;
-      const service = data.service;
+      const { service, id, version, configOptions } = data;
 
-      serviceConfigurationRepository
-        .getConfigOption(service)
+      try {
+        if (!service || !version || !configOptions) {
+          throw new HttpException(400, 'Service, Version, and ConfigOptions are required.');
+        }
+
+        serviceConfigurationRepository
+          .get(id)
+          .then((serviceOptionEntity) => {
+            if (!serviceOptionEntity) {
+              throw new HttpException(404, `Service Options ${service} not found`);
+            } else {
+              return serviceOptionEntity.update(data);
+            }
+          })
+          .then((entity) => {
+            res.json(mapServiceOption(entity));
+            return entity;
+          })
+          .catch((err) => next(err));
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  /**
+   * @swagger
+   *
+   * /configuration/v1/serviceOptions/id:
+   *   delete:
+   *     tags: [TenantConfig]
+   *     description: Deletes service configuation..
+   *     parameters:
+   *     - name: id
+   *       description: Id of the service.
+   *       in: path
+   *       required: true
+   *       schema:
+   *         $ref: '#.../model/TenantConfigEntity'
+   *
+   *     responses:
+   *       200:
+   *         description: Service configuration succesfully deleted.
+   *       404:
+   *         description: Service Configuration not found.
+   */
+  serviceOptionRouter.delete(
+    '/:id',
+    (req: Request, res: Response, next) => {
+      const { id } = req.params;
+
+      return serviceConfigurationRepository.get(id)
         .then((serviceOptionEntity) => {
           if (!serviceOptionEntity) {
-            res.status(404).json({ error: `Service Options ${service} not found` })
+            throw new HttpException(404, `Service Options not found`);
           } else {
-            return serviceOptionEntity.update(data);
+            serviceOptionEntity.delete(serviceOptionEntity)
           }
-        })
-        .then((entity) => {
-          res.json(mapServiceOption(entity));
-          return entity;
-        })
+        }
+        )
+        .then((result) =>
+          res.json(result)
+        )
         .catch((err) => next(err));
     }
   );

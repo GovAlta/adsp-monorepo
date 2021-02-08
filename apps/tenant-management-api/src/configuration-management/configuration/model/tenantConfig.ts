@@ -2,6 +2,7 @@ import { TenantConfigurationRepository } from '../repository';
 import { TenantConfig } from '../types';
 
 export class TenantConfigEntity implements TenantConfig {
+  id: string;
   realmName: string;
   configurationSettingsList: string;
 
@@ -9,6 +10,7 @@ export class TenantConfigEntity implements TenantConfig {
     private repository: TenantConfigurationRepository,
     config: TenantConfig
   ) {
+    this.id = config.id,
     this.realmName = config.realmName;
     this.configurationSettingsList = config.configurationSettingsList;
   }
@@ -26,6 +28,7 @@ export class TenantConfigEntity implements TenantConfig {
 
     if (update.configurationSettingsList) {
       this.configurationSettingsList = update.configurationSettingsList;
+      this.realmName = update.realmName;
     }
 
     return this.repository.save(this);

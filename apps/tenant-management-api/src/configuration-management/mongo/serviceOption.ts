@@ -1,4 +1,7 @@
-import { Doc } from '@core-services/core-common';
+import { Doc,
+  Results,
+  decodeAfter,
+  encodeNext } from '@core-services/core-common';
 import { model, Types } from 'mongoose';
 import { ServiceConfigurationRepository, ServiceOptionEntity, ServiceOption } from '../configuration';
 import { serviceOptionSchema } from './schema';
@@ -11,17 +14,58 @@ export class MongoServiceOptionRepository implements ServiceConfigurationReposit
     this.serviceModel = model('serviceOption', serviceOptionSchema);
   }
 
-  getConfigOption(service: string): Promise<ServiceOptionEntity> {
+  find(top: number, after: string): Promise<Results<ServiceOptionEntity>> {
+    const skip = decodeAfter(after);
+    return new Promise<Results<ServiceOptionEntity>>((resolve, reject) => {
+      this.serviceModel.find({}, null, { lean: true })
+      .skip(skip)
+      .limit(top)
+      .exec((err, docs) => err ?
+        reject(err) :
+        resolve({
+          results: docs.map(doc => this.fromDoc(doc)),
+          page: {
+            after,
+            next: encodeNext(docs.length, top, skip),
+            size: docs.length
+          }
+        })
+      );
+    });
+  }
+
+  getConfigOption(service: string, top: number, after: string): Promise<Results<ServiceOptionEntity>> {
+    const skip = decodeAfter(after);
+    return new Promise<Results<ServiceOptionEntity>>((resolve, reject) => {
+      this.serviceModel.find({}, null, { lean: true })
+      .skip(skip)
+      .limit(top)
+      .exec((err, docs) => err ?
+        reject(err) :
+        resolve({
+          results: docs.map(doc => this.fromDoc(doc)),
+          page: {
+            after,
+            next: encodeNext(docs.length, top, skip),
+            size: docs.length
+          }
+        })
+      );
+    });
+  }
+
+  getConfigOptionByVersion(service: string, version: string): Promise<ServiceOptionEntity>
+  {
     return new Promise<ServiceOptionEntity>((resolve, reject) =>
-      this.serviceModel.findOne(
-        { service: service },
-        null,
-        { lean: true },
-        (err, doc) => err ?
-          reject(err) :
-          resolve(this.fromDoc(doc))
-      )
-    );
+    this.serviceModel.findOne(
+      { service: service,
+        version: version
+      },
+      (err, doc) => err ?
+        reject(err) :
+        resolve(this.fromDoc(doc))
+    )
+  );
   }
 
   get(id: string): Promise<ServiceOptionEntity> {

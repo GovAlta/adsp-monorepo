@@ -5,26 +5,35 @@ export const serviceOptionSchema = new Schema({
     type: String,
     required: true
   },
-  service: { 
+  service: {
     type: String,
-    required: true,
-    unique: true
+    required: true
   },
   version: {
-    type: String
+    type: String,
+    required: true,
+    minlength: 1
   },
   configOptions: {
-    type: String
+    type: String,
+    required: true
   }
 });
 
+serviceOptionSchema.index({service:1, version:1}, {unique: true});
+
 export const tenantConfigSchema = new Schema({
-  realmName: { 
+  _id: {
+    type: String,
+    required: true
+  },
+  realmName: {
     type: String,
     required: true,
     unique: true
   },
   configurationSettingsList: {
-    type: String
+    type: String,
+    required: true,
   }
 });

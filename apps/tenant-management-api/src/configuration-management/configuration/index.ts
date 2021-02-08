@@ -3,7 +3,7 @@ import { Application } from 'express';
 import { Repositories } from './repository';
 import { createConfigurationRouter, createTenantConfigurationRouter } from './router';
 import { Logger } from 'winston';
-
+import { errorHandler } from './errorHandlers';
 export * from './types';
 export * from './repository';
 export * from './model';
@@ -36,6 +36,8 @@ export const applyConfigMiddleware = (
 
   app.use('/api/configuration/v1/serviceOptions/', serviceConfigRouter);
   app.use('/api/configuration/v1/tenantConfig/', tenantConfigRouter);
+
+  app.use(errorHandler);
 
   let swagger = null;
   app.use('/swagger/docs/v1', (req, res) => {
