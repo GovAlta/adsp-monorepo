@@ -1,6 +1,8 @@
 import * as fs from 'fs';
 import * as express from 'express';
 import * as healthCheck from 'express-healthcheck';
+import { environment } from './environments/environment';
+import { createConfigService} from './configuration-management';
 import { connectMongo, disconnect } from './mongo/index';
 import directoryRouter from './app/router/directory';
 import fileRouter from './app/router/file';
@@ -16,6 +18,7 @@ import {
 import { logger } from './middleware/logger';
 
 import * as cors from 'cors';
+
 
 const app = express();
 app.use(express.json());
@@ -67,7 +70,9 @@ app.get('/swagger/json/v1', (req, res) => {
   res.json(JSON.parse(swaggerDocument));
 });
 
-const port = process.env.PORT || 3333;
+const port = process.env.port || 3333;
+
+createConfigService(app);
 
 const server = app.listen(port, () => {
   console.log(`Listening at http://localhost:${port}/api`);
