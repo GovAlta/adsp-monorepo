@@ -11,8 +11,11 @@ import white from '../../../assets/white.png';
 import './CreatingRealm.css';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'react-bootstrap-carousel/dist/react-bootstrap-carousel.css';
+import { useHistory } from 'react-router-dom';
 
-function CreatingRealm(props) {
+const CreatingRealm = () => {
+  const history = useHistory();
+
   const [name, setName] = useState('');
   const [index, setIndex] = useState(0);
 
@@ -32,7 +35,7 @@ function CreatingRealm(props) {
   };
 
   const backToMain = () => {
-    props.history.push('/realms');
+    history.push('/realms');
   };
 
   const onChangeName = (event) => {
@@ -146,6 +149,6 @@ function CreatingRealm(props) {
       </div>
     </Container>
   );
-}
+};
 
 export default CreatingRealm;
