@@ -9,7 +9,7 @@ const FileSpace = () => {
   return (
     <div>
       <p>
-        {spaceName}
+        Space Name: {spaceName}
       </p>
     </div>
   );

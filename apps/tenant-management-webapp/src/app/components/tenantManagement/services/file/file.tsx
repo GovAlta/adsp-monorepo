@@ -37,8 +37,10 @@ const APIIntegration = () => {
 
 const TabsForSetup = () => {
   const isActive = useSelector((state) => _.get(state, 'File.status.isActive'));
-  const activeTab = useSelector((state) => _.get(state, 'File.states.activeTab'));
-  const dispatch = useDispatch()
+  const activeTab = useSelector((state) =>
+    _.get(state, 'File.states.activeTab')
+  );
+  const dispatch = useDispatch();
 
   return (
     <Tabs
@@ -68,7 +70,6 @@ const TabsForSetup = () => {
         eventKey="api-integration"
         title="API integration"
         disabled={!isActive}
-        className="myClass"
       >
         <APIIntegration />
       </Tab>
@@ -81,7 +82,9 @@ const TabsForSetup = () => {
 };
 
 const TabsForInit = () => {
-  const activeTab = useSelector((state) => _.get(state, 'File.states.activeTab'));
+  const activeTab = useSelector((state) =>
+    _.get(state, 'File.states.activeTab')
+  );
 
   return (
     <Tabs
@@ -102,15 +105,18 @@ export default function File() {
     _.get(state, 'File.requirements.setup')
   );
 
-  const dispatch = useDispatch()
-  const fileServiceConfig = useSelector((state) => _.get(state, 'Config.fileService'));
+  const dispatch = useDispatch();
+  const fileServiceConfig = useSelector((state) =>
+    _.get(state, 'Config.fileService')
+  );
   const user = useSelector((state) => _.get(state, 'User'));
   // TODO: shall we load the file service info at begining?
   dispatch({
-    type: TYPES.FETCH_FILE_SPACE, payload:
-    {
-      fileService: fileServiceConfig, user: user
-    }
+    type: TYPES.FETCH_FILE_SPACE,
+    payload: {
+      fileService: fileServiceConfig,
+      user: user,
+    },
   });
 
   const FileOverviewTab = setupRequired ? <TabsForInit /> : <TabsForSetup />;
