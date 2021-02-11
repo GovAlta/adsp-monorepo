@@ -27,7 +27,7 @@ Then('the {string} landing page is displayed', function (type) {
       urlPart = '/tenant-admin/admin';
       break;
     case 'file services':
-      urlPart = '/file-service';
+      urlPart = '/tenant-admin/services/file';
       break;
   }
   cy.url().should('include', urlPart);
@@ -40,7 +40,7 @@ When('the user selects the {string} menu item', function (menuItem) {
       menuItemSelector = 'administration';
       break;
     case 'File Services':
-      menuItemSelector = '/file-service';
+      menuItemSelector = '/tenant-admin/services/file';
       break;
   }
 
