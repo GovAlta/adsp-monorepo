@@ -158,7 +158,6 @@ pipeline {
     }
     stage("Smoke Test"){
       steps {
-        sh "npm ci"
         sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --headless=true --env.'TAGS'='@smoke-test' --env.API=https://tenant-management-api-core-services-dev.os99.gov.ab.ca --baseUrl=https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca"
       }
       post {
@@ -220,7 +219,6 @@ pipeline {
     }
     stage("Regression Test") {
       steps {
-        sh "npm ci"
         sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --headless=true --env.'TAGS'='@regression' --env.API=https://tenant-management-api-core-services-test.os99.gov.ab.ca --baseUrl=https://tenant-management-webapp-test.os99.int.alberta.ca"
       }
       post {
