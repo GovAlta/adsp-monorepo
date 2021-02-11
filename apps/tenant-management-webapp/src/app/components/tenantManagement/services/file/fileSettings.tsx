@@ -3,7 +3,6 @@ import { useDispatch } from 'react-redux';
 import React from 'react';
 import './file.css';
 import { TYPES } from '../../../../store/actions';
-import { DropdownButton, Dropdown } from 'react-bootstrap';
 
 const FileSettings = () => {
   const Space = () => {

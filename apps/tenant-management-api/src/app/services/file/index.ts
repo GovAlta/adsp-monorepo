@@ -68,6 +68,7 @@ export const createSpacePromise = (tenantId, realm, token) => {
     };
 
     const url = `${FILE_SERVICE_HOST}${path}/${tenantId}`;
+
     const payload = {
       url: url,
       method: 'PUT',

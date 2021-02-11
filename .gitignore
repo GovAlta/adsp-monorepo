@@ -16,7 +16,7 @@
 *.launch
 .settings/
 *.sublime-workspace
-
+/apps/file-service/kc-gzip-cache
 # IDE - VSCode
 .vscode/*
 !.vscode/settings.json
