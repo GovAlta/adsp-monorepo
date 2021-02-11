@@ -9,7 +9,7 @@ export const environment = {
   MONGO_DB: 'file',
   MONGO_USER: null,
   MONGO_PASSWORD: null,
-  AMQP_HOST: 'localhost',
+  AMQP_HOST: '',
   AMQP_USER: 'guest',
   AMQP_PASSWORD: 'guest',
   AV_HOST: 'localhost',

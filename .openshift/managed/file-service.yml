@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Template
 metadata:
-  name: tenant-management-api
+  name: file-service
   annotations:
-    tags: core-services, tenant-management
+    tags: core-services, file-service
     template.openshift.io/provider-display-name: platform team
-    description: Tenant Management API
+    description: File Service
 labels:
-  application: tenant-management
+  application: file-service
 parameters:
   - name: INFRA_NAMESPACE
     description: Name of the infrastructure project.
@@ -60,25 +60,25 @@ objects:
         template.openshift.io/expose-password: "{.data['database-password']}"
         template.openshift.io/expose-username: "{.data['database-user']}"
       labels:
-        app: tenant-management${NAME_SUFFIX}
+        app: file-service${NAME_SUFFIX}
         component: database
         apply-branch: "true"
-      name: tenant-management-mongodb${NAME_SUFFIX}
+      name: file-service-mongodb${NAME_SUFFIX}
     stringData:
       database-admin-password: ${MONGODB_ADMIN_PASSWORD}
-      database-name: tenantDb
+      database-name: fileDb
       database-password: ${MONGODB_PASSWORD}
       database-user: ${MONGODB_USER}
-      database-uri: mongodb://tenant-management-mongodb${NAME_SUFFIX}:27017
+      database-uri: mongodb://file-service-mongodb${NAME_SUFFIX}:27017
   # PersistentVolumeClaim is only generated for branch deployment to avoid losing persistent data.
   - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
       labels:
-        app: tenant-management${NAME_SUFFIX}
+        app: file-service${NAME_SUFFIX}
         component: database
         apply-branch: "true"
-      name: tenant-management-mongodb${NAME_SUFFIX}
+      name: file-service-mongodb${NAME_SUFFIX}
     spec:
       accessModes:
         - ReadWriteOnce
@@ -91,14 +91,14 @@ objects:
       annotations:
         template.openshift.io/expose-uri: mongodb://{.spec.clusterIP}:{.spec.ports[?(.name=="mongo")].port}
       labels:
-        app: tenant-management${NAME_SUFFIX}
+        app: file-service${NAME_SUFFIX}
         component: database
         apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: tenant-management-mongodb${NAME_SUFFIX}
+      name: file-service-mongodb${NAME_SUFFIX}
     spec:
       ports:
         - name: mongo
@@ -107,7 +107,7 @@ objects:
           protocol: TCP
           targetPort: 27017
       selector:
-        app: tenant-management${NAME_SUFFIX}
+        app: file-service${NAME_SUFFIX}
         component: database
       sessionAffinity: None
       type: ClusterIP
@@ -119,25 +119,25 @@ objects:
       annotations:
         template.alpha.openshift.io/wait-for-ready: "true"
       labels:
-        app: tenant-management${NAME_SUFFIX}
+        app: file-service${NAME_SUFFIX}
         component: database
         apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: tenant-management-mongodb${NAME_SUFFIX}
+      name: file-service-mongodb${NAME_SUFFIX}
     spec:
       replicas: 1
       selector:
-        app: tenant-management${NAME_SUFFIX}
+        app: file-service${NAME_SUFFIX}
         component: database
       strategy:
         type: Recreate
       template:
         metadata:
           labels:
-            app: tenant-management${NAME_SUFFIX}
+            app: file-service${NAME_SUFFIX}
             component: database
         spec:
           containers:
@@ -147,22 +147,22 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-user
-                      name: tenant-management-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb${NAME_SUFFIX}
                 - name: MONGODB_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: tenant-management-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb${NAME_SUFFIX}
                 - name: MONGODB_ADMIN_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-admin-password
-                      name: tenant-management-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb${NAME_SUFFIX}
                 - name: MONGODB_DATABASE
                   valueFrom:
                     secretKeyRef:
                       key: database-name
-                      name: tenant-management-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb${NAME_SUFFIX}
               image: " "
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -193,13 +193,13 @@ objects:
               terminationMessagePath: /dev/termination-log
               volumeMounts:
                 - mountPath: /var/lib/mongodb/data
-                  name: tenant-management-data
+                  name: file-service-data
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           volumes:
-            - name: tenant-management-data
+            - name: file-service-data
               persistentVolumeClaim:
-                claimName: tenant-management-mongodb${NAME_SUFFIX}
+                claimName: file-service-mongodb${NAME_SUFFIX}
       triggers:
         - imageChangeParams:
             automatic: true
@@ -210,7 +210,8 @@ objects:
               name: mongodb:latest
               namespace: openshift
           type: ImageChange
-  # Tenant Management API Objects
+
+  # File Service Objects
 
   # ImageStream is here for reference.
   # There is a single ImageStream created in the infra project.
@@ -218,10 +219,10 @@ objects:
     kind: ImageStream
     metadata:
       labels:
-        app: tenant-management
+        app: file-service
         component: api
         apply-infra: "true"
-      name: tenant-management-api
+      name: file-service
       namespace: ${INFRA_NAMESPACE}
     spec: {}
 
@@ -231,16 +232,16 @@ objects:
     kind: BuildConfig
     metadata:
       labels:
-        app: tenant-management${NAME_SUFFIX}
+        app: file-service${NAME_SUFFIX}
         component: api
         apply-infra: "true"
         apply-branch: "true"
-      name: tenant-management-api${NAME_SUFFIX}
+      name: file-service${NAME_SUFFIX}
     spec:
       output:
         to:
           kind: ImageStreamTag
-          name: tenant-management-api:${BUILD_TAG}
+          name: file-service:${BUILD_TAG}
           namespace: ${INFRA_NAMESPACE}
       postCommit: {}
       resources: {}
@@ -251,7 +252,7 @@ objects:
         dockerStrategy:
           buildArgs:
             - name: SERVICE
-              value: tenant-management-api
+              value: file-service
           dockerfilePath: .openshift/service/Dockerfile
         type: Docker
 
@@ -262,13 +263,32 @@ objects:
   #   kind: ConfigMap
   #   metadata:
   #     labels:
-  #       app: tenant-management
+  #       app: file-service
   #       component: api
-  #     name: tenant-management-api
+  #     name: file-service
   #   data:
   #     KEYCLOAK_REALM: core
   #     KEYCLOAK_ROOT_URL: https://access-dev.os99.gov.ab.ca/auth
   #     FILE_SERVICE_HOST: https://file-service-core-services-dev.os99.gov.ab.ca
+  #     AV_PROVIDER: meta
+  #     AV_HOST: http://vnn4457.gov.ab.ca
+  #     AV_PORT: '8008'
+
+  # PersistentVolumeClaim is only generated for branch deployment to avoid losing persistent data.
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: file-service${NAME_SUFFIX}
+        component: api
+        apply-branch: "true"
+      name: file-service-files${NAME_SUFFIX}
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
 
   # DeploymentConfig (and Service and Route) is created in each environment of the
   # primary pipline as well as branch deployment.
@@ -276,19 +296,19 @@ objects:
     kind: DeploymentConfig
     metadata:
       labels:
-        app: tenant-management${NAME_SUFFIX}
+        app: file-service${NAME_SUFFIX}
         component: api
         apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: tenant-management-api${NAME_SUFFIX}
+      name: file-service${NAME_SUFFIX}
     spec:
       replicas: 1
       revisionHistoryLimit: 3
       selector:
-        app: tenant-management${NAME_SUFFIX}
+        app: file-service${NAME_SUFFIX}
         component: api
       strategy:
         activeDeadlineSeconds: 21600
@@ -299,40 +319,42 @@ objects:
       template:
         metadata:
           labels:
-            app: tenant-management${NAME_SUFFIX}
+            app: file-service${NAME_SUFFIX}
             component: api
         spec:
           containers:
             - envFrom:
                 - configMapRef:
-                    name: tenant-management-api
-                - secretRef:
-                    name: tenant-management-api
+                    name: file-service
               env:
                 - name: PORT
                   value: "3333"
+                - name: FILE_PATH
+                  value: /data/files
+                - name: LOG_LEVEL
+                  value: info
                 - name: MONGO_USER
                   valueFrom:
                     secretKeyRef:
                       key: database-user
-                      name: tenant-management-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb${NAME_SUFFIX}
                 - name: MONGO_URI
                   valueFrom:
                     secretKeyRef:
                       key: database-uri
-                      name: tenant-management-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb${NAME_SUFFIX}
                 - name: MONGO_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-password
-                      name: tenant-management-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb${NAME_SUFFIX}
                 - name: MONGO_DB
                   valueFrom:
                     secretKeyRef:
                       key: database-name
-                      name: tenant-management-mongodb${NAME_SUFFIX}
+                      name: file-service-mongodb${NAME_SUFFIX}
               imagePullPolicy: IfNotPresent
-              name: tenant-management-api
+              name: file-service
               ports:
                 - containerPort: 3333
                   name: http
@@ -340,33 +362,40 @@ objects:
               resources: {}
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
+              volumeMounts:
+                - mountPath: /data/files
+                  name: file-volume
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           schedulerName: default-scheduler
           securityContext: {}
           terminationGracePeriodSeconds: 30
+          volumes:
+            - name: file-volume
+              persistentVolumeClaim:
+                claimName: file-service-files${NAME_SUFFIX}
       test: false
       triggers:
         - imageChangeParams:
             containerNames:
-              - tenant-management-api
+              - file-service
             from:
               kind: ImageStreamTag
-              name: tenant-management-api:${DEPLOY_TAG}
+              name: file-service:${DEPLOY_TAG}
               namespace: ${INFRA_NAMESPACE}
           type: ImageChange
   - apiVersion: v1
     kind: Service
     metadata:
       labels:
-        app: tenant-management${NAME_SUFFIX}
+        app: file-service${NAME_SUFFIX}
         component: api
         apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: tenant-management-api${NAME_SUFFIX}
+      name: file-service${NAME_SUFFIX}
     spec:
       ports:
         - name: http
@@ -374,7 +403,7 @@ objects:
           protocol: TCP
           targetPort: 3333
       selector:
-        app: tenant-management${NAME_SUFFIX}
+        app: file-service${NAME_SUFFIX}
         component: api
       sessionAffinity: None
       type: ClusterIP
@@ -382,14 +411,14 @@ objects:
     kind: Route
     metadata:
       labels:
-        app: tenant-management${NAME_SUFFIX}
+        app: file-service${NAME_SUFFIX}
         component: api
         apply-branch: "true"
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: tenant-management-api${NAME_SUFFIX}
+      name: file-service${NAME_SUFFIX}
     spec:
       host: ${ROUTE_HOST}
       port:
@@ -398,6 +427,6 @@ objects:
         termination: edge
       to:
         kind: Service
-        name: tenant-management-api${NAME_SUFFIX}
+        name: file-service${NAME_SUFFIX}
         weight: 100
       wildcardPolicy: None
