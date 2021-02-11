@@ -1,6 +1,7 @@
 {
   "env": {
-    "TAGS": ""
+    "TAGS": "",
+    "API": ""
   },
   "baseUrl": "http://localhost:4200/",
   "fileServerFolder": ".",

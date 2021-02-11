@@ -1,5 +1,4 @@
 import React from 'react';
-
 import './app.scss';
 import '@abgov/react-components/react-components.esm.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -21,58 +20,75 @@ import CreateErrorPage from './components/realms/CreateErrorPage';
 import ActivateErrorPage from './components/realms/ActivateErrorPage';
 import Realms from './components/realms/Realms';
 import '@abgov/core-css/goa-core.css';
-import BaseApp from './baseApp'
+import BaseApp from './baseApp';
+import { Provider } from 'react-redux';
+import { store, persistor } from '../app/store/store';
+import { PersistGate } from 'redux-persist/integration/react';
+
+const AppRouters = () => {
+  return (
+    <Router>
+      <Switch>
+        <Route exact path="/">
+          <LandingPage />
+        </Route>
+        <Route path="/login">
+          <Login />
+        </Route>
+        <Route path="/sign-up">
+          <SignUp />
+        </Route>
+        <BaseApp>
+          <Route path="/case-study">
+            <CaseStudy />
+          </Route>
+          <Route path="/file-service">
+            <FileService />
+          </Route>
+          <Route path="/service-measures">
+            <ServiceMeasure />
+          </Route>
+          <Route path="/app-status">
+            <AppStatus />
+          </Route>
+          <Route path="/notifications">
+            <Notifications />
+          </Route>
+          <Route path="/integration">
+            <Integration />
+          </Route>
+          <Route path="/tenant-admin">
+            <TenantManagement />
+          </Route>
+          <Route path="/Realms" exact component={Realms} />
+          <Route path="/Realms/CreateRealm" exact component={CreateRealm} />
+          <Route path="/Realms/CreatingRealm" exact component={CreatingRealm} />
+          <Route path="/Realms/AddClientRole" exact component={AddClientRole} />
+          <Route
+            path="/Realms/CreateErrorPage"
+            exact
+            component={CreateErrorPage}
+          />
+          <Route
+            path="/Realms/ActivateErrorPage"
+            exact
+            component={ActivateErrorPage}
+          />
+        </BaseApp>
+      </Switch>
+    </Router>
+  );
+};
 
 export const App = () => {
   return (
-    <div>
-      <main>
-        <Router>
-          <Switch>
-            <Route exact path="/">
-              <LandingPage />
-            </Route>
-            <Route path="/login">
-              <Login />
-            </Route>
-            <Route path="/sign-up">
-              <SignUp />
-            </Route>
-
-            <BaseApp>
-              <Route path="/case-study">
-                <CaseStudy />
-              </Route>
-              <Route path="/file-service">
-                <FileService />
-              </Route>
-              <Route path="/service-measures">
-                <ServiceMeasure />
-              </Route>
-              <Route path="/app-status">
-                <AppStatus />
-              </Route>
-              <Route path="/notifications">
-                <Notifications />
-              </Route>
-              <Route path="/integration">
-                <Integration />
-              </Route>
-              <Route path="/tenant-admin">
-                <TenantManagement />
-              </Route>
-              <Route path="/Realms" exact component={Realms} />
-              <Route path="/Realms/CreateRealm" exact component={CreateRealm} />
-              <Route path="/Realms/CreatingRealm" exact component={CreatingRealm} />
-              <Route path="/Realms/AddClientRole" exact component={AddClientRole} />
-              <Route path="/Realms/CreateErrorPage" exact component={CreateErrorPage} />
-              <Route path="/Realms/ActivateErrorPage" exact component={ActivateErrorPage} />
-            </BaseApp>
-
-          </Switch>
-        </Router>
-      </main>
-    </div>
+    <main>
+      <Provider store={store}>
+        <PersistGate loading={null} persistor={persistor}>
+          <AppRouters />
+        </PersistGate>
+      </Provider>
+    </main>
   );
 };
 

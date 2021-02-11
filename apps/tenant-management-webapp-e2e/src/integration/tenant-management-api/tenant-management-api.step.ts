@@ -5,10 +5,8 @@ let responseObj;
 When(
   'the user sends a request to tenant management health endpoint',
   function () {
-    cy.request(
-      'GET',
-      'https://tenant-management-api-core-services-dev.os99.gov.ab.ca/health'
-    ).then(function (response) {
+    const requestURL = Cypress.env('API') + '/health';
+    cy.request('GET', requestURL).then(function (response) {
       responseObj = response;
     });
   }
