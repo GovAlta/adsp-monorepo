@@ -1,8 +1,8 @@
 const env = process.env;
 
 export const environment = {
-  KEYCLOAK_ROOT_URL: '',
-  KEYCLOAK_REALM: '',
+  KEYCLOAK_ROOT_URL: 'https://access-dev.os99.gov.ab.ca',
+  KEYCLOAK_REALM: 'core',
   FILE_PATH: 'data/file/',
   LOG_LEVEL: 'debug',
   MONGO_URI: 'mongodb://localhost:27017',

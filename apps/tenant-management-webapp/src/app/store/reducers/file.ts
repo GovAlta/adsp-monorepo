@@ -55,5 +55,15 @@ export default function (state = INIT_STATE.tenant.file, action) {
     };
   }
 
+  if (action.type === TYPES.FETCH_FILE_SPACE_SUCCEEDED) {
+    // action is the spaceInfo
+    return {
+      ...state,
+      spaces: [
+        action.payload.data
+      ]
+    }
+  }
+
   return state;
 }

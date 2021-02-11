@@ -3,6 +3,7 @@ import { Container, Tabs, Tab } from 'react-bootstrap';
 import FileOverview from './fileOverview';
 import FileHeader from './fileHeader';
 import InitSetup from './fileInitSetup';
+import FileSpace from './fileSpace';
 import './file.css';
 import * as _ from 'lodash';
 import FileSettings from './fileSettings';
@@ -37,7 +38,7 @@ const APIIntegration = () => {
 const TabsForSetup = () => {
   const isActive = useSelector((state) => _.get(state, 'File.status.isActive'));
   const activeTab = useSelector((state) => _.get(state, 'File.states.activeTab'));
-  const dispatch = useDispatch();
+  const dispatch = useDispatch()
 
   return (
     <Tabs
@@ -45,10 +46,14 @@ const TabsForSetup = () => {
       id="admin-file-service-tab"
       className="file-tab"
       activeKey={activeTab}
-      onSelect={(key) => dispatch({type: TYPES.FILE_SET_ACTIVE_TAB, key})}
+      onSelect={(key) => dispatch({ type: TYPES.FILE_SET_ACTIVE_TAB, key })}
     >
       <Tab eventKey="overall-view" title="Overview">
         <FileOverview />
+      </Tab>
+
+      <Tab eventKey="space" title="Space Config" disabled={!isActive}>
+        <FileSpace />
       </Tab>
 
       <Tab eventKey="templates" title="Templates" disabled={!isActive}>
@@ -96,6 +101,17 @@ export default function File() {
   const setupRequired = useSelector((state) =>
     _.get(state, 'File.requirements.setup')
   );
+
+  const dispatch = useDispatch()
+  const fileServiceConfig = useSelector((state) => _.get(state, 'Config.fileService'));
+  const user = useSelector((state) => _.get(state, 'User'));
+  // TODO: shall we load the file service info at begining?
+  dispatch({
+    type: TYPES.FETCH_FILE_SPACE, payload:
+    {
+      fileService: fileServiceConfig, user: user
+    }
+  });
 
   const FileOverviewTab = setupRequired ? <TabsForInit /> : <TabsForSetup />;
 

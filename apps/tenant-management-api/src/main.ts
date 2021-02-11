@@ -53,10 +53,11 @@ app.get('/welcome', (req, res) => {
 app.use('/api/realm', realmRouter);
 app.use('/api/discovery', directoryRouter);
 
-app.use('/api/v1/tenant/file', [
-  passport.authenticate(['jwt'], { session: false }),
-  fileRouter,
-]);
+app.use('/api/tenant/file',
+  [
+    passport.authenticate(['jwt'], { session: false }),
+    fileRouter
+  ]);
 
 app.use('/health', healthCheck());
 
