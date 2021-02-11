@@ -12,7 +12,6 @@ export const connectMongo = async () => {
     const mongoURI = `${mongoHost}/${mongoDb}`;
 
     logger.info(`Mondodb URI is  ${mongoURI}`);
-    logger.info(`environment.MONGO_URI   ${mongoHost}`);
 
     const options: ConnectionOptions = {
       user:mongoUser,
@@ -24,7 +23,7 @@ export const connectMongo = async () => {
 
     await connect(mongoURI, options);
     logger.info('MongoDB Connected...');
-    
+
   } catch (err) {
     // Exit process with failure
     logger.error(`MongoDB has error, ${err.message} will exit ...`);
