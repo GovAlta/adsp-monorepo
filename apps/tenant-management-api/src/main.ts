@@ -1,12 +1,8 @@
 import * as fs from 'fs';
 import * as express from 'express';
 import * as healthCheck from 'express-healthcheck';
-import { environment } from './environments/environment';
-import { createConfigService} from './configuration-management';
+import { createConfigService } from './configuration-management';
 import { connectMongo, disconnect } from './mongo/index';
-import directoryRouter from './app/router/directory';
-import fileRouter from './app/router/file';
-import realmRouter from './app/router/realm';
 import * as swaggerUi from 'swagger-ui-express';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as passport from 'passport';
@@ -14,21 +10,28 @@ import {
   createKeycloakStrategy,
   KeycloakStrategyProps,
 } from '@core-services/core-common';
-
+import apiRouter from './app/router';
 import { logger } from './middleware/logger';
+import { environment } from './environments/environment';
 
 import * as cors from 'cors';
 
+const version = require('../../../package.json').version;
 
 const app = express();
 app.use(express.json());
 /* Connect to mongo db */
 connectMongo();
+
 app.use(cors());
 
 const keycloakProps: KeycloakStrategyProps = {
-  KEYCLOAK_ROOT_URL: process.env.KEYCLOAK_ROOT_URL || 'http://localhost:8080',
-  KEYCLOAK_REALM: process.env.KEYCLOAK_REALM || 'master',
+  KEYCLOAK_ROOT_URL:
+    process.env.KEYCLOAK_ROOT_URL ||
+    environment.KEYCLOAK_ROOT_URL ||
+    'http://localhost:8080',
+  KEYCLOAK_REALM:
+    process.env.KEYCLOAK_REALM || environment.KEYCLOAK_REALM || 'master',
 };
 
 passport.use('jwt', createKeycloakStrategy(keycloakProps));
@@ -49,15 +52,14 @@ app.use(passport.initialize());
 app.get('/welcome', (req, res) => {
   res.send({ message: 'Welcome to tenant-management-api!' });
 });
+app.get('/version', (req, res) => {
+  res.send(`Version: ${version}`);
+});
 
-app.use('/api/realm', realmRouter);
-app.use('/api/discovery', directoryRouter);
-
-app.use('/api/tenant/file',
-  [
-    passport.authenticate(['jwt'], { session: false }),
-    fileRouter
-  ]);
+app.use('/api/v1', [
+  passport.authenticate(['jwt'], { session: false }),
+  apiRouter,
+]);
 
 app.use('/health', healthCheck());
 
@@ -76,7 +78,7 @@ const port = process.env.port || 3333;
 createConfigService(app);
 
 const server = app.listen(port, () => {
-  console.log(`Listening at http://localhost:${port}/api`);
+  logger.info(`Listening at http://localhost:${port}/api`);
 });
 
 process.on('SIGINT', async () => {

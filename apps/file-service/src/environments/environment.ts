@@ -17,5 +17,5 @@ export const environment = {
   AV_PROVIDER: 'clam',
   PORT: 3337,
   ...env,
-  production: env.NODE_ENV === 'production'
+  production: env.NODE_ENV === 'production',
 };

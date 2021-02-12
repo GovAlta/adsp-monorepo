@@ -7,16 +7,16 @@ export const connectMongo = async () => {
     const mongoHost = environment.MONGO_URI || process.env.MONGO_URI;
     const mongoDb = environment.MONGO_DB || process.env.MONGO_DB;
     const mongoUser = environment.MONGO_USER || process.env.MONGO_USER;
-    const mongoPassword = environment.MONGO_PASSWORD || process.env.MONGO_PASSWORD;
+    const mongoPassword =
+      environment.MONGO_PASSWORD || process.env.MONGO_PASSWORD;
 
     const mongoURI = `${mongoHost}/${mongoDb}`;
 
     logger.info(`Mondodb URI is  ${mongoURI}`);
-    logger.info(`environment.MONGO_URI   ${mongoHost}`);
 
     const options: ConnectionOptions = {
-      user:mongoUser,
-      pass:mongoPassword,
+      user: mongoUser,
+      pass: mongoPassword,
       useNewUrlParser: true,
       useFindAndModify: false,
       useUnifiedTopology: true,
@@ -24,7 +24,6 @@ export const connectMongo = async () => {
 
     await connect(mongoURI, options);
     logger.info('MongoDB Connected...');
-    
   } catch (err) {
     // Exit process with failure
     logger.error(`MongoDB has error, ${err.message} will exit ...`);
