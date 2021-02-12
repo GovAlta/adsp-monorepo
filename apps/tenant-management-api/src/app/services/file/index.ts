@@ -60,14 +60,15 @@ export const addFileTypePromise = (space, type, data, token) => {
 export const createSpacePromise = (tenantId, realm, token) => {
   return new Promise((resolve, reject) => {
     const path = '/space/v1/spaces';
+    const spaceId = `${realm}-${tenantId}`;
 
     const data = {
       name: realm,
       spaceAdminRole: `${realm}-file-admin`,
-      id: tenantId,
+      id: spaceId,
     };
 
-    const url = `${FILE_SERVICE_HOST}${path}/${tenantId}`;
+    const url = `${FILE_SERVICE_HOST}${path}/${spaceId}`;
 
     const payload = {
       url: url,
