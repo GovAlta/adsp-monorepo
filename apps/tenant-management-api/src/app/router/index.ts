@@ -9,9 +9,8 @@ import realmRouter from './realm';
 
 const apiRouter = Router();
 
-apiRouter.use('/discovery',directoryRouter);
-apiRouter.use('/realm',realmRouter);
-apiRouter.use('/tenant/file',fileRouter);
-
+apiRouter.use('/discovery', directoryRouter);
+apiRouter.use('/realm', realmRouter);
+apiRouter.use('/tenant/file', fileRouter);
 
 export default apiRouter;

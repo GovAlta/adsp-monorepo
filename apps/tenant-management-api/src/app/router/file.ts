@@ -59,12 +59,11 @@ fileRouter.get(
  *           realm:
  *             type: string
  *             description: tenant realm
-*/
+ */
 
-fileRouter.post('/space',
-  [
-    check('tenantId').not().isEmpty(),
-    check('realm').not().isEmpty()],
+fileRouter.post(
+  '/space',
+  [check('tenantId').not().isEmpty(), check('realm').not().isEmpty()],
   async (req, res) => {
     if (!validateRole(req.user)) {
       return res.send(HttpStatusCodes.UNAUTHORIZED);
