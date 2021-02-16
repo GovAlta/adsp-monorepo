@@ -60,12 +60,15 @@ const getUrlResponse = (services, component) => {
   if (host) {
     const discoveryRes: Response = {};
     discoveryRes.urn = getUrn(component);
-    discoveryRes.url = component.apiVersion
-      ? `${HTTPS}${host}/application${component.apiVersion}`
+
+    let responseUrl = component.apiVersion
+      ? `${HTTPS}${host}/application/${component.apiVersion}`
       : `${HTTPS}${host}`;
-    discoveryRes.url = component.resource
-      ? `${HTTPS}${host}${component.resource}`
-      : `${HTTPS}${host}`;
+
+    responseUrl = component.resource
+      ? `${responseUrl}${component.resource}`
+      : responseUrl;
+    discoveryRes.url = responseUrl;
     return discoveryRes;
   }
   return new ApiError(
@@ -96,6 +99,9 @@ export const discovery = async (urn) => {
     if (urnArray[4]) {
       if (validateVersion(urnArray[4])) {
         component.apiVersion = urnArray[4];
+        if (urnArray[5] && validatePath(urnArray[5])) {
+          component.resource = urnArray[5];
+        }
       }
 
       if (validatePath(urnArray[4])) {
