@@ -56,7 +56,7 @@ app.get('/version', (req, res) => {
   res.send(`Version: ${version}`);
 });
 
-app.use('/api/v1', [
+app.use('/api/', [
   passport.authenticate(['jwt'], { session: false }),
   apiRouter,
 ]);
