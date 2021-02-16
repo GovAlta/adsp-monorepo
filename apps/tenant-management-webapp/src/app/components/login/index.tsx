@@ -4,39 +4,40 @@ import { useSelector, useDispatch } from 'react-redux';
 import { TYPES } from '../../store/actions';
 import * as _ from 'lodash';
 import Keycloak from 'keycloak-js';
-import { Redirect } from 'react-router-dom'
-
+import { Redirect } from 'react-router-dom';
 
 function Login() {
-
-  const keycloakConfig = useSelector((state) => _.get(state, 'Config.keycloak'));
-  const isAuthenticated = useSelector((state) => _.get(state, 'User.authenticated'));
+  const keycloakConfig = useSelector((state) =>
+    _.get(state, 'Config.keycloak')
+  );
+  const isAuthenticated = useSelector((state) =>
+    _.get(state, 'User.authenticated')
+  );
 
   const dispatch = useDispatch();
 
-  const initKeyCloak = () => {
+  const login = () => {
+    const keycloak = Keycloak(keycloakConfig);
 
-    const keycloak = Keycloak(keycloakConfig)
-
-    keycloak.init({ onLoad: 'login-required' }).then(authenticated => {
-      dispatch({ type: TYPES.USER_LOGIN_SUCCESS, keycloak })
+    keycloak.init({ onLoad: 'login-required' }).then((authenticated) => {
+      dispatch({ type: TYPES.USER_LOGIN_SUCCESS, keycloak });
       // TODO: Add error handling if the keycloak server is down.
       if (authenticated) {
         keycloak.loadUserInfo().then(() => {
           // User roles are in the keycloak.tokenParsed
-          dispatch({ type: TYPES.USER_LOGIN_SUCCESS, keycloak })
-        })
+          dispatch({ type: TYPES.USER_LOGIN_SUCCESS, keycloak });
+        });
       } else {
         // TODO: need UI design
-        alert('Login Failed')
+        alert('Login Failed');
       }
-    })
-  }
+    });
+  };
 
-  useEffect(initKeyCloak);
+  useEffect(login);
 
   if (isAuthenticated) {
-    return <Redirect to='/tenant-admin' />;
+    return <Redirect to="/tenant-admin" />;
   }
 
   return (

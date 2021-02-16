@@ -8,6 +8,6 @@ const apiRouter = Router();
 
 apiRouter.use('/discovery/v1', directoryRouter);
 apiRouter.use('/realm', realmRouter);
-apiRouter.use('/tenant/file', fileRouter);
+apiRouter.use('/file/v1', fileRouter);
 
 export default apiRouter;
