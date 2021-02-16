@@ -9,39 +9,40 @@ const FILE_INIT = {
     isDisable: true,
   },
   requirements: {
-    setup: false
+    setup: false,
   },
   states: {
-    activeTab: 'overall-view'
+    activeTab: 'overall-view',
   },
-  spaces: []
-}
+  spaces: [],
+};
 
 // TODO: [Feb-5-2021] Paul: need to fetch using configuration service and environment varaibles
 const KEYCLOAK_CONFIG = {
-  realm: "core",
-  url: "https://access-dev.os99.gov.ab.ca/auth/",
-  clientId: "tenant-admin-frontend-qa"
-}
+  realm: 'core',
+  url: 'https://access-dev.os99.gov.ab.ca/auth/',
+  clientId: 'tenant-admin-frontend-qa',
+  checkLoginIframe: false,
+};
 
 const FILE_SERVICE_CONFIG = {
-  host: "https://tenant-management-api-core-services-dev.os99.gov.ab.ca",
+  host: 'https://tenant-management-api-core-services-dev.os99.gov.ab.ca',
   endpoints: {
-    spaceAdmin: "/api/tenant/file/space"
-  }
-}
+    spaceAdmin: '/api/file/v1/space',
+  },
+};
 
 // TODO: Use strong stype when the schema is stable
 const USER = {
   jwt: {
     exp: 0,
-    token: null
+    token: null,
   },
   authenticated: false,
   roles: [],
   username: 'Guest',
   keycloak: null,
-}
+};
 
 // TODO: need to move then to Configuration Service later
 const INIT_STATE = {
@@ -51,8 +52,8 @@ const INIT_STATE = {
   user: USER,
   config: {
     keycloak: KEYCLOAK_CONFIG,
-    fileService: FILE_SERVICE_CONFIG
-  }
+    fileService: FILE_SERVICE_CONFIG,
+  },
 };
 
 export default INIT_STATE;

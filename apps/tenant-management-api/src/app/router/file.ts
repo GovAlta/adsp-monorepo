@@ -39,28 +39,6 @@ fileRouter.get(
   }
 );
 
-/**
- * @swagger
- *
- * /api/tenant/file/space:
- *   post:
- *     description: Fetch list of space for a tenant
- *     consumes: applicaiton/json
- *     parameters:
- *     - name: body
- *       in: body
- *       schema:
- *         type: object
- *         required: ['tenantId', realm]
- *         properties:
- *           tenantId:
- *             type: string
- *             description: tenant Id
- *           realm:
- *             type: string
- *             description: tenant realm
- */
-
 fileRouter.post(
   '/space',
   [check('tenantId').not().isEmpty(), check('realm').not().isEmpty()],

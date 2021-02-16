@@ -5,6 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 import LandingPage from './components/landingPage';
 import Login from './components/login/';
+import Logout from './components/logout/';
 import CaseStudy from './components/caseStudy/';
 import FileService from './components/file-service';
 import ServiceMeasure from './components/serviceMeasure';
@@ -34,6 +35,9 @@ const AppRouters = () => {
         </Route>
         <Route path="/login">
           <Login />
+        </Route>
+        <Route path="/logout">
+          <Logout />
         </Route>
         <Route path="/sign-up">
           <SignUp />
