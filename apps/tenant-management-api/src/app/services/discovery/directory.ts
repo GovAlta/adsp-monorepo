@@ -4,7 +4,12 @@ import Directory from './model/directory';
 import { logger } from '../../../middleware/logger';
 import { ApiError } from '../../util/apiError';
 import * as HttpStatusCodes from 'http-status-codes';
-import { validateUrn } from './util/UrnUtil';
+import {
+  validateUrn,
+  validateHostname,
+  validateVersion,
+  validatePath,
+} from './util/patternUtil';
 
 export interface URNComponent {
   scheme?: string;
@@ -12,6 +17,7 @@ export interface URNComponent {
   core?: string;
   service?: string;
   apiVersion?: string;
+  resource?: string;
 }
 export interface Response {
   url?: string;
@@ -30,9 +36,12 @@ const getName = (directory, core: string) => {
 };
 
 const getUrn = (component: URNComponent) => {
-  const urn = `${component.scheme}:${component.nic}:${component.core}:${component.service}`;
-  return component.apiVersion ? `${urn}:${component.apiVersion}` : urn;
+  let urn = `${component.scheme}:${component.nic}:${component.core}:${component.service}`;
+  urn = component.apiVersion ? `${urn}:${component.apiVersion}` : urn;
+  urn = component.resource ? `${urn}:${component.resource}` : urn;
+  return urn;
 };
+
 const isStartWithHttp = (service: string) => {
   return service.toLowerCase().startsWith('http');
 };
@@ -51,9 +60,15 @@ const getUrlResponse = (services, component) => {
   if (host) {
     const discoveryRes: Response = {};
     discoveryRes.urn = getUrn(component);
-    discoveryRes.url = component.apiVersion
+
+    let responseUrl = component.apiVersion
       ? `${HTTPS}${host}/application/${component.apiVersion}`
       : `${HTTPS}${host}`;
+
+    responseUrl = component.resource
+      ? `${responseUrl}${component.resource}`
+      : responseUrl;
+    discoveryRes.url = responseUrl;
     return discoveryRes;
   }
   return new ApiError(
@@ -68,12 +83,32 @@ export const discovery = async (urn) => {
   const component: URNComponent = {};
   const urnArray = urn.split(URN_SEPARATOR);
 
-  if (urnArray.length > 0 && !validateUrn(urn)) {
+  if (urnArray.length > 3) {
     component.scheme = urnArray[0];
     component.nic = urnArray[1];
     component.core = urnArray[2];
     component.service = urnArray[3];
-    component.apiVersion = urnArray[4];
+
+    if (!validateUrn(getUrn(component))) {
+      return new ApiError(
+        HttpStatusCodes.BAD_REQUEST,
+        'Please give right format URN! urn format should looks like urn:ads:{tenant|core}:{service}'
+      );
+    }
+
+    if (urnArray[4]) {
+      if (validateVersion(urnArray[4])) {
+        component.apiVersion = urnArray[4];
+        if (urnArray[5] && validatePath(urnArray[5])) {
+          component.resource = urnArray[5];
+        }
+      }
+
+      if (validatePath(urnArray[4])) {
+        component.resource = urnArray[4];
+      }
+    }
+
     try {
       let directory: DirectoryMap[] = await Directory.find();
 
@@ -144,24 +179,35 @@ export const getDirectories = async () => {
   }
 };
 
-export const addUpdateDirectory = async (directoryJson) => {
+export const addUpdateDirectory = async (directories) => {
   logger.info('directory service add updateDirectory');
   try {
+    const services = directories['services'];
+    for (const service of services) {
+      if (!validateHostname(service['host'])) {
+        return new ApiError(
+          HttpStatusCodes.BAD_REQUEST,
+          'Host format not correct!'
+        );
+      }
+    }
+
     const directory: DirectoryMap[] = await Directory.find({
-      name: directoryJson['name'],
+      name: directories['name'],
     });
 
     if (directory && directory.length > 0) {
       // Update
       await Directory.findOneAndUpdate(
-        { name: directoryJson['name'] },
-        { services: directoryJson['services'] },
+        { name: directories['name'] },
+        { services: directories['services'] },
         { new: true }
       );
       return HttpStatusCodes.CREATED;
     }
+
     // Create
-    await Directory.create(directoryJson);
+    await Directory.create(directories);
     return HttpStatusCodes.CREATED;
   } catch (err) {
     return new ApiError(

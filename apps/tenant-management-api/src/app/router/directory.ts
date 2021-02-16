@@ -10,10 +10,16 @@ import * as HttpStatusCodes from 'http-status-codes';
 import { logger } from '../../middleware/logger';
 import { check, validationResult } from 'express-validator/check';
 
+/**
+ * Get all of directoies
+ */
 directoryRouter.get('/', async (req, res) => {
   return res.send(await getDirectories());
 });
 
+/**
+ * Get one directory by urn
+ */
 directoryRouter.get('/urn', async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -31,7 +37,9 @@ directoryRouter.get('/urn', async (req, res) => {
     .status(HttpStatusCodes.BAD_REQUEST)
     .json({ errors: 'There is no context in post' });
 });
-
+/**
+ * Add or update one directory
+ */
 directoryRouter.post(
   '/',
   [
@@ -45,6 +53,7 @@ directoryRouter.post(
         .sendStatus(HttpStatusCodes.BAD_REQUEST)
         .json({ errors: errors.array() });
     }
+
     if (req.body) {
       return res
         .status(HttpStatusCodes.CREATED)
@@ -57,6 +66,9 @@ directoryRouter.post(
   }
 );
 
+/**
+ * Delete one directory by name
+ */
 directoryRouter.delete(
   '/',
   [check('name', 'name is required').not().isEmpty()],
