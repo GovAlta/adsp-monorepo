@@ -1,10 +1,8 @@
 import React from 'react';
 import { GoaHeader } from '@abgov/react-components';
 import { Link } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import * as _ from 'lodash';
-import { TYPES } from './store/actions';
-
 import person from '../assets/person.jpg';
 
 enum ServiceLevel {
@@ -14,19 +12,12 @@ enum ServiceLevel {
 }
 
 function Header({ serviceName }) {
-  const dispatch = useDispatch()
-  const authenticated = useSelector((state) => _.get(state, 'User.authenticated'));
+  const authenticated = useSelector((state) =>
+    _.get(state, 'User.authenticated')
+  );
   // TODO: Do we need the login page?
-  const url = authenticated ? '/' : '/login';
+  const url = authenticated ? '/logout' : '/login';
   const urlName = authenticated ? 'Sign Out' : 'Sign In';
-  const keycloak = useSelector((state) => _.get(state, 'User.keycloak'));
-
-  const logout = (authenticated) => {
-    if (authenticated) {
-      // TODO: Call keycloak sign out API to delete the session from keycloak
-      dispatch({ type: TYPES.USER_LOGOUT });
-    }
-  }
 
   return (
     <div>
@@ -76,7 +67,7 @@ function Header({ serviceName }) {
               <div style={{ margin: '4px 6px 6px 0' }}>
                 <img src={person} alt="" height="26px" />
               </div>
-              <Link to={url} style={{ margin: '6px 20px 12px 0' }} onClick={logout} >
+              <Link to={url} style={{ margin: '6px 20px 12px 0' }}>
                 {urlName}
               </Link>
             </div>
