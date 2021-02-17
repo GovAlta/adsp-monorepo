@@ -6,7 +6,7 @@
     "nx": "nx",
     "start": "nx serve",
     "start:tenant-management-webapp": "nx run tenant-management-webapp:serve",
-    "start:tenant-management-api": "nx run tenant-management-webapp:api",
+    "start:tenant-management-api": "nx run tenant-management-api:serve",
     "build": "nx build",
     "test": "nx test",
     "lint": "nx workspace-lint && nx lint",

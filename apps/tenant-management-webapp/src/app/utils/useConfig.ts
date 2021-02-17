@@ -8,12 +8,12 @@ export const configKey = 'config-key';
  * returned from the API
  */
 export interface Config {
-  eventServiceUrl: string;
-  notificationServiceUrl: string;
-  keyCloakUrl: string;
-  tenantManagementApi: string;
-  accessManagementApi: string;
-  uiComponentUrl: string;
+  eventServiceUrl?: string;
+  notificationServiceUrl?: string;
+  keycloakUrl?: string;
+  tenantManagementApi?: string;
+  accessManagementApi?: string;
+  uiComponentUrl?: string;
 }
 
 /**
@@ -46,7 +46,6 @@ export function useConfig(): [Config, State, string] {
     };
     _getConfig();
   }, []);
-
 
   return [config, state, error];
 }
@@ -81,7 +80,7 @@ export async function fetchConfig(): Promise<Config> {
   try {
     return cached && JSON.parse(cached);
   } catch (e) {
-    throw new Error('failed to parse json')
+    throw new Error('failed to parse json');
   }
 }
 
