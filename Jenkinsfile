@@ -103,7 +103,7 @@ pipeline {
         expression { return affectedApps }
       }
       steps {
-        sh "npx nx affected --target=build ${baseCommand} --parallel"
+        sh "npx nx affected --configuration=production --target=build ${baseCommand} --parallel"
         script {
           openshift.withCluster() {
             openshift.withProject() {
