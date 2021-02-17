@@ -9,7 +9,7 @@ module.exports = (config) => {
       ...config.plugins,
       new SwaggerJSDocWebpackPlugin({
         swaggerDefinition,
-        apis: ['apps/tenant-management-api/src/app/router/**/*.ts'],
+        apis: ['apps/tenant-management-api/src/app/**/*.ts'],
       }),
     ],
   };

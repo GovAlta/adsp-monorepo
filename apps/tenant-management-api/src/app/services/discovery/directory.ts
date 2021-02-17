@@ -81,7 +81,7 @@ export const discovery = async (urn) => {
   //reslove the urn to object
   logger.info(`Starting discover URL for urn ${urn}`);
   const component: URNComponent = {};
-  const urnArray = urn.split(URN_SEPARATOR);
+  const urnArray = urn.toLowerCase().split(URN_SEPARATOR);
 
   if (urnArray.length > 3) {
     component.scheme = urnArray[0];
@@ -200,14 +200,20 @@ export const addUpdateDirectory = async (directories) => {
       // Update
       await Directory.findOneAndUpdate(
         { name: directories['name'] },
-        { services: directories['services'] },
+        {
+          services: JSON.parse(
+            JSON.stringify(directories['services']).toLowerCase()
+          ),
+        },
         { new: true }
       );
       return HttpStatusCodes.CREATED;
     }
 
     // Create
-    await Directory.create(directories);
+    await Directory.create(
+      JSON.parse(JSON.stringify(directories).toLowerCase())
+    );
     return HttpStatusCodes.CREATED;
   } catch (err) {
     return new ApiError(
