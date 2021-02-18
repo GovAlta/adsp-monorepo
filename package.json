@@ -140,7 +140,9 @@
     "@types/passport-jwt": "^3.0.3",
     "@types/react": "16.9.38",
     "@types/react-dom": "16.9.8",
+    "@types/react-redux": "^7.1.16",
     "@types/react-router-dom": "5.1.5",
+    "@types/redux-mock-store": "^1.0.2",
     "@types/request": "^2.48.5",
     "@types/shortid": "0.0.29",
     "@typescript-eslint/eslint-plugin": "2.19.2",
@@ -151,6 +153,7 @@
     "cypress": "^6.2.1",
     "cypress-cucumber-preprocessor": "^4.0.0",
     "dotenv": "6.2.0",
+    "dotenv-webpack": "^6.0.0",
     "eslint": "6.8.0",
     "eslint-config-prettier": "6.0.0",
     "eslint-plugin-cypress": "^2.10.3",
@@ -161,13 +164,13 @@
     "path": "^0.12.7",
     "prettier": "2.0.4",
     "react-test-renderer": "^16.14.0",
+    "redux-mock-store": "^1.5.4",
     "swagger-jsdoc-webpack-plugin": "^1.0.0",
     "ts-jest": "25.2.1",
     "ts-node": "~7.0.0",
     "tsify": "^5.0.2",
     "tslint": "~6.0.0",
-    "typescript": "~3.9.3",
-    "dotenv-webpack": "^6.0.0",
-    "typedi": "^0.9.1"
+    "typedi": "^0.9.1",
+    "typescript": "~3.9.3"
   }
 }
