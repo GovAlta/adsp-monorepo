@@ -50,13 +50,17 @@ export function useConfig(): [Config, State, string] {
   return [config, state, error];
 }
 
+export function clearConfig() {
+  localStorage.removeItem(configKey);
+}
+
 /**
  * Test helper method to stub out config data,
  * allowing the hook to respond with a `loaded` state
  */
 export function stubConfig(config?: Config) {
   const data = config ? JSON.stringify(config) : '{}';
-  localStorage.setItem('config-key', data);
+  localStorage.setItem(configKey, data);
 }
 
 /**
