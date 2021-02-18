@@ -1,7 +1,11 @@
 {
   "env": {
     "TAGS": "",
-    "API": ""
+    "API": "",
+    "keycloak": "https://access-dev.os99.gov.ab.ca/auth/realms/core/protocol/openid-connect/token",
+    "client-id": "tenant-admin-backend-dev-qa",
+    "client-secret": "767995af-158a-43b2-aa1f-dd7cd9ba4ffc",
+    "token": ""
   },
   "baseUrl": "http://localhost:4200/",
   "fileServerFolder": ".",

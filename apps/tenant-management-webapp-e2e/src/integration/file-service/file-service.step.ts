@@ -9,18 +9,34 @@ Given(
     const name = urnname;
     const service = urnservice;
     const host = serviceurl;
-    cy.request('POST', requestURL, {
-      name,
-      services: [{ service, host }],
-    }).then(function (response) {
-      expect(response.status).equals(201);
+    // Call postToken to get a token to store in an environment variable to be used for the following requests
+    cy.postToken().then(() => {
+      cy.request({
+        method: 'POST',
+        url: requestURL,
+        auth: {
+          bearer: Cypress.env('token'),
+        },
+        body: {
+          name,
+          services: [{ service, host }],
+        },
+      }).then(function (response) {
+        expect(response.status).equals(201);
+      });
     });
   }
 );
 
 When('the user sends a discovery request with {string}', function (request) {
   const requestURL = Cypress.env('API') + request;
-  cy.request('GET', requestURL).then(function (response) {
+  cy.request({
+    method: 'GET',
+    url: requestURL,
+    auth: {
+      bearer: Cypress.env('token'),
+    },
+  }).then(function (response) {
     responseObj = response;
   });
 });
@@ -39,7 +55,6 @@ Then(
   function (fileServiceURL) {
     // Verify that response has 200 status and url of file service
     expect(responseObj.status).to.eq(200);
-    // Due to an issue of URL being created with duplicated https:// through POST utility method, the validation uses contain instead of equal.
     expect(responseObj.body).to.have.property('url').to.contain(fileServiceURL);
   }
 );
@@ -50,7 +65,14 @@ When('the user sends a delete request of {string} with {string}', function (
 ) {
   const requestURL = Cypress.env('API') + request;
   const name = urnname;
-  cy.request('DELETE', requestURL, { name }).then(function (response) {
+  cy.request({
+    method: 'DELETE',
+    url: requestURL,
+    body: { name },
+    auth: {
+      bearer: Cypress.env('token'),
+    },
+  }).then(function (response) {
     responseObj = response;
   });
 });

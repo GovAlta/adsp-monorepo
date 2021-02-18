@@ -11,8 +11,8 @@ Feature: File service
     When the user sends a delete request of "<Name>" with "<RequestURL>"
     Then the testing mapping is removed
     Examples:
-      | RequestURL     | Name   | Service | Service URL                        |
-      | /api/discovery | ArcGIS | maps    | https://maps.alberta.ca/egn/change |
+      | RequestURL        | Name   | Service | Service URL     |
+      | /api/discovery/v1 | arcgis | maps    | maps.alberta.ca |
 
   @TEST_CS-344 @REQ_CS-232 @regression @api
   Scenario Outline: As a developer of a GoA digital service, I can discover individual service URL
@@ -22,5 +22,5 @@ Feature: File service
     When the user sends a delete request of "<Name>" with "<RequestURL>"
     Then the testing mapping is removed
     Examples:
-      | RequestURL     | RequestURLWithUrn                          | Name   | Service | Service URL                        |
-      | /api/discovery | /api/discovery/urn?urn=urn:ads:ArcGIS:maps | ArcGIS | maps    | https://maps.alberta.ca/egn/change |
+      | RequestURL        | RequestURLWithUrn                             | Name   | Service | Service URL     |
+      | /api/discovery/v1 | /api/discovery/v1/urn?urn=urn:ads:arcgis:maps | arcgis | maps    | maps.alberta.ca |
