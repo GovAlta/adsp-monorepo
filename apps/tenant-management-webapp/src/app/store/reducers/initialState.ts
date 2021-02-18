@@ -1,12 +1,61 @@
 /**
  * isActive - whether the file service is ready
- * isDiable - whether the server is enabled by user or admin
+ * isDisabled - whether the server is enabled by user or admin
  */
 
-const FILE_INIT = {
+export interface AppState {
+  tenant: { file: FileServiceState };
+  user: UserState;
+  config: ConfigState;
+}
+
+interface FileServiceState {
+  status: {
+    isActive: boolean;
+    isDisabled: boolean;
+  };
+  requirements: {
+    setup: boolean;
+  };
+  states: {
+    activeTab: string;
+  };
+  spaces: string[];
+}
+
+interface KeycloakState {
+  realm: string;
+  url: string;
+  clientId: string;
+}
+
+interface FileServiceConfigState {
+  host: string;
+  endpoints: {
+    spaceAdmin: string;
+  };
+}
+
+interface UserState {
+  jwt: {
+    exp: number;
+    token: string;
+  };
+  authenticated: boolean;
+  roles: string[];
+  username: string;
+  keycloak: string;
+}
+
+interface ConfigState {
+  keycloak: KeycloakState;
+  fileService: FileServiceConfigState;
+}
+
+const FILE_INIT: FileServiceState = {
   status: {
     isActive: true,
-    isDisable: true,
+    isDisabled: true,
   },
   requirements: {
     setup: false,
@@ -32,8 +81,7 @@ const FILE_SERVICE_CONFIG = {
   },
 };
 
-// TODO: Use strong stype when the schema is stable
-const USER = {
+const USER: UserState = {
   jwt: {
     exp: 0,
     token: null,
@@ -45,7 +93,7 @@ const USER = {
 };
 
 // TODO: need to move then to Configuration Service later
-const INIT_STATE = {
+const INIT_STATE: AppState = {
   tenant: {
     file: FILE_INIT,
   },
