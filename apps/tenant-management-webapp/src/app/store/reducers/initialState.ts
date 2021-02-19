@@ -3,6 +3,8 @@
  * isDisabled - whether the server is enabled by user or admin
  */
 
+import { Keycloak } from "../actions/config";
+
 export interface AppState {
   tenant: { file: FileServiceState };
   user: UserState;
@@ -21,12 +23,6 @@ interface FileServiceState {
     activeTab: string;
   };
   spaces: string[];
-}
-
-interface KeycloakState {
-  realm: string;
-  url: string;
-  clientId: string;
 }
 
 interface FileServiceConfigState {
@@ -48,7 +44,7 @@ interface UserState {
 }
 
 interface ConfigState {
-  keycloak: KeycloakState;
+  keycloak: Keycloak;
   fileService: FileServiceConfigState;
 }
 

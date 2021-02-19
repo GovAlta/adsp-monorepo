@@ -1,18 +1,22 @@
 import React, { FC, useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Tab, Tabs } from 'react-bootstrap';
 import useConfig from '../../../../utils/useConfig';
+import { AppState } from '../../../../store/reducers/initialState';
 
 const AccessPage: FC = () => {
   const [activeTab, setActiveTab] = useState<string>();
   const [keycloakUrl, setKeycloakUrl] = useState<string>();
   const [config, state] = useConfig();
 
+  const realmName = useSelector(
+    (state: AppState) => state?.config?.keycloak?.realm ?? ''
+  );
+
   useEffect(() => {
     if (state !== 'loaded') return;
-    // TODO: need to get the user specific realm for the user
-    const realm = 'core';
-    setKeycloakUrl(`${config.keycloakUrl}/auth/admin/${realm}/console`);
-  }, [config, state]);
+    setKeycloakUrl(`${config.keycloakUrl}/auth/admin/${realmName}/console`);
+  }, [config, state, realmName]);
 
   return (
     <div>
