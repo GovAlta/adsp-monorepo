@@ -4,12 +4,12 @@ import FileOverview from './fileOverview';
 import FileHeader from './fileHeader';
 import InitSetup from './fileInitSetup';
 import FileSpace from './fileSpace';
-import './file.css';
-import * as _ from 'lodash';
 import FileSettings from './fileSettings';
 import { useSelector, useDispatch } from 'react-redux';
 import '@abgov/react-components/react-components.esm.css';
 import { TYPES } from '../../../../store/actions';
+import { RootState } from '../../../../store/reducers';
+import './file.css';
 
 const Templates = () => {
   return (
@@ -36,10 +36,14 @@ const APIIntegration = () => {
 };
 
 const TabsForSetup = () => {
-  const isActive = useSelector((state) => _.get(state, 'File.status.isActive'));
-  const activeTab = useSelector((state) =>
-    _.get(state, 'File.states.activeTab')
+  const isActive = useSelector(
+    (state: RootState) => state.file.status.isActive
   );
+
+  const activeTab = useSelector(
+    (state: RootState) => state.file.states.activeTab
+  );
+
   const dispatch = useDispatch();
 
   return (
@@ -82,8 +86,8 @@ const TabsForSetup = () => {
 };
 
 const TabsForInit = () => {
-  const activeTab = useSelector((state) =>
-    _.get(state, 'File.states.activeTab')
+  const activeTab = useSelector(
+    (state: RootState) => state.file.states.activeTab
   );
 
   return (
@@ -101,20 +105,18 @@ const TabsForInit = () => {
 };
 
 export default function File() {
-  const setupRequired = useSelector((state) =>
-    _.get(state, 'File.requirements.setup')
+  const setupRequired = useSelector(
+    (state: RootState) => state.file.requirements.setup
   );
 
   const dispatch = useDispatch();
-  const fileServiceConfig = useSelector((state) =>
-    _.get(state, 'Config.fileService')
-  );
-  const user = useSelector((state) => _.get(state, 'User'));
+  const tenantAPI = useSelector((state: RootState) => state.config.tenantAPI);
+  const user = useSelector((state: RootState) => state.user);
   // TODO: shall we load the file service info at begining?
   dispatch({
     type: TYPES.FETCH_FILE_SPACE,
     payload: {
-      fileService: fileServiceConfig,
+      tenantAPI: tenantAPI,
       user: user,
     },
   });

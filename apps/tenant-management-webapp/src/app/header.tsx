@@ -2,8 +2,8 @@ import React from 'react';
 import { GoaHeader } from '@abgov/react-components';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import * as _ from 'lodash';
 import person from '../assets/person.jpg';
+import { RootState } from './store/reducers';
 
 enum ServiceLevel {
   Alpha = 'Alpha',
@@ -11,13 +11,34 @@ enum ServiceLevel {
   Live = 'Live',
 }
 
-function Header({ serviceName }) {
-  const authenticated = useSelector((state) =>
-    _.get(state, 'User.authenticated')
+function Header({ serviceName = '', isLoginLink = true }) {
+  const authenticated = useSelector(
+    (state: RootState) => state.user.authenticated
   );
   // TODO: Do we need the login page?
   const url = authenticated ? '/logout' : '/login';
   const urlName = authenticated ? 'Sign Out' : 'Sign In';
+  const loginLinkClass = isLoginLink ? '' : 'd-none';
+
+  const LoginLink = () => {
+    return (
+      <div
+        className={loginLinkClass}
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          paddingTop: '16px',
+        }}
+      >
+        <div style={{ margin: '4px 6px 6px 0' }}>
+          <img src={person} alt="" height="26px" />
+        </div>
+        <Link to={url} style={{ margin: '6px 20px 12px 0' }}>
+          {urlName}
+        </Link>
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -57,20 +78,7 @@ function Header({ serviceName }) {
                 </div>
               </div>
             </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'row',
-                paddingTop: '16px',
-              }}
-            >
-              <div style={{ margin: '4px 6px 6px 0' }}>
-                <img src={person} alt="" height="26px" />
-              </div>
-              <Link to={url} style={{ margin: '6px 20px 12px 0' }}>
-                {urlName}
-              </Link>
-            </div>
+            <LoginLink />
           </div>
         </div>
       </header>

@@ -2,12 +2,12 @@ import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { TYPES } from '../../store/actions';
 import { Link } from 'react-router-dom';
-import * as _ from 'lodash';
 import Keycloak from 'keycloak-js';
+import { RootState } from '../../store/reducers';
 
 function Logout() {
-  const KeycloakConfig = useSelector((state) =>
-    _.get(state, 'Config.keycloak')
+  const KeycloakConfig = useSelector(
+    (state: RootState) => state.config.keycloak
   );
   const dispatch = useDispatch();
   const logout = () => {
