@@ -9,9 +9,10 @@ import { render, waitFor } from '@testing-library/react';
 import { configActions } from '../../../../store/actions';
 import {
   CONFIG_SET_KEYCLOAK,
-  Keycloak,
   KeyCloakAction,
 } from '../../../../store/actions/config';
+
+import { Keycloak } from '../../../../store/reducers/config.contract';
 
 import AccessPage from './access';
 

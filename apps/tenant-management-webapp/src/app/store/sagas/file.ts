@@ -2,12 +2,10 @@ import { put } from 'redux-saga/effects';
 import { TYPES } from '../actions';
 import http from '../../api/http';
 
-
 export function* fetchSpace(config) {
-
   // TODO: we might need to revisit this part
-  const fileService = config.payload.fileService;
-  const url = `${fileService.host}${fileService.endpoints.spaceAdmin}`;
+  const tenantAPI = config.payload.tenantAPI;
+  const url = `${tenantAPI.host}${tenantAPI.endpoints.spaceAdmin}`;
   const user = config.payload.user;
   const token = user.jwt.token;
 
@@ -15,13 +13,13 @@ export function* fetchSpace(config) {
   const tenantId = user.keycloak.clientId;
 
   const headers = {
-    Authorization: `Bearer ${token}`
-  }
+    Authorization: `Bearer ${token}`,
+  };
 
   const data = {
     tenantId: tenantId,
-    realm: realm
-  }
+    realm: realm,
+  };
 
   try {
     const tenantSpaces = http.post(url, data, { headers: headers });

@@ -3,9 +3,12 @@ import { useDispatch } from 'react-redux';
 import { serviceMeasure } from '../../store/actions';
 import { useSelector } from 'react-redux';
 import { Container } from 'react-bootstrap';
+import { RootState } from '../../store/reducers';
 
 function ServiceMeasure() {
-  const tenantManagement = useSelector((state) => state.serviceMeasure);
+  const tenantManagement = useSelector(
+    (state: RootState) => state.serviceMeasure
+  );
   const dispatch = useDispatch();
 
   return (

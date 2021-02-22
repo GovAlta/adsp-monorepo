@@ -1,6 +1,5 @@
 import { TYPES } from '../actions';
 import INIT_STATE from './initialState';
-import * as _ from 'lodash';
 
 export default function (state = INIT_STATE.user, action) {
   if (action.type === TYPES.USER_LOGIN_SUCCESS) {
@@ -15,7 +14,7 @@ export default function (state = INIT_STATE.user, action) {
       ...state,
       keycloak: keycloak,
       authenticated: true,
-      username: _.get(keycloak, 'userInfo.preferred_username') || 'Guest',
+      username: keycloak.userInfo.preferred_username || 'Guest',
       jwt: jwt,
     };
   }

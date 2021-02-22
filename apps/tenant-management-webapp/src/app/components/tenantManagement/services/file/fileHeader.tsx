@@ -1,14 +1,16 @@
 import React from 'react';
 import './file.css';
 import { useSelector } from 'react-redux';
-import * as _ from 'lodash';
+import { RootState } from '../../../../store/reducers';
 
 const FileHeader = () => {
-  const setup = useSelector((state) => _.get(state, 'File.requirements.setup'));
+  const setup = useSelector(
+    (state: RootState) => state.file.requirements.setup
+  );
+  const active = useSelector((state: RootState) => state.file.status.isActive);
 
-  const active = useSelector((state) => _.get(state, 'File.status.isActive'));
   let headerState = '';
-  let headerStateClass = ''
+  let headerStateClass = '';
 
   if (setup) {
     headerState = 'Disabled';
