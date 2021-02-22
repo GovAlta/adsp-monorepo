@@ -8,7 +8,8 @@
     {
       "files": [
         "src/plugins/index.js",
-        "src/support/multiple-cucumber-html-reporter.js"
+        "src/support/multiple-cucumber-html-reporter.js",
+        "src/support/index.ts"
       ],
       "rules": {
         "@typescript-eslint/no-var-requires": "off",

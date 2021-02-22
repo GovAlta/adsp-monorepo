@@ -15,6 +15,7 @@ declare namespace Cypress {
   interface Chainable<Subject> {
     login(email: string, password: string): void;
     postToken(): Chainable<Subject>;
+    getConfig(): Chainable<Subject>;
   }
 }
 //
@@ -30,7 +31,9 @@ Cypress.Commands.add('postToken', () => {
   const grantType = 'client_credentials';
   cy.request({
     method: 'POST',
-    url: Cypress.env('keycloak'),
+    url:
+      Cypress.env('accessManagementApi') +
+      Cypress.env('keycloakTokenUrlSuffix'),
     body: {
       client_id: clientId,
       client_secret: clientSecret,
@@ -39,6 +42,21 @@ Cypress.Commands.add('postToken', () => {
     form: true,
   }).then((response) => {
     Cypress.env('token', response.body.access_token);
+  });
+});
+
+// Get all the config settings to store in cypress environment variables
+Cypress.Commands.add('getConfig', () => {
+  cy.request({
+    method: 'GET',
+    url: 'config/config.json',
+  }).then((response) => {
+    Cypress.env('eventServiceApiUrl', response.body.eventServiceApiUrl);
+    Cypress.env('notificationServiceUrl', response.body.notificationServiceUrl);
+    Cypress.env('keycloakUrl', response.body.keycloakUrl);
+    Cypress.env('tenantManagementApi', response.body.tenantManagementApi);
+    Cypress.env('accessManagementApi', response.body.accessManagementApi);
+    Cypress.env('uiComponentUrl', response.body.uiComponentUrl);
   });
 });
 //
