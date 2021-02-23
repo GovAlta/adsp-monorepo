@@ -12,7 +12,13 @@ import {
 } from '@core-services/core-common';
 import apiRouter from './app/router';
 import { logger } from './middleware/logger';
+import { Request, Response, NextFunction } from 'express'
 import { environment } from './environments/environment';
+import {
+  UnauthorizedError,
+  NotFoundError,
+  InvalidOperationError
+} from '@core-services/core-common';
 
 import * as cors from 'cors';
 
@@ -55,13 +61,37 @@ app.get('/welcome', (req, res) => {
 app.get('/version', (req, res) => {
   res.send(`Version: ${version}`);
 });
+app.use('/health', healthCheck());
 
-app.use('/api/', [
+// Q: log info should include user info?
+app.use('/', (req:Request,resp:Response,next:NextFunction)=>{
+  resp.on('finish', () => {
+    if (resp.statusCode === 401) {
+      logger.error('401 Unauthorized, Please set valid token in request',
+        `${JSON.stringify(req.query)}`);
+    }
+  });
+  logger.info(`${req.method}  ${req.path} Status Code : ${resp.statusCode}`);
+  next();
+}
+);
+app.use('/api', [
   passport.authenticate(['jwt'], { session: false }),
   apiRouter,
 ]);
 
-app.use('/health', healthCheck());
+app.use((err:Error, req:Request, res:Response, next:NextFunction) => {
+  if (err instanceof UnauthorizedError) {
+    res.status(401).send(err.message);
+  } else if (err instanceof NotFoundError) {
+    res.status(404).send(err.message);
+  } else if (err instanceof InvalidOperationError) {
+    res.status(400).send(err.message);
+  } else {
+    logger.warn(`Unexpected error encountered in handler: ${err}`);
+    res.sendStatus(500);
+  }
+});
 
 app.use(
   '/swagger/docs',
@@ -82,9 +112,20 @@ const server = app.listen(port, () => {
 });
 
 process.on('SIGINT', async () => {
-  await disconnect();
-  logger.info('Tenant management api exit, Byte');
-  process.exit();
+  handleExit('Tenant management api exit, Byte',1,null);
+});
+process.on('SIGTERM', async () => {
+  handleExit('Tenant management api was termination, Byte',1,null);
+});
+process.on('uncaughtException', async(err: Error) => {
+  handleExit('Tenant management api Uncaught exception',1,err);
 });
 
-server.on('error', console.error);
+const handleExit = async(message,code,err)=>{
+  await disconnect();
+  server.close();
+  (err === null)? logger.info(message):logger.error(message,err);
+  process.exit(code);
+
+}
+
