@@ -10,7 +10,7 @@ export class TenantConfigEntity implements TenantConfig {
     private repository: TenantConfigurationRepository,
     config: TenantConfig
   ) {
-    this.id = config.id,
+    this.id = config.id;
     this.realmName = config.realmName;
     this.configurationSettingsList = config.configurationSettingsList;
   }
@@ -25,7 +25,6 @@ export class TenantConfigEntity implements TenantConfig {
   }
 
   update(update: TenantConfig) {
-
     if (update.configurationSettingsList) {
       this.configurationSettingsList = update.configurationSettingsList;
       this.realmName = update.realmName;
@@ -34,7 +33,7 @@ export class TenantConfigEntity implements TenantConfig {
     return this.repository.save(this);
   }
 
-  delete(config: TenantConfig) {
+  delete() {
     return this.repository.delete(this);
   }
 }

@@ -3,6 +3,8 @@ import { ServiceConfigurationRepository } from '../repository';
 import { mapServiceOption } from './mappers';
 import { ServiceOptionEntity } from '../model';
 import HttpException from '../errorHandlers/httpException';
+import * as HttpStatusCodes from 'http-status-codes';
+import { errorHandler } from '../errorHandlers';
 
 interface ServiceOptionRouterProps {
   serviceConfigurationRepository: ServiceConfigurationRepository;
@@ -25,32 +27,33 @@ export const createConfigurationRouter = ({
    *       200:
    *         description: Service options succesfully retrieved.
    */
-  serviceOptionRouter.get(
-    '/',
-    (req: Request, res: Response, next) => {
-      const { top, after } = req.query;
+  serviceOptionRouter.get('/', async (req: Request, res: Response) => {
+    const { top, after } = req.query;
 
-      serviceConfigurationRepository.find(
+    try {
+      const results = await serviceConfigurationRepository.find(
         parseInt((top as string) || '10', 10),
         after as string
-      ).then((entities) => {
-        res.json({
-          page: entities.page,
-          results: entities.results.map(mapServiceOption)
-        })
-      }).catch((err) => next(err));
+      );
+
+      res.json({
+        page: results.page,
+        results: results.results.map(mapServiceOption),
+      });
+    } catch (err) {
+      errorHandler(err, req, res);
     }
-  );
+  });
 
   /**
    * @swagger
    *
-   * /configuration/v1/serviceOptions/{service}:
+   * /configuration/v1/serviceOptions/{id}:
    *   get:
    *     tags: [ServiceOption]
    *     description: Retrieves service options for a service type.
    *     parameters:
-   *     - name: service
+   *     - name: id
    *       description: Service type.
    *       in: path
    *       required: true
@@ -63,26 +66,24 @@ export const createConfigurationRouter = ({
    *       404:
    *         description: Service not found.
    */
-  serviceOptionRouter.get(
-    '/:id',
+  serviceOptionRouter.get('/:id', async (req, res) => {
+    const { id } = req.params;
 
-    (req, res, next) => {
+    try {
+      const results = await serviceConfigurationRepository.get(id);
 
-      const { id } = req.params;
+      if (!results) {
+        throw new HttpException(
+          HttpStatusCodes.NOT_FOUND,
+          `Service Options for ID ${id} was not found`
+        );
+      }
 
-      serviceConfigurationRepository
-        .get(id)
-        .then((serviceOptionEntity) => {
-
-          if (!serviceOptionEntity) {
-            throw new HttpException(404, `Service Options was not found`)
-          } else {
-            res.json(mapServiceOption(serviceOptionEntity));
-          }
-        })
-        .catch((err) => next(err));
+      res.json(mapServiceOption(results));
+    } catch (err) {
+      errorHandler(err, req, res);
     }
-  );
+  });
 
   /**
    * @swagger
@@ -102,39 +103,42 @@ export const createConfigurationRouter = ({
    *       200:
    *         description: Service options succesfully created.
    */
-  serviceOptionRouter.post(
-    '/',
-    (req: Request, res: Response, next) => {
-      const data = req.body;
-      const { service, version, configOptions } = data;
+  serviceOptionRouter.post('/', async (req: Request, res: Response) => {
+    const data = req.body;
+    const { service, version } = data;
 
-      try {
-        if (!service || !version || !configOptions) {
-          throw new HttpException(400, 'Service, Version, and ConfigOptions are required.');
-        }
-
-        serviceConfigurationRepository
-          .getConfigOptionByVersion(service, version)
-          .then((serviceOptionEntity) => {
-            if (serviceOptionEntity) {
-              throw new HttpException(400, `Service Options ${service} version ${version} already exists`);
-            } else {
-              return ServiceOptionEntity.create(serviceConfigurationRepository, {
-                ...data,
-                serviceOption: serviceOptionEntity,
-              });
-            }
-          })
-          .then((entity) => {
-            res.json(mapServiceOption(entity));
-            return entity;
-          })
-          .catch((err) => next(err));
-      } catch (err) {
-        next(err);
+    try {
+      if (!service || !version) {
+        throw new HttpException(
+          HttpStatusCodes.BAD_REQUEST,
+          'Service, Version are required.'
+        );
       }
+
+      const results = await serviceConfigurationRepository.getConfigOptionByVersion(
+        service,
+        version
+      );
+
+      if (results) {
+        throw new HttpException(
+          HttpStatusCodes.BAD_REQUEST,
+          `Service Options ${service} version ${version} already exists`
+        );
+      }
+      const entity = await ServiceOptionEntity.create(
+        serviceConfigurationRepository,
+        {
+          ...data,
+          serviceOption: results,
+        }
+      );
+
+      res.json(mapServiceOption(entity));
+    } catch (err) {
+      errorHandler(err, req, res);
     }
-  );
+  });
 
   /**
    * @swagger
@@ -156,36 +160,34 @@ export const createConfigurationRouter = ({
    *       404:
    *         description: Service not found.
    */
-  serviceOptionRouter.put(
-    '/',
-    (req: Request, res: Response, next) => {
-      const data = req.body;
-      const { service, id, version, configOptions } = data;
+  serviceOptionRouter.put('/', async (req: Request, res: Response) => {
+    const data = req.body;
+    const { service, id, version } = data;
 
-      try {
-        if (!service || !version || !configOptions) {
-          throw new HttpException(400, 'Service, Version, and ConfigOptions are required.');
-        }
-
-        serviceConfigurationRepository
-          .get(id)
-          .then((serviceOptionEntity) => {
-            if (!serviceOptionEntity) {
-              throw new HttpException(404, `Service Options ${service} not found`);
-            } else {
-              return serviceOptionEntity.update(data);
-            }
-          })
-          .then((entity) => {
-            res.json(mapServiceOption(entity));
-            return entity;
-          })
-          .catch((err) => next(err));
-      } catch (err) {
-        next(err);
+    try {
+      if (!service || !version) {
+        throw new HttpException(
+          HttpStatusCodes.BAD_REQUEST,
+          'Service, Version are required.'
+        );
       }
+
+      const results = await serviceConfigurationRepository.get(id);
+
+      if (!results) {
+        throw new HttpException(
+          HttpStatusCodes.NOT_FOUND,
+          `Service Options for ID ${id} was not found`
+        );
+      }
+
+      const entity = await results.update(data);
+
+      res.json(mapServiceOption(entity));
+    } catch (err) {
+      errorHandler(err, req, res);
     }
-  );
+  });
 
   /**
    * @swagger
@@ -210,22 +212,25 @@ export const createConfigurationRouter = ({
    */
   serviceOptionRouter.delete(
     '/:id',
-    (req: Request, res: Response, next) => {
+    async (req: Request, res: Response, next) => {
       const { id } = req.params;
 
-      return serviceConfigurationRepository.get(id)
-        .then((serviceOptionEntity) => {
-          if (!serviceOptionEntity) {
-            throw new HttpException(404, `Service Options not found`);
-          } else {
-            serviceOptionEntity.delete(serviceOptionEntity)
-          }
+      try {
+        const results = await serviceConfigurationRepository.get(id);
+
+        if (!results) {
+          throw new HttpException(
+            HttpStatusCodes.NOT_FOUND,
+            `Service Options for ID ${id} was not found`
+          );
         }
-        )
-        .then((result) =>
-          res.json(result)
-        )
-        .catch((err) => next(err));
+
+        const success = await results.delete();
+
+        res.json(success);
+      } catch (err) {
+        errorHandler(err, req, res);
+      }
     }
   );
 
