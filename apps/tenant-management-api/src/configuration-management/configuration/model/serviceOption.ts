@@ -4,7 +4,7 @@ import { ServiceOption } from '../types';
 
 export class ServiceOptionEntity implements ServiceOption {
   service: string;
-  id: string
+  id: string;
   version: string;
   configOptions: string;
 
@@ -26,8 +26,7 @@ export class ServiceOptionEntity implements ServiceOption {
     return repository.save(entity);
   }
 
-  update(update: ServiceOption) {
-
+  update(update: Update<ServiceOption>) {
     if (update.version) {
       this.version = update.version;
     }
@@ -39,9 +38,7 @@ export class ServiceOptionEntity implements ServiceOption {
     return this.repository.save(this);
   }
 
-  delete(serviceOption: ServiceOption) {
-    const entity = new ServiceOptionEntity(this.repository, serviceOption);
-
-    return this.repository.delete(entity);
+  delete() {
+    return this.repository.delete(this);
   }
 }

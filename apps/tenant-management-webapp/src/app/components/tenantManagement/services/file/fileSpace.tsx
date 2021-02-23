@@ -1,16 +1,15 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import * as _ from 'lodash';
+import { RootState } from '../../../../store/reducers';
 
 const FileSpace = () => {
-
-  const spaceName = useSelector((state) => _.get(state, 'File.spaces[0].name'));
+  const spaceName = useSelector(
+    (state: RootState) => state.file.spaces[0]?.name
+  );
 
   return (
     <div>
-      <p>
-        Space Name: {spaceName}
-      </p>
+      <p>Space Name: {spaceName}</p>
     </div>
   );
 };

@@ -18,6 +18,5 @@ const persistConfig = {
   storage,
 };
 
-const persistedReducer = persistReducer(persistConfig, rootReducer);
-
-export default persistedReducer;
+export const persistedReducer = persistReducer(persistConfig, rootReducer);
+export type RootState = ReturnType<typeof persistedReducer>;

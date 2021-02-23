@@ -5,7 +5,7 @@ let responseObj;
 When(
   'the user sends a request to tenant management health endpoint',
   function () {
-    const requestURL = Cypress.env('API') + '/health';
+    const requestURL = Cypress.env('tenantManagementApi') + '/health';
     cy.request('GET', requestURL).then(function (response) {
       responseObj = response;
     });

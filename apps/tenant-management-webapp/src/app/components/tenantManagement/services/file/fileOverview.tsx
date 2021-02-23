@@ -6,6 +6,7 @@ import './file.css';
 import { GoAButton } from '@abgov/react-components';
 import styled from 'styled-components';
 import externalLinkIcon from '../../../../../assets/external-link.svg'; // Tell webpack this JS file uses this image
+import { RootState } from '../../../../store/reducers';
 
 // TODO: need to move the code to core later
 const GOAWrapper = styled.a`
@@ -82,7 +83,7 @@ const OverviewContent = () => {
   );
 };
 export default function FileOverview() {
-  const active = useSelector((state) => state.File.status.isActive);
+  const active = useSelector((state: RootState) => state.file.status.isActive);
 
   return (
     <div>

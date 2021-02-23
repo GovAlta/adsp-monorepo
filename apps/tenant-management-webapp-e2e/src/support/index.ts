@@ -15,3 +15,11 @@
 
 // Import commands.js using ES2015 syntax:
 import './commands';
+
+it('Get config settings and store them in environment variables', function () {
+  cy.getConfig();
+});
+
+it('Get a token and store it in token environment variable', function () {
+  cy.postToken();
+});

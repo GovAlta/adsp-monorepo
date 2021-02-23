@@ -5,31 +5,29 @@ let responseObj: Cypress.Response;
 Given(
   'a testing mapping of {string}, {string} and {string} is inserted with {string}',
   function (urnname, urnservice, serviceurl, request) {
-    const requestURL = Cypress.env('API') + request;
+    const requestURL = Cypress.env('tenantManagementApi') + request;
     const name = urnname;
     const service = urnservice;
     const host = serviceurl;
-    // Call postToken to get a token to store in an environment variable to be used for the following requests
-    cy.postToken().then(() => {
-      cy.request({
-        method: 'POST',
-        url: requestURL,
-        auth: {
-          bearer: Cypress.env('token'),
-        },
-        body: {
-          name,
-          services: [{ service, host }],
-        },
-      }).then(function (response) {
-        expect(response.status).equals(201);
-      });
+
+    cy.request({
+      method: 'POST',
+      url: requestURL,
+      auth: {
+        bearer: Cypress.env('token'),
+      },
+      body: {
+        name,
+        services: [{ service, host }],
+      },
+    }).then(function (response) {
+      expect(response.status).equals(201);
     });
   }
 );
 
 When('the user sends a discovery request with {string}', function (request) {
-  const requestURL = Cypress.env('API') + request;
+  const requestURL = Cypress.env('tenantManagementApi') + request;
   cy.request({
     method: 'GET',
     url: requestURL,
@@ -63,7 +61,7 @@ When('the user sends a delete request of {string} with {string}', function (
   urnname,
   request
 ) {
-  const requestURL = Cypress.env('API') + request;
+  const requestURL = Cypress.env('tenantManagementApi') + request;
   const name = urnname;
   cy.request({
     method: 'DELETE',
@@ -79,4 +77,10 @@ When('the user sends a delete request of {string} with {string}', function (
 
 Then('the testing mapping is removed', function () {
   expect(responseObj.status).equals(202);
+});
+
+Then('the user can get the URL with {string}', function (fileResourceURL) {
+  // Verify that response has 200 status and url of file resource
+  expect(responseObj.status).to.eq(200);
+  expect(responseObj.body).to.have.property('url').to.contain(fileResourceURL);
 });

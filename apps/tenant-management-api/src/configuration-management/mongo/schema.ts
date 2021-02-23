@@ -15,8 +15,7 @@ export const serviceOptionSchema = new Schema({
     minlength: 1
   },
   configOptions: {
-    type: String,
-    required: true
+    type: String
   }
 });
 

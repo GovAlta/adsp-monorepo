@@ -4,15 +4,13 @@ import {
   configUrl,
   configKey,
   stubConfig,
+  clearConfig,
   State,
   Config,
 } from './useConfig';
 
 describe('useConfig', () => {
-
-  beforeEach(() => {
-    localStorage.removeItem('config-key');
-  })
+  beforeEach(clearConfig);
 
   it('fetches the config settings', async () => {
     const expectedJson = { notificationServiceUrl: 'some.url' };
@@ -117,7 +115,7 @@ describe('useConfig', () => {
       })
     );
     expect(config).toBeNull();
-    expect(state).toEqual('error')
+    expect(state).toEqual('error');
     expect(error).toBe('failed to fetch config settings');
   });
 
@@ -136,7 +134,7 @@ describe('useConfig', () => {
       })
     );
     expect(config).toBeNull();
-    expect(state).toEqual('error')
+    expect(state).toEqual('error');
     expect(error).toBe('failed to parse json');
   });
 });
