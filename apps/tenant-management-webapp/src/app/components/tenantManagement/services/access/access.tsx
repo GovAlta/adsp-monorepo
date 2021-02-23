@@ -34,15 +34,12 @@ const AccessPage: FC = () => {
             </p>
             <a
               href={keycloakUrl}
+              rel="noopener noreferrer"
+              target="_blank"
               className="link-button"
               title="Keycloak Admin"
             >
               Manage Keycloak Admin
-              <img
-                src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+IDxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxwYXRoIGQ9Ik0xOCwxMC44MmExLDEsMCwwLDAtMSwxVjE5YTEsMSwwLDAsMS0xLDFINWExLDEsMCwwLDEtMS0xVjhBMSwxLDAsMCwxLDUsN2g3LjE4YTEsMSwwLDAsMCwwLTJINUEzLDMsMCwwLDAsMiw4VjE5YTMsMywwLDAsMCwzLDNIMTZhMywzLDAsMCwwLDMtM1YxMS44MkExLDEsMCwwLDAsMTgsMTAuODJabTMuOTItOC4yYTEsMSwwLDAsMC0uNTQtLjU0QTEsMSwwLDAsMCwyMSwySDE1YTEsMSwwLDAsMCwwLDJoMy41OUw4LjI5LDE0LjI5YTEsMSwwLDAsMCwwLDEuNDIsMSwxLDAsMCwwLDEuNDIsMEwyMCw1LjQxVjlhMSwxLDAsMCwwLDIsMFYzQTEsMSwwLDAsMCwyMS45MiwyLjYyWiIvPjwvc3ZnPg=="
-                className="external-link"
-                alt="file-service-support"
-              ></img>
             </a>
           </Tab>
 
