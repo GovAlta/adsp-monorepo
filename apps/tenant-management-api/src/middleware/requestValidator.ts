@@ -7,7 +7,7 @@ interface CustomRequest extends Request {
   payload?: object;
 }
 
-const validationMiddleware = (classValidator) => (
+const validationMiddleware = (classValidator) => async (
   req: CustomRequest,
   res: Response,
   next: () => void
@@ -29,19 +29,17 @@ const validationMiddleware = (classValidator) => (
   }
 
   const dataObj: object = plainToClass(classValidator, data);
+  const errors = await validate(dataObj);
 
-  validate(dataObj).then((errors) => {
-    if (errors.length > 0) {
-      res.status(HttpStatusCodes.BAD_REQUEST).json({
-        success: false,
-        errors: errors,
-      });
-    } else {
-      // Note: normally, we need to pass variable to res.locals., but it looks ugly
-      req.payload = dataObj;
-      next();
-    }
-  });
+  if (errors.length > 0) {
+    res.status(HttpStatusCodes.BAD_REQUEST).json({
+      success: false,
+      errors: errors,
+    });
+  } else {
+    req.payload = dataObj;
+    next();
+  }
 };
 
 export default validationMiddleware;
