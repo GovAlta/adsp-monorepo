@@ -3,12 +3,12 @@ import { validate } from 'class-validator';
 import { plainToClass } from 'class-transformer';
 import * as HttpStatusCodes from 'http-status-codes';
 
-interface customRequest extends Request {
+interface CustomRequest extends Request {
   payload?: object;
 }
 
 const validationMiddleware = (classValidator) => (
-  req: customRequest,
+  req: CustomRequest,
   res: Response,
   next: () => void
 ) => {
