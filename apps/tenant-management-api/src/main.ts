@@ -111,6 +111,14 @@ const server = app.listen(port, () => {
   logger.info(`Listening at http://localhost:${port}/api`);
 });
 
+const handleExit = async(message,code,err)=>{
+  await disconnect();
+  server.close();
+  (err === null)? logger.info(message):logger.error(message,err);
+  process.exit(code);
+
+}
+
 process.on('SIGINT', async () => {
   handleExit('Tenant management api exit, Byte',1,null);
 });
@@ -121,11 +129,5 @@ process.on('uncaughtException', async(err: Error) => {
   handleExit('Tenant management api Uncaught exception',1,err);
 });
 
-const handleExit = async(message,code,err)=>{
-  await disconnect();
-  server.close();
-  (err === null)? logger.info(message):logger.error(message,err);
-  process.exit(code);
 
-}
 

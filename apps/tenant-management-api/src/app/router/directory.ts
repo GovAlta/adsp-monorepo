@@ -9,6 +9,7 @@ import {
 import * as HttpStatusCodes from 'http-status-codes';
 import { logger } from '../../middleware/logger';
 import { check, validationResult } from 'express-validator/check';
+import validationMiddleware from '../../middleware/requestValidator';
 
 /**
  * Get all of directoies
@@ -20,14 +21,16 @@ directoryRouter.get('/', async (req, res) => {
 /**
  * Get one directory by urn
  */
-directoryRouter.get('/urn', async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res
-      .status(HttpStatusCodes.BAD_REQUEST)
-      .json({ errors: errors.array() });
-  }
+directoryRouter.get('/urn', async (req, res,next) => {
+  // const errors = validationResult(req);
+  // if (!errors.isEmpty()) {
+  //   return res
+  //     .status(HttpStatusCodes.BAD_REQUEST)
+  //     .json({ errors: errors.array() });
+  // }
 
+  //const error = await validationMiddleware(req, res,next,null);
+  // console.log(error);
   if (req.query.urn) {
     const { urn } = req.query;
     return res.send(await discovery(urn));
