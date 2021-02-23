@@ -8,7 +8,7 @@
     "start:tenant-management-webapp": "nx run tenant-management-webapp:serve",
     "start:tenant-management-api": "nx run tenant-management-api:serve",
     "build": "nx build",
-    "test": "nx test",
+    "test": "nx run-many --all --target=test --parallel",
     "lint": "nx workspace-lint && nx lint",
     "e2e": "nx e2e",
     "affected:apps": "nx affected:apps",
