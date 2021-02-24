@@ -2,10 +2,11 @@ import { connect, ConnectionOptions, connection } from 'mongoose';
 import { environment } from '../environments/environment';
 import { logger } from '../middleware/logger';
 
-export const connectMongo = async () => {
+export const connectMongo = async (isTest = false) => {
   try {
     const mongoHost = environment.MONGO_URI || process.env.MONGO_URI;
-    const mongoDb = environment.MONGO_DB || process.env.MONGO_DB;
+    const DbNameInEnv = environment.MONGO_DB || process.env.MONGO_DB;
+    const mongoDb = isTest ? DbNameInEnv + 'Test' : DbNameInEnv;
     const mongoUser = environment.MONGO_USER || process.env.MONGO_USER;
     const mongoPassword =
       environment.MONGO_PASSWORD || process.env.MONGO_PASSWORD;
