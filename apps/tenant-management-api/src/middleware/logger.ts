@@ -1,5 +1,5 @@
 import { createLogger } from '@core-services/core-common';
-import { Request, Response, NextFunction } from 'express'
+import { Request, Response, NextFunction } from 'express';
 
 export const WinstonLogger = (req, res, next) => {
   // TODO: add api or http request logger here
@@ -16,10 +16,7 @@ export const logger = createLogger(
   process.env.LOG_LEVEL || 'info'
 );
 
-
 export const loggerApi = (req: Request, resp: Response, NextFunction) => {
-
-    console.log('Request logged:', req.method, req.path)
-    logger.info(`${req.method}  ${req.path}`);
-
-}
+  console.log('Request logged:', req.method, req.path);
+  logger.info(`${req.method}  ${req.path}`);
+};

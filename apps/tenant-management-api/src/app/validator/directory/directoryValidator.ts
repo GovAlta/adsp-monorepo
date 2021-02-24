@@ -1,10 +1,21 @@
-import { Length, IsFQDN}from 'class-validator';
+import { IsFQDN, ValidateNested, IsDefined, MinLength } from 'class-validator';
+import { Serivce } from '../../types/directory';
 
-export class DirectoryValidator{
-  @Length(3-100)
-  service:string;
+export class Directory {
+  @IsDefined()
+  @MinLength(4)
+  name: string;
+
+  @ValidateNested()
+  services: Serivce[];
+}
+export class Service {
+  @IsDefined()
+  @MinLength(4)
+  service: string;
 
   @IsFQDN()
-  @Length(10-150)
-  host:string;
+  @IsDefined()
+  @MinLength(4)
+  host: string;
 }
