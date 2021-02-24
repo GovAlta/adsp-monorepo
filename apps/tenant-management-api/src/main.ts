@@ -10,7 +10,8 @@ import {
   createKeycloakStrategy,
   KeycloakStrategyProps,
 } from '@core-services/core-common';
-import apiRouter from './app/router';
+import { apiRouter, apiPublicRouter } from './app/router';
+
 import { logger } from './middleware/logger';
 import { environment } from './environments/environment';
 
@@ -56,7 +57,9 @@ app.get('/version', (req, res) => {
   res.send(`Version: ${version}`);
 });
 
-app.use('/api/', [
+app.use('/api', apiPublicRouter);
+
+app.use('/api', [
   passport.authenticate(['jwt'], { session: false }),
   apiRouter,
 ]);
