@@ -76,6 +76,16 @@ const getUrlResponse = (services, component) => {
     'Empty in urn! urn format should looks like urn:ads:{tenant|core}:{service}'
   );
 };
+const validateServices = (services) => {
+  for (const service of services) {
+    if (!validateHostname(service['host'])) {
+      return new ApiError(
+        HttpStatusCodes.BAD_REQUEST,
+        'Host format not correct!'
+      ).getJson();
+    }
+  }
+};
 
 export const discovery = async (urn) => {
   //reslove the urn to object
@@ -93,7 +103,7 @@ export const discovery = async (urn) => {
       return new ApiError(
         HttpStatusCodes.BAD_REQUEST,
         'Please give right format URN! urn format should looks like urn:ads:{tenant|core}:{service}'
-      );
+      ).getJson();
     }
 
     if (urnArray[4]) {
@@ -179,18 +189,34 @@ export const getDirectories = async () => {
   }
 };
 
-export const addUpdateDirectory = async (directories) => {
+export const addDirectory = async (directories) => {
   logger.info('directory service add updateDirectory');
   try {
     const services = directories['services'];
-    for (const service of services) {
-      if (!validateHostname(service['host'])) {
-        return new ApiError(
-          HttpStatusCodes.BAD_REQUEST,
-          'Host format not correct!'
-        );
-      }
-    }
+    validateServices(services);
+
+    const directory: DirectoryMap[] = await Directory.find({
+      name: directories['name'],
+    });
+
+    // Create
+    await Directory.create(
+      JSON.parse(JSON.stringify(directories).toLowerCase())
+    );
+    return HttpStatusCodes.CREATED;
+  } catch (err) {
+    return new ApiError(
+      HttpStatusCodes.BAD_REQUEST,
+      'Empty in urn! urn format should looks like urn:ads:{tenant|core}:{service}'
+    );
+  }
+};
+
+export const updateDirectory = async (directories) => {
+  logger.info('directory service add updateDirectory');
+  try {
+    const services = directories['services'];
+    validateServices(services);
 
     const directory: DirectoryMap[] = await Directory.find({
       name: directories['name'],
@@ -209,12 +235,6 @@ export const addUpdateDirectory = async (directories) => {
       );
       return HttpStatusCodes.CREATED;
     }
-
-    // Create
-    await Directory.create(
-      JSON.parse(JSON.stringify(directories).toLowerCase())
-    );
-    return HttpStatusCodes.CREATED;
   } catch (err) {
     return new ApiError(
       HttpStatusCodes.BAD_REQUEST,
