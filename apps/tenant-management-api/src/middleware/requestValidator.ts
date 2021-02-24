@@ -13,7 +13,6 @@ const validationMiddleware = (classValidator) => async (
   next: () => void
 ) => {
   let data = {};
-
   if (req.method === 'POST') {
     data = {
       ...req.query,
