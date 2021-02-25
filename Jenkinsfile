@@ -38,6 +38,9 @@ pipeline {
       }
     }
     stage("Manage Environments") {
+      when {
+        expression { return env.GIT_PREVIOUS_SUCCESSFUL_COMMIT }
+      }
       steps {
         script {
           def affectedFiles = sh (
