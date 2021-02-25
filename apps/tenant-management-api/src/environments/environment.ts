@@ -7,7 +7,7 @@ export const environment = {
   MONGO_PASSWORD: null,
   KEYCLOAK_ROOT_URL: 'https://access-dev.os99.gov.ab.ca',
   KEYCLOAK_REALM: 'core',
-  // KEYCLOAK_CLIENT_ID: 'admin-cli',
+  KEYCLOAK_ADMIN_CLIENT_ID: 'admin-cli',
   KEYCLOAK_CLIENT_ID: 'tenant-admin-backend-dev-qa',
   KEYCLOAK_CLIENT_SECRET: '767995af-158a-43b2-aa1f-dd7cd9ba4ffc',
   REALM_ADMIN_USERNAME: 'admin_dev',
