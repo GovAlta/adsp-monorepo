@@ -5,7 +5,7 @@ import { Container, Row, Col, Form } from 'react-bootstrap';
 import { GoAButton } from '@abgov/react-components';
 
 const LoginLanding = () => {
-  const [tenantId, setTenantId] = useState<string>();
+  const [tenantName, setTenantName] = useState<string>();
   const history = useHistory();
 
   return (
@@ -16,11 +16,11 @@ const LoginLanding = () => {
           <Col></Col>
           <Col>
             <Form>
-              <Form.Group controlId="tenantId">
-                <Form.Label>Please enter tenant ID:</Form.Label>
+              <Form.Group controlId="tenantName">
+                <Form.Label>Please enter tenant Name:</Form.Label>
                 <Form.Control
                   onChange={(event): void => {
-                    setTenantId(event.target.value);
+                    setTenantName(event.target.value);
                   }}
                 />
               </Form.Group>
@@ -28,8 +28,8 @@ const LoginLanding = () => {
               <GoAButton
                 variant="primary"
                 onClick={() => {
-                  console.log(tenantId);
-                  history.push(`/${tenantId}/login`);
+                  console.log(tenantName);
+                  history.push(`/${tenantName}/login`);
                 }}
               >
                 Tenant Login

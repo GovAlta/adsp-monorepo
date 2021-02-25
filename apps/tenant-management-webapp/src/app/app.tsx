@@ -33,7 +33,7 @@ const AppRouters = () => {
         <Route exact path="/">
           <LandingPage />
         </Route>
-        <Route path="/:tenantId/login">
+        <Route path="/:tenantName/login">
           <TenantLogin />
         </Route>
         <Route path="/login">

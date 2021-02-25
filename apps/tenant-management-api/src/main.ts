@@ -74,7 +74,7 @@ app.use('/', (req: Request, resp: Response, next: NextFunction) => {
       );
     } else if (resp.statusCode === 404) {
       logger.error(
-        '401 Not Found, Please input valid request resource',
+        '404 Not Found, Please input valid request resource',
         `${JSON.stringify(req.query)}`
       );
     }

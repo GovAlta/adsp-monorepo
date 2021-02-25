@@ -190,20 +190,26 @@ export const getDirectories = async () => {
 };
 
 export const addDirectory = async (directories) => {
-  logger.info('directory service add updateDirectory');
+  logger.info('directory service add directory');
   try {
-    const services = directories['services'];
-    validateServices(services);
-
     const directory: DirectoryMap[] = await Directory.find({
       name: directories['name'],
     });
 
-    // Create
-    await Directory.create(
-      JSON.parse(JSON.stringify(directories).toLowerCase())
+    if (directory.length === 0) {
+      const services = directories['services'];
+      validateServices(services);
+
+      // Create
+      await Directory.create(
+        JSON.parse(JSON.stringify(directories).toLowerCase())
+      );
+      return HttpStatusCodes.CREATED;
+    }
+    return new ApiError(
+      HttpStatusCodes.BAD_REQUEST,
+      `There exist directory ${directories['name']}`
     );
-    return HttpStatusCodes.CREATED;
   } catch (err) {
     return new ApiError(
       HttpStatusCodes.BAD_REQUEST,
@@ -213,17 +219,16 @@ export const addDirectory = async (directories) => {
 };
 
 export const updateDirectory = async (directories) => {
-  logger.info('directory service add updateDirectory');
+  logger.info('directory service  updateDirectory');
   try {
-    const services = directories['services'];
-    validateServices(services);
-
     const directory: DirectoryMap[] = await Directory.find({
       name: directories['name'],
     });
 
     if (directory && directory.length > 0) {
       // Update
+      const services = directories['services'];
+      validateServices(services);
       await Directory.findOneAndUpdate(
         { name: directories['name'] },
         {
@@ -246,7 +251,7 @@ export const updateDirectory = async (directories) => {
 export const deleteDirectory = async (name: string) => {
   try {
     logger.info(`Start delete diretory :  ${name}...`);
-    await Directory.deleteOne({ name: name });
+    await Directory.deleteMany({ name: name.toLowerCase() });
 
     return HttpStatusCodes.ACCEPTED;
   } catch (err) {
