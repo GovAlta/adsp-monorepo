@@ -4,7 +4,7 @@ import { TenantConfig } from '../types';
 export class TenantConfigEntity implements TenantConfig {
   id: string;
   realmName: string;
-  configurationSettingsList: string;
+  configurationSettingsList: JSON;
 
   constructor(
     private repository: TenantConfigurationRepository,

@@ -15,7 +15,7 @@ export const serviceOptionSchema = new Schema({
     minlength: 1
   },
   configOptions: {
-    type: String
+    type: JSON
   }
 });
 
@@ -32,7 +32,7 @@ export const tenantConfigSchema = new Schema({
     unique: true
   },
   configurationSettingsList: {
-    type: String,
+    type: JSON,
     required: true,
   }
 });
