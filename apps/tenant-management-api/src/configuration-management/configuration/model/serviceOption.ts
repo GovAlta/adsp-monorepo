@@ -6,7 +6,7 @@ export class ServiceOptionEntity implements ServiceOption {
   service: string;
   id: string;
   version: string;
-  configOptions: string;
+  configOptions: JSON;
 
   constructor(
     private repository: ServiceConfigurationRepository,
