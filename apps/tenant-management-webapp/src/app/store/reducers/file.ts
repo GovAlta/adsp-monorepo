@@ -59,10 +59,8 @@ export default function (state = INIT_STATE.tenant.file, action) {
     // action is the spaceInfo
     return {
       ...state,
-      spaces: [
-        action.payload.data
-      ]
-    }
+      spaces: [action.payload.data],
+    };
   }
 
   return state;

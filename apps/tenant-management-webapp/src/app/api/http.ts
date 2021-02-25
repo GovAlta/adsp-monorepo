@@ -5,7 +5,7 @@ const http = axios.create();
 http.interceptors.request.use(
   (config) => {
     if (config.method === 'post' && typeof config.data === 'string') {
-      config.data = JSON.stringify(config.data)
+      config.data = JSON.stringify(config.data);
     }
     return config;
   },
@@ -17,7 +17,7 @@ http.interceptors.request.use(
 http.interceptors.response.use(
   (response) => {
     if (response.status === 200) {
-      return response.data
+      return response.data;
     }
     return response;
   },

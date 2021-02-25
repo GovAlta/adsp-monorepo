@@ -31,13 +31,13 @@ export const SET_ACTIVE_TAB = (activeTab) => ({
 export const FETCH_FILE_SPACE = (config) => ({
   type: TYPES.FETCH_FILE_SPACE,
   payload: {
-    config
-  }
-})
+    config,
+  },
+});
 
 export const FETCH_FILE_SPACE_SUCCEEDED = (spaceInfo) => ({
   type: TYPES.FETCH_FILE_SPACE_SUCCEEDED,
   payload: {
-    spaceInfo
-  }
-})
+    spaceInfo,
+  },
+});

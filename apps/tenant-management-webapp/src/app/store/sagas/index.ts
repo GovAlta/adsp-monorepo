@@ -1,6 +1,6 @@
 import { uptimeFetch } from './serviceMeasure';
-import * as fileSagas from './file'
-import { fork, all, takeEvery } from "redux-saga/effects";
+import * as fileSagas from './file';
+import { fork, all, takeEvery } from 'redux-saga/effects';
 import { TYPES } from '../actions';
 
 export function* watchSagas() {

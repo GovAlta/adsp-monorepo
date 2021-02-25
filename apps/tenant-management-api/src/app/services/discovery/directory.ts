@@ -192,7 +192,6 @@ export const getDirectories = async () => {
 export const addDirectory = async (directories) => {
   logger.info('directory service add directory');
   try {
-
     const directory: DirectoryMap[] = await Directory.find({
       name: directories['name'],
     });
@@ -201,11 +200,11 @@ export const addDirectory = async (directories) => {
       const services = directories['services'];
       validateServices(services);
 
-    // Create
-    await Directory.create(
-      JSON.parse(JSON.stringify(directories).toLowerCase())
-    );
-    return HttpStatusCodes.CREATED;
+      // Create
+      await Directory.create(
+        JSON.parse(JSON.stringify(directories).toLowerCase())
+      );
+      return HttpStatusCodes.CREATED;
     }
     return new ApiError(
       HttpStatusCodes.BAD_REQUEST,
