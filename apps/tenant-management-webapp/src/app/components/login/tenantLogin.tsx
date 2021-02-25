@@ -27,7 +27,6 @@ function TenantLogin() {
   const login = () => {
     const keycloak = Keycloak(keycloakConfig);
     keycloak.init({ onLoad: 'login-required' }).then((authenticated) => {
-      dispatch({ type: TYPES.USER_LOGIN_SUCCESS, keycloak });
       // TODO: Add error handling if the keycloak server is down.
       if (authenticated) {
         keycloak.loadUserInfo().then(() => {
