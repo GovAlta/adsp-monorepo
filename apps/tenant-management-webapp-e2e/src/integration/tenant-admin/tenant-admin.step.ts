@@ -2,6 +2,7 @@ import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import tenantAdminPage from './tenant-admin.page';
 
 const tenantAdminObj = new tenantAdminPage();
+let responseObj: Cypress.Response;
 
 When('the user visits the tenant management webapp', function () {
   cy.visit('/tenant-admin');
@@ -45,4 +46,24 @@ When('the user selects the {string} menu item', function (menuItem) {
   }
 
   tenantAdminObj.dashboardMenuItem(menuItemSelector).click();
+});
+
+When('the user sends a configuration service request to {string}', function (
+  request
+) {
+  const requestURL = Cypress.env('tenantManagementApi') + request;
+  cy.request({
+    method: 'GET',
+    url: requestURL,
+    auth: {
+      bearer: Cypress.env('token'),
+    },
+  }).then(function (response) {
+    responseObj = response;
+  });
+});
+
+Then('the user gets a list of configuration options', function () {
+  expect(responseObj.status).to.eq(200);
+  expect(responseObj.body.results).to.be.a('array');
 });
