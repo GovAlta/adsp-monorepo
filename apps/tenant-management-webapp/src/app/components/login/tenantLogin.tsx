@@ -7,7 +7,7 @@ import { Redirect, useParams } from 'react-router-dom';
 import { RootState } from '../../store/reducers';
 
 interface TennatTypes {
-  tenantId: string;
+  tenantName: string;
 }
 
 function TenantLogin() {
@@ -21,8 +21,8 @@ function TenantLogin() {
 
   const dispatch = useDispatch();
 
-  // TODO: fetch the tenantId-realm mapping
-  const { tenantId } = useParams<TennatTypes>();
+  // TODO: fetch the tenantName-realm mapping
+  const { tenantName } = useParams<TennatTypes>();
 
   const login = () => {
     const keycloak = Keycloak(keycloakConfig);

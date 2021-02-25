@@ -9,7 +9,7 @@ export const USER_LOGIN_SUCCESS = (loginInfo) => ({
 });
 
 export const USER_LOGOUT = (loginInfo) => ({
-  type: TYPES.USER_LOGIN_SUCCESS,
+  type: TYPES.USER_LOGOUT,
   payload: {
     loginInfo,
   },
