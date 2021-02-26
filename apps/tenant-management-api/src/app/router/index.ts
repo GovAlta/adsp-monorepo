@@ -13,6 +13,6 @@ const passportMiddleware = passport.authenticate(['jwt'], { session: false });
 
 apiPublicRouter.use('/tenant/v1', tenantPublicRouter);
 apiRouter.use('/discovery/v1', [passportMiddleware, directoryRouter]);
-apiRouter.use('/realm', [passportMiddleware, realmRouter]);
+apiRouter.use('/realm/v1', [passportMiddleware, realmRouter]);
 apiRouter.use('/file/v1', [passportMiddleware, fileRouter]);
 apiRouter.use('/tenant/v1', [passportMiddleware, tenantRouter]);
