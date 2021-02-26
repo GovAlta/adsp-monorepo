@@ -61,12 +61,11 @@ When('the user sends a delete request of {string} with {string}', function (
   urnname,
   request
 ) {
-  const requestURL = Cypress.env('tenantManagementApi') + request;
-  const name = urnname;
+  const requestURL =
+    Cypress.env('tenantManagementApi') + request + '/' + urnname;
   cy.request({
     method: 'DELETE',
     url: requestURL,
-    body: { name },
     auth: {
       bearer: Cypress.env('token'),
     },
