@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Container, Row, Col } from 'reactstrap';
 import { GoAButton } from '@abgov/react-components';
 import { useHistory } from 'react-router-dom';
+import axios from 'axios';
 
 import './SignIn.css';
 const CreateRealm = () => {
@@ -10,6 +11,8 @@ const CreateRealm = () => {
   const history = useHistory();
 
   const onCreateRealm = async () => {
+    const url = "/api/realm/v1?realm=" + name;
+    const res = await axios.post(url);
     history.push('/realms/creatingRealm');
   };
 
