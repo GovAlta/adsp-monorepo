@@ -11,6 +11,10 @@ class TenantAdminPage {
   dashboardServicesMenuCategory() {
     cy.contains('Services');
   }
+
+  keycloakLink() {
+    return cy.contains('Keycloak Admin');
+  }
 }
 
 export default TenantAdminPage;
