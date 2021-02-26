@@ -26,4 +26,11 @@ describe('Tenant Entity', () => {
     expect(result.tenant).toHaveProperty('name', name);
     done();
   });
+
+  it('can delete the tenant by name', async (done) => {
+    const name = 'mock-tenant-create';
+    const result = await TenantModel.deleteTenantByName(name);
+    expect(result.success).toEqual(true);
+    done();
+  });
 });
