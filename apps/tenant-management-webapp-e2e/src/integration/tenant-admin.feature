@@ -29,6 +29,12 @@ Feature: Tenant admin
       | Service Options       | /api/configuration/v1/serviceOptions/ |
       | Tenant Configurations | /api/configuration/v1/tenantConfig/   |
 
+  @TEST_CS-322 @regression
+  Scenario: As a GoA service owner, I can access the realm administration from the Access section of the tenant admin portal to manage users
+    Given the user is in the tenant management webapp
+    When the user selects the "Access" menu item
+    Then the user views a link for the Keycloak admin
+    And the keycloak admin link can open tenant admin portal in a new tab
 
 
 

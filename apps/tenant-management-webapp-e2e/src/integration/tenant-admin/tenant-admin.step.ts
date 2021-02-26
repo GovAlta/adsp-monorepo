@@ -43,6 +43,9 @@ When('the user selects the {string} menu item', function (menuItem) {
     case 'File Services':
       menuItemSelector = '/tenant-admin/services/file';
       break;
+    case 'Access':
+      menuItemSelector = '/tenant-admin/access';
+      break;
   }
 
   tenantAdminObj.dashboardMenuItem(menuItemSelector).click();
@@ -67,3 +70,24 @@ Then('the user gets a list of configuration options', function () {
   expect(responseObj.status).to.eq(200);
   expect(responseObj.body.results).to.be.a('array');
 });
+
+Then('the user views a link for the Keycloak admin', function () {
+  tenantAdminObj.keycloakLink().should('have.class', 'link-button');
+});
+
+// Cypress doesn't support multi-tabs. Therefore, the validation is done on the element itself
+// as recommended by Cypress: https://docs.cypress.io/guides/references/trade-offs.html#Multiple-tabs
+Then(
+  'the keycloak admin link can open tenant admin portal in a new tab',
+  function () {
+    // Validate href to match the pattern, i.e. https://access-uat.alpha.alberta.ca/auth/admin/{realm}/console
+    const hrefPrefix = Cypress.env('accessManagementApi') + '/admin';
+    const hrefRegexString = new RegExp(hrefPrefix + '/[^/]+/console');
+    tenantAdminObj
+      .keycloakLink()
+      .should('have.attr', 'href')
+      .and('match', hrefRegexString);
+    // Validate the link has target="_blank" aka link opens in a new tab
+    tenantAdminObj.keycloakLink().should('have.attr', 'target', '_blank');
+  }
+);
