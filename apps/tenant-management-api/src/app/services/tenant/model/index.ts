@@ -1,16 +1,19 @@
 import { Document, Model, model, Schema } from 'mongoose';
 
-const tenantSchema: Schema = new Schema({
-  name: {
-    type: String,
-    required: true,
-    unique: true,
+const tenantSchema: Schema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    realm: {
+      type: String,
+      required: true,
+    },
   },
-  realm: {
-    type: String,
-    required: true,
-  },
-});
+  { timestamps: true }
+);
 
 interface Tenant extends Document {
   _id: string;
@@ -48,6 +51,28 @@ interface FetchTenantResponse {
   success: boolean;
   errors?: Array<string>;
   tenant?: Tenant;
+}
+interface DeleteTenantResponse {
+  success: boolean;
+  errors?: Array<string>;
+}
+
+export async function deleteTenantByName(name: string) {
+  try {
+    Tenant.deleteOne({ name: name });
+    const response: DeleteTenantResponse = {
+      success: true,
+    };
+
+    return Promise.resolve(response);
+  } catch (e) {
+    console.error(e);
+    const response: DeleteTenantResponse = {
+      success: false,
+      errors: [e],
+    };
+    return Promise.resolve(response);
+  }
 }
 
 export async function findTenantByName(name: string) {
