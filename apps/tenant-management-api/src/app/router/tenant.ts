@@ -39,9 +39,9 @@ async function createTenant(req, res) {
 }
 
 tenantPublicRouter.get(
-  '/tenant/name/:name',
+  '/name/:name',
   validationMiddleware(TenantByNameDto),
   getTenantByName
 );
 
-tenantRouter.post('/tenant', validationMiddleware(TenantDto), createTenant);
+tenantRouter.post('/', validationMiddleware(TenantDto), createTenant);
