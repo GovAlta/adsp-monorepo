@@ -44,6 +44,7 @@ async function createRealm(req, res) {
       const realm = await kcAdminClient.realms.create({
         id: realmName,
         realm: realmName,
+        enabled: true,
       });
 
       if (realm.realmName != realmName) {
