@@ -7,7 +7,19 @@ const tenantSchema: Schema = new Schema(
       required: true,
       unique: true,
     },
+    version: {
+      type: String,
+      default: 'v1',
+    },
     realm: {
+      type: String,
+      required: true,
+    },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    adminEmail: {
       type: String,
       required: true,
     },
@@ -15,10 +27,11 @@ const tenantSchema: Schema = new Schema(
   { timestamps: true }
 );
 
-interface Tenant extends Document {
+export interface Tenant extends Document {
   _id: string;
   name: string;
   realm: string;
+  createdBy: string;
 }
 
 const Tenant: Model<Tenant> = model('Tenant', tenantSchema);
@@ -52,6 +65,7 @@ interface FetchTenantResponse {
   errors?: Array<string>;
   tenant?: Tenant;
 }
+
 interface DeleteTenantResponse {
   success: boolean;
   errors?: Array<string>;
@@ -78,6 +92,31 @@ export async function deleteTenantByName(name: string) {
 export async function findTenantByName(name: string) {
   try {
     const tenant = await Tenant.findOne({ name: name });
+    if (tenant === null) {
+      throw 'Not found, Please check tenant name';
+    }
+
+    const response: FetchTenantResponse = {
+      success: true,
+      tenant: tenant,
+    };
+
+    return Promise.resolve(response);
+  } catch (e) {
+    const response: FetchTenantResponse = {
+      success: false,
+      errors: [e],
+    };
+
+    return Promise.resolve(response);
+  }
+}
+
+export async function findTenantByEmail(email: string) {
+  try {
+    const tenant = await Tenant.findOne({ adminEmail: email }).populate(
+      'createdBy'
+    );
     if (tenant === null) {
       throw 'Not found, Please check tenant name';
     }

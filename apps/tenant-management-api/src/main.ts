@@ -10,7 +10,7 @@ import {
   createKeycloakStrategy,
   KeycloakStrategyProps,
 } from '@core-services/core-common';
-import { apiRouter, apiPublicRouter } from './app/router';
+import { apiRouter } from './app/router';
 
 import { logger } from './middleware/logger';
 import { Request, Response, NextFunction } from 'express';
@@ -82,7 +82,6 @@ app.use('/', (req: Request, resp: Response, next: NextFunction) => {
   logger.info(`${req.method}  ${req.path} Status Code : ${resp.statusCode}`);
   next();
 });
-app.use('/api', apiPublicRouter);
 
 app.use('/api', apiRouter);
 
