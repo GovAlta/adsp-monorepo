@@ -10,7 +10,7 @@ describe('Tenant Entity', () => {
     await disconnect();
   });
 
-  let tenant = {
+  const tenant = {
     name: 'mock-tenant-create',
     realm: 'mock',
     createdBy: null,
