@@ -151,6 +151,8 @@ async function deleteRealm(req, res) {
     const realmResponse = await kcAdminClient.realms.del({
       realm: realmName,
     });
+    await TenantModel.deleteTenantByRealm(realmName);
+
     return res.status(HttpStatusCodes.OK).json(data);
   } catch (err) {
     logger.error(err.message);
