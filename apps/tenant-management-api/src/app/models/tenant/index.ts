@@ -89,6 +89,24 @@ export async function deleteTenantByName(name: string) {
   }
 }
 
+export async function deleteTenantByRealm(realm: string) {
+  try {
+    Tenant.deleteOne({ realm: realm });
+    const response: DeleteTenantResponse = {
+      success: true,
+    };
+
+    return Promise.resolve(response);
+  } catch (e) {
+    console.error(e);
+    const response: DeleteTenantResponse = {
+      success: false,
+      errors: [e],
+    };
+    return Promise.resolve(response);
+  }
+}
+
 export async function findTenantByName(name: string) {
   try {
     const tenant = await Tenant.findOne({ name: name });
