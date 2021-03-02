@@ -27,6 +27,13 @@ const validationMiddleware = (classValidator) => async (
     };
   }
 
+  if (req.method === 'DELETE') {
+    data = {
+      ...req.query,
+      ...req.params,
+    };
+  }
+
   const dataObj: object = plainToClass(classValidator, data);
   const errors = await validate(dataObj);
 

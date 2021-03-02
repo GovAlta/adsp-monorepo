@@ -33,13 +33,13 @@ async function createRealm(req, res) {
 
     try {
       logger.info('Starting create realm....');
-      const realm = await kcAdminClient.realms.create({
+      const realmResponse = await kcAdminClient.realms.create({
         id: realmName,
         realm: realmName,
         enabled: true,
       });
 
-      if (realm.realmName != realmName) {
+      if (realmResponse.realmName != realmName) {
         return res
           .status(HttpStatusCodes.BAD_REQUEST)
           .json({ error: 'Create Realm failed!' });
@@ -133,15 +133,33 @@ async function createRealm(req, res) {
 
       return res.status(HttpStatusCodes.OK).json(data);
     } catch (err) {
-      logger.error(err);
+      logger.error(err.message);
       // The err might include token
-      return res
-        .status(HttpStatusCodes.INTERNAL_SERVER_ERROR)
-        .json({ error: 'Create Realm failed!' });
+      return res.status(err.response.status).json({ error: err.message });
     }
   }
 }
 
+async function deleteRealm(req, res) {
+  const kcAdminClient = await createkcAdminClient();
+  const data = { status: 'ok', message: 'Delete Realm Success!' };
+  const payload = req.payload;
+  const realmName = payload.realm;
+
+  try {
+    logger.info('Starting delete realm....');
+    const realmResponse = await kcAdminClient.realms.del({
+      realm: realmName,
+    });
+    return res.status(HttpStatusCodes.OK).json(data);
+  } catch (err) {
+    logger.error(err.message);
+    return res.status(err.response.status).json({ error: err.message });
+  }
+}
+
 realmRouter.post('/', validationMiddleware(CreateRealmDto), createRealm);
+
+realmRouter.delete('/', validationMiddleware(CreateRealmDto), deleteRealm);
 
 export default realmRouter;
