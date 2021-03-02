@@ -21,9 +21,8 @@ const authOptions = {
 };
 
 export async function createkcAdminClient(): Promise<KcAdminClient> {
-  if (kcAdminClient == null) {
-    kcAdminClient = new KcAdminClient(options);
-    await kcAdminClient.auth(authOptions);
-  }
+  kcAdminClient = new KcAdminClient(options);
+  await kcAdminClient.auth(authOptions);
+
   return Promise.resolve(kcAdminClient);
 }
