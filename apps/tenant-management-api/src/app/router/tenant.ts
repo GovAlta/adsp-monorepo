@@ -15,6 +15,10 @@ class TenantByEmailDto {
   email;
 }
 
+class TenantByRealmDto {
+  @IsDefined()
+  realm;
+}
 class TenantDto {
   @IsDefined()
   @MinLength(4)
@@ -48,6 +52,17 @@ async function getTenantByEmail(req, res) {
   }
 }
 
+async function getTenantByRealm(req, res) {
+  const data = req.payload;
+  const result = await TenantModel.findTenantByRealm(data.realm);
+
+  if (result.success) {
+    return res.json(result.tenant);
+  } else {
+    return res.status(HttpStatusCodes.NOT_FOUND).json(result);
+  }
+}
+
 async function createTenant(req, res) {
   const tenant = req.payload;
   const result = await TenantModel.create(tenant);
@@ -58,6 +73,12 @@ tenantRouter.get(
   '/name/:name',
   validationMiddleware(TenantByNameDto),
   getTenantByName
+);
+
+tenantRouter.get(
+  '/realm/:realm',
+  validationMiddleware(TenantByRealmDto),
+  getTenantByRealm
 );
 
 // email PII data, so use post method here

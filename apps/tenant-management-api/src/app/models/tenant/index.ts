@@ -118,7 +118,30 @@ export async function findTenantByEmail(email: string) {
       'createdBy'
     );
     if (tenant === null) {
-      throw 'Not found, Please check tenant name';
+      throw 'Not found, Please check admin name';
+    }
+
+    const response: FetchTenantResponse = {
+      success: true,
+      tenant: tenant,
+    };
+
+    return Promise.resolve(response);
+  } catch (e) {
+    const response: FetchTenantResponse = {
+      success: false,
+      errors: [e],
+    };
+
+    return Promise.resolve(response);
+  }
+}
+
+export async function findTenantByRealm(realm: string) {
+  try {
+    const tenant = await Tenant.findOne({ realm: realm }).populate('createdBy');
+    if (tenant === null) {
+      throw 'Not found, Please check realm name';
     }
 
     const response: FetchTenantResponse = {
