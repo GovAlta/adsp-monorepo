@@ -1,3 +1,37 @@
+:root {
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-base: 1rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.25rem;
+  --fs-2xl: 1.5rem;
+  --fs-3xl: 1.875rem;
+  --fs-4xl: 2.25rem;
+  --fs-5xl: 3rem;
+  --fs-6xl: 3.75rem;
+  --fs-7xl: 4.5rem;
+  --fs-8xl: 6rem;
+  --fs-9xl: 8rem;
+
+  --fw-thin: 100;
+  --fw-light: 300;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-bold: 700;
+  --fw-black: 900;
+
+  --breakpoint-sm: 576px;
+}
+
+// reset :(
+a:focus, a:active { outline: none !important; }
+nav {
+  margin-top: 1.5rem;
+}
+p {
+  margin-top: 24px !important;
+}
+
 .App {
   text-align: center;
 }

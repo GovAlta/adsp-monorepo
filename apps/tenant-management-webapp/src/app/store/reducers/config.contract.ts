@@ -11,6 +11,7 @@ export interface Keycloak {
   url: string;
   clientId: string;
   checkLoginIframe?: boolean;
+  flow?: string;
 }
 
 export interface Config {
@@ -21,7 +22,7 @@ export interface Config {
 // TODO: [Feb-5-2021] Paul: need to fetch using configuration service and environment varaibles
 const KEYCLOAK_INIT: Keycloak = {
   realm: 'core',
-  url: 'https://access-dev.os99.gov.ab.ca/auth/',
+  url: 'https://access-dev.os99.gov.ab.ca/auth',
   clientId: 'tenant-admin-frontend-qa',
   checkLoginIframe: false,
 };

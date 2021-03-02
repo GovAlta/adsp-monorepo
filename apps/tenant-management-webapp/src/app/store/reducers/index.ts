@@ -5,6 +5,8 @@ import ServiceMeasure from './serviceMeasure';
 import User from './user';
 import Config from './config';
 import { persistReducer } from 'redux-persist';
+import Access from '../access/reducers'
+
 import storage from 'redux-persist/lib/storage';
 
 const rootReducer = combineReducers({
@@ -12,6 +14,7 @@ const rootReducer = combineReducers({
   serviceMeasure: ServiceMeasure,
   user: User,
   config: Config,
+  access: Access,
 });
 const persistConfig = {
   key: 'root',
