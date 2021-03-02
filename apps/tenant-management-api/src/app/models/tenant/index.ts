@@ -73,7 +73,7 @@ interface DeleteTenantResponse {
 
 export async function deleteTenantByName(name: string) {
   try {
-    Tenant.deleteOne({ name: name });
+    await Tenant.deleteOne({ name: name });
     const response: DeleteTenantResponse = {
       success: true,
     };
@@ -91,7 +91,7 @@ export async function deleteTenantByName(name: string) {
 
 export async function deleteTenantByRealm(realm: string) {
   try {
-    Tenant.deleteOne({ realm: realm });
+    await Tenant.deleteOne({ realm: realm });
     const response: DeleteTenantResponse = {
       success: true,
     };
