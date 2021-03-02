@@ -2,10 +2,11 @@ import { Router } from 'express';
 import { IsDefined, IsOptional } from 'class-validator';
 import { logger } from '../../middleware/logger';
 import * as HttpStatusCodes from 'http-status-codes';
-import * as TenantModel from '../services/tenant/model';
+import * as TenantModel from '../models/tenant';
 import validationMiddleware from '../../middleware/requestValidator';
 import { createkcAdminClient } from '../../keycloak';
 import { environment } from '../../environments/environment';
+import * as UserModel from '../models/user';
 
 const realmRouter = Router();
 class CreateRealmDto {
@@ -23,23 +24,14 @@ async function createRealm(req, res) {
     const payload = req.payload;
     const realmName = payload.realm;
     let tenantName = realmName;
+    const email = req.user.email;
+    const username = req.user.name;
 
     if (!payload.tenantName) {
       tenantName = realmName;
     }
 
     try {
-      const tenant = {
-        name: tenantName,
-        realm: realmName,
-      };
-
-      const createTenantResult = await TenantModel.create(tenant);
-
-      if (!createTenantResult.success) {
-        throw createTenantResult.errors;
-      }
-
       logger.info('Starting create realm....');
       const realm = await kcAdminClient.realms.create({
         id: realmName,
@@ -108,6 +100,36 @@ async function createRealm(req, res) {
           ),
         }
       );
+
+      // Update the tenancy database
+      const fetchUserResponse = await UserModel.findUserByEmail(email);
+      let userId = null;
+
+      if (fetchUserResponse.success) {
+        logger.info('Find user in the database');
+        console.log(fetchUserResponse);
+        userId = fetchUserResponse.user._id;
+      } else {
+        logger.info('Cannot find user in the database, and create new use');
+        const newAdminUser = {
+          email: email,
+          username: username,
+        };
+        const newUserResponse = await UserModel.create(newAdminUser);
+        userId = newUserResponse.id;
+      }
+      const tenant = {
+        name: tenantName,
+        realm: realmName,
+        createdBy: userId,
+        adminEmail: email,
+      };
+
+      const createTenantResult = await TenantModel.create(tenant);
+
+      if (!createTenantResult.success) {
+        throw createTenantResult.errors;
+      }
 
       return res.status(HttpStatusCodes.OK).json(data);
     } catch (err) {
