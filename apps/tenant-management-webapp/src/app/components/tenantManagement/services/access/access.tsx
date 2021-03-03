@@ -29,7 +29,7 @@ const AccessPage: FC = () => {
   }, [dispatch, currentUser, tenant]);
 
   function activeUsers(): User[] {
-    return users.filter((user) => user.emailVerified);
+    return users.filter((user) => user.enabled);
   }
 
   return (
