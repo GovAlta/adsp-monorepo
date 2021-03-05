@@ -1,3 +1,4 @@
 import TenantLogin from './tenantLogin';
 import LoginLanding from './loginLanding';
-export { TenantLogin, LoginLanding };
+import LoginSSO from './loginSSO';
+export { TenantLogin, LoginLanding, LoginSSO };

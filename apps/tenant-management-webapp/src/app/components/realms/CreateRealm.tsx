@@ -11,7 +11,7 @@ const CreateRealm = () => {
   const history = useHistory();
 
   const onCreateRealm = async () => {
-    const url = "/api/realm/v1?realm=" + name;
+    const url = '/api/realm/v1?realm=' + name;
     const res = await axios.post(url);
     history.push('/realms/creatingRealm');
   };

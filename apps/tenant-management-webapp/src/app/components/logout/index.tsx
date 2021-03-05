@@ -4,6 +4,7 @@ import { TYPES } from '../../store/actions';
 import { Link } from 'react-router-dom';
 import Keycloak from 'keycloak-js';
 import { RootState } from '../../store/reducers';
+import { setAuthToken } from '../../api/http';
 
 function Logout() {
   const KeycloakConfig = useSelector(
@@ -12,11 +13,11 @@ function Logout() {
   const dispatch = useDispatch();
   const logout = () => {
     const keycloak = Keycloak(KeycloakConfig);
-
     // Double check the auth status
     keycloak.init({ onLoad: 'check-sso' }).then((authenticated) => {
       if (authenticated) {
         keycloak.logout();
+        setAuthToken(null);
       } else {
         // If keycloak successfuly logout, it will redirect to the logout page again.
         // After confirm that we have successfully logout and we can update the state.

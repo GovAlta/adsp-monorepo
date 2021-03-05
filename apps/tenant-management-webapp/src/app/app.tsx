@@ -4,7 +4,7 @@ import '@abgov/react-components/react-components.esm.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 import LandingPage from './components/landingPage';
-import { TenantLogin, LoginLanding } from './components/login/';
+import { TenantLogin, LoginLanding, LoginSSO } from './components/login/';
 import Logout from './components/logout/';
 import CaseStudy from './components/caseStudy/';
 import FileService from './components/file-service';
@@ -37,7 +37,7 @@ const AppRouters = () => {
           <TenantLogin />
         </Route>
         <Route path="/login">
-          <LoginLanding />
+          <LoginSSO />
         </Route>
         <Route path="/logout">
           <Logout />

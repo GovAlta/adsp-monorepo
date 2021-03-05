@@ -3,6 +3,7 @@ export interface TenantAPI {
   endpoints: {
     spaceAdmin: string;
     realmByTenantId: string;
+    tenantNameByRealm: string;
   };
 }
 
@@ -27,11 +28,12 @@ const KEYCLOAK_INIT: Keycloak = {
   checkLoginIframe: false,
 };
 
-const TENANT_API_INIT: TenantAPI = {
+export const TENANT_API_INIT: TenantAPI = {
   host: 'https://tenant-management-api-core-services-dev.os99.gov.ab.ca',
   endpoints: {
     spaceAdmin: '/api/file/v1/space',
     realmByTenantId: '/api/realm/v1',
+    tenantNameByRealm: '/api/tenant/v1/realm',
   },
 };
 
