@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import person from '../assets/person.jpg';
 import { RootState } from './store/reducers';
+import { tenant } from './store/actions';
 
 enum ServiceLevel {
   Alpha = 'Alpha',
@@ -15,9 +16,12 @@ function Header({ serviceName = '', isLoginLink = true }) {
   const authenticated = useSelector(
     (state: RootState) => state.user.authenticated
   );
+  const keycloakInfo = useSelector((state: RootState) => state.user.keycloak);
+
   // TODO: Do we need the login page?
   const url = authenticated ? '/logout' : '/login';
   const urlName = authenticated ? 'Sign Out' : 'Sign In';
+
   const loginLinkClass = isLoginLink ? '' : 'd-none';
 
   const LoginLink = () => {
@@ -33,6 +37,7 @@ function Header({ serviceName = '', isLoginLink = true }) {
         <div style={{ margin: '4px 6px 6px 0' }}>
           <img src={person} alt="" height="26px" />
         </div>
+
         <Link to={url} style={{ margin: '6px 20px 12px 0' }}>
           {urlName}
         </Link>

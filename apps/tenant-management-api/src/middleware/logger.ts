@@ -17,6 +17,5 @@ export const logger = createLogger(
 );
 
 export const loggerApi = (req: Request, resp: Response, NextFunction) => {
-  console.log('Request logged:', req.method, req.path);
   logger.info(`${req.method}  ${req.path}`);
 };

@@ -26,8 +26,8 @@ export const UPTIME_FETCH_SUCCEEDED = 'UPTIME_FETCH_SUCCEEDED';
 export const UPTIME_FETCH_FAILED = 'UPTIME_FETCH_FAILED';
 
 // Types for tenant information
-export const GET_TENANT_INFO_SUCCESS = 'tGET_TENANT_INFO_SUCCESS';
-export const GET_TENANT_INFO_FAILED = 'tGET_TENANT_INFO_FAILED';
+export const FETCH_TENANT_INFO_SUCCESS = 'GET_TENANT_INFO_SUCCESS';
+export const FETCH_TENANT_INFO_FAILED = 'GET_TENANT_INFO_FAILED';
 
 // Generic Types
 export const HTTP_ERROR = 'helper/http/error';
