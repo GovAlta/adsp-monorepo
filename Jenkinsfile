@@ -1,9 +1,10 @@
 def baseCommand = '--all'
 def affectedApps = []
+def affectedManifests = []
 
 pipeline {
   options {
-    timeout(time: 3, unit: "HOURS")
+    timeout(time: 1, unit: "HOURS")
   }
   agent {
     node {
@@ -33,26 +34,28 @@ pipeline {
             script: "npx nx affected:apps --plain ${baseCommand}",
             returnStdout: true
           ).split()
+
+          if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT) {
+            affectedManifests = sh (
+              script: "git diff --name-only HEAD ${env.GIT_PREVIOUS_SUCCESSFUL_COMMIT}",
+              returnStdout: true
+            )
+            .tokenize()
+            .findAll{ it.startsWith('.openshift/managed/') }
+          }
         }
         echo "Building with base ${baseCommand} and affected apps: ${affectedApps.join(', ')}"
       }
     }
-    stage("Manage Environments") {
+    stage("Manage Infra") {
       when {
-        expression { return env.GIT_PREVIOUS_SUCCESSFUL_COMMIT }
+        expression { return affectedManifests }
       }
       steps {
         script {
-          def affectedFiles = sh (
-            script: "git diff --name-only HEAD ${env.GIT_PREVIOUS_SUCCESSFUL_COMMIT}",
-            returnStdout: true
-          )
-          .tokenize()
-          .findAll{ it.startsWith('.openshift/managed/') }
+          affectedManifests.each { affected ->
 
-          affectedFiles.each { affected ->
-
-            echo "Updating environment based on ${affected} ..."
+            echo "Updating infra environment based on ${affected} ..."
             def template = readYaml(file: affected)
 
             openshift.withCluster() {
@@ -63,26 +66,6 @@ pipeline {
                   "BUILD_TAG=latest"
                 )
                 .findAll{ it.metadata.labels["apply-infra"] == 'true' }
-
-                openshift.apply(deployment)
-              }
-              openshift.withProject('core-services-dev') {
-                def deployment = openshift.process(
-                  template,
-                  "-p",
-                  "DEPLOY_TAG=dev"
-                )
-                .findAll{ it.metadata.labels["apply-dev"] == 'true' }
-
-                openshift.apply(deployment)
-              }
-              openshift.withProject('core-services-test') {
-                def deployment = openshift.process(
-                  template,
-                  "-p",
-                  "DEPLOY_TAG=test"
-                )
-                .findAll{ it.metadata.labels["apply-test"] == 'true' }
 
                 openshift.apply(deployment)
               }
@@ -128,9 +111,29 @@ pipeline {
     }
     stage("Promote to Dev") {
       when {
-        expression { return affectedApps }
+        expression { return affectedApps || affectedManifests }
       }
       steps {
+        script {
+          openshift.withCluster() {
+            openshift.withProject('core-services-dev') {
+              affectedManifests.each { affected ->
+
+                echo "Updating dev environment based on ${affected} ..."
+                def template = readYaml(file: affected)
+
+                def deployment = openshift.process(
+                  template,
+                  "-p",
+                  "DEPLOY_TAG=dev"
+                )
+                .findAll{ it.metadata.labels["apply-dev"] == 'true' }
+
+                openshift.apply(deployment)
+              }
+            }
+          }
+        }
         script {
           openshift.withCluster() {
             openshift.withProject() {
@@ -183,15 +186,34 @@ pipeline {
       }
     }
     stage("Promote to Test") {
-
       input{
         message "Promote to Test?"
         ok "Yes"
       }
       when {
-        expression { return affectedApps }
+        expression { return affectedApps || affectedManifests }
       }
       steps {
+        script {
+          openshift.withCluster() {
+            openshift.withProject('core-services-test') {
+              affectedManifests.each { affected ->
+
+                echo "Updating test environment based on ${affected} ..."
+                def template = readYaml(file: affected)
+
+                def deployment = openshift.process(
+                  template,
+                  "-p",
+                  "DEPLOY_TAG=test"
+                )
+                .findAll{ it.metadata.labels["apply-test"] == 'true' }
+
+                openshift.apply(deployment)
+              }
+            }
+          }
+        }
         script {
           openshift.withCluster() {
             openshift.withProject() {
@@ -231,6 +253,63 @@ pipeline {
           sh "node ./apps/tenant-management-webapp-e2e/src/support/multiple-cucumber-html-reporter.js"
           zip zipFile: 'cypress-regression-test-html-report.zip', archive: false, dir: 'dist/cypress'
           archiveArtifacts artifacts: 'cypress-regression-test-html-report.zip'
+        }
+      }
+    }
+    stage("Promote to Staging") {
+      input{
+        message "Promote to Staging?"
+        ok "Yes"
+      }
+      when {
+        expression { return affectedApps || affectedManifests }
+      }
+      steps {
+        script {
+          openshift.withCluster() {
+            openshift.withProject('core-services-uat') {
+              affectedManifests.each { affected ->
+
+                echo "Updating staging environment based on ${affected} ..."
+                def template = readYaml(file: affected)
+
+                def deployment = openshift.process(
+                  template,
+                  "-p",
+                  "DEPLOY_TAG=uat"
+                )
+                .findAll{ it.metadata.labels["apply-staging"] == 'true' }
+
+                openshift.apply(deployment)
+              }
+            }
+          }
+        }
+        script {
+          openshift.withCluster() {
+            openshift.withProject() {
+              affectedApps.each { affected ->
+                def is = openshift.selector("is", "${affected}")
+                if ( is.exists() ) {
+                  openshift.tag("${affected}:test", "${affected}:uat")
+                }
+              }
+            }
+          }
+        }
+        script {
+          openshift.withCluster() {
+            openshift.withProject("core-services-uat") {
+              affectedApps.each { affected ->
+                def dc = openshift.selector("dc", "${affected}")
+                if ( dc.exists() ) {
+                  def rm = dc.rollout()
+                  rm.latest()
+                  rm.status()
+                }
+              }
+            }
+          }
         }
       }
     }
