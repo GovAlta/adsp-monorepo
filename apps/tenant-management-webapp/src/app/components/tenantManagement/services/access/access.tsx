@@ -1,32 +1,29 @@
 import React, { FC, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Tab, Tabs } from 'react-bootstrap';
-import useConfig from '../../../../utils/useConfig';
-import css from './access.module.css';
-import { RootState } from '../../../../store/reducers';
+
+import { RootState } from '../../../../store';
 import { fetchAccess } from '../../../../store/access/actions';
-import { User } from '../../../../store/access/types';
+import { User } from '../../../../store/access/models';
+
+import css from './access.module.css';
 
 const AccessPage: FC = () => {
   const [activeTab, setActiveTab] = useState<string>();
-  const [, state] = useConfig();
-
   const dispatch = useDispatch();
 
-  const users = useSelector((state: RootState) => state.access.users);
-  const roles = useSelector((state: RootState) => state.access.roles);
-  const currentUser = useSelector((state: RootState) => state.user);
-  const tenant = useSelector((state: RootState) => state.config.tenantAPI);
-  const keycloakConfig = useSelector(
-    (state: RootState) => state.config.keycloak
-  );
+  const { users, roles, keycloakConfig } = useSelector((state: RootState) => {
+    return {
+      users: state.access.users,
+      roles: state.access.roles,
+      keycloakConfig: state.config.keycloakApi,
+    };
+  });
 
   // fetch users
   useEffect(() => {
-    dispatch(
-      fetchAccess(currentUser, tenant)
-    );
-  }, [dispatch, currentUser, tenant]);
+    dispatch(fetchAccess());
+  }, [dispatch]);
 
   function activeUsers(): User[] {
     return users.filter((user) => user.enabled);
@@ -35,22 +32,19 @@ const AccessPage: FC = () => {
   return (
     <div className={css.Page}>
       <h2>Access</h2>
-      {state === 'loaded' && (
         <Tabs activeKey={activeTab} onSelect={(key) => setActiveTab(key)}>
           <Tab eventKey="tab1" ref="tab1" title="Overview">
             <div className={css.Content}>
               <div className={css.Info}>
                 <p>
-                  Access allows you to add a secure sign in to you application
-                  and services with minimum effort and configuration. No need to
-                  deal with storing or authenticating users. It's all available
-                  out of the box.
+                  Access allows you to add a secure sign in to you application and services with minimum effort and
+                  configuration. No need to deal with storing or authenticating users. It's all available out of the
+                  box.
                 </p>
                 <p>
-                  Access allows you to add a secure sign in to you application
-                  and services with minimum effort and configuration. No need to
-                  deal with storing or authenticating users. It's all available
-                  out of the box.
+                  Access allows you to add a secure sign in to you application and services with minimum effort and
+                  configuration. No need to deal with storing or authenticating users. It's all available out of the
+                  box.
                 </p>
 
                 <div className={css.InfoHeader}>
@@ -68,15 +62,21 @@ const AccessPage: FC = () => {
 
                 <div className={css.BoxSet}>
                   <div className={css.Box}>
-                    <div id="user-count" className={css.BoxValue}>{users.length}</div>
+                    <div id="user-count" className={css.BoxValue}>
+                      {users.length}
+                    </div>
                     <div className={css.BoxTitle}>Total number of users</div>
                   </div>
                   <div className={css.Box}>
-                    <div id="role-count" className={css.BoxValue}>{roles?.length ?? '-'}</div>
+                    <div id="role-count" className={css.BoxValue}>
+                      {roles?.length ?? '-'}
+                    </div>
                     <div className={css.BoxTitle}>Types of user roles</div>
                   </div>
                   <div className={css.Box}>
-                    <div id="active-user-count" className={css.BoxValue}>{activeUsers().length}</div>
+                    <div id="active-user-count" className={css.BoxValue}>
+                      {activeUsers().length}
+                    </div>
                     <div className={css.BoxTitle}>Active users</div>
                   </div>
                 </div>
@@ -84,13 +84,9 @@ const AccessPage: FC = () => {
                 <h3>Keycloak role information</h3>
 
                 <p>
-                  Displayed below are the top 5 user roles based on their
-                  counts. To view all your available roles, please{' '}
-                  <a
-                    href={keycloakConfig.url}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
+                  Displayed below are the top 5 user roles based on their counts. To view all your available roles,
+                  please{' '}
+                  <a href={keycloakConfig.url} rel="noopener noreferrer" target="_blank">
                     sign in
                   </a>{' '}
                   to your Keycloak admin portal.
@@ -106,9 +102,7 @@ const AccessPage: FC = () => {
                     </thead>
                     <tbody>
                       {roles
-                        .sort((a, b) =>
-                          a.userIds.length > b.userIds.length ? -1 : 1
-                        )
+                        .sort((a, b) => (a.userIds.length > b.userIds.length ? -1 : 1))
                         .slice(0, 5)
                         .map((role) => {
                           return (
@@ -125,11 +119,7 @@ const AccessPage: FC = () => {
 
               <div className={css.Sidebar}>
                 <div className={css.InfoTitle}>Helpful Links</div>
-                <a
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  href="/keycloak/support"
-                >
+                <a rel="noopener noreferrer" target="_blank" href="/keycloak/support">
                   Keycloak Support
                 </a>
               </div>
@@ -152,7 +142,6 @@ const AccessPage: FC = () => {
             Settings
           </Tab>
         </Tabs>
-      )}
     </div>
   );
 };

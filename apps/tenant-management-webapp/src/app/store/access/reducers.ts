@@ -1,27 +1,11 @@
-import {
-  AccessState,
-  ActionTypes,
-  GET_ACCESS_ACTION,
-  FETCH_ACCESSINFO_SUCCESS_ACTION,
-} from './types';
+import { ActionTypes } from "./actions";
+import { ACCESS_INIT, AccessState } from "./models";
 
-const initState: AccessState = {
-  users: [],
-  roles: [],
-};
-
-export default function accessReducer(
-  state = initState,
-  action: ActionTypes
-): AccessState {
+export default function accessReducer(state: AccessState = ACCESS_INIT, action: ActionTypes): AccessState {
   switch (action.type) {
-    case GET_ACCESS_ACTION:
+    case "tenant/access/FETCH_ACCESS_SUCCESS":
       return {
-        ...initState,
-      };
-    case FETCH_ACCESSINFO_SUCCESS_ACTION:
-      return {
-        ...initState,
+        ...state,
         users: action.payload.users,
         roles: action.payload.roles,
       };

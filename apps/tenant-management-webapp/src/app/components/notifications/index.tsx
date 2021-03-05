@@ -1,15 +1,16 @@
 import React from 'react';
 import { Container } from 'react-bootstrap';
-import useConfig from '../../utils/useConfig';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
 
 function Notifications() {
 
-  const [config,,] = useConfig();
+  const notificationServiceUrl = useSelector((state: RootState) => state.config.serviceUrls.notificationServiceUrl)
 
   return (
     <Container>
       <h2>Future notifications</h2>
-      {config && `Notification Url: ${config.notificationServiceUrl}`}
+      {notificationServiceUrl && `Notification Url: ${notificationServiceUrl}`}
     </Container>
   );
 }

@@ -1,7 +1,7 @@
 import { GoAButton } from '@abgov/react-components';
 import React from 'react';
 import { useDispatch } from 'react-redux';
-import { TYPES } from '../../../../store/actions';
+import { SetupFileService } from '../../../../store/file/actions'
 
 const InitSetup = () => {
   const dispatch = useDispatch();
@@ -19,7 +19,7 @@ const InitSetup = () => {
       </p>
       <GoAButton
         content="Setup Service"
-        onClick={() => dispatch({ type: TYPES.FILE_SETUP })}
+        onClick={() => dispatch(SetupFileService())}
       />
     </div>
   );

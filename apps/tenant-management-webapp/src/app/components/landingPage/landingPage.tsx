@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import caseStudy from '../../../assets/CaseStudy.png';
 import integrate from '../../../assets/Integrate.png';
@@ -13,18 +13,25 @@ import { useHistory } from 'react-router-dom';
 
 import { Container, Row, Col } from 'react-bootstrap';
 import numberFormatter from '../../utils/numberFormatter';
-import useConfig from '../../utils/useConfig';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@abgov/react-components/react-components.esm.css';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
 
 const LandingPage = () => {
+
   const history = useHistory();
-  const [config, state] = useConfig();
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const { serviceUrls } = useSelector((store: RootState) => ({
+    serviceUrls: store.config.serviceUrls
+  }));
+
+  useEffect(() => setIsLoaded(true), [serviceUrls])
 
   return (
     <div>
-      { state === 'loaded' && (
+      { isLoaded && (
         <div>
           <Header serviceName="" />
           <div className="contain-text">
@@ -181,7 +188,7 @@ const LandingPage = () => {
                         buttonType="primary"
                         buttonSize="normal"
                         onClick={() =>
-                          (window.location.href = `${config.uiComponentUrl}/react`)
+                          (window.location.href = `${serviceUrls.uiComponentUrl}/react`)
                         }
                       >
                         React
@@ -192,7 +199,7 @@ const LandingPage = () => {
                         buttonType="primary"
                         buttonSize="normal"
                         onClick={() =>
-                          (window.location.href = `${config.uiComponentUrl}/angular`)
+                          (window.location.href = `${serviceUrls.uiComponentUrl}/angular`)
                         }
                       >
                         Angular
@@ -203,7 +210,7 @@ const LandingPage = () => {
                         buttonType="primary"
                         buttonSize="normal"
                         onClick={() =>
-                          (window.location.href = `${config.uiComponentUrl}/vue`)
+                          (window.location.href = `${serviceUrls.uiComponentUrl}/vue`)
                         }
                       >
                         Vue
@@ -223,7 +230,7 @@ const LandingPage = () => {
                       buttonType="primary"
                       buttonSize="normal"
                       onClick={() =>
-                        (window.location.href = config.accessManagementApi)
+                        (window.location.href = serviceUrls.accessManagementApi)
                       }
                     >
                       Learn More

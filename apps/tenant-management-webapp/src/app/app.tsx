@@ -4,7 +4,7 @@ import '@abgov/react-components/react-components.esm.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 import LandingPage from './components/landingPage';
-import { TenantLogin, LoginLanding, LoginSSO } from './components/login/';
+import { TenantLogin, LoginSSO } from './components/login/';
 import Logout from './components/logout/';
 import CaseStudy from './components/caseStudy/';
 import FileService from './components/file-service';
@@ -23,7 +23,7 @@ import Realms from './components/realms/Realms';
 import '@abgov/core-css/goa-core.css';
 import BaseApp from './baseApp';
 import { Provider } from 'react-redux';
-import { store, persistor } from '../app/store/store';
+import { store, persistor } from '../app/store';
 import { PersistGate } from 'redux-persist/integration/react';
 
 const AppRouters = () => {
@@ -88,6 +88,7 @@ const AppRouters = () => {
 };
 
 export const App = () => {
+
   return (
     <main>
       <Provider store={store}>

@@ -1,12 +1,14 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { TYPES } from '../../../../store/actions';
 import { Container, Row, Col } from 'react-bootstrap';
-import './file.css';
 import { GoAButton } from '@abgov/react-components';
 import styled from 'styled-components';
 import externalLinkIcon from '../../../../../assets/external-link.svg'; // Tell webpack this JS file uses this image
-import { RootState } from '../../../../store/reducers';
+
+import { RootState } from '../../../../store';
+import { EnableFileService } from '../../../../store/file/actions';
+
+import './file.css';
 
 // TODO: need to move the code to core later
 const GOAWrapper = styled.a`
@@ -33,12 +35,9 @@ const GOAWrapper = styled.a`
 const OverviewBtn = () => {
   const dispatch = useDispatch();
 
-  return (
-    <GoAButton
-      content="Enable Service"
-      onClick={() => dispatch({ type: TYPES.FILE_ENABLE })}
-    />
-  );
+  return <GoAButton content="Enable Service" onClick={() => {
+    dispatch(EnableFileService())
+  }} />;
 };
 
 const HelpLink = () => {
@@ -48,11 +47,7 @@ const HelpLink = () => {
       <br />
       <GOAWrapper>
         <a>File Services Support</a>
-        <img
-          src={externalLinkIcon}
-          className="external-link"
-          alt="file-service-support"
-        />
+        <img src={externalLinkIcon} className="external-link" alt="file-service-support" />
       </GOAWrapper>
     </div>
   );
@@ -64,13 +59,10 @@ const OverviewContent = () => {
       <Row>
         <Col md={7} sm={12}>
           <p className="file-header-div">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent
-            volutpat odio est, eget faucibus nisl accumsan eu. Ut sit amet elit
-            non elit semper varius. Integer nunc felis, tristique at congue ac,
-            efficitur sed ante. Phasellus mi nibh, tempus in ultrices id,
-            lacinia sit amet nisi. Vestibulum dictum dignissim nibh a accumsan.
-            Vestibulum eget egestas diam. Fusce est massa, venenatis a
-            condimentum sed, elementum vel diam.
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent volutpat odio est, eget faucibus nisl
+            accumsan eu. Ut sit amet elit non elit semper varius. Integer nunc felis, tristique at congue ac, efficitur
+            sed ante. Phasellus mi nibh, tempus in ultrices id, lacinia sit amet nisi. Vestibulum dictum dignissim nibh
+            a accumsan. Vestibulum eget egestas diam. Fusce est massa, venenatis a condimentum sed, elementum vel diam.
           </p>
         </Col>
         <Col md={1} />

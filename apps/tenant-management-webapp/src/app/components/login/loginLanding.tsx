@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import Header from '../../header';
 import { useHistory } from 'react-router-dom';
 import { Container, Row, Col, Form } from 'react-bootstrap';
 import { GoAButton } from '@abgov/react-components';
+
+import Header from '../../header';
 
 const LoginLanding = () => {
   const [tenantName, setTenantName] = useState<string>();
