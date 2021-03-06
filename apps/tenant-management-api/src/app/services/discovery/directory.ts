@@ -1,6 +1,5 @@
 import * as data from './directory.json';
-import { DirectoryMap, createDirectory } from './model/directory';
-import Directory from './model/directory';
+import Directory,{ DirectoryMap, createDirectory } from '../../models/directory/directory';
 import { logger } from '../../../middleware/logger';
 import { ApiError } from '../../util/apiError';
 import * as HttpStatusCodes from 'http-status-codes';

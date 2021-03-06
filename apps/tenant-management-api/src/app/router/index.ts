@@ -4,7 +4,7 @@ import * as passport from 'passport';
 import directoryRouter from './directory';
 import fileRouter from './file';
 import realmRouter from './realm';
-import { tenantPublicRouter, tenantRouter } from './tenant';
+import { tenantRouter } from './tenant';
 import keycloakRouter from './keycloak';
 
 export const apiRouter = Router();
