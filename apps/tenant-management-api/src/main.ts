@@ -6,15 +6,12 @@ import { connectMongo, disconnect } from './mongo/index';
 import * as swaggerUi from 'swagger-ui-express';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as passport from 'passport';
-import {
-  createKeycloakStrategy,
-  KeycloakStrategyProps,
-} from '@core-services/core-common';
+import { createKeycloakStrategy } from '@core-services/core-common';
 import { apiRouter } from './app/router';
 
 import { logger } from './middleware/logger';
 import { Request, Response, NextFunction } from 'express';
-import { environment } from './environments/environment';
+
 import {
   UnauthorizedError,
   NotFoundError,
@@ -32,16 +29,8 @@ connectMongo();
 
 app.use(cors());
 
-const keycloakProps: KeycloakStrategyProps = {
-  KEYCLOAK_ROOT_URL:
-    process.env.KEYCLOAK_ROOT_URL ||
-    environment.KEYCLOAK_ROOT_URL ||
-    'http://localhost:8080',
-  KEYCLOAK_REALM:
-    process.env.KEYCLOAK_REALM || environment.KEYCLOAK_REALM || 'master',
-};
+passport.use('jwt', createKeycloakStrategy());
 
-passport.use('jwt', createKeycloakStrategy(keycloakProps));
 passport.use(new AnonymousStrategy());
 
 passport.serializeUser(function (user, done) {

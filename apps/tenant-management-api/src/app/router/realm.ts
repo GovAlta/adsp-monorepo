@@ -26,6 +26,7 @@ async function createRealm(req, res) {
     let tenantName = realmName;
     const email = req.user.email;
     const username = req.user.name;
+    const tokenIssuer = req.user.tokenIssuer;
 
     if (!payload.tenantName) {
       tenantName = realmName;
@@ -33,6 +34,16 @@ async function createRealm(req, res) {
 
     try {
       logger.info('Starting create realm....');
+      const result = await TenantModel.findTenantByEmail(email);
+
+      if (result.success) {
+        throw Error(
+          `${email} already created ${result.tenant.name}. One user can create only one realm.`
+        );
+      }
+
+      logger.info('Starting create realm....');
+
       const realmResponse = await kcAdminClient.realms.create({
         id: realmName,
         realm: realmName,
@@ -123,6 +134,7 @@ async function createRealm(req, res) {
         realm: realmName,
         createdBy: userId,
         adminEmail: email,
+        tokenIssuer: tokenIssuer,
       };
 
       const createTenantResult = await TenantModel.create(tenant);
@@ -148,7 +160,7 @@ async function deleteRealm(req, res) {
 
   try {
     logger.info('Starting delete realm....');
-    const realmResponse = await kcAdminClient.realms.del({
+    await kcAdminClient.realms.del({
       realm: realmName,
     });
     await TenantModel.deleteTenantByRealm(realmName);

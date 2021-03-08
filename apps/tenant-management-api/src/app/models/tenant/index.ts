@@ -1,5 +1,7 @@
 import { Document, Model, model, Schema } from 'mongoose';
 
+const INITIAL_REALM = 'core';
+
 const tenantSchema: Schema = new Schema(
   {
     name: {
@@ -23,6 +25,10 @@ const tenantSchema: Schema = new Schema(
       type: String,
       required: true,
     },
+    tokenIssuer: {
+      type: String,
+      required: true,
+    },
   },
   { timestamps: true }
 );
@@ -31,6 +37,7 @@ export interface Tenant extends Document {
   _id: string;
   name: string;
   realm: string;
+  tokenIssuer: string;
   createdBy: string;
 }
 
@@ -44,6 +51,10 @@ interface CreateTenantResponse {
 
 export async function create(tenant) {
   try {
+    tenant.tokenIssuer = tenant.tokenIssuer.replace(
+      INITIAL_REALM,
+      tenant.realm
+    );
     const newTenant = new Tenant(tenant);
     const _tenant = await newTenant.save();
     const response: CreateTenantResponse = {
@@ -68,6 +79,18 @@ interface FetchTenantResponse {
 
 interface DeleteTenantResponse {
   success: boolean;
+  errors?: Array<string>;
+}
+
+interface ValidateIssuerResponse {
+  success: boolean;
+  isValid?: boolean;
+  errors?: Array<string>;
+}
+
+interface FetchIssuersResponse {
+  success: boolean;
+  issuers?: Array<string>;
   errors?: Array<string>;
 }
 
@@ -174,6 +197,47 @@ export async function findTenantByRealm(realm: string) {
       errors: [e],
     };
 
+    return Promise.resolve(response);
+  }
+}
+
+export async function validateTenantIssuer(issuer: string) {
+  try {
+    const isValid = await Tenant.exists({ tokenIssuer: issuer });
+    const response: ValidateIssuerResponse = {
+      success: true,
+      isValid: isValid,
+    };
+
+    return Promise.resolve(response);
+  } catch (e) {
+    const response: ValidateIssuerResponse = {
+      success: false,
+      errors: [e],
+    };
+    return Promise.resolve(response);
+  }
+}
+
+export async function fetchIssuers() {
+  try {
+    const issuerObjs = await Tenant.find().select('tokenIssuer');
+
+    const response: FetchIssuersResponse = {
+      success: true,
+      issuers: issuerObjs
+        .map((issuerObj) => issuerObj.tokenIssuer)
+        .filter((tokenIssuer) => {
+          return tokenIssuer !== undefined;
+        }),
+    };
+
+    return Promise.resolve(response);
+  } catch (e) {
+    const response: FetchIssuersResponse = {
+      success: false,
+      errors: [e],
+    };
     return Promise.resolve(response);
   }
 }

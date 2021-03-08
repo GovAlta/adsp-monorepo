@@ -9,17 +9,14 @@ import {
   UnauthorizedError,
   NotFoundError,
   InvalidOperationError,
-  DomainEventService
+  DomainEventService,
 } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { applyFileMiddleware } from './file';
 import { createRepositories } from './mongo';
 import { createEventService } from './amqp';
 
-const logger = createLogger(
-  'file-service',
-  environment.LOG_LEVEL || 'info'
-);
+const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
 
 const app = express();
 
@@ -27,36 +24,37 @@ app.use(compression());
 app.use(helmet());
 app.use(express.json({ limit: '1mb' }));
 
-passport.use('jwt', createKeycloakStrategy(environment));
+passport.use('jwt', createKeycloakStrategy());
 passport.use(new AnonymousStrategy());
 
-passport.serializeUser(function(user, done) {
+passport.serializeUser(function (user, done) {
   done(null, user);
 });
 
-passport.deserializeUser(function(user, done) {
+passport.deserializeUser(function (user, done) {
   done(null, user);
 });
 
 app.use(passport.initialize());
 app.use('/space', passport.authenticate(['jwt'], { session: false }));
 app.use('/file-admin', passport.authenticate(['jwt'], { session: false }));
-app.use('/file', passport.authenticate(['jwt', 'anonymous'], { session: false }));
+app.use(
+  '/file',
+  passport.authenticate(['jwt', 'anonymous'], { session: false })
+);
 
 Promise.all([
-  createRepositories({...environment, logger}),
-  (
-    environment.AMQP_HOST ?
-      createEventService({...environment, logger}) :
-      Promise.resolve<DomainEventService>({
-        send: (event) => logger.debug(
-          `Event sink received event '${event.namespace}:${event.name}'`
-        ),
-        isConnected: () => true
-      })
-  )
+  createRepositories({ ...environment, logger }),
+  environment.AMQP_HOST
+    ? createEventService({ ...environment, logger })
+    : Promise.resolve<DomainEventService>({
+        send: (event) =>
+          logger.debug(
+            `Event sink received event '${event.namespace}:${event.name}'`
+          ),
+        isConnected: () => true,
+      }),
 ]).then(([repositories, eventService]) => {
-
   applyFileMiddleware(app, {
     logger,
     rootStoragePath: environment.FILE_PATH,
@@ -64,14 +62,13 @@ Promise.all([
     avHost: environment.AV_HOST,
     avPort: environment.AV_PORT,
     eventService,
-    ...repositories
+    ...repositories,
   });
 
-  app.get(
-    '/health',
-    (req, res) => res.json({
+  app.get('/health', (req, res) =>
+    res.json({
       db: repositories.isConnected(),
-      msg: eventService.isConnected()
+      msg: eventService.isConnected(),
     })
   );
 
@@ -95,6 +92,7 @@ Promise.all([
   const server = app.listen(port, () => {
     logger.info(`Listening at http://localhost:${port}`);
   });
-  server.on('error',
-    (err) => logger.error(`Error encountered in server: ${err}`));
+  server.on('error', (err) =>
+    logger.error(`Error encountered in server: ${err}`)
+  );
 });
