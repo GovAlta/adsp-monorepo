@@ -1,5 +1,4 @@
 import * as UserModel from './user';
-import * as TenantModel from '../tenant';
 
 interface CreateUserResponse {
   success: boolean;

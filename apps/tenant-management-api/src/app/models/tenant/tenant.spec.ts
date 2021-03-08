@@ -15,6 +15,7 @@ describe('Tenant Entity', () => {
     realm: 'mock',
     createdBy: null,
     adminEmail: 'mock-admin@gov.ab.ca',
+    tokenIssuer: 'http://mock-issuer@gov.ab.ca',
   };
 
   it('can create new tenant', async (done) => {
@@ -42,6 +43,19 @@ describe('Tenant Entity', () => {
     expect(result.tenant).toHaveProperty('adminEmail', email);
     done();
   });
+
+  it('can validate the token issuer', async (done) => {
+    const result = await TenantModel.validateTenantIssuer(tenant.tokenIssuer);
+    expect(result.isValid).toEqual(true);
+    done();
+  });
+
+  it('can get all issuers', async (done) => {
+    const result = await TenantModel.fetchIssuers();
+    expect(result.issuers).toContain(tenant.tokenIssuer);
+    done();
+  });
+
   it('can delete the tenant created', async (done) => {
     const name = 'mock-tenant-create';
     const result = await TenantModel.deleteTenantByName(name);
