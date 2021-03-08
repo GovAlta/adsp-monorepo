@@ -20,6 +20,7 @@ const directorySchema: Schema = new Schema({
 });
 
 export interface DirectoryMap extends Document {
+  _id: string;
   name: string;
   service: string;
 }
@@ -29,9 +30,10 @@ const Directory: Model<DirectoryMap> = model('directory', directorySchema);
 export const createDirectory = (directories) => {
   Directory.create(directories, (err) => {
     if (err) {
-      return console.error(err);
+       return err;
     }
   });
+  return '201';
 };
 
 export default Directory;
