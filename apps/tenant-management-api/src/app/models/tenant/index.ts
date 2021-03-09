@@ -51,10 +51,7 @@ interface CreateTenantResponse {
 
 export async function create(tenant) {
   try {
-    tenant.tokenIssuer = tenant.tokenIssuer.replace(
-      INITIAL_REALM,
-      tenant.realm
-    );
+    tenant.tokenIssuer = tenant.tokenIssuer.replace(INITIAL_REALM, tenant.realm);
     const newTenant = new Tenant(tenant);
     const _tenant = await newTenant.save();
     const response: CreateTenantResponse = {
@@ -91,6 +88,12 @@ interface ValidateIssuerResponse {
 interface FetchIssuersResponse {
   success: boolean;
   issuers?: Array<string>;
+  errors?: Array<string>;
+}
+
+interface FetchNameRealmMappingResponse {
+  success: boolean;
+  realmToNameMapping?: object;
   errors?: Array<string>;
 }
 
@@ -155,9 +158,7 @@ export async function findTenantByName(name: string) {
 
 export async function findTenantByEmail(email: string) {
   try {
-    const tenant = await Tenant.findOne({ adminEmail: email }).populate(
-      'createdBy'
-    );
+    const tenant = await Tenant.findOne({ adminEmail: email }).populate('createdBy');
     if (tenant === null) {
       throw 'Not found, Please check admin name';
     }
@@ -235,6 +236,29 @@ export async function fetchIssuers() {
     return Promise.resolve(response);
   } catch (e) {
     const response: FetchIssuersResponse = {
+      success: false,
+      errors: [e],
+    };
+    return Promise.resolve(response);
+  }
+}
+
+export async function fetchRealmToNameMapping() {
+  try {
+    const tenants = await Tenant.find();
+    const mapping = {};
+    for (const tenant of tenants) {
+      mapping[tenant.realm] = tenant.name;
+    }
+
+    const response: FetchNameRealmMappingResponse = {
+      success: true,
+      realmToNameMapping: mapping,
+    };
+
+    return Promise.resolve(response);
+  } catch (e) {
+    const response: FetchNameRealmMappingResponse = {
       success: false,
       errors: [e],
     };

@@ -37,9 +37,9 @@ async function createRealm(req, res) {
       const result = await TenantModel.findTenantByEmail(email);
 
       if (result.success) {
-        throw Error(
-          `${email} already created ${result.tenant.name}. One user can create only one realm.`
-        );
+        const errorMessage = `${email} already created ${result.tenant.name}. One user can create only one realm.`;
+        logger.warn(errorMessage);
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({ errors: [errorMessage] });
       }
 
       logger.info('Starting create realm....');
@@ -51,9 +51,7 @@ async function createRealm(req, res) {
       });
 
       if (realmResponse.realmName != realmName) {
-        return res
-          .status(HttpStatusCodes.BAD_REQUEST)
-          .json({ error: 'Create Realm failed!' });
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({ error: 'Create Realm failed!' });
       }
 
       logger.info('Starting create IdentityProvider...');
@@ -71,35 +69,25 @@ async function createRealm(req, res) {
         config: {
           loginHint: 'true',
           clientId: 'broker',
-          tokenUrl:
-            environment.KEYCLOAK_CORE_TOKEN_URL ||
-            process.env.KEYCLOAK_CORE_TOKEN_URL,
-          authorizationUrl:
-            environment.KEYCLOAK_CORE_AUTH_URL ||
-            process.env.KEYCLOAK_CORE_AUTH_URL,
+          tokenUrl: environment.KEYCLOAK_CORE_TOKEN_URL || process.env.KEYCLOAK_CORE_TOKEN_URL,
+          authorizationUrl: environment.KEYCLOAK_CORE_AUTH_URL || process.env.KEYCLOAK_CORE_AUTH_URL,
           clientAuthMethod: 'client_secret_basic',
           syncMode: 'IMPORT',
-          clientSecret:
-            environment.KEYCLOAK_CORE_CLIENT_SECRET ||
-            process.env.KEYCLOAK_CORE_CLIENT_SECRET,
+          clientSecret: environment.KEYCLOAK_CORE_CLIENT_SECRET || process.env.KEYCLOAK_CORE_CLIENT_SECRET,
           prompt: 'login',
           useJwksUrl: 'true',
         },
       });
 
       const brokerClient = await kcAdminClient.clients.findOne({
-        id:
-          environment.KEYCLOAK_CORE_BROKER_CLIENT_ID ||
-          process.env.KEYCLOAK_CORE_BROKER_CLIENT_ID,
+        id: environment.KEYCLOAK_CORE_BROKER_CLIENT_ID || process.env.KEYCLOAK_CORE_BROKER_CLIENT_ID,
         realm: environment.KEYCLOAK_REALM || process.env.KEYCLOAK_REALM,
       });
 
       logger.info('Starting add redirectURI to broker...');
       const updatedBroker = await kcAdminClient.clients.update(
         {
-          id:
-            environment.KEYCLOAK_CORE_BROKER_CLIENT_ID ||
-            process.env.KEYCLOAK_CORE_BROKER_CLIENT_ID,
+          id: environment.KEYCLOAK_CORE_BROKER_CLIENT_ID || process.env.KEYCLOAK_CORE_BROKER_CLIENT_ID,
           realm: environment.KEYCLOAK_REALM || process.env.KEYCLOAK_REALM,
         },
         {

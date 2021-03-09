@@ -56,6 +56,12 @@ describe('Tenant Entity', () => {
     done();
   });
 
+  it('can get realm-name mapping', async (done) => {
+    const result = await TenantModel.fetchRealmToNameMapping();
+    expect(result.realmToNameMapping).toEqual({ mock: 'mock-tenant-create' });
+    done();
+  });
+
   it('can delete the tenant created', async (done) => {
     const name = 'mock-tenant-create';
     const result = await TenantModel.deleteTenantByName(name);
