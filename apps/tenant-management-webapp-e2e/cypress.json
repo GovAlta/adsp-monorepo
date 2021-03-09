@@ -10,7 +10,9 @@
     "keycloakUrl": "",
     "tenantManagementApi": "",
     "accessManagementApi": "",
-    "uiComponentUrl": ""
+    "uiComponentUrl": "",
+    "email": "auto.test@gov.ab.ca",
+    "password": "123456"
   },
   "baseUrl": "http://localhost:4200/",
   "fileServerFolder": ".",

@@ -1,5 +1,10 @@
 import { getGreeting } from '../../support/app.po';
-import { When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
+
+import WelcomPage from './welcome.page';
+import TenantAdminPage from '../tenant-admin/tenant-admin.page';
+const welcomPageObj = new WelcomPage();
+const tenantAdminPageObj = new TenantAdminPage();
 
 // describe('tenant-management-webapp', () => {
 //   beforeEach(() => cy.visit('/'));
@@ -19,4 +24,26 @@ When('the user goes to the tenant management welcome page', function () {
 
 Then('the user views the tenant management welcome page title', function () {
   getGreeting().contains('A platform built for government services');
+});
+
+Given('the user is on the tenant management welcome page', function () {
+  cy.visit('/');
+  getGreeting().contains('A platform built for government services');
+});
+
+When('the user clicks the sign in button', function () {
+  // welcomPageObj.loginButton().click();
+  cy.visit(Cypress.env('accessManagementApi') + '/admin/Auto-Test/console');
+});
+
+When('the user enters credentials and clicks login button', function () {
+  welcomPageObj.usernameEmailField().type(Cypress.env('email'));
+  welcomPageObj.passwordField().type(Cypress.env('password'));
+  welcomPageObj.loginButton().click();
+});
+
+Then('the user is logged in tenant admin site', function () {
+  cy.visit('/tenant-admin').then(() => {
+    tenantAdminPageObj.dashboardTitle().contains('Tenant Management');
+  });
 });
