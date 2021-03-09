@@ -3,7 +3,7 @@ import * as Logging from './logging';
 import jwtDecode from 'jwt-decode';
 import * as jwksRsa from 'jwks-rsa';
 import * as keycloakInit from './keycloakInit';
-import { validateIssuer, validateRealm, getTenantName } from './keycloakCache';
+import { validateIssuer, updateCache, getTenantName } from './keycloakCache';
 
 keycloakInit.initTenantApi();
 
@@ -49,6 +49,25 @@ export const getKeycloakTokenRequestProps = ({
   clientSecret: KEYCLOAK_CLIENT_SECRET,
 });
 
+const authKeyCLoakAdmin = (issuer, kid, done) => {
+  const jwksUri = issuer + '/protocol/openid-connect/certs';
+  const client = createJwkClient({
+    jwksUri: jwksUri,
+    ...JWK_CLIENT_CONFIG,
+  });
+
+  client.getSigningKey(kid, (err, key: jwksRsa.SigningKey) => {
+    const signingKey = (key as jwksRsa.CertSigningKey)?.publicKey || (key as jwksRsa.RsaSigningKey)?.rsaPublicKey;
+
+    if (signingKey !== null) {
+      done(null, signingKey);
+    } else {
+      logger.error(err);
+      done(null, null);
+    }
+  });
+};
+
 const kcKeyProvider = (req, rawJwtToken, done) => {
   let payload;
   let header;
@@ -64,34 +83,22 @@ const kcKeyProvider = (req, rawJwtToken, done) => {
     if (!payload) {
       return done(null, null);
     }
-
     const issuer = payload.iss;
+    const kid = header.kid;
     if (!validateIssuer(issuer)) {
-      done(null, null);
+      updateCache().then(() => {
+        if (validateIssuer(issuer)) {
+          if (typeof getTenantName(issuer) === 'undefined') {
+            return done(null, null);
+          }
+          authKeyCLoakAdmin(issuer, kid, done);
+        } else {
+          return done(null, null);
+        }
+      });
+    } else {
+      authKeyCLoakAdmin(issuer, kid, done);
     }
-
-    const realm = issuer.split('/').slice(-1)[0];
-
-    if (!validateRealm(realm)) {
-      done(null, null);
-    }
-
-    const jwksUri = issuer + '/protocol/openid-connect/certs';
-    const client = createJwkClient({
-      jwksUri: jwksUri,
-      ...JWK_CLIENT_CONFIG,
-    });
-
-    client.getSigningKey(header.kid, (err, key: jwksRsa.SigningKey) => {
-      const signingKey = (key as jwksRsa.CertSigningKey)?.publicKey || (key as jwksRsa.RsaSigningKey)?.rsaPublicKey;
-
-      if (signingKey !== null) {
-        done(null, signingKey);
-      } else {
-        logger.error(err);
-        done(null, null);
-      }
-    });
   } catch (err) {
     logger.error(err);
     return done(null, null);
@@ -117,7 +124,7 @@ export const createKeycloakStrategy = () => {
         roles: payload.realm_access.roles,
         organizationId: payload.organizationId,
         tokenIssuer: payload.iss,
-        tenantName: getTenantName(realm),
+        tenantName: getTenantName(payload.iss),
       });
     }
   );

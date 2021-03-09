@@ -1,5 +1,6 @@
 import KcAdminClient from 'keycloak-admin';
 import * as Logging from './logging';
+import { setAdminAuthToken } from './http';
 
 const logger = Logging.createLogger('[JWT][KeyCloak][INIT]', 'info');
 const refreshTimeInterval = (parseInt(process.env.KEYCLOAK_TENANT_API_TOKEN_EXPIRY_INTERVAL) || 3600) * 1000;
@@ -25,6 +26,7 @@ export function initTenantApi() {
       const accessToken = await tenantAPIClient.getAccessToken();
       logger.info('Fetched api-tenant client access token and save it to process.env.KEYCLOAK_TENANT_API_AUTH_TOKEN');
       process.env.KEYCLOAK_TENANT_API_AUTH_TOKEN = accessToken;
+      setAdminAuthToken();
     } catch (err) {
       logger.warn(
         `Error fetch the tenant api token ${err}. Please double check your envrionment variables. Or, we are running the code for testing`
