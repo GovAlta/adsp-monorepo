@@ -1,4 +1,4 @@
-import Directory from '../services/discovery/model/directory';
+import Directory from '../models/directory/directory';
 
 export interface Serivce {
   service: string;

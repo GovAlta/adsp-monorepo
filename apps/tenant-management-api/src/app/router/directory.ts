@@ -24,7 +24,7 @@ directoryRouter.get('/', async (req, res) => {
 directoryRouter.get(
   '/urn',
   validationMiddleware(null),
-  async (req, res, next) => {
+  async (req, res) => {
     if (req.query.urn) {
       const { urn } = req.query;
       return res.send(await discovery(urn));

@@ -27,6 +27,11 @@ class TenantDto {
   realm: string;
 }
 
+class ValidateIssuerDto {
+  @IsDefined()
+  issuer: string;
+}
+
 export const tenantPublicRouter = Router();
 export const tenantRouter = Router();
 
@@ -69,23 +74,45 @@ async function createTenant(req, res) {
   return res.json(result);
 }
 
-tenantRouter.get(
-  '/name/:name',
-  validationMiddleware(TenantByNameDto),
-  getTenantByName
-);
+async function validateTokenIssuer(req, res) {
+  const issuer = req.payload.issuer;
+  const result = await TenantModel.validateTenantIssuer(issuer);
 
-tenantRouter.get(
-  '/realm/:realm',
-  validationMiddleware(TenantByRealmDto),
-  getTenantByRealm
-);
+  if (result.success) {
+    return res.status(HttpStatusCodes.OK);
+  } else {
+    return res.status(HttpStatusCodes.NOT_FOUND);
+  }
+}
+
+async function fetchIssuers(req, res) {
+  const result = await TenantModel.fetchIssuers();
+  if (result.success) {
+    return res.json(result.issuers);
+  } else {
+    return res.status(HttpStatusCodes.BAD_REQUEST);
+  }
+}
+
+async function fetchRealmTenantMapping(req, res) {
+  const result = await TenantModel.fetchRealmToNameMapping();
+  if (result.success) {
+    return res.json(result.realmToNameMapping);
+  } else {
+    return res.status(HttpStatusCodes.BAD_REQUEST);
+  }
+}
+tenantRouter.get('/name/:name', validationMiddleware(TenantByNameDto), getTenantByName);
+
+tenantRouter.get('/realm/:realm', validationMiddleware(TenantByRealmDto), getTenantByRealm);
 
 // email PII data, so use post method here
-tenantRouter.post(
-  '/email',
-  validationMiddleware(TenantByEmailDto),
-  getTenantByEmail
-);
+tenantRouter.post('/email', validationMiddleware(TenantByEmailDto), getTenantByEmail);
+
+tenantRouter.get('/issuer/:issuer', validationMiddleware(ValidateIssuerDto), validateTokenIssuer);
+
+tenantRouter.get('/realms/names', fetchRealmTenantMapping);
 
 tenantRouter.post('/', validationMiddleware(TenantDto), createTenant);
+
+tenantRouter.get('/issuers', fetchIssuers);
