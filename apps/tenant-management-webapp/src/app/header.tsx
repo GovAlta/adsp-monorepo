@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import person from '../assets/person.jpg';
 import { RootState } from './store/reducers';
-import { tenant } from './store/actions';
+
 
 enum ServiceLevel {
   Alpha = 'Alpha',

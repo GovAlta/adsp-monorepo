@@ -9,13 +9,14 @@ import UserService from '../../service/userSevice';
 function LoginSSO() {
   const isAuthenticated = useSelector((state: RootState) => state.user.authenticated);
 
-  const tenentName = useSelector((state: RootState) => state.tenant.tenant.name);
+  const tenentName = useSelector((state: RootState) => state.tenant.tenant?.name);
   const dispatch = useDispatch();
 
   const loginHandler = (keycloak) => {
     if (keycloak.realm) {
       dispatch(tenant.getTenantInfo(keycloak.realm));
     }
+    console.log(tenentName);
     if (tenentName !== null) {
       dispatch({ type: TYPES.USER_LOGIN_SUCCESS, keycloak });
     } else {
