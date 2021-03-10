@@ -14,7 +14,7 @@ export default function (state = INIT_STATE.user, action) {
       ...state,
       keycloak: keycloak,
       authenticated: true,
-      username: keycloak.userInfo.preferred_username || 'Guest',
+      username: keycloak.tokenParsed.preferred_username || 'Guest',
       jwt: jwt,
     };
   }
