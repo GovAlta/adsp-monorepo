@@ -14,6 +14,11 @@ parameters:
     displayName: Infra Namespace
     value: core-services-infra
     required: true
+  - name: NAMESPACE
+    description: Namespace of the environment.
+    displayName: Namespace
+    value: core-services-dev
+    required: true
   - name: NAME_SUFFIX
     description: Suffix applied to the names of the objects created.
     displayName: Name Suffix
@@ -62,6 +67,7 @@ objects:
       labels:
         app: file-service${NAME_SUFFIX}
         component: database
+        apply-init: "true"
         apply-branch: "true"
       name: file-service-mongodb${NAME_SUFFIX}
     stringData:
@@ -77,6 +83,7 @@ objects:
       labels:
         app: file-service${NAME_SUFFIX}
         component: database
+        apply-init: "true"
         apply-branch: "true"
       name: file-service-mongodb${NAME_SUFFIX}
     spec:
@@ -256,24 +263,6 @@ objects:
           dockerfilePath: .openshift/service/Dockerfile
         type: Docker
 
-  # ConfigMap is here for reference.
-  # ConfigMap is required but not created automatically; needs manual configuration.
-  # NOTE: Branch deployment will use the same config map, manually modify as required.
-  # - apiVersion: v1
-  #   kind: ConfigMap
-  #   metadata:
-  #     labels:
-  #       app: file-service
-  #       component: api
-  #     name: file-service
-  #   data:
-  #     KEYCLOAK_REALM: core
-  #     KEYCLOAK_ROOT_URL: https://access-dev.os99.gov.ab.ca/auth
-  #     FILE_SERVICE_HOST: https://file-service-core-services-dev.os99.gov.ab.ca
-  #     AV_PROVIDER: meta
-  #     AV_HOST: http://vnn4457.gov.ab.ca
-  #     AV_PORT: '8008'
-
   # PersistentVolumeClaim is only generated for branch deployment to avoid losing persistent data.
   - apiVersion: v1
     kind: PersistentVolumeClaim
@@ -281,6 +270,7 @@ objects:
       labels:
         app: file-service${NAME_SUFFIX}
         component: api
+        apply-init: "true"
         apply-branch: "true"
       name: file-service-files${NAME_SUFFIX}
     spec:
@@ -325,6 +315,8 @@ objects:
           containers:
             - envFrom:
                 - configMapRef:
+                    name: file-service
+                - secretRef:
                     name: file-service
               env:
                 - name: PORT

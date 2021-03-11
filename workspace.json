@@ -496,6 +496,49 @@
           }
         }
       }
+    },
+    "tools-scripts": {
+      "root": "tools/scripts",
+      "sourceRoot": "tools/scripts",
+      "projectType": "library",
+      "schematics": {},
+      "architect": {
+        "build-encodeSecrets": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "outputPath": "dist/tools/scripts/encodeSecrets",
+            "main": "tools/scripts/encodeSecrets/index.ts",
+            "tsConfig": "tools/tsconfig.tools.json",
+            "assets": [],
+            "buildLibsFromSource": true
+          },
+          "outputs": [
+            "{options.outputPath}"
+          ]
+        },
+        "execute": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              {
+                "command": "nx run tools-scripts:build-{args.script}"
+              },
+              {
+                "command": "node dist/tools/scripts/{args.script}/main.js .openshift/configuration"
+              }
+            ],
+            "parallel": false
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "tools/scripts/jest.config.js",
+            "tsConfig": "tools/tsconfig.spec.json",
+            "passWithNoTests": true
+          }
+        }
+      }
     }
   },
   "cli": {

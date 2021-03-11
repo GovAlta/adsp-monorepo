@@ -1,9 +1,0 @@
-apiVersion: v1
-data:
-  password: 
-  username: 
-kind: Secret
-metadata:
-  name: core-services-gitlab
-  namespace: core-services-infra
-type: kubernetes.io/basic-auth

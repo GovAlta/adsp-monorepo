@@ -1,0 +1,688 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: event-service
+  annotations:
+    tags: core-services, event-service
+    template.openshift.io/provider-display-name: platform team
+    description: Event Service
+labels:
+  application: event-service
+parameters:
+  - name: INFRA_NAMESPACE
+    description: Name of the infrastructure project.
+    displayName: Infra Namespace
+    value: core-services-infra
+    required: true
+  - name: NAMESPACE
+    description: Namespace of the environment.
+    displayName: Namespace
+    value: core-services-dev
+    required: true
+  - name: NAME_SUFFIX
+    description: Suffix applied to the names of the objects created.
+    displayName: Name Suffix
+    value: ""
+  - name: BUILD_TAG
+    description: Name of the ImageStreamTag to build.
+    displayName: Build Tag
+    value: latest
+  - name: DEPLOY_TAG
+    description: Name of the ImageStreamTag to deploy.
+    displayName: Deploy Tag
+    value: latest
+  - name: ROUTE_HOST
+    description: Host for the route.
+    displayName: Route Host
+    value: ""
+  - name: RABBITMQ_USER
+    description: Username for the RabbitMQ instance.
+    generate: expression
+    from: user[A-Z0-9]{3}
+  - name: RABBITMQ_PASS
+    description: Password securing the RabbitMQ instance.
+    generate: expression
+    from: "[a-zA-Z0-9]{16}"
+  - name: RABBITMQ_ERLANG_COOKIE
+    description: Cookie used for authentication of cluster nodes.
+    generate: expression
+    from: "[a-zA-Z0-9]{16}"
+  - description: Username for MongoDB user that will be used for accessing the database.
+    displayName: MongoDB Connection Username
+    from: user[A-Z0-9]{3}
+    generate: expression
+    name: MONGODB_USER
+    required: true
+  - description: Password for the MongoDB connection user.
+    displayName: MongoDB Connection Password
+    from: "[a-zA-Z0-9]{16}"
+    generate: expression
+    name: MONGODB_PASSWORD
+    required: true
+  - description: Password for the database admin user.
+    displayName: MongoDB Admin Password
+    from: "[a-zA-Z0-9]{16}"
+    generate: expression
+    name: MONGODB_ADMIN_PASSWORD
+    required: true
+objects:
+  # RabbitMQ Objects
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: event-service-rabbitmq
+      labels:
+        app: event-service
+        component: queue
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+  - apiVersion: v1
+    kind: RoleBinding
+    metadata:
+      name: event-service-rabbitmq-view
+      labels:
+        app: event-service
+        component: queue
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+    roleRef:
+      kind: Role
+      name: view
+    subjects:
+      - kind: ServiceAccount
+        name: event-service-rabbitmq
+  - apiVersion: v1
+    kind: Secret
+    stringData:
+      username: ${RABBITMQ_USER}
+      password: ${RABBITMQ_PASS}
+      cookie: ${RABBITMQ_ERLANG_COOKIE}
+    metadata:
+      name: event-service-rabbitmq
+      labels:
+        app: event-service
+        component: queue
+        apply-init: "true"
+    type: Opaque
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: event-service-rabbitmq
+      labels:
+        app: event-service
+        component: queue
+        apply-init: "true"
+    data:
+      rabbitmq.conf: |
+        loopback_users.guest = false
+
+        ## Clustering
+        cluster_formation.peer_discovery_backend = rabbit_peer_discovery_k8s
+        cluster_formation.k8s.host = kubernetes.default.svc.cluster.local
+        cluster_formation.k8s.address_type = hostname
+        cluster_formation.k8s.service_name = event-service-rabbitmq
+        cluster_formation.k8s.hostname_suffix = .event-service-rabbitmq.${NAMESPACE}.svc.cluster.local
+        cluster_formation.node_cleanup.interval = 10
+        cluster_formation.node_cleanup.only_log_warning = true
+        cluster_partition_handling = autoheal
+        ## queue master locator
+        queue_master_locator=min-masters
+      enabled_plugins: |
+        [rabbitmq_management,rabbitmq_peer_discovery_k8s].
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: event-service-rabbitmq-balancer
+      labels:
+        app: event-service
+        component: queue
+        type: LoadBalancer
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+    spec:
+      type: ClusterIP
+      ports:
+        - name: http
+          protocol: TCP
+          port: 15672
+          targetPort: 15672
+        - name: amqp
+          protocol: TCP
+          port: 5672
+          targetPort: 5672
+      selector:
+        app: event-service
+        component: queue
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: event-service-rabbitmq
+      labels:
+        app: event-service
+        component: queue
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+    spec:
+      selector:
+        app: event-service
+        component: queue
+      clusterIP: None
+      ports:
+        - name: amqp
+          port: 5672
+          targetPort: 5672
+        - name: clustering
+          port: 25672
+          targetPort: 25672
+  - apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      name: event-service-rabbitmq-internal-access
+      labels:
+        app: event-service
+        component: queue
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+    spec:
+      podSelector:
+        matchLabels:
+          app: event-service
+          component: queue
+      ingress:
+        - from:
+            - podSelector:
+                matchLabels:
+                  app: event-service
+                  component: queue
+  - apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      name: event-service-rabbitmq
+      labels:
+        app: event-service
+        component: queue
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+    spec:
+      serviceName: event-service-rabbitmq
+      replicas: 3
+      selector:
+        matchLabels:
+          app: event-service
+          component: queue
+      template:
+        metadata:
+          labels:
+            app: event-service
+            component: queue
+        spec:
+          serviceAccountName: event-service-rabbitmq
+          terminationGracePeriodSeconds: 30
+          containers:
+            - name: rabbitmq
+              command:
+                - sh
+              args:
+                - -c
+                - cp -v /etc/rabbitmq/rabbitmq.conf ${RABBITMQ_CONFIG_FILE}.conf; exec docker-entrypoint.sh rabbitmq-server
+              image: rabbitmq:3.8-management
+              imagePullPolicy: IfNotPresent
+              volumeMounts:
+                - name: config-volume
+                  mountPath: /etc/rabbitmq
+                - name: event-service-rabbitmq-storage
+                  mountPath: /var/lib/rabbitmq
+              ports:
+                - name: http
+                  protocol: TCP
+                  containerPort: 15672
+                - name: amqp
+                  protocol: TCP
+                  containerPort: 5672
+                - name: clustering
+                  protocol: TCP
+                  containerPort: 25672
+              livenessProbe:
+                exec:
+                  command: ["rabbitmqctl", "status"]
+                initialDelaySeconds: 30
+                timeoutSeconds: 10
+              readinessProbe:
+                exec:
+                  command: ["rabbitmqctl", "status"]
+                initialDelaySeconds: 10
+                timeoutSeconds: 10
+              env:
+                - name: RABBITMQ_DEFAULT_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: event-service-rabbitmq
+                      key: username
+                - name: RABBITMQ_DEFAULT_PASS
+                  valueFrom:
+                    secretKeyRef:
+                      name: event-service-rabbitmq
+                      key: password
+                - name: RABBITMQ_ERLANG_COOKIE
+                  valueFrom:
+                    secretKeyRef:
+                      name: event-service-rabbitmq
+                      key: cookie
+                - name: K8S_SERVICE_NAME
+                  value: event-service-rabbitmq
+                - name: POD_IP
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: status.podIP
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: RABBITMQ_USE_LONGNAME
+                  value: "true"
+                - name: RABBITMQ_NODENAME
+                  value: "rabbit@$(POD_NAME).event-service-rabbitmq.$(POD_NAMESPACE).svc.cluster.local"
+                - name: RABBITMQ_CONFIG_FILE
+                  value: /var/lib/rabbitmq/rabbitmq
+          volumes:
+            - name: config-volume
+              configMap:
+                name: event-service-rabbitmq
+                items:
+                  - key: rabbitmq.conf
+                    path: rabbitmq.conf
+                  - key: enabled_plugins
+                    path: enabled_plugins
+      volumeClaimTemplates:
+        - metadata:
+            name: event-service-rabbitmq-storage
+            labels:
+              app: event-service
+              component: queue
+          spec:
+            storageClassName: standard-disk
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 1Gi
+  - apiVersion: route.openshift.io/v1
+    kind: Route
+    metadata:
+      name: event-service-rabbitmq
+      labels:
+        app: event-service
+        component: queue
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+    spec:
+      host: event-service-rabbitmq-${NAMESPACE}.os99.int.alberta.ca
+      port:
+        targetPort: http
+      tls:
+        termination: edge
+      to:
+        kind: Service
+        name: event-service-rabbitmq-balancer
+        weight: 100
+      wildcardPolicy: None
+
+  # MongoDB Objects
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      annotations:
+        template.openshift.io/expose-admin_password: "{.data['database-admin-password']}"
+        template.openshift.io/expose-database_name: "{.data['database-name']}"
+        template.openshift.io/expose-password: "{.data['database-password']}"
+        template.openshift.io/expose-username: "{.data['database-user']}"
+      labels:
+        app: event-service${NAME_SUFFIX}
+        component: database
+        apply-init: "true"
+        apply-branch: "true"
+      name: event-service-mongodb${NAME_SUFFIX}
+    stringData:
+      database-admin-password: ${MONGODB_ADMIN_PASSWORD}
+      database-name: eventDb
+      database-password: ${MONGODB_PASSWORD}
+      database-user: ${MONGODB_USER}
+      database-uri: mongodb://event-service-mongodb${NAME_SUFFIX}:27017
+  # PersistentVolumeClaim is only generated for branch deployment to avoid losing persistent data.
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: event-service${NAME_SUFFIX}
+        component: database
+        apply-init: "true"
+        apply-branch: "true"
+      name: event-service-mongodb${NAME_SUFFIX}
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        template.openshift.io/expose-uri: mongodb://{.spec.clusterIP}:{.spec.ports[?(.name=="mongo")].port}
+      labels:
+        app: event-service${NAME_SUFFIX}
+        component: database
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: event-service-mongodb${NAME_SUFFIX}
+    spec:
+      ports:
+        - name: mongo
+          nodePort: 0
+          port: 27017
+          protocol: TCP
+          targetPort: 27017
+      selector:
+        app: event-service${NAME_SUFFIX}
+        component: database
+      sessionAffinity: None
+      type: ClusterIP
+    status:
+      loadBalancer: {}
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      annotations:
+        template.alpha.openshift.io/wait-for-ready: "true"
+      labels:
+        app: event-service${NAME_SUFFIX}
+        component: database
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: event-service-mongodb${NAME_SUFFIX}
+    spec:
+      replicas: 1
+      selector:
+        app: event-service${NAME_SUFFIX}
+        component: database
+      strategy:
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            app: event-service${NAME_SUFFIX}
+            component: database
+        spec:
+          containers:
+            - capabilities: {}
+              env:
+                - name: MONGODB_USER
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-user
+                      name: event-service-mongodb${NAME_SUFFIX}
+                - name: MONGODB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-password
+                      name: event-service-mongodb${NAME_SUFFIX}
+                - name: MONGODB_ADMIN_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-admin-password
+                      name: event-service-mongodb${NAME_SUFFIX}
+                - name: MONGODB_DATABASE
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-name
+                      name: event-service-mongodb${NAME_SUFFIX}
+              image: " "
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                initialDelaySeconds: 30
+                tcpSocket:
+                  port: 27017
+                timeoutSeconds: 1
+              name: mongodb
+              ports:
+                - containerPort: 27017
+                  protocol: TCP
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -i
+                    - -c
+                    - mongo 127.0.0.1:27017/$MONGODB_DATABASE -u $MONGODB_USER -p $MONGODB_PASSWORD
+                      --eval="quit()"
+                initialDelaySeconds: 3
+                timeoutSeconds: 1
+              resources:
+                limits:
+                  memory: 512Mi
+              securityContext:
+                capabilities: {}
+                privileged: false
+              terminationMessagePath: /dev/termination-log
+              volumeMounts:
+                - mountPath: /var/lib/mongodb/data
+                  name: event-service-data
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          volumes:
+            - name: event-service-data
+              persistentVolumeClaim:
+                claimName: event-service-mongodb${NAME_SUFFIX}
+      triggers:
+        - imageChangeParams:
+            automatic: true
+            containerNames:
+              - mongodb
+            from:
+              kind: ImageStreamTag
+              name: mongodb:latest
+              namespace: openshift
+          type: ImageChange
+
+  # Event Service Objects
+
+  # ImageStream is here for reference.
+  # There is a single ImageStream created in the infra project.
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      labels:
+        app: event-service
+        component: api
+        apply-infra: "true"
+      name: event-service
+      namespace: ${INFRA_NAMESPACE}
+    spec: {}
+
+  # BuildConfig is created for the primary pipeline as well as branch deployment.
+  # NOTE: Each instance should publish a unique Tag to the common ImageStream in infra.
+  - apiVersion: v1
+    kind: BuildConfig
+    metadata:
+      labels:
+        app: event-service${NAME_SUFFIX}
+        component: api
+        apply-infra: "true"
+        apply-branch: "true"
+      name: event-service${NAME_SUFFIX}
+    spec:
+      output:
+        to:
+          kind: ImageStreamTag
+          name: event-service:${BUILD_TAG}
+          namespace: ${INFRA_NAMESPACE}
+      postCommit: {}
+      resources: {}
+      source:
+        binary: {}
+        type: Binary
+      strategy:
+        dockerStrategy:
+          buildArgs:
+            - name: SERVICE
+              value: event-service
+          dockerfilePath: .openshift/service/Dockerfile
+        type: Docker
+
+  # DeploymentConfig (and Service and Route) is created in each environment of the
+  # primary pipline as well as branch deployment.
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      labels:
+        app: event-service${NAME_SUFFIX}
+        component: api
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: event-service${NAME_SUFFIX}
+    spec:
+      replicas: 1
+      revisionHistoryLimit: 3
+      selector:
+        app: event-service${NAME_SUFFIX}
+        component: api
+      strategy:
+        activeDeadlineSeconds: 21600
+        recreateParams:
+          timeoutSeconds: 600
+        resources: {}
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            app: event-service${NAME_SUFFIX}
+            component: api
+        spec:
+          containers:
+            - envFrom:
+                - configMapRef:
+                    name: event-service
+                - secretRef:
+                    name: event-service
+              env:
+                - name: PORT
+                  value: "3333"
+                - name: LOG_LEVEL
+                  value: info
+                - name: MONGO_USER
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-user
+                      name: event-service-mongodb${NAME_SUFFIX}
+                - name: MONGO_URI
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-uri
+                      name: event-service-mongodb${NAME_SUFFIX}
+                - name: MONGO_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-password
+                      name: event-service-mongodb${NAME_SUFFIX}
+                - name: MONGO_DB
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-name
+                      name: event-service-mongodb${NAME_SUFFIX}
+                - name: AMQP_HOST
+                  value: event-service-rabbitmq-balancer
+              imagePullPolicy: IfNotPresent
+              name: event-service
+              ports:
+                - containerPort: 3333
+                  name: http
+                  protocol: TCP
+              resources: {}
+              terminationMessagePath: /dev/termination-log
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+      test: false
+      triggers:
+        - imageChangeParams:
+            containerNames:
+              - event-service
+            from:
+              kind: ImageStreamTag
+              name: event-service:${DEPLOY_TAG}
+              namespace: ${INFRA_NAMESPACE}
+          type: ImageChange
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: event-service${NAME_SUFFIX}
+        component: api
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: event-service${NAME_SUFFIX}
+    spec:
+      ports:
+        - name: http
+          port: 3333
+          protocol: TCP
+          targetPort: 3333
+      selector:
+        app: event-service${NAME_SUFFIX}
+        component: api
+      sessionAffinity: None
+      type: ClusterIP
+  - apiVersion: v1
+    kind: Route
+    metadata:
+      labels:
+        app: event-service${NAME_SUFFIX}
+        component: api
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: event-service${NAME_SUFFIX}
+    spec:
+      host: ${ROUTE_HOST}
+      port:
+        targetPort: http
+      tls:
+        termination: edge
+      to:
+        kind: Service
+        name: event-service${NAME_SUFFIX}
+        weight: 100
+      wildcardPolicy: None
