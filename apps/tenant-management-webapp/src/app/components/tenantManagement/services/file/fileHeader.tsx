@@ -1,7 +1,7 @@
 import React from 'react';
 import './file.css';
 import { useSelector } from 'react-redux';
-import { RootState } from '../../../../store/reducers';
+import { RootState } from '../../../../store';
 
 const FileHeader = () => {
   const setup = useSelector(

@@ -1,15 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Container, Tabs, Tab } from 'react-bootstrap';
+import '@abgov/react-components/react-components.esm.css';
+import { useSelector, useDispatch } from 'react-redux';
+
 import FileOverview from './fileOverview';
 import FileHeader from './fileHeader';
 import InitSetup from './fileInitSetup';
 import FileSpace from './fileSpace';
 import FileSettings from './fileSettings';
-import { useSelector, useDispatch } from 'react-redux';
-import '@abgov/react-components/react-components.esm.css';
-import { TYPES } from '../../../../store/actions';
-import { RootState } from '../../../../store/reducers';
+import { RootState } from '../../../../store';
 import './file.css';
+import { FetchFileSpace, SetActiveTab } from '../../../../store/file/actions';
 
 const Templates = () => {
   return (
@@ -36,13 +37,10 @@ const APIIntegration = () => {
 };
 
 const TabsForSetup = () => {
-  const isActive = useSelector(
-    (state: RootState) => state.file.status.isActive
-  );
-
-  const activeTab = useSelector(
-    (state: RootState) => state.file.states.activeTab
-  );
+  const { isActive, activeTab } = useSelector((state: RootState) => ({
+    isActive: state.file.status.isActive,
+    activeTab: state.file.states.activeTab
+  }));
 
   const dispatch = useDispatch();
 
@@ -52,7 +50,7 @@ const TabsForSetup = () => {
       id="admin-file-service-tab"
       className="file-tab"
       activeKey={activeTab}
-      onSelect={(key) => dispatch({ type: TYPES.FILE_SET_ACTIVE_TAB, key })}
+      onSelect={(key) => dispatch(SetActiveTab(key))}
     >
       <Tab eventKey="overall-view" title="Overview">
         <FileOverview />
@@ -70,11 +68,7 @@ const TabsForSetup = () => {
         <Usage />
       </Tab>
 
-      <Tab
-        eventKey="api-integration"
-        title="API integration"
-        disabled={!isActive}
-      >
+      <Tab eventKey="api-integration" title="API integration" disabled={!isActive}>
         <APIIntegration />
       </Tab>
 
@@ -86,17 +80,10 @@ const TabsForSetup = () => {
 };
 
 const TabsForInit = () => {
-  const activeTab = useSelector(
-    (state: RootState) => state.file.states.activeTab
-  );
+  const activeTab = useSelector((state: RootState) => state.file.states.activeTab);
 
   return (
-    <Tabs
-      defaultActiveKey="overall-view"
-      id="admin-file-service-tab"
-      className="file-tab"
-      activeKey={activeTab}
-    >
+    <Tabs defaultActiveKey="overall-view" id="admin-file-service-tab" className="file-tab" activeKey={activeTab}>
       <Tab eventKey="overall-view" title="Overview">
         <InitSetup />
       </Tab>
@@ -105,21 +92,12 @@ const TabsForInit = () => {
 };
 
 export default function File() {
-  const setupRequired = useSelector(
-    (state: RootState) => state.file.requirements.setup
-  );
-
   const dispatch = useDispatch();
-  const tenantAPI = useSelector((state: RootState) => state.config.tenantAPI);
-  const user = useSelector((state: RootState) => state.user);
-  // TODO: shall we load the file service info at begining?
-  dispatch({
-    type: TYPES.FETCH_FILE_SPACE,
-    payload: {
-      tenantAPI: tenantAPI,
-      user: user,
-    },
-  });
+  const setupRequired = useSelector((state: RootState) => state.file.requirements.setup);
+
+  useEffect(() => {
+    dispatch(FetchFileSpace())
+  }, [dispatch]);
 
   const FileOverviewTab = setupRequired ? <TabsForInit /> : <TabsForSetup />;
 

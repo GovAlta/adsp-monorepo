@@ -1,46 +1,37 @@
 import React, { useEffect } from 'react';
 import Header from '../../header';
 import { useSelector, useDispatch } from 'react-redux';
-import { TYPES, tenant } from '../../store/actions';
+import { FetchTenantSuccess, FetchTenant } from '../../store/tenant/actions';
 import { Redirect } from 'react-router-dom';
-import { RootState } from '../../store/reducers';
-import UserService from '../../service/userSevice';
+import { RootState } from '../../store';
+import { ErrorNotification } from '../../store/notifications/actions';
+import { login, isAuthenticated } from '../../services/session';
+import { SessionLoginSuccess } from '../../store/session/actions';
+import { Session } from '../../store/session/models';
 
 function LoginSSO() {
-  const isAuthenticated = useSelector((state: RootState) => state.user.authenticated);
-
-  const tenentName = useSelector((state: RootState) => state.tenant.tenant?.name);
   const dispatch = useDispatch();
+  const tenantName = useSelector((state: RootState) => state.tenant.name);
+  const { keycloakConfig } = useSelector((state: RootState) => ({
+    keycloakConfig: state.config?.keycloakApi,
+  }));
 
-  const loginHandler = (keycloak) => {
-    if (keycloak.realm) {
-      dispatch(tenant.getTenantInfo(keycloak.realm));
-    }
-    console.log(tenentName);
-    if (tenentName !== null) {
-      dispatch({ type: TYPES.USER_LOGIN_SUCCESS, keycloak });
-    } else {
-      //  TODO: need UI design
-      alert('Get tenant name Failed');
-    }
-  };
-  const loginFailed = () => {
-    // TODO: need UI design
-    alert('Login Failed');
-  };
+  // login
+  useEffect(() => {
+    login(keycloakConfig,
+      (session: Session) => {
+        dispatch(SessionLoginSuccess(session));
+        dispatch(FetchTenant(session.realm));
+        dispatch(FetchTenantSuccess({ name: session.realm }));  // TODO: what is this for?
+      },
+      (err: string) => {
+        dispatch(ErrorNotification({ message: err }));
+      }
+    )
+  }, [dispatch, keycloakConfig]);
 
-  const login = () => {
-    // TODO: Add error handling if the keycloak server is down.
-
-    // Get token to check is tenant exist in db
-    // if yes, login sucessful otherwise login failed.
-    UserService.login(loginHandler, loginFailed);
-  };
-
-  useEffect(login);
-
-  if (isAuthenticated) {
-    if (tenentName === null) {
+  if (isAuthenticated()) {
+    if (tenantName === null) {
       return <Redirect to="/Realms/CreateRealm" />;
     }
     return <Redirect to="/tenant-admin" />;

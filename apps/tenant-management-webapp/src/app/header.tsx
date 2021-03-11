@@ -3,8 +3,7 @@ import { GoaHeader } from '@abgov/react-components';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import person from '../assets/person.jpg';
-import { RootState } from './store/reducers';
-
+import { RootState } from './store';
 
 enum ServiceLevel {
   Alpha = 'Alpha',
@@ -14,9 +13,8 @@ enum ServiceLevel {
 
 function Header({ serviceName = '', isLoginLink = true }) {
   const authenticated = useSelector(
-    (state: RootState) => state.user.authenticated
+    (state: RootState) => state.session.authenticated
   );
-  const keycloakInfo = useSelector((state: RootState) => state.user.keycloak);
 
   // TODO: Do we need the login page?
   const url = authenticated ? '/logout' : '/login';

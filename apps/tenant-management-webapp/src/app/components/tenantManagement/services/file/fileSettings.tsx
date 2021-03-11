@@ -1,8 +1,11 @@
-import { GoARadioGroup, GoAButton } from '@abgov/react-components';
-import { useDispatch } from 'react-redux';
 import React from 'react';
+import { useDispatch } from 'react-redux';
+import { GoARadioGroup, GoAButton } from '@abgov/react-components';
+
+import { DisableFileService, DeleteFileService } from '../../../../store/file/actions';
+import { FILE_INIT } from '../../../../store/file/models';
+
 import './file.css';
-import { TYPES } from '../../../../store/actions';
 
 const FileSettings = () => {
   const Space = () => {
@@ -74,22 +77,23 @@ const FileSettings = () => {
       <div>
         <h3>Service Management</h3>
 
-        <p>
-          Vestibulum eget egestas diam. Fusce est massa, venenatis a condimentum
-          sed, elementum vel diam.
-        </p>
+        <p>Vestibulum eget egestas diam. Fusce est massa, venenatis a condimentum sed, elementum vel diam.</p>
 
         <GoAButton
           buttonType="secondary"
           content="Disable Service"
-          onClick={() => dispatch({ type: TYPES.FILE_DISABLE })}
+          onClick={() => dispatch(DisableFileService(
+            FILE_INIT  // FIXME: this is not right, but currently the method is defined as needing these params
+          ))}
         />
 
         <GoAButton
           className="file-disable-btn"
           buttonType="tertiary"
           content="Delete Service"
-          onClick={() => dispatch({ type: TYPES.FILE_DELETE })}
+          onClick={() => dispatch(DeleteFileService(
+            FILE_INIT  // FIXME: this is not right, but currently the method is defined as needing these params
+          ))}
         />
       </div>
     );

@@ -1,25 +1,18 @@
 import React from 'react';
 import { Provider } from 'react-redux';
-import { stubConfig } from '../../../../utils/useConfig';
-import { PersistGate } from 'redux-persist/integration/react';
-import { persistor } from '../../../../store/store';
 import configureStore from 'redux-mock-store';
-import { render, waitFor } from '@testing-library/react';
 import * as reactRedux from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
+import { render, waitFor } from '@testing-library/react';
 
-import { configActions } from '../../../../store/actions';
-import {
-  CONFIG_SET_KEYCLOAK,
-  KeyCloakAction,
-} from '../../../../store/actions/config';
-
-import { Keycloak } from '../../../../store/reducers/config.contract';
+import { persistor } from '../../../../store';
+import { KeycloakApi } from '../../../../store/config/models';
 
 import AccessPage from './access';
 
 describe('Access Page', () => {
   const keycloakBaseUrl = 'https://somedomain.mock';
-  const mockKeycloak: Keycloak = {
+  const mockKeycloak: KeycloakApi = {
     realm: 'mock-realm',
     clientId: '99',
     url: 'https://foo.bar',
@@ -27,14 +20,7 @@ describe('Access Page', () => {
 
   const useSelectorMock = jest.spyOn(reactRedux, 'useSelector');
   const useDispatchMock = jest.spyOn(reactRedux, 'useDispatch');
-
   const mockStore = configureStore([]);
-
-  beforeAll(() => {
-    stubConfig({
-      keycloakUrl: keycloakBaseUrl,
-    });
-  });
 
   beforeEach(() => {
     useSelectorMock.mockClear();
@@ -82,7 +68,8 @@ describe('Access Page', () => {
     ];
     const store = mockStore({
       config: {
-        keycloak: mockKeycloak,
+        keycloakApi: mockKeycloak,
+        tenantApi: { host: 'foo'}
       },
       access: {
         users: users,
@@ -108,13 +95,10 @@ describe('Access Page', () => {
       expect(userCount).toBe(`${users.length}`);
       const roleCount = document.getElementById('role-count').innerHTML;
       expect(roleCount).toBe(`${roles.length}`);
-      const activeUserCount = document.getElementById('active-user-count')
-        .innerHTML;
+      const activeUserCount = document.getElementById('active-user-count').innerHTML;
       expect(activeUserCount).toBe('2');
 
-      const roleInfoRows = document.querySelectorAll(
-        '#role-information tbody tr'
-      );
+      const roleInfoRows = document.querySelectorAll('#role-information tbody tr');
       expect(roleInfoRows.length).toBe(5);
     });
   });
@@ -122,7 +106,8 @@ describe('Access Page', () => {
   it('uses the keycloak realm within the store config', async () => {
     const store = mockStore({
       config: {
-        keycloak: mockKeycloak,
+        keycloakApi: mockKeycloak,
+        tenantApi: { host: 'foo'}
       },
       access: {
         users: [],
@@ -148,25 +133,5 @@ describe('Access Page', () => {
       expect(link).not.toBeNull();
       expect(link.getAttribute('href')).toEqual(mockKeycloak.url);
     });
-  });
-
-  it('updates the keycloak realm config', async () => {
-    const store = mockStore({
-      config: {
-        keycloak: {
-          realm: 'some init realm',
-        },
-      },
-    });
-
-    store.dispatch(configActions.setKeycloak(mockKeycloak));
-
-    const actions: KeyCloakAction[] = store.getActions();
-    expect(actions).toEqual([
-      {
-        type: CONFIG_SET_KEYCLOAK,
-        payload: mockKeycloak,
-      } as KeyCloakAction,
-    ]);
   });
 });

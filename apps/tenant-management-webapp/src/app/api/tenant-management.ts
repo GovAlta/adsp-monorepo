@@ -1,17 +1,13 @@
-import axios from 'axios';
-import { fetchConfig } from '../utils/useConfig';
+import axios, { AxiosInstance } from 'axios';
 
-export default function tenantManagementApi(endpoint) {
-  return fetchApi(endpoint);
+let http: AxiosInstance;
+
+interface Config {
+  baseUrl: string;
 }
 
-async function fetchApi(endpoint) {
-  const config = await fetchConfig();
-  return axios.get(`${config.tenantManagementApi}/${endpoint}`)
-    .then(function (response) {
-      return response.data;
-    })
-    .catch(function (error) {
-      console.log(error);
-    })
+export function init(config: Config) {
+  http = axios.create({ baseURL: config.baseUrl });
 }
+
+export { http };
