@@ -3,7 +3,7 @@ import { IsDefined, MinLength } from 'class-validator';
 import validationMiddleware from '../../middleware/requestValidator';
 import * as TenantModel from '../models/tenant';
 import * as HttpStatusCodes from 'http-status-codes';
-
+import { tenantApiAdminOnly } from '../../middleware/serviceAuth';
 class TenantByNameDto {
   @IsDefined()
   @MinLength(4)
@@ -38,7 +38,6 @@ export const tenantRouter = Router();
 async function getTenantByName(req, res) {
   const data = req.payload;
   const result = await TenantModel.findTenantByName(data.name);
-
   if (result.success) {
     return res.json(result.tenant);
   } else {
@@ -111,7 +110,7 @@ tenantRouter.post('/email', validationMiddleware(TenantByEmailDto), getTenantByE
 
 tenantRouter.get('/issuer/:issuer', validationMiddleware(ValidateIssuerDto), validateTokenIssuer);
 
-tenantRouter.get('/realms/names', fetchRealmTenantMapping);
+tenantRouter.get('/realms/names', tenantApiAdminOnly, fetchRealmTenantMapping);
 
 tenantRouter.post('/', validationMiddleware(TenantDto), createTenant);
 
