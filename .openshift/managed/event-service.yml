@@ -74,10 +74,7 @@ objects:
       labels:
         app: event-service
         component: queue
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-init: "true"
   - apiVersion: v1
     kind: RoleBinding
     metadata:
@@ -85,10 +82,7 @@ objects:
       labels:
         app: event-service
         component: queue
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-init: "true"
     roleRef:
       kind: Role
       name: view
