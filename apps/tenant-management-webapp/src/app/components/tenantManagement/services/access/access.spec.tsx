@@ -69,7 +69,7 @@ describe('Access Page', () => {
     const store = mockStore({
       config: {
         keycloakApi: mockKeycloak,
-        tenantApi: { host: 'foo'}
+        tenantApi: { host: 'foo' },
       },
       access: {
         users: users,
@@ -79,6 +79,9 @@ describe('Access Page', () => {
         jwt: {
           token: '',
         },
+      },
+      session: {
+        realm: 'core',
       },
     });
 
@@ -107,7 +110,7 @@ describe('Access Page', () => {
     const store = mockStore({
       config: {
         keycloakApi: mockKeycloak,
-        tenantApi: { host: 'foo'}
+        tenantApi: { host: 'foo' },
       },
       access: {
         users: [],
@@ -118,8 +121,11 @@ describe('Access Page', () => {
           token: '',
         },
       },
+      session: {
+        realm: 'core',
+      },
     });
-
+    const state = store.getState();
     const { queryByTitle } = render(
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
@@ -131,7 +137,7 @@ describe('Access Page', () => {
     await waitFor(() => {
       const link = queryByTitle('Keycloak Admin');
       expect(link).not.toBeNull();
-      expect(link.getAttribute('href')).toEqual(mockKeycloak.url);
+      expect(link.getAttribute('href')).toEqual(`${mockKeycloak.url}/admin/${state.session.realm}/console`);
     });
   });
 });

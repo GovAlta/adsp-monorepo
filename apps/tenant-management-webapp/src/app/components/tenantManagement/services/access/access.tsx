@@ -6,7 +6,6 @@ import { RootState } from '../../../../store';
 import { fetchAccess } from '../../../../store/access/actions';
 import { User } from '../../../../store/access/models';
 import { FetchTenant } from '../../../../store/tenant/actions';
-import { Session } from '../../../../store/session/models';
 
 import css from './access.module.css';
 
@@ -14,12 +13,11 @@ const AccessPage: FC = () => {
   const [activeTab, setActiveTab] = useState<string>();
   const dispatch = useDispatch();
 
-  const { users, roles, keycloakConfig, tenant, session } = useSelector((state: RootState) => {
+  const { users, roles, keycloakConfig, session } = useSelector((state: RootState) => {
     return {
       users: state.access.users,
       roles: state.access.roles,
       keycloakConfig: state.config.keycloakApi,
-      tenant: state.tenant,
       session: state.session,
     };
   });
