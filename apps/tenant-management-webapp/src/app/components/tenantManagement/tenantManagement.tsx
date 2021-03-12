@@ -19,9 +19,8 @@ import { SessionLoginSuccess } from '../../store/session/actions';
 const TenantManagement = () => {
   const dispatch = useDispatch();
   const { setTitle } = useContext(HeaderCtx);
-  const { keycloakConfig } = useSelector((state: RootState) => ({
-    keycloakConfig: state.config?.keycloakApi,
-  }));
+  const keycloakConfig = useSelector((state: RootState) => state.config?.keycloakApi);
+  const authenticated = useSelector((state: RootState) => state.session.authenticated);
   const [ loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -29,7 +28,7 @@ const TenantManagement = () => {
   }, []);
 
   useEffect(() => {
-    login(keycloakConfig,
+    !authenticated && login(keycloakConfig,
       (session: Session) => {
         dispatch(SessionLoginSuccess(session));
         dispatch(FetchTenantSuccess({ name: session.realm }));  // TODO: what is this for?
@@ -39,7 +38,7 @@ const TenantManagement = () => {
         dispatch(ErrorNotification({ message: err }));
       }
     )
-  }, [dispatch, keycloakConfig]);
+  }, [dispatch, keycloakConfig, authenticated]);
 
   return (
    loading
