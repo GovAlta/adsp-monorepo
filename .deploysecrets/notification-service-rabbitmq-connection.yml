@@ -1,9 +1,0 @@
-apiVersion: v1
-data:
-  AMQP_HOST: 
-  AMQP_PASSWORD: 
-  AMQP_USER: 
-kind: Secret
-metadata:
-  name: notification-service-rabbitmq-connection
-type: Opaque

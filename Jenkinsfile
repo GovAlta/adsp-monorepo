@@ -4,7 +4,7 @@ def affectedManifests = []
 
 pipeline {
   options {
-    timeout(time: 1, unit: "HOURS")
+    timeout(time: 2, unit: "HOURS")
   }
   agent {
     node {
@@ -125,6 +125,7 @@ pipeline {
                 def deployment = openshift.process(
                   template,
                   "-p",
+                  "NAMESPACE=core-services-dev",
                   "DEPLOY_TAG=dev"
                 )
                 .findAll{ it.metadata.labels["apply-dev"] == 'true' }
@@ -211,6 +212,7 @@ pipeline {
                 def deployment = openshift.process(
                   template,
                   "-p",
+                  "NAMESPACE=core-services-test",
                   "DEPLOY_TAG=test"
                 )
                 .findAll{ it.metadata.labels["apply-test"] == 'true' }
@@ -288,6 +290,7 @@ pipeline {
                 def deployment = openshift.process(
                   template,
                   "-p",
+                  "NAMESPACE=core-services-uat",
                   "DEPLOY_TAG=uat"
                 )
                 .findAll{ it.metadata.labels["apply-staging"] == 'true' }

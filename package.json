@@ -27,6 +27,7 @@
     "dep-graph": "nx dep-graph",
     "help": "nx help",
     "service": "node",
+    "secrets": "nx run tools-scripts:execute --script=encodeSecrets",
     "tmw-e2e": "npx nx e2e tenant-management-webapp-e2e",
     "tmw-e2e-cypress-open": "npx nx e2e tenant-management-webapp-e2e --watch",
     "tmw-e2e:smoke-dev": "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --headless=true --env.'TAGS'='@smoke-test' --baseUrl=https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca",
@@ -117,6 +118,7 @@
     "@nrwl/react": "10.3.1",
     "@nrwl/web": "10.3.1",
     "@nrwl/workspace": "10.3.1",
+    "@shelf/jest-mongodb": "^1.2.3",
     "@testing-library/react": "10.4.1",
     "@testing-library/react-hooks": "^3.7.0",
     "@types/amqplib": "^0.5.13",
@@ -160,6 +162,7 @@
     "eslint-plugin-cypress": "^2.10.3",
     "fs-extra": "^8.1.0",
     "jest": "25.2.3",
+    "js-base64": "^3.6.0",
     "moq.ts": "^6.4.0",
     "multiple-cucumber-html-reporter": "^1.18.0",
     "path": "^0.12.7",
@@ -173,6 +176,6 @@
     "tslint": "~6.0.0",
     "typedi": "^0.9.1",
     "typescript": "~3.9.3",
-    "@shelf/jest-mongodb": "^1.2.3"
+    "yaml": "^1.10.0"
   }
 }

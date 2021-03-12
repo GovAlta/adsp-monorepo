@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: tenant-management
+        component: app
+      name: tenant-management-webapp
+    data:
+      configuration: |-
+        {
+            "eventServiceApiUrl": "https://event-service-core-services-dev.os99.gov.ab.ca",
+            "notificationServiceUrl": "https://notification-service-core-services-dev.os99.gov.ab.ca",
+            "keycloakUrl": "https://access-uat.alpha.alberta.ca",
+            "tenantManagementApi": "https://tenant-management-api-core-services-dev.os99.gov.ab.ca",
+            "accessManagementApi": "https://access-dev.os99.gov.ab.ca/auth",
+            "uiComponentUrl": "https://ui-components-ui-components-dev.os99.gov.ab.ca"
+        }

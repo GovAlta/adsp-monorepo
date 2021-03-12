@@ -1,9 +1,0 @@
-apiVersion: v1
-data:
-  host:  
-  password: 
-  username: 
-kind: Secret
-metadata:
-  name: file-service-amqp-client
-type: Opaque

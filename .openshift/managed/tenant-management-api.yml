@@ -14,6 +14,11 @@ parameters:
     displayName: Infra Namespace
     value: core-services-infra
     required: true
+  - name: NAMESPACE
+    description: Namespace of the environment.
+    displayName: Namespace
+    value: core-services-dev
+    required: true
   - name: NAME_SUFFIX
     description: Suffix applied to the names of the objects created.
     displayName: Name Suffix
@@ -62,6 +67,7 @@ objects:
       labels:
         app: tenant-management${NAME_SUFFIX}
         component: database
+        apply-init: "true"
         apply-branch: "true"
       name: tenant-management-mongodb${NAME_SUFFIX}
     stringData:
@@ -77,6 +83,7 @@ objects:
       labels:
         app: tenant-management${NAME_SUFFIX}
         component: database
+        apply-init: "true"
         apply-branch: "true"
       name: tenant-management-mongodb${NAME_SUFFIX}
     spec:
@@ -254,21 +261,6 @@ objects:
               value: tenant-management-api
           dockerfilePath: .openshift/service/Dockerfile
         type: Docker
-
-  # ConfigMap is here for reference.
-  # ConfigMap is required but not created automatically; needs manual configuration.
-  # NOTE: Branch deployment will use the same config map, manually modify as required.
-  # - apiVersion: v1
-  #   kind: ConfigMap
-  #   metadata:
-  #     labels:
-  #       app: tenant-management
-  #       component: api
-  #     name: tenant-management-api
-  #   data:
-  #     KEYCLOAK_REALM: core
-  #     KEYCLOAK_ROOT_URL: https://access-dev.os99.gov.ab.ca/auth
-  #     FILE_SERVICE_HOST: https://file-service-core-services-dev.os99.gov.ab.ca
 
   # DeploymentConfig (and Service and Route) is created in each environment of the
   # primary pipline as well as branch deployment.
