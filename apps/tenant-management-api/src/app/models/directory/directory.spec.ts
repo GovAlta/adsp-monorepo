@@ -2,12 +2,14 @@ import { createDirectory }  from './directory';
 import { createMockMongoServer, disconnect } from '../../../mongo';
 
 describe('Directory Unit test', () => {
-  beforeAll(async () => {
+  beforeAll(async (done) => {
     await createMockMongoServer();
+    done();
   });
 
-  afterAll(async () => {
+  afterAll(async (done) => {
     await disconnect();
+    done();
   });
 
   it('can create new directory', async (done) => {

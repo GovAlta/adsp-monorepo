@@ -7,4 +7,5 @@ module.exports = {
     },
   },
   coverageDirectory: '../../coverage/apps/tenant-management-api',
+  testEnvironment: 'node',
 };
