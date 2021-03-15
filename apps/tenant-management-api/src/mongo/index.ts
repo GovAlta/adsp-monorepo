@@ -2,7 +2,7 @@ import { connect, ConnectionOptions, connection } from 'mongoose';
 import { environment } from '../environments/environment';
 import { logger } from '../middleware/logger';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-
+const mongod = new MongoMemoryServer();
 export const connectMongo = async () => {
   try {
     const mongoHost = environment.MONGO_URI || process.env.MONGO_URI;
@@ -35,19 +35,16 @@ export const connectMongo = async () => {
 export const disconnect = async () => {
   logger.info('MongoDB diconnected...');
   await connection.close();
+  await mongod.stop();
 };
 
 export const createMockMongoServer = async () => {
-  logger.info('Start to create MockMongoDB...');
-  const mongod = new MongoMemoryServer();
-  const mockMongoUri = await mongod.getUri();
 
-  logger.info(`Mondodb URI is  ${mockMongoUri}`);
+  const mockMongoUri = await mongod.getUri();
   const options: ConnectionOptions = {};
 
   try {
     await connect(mockMongoUri, options);
-    logger.info('MockMongoDB Connected...');
   } catch (err) {
     logger.error(`MockMongoDB has error, ${err.message} will exit ...`);
   }
