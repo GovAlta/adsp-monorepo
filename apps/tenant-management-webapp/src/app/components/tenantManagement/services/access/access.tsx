@@ -89,7 +89,7 @@ const AccessPage: FC = () => {
 
               <p>
                 Displayed below are the top 5 user roles based on their counts. To view all your available roles, please{' '}
-                <a href={keycloakConfig.url} rel="noopener noreferrer" target="_blank">
+                <a href={getKeycloakAdminPortal()} rel="noopener noreferrer" target="_blank">
                   sign in
                 </a>{' '}
                 to your Keycloak admin portal.
