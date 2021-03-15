@@ -25,6 +25,7 @@ import BaseApp from './baseApp';
 import { Provider } from 'react-redux';
 import { store, persistor } from '../app/store';
 import { PersistGate } from 'redux-persist/integration/react';
+import { PrivateRoute } from './customRoute';
 
 const AppRouters = () => {
   return (
@@ -46,41 +47,20 @@ const AppRouters = () => {
           <SignUp />
         </Route>
         <BaseApp>
-          <Route path="/case-study">
-            <CaseStudy />
-          </Route>
-          <Route path="/file-service">
-            <FileService />
-          </Route>
-          <Route path="/service-measures">
-            <ServiceMeasure />
-          </Route>
-          <Route path="/app-status">
-            <AppStatus />
-          </Route>
-          <Route path="/notifications">
-            <Notifications />
-          </Route>
-          <Route path="/integration">
-            <Integration />
-          </Route>
-          <Route path="/tenant-admin">
-            <TenantManagement />
-          </Route>
+          <PrivateRoute path="/case-study" component={CaseStudy} />
+          <PrivateRoute path="/file-service" component={FileService} />
+          <PrivateRoute path="/service-measures" component={ServiceMeasure} />
+          <PrivateRoute path="/app-status" component={AppStatus} />
+          <PrivateRoute path="/notifications" component={Notifications} />
+          <PrivateRoute path="/integration" component={Integration} />
+          <PrivateRoute path="/tenant-admin" component={TenantManagement} />
+
           <Route path="/Realms" exact component={Realms} />
           <Route path="/Realms/CreateRealm" exact component={CreateRealm} />
           <Route path="/Realms/CreatingRealm" exact component={CreatingRealm} />
           <Route path="/Realms/AddClientRole" exact component={AddClientRole} />
-          <Route
-            path="/Realms/CreateErrorPage"
-            exact
-            component={CreateErrorPage}
-          />
-          <Route
-            path="/Realms/ActivateErrorPage"
-            exact
-            component={ActivateErrorPage}
-          />
+          <Route path="/Realms/CreateErrorPage" exact component={CreateErrorPage} />
+          <Route path="/Realms/ActivateErrorPage" exact component={ActivateErrorPage} />
         </BaseApp>
       </Switch>
     </Router>
@@ -88,7 +68,6 @@ const AppRouters = () => {
 };
 
 export const App = () => {
-
   return (
     <main>
       <Provider store={store}>
