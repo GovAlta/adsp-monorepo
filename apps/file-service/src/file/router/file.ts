@@ -3,13 +3,13 @@ import * as appRoot from 'app-root-path';
 import { Router } from 'express';
 import * as validFilename from 'valid-filename';
 import { Logger } from 'winston';
-import { 
-  User, 
-  assertAuthenticatedHandler, 
-  UnauthorizedError, 
-  NotFoundError, 
+import {
+  User,
+  assertAuthenticatedHandler,
+  UnauthorizedError,
+  NotFoundError,
   InvalidOperationError,
-  DomainEventService
+  DomainEventService,
 } from '@core-services/core-common';
 import { FileRepository, FileSpaceRepository } from '../repository';
 import { FileEntity } from '../model';
@@ -17,11 +17,11 @@ import { createUpload } from '../upload';
 import { createdFile, deletedFile } from '../event';
 
 interface FileRouterProps {
-  logger: Logger
-  rootStoragePath: string
-  eventService: DomainEventService
-  spaceRepository: FileSpaceRepository
-  fileRepository: FileRepository
+  logger: Logger;
+  rootStoragePath: string;
+  eventService: DomainEventService;
+  spaceRepository: FileSpaceRepository;
+  fileRepository: FileRepository;
 }
 
 export const createFileRouter = ({
@@ -29,18 +29,17 @@ export const createFileRouter = ({
   rootStoragePath,
   eventService,
   spaceRepository,
-  fileRepository
+  fileRepository,
 }: FileRouterProps) => {
-  
-  const upload = createUpload({rootStoragePath});
+  const upload = createUpload({ rootStoragePath });
   const fileRouter = Router();
-  
+
   /**
    * @swagger
    *
    * /file/v1/files:
    *   post:
-   *     tags: 
+   *     tags:
    *     - File
    *     description: Upload a file.
    *     requestBody:
@@ -73,7 +72,7 @@ export const createFileRouter = ({
    *             schema:
    *               type: object
    *               properties:
-   *                 id: 
+   *                 id:
    *                   type: string
    *                 filename:
    *                   type: string
@@ -85,10 +84,10 @@ export const createFileRouter = ({
    *         description: Space or type not found.
    */
   fileRouter.post(
-    '/files', 
+    '/files',
     assertAuthenticatedHandler,
-    upload.single('file'), 
-    (req, res, next) => {
+    upload.single('file'),
+    async (req, res, next) => {
       const user = req.user as User;
       const { space, type, recordId, filename } = req.body;
       const uploaded = req.file;
@@ -97,59 +96,60 @@ export const createFileRouter = ({
         throw new InvalidOperationError(`Specified filename is not valid.`);
       }
 
-      if (!uploaded || !space || !type) {
-        res.sendStatus(400);
-      } else {
-        spaceRepository.get(space)
-        .then((spaceEntity) => {
+      try {
+        if (!uploaded || !space || !type) {
+          res.sendStatus(400);
+        } else {
+          var spaceEntity = await spaceRepository.get(space);
+
           if (!spaceEntity) {
             throw new NotFoundError('Space', space);
           }
-          
+
           const fileType = spaceEntity.types[type];
+
           if (!fileType) {
             throw new NotFoundError('Type', type);
           }
 
-          return fileType;
-        }).then((typeEntity) => 
-          FileEntity.create(
-            user, 
-            fileRepository, 
-            typeEntity, 
+          const fileEntity = await FileEntity.create(
+            user,
+            fileRepository,
+            fileType,
             {
               filename: filename || uploaded.originalname,
               size: uploaded.size,
-              recordId
-            }, 
-            uploaded.path, 
+              recordId,
+            },
+            uploaded.path,
             rootStoragePath
-          )
-        ).then((fileEntity) => {
-          eventService.send(createdFile(
-            space,
-            type,
-            {
+          );
+
+          eventService.send(
+            createdFile(space, type, {
               id: fileEntity.id,
               filename: fileEntity.filename,
               size: fileEntity.size,
               recordId: fileEntity.recordId,
               createdBy: fileEntity.createdBy,
               created: fileEntity.created,
-              scanned: fileEntity.scanned
-            }
-          ))
-          return fileEntity;
-        }).then((fileEntity) => {
+              scanned: fileEntity.scanned,
+            })
+          );
+
           res.json({
             id: fileEntity.id,
             filename: fileEntity.filename,
-            size: fileEntity.size
+            size: fileEntity.size,
           });
-          
-          logger.info(`File '${fileEntity.filename}' (ID: ${fileEntity.id}) uploaded by ` + 
-            `user '${user.name}' (ID: ${user.id}).`);
-        }).catch(err => next(err));
+
+          logger.info(
+            `File '${fileEntity.filename}' (ID: ${fileEntity.id}) uploaded by ` +
+              `user '${user.name}' (ID: ${user.id}).`
+          );
+        }
+      } catch (err) {
+        next(err);
       }
     }
   );
@@ -159,7 +159,7 @@ export const createFileRouter = ({
    *
    * /file/v1/files/{fileId}:
    *   get:
-   *     tags: 
+   *     tags:
    *     - File
    *     description: Retrieves a file's metadata.
    *     parameters:
@@ -177,7 +177,7 @@ export const createFileRouter = ({
    *             schema:
    *               type: object
    *               properties:
-   *                 id: 
+   *                 id:
    *                   type: string
    *                 filename:
    *                   type: string
@@ -190,37 +190,37 @@ export const createFileRouter = ({
    *       404:
    *         description: file not found
    */
-  fileRouter.get(
-    '/files/:fileId', 
-    (req, res, next) => {
-      const user = req.user as User;
-      const { fileId } = req.params;
-      
-      fileRepository.get(fileId)
-      .then((fileEntity) => {
-        if (!fileEntity) {
-          throw new NotFoundError('File', fileId);
-        } else if (!fileEntity.canAccess(user)) {
-          throw new UnauthorizedError('User not authorized to access file.');
-        }
-        
-        res.json({
-          id: fileEntity.id,
-          filename: fileEntity.filename,
-          size: fileEntity.size,
-          scanned: fileEntity.scanned,
-          deleted: fileEntity.deleted
-        });
-      }).catch((err) => next(err));
+  fileRouter.get('/files/:fileId', async (req, res, next) => {
+    const user = req.user as User;
+    const { fileId } = req.params;
+
+    try {
+      const fileEntity = await fileRepository.get(fileId);
+
+      if (!fileEntity) {
+        throw new NotFoundError('File', fileId);
+      } else if (!fileEntity.canAccess(user)) {
+        throw new UnauthorizedError('User not authorized to access file.');
+      }
+
+      res.json({
+        id: fileEntity.id,
+        filename: fileEntity.filename,
+        size: fileEntity.size,
+        scanned: fileEntity.scanned,
+        deleted: fileEntity.deleted,
+      });
+    } catch (err) {
+      next(err);
     }
-  );
+  });
 
   /**
    * @swagger
    *
    * /file/v1/files/{fileId}/download:
    *   get:
-   *     tags: 
+   *     tags:
    *     - File
    *     description: Downloads a file.
    *     parameters:
@@ -241,40 +241,43 @@ export const createFileRouter = ({
    *       404:
    *         description: file not found
    */
-  fileRouter.get(
-    '/files/:fileId/download', 
-    (req, res, next) => {
-      const user = req.user as User;
-      const { fileId } = req.params;
-      
-      fileRepository.get(fileId)
-      .then((fileEntity) => {
-        if (!fileEntity || fileEntity.deleted) {
-          throw new NotFoundError('File', fileId);
-        } else if (!fileEntity.canAccess(user)) {
-          throw new UnauthorizedError('User not authorized to access file.');
-        } else if (!fileEntity.scanned) {
-          throw new InvalidOperationError('File scan pending.');
-        } else {
-          const filePath = path.resolve(`${appRoot}`, fileEntity.getFilePath(rootStoragePath));
-          res.sendFile(filePath, {
-            headers: { 
-              'Content-Disposition': `attachment; filename="${fileEntity.filename}"`, 
-              'Cache-Control': 'public'
-            } 
-          });
-          fileEntity.accessed();
-        }
-      }).catch((err) => next(err));
+  fileRouter.get('/files/:fileId/download', async (req, res, next) => {
+    const user = req.user as User;
+    const { fileId } = req.params;
+
+    try {
+      const fileEntity = await fileRepository.get(fileId);
+
+      if (!fileEntity || fileEntity.deleted) {
+        throw new NotFoundError('File', fileId);
+      } else if (!fileEntity.canAccess(user)) {
+        throw new UnauthorizedError('User not authorized to access file.');
+      } else if (!fileEntity.scanned) {
+        throw new InvalidOperationError('File scan pending.');
+      } else {
+        const filePath = path.resolve(
+          `${appRoot}`,
+          fileEntity.getFilePath(rootStoragePath)
+        );
+        res.sendFile(filePath, {
+          headers: {
+            'Content-Disposition': `attachment; filename="${fileEntity.filename}"`,
+            'Cache-Control': 'public',
+          },
+        });
+        fileEntity.accessed();
+      }
+    } catch (err) {
+      next(err);
     }
-  );
+  });
 
   /**
    * @swagger
    *
    * /file/v1/files/{fileId}:
    *   delete:
-   *     tags: 
+   *     tags:
    *     - File
    *     description: Marks a file for deletion.
    *     parameters:
@@ -298,46 +301,49 @@ export const createFileRouter = ({
    *         description: file not found
    */
   fileRouter.delete(
-    '/files/:fileId', 
+    '/files/:fileId',
     assertAuthenticatedHandler,
-    (req, res, next) => {
+    async (req, res, next) => {
       const user = req.user as User;
       const { fileId } = req.params;
-      
-      fileRepository.get(fileId)
-      .then((fileEntity) => {
+
+      try {
+        const fileEntity = await fileRepository.get(fileId);
+
         if (!fileEntity) {
           throw new NotFoundError('File', fileId);
-        } 
-        return fileEntity.markForDeletion(user);
-      }).then((fileEntity) => {
-        eventService.send(deletedFile(
-          fileEntity.type.space.id,
-          fileEntity.type.id,
-          {
-            id: fileEntity.id,
-            filename: fileEntity.filename,
-            size: fileEntity.size,
-            recordId: fileEntity.recordId,
-            createdBy: fileEntity.createdBy,
-            created: fileEntity.created,
-            scanned: fileEntity.scanned
-          },
-          user,
-          new Date()
-        ))
-        return fileEntity;
-      }).then((fileEntity) => {
-        logger.info(
-          `File '${fileEntity.filename}' (ID: ${fileEntity.id}) marked for deletion by ` + 
-          `user '${user.name}' (ID: ${user.id}).`
+        }
+        fileEntity.markForDeletion(user);
+
+        eventService.send(
+          deletedFile(
+            fileEntity.type.space.id,
+            fileEntity.type.id,
+            {
+              id: fileEntity.id,
+              filename: fileEntity.filename,
+              size: fileEntity.size,
+              recordId: fileEntity.recordId,
+              createdBy: fileEntity.createdBy,
+              created: fileEntity.created,
+              scanned: fileEntity.scanned,
+            },
+            user,
+            new Date()
+          )
         );
-        return fileEntity;
-      }).then((fileEntity) =>
-        res.json({deleted: fileEntity.deleted})
-      ).catch((err) => next(err));
+
+        logger.info(
+          `File '${fileEntity.filename}' (ID: ${fileEntity.id}) marked for deletion by ` +
+            `user '${user.name}' (ID: ${user.id}).`
+        );
+
+        res.json({ deleted: fileEntity.deleted });
+      } catch (err) {
+        next(err);
+      }
     }
   );
 
   return fileRouter;
-}
+};

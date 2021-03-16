@@ -1,21 +1,21 @@
 import { Logger } from 'winston';
 import { Router } from 'express';
-import { 
-  assertAuthenticatedHandler, 
-  User, 
-  UnauthorizedError, 
+import {
+  assertAuthenticatedHandler,
+  User,
+  UnauthorizedError,
   NotFoundError,
-  DomainEventService
+  DomainEventService,
 } from '@core-services/core-common';
 import { FileSpaceRepository, FileRepository } from '../repository';
 import { createdFileType, updatedFileType } from '../event';
 
 interface AdminRouterProps {
-  logger: Logger
-  rootStoragePath: string
-  eventService: DomainEventService
-  spaceRepository: FileSpaceRepository
-  fileRepository: FileRepository
+  logger: Logger;
+  rootStoragePath: string;
+  eventService: DomainEventService;
+  spaceRepository: FileSpaceRepository;
+  fileRepository: FileRepository;
 }
 
 export const createAdminRouter = ({
@@ -23,9 +23,8 @@ export const createAdminRouter = ({
   rootStoragePath,
   eventService,
   spaceRepository,
-  fileRepository
+  fileRepository,
 }: AdminRouterProps) => {
-
   const adminRouter = Router();
 
   /**
@@ -33,7 +32,7 @@ export const createAdminRouter = ({
    *
    * /file-admin/v1/{space}/types:
    *   get:
-   *     tags: 
+   *     tags:
    *     - File Administration
    *     description: Retrieves file types.
    *     parameters:
@@ -51,12 +50,12 @@ export const createAdminRouter = ({
    *             schema:
    *               type: object
    *               properties:
-   *                 page: 
+   *                 page:
    *                   type: object
    *                   properties:
-   *                     size: 
+   *                     size:
    *                       type: number
-   *                     after: 
+   *                     after:
    *                       type: string
    *                     next:
    *                       type: string
@@ -65,7 +64,7 @@ export const createAdminRouter = ({
    *                   items:
    *                     type: object
    *                     properties:
-   *                       id: 
+   *                       id:
    *                         type: string
    *                       name:
    *                         type: string
@@ -81,14 +80,15 @@ export const createAdminRouter = ({
    *                           type: string
    */
   adminRouter.get(
-    '/:space/types', 
+    '/:space/types',
     assertAuthenticatedHandler,
-    (req, res, next) => {
+    async (req, res, next) => {
       const user = req.user as User;
       const { space } = req.params;
-      
-      spaceRepository.get(space)
-      .then((spaceEntity) => {
+
+      try {
+        const spaceEntity = await spaceRepository.get(space);
+
         if (!spaceEntity) {
           throw new NotFoundError('Space', space);
         } else if (!spaceEntity.canAccess(user)) {
@@ -96,22 +96,20 @@ export const createAdminRouter = ({
         }
 
         res.json(
-          Object.entries(spaceEntity.types)
-          .reduce(
-            (result, [id, type]) => {
-              result[id] = {
-                id: type.id,
-                name: type.name,
-                anonymousRead: type.anonymousRead,
-                readRoles: type.readRoles,
-                updateRoles: type.updateRoles
-              }
-              return result;
-            }, 
-            {}
-          )
+          Object.entries(spaceEntity.types).reduce((result, [id, type]) => {
+            result[id] = {
+              id: type.id,
+              name: type.name,
+              anonymousRead: type.anonymousRead,
+              readRoles: type.readRoles,
+              updateRoles: type.updateRoles,
+            };
+            return result;
+          }, {})
         );
-      }).catch(err => next(err));
+      } catch (err) {
+        next(err);
+      }
     }
   );
 
@@ -120,7 +118,7 @@ export const createAdminRouter = ({
    *
    * /file-admin/v1/{space}/types/{type}:
    *   put:
-   *     tags: 
+   *     tags:
    *     - File Administration
    *     description: Creates or updates a file type.
    *     parameters:
@@ -143,7 +141,7 @@ export const createAdminRouter = ({
    *           schema:
    *             type: object
    *             properties:
-   *               name: 
+   *               name:
    *                 type: string
    *               anonymousRead:
    *                 type: boolean
@@ -163,7 +161,7 @@ export const createAdminRouter = ({
    *             schema:
    *               type: object
    *               properties:
-   *                 id: 
+   *                 id:
    *                   type: string
    *                 name:
    *                   type: string
@@ -183,20 +181,16 @@ export const createAdminRouter = ({
    *         description: Space not found.
    */
   adminRouter.put(
-    '/:space/types/:type', 
+    '/:space/types/:type',
     assertAuthenticatedHandler,
-    (req, res, next) => {
+    async (req, res, next) => {
       const user = req.user as User;
       const { space, type } = req.params;
-      const { 
-        name, 
-        anonymousRead, 
-        readRoles, 
-        updateRoles 
-      } = req.body;
-      
-      spaceRepository.get(space)
-      .then((spaceEntity) => {
+      const { name, anonymousRead, readRoles, updateRoles } = req.body;
+
+      try {
+        const spaceEntity = await spaceRepository.get(space);
+
         if (!spaceEntity) {
           throw new NotFoundError('Space', space);
         } else if (!spaceEntity.canAccess(user)) {
@@ -204,67 +198,76 @@ export const createAdminRouter = ({
         }
 
         const fileType = spaceEntity.types[type];
+
         if (!fileType) {
-          return spaceEntity.addType(
-            user, 
+          const entity = await spaceEntity.addType(
+            user,
             rootStoragePath,
-            type, 
-            {name, anonymousRead, readRoles, updateRoles}
-          ).then((entity) => {
-            const typeEntity = entity.types[type];
-            eventService.send(createdFileType(
-              space, 
-              { 
+            type,
+            {
+              name,
+              anonymousRead,
+              readRoles,
+              updateRoles,
+            }
+          );
+
+          const typeEntity = entity.types[type];
+          eventService.send(
+            createdFileType(
+              space,
+              {
                 id: typeEntity.id,
                 name: typeEntity.name,
                 anonymousRead: typeEntity.anonymousRead,
                 readRoles: typeEntity.readRoles,
-                updateRoles: typeEntity.updateRoles
-              }, 
-              user, 
+                updateRoles: typeEntity.updateRoles,
+              },
+              user,
               new Date()
-            ));
-            return entity;
-          });
+            )
+          );
         } else {
-          return spaceEntity.updateType(
-            user, 
-            type, 
-            {name, anonymousRead, readRoles, updateRoles}
-          ).then((entity) => {
-            const typeEntity = entity.types[type];
-            eventService.send(updatedFileType(
-              space, 
-              { 
+          const entity = await spaceEntity.updateType(user, type, {
+            name,
+            anonymousRead,
+            readRoles,
+            updateRoles,
+          });
+
+          const typeEntity = entity.types[type];
+          eventService.send(
+            updatedFileType(
+              space,
+              {
                 id: typeEntity.id,
                 name: typeEntity.name,
                 anonymousRead: typeEntity.anonymousRead,
                 readRoles: typeEntity.readRoles,
-                updateRoles: typeEntity.updateRoles
-              }, 
-              user, 
+                updateRoles: typeEntity.updateRoles,
+              },
+              user,
               new Date()
-            ));
-            return entity;
-          });
+            )
+          );
         }
-      }).then((spaceEntity) => {
-        const fileType = spaceEntity.types[type];
+
         logger.info(
           `File type ${fileType.name} (ID: ${fileType.id}) in ` +
-          `space ${spaceEntity.id} (ID: ${spaceEntity.id}) updated by ` + 
-          `user ${user.name} (ID: ${user.id}).`
-        )
-        return fileType;
-      }).then((fileType) => {
+            `space ${spaceEntity.id} (ID: ${spaceEntity.id}) updated by ` +
+            `user ${user.name} (ID: ${user.id}).`
+        );
+
         res.json({
           id: fileType.id,
           name: fileType.name,
           anonymousRead: fileType.anonymousRead,
           readRoles: fileType.readRoles,
-          updateRoles: fileType.updateRoles
+          updateRoles: fileType.updateRoles,
         });
-      }).catch(err => next(err));
+      } catch (err) {
+        next(err);
+      }
     }
   );
 
@@ -273,7 +276,7 @@ export const createAdminRouter = ({
    *
    * /file-admin/v1/{space}/types/{type}/files:
    *   get:
-   *     tags: 
+   *     tags:
    *     - File Administration
    *     description: Retrieves files of a type.
    *     parameters:
@@ -309,12 +312,12 @@ export const createAdminRouter = ({
    *             schema:
    *               type: object
    *               properties:
-   *                 page: 
+   *                 page:
    *                   type: object
    *                   properties:
-   *                     size: 
+   *                     size:
    *                       type: number
-   *                     after: 
+   *                     after:
    *                       type: string
    *                     next:
    *                       type: string
@@ -323,7 +326,7 @@ export const createAdminRouter = ({
    *                   items:
    *                     type: object
    *                     properties:
-   *                       id: 
+   *                       id:
    *                         type: string
    *                       filename:
    *                         type: string
@@ -348,36 +351,43 @@ export const createAdminRouter = ({
    *                         type: boolean
    */
   adminRouter.get(
-    '/:space/types/:type/files', 
+    '/:space/types/:type/files',
     assertAuthenticatedHandler,
-    (req, res, next) => {
+    async (req, res, next) => {
       const user = req.user as User;
       const { space, type } = req.params;
       const { top, after } = req.query;
-      
-      fileRepository.find(
-        parseInt(top as string || '10', 10), 
-        after as string, 
-        { spaceEquals: space, typeEquals: type }
-      ).then((results) => {
+
+      try {
+        const results = await fileRepository.find(
+          parseInt((top as string) || '10', 10),
+          after as string,
+          {
+            spaceEquals: space,
+            typeEquals: type,
+          }
+        );
+
         res.json({
           page: results.page,
-          results: results.results.filter(
-            (result) => result.canAccess(user)
-          ).map((result) => ({
-            id: result.id,
-            filename: result.filename,
-            size: result.size,
-            created: result.created,
-            createdBy: result.createdBy,
-            lastAccessed: result.lastAccessed,
-            scanned: result.scanned,
-            deleted: result.deleted
-          }))
+          results: results.results
+            .filter((result) => result.canAccess(user))
+            .map((result) => ({
+              id: result.id,
+              filename: result.filename,
+              size: result.size,
+              created: result.created,
+              createdBy: result.createdBy,
+              lastAccessed: result.lastAccessed,
+              scanned: result.scanned,
+              deleted: result.deleted,
+            })),
         });
-      }).catch(err => next(err));
+      } catch (err) {
+        next(err);
+      }
     }
-  )
+  );
 
   return adminRouter;
-}
+};

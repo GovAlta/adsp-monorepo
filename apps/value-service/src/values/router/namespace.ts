@@ -1,18 +1,23 @@
 import { Router } from 'express';
-import { User, assertAuthenticatedHandler, Update, NotFoundError, UnauthorizedError } from '@core-services/core-common';
+import {
+  User,
+  assertAuthenticatedHandler,
+  Update,
+  NotFoundError,
+  UnauthorizedError,
+} from '@core-services/core-common';
 import { ValuesRepository } from '../repository';
 import { NamespaceEntity } from '../model';
 import { Namespace } from '../types';
 import { mapNamespace } from './mappers';
 
 interface NamespaceRouterProps {
-  valueRepository: ValuesRepository
+  valueRepository: ValuesRepository;
 }
 
 export const createNamespaceRouter = ({
-  valueRepository
+  valueRepository,
 }: NamespaceRouterProps): Router => {
-
   const namespaceRouter = Router();
 
   /**
@@ -20,7 +25,7 @@ export const createNamespaceRouter = ({
    *
    * /namespace/v1/namespaces:
    *   get:
-   *     tags: 
+   *     tags:
    *     - Value Namespace
    *     description: Retrieves value namespaces.
    *     parameters:
@@ -44,12 +49,12 @@ export const createNamespaceRouter = ({
    *             schema:
    *               type: object
    *               properties:
-   *                 page: 
+   *                 page:
    *                   type: object
    *                   properties:
-   *                     size: 
+   *                     size:
    *                       type: number
-   *                     after: 
+   *                     after:
    *                       type: string
    *                     next:
    *                       type: string
@@ -60,7 +65,7 @@ export const createNamespaceRouter = ({
    *                     properties:
    *                       name:
    *                         type: string
-   *                       description: 
+   *                       description:
    *                         type: string
    *                       adminRole:
    *                         type: string
@@ -68,29 +73,32 @@ export const createNamespaceRouter = ({
   namespaceRouter.get(
     '/namespaces',
     assertAuthenticatedHandler,
-    (req, res, next) => {
+    async (req, res, next) => {
       const user: User = req.user as User;
-      const top: number = parseInt(req.query.top as string || '10', 10);
+      const top: number = parseInt((req.query.top as string) || '10', 10);
       const after: string = req.query.after as string;
-      
-      valueRepository.getNamespaces(top, after)
-      .then((result) => res.json({
-        results: result.results
-          .filter(r => r.canAccess(user))
-          .map(mapNamespace),
-        page: result.page
-      })).catch((err) => 
-        next(err)
-      );
+
+      try {
+        var result = await valueRepository.getNamespaces(top, after);
+
+        res.json({
+          results: result.results
+            .filter((r) => r.canAccess(user))
+            .map(mapNamespace),
+          page: result.page,
+        });
+      } catch (err) {
+        next(err);
+      }
     }
-  )
-  
+  );
+
   /**
    * @swagger
    *
    * /namespace/v1/namespaces:
    *   post:
-   *     tags: 
+   *     tags:
    *     - Value Namespace
    *     description: Creates a new value namespace.
    *     requestBody:
@@ -100,9 +108,9 @@ export const createNamespaceRouter = ({
    *           schema:
    *             type: object
    *             properties:
-   *               name: 
+   *               name:
    *                 type: string
-   *               description: 
+   *               description:
    *                 type: string
    *               adminRole:
    *                 type: string
@@ -116,7 +124,7 @@ export const createNamespaceRouter = ({
    *               properties:
    *                 name:
    *                   type: string
-   *                 description: 
+   *                 description:
    *                   type: string
    *                 adminRole:
    *                   type: string
@@ -124,20 +132,23 @@ export const createNamespaceRouter = ({
    *         description: User not authorized to create namepace.
    */
   namespaceRouter.post(
-    '/namespaces', 
+    '/namespaces',
     assertAuthenticatedHandler,
-    (req, res, next) => {
+    async (req, res, next) => {
       const user: User = req.user as User;
       const namespace: Namespace = req.body;
-      NamespaceEntity.create(
-        user, valueRepository, namespace
-      )
-      .then((entity) => 
-        res.json(mapNamespace(entity))
-      )
-      .catch((err) => 
-        next(err)
-      );
+
+      try {
+        const entity = await NamespaceEntity.create(
+          user,
+          valueRepository,
+          namespace
+        );
+
+        res.json(mapNamespace(entity));
+      } catch (err) {
+        next(err);
+      }
     }
   );
 
@@ -146,7 +157,7 @@ export const createNamespaceRouter = ({
    *
    * /namespace/v1/namespaces/{namespace}:
    *   get:
-   *     tags: 
+   *     tags:
    *     - Value Namespace
    *     description: Retrieves a specified value namespace.
    *     parameters:
@@ -166,7 +177,7 @@ export const createNamespaceRouter = ({
    *               properties:
    *                 name:
    *                   type: string
-   *                 description: 
+   *                 description:
    *                   type: string
    *                 adminRole:
    *                   type: string
@@ -178,22 +189,25 @@ export const createNamespaceRouter = ({
   namespaceRouter.get(
     '/namespaces/:namespace',
     assertAuthenticatedHandler,
-    (req, res, next) => {
+    async (req, res, next) => {
       const user: User = req.user as User;
       const name: string = req.params.namespace;
-      valueRepository.getNamespace(name)
-      .then((entity) => {
+
+      try {
+        const entity = await valueRepository.getNamespace(name);
+
         if (!entity) {
           throw new NotFoundError('Value Namespace', name);
         } else if (!entity.canAccess(user)) {
-          throw new UnauthorizedError('User not authorized to access namespace.');
+          throw new UnauthorizedError(
+            'User not authorized to access namespace.'
+          );
         }
-        return entity;
-      })
-      .then((entity) => 
-        res.send(mapNamespace(entity))
-      )
-      .catch((err) => next(err));
+
+        res.send(mapNamespace(entity));
+      } catch (err) {
+        next(err);
+      }
     }
   );
 
@@ -202,7 +216,7 @@ export const createNamespaceRouter = ({
    *
    * /namespace/v1/namespaces/{namespace}:
    *   post:
-   *     tags: 
+   *     tags:
    *     - Value Namespace
    *     description: Updates a value namespace.
    *     parameters:
@@ -219,9 +233,9 @@ export const createNamespaceRouter = ({
    *           schema:
    *             type: object
    *             properties:
-   *               name: 
+   *               name:
    *                 type: string
-   *               description: 
+   *               description:
    *                 type: string
    *               adminRole:
    *                 type: string
@@ -233,7 +247,7 @@ export const createNamespaceRouter = ({
    *             schema:
    *               type: object
    *               properties:
-   *                 id: 
+   *                 id:
    *                   type: string
    *                 name:
    *                   type: string
@@ -243,26 +257,29 @@ export const createNamespaceRouter = ({
    *         description: User not authorized to update value namespace.
    */
   namespaceRouter.post(
-    '/namespaces/:namespace', 
+    '/namespaces/:namespace',
     assertAuthenticatedHandler,
-    (req, res, next) => {
+    async (req, res, next) => {
       const user: User = req.user as User;
       const update: Update<Namespace> = req.body;
       const name: string = req.params.namespace;
 
-      valueRepository.getNamespace(name)
-      .then(
-        (entity) => entity.update(user, update)
-      )
-      .then((entity) => res.json({
-        name: entity.name,
-        description: entity.description,
-        definitions: entity.definitions,
-        adminRole: entity.adminRole
-      }))
-      .catch((err) => next(err));
+      try {
+        const entity = await valueRepository.getNamespace(name);
+
+        entity.update(user, update);
+
+        res.json({
+          name: entity.name,
+          description: entity.description,
+          definitions: entity.definitions,
+          adminRole: entity.adminRole,
+        });
+      } catch (err) {
+        next(err);
+      }
     }
   );
 
   return namespaceRouter;
-}
+};

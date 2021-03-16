@@ -1,28 +1,27 @@
 import { Logger } from 'winston';
 import { Router } from 'express';
-import { 
-  assertAuthenticatedHandler, 
-  User, 
-  UnauthorizedError, 
-  NotFoundError, 
-  DomainEventService 
+import {
+  assertAuthenticatedHandler,
+  User,
+  UnauthorizedError,
+  NotFoundError,
+  DomainEventService,
 } from '@core-services/core-common';
 import { FileSpaceRepository } from '../repository';
 import { FileSpaceEntity } from '../model';
 import { createdFileSpace, updatedFileSpace } from '../event/space';
 
 interface SpaceRouterProps {
-  logger: Logger
-  eventService: DomainEventService
-  spaceRepository: FileSpaceRepository
+  logger: Logger;
+  eventService: DomainEventService;
+  spaceRepository: FileSpaceRepository;
 }
 
 export const createSpaceRouter = ({
   logger,
   eventService,
-  spaceRepository
+  spaceRepository,
 }: SpaceRouterProps) => {
-
   const spaceRouter = Router();
 
   /**
@@ -30,7 +29,7 @@ export const createSpaceRouter = ({
    *
    * /space/v1/spaces:
    *   get:
-   *     tags: 
+   *     tags:
    *     - File Space
    *     description: Retrieves file spaces.
    *     parameters:
@@ -54,12 +53,12 @@ export const createSpaceRouter = ({
    *             schema:
    *               type: object
    *               properties:
-   *                 page: 
+   *                 page:
    *                   type: object
    *                   properties:
-   *                     size: 
+   *                     size:
    *                       type: number
-   *                     after: 
+   *                     after:
    *                       type: string
    *                     next:
    *                       type: string
@@ -68,7 +67,7 @@ export const createSpaceRouter = ({
    *                   items:
    *                     type: object
    *                     properties:
-   *                       id: 
+   *                       id:
    *                         type: string
    *                       name:
    *                         type: string
@@ -76,37 +75,39 @@ export const createSpaceRouter = ({
    *                         type: string
    */
   spaceRouter.get(
-    '/spaces', 
+    '/spaces',
     assertAuthenticatedHandler,
-    (req, res, next) => {
+    async (req, res, next) => {
       const user = req.user as User;
       const { top, after } = req.query;
 
-      spaceRepository.find(
-        parseInt((top as string) || '10', 10), 
-        after as string
-      ).then((spaces) => {
+      try {
+        const spaces = await spaceRepository.find(
+          parseInt((top as string) || '10', 10),
+          after as string
+        );
         res.send({
           page: spaces.page,
-          results: spaces.results.filter(
-            n => n.canAccess(user)
-          ).map(n => ({
-            id: n.id,
-            name: n.name,
-            spaceAdminRole: n.spaceAdminRole
-          }))
-        })
-      }).catch((err) => next(err));
+          results: spaces.results
+            .filter((n) => n.canAccess(user))
+            .map((n) => ({
+              id: n.id,
+              name: n.name,
+              spaceAdminRole: n.spaceAdminRole,
+            })),
+        });
+      } catch (err) {
+        next(err);
+      }
     }
   );
-
 
   /**
    * @swagger
    *
    * /space/v1/spaces/{space}:
    *   get:
-   *     tags: 
+   *     tags:
    *     - File Space
    *     description: Retrieves a specified file space.
    *     parameters:
@@ -124,7 +125,7 @@ export const createSpaceRouter = ({
    *             schema:
    *               type: object
    *               properties:
-   *                 id: 
+   *                 id:
    *                   type: string
    *                 name:
    *                   type: string
@@ -136,29 +137,29 @@ export const createSpaceRouter = ({
    *         description: File space not found.
    */
   spaceRouter.get(
-    '/spaces/:space', 
+    '/spaces/:space',
     assertAuthenticatedHandler,
-    (req, res, next) => {
+    async (req, res, next) => {
       const user = req.user as User;
       const { space } = req.params;
 
-      spaceRepository.get(
-        space
-      ).then((spaceEntity) => {
-        
+      try {
+        const spaceEntity = await spaceRepository.get(space);
+
         if (!spaceEntity) {
           throw new NotFoundError('Space', space);
-        }
-        else if (!spaceEntity.canAccess(user)) {
+        } else if (!spaceEntity.canAccess(user)) {
           throw new UnauthorizedError('User not authorized to access space.');
         } else {
           res.json({
             id: spaceEntity.id,
             name: spaceEntity.name,
-            spaceAdminRole: spaceEntity.spaceAdminRole
+            spaceAdminRole: spaceEntity.spaceAdminRole,
           });
         }
-      }).catch((err) => next(err));
+      } catch (err) {
+        next(err);
+      }
     }
   );
 
@@ -167,7 +168,7 @@ export const createSpaceRouter = ({
    *
    * /space/v1/spaces/{space}:
    *   put:
-   *     tags: 
+   *     tags:
    *     - File Space
    *     description: Creates or updates a file space.
    *     parameters:
@@ -184,7 +185,7 @@ export const createSpaceRouter = ({
    *           schema:
    *             type: object
    *             properties:
-   *               name: 
+   *               name:
    *                 type: string
    *               spaceAdminRole:
    *                 type: string
@@ -196,7 +197,7 @@ export const createSpaceRouter = ({
    *             schema:
    *               type: object
    *               properties:
-   *                 id: 
+   *                 id:
    *                   type: string
    *                 name:
    *                   type: string
@@ -206,65 +207,68 @@ export const createSpaceRouter = ({
    *         description: User not authorized to update file space.
    */
   spaceRouter.put(
-    '/spaces/:space', 
+    '/spaces/:space',
     assertAuthenticatedHandler,
-    (req, res, next) => {
+    async (req, res, next) => {
       const user = req.user as User;
       const { space } = req.params;
       const { spaceAdminRole, name } = req.body;
 
-      spaceRepository.get(
-        space
-      ).then((spaceEntity) => {
+      try {
+        const spaceEntity = await spaceRepository.get(space);
+
         if (!spaceEntity) {
-          return FileSpaceEntity.create(
-            user, 
-            spaceRepository, 
-            { id: space, spaceAdminRole, name }
-          ).then((entity) => {
-            eventService.send(createdFileSpace(
+          const entity = await FileSpaceEntity.create(user, spaceRepository, {
+            id: space,
+            spaceAdminRole,
+            name,
+          });
+
+          eventService.send(
+            createdFileSpace(
               {
-                id: entity.id, 
-                name: entity.name, 
-                spaceAdminRole: entity.spaceAdminRole
+                id: entity.id,
+                name: entity.name,
+                spaceAdminRole: entity.spaceAdminRole,
               },
               user,
               new Date()
-            ));
-            return entity;
-          }) 
+            )
+          );
         } else {
-          return spaceEntity.update(
-            user, 
-            { spaceAdminRole, name }
-          ).then((entity) => {
-            eventService.send(updatedFileSpace(
+          const entity = await spaceEntity.update(user, {
+            spaceAdminRole,
+            name,
+          });
+
+          eventService.send(
+            updatedFileSpace(
               {
-                id: entity.id, 
-                name: entity.name, 
-                spaceAdminRole: entity.spaceAdminRole
+                id: entity.id,
+                name: entity.name,
+                spaceAdminRole: entity.spaceAdminRole,
               },
               user,
               new Date()
-            ));
-            return entity;
-          })
+            )
+          );
         }
-      }).then((spaceEntity) => {
+
         logger.info(
-          `Space ${spaceEntity.name} (ID: ${space}) updated by ` + 
-          `user ${user.name} (ID: ${user.id}).`
+          `Space ${spaceEntity.name} (ID: ${space}) updated by ` +
+            `user ${user.name} (ID: ${user.id}).`
         );
-        return spaceEntity;
-      }).then((spaceEntity) => {
+
         res.send({
           id: spaceEntity.id,
           name: spaceEntity.name,
-          spaceAdminRole: spaceEntity.spaceAdminRole
+          spaceAdminRole: spaceEntity.spaceAdminRole,
         });
-      }).catch(err => next(err));
+      } catch (err) {
+        next(err);
+      }
     }
   );
 
   return spaceRouter;
-}
+};

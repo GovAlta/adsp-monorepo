@@ -1,16 +1,20 @@
-import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError, User } from '@core-services/core-common';
+import {
+  assertAuthenticatedHandler,
+  NotFoundError,
+  UnauthorizedError,
+  User,
+} from '@core-services/core-common';
 import { Router } from 'express';
 import { ValuesRepository } from '../repository';
 import { mapValueDefinition } from './mappers';
 
 interface AdministrationRouterProps {
-  valueRepository: ValuesRepository
+  valueRepository: ValuesRepository;
 }
 
 export const createAdministrationRouter = ({
-  valueRepository
+  valueRepository,
 }: AdministrationRouterProps): Router => {
-
   const administrationRouter = Router();
 
   /**
@@ -60,28 +64,29 @@ export const createAdministrationRouter = ({
   administrationRouter.get(
     '/:namespace/definitions',
     assertAuthenticatedHandler,
-    (req, res, next) => {
+    async (req, res, next) => {
       const user = req.user as User;
       const namespace = req.params.namespace;
-      
-      valueRepository.getNamespace(namespace)
-      .then((entity) => {
+
+      try {
+        const entity = await valueRepository.getNamespace(namespace);
+
         if (!entity) {
           throw new NotFoundError('Value Namespace', namespace);
         } else if (!entity.canAccess(user)) {
-          throw new UnauthorizedError('User not authorized to access namespace.');
+          throw new UnauthorizedError(
+            'User not authorized to access namespace.'
+          );
         }
-        return entity;
-      })
-      .then((entity) =>
+
         res.send(
-          Object.entries(entity.definitions)
-          .map(([_,definition]) =>
+          Object.entries(entity.definitions).map(([_, definition]) =>
             mapValueDefinition(namespace, definition)
           )
-        )
-      )
-      .catch(err => next(err));
+        );
+      } catch (err) {
+        next(err);
+      }
     }
   );
 
@@ -155,25 +160,27 @@ export const createAdministrationRouter = ({
   administrationRouter.post(
     '/:namespace/definitions',
     assertAuthenticatedHandler,
-    (req, res, next) => {
+    async (req, res, next) => {
       const user = req.user as User;
       const namespace = req.params.namespace;
-      valueRepository.getNamespace(namespace)
-      .then((entity) => {
+
+      try {
+        const entity = await valueRepository.getNamespace(namespace);
+
         if (!entity) {
           throw new NotFoundError('Value Namespace', namespace);
         } else if (!entity.canAccess(user)) {
-          throw new UnauthorizedError('User not authorized to access namespace.');
+          throw new UnauthorizedError(
+            'User not authorized to access namespace.'
+          );
         }
-        return entity;
-      })
-      .then((entity) =>
-        entity.addDefinition(user, req.body)
-      )
-      .then((entity) =>
-        res.send(mapValueDefinition(namespace, entity))
-      )
-      .catch(err => next(err));
+
+        const valueEntity = await entity.addDefinition(user, req.body);
+
+        res.send(mapValueDefinition(namespace, valueEntity));
+      } catch (err) {
+        next(err);
+      }
     }
   );
 
@@ -251,28 +258,30 @@ export const createAdministrationRouter = ({
   administrationRouter.post(
     '/:namespace/definitions/:name',
     assertAuthenticatedHandler,
-    (req, res, next) => {
+    async (req, res, next) => {
       const user = req.user as User;
       const namespace = req.params.namespace;
       const name = req.params.name;
-      valueRepository.getNamespace(namespace)
-      .then((entity) => {
+
+      try {
+        const entity = await valueRepository.getNamespace(namespace);
+
         if (!entity) {
           throw new NotFoundError('Value Namespace', namespace);
         } else if (!entity.canAccess(user)) {
-          throw new UnauthorizedError('User not authorized to access namespace.');
+          throw new UnauthorizedError(
+            'User not authorized to access namespace.'
+          );
         }
-        return entity;
-      })
-      .then((entity) =>
-        entity.updateDefinition(user, name, req.body)
-      )
-      .then((entity) =>
-        res.send(mapValueDefinition(namespace, entity))
-      )
-      .catch(err => next(err));
+
+        const valueEntity = await entity.updateDefinition(user, name, req.body);
+
+        res.send(mapValueDefinition(namespace, valueEntity));
+      } catch (err) {
+        next(err);
+      }
     }
   );
 
   return administrationRouter;
-}
+};
