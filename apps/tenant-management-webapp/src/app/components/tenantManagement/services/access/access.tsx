@@ -26,7 +26,7 @@ const AccessPage: FC = () => {
   useEffect(() => {
     dispatch(fetchAccess());
     dispatch(FetchTenant(session.realm));
-  }, [dispatch]);
+  }, [dispatch, session]);
 
   function activeUsers(): User[] {
     return users.filter((user) => user.enabled);

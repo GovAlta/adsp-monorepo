@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { Nav, Navbar } from 'react-bootstrap';
 import { withRouter } from 'react-router';
-import { useHistory } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const Side = () => {
-  const history = useHistory();
   const [expanded, setExpanded] = useState(false);
   const toggleClicked = () => {
     setExpanded(!expanded);
@@ -20,31 +19,16 @@ const Side = () => {
           onClick={toggleClicked}
         />
         <Navbar.Collapse id="basic-navbar-nav">
-          <Nav
-            variant="pills"
-            className="flex-column mr-auto"
-            style={{ width: '100%' }}
-          >
+          <Nav className="flex-column mr-auto" style={{ width: '100%' }}>
             <h4>Tenant Name</h4>
-            <Nav.Link
-              eventKey="dashboard"
-              onClick={() => history.push('/tenant-admin')}
-            >
-              Dashboard
-            </Nav.Link>
-            <Nav.Link
-              eventKey="administration"
-              onClick={() => history.push('/tenant-admin/admin')}
-            >
-              Administration
-            </Nav.Link>
+            <Link to="/tenant-admin/admin">Administration</Link>
+            <Link to="/tenant-admin">Dashboard</Link>
+
             <h4>Services</h4>
-            <Nav.Link href="/tenant-admin/access">Access</Nav.Link>
-            <Nav.Link href="/tenant-admin/services/file">
-              File Services
-            </Nav.Link>
-            <Nav.Link href="/notifications">Notifications</Nav.Link>
-            <Nav.Link href="/app-status">App Status</Nav.Link>
+            <Link to="/tenant-admin/access">Access</Link>
+            <Link to="/tenant-admin/services/file">File Services</Link>
+            <Link to="/notifications">Notifications</Link>
+            <Link to="/app-status">App Status</Link>
           </Nav>
         </Navbar.Collapse>
       </Navbar>

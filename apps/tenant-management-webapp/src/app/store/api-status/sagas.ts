@@ -17,6 +17,6 @@ export function* uptimeFetch() {
 
     yield put(action);
   } catch (e) {
-    yield put(ErrorNotification({ message: e.message }));
+    yield put(ErrorNotification({ message: `failed to fetch uptime: ${e.message}` }));
   }
 }

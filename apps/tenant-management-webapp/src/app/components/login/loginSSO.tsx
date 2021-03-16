@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
 import Header from '../../header';
 import { useSelector, useDispatch } from 'react-redux';
-import { FetchTenantSuccess, FetchTenant } from '../../store/tenant/actions';
+import { FetchTenant } from '../../store/tenant/actions';
 import { Redirect } from 'react-router-dom';
 import { RootState } from '../../store';
 import { ErrorNotification } from '../../store/notifications/actions';
 import { login, isAuthenticated } from '../../services/session';
-import { SessionLoginSuccess } from '../../store/session/actions';
+import { CredentialRefresh, SessionLoginSuccess } from '../../store/session/actions';
 import { Session } from '../../store/session/models';
 
 function LoginSSO() {
@@ -18,16 +18,17 @@ function LoginSSO() {
 
   // login
   useEffect(() => {
-    login(keycloakConfig,
-      (session: Session) => {
-        dispatch(SessionLoginSuccess(session));
-        dispatch(FetchTenant(session.realm));
-        dispatch(FetchTenantSuccess({ name: session.realm }));  // TODO: what is this for?
-      },
-      (err: string) => {
-        dispatch(ErrorNotification({ message: err }));
-      }
-    )
+    const onSuccess = (session: Session) => {
+      dispatch(CredentialRefresh(session.credentials));
+      dispatch(SessionLoginSuccess(session));
+      dispatch(FetchTenant(session.realm));
+    };
+    const onError = (err: string) => {
+      dispatch(ErrorNotification({ message: err }));
+    };
+
+    login(keycloakConfig, onSuccess, onError)
+
   }, [dispatch, keycloakConfig]);
 
   if (isAuthenticated()) {
