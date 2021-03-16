@@ -9,10 +9,16 @@ const http = axios.create();
 
 export function* fetchAccess() {
   const currentState: RootState = yield select();
-  const url = `${currentState.config.keycloakApi.url}/api/keycloak/v1/access`;
+  const url = `${currentState.config.tenantApi.host}/api/keycloak/v1/access`;
+
+  const token = getToken();
+  if (!token) {
+    yield put(ErrorNotification({ message: `failed to get auth token - ${url}` }));
+    return;
+  }
 
   const headers = {
-    Authorization: `Bearer ${getToken()}`,
+    Authorization: `Bearer ${token}`,
   };
 
   try {
@@ -25,6 +31,6 @@ export function* fetchAccess() {
 
     yield put(action);
   } catch (e) {
-    yield put(ErrorNotification({ message: e.message }));
+    yield put(ErrorNotification({ message: `${e.message} - ${url}` }));
   }
 }

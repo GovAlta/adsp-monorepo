@@ -26,7 +26,7 @@ async function fetchTenantApi(): Promise<TenantApi> {
     endpoints: {
       spaceAdmin: '/api/file/v1/space',
       realmByTenantId: '/api/realm/v1',
-      tenantNameByRealm: '',
+      tenantNameByRealm: '/api/tenant/v1/realm',
     },
   });
 }
