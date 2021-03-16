@@ -82,7 +82,7 @@ export const createSpaceRouter = ({
       const { top, after } = req.query;
 
       try {
-        var spaces = await spaceRepository.find(
+        const spaces = await spaceRepository.find(
           parseInt((top as string) || '10', 10),
           after as string
         );
@@ -144,7 +144,7 @@ export const createSpaceRouter = ({
       const { space } = req.params;
 
       try {
-        var spaceEntity = await spaceRepository.get(space);
+        const spaceEntity = await spaceRepository.get(space);
 
         if (!spaceEntity) {
           throw new NotFoundError('Space', space);
@@ -215,10 +215,10 @@ export const createSpaceRouter = ({
       const { spaceAdminRole, name } = req.body;
 
       try {
-        var spaceEntity = await spaceRepository.get(space);
+        const spaceEntity = await spaceRepository.get(space);
 
         if (!spaceEntity) {
-          var entity = await FileSpaceEntity.create(user, spaceRepository, {
+          const entity = await FileSpaceEntity.create(user, spaceRepository, {
             id: space,
             spaceAdminRole,
             name,
@@ -236,7 +236,10 @@ export const createSpaceRouter = ({
             )
           );
         } else {
-          var entity = await spaceEntity.update(user, { spaceAdminRole, name });
+          const entity = await spaceEntity.update(user, {
+            spaceAdminRole,
+            name,
+          });
 
           eventService.send(
             updatedFileSpace(

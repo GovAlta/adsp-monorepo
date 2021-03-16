@@ -69,7 +69,7 @@ export const createAdministrationRouter = ({
       const namespace = req.params.namespace;
 
       try {
-        var entity = await valueRepository.getNamespace(namespace);
+        const entity = await valueRepository.getNamespace(namespace);
 
         if (!entity) {
           throw new NotFoundError('Value Namespace', namespace);
@@ -165,7 +165,8 @@ export const createAdministrationRouter = ({
       const namespace = req.params.namespace;
 
       try {
-        var entity = await valueRepository.getNamespace(namespace);
+        const entity = await valueRepository.getNamespace(namespace);
+
         if (!entity) {
           throw new NotFoundError('Value Namespace', namespace);
         } else if (!entity.canAccess(user)) {
@@ -174,7 +175,7 @@ export const createAdministrationRouter = ({
           );
         }
 
-        var valueEntity = await entity.addDefinition(user, req.body);
+        const valueEntity = await entity.addDefinition(user, req.body);
 
         res.send(mapValueDefinition(namespace, valueEntity));
       } catch (err) {
@@ -263,7 +264,7 @@ export const createAdministrationRouter = ({
       const name = req.params.name;
 
       try {
-        var entity = await valueRepository.getNamespace(namespace);
+        const entity = await valueRepository.getNamespace(namespace);
 
         if (!entity) {
           throw new NotFoundError('Value Namespace', namespace);
@@ -273,7 +274,7 @@ export const createAdministrationRouter = ({
           );
         }
 
-        var valueEntity = await entity.updateDefinition(user, name, req.body);
+        const valueEntity = await entity.updateDefinition(user, name, req.body);
 
         res.send(mapValueDefinition(namespace, valueEntity));
       } catch (err) {

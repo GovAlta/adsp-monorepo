@@ -87,7 +87,7 @@ export const createAdminRouter = ({
       const { space } = req.params;
 
       try {
-        var spaceEntity = await spaceRepository.get(space);
+        const spaceEntity = await spaceRepository.get(space);
 
         if (!spaceEntity) {
           throw new NotFoundError('Space', space);
@@ -189,7 +189,7 @@ export const createAdminRouter = ({
       const { name, anonymousRead, readRoles, updateRoles } = req.body;
 
       try {
-        var spaceEntity = await spaceRepository.get(space);
+        const spaceEntity = await spaceRepository.get(space);
 
         if (!spaceEntity) {
           throw new NotFoundError('Space', space);
@@ -200,12 +200,17 @@ export const createAdminRouter = ({
         const fileType = spaceEntity.types[type];
 
         if (!fileType) {
-          var entity = await spaceEntity.addType(user, rootStoragePath, type, {
-            name,
-            anonymousRead,
-            readRoles,
-            updateRoles,
-          });
+          const entity = await spaceEntity.addType(
+            user,
+            rootStoragePath,
+            type,
+            {
+              name,
+              anonymousRead,
+              readRoles,
+              updateRoles,
+            }
+          );
 
           const typeEntity = entity.types[type];
           eventService.send(
@@ -223,7 +228,7 @@ export const createAdminRouter = ({
             )
           );
         } else {
-          var entity = await spaceEntity.updateType(user, type, {
+          const entity = await spaceEntity.updateType(user, type, {
             name,
             anonymousRead,
             readRoles,
@@ -354,7 +359,7 @@ export const createAdminRouter = ({
       const { top, after } = req.query;
 
       try {
-        var results = await fileRepository.find(
+        const results = await fileRepository.find(
           parseInt((top as string) || '10', 10),
           after as string,
           {

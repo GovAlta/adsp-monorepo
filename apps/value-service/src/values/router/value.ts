@@ -44,7 +44,7 @@ export const createValueRouter = ({
     const namespace = req.params.namespace;
 
     try {
-      var entity = await valueRepository.getNamespace(namespace);
+      const entity = await valueRepository.getNamespace(namespace);
 
       if (!entity) {
         throw new NotFoundError('namespace', namespace);
@@ -54,7 +54,7 @@ export const createValueRouter = ({
         ? (req.query.names as string).split(',').map((name) => name.trim())
         : Object.keys(entity.definitions);
 
-      var results = Promise.all(
+      const results = Promise.all(
         names.map((name) =>
           entity.definitions[name]
             ? new Promise((resolve) => {
@@ -147,14 +147,14 @@ export const createValueRouter = ({
     };
 
     try {
-      var entity = await valueRepository.getNamespace(namespace);
-      var valDef = entity && entity.definitions[name];
+      const entity = await valueRepository.getNamespace(namespace);
+      const valDef = entity && entity.definitions[name];
 
       if (!valDef) {
         throw new NotFoundError('value definition', `${namespace}:${name}`);
       }
 
-      var results = await valDef.readValues(user, criteria);
+      const results = await valDef.readValues(user, criteria);
 
       res.send({
         [namespace]: {
@@ -243,14 +243,14 @@ export const createValueRouter = ({
       };
 
       try {
-        var entity = await valueRepository.getNamespace(namespace);
-        var valDef = entity && entity.definitions[name];
+        const entity = await valueRepository.getNamespace(namespace);
+        const valDef = entity && entity.definitions[name];
 
         if (!valDef) {
           throw new NotFoundError('value definition', `${namespace}:${name}`);
         }
 
-        var result = await valDef.readValueMetric(user, metric, criteria);
+        const result = await valDef.readValueMetric(user, metric, criteria);
 
         res.send({
           [namespace]: {
@@ -314,31 +314,30 @@ export const createValueRouter = ({
   valueRouter.post(
     '/:namespace/values/:name',
     assertAuthenticatedHandler,
-    (req, res, next) => {
+    async (req, res, next) => {
       const user = req.user as User;
       const namespace = req.params.namespace;
       const name = req.params.name;
-      valueRepository
-        .getNamespace(namespace)
-        .then((entity) => entity && entity.definitions[name])
-        .then((entity) => {
-          if (!entity) {
-            throw new NotFoundError(
-              'value definition',
-              `${namespace}: ${name}`
-            );
-          }
 
-          return entity.writeValue(user, req.body);
-        })
-        .then((result) =>
-          res.send({
-            [namespace]: {
-              [name]: [result],
-            },
-          })
-        )
-        .catch((err) => next(err));
+      try {
+        const entity = await valueRepository.getNamespace(namespace);
+
+        const valDef = entity && entity.definitions[name];
+
+        if (!valDef) {
+          throw new NotFoundError('value definition', `${namespace}: ${name}`);
+        }
+
+        const result = valDef.writeValue(user, req.body);
+
+        res.send({
+          [namespace]: {
+            [name]: [result],
+          },
+        });
+      } catch (err) {
+        next(err);
+      }
     }
   );
 

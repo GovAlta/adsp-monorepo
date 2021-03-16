@@ -139,7 +139,7 @@ export const createNamespaceRouter = ({
       const namespace: Namespace = req.body;
 
       try {
-        var entity = await NamespaceEntity.create(
+        const entity = await NamespaceEntity.create(
           user,
           valueRepository,
           namespace
@@ -194,7 +194,7 @@ export const createNamespaceRouter = ({
       const name: string = req.params.namespace;
 
       try {
-        var entity = await valueRepository.getNamespace(name);
+        const entity = await valueRepository.getNamespace(name);
 
         if (!entity) {
           throw new NotFoundError('Value Namespace', name);
@@ -265,7 +265,7 @@ export const createNamespaceRouter = ({
       const name: string = req.params.namespace;
 
       try {
-        var entity = await valueRepository.getNamespace(name);
+        const entity = await valueRepository.getNamespace(name);
 
         entity.update(user, update);
 

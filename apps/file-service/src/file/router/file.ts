@@ -112,10 +112,10 @@ export const createFileRouter = ({
             throw new NotFoundError('Type', type);
           }
 
-          var typeEntity = await FileEntity.create(
+          const fileEntity = await FileEntity.create(
             user,
             fileRepository,
-            typeEntity,
+            fileType,
             {
               filename: filename || uploaded.originalname,
               size: uploaded.size,
@@ -125,7 +125,7 @@ export const createFileRouter = ({
             rootStoragePath
           );
 
-          var fileEntity = await eventService.send(
+          eventService.send(
             createdFile(space, type, {
               id: fileEntity.id,
               filename: fileEntity.filename,
@@ -136,18 +136,18 @@ export const createFileRouter = ({
               scanned: fileEntity.scanned,
             })
           );
+
+          res.json({
+            id: fileEntity.id,
+            filename: fileEntity.filename,
+            size: fileEntity.size,
+          });
+
+          logger.info(
+            `File '${fileEntity.filename}' (ID: ${fileEntity.id}) uploaded by ` +
+              `user '${user.name}' (ID: ${user.id}).`
+          );
         }
-
-        res.json({
-          id: fileEntity.id,
-          filename: fileEntity.filename,
-          size: fileEntity.size,
-        });
-
-        logger.info(
-          `File '${fileEntity.filename}' (ID: ${fileEntity.id}) uploaded by ` +
-            `user '${user.name}' (ID: ${user.id}).`
-        );
       } catch (err) {
         next(err);
       }
@@ -195,7 +195,7 @@ export const createFileRouter = ({
     const { fileId } = req.params;
 
     try {
-      var fileEntity = await fileRepository.get(fileId);
+      const fileEntity = await fileRepository.get(fileId);
 
       if (!fileEntity) {
         throw new NotFoundError('File', fileId);
@@ -246,7 +246,7 @@ export const createFileRouter = ({
     const { fileId } = req.params;
 
     try {
-      var fileEntity = await fileRepository.get(fileId);
+      const fileEntity = await fileRepository.get(fileId);
 
       if (!fileEntity || fileEntity.deleted) {
         throw new NotFoundError('File', fileId);
@@ -308,7 +308,7 @@ export const createFileRouter = ({
       const { fileId } = req.params;
 
       try {
-        var fileEntity = await fileRepository.get(fileId);
+        const fileEntity = await fileRepository.get(fileId);
 
         if (!fileEntity) {
           throw new NotFoundError('File', fileId);
