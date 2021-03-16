@@ -57,7 +57,7 @@ function Header({ serviceName = '', isLoginLink = true }) {
           <div style={{ width: 'calc(100vw - 140px)' }}>
             <GoaHeader
               serviceHome="/"
-              serviceLevel={ServiceLevel.Live}
+              serviceLevel={ServiceLevel.Alpha}
               serviceName={serviceName}
             />
           </div>
