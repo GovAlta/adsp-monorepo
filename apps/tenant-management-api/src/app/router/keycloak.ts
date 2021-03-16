@@ -13,9 +13,12 @@ router.get('/access', async (_req, res, next) => {
       [key: string]: string[];
     }
 
+    const userIds = users.map(user => user.id);
     const userRoles = roles.map(async (role) => {
-      const users = await client.roles.findUsersWithRole({ name: role.name });
-      return { roleId: role.id, users: users.map((user) => user.id) };
+      const usersWithRole = (await client.roles
+        .findUsersWithRole({ name: role.name }))
+        .filter(user => userIds.includes(user.id));
+      return { roleId: role.id, users: usersWithRole.map((user) => user.id) };
     });
 
     Promise.all(userRoles).then((mapItems) => {
