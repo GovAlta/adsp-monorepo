@@ -100,7 +100,7 @@ export const createFileRouter = ({
         if (!uploaded || !space || !type) {
           res.sendStatus(400);
         } else {
-          var spaceEntity = await spaceRepository.get(space);
+          const spaceEntity = await spaceRepository.get(space);
 
           if (!spaceEntity) {
             throw new NotFoundError('Space', space);

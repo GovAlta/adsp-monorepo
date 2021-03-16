@@ -79,7 +79,7 @@ export const createNamespaceRouter = ({
       const after: string = req.query.after as string;
 
       try {
-        var result = await valueRepository.getNamespaces(top, after);
+        const result = await valueRepository.getNamespaces(top, after);
 
         res.json({
           results: result.results
