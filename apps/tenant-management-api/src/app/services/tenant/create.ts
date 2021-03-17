@@ -27,6 +27,49 @@ const createWebappClientConfig = () => {
   return config;
 };
 
+const createAdminUser = async (realm, email) => {
+  logger.info('Start to create admin user');
+  const kcClient = await createkcAdminClient();
+  const username = email.split('@')[0];
+  const adminUser = {
+    id: uuidv4(),
+    email: email,
+    username: username,
+    realm: realm,
+  };
+  const user = await kcClient.users.create(adminUser);
+
+  const realmMangementClient = (
+    await kcClient.clients.find({
+      clientId: 'realm-management',
+      realm: realm,
+    })
+  )[0];
+
+  const roles = await kcClient.clients.listRoles({
+    id: realmMangementClient.id,
+    realm: realm,
+  });
+
+  const roleMapping = {
+    realm: realm,
+    id: user.id,
+    clientUniqueId: realmMangementClient.id,
+    roles: [],
+  };
+
+  for (const role of roles) {
+    roleMapping.roles.push({
+      id: role.id,
+      name: role.name,
+    });
+  }
+
+  logger.info(`Add roles to user: ${util.inspect(roleMapping)}`);
+  await kcClient.users.addClientRoleMappings(roleMapping);
+  logger.info('Created admin user');
+};
+
 const createIdpConfig = (secret, client) => {
   const authorizationUrl = `${process.env.KEYCLOAK_ROOT_URL}/auth/realms/core/protocol/openid-connect/auth`;
   const tokenUrl = `${process.env.KEYCLOAK_ROOT_URL}/auth/realms/core/protocol/openid-connect/token`;
@@ -114,16 +157,16 @@ export const validateRealmCreation = async (realm) => {
   }
 };
 
-export const createRealm = async (realm) => {
-  logger.info(`Start to create new realm ${realm}`);
+export const createRealm = async (realm, email) => {
+  logger.info(`Start to create ${realm} realm`);
   try {
     const brokerClientSecret = uuidv4();
     const brokerClient = brokerClientName(realm);
-    logger.info(`Start to create IdP broker client on the core for the new ${realm}`);
+    logger.info(`Start to create IdP broker client on the core for ${realm} realm`);
 
     const client = await createkcAdminClient();
     await createBrokerClient(realm, brokerClientSecret, brokerClient);
-    logger.info(`Finished IdP broker client on the core for the new ${realm}`);
+    logger.info(`Created IdP broker client on the core realm for ${realm} realm`);
 
     const realmConfig = {
       id: realm,
@@ -134,6 +177,8 @@ export const createRealm = async (realm) => {
     };
     logger.info(`New realm config: ${util.inspect(realmConfig)}`);
     await client.realms.create(realmConfig);
+
+    await createAdminUser(realm, email);
 
     validateRealmCreation(realm);
   } catch (err) {
@@ -152,7 +197,7 @@ export const createNewTenantInDB = async (username, email, realmName, tenantName
 
   const fetchUserResponse = await UserModel.findUserByEmail(email);
   if (fetchUserResponse.success) {
-    logger.info(`Find user in the database ${util.inspect(fetchUserResponse)}`);
+    logger.info(`Found user in database, user info: ${util.inspect(fetchUserResponse)}`);
     userId = fetchUserResponse.user._id;
   } else {
     logger.info(`Cannot find ${email} in database and start to create a new entry`);

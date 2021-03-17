@@ -32,7 +32,7 @@ async function createRealm(req, res) {
     try {
       logger.info('Starting create realm....');
       await TenantService.validateEmailInDB(email);
-      await TenantService.createRealm(realmName);
+      await TenantService.createRealm(realmName, email);
       await TenantService.createNewTenantInDB(username, email, realmName, tenantName, tokenIssuer);
       return res.status(HttpStatusCodes.OK).json(data);
     } catch (err) {
