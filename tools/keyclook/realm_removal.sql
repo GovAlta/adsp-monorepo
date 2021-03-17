@@ -1,7 +1,7 @@
 DROP table IF EXISTS  tmpTable
 DROP table IF EXISTS tmpTable2
 
-DECLARE @RealmId AS VARCHAR(100)='<real>'
+DECLARE @RealmId AS VARCHAR(100)='<realm_name>'
 
 Select  t1.ID
 into tmpTable

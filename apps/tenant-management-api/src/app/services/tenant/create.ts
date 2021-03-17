@@ -93,7 +93,7 @@ export const validateEmailInDB = async (email) => {
 };
 
 export const validateRealmCreation = async (realm) => {
-  // Re-init the keycloak client
+  // Re-init the keycloak client after realm creation
   logger.info(`Start to validate the tenant creation: ${realm}`);
   const kcClient = await createkcAdminClient();
   const brokerClient = await kcClient.clients.find({

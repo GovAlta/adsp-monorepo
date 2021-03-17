@@ -34,7 +34,7 @@ export interface ConfigState {
 const KEYCLOAK_INIT: KeycloakApi = {
   realm: 'core',
   url: 'https://access-dev.os99.gov.ab.ca/auth',
-  clientId: 'tenant-admin-frontend-qa',
+  clientId: 'tenant-platform-webapp	',
   checkLoginIframe: false,
 };
 
@@ -50,5 +50,5 @@ const TENANT_API_INIT: TenantApi = {
 export const CONFIG_INIT: ConfigState = {
   keycloakApi: KEYCLOAK_INIT,
   tenantApi: TENANT_API_INIT,
-  serviceUrls: {}
+  serviceUrls: {},
 };
