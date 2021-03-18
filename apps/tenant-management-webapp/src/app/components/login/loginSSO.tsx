@@ -19,9 +19,11 @@ function LoginSSO() {
   // login
   useEffect(() => {
     const onSuccess = (session: Session) => {
+      if (!tenantName || tenantName === "") {
+        dispatch(FetchTenant(session.realm));
+      }
       dispatch(CredentialRefresh(session.credentials));
       dispatch(SessionLoginSuccess(session));
-      dispatch(FetchTenant(session.realm));
     };
     const onError = (err: string) => {
       dispatch(ErrorNotification({ message: err }));
@@ -32,7 +34,7 @@ function LoginSSO() {
   }, [dispatch, keycloakConfig]);
 
   if (isAuthenticated()) {
-    if (tenantName === null) {
+    if (!tenantName || tenantName === "") {
       return <Redirect to="/Realms/CreateRealm" />;
     }
     return <Redirect to="/tenant-admin" />;
