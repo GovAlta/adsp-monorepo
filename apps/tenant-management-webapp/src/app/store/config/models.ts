@@ -34,7 +34,7 @@ export interface ConfigState {
 const KEYCLOAK_INIT: KeycloakApi = {
   realm: 'core',
   url: 'https://access-dev.os99.gov.ab.ca/auth',
-  clientId: 'tenant-platform-webapp	',
+  clientId: 'tenant-platform-webapp',
   checkLoginIframe: false,
 };
 
