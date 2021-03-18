@@ -15,7 +15,7 @@ async function fetchKeycloakApi(): Promise<KeycloakApi> {
   return Promise.resolve({
     realm: 'core',
     url: 'https://access-dev.os99.gov.ab.ca/auth',
-    clientId: 'tenant-admin-frontend-qa',
+    clientId: 'tenant-platform-webapp',
     checkLoginIframe: false,
   });
 }
@@ -25,8 +25,9 @@ async function fetchTenantApi(): Promise<TenantApi> {
     host: 'https://tenant-management-api-core-services-dev.os99.gov.ab.ca',
     endpoints: {
       spaceAdmin: '/api/file/v1/space',
-      realmByTenantId: '/api/realm/v1',
+      createTenant: '/api/realm/v1',
       tenantNameByRealm: '/api/tenant/v1/realm',
+      tenantByEmail: '/api/tenant/v1/email',
     },
   });
 }

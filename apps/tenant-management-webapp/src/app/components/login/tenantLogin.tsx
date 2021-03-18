@@ -1,46 +1,49 @@
 import React, { useEffect } from 'react';
-import Keycloak from 'keycloak-js';
+import { Session } from '../../store/session/models';
 
 import { useSelector, useDispatch } from 'react-redux';
-import { SessionLoginSuccess } from '../../store/session/actions';
+import { SessionLoginSuccess, SessionLogout } from '../../store/session/actions';
+import { UpdateConfigRealm } from '../../store/config/actions';
+
 import { Redirect, useParams } from 'react-router-dom';
 import { RootState } from '../../store';
-
+import { login } from '../../services/session';
 import Header from '../../header';
 import { ErrorNotification } from '../../store/notifications/actions';
+import { useHistory } from 'react-router-dom';
 
 interface TennatTypes {
   tenantName: string;
 }
 
 function TenantLogin() {
+  const history = useHistory();
+
   const { keycloakConfig, isAuthenticated } = useSelector((state: RootState) => ({
     keycloakConfig: state.config?.keycloakApi,
     isAuthenticated: state.session.authenticated,
   }));
   const dispatch = useDispatch();
 
-  // TODO: fetch the tenantName-realm mapping
   const { tenantName } = useParams<TennatTypes>();
 
-  // login
   useEffect(() => {
-    const kc = Keycloak(keycloakConfig);
-    kc.init({ onLoad: 'login-required' }).then((authenticated) => {
-      // TODO: Add error handling if the keycloak server is down.
-      if (authenticated) {
-        kc.loadUserInfo().then(() => {
-          dispatch(SessionLoginSuccess(kc));
-        });
-      } else {
-        dispatch(ErrorNotification({message: 'Login failed'}))
-      }
-    });
-  }, []);
+    const onSuccess = (session: Session) => {
+      dispatch(SessionLoginSuccess(session));
+      dispatch(UpdateConfigRealm(tenantName));
+      history.push('/tenant-admin');
+    };
+    const onError = (err: string) => {
+      dispatch(ErrorNotification({ message: err }));
+    };
 
-  if (isAuthenticated) {
-    return <Redirect to="/tenant-admin" />;
-  }
+    const tenantConfig = keycloakConfig;
+    // TODO: fetch the tenantName-realm mapping
+    tenantConfig.realm = tenantName;
+
+    tenantConfig.realm = tenantName;
+    login(tenantConfig, onSuccess, onError);
+  }, [dispatch, keycloakConfig, tenantName]);
 
   return (
     <div>
