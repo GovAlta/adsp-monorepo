@@ -36,6 +36,7 @@ const createAdminUser = async (realm, email) => {
     email: email,
     username: username,
     realm: realm,
+    enabled: true,
   };
   const user = await kcClient.users.create(adminUser);
 
