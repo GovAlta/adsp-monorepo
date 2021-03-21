@@ -4,7 +4,6 @@ import { ErrorNotification } from '../../store/notifications/actions';
 import { FetchFileSpaceSuccess } from './actions';
 import { http } from '../../api/tenant-management';
 import { RootState } from '..';
-import { getToken } from '../../services/session';
 
 export function* fetchSpace() {
   const state: RootState = yield select();
@@ -13,7 +12,7 @@ export function* fetchSpace() {
   const session = state.session;
 
   const headers = {
-    Authorization: `Bearer ${getToken()}`,
+    Authorization: `Bearer ${session.credentials.token}`
   };
 
   const data = {

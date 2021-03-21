@@ -1,55 +1,20 @@
 import axios from 'axios';
-import { put } from 'redux-saga/effects';
+import { put, select } from 'redux-saga/effects';
+import { RootState } from '..';
 import { ErrorNotification } from '../../store/notifications/actions';
-import { FetchConfigAction, FetchConfigSuccessAction } from './actions';
-import { KeycloakApi, ServiceUrls, TenantApi } from './models';
+import { FetchConfigSuccessAction } from './actions';
 
-const http = axios.create();
-
-async function fetchServiceConfig(): Promise<ServiceUrls> {
-  const res = await http.get('/config/config.json');
-  return res.data as ServiceUrls;
-}
-
-async function fetchKeycloakApi(): Promise<KeycloakApi> {
-  return Promise.resolve({
-    realm: 'core',
-    url: 'https://access-dev.os99.gov.ab.ca/auth',
-    clientId: 'tenant-platform-webapp',
-    checkLoginIframe: false,
-  });
-}
-
-async function fetchTenantApi(): Promise<TenantApi> {
-  return Promise.resolve({
-    host: 'https://tenant-management-api-core-services-dev.os99.gov.ab.ca',
-    endpoints: {
-      spaceAdmin: '/api/file/v1/space',
-      createTenant: '/api/realm/v1',
-      tenantNameByRealm: '/api/tenant/v1/realm',
-      tenantByEmail: '/api/tenant/v1/email',
-    },
-  });
-}
-
-export function* fetchConfig(params: FetchConfigAction) {
-  // TODO: some of this data is hardcoded for now, fetch from api later
-  // TODO: do the same thing here as was done with the tenant-managment api setup
+export function* fetchConfig() {
   try {
-    const serviceUrls = yield fetchServiceConfig();
-    const keycloakApi = yield fetchKeycloakApi();
-    const tenantApi = yield fetchTenantApi();
-
-    const action: FetchConfigSuccessAction = {
-      type: 'config/fetch-config-success',
-      payload: {
-        keycloakApi,
-        tenantApi,
-        serviceUrls,
-      },
-    };
-
-    yield put(action);
+    const state: RootState = yield select();
+    if (!state.config?.keycloakApi?.realm) {
+      const res = yield axios.get('/config.v2/config.json');
+      const action: FetchConfigSuccessAction = {
+        type: 'config/fetch-config-success',
+        payload: res.data,
+      };
+      yield put(action);
+    }
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
   }

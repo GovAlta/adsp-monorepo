@@ -1,53 +1,39 @@
-import React, { useEffect } from 'react';
-import { Session } from '../../store/session/models';
-
-import { useSelector, useDispatch } from 'react-redux';
-import { SessionLoginSuccess, SessionLogout } from '../../store/session/actions';
-import { UpdateConfigRealm } from '../../store/config/actions';
-
+import React, { useContext, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { RootState } from '../../store';
-import { login, logout } from '../../services/session';
 import Header from '../../header';
-import { ErrorNotification } from '../../store/notifications/actions';
-import { useHistory } from 'react-router-dom';
-
-interface TennatTypes {
-  tenantName: string;
-}
+import AuthContext from '../../authContext';
+import { SelectTenant } from '../../store/tenant/actions';
+import { GoAButton } from '@abgov/react-components';
+import { Row, Col } from 'react-bootstrap';
 
 function TenantLogin() {
-  const history = useHistory();
-
-  const { keycloakConfig } = useSelector((state: RootState) => ({
-    keycloakConfig: state.config?.keycloakApi,
-  }));
   const dispatch = useDispatch();
-
-  const { tenantName } = useParams<TennatTypes>();
+  const { signIn } = useContext(AuthContext);
+  const { tenantName } = useParams<{ tenantName: string }>();
 
   useEffect(() => {
-    const onSuccess = (session: Session) => {
-      dispatch(SessionLoginSuccess(session));
-      dispatch(UpdateConfigRealm(tenantName));
-      history.push('/tenant-admin');
-    };
-    const onError = (err: string) => {
-      dispatch(ErrorNotification({ message: err }));
-    };
+    dispatch(SelectTenant(tenantName));
+  }, [dispatch, tenantName]);
 
-    const tenantConfig = keycloakConfig;
-    // TODO: fetch the tenantName-realm mapping
-    tenantConfig.realm = tenantName;
-    tenantConfig.realm = tenantName;
-    login(tenantConfig, onSuccess, onError, true);
-  }, [dispatch, keycloakConfig, tenantName]);
+  function login() {
+    signIn('/tenant-admin');
+  }
 
   return (
     <div>
-      <Header isLoginLink={false} />
+      <div>
+        <Header isLoginLink={false} />
+      </div>
+      <Row>
+        <Col md={1}></Col>
+        <Col md={11}>
+          <GoAButton buttonType="primary" buttonSize="normal" onClick={login}>
+            Tenant {tenantName} Login
+          </GoAButton>
+        </Col>
+      </Row>
     </div>
   );
 }
-
 export default TenantLogin;

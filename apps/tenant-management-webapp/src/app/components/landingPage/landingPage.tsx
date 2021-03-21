@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 
 import caseStudy from '../../../assets/CaseStudy.png';
 import integrate from '../../../assets/Integrate.png';
@@ -18,6 +18,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import '@abgov/react-components/react-components.esm.css';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
+import AuthContext from '../../authContext';
 
 const LandingPage = () => {
   const history = useHistory();
@@ -25,8 +26,17 @@ const LandingPage = () => {
   const { serviceUrls } = useSelector((store: RootState) => ({
     serviceUrls: store.config.serviceUrls,
   }));
+  const tenant = useSelector((state: RootState) => state.tenant);
+  const s = useSelector((state: RootState) => state.session);
+  const session = useContext(AuthContext)
 
   useEffect(() => setIsLoaded(true), [serviceUrls]);
+
+  useEffect(() => {
+    if (s.authenticated && tenant.name) {
+      history.push('/tenant-admin')
+    }
+  }, [history, tenant, s])
 
   return (
     <div>
@@ -47,9 +57,10 @@ const LandingPage = () => {
                     </GoAButton>
                   </div>
                   <div style={{ margin: '15px 30px 15px 0' }}>
-                    <GoAButton buttonType="secondary" buttonSize="normal" onClick={() => history.push('/login')}>
-                      Sign In
-                    </GoAButton>
+                    {!s.authenticated
+                      ? <GoAButton buttonType="secondary" buttonSize="normal" onClick={() => session.signIn()} >Sign In</GoAButton>
+                      : <GoAButton buttonType="secondary" buttonSize="normal" onClick={() => history.push('/Realms/CreateRealm')} >Create Tenant</GoAButton>
+                    }
                   </div>
                 </div>
               </div>

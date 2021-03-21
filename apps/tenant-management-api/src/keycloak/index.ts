@@ -1,22 +1,29 @@
 import { environment } from '../environments/environment';
 import KcAdminClient from 'keycloak-admin';
 
-let kcAdminClient = null;
+interface Options {
+  baseUrl?: string;
+  realmName?: string;
+}
 
-const options = {
+const defaultOptions: Options = {
   baseUrl: (environment.KEYCLOAK_ROOT_URL || process.env.KEYCLOAK_ROOT_URL) + '/auth',
   realmName: 'master',
 };
 
-const authOptions = {
-  grantType: 'client_credentials',
-  clientId: process.env.KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_ID || 'tenant-realm-admin',
-  clientSecret: process.env.KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_SECRET,
-};
+export async function createkcAdminClient(opts?: Options): Promise<KcAdminClient> {
+  const client = new KcAdminClient({
+    ...defaultOptions,
+    ...opts,
+  });
 
-export async function createkcAdminClient(): Promise<KcAdminClient> {
-  kcAdminClient = new KcAdminClient(options);
-  await kcAdminClient.auth(authOptions);
+  await client.auth({
+    username: process.env.KEYCLOAK_TENANT_API_CLIENT ,
+    password: process.env.KEYCLOAK_TENANT_API_CLIENT_SECRET,
+    grantType: 'client_credentials',
+    clientId: process.env.KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_ID || 'tenant-realm-admin',
+    clientSecret: process.env.KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_SECRET,
+  });
 
-  return Promise.resolve(kcAdminClient);
+  return Promise.resolve(client);
 }

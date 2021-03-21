@@ -1,6 +1,7 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
 import { Route, Switch } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 
 import Sidebar from './sidebar';
 import Dashboard from './dashboard';
@@ -8,44 +9,28 @@ import Adminstration from './administration';
 import { HeaderCtx } from '../../baseApp';
 import File from './services/file';
 import AccessPage from './services/access/access';
-import { refreshToken } from '../../services/session';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../store';
+import { keycloak } from '../../services/session';
 import { CredentialRefresh } from '../../store/session/actions';
-import { Credentials } from '../../store/session/models';
 
 const TenantManagement = () => {
   const { setTitle } = useContext(HeaderCtx);
-
   const dispatch = useDispatch();
-  const { keycloakConfig } = useSelector((state: RootState) => ({
-    keycloakConfig: state.config?.keycloakApi,
-  }));
 
   useEffect(() => {
     setTitle('Alberta Digital Service Platform - Tenant Management');
-  }, []);
+  }, [setTitle]);
 
-  const [refreshingToken, setRefreshingToken] = useState(false);
-
-  // refresh auth token
   useEffect(() => {
-    const fetchToken = async () => {
-      setRefreshingToken(true);
-      try {
-        const [refreshed, credentials] = await refreshToken();
-        if (refreshed) {
-          dispatch(CredentialRefresh(credentials as Credentials));
-        }
-      } catch (e) {
-        console.log(`failed to refresh token: ${e}`)
+    setInterval(async () => {
+      const refreshed = await keycloak.updateToken(50)
+      if (refreshed) {
+        dispatch(CredentialRefresh({
+          token: keycloak.token,
+          tokenExp: keycloak.tokenParsed.exp,
+        }))
       }
-    }
-
-    if (!refreshingToken) {
-      setInterval(() => fetchToken(), 30 * 1000);
-    }
-  }, [dispatch, keycloakConfig, refreshingToken])
+    }, 4000)
+  }, [dispatch])
 
   return (
     <Container fluid style={{ padding: '0 0 25px 20px' }}>

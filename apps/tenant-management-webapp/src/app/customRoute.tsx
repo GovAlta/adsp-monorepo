@@ -5,19 +5,14 @@ import { useSelector } from 'react-redux';
 
 export function PrivateRoute({ component: Component, ...rest }) {
   const homePath = '/';
-  const { isAuthenticated } = useSelector((state: RootState) => ({
-    isAuthenticated: state.session.authenticated,
-  }));
+  const isAuthenticated = useSelector((state: RootState) => state.session.authenticated);
 
   return (
     <Route
       {...rest}
-      render={(props) =>
-        isAuthenticated === true ? (
-          <Component {...props} />
-        ) : (
-          <Redirect to={{ pathname: homePath, state: { from: props.location } }} />
-        )
+      render={(props) => isAuthenticated
+        ? <Component {...props} />
+        : <Redirect to={{ pathname: homePath, state: { from: props.location } }} />
       }
     />
   );

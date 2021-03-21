@@ -5,7 +5,6 @@ import { Tab, Tabs } from 'react-bootstrap';
 import { RootState } from '../../../../store';
 import { fetchAccess } from '../../../../store/access/actions';
 import { User } from '../../../../store/access/models';
-import { FetchTenant } from '../../../../store/tenant/actions';
 
 import css from './access.module.css';
 
@@ -25,7 +24,6 @@ const AccessPage: FC = () => {
   // fetch users
   useEffect(() => {
     dispatch(fetchAccess());
-    dispatch(FetchTenant(session.realm));
   }, [dispatch, session]);
 
   function activeUsers(): User[] {

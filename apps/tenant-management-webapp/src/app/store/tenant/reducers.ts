@@ -12,6 +12,13 @@ export default (state = TENANT_INIT, action: ActionType): Tenant => {
     case 'CREATE_TENANT_SUCCESS':
       return { ...state, isTenantCreated: action.payload };
 
+    case 'SELECT_TENANT':
+      return {
+        ...state,
+        isTenantCreated: true,
+        name: action.payload,
+      };
+
     default:
       return state;
   }
