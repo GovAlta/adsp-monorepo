@@ -63,7 +63,6 @@ export function* isTenantAdmin(action) {
   } catch (e) {
     // The user is not tenant admin yet. The user can create a new tenant
     if (e.response.status === 404) {
-      console.log('xxxx');
       yield put(UpdateTenantAdminInfo(false));
     } else {
       yield put(ErrorNotification({ message: `failed to check tenant admin: ${e.message}` }));
