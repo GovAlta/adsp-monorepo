@@ -1,8 +1,7 @@
-
 @REQ_CS-191 @tenant-admin
 Feature: Tenant admin
 
-  @TEST_CS-298 @REQ_CS-194 @dashboard @regression @smoke-test
+  @TEST_CS-298 @REQ_CS-194 @dashboard @regression
   Scenario: As a GoA service owner, I can access the Tenant management webapp
     # Given the user is a GoA service owner     // no Given as login is not working yet
     When the user visits the tenant management webapp
