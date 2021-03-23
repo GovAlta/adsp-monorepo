@@ -22,6 +22,7 @@ function LoginSSO() {
   // login
   useEffect(() => {
     const onSuccess = (session: Session) => {
+      // TODO: realm to tenant
       dispatch(CredentialRefresh(session.credentials));
       dispatch(SessionLoginSuccess(session));
       dispatch(IsTenantAdmin(session.userInfo.email));
@@ -32,25 +33,6 @@ function LoginSSO() {
 
     login(keycloakConfig, onSuccess, onError);
   }, [dispatch, keycloakConfig]);
-
-  if (isAuthenticated()) {
-    // The isAdmin can be null, but this is not expected.
-    if (isAdmin === false) {
-      return <Redirect to="/Realms/CreateRealm" />;
-    }
-    if (isAdmin === true) {
-      const keycloak = Keycloak(keycloakConfig);
-      // Logout from the core realm to switch to the tenant realm
-      keycloak.init({ onLoad: 'check-sso' }).then(() => {
-        dispatch(SessionLogout());
-
-        keycloak.logout().then(() => {
-          const tenantLoginUrl = `/${realm}/login`;
-          return <Redirect to={tenantLoginUrl} />;
-        });
-      });
-    }
-  }
 
   return (
     <div>

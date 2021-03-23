@@ -35,6 +35,7 @@ export function* fetchTenant(action) {
 }
 
 export function* isTenantAdmin(action) {
+  const email = action.payload;
   try {
     const state: RootState = yield select();
 
@@ -53,17 +54,17 @@ export function* isTenantAdmin(action) {
     const path = state.config.tenantApi.endpoints.tenantByEmail;
 
     const data = {
-      email: action.payload,
+      email: email,
     };
     const url = host + path;
-    yield http.post(url, data, { headers });
-
-    // The user is tenant admin
-    yield put(UpdateTenantAdminInfo(true));
+    const response = yield http.post(url, data, { headers });
+    const tenant = response.data.name;
+    // This is the login navigation. Using window.local.href might be good enough
+    window.location.href = `/${tenant}/login`;
   } catch (e) {
     // The user is not tenant admin yet. The user can create a new tenant
     if (e.response.status === 404) {
-      yield put(UpdateTenantAdminInfo(false));
+      window.location.href = '/Realms/CreateRealm';
     } else {
       yield put(ErrorNotification({ message: `failed to check tenant admin: ${e.message}` }));
     }

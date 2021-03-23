@@ -1,7 +1,7 @@
 import { ActionType } from './actions';
-import { TENANT_INIT } from './models';
+import { TENANT_INIT, Tenant } from './models';
 
-export default (state = TENANT_INIT, action: ActionType) => {
+export default (state = TENANT_INIT, action: ActionType): Tenant => {
   switch (action.type) {
     case 'FETCH_TENANT_SUCCESS':
       return { ...state, ...action.payload };

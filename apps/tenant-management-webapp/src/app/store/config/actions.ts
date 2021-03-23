@@ -21,15 +21,15 @@ export interface UpdateConfigRealmAction {
 export type ActionTypes = FetchConfigAction | FetchConfigSuccessAction | UpdateConfigRealmAction;
 
 export const fetchConfig = (): FetchConfigAction => ({
-  type: FETCH_CONFIG_ACTION,
+  type: 'config/fetch-config',
 });
 
 export const fetchConfigSuccess = (params: ConfigState): FetchConfigSuccessAction => ({
-  type: FETCH_CONFIG_SUCCESS_ACTION,
+  type: 'config/fetch-config-success',
   payload: params,
 });
 
 export const UpdateConfigRealm = (realm: string): UpdateConfigRealmAction => ({
-  type: UPDATE_CONFIG_REALM_ACTION,
+  type: 'config/update-config-realm',
   payload: realm,
 });

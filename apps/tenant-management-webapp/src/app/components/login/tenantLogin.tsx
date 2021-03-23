@@ -5,9 +5,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import { SessionLoginSuccess, SessionLogout } from '../../store/session/actions';
 import { UpdateConfigRealm } from '../../store/config/actions';
 
-import { Redirect, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { RootState } from '../../store';
-import { login } from '../../services/session';
+import { login, logout } from '../../services/session';
 import Header from '../../header';
 import { ErrorNotification } from '../../store/notifications/actions';
 import { useHistory } from 'react-router-dom';
@@ -19,9 +19,8 @@ interface TennatTypes {
 function TenantLogin() {
   const history = useHistory();
 
-  const { keycloakConfig, isAuthenticated } = useSelector((state: RootState) => ({
+  const { keycloakConfig } = useSelector((state: RootState) => ({
     keycloakConfig: state.config?.keycloakApi,
-    isAuthenticated: state.session.authenticated,
   }));
   const dispatch = useDispatch();
 
@@ -40,9 +39,8 @@ function TenantLogin() {
     const tenantConfig = keycloakConfig;
     // TODO: fetch the tenantName-realm mapping
     tenantConfig.realm = tenantName;
-
     tenantConfig.realm = tenantName;
-    login(tenantConfig, onSuccess, onError);
+    login(tenantConfig, onSuccess, onError, true);
   }, [dispatch, keycloakConfig, tenantName]);
 
   return (

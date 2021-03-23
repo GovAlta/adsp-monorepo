@@ -30,8 +30,13 @@ export function isAuthenticated(): boolean {
   return keycloak?.authenticated ?? false;
 }
 
-export function login(config: KeycloakConfig, onSuccess: onSuccessFn, onError: onErrorFn) {
-  keycloak = keycloak || Keycloak(config);
+export function login(config: KeycloakConfig, onSuccess: onSuccessFn, onError: onErrorFn, force = false) {
+  if (force) {
+    keycloak = Keycloak(config);
+  } else {
+    keycloak = keycloak || Keycloak(config);
+  }
+
   keycloak.init({ onLoad: 'login-required' }).then((authenticated) => {
     if (authenticated) {
       keycloak.loadUserInfo().then(() => onSuccess(mapKeyCloakToSession(keycloak)));

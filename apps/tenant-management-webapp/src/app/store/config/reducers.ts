@@ -1,6 +1,5 @@
 import { ConfigState, CONFIG_INIT } from './models';
 import { ActionTypes } from './actions';
-let keycloakApi = null;
 
 export default function (state: ConfigState = CONFIG_INIT, action: ActionTypes): ConfigState {
   switch (action.type) {
@@ -11,12 +10,12 @@ export default function (state: ConfigState = CONFIG_INIT, action: ActionTypes):
       };
 
     case 'config/update-config-realm':
-      keycloakApi = state.keycloakApi;
-      keycloakApi.realm = action.payload;
-
       return {
         ...state,
-        keycloakApi: keycloakApi,
+        keycloakApi: {
+          ...state.keycloakApi,
+          realm: action.payload,
+        },
       };
 
     default:
