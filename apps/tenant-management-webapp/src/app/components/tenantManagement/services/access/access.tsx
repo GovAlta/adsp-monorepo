@@ -129,7 +129,7 @@ const AccessPage: FC = () => {
           </div>
         </Tab>
 
-        <Tab eventKey="tab2" ref="tab2" title="Templates">
+        {/*<Tab eventKey="tab2" ref="tab2" title="Templates">
           Templates
         </Tab>
 
@@ -143,7 +143,7 @@ const AccessPage: FC = () => {
 
         <Tab eventKey="tab4" ref="tab4" title="Settings">
           Settings
-        </Tab>
+                    </Tab>*/}
       </Tabs>
     </div>
   );

@@ -26,9 +26,9 @@ const Side = () => {
 
             <h4>Services</h4>
             <Link to="/tenant-admin/access">Access</Link>
-            <Link to="/tenant-admin/services/file">File Services</Link>
+            {/*<Link to="/tenant-admin/services/file">File Services</Link>
             <Link to="/notifications">Notifications</Link>
-            <Link to="/app-status">App Status</Link>
+            <Link to="/app-status">App Status</Link>*/}
           </Nav>
         </Navbar.Collapse>
       </Navbar>
