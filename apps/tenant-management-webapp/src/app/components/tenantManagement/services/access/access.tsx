@@ -15,8 +15,8 @@ const AccessPage: FC = () => {
 
   const { users, roles, keycloakConfig, session } = useSelector((state: RootState) => {
     return {
-      users: state.access.users,
-      roles: state.access.roles,
+      users: state.access.users || [],
+      roles: state.access.roles || [],
       keycloakConfig: state.config.keycloakApi,
       session: state.session,
     };
@@ -105,13 +105,13 @@ const AccessPage: FC = () => {
                   </thead>
                   <tbody>
                     {roles
-                      .sort((a, b) => (a.userIds.length > b.userIds.length ? -1 : 1))
+                      .sort((a, b) => (a.userIds?.length > b.userIds?.length ? -1 : 1))
                       .slice(0, 5)
                       .map((role) => {
                         return (
                           <tr key={role.name}>
                             <td>{role.name}</td>
-                            <td>{role.userIds.length}</td>
+                            <td>{role.userIds?.length ?? 0}</td>
                           </tr>
                         );
                       })}

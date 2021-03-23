@@ -1,36 +1,55 @@
-import axios from 'axios';
 import { put, select } from 'redux-saga/effects';
 import { RootState } from '..';
 import { ErrorNotification } from '../../store/notifications/actions';
 import { FetchAccessSuccessAction } from './actions';
-import { getToken } from '../../services/session'
-
-const http = axios.create();
+import { KeycloakApi } from './api';
+import { Role, User } from './models';
 
 export function* fetchAccess() {
   const currentState: RootState = yield select();
-  const url = `${currentState.config.tenantApi.host}/api/keycloak/v1/access`;
 
-  const token = getToken();
-  if (!token) {
-    yield put(ErrorNotification({ message: `failed to get auth token - ${url}` }));
-    return;
-  }
+  const baseUrl = currentState.config.keycloakApi.url;
+  const token = currentState.session.credentials.token;
+  const realm = currentState.session.realm;
 
-  const headers = {
-    Authorization: `Bearer ${token}`,
-  };
+  const keycloakApi = new KeycloakApi(baseUrl, realm, token);
 
   try {
-    // FIXME: there is no schema validation of payload data
-    const payload = yield http.get(url, { headers });
+    const [ users, roles ] = [
+      yield keycloakApi.getUsers(),
+      yield keycloakApi.getRoles(),
+    ];
+
+    // add userId[] attribute to roles
+    const rolesWithUsers = yield (async () => {
+      const userIds = users.map((user: User) => user.id);
+      const userRoles = roles.map(async (role: Role) => {
+        const usersWithRole = (await keycloakApi.getUsersByRole(role.name)).filter((user) =>
+          userIds.includes(user.id)
+        );
+        return { roleId: role.id, users: usersWithRole.map((user) => user.id) };
+      });
+
+      return await Promise.all(userRoles).then((mapItems) => {
+        const userRoleMap = {};
+        mapItems.forEach((userRole) => (userRoleMap[userRole['roleId']] = userRole['users']));
+
+        return roles.map((role: Role) => {
+          return {
+            ...role,
+            userIds: userRoleMap[role.id] || [],
+          };
+        });
+      });
+    })();
+
     const action: FetchAccessSuccessAction = {
       type: 'tenant/access/FETCH_ACCESS_SUCCESS',
-      payload: payload.data,
+      payload: { users, roles: rolesWithUsers },
     };
 
     yield put(action);
   } catch (e) {
-    yield put(ErrorNotification({ message: `${e.message} - ${url}` }));
+    yield put(ErrorNotification({ message: e.message }));
   }
 }
