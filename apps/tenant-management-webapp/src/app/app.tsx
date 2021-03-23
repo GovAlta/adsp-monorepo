@@ -26,8 +26,14 @@ import { Provider } from 'react-redux';
 import { store, persistor } from '../app/store';
 import { PersistGate } from 'redux-persist/integration/react';
 import { PrivateRoute } from './customRoute';
+import { setIsSkipSSO } from './services/session';
 
 const AppRouters = () => {
+  const location: string = window.location.href;
+  if (location.indexOf('kc_idp_hint') > -1) {
+    setIsSkipSSO();
+  }
+
   return (
     <Router>
       <Switch>
