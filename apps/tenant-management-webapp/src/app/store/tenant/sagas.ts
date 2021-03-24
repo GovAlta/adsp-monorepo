@@ -76,7 +76,7 @@ export function* createTenant(action) {
   const host = state.config.tenantApi.host;
   const path = state.config.tenantApi.endpoints.createTenant;
   const url = `${host}${path}`;
-  const token = getToken();
+  const token = state?.session?.credentials?.token;
 
   if (!token) {
     yield put(ErrorNotification({ message: `failed to get auth token - ` }));
