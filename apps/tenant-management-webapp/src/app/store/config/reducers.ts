@@ -9,6 +9,15 @@ export default function (state: ConfigState = CONFIG_INIT, action: ActionTypes):
         ...action.payload,
       };
 
+    case 'config/update-config-realm':
+      return {
+        ...state,
+        keycloakApi: {
+          ...state.keycloakApi,
+          realm: action.payload,
+        },
+      };
+
     default:
       return state;
   }

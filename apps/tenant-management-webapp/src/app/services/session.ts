@@ -35,8 +35,13 @@ export function isAuthenticated(): boolean {
   return keycloak?.authenticated ?? false;
 }
 
-export function login(config: KeycloakConfig, onSuccess: onSuccessFn, onError: onErrorFn) {
-  keycloak = keycloak || Keycloak(config);
+export function login(config: KeycloakConfig, onSuccess: onSuccessFn, onError: onErrorFn, force = false) {
+  if (force) {
+    keycloak = Keycloak(config);
+  } else {
+    keycloak = keycloak || Keycloak(config);
+  }
+
   if (isSkipSSO) {
     const options: KeycloakLoginOptions = {
       idpHint: ' ',

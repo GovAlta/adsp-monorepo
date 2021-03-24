@@ -8,4 +8,5 @@ module.exports = {
   },
   coverageDirectory: '../../coverage/apps/tenant-management-api',
   testEnvironment: 'node',
+  setupFiles: ['./.jest/setEnvVars.js'],
 };

@@ -28,11 +28,15 @@ export function initTenantApi() {
       process.env.KEYCLOAK_TENANT_API_AUTH_TOKEN = accessToken;
       setAdminAuthToken();
     } catch (err) {
-      logger.warn(
-        `Error fetch the tenant api token ${err}. Please double check your envrionment variables. Or, we are running the code for testing`
-      );
+      if (process.env.APP_ENVIRONMENT !== 'test') {
+        logger.warn(
+          `Error fetch the tenant api token ${err}. Please double check your envrionment variables. Or, we are running the code for testing`
+        );
+      }
     }
   })();
 }
 
-setInterval(initTenantApi, refreshTimeInterval);
+if (process.env.APP_ENVIRONMENT !== 'test') {
+  setInterval(initTenantApi, refreshTimeInterval);
+}

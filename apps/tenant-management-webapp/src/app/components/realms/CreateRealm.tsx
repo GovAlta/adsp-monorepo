@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { Container, Row, Col } from 'reactstrap';
 import { GoAButton } from '@abgov/react-components';
 import { useHistory } from 'react-router-dom';
-import axios from 'axios';
+import { CreateTenant } from '../../store/tenant/actions';
+import { RootState } from '../../store';
+import { Link } from 'react-router-dom';
 
 import './SignIn.css';
+
 const CreateRealm = () => {
+  const dispatch = useDispatch();
   const [name, setName] = useState('');
 
   const history = useHistory();
 
   const onCreateRealm = async () => {
-    const url = '/api/realm/v1?realm=' + name;
-    const res = await axios.post(url);
-    history.push('/realms/creatingRealm');
+    dispatch(CreateTenant(name));
   };
 
   const backToMain = () => {
@@ -22,6 +25,24 @@ const CreateRealm = () => {
 
   const onChangeName = (event) => {
     setName(event.target.value);
+  };
+
+  const NewTenatLoginLink = () => {
+    const tenantLoginUrl = `/${name}/login`;
+    const { isTenantCreated } = useSelector((state: RootState) => ({
+      isTenantCreated: state.tenant.isTenantCreated,
+    }));
+
+    return (
+      <div className={isTenantCreated ? '' : 'd-none'}>
+        <div>
+          <p>New Tenant: {name} has successfully created. </p> <br />
+        </div>
+        <div>
+          <Link to={tenantLoginUrl}> Clik to tennat login </Link>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -40,36 +61,28 @@ const CreateRealm = () => {
           }}
         >
           <div className="signin-title mb-5">
-            <h1 style={{ fontWeight: 'bold', textAlign: 'left' }}>
-              Create tenant
-            </h1>
+            <h1 style={{ fontWeight: 'bold', textAlign: 'left' }}>Create tenant</h1>
           </div>
-          <div className="mb-5">
-            As a reminder, you are only able to create one tenant per user
-            account
-          </div>
+          <div>
+            <div className="mb-5">As a reminder, you are only able to create one tenant per user account</div>
 
-          <label htmlFor="fname" className="siginin-small-title">
-            Tenant Name
-          </label>
-          <input
-            className="signin-input"
-            value={name}
-            onChange={onChangeName}
-          />
-          <div className="siginin-subset">
-            Names cannot container special characters (ex. ! % &)
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
-            <div style={{ margin: '35px 11px 0 0' }}>
-              <GoAButton onClick={backToMain} buttonType="secondary">
-                Back
-              </GoAButton>
-            </div>
-            <div style={{ margin: '35px 0 0 11px' }}>
-              <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
+            <label htmlFor="fname" className="siginin-small-title">
+              Tenant Name
+            </label>
+            <input className="signin-input" value={name} onChange={onChangeName} />
+            <div className="siginin-subset">Names cannot container special characters (ex. ! % &)</div>
+            <div style={{ display: 'flex', flexDirection: 'row' }}>
+              <div style={{ margin: '35px 11px 0 0' }}>
+                <GoAButton onClick={backToMain} buttonType="secondary">
+                  Back
+                </GoAButton>
+              </div>
+              <div style={{ margin: '35px 0 0 11px' }}>
+                <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
+              </div>
             </div>
           </div>
+          <NewTenatLoginLink />
         </Col>
       </Row>
     </Container>

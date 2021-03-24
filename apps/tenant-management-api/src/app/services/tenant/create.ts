@@ -6,6 +6,7 @@ import { TenantError } from './error';
 import * as HttpStatusCodes from 'http-status-codes';
 import * as TenantModel from '../../models/tenant';
 import * as UserModel from '../../models/user';
+import { FLOW_ALIAS, createAuthentificationFlow } from './createAuthenticationFlow';
 
 export const tenantManagementRealm = 'core';
 
@@ -13,9 +14,9 @@ export const brokerClientName = (realm) => {
   return `broker-${realm}`;
 };
 
-const createWebappClientConfig = () => {
+const createWebappClientConfig = (id) => {
   const config = {
-    id: uuidv4(),
+    id: id,
     clientId: 'tenant-platform-webapp',
     publicClient: true,
     directAccessGrantsEnabled: false,
@@ -30,7 +31,7 @@ const createWebappClientConfig = () => {
 const createAdminUser = async (realm, email) => {
   logger.info('Start to create admin user');
   const kcClient = await createkcAdminClient();
-  const username = email.split('@')[0];
+  const username = email;
   const adminUser = {
     id: uuidv4(),
     email: email,
@@ -71,7 +72,7 @@ const createAdminUser = async (realm, email) => {
   logger.info('Created admin user');
 };
 
-const createIdpConfig = (secret, client) => {
+const createIdpConfig = (secret, client, firstFlowAlias, realm) => {
   const authorizationUrl = `${process.env.KEYCLOAK_ROOT_URL}/auth/realms/core/protocol/openid-connect/auth`;
   const tokenUrl = `${process.env.KEYCLOAK_ROOT_URL}/auth/realms/core/protocol/openid-connect/token`;
 
@@ -80,11 +81,12 @@ const createIdpConfig = (secret, client) => {
     providerId: 'keycloak-oidc',
     enabled: true,
     trustEmail: true,
-    firstBrokerLoginFlowAlias: 'first broker login',
+    firstBrokerLoginFlowAlias: firstFlowAlias,
     displayName: 'GOA Single SignOn',
     storeToken: false,
     linkOnly: false,
     addReadTokenRoleOnCreate: false,
+    realm: realm,
     config: {
       loginHint: 'true',
       clientId: client,
@@ -162,22 +164,34 @@ export const createRealm = async (realm, email) => {
   logger.info(`Start to create ${realm} realm`);
   try {
     const brokerClientSecret = uuidv4();
+    const tenantPublicClientId = uuidv4();
     const brokerClient = brokerClientName(realm);
     logger.info(`Start to create IdP broker client on the core for ${realm} realm`);
 
-    const client = await createkcAdminClient();
+    let client = await createkcAdminClient();
     await createBrokerClient(realm, brokerClientSecret, brokerClient);
     logger.info(`Created IdP broker client on the core realm for ${realm} realm`);
+
+    const publicClientConfig = createWebappClientConfig(tenantPublicClientId);
+    const idpConfig = createIdpConfig(brokerClientSecret, brokerClient, FLOW_ALIAS, realm);
 
     const realmConfig = {
       id: realm,
       realm: realm,
-      clients: [createWebappClientConfig()],
-      identityProviders: [createIdpConfig(brokerClientSecret, brokerClient)],
+      clients: [publicClientConfig],
       enabled: true,
     };
+
     logger.info(`New realm config: ${util.inspect(realmConfig)}`);
+
     await client.realms.create(realmConfig);
+
+    await createAuthentificationFlow(realm);
+
+    client = await createkcAdminClient();
+
+    // IdP shall be created after authentification flow
+    await client.identityProviders.create(idpConfig);
 
     await createAdminUser(realm, email);
 
@@ -185,9 +199,8 @@ export const createRealm = async (realm, email) => {
   } catch (err) {
     if (err instanceof TenantError) {
       throw err;
-    }
-
-    if (err instanceof Error) {
+    } else {
+      logger.error(err);
       throw new TenantError(err.message, HttpStatusCodes.INTERNAL_SERVER_ERROR);
     }
   }
