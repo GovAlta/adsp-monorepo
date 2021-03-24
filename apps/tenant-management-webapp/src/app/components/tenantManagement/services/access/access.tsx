@@ -46,10 +46,6 @@ const AccessPage: FC = () => {
                 Access allows you to add a secure sign in to you application and services with minimum effort and
                 configuration. No need to deal with storing or authenticating users. It's all available out of the box.
               </p>
-              <p>
-                Access allows you to add a secure sign in to you application and services with minimum effort and
-                configuration. No need to deal with storing or authenticating users. It's all available out of the box.
-              </p>
 
               <div className={css.InfoHeader}>
                 <h3 className={css.InfoTitle}>Keycloak user information</h3>
@@ -129,7 +125,7 @@ const AccessPage: FC = () => {
           </div>
         </Tab>
 
-        <Tab eventKey="tab2" ref="tab2" title="Templates">
+        {/*<Tab eventKey="tab2" ref="tab2" title="Templates">
           Templates
         </Tab>
 
@@ -143,7 +139,7 @@ const AccessPage: FC = () => {
 
         <Tab eventKey="tab4" ref="tab4" title="Settings">
           Settings
-        </Tab>
+                    </Tab>*/}
       </Tabs>
     </div>
   );
