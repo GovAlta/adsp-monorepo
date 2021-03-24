@@ -11,7 +11,7 @@ export interface User {
   };
 }
 
-interface Role {
+export interface Role {
   id: string;
   clientRole: boolean;
   description: string;
@@ -26,5 +26,5 @@ export interface AccessState {
 
 export const ACCESS_INIT: AccessState = {
   users: [],
-  roles: []
-}
+  roles: [],
+};
