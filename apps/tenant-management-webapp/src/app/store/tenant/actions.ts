@@ -72,7 +72,7 @@ export const UpdateTenantAdminInfo = (isAdmin: boolean): UpdateTenantAdminInfoAc
   payload: isAdmin,
 });
 
-export const CreateTenantSuccess = (isCreated: boolean): CreateTenantSuccessAction => ({
+export const CreateTenantSuccess = (): CreateTenantSuccessAction => ({
   type: CREATE_TENANT_SUCCESS,
-  payload: isCreated,
+  payload: true,
 });

@@ -99,9 +99,8 @@ export function* createTenant(action) {
       },
       { headers }
     );
-    yield put(CreateTenantSuccess(true));
+    yield put(CreateTenantSuccess());
   } catch (e) {
-    yield put(CreateTenantSuccess(false));
     yield put(ErrorNotification({ message: `Failed to create new tenant: ${e.message}` }));
   }
 }

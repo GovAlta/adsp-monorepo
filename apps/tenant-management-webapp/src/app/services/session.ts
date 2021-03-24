@@ -1,8 +1,13 @@
-import Keycloak, { KeycloakConfig, KeycloakInstance } from 'keycloak-js';
+import Keycloak, { KeycloakConfig, KeycloakInstance, KeycloakLoginOptions } from 'keycloak-js';
 import { Credentials, Session } from '../store/session/models';
 
 type onSuccessFn = (session: Session) => void;
 type onErrorFn = (err: string) => void;
+
+let isSkipSSO = false;
+export function setIsSkipSSO() {
+  isSkipSSO = true;
+}
 
 export let keycloak: KeycloakInstance;
 
@@ -37,13 +42,24 @@ export function login(config: KeycloakConfig, onSuccess: onSuccessFn, onError: o
     keycloak = keycloak || Keycloak(config);
   }
 
-  keycloak.init({ onLoad: 'login-required' }).then((authenticated) => {
-    if (authenticated) {
-      keycloak.loadUserInfo().then(() => onSuccess(mapKeyCloakToSession(keycloak)));
-    } else {
-      onError('Failed to authenticate');
-    }
-  });
+  if (isSkipSSO) {
+    const options: KeycloakLoginOptions = {
+      idpHint: ' ',
+    };
+    keycloak.init({}).then(() => {
+      keycloak.login(options).then(() => {
+        onSuccess(mapKeyCloakToSession(keycloak));
+      });
+    });
+  } else {
+    keycloak.init({ onLoad: 'login-required' }).then((authenticated) => {
+      if (authenticated) {
+        keycloak.loadUserInfo().then(() => onSuccess(mapKeyCloakToSession(keycloak)));
+      } else {
+        onError('Failed to authenticate');
+      }
+    });
+  }
 }
 
 function mapKeyCloakToSession(kc: KeycloakInstance): Session {
