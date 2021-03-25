@@ -21,7 +21,7 @@ const createWebappClientConfig = (id) => {
     publicClient: true,
     directAccessGrantsEnabled: false,
     redirectUris: ['https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca/*', 'http://localhost:4200/*'],
-    webOrigins: ['https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca/*', 'http://localhost:4200/*'],
+    webOrigins: ['https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca', 'http://localhost:4200'],
     description: 'Client created by platform team to support the frontend. Please do not delete it',
   };
 
