@@ -33,7 +33,7 @@ function Header({ serviceName = '', isLoginLink = true }) {
         {authenticated ? (
           <div onClick={() => authCtx.signOut()}>Sign Out</div>
         ) : (
-          <div onClick={() => authCtx.signIn()}>Sign In</div>
+          <div onClick={() => authCtx.signIn('/')}>Sign In</div>
         )}
       </div>
     );

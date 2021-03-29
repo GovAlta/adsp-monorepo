@@ -22,14 +22,18 @@ const TenantManagement = () => {
 
   useEffect(() => {
     setInterval(async () => {
-      const refreshed = await keycloak.updateToken(50)
-      if (refreshed) {
-        dispatch(CredentialRefresh({
-          token: keycloak.token,
-          tokenExp: keycloak.tokenParsed.exp,
-        }))
+      try {
+        const expiringSoon = await keycloak.updateToken(60)
+        if (expiringSoon) {
+          dispatch(CredentialRefresh({
+            token: keycloak.token,
+            tokenExp: keycloak.tokenParsed.exp,
+          }))
+        }
+      } catch (e) {
+        console.log(e)
       }
-    }, 4000)
+    }, 20000)
   }, [dispatch])
 
   return (

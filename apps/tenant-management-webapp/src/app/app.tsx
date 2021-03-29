@@ -122,8 +122,8 @@ function AppWithAuthContext() {
     });
   }, [dispatch, hasSession]);
 
-  function signIn(path = '/') {
-    const redirectUri = `${window.location.origin}${path}`
+  function signIn(redirectPath: string) {
+    const redirectUri = `${window.location.origin}${redirectPath}`
     if (skipSSO) {
       keycloak.init({}).then(authenticated => {
         keycloak.login({ idpHint: ' ', redirectUri });

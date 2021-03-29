@@ -1,7 +1,7 @@
 import React from 'react'
 
 interface Actions {
-  signIn: (redirectUrl?: string) => void,
+  signIn: (redirectPath: string) => void,
   signOut: () => void,
 }
 
