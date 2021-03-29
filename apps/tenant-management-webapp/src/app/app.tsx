@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
+import { Provider, useDispatch, useSelector } from 'react-redux';
+
 import './app.scss';
 import '@abgov/react-components/react-components.esm.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
+import '@abgov/core-css/goa-core.css';
+
 import LandingPage from './components/landingPage';
-import { TenantLogin, LoginSSO } from './components/login/';
+import { TenantLogin } from './components/login';
 import Logout from './components/logout/';
 import CaseStudy from './components/caseStudy/';
 import FileService from './components/file-service';
@@ -20,20 +24,16 @@ import AddClientRole from './components/realms/AddClientRole';
 import CreateErrorPage from './components/realms/CreateErrorPage';
 import ActivateErrorPage from './components/realms/ActivateErrorPage';
 import Realms from './components/realms/Realms';
-import '@abgov/core-css/goa-core.css';
 import BaseApp from './baseApp';
-import { Provider } from 'react-redux';
-import { store, persistor } from '../app/store';
+import { store, persistor, RootState } from '../app/store';
 import { PersistGate } from 'redux-persist/integration/react';
 import { PrivateRoute } from './customRoute';
-import { setIsSkipSSO } from './services/session';
+import { fetchConfig } from './store/config/actions';
+import AuthContext from './authContext';
+import { SessionLoginSuccess, SessionLogout } from './store/session/actions';
+import { keycloak, createKeycloakInstance, convertToSession } from './services/session';
 
 const AppRouters = () => {
-  const location: string = window.location.href;
-  if (location.indexOf('kc_idp_hint') > -1) {
-    setIsSkipSSO();
-  }
-
   return (
     <Router>
       <Switch>
@@ -42,9 +42,6 @@ const AppRouters = () => {
         </Route>
         <Route path="/:tenantName/login">
           <TenantLogin />
-        </Route>
-        <Route path="/login">
-          <LoginSSO />
         </Route>
         <Route path="/logout">
           <Logout />
@@ -78,11 +75,76 @@ export const App = () => {
     <main>
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
-          <AppRouters />
+          <AppWithAuthContext />
         </PersistGate>
       </Provider>
     </main>
   );
 };
+
+function AppWithAuthContext() {
+  const keycloakConfig = useSelector((state: RootState) => state.config.keycloakApi);
+  const tenant = useSelector((state: RootState) => state.tenant);
+  const dispatch = useDispatch();
+  const [hasSession, setHasSession] = useState<boolean>(false);
+
+  const location: string = window.location.href;
+  const skipSSO = location.indexOf('kc_idp_hint') > -1;
+
+  useEffect(() => {
+    dispatch(fetchConfig());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (keycloakConfig?.realm) {
+      createKeycloakInstance(tenant.name ? { ...keycloakConfig, realm: tenant.name } : keycloakConfig);
+      setHasSession(true);
+    }
+  }, [keycloakConfig, tenant]);
+
+  useEffect(() => {
+    if (!hasSession) return;
+
+    keycloak.init({ onLoad: 'check-sso' }).then((authenticated: boolean) => {
+      if (authenticated) {
+        keycloak
+          .loadUserInfo()
+          .then(() => {
+            const session = convertToSession(keycloak);
+            dispatch(SessionLoginSuccess(session));
+          })
+          .catch((e) => {
+            console.error('failed loading user info', e);
+          });
+      } else {
+        dispatch(SessionLogout());
+      }
+    });
+  }, [dispatch, hasSession]);
+
+  function signIn(redirectPath: string) {
+    const redirectUri = `${window.location.origin}${redirectPath}`
+    if (skipSSO) {
+      keycloak.init({}).then(authenticated => {
+        keycloak.login({ idpHint: ' ', redirectUri });
+      });
+    } else {
+      keycloak.init({ onLoad: 'login-required', redirectUri });
+    }
+  }
+
+  function signOut() {
+    keycloak.logout();
+    dispatch(SessionLogout());
+  }
+
+  return (
+    <AuthContext.Provider value={{ signIn, signOut }}>
+      { hasSession &&
+      <AppRouters />
+      }
+    </AuthContext.Provider>
+  );
+}
 
 export default App;

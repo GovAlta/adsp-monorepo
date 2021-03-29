@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 
 import caseStudy from '../../../assets/CaseStudy.png';
 import integrate from '../../../assets/Integrate.png';
@@ -7,30 +7,36 @@ import document from '../../../assets/files-icon.svg';
 import messageIcon from '../../../assets/message-icon.svg';
 import servicePartners from '../../../assets/partners-icon.svg';
 import productFeatures from '../../../assets/ProductFeatures.png';
-import { GoAButton, GoaHeroBanner, GoACard } from '@abgov/react-components';
-import Header from '../../header';
 import { useHistory } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 import { Container, Row, Col } from 'react-bootstrap';
-import numberFormatter from '../../utils/numberFormatter';
+import { GoAButton, GoaHeroBanner, GoACard } from '@abgov/react-components';
+import Header from '../../header';
+import { RootState } from '../../store';
+import AuthContext from '../../authContext';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@abgov/react-components/react-components.esm.css';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../store';
 
 const LandingPage = () => {
   const history = useHistory();
-  const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const { serviceUrls } = useSelector((store: RootState) => ({
     serviceUrls: store.config.serviceUrls,
   }));
 
-  useEffect(() => setIsLoaded(true), [serviceUrls]);
+  const tenant = useSelector((state: RootState) => state.tenant);
+  const session = useSelector((state: RootState) => state.session);
+  const { signIn } = useContext(AuthContext)
+
+  useEffect(() => {
+    if (session.authenticated && tenant.name) {
+      history.push('/tenant-admin')
+    }
+  }, [history, tenant, session])
 
   return (
     <div>
-      {isLoaded && (
         <div>
           <Header serviceName="" />
           <div className="contain-text">
@@ -47,9 +53,10 @@ const LandingPage = () => {
                     </GoAButton>
                   </div>
                   <div style={{ margin: '15px 30px 15px 0' }}>
-                    <GoAButton buttonType="secondary" buttonSize="normal" onClick={() => history.push('/login')}>
-                      Sign In
-                    </GoAButton>
+                    {!session.authenticated
+                      ? <GoAButton buttonType="secondary" buttonSize="normal" onClick={() => signIn('/')}>Sign In</GoAButton>
+                      : <GoAButton buttonType="secondary" buttonSize="normal" onClick={() => history.push('/Realms/CreateRealm')} >Create Tenant</GoAButton>
+                    }
                   </div>
                 </div>
               </div>
@@ -407,7 +414,6 @@ const LandingPage = () => {
             </Container>
           </div>
         </div>
-      )}
     </div>
   );
 };

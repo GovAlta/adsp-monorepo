@@ -11,7 +11,6 @@ import { KeycloakApi } from '../../../../store/config/models';
 import AccessPage from './access';
 
 describe('Access Page', () => {
-  const keycloakBaseUrl = 'https://somedomain.mock';
   const mockKeycloak: KeycloakApi = {
     realm: 'mock-realm',
     clientId: '99',

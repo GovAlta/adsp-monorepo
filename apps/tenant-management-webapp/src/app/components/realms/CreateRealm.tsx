@@ -1,19 +1,22 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Container, Row, Col } from 'reactstrap';
 import { GoAButton } from '@abgov/react-components';
 import { useHistory } from 'react-router-dom';
-import { CreateTenant } from '../../store/tenant/actions';
+import { CreateTenant, SelectTenant } from '../../store/tenant/actions';
 import { RootState } from '../../store';
 import { Link } from 'react-router-dom';
 
 import './SignIn.css';
+import AuthContext from '../../authContext';
 
 const CreateRealm = () => {
   const dispatch = useDispatch();
   const [name, setName] = useState('');
 
   const history = useHistory();
+
+  const authContext = useContext(AuthContext);
 
   const onCreateRealm = async () => {
     dispatch(CreateTenant(name));
@@ -39,6 +42,10 @@ const CreateRealm = () => {
           <p>New Tenant: {name} has successfully created. </p> <br />
         </div>
         <div>
+          <div onClick={() => {
+            dispatch(SelectTenant(name))
+            authContext.signIn('/tenant-admin')
+          }}>Tenant Login</div>
           <Link to={tenantLoginUrl}> Clik to tennat login </Link>
         </div>
       </div>

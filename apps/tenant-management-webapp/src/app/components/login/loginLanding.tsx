@@ -29,7 +29,6 @@ const LoginLanding = () => {
               <GoAButton
                 variant="primary"
                 onClick={() => {
-                  console.log(tenantName);
                   history.push(`/${tenantName}/login`);
                 }}
               >

@@ -17,8 +17,8 @@ export interface Session {
 export interface Credentials {
   token: string;
   tokenExp: number;
-  refreshToken: string;
-  refreshTokenExp: number;
+  refreshToken?: string;
+  refreshTokenExp?: number;
 }
 
 export const SESSION_INIT: Session = {};

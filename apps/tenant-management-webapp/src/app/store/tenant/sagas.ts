@@ -1,19 +1,14 @@
 import { put, select } from 'redux-saga/effects';
 import { RootState } from '..';
 import { ErrorNotification } from '../notifications/actions';
-import { FetchTenantSuccess, UpdateTenantAdminInfo, CreateTenantSuccess } from './actions';
-import { getToken } from '../../services/session';
+import { CreateTenantSuccess, FetchTenantSuccess } from './actions';
 import axios from 'axios';
 
 const http = axios.create();
 export function* fetchTenant(action) {
   const state: RootState = yield select();
 
-  const token = getToken();
-  if (!token) {
-    yield put(ErrorNotification({ message: `failed to get auth token - ` }));
-    return;
-  }
+  const token = state.session.credentials.token;
 
   const headers = {
     Authorization: `Bearer ${token}`,
@@ -38,12 +33,7 @@ export function* isTenantAdmin(action) {
   const email = action.payload;
   try {
     const state: RootState = yield select();
-
-    const token = getToken();
-    if (!token) {
-      yield put(ErrorNotification({ message: `failed to get auth token - ` }));
-      return;
-    }
+    const token = state.session.credentials.token;
 
     const headers = {
       Authorization: `Bearer ${token}`,
@@ -57,10 +47,12 @@ export function* isTenantAdmin(action) {
       email: email,
     };
     const url = host + path;
-    const response = yield http.post(url, data, { headers });
-    const tenant = response.data.name;
+    // const response = yield http.post(url, data, { headers });
+    // const tenant = response.data.name;
+
     // This is the login navigation. Using window.local.href might be good enough
-    window.location.href = `/${tenant}/login`;
+    // window.location.href = `/${tenant}/login`;
+      window.location.href = '/Realms/CreateRealm';
   } catch (e) {
     // The user is not tenant admin yet. The user can create a new tenant
     if (e.response.status === 404) {

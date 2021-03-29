@@ -2,7 +2,7 @@ import { combineReducers } from 'redux';
 import { persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 
-import Access from './access/reducers'
+import Access from './access/reducers';
 import ApiStatus from './api-status/reducers';
 import Config from './config/reducers';
 import File from './file/reducers';
@@ -22,6 +22,7 @@ const rootReducer = combineReducers({
 const persistConfig = {
   key: 'root',
   storage,
+  // whitelist: ['config', 'session']
 };
 
 export const persistedReducer = persistReducer(persistConfig, rootReducer);
