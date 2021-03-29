@@ -45,8 +45,6 @@
     cursor: pointer;
 }
 
-
-
 .one{
     float: left;
     /*display: inline-block;*/
@@ -73,5 +71,18 @@
     display: table-cell;
     vertical-align: middle;
     text-align: center;
+}
+
+.create-tenant-form-border {
+    padding: 51px;
+    border-style: solid;
+    border-color: grey;
+    border-width: 1px;
+    box-shadow: 1px 2px #888888;
+    margin: 0 8px 0 8px
+}
+
+.create-tenant-form {
+    margin: 15px;
 }
 

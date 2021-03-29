@@ -48,7 +48,7 @@ export function* isTenantAdmin(action) {
     const url = host + path;
     const response = yield http.post(url, data, { headers });
     const findTenant = response.data.success;
-    put(UpdateTenantAdminInfo(findTenant));
+    yield put(UpdateTenantAdminInfo(findTenant));
   } catch (e) {
     yield put(ErrorNotification({ message: `failed to check tenant admin: ${e.message}` }));
   }

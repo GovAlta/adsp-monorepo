@@ -29,8 +29,7 @@ export function convertToSession(kc: KeycloakInstance): Session {
 }
 
 export function logout() {
-  if (keycloak?.authenticated && keycloak) {
+  if (keycloak?.authenticated) {
     keycloak.logout();
-    keycloak = null;
   }
 }

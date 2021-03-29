@@ -125,12 +125,8 @@ function AppWithAuthContext() {
   function signIn(redirectPath: string) {
     const redirectUri = `${window.location.origin}${redirectPath}`;
     if (skipSSO) {
-      keycloak.init({}).then((authenticated) => {
-        if (authenticated) {
-          keycloak.login({ idpHint: ' ', redirectUri });
-        } else {
-          console.error('failed authenticating the user.');
-        }
+      keycloak.init({}).then(() => {
+        keycloak.login({ idpHint: ' ', redirectUri });
       });
     } else {
       keycloak.init({ onLoad: 'login-required', redirectUri });
