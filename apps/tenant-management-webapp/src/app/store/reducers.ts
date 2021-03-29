@@ -19,10 +19,11 @@ const rootReducer = combineReducers({
   tenant: Tenant,
   notifications: Notifications,
 });
+
 const persistConfig = {
   key: 'root',
   storage,
-  // whitelist: ['config', 'session']
+  whitelist: ['config', 'session', 'tenant'],
 };
 
 export const persistedReducer = persistReducer(persistConfig, rootReducer);
