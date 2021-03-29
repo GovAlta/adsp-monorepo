@@ -18,6 +18,15 @@ export default function (state: ConfigState = CONFIG_INIT, action: ActionTypes):
         },
       };
 
+    case 'config/logout':
+      return {
+        ...state,
+        keycloakApi: {
+          ...state.keycloakApi,
+          realm: 'core',
+        },
+      };
+
     default:
       return state;
   }

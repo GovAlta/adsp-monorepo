@@ -7,10 +7,15 @@ const UPDATE_TENANT_ADMIN_INFO = 'UPDATE_TENANT_ADMIN_INFO';
 export const CREATE_TENANT = 'FETCH_TENANT';
 const CREATE_TENANT_SUCCESS = 'CREATE_TENANT_SUCCESS';
 export const CHECK_IS_TENANT_ADMIN = 'CHECK_IS_ADMIN';
+export const LOGOUT_TENANT = 'LOGOUT_TENANT';
 
 interface SelectTenantAction {
   type: typeof SELECT_TENANT;
   payload: string;
+}
+
+interface LogoutTenantAction {
+  type: typeof LOGOUT_TENANT;
 }
 
 interface FetchTenantAction {
@@ -50,6 +55,7 @@ export type ActionType =
   | CheckIsTenanAdminAction
   | CreateTenantSuccessAction
   | SelectTenantAction
+  | LogoutTenantAction
   | UpdateTenantAdminInfoAction;
 
 export const SelectTenant = (realm: string): SelectTenantAction => ({
@@ -85,4 +91,8 @@ export const UpdateTenantAdminInfo = (isAdmin: boolean): UpdateTenantAdminInfoAc
 export const CreateTenantSuccess = (): CreateTenantSuccessAction => ({
   type: 'CREATE_TENANT_SUCCESS',
   payload: true,
+});
+
+export const TenantLogout = (): LogoutTenantAction => ({
+  type: 'LOGOUT_TENANT',
 });

@@ -1,7 +1,7 @@
 import { put, select } from 'redux-saga/effects';
 import { RootState } from '..';
 import { ErrorNotification } from '../notifications/actions';
-import { CreateTenantSuccess, FetchTenantSuccess } from './actions';
+import { CreateTenantSuccess, FetchTenantSuccess, UpdateTenantAdminInfo } from './actions';
 import axios from 'axios';
 
 const http = axios.create();
@@ -14,8 +14,6 @@ export function* fetchTenant(action) {
     Authorization: `Bearer ${token}`,
   };
 
-  // TODO: create an api lib (like the ) that has the host pre-configured
-  // TODO: create methods within -^ for each of the endpoint urls
   const host = state.config.tenantApi.host;
   const path = state.config.tenantApi.endpoints.tenantNameByRealm;
   const realm = action.payload;
@@ -46,20 +44,13 @@ export function* isTenantAdmin(action) {
     const data = {
       email: email,
     };
-    const url = host + path;
-    // const response = yield http.post(url, data, { headers });
-    // const tenant = response.data.name;
 
-    // This is the login navigation. Using window.local.href might be good enough
-    // window.location.href = `/${tenant}/login`;
-      window.location.href = '/Realms/CreateRealm';
+    const url = host + path;
+    const response = yield http.post(url, data, { headers });
+    const findTenant = response.data.success;
+    yield put(UpdateTenantAdminInfo(findTenant));
   } catch (e) {
-    // The user is not tenant admin yet. The user can create a new tenant
-    if (e.response.status === 404) {
-      window.location.href = '/Realms/CreateRealm';
-    } else {
-      yield put(ErrorNotification({ message: `failed to check tenant admin: ${e.message}` }));
-    }
+    yield put(ErrorNotification({ message: `failed to check tenant admin: ${e.message}` }));
   }
 }
 

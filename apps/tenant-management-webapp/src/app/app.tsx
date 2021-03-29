@@ -123,9 +123,9 @@ function AppWithAuthContext() {
   }, [dispatch, hasSession]);
 
   function signIn(redirectPath: string) {
-    const redirectUri = `${window.location.origin}${redirectPath}`
+    const redirectUri = `${window.location.origin}${redirectPath}`;
     if (skipSSO) {
-      keycloak.init({}).then(authenticated => {
+      keycloak.init({}).then(() => {
         keycloak.login({ idpHint: ' ', redirectUri });
       });
     } else {
@@ -134,17 +134,13 @@ function AppWithAuthContext() {
   }
 
   function signOut() {
-    keycloak.logout();
-    dispatch(SessionLogout());
+    const redirectUri = `${window.location.origin}/logout`;
+    keycloak.logout({
+      redirectUri,
+    });
   }
 
-  return (
-    <AuthContext.Provider value={{ signIn, signOut }}>
-      { hasSession &&
-      <AppRouters />
-      }
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ signIn, signOut }}>{hasSession && <AppRouters />}</AuthContext.Provider>;
 }
 
 export default App;

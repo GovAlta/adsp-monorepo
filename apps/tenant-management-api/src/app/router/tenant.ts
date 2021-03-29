@@ -48,12 +48,7 @@ async function getTenantByName(req, res) {
 async function getTenantByEmail(req, res) {
   const data = req.payload;
   const result = await TenantModel.findTenantByEmail(data.email);
-
-  if (result.success) {
-    return res.json(result.tenant);
-  } else {
-    return res.status(HttpStatusCodes.NOT_FOUND).json(result);
-  }
+  return res.json(result);
 }
 
 async function getTenantByRealm(req, res) {
