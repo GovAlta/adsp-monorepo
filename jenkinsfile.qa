@@ -18,7 +18,12 @@ pipeline {
         string(
           name: 'base_url',
           defaultValue: 'https://tenant-management-webapp-core-services-test.os99.gov.ab.ca',
-          description: 'base url for running tests against'
+          description: 'base url for running tests against.'
+        )
+        string(
+          name: 'tags',
+          defaultValue: '@regression and not @ignore',
+          description: 'tags for tests to be executed.'
         )
     }
 
@@ -50,7 +55,8 @@ pipeline {
                 // def source = new File('source.txt') //Hello World
                 // Update cypress.json file with tags before run the tests
                 def text = readFile file: "apps/tenant-management-webapp-e2e/cypress.json"
-                text = text.replaceAll(/"TAGS":.+/, "\"TAGS\": \"@regression and not @ignore\",")
+                text = text.replaceAll(/"TAGS":.+/, "\"TAGS\": \"${tags}\",")
+                echo text
                 writeFile file: "apps/tenant-management-webapp-e2e/cypress.json", text: text
             }
           sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --headless=true --baseUrl=${base_url}"

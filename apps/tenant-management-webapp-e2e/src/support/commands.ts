@@ -28,16 +28,18 @@ Cypress.Commands.add('login', (email, password) => {
 Cypress.Commands.add('postToken', () => {
   const clientId = Cypress.env('client-id');
   const clientSecret = Cypress.env('client-secret');
-  const grantType = 'client_credentials';
+  const grantType = 'password';
+  const username = Cypress.env('email');
+  const password = Cypress.env('password');
   cy.request({
     method: 'POST',
-    url:
-      Cypress.env('accessManagementApi') +
-      Cypress.env('keycloakTokenUrlSuffix'),
+    url: Cypress.env('accessManagementApi') + Cypress.env('keycloakTokenUrlSuffix'),
     body: {
       client_id: clientId,
       client_secret: clientSecret,
       grant_type: grantType,
+      username: username,
+      password: password,
     },
     form: true,
   }).then((response) => {

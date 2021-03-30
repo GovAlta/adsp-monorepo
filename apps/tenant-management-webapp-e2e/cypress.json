@@ -1,9 +1,9 @@
 {
   "env": {
-    "TAGS": "",
-    "keycloakTokenUrlSuffix": "/realms/core/protocol/openid-connect/token",
-    "client-id": "tenant-admin-backend-dev-qa",
-    "client-secret": "767995af-158a-43b2-aa1f-dd7cd9ba4ffc",
+    "TAGS": "@regression and not @ignore",
+    "keycloakTokenUrlSuffix": "/realms/autotest/protocol/openid-connect/token",
+    "client-id": "auto-test-client",
+    "client-secret": "410772e1-5ab3-4165-a3c2-0ea4ed2d08c4",
     "token": "",
     "eventServiceApiUrl": "",
     "notificationServiceUrl": "",
@@ -12,7 +12,8 @@
     "accessManagementApi": "",
     "uiComponentUrl": "",
     "email": "auto.test@gov.ab.ca",
-    "password": "123456"
+    "password": "autotest",
+    "realm": "autotest"
   },
   "baseUrl": "http://localhost:4200/",
   "fileServerFolder": ".",

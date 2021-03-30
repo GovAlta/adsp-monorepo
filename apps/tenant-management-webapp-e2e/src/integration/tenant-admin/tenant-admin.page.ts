@@ -4,7 +4,7 @@ class TenantAdminPage {
   }
 
   dashboardMenuItem(menuItemKey: string) {
-    const menuItemSelector = `[data-rb-event-key="${menuItemKey}"]`;
+    const menuItemSelector = `[href="${menuItemKey}"]`;
     return cy.get(menuItemSelector);
   }
 
@@ -14,6 +14,26 @@ class TenantAdminPage {
 
   keycloakLink() {
     return cy.contains('Keycloak Admin');
+  }
+
+  userCount() {
+    return cy.get('#user-count');
+  }
+
+  roleCount() {
+    return cy.get('#role-count');
+  }
+
+  activeUserCount() {
+    return cy.get('#active-user-count');
+  }
+
+  roleTableBody() {
+    return cy.get('tbody');
+  }
+
+  roleTableHead() {
+    return cy.get('thead');
   }
 }
 
