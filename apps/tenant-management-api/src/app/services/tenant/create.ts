@@ -40,7 +40,7 @@ const createAdminUser = async (realm, email) => {
     enabled: true,
   };
   const user = await kcClient.users.create(adminUser);
-
+  // Add realm admin roles
   const realmMangementClient = (
     await kcClient.clients.find({
       clientId: 'realm-management',
@@ -67,8 +67,38 @@ const createAdminUser = async (realm, email) => {
     });
   }
 
-  logger.info(`Add roles to user: ${util.inspect(roleMapping)}`);
+  logger.info(`Add realm management roles to user: ${util.inspect(roleMapping)}`);
   await kcClient.users.addClientRoleMappings(roleMapping);
+
+  // Add default service roles
+  const defaultServiceRoles = ['file-service-admin'];
+
+  const serviceRoles = [];
+
+  for (const serviceRole of defaultServiceRoles) {
+    await kcClient.roles.create({
+      name: serviceRole,
+      realm: realm,
+    });
+
+    const currentRole = await kcClient.roles.findOneByName({
+      name: serviceRole,
+      realm: realm,
+    });
+    serviceRoles.push({
+      id: currentRole.id,
+      name: currentRole.name,
+    });
+  }
+
+  logger.info(`Add service roles to user: ${util.inspect(serviceRoles)}`);
+
+  await kcClient.users.addRealmRoleMappings({
+    id: user.id,
+    realm: realm,
+    roles: serviceRoles,
+  });
+
   logger.info('Created admin user');
 };
 
