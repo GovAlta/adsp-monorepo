@@ -17,4 +17,10 @@ API doc endpoint at /swagger/docs/v1
 mv .env.sample .env
 ```
 
+Secrets of dev keycloak which might be used during development are listed as follows:
+| Variable Name                             | Secret URI                                                                                                          |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| KEYCLOAK_TENANT_API_CLIENT_SECRET         | [Click](https://console.os99.gov.ab.ca:8443/console/project/core-services-dev/browse/secrets/tenant-management-api) |
+| KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_SECRET | [click](https://console.os99.gov.ab.ca:8443/console/project/core-services-dev/browse/secrets/tenant-management-api) |
+
 Please do not commit .env to the repository.
