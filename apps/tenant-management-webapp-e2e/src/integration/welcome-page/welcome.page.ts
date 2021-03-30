@@ -1,6 +1,6 @@
 class WelcomePage {
-  loginButton() {
-    return cy.get('[value="Log In"]');
+  signinButton() {
+    return cy.get('button:contains("Sign In")');
   }
 
   usernameEmailField() {
