@@ -2,9 +2,9 @@ import React, { FC, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Tab, Tabs } from 'react-bootstrap';
 
-import { RootState } from '../../../../store';
-import { fetchAccess } from '../../../../store/access/actions';
-import { User } from '../../../../store/access/models';
+import { RootState } from '@store/index';
+import { fetchAccess } from '@store/access/actions';
+import { User } from '@store/access/models';
 
 import css from './access.module.css';
 

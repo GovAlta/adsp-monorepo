@@ -1,6 +1,6 @@
 import React from 'react';
 import { GoACard } from '@abgov/react-components';
-import ProductFeatures from '../../../../assets/ProductFeatures.png';
+import ProductFeatures from '@assets/ProductFeatures.png';
 import { Container, Row, Col } from 'react-bootstrap';
 const Dashboard = () => {
   return (

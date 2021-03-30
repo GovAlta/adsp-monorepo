@@ -1,9 +1,9 @@
 import React from 'react';
 import { useDispatch } from 'react-redux';
-import { ApiUptimeFetch } from '../../store/api-status/actions';
+import { ApiUptimeFetch } from '@store/api-status/actions';
 import { useSelector } from 'react-redux';
 import { Container } from 'react-bootstrap';
-import { RootState } from '../../store';
+import { RootState } from '@store/index';
 
 function ServiceMeasure() {
   const apiStatus = useSelector((state: RootState) => state.apiStatus);

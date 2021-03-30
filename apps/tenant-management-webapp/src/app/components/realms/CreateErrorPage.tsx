@@ -1,7 +1,7 @@
 import React from 'react';
 import { Container } from 'react-bootstrap';
 import { GoAButton } from '@abgov/react-components';
-import Tools from '../../../assets/tools.png';
+import Tools from '@assets/tools.png';
 import { useHistory } from 'react-router-dom';
 
 import './SignIn.css';

@@ -9,8 +9,8 @@ import Adminstration from './administration';
 import { HeaderCtx } from '../../baseApp';
 import File from './services/file';
 import AccessPage from './services/access/access';
-import { keycloak } from '../../services/session';
-import { CredentialRefresh } from '../../store/session/actions';
+import { keycloak } from '@services/session';
+import { CredentialRefresh } from '@store/session/actions';
 
 const TenantManagement = () => {
   const { setTitle } = useContext(HeaderCtx);
@@ -31,7 +31,7 @@ const TenantManagement = () => {
           }))
         }
       } catch (e) {
-        console.log(e)
+        console.error('Refresh token error', e)
       }
     }, 20000)
   }, [dispatch])

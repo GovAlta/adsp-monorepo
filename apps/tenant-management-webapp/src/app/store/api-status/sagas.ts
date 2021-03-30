@@ -1,7 +1,7 @@
 import { put } from 'redux-saga/effects';
 
 import { ApiUptimeFetchSuccessAction } from './actions';
-import { ErrorNotification } from '../../store/notifications/actions';
+import { ErrorNotification } from '@store/notifications/actions';
 import { http } from '../../api/tenant-management';
 
 export function* uptimeFetch() {

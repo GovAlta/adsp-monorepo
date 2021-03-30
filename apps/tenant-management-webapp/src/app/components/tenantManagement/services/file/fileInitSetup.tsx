@@ -1,7 +1,7 @@
 import { GoAButton } from '@abgov/react-components';
 import React from 'react';
 import { useDispatch } from 'react-redux';
-import { SetupFileService } from '../../../../store/file/actions'
+import { SetupFileService } from '@store/file/actions'
 
 const InitSetup = () => {
   const dispatch = useDispatch();

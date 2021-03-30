@@ -3,10 +3,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Container, Row, Col } from 'react-bootstrap';
 import { GoAButton } from '@abgov/react-components';
 import styled from 'styled-components';
-import externalLinkIcon from '../../../../../assets/external-link.svg'; // Tell webpack this JS file uses this image
+import externalLinkIcon from '@assets/external-link.svg'; // Tell webpack this JS file uses this image
 
-import { RootState } from '../../../../store';
-import { EnableFileService } from '../../../../store/file/actions';
+import { RootState } from '@store/index';
+import { EnableFileService } from '@store/file/actions';
 
 import './file.css';
 

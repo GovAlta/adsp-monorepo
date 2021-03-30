@@ -5,8 +5,8 @@ import * as reactRedux from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { render, waitFor } from '@testing-library/react';
 
-import { persistor } from '../../../../store';
-import { KeycloakApi } from '../../../../store/config/models';
+import { persistor } from '@store/index';
+import { KeycloakApi } from '@store/config/models';
 
 import AccessPage from './access';
 

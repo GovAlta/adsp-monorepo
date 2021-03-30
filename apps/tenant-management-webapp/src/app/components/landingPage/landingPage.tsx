@@ -1,19 +1,19 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect } from 'react';
 
-import caseStudy from '../../../assets/CaseStudy.png';
-import integrate from '../../../assets/Integrate.png';
-import bannerBackground from '../../../assets/BannerBackground.jpg';
-import document from '../../../assets/files-icon.svg';
-import messageIcon from '../../../assets/message-icon.svg';
-import servicePartners from '../../../assets/partners-icon.svg';
-import productFeatures from '../../../assets/ProductFeatures.png';
+import caseStudy from '@assets/CaseStudy.png';
+import integrate from '@assets/Integrate.png';
+import bannerBackground from '@assets/BannerBackground.jpg';
+import document from '@assets/files-icon.svg';
+import messageIcon from '@assets/message-icon.svg';
+import servicePartners from '@assets/partners-icon.svg';
+import productFeatures from '@assets/ProductFeatures.png';
 import { useHistory } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 import { Container, Row, Col } from 'react-bootstrap';
 import { GoAButton, GoaHeroBanner, GoACard } from '@abgov/react-components';
 import Header from '../../header';
-import { RootState } from '../../store';
+import { RootState } from '@store/index';
 import AuthContext from '../../authContext';
 
 import 'bootstrap/dist/css/bootstrap.min.css';

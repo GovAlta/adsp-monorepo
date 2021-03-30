@@ -2,8 +2,8 @@ import React from 'react';
 import { useDispatch } from 'react-redux';
 import { GoARadioGroup, GoAButton } from '@abgov/react-components';
 
-import { DisableFileService, DeleteFileService } from '../../../../store/file/actions';
-import { FILE_INIT } from '../../../../store/file/models';
+import { DisableFileService, DeleteFileService } from '@store/file/actions';
+import { FILE_INIT } from '@store/file/models';
 
 import './file.css';
 
