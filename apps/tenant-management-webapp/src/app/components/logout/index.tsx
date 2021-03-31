@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { TenantLogout } from '../../store/tenant/actions';
-import { SessionLogout } from '../../store/session/actions';
-import { ConfigLogout } from '../../store/config/actions';
+import { TenantLogout } from '@store/tenant/actions';
+import { SessionLogout } from '@store/session/actions';
+import { ConfigLogout } from '@store/config/actions';
 
 function Logout() {
   const dispatch = useDispatch();

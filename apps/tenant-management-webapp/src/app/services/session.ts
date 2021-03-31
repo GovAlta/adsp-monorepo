@@ -1,5 +1,5 @@
 import Keycloak, { KeycloakConfig, KeycloakInstance } from 'keycloak-js';
-import { Session } from '../store/session/models';
+import { Session } from '@store/session/models';
 
 export let keycloak: KeycloakInstance;
 

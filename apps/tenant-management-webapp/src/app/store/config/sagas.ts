@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { put, select } from 'redux-saga/effects';
-import { RootState } from '..';
-import { ErrorNotification } from '../../store/notifications/actions';
+import { RootState } from '@store/index';
+import { ErrorNotification } from '@store/notifications/actions';
 import { FetchConfigSuccessAction } from './actions';
 
 export function* fetchConfig() {

@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { GoaHeader } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
-import person from '../assets/person.jpg';
+import person from '@assets/person.jpg';
 import { RootState } from './store';
 import AuthContext from './authContext';
 

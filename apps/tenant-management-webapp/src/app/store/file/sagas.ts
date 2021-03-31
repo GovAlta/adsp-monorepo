@@ -1,9 +1,9 @@
 import { put, select } from 'redux-saga/effects';
 
-import { ErrorNotification } from '../../store/notifications/actions';
+import { ErrorNotification } from '@store/notifications/actions';
 import { FetchFileSpaceSuccess } from './actions';
 import { http } from '../../api/tenant-management';
-import { RootState } from '..';
+import { RootState } from '@store/index';
 
 export function* fetchSpace() {
   const state: RootState = yield select();

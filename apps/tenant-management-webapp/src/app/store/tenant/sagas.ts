@@ -1,6 +1,6 @@
 import { put, select } from 'redux-saga/effects';
-import { RootState } from '..';
-import { ErrorNotification } from '../notifications/actions';
+import { RootState } from '@store/index';
+import { ErrorNotification } from '@store/notifications/actions';
 import { CreateTenantSuccess, FetchTenantSuccess, UpdateTenantAdminInfo } from './actions';
 import axios from 'axios';
 

@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import Header from '../../header';
 import AuthContext from '../../authContext';
-import { SelectTenant } from '../../store/tenant/actions';
+import { SelectTenant } from '@store/tenant/actions';
 import { GoAButton } from '@abgov/react-components';
 import { Row, Col } from 'react-bootstrap';
 

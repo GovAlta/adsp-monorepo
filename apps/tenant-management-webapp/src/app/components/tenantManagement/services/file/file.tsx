@@ -8,9 +8,9 @@ import FileHeader from './fileHeader';
 import InitSetup from './fileInitSetup';
 import FileSpace from './fileSpace';
 import FileSettings from './fileSettings';
-import { RootState } from '../../../../store';
+import { RootState } from '@store/index';
 import './file.css';
-import { FetchFileSpace, SetActiveTab } from '../../../../store/file/actions';
+import { FetchFileSpace, SetActiveTab } from '@store/file/actions';
 
 const Templates = () => {
   return (
