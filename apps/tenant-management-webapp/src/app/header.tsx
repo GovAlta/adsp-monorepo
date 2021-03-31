@@ -3,7 +3,7 @@ import { GoaHeader } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 import person from '@assets/person.jpg';
 import { RootState } from './store';
-import AuthContext from './authContext';
+import AuthContext from './lib/authContext';
 
 enum ServiceLevel {
   Alpha = 'Alpha',

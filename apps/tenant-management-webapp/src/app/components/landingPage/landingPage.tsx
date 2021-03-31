@@ -14,7 +14,7 @@ import { Container, Row, Col } from 'react-bootstrap';
 import { GoAButton, GoaHeroBanner, GoACard } from '@abgov/react-components';
 import Header from '../../header';
 import { RootState } from '@store/index';
-import AuthContext from '../../authContext';
+import AuthContext from '../../lib/authContext';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@abgov/react-components/react-components.esm.css';

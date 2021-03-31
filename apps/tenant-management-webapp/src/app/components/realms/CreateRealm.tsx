@@ -7,7 +7,7 @@ import { CreateTenant, SelectTenant, IsTenantAdmin } from '@store/tenant/actions
 import { RootState } from '@store/index';
 import { Link } from 'react-router-dom';
 import './SignIn.css';
-import AuthContext from '../../authContext';
+import AuthContext from '../../lib/authContext';
 
 const CreateRealm = () => {
   const dispatch = useDispatch();
