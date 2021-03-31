@@ -15,6 +15,7 @@ export const environment = envalid.cleanEnv(
     PORT: envalid.num({ default: 3333 }),
     KEYCLOAK_ROOT_URL: envalid.str({ default: 'https://access-dev.os99.gov.ab.ca' }),
     FILE_SERVICE_HOST: envalid.str({ default: 'https://file-service-core-services-dev.os99.gov.ab.ca' }),
+    WEB_SERVICE_HOST: envalid.str({ default: 'https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca' }),
     KEYCLOAK_TENANT_API_CLIENT_SECRET: envalid.str(),
     KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_ID: envalid.str(),
     APP_ENVIRONMENT: envalid.str(),
