@@ -6,7 +6,7 @@ import { useDispatch } from 'react-redux';
 import Sidebar from './sidebar';
 import Dashboard from './dashboard';
 import Adminstration from './administration';
-import { HeaderCtx } from '../../baseApp';
+import { HeaderCtx } from '../../privateApp';
 import File from './services/file';
 import AccessPage from './services/access/access';
 import { keycloak } from '@services/session';

@@ -1,5 +1,7 @@
 import React, { createContext, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Redirect, Route } from 'react-router-dom';
+
 import Header from './header';
 import { RootState } from './store';
 import { ApiUptimeFetch } from './store/api-status/actions';
@@ -9,27 +11,16 @@ export interface HeaderContext {
 }
 export const HeaderCtx = createContext<HeaderContext>(null);
 
-function BaseApp({ children }) {
+export function PrivateApp({ children }) {
   const [title, setTitle] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  const config = useSelector((state: RootState) => state.config);
-
   const dispatch = useDispatch();
-
-  // inform user when loading is complete
-  useEffect(() => {
-    setIsLoading(false);
-  }, [config]);
 
   // initiate the get API health reoccurring request
   useEffect(() => {
     setInterval(async () => dispatch(ApiUptimeFetch()), 10 * 1000);
-  }, [config.tenantApi.host, dispatch]);
+  }, [dispatch]);
 
-  return isLoading ? (
-    <div>Loading...</div>
-  ) : (
+  return (
     <HeaderCtx.Provider value={{ setTitle }}>
       <Header serviceName={title} />
       <div>{children}</div>
@@ -37,4 +28,22 @@ function BaseApp({ children }) {
   );
 }
 
-export default BaseApp;
+export function PrivateRoute({ component: Component, ...rest }) {
+  const homePath = '/';
+  const isAuthenticated = useSelector((state: RootState) => state.session.authenticated);
+
+  return (
+    <Route
+      {...rest}
+      render={(props) =>
+        isAuthenticated ? (
+          <Component {...props} />
+        ) : (
+          <Redirect to={{ pathname: homePath, state: { from: props.location } }} />
+        )
+      }
+    />
+  );
+}
+
+export default PrivateApp;
