@@ -2,7 +2,7 @@ import React, { createContext, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Redirect, Route } from 'react-router-dom';
 
-import Header from './header';
+import Header from './components/appHeader';
 import { RootState } from './store';
 import { ApiUptimeFetch } from './store/api-status/actions';
 

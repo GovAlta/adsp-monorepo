@@ -12,8 +12,8 @@ import { useSelector } from 'react-redux';
 
 import { Container, Row, Col } from 'react-bootstrap';
 import { GoAButton, GoaHeroBanner, GoACard } from '@abgov/react-components';
-import Header from '../../header';
 import { RootState } from '@store/index';
+import Header from '../appHeader';
 import AuthContext from '../../lib/authContext';
 
 import 'bootstrap/dist/css/bootstrap.min.css';

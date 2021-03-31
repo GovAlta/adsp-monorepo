@@ -1,8 +1,8 @@
 import React, { useContext, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import Header from '../../header';
 import { SelectTenant } from '@store/tenant/actions';
+import Header from '../appHeader';
 import AuthContext from '../../lib/authContext';
 import { GoAButton } from '@abgov/react-components';
 import { Row, Col } from 'react-bootstrap';

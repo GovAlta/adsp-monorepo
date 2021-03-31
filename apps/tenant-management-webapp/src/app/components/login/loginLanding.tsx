@@ -3,7 +3,7 @@ import { useHistory } from 'react-router-dom';
 import { Container, Row, Col, Form } from 'react-bootstrap';
 import { GoAButton } from '@abgov/react-components';
 
-import Header from '../../header';
+import Header from '../appHeader';
 
 const LoginLanding = () => {
   const [tenantName, setTenantName] = useState<string>();

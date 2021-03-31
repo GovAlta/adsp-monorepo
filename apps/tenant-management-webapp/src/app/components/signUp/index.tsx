@@ -1,6 +1,6 @@
 import React from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
-import Header from '../../header';
+import Header from '../appHeader';
 
 function SignUp() {
   return (

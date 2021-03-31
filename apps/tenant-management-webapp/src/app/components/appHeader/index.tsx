@@ -2,8 +2,8 @@ import React, { useContext } from 'react';
 import { GoaHeader } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 import person from '@assets/person.jpg';
-import { RootState } from './store';
-import AuthContext from './lib/authContext';
+import { RootState } from '../../store';
+import AuthContext from '../../lib/authContext';
 
 enum ServiceLevel {
   Alpha = 'Alpha',
@@ -11,7 +11,7 @@ enum ServiceLevel {
   Live = 'Live',
 }
 
-function Header({ serviceName = '', isLoginLink = true }) {
+function AppHeader({ serviceName = '', isLoginLink = true }) {
   const authenticated = useSelector((state: RootState) => state.session.authenticated);
   const loginLinkClass = isLoginLink ? '' : 'd-none';
   const authCtx = useContext(AuthContext);
@@ -78,4 +78,4 @@ function Header({ serviceName = '', isLoginLink = true }) {
   );
 }
 
-export default Header;
+export default AppHeader;
