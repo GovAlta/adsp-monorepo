@@ -2,12 +2,14 @@ import { connect, ConnectionOptions, connection } from 'mongoose';
 import { logger } from '../middleware/logger';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 const mongod = new MongoMemoryServer();
+import { environment } from '../environments/environment';
+
 export const connectMongo = async () => {
   try {
-    const mongoHost = process.env.MONGO_URI;
-    const mongoDb = process.env.MONGO_DB;
-    const mongoUser = process.env.MONGO_USER;
-    const mongoPassword = process.env.MONGO_PASSWORD;
+    const mongoHost = environment.MONGO_URI;
+    const mongoDb = environment.MONGO_DB;
+    const mongoUser = environment.MONGO_USER;
+    const mongoPassword = environment.MONGO_PASSWORD;
 
     const mongoURI = `${mongoHost}/${mongoDb}`;
 
