@@ -30,7 +30,7 @@ import { PrivateApp, PrivateRoute } from './privateApp';
 import { fetchConfig } from '@store/config/actions';
 import AuthContext from './authContext';
 import { SessionLoginSuccess, SessionLogout } from '@store/session/actions';
-import { keycloak, createKeycloakInstance, convertToSession } from '@services/session';
+import { keycloak, createKeycloakInstance, convertToSession } from '@lib/session';
 
 const AppRouters = () => {
   return (

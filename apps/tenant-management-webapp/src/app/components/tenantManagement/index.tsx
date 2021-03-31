@@ -9,7 +9,7 @@ import Adminstration from './administration';
 import { HeaderCtx } from '../../privateApp';
 import File from './services/file';
 import AccessPage from './services/access/access';
-import { keycloak } from '../../services/session';
+import { keycloak } from '../../lib/session';
 import { CredentialRefresh } from '../../store/session/actions';
 
 const TenantManagement = () => {
