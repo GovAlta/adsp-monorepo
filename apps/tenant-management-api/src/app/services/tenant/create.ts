@@ -7,6 +7,7 @@ import * as HttpStatusCodes from 'http-status-codes';
 import * as TenantModel from '../../models/tenant';
 import * as UserModel from '../../models/user';
 import { FLOW_ALIAS, createAuthentificationFlow } from './createAuthenticationFlow';
+import { environment } from '../../../environments/environment';
 
 export const tenantManagementRealm = 'core';
 
@@ -20,8 +21,16 @@ const createWebappClientConfig = (id) => {
     clientId: 'tenant-platform-webapp',
     publicClient: true,
     directAccessGrantsEnabled: false,
-    redirectUris: ['https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca/*', 'http://localhost:4200/*'],
-    webOrigins: ['https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca', 'http://localhost:4200'],
+    redirectUris: [
+      'https://tenant-management-webapp-core-services-test.os99.gov.ab.ca/*',
+      'http://localhost:4200/*',
+      `${environment.WEB_SERVICE_HOST}/*`,
+    ],
+    webOrigins: [
+      'https://tenant-management-webapp-core-services-test.os99.gov.ab.ca',
+      'http://localhost:4200',
+      environment.WEB_SERVICE_HOST,
+    ],
     description: 'Client created by platform team to support the frontend. Please do not delete it',
   };
 
@@ -103,8 +112,8 @@ const createAdminUser = async (realm, email) => {
 };
 
 const createIdpConfig = (secret, client, firstFlowAlias, realm) => {
-  const authorizationUrl = `${process.env.KEYCLOAK_ROOT_URL}/auth/realms/core/protocol/openid-connect/auth`;
-  const tokenUrl = `${process.env.KEYCLOAK_ROOT_URL}/auth/realms/core/protocol/openid-connect/token`;
+  const authorizationUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/realms/core/protocol/openid-connect/auth`;
+  const tokenUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/realms/core/protocol/openid-connect/token`;
 
   const config = {
     alias: 'core',
@@ -134,7 +143,7 @@ const createIdpConfig = (secret, client, firstFlowAlias, realm) => {
 };
 
 const createBrokerClientConfig = (realm, secret, client) => {
-  const redirectUrl = `${process.env.KEYCLOAK_ROOT_URL}/auth/realms/${realm}/broker/core/endpoint`;
+  const redirectUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/realms/${realm}/broker/core/endpoint`;
   const config = {
     id: uuidv4(),
     clientId: client,
