@@ -18,7 +18,7 @@ interface LogoutTenantAction {
   type: typeof LOGOUT_TENANT;
 }
 
-interface FetchTenantAction {
+export interface FetchTenantAction {
   type: typeof FETCH_TENANT;
   payload: string;
 }
@@ -28,12 +28,12 @@ interface FetchTenantSuccessAction {
   payload: Tenant;
 }
 
-interface CreateTenantAction {
+export interface CreateTenantAction {
   type: typeof CREATE_TENANT;
   payload: string;
 }
 
-interface CheckIsTenanAdminAction {
+export interface CheckIsTenantAdminAction {
   type: typeof CHECK_IS_TENANT_ADMIN;
   payload: string;
 }
@@ -52,7 +52,7 @@ export type ActionType =
   | FetchTenantAction
   | FetchTenantSuccessAction
   | CreateTenantAction
-  | CheckIsTenanAdminAction
+  | CheckIsTenantAdminAction
   | CreateTenantSuccessAction
   | SelectTenantAction
   | LogoutTenantAction
@@ -78,7 +78,7 @@ export const CreateTenant = (tenantName: string): CreateTenantAction => ({
   payload: tenantName,
 });
 
-export const IsTenantAdmin = (email: string): CheckIsTenanAdminAction => ({
+export const IsTenantAdmin = (email: string): CheckIsTenantAdminAction => ({
   type: 'CHECK_IS_ADMIN',
   payload: email,
 });

@@ -2,29 +2,20 @@ import { put, select } from 'redux-saga/effects';
 
 import { ErrorNotification } from '@store/notifications/actions';
 import { FetchFileSpaceSuccess } from './actions';
-import { http } from '../../api/tenant-management';
 import { RootState } from '@store/index';
+import { FileApi } from './api';
 
 export function* fetchSpace() {
   const state: RootState = yield select();
 
-  const url = state.config.tenantApi.endpoints.spaceAdmin;
-  const session = state.session;
-
-  const headers = {
-    Authorization: `Bearer ${session.credentials.token}`
-  };
-
-  const data = {
-    tenantId: session.clientId,
-    realm: session.realm,
-  };
+  const token = state.session.credentials.token;
+  const api = new FileApi(state.config.tenantApi, token);
+  const { clientId, realm } = state.session;
 
   try {
-    const spaceInfo = yield http.post(url, data, { headers });
-
-    yield put(FetchFileSpaceSuccess({ data: spaceInfo }));
+    const file = yield api.fetchSpace(clientId, realm);
+    yield put(FetchFileSpaceSuccess({ data: file }));
   } catch (e) {
-    yield put(ErrorNotification({ message: e.message }));
+    yield put(ErrorNotification({ message: 'failed to fetch space' }));
   }
 }
