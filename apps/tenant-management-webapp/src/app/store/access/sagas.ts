@@ -15,7 +15,7 @@ export function* fetchAccess() {
   const keycloakApi = new KeycloakApi(baseUrl, realm, token);
 
   try {
-    const [ users, roles ] = [
+    const [ users, roles] = [
       yield keycloakApi.getUsers(),
       yield keycloakApi.getRoles(),
     ];

@@ -1,87 +1,52 @@
 import { put, select } from 'redux-saga/effects';
 import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
-import { CreateTenantSuccess, FetchTenantSuccess, UpdateTenantAdminInfo } from './actions';
-import axios from 'axios';
+import {
+  CheckIsTenantAdminAction,
+  CreateTenantAction,
+  CreateTenantSuccess,
+  FetchTenantAction,
+  FetchTenantSuccess,
+  UpdateTenantAdminInfo,
+} from './actions';
+import { TenantApi } from './api';
 
-const http = axios.create();
-export function* fetchTenant(action) {
+export function* fetchTenant(action: FetchTenantAction) {
   const state: RootState = yield select();
-
   const token = state.session.credentials.token;
-
-  const headers = {
-    Authorization: `Bearer ${token}`,
-  };
-
-  const host = state.config.tenantApi.host;
-  const path = state.config.tenantApi.endpoints.tenantNameByRealm;
+  const api = new TenantApi(state.config.tenantApi, token);
   const realm = action.payload;
-  const url = `${host}${path}/${realm}`;
 
   try {
-    const tenant = yield http.get(url, { headers });
-    yield put(FetchTenantSuccess(tenant.data));
+    const tenant = yield api.fetchTenantByRealm(realm);
+    yield put(FetchTenantSuccess(tenant));
   } catch (e) {
-    yield put(ErrorNotification({ message: `failed to fetch tenant: ${e.message}` }));
+    yield put(ErrorNotification({ message: 'failed to fetch tenant' }));
   }
 }
 
-export function* isTenantAdmin(action) {
-  const email = action.payload;
-  try {
-    const state: RootState = yield select();
-    const token = state.session.credentials.token;
-
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json;charset=UTF-8',
-    };
-
-    const host = state.config.tenantApi.host;
-    const path = state.config.tenantApi.endpoints.tenantByEmail;
-
-    const data = {
-      email: email,
-    };
-
-    const url = host + path;
-    const response = yield http.post(url, data, { headers });
-    const findTenant = response.data.success;
-    yield put(UpdateTenantAdminInfo(findTenant));
-  } catch (e) {
-    yield put(ErrorNotification({ message: `failed to check tenant admin: ${e.message}` }));
-  }
-}
-
-export function* createTenant(action) {
+export function* isTenantAdmin(action: CheckIsTenantAdminAction) {
   const state: RootState = yield select();
-  const host = state.config.tenantApi.host;
-  const path = state.config.tenantApi.endpoints.createTenant;
-  const url = `${host}${path}`;
   const token = state?.session?.credentials?.token;
-
-  if (!token) {
-    yield put(ErrorNotification({ message: `failed to get auth token - ` }));
-    return;
-  }
-
-  const headers = {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json;charset=UTF-8',
-  };
-
-  const tenantName = action.payload;
+  const api = new TenantApi(state.config.tenantApi, token);
+  const email = action.payload;
 
   try {
-    yield http.post(
-      url,
-      {
-        tenantName: tenantName,
-        realm: tenantName,
-      },
-      { headers }
-    );
+    const tenant = yield api.fetchTenantByEmail(email);
+    yield put(UpdateTenantAdminInfo(tenant.success));
+  } catch (e) {
+    yield put(ErrorNotification({ message: 'failed to check tenant admin' }));
+  }
+}
+
+export function* createTenant(action: CreateTenantAction) {
+  const state: RootState = yield select();
+  const token = state?.session?.credentials?.token;
+  const api = new TenantApi(state.config.tenantApi, token);
+  const name = action.payload;
+
+  try {
+    const tenant = yield api.createTenant(name);
     yield put(CreateTenantSuccess());
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to create new tenant: ${e.message}` }));

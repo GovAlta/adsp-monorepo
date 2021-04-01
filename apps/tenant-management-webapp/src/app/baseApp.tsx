@@ -2,7 +2,6 @@ import React, { createContext, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Header from './header';
 import { RootState } from './store';
-import { init as initTenantApi } from './api/tenant-management';
 import { ApiUptimeFetch } from './store/api-status/actions';
 
 export interface HeaderContext {
@@ -23,12 +22,7 @@ function BaseApp({ children }) {
     setIsLoading(false);
   }, [config]);
 
-  // fetch tenant config
-  useEffect(() => {
-    initTenantApi({ baseUrl: config.tenantApi.host });
-  }, [config.tenantApi.host]);
-
-  // initiate the get API health reoccuring request
+  // initiate the get API health reoccurring request
   useEffect(() => {
     setInterval(async () => dispatch(ApiUptimeFetch()), 10 * 1000);
   }, [config.tenantApi.host, dispatch]);

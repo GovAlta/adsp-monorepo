@@ -5,8 +5,9 @@ import { ErrorNotification } from '@store/notifications/actions';
 import { FetchConfigSuccessAction } from './actions';
 
 export function* fetchConfig() {
+  const state: RootState = yield select();
+
   try {
-    const state: RootState = yield select();
     if (!state.config?.keycloakApi?.realm) {
       const res = yield axios.get('/config.v2/config.json');
       const action: FetchConfigSuccessAction = {
