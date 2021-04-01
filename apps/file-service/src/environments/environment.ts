@@ -4,7 +4,7 @@ import * as util from 'util';
 
 dotenv.config();
 
-const environment = envalid.cleanEnv(
+export const environment = envalid.cleanEnv(
   process.env,
   {
     KEYCLOAK_ROOT_URL: envalid.str({ default: 'https://access-dev.os99.gov.ab.ca' }),
@@ -35,5 +35,3 @@ const environment = envalid.cleanEnv(
 );
 
 environment.isProd; // true if NODE_ENV === 'production'
-
-export default environment;
