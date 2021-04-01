@@ -43,7 +43,7 @@ export const createSubscriptionRouter = ({
    *         type: string
    *     responses:
    *       200:
-   *         description: Subscriptions succesfully retrieved.
+   *         description: Subscriptions successfully retrieved.
    */
   subscriptionRouter.get('/:space/:type/subscriptions', assertAuthenticatedHandler, (req, res, next) => {
     const { space, type } = req.params;
@@ -86,7 +86,7 @@ export const createSubscriptionRouter = ({
    *         type: string
    *     responses:
    *       200:
-   *         description: Subscriptions succesfully retrieved.
+   *         description: Subscriptions successfully retrieved.
    */
   subscriptionRouter.post('/:space/:type/subscriptions', assertAuthenticatedHandler, (req, res, next) => {
     const user = req.user as User;
@@ -134,7 +134,7 @@ export const createSubscriptionRouter = ({
    *         type: string
    *     responses:
    *       200:
-   *         description: Subscriptions succesfully retrieved.
+   *         description: Subscriptions successfully retrieved.
    */
   subscriptionRouter.get('/:space/:type/subscriptions/:subscriber', assertAuthenticatedHandler, (req, res, next) => {
     const { space, type, subscriber } = req.params;
@@ -176,7 +176,7 @@ export const createSubscriptionRouter = ({
    *         type: string
    *     responses:
    *       200:
-   *         description: Subscriptions succesfully removed.
+   *         description: Subscriptions successfully removed.
    */
   subscriptionRouter.delete('/:space/:type/subscriptions/:subscriber', assertAuthenticatedHandler, (req, res, next) => {
     const user = req.user as User;
@@ -208,7 +208,7 @@ export const createSubscriptionRouter = ({
    *         type: string
    *     responses:
    *       200:
-   *         description: Subscribers succesfully retrieved.
+   *         description: Subscribers successfully retrieved.
    */
   subscriptionRouter.get('/:space/subscribers', assertAuthenticatedHandler, (req, res, next) => {
     const { space } = req.params;
@@ -249,7 +249,7 @@ export const createSubscriptionRouter = ({
    *         type: string
    *     responses:
    *       200:
-   *         description: Subscriber succesfully retrieved.
+   *         description: Subscriber successfully retrieved.
    */
   subscriptionRouter.get('/:space/subscribers/:subscriber', assertAuthenticatedHandler, (req, res, next) => {
     const { subscriber } = req.params;
@@ -283,7 +283,7 @@ export const createSubscriptionRouter = ({
    *         type: string
    *     responses:
    *       200:
-   *         description: Subscriber succesfully deleted.
+   *         description: Subscriber successfully deleted.
    */
   subscriptionRouter.delete('/:space/subscribers/:subscriber', assertAuthenticatedHandler, (req, res, next) => {
     const { subscriber } = req.params;

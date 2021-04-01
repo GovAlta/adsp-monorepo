@@ -40,7 +40,7 @@ export const createSpaceRouter = ({ logger, spaceRepository }: SpaceRouterProps)
    *         type: string
    *     responses:
    *       200:
-   *         description: Push spaces succesfully retrieved.
+   *         description: Push spaces successfully retrieved.
    *         content:
    *           application/json:
    *             schema:

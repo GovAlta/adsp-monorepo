@@ -1,5 +1,4 @@
 import { IsFQDN, ValidateNested, IsDefined, MinLength } from 'class-validator';
-import { Serivce } from '../../types/directory';
 
 export class Directory {
   @IsDefined()
@@ -7,7 +6,7 @@ export class Directory {
   name: string;
 
   @ValidateNested()
-  services: Serivce[];
+  services: Service[];
 }
 export class Service {
   @IsDefined()

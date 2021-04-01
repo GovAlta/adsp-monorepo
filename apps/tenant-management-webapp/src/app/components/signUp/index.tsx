@@ -7,7 +7,7 @@ function SignUp() {
     <div>
       <Header serviceName="" />
       <Container>
-        <h2>Future signup page</h2>
+        <h2>Future sign up page</h2>
       </Container>
     </div>
   );

@@ -24,5 +24,21 @@
   },
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
+  },
+  "cSpell.words": [
+    "Albertans",
+    "COVID",
+    "abgov",
+    "createkc",
+    "dashify",
+    "filespace",
+    "hasha",
+    "healthcheck",
+    "keycloak",
+    "minlength",
+    "notificationtype",
+    "persistor",
+    "signin",
+    "uuidv"
+  ]
 }

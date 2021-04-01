@@ -29,7 +29,7 @@ const CreateErrorPage = () => {
         </div>
 
         <div className="mb-5" style={{ fontSize: '23px' }}>
-          We appologize for the inconvenience, but we could not successfully activate your tenant. Please try again.
+          We apologize for the inconvenience, but we could not successfully activate your tenant. Please try again.
         </div>
         <div style={{ margin: '35px 0 0 11px' }}>
           <GoAButton onClick={onAddClientRole}>Activate Tenant</GoAButton>

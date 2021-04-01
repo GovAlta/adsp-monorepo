@@ -42,7 +42,7 @@ const createFlowExecutions = async (realm, flowAlias, token, flowId) => {
     }
   } catch (err) {
     throw new TenantError(
-      `Error creating authentificaiton flow executionsm, ${util.inspect(err)}`,
+      `Error creating authentication flow executions, ${util.inspect(err)}`,
       HttpStatusCodes.INSUFFICIENT_SPACE_ON_RESOURCE
     );
   }
@@ -63,19 +63,19 @@ export const creatFlowConfig = (realm, flowAlias, flowId) => {
   return config;
 };
 
-export const createAuthentificationFlow = async (realm) => {
+export const createAuthenticationFlow = async (realm) => {
   try {
     const client = await createkcAdminClient();
 
-    logger.info('Added authentification flow to  tenant public client');
+    logger.info('Added authentication flow to  tenant public client');
     const flowId = uuidv4();
     const authFlow = creatFlowConfig(realm, FLOW_ALIAS, flowId);
     await client.authenticationManagement.createFlow(authFlow);
 
-    // Have issue of creating executions with the authentification flow and try to add executions seperately
+    // Have issue of creating executions with the authentication flow and try to add executions separately
     await createFlowExecutions(realm, FLOW_ALIAS, client.accessToken, flowId);
 
-    logger.info('Start to add authentification flow');
+    logger.info('Start to add authentication flow');
   } catch (err) {
     if (err instanceof TenantError) {
       throw err;
