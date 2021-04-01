@@ -6,7 +6,7 @@ import { TenantError } from './error';
 import * as HttpStatusCodes from 'http-status-codes';
 import * as TenantModel from '../../models/tenant';
 import * as UserModel from '../../models/user';
-import { FLOW_ALIAS, createAuthentificationFlow } from './createAuthenticationFlow';
+import { FLOW_ALIAS, createAuthenticationFlow } from './createAuthenticationFlow';
 import { environment } from '../../../environments/environment';
 
 export const tenantManagementRealm = 'core';
@@ -225,11 +225,11 @@ export const createRealm = async (realm, email) => {
 
     await client.realms.create(realmConfig);
 
-    await createAuthentificationFlow(realm);
+    await createAuthenticationFlow(realm);
 
     client = await createkcAdminClient();
 
-    // IdP shall be created after authentification flow
+    // IdP shall be created after authentication flow
     await client.identityProviders.create(idpConfig);
 
     await createAdminUser(realm, email);

@@ -51,12 +51,12 @@ const AddClientRole = () => {
             your email for the tenant's name.
           </div>
 
-          <label htmlFor="fname" className="siginin-small-title">
+          <label htmlFor="fname" className="signin-small-title">
             Tenant Name
           </label>
           <input className="signin-input" value={name} onChange={onChangeName} />
           <div className="siginin-subset">Names cannot container special characters (ex. ! % &)</div>
-          <label htmlFor="fname" className="siginin-small-title">
+          <label htmlFor="fname" className="signin-small-title">
             Email
           </label>
           <input className="signin-input" value={email} onChange={onChangeEmail} />

@@ -16,14 +16,14 @@ const serviceAuth = (authConfig: ServiceAuthConfig, user) => {
       const realm = user.tokenIssuer.split('/').slice(-1)[0];
 
       if (realm !== authConfig.realm) {
-        logger.warning(`Eexpect realm ${authConfig.realm}, but current realm is ${user.realm}`);
+        logger.warning(`Expect realm ${authConfig.realm}, but current realm is ${user.realm}`);
         return false;
       }
     }
 
     if (authConfig.tenantName) {
       if (user.tenantName !== authConfig.tenantName) {
-        logger.warning(`Eexpect realm ${authConfig.tenantName}, but current realm is ${user.tenantName}`);
+        logger.warning(`Expect realm ${authConfig.tenantName}, but current realm is ${user.tenantName}`);
 
         return false;
       }
@@ -31,7 +31,7 @@ const serviceAuth = (authConfig: ServiceAuthConfig, user) => {
 
     if (authConfig.client) {
       if (user.client != authConfig.client) {
-        logger.warning(`Eexpect realm ${authConfig.client}, but current realm is ${user.client}`);
+        logger.warning(`Expect realm ${authConfig.client}, but current realm is ${user.client}`);
 
         return false;
       }

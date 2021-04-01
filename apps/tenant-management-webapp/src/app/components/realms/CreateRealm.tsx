@@ -38,7 +38,7 @@ const CreateRealm = () => {
     dispatch(IsTenantAdmin(email));
   }, [email]);
 
-  const NewTenatLoginLink = () => {
+  const NewTenantLoginLink = () => {
     const tenantLoginUrl = `/${name}/login`;
     const { isTenantCreated } = useSelector((state: RootState) => ({
       isTenantCreated: state.tenant.isTenantCreated,
@@ -58,7 +58,7 @@ const CreateRealm = () => {
           >
             Tenant Login
           </div>
-          <Link to={tenantLoginUrl}> Clik to tennat login </Link>
+          <Link to={tenantLoginUrl}> Click to tenant login </Link>
         </div>
       </div>
     );
@@ -83,11 +83,11 @@ const CreateRealm = () => {
             <div>
               <div className="mb-6">As a reminder, you are only able to create one tenant per user account</div>
               <br />
-              <label htmlFor="fname" className="siginin-small-title">
+              <label htmlFor="fname" className="signin-small-title">
                 Tenant Name
               </label>
               <input className="signin-input" value={name} onChange={onChangeName} />
-              <div className="siginin-subset">Names cannot container special characters (ex. ! % &)</div>
+              <div className="signin-subset">Names cannot container special characters (ex. ! % &)</div>
               <div style={{ display: 'flex', flexDirection: 'row' }}>
                 <div style={{ margin: '35px 11px 0 0' }}>
                   <GoAButton onClick={backToMain} buttonType="secondary">
@@ -99,7 +99,7 @@ const CreateRealm = () => {
                 </div>
               </div>
             </div>
-            <NewTenatLoginLink />
+            <NewTenantLoginLink />
           </div>
         </Col>
       </Row>

@@ -19,11 +19,11 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
    * /configuration/v1/tenantConfig/:
    *   get:
    *     tags: [ServiceOption]
-   *     description: Retrieves all tenant configuations
+   *     description: Retrieves all tenant configurations
    *
    *     responses:
    *       200:
-   *         description: Tenant configurations succesfully retrieved.
+   *         description: Tenant configurations successfully retrieved.
    */
   tenantConfigRouter.get('/', async (req: Request, res: Response, next) => {
     const { top, after } = req.query;
@@ -46,7 +46,7 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
    * /configuration/v1/tenantConfig/{id}:
    *   get:
    *     tags: [TenantConfig]
-   *     description: Retrieves tenant configuation for a realm.
+   *     description: Retrieves tenant configuration for a realm.
    *     parameters:
    *     - name: id
    *       description: Name of the realm.
@@ -57,7 +57,7 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
    *
    *     responses:
    *       200:
-   *         description: Tenant configuration succesfully retrieved.
+   *         description: Tenant configuration successfully retrieved.
    *       404:
    *         description: Tenant Configuration not found.
    */
@@ -91,7 +91,7 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
    *             $ref: '#.../model/TenantConfigEntity'
    *     responses:
    *       200:
-   *         description: Tenant Configuration succesfully created.
+   *         description: Tenant Configuration successfully created.
    */
   tenantConfigRouter.post('/', async (req: Request, res: Response, next) => {
     const data = req.body;
@@ -137,7 +137,7 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
    *             $ref: '#.../model/TenantConfigEntity'
    *     responses:
    *       200:
-   *         description: Tenant Configuration succesfully created.
+   *         description: Tenant Configuration successfully created.
    *       404:
    *         description: Tenant Configuration not found.
    *       400:
@@ -174,7 +174,7 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
    * /configuration/v1/tenantConfig/id:
    *   delete:
    *     tags: [TenantConfig]
-   *     description: Deletes tenant configuation for a realm.
+   *     description: Deletes tenant configuration for a realm.
    *     parameters:
    *     - name: id
    *       description: Id of the tenant configuration.
@@ -185,7 +185,7 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
    *
    *     responses:
    *       200:
-   *         description: Tenant configuration succesfully deleted.
+   *         description: Tenant configuration successfully deleted.
    *       404:
    *         description: Tenant Configuration not found.
    */

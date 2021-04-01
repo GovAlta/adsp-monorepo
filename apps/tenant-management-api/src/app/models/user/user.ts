@@ -6,7 +6,7 @@ const roleSchema: Schema = new Schema({
       type: Object,
     },
   ],
-  resouces: [
+  resources: [
     {
       type: Object,
     },

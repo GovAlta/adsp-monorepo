@@ -23,7 +23,7 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
    *
    *     responses:
    *       200:
-   *         description: Service options succesfully retrieved.
+   *         description: Service options successfully retrieved.
    */
   serviceOptionRouter.get('/', async (req: Request, res: Response) => {
     const { top, after } = req.query;
@@ -57,7 +57,7 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
    *
    *     responses:
    *       200:
-   *         description: Service options succesfully retrieved.
+   *         description: Service options successfully retrieved.
    *       404:
    *         description: Service not found.
    */
@@ -93,7 +93,7 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
    *
    *     responses:
    *       200:
-   *         description: Service options succesfully created.
+   *         description: Service options successfully created.
    */
   serviceOptionRouter.post('/', async (req: Request, res: Response) => {
     const data = req.body;
@@ -139,7 +139,7 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
    *
    *     responses:
    *       200:
-   *         description: Service options succesfully Updated.
+   *         description: Service options successfully Updated.
    *       404:
    *         description: Service not found.
    */
@@ -172,7 +172,7 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
    * /configuration/v1/serviceOptions/id:
    *   delete:
    *     tags: [TenantConfig]
-   *     description: Deletes service configuation..
+   *     description: Deletes service configuration..
    *     parameters:
    *     - name: id
    *       description: Id of the service.
@@ -183,7 +183,7 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
    *
    *     responses:
    *       200:
-   *         description: Service configuration succesfully deleted.
+   *         description: Service configuration successfully deleted.
    *       404:
    *         description: Service Configuration not found.
    */
