@@ -13,7 +13,7 @@ export const connectMongo = async () => {
 
     const mongoURI = `${mongoHost}/${mongoDb}`;
 
-    logger.info(`Mondodb URI is  ${mongoURI}`);
+    logger.info(`Mongodb URI is  ${mongoURI}`);
 
     const options: ConnectionOptions = {
       user: mongoUser,
@@ -33,7 +33,7 @@ export const connectMongo = async () => {
 };
 
 export const disconnect = async () => {
-  logger.info('MongoDB diconnected...');
+  logger.info('MongoDB disconnected...');
   await connection.close();
   await mongod.stop();
 };

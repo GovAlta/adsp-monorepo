@@ -36,7 +36,7 @@ export const createSpaceRouter = ({ logger, spaceRepository }: SpaceRouterProps)
    *         type: string
    *     responses:
    *       200:
-   *         description: Notification spaces succesfully retrieved.
+   *         description: Notification spaces successfully retrieved.
    *         content:
    *           application/json:
    *             schema:

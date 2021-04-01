@@ -6,7 +6,7 @@ import { logger } from '../../middleware/logger';
 import validationMiddleware from '../../middleware/requestValidator';
 import { Directory } from '../validator/directory/directoryValidator';
 /**
- * Get all of directoies
+ * Get all of directories
  */
 directoryRouter.get('/', async (req, res) => {
   return res.send(await getDirectories());

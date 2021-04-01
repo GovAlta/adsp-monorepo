@@ -88,7 +88,7 @@ describe('File Type Entity', () => {
       expect(canAccess).toBeFalsy();
     });
 
-    it('can check access for anonymouse read', () => {
+    it('can check access for anonymous read', () => {
       entity.anonymousRead = true;
       const canAccess = entity.canAccessFile(null);
       expect(canAccess).toBeTruthy();

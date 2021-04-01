@@ -31,7 +31,7 @@ export const createAdminRouter = ({ logger, spaceRepository, typeRepository }: N
    *         type: string
    *     responses:
    *       200:
-   *         description: Notification types succesfully retrieved.
+   *         description: Notification types successfully retrieved.
    */
   notificationRouter.get('/:space/types', assertAuthenticatedHandler, (req, res, next) => {
     const { space } = req.params;
@@ -72,7 +72,7 @@ export const createAdminRouter = ({ logger, spaceRepository, typeRepository }: N
    *         type: string
    *     responses:
    *       200:
-   *         description: Notification type succesfully retrieved.
+   *         description: Notification type successfully retrieved.
    */
   notificationRouter.get('/:space/types/:type', assertAuthenticatedHandler, (req, res, next) => {
     const { space, type } = req.params;
@@ -164,7 +164,7 @@ export const createAdminRouter = ({ logger, spaceRepository, typeRepository }: N
    *                                 type: string
    *     responses:
    *       200:
-   *         description: Notification type succesfully updated.
+   *         description: Notification type successfully updated.
    */
   notificationRouter.put('/:space/types/:type', assertAuthenticatedHandler, (req, res, next) => {
     const { space, type } = req.params;

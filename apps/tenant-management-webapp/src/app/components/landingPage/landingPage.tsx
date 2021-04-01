@@ -155,7 +155,7 @@ const LandingPage = () => {
                 >
                   <h2 className="mb-3">Integrate it into your system</h2>
                   <div className="mb-3">
-                    Take advantage of secure, cloud-based platform by intergrating DIO Service Platform with your
+                    Take advantage of secure, cloud-based platform by integrating DIO Service Platform with your
                     current system
                   </div>
                   {/*<a href={'/integration'}>

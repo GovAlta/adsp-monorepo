@@ -12,7 +12,7 @@ const options = {
 };
 
 // Have not found any doc to use grant_type client_credentials
-export const tenanApiOptions = {
+export const tenantApiOptions = {
   grantType: 'client_credentials' as const,
   clientId: process.env.KEYCLOAK_TENANT_API_CLIENT || 'tenant-api',
   clientSecret: process.env.KEYCLOAK_TENANT_API_CLIENT_SECRET,
@@ -22,7 +22,7 @@ export function initTenantApi() {
   (async () => {
     try {
       tenantAPIClient = new KcAdminClient(options);
-      await tenantAPIClient.auth(tenanApiOptions);
+      await tenantAPIClient.auth(tenantApiOptions);
       const accessToken = await tenantAPIClient.getAccessToken();
       logger.info('Fetched api-tenant client access token and save it to process.env.KEYCLOAK_TENANT_API_AUTH_TOKEN');
       process.env.KEYCLOAK_TENANT_API_AUTH_TOKEN = accessToken;
@@ -30,7 +30,7 @@ export function initTenantApi() {
     } catch (err) {
       if (process.env.APP_ENVIRONMENT !== 'test') {
         logger.warn(
-          `Error fetch the tenant api token ${err}. Please double check your envrionment variables. Or, we are running the code for testing`
+          `Error fetch the tenant api token ${err}. Please double check your environment variables. Or, we are running the code for testing`
         );
       }
     }

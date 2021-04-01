@@ -29,7 +29,7 @@ export const createAdministrationRouter = ({ logger, eventRepository }: Administ
    *         type: number
    *     responses:
    *       200:
-   *         description: Event definitions succesfully retrieved.
+   *         description: Event definitions successfully retrieved.
    *         content:
    *           application/json:
    *             schema:

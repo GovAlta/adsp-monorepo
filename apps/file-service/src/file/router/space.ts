@@ -43,7 +43,7 @@ export const createSpaceRouter = ({ logger, eventService, spaceRepository }: Spa
    *         type: string
    *     responses:
    *       200:
-   *         description: File spaces succesfully retrieved.
+   *         description: File spaces successfully retrieved.
    *         content:
    *           application/json:
    *             schema:

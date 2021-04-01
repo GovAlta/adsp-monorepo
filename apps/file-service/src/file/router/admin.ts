@@ -44,7 +44,7 @@ export const createAdminRouter = ({
    *         type: string
    *     responses:
    *       200:
-   *         description: File types succesfully retrieved.
+   *         description: File types successfully retrieved.
    *         content:
    *           application/json:
    *             schema:
@@ -293,7 +293,7 @@ export const createAdminRouter = ({
    *         type: string
    *     responses:
    *       200:
-   *         description: Files succesfully retrieved.
+   *         description: Files successfully retrieved.
    *         content:
    *           application/json:
    *             schema:
