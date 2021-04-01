@@ -49,7 +49,7 @@ export const getKeycloakTokenRequestProps = ({
   clientSecret: KEYCLOAK_CLIENT_SECRET,
 });
 
-const authKeyCLoakAdmin = (issuer, kid, done) => {
+const authKeyCloakAdmin = (issuer, kid, done) => {
   const jwksUri = issuer + '/protocol/openid-connect/certs';
   const client = createJwkClient({
     jwksUri: jwksUri,
@@ -91,13 +91,13 @@ const kcKeyProvider = (req, rawJwtToken, done) => {
           if (typeof getTenantName(issuer) === 'undefined') {
             return done(null, null);
           }
-          authKeyCLoakAdmin(issuer, kid, done);
+          authKeyCloakAdmin(issuer, kid, done);
         } else {
           return done(null, null);
         }
       });
     } else {
-      authKeyCLoakAdmin(issuer, kid, done);
+      authKeyCloakAdmin(issuer, kid, done);
     }
   } catch (err) {
     logger.error(err);

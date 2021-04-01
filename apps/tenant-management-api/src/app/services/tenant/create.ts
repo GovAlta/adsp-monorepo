@@ -50,7 +50,7 @@ const createAdminUser = async (realm, email) => {
   };
   const user = await kcClient.users.create(adminUser);
   // Add realm admin roles
-  const realmMangementClient = (
+  const realmManagementClient = (
     await kcClient.clients.find({
       clientId: 'realm-management',
       realm: realm,
@@ -58,14 +58,14 @@ const createAdminUser = async (realm, email) => {
   )[0];
 
   const roles = await kcClient.clients.listRoles({
-    id: realmMangementClient.id,
+    id: realmManagementClient.id,
     realm: realm,
   });
 
   const roleMapping = {
     realm: realm,
     id: user.id,
-    clientUniqueId: realmMangementClient.id,
+    clientUniqueId: realmManagementClient.id,
     roles: [],
   };
 

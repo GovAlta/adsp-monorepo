@@ -1,7 +1,7 @@
 import { FileService } from './models';
 
 export const FETCH_FILE_SPACE = 'tenant/file-service/space/fetch';
-export const FETCH_FILE_SPACE_SUCCESS = 'tenant/file-service/space/fetch/successed';
+export const FETCH_FILE_SPACE_SUCCESS = 'tenant/file-service/space/fetch/success';
 export const FILE_DELETE = 'tenant/file-service/delete';
 export const FILE_DISABLE = 'tenant/file-service/activation/';
 export const FILE_ENABLE = 'tenant/file-service/activation/activate';

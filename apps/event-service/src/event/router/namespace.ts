@@ -36,7 +36,7 @@ export const createNamespaceRouter = ({ logger, eventRepository }: NamespaceRout
    *         type: string
    *     responses:
    *       200:
-   *         description: event namespaces succesfully retrieved.
+   *         description: event namespaces successfully retrieved.
    *         content:
    *           application/json:
    *             schema:
@@ -136,7 +136,7 @@ export const createNamespaceRouter = ({ logger, eventRepository }: NamespaceRout
    *   put:
    *     tags:
    *     - Event Namespace
-   *     description: Create or udpates an event namespace.
+   *     description: Create or updates an event namespace.
    *     parameters:
    *     - name: namespace
    *       description: Name of the event namespace to update.

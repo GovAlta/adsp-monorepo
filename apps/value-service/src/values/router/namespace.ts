@@ -1,11 +1,5 @@
 import { Router } from 'express';
-import {
-  User,
-  assertAuthenticatedHandler,
-  Update,
-  NotFoundError,
-  UnauthorizedError,
-} from '@core-services/core-common';
+import { User, assertAuthenticatedHandler, Update, NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import { ValuesRepository } from '../repository';
 import { NamespaceEntity } from '../model';
 import { Namespace } from '../types';
@@ -15,9 +9,7 @@ interface NamespaceRouterProps {
   valueRepository: ValuesRepository;
 }
 
-export const createNamespaceRouter = ({
-  valueRepository,
-}: NamespaceRouterProps): Router => {
+export const createNamespaceRouter = ({ valueRepository }: NamespaceRouterProps): Router => {
   const namespaceRouter = Router();
 
   /**
@@ -43,7 +35,7 @@ export const createNamespaceRouter = ({
    *         type: string
    *     responses:
    *       200:
-   *         description: Value namespaces succesfully retrieved.
+   *         description: Value namespaces successfully retrieved.
    *         content:
    *           application/json:
    *             schema:
@@ -70,28 +62,22 @@ export const createNamespaceRouter = ({
    *                       adminRole:
    *                         type: string
    */
-  namespaceRouter.get(
-    '/namespaces',
-    assertAuthenticatedHandler,
-    async (req, res, next) => {
-      const user: User = req.user as User;
-      const top: number = parseInt((req.query.top as string) || '10', 10);
-      const after: string = req.query.after as string;
+  namespaceRouter.get('/namespaces', assertAuthenticatedHandler, async (req, res, next) => {
+    const user: User = req.user as User;
+    const top: number = parseInt((req.query.top as string) || '10', 10);
+    const after: string = req.query.after as string;
 
-      try {
-        const result = await valueRepository.getNamespaces(top, after);
+    try {
+      const result = await valueRepository.getNamespaces(top, after);
 
-        res.json({
-          results: result.results
-            .filter((r) => r.canAccess(user))
-            .map(mapNamespace),
-          page: result.page,
-        });
-      } catch (err) {
-        next(err);
-      }
+      res.json({
+        results: result.results.filter((r) => r.canAccess(user)).map(mapNamespace),
+        page: result.page,
+      });
+    } catch (err) {
+      next(err);
     }
-  );
+  });
 
   /**
    * @swagger
@@ -131,26 +117,18 @@ export const createNamespaceRouter = ({
    *       401:
    *         description: User not authorized to create namepace.
    */
-  namespaceRouter.post(
-    '/namespaces',
-    assertAuthenticatedHandler,
-    async (req, res, next) => {
-      const user: User = req.user as User;
-      const namespace: Namespace = req.body;
+  namespaceRouter.post('/namespaces', assertAuthenticatedHandler, async (req, res, next) => {
+    const user: User = req.user as User;
+    const namespace: Namespace = req.body;
 
-      try {
-        const entity = await NamespaceEntity.create(
-          user,
-          valueRepository,
-          namespace
-        );
+    try {
+      const entity = await NamespaceEntity.create(user, valueRepository, namespace);
 
-        res.json(mapNamespace(entity));
-      } catch (err) {
-        next(err);
-      }
+      res.json(mapNamespace(entity));
+    } catch (err) {
+      next(err);
     }
-  );
+  });
 
   /**
    * @swagger
@@ -186,30 +164,24 @@ export const createNamespaceRouter = ({
    *       404:
    *         description: Namespace not found.
    */
-  namespaceRouter.get(
-    '/namespaces/:namespace',
-    assertAuthenticatedHandler,
-    async (req, res, next) => {
-      const user: User = req.user as User;
-      const name: string = req.params.namespace;
+  namespaceRouter.get('/namespaces/:namespace', assertAuthenticatedHandler, async (req, res, next) => {
+    const user: User = req.user as User;
+    const name: string = req.params.namespace;
 
-      try {
-        const entity = await valueRepository.getNamespace(name);
+    try {
+      const entity = await valueRepository.getNamespace(name);
 
-        if (!entity) {
-          throw new NotFoundError('Value Namespace', name);
-        } else if (!entity.canAccess(user)) {
-          throw new UnauthorizedError(
-            'User not authorized to access namespace.'
-          );
-        }
-
-        res.send(mapNamespace(entity));
-      } catch (err) {
-        next(err);
+      if (!entity) {
+        throw new NotFoundError('Value Namespace', name);
+      } else if (!entity.canAccess(user)) {
+        throw new UnauthorizedError('User not authorized to access namespace.');
       }
+
+      res.send(mapNamespace(entity));
+    } catch (err) {
+      next(err);
     }
-  );
+  });
 
   /**
    * @swagger
@@ -256,30 +228,26 @@ export const createNamespaceRouter = ({
    *       401:
    *         description: User not authorized to update value namespace.
    */
-  namespaceRouter.post(
-    '/namespaces/:namespace',
-    assertAuthenticatedHandler,
-    async (req, res, next) => {
-      const user: User = req.user as User;
-      const update: Update<Namespace> = req.body;
-      const name: string = req.params.namespace;
+  namespaceRouter.post('/namespaces/:namespace', assertAuthenticatedHandler, async (req, res, next) => {
+    const user: User = req.user as User;
+    const update: Update<Namespace> = req.body;
+    const name: string = req.params.namespace;
 
-      try {
-        const entity = await valueRepository.getNamespace(name);
+    try {
+      const entity = await valueRepository.getNamespace(name);
 
-        entity.update(user, update);
+      entity.update(user, update);
 
-        res.json({
-          name: entity.name,
-          description: entity.description,
-          definitions: entity.definitions,
-          adminRole: entity.adminRole,
-        });
-      } catch (err) {
-        next(err);
-      }
+      res.json({
+        name: entity.name,
+        description: entity.description,
+        definitions: entity.definitions,
+        adminRole: entity.adminRole,
+      });
+    } catch (err) {
+      next(err);
     }
-  );
+  });
 
   return namespaceRouter;
 };

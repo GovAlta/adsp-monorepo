@@ -20,7 +20,7 @@ export class ApiError extends Error {
     return {
       code: this.statusCode,
       message: this.message,
-      isOpertional: this.isOperational,
+      isOperational: this.isOperational,
     };
   };
 }

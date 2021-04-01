@@ -20,7 +20,7 @@ describe('Tenant Entity', () => {
     done();
   });
 
-  it('can fetch user by eamil', async (done) => {
+  it('can fetch user by email', async (done) => {
     const email = 'mock.user@gov.ab.ca';
     const response = await UserModel.findUserByEmail(email);
     expect(response.user.email).toEqual(email);

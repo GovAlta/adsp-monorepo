@@ -75,7 +75,7 @@ const validateServices = (services) => {
 };
 
 export const discovery = async (urn) => {
-  //reslove the urn to object
+  //resolve the urn to object
   logger.info(`Starting discover URL for urn ${urn}`);
   const component: URNComponent = {};
   const urnArray = urn.toLowerCase().split(URN_SEPARATOR);
@@ -228,7 +228,7 @@ export const updateDirectory = async (directories) => {
 
 export const deleteDirectory = async (name: string) => {
   try {
-    logger.info(`Start delete diretory :  ${name}...`);
+    logger.info(`Start delete directory :  ${name}...`);
     await Directory.deleteMany({ name: name.toLowerCase() });
 
     return HttpStatusCodes.ACCEPTED;
