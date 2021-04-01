@@ -21,8 +21,8 @@ export async function createkcAdminClient(opts?: Options): Promise<KcAdminClient
     username: process.env.KEYCLOAK_TENANT_API_CLIENT,
     password: process.env.KEYCLOAK_TENANT_API_CLIENT_SECRET,
     grantType: 'client_credentials',
-    clientId: process.env.KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_ID || 'tenant-realm-admin',
-    clientSecret: process.env.KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_SECRET,
+    clientId: environment.KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_ID,
+    clientSecret: environment.KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_SECRET,
   });
 
   return Promise.resolve(client);
