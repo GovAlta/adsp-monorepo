@@ -3,8 +3,8 @@ import { InvalidOperationError } from '@core-services/core-common';
 import { EventDefinition } from './types';
 
 export interface ValidationService {
-  validate(valueDefinition: EventDefinition, value: unknown): boolean
-  setSchema(definition: EventDefinition): void
+  validate(valueDefinition: EventDefinition, value: unknown): boolean;
+  setSchema(definition: EventDefinition): void;
 }
 
 export class AjvValidationService implements ValidationService {
@@ -17,25 +17,17 @@ export class AjvValidationService implements ValidationService {
   setSchema(definition: EventDefinition) {
     const schemaKey = this.getSchemaKey(definition);
     try {
-      this.ajv.removeSchema(schemaKey)
-      .addSchema(
-        definition.payloadSchema || {}, 
-        schemaKey
-      );
-    }
-    catch (err) {
+      this.ajv.removeSchema(schemaKey).addSchema(definition.payloadSchema || {}, schemaKey);
+    } catch (err) {
       throw new InvalidOperationError('Schema is invalid.');
     }
   }
-  
+
   validate(definition: EventDefinition, value: unknown) {
-    return this.ajv.validate(
-      this.getSchemaKey(definition), 
-      value
-    ) as boolean;
+    return this.ajv.validate(this.getSchemaKey(definition), value) as boolean;
   }
 
   private getSchemaKey(definition: EventDefinition) {
-    return `value:${this.namespace}:${definition.name}`
+    return `value:${this.namespace}:${definition.name}`;
   }
 }

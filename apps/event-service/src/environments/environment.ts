@@ -16,5 +16,5 @@ export const environment = {
   PORT: 3334,
   VALUE_SERVICE_URL: 'http://localhost:3336',
   ...env,
-  production: env.NODE_ENV === 'production'
+  production: env.NODE_ENV === 'production',
 };

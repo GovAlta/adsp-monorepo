@@ -30,7 +30,7 @@ const Directory: Model<DirectoryMap> = model('directory', directorySchema);
 export const createDirectory = (directories) => {
   Directory.create(directories, (err) => {
     if (err) {
-       return err;
+      return err;
     }
   });
   return '201';

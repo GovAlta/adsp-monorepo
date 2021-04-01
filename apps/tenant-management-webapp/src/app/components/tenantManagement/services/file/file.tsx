@@ -39,7 +39,7 @@ const APIIntegration = () => {
 const TabsForSetup = () => {
   const { isActive, activeTab } = useSelector((state: RootState) => ({
     isActive: state.file.status.isActive,
-    activeTab: state.file.states.activeTab
+    activeTab: state.file.states.activeTab,
   }));
 
   const dispatch = useDispatch();
@@ -96,7 +96,7 @@ export default function File() {
   const setupRequired = useSelector((state: RootState) => state.file.requirements.setup);
 
   useEffect(() => {
-    dispatch(FetchFileSpace())
+    dispatch(FetchFileSpace());
   }, [dispatch]);
 
   const FileOverviewTab = setupRequired ? <TabsForInit /> : <TabsForSetup />;

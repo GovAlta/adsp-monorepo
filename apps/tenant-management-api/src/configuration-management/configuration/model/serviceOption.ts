@@ -8,19 +8,13 @@ export class ServiceOptionEntity implements ServiceOption {
   version: string;
   configOptions: JSON;
 
-  constructor(
-    private repository: ServiceConfigurationRepository,
-    serviceOption: ServiceOption
-  ) {
+  constructor(private repository: ServiceConfigurationRepository, serviceOption: ServiceOption) {
     this.service = serviceOption.service;
     this.id = serviceOption.id;
     this.version = serviceOption.version;
     this.configOptions = serviceOption.configOptions;
   }
-  static create(
-    repository: ServiceConfigurationRepository,
-    serviceOption: ServiceOption
-  ) {
+  static create(repository: ServiceConfigurationRepository, serviceOption: ServiceOption) {
     const entity = new ServiceOptionEntity(repository, serviceOption);
 
     return repository.save(entity);

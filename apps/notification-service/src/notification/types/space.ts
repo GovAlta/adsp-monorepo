@@ -1,6 +1,6 @@
 export interface NotificationSpace {
-  id: string
-  name: string
-  spaceAdminRole: string
-  subscriberAdminRole: string
+  id: string;
+  name: string;
+  spaceAdminRole: string;
+  subscriberAdminRole: string;
 }

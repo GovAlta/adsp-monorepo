@@ -4,8 +4,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 
 function Notifications() {
-
-  const notificationServiceUrl = useSelector((state: RootState) => state.config.serviceUrls.notificationServiceUrl)
+  const notificationServiceUrl = useSelector((state: RootState) => state.config.serviceUrls.notificationServiceUrl);
 
   return (
     <Container>

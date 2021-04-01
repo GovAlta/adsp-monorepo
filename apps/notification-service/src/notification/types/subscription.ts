@@ -1,13 +1,13 @@
 export interface SubscriptionCriteria {
-  correlationId?: string
+  correlationId?: string;
   context?: {
-    [key: string]: unknown
-  }
+    [key: string]: unknown;
+  };
 }
 
 export interface Subscription {
-  spaceId: string
-  typeId: string
-  criteria: SubscriptionCriteria
-  subscriberId: string
+  spaceId: string;
+  typeId: string;
+  criteria: SubscriptionCriteria;
+  subscriberId: string;
 }

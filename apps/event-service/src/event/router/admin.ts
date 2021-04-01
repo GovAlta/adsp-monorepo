@@ -5,23 +5,19 @@ import { EventRepository } from '../repository';
 import { mapEventDefinition } from './mappers';
 
 interface AdministrationRouterProps {
-  logger: Logger
-  eventRepository: EventRepository
+  logger: Logger;
+  eventRepository: EventRepository;
 }
 
-export const createAdministrationRouter = ({
-  logger,
-  eventRepository
-}: AdministrationRouterProps): Router => {
-
+export const createAdministrationRouter = ({ logger, eventRepository }: AdministrationRouterProps): Router => {
   const administrationRouter = Router();
-  
+
   /**
    * @swagger
    *
    * /event-admin/v1/{namespace}/definitions:
    *   get:
-   *     tags: 
+   *     tags:
    *     - Event Administration
    *     description: Retrieves event definitions in a namespace.
    *     parameters:
@@ -41,9 +37,9 @@ export const createAdministrationRouter = ({
    *               items:
    *                 type: object
    *                 properties:
-   *                   namespace: 
+   *                   namespace:
    *                     type: string
-   *                   name: 
+   *                   name:
    *                     type: string
    *                   description:
    *                     type: string
@@ -51,16 +47,14 @@ export const createAdministrationRouter = ({
    *                     type: object
    *                   sendRoles:
    *                     type: array
-   *                     items: 
+   *                     items:
    *                       type: string
    */
-  administrationRouter.get(
-    '/:namespace/definitions',
-    assertAuthenticatedHandler,
-    (req, res, next) => {
-      const user = req.user as User;
-      const { namespace } = req.params;
-      eventRepository.getNamespace(namespace)
+  administrationRouter.get('/:namespace/definitions', assertAuthenticatedHandler, (req, res, next) => {
+    const user = req.user as User;
+    const { namespace } = req.params;
+    eventRepository
+      .getNamespace(namespace)
       .then((entity) => {
         if (!entity) {
           throw new NotFoundError('Event Namespace', namespace);
@@ -69,24 +63,20 @@ export const createAdministrationRouter = ({
         }
         return entity;
       })
-      .then((entity) => 
+      .then((entity) =>
         res.send(
-          Object.entries(entity.definitions)
-          .map(([_key, definition]) => 
-            mapEventDefinition(namespace, definition)
-          )
+          Object.entries(entity.definitions).map(([_key, definition]) => mapEventDefinition(namespace, definition))
         )
       )
-      .catch(err => next(err));
-    }
-  );
+      .catch((err) => next(err));
+  });
 
   /**
    * @swagger
    *
    * /event-admin/v1/{namespace}/definitions/{definition}:
    *   get:
-   *     tags: 
+   *     tags:
    *     - Event Administration
    *     description: Retrieves an event definitions in a namespace.
    *     parameters:
@@ -112,9 +102,9 @@ export const createAdministrationRouter = ({
    *               items:
    *                 type: object
    *                 properties:
-   *                   namespace: 
+   *                   namespace:
    *                     type: string
-   *                   name: 
+   *                   name:
    *                     type: string
    *                   description:
    *                     type: string
@@ -122,16 +112,14 @@ export const createAdministrationRouter = ({
    *                     type: object
    *                   sendRoles:
    *                     type: array
-   *                     items: 
+   *                     items:
    *                       type: string
    */
-  administrationRouter.get(
-    '/:namespace/definitions/:name',
-    assertAuthenticatedHandler,
-    (req, res, next) => {
-      const user = req.user as User;
-      const { namespace, name } = req.params;
-      eventRepository.getNamespace(namespace)
+  administrationRouter.get('/:namespace/definitions/:name', assertAuthenticatedHandler, (req, res, next) => {
+    const user = req.user as User;
+    const { namespace, name } = req.params;
+    eventRepository
+      .getNamespace(namespace)
       .then((entity) => {
         if (!entity) {
           throw new NotFoundError('Event Namespace', namespace);
@@ -143,23 +131,20 @@ export const createAdministrationRouter = ({
       .then((entity) => {
         const definition = entity.definitions[name];
         if (!definition) {
-          throw new NotFoundError('Event Definition', `${namespace}:${name}`)
+          throw new NotFoundError('Event Definition', `${namespace}:${name}`);
         }
         return definition;
       })
-      .then((definition) => 
-        res.send(mapEventDefinition(namespace, definition))
-      )
-      .catch(err => next(err));
-    }
-  );
+      .then((definition) => res.send(mapEventDefinition(namespace, definition)))
+      .catch((err) => next(err));
+  });
 
   /**
    * @swagger
    *
    * /event-admin/v1/{namespace}/definitions/{definition}:
    *   put:
-   *     tags: 
+   *     tags:
    *     - Event Administration
    *     description: Creates or updates an event definitions in a namespace.
    *     parameters:
@@ -188,7 +173,7 @@ export const createAdministrationRouter = ({
    *                 type: object
    *               sendRoles:
    *                 type: array
-   *                 items: 
+   *                 items:
    *                   type: string
    *     responses:
    *       '200':
@@ -200,9 +185,9 @@ export const createAdministrationRouter = ({
    *               items:
    *                 type: object
    *                 properties:
-   *                   namespace: 
+   *                   namespace:
    *                     type: string
-   *                   name: 
+   *                   name:
    *                     type: string
    *                   description:
    *                     type: string
@@ -210,46 +195,37 @@ export const createAdministrationRouter = ({
    *                     type: object
    *                   sendRoles:
    *                     type: array
-   *                     items: 
+   *                     items:
    *                       type: string
    */
-  administrationRouter.put(
-    '/:namespace/definitions/:name',
-    assertAuthenticatedHandler,
-    (req, res, next) => {
-      const user = req.user as User;
-      const namespace = req.params.namespace;
-      const name = req.params.name;
-      eventRepository.getNamespace(namespace)
+  administrationRouter.put('/:namespace/definitions/:name', assertAuthenticatedHandler, (req, res, next) => {
+    const user = req.user as User;
+    const namespace = req.params.namespace;
+    const name = req.params.name;
+    eventRepository
+      .getNamespace(namespace)
       .then((entity) => {
-        if(!entity) {
+        if (!entity) {
           throw new NotFoundError('Namespace', namespace);
         }
         return entity;
       })
-      .then((entity) => 
-        entity.definitions[name] ?
-          entity.updateDefinition(user, name, req.body) :
-          entity.addDefinition(user, {...req.body, name, namespace})
+      .then((entity) =>
+        entity.definitions[name]
+          ? entity.updateDefinition(user, name, req.body)
+          : entity.addDefinition(user, { ...req.body, name, namespace })
       )
-      .then((entity) => 
-        res.send(mapEventDefinition(namespace, entity))
-      )
-      .then(() => 
-        logger.info(
-          `Event definition ${namespace}:${name} updated by user ${user.name} (ID: ${user.id}).`
-        )
-      )
-      .catch(err => next(err));
-    }
-  );
+      .then((entity) => res.send(mapEventDefinition(namespace, entity)))
+      .then(() => logger.info(`Event definition ${namespace}:${name} updated by user ${user.name} (ID: ${user.id}).`))
+      .catch((err) => next(err));
+  });
 
   /**
    * @swagger
    *
    * /event-admin/v1/{namespace}/definitions/{definition}:
    *   delete:
-   *     tags: 
+   *     tags:
    *     - Event Administration
    *     description: Deletes an event definitions in a namespace.
    *     parameters:
@@ -276,34 +252,23 @@ export const createAdministrationRouter = ({
    *                 deleted:
    *                   type: boolean
    */
-  administrationRouter.delete(
-    '/:namespace/definitions/:name',
-    assertAuthenticatedHandler,
-    (req, res, next) => {
-      const user = req.user as User;
-      const namespace = req.params.namespace;
-      const name = req.params.name;
-      eventRepository.getNamespace(namespace)
+  administrationRouter.delete('/:namespace/definitions/:name', assertAuthenticatedHandler, (req, res, next) => {
+    const user = req.user as User;
+    const namespace = req.params.namespace;
+    const name = req.params.name;
+    eventRepository
+      .getNamespace(namespace)
       .then((entity) => {
-        if(!entity) {
+        if (!entity) {
           throw new NotFoundError('Namespace', namespace);
         }
         return entity;
       })
-      .then((entity) => 
-        entity.removeDefinition(user, name)
-      )
-      .then((deleted) => 
-        res.send({ deleted })
-      )
-      .then(() => 
-        logger.info(
-          `Event definition ${namespace}:${name} deleted by user ${user.name} (ID: ${user.id}).`
-        )
-      )
-      .catch(err => next(err));
-    }
-  )
+      .then((entity) => entity.removeDefinition(user, name))
+      .then((deleted) => res.send({ deleted }))
+      .then(() => logger.info(`Event definition ${namespace}:${name} deleted by user ${user.name} (ID: ${user.id}).`))
+      .catch((err) => next(err));
+  });
 
   return administrationRouter;
-}
+};

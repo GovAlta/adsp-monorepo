@@ -2,19 +2,19 @@ import { User, DomainEvent } from '@core-services/core-common';
 import { File } from '../types';
 
 interface FileEvent extends DomainEvent {
-  namespace: 'File'
-  space: string
-  type: string
-  file: Omit<File, 'storage' | 'deleted'>
+  namespace: 'File';
+  space: string;
+  type: string;
+  file: Omit<File, 'storage' | 'deleted'>;
 }
 
 interface FileCreatedEvent extends FileEvent {
-  name: 'File Created'
+  name: 'File Created';
 }
 
 interface FileDeletedEvent extends FileEvent {
-  name: 'File Deleted'
-  deletedBy: string
+  name: 'File Deleted';
+  deletedBy: string;
 }
 
 export const createdFile = (
@@ -28,8 +28,8 @@ export const createdFile = (
   correlationId: file.id,
   space,
   type,
-  file
-})
+  file,
+});
 
 export const deletedFile = (
   space: string,
@@ -45,5 +45,5 @@ export const deletedFile = (
   space,
   type,
   file,
-  deletedBy: `${deletedBy.name} (ID: ${deletedBy.id})`
-})
+  deletedBy: `${deletedBy.name} (ID: ${deletedBy.id})`,
+});

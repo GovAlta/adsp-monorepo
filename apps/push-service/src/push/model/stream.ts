@@ -15,22 +15,11 @@ export class StreamEntity implements Stream {
 
   stream: Observable<object & Pick<DomainEvent, 'correlationId' | 'context'>>;
 
-  static create(
-    repository: StreamRepository, 
-    space: PushSpaceEntity, 
-    id: string, 
-    stream: New<Stream>
-  ) {
-    return repository.save(
-      new StreamEntity(repository, space, {...stream, spaceId: space.id, id})
-    );
+  static create(repository: StreamRepository, space: PushSpaceEntity, id: string, stream: New<Stream>) {
+    return repository.save(new StreamEntity(repository, space, { ...stream, spaceId: space.id, id }));
   }
 
-  constructor(
-    private repository: StreamRepository, 
-    public space: PushSpaceEntity, 
-    stream: Stream
-  ) {
+  constructor(private repository: StreamRepository, public space: PushSpaceEntity, stream: Stream) {
     this.id = stream.id;
     this.spaceId = stream.spaceId;
     this.name = stream.name;
@@ -43,45 +32,32 @@ export class StreamEntity implements Stream {
       this.stream = events.pipe(
         map((event) => [
           event,
-          this.events.find(se => 
-            event.namespace === se.namespace &&
-            event.name === se.name &&
-            this.isMatch(event, se.criteria)
-          )
+          this.events.find(
+            (se) => event.namespace === se.namespace && event.name === se.name && this.isMatch(event, se.criteria)
+          ),
         ]),
         filter(([_, streamEvent]) => !!streamEvent),
-        map(([event, streamEvent]: [DomainEvent, StreamEvent]) => 
-          this.mapEvent(event, streamEvent)
-        )
-      )
+        map(([event, streamEvent]: [DomainEvent, StreamEvent]) => this.mapEvent(event, streamEvent))
+      );
     }
     return this;
   }
 
-  private isMatch(
-    event: Pick<DomainEvent, 'correlationId' | 'context'>, 
-    criteria?: EventCriteria
-  ) {
-    return !criteria || (
-        !(
-          criteria.correlationId && 
-          criteria.correlationId !== event.correlationId
-        ) &&
-        !(
-          criteria.context &&
-          !_.isEqual(criteria.context, event.context)
-        )
-      )
+  private isMatch(event: Pick<DomainEvent, 'correlationId' | 'context'>, criteria?: EventCriteria) {
+    return (
+      !criteria ||
+      (!(criteria.correlationId && criteria.correlationId !== event.correlationId) &&
+        !(criteria.context && !_.isEqual(criteria.context, event.context)))
+    );
   }
 
   private mapEvent(event: DomainEvent, streamEvent: StreamEvent) {
-    return streamEvent.map ? 
-      Object.entries(streamEvent.map)
-      .reduce(
-        (o, [k, p]) => ({...o, [k]: _.get(event, p, undefined)}), 
-        { correlationId: event.correlationId, context: event.context }
-      ) : 
-      {...event}
+    return streamEvent.map
+      ? Object.entries(streamEvent.map).reduce((o, [k, p]) => ({ ...o, [k]: _.get(event, p, undefined) }), {
+          correlationId: event.correlationId,
+          context: event.context,
+        })
+      : { ...event };
   }
 
   canAccess(user: User) {
@@ -89,21 +65,14 @@ export class StreamEntity implements Stream {
   }
 
   canSubscribe(user: User) {
-    return user && 
-      user.roles &&
-      user.roles.find(r => 
-        this.subscriberRoles.includes(r)
-      );
+    return user && user.roles && user.roles.find((r) => this.subscriberRoles.includes(r));
   }
 
   canUpdate(user: User) {
     return this.space.canUpdate(user);
   }
 
-  getEvents(
-    user: User,
-    criteria?: EventCriteria
-  ) {
+  getEvents(user: User, criteria?: EventCriteria) {
     if (!this.canSubscribe(user)) {
       throw new UnauthorizedError('User not authorized to access stream.');
     }
@@ -111,10 +80,8 @@ export class StreamEntity implements Stream {
     if (!this.stream) {
       throw new InvalidOperationError('Stream not connected.');
     }
-    
-    return this.stream.pipe(
-      filter((o) => this.isMatch(o, criteria))
-    );
+
+    return this.stream.pipe(filter((o) => this.isMatch(o, criteria)));
   }
 
   update(user: User, update: Update<Stream>) {
@@ -133,7 +100,7 @@ export class StreamEntity implements Stream {
     if (update.events) {
       this.events = update.events;
     }
-    
+
     return this.repository.save(this);
   }
 

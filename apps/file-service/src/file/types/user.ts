@@ -1,3 +1,3 @@
 export enum ServiceUserRoles {
-  Admin = 'file-service-admin'
+  Admin = 'file-service-admin',
 }

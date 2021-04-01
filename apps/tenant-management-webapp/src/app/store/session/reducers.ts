@@ -14,7 +14,7 @@ export default function (state: Session = SESSION_INIT, action: ActionType): Ses
         ...state,
         credentials: {
           ...state.credentials,
-          ...action.payload
+          ...action.payload,
         },
       };
 

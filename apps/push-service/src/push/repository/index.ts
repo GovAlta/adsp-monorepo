@@ -5,7 +5,7 @@ export * from './space';
 export * from './stream';
 
 export interface Repositories {
-  spaceRepository: PushSpaceRepository
-  streamRepository: StreamRepository
-  isConnected(): boolean
+  spaceRepository: PushSpaceRepository;
+  streamRepository: StreamRepository;
+  isConnected(): boolean;
 }

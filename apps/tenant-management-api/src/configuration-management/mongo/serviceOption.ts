@@ -1,19 +1,9 @@
-import {
-  Doc,
-  Results,
-  decodeAfter,
-  encodeNext,
-} from '@core-services/core-common';
+import { Doc, Results, decodeAfter, encodeNext } from '@core-services/core-common';
 import { model, Types } from 'mongoose';
-import {
-  ServiceConfigurationRepository,
-  ServiceOptionEntity,
-  ServiceOption,
-} from '../configuration';
+import { ServiceConfigurationRepository, ServiceOptionEntity, ServiceOption } from '../configuration';
 import { serviceOptionSchema } from './schema';
 
-export class MongoServiceOptionRepository
-  implements ServiceConfigurationRepository {
+export class MongoServiceOptionRepository implements ServiceConfigurationRepository {
   private serviceModel;
 
   constructor() {
@@ -42,11 +32,7 @@ export class MongoServiceOptionRepository
     });
   }
 
-  findServiceOptions(
-    service: string,
-    top: number,
-    after: string
-  ): Promise<Results<ServiceOptionEntity>> {
+  findServiceOptions(service: string, top: number, after: string): Promise<Results<ServiceOptionEntity>> {
     const skip = decodeAfter(after);
     return new Promise<Results<ServiceOptionEntity>>((resolve, reject) => {
       this.serviceModel
@@ -68,14 +54,10 @@ export class MongoServiceOptionRepository
     });
   }
 
-  getConfigOptionByVersion(
-    service: string,
-    version: string
-  ): Promise<ServiceOptionEntity> {
+  getConfigOptionByVersion(service: string, version: string): Promise<ServiceOptionEntity> {
     return new Promise<ServiceOptionEntity>((resolve, reject) =>
-      this.serviceModel.findOne(
-        { service: service, version: version },
-        (err, doc) => (err ? reject(err) : resolve(this.fromDoc(doc)))
+      this.serviceModel.findOne({ service: service, version: version }, (err, doc) =>
+        err ? reject(err) : resolve(this.fromDoc(doc))
       )
     );
   }
@@ -107,9 +89,8 @@ export class MongoServiceOptionRepository
 
   delete(entity: ServiceOptionEntity): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) =>
-      this.serviceModel.findOneAndDelete(
-        { service: entity.service },
-        (err, doc) => (err ? reject(err) : resolve(!!doc))
+      this.serviceModel.findOneAndDelete({ service: entity.service }, (err, doc) =>
+        err ? reject(err) : resolve(!!doc)
       )
     );
   }

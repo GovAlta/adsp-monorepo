@@ -6,21 +6,14 @@ export class PushSpaceEntity implements PushSpace {
   id: string;
   name: string;
   adminRole: string;
-  
+
   @AssertRole('create push space', ServiceUserRoles.Admin)
-  static create(
-    user: User, 
-    repository: PushSpaceRepository, 
-    space: PushSpace
-  ) {
+  static create(user: User, repository: PushSpaceRepository, space: PushSpace) {
     const entity = new PushSpaceEntity(repository, space);
     return repository.save(entity);
   }
 
-  constructor(
-    private repository: PushSpaceRepository, 
-    space: PushSpace
-  ) {
+  constructor(private repository: PushSpaceRepository, space: PushSpace) {
     this.id = space.id;
     this.name = space.name;
     this.adminRole = space.adminRole;
@@ -43,16 +36,10 @@ export class PushSpaceEntity implements PushSpace {
   }
 
   canAccess(user: User) {
-    return user && (
-      user.roles.includes(ServiceUserRoles.Admin) ||
-      user.roles.includes(this.adminRole)
-    );
+    return user && (user.roles.includes(ServiceUserRoles.Admin) || user.roles.includes(this.adminRole));
   }
 
   canUpdate(user: User) {
-    return user &&  (
-      user.roles.includes(ServiceUserRoles.Admin) ||
-      user.roles.includes(this.adminRole)
-    );
+    return user && (user.roles.includes(ServiceUserRoles.Admin) || user.roles.includes(this.adminRole));
   }
 }

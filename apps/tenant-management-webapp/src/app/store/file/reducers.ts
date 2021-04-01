@@ -56,7 +56,7 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
       };
 
     case FILE_SET_ACTIVE_TAB:
-      console.log(action.payload)
+      console.log(action.payload);
       return {
         ...state,
         states: {

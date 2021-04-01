@@ -7,7 +7,7 @@ import { FileTypeEntity } from './type';
 import { FileSpaceEntity } from './space';
 
 jest.mock('mkdirp', () => jest.fn(() => Promise.resolve()));
-const mkdirpMock = mkdirp as unknown as jest.Mock<typeof mkdirp>;
+const mkdirpMock = (mkdirp as unknown) as jest.Mock<typeof mkdirp>;
 
 describe('File Space Entity', () => {
   const user: User = {
@@ -15,8 +15,8 @@ describe('File Space Entity', () => {
     name: 'testy',
     email: 'test@testco.org',
     organizationId: null,
-    roles: [ServiceUserRoles.Admin]
-  }
+    roles: [ServiceUserRoles.Admin],
+  };
 
   const space: FileSpace = {
     id: 'test',
@@ -28,41 +28,32 @@ describe('File Space Entity', () => {
         name: 'Type A',
         anonymousRead: false,
         readRoles: [],
-        updateRoles: []
-      }
-    }
-  }
-  
+        updateRoles: [],
+      },
+    },
+  };
+
   const storagePath = 'files';
 
   let repositoryMock: Mock<FileSpaceRepository> = null;
 
   beforeEach(() => {
     repositoryMock = new Mock<FileSpaceRepository>();
-    repositoryMock.setup(m => 
-      m.save(It.IsAny())
-    ).callback(i => Promise.resolve(i.args[0]));
+    repositoryMock.setup((m) => m.save(It.IsAny())).callback((i) => Promise.resolve(i.args[0]));
   });
 
   it('can be initialized', () => {
-    const entity = new FileSpaceEntity(
-      repositoryMock.object(), 
-      space
-    );
+    const entity = new FileSpaceEntity(repositoryMock.object(), space);
 
     expect(entity).toBeTruthy();
     expect(entity.id).toEqual(space.id);
     expect(entity.name).toEqual(space.name);
     expect(entity.spaceAdminRole).toEqual(entity.spaceAdminRole);
-    expect(entity.types['a']).toBeInstanceOf(FileTypeEntity)
+    expect(entity.types['a']).toBeInstanceOf(FileTypeEntity);
   });
 
   it('can create new', (done) => {
-    FileSpaceEntity.create(
-      user, 
-      repositoryMock.object(),
-      space
-    ).then((entity) => {
+    FileSpaceEntity.create(user, repositoryMock.object(), space).then((entity) => {
       expect(entity).toBeTruthy();
       done();
     });
@@ -73,8 +64,8 @@ describe('File Space Entity', () => {
       FileSpaceEntity.create(
         {
           ...user,
-          roles: []
-        }, 
+          roles: [],
+        },
         repositoryMock.object(),
         space
       );
@@ -84,10 +75,7 @@ describe('File Space Entity', () => {
   describe('instance', () => {
     let entity: FileSpaceEntity = null;
     beforeEach(() => {
-      entity = new FileSpaceEntity(
-        repositoryMock.object(),
-        space
-      )
+      entity = new FileSpaceEntity(repositoryMock.object(), space);
     });
 
     it('can get path', () => {
@@ -98,12 +86,10 @@ describe('File Space Entity', () => {
     it('can update', (done) => {
       const update = {
         name: 'new-name',
-        spaceAdminRole: 'new-admin'
-      }
+        spaceAdminRole: 'new-admin',
+      };
 
-      entity.update(
-        user, update
-      ).then((result) => {
+      entity.update(user, update).then((result) => {
         expect(result.name).toEqual(update.name);
         expect(result.spaceAdminRole).toEqual(update.spaceAdminRole);
         done();
@@ -115,10 +101,10 @@ describe('File Space Entity', () => {
         entity.update(
           {
             ...user,
-            roles: []
-          }, 
+            roles: [],
+          },
           {
-            name: 'new-name'
+            name: 'new-name',
           }
         );
       }).toThrowError(UnauthorizedError);
@@ -132,7 +118,7 @@ describe('File Space Entity', () => {
     it('can check access for user with space admin role', () => {
       const canAccess = entity.canAccess({
         ...user,
-        roles: ['test-admin']
+        roles: ['test-admin'],
       });
       expect(canAccess).toBeTruthy();
     });
@@ -140,7 +126,7 @@ describe('File Space Entity', () => {
     it('can check access for user without role', () => {
       const canAccess = entity.canAccess({
         ...user,
-        roles: []
+        roles: [],
       });
       expect(canAccess).toBeFalsy();
     });
@@ -158,7 +144,7 @@ describe('File Space Entity', () => {
     it('can check update for user with space admin role', () => {
       const canUpdate = entity.canUpdate({
         ...user,
-        roles: ['test-admin']
+        roles: ['test-admin'],
       });
       expect(canUpdate).toBeTruthy();
     });
@@ -166,7 +152,7 @@ describe('File Space Entity', () => {
     it('can check update for user without role', () => {
       const canUpdate = entity.canUpdate({
         ...user,
-        roles: []
+        roles: [],
       });
       expect(canUpdate).toBeFalsy();
     });
@@ -177,24 +163,19 @@ describe('File Space Entity', () => {
     });
 
     it('can add type', (done) => {
-      entity.addType(
-        user,
-        storagePath,
-        'test',
-        {
+      entity
+        .addType(user, storagePath, 'test', {
           name: 'test',
           anonymousRead: false,
           readRoles: [],
-          updateRoles: []
-        }
-      ).then((result) => {
-        const type = result.types['test'];
-        expect(type).toBeTruthy();
-        expect(
-          mkdirpMock.mock.calls[0][0]
-        ).toEqual(`${storagePath}/${entity.id}/test`);
-        done();
-      });
+          updateRoles: [],
+        })
+        .then((result) => {
+          const type = result.types['test'];
+          expect(type).toBeTruthy();
+          expect(mkdirpMock.mock.calls[0][0]).toEqual(`${storagePath}/${entity.id}/test`);
+          done();
+        });
     });
 
     it('can prevent unauthorized add type', () => {
@@ -202,7 +183,7 @@ describe('File Space Entity', () => {
         entity.addType(
           {
             ...user,
-            roles: []
+            roles: [],
           },
           storagePath,
           'test',
@@ -210,56 +191,40 @@ describe('File Space Entity', () => {
             name: 'test',
             anonymousRead: false,
             readRoles: [],
-            updateRoles: []
+            updateRoles: [],
           }
-        )
+        );
       }).toThrowError(UnauthorizedError);
     });
 
     it('can prevent add existing type', () => {
       expect(() => {
-        entity.addType(
-          user, 
-          storagePath, 
-          'a', 
-          {
-            name: 'a',
-            anonymousRead: false,
-            readRoles: [],
-            updateRoles: []
-          }
-        )
+        entity.addType(user, storagePath, 'a', {
+          name: 'a',
+          anonymousRead: false,
+          readRoles: [],
+          updateRoles: [],
+        });
       }).toThrowError(InvalidOperationError);
     });
 
     it('can prevent add type with invalid id', () => {
       expect(() => {
-        entity.addType(
-          user, 
-          storagePath, 
-          '../a', 
-          {
-            name: '../a',
-            anonymousRead: false,
-            readRoles: [],
-            updateRoles: []
-          }
-        )
+        entity.addType(user, storagePath, '../a', {
+          name: '../a',
+          anonymousRead: false,
+          readRoles: [],
+          updateRoles: [],
+        });
       }).toThrowError(InvalidOperationError);
     });
 
     it('can update type', (done) => {
       const update = {
-        anonymousRead: true
-      }
-      entity.updateType(
-        user, 
-        'a', 
-        update
-      ).then((result) => {
-        expect(
-          result.types['a'].anonymousRead
-        ).toEqual(update.anonymousRead);
+        anonymousRead: true,
+      };
+      entity.updateType(user, 'a', update).then((result) => {
+        expect(result.types['a'].anonymousRead).toEqual(update.anonymousRead);
         done();
       });
     });

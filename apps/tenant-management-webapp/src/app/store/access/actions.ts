@@ -8,7 +8,6 @@ const GET_ACCESS_ACTION = 'tenant/access/GET_ACCESS';
 export const FETCH_ACCESS_ACTION = 'tenant/access/FETCH_ACCESS';
 const FETCH_ACCESS_SUCCESS_ACTION = 'tenant/access/FETCH_ACCESS_SUCCESS';
 
-
 interface GetAccessAction {
   type: typeof GET_ACCESS_ACTION;
 }
@@ -32,6 +31,6 @@ export const fetchAccess = (): FetchAccessAction => ({
 });
 
 export const fetchAccessSuccess = (payload: AccessState): FetchAccessSuccessAction => ({
-  type: "tenant/access/FETCH_ACCESS_SUCCESS",
-  payload
+  type: 'tenant/access/FETCH_ACCESS_SUCCESS',
+  payload,
 });

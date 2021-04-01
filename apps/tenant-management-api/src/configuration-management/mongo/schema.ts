@@ -3,36 +3,36 @@ import { Schema } from 'mongoose';
 export const serviceOptionSchema = new Schema({
   _id: {
     type: String,
-    required: true
+    required: true,
   },
   service: {
     type: String,
-    required: true
+    required: true,
   },
   version: {
     type: String,
     required: true,
-    minlength: 1
+    minlength: 1,
   },
   configOptions: {
-    type: JSON
-  }
+    type: JSON,
+  },
 });
 
-serviceOptionSchema.index({service:1, version:1}, {unique: true});
+serviceOptionSchema.index({ service: 1, version: 1 }, { unique: true });
 
 export const tenantConfigSchema = new Schema({
   _id: {
     type: String,
-    required: true
+    required: true,
   },
   realmName: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
   },
   configurationSettingsList: {
     type: JSON,
     required: true,
-  }
+  },
 });

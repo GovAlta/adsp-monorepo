@@ -13,9 +13,7 @@ function ServiceMeasure() {
     <Container>
       <h2>Future Service Measures</h2>
       <button onClick={() => dispatch(ApiUptimeFetch())}>Refresh Uptime</button>
-      {apiStatus.status === "loaded" && (
-        <div>Tenant Management Api Uptime: {apiStatus.uptime} seconds</div>
-      )}
+      {apiStatus.status === 'loaded' && <div>Tenant Management Api Uptime: {apiStatus.uptime} seconds</div>}
     </Container>
   );
 }

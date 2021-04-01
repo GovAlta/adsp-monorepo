@@ -1,7 +1,6 @@
 import { encodeNext, decodeAfter } from './cursor';
 
 describe('cursor', () => {
-
   it('can encode', () => {
     const cursor = encodeNext(10, 10, 10);
     expect(cursor).toBeTruthy();

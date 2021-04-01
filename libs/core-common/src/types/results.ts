@@ -1,8 +1,8 @@
 export interface Results<T> {
-  results: T[]
+  results: T[];
   page: {
-    after: string
-    size: number
-    next?: string
-  }
+    after: string;
+    size: number;
+    next?: string;
+  };
 }

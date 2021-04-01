@@ -7,8 +7,8 @@ export * from './type';
 export * from './subscription';
 
 export interface Repositories {
-  isConnected: () => boolean
-  spaceRepository: NotificationSpaceRepository
-  typeRepository: NotificationTypeRepository
-  subscriptionRepository: SubscriptionRepository
+  isConnected: () => boolean;
+  spaceRepository: NotificationSpaceRepository;
+  typeRepository: NotificationTypeRepository;
+  subscriptionRepository: SubscriptionRepository;
 }

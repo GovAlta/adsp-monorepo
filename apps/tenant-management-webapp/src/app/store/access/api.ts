@@ -2,7 +2,6 @@ import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { User, Role } from './models';
 
 export class KeycloakApi {
-
   private http: AxiosInstance;
   constructor(baseUrl: string, private realm: string, private token: string) {
     this.http = axios.create({ baseURL: `${baseUrl}/admin/realms` });

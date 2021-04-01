@@ -38,20 +38,14 @@ passport.deserializeUser(function (user, done) {
 app.use(passport.initialize());
 app.use('/space', passport.authenticate(['jwt'], { session: false }));
 app.use('/file-admin', passport.authenticate(['jwt'], { session: false }));
-app.use(
-  '/file',
-  passport.authenticate(['jwt', 'anonymous'], { session: false })
-);
+app.use('/file', passport.authenticate(['jwt', 'anonymous'], { session: false }));
 
 Promise.all([
   createRepositories({ ...environment, logger }),
   environment.AMQP_HOST
     ? createEventService({ ...environment, logger })
     : Promise.resolve<DomainEventService>({
-        send: (event) =>
-          logger.debug(
-            `Event sink received event '${event.namespace}:${event.name}'`
-          ),
+        send: (event) => logger.debug(`Event sink received event '${event.namespace}:${event.name}'`),
         isConnected: () => true,
       }),
 ]).then(([repositories, eventService]) => {
@@ -92,7 +86,5 @@ Promise.all([
   const server = app.listen(port, () => {
     logger.info(`Listening at http://localhost:${port}`);
   });
-  server.on('error', (err) =>
-    logger.error(`Error encountered in server: ${err}`)
-  );
+  server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
 });

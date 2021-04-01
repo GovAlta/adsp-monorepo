@@ -24,8 +24,8 @@ export class FileEntity implements File {
 
   static create(
     user: User,
-    repository: FileRepository, 
-    type: FileTypeEntity, 
+    repository: FileRepository,
+    type: FileTypeEntity,
     values: NewFile,
     file: string,
     rootStoragePath: string
@@ -34,37 +34,27 @@ export class FileEntity implements File {
       throw new UnauthorizedError('User not authorized to create file.');
     }
 
-    const entity = new FileEntity(
-      repository, 
-      type, 
-      {
-        ...values, 
-        created: new Date(),
-        createdBy: {
-          id: user.id,
-          name: user.name
-        }
-      }
-    );
-    
-    return repository.save(entity)
-    .then((fileEntity) => new Promise<FileEntity>(
-      (resolve, reject) =>
-        fs.rename(
-          file, 
-          fileEntity.getFilePath(rootStoragePath), 
-          (err) => err ? 
-            reject(err) : 
-            resolve(fileEntity)
+    const entity = new FileEntity(repository, type, {
+      ...values,
+      created: new Date(),
+      createdBy: {
+        id: user.id,
+        name: user.name,
+      },
+    });
+
+    return repository.save(entity).then(
+      (fileEntity) =>
+        new Promise<FileEntity>((resolve, reject) =>
+          fs.rename(file, fileEntity.getFilePath(rootStoragePath), (err) => (err ? reject(err) : resolve(fileEntity)))
         )
-      )
-    )
+    );
   }
 
   constructor(
     private repository: FileRepository,
-    public type: FileTypeEntity, 
-    values: (NewFile & {createdBy: UserInfo, created: Date}) | File
+    public type: FileTypeEntity,
+    values: (NewFile & { createdBy: UserInfo; created: Date }) | File
   ) {
     this.recordId = values.recordId;
     this.filename = values.filename;
@@ -104,24 +94,16 @@ export class FileEntity implements File {
   }
 
   delete(rootStoragePath: string) {
-
-    if(!this.deleted) {
+    if (!this.deleted) {
       throw new InvalidOperationError('File not marked for deletion.');
     }
-    
+
     const filePath = this.getFilePath(rootStoragePath);
-    return new Promise((resolve, reject) => 
+    return new Promise((resolve, reject) =>
       // Delete the file first to avoid an orphaned file.
       // If the error is file not found, then proceed with deletion of the record.
-      fs.unlink(
-        filePath, 
-        (err) => (err && err.errno !== ENOENT) ? 
-          reject(err) :
-          resolve()
-      )
-    ).then(() => 
-      this.repository.delete(this)
-    );
+      fs.unlink(filePath, (err) => (err && err.errno !== ENOENT ? reject(err) : resolve()))
+    ).then(() => this.repository.delete(this));
   }
 
   getFilePath(storageRoot: string) {

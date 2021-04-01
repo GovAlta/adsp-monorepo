@@ -79,39 +79,35 @@ export const createAdminRouter = ({
    *                         items:
    *                           type: string
    */
-  adminRouter.get(
-    '/:space/types',
-    assertAuthenticatedHandler,
-    async (req, res, next) => {
-      const user = req.user as User;
-      const { space } = req.params;
+  adminRouter.get('/:space/types', assertAuthenticatedHandler, async (req, res, next) => {
+    const user = req.user as User;
+    const { space } = req.params;
 
-      try {
-        const spaceEntity = await spaceRepository.get(space);
+    try {
+      const spaceEntity = await spaceRepository.get(space);
 
-        if (!spaceEntity) {
-          throw new NotFoundError('Space', space);
-        } else if (!spaceEntity.canAccess(user)) {
-          throw new UnauthorizedError('User not authorized to access space.');
-        }
-
-        res.json(
-          Object.entries(spaceEntity.types).reduce((result, [id, type]) => {
-            result[id] = {
-              id: type.id,
-              name: type.name,
-              anonymousRead: type.anonymousRead,
-              readRoles: type.readRoles,
-              updateRoles: type.updateRoles,
-            };
-            return result;
-          }, {})
-        );
-      } catch (err) {
-        next(err);
+      if (!spaceEntity) {
+        throw new NotFoundError('Space', space);
+      } else if (!spaceEntity.canAccess(user)) {
+        throw new UnauthorizedError('User not authorized to access space.');
       }
+
+      res.json(
+        Object.entries(spaceEntity.types).reduce((result, [id, type]) => {
+          result[id] = {
+            id: type.id,
+            name: type.name,
+            anonymousRead: type.anonymousRead,
+            readRoles: type.readRoles,
+            updateRoles: type.updateRoles,
+          };
+          return result;
+        }, {})
+      );
+    } catch (err) {
+      next(err);
     }
-  );
+  });
 
   /**
    * @swagger
@@ -180,96 +176,87 @@ export const createAdminRouter = ({
    *       404:
    *         description: Space not found.
    */
-  adminRouter.put(
-    '/:space/types/:type',
-    assertAuthenticatedHandler,
-    async (req, res, next) => {
-      const user = req.user as User;
-      const { space, type } = req.params;
-      const { name, anonymousRead, readRoles, updateRoles } = req.body;
+  adminRouter.put('/:space/types/:type', assertAuthenticatedHandler, async (req, res, next) => {
+    const user = req.user as User;
+    const { space, type } = req.params;
+    const { name, anonymousRead, readRoles, updateRoles } = req.body;
 
-      try {
-        const spaceEntity = await spaceRepository.get(space);
+    try {
+      const spaceEntity = await spaceRepository.get(space);
 
-        if (!spaceEntity) {
-          throw new NotFoundError('Space', space);
-        } else if (!spaceEntity.canAccess(user)) {
-          throw new UnauthorizedError('User not authorized to access space.');
-        }
-
-        const fileType = spaceEntity.types[type];
-
-        if (!fileType) {
-          const entity = await spaceEntity.addType(
-            user,
-            rootStoragePath,
-            type,
-            {
-              name,
-              anonymousRead,
-              readRoles,
-              updateRoles,
-            }
-          );
-
-          const typeEntity = entity.types[type];
-          eventService.send(
-            createdFileType(
-              space,
-              {
-                id: typeEntity.id,
-                name: typeEntity.name,
-                anonymousRead: typeEntity.anonymousRead,
-                readRoles: typeEntity.readRoles,
-                updateRoles: typeEntity.updateRoles,
-              },
-              user,
-              new Date()
-            )
-          );
-        } else {
-          const entity = await spaceEntity.updateType(user, type, {
-            name,
-            anonymousRead,
-            readRoles,
-            updateRoles,
-          });
-
-          const typeEntity = entity.types[type];
-          eventService.send(
-            updatedFileType(
-              space,
-              {
-                id: typeEntity.id,
-                name: typeEntity.name,
-                anonymousRead: typeEntity.anonymousRead,
-                readRoles: typeEntity.readRoles,
-                updateRoles: typeEntity.updateRoles,
-              },
-              user,
-              new Date()
-            )
-          );
-        }
-
-        logger.info(
-          `File type ${fileType.name} (ID: ${fileType.id}) in ` +
-            `space ${spaceEntity.id} (ID: ${spaceEntity.id}) updated by ` +
-            `user ${user.name} (ID: ${user.id}).`
-        );
-
-        res.json({
-          id: fileType.id,
-          name: fileType.name,
-          anonymousRead: fileType.anonymousRead,
-          readRoles: fileType.readRoles,
-          updateRoles: fileType.updateRoles,
-        });
-      } catch (err) {
-        next(err);
+      if (!spaceEntity) {
+        throw new NotFoundError('Space', space);
+      } else if (!spaceEntity.canAccess(user)) {
+        throw new UnauthorizedError('User not authorized to access space.');
       }
+
+      const fileType = spaceEntity.types[type];
+
+      if (!fileType) {
+        const entity = await spaceEntity.addType(user, rootStoragePath, type, {
+          name,
+          anonymousRead,
+          readRoles,
+          updateRoles,
+        });
+
+        const typeEntity = entity.types[type];
+        eventService.send(
+          createdFileType(
+            space,
+            {
+              id: typeEntity.id,
+              name: typeEntity.name,
+              anonymousRead: typeEntity.anonymousRead,
+              readRoles: typeEntity.readRoles,
+              updateRoles: typeEntity.updateRoles,
+            },
+            user,
+            new Date()
+          )
+        );
+      } else {
+        const entity = await spaceEntity.updateType(user, type, {
+          name,
+          anonymousRead,
+          readRoles,
+          updateRoles,
+        });
+
+        const typeEntity = entity.types[type];
+        eventService.send(
+          updatedFileType(
+            space,
+            {
+              id: typeEntity.id,
+              name: typeEntity.name,
+              anonymousRead: typeEntity.anonymousRead,
+              readRoles: typeEntity.readRoles,
+              updateRoles: typeEntity.updateRoles,
+            },
+            user,
+            new Date()
+          )
+        );
+      }
+
+      logger.info(
+        `File type ${fileType.name} (ID: ${fileType.id}) in ` +
+          `space ${spaceEntity.id} (ID: ${spaceEntity.id}) updated by ` +
+          `user ${user.name} (ID: ${user.id}).`
+      );
+
+      res.json({
+        id: fileType.id,
+        name: fileType.name,
+        anonymousRead: fileType.anonymousRead,
+        readRoles: fileType.readRoles,
+        updateRoles: fileType.updateRoles,
+      });
+    } catch (err) {
+      next(err);
     }
-  );
+  });
 
   /**
    * @swagger
@@ -350,44 +337,36 @@ export const createAdminRouter = ({
    *                       deleted:
    *                         type: boolean
    */
-  adminRouter.get(
-    '/:space/types/:type/files',
-    assertAuthenticatedHandler,
-    async (req, res, next) => {
-      const user = req.user as User;
-      const { space, type } = req.params;
-      const { top, after } = req.query;
+  adminRouter.get('/:space/types/:type/files', assertAuthenticatedHandler, async (req, res, next) => {
+    const user = req.user as User;
+    const { space, type } = req.params;
+    const { top, after } = req.query;
 
-      try {
-        const results = await fileRepository.find(
-          parseInt((top as string) || '10', 10),
-          after as string,
-          {
-            spaceEquals: space,
-            typeEquals: type,
-          }
-        );
+    try {
+      const results = await fileRepository.find(parseInt((top as string) || '10', 10), after as string, {
+        spaceEquals: space,
+        typeEquals: type,
+      });
 
-        res.json({
-          page: results.page,
-          results: results.results
-            .filter((result) => result.canAccess(user))
-            .map((result) => ({
-              id: result.id,
-              filename: result.filename,
-              size: result.size,
-              created: result.created,
-              createdBy: result.createdBy,
-              lastAccessed: result.lastAccessed,
-              scanned: result.scanned,
-              deleted: result.deleted,
-            })),
-        });
-      } catch (err) {
-        next(err);
-      }
+      res.json({
+        page: results.page,
+        results: results.results
+          .filter((result) => result.canAccess(user))
+          .map((result) => ({
+            id: result.id,
+            filename: result.filename,
+            size: result.size,
+            created: result.created,
+            createdBy: result.createdBy,
+            lastAccessed: result.lastAccessed,
+            scanned: result.scanned,
+            deleted: result.deleted,
+          })),
+      });
+    } catch (err) {
+      next(err);
     }
-  );
+  });
 
   return adminRouter;
 };

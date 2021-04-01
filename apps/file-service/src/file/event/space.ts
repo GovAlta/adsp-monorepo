@@ -1,19 +1,19 @@
-import { User, DomainEvent } from '@core-services/core-common'
+import { User, DomainEvent } from '@core-services/core-common';
 import { FileSpace } from '../types';
 
 interface FileSpaceEvent extends DomainEvent {
-  namespace: 'File'
-  space: Omit<FileSpace, 'types'>
+  namespace: 'File';
+  space: Omit<FileSpace, 'types'>;
 }
 
 interface FileSpaceCreateEvent extends FileSpaceEvent {
-  name: 'File Space Created'
-  createdBy: string
+  name: 'File Space Created';
+  createdBy: string;
 }
 
 interface FileSpaceUpdatedEvent extends FileSpaceEvent {
-  name: 'File Space Updated'
-  updatedBy: string
+  name: 'File Space Updated';
+  updatedBy: string;
 }
 
 export const createdFileSpace = (
@@ -26,8 +26,8 @@ export const createdFileSpace = (
   timestamp: created,
   correlationId: space.id,
   space,
-  createdBy: `${createdBy.name} (ID: ${createdBy.id})`
-})
+  createdBy: `${createdBy.name} (ID: ${createdBy.id})`,
+});
 
 export const updatedFileSpace = (
   space: Omit<FileSpace, 'types'>,
@@ -39,5 +39,5 @@ export const updatedFileSpace = (
   timestamp: updated,
   correlationId: space.id,
   space,
-  updatedBy: `${updatedBy.name} (ID: ${updatedBy.id})`
-})
+  updatedBy: `${updatedBy.name} (ID: ${updatedBy.id})`,
+});

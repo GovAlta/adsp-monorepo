@@ -7,46 +7,37 @@ import { StreamRepository } from '../repository';
 import { EventCriteria } from '../types';
 
 interface StreamRouterProps {
-  logger: Logger
-  eventService: DomainEventSubscriberService
-  streamRepository: StreamRepository
+  logger: Logger;
+  eventService: DomainEventSubscriberService;
+  streamRepository: StreamRepository;
 }
 
 export const createStreamRouter = (
   ws: WsApplication,
-  {
-    logger,
-    eventService,
-    streamRepository
-  }: StreamRouterProps
+  { logger, eventService, streamRepository }: StreamRouterProps
 ) => {
-
-  const events = eventService.getEvents()
-  .pipe(
-    map(({event, done}) => {
+  const events = eventService.getEvents().pipe(
+    map(({ event, done }) => {
       done();
       return event;
     }),
     share()
   );
-  
+
   events.subscribe((next) => {
     logger.debug(`Processing event ${next.namespace}:${next.name} ...`);
   });
-  
+
   const streamRouter = Router();
   ws.applyTo(streamRouter);
 
-  streamRouter.get(
-    '/:space/:stream',
-    (req, res, next) => {
-      const user = req.user as User;
-      const { space, stream } = req.params;
-      const criteria: EventCriteria = req.query.criteria ? 
-        JSON.parse(req.query.criteria as string) : 
-        {};
+  streamRouter.get('/:space/:stream', (req, res, next) => {
+    const user = req.user as User;
+    const { space, stream } = req.params;
+    const criteria: EventCriteria = req.query.criteria ? JSON.parse(req.query.criteria as string) : {};
 
-      streamRepository.get({spaceId: space, id: stream})
+    streamRepository
+      .get({ spaceId: space, id: stream })
       .then((entity) => {
         if (!entity) {
           throw new NotFoundError('stream', `${space}:${stream}`);
@@ -58,12 +49,11 @@ export const createStreamRouter = (
         res.set({
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive'
+          Connection: 'keep-alive',
         });
         res.flushHeaders();
-        
-        const sub = stream.getEvents(user, criteria)
-        .subscribe((next) => {
+
+        const sub = stream.getEvents(user, criteria).subscribe((next) => {
           res.write(`data: ${JSON.stringify(next)}\n\n`);
           res.flush();
         });
@@ -71,20 +61,16 @@ export const createStreamRouter = (
         res.on('close', () => sub.unsubscribe());
         res.on('error', () => sub.unsubscribe());
       })
-      .catch(err => next(err));
-    }
-  );
+      .catch((err) => next(err));
+  });
 
-  streamRouter.ws(
-    '/:space/:stream',
-    (ws, req, next) => {
-      const user = req.user as User;
-      const { space, stream } = req.params;
-      const criteria: EventCriteria = req.query.criteria ? 
-        JSON.parse(req.query.criteria as string) : 
-        {};
+  streamRouter.ws('/:space/:stream', (ws, req, next) => {
+    const user = req.user as User;
+    const { space, stream } = req.params;
+    const criteria: EventCriteria = req.query.criteria ? JSON.parse(req.query.criteria as string) : {};
 
-      streamRepository.get({spaceId: space, id: stream})
+    streamRepository
+      .get({ spaceId: space, id: stream })
       .then((entity) => {
         if (!entity) {
           throw new NotFoundError('stream', `${space}:${stream}`);
@@ -93,17 +79,13 @@ export const createStreamRouter = (
       })
       .then((stream) => stream.connect(events))
       .then((stream) => {
-        const sub = stream.getEvents(user, criteria)
-        .subscribe((next) => 
-          ws.send(JSON.stringify(next))
-        );
+        const sub = stream.getEvents(user, criteria).subscribe((next) => ws.send(JSON.stringify(next)));
 
         ws.on('close', () => sub.unsubscribe());
         ws.on('error', () => sub.unsubscribe());
       })
-      .catch(err => next(err));
-    }
-  );
+      .catch((err) => next(err));
+  });
 
   return streamRouter;
-}
+};

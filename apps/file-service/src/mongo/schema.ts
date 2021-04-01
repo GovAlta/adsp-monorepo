@@ -2,38 +2,38 @@ import { Schema } from 'mongoose';
 
 const fileTypeDefinition = {
   _id: false,
-  name: { 
+  name: {
     type: String,
-    required: true
+    required: true,
   },
   anonymousRead: {
     type: Boolean,
-    default: false
+    default: false,
   },
   readRoles: {
     type: [String],
-    default: []
+    default: [],
   },
   updateRoles: {
     type: [String],
-    default: []
-  }
-}
+    default: [],
+  },
+};
 
 export const fileSpaceSchema = new Schema({
   _id: String,
-  name: { 
+  name: {
     type: String,
-    required: true
+    required: true,
   },
   spaceAdminRole: {
     type: String,
-    required: true
+    required: true,
   },
   types: {
     type: Map,
-    of: fileTypeDefinition
-  }
+    of: fileTypeDefinition,
+  },
 });
 
 export const fileSchema = new Schema({
@@ -41,46 +41,46 @@ export const fileSchema = new Schema({
   spaceId: {
     type: String,
     ref: 'filespace',
-    required: true
+    required: true,
   },
   typeId: {
     type: String,
-    required: true
+    required: true,
   },
   size: {
     type: Number,
-    required: true
+    required: true,
   },
   filename: {
     type: String,
-    required: true
+    required: true,
   },
   storage: {
     type: String,
-    required: true
+    required: true,
   },
   recordId: String,
   createdBy: {
     name: {
       type: String,
-      default: ''
+      default: '',
     },
     id: {
       type: String,
-      required: true
-    }
+      required: true,
+    },
   },
   created: {
     type: Date,
-    required: true
+    required: true,
   },
   lastAccessed: Date,
   scanned: {
     type: Boolean,
-    default: false
+    default: false,
   },
   deleted: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 });

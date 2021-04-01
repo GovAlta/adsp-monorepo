@@ -11,17 +11,13 @@ export * from './repository';
 export * from './types';
 
 interface EventMiddlewareProps extends JobProps, Repositories {
-  logger: Logger
-  eventService: DomainEventService
+  logger: Logger;
+  eventService: DomainEventService;
 }
 
-export const applyEventMiddleware = (
-  app: Application, 
-  props: EventMiddlewareProps
-) => {
-
+export const applyEventMiddleware = (app: Application, props: EventMiddlewareProps) => {
   createJobs(props);
-  
+
   const namespaceRouter = createNamespaceRouter(props);
   const adminRouter = createAdministrationRouter(props);
   const eventRouter = createEventRouter(props);
@@ -43,6 +39,6 @@ export const applyEventMiddleware = (
           res.json(swagger);
         }
       });
-    } 
+    }
   });
-}
+};

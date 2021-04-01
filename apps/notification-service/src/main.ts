@@ -15,19 +15,12 @@ import {
   getKeycloakTokenRequestProps,
 } from '@core-services/core-common';
 import { environment } from './environments/environment';
-import {
-  applyNotificationMiddleware,
-  Channel,
-  Notification,
-} from './notification';
+import { applyNotificationMiddleware, Channel, Notification } from './notification';
 import { createRepositories } from './mongo';
 import { createABNotifySmsProvider, createGoAEmailProvider } from './provider';
 import { templateService } from './handlebars';
 
-const logger = createLogger(
-  'notification-service',
-  environment.LOG_LEVEL || 'info'
-);
+const logger = createLogger('notification-service', environment.LOG_LEVEL || 'info');
 
 const app = express();
 
@@ -48,14 +41,8 @@ passport.deserializeUser(function (user, done) {
 
 app.use(passport.initialize());
 app.use('/space', passport.authenticate(['jwt'], { session: false }));
-app.use(
-  '/notification-admin',
-  passport.authenticate(['jwt'], { session: false })
-);
-app.use(
-  '/subscription',
-  passport.authenticate(['jwt', 'anonymous'], { session: false })
-);
+app.use('/notification-admin', passport.authenticate(['jwt'], { session: false }));
+app.use('/subscription', passport.authenticate(['jwt', 'anonymous'], { session: false }));
 
 Promise.all([
   createRepositories({ ...environment, logger }),
@@ -113,7 +100,5 @@ Promise.all([
   const server = app.listen(port, () => {
     logger.info(`Listening at http://localhost:${port}`);
   });
-  server.on('error', (err) =>
-    logger.error(`Error encountered in server: ${err}`)
-  );
+  server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
 });

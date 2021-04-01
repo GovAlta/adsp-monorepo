@@ -20,13 +20,10 @@ const CreateErrorPage = () => {
           <img src={Tools} alt="Tools" style={{ width: '125px' }}></img>
         </div>
         <div className="signin-title mb-5">
-          <h1 style={{ fontWeight: 'bold' }}>
-            Unfortunately, there was a problem creating your tenant
-          </h1>
+          <h1 style={{ fontWeight: 'bold' }}>Unfortunately, there was a problem creating your tenant</h1>
         </div>
         <div className="mb-5" style={{ fontSize: '23px' }}>
-          We appologize for the inconvenience, but we could not successfully
-          create your tenant, please try again
+          We appologize for the inconvenience, but we could not successfully create your tenant, please try again
         </div>
         <div style={{ margin: '35px 0 0 11px' }}>
           <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>

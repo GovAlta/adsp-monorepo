@@ -83,76 +83,70 @@ export const createFileRouter = ({
    *       404:
    *         description: Space or type not found.
    */
-  fileRouter.post(
-    '/files',
-    assertAuthenticatedHandler,
-    upload.single('file'),
-    async (req, res, next) => {
-      const user = req.user as User;
-      const { space, type, recordId, filename } = req.body;
-      const uploaded = req.file;
+  fileRouter.post('/files', assertAuthenticatedHandler, upload.single('file'), async (req, res, next) => {
+    const user = req.user as User;
+    const { space, type, recordId, filename } = req.body;
+    const uploaded = req.file;
 
-      if (filename && !validFilename(filename)) {
-        throw new InvalidOperationError(`Specified filename is not valid.`);
-      }
+    if (filename && !validFilename(filename)) {
+      throw new InvalidOperationError(`Specified filename is not valid.`);
+    }
 
-      try {
-        if (!uploaded || !space || !type) {
-          res.sendStatus(400);
-        } else {
-          const spaceEntity = await spaceRepository.get(space);
+    try {
+      if (!uploaded || !space || !type) {
+        res.sendStatus(400);
+      } else {
+        const spaceEntity = await spaceRepository.get(space);
 
-          if (!spaceEntity) {
-            throw new NotFoundError('Space', space);
-          }
+        if (!spaceEntity) {
+          throw new NotFoundError('Space', space);
+        }
 
-          const fileType = spaceEntity.types[type];
+        const fileType = spaceEntity.types[type];
 
-          if (!fileType) {
-            throw new NotFoundError('Type', type);
-          }
+        if (!fileType) {
+          throw new NotFoundError('Type', type);
+        }
 
-          const fileEntity = await FileEntity.create(
-            user,
-            fileRepository,
-            fileType,
-            {
-              filename: filename || uploaded.originalname,
-              size: uploaded.size,
-              recordId,
-            },
-            uploaded.path,
-            rootStoragePath
-          );
+        const fileEntity = await FileEntity.create(
+          user,
+          fileRepository,
+          fileType,
+          {
+            filename: filename || uploaded.originalname,
+            size: uploaded.size,
+            recordId,
+          },
+          uploaded.path,
+          rootStoragePath
+        );
 
-          eventService.send(
-            createdFile(space, type, {
-              id: fileEntity.id,
-              filename: fileEntity.filename,
-              size: fileEntity.size,
-              recordId: fileEntity.recordId,
-              createdBy: fileEntity.createdBy,
-              created: fileEntity.created,
-              scanned: fileEntity.scanned,
-            })
-          );
-
-          res.json({
+        eventService.send(
+          createdFile(space, type, {
             id: fileEntity.id,
             filename: fileEntity.filename,
             size: fileEntity.size,
-          });
+            recordId: fileEntity.recordId,
+            createdBy: fileEntity.createdBy,
+            created: fileEntity.created,
+            scanned: fileEntity.scanned,
+          })
+        );
 
-          logger.info(
-            `File '${fileEntity.filename}' (ID: ${fileEntity.id}) uploaded by ` +
-              `user '${user.name}' (ID: ${user.id}).`
-          );
-        }
-      } catch (err) {
-        next(err);
+        res.json({
+          id: fileEntity.id,
+          filename: fileEntity.filename,
+          size: fileEntity.size,
+        });
+
+        logger.info(
+          `File '${fileEntity.filename}' (ID: ${fileEntity.id}) uploaded by ` + `user '${user.name}' (ID: ${user.id}).`
+        );
       }
+    } catch (err) {
+      next(err);
     }
-  );
+  });
 
   /**
    * @swagger
@@ -255,10 +249,7 @@ export const createFileRouter = ({
       } else if (!fileEntity.scanned) {
         throw new InvalidOperationError('File scan pending.');
       } else {
-        const filePath = path.resolve(
-          `${appRoot}`,
-          fileEntity.getFilePath(rootStoragePath)
-        );
+        const filePath = path.resolve(`${appRoot}`, fileEntity.getFilePath(rootStoragePath));
         res.sendFile(filePath, {
           headers: {
             'Content-Disposition': `attachment; filename="${fileEntity.filename}"`,
@@ -300,50 +291,46 @@ export const createFileRouter = ({
    *       404:
    *         description: file not found
    */
-  fileRouter.delete(
-    '/files/:fileId',
-    assertAuthenticatedHandler,
-    async (req, res, next) => {
-      const user = req.user as User;
-      const { fileId } = req.params;
+  fileRouter.delete('/files/:fileId', assertAuthenticatedHandler, async (req, res, next) => {
+    const user = req.user as User;
+    const { fileId } = req.params;
 
-      try {
-        const fileEntity = await fileRepository.get(fileId);
+    try {
+      const fileEntity = await fileRepository.get(fileId);
 
-        if (!fileEntity) {
-          throw new NotFoundError('File', fileId);
-        }
-        fileEntity.markForDeletion(user);
-
-        eventService.send(
-          deletedFile(
-            fileEntity.type.space.id,
-            fileEntity.type.id,
-            {
-              id: fileEntity.id,
-              filename: fileEntity.filename,
-              size: fileEntity.size,
-              recordId: fileEntity.recordId,
-              createdBy: fileEntity.createdBy,
-              created: fileEntity.created,
-              scanned: fileEntity.scanned,
-            },
-            user,
-            new Date()
-          )
-        );
-
-        logger.info(
-          `File '${fileEntity.filename}' (ID: ${fileEntity.id}) marked for deletion by ` +
-            `user '${user.name}' (ID: ${user.id}).`
-        );
-
-        res.json({ deleted: fileEntity.deleted });
-      } catch (err) {
-        next(err);
+      if (!fileEntity) {
+        throw new NotFoundError('File', fileId);
       }
+      fileEntity.markForDeletion(user);
+
+      eventService.send(
+        deletedFile(
+          fileEntity.type.space.id,
+          fileEntity.type.id,
+          {
+            id: fileEntity.id,
+            filename: fileEntity.filename,
+            size: fileEntity.size,
+            recordId: fileEntity.recordId,
+            createdBy: fileEntity.createdBy,
+            created: fileEntity.created,
+            scanned: fileEntity.scanned,
+          },
+          user,
+          new Date()
+        )
+      );
+
+      logger.info(
+        `File '${fileEntity.filename}' (ID: ${fileEntity.id}) marked for deletion by ` +
+          `user '${user.name}' (ID: ${user.id}).`
+      );
+
+      res.json({ deleted: fileEntity.deleted });
+    } catch (err) {
+      next(err);
     }
-  );
+  });
 
   return fileRouter;
 };

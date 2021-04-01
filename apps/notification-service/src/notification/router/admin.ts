@@ -6,25 +6,20 @@ import { NotificationSpaceEntity, NotificationTypeEntity } from '../model';
 import { mapType } from './mappers';
 
 interface NotificationAdminRouterProps {
-  logger: Logger
-  spaceRepository: NotificationSpaceRepository
-  typeRepository: NotificationTypeRepository
+  logger: Logger;
+  spaceRepository: NotificationSpaceRepository;
+  typeRepository: NotificationTypeRepository;
 }
 
-export const createAdminRouter = ({
-  logger,
-  spaceRepository,
-  typeRepository
-}: NotificationAdminRouterProps) => {
-
+export const createAdminRouter = ({ logger, spaceRepository, typeRepository }: NotificationAdminRouterProps) => {
   const notificationRouter = Router();
-  
+
   /**
    * @swagger
    *
    * /notification-admin/v1/{space}/types:
    *   get:
-   *     tags: 
+   *     tags:
    *     - Notification Administration
    *     description: Retrieves notification types in a notification space.
    *     parameters:
@@ -38,33 +33,28 @@ export const createAdminRouter = ({
    *       200:
    *         description: Notification types succesfully retrieved.
    */
-  notificationRouter.get(
-    '/:space/types',
-    assertAuthenticatedHandler,
-    (req, res, next) => {
-      const { space } = req.params;
-      const top = req.query.top ? 
-        parseInt(req.query.top as string, 10): 
-        10;
-      const after = req.query.after as string;
+  notificationRouter.get('/:space/types', assertAuthenticatedHandler, (req, res, next) => {
+    const { space } = req.params;
+    const top = req.query.top ? parseInt(req.query.top as string, 10) : 10;
+    const after = req.query.after as string;
 
-      typeRepository.find(top, after, { spaceIdEquals: space })
-      .then((result) => 
+    typeRepository
+      .find(top, after, { spaceIdEquals: space })
+      .then((result) =>
         res.send({
           results: result.results.map(mapType),
-          page: result.page
+          page: result.page,
         })
       )
       .catch((err) => next(err));
-    }
-  );
+  });
 
   /**
    * @swagger
    *
    * /notification-admin/v1/{space}/types/{type}:
    *   get:
-   *     tags: 
+   *     tags:
    *     - Notification Administration
    *     description: Retrieves notification type in a notification space.
    *     parameters:
@@ -84,29 +74,22 @@ export const createAdminRouter = ({
    *       200:
    *         description: Notification type succesfully retrieved.
    */
-  notificationRouter.get(
-    '/:space/types/:type',
-    assertAuthenticatedHandler,
-    (req, res, next) => {
-      const { space, type } = req.params;
-      
-      spaceRepository.get(space)
-      .then(spaceEntity => 
-        typeRepository.get(spaceEntity, type)
-      )
-      .then((type) => 
-        res.send(mapType(type))
-      )
+  notificationRouter.get('/:space/types/:type', assertAuthenticatedHandler, (req, res, next) => {
+    const { space, type } = req.params;
+
+    spaceRepository
+      .get(space)
+      .then((spaceEntity) => typeRepository.get(spaceEntity, type))
+      .then((type) => res.send(mapType(type)))
       .catch((err) => next(err));
-    }
-  );
+  });
 
   /**
    * @swagger
    *
    * /notification-admin/v1/{space}/types/{type}:
    *   put:
-   *     tags: 
+   *     tags:
    *     - Notification Administration
    *     description: Create or update notification type in a notification space.
    *     parameters:
@@ -137,11 +120,11 @@ export const createAdminRouter = ({
    *                 type: boolean
    *               subscriberRoles:
    *                 type: array
-   *                 items: 
+   *                 items:
    *                   type: string
    *               events:
    *                 type: array
-   *                 items: 
+   *                 items:
    *                   type: object
    *                   properties:
    *                     namespace:
@@ -150,29 +133,29 @@ export const createAdminRouter = ({
    *                       type: string
    *                     channels:
    *                       type: array
-   *                       items: 
+   *                       items:
    *                         type: string
    *                         enum: [email, sms, mail]
    *                     templates:
    *                       type: object
-   *                       items: 
+   *                       items:
    *                         type: object
-   *                         properties: 
-   *                           email: 
+   *                         properties:
+   *                           email:
    *                             type: object
    *                             properties:
    *                               subject:
    *                                 type: string
    *                               body:
    *                                 type: string
-   *                           sms: 
+   *                           sms:
    *                             type: object
    *                             properties:
    *                               subject:
    *                                 type: string
    *                               body:
    *                                 type: string
-   *                           mail: 
+   *                           mail:
    *                             type: object
    *                             properties:
    *                               subject:
@@ -183,43 +166,35 @@ export const createAdminRouter = ({
    *       200:
    *         description: Notification type succesfully updated.
    */
-  notificationRouter.put(
-    '/:space/types/:type',
-    assertAuthenticatedHandler,
-    (req, res, next) => {
-      const { space, type } = req.params;
-      const user = req.user as User;
+  notificationRouter.put('/:space/types/:type', assertAuthenticatedHandler, (req, res, next) => {
+    const { space, type } = req.params;
+    const user = req.user as User;
 
-      spaceRepository.get(space)
-      .then(spaceEntity =>
-        typeRepository.get(spaceEntity, type)
-        .then((typeEntity) => [spaceEntity, typeEntity])
-      )
-      .then(([spaceEntity, typeEntity]: [NotificationSpaceEntity, NotificationTypeEntity]) => 
-        typeEntity ? 
-          typeEntity.update(user, req.body) :
-          NotificationTypeEntity.create(user, typeRepository, spaceEntity, type, req.body)
+    spaceRepository
+      .get(space)
+      .then((spaceEntity) => typeRepository.get(spaceEntity, type).then((typeEntity) => [spaceEntity, typeEntity]))
+      .then(([spaceEntity, typeEntity]: [NotificationSpaceEntity, NotificationTypeEntity]) =>
+        typeEntity
+          ? typeEntity.update(user, req.body)
+          : NotificationTypeEntity.create(user, typeRepository, spaceEntity, type, req.body)
       )
       .then((typeEntity) => {
         logger.info(
-          `Notification type ${typeEntity.name} (ID: ${typeEntity.id}) updated by ` + 
-          `user ${user.name} (ID: ${user.id}).`
+          `Notification type ${typeEntity.name} (ID: ${typeEntity.id}) updated by ` +
+            `user ${user.name} (ID: ${user.id}).`
         );
         return typeEntity;
       })
-      .then((typeEntity) => 
-        res.send(mapType(typeEntity))
-      )
+      .then((typeEntity) => res.send(mapType(typeEntity)))
       .catch((err) => next(err));
-    }
-  );
+  });
 
   /**
    * @swagger
    *
    * /notification-admin/v1/{space}/types/{type}:
    *   delete:
-   *     tags: 
+   *     tags:
    *     - Notification Administration
    *     description: Deletes a notification type in a notification space.
    *     parameters:
@@ -239,38 +214,26 @@ export const createAdminRouter = ({
    *       200:
    *         description: Notification type deleted.
    */
-  notificationRouter.delete(
-    '/:space/types/:type',
-    assertAuthenticatedHandler,
-    (req, res, next) => {
-      const user = req.user as User;
-      const { space, type } = req.params;
-      
-      return spaceRepository.get(space)
-      .then((spaceEntity) => 
-        typeRepository.get(spaceEntity, type)
-      )
-      .then((typeEntity) => 
-        typeEntity.delete(user)
-        .then((result) => 
-          [typeEntity, result]
-        )
-      )
-      .then(([typeEntity, result]: [NotificationTypeEntity, boolean]) => {    
+  notificationRouter.delete('/:space/types/:type', assertAuthenticatedHandler, (req, res, next) => {
+    const user = req.user as User;
+    const { space, type } = req.params;
+
+    return spaceRepository
+      .get(space)
+      .then((spaceEntity) => typeRepository.get(spaceEntity, type))
+      .then((typeEntity) => typeEntity.delete(user).then((result) => [typeEntity, result]))
+      .then(([typeEntity, result]: [NotificationTypeEntity, boolean]) => {
         if (result) {
           logger.info(
-            `Notification type ${typeEntity.name} (ID: ${typeEntity.id}) deleted by ` + 
-            `user ${user.name} (ID: ${user.id}).`
+            `Notification type ${typeEntity.name} (ID: ${typeEntity.id}) deleted by ` +
+              `user ${user.name} (ID: ${user.id}).`
           );
         }
         return result;
       })
-      .then((result) => 
-        res.send(result)
-      )
+      .then((result) => res.send(result))
       .catch((err) => next(err));
-    }
-  );
+  });
 
   return notificationRouter;
-}
+};

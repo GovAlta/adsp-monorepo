@@ -82,18 +82,26 @@ const FileSettings = () => {
         <GoAButton
           buttonType="secondary"
           content="Disable Service"
-          onClick={() => dispatch(DisableFileService(
-            FILE_INIT  // FIXME: this is not right, but currently the method is defined as needing these params
-          ))}
+          onClick={() =>
+            dispatch(
+              DisableFileService(
+                FILE_INIT // FIXME: this is not right, but currently the method is defined as needing these params
+              )
+            )
+          }
         />
 
         <GoAButton
           className="file-disable-btn"
           buttonType="tertiary"
           content="Delete Service"
-          onClick={() => dispatch(DeleteFileService(
-            FILE_INIT  // FIXME: this is not right, but currently the method is defined as needing these params
-          ))}
+          onClick={() =>
+            dispatch(
+              DeleteFileService(
+                FILE_INIT // FIXME: this is not right, but currently the method is defined as needing these params
+              )
+            )
+          }
         />
       </div>
     );

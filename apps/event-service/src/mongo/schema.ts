@@ -2,32 +2,35 @@ import { Schema } from 'mongoose';
 
 const definitionSchema = {
   _id: false,
-  description: { 
-    type: String
+  description: {
+    type: String,
   },
   payloadSchema: {
-    type: Schema.Types.Mixed
+    type: Schema.Types.Mixed,
   },
   sendRoles: {
-    type: [String]
-  }
-}
+    type: [String],
+  },
+};
 
-export const namespaceSchema = new Schema({
-  name: { 
-    type: String,
-    required: true
+export const namespaceSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+    description: {
+      type: String,
+    },
+    adminRole: {
+      type: String,
+    },
+    definitions: {
+      type: Map,
+      of: definitionSchema,
+    },
   },
-  description: { 
-    type: String
-  },
-  adminRole: {
-    type: String
-  },
-  definitions: {
-    type: Map,
-    of: definitionSchema
-  }
-}, { _id: false });
+  { _id: false }
+);
 
 namespaceSchema.index('name', { unique: true });

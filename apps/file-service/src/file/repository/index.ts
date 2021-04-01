@@ -5,7 +5,7 @@ export * from './space';
 export * from './file';
 
 export interface Repositories {
-  spaceRepository: FileSpaceRepository
-  fileRepository: FileRepository
-  isConnected(): boolean
+  spaceRepository: FileSpaceRepository;
+  fileRepository: FileRepository;
+  isConnected(): boolean;
 }

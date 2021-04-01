@@ -7,21 +7,14 @@ export class NotificationSpaceEntity implements NotificationSpace {
   name: string;
   spaceAdminRole: string;
   subscriberAdminRole: string;
-  
+
   @AssertRole('create notification space', ServiceUserRoles.Admin)
-  static create(
-    user: User, 
-    repository: NotificationSpaceRepository, 
-    space: NotificationSpace
-  ) {
+  static create(user: User, repository: NotificationSpaceRepository, space: NotificationSpace) {
     const entity = new NotificationSpaceEntity(repository, space);
     return repository.save(entity);
   }
 
-  constructor(
-    private repository: NotificationSpaceRepository, 
-    space: NotificationSpace
-  ) {
+  constructor(private repository: NotificationSpaceRepository, space: NotificationSpace) {
     this.id = space.id;
     this.name = space.name;
     this.spaceAdminRole = space.spaceAdminRole;
@@ -49,16 +42,10 @@ export class NotificationSpaceEntity implements NotificationSpace {
   }
 
   canAccess(user: User) {
-    return user && (
-      user.roles.includes(ServiceUserRoles.Admin) ||
-      user.roles.includes(this.spaceAdminRole)
-    );
+    return user && (user.roles.includes(ServiceUserRoles.Admin) || user.roles.includes(this.spaceAdminRole));
   }
 
   canUpdate(user: User) {
-    return user &&  (
-      user.roles.includes(ServiceUserRoles.Admin) ||
-      user.roles.includes(this.spaceAdminRole)
-    );
+    return user && (user.roles.includes(ServiceUserRoles.Admin) || user.roles.includes(this.spaceAdminRole));
   }
 }

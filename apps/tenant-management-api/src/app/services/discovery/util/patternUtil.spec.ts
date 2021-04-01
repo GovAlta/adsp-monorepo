@@ -1,9 +1,4 @@
-import {
-  validateUrn,
-  validateHostname,
-  validateVersion,
-  validatePath,
-} from './patternUtil';
+import { validateUrn, validateHostname, validateVersion, validatePath } from './patternUtil';
 
 describe('Patten utility unit test', () => {
   const hostname = 'maps.alberta.ca';

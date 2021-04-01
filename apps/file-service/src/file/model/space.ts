@@ -14,35 +14,25 @@ export class FileSpaceEntity implements FileSpace {
   spaceAdminRole: string;
   @IsNotEmpty()
   types: {
-    [id: string]: FileTypeEntity
+    [id: string]: FileTypeEntity;
   };
 
   @AssertRole('create file space', ServiceUserRoles.Admin)
-  static create(
-    user: User, 
-    repository: FileSpaceRepository, 
-    space: Omit<FileSpace, 'types'>
-  ) {
-    const entity = new FileSpaceEntity(repository, {types: {}, ...space});
+  static create(user: User, repository: FileSpaceRepository, space: Omit<FileSpace, 'types'>) {
+    const entity = new FileSpaceEntity(repository, { types: {}, ...space });
     return repository.save(entity);
   }
 
-  constructor(
-    private repository: FileSpaceRepository,
-    space: FileSpace
-  ) {
+  constructor(private repository: FileSpaceRepository, space: FileSpace) {
     this.id = space.id;
     this.name = space.name;
     this.spaceAdminRole = space.spaceAdminRole;
-    this.types = Object.entries(space.types)
-      .reduce((types, [id, type]) => {
-        types[id] = new FileTypeEntity(this, type);
-        return types;
-      }, 
-      {}
-    );
+    this.types = Object.entries(space.types).reduce((types, [id, type]) => {
+      types[id] = new FileTypeEntity(this, type);
+      return types;
+    }, {});
   }
-  
+
   getPath(storageRoot: string) {
     return path.join(storageRoot, this.id);
   }
@@ -64,7 +54,6 @@ export class FileSpaceEntity implements FileSpace {
   }
 
   updateType(user: User, typeId: string, update: Update<FileType>) {
-
     const type = this.types[typeId];
     type.update(user, update);
 
@@ -76,7 +65,7 @@ export class FileSpaceEntity implements FileSpace {
     if (existing) {
       throw new InvalidOperationError(`Type with ID '${typeId}' already exists.`);
     }
-    
+
     if (!validFilename(typeId)) {
       throw new InvalidOperationError(`Type ID '${typeId}' is not valid.`);
     }
@@ -84,25 +73,14 @@ export class FileSpaceEntity implements FileSpace {
     const fileType = FileTypeEntity.create(user, this, typeId, type);
     this.types[typeId] = fileType;
 
-    return this.repository.save(this)
-    .then((created) => 
-      mkdirp(
-        fileType.getPath(rootStoragePath)
-      ).then(() => created)
-    );
+    return this.repository.save(this).then((created) => mkdirp(fileType.getPath(rootStoragePath)).then(() => created));
   }
 
   canAccess(user: User) {
-    return user && (
-      user.roles.includes(ServiceUserRoles.Admin) ||
-      user.roles.includes(this.spaceAdminRole)
-    );
+    return user && (user.roles.includes(ServiceUserRoles.Admin) || user.roles.includes(this.spaceAdminRole));
   }
 
   canUpdate(user: User) {
-    return user &&  (
-      user.roles.includes(ServiceUserRoles.Admin) ||
-      user.roles.includes(this.spaceAdminRole)
-    );
+    return user && (user.roles.includes(ServiceUserRoles.Admin) || user.roles.includes(this.spaceAdminRole));
   }
 }

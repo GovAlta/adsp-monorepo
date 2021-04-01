@@ -15,8 +15,7 @@ describe('http exception handler tests', () => {
       status: jest.fn(() => response),
     };
 
-    const expectedMessage =
-      `It's not you. It's us. We are having some problems.`;
+    const expectedMessage = `It's not you. It's us. We are having some problems.`;
     const exception = new HttpException(null, '');
 
     const expectedResponse = {

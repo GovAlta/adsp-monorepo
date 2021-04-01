@@ -23,52 +23,35 @@ const responseHelper = async (res, _promise) => {
   }
 };
 
-fileRouter.get(
-  '/types',
-  [check('spaceId').not().isEmpty()],
-  async (req, res) => {
-    if (!validateRole(req.user)) {
-      return res.send(HttpStatusCodes.UNAUTHORIZED);
-    }
-    const { spaceId } = req.query;
-    const spaceTypesPromise = fileService.fetchSpaceTypes(
-      spaceId,
-      createFileJTW(req)
-    );
-    return await responseHelper(res, spaceTypesPromise);
+fileRouter.get('/types', [check('spaceId').not().isEmpty()], async (req, res) => {
+  if (!validateRole(req.user)) {
+    return res.send(HttpStatusCodes.UNAUTHORIZED);
   }
-);
+  const { spaceId } = req.query;
+  const spaceTypesPromise = fileService.fetchSpaceTypes(spaceId, createFileJTW(req));
+  return await responseHelper(res, spaceTypesPromise);
+});
 
-fileRouter.post(
-  '/space',
-  [check('tenantId').not().isEmpty(), check('realm').not().isEmpty()],
-  async (req, res) => {
-    if (!validateRole(req.user)) {
-      return res.send(HttpStatusCodes.UNAUTHORIZED);
-    }
-
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res
-        .status(HttpStatusCodes.BAD_REQUEST)
-        .json({ errors: errors.array() });
-    }
-
-    const { tenantId, realm } = req.body;
-
-    const createSpacePromise = fileService.createSpacePromise(
-      tenantId,
-      realm,
-      req.headers.authorization
-    );
-
-    try {
-      const result = await createSpacePromise;
-      res.json(result);
-    } catch (err) {
-      res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json(err);
-    }
+fileRouter.post('/space', [check('tenantId').not().isEmpty(), check('realm').not().isEmpty()], async (req, res) => {
+  if (!validateRole(req.user)) {
+    return res.send(HttpStatusCodes.UNAUTHORIZED);
   }
-);
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(HttpStatusCodes.BAD_REQUEST).json({ errors: errors.array() });
+  }
+
+  const { tenantId, realm } = req.body;
+
+  const createSpacePromise = fileService.createSpacePromise(tenantId, realm, req.headers.authorization);
+
+  try {
+    const result = await createSpacePromise;
+    res.json(result);
+  } catch (err) {
+    res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json(err);
+  }
+});
 
 export default fileRouter;

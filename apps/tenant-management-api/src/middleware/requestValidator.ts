@@ -7,11 +7,7 @@ interface CustomRequest extends Request {
   payload?: object;
 }
 
-const validationMiddleware = (classValidator) => async (
-  req: CustomRequest,
-  res: Response,
-  next: () => void
-) => {
+const validationMiddleware = (classValidator) => async (req: CustomRequest, res: Response, next: () => void) => {
   let data = {};
   if (req.method === 'POST') {
     data = {
