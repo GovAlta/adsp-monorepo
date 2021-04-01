@@ -1,4 +1,4 @@
 export interface Template {
-  subject: unknown
-  body: unknown
+  subject: unknown;
+  body: unknown;
 }

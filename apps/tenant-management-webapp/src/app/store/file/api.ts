@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { TenantApi as TenantApiConfig } from '@store/config/models'
+import { TenantApi as TenantApiConfig } from '@store/config/models';
 import { FileService } from './models';
 
 export class FileApi {
@@ -7,7 +7,7 @@ export class FileApi {
   private config: TenantApiConfig;
   constructor(config: TenantApiConfig, token: string) {
     if (!token) {
-      throw new Error('missing auth token = tenant api')
+      throw new Error('missing auth token = tenant api');
     }
 
     this.http = axios.create({ baseURL: config.host });
@@ -20,7 +20,7 @@ export class FileApi {
 
   async fetchSpace(tenantId: string, realm: string): Promise<FileService> {
     const url = `${this.config.host}${this.config.endpoints.spaceAdmin}`;
-    const res = await this.http.post(url, { tenantId, realm })
+    const res = await this.http.post(url, { tenantId, realm });
     return res.data;
   }
 }

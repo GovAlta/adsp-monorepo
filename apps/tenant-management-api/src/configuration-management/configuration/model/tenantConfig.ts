@@ -6,19 +6,13 @@ export class TenantConfigEntity implements TenantConfig {
   realmName: string;
   configurationSettingsList: JSON;
 
-  constructor(
-    private repository: TenantConfigurationRepository,
-    config: TenantConfig
-  ) {
+  constructor(private repository: TenantConfigurationRepository, config: TenantConfig) {
     this.id = config.id;
     this.realmName = config.realmName;
     this.configurationSettingsList = config.configurationSettingsList;
   }
 
-  static create(
-    repository: TenantConfigurationRepository,
-    config: TenantConfig
-  ) {
+  static create(repository: TenantConfigurationRepository, config: TenantConfig) {
     const entity = new TenantConfigEntity(repository, config);
 
     return repository.save(entity);

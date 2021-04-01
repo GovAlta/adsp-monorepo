@@ -40,10 +40,7 @@ passport.deserializeUser(function (user, done) {
 app.use(passport.initialize());
 app.use('/space', passport.authenticate(['jwt'], { session: false }));
 app.use('/push-admin', passport.authenticate(['jwt'], { session: false }));
-app.use(
-  '/stream',
-  passport.authenticate(['jwt', 'anonymous'], { session: false })
-);
+app.use('/stream', passport.authenticate(['jwt', 'anonymous'], { session: false }));
 
 app.use('/stream', cors());
 
@@ -82,7 +79,5 @@ Promise.all([
   const server = app.listen(port, () => {
     logger.info(`Listening at http://localhost:${port}`);
   });
-  server.on('error', (err) =>
-    logger.error(`Error encountered in server: ${err}`)
-  );
+  server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
 });

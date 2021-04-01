@@ -1,5 +1,13 @@
 import { IsNotEmpty } from 'class-validator';
-import { User, UserRole, Update, AssertRole, UnauthorizedError, InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import {
+  User,
+  UserRole,
+  Update,
+  AssertRole,
+  UnauthorizedError,
+  InvalidOperationError,
+  NotFoundError,
+} from '@core-services/core-common';
 import { Namespace, EventDefinition, ServiceUserRoles } from '../types';
 import { EventRepository } from '../repository';
 import { EventDefinitionEntity } from './eventDefinition';
@@ -15,37 +23,20 @@ export class NamespaceEntity implements Namespace {
   public adminRole: UserRole;
 
   @AssertRole('create namespace', ServiceUserRoles.Admin)
-  static create(
-    user: User, 
-    repository: EventRepository, 
-    namespace: Namespace
-  ) {
-    return repository.save(
-      new NamespaceEntity(repository, namespace, true)
-    );
+  static create(user: User, repository: EventRepository, namespace: Namespace) {
+    return repository.save(new NamespaceEntity(repository, namespace, true));
   }
-  
-  constructor(
-    private repository: EventRepository,
-    namespace: Namespace, 
-    public isNew = false
-  ) {
+
+  constructor(private repository: EventRepository, namespace: Namespace, public isNew = false) {
     this.validationService = new AjvValidationService(namespace.name);
     this.name = namespace.name;
     this.description = namespace.description;
     this.adminRole = namespace.adminRole;
-    this.definitions = Object.entries(
-      namespace.definitions || {}
-    ).reduce(
-      (defs, [name, definition]) => 
-        ({
-          ...defs,
-          [name]: new EventDefinitionEntity(
-            this.validationService, 
-            this.name, 
-            {...definition, name}
-          )
-        }),
+    this.definitions = Object.entries(namespace.definitions || {}).reduce(
+      (defs, [name, definition]) => ({
+        ...defs,
+        [name]: new EventDefinitionEntity(this.validationService, this.name, { ...definition, name }),
+      }),
       {}
     );
   }
@@ -76,37 +67,26 @@ export class NamespaceEntity implements Namespace {
     }
 
     if (!definition.name) {
-      throw new InvalidOperationError('Value definition must have a name.')
+      throw new InvalidOperationError('Value definition must have a name.');
     }
 
     if (this.definitions[definition.name]) {
       throw new InvalidOperationError('Value definition already exists.');
     }
-    
-    const newDefinition = new EventDefinitionEntity(
-      this.validationService,
-      this.name, 
-      {
-        name: definition.name,
-        description: definition.description,
-        payloadSchema: definition.payloadSchema,
-        sendRoles: definition.sendRoles
-      }
-    );
+
+    const newDefinition = new EventDefinitionEntity(this.validationService, this.name, {
+      name: definition.name,
+      description: definition.description,
+      payloadSchema: definition.payloadSchema,
+      sendRoles: definition.sendRoles,
+    });
 
     this.definitions[newDefinition.name] = newDefinition;
-    
-    return this.repository.save(this)
-    .then(result => 
-      result.definitions[newDefinition.name]
-    );
+
+    return this.repository.save(this).then((result) => result.definitions[newDefinition.name]);
   }
 
-  updateDefinition(
-    user: User, 
-    name: string, 
-    update: Update<EventDefinition, 'name'>
-  ) {
+  updateDefinition(user: User, name: string, update: Update<EventDefinition, 'name'>) {
     if (!this.canUpdate(user)) {
       throw new UnauthorizedError('User not authorized to update namespace.');
     }
@@ -117,17 +97,11 @@ export class NamespaceEntity implements Namespace {
     }
 
     definition.update(update);
-    
-    return this.repository.save(this)
-    .then(result => 
-      result.definitions[name]
-    );
+
+    return this.repository.save(this).then((result) => result.definitions[name]);
   }
 
-  removeDefinition(
-    user: User, 
-    name: string
-  ) {
+  removeDefinition(user: User, name: string) {
     if (!this.canUpdate(user)) {
       throw new UnauthorizedError('User not authorized to update namespace.');
     }
@@ -136,22 +110,15 @@ export class NamespaceEntity implements Namespace {
     if (definition) {
       delete this.definitions[name];
     }
-    
-    return this.repository.save(this)
-    .then(() => 
-      !!definition
-    );
+
+    return this.repository.save(this).then(() => !!definition);
   }
 
   canAccess(user: User) {
-    return user && 
-      (user.roles.includes(ServiceUserRoles.Admin) ||
-      user.roles.includes(this.adminRole));
+    return user && (user.roles.includes(ServiceUserRoles.Admin) || user.roles.includes(this.adminRole));
   }
 
   canUpdate(user: User) {
-    return user &&
-      (user.roles.includes(ServiceUserRoles.Admin) ||
-      user.roles.includes(this.adminRole));
+    return user && (user.roles.includes(ServiceUserRoles.Admin) || user.roles.includes(this.adminRole));
   }
 }

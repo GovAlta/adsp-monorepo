@@ -44,9 +44,8 @@ const Dashboard = () => {
 
         <h2 className="mb-3">Recent Activity</h2>
         <p>
-          Cases of COVID-19 continue to rise in Alberta. All Albertans must
-          continue to follow all public health measures to help bend the curve
-          and protect the health-care system.
+          Cases of COVID-19 continue to rise in Alberta. All Albertans must continue to follow all public health
+          measures to help bend the curve and protect the health-care system.
         </p>
       </Container>
     </div>

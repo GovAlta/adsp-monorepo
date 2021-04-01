@@ -15,18 +15,13 @@ export function* fetchAccess() {
   const keycloakApi = new KeycloakApi(baseUrl, realm, token);
 
   try {
-    const [ users, roles] = [
-      yield keycloakApi.getUsers(),
-      yield keycloakApi.getRoles(),
-    ];
+    const [users, roles] = [yield keycloakApi.getUsers(), yield keycloakApi.getRoles()];
 
     // add userId[] attribute to roles
     const rolesWithUsers = yield (async () => {
       const userIds = users.map((user: User) => user.id);
       const userRoles = roles.map(async (role: Role) => {
-        const usersWithRole = (await keycloakApi.getUsersByRole(role.name)).filter((user) =>
-          userIds.includes(user.id)
-        );
+        const usersWithRole = (await keycloakApi.getUsersByRole(role.name)).filter((user) => userIds.includes(user.id));
         return { roleId: role.id, users: usersWithRole.map((user) => user.id) };
       });
 

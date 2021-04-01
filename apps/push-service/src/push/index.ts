@@ -12,16 +12,11 @@ export * from './model';
 export * from './repository';
 
 interface PushMiddlewareProps extends Repositories {
-  logger: Logger
-  eventService: DomainEventSubscriberService
+  logger: Logger;
+  eventService: DomainEventSubscriberService;
 }
 
-export const applyPushMiddleware = (
-  app: Application,
-  ws: WsApplication,
-  props: PushMiddlewareProps
-) => {
-  
+export const applyPushMiddleware = (app: Application, ws: WsApplication, props: PushMiddlewareProps) => {
   const spaceRouter = createSpaceRouter(props);
   const adminRouter = createAdminRouter(props);
   const streamRouter = createStreamRouter(ws, props);
@@ -29,6 +24,6 @@ export const applyPushMiddleware = (
   app.use('/space/v1', spaceRouter);
   app.use('/push-admin/v1', adminRouter);
   app.use('/stream/v1', streamRouter);
-  
+
   return app;
-}
+};

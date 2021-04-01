@@ -12,11 +12,7 @@ import { apiRouter } from './app/router';
 import { logger } from './middleware/logger';
 import { Request, Response, NextFunction } from 'express';
 
-import {
-  UnauthorizedError,
-  NotFoundError,
-  InvalidOperationError,
-} from '@core-services/core-common';
+import { UnauthorizedError, NotFoundError, InvalidOperationError } from '@core-services/core-common';
 
 import * as cors from 'cors';
 
@@ -57,15 +53,9 @@ app.use('/health', healthCheck());
 app.use('/', (req: Request, resp: Response, next: NextFunction) => {
   resp.on('finish', () => {
     if (resp.statusCode === 401) {
-      logger.error(
-        '401 Unauthorized, Please set valid token in request',
-        `${JSON.stringify(req.query)}`
-      );
+      logger.error('401 Unauthorized, Please set valid token in request', `${JSON.stringify(req.query)}`);
     } else if (resp.statusCode === 404) {
-      logger.error(
-        '404 Not Found, Please input valid request resource',
-        `${JSON.stringify(req.query)}`
-      );
+      logger.error('404 Not Found, Please input valid request resource', `${JSON.stringify(req.query)}`);
     }
   });
   logger.info(`${req.method}  ${req.path} Status Code : ${resp.statusCode}`);
@@ -87,11 +77,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-app.use(
-  '/swagger/docs',
-  swaggerUi.serve,
-  swaggerUi.setup(JSON.parse(swaggerDocument))
-);
+app.use('/swagger/docs', swaggerUi.serve, swaggerUi.setup(JSON.parse(swaggerDocument)));
 
 app.get('/swagger/json/v1', (req, res) => {
   res.json(JSON.parse(swaggerDocument));

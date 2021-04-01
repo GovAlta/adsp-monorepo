@@ -1,28 +1,21 @@
 import { Model, model } from 'mongoose';
 import { Results, decodeAfter, encodeNext } from '@core-services/core-common';
-import { 
-  FileRepository, 
-  FileCriteria, 
-  FileEntity, 
-  FileTypeEntity, 
-  FileSpaceRepository
-} from '../file';
+import { FileRepository, FileCriteria, FileEntity, FileTypeEntity, FileSpaceRepository } from '../file';
 import { fileSchema } from './schema';
 import { FileDoc } from './types';
 
 export class MongoFileRepository implements FileRepository {
-  
   private model: Model<FileDoc>;
 
   constructor(private spaceRepository: FileSpaceRepository) {
     this.model = model('file', fileSchema);
   }
-  
+
   find(top: number, after: string, criteria: FileCriteria): Promise<Results<FileEntity>> {
     const skip = decodeAfter(after);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const query: any = {}
+    const query: any = {};
 
     if (criteria.spaceEquals) {
       query.spaceId = criteria.spaceEquals;
@@ -41,65 +34,61 @@ export class MongoFileRepository implements FileRepository {
     }
 
     if (criteria.filenameContains) {
-      query.filename =  { 
-        $regex: criteria.filenameContains, 
-        $options: 'i' 
-      }
+      query.filename = {
+        $regex: criteria.filenameContains,
+        $options: 'i',
+      };
     }
 
     return new Promise<FileEntity[]>((resolve, reject) => {
-      this.model.find(query, null, { lean: true })
-      .skip(skip)
-      .limit(top)
-      .exec((err, docs) => err ? 
-        reject(err) : 
-        resolve(Promise.all(
-          docs.map(doc => 
-            this.spaceRepository.getType(
-              doc.spaceId, doc.typeId
-            ).then((type) => this.fromDoc(type, doc as FileDoc))
-          )
-        ))
-      )
-    }).then((docs) => (
-      {
-        results: docs,
-        page: {
-          after,
-          next: encodeNext(docs.length, top, skip),
-          size: docs.length
-        }
-      }
-    ));;
+      this.model
+        .find(query, null, { lean: true })
+        .skip(skip)
+        .limit(top)
+        .exec((err, docs) =>
+          err
+            ? reject(err)
+            : resolve(
+                Promise.all(
+                  docs.map((doc) =>
+                    this.spaceRepository
+                      .getType(doc.spaceId, doc.typeId)
+                      .then((type) => this.fromDoc(type, doc as FileDoc))
+                  )
+                )
+              )
+        );
+    }).then((docs) => ({
+      results: docs,
+      page: {
+        after,
+        next: encodeNext(docs.length, top, skip),
+        size: docs.length,
+      },
+    }));
   }
-  
+
   get(id: string): Promise<FileEntity> {
-    return new Promise<FileEntity>((resolve, reject) => 
-      this.model.findOne(
-        {_id: id}, 
-        null,
-        {lean: true}, 
-        (err, doc) => {
-          if (err) {
-            reject(err);
-          } else if (!doc) {
-            resolve(null);
-          } else {
-            this.spaceRepository.getType(doc.spaceId, doc.typeId)
-            .then((fileType) => 
-              resolve(this.fromDoc(fileType, doc))
-            );
-          }
+    return new Promise<FileEntity>((resolve, reject) =>
+      this.model.findOne({ _id: id }, null, { lean: true }, (err, doc) => {
+        if (err) {
+          reject(err);
+        } else if (!doc) {
+          resolve(null);
+        } else {
+          this.spaceRepository
+            .getType(doc.spaceId, doc.typeId)
+            .then((fileType) => resolve(this.fromDoc(fileType, doc)));
         }
-      )
+      })
     );
   }
-  
+
   save(entity: FileEntity): Promise<FileEntity> {
-    return new Promise<FileEntity>((resolve, reject) => 
+    return new Promise<FileEntity>((resolve, reject) =>
       this.model.findOneAndUpdate(
-        { _id: entity.id }, 
-        this.toDoc(entity), 
+        { _id: entity.id },
+        this.toDoc(entity),
         { upsert: true, new: true, lean: true },
         (err, doc) => {
           if (err) {
@@ -111,33 +100,28 @@ export class MongoFileRepository implements FileRepository {
       )
     );
   }
-  
+
   delete(entity: FileEntity): Promise<boolean> {
-    return new Promise<boolean>((resolve, reject) => 
-      this.model.findOneAndDelete(
-        {_id: entity.id},
-        (err, doc) => err ? 
-          reject(err) : 
-          resolve(!!doc)
-      )
+    return new Promise<boolean>((resolve, reject) =>
+      this.model.findOneAndDelete({ _id: entity.id }, (err, doc) => (err ? reject(err) : resolve(!!doc)))
     );
   }
 
   fromDoc(type: FileTypeEntity, values: FileDoc) {
-    return values ? 
-      new FileEntity(this, type, {
-        id: values._id,
-        recordId: values.recordId,
-        filename: values.filename,
-        size: values.size,
-        storage: values.storage,
-        createdBy: values.createdBy,
-        created: values.created,
-        lastAccessed: values.lastAccessed,
-        scanned: values.scanned,
-        deleted: values.deleted
-      }) : 
-      null
+    return values
+      ? new FileEntity(this, type, {
+          id: values._id,
+          recordId: values.recordId,
+          filename: values.filename,
+          size: values.size,
+          storage: values.storage,
+          createdBy: values.createdBy,
+          created: values.created,
+          lastAccessed: values.lastAccessed,
+          scanned: values.scanned,
+          deleted: values.deleted,
+        })
+      : null;
   }
 
   toDoc(entity: FileEntity) {
@@ -152,7 +136,7 @@ export class MongoFileRepository implements FileRepository {
       created: entity.created,
       lastAccessed: entity.lastAccessed,
       scanned: entity.scanned,
-      deleted: entity.deleted
-    }
+      deleted: entity.deleted,
+    };
   }
 }

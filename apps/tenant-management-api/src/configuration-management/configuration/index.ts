@@ -14,22 +14,17 @@ interface ConfigMiddlewareProps extends Repositories {
 
 export const applyConfigMiddleware = (
   app: Application,
-  {
-    logger,
-    serviceConfigurationRepository,
-    tenantConfigurationRepository
-  }: ConfigMiddlewareProps
+  { logger, serviceConfigurationRepository, tenantConfigurationRepository }: ConfigMiddlewareProps
 ) => {
-
   const serviceConfigRouterProps = {
     logger,
-    serviceConfigurationRepository
-  }
+    serviceConfigurationRepository,
+  };
 
   const tenantConfigRouterProps = {
     logger,
-    tenantConfigurationRepository
-  }
+    tenantConfigurationRepository,
+  };
 
   const serviceConfigRouter = createConfigurationRouter(serviceConfigRouterProps);
   const tenantConfigRouter = createTenantConfigurationRouter(tenantConfigRouterProps);
@@ -54,4 +49,4 @@ export const applyConfigMiddleware = (
       });
     }
   });
-}
+};

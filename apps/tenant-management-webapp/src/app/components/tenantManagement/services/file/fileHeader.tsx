@@ -4,9 +4,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 
 const FileHeader = () => {
-  const setup = useSelector(
-    (state: RootState) => state.file.requirements.setup
-  );
+  const setup = useSelector((state: RootState) => state.file.requirements.setup);
   const active = useSelector((state: RootState) => state.file.status.isActive);
 
   let headerState = '';

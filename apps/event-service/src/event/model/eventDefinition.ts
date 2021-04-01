@@ -1,10 +1,16 @@
 import { IsNotEmpty } from 'class-validator';
-import { DomainEvent, DomainEventService, InvalidOperationError, UnauthorizedError, Update, User } from '@core-services/core-common';
+import {
+  DomainEvent,
+  DomainEventService,
+  InvalidOperationError,
+  UnauthorizedError,
+  Update,
+  User,
+} from '@core-services/core-common';
 import { EventDefinition } from '../types';
 import { ValidationService } from '../validation';
 
 export class EventDefinitionEntity implements EventDefinition {
-
   @IsNotEmpty()
   public namespace: string;
   @IsNotEmpty()
@@ -14,11 +20,7 @@ export class EventDefinitionEntity implements EventDefinition {
   @IsNotEmpty()
   public sendRoles: string[];
 
-  constructor(
-    public validationService: ValidationService,
-    namespace: string,
-    definition: EventDefinition
-  ) {
+  constructor(public validationService: ValidationService, namespace: string, definition: EventDefinition) {
     this.namespace = namespace;
     this.name = definition.name;
     this.description = definition.description;
@@ -43,16 +45,14 @@ export class EventDefinitionEntity implements EventDefinition {
   }
 
   canSend(user: User) {
-    return user && 
-      user.roles &&
-      this.sendRoles.find(r => user.roles.includes(r));
+    return user && user.roles && this.sendRoles.find((r) => user.roles.includes(r));
   }
 
   send(service: DomainEventService, user: User, event: DomainEvent) {
     if (!this.canSend(user)) {
       throw new UnauthorizedError('User not authorized to send event.');
     }
-    const { 
+    const {
       namespace: _namespace,
       name: _name,
       timestamp: _timestamp,

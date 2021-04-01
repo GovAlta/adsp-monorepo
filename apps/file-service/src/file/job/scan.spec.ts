@@ -7,25 +7,24 @@ import { FileCriteria } from '../types';
 import { createScanJob } from './scan';
 
 describe('Scan Job', () => {
-
-  const logger = {
+  const logger = ({
     debug: jest.fn(),
     info: jest.fn(),
-    warn: jest.fn()
-  } as unknown as Logger;
+    warn: jest.fn(),
+  } as unknown) as Logger;
   let repositoryMock: Mock<FileRepository> = null;
   let scanServiceMock: Mock<ScanService> = null;
-  
+
   beforeEach(() => {
     repositoryMock = new Mock<FileRepository>();
     scanServiceMock = new Mock<ScanService>();
   });
-  
+
   it('can be created', () => {
     const scanJob = createScanJob({
-      logger, 
+      logger,
       scanService: scanServiceMock.object(),
-      fileRepository: repositoryMock.object()
+      fileRepository: repositoryMock.object(),
     });
 
     expect(scanJob).toBeTruthy();
@@ -35,34 +34,41 @@ describe('Scan Job', () => {
     const scanJob = createScanJob({
       logger,
       scanService: scanServiceMock.object(),
-      fileRepository: repositoryMock.object()
+      fileRepository: repositoryMock.object(),
     });
 
     const fileEntityMock = new Mock<FileEntity>();
-    fileEntityMock.setup(instance => instance.deleted).returns(true);
-    fileEntityMock.setup(instance =>
-      instance.updateScanResult(true)
-    ).returns(Promise.resolve(fileEntityMock.object()));
+    fileEntityMock.setup((instance) => instance.deleted).returns(true);
+    fileEntityMock
+      .setup((instance) => instance.updateScanResult(true))
+      .returns(Promise.resolve(fileEntityMock.object()));
 
-    scanServiceMock.setup(instance => 
-      instance.scan(fileEntityMock.object())
-    ).returns(Promise.resolve({scanned: true, infected: true}));
+    scanServiceMock
+      .setup((instance) => instance.scan(fileEntityMock.object()))
+      .returns(Promise.resolve({ scanned: true, infected: true }));
 
-    repositoryMock.setup(instance => 
-      instance.find(20, null, It.Is<FileCriteria>(c => !c.deleted && !c.scanned))
-    ).returns(Promise.resolve({
-        page: {
-          size: 1,
-          after: null,
-          next: null
-        },
-        results: [fileEntityMock.object()]
-      })
-    );
+    repositoryMock
+      .setup((instance) =>
+        instance.find(
+          20,
+          null,
+          It.Is<FileCriteria>((c) => !c.deleted && !c.scanned)
+        )
+      )
+      .returns(
+        Promise.resolve({
+          page: {
+            size: 1,
+            after: null,
+            next: null,
+          },
+          results: [fileEntityMock.object()],
+        })
+      );
 
     scanJob().then((infected) => {
       expect(infected).toEqual(1);
-      fileEntityMock.verify(instance => instance.updateScanResult(true));
+      fileEntityMock.verify((instance) => instance.updateScanResult(true));
       done();
     });
   });
@@ -71,33 +77,37 @@ describe('Scan Job', () => {
     const scanJob = createScanJob({
       logger,
       scanService: scanServiceMock.object(),
-      fileRepository: repositoryMock.object()
+      fileRepository: repositoryMock.object(),
     });
 
     const fileEntityMock = new Mock<FileEntity>();
 
-    scanServiceMock.setup(instance => 
-      instance.scan(fileEntityMock.object())
-    ).returns(Promise.resolve({scanned: false, infected: false}));
+    scanServiceMock
+      .setup((instance) => instance.scan(fileEntityMock.object()))
+      .returns(Promise.resolve({ scanned: false, infected: false }));
 
-    repositoryMock.setup(instance => 
-      instance.find(20, null, It.Is<FileCriteria>(c => !c.deleted && !c.scanned))
-    ).returns(Promise.resolve({
-        page: {
-          size: 1,
-          after: null,
-          next: null
-        },
-        results: [fileEntityMock.object()]
-      })
-    );
+    repositoryMock
+      .setup((instance) =>
+        instance.find(
+          20,
+          null,
+          It.Is<FileCriteria>((c) => !c.deleted && !c.scanned)
+        )
+      )
+      .returns(
+        Promise.resolve({
+          page: {
+            size: 1,
+            after: null,
+            next: null,
+          },
+          results: [fileEntityMock.object()],
+        })
+      );
 
     scanJob().then((infected) => {
       expect(infected).toEqual(0);
-      fileEntityMock.verify(
-        instance => instance.updateScanResult(It.IsAny()), 
-        Times.Never()
-      );
+      fileEntityMock.verify((instance) => instance.updateScanResult(It.IsAny()), Times.Never());
       done();
     });
   });
@@ -106,33 +116,37 @@ describe('Scan Job', () => {
     const scanJob = createScanJob({
       logger,
       scanService: scanServiceMock.object(),
-      fileRepository: repositoryMock.object()
+      fileRepository: repositoryMock.object(),
     });
 
     const fileEntityMock = new Mock<FileEntity>();
 
-    scanServiceMock.setup(instance => 
-      instance.scan(fileEntityMock.object())
-    ).returns(Promise.reject(new Error('something failed.')));
+    scanServiceMock
+      .setup((instance) => instance.scan(fileEntityMock.object()))
+      .returns(Promise.reject(new Error('something failed.')));
 
-    repositoryMock.setup(instance => 
-      instance.find(20, null, It.Is<FileCriteria>(c => !c.deleted && !c.scanned))
-    ).returns(Promise.resolve({
-        page: {
-          size: 1,
-          after: null,
-          next: null
-        },
-        results: [fileEntityMock.object()]
-      })
-    );
+    repositoryMock
+      .setup((instance) =>
+        instance.find(
+          20,
+          null,
+          It.Is<FileCriteria>((c) => !c.deleted && !c.scanned)
+        )
+      )
+      .returns(
+        Promise.resolve({
+          page: {
+            size: 1,
+            after: null,
+            next: null,
+          },
+          results: [fileEntityMock.object()],
+        })
+      );
 
     scanJob().then((infected) => {
       expect(infected).toEqual(0);
-      fileEntityMock.verify(
-        instance => instance.updateScanResult(It.IsAny()), 
-        Times.Never()
-      );
+      fileEntityMock.verify((instance) => instance.updateScanResult(It.IsAny()), Times.Never());
       done();
     });
   });

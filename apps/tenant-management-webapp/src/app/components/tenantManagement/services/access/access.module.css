@@ -10,14 +10,14 @@
   flex: 1 1 auto;
 }
 
-.InfoHeader{
+.InfoHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin: 2rem 0 1rem;
 }
 
-.InfoTitle{
+.InfoTitle {
   margin: 0;
 }
 

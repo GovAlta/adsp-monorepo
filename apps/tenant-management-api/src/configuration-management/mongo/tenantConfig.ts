@@ -1,22 +1,12 @@
-import {
-  Doc,
-  decodeAfter,
-  encodeNext,
-  Results,
-} from '@core-services/core-common';
+import { Doc, decodeAfter, encodeNext, Results } from '@core-services/core-common';
 
 import { model, Types } from 'mongoose';
 
-import {
-  TenantConfigurationRepository,
-  TenantConfig,
-  TenantConfigEntity,
-} from '../configuration';
+import { TenantConfigurationRepository, TenantConfig, TenantConfigEntity } from '../configuration';
 
 import { tenantConfigSchema } from './schema';
 
-export class MongoTenantConfigurationRepository
-  implements TenantConfigurationRepository {
+export class MongoTenantConfigurationRepository implements TenantConfigurationRepository {
   private tenantConfigModel;
 
   constructor() {
@@ -47,22 +37,16 @@ export class MongoTenantConfigurationRepository
 
   getTenantConfig(realmName: string): Promise<TenantConfigEntity> {
     return new Promise<TenantConfigEntity>((resolve, reject) =>
-      this.tenantConfigModel.findOne(
-        { realmName: realmName },
-        null,
-        { lean: true },
-        (err, doc) => (err ? reject(err) : resolve(this.fromDoc(doc)))
+      this.tenantConfigModel.findOne({ realmName: realmName }, null, { lean: true }, (err, doc) =>
+        err ? reject(err) : resolve(this.fromDoc(doc))
       )
     );
   }
 
   get(id: string): Promise<TenantConfigEntity> {
     return new Promise<TenantConfigEntity>((resolve, reject) =>
-      this.tenantConfigModel.findOne(
-        { _id: id },
-        null,
-        { lean: true },
-        (err, doc) => (err ? reject(err) : resolve(this.fromDoc(doc)))
+      this.tenantConfigModel.findOne({ _id: id }, null, { lean: true }, (err, doc) =>
+        err ? reject(err) : resolve(this.fromDoc(doc))
       )
     );
   }
@@ -86,9 +70,7 @@ export class MongoTenantConfigurationRepository
 
   delete(entity: TenantConfigEntity): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) =>
-      this.tenantConfigModel.findOneAndDelete({ _id: entity.id }, (err, doc) =>
-        err ? reject(err) : resolve(!!doc)
-      )
+      this.tenantConfigModel.findOneAndDelete({ _id: entity.id }, (err, doc) => (err ? reject(err) : resolve(!!doc)))
     );
   }
 

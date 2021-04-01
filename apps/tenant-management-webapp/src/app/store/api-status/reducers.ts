@@ -8,12 +8,12 @@ export default (state: ApiStatusState = INITIAL_STATE, action: ActionTypes): Api
     case 'api-status/uptime/fetch_success':
       return {
         ...state,
-        ...action.payload
+        ...action.payload,
       };
     case 'api-status/uptime/fetch_failure':
       return {
         ...state,
-        ...action.payload
+        ...action.payload,
       };
     default:
       return state;

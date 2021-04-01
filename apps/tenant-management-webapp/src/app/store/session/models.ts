@@ -10,8 +10,8 @@ export interface Session {
   };
   realmAccess?: {
     roles?: string[];
-  },
-  credentials?: Credentials
+  };
+  credentials?: Credentials;
 }
 
 export interface Credentials {

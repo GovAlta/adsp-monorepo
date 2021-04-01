@@ -6,11 +6,11 @@ import { MongoPushSpaceRepository } from './space';
 import { MongoStreamRepository } from './stream';
 
 interface MongoRepositoryProps {
-  logger: Logger
-  MONGO_URI: string
-  MONGO_DB: string
-  MONGO_USER: string
-  MONGO_PASSWORD: string
+  logger: Logger;
+  MONGO_URI: string;
+  MONGO_DB: string;
+  MONGO_USER: string;
+  MONGO_PASSWORD: string;
 }
 
 export const createRepositories = ({
@@ -18,30 +18,33 @@ export const createRepositories = ({
   MONGO_URI,
   MONGO_DB,
   MONGO_USER,
-  MONGO_PASSWORD
-}: MongoRepositoryProps): Promise<Repositories> => new Promise(
-  (resolve, reject) => {
+  MONGO_PASSWORD,
+}: MongoRepositoryProps): Promise<Repositories> =>
+  new Promise((resolve, reject) => {
     const mongoConnectionString = `${MONGO_URI}/${MONGO_DB}`;
-    connect(mongoConnectionString,
-      { 
-        user: MONGO_USER, pass: MONGO_PASSWORD, 
-        useNewUrlParser: true, useFindAndModify: false, useUnifiedTopology: true
-      }, 
+    connect(
+      mongoConnectionString,
+      {
+        user: MONGO_USER,
+        pass: MONGO_PASSWORD,
+        useNewUrlParser: true,
+        useFindAndModify: false,
+        useUnifiedTopology: true,
+      },
       (err) => {
         if (err) {
           reject(err);
         } else {
           const cache = new NodeCache({ stdTTL: 86400, useClones: false });
           const spaceRepository = new MongoPushSpaceRepository();
-          resolve(({
+          resolve({
             spaceRepository,
             streamRepository: new MongoStreamRepository(spaceRepository, cache),
-            isConnected: () => (connection.readyState === connection.states.connected)
-          }));
+            isConnected: () => connection.readyState === connection.states.connected,
+          });
 
           logger.info(`Connected to MongoDB at: ${mongoConnectionString}`);
         }
       }
     );
-  }
-)
+  });

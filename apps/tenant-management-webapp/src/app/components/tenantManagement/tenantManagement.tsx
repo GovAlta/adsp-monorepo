@@ -23,18 +23,20 @@ const TenantManagement = () => {
   useEffect(() => {
     setInterval(async () => {
       try {
-        const expiringSoon = await keycloak.updateToken(60)
+        const expiringSoon = await keycloak.updateToken(60);
         if (expiringSoon) {
-          dispatch(CredentialRefresh({
-            token: keycloak.token,
-            tokenExp: keycloak.tokenParsed.exp,
-          }))
+          dispatch(
+            CredentialRefresh({
+              token: keycloak.token,
+              tokenExp: keycloak.tokenParsed.exp,
+            })
+          );
         }
       } catch (e) {
-        console.error('Refresh token error', e)
+        console.error('Refresh token error', e);
       }
-    }, 20000)
-  }, [dispatch])
+    }, 20000);
+  }, [dispatch]);
 
   return (
     <Container fluid style={{ padding: '0 0 25px 20px' }}>

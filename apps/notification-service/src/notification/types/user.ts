@@ -1,3 +1,3 @@
 export enum ServiceUserRoles {
-  Admin = 'notification-service-admin'
+  Admin = 'notification-service-admin',
 }

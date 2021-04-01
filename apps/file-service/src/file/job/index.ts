@@ -6,10 +6,10 @@ import { createDeleteJob } from './delete';
 import { createScanJob } from './scan';
 
 interface FileJobProps {
-  logger: Logger
-  rootStoragePath: string
-  fileRepository: FileRepository,
-  scanService: ScanService
+  logger: Logger;
+  rootStoragePath: string;
+  fileRepository: FileRepository;
+  scanService: ScanService;
 }
 
 export const scheduleFileJobs = (props: FileJobProps) => {
@@ -22,4 +22,4 @@ export const scheduleFileJobs = (props: FileJobProps) => {
     schedule.scheduleJob('*/5 * * * *', scanJob);
     props.logger.info(`Scheduled file scan job.`);
   }
-}
+};

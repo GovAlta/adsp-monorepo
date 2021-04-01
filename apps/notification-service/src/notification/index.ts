@@ -14,12 +14,12 @@ export * from './model';
 export * from './template';
 
 interface NotificationMiddlewareProps extends Repositories {
-  logger: Logger
-  templateService: TemplateService
-  eventService: EventServiceClient
-  eventSubscriber: DomainEventSubscriberService
-  queueService: WorkQueueService<Notification>
-  providers: Providers
+  logger: Logger;
+  templateService: TemplateService;
+  eventService: EventServiceClient;
+  eventSubscriber: DomainEventSubscriberService;
+  queueService: WorkQueueService<Notification>;
+  providers: Providers;
 }
 
 export const applyNotificationMiddleware = (
@@ -33,7 +33,7 @@ export const applyNotificationMiddleware = (
     eventService,
     eventSubscriber,
     queueService,
-    providers
+    providers,
   }: NotificationMiddlewareProps
 ) => {
   createJobs({
@@ -44,19 +44,19 @@ export const applyNotificationMiddleware = (
     queueService,
     typeRepository,
     subscriptionRepository,
-    providers
+    providers,
   });
 
-  const routerProps = { 
-    logger, 
-    spaceRepository, 
-    typeRepository, 
-    subscriptionRepository 
-  }
+  const routerProps = {
+    logger,
+    spaceRepository,
+    typeRepository,
+    subscriptionRepository,
+  };
   const spaceRouter = createSpaceRouter(routerProps);
   const adminRouter = createAdminRouter(routerProps);
   const subscriptionRouter = createSubscriptionRouter(routerProps);
-  
+
   app.use('/space/v1', spaceRouter);
   app.use('/notification-admin/v1', adminRouter);
   app.use('/subscription/v1', subscriptionRouter);
@@ -74,6 +74,6 @@ export const applyNotificationMiddleware = (
           res.json(swagger);
         }
       });
-    } 
+    }
   });
-}
+};

@@ -35,9 +35,14 @@ const GOAWrapper = styled.a`
 const OverviewBtn = () => {
   const dispatch = useDispatch();
 
-  return <GoAButton content="Enable Service" onClick={() => {
-    dispatch(EnableFileService())
-  }} />;
+  return (
+    <GoAButton
+      content="Enable Service"
+      onClick={() => {
+        dispatch(EnableFileService());
+      }}
+    />
+  );
 };
 
 const HelpLink = () => {

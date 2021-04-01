@@ -1,29 +1,20 @@
 import { Logger } from 'winston';
 import { Router } from 'express';
-import { 
-  assertAuthenticatedHandler, 
-  User, 
-  UnauthorizedError, 
-  NotFoundError 
-} from '@core-services/core-common';
+import { assertAuthenticatedHandler, User, UnauthorizedError, NotFoundError } from '@core-services/core-common';
 import { PushSpaceRepository } from '../repository';
 import { PushSpaceEntity } from '../model';
 
 interface SpaceRouterProps {
-  logger: Logger
-  spaceRepository: PushSpaceRepository
+  logger: Logger;
+  spaceRepository: PushSpaceRepository;
 }
 
 const mapSpace = (entity: PushSpaceEntity) => ({
   id: entity.id,
-  adminRole: entity.adminRole
-})
+  adminRole: entity.adminRole,
+});
 
-export const createSpaceRouter = ({
-  logger,
-  spaceRepository
-}: SpaceRouterProps) => {
-
+export const createSpaceRouter = ({ logger, spaceRepository }: SpaceRouterProps) => {
   const spaceRouter = Router();
 
   /**
@@ -31,7 +22,7 @@ export const createSpaceRouter = ({
    *
    * /space/v1/spaces:
    *   get:
-   *     tags: 
+   *     tags:
    *     - Push Space
    *     description: Retrieves push spaces.
    *     parameters:
@@ -55,12 +46,12 @@ export const createSpaceRouter = ({
    *             schema:
    *               type: object
    *               properties:
-   *                 page: 
+   *                 page:
    *                   type: object
    *                   properties:
-   *                     size: 
+   *                     size:
    *                       type: number
-   *                     after: 
+   *                     after:
    *                       type: string
    *                     next:
    *                       type: string
@@ -69,41 +60,34 @@ export const createSpaceRouter = ({
    *                   items:
    *                     type: object
    *                     properties:
-   *                       id: 
+   *                       id:
    *                         type: string
    *                       name:
    *                         type: string
    *                       adminRole:
    *                         type: string
    */
-  spaceRouter.get(
-    '/spaces', 
-    assertAuthenticatedHandler,
-    (req, res, next) => {
-      const user = req.user as User;
-      const { top, after } = req.query;
+  spaceRouter.get('/spaces', assertAuthenticatedHandler, (req, res, next) => {
+    const user = req.user as User;
+    const { top, after } = req.query;
 
-      spaceRepository.find(
-        parseInt((top as string) || '10', 10), 
-        after as string
-      ).then((spaces) => {
+    spaceRepository
+      .find(parseInt((top as string) || '10', 10), after as string)
+      .then((spaces) => {
         res.send({
           page: spaces.page,
-          results: spaces.results.filter(
-            n => n.canAccess(user)
-          ).map(mapSpace)
-        })
-      }).catch((err) => next(err));
-    }
-  );
-
+          results: spaces.results.filter((n) => n.canAccess(user)).map(mapSpace),
+        });
+      })
+      .catch((err) => next(err));
+  });
 
   /**
    * @swagger
    *
    * /space/v1/spaces/{space}:
    *   get:
-   *     tags: 
+   *     tags:
    *     - Push Space
    *     description: Retrieves a specified push space.
    *     parameters:
@@ -121,7 +105,7 @@ export const createSpaceRouter = ({
    *             schema:
    *               type: object
    *               properties:
-   *                 id: 
+   *                 id:
    *                   type: string
    *                 name:
    *                   type: string
@@ -132,35 +116,30 @@ export const createSpaceRouter = ({
    *       404:
    *         description: Push space not found.
    */
-  spaceRouter.get(
-    '/spaces/:space', 
-    assertAuthenticatedHandler,
-    (req, res, next) => {
-      const user = req.user as User;
-      const { space } = req.params;
+  spaceRouter.get('/spaces/:space', assertAuthenticatedHandler, (req, res, next) => {
+    const user = req.user as User;
+    const { space } = req.params;
 
-      spaceRepository.get(
-        space
-      ).then((spaceEntity) => {
-        
+    spaceRepository
+      .get(space)
+      .then((spaceEntity) => {
         if (!spaceEntity) {
           throw new NotFoundError('Space', space);
-        }
-        else if (!spaceEntity.canAccess(user)) {
+        } else if (!spaceEntity.canAccess(user)) {
           throw new UnauthorizedError('User not authorized to access space.');
         } else {
           res.json(mapSpace(spaceEntity));
         }
-      }).catch((err) => next(err));
-    }
-  );
+      })
+      .catch((err) => next(err));
+  });
 
   /**
    * @swagger
    *
    * /space/v1/spaces/{space}:
    *   put:
-   *     tags: 
+   *     tags:
    *     - Push Space
    *     description: Creates or updates a push space.
    *     parameters:
@@ -177,7 +156,7 @@ export const createSpaceRouter = ({
    *           schema:
    *             type: object
    *             properties:
-   *               name: 
+   *               name:
    *                 type: string
    *               adminRole:
    *                 type: string
@@ -189,7 +168,7 @@ export const createSpaceRouter = ({
    *             schema:
    *               type: object
    *               properties:
-   *                 id: 
+   *                 id:
    *                   type: string
    *                 name:
    *                   type: string
@@ -198,42 +177,28 @@ export const createSpaceRouter = ({
    *       401:
    *         description: User not authorized to update push space.
    */
-  spaceRouter.put(
-    '/spaces/:space', 
-    assertAuthenticatedHandler,
-    (req, res, next) => {
-      const user = req.user as User;
-      const { space } = req.params;
+  spaceRouter.put('/spaces/:space', assertAuthenticatedHandler, (req, res, next) => {
+    const user = req.user as User;
+    const { space } = req.params;
 
-      spaceRepository.get(
-        space
-      ).then((spaceEntity) => {
+    spaceRepository
+      .get(space)
+      .then((spaceEntity) => {
         if (!spaceEntity) {
-          return PushSpaceEntity.create(
-            user, 
-            spaceRepository, 
-            { ...req.body, id: space }
-          ) ;
+          return PushSpaceEntity.create(user, spaceRepository, { ...req.body, id: space });
         } else {
-          return spaceEntity.update(
-            user, 
-            req.body
-          );
+          return spaceEntity.update(user, req.body);
         }
       })
       .then((spaceEntity) => {
         res.send(mapSpace(spaceEntity));
         return spaceEntity;
       })
-      .then((spaceEntity) => 
-        logger.info(
-          `Space ${spaceEntity.name} (ID: ${space}) updated by ` + 
-          `user ${user.name} (ID: ${user.id}).`
-        )
+      .then((spaceEntity) =>
+        logger.info(`Space ${spaceEntity.name} (ID: ${space}) updated by ` + `user ${user.name} (ID: ${user.id}).`)
       )
-      .catch(err => next(err));
-    }
-  );
+      .catch((err) => next(err));
+  });
 
   return spaceRouter;
-}
+};

@@ -1,4 +1,4 @@
-import { rename, unlink }from 'fs';
+import { rename, unlink } from 'fs';
 import { Mock, It } from 'moq.ts';
 import { User, UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
 import { FileRepository } from '../repository';
@@ -8,10 +8,10 @@ import { FileTypeEntity } from './type';
 
 jest.mock('fs', () => ({
   rename: jest.fn((o, n, cb) => cb(null)),
-  unlink: jest.fn((o, cb) => cb(null))
+  unlink: jest.fn((o, cb) => cb(null)),
 }));
-const renameMock = rename as unknown as jest.Mock<typeof rename>;
-const unlinkMock = unlink as unknown as jest.Mock<typeof unlink>;
+const renameMock = (rename as unknown) as jest.Mock<typeof rename>;
+const unlinkMock = (unlink as unknown) as jest.Mock<typeof unlink>;
 
 describe('File Entity', () => {
   const user: User = {
@@ -19,13 +19,13 @@ describe('File Entity', () => {
     name: 'testy',
     email: 'test@testco.org',
     organizationId: null,
-    roles: ['test-admin']
-  }
+    roles: ['test-admin'],
+  };
   const storagePath = 'files';
   const typePath = `${storagePath}/test/file-type-1`;
   let repositoryMock: Mock<FileRepository> = null;
   let typeMock: Mock<FileTypeEntity> = null;
-  
+
   beforeEach(() => {
     renameMock.mockClear();
     unlinkMock.mockClear();
@@ -42,15 +42,11 @@ describe('File Entity', () => {
       created: new Date(),
       createdBy: {
         id: 'user-1',
-        name: 'testy'
-      }
-    }
-    
-    const entity = new FileEntity(
-      repositoryMock.object(), 
-      typeMock.object(),
-      file
-    )
+        name: 'testy',
+      },
+    };
+
+    const entity = new FileEntity(repositoryMock.object(), typeMock.object(), file);
 
     expect(entity).toBeTruthy();
     expect(entity.id).toBeTruthy();
@@ -74,17 +70,13 @@ describe('File Entity', () => {
       created: new Date(),
       createdBy: {
         id: 'user-1',
-        name: 'testy'
+        name: 'testy',
       },
       scanned: false,
-      deleted: true
-    }
-    
-    const entity = new FileEntity(
-      repositoryMock.object(), 
-      typeMock.object(),
-      file
-    )
+      deleted: true,
+    };
+
+    const entity = new FileEntity(repositoryMock.object(), typeMock.object(), file);
 
     expect(entity).toBeTruthy();
     expect(entity.id).toEqual(file.id);
@@ -99,17 +91,11 @@ describe('File Entity', () => {
   });
 
   it('can create new', (done) => {
-    typeMock.setup(m => 
-      m.canUpdateFile(It.IsAny())
-    ).returns(true);
+    typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(true);
 
-    typeMock.setup(m => 
-      m.getPath(It.Is<string>((storage) => !!storage))
-    ).returns(typePath);
+    typeMock.setup((m) => m.getPath(It.Is<string>((storage) => !!storage))).returns(typePath);
 
-    repositoryMock.setup(m => 
-      m.save(It.IsAny())
-    ).callback(i => Promise.resolve(i.args[0]));
+    repositoryMock.setup((m) => m.save(It.IsAny())).callback((i) => Promise.resolve(i.args[0]));
 
     const file = {
       filename: 'test.txt',
@@ -118,33 +104,22 @@ describe('File Entity', () => {
       created: new Date(),
       createdBy: {
         id: 'user-1',
-        name: 'testy'
+        name: 'testy',
+      },
+    };
+
+    FileEntity.create(user, repositoryMock.object(), typeMock.object(), file, 'tmp-file', storagePath).then(
+      (entity) => {
+        expect(entity).toBeTruthy();
+        expect(renameMock.mock.calls[0][0]).toEqual('tmp-file');
+        expect(renameMock.mock.calls[0][1]).toEqual(`${typePath}/${entity.storage}`);
+        done();
       }
-    }
-    
-    FileEntity.create(
-      user, 
-      repositoryMock.object(), 
-      typeMock.object(), 
-      file, 
-      'tmp-file',
-      storagePath
-    ).then((entity) => {
-      expect(entity).toBeTruthy();
-      expect(
-        renameMock.mock.calls[0][0]
-      ).toEqual('tmp-file');
-      expect(
-        renameMock.mock.calls[0][1]
-      ).toEqual(`${typePath}/${entity.storage}`);
-      done();
-    });
+    );
   });
 
   it('can prevent unauthorized user create new', () => {
-    typeMock.setup(m => 
-      m.canUpdateFile(It.IsAny())
-    ).returns(false);
+    typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(false);
 
     const file = {
       filename: 'test.txt',
@@ -153,25 +128,16 @@ describe('File Entity', () => {
       created: new Date(),
       createdBy: {
         id: 'user-1',
-        name: 'testy'
-      }
-    }
-    
-    expect(() => {
-      FileEntity.create(
-        user, 
-        repositoryMock.object(), 
-        typeMock.object(), 
-        file, 
-        'tmp-file',
-        storagePath
-      );
-    }).toThrowError(UnauthorizedError);
+        name: 'testy',
+      },
+    };
 
+    expect(() => {
+      FileEntity.create(user, repositoryMock.object(), typeMock.object(), file, 'tmp-file', storagePath);
+    }).toThrowError(UnauthorizedError);
   });
 
   describe('instance', () => {
-
     let entity: FileEntity = null;
     beforeEach(() => {
       const file: File = {
@@ -183,31 +149,19 @@ describe('File Entity', () => {
         created: new Date(),
         createdBy: {
           id: 'user-1',
-          name: 'testy'
+          name: 'testy',
         },
         scanned: false,
-        deleted: false
-      }
-      
-      entity = new FileEntity(
-        repositoryMock.object(), 
-        typeMock.object(),
-        file
-      )
+        deleted: false,
+      };
 
-      typeMock.setup(
-        m => m.canUpdateFile(user)
-      ).returns(true);
-      
-      typeMock.setup(
-        m => m.getPath(storagePath)
-      ).returns(typePath);
-      
-      repositoryMock.setup(m => 
-        m.save(entity)
-      ).returns(
-        Promise.resolve(entity)
-      );
+      entity = new FileEntity(repositoryMock.object(), typeMock.object(), file);
+
+      typeMock.setup((m) => m.canUpdateFile(user)).returns(true);
+
+      typeMock.setup((m) => m.getPath(storagePath)).returns(typePath);
+
+      repositoryMock.setup((m) => m.save(entity)).returns(Promise.resolve(entity));
     });
 
     it('can get file path', () => {
@@ -216,18 +170,14 @@ describe('File Entity', () => {
     });
 
     it('can check user access for user with access to type', () => {
-      typeMock.setup(
-        m => m.canAccessFile(user)
-      ).returns(true);
+      typeMock.setup((m) => m.canAccessFile(user)).returns(true);
 
       const canAccess = entity.canAccess(user);
       expect(canAccess).toBeTruthy();
     });
 
     it('can check user access for user without access to type', () => {
-      typeMock.setup(
-        m => m.canAccessFile(user)
-      ).returns(false);
+      typeMock.setup((m) => m.canAccessFile(user)).returns(false);
 
       const canAccess = entity.canAccess(user);
       expect(canAccess).toBeFalsy();
@@ -235,9 +185,7 @@ describe('File Entity', () => {
 
     it('can record access', (done) => {
       const accessed = new Date();
-      entity.accessed(
-        accessed
-      ).then((result) => {
+      entity.accessed(accessed).then((result) => {
         expect(result.lastAccessed).toEqual(accessed);
         done();
       });
@@ -245,26 +193,21 @@ describe('File Entity', () => {
 
     it('can record access with current date and time', (done) => {
       const accessed = new Date();
-      entity.accessed()
-      .then((result) => {
+      entity.accessed().then((result) => {
         expect(result.lastAccessed >= accessed).toBeTruthy();
         done();
       });
     });
 
     it('can mark for delete', (done) => {
-      entity.markForDeletion(
-        user
-      ).then((result) => {
+      entity.markForDeletion(user).then((result) => {
         expect(result.deleted).toEqual(true);
         done();
-      })
+      });
     });
 
     it('can prevent unauthorized user from marking file for delete', () => {
-      typeMock.setup(
-        m => m.canUpdateFile(user)
-      ).returns(false);
+      typeMock.setup((m) => m.canUpdateFile(user)).returns(false);
 
       expect(() => {
         entity.markForDeletion(user);
@@ -272,33 +215,25 @@ describe('File Entity', () => {
     });
 
     it('can delete', (done) => {
-      repositoryMock.setup(m => 
-        m.delete(entity)
-      ).returns(Promise.resolve(true));
+      repositoryMock.setup((m) => m.delete(entity)).returns(Promise.resolve(true));
 
       entity.deleted = true;
-      entity.delete(
-        storagePath
-      ).then(deleted => {
+      entity.delete(storagePath).then((deleted) => {
         expect(deleted).toBeTruthy();
-        expect(
-          unlinkMock.mock.calls[0][0]
-        ).toEqual(`${typePath}/${entity.storage}`);
+        expect(unlinkMock.mock.calls[0][0]).toEqual(`${typePath}/${entity.storage}`);
         done();
       });
     });
 
     it('can prevent delete of file not marked for deletion', () => {
       entity.deleted = false;
-      expect(() => { 
-        entity.delete(storagePath) 
+      expect(() => {
+        entity.delete(storagePath);
       }).toThrowError(InvalidOperationError);
     });
 
     it('can update scan result', (done) => {
-      entity.updateScanResult(
-        false
-      ).then(result => {
+      entity.updateScanResult(false).then((result) => {
         expect(result.scanned).toBeTruthy();
         expect(result.deleted).toBeFalsy();
         done();
@@ -306,13 +241,9 @@ describe('File Entity', () => {
     });
 
     it('can update scan result as infected', (done) => {
-      repositoryMock.setup(m => 
-        m.save(entity)
-      ).returns(Promise.resolve(entity));
+      repositoryMock.setup((m) => m.save(entity)).returns(Promise.resolve(entity));
 
-      entity.updateScanResult(
-        true
-      ).then(result => {
+      entity.updateScanResult(true).then((result) => {
         expect(result.scanned).toBeTruthy();
         expect(result.deleted).toBeTruthy();
         done();

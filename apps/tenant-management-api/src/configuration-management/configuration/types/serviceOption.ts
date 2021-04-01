@@ -1,6 +1,6 @@
-export interface ServiceOption{
-  service: string
-  id: string
-  version: string
-  configOptions: JSON
+export interface ServiceOption {
+  service: string;
+  id: string;
+  version: string;
+  configOptions: JSON;
 }

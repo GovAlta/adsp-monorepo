@@ -14,5 +14,5 @@ export const environment = {
   // EVENT_SERVICE_URL: 'http://localhost:3334',
   PORT: 3333,
   ...env,
-  production: env.NODE_ENV === 'production'
+  production: env.NODE_ENV === 'production',
 };

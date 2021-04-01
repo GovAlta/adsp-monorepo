@@ -37,8 +37,7 @@ export const createRepositories = ({
           resolve({
             serviceConfigurationRepository: new MongoServiceOptionRepository(),
             tenantConfigurationRepository: new MongoTenantConfigurationRepository(),
-            isConnected: () =>
-              connection.readyState === connection.states.connected,
+            isConnected: () => connection.readyState === connection.states.connected,
           });
 
           logger.info(`Connected to MongoDB at: ${mongoConnectionString}`);

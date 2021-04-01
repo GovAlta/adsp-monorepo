@@ -4,9 +4,9 @@ export interface Notification {
 }
 
 export interface NotificationState {
-  notifications: Notification[]
+  notifications: Notification[];
 }
 
 export const NOTIFICATION_INIT: NotificationState = {
-  notifications: []
-}
+  notifications: [],
+};

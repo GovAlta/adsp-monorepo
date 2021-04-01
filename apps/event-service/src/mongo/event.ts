@@ -4,57 +4,50 @@ import { EventDefinitionEntity, EventRepository, Namespace, NamespaceEntity } fr
 import { namespaceSchema } from './schema';
 
 export class MongoEventRepository implements EventRepository {
-  
   model: Model<Document>;
   constructor() {
     this.model = model('eventnamespace', namespaceSchema);
   }
 
   getNamespace(name: string): Promise<NamespaceEntity> {
-    return new Promise<NamespaceEntity>((resolve, reject) => 
-      this.model.findOne(
-        { name }, 
-        null,
-        { lean: true }, 
-        (err, doc: unknown) => err ?
-          reject(err) :
-          resolve(this.fromDoc(doc as Doc<Namespace>))
+    return new Promise<NamespaceEntity>((resolve, reject) =>
+      this.model.findOne({ name }, null, { lean: true }, (err, doc: unknown) =>
+        err ? reject(err) : resolve(this.fromDoc(doc as Doc<Namespace>))
       )
     );
   }
-  
+
   getNamespaces(top: number, after: string): Promise<Results<NamespaceEntity>> {
     const skip = decodeAfter(after);
     return new Promise<Results<NamespaceEntity>>((resolve, reject) => {
-      this.model.find({}, null, { lean: true })
-      .skip(skip)
-      .limit(top)
-      .exec((err, docs) => err ? 
-        reject(err) : 
-        resolve({
-          results: docs.map((doc: unknown) => this.fromDoc(doc as Doc<Namespace>)),
-          page: {
-            after,
-            next: encodeNext(docs.length, top, skip),
-            size: docs.length
-          }
-        })
-      );
+      this.model
+        .find({}, null, { lean: true })
+        .skip(skip)
+        .limit(top)
+        .exec((err, docs) =>
+          err
+            ? reject(err)
+            : resolve({
+                results: docs.map((doc: unknown) => this.fromDoc(doc as Doc<Namespace>)),
+                page: {
+                  after,
+                  next: encodeNext(docs.length, top, skip),
+                  size: docs.length,
+                },
+              })
+        );
     });
   }
-  
+
   getDefinition(namespace: string, name: string): Promise<EventDefinitionEntity> {
-    return this.getNamespace(namespace)
-    .then((entity) => 
-      entity && entity.definitions[name]
-    );
+    return this.getNamespace(namespace).then((entity) => entity && entity.definitions[name]);
   }
-  
+
   save(entity: NamespaceEntity): Promise<NamespaceEntity> {
-    return new Promise<NamespaceEntity>((resolve, reject) => 
+    return new Promise<NamespaceEntity>((resolve, reject) =>
       this.model.findOneAndUpdate(
-        { name: entity.name }, 
-        this.toDoc(entity), 
+        { name: entity.name },
+        this.toDoc(entity),
         { upsert: true, new: true, lean: true },
         (err, doc: unknown) => {
           if (err) {
@@ -74,29 +67,27 @@ export class MongoEventRepository implements EventRepository {
       adminRole: entity.adminRole,
       definitions: Object.entries(entity.definitions).reduce(
         (defs, [key, def]) => ({
-          ...defs, 
+          ...defs,
           [key]: {
             name: key,
             description: def.description,
             sendRoles: def.sendRoles,
-            payloadSchema: def.payloadSchema
-          }
+            payloadSchema: def.payloadSchema,
+          },
         }),
         {}
-      )
-    }
+      ),
+    };
   }
 
   private fromDoc(doc: Doc<Namespace>): NamespaceEntity {
-    return doc ? new NamespaceEntity(
-      this, 
-      {
-        name: doc.name,
-        description: doc.description,
-        adminRole: doc.adminRole,
-        definitions: doc.definitions
-      }
-    ) : 
-    null;
+    return doc
+      ? new NamespaceEntity(this, {
+          name: doc.name,
+          description: doc.description,
+          adminRole: doc.adminRole,
+          definitions: doc.definitions,
+        })
+      : null;
   }
 }

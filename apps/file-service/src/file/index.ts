@@ -12,33 +12,27 @@ export * from './repository';
 export * from './model';
 
 interface FileMiddlewareProps extends Repositories {
-  logger: Logger
-  rootStoragePath: string
-  avProvider: string
-  avHost: string
-  avPort: number
-  eventService: DomainEventService
+  logger: Logger;
+  rootStoragePath: string;
+  avProvider: string;
+  avHost: string;
+  avPort: number;
+  eventService: DomainEventService;
 }
 
-export const applyFileMiddleware = (
-  app: Application,
-  props: FileMiddlewareProps
-) => {
+export const applyFileMiddleware = (app: Application, props: FileMiddlewareProps) => {
   const spaceRouter = createSpaceRouter(props);
   const adminRouter = createAdminRouter(props);
   const fileRouter = createFileRouter(props);
-  
-  const scanService = createScanService(
-    props.avProvider, 
-    {
-      rootStoragePath: props.rootStoragePath, 
-      host: props.avHost, 
-      port: props.avPort
-    }
-  );
 
-  scheduleFileJobs({...props, scanService});
-  
+  const scanService = createScanService(props.avProvider, {
+    rootStoragePath: props.rootStoragePath,
+    host: props.avHost,
+    port: props.avPort,
+  });
+
+  scheduleFileJobs({ ...props, scanService });
+
   app.use('/space/v1', spaceRouter);
   app.use('/file-admin/v1', adminRouter);
   app.use('/file/v1', fileRouter);
@@ -56,6 +50,6 @@ export const applyFileMiddleware = (
           res.json(swagger);
         }
       });
-    } 
+    }
   });
-}
+};

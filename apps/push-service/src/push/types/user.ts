@@ -1,3 +1,3 @@
 export enum ServiceUserRoles {
-  Admin = 'push-service-admin'
+  Admin = 'push-service-admin',
 }

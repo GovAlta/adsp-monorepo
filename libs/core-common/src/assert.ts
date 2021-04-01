@@ -11,33 +11,36 @@ export const assertAuthenticatedHandler: RequestHandler = (req, res, next) => {
   } else {
     next();
   }
-}
+};
 
-type AssertRole = (operation: string, roles: UserRole | UserRole[]) => 
-  <T extends Function>(target: object, propertyKey: string, descriptor: TypedPropertyDescriptor<T>) => 
-  TypedPropertyDescriptor<T>
+type AssertRole = (
+  operation: string,
+  roles: UserRole | UserRole[]
+) => <T extends Function>(
+  target: object,
+  propertyKey: string,
+  descriptor: TypedPropertyDescriptor<T>
+) => TypedPropertyDescriptor<T>;
 
 export const AssertRole: AssertRole = (operation, roles) => (target, propertyKey, descriptor) => {
-
   const method = descriptor.value;
-  descriptor.value = (function(...args: unknown[]) {
-
+  descriptor.value = function (...args: unknown[]) {
     if (!(roles instanceof Array)) {
-      roles = [ roles ];
+      roles = [roles];
     }
 
     const [user] = args;
     const userRoles = user ? (user as User).roles : [];
     // If user has at least one of the roles, then they are permitted.
-    const matchedRoles = roles.filter(required => userRoles.includes(required));
+    const matchedRoles = roles.filter((required) => userRoles.includes(required));
 
     if (matchedRoles.length === 0) {
       throw new UnauthorizedError(`User not permitted to ${operation}.`);
     } else {
       return method.apply(this, args);
     }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any;
 
   return descriptor;
-}
+};

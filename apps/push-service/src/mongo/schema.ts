@@ -3,60 +3,63 @@ import { Schema } from 'mongoose';
 export const spaceSchema = new Schema({
   _id: {
     type: String,
-    required: true
+    required: true,
   },
-  name: { 
-    type: String,
-    required: true
-  },
-  adminRole: {
-    type: String
-  }
-});
-
-export const streamSchema = new Schema({
-  spaceId: {
+  name: {
     type: String,
     required: true,
-    ref: 'space'
   },
-  _id: {
+  adminRole: {
     type: String,
-    required: true
   },
-  name: { 
-    type: String,
-    required: true
-  },
-  subscriberRoles: {
-    type: [String],
-    required: true
-  },
-  events: {
-    type: [
-      {
-        _id: false,
-        namespace: {
-          type: String,
-          required: true
+});
+
+export const streamSchema = new Schema(
+  {
+    spaceId: {
+      type: String,
+      required: true,
+      ref: 'space',
+    },
+    _id: {
+      type: String,
+      required: true,
+    },
+    name: {
+      type: String,
+      required: true,
+    },
+    subscriberRoles: {
+      type: [String],
+      required: true,
+    },
+    events: {
+      type: [
+        {
+          _id: false,
+          namespace: {
+            type: String,
+            required: true,
+          },
+          name: {
+            type: String,
+            required: true,
+          },
+          map: {
+            type: Object,
+          },
+          criteria: {
+            type: {
+              correlationId: String,
+              context: Object,
+            },
+          },
         },
-        name: {
-          type: String,
-          required: true
-        },
-        map: {
-          type: Object
-        },
-        criteria: {
-          type: {
-            correlationId: String,
-            context: Object
-          }
-        }
-      }
-    ],
-    required: true
+      ],
+      required: true,
+    },
   },
-}, { _id: false });
+  { _id: false }
+);
 
 streamSchema.index({ spaceId: 1, _id: 1 }, { unique: true });

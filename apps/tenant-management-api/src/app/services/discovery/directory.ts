@@ -1,14 +1,9 @@
 import * as data from './directory.json';
-import Directory,{ DirectoryMap, createDirectory } from '../../models/directory/directory';
+import Directory, { DirectoryMap, createDirectory } from '../../models/directory/directory';
 import { logger } from '../../../middleware/logger';
 import { ApiError } from '../../util/apiError';
 import * as HttpStatusCodes from 'http-status-codes';
-import {
-  validateUrn,
-  validateHostname,
-  validateVersion,
-  validatePath,
-} from './util/patternUtil';
+import { validateUrn, validateHostname, validateVersion, validatePath } from './util/patternUtil';
 
 export interface URNComponent {
   scheme?: string;
@@ -60,13 +55,9 @@ const getUrlResponse = (services, component) => {
     const discoveryRes: Response = {};
     discoveryRes.urn = getUrn(component);
 
-    let responseUrl = component.apiVersion
-      ? `${HTTPS}${host}/application/${component.apiVersion}`
-      : `${HTTPS}${host}`;
+    let responseUrl = component.apiVersion ? `${HTTPS}${host}/application/${component.apiVersion}` : `${HTTPS}${host}`;
 
-    responseUrl = component.resource
-      ? `${responseUrl}${component.resource}`
-      : responseUrl;
+    responseUrl = component.resource ? `${responseUrl}${component.resource}` : responseUrl;
     discoveryRes.url = responseUrl;
     return discoveryRes;
   }
@@ -78,10 +69,7 @@ const getUrlResponse = (services, component) => {
 const validateServices = (services) => {
   for (const service of services) {
     if (!validateHostname(service['host'])) {
-      return new ApiError(
-        HttpStatusCodes.BAD_REQUEST,
-        'Host format not correct!'
-      ).getJson();
+      return new ApiError(HttpStatusCodes.BAD_REQUEST, 'Host format not correct!').getJson();
     }
   }
 };
@@ -172,9 +160,7 @@ export const getDirectories = async () => {
 
           element.urn = getUrn(component);
           const serviceName: string = service['host'].toString();
-          element.url = isStartWithHttp(serviceName)
-            ? serviceName
-            : `${HTTPS}${serviceName}`;
+          element.url = isStartWithHttp(serviceName) ? serviceName : `${HTTPS}${serviceName}`;
           response.push(element);
         }
       }
@@ -200,15 +186,10 @@ export const addDirectory = async (directories) => {
       validateServices(services);
 
       // Create
-      await Directory.create(
-        JSON.parse(JSON.stringify(directories).toLowerCase())
-      );
+      await Directory.create(JSON.parse(JSON.stringify(directories).toLowerCase()));
       return HttpStatusCodes.CREATED;
     }
-    return new ApiError(
-      HttpStatusCodes.BAD_REQUEST,
-      `There exist directory ${directories['name']}`
-    );
+    return new ApiError(HttpStatusCodes.BAD_REQUEST, `There exist directory ${directories['name']}`);
   } catch (err) {
     return new ApiError(
       HttpStatusCodes.BAD_REQUEST,
@@ -231,9 +212,7 @@ export const updateDirectory = async (directories) => {
       await Directory.findOneAndUpdate(
         { name: directories['name'] },
         {
-          services: JSON.parse(
-            JSON.stringify(directories['services']).toLowerCase()
-          ),
+          services: JSON.parse(JSON.stringify(directories['services']).toLowerCase()),
         },
         { new: true }
       );

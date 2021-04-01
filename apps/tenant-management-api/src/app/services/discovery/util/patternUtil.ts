@@ -1,7 +1,5 @@
 export const validateUrn = (urnStr: string) => {
-  const pattern = new RegExp(
-    "^urn:ads:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,-.:=@;$_!*'%/?#]+$"
-  );
+  const pattern = new RegExp("^urn:ads:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,-.:=@;$_!*'%/?#]+$");
   return pattern.test(urnStr);
 };
 

@@ -7,17 +7,12 @@ const Side = () => {
   const [expanded, setExpanded] = useState(false);
   const toggleClicked = () => {
     setExpanded(!expanded);
-    document.getElementById('dashboard').style.marginLeft = expanded
-      ? '0px'
-      : '100px';
+    document.getElementById('dashboard').style.marginLeft = expanded ? '0px' : '100px';
   };
   return (
     <div className="col-md-12 goa-admin-side" id="sidebar">
       <Navbar collapseOnSelect expanded={expanded} sticky="top" expand="lg">
-        <Navbar.Toggle
-          aria-controls="basic-navbar-nav"
-          onClick={toggleClicked}
-        />
+        <Navbar.Toggle aria-controls="basic-navbar-nav" onClick={toggleClicked} />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="flex-column mr-auto" style={{ width: '100%' }}>
             <h4>Tenant Name</h4>

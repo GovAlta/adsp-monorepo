@@ -2,23 +2,23 @@ import { DomainEvent } from '@core-services/core-common';
 import { Notification, NotificationType } from '../types';
 
 interface NotificationEvent extends DomainEvent {
-  namespace: 'notification'
+  namespace: 'notification';
   context: {
-    space: string
-    type: string
-  }
+    space: string;
+    type: string;
+  };
 }
 
 export interface NotificationsGenerated extends NotificationEvent {
-  name: 'notifications-generated'
-  event: DomainEvent
-  type: NotificationType
-  count: number
+  name: 'notifications-generated';
+  event: DomainEvent;
+  type: NotificationType;
+  count: number;
 }
 
 export interface NotificationSentEvent extends NotificationEvent {
-  name: 'notification-sent'
-  notification: Notification
+  name: 'notification-sent';
+  notification: Notification;
 }
 
 export const generatedNotifications = (
@@ -32,23 +32,21 @@ export const generatedNotifications = (
   context: {
     space: type.spaceId,
     type: type.id,
-    ...(event.context || {})
+    ...(event.context || {}),
   },
   correlationId: event.correlationId,
   event,
   type,
-  count
-})
+  count,
+});
 
-export const sentNotification = (
-  notification: Notification
-): NotificationSentEvent => ({
+export const sentNotification = (notification: Notification): NotificationSentEvent => ({
   namespace: 'notification',
   name: 'notification-sent',
   timestamp: new Date(),
   context: {
     space: '',
-    type: ''
+    type: '',
   },
-  notification
+  notification,
 });

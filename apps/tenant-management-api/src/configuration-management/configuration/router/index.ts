@@ -1,2 +1,2 @@
-export * from "./serviceOption";
-export * from "./tenantConfig";
+export * from './serviceOption';
+export * from './tenantConfig';

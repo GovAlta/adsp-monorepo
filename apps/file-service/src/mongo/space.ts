@@ -1,20 +1,14 @@
 import { Model, model } from 'mongoose';
 import * as NodeCache from 'node-cache';
-import { 
-  Results,
-  decodeAfter, 
-  encodeNext, 
-  Doc
-} from '@core-services/core-common';
+import { Results, decodeAfter, encodeNext, Doc } from '@core-services/core-common';
 import { FileSpaceRepository, FileSpaceEntity, FileSpace } from '../file';
 import { fileSpaceSchema } from './schema';
 import { FileSpaceDoc } from './types';
 import { Logger } from 'winston';
 
 export class MongoFileSpaceRepository implements FileSpaceRepository {
-  
   private model: Model<FileSpaceDoc>;
-  
+
   constructor(private logger: Logger, private cache: NodeCache) {
     this.model = model('filespace', fileSpaceSchema);
   }
@@ -22,64 +16,54 @@ export class MongoFileSpaceRepository implements FileSpaceRepository {
   find(top: number, after: string): Promise<Results<FileSpaceEntity>> {
     const skip = decodeAfter(after);
     return new Promise<Results<FileSpaceEntity>>((resolve, reject) => {
-      this.model.find({}, null, { lean: true })
-      .skip(skip)
-      .limit(top)
-      .exec((err, docs) => err ? 
-        reject(err) : 
-        resolve({
-          results: docs.map(doc => this.fromDoc(doc)),
-          page: {
-            after,
-            next: encodeNext(docs.length, top, skip),
-            size: docs.length
-          }
-        })
-      );
+      this.model
+        .find({}, null, { lean: true })
+        .skip(skip)
+        .limit(top)
+        .exec((err, docs) =>
+          err
+            ? reject(err)
+            : resolve({
+                results: docs.map((doc) => this.fromDoc(doc)),
+                page: {
+                  after,
+                  next: encodeNext(docs.length, top, skip),
+                  size: docs.length,
+                },
+              })
+        );
     });
   }
-  
+
   get(id: string): Promise<FileSpaceEntity> {
-    const entity: FileSpaceEntity = this.cache.get(
-      this.getCacheKey(id)
-    );
+    const entity: FileSpaceEntity = this.cache.get(this.getCacheKey(id));
     if (entity) {
       this.logger.debug(`Cache hit for Space with ID: ${id}`);
     } else {
       this.logger.debug(`Cache miss for Space with ID: ${id}`);
     }
-    
-    return entity ? 
-      Promise.resolve(entity) :
-      new Promise<FileSpaceEntity>((resolve, reject) => 
-        this.model.findOne(
-          { _id: id }, 
-          null,
-          { lean: true }, 
-          (err, doc) => err ?
-            reject(err) :
-            resolve(this.fromDoc(doc))
-        )
-      ).then(loaded => {
-        this.cache.set(this.getCacheKey(id), loaded);
-        return loaded;
-      });
+
+    return entity
+      ? Promise.resolve(entity)
+      : new Promise<FileSpaceEntity>((resolve, reject) =>
+          this.model.findOne({ _id: id }, null, { lean: true }, (err, doc) =>
+            err ? reject(err) : resolve(this.fromDoc(doc))
+          )
+        ).then((loaded) => {
+          this.cache.set(this.getCacheKey(id), loaded);
+          return loaded;
+        });
   }
 
   getType(spaceId: string, typeId: string) {
-    return this.get(spaceId)
-    .then((spaceEntity) => 
-      spaceEntity ? 
-      spaceEntity.types[typeId] : 
-      null
-    )
+    return this.get(spaceId).then((spaceEntity) => (spaceEntity ? spaceEntity.types[typeId] : null));
   }
 
   save(entity: FileSpaceEntity): Promise<FileSpaceEntity> {
-    return new Promise<FileSpaceEntity>((resolve, reject) => 
+    return new Promise<FileSpaceEntity>((resolve, reject) =>
       this.model.findOneAndUpdate(
-        { _id: entity.id }, 
-        this.toDoc(entity), 
+        { _id: entity.id },
+        this.toDoc(entity),
         { upsert: true, new: true, lean: true },
         (err, doc) => {
           if (err) {
@@ -94,17 +78,12 @@ export class MongoFileSpaceRepository implements FileSpaceRepository {
       return saved;
     });
   }
-  
+
   delete(entity: FileSpaceEntity): Promise<boolean> {
-    return new Promise<boolean>((resolve, reject) => 
-      this.model.findOneAndDelete(
-        {_id: entity.id},
-        (err, doc) => err ? 
-          reject(err) : 
-          resolve(!!doc)
-      )
+    return new Promise<boolean>((resolve, reject) =>
+      this.model.findOneAndDelete({ _id: entity.id }, (err, doc) => (err ? reject(err) : resolve(!!doc)))
     ).then((deleted) => {
-      this.cache.del(entity.id)
+      this.cache.del(entity.id);
       return deleted;
     });
   }
@@ -114,46 +93,38 @@ export class MongoFileSpaceRepository implements FileSpaceRepository {
   }
 
   private fromDoc(doc: Doc<FileSpace>) {
-    return doc ? 
-      new FileSpaceEntity(this, {
-        id: doc._id,
-        name: doc.name,
-        spaceAdminRole: doc.spaceAdminRole,
-        types: Object.entries(doc.types || {})
-          .reduce(
-            (types, [id, type]) => {
-              types[id] = {
-                id,
-                name: type.name,
-                anonymousRead: type.anonymousRead,
-                readRoles: type.readRoles,
-                updateRoles: type.updateRoles
-              }
-              return types;
-            },
-            {}
-          )
-      }) : 
-      null;
+    return doc
+      ? new FileSpaceEntity(this, {
+          id: doc._id,
+          name: doc.name,
+          spaceAdminRole: doc.spaceAdminRole,
+          types: Object.entries(doc.types || {}).reduce((types, [id, type]) => {
+            types[id] = {
+              id,
+              name: type.name,
+              anonymousRead: type.anonymousRead,
+              readRoles: type.readRoles,
+              updateRoles: type.updateRoles,
+            };
+            return types;
+          }, {}),
+        })
+      : null;
   }
 
   private toDoc(entity: FileSpaceEntity) {
     return {
       name: entity.name,
       spaceAdminRole: entity.spaceAdminRole,
-      types: Object.entries(entity.types || {})
-        .reduce(
-          (types, [id, type]) => {
-            types[id] = {
-              name: type.name,
-              anonymousRead: type.anonymousRead,
-              readRoles: type.readRoles,
-              updateRoles: type.updateRoles
-            }
-            return types;
-          }, 
-          {}
-        )
-    }
+      types: Object.entries(entity.types || {}).reduce((types, [id, type]) => {
+        types[id] = {
+          name: type.name,
+          anonymousRead: type.anonymousRead,
+          readRoles: type.readRoles,
+          updateRoles: type.updateRoles,
+        };
+        return types;
+      }, {}),
+    };
   }
 }

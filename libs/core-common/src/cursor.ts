@@ -6,7 +6,7 @@ export const decodeAfter = (after: string) => {
   }
 
   return skip;
-}
+};
 
 export const encodeNext = (count: number, top: number, skip: number) => {
   let next: string;
@@ -15,4 +15,4 @@ export const encodeNext = (count: number, top: number, skip: number) => {
   }
 
   return next;
-}
+};
