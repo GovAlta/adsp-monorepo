@@ -6,11 +6,11 @@ import { useDispatch } from 'react-redux';
 import Sidebar from './sidebar';
 import Dashboard from './dashboard';
 import Adminstration from './administration';
-import { HeaderCtx } from '../../privateApp';
+import { HeaderCtx } from '@lib/headerContext';
 import File from './services/file';
 import AccessPage from './services/access/access';
-import { keycloak } from '../../lib/session';
-import { CredentialRefresh } from '../../store/session/actions';
+import { keycloak } from '@lib/session';
+import { CredentialRefresh } from '@store/session/actions';
 
 const TenantManagement = () => {
   const { setTitle } = useContext(HeaderCtx);

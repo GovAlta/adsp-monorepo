@@ -29,8 +29,8 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { PrivateApp, PrivateRoute } from './privateApp';
 import { fetchConfig } from '@store/config/actions';
 import { SessionLoginSuccess, SessionLogout } from '@store/session/actions';
-import AuthContext from './lib/authContext';
-import { keycloak, createKeycloakInstance, convertToSession } from './lib/session';
+import AuthContext from '@lib/authContext';
+import { keycloak, createKeycloakInstance, convertToSession } from '@lib/session';
 
 const AppRouters = () => {
   return (
