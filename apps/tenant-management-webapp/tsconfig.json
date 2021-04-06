@@ -10,6 +10,7 @@
       "@components/*": [ "app/components/*" ],
       "@services/*": [ "app/services/*" ],
       "@store/*": [ "app/store/*" ],
+      "@lib/*": [ "app/lib/*" ],
       "@assets/*": [ "assets/*" ],
     }
   },

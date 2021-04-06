@@ -24,14 +24,13 @@ import AddClientRole from '@components/realms/AddClientRole';
 import CreateErrorPage from '@components/realms/CreateErrorPage';
 import ActivateErrorPage from '@components/realms/ActivateErrorPage';
 import Realms from '@components/realms/Realms';
-import BaseApp from './baseApp';
 import { store, persistor, RootState } from '@store/index';
 import { PersistGate } from 'redux-persist/integration/react';
-import { PrivateRoute } from './customRoute';
+import { PrivateApp, PrivateRoute } from './privateApp';
 import { fetchConfig } from '@store/config/actions';
-import AuthContext from './authContext';
 import { SessionLoginSuccess, SessionLogout } from '@store/session/actions';
-import { keycloak, createKeycloakInstance, convertToSession } from '@services/session';
+import AuthContext from '@lib/authContext';
+import { keycloak, createKeycloakInstance, convertToSession } from '@lib/session';
 
 const AppRouters = () => {
   return (
@@ -49,7 +48,7 @@ const AppRouters = () => {
         <Route path="/sign-up">
           <SignUp />
         </Route>
-        <BaseApp>
+        <PrivateApp>
           <PrivateRoute path="/case-study" component={CaseStudy} />
           <PrivateRoute path="/file-service" component={FileService} />
           <PrivateRoute path="/service-measures" component={ServiceMeasure} />
@@ -64,7 +63,7 @@ const AppRouters = () => {
           <Route path="/Realms/AddClientRole" exact component={AddClientRole} />
           <Route path="/Realms/CreateErrorPage" exact component={CreateErrorPage} />
           <Route path="/Realms/ActivateErrorPage" exact component={ActivateErrorPage} />
-        </BaseApp>
+        </PrivateApp>
       </Switch>
     </Router>
   );
