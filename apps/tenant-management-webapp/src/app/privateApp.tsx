@@ -1,15 +1,11 @@
-import React, { createContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Redirect, Route } from 'react-router-dom';
 
-import Header from './components/appHeader';
-import { RootState } from './store';
-import { ApiUptimeFetch } from './store/api-status/actions';
-
-export interface HeaderContext {
-  setTitle: (title: string) => void;
-}
-export const HeaderCtx = createContext<HeaderContext>(null);
+import Header from '@components/appHeader';
+import { RootState } from '@store/index';
+import { ApiUptimeFetch } from '@store/api-status/actions';
+import { HeaderCtx } from '@lib/headerContext'
 
 export function PrivateApp({ children }) {
   const [title, setTitle] = useState<string>('');
