@@ -19,7 +19,7 @@ export function PrivateApp({ children }) {
   return (
     <HeaderCtx.Provider value={{ setTitle }}>
       <Header serviceName={title} />
-      <div>{children}</div>
+      {children}
     </HeaderCtx.Provider>
   );
 }
