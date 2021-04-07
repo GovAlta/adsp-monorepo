@@ -22,4 +22,10 @@ module.exports = (on, config) => {
   };
   options.browserifyOptions.plugin.unshift(['tsify']);
   on('file:preprocessor', cucumber(options));
+  on('before:browser:launch', (browser = {}, launchOptions) => {
+    if (browser.name === 'chrome') {
+      launchOptions.args.push('--disable-dev-shm-usage');
+      return launchOptions;
+    }
+  });
 };
