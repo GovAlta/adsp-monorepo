@@ -3,7 +3,8 @@ import * as Logging from './logging';
 const logger = Logging.createLogger('[CORE COMMON][HTTP]', 'info');
 
 export const HOSTS = {
-  tenantAPI: process.env.TENANT_MANAGEMENT_API_HOST || 'http://localhost:3333',
+  tenantAPI: process.env.TENANT_MANAGEMENT_API_HOST,
+  keycloakHost: process.env.KEYCLOAK_ROOT_URL,
 };
 
 /**
