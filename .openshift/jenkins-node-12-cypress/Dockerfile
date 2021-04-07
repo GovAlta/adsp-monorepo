@@ -24,6 +24,8 @@ RUN curl http://mirror.centos.org/centos-7/7/os/x86_64/RPM-GPG-KEY-CentOS-7 -o /
     curl -sL https://rpm.nodesource.com/setup_12.x | bash - && \
     yum $DISABLES install -y --setopt=tsflags=nodocs --disableplugin=subscription-manager nodejs && \
     rpm -V nodejs && \
+    wget --no-verbose https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm && \
+    yum $DISABLES install -y --setopt=tsflags=nodocs --disableplugin=subscription-manager ./google-chrome-stable_current_*.rpm && \
     yum clean all -y 
 
 RUN chown -R 1001:0 $HOME && \
