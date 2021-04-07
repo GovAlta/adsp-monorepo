@@ -11,27 +11,25 @@ interface ServiceAuthConfig {
 const serviceAuth = (authConfig: ServiceAuthConfig, user) => {
   logger.info(`tenant: ${user.client}`);
   try {
-    console.log();
     if (authConfig.realm) {
       const realm = user.tokenIssuer.split('/').slice(-1)[0];
 
       if (realm !== authConfig.realm) {
-        logger.warning(`Expect realm ${authConfig.realm}, but current realm is ${user.realm}`);
+        logger.warn(`Expect realm ${authConfig.realm}, but current realm is ${user.realm}`);
         return false;
       }
     }
 
     if (authConfig.tenantName) {
       if (user.tenantName !== authConfig.tenantName) {
-        logger.warning(`Expect realm ${authConfig.tenantName}, but current realm is ${user.tenantName}`);
-
+        logger.warn(`Expect tenant ${authConfig.tenantName}, but current realm is ${user.tenantName}`);
         return false;
       }
     }
 
     if (authConfig.client) {
       if (user.client != authConfig.client) {
-        logger.warning(`Expect realm ${authConfig.client}, but current realm is ${user.client}`);
+        logger.warn(`Expect client ${authConfig.client}, but current realm is ${user.client}`);
 
         return false;
       }
@@ -54,7 +52,7 @@ export const serviceAuthMiddleware = (authConfig: ServiceAuthConfig) => async (r
 
 export const tenantApiAdminOnly = async (req, res, next: () => void) => {
   const authConfig: ServiceAuthConfig = {
-    realm: 'core',
+    tenantName: 'core',
     client: 'tenant-api',
   };
 

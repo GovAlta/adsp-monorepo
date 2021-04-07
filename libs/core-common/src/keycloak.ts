@@ -115,8 +115,6 @@ export const createKeycloakStrategy = () => {
       secretOrKeyProvider: kcKeyProvider,
     },
     (payload, done) => {
-      const realm = payload.iss.split('/').slice(-1)[0];
-      // TODO: correct the tenant name based on the tenant-management-api
       done(null, {
         id: payload.sub,
         name: payload.name || payload.preferred_username,
@@ -124,6 +122,7 @@ export const createKeycloakStrategy = () => {
         roles: payload.realm_access.roles,
         organizationId: payload.organizationId,
         tokenIssuer: payload.iss,
+        client: payload?.azp,
         tenantName: getTenantName(payload.iss),
       });
     }

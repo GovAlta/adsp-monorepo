@@ -2,8 +2,8 @@ import * as Logging from './logging';
 import { executeAdminGet, HOSTS } from './http';
 import * as util from 'util';
 
-// Must set default Issuer appropriately. Otherwise,the code will in an infinite loop
-const DEFAULT_TOKEN_ISSUER = 'https://access-dev.os99.gov.ab.ca/auth/realms/core';
+// Initial issuer is required to prevent infinite loop
+const DEFAULT_TOKEN_ISSUER = `${HOSTS.keycloakHost}/auth/realms/core`;
 const DEFAULT_REALM_TENANT_NAME_MAPPING = {
   master: 'master',
   core: 'core',
