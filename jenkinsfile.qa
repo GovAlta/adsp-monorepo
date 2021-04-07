@@ -59,7 +59,7 @@ pipeline {
                 echo text
                 writeFile file: "apps/tenant-management-webapp-e2e/cypress.json", text: text
             }
-          sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --headless=true --baseUrl=${base_url}"
+          sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --baseUrl=${base_url}"
         }
         post {
           always {
