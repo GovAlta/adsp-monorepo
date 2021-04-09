@@ -2,9 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 
-import './app.scss';
 import '@abgov/react-components/react-components.esm.css';
-import 'bootstrap/dist/css/bootstrap.min.css';
 import '@abgov/core-css/goa-core.css';
 
 import LandingPage from '@components/landingPage';
@@ -31,6 +29,8 @@ import { fetchConfig } from '@store/config/actions';
 import { SessionLoginSuccess, SessionLogout } from '@store/session/actions';
 import AuthContext from '@lib/authContext';
 import { keycloak, createKeycloakInstance, convertToSession } from '@lib/session';
+
+import './app.css'
 
 const AppRouters = () => {
   return (
@@ -71,7 +71,7 @@ const AppRouters = () => {
 
 export const App = () => {
   return (
-    <main>
+    <main style={{height: '100vh', overflowX: 'hidden'}}>
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
           <AppWithAuthContext />

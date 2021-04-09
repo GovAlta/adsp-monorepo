@@ -1,16 +1,17 @@
 import React, { useContext, useEffect } from 'react';
-import { Container, Row, Col } from 'react-bootstrap';
 import { Route, Switch } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import styled from 'styled-components';
+
+import { HeaderCtx } from '@lib/headerContext';
+import { keycloak } from '@lib/session';
+import { CredentialRefresh } from '@store/session/actions';
 
 import Sidebar from './sidebar';
 import Dashboard from './dashboard';
 import Adminstration from './administration';
-import { HeaderCtx } from '@lib/headerContext';
 import File from './services/file';
 import AccessPage from './services/access/access';
-import { keycloak } from '@lib/session';
-import { CredentialRefresh } from '@store/session/actions';
 
 const TenantManagement = () => {
   const { setTitle } = useContext(HeaderCtx);
@@ -23,48 +24,68 @@ const TenantManagement = () => {
   useEffect(() => {
     setInterval(async () => {
       try {
-        const expiringSoon = await keycloak.updateToken(60)
+        const expiringSoon = await keycloak.updateToken(60);
         if (expiringSoon) {
-          dispatch(CredentialRefresh({
-            token: keycloak.token,
-            tokenExp: keycloak.tokenParsed.exp,
-          }))
+          dispatch(
+            CredentialRefresh({
+              token: keycloak.token,
+              tokenExp: keycloak.tokenParsed.exp,
+            })
+          );
         }
       } catch (e) {
-        console.log(e)
+        console.log(e);
       }
-    }, 20000)
-  }, [dispatch])
+    }, 20000);
+  }, [dispatch]);
 
   return (
-    <Container fluid style={{ padding: '0 0 25px 20px' }}>
-      <Row>
-        <Col xs={1} sm={2} className="goa-admin-sidebar-col">
-          <Sidebar />
-        </Col>
-        <Col xs={11} sm={10} className="goa-admin-content-col">
-          <Switch>
-            <Route exact path="/tenant-admin/">
-              <Dashboard />
-            </Route>
-            <Route exact path="/tenant-admin/admin">
-              <Adminstration />
-            </Route>
-            <Route path="/tenant-admin/access">
-              <AccessPage />
-            </Route>
-
-            <Route exact path="/tenant-admin/admin">
-              <Adminstration />
-            </Route>
-
-            <Route exact path="/tenant-admin/services/file">
-              <File />
-            </Route>
-          </Switch>
-        </Col>
-      </Row>
-    </Container>
+    <AdminLayout>
+      <SidebarWrapper>
+        <Sidebar type="desktop" />
+      </SidebarWrapper>
+      <ContentWrapper>
+        <Switch>
+          <Route exact path="/tenant-admin/">
+            <Dashboard />
+          </Route>
+          <Route exact path="/tenant-admin/admin">
+            <Adminstration />
+          </Route>
+          <Route path="/tenant-admin/access">
+            <AccessPage />
+          </Route>
+          <Route exact path="/tenant-admin/admin">
+            <Adminstration />
+          </Route>
+          <Route exact path="/tenant-admin/services/file">
+            <File />
+          </Route>
+        </Switch>
+      </ContentWrapper>
+    </AdminLayout>
   );
 };
+
 export default TenantManagement;
+
+const AdminLayout = styled.div`
+  display: flex;
+  min-height: 100vh;
+`;
+
+const SidebarWrapper = styled.nav`
+  flex: 0 0 0;
+  transition: flex-basis 200ms;
+  overflow-x: hidden;
+  margin-top: 0.5rem;
+
+  @media (min-width: 768px) {
+    flex-basis: 12rem;
+  }
+`;
+
+const ContentWrapper = styled.div`
+  padding: 0 1rem;
+  margin-top: 0.5rem;
+`;

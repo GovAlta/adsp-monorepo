@@ -1,22 +1,17 @@
 import React, { useContext, useEffect } from 'react';
-
-import caseStudy from '@assets/CaseStudy.png';
-import integrate from '@assets/Integrate.png';
-import bannerBackground from '@assets/BannerBackground.jpg';
-import document from '@assets/files-icon.svg';
-import messageIcon from '@assets/message-icon.svg';
-import servicePartners from '@assets/partners-icon.svg';
-import productFeatures from '@assets/ProductFeatures.png';
-import { useHistory } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import styled from 'styled-components';
 
-import { Container, Row, Col } from 'react-bootstrap';
 import { GoAButton, GoaHeroBanner, GoACard } from '@abgov/react-components';
-import { RootState } from '@store/index';
+import caseStudy from '@assets/CaseStudy.png';
+import bannerBackground from '@assets/BannerBackground.jpg';
+import userGroup from '@icons/user-group.svg';
+import puzzleIcon from '@icons/extension-puzzle-outline.svg';
 import Header from '@components/appHeader';
+import { RootState } from '@store/index';
 import AuthContext from '@lib/authContext';
 
-import 'bootstrap/dist/css/bootstrap.min.css';
 import '@abgov/react-components/react-components.esm.css';
 
 const LandingPage = () => {
@@ -36,395 +31,244 @@ const LandingPage = () => {
   }, [history, tenant, session]);
 
   return (
-    <div>
-      <div>
-        <Header serviceName="" />
-        <div className="contain-text">
-          <GoaHeroBanner title="A platform built for government services" backgroundUrl={bannerBackground}>
-            <div className="banner-content">
-              <div style={{ fontSize: '20px' }}>
-                DIO Service management platform will enable you to add, configure, and manage a range of services that
-                can integrate with your existing application.
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'row' }}>
-                <div style={{ margin: '15px 30px 15px 0' }}>
-                  <GoAButton buttonType="primary" buttonSize="normal" onClick={() => history.push('/sign-up')}>
-                    Create an Account
-                  </GoAButton>
-                </div>
-                <div style={{ margin: '15px 30px 15px 0' }}>
-                  {!session.authenticated ? (
-                    <GoAButton buttonType="secondary" buttonSize="normal" onClick={() => signIn('/')}>
-                      Sign In
-                    </GoAButton>
-                  ) : (
-                    <GoAButton
-                      buttonType="secondary"
-                      buttonSize="normal"
-                      onClick={() => history.push('/Realms/CreateRealm')}
-                    >
-                      Create Tenant
-                    </GoAButton>
-                  )}
-                </div>
-              </div>
-            </div>
-          </GoaHeroBanner>
-        </div>
-        <Container className="mt-4 mb-4">
-          <Row>
-            <Col xs={12} md={6} className="mb-4">
-              <h2 className="mb-3">What does it mean?</h2>
-              <div>
-                We understand that everyone is busy, and we also know that a lot of teams end up building the same
-                components. We want to save everyone time while providing a consistent and pleasant experience for
-                Albertans. Our goal is to speed teams up while allowing for incredible control and immersion. Basically,
-                we have done the heavy lifting so that you and your teams can focus on the specific pieces unique to
-                your project. Sound good? See for yourself how it’s helped other teams out.
-              </div>
-            </Col>
-            <Col
-              xs={12}
-              md={6}
-              style={{
-                flex: 1,
-                display: 'flex',
-                justifyContent: 'center',
-                flexDirection: 'column',
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    margin: '10px',
-                  }}
-                >
-                  <img src={caseStudy} alt="" />
-                </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    margin: '10px',
-                  }}
-                >
-                  {/*}GoAButton
-                      buttonType="secondary"
-                      content="View Case Study"
-                      onClick={() => history.push('/case-study')}
-                  />*/}
-                </div>
-              </div>
-            </Col>
-          </Row>
-        </Container>
-        <div style={{ backgroundColor: '#f1f1f1' }}>
-          <Container>
-            <Row>
-              <Col xs={12} md={6} className="mb-3 mt-3">
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    margin: '40px',
-                  }}
-                >
-                  <img src={integrate} width={'100%'} alt="" />
-                </div>
-              </Col>
-              <Col
-                xs={12}
-                md={6}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  flexDirection: 'column',
-                }}
-              >
-                <div
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    margin: '10px',
-                    flexDirection: 'column',
-                  }}
-                >
-                  <h2 className="mb-3">Integrate it into your system</h2>
-                  <div className="mb-3">
-                    Take advantage of secure, cloud-based platform by integrating DIO Service Platform with your
-                    current system
-                  </div>
-                  {/*<a href={'/integration'}>
-                      Learn how to integrate with Alberta's Service Management
-                      Platform
-                  </a>*/}
-                </div>
-              </Col>
-            </Row>
-          </Container>
-        </div>
-        <Container>
-          <Row className="mb-5 mt-5">
-            <Col xs={12}>
-              <h2>Platform Services</h2>
-              <div>
-                Find out a bit more about our platform services and how they could help enhance your program services
-              </div>
-            </Col>
-            <Col xs={12} md={6} className="mb-3 mt-3">
-              <div style={{ flex: 1, margin: '10px' }}>
-                <GoACard
-                  title="UI Component Libraries"
-                  description="Common UI components that implement common Government of Alberta styles that can be used across various projects"
-                  cardWidth="auto"
-                >
-                  <div style={{ margin: '5px 11px 5px 0' }}>
-                    <GoAButton
-                      buttonType="primary"
-                      buttonSize="normal"
-                      onClick={() => (window.location.href = `${serviceUrls.uiComponentUrl}/react`)}
-                    >
-                      React
-                    </GoAButton>
-                  </div>
-                  <div style={{ margin: '5px 11px 5px 0' }}>
-                    <GoAButton
-                      buttonType="primary"
-                      buttonSize="normal"
-                      onClick={() => (window.location.href = `${serviceUrls.uiComponentUrl}/angular`)}
-                    >
-                      Angular
-                    </GoAButton>
-                  </div>
-                  <div style={{ margin: '5px 11px 5px 0' }}>
-                    <GoAButton
-                      buttonType="primary"
-                      buttonSize="normal"
-                      onClick={() => (window.location.href = `${serviceUrls.uiComponentUrl}/vue`)}
-                    >
-                      Vue
-                    </GoAButton>
-                  </div>
-                </GoACard>
-              </div>
-            </Col>
-            <Col xs={12} md={6} className="mb-3 mt-3">
-              <div style={{ flex: 1, margin: '10px' }}>
-                <GoACard
-                  title="Keycloak Access Management"
-                  description="Many GoA Services require secure transmission, storage, and records management of files."
-                  cardWidth="auto"
-                >
-                  <GoAButton
-                    buttonType="primary"
-                    buttonSize="normal"
-                    onClick={() => (window.location.href = serviceUrls.accessManagementApi)}
-                  >
-                    Learn More
-                  </GoAButton>
-                </GoACard>
-              </div>
-            </Col>
-            <Col xs={12} md={6} className="mb-3 mt-3">
-              <div style={{ flex: 1, margin: '10px' }}>
-                <GoACard
-                  title="File Service"
-                  description="Many GoA Services require secure transmission, storage, and records management of files."
-                  cardWidth="auto"
-                >
-                  <GoAButton buttonType="primary" buttonSize="normal" onClick={() => history.push('/file-service')}>
-                    Learn More
-                  </GoAButton>
-                </GoACard>
-              </div>
-            </Col>
-            {/*<Col xs={12} md={6} className="mb-3 mt-3">
-                <div style={{ flex: 1, margin: '10px' }}>
-                  <GoACard
-                    title="Service Measures"
-                    description="Transparency of service performance and health metrics is a key part of delivering better service."
-                    cardWidth="auto"
-                  >
-                    <GoAButton
-                      buttonType="primary"
-                      buttonSize="normal"
-                      onClick={() => history.push('/service-measures')}
-                    >
-                      Learn More
-                    </GoAButton>
-                  </GoACard>
-                </div>
-              </Col>
-              <Col xs={12} md={6} className="mb-3 mt-3">
-                <div style={{ flex: 1, margin: '10px' }}>
-                  <GoACard
-                    title="App Status"
-                    description="Keeping your service running and users informed when there is maintenance or updates is vital to any well run service."
-                    cardWidth="auto"
-                  >
-                    <GoAButton buttonType="primary" buttonSize="normal" onClick={() => history.push('/app-status')}>
-                      Learn More
-                    </GoAButton>
-                  </GoACard>
-                </div>
-              </Col>
-              <Col xs={12} md={6} className="mb-3 mt-3">
-                <div style={{ flex: 1, margin: '10px' }}>
-                  <GoACard
-                    title="Notifications"
-                    description="Send emails or text messages to keep the public informed and assured when interacting with your service."
-                    cardWidth="auto"
-                  >
-                    <GoAButton buttonType="primary" buttonSize="normal" onClick={() => history.push('/notifications')}>
-                      Learn More
-                    </GoAButton>
-                  </GoACard>
-                </div>
-                </Col>*/}
-          </Row>
-        </Container>
-        <div style={{ backgroundColor: '#f1f1f1' }} className="pb-5 pt-5">
-          <Container>
-            <Row>
-              <Col xs={12} md={6} className="mb-4">
-                <h2 className="mb-3">A product built for teams</h2>
-                <h4>Administrators</h4>
-                <p>
-                  Setup and control the access and individual platform services through the fine grain control over
-                  roles and permissions.
-                </p>
-                <h4>Staff</h4>
-                <p>
-                  Empower staff who regularly post notices, and send messages by giving them the tools to craft and
-                  manage their communications
-                </p>
-                <h4>Developers</h4>
-                <p>
-                  Service management platform was designed with developers in mind, integrations are quick to setup and
-                  configuration is easy.
-                </p>
-              </Col>
-              <Col
-                xs={12}
-                md={6}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  flexDirection: 'column',
-                }}
-                className="pb-2 pt-2"
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    margin: '10px',
-                  }}
-                >
-                  <img src={productFeatures} alt="" max-width="80%" height="300px" />
-                </div>
-              </Col>
-            </Row>
-          </Container>
-        </div>
-        <div style={{ backgroundColor: '#feba35' }} className="pb-5 pt-5">
-          <Container>
-            <Row>
-              <Col
-                xs={12}
-                md={4}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  flexDirection: 'row',
-                }}
-                className="pb-2 pt-2"
-              >
-                <img src={servicePartners} alt="" width="90px" height="90px" />
-                <div style={{ marginLeft: '16px', justifyContent: 'center' }}>
-                  {/*<h1 style={{ fontWeight: 'bold' }}>{numberFormatter(12)}</h1>
-                    Service Partners*/}
-                </div>
-              </Col>
-              <Col
-                xs={12}
-                md={4}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  flexDirection: 'row',
-                }}
-                className="pb-2 pt-2"
-              >
-                <img src={messageIcon} alt="" width="90px" height="90px" />
-                <div style={{ marginLeft: '16px', justifyContent: 'center' }}>
-                  {/*<h1 style={{ fontWeight: 'bold' }}>{numberFormatter(532534)}</h1>
-                    Messages Sent*/}
-                </div>
-              </Col>
-              <Col
-                xs={12}
-                md={4}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  flexDirection: 'row',
-                }}
-                className="pb-2 pt-2"
-              >
-                <img src={document} alt="" width="90px" height="90px" />
-                <div style={{ marginLeft: '16px', justifyContent: 'center' }}>
-                  {/*<h1 style={{ fontWeight: 'bold' }}>{numberFormatter(4700000)}</h1>
-                    Files stored*/}
-                </div>
-              </Col>
-            </Row>
-          </Container>
-        </div>
-        <Container className="pb-4 pt-4">
-          <Row>
-            <Col xs={12} md={12} className="mb-3">
-              <h2 className="mb-3">Questions?</h2>
-              <p>
-                If you're a government of Alberta service interested in using this service, please{' '}
-                <a href="dio@gov.ab.ca">contact the Digital Innovation Office</a>
-              </p>
-            </Col>
-          </Row>
-        </Container>
-        <div style={{ backgroundColor: '#f1f1f1' }} className="pb-2 pt-2">
-          <Container>
-            <Row>
-              <Col xs={12} md={12} className="mb-3 pt-3">
-                <a href={'https://www.alberta.ca'} style={{ margin: '12px 20px 12px 0' }}>
-                  Go to Alberta.ca
-                </a>
-                <a href={'https://www.alberta.ca/disclaimer.aspx'} style={{ margin: '12px 20px 12px 0' }}>
-                  Disclaimer
-                </a>
-                <a href={'https://www.alberta.ca/privacystatement.aspx'} style={{ margin: '12px 20px 12px 0' }}>
-                  Privacy
-                </a>
-                <a href={'https://www.alberta.ca/accessibility.aspx'} style={{ margin: '12px 20px 12px 0' }}>
-                  Accessibility
-                </a>
+    <>
+      <Header serviceName="" />
+      <GoaHeroBanner title="A platform built for government services" backgroundUrl={bannerBackground}>
+        <p>
+          DIO Service management platform will enable you to add, configure, and manage a range of services that can
+          integrate with your existing application.
+        </p>
 
-                <div style={{ float: 'right' }}>&#169; 2020 Government of Alberta</div>
-              </Col>
-            </Row>
-          </Container>
-        </div>
-      </div>
-    </div>
+        <ButtonGroup>
+          <GoAButton buttonType="primary" buttonSize="normal" onClick={() => history.push('/sign-up')}>
+            Create an Account
+          </GoAButton>
+
+          {!session.authenticated ? (
+            <GoAButton buttonType="secondary" buttonSize="normal" onClick={() => signIn('/')}>
+              Sign In
+            </GoAButton>
+          ) : (
+            <GoAButton buttonType="secondary" buttonSize="normal" onClick={() => history.push('/Realms/CreateRealm')}>
+              Create Tenant
+            </GoAButton>
+          )}
+        </ButtonGroup>
+      </GoaHeroBanner>
+
+      <Section>
+        <Container>
+        <ImageTextSection imagePosition="right">
+          <div>
+            <h2>What does it mean?</h2>
+            <p>
+              We understand that everyone is busy, and we also know that a lot of teams end up building the same
+              components. We want to save everyone time while providing a consistent and pleasant experience for
+              Albertans. Our goal is to speed teams up while allowing for incredible control and immersion. Basically,
+              we have done the heavy lifting so that you and your teams can focus on the specific pieces unique to your
+              project. Sound good? See for yourself how it’s helped other teams out.
+            </p>
+          </div>
+          <img src={caseStudy} alt="" />
+        </ImageTextSection>
+        </Container>
+      </Section>
+
+      <Section backgroundColor="#eee">
+        <Container>
+          <ImageTextSection imagePosition="left">
+            <img src={puzzleIcon} height="200px" alt="Integration" />
+            <div>
+              <h2>Integrate it into your system</h2>
+              <p>
+                Take advantage of secure, cloud-based platform by integrating DIO Service Platform with your current
+                system
+              </p>
+            </div>
+          </ImageTextSection>
+        </Container>
+      </Section>
+
+      <Section>
+        <Container>
+          <h2>Platform Services</h2>
+          <p>Find out a bit more about our platform services and how they could help enhance your program services</p>
+
+          <CardGroup>
+            <GoACard
+              title="UI Component Libraries"
+              description={
+                <>
+                  <p>
+                    Common UI components that implement common Government of Alberta styles that can be used across
+                    various projects
+                  </p>
+                  <Link to={`${serviceUrls.uiComponentUrl}/react`}>React</Link> |{' '}
+                  <Link to={`${serviceUrls.uiComponentUrl}/vue`}>Vue</Link> |{' '}
+                  <Link to={`${serviceUrls.uiComponentUrl}/angular`}>Angular</Link>
+                </>
+              }
+            ></GoACard>
+
+            <GoACard
+              title="Keycloak Access Management"
+              description="Many GoA Services require secure transmission, storage, and records management of files."
+            >
+              <Link to={serviceUrls.accessManagementApi}>Learn More</Link>
+            </GoACard>
+
+            <GoACard
+              title="File Service"
+              description="Many GoA Services require secure transmission, storage, and records management of files."
+            >
+              <Link to="/file-service">Learn More</Link>
+            </GoACard>
+          </CardGroup>
+        </Container>
+      </Section>
+
+      <Section backgroundColor="#eee">
+        <Container>
+          <ImageTextSection imagePosition="right">
+            <div>
+              <h2>A product built for teams</h2>
+              <h4>Administrators</h4>
+              <p>
+                Setup and control the access and individual platform services through the fine grain control over roles
+                and permissions.
+              </p>
+              <h4>Staff</h4>
+              <p>
+                Empower staff who regularly post notices, and send messages by giving them the tools to craft and manage
+                their communications
+              </p>
+              <h4>Developers</h4>
+              <p>
+                Service management platform was designed with developers in mind, integrations are quick to setup and
+                configuration is easy.
+              </p>
+            </div>
+            <img src={userGroup} alt="" height="200px" />
+          </ImageTextSection>
+        </Container>
+      </Section>
+
+      <Section>
+        <Container>
+          <h2>Questions?</h2>
+          <p>
+            If you're a government of Alberta service interested in using this service, please{' '}
+            <a href="dio@gov.ab.ca">contact the Digital Innovation Office</a>
+          </p>
+        </Container>
+      </Section>
+
+      <footer>
+        <FooterLinks>
+          <a href={'https://www.alberta.ca'}>Go to Alberta.ca</a>
+          <a href={'https://www.alberta.ca/disclaimer.aspx'}>Disclaimer</a>
+          <a href={'https://www.alberta.ca/privacystatement.aspx'}>Privacy</a>
+          <a href={'https://www.alberta.ca/accessibility.aspx'}>Accessibility</a>
+        </FooterLinks>
+        <FooterCopyright>&#169; 2020 Government of Alberta</FooterCopyright>
+      </footer>
+    </>
   );
 };
 
 export default LandingPage;
+
+// *****************
+// Styled Components
+// *****************
+
+// TODO: make this a global component
+const ButtonGroup = styled.div`
+  button {
+    display: block;
+    width: 100%;
+    @media (min-width: 768px) {
+      display: inline-block;
+      width: auto;
+    }
+  }
+`;
+
+const CardGroup = styled.div`
+  display: flex;
+  flex-flow: wrap;
+  justify-content: center;
+
+  > div {
+    margin: 10px;
+  }
+  @media (min-width: 768px) {
+    > div {
+      max-width: 300px;
+    }
+  }
+`;
+
+interface SectionProps {
+  backgroundColor?: string;
+}
+
+const Section = styled.div<SectionProps>`
+  width: 100%;
+  padding: 3rem 2rem;
+  background-color: ${(props: SectionProps) => props.backgroundColor ?? 'transparent'};
+  @media (min-width: 1024px) {
+    .flex {
+      margin: 0 auto;
+      width: 1024px;
+    }
+  }
+`;
+
+const Container = styled.div`
+  @media (min-width: 1024px) {
+    margin: 0 auto;
+    width: calc(1024px - 4rem);
+  }
+`;
+
+const FooterLinks = styled.div`
+  display: flex;
+  justify-content: center;
+  > * {
+    display: inline-block;
+    margin-right: 1rem;
+    &:last-of-type {
+      margin-right: 0;
+    }
+  }
+`;
+
+const FooterCopyright = styled.div`
+  text-align: center;
+  padding: 1rem;
+`;
+
+interface ImageTextSectionProps {
+  imagePosition: 'left' | 'right';
+}
+
+const ImageTextSection = styled.section<ImageTextSectionProps>`
+  display: flex;
+  flex-direction: ${(props: ImageTextSectionProps) => (props.imagePosition === 'right' ? 'column-reverse' : 'column')};
+  align-items: center;
+  img {
+    margin: 0 0 2rem 0;
+  }
+  @media (min-width: 768px) {
+    flex-direction: row;
+    img {
+      margin: 0;
+      margin-left: ${(props: ImageTextSectionProps) => (props.imagePosition === 'right' ? 4 : 0)}rem;
+      margin-right: ${(props: ImageTextSectionProps) => (props.imagePosition === 'left' ? 4 : 0)}rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    margin: 0 auto;
+  }
+`;
