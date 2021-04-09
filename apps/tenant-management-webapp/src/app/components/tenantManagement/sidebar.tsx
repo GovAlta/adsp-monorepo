@@ -1,14 +1,15 @@
+import { withRouter, RouteComponentProps } from 'react-router';
+import React, { useContext } from 'react';
+import { useSelector } from 'react-redux';
+import { NavLink } from 'react-router-dom';
+import styled from 'styled-components';
+
 import PulseIcon from '@icons/pulse-outline.svg';
 import AdminIcon from '@icons/options-outline.svg';
 import DashboardIcon from '@icons/home-outline.svg';
 import LogoutIcon from '@icons/log-out-outline.svg';
 import AuthContext from '@lib/authContext';
 import { RootState } from '@store/index';
-import React, { useContext } from 'react';
-import { useSelector } from 'react-redux';
-import { withRouter, RouteComponentProps } from 'react-router';
-import { NavLink } from 'react-router-dom';
-import styled from 'styled-components';
 
 interface SidebarProps {
   type: 'mobile' | 'desktop';

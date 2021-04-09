@@ -110,9 +110,6 @@
                 "output": "./"
               }
             ],
-            "styles": [
-              "apps/tenant-management-webapp/src/styles.scss"
-            ],
             "scripts": [],
             "webpackConfig": "@nrwl/react/plugins/webpack"
           },

@@ -67,3 +67,19 @@ h2 ~ h4:first-of-type,
 h3 ~ h4:first-of-type {
   margin-top: 2rem;
 }
+
+p {
+  margin-bottom: 1rem;
+  font-size: var(--fs-base);
+}
+
+button {
+  display: block;
+  width: 100%;
+}
+@media (min-width: 640px) {
+  button {
+    display: inline-block;
+    width: fit-content;
+  }
+}
