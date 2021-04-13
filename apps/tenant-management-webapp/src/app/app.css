@@ -52,11 +52,20 @@
   margin-right: 0;
 }
 
+/* Base header margins */
 h1,
 h2,
 h3,
 h4 {
   margin-bottom: 1rem;
+  margin-top: 2rem;
+}
+
+/* Prevent gaps at the start of content  */
+main > h1:first-child,
+main > h2:first-child,
+main > h3:first-child {
+  margin-top: 0;
 }
 
 h1 ~ h2:first-of-type,

@@ -58,6 +58,4 @@ const GridItem = styled.div<GridItemProps>`
   }
 `;
 
-export default Grid;
-
 export { Grid, GridItem };

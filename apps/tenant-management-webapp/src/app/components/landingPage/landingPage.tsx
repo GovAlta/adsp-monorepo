@@ -14,7 +14,7 @@ import AuthContext from '@lib/authContext';
 
 import '@abgov/react-components/react-components.esm.css';
 import Container from '@components/_/Container';
-import Grid, { GridItem } from '@components/_/Grid';
+import { Grid, GridItem } from '@components/_/Grid';
 
 const LandingPage = () => {
   const history = useHistory();

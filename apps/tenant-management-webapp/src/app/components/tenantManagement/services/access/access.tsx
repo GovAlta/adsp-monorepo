@@ -6,8 +6,6 @@ import { fetchAccess } from '@store/access/actions';
 import { User } from '@store/access/models';
 import styled from 'styled-components';
 
-// import css from './access.module.css';
-
 export default function () {
   const dispatch = useDispatch();
 
@@ -35,7 +33,7 @@ export default function () {
 
   return (
     <AccessPage>
-      <section>
+      <main>
         <h2>Access</h2>
         <p>
           Access allows you to add a secure sign in to you application and services with minimum effort and
@@ -58,15 +56,15 @@ export default function () {
 
           <UserStats>
             <div>
-              <h4 id="user-count">{users.length}</h4>
+              <Count id="user-count">{users.length}</Count>
               <div>Total number of users</div>
             </div>
             <div>
-              <h4 id="role-count">{roles?.length ?? '-'}</h4>
+              <Count id="role-count">{roles?.length ?? '-'}</Count>
               <div>Types of user roles</div>
             </div>
             <div>
-              <h4 id="active-user-count">{activeUsers().length}</h4>
+              <Count id="active-user-count">{activeUsers().length}</Count>
               <div>Active users</div>
             </div>
           </UserStats>
@@ -74,7 +72,6 @@ export default function () {
 
         <section id="keycloak-role-info">
           <h3>Keycloak role information</h3>
-
           <p>
             Displayed below are the top 5 user roles based on their counts. To view all your available roles, please{' '}
             <a href={getKeycloakAdminPortal()} rel="noopener noreferrer" target="_blank">
@@ -105,7 +102,7 @@ export default function () {
             </tbody>
           </DataTable>
         </section>
-      </section>
+      </main>
 
       <Links>
         <h5>Helpful Links</h5>
@@ -120,6 +117,11 @@ export default function () {
 // *****************
 // Styled Components
 // *****************
+
+const Count = styled.div`
+  font-size: var(--fs-3xl);
+  font-weight: var(--fw-bold);
+`;
 
 const TitleLinkHeader = styled.div`
   display: flex;
@@ -188,5 +190,8 @@ const DataTable = styled.table`
   }
   tbody tr:nth-child(even) {
     background-color: #fafafa;
+  }
+  tbody td {
+    padding: 0.5rem 0;
   }
 `;

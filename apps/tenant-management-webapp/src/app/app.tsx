@@ -71,13 +71,13 @@ const AppRouters = () => {
 
 export const App = () => {
   return (
-    <main style={{height: '100vh', overflowX: 'hidden'}}>
+    <div style={{height: '100vh', overflowX: 'hidden'}}>
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
           <AppWithAuthContext />
         </PersistGate>
       </Provider>
-    </main>
+    </div>
   );
 };
 
