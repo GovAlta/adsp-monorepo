@@ -3,7 +3,6 @@ import { GoaHeader } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
-import person from '@assets/person.jpg';
 import { RootState } from '@store/index';
 import AuthContext from '@lib/authContext';
 import Sidebar from '@components/tenantManagement/sidebar';
@@ -34,8 +33,6 @@ const ActionsMenu = () => {
       </section>
 
       <section className="desktop">
-        <img src={person} alt="" height="26px" />
-
         {authenticated ? (
           <AuthLink onClick={() => authCtx.signOut()}>Sign Out</AuthLink>
         ) : (
