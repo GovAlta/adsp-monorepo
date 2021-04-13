@@ -4,7 +4,7 @@ class TenantAdminPage {
   }
 
   dashboardMenuItem(menuItemKey: string) {
-    const menuItemSelector = `[href="${menuItemKey}"]`;
+    const menuItemSelector = `nav > div > [href="${menuItemKey}"] > span`;
     return cy.get(menuItemSelector);
   }
 
