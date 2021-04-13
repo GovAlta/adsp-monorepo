@@ -25,7 +25,7 @@ export const fetchConfig = () => {
             params: { urn: platformURNs[service] },
           });
 
-          serviceHosts[service] = data['hosts'];
+          serviceHosts[service] = data['url'];
         } catch (err) {
           logger.error(`Failed fetching ${platformURNs[service]}`);
         }
