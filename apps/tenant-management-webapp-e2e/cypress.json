@@ -13,7 +13,9 @@
     "uiComponentUrl": "",
     "email": "auto.test@gov.ab.ca",
     "password": "autotest",
-    "realm": "autotest"
+    "realm": "autotest",
+    "email2": "auto.test2@gov.ab.ca",
+    "password2": "autotest"
   },
   "baseUrl": "http://localhost:4200/",
   "fileServerFolder": ".",
