@@ -2,10 +2,10 @@ import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import * as Logging from './logging';
 import jwtDecode from 'jwt-decode';
 import * as jwksRsa from 'jwks-rsa';
-import * as keycloakInit from './keycloakInit';
+import * as serviceInit from './serviceInit';
 import { validateIssuer, updateCache, getTenantName } from './keycloakCache';
 
-keycloakInit.initTenantApi();
+serviceInit.initService();
 
 const createJwkClient = (jwksRsa as unknown) as (options: jwksRsa.ClientOptions) => jwksRsa.JwksClient;
 
