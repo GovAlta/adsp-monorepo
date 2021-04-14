@@ -1,6 +1,7 @@
 import { Model, model } from 'mongoose';
 import { Results, decodeAfter, encodeNext } from '@core-services/core-common';
-import { FileRepository, FileCriteria, FileEntity, FileTypeEntity, FileSpaceRepository } from '../file';
+import { FileRepository, FileCriteria, FileEntity, FileSpaceRepository } from '../file';
+import { FileTypeEntity } from '../file/model/type';
 import { fileSchema } from './schema';
 import { FileDoc } from './types';
 
@@ -126,7 +127,7 @@ export class MongoFileRepository implements FileRepository {
 
   toDoc(entity: FileEntity) {
     return {
-      spaceId: entity.type.space.id,
+      spaceId: entity.type.spaceId,
       typeId: entity.type.id,
       recordId: entity.recordId,
       filename: entity.filename,

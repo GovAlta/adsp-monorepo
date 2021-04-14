@@ -95,3 +95,10 @@ a:focus {
   position: relative;
   top: -2px;
 }
+
+.blended-button {
+  background: white !important;
+  color: black !important;
+  border-color: white !important;
+  padding: 0px !important;
+}

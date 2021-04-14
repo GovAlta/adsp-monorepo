@@ -249,7 +249,7 @@ export const createFileRouter = ({
       } else if (!fileEntity.scanned) {
         throw new InvalidOperationError('File scan pending.');
       } else {
-        const filePath = path.resolve(`${appRoot}`, fileEntity.getFilePath(rootStoragePath));
+        const filePath = path.resolve(`${appRoot}`, await fileEntity.getFilePath(rootStoragePath));
         res.sendFile(filePath, {
           headers: {
             'Content-Disposition': `attachment; filename="${fileEntity.filename}"`,
@@ -294,7 +294,6 @@ export const createFileRouter = ({
   fileRouter.delete('/files/:fileId', assertAuthenticatedHandler, async (req, res, next) => {
     const user = req.user as User;
     const { fileId } = req.params;
-
     try {
       const fileEntity = await fileRepository.get(fileId);
 
@@ -305,7 +304,7 @@ export const createFileRouter = ({
 
       eventService.send(
         deletedFile(
-          fileEntity.type.space.id,
+          fileEntity.type.spaceId,
           fileEntity.type.id,
           {
             id: fileEntity.id,

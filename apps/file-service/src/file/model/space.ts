@@ -6,29 +6,32 @@ import { User, UnauthorizedError, Update, InvalidOperationError, New, AssertRole
 import { FileSpace, FileType, ServiceUserRoles } from '../types';
 import { FileSpaceRepository } from '../repository';
 import { FileTypeEntity } from './type';
-
+import { fileSpaceRepository } from '../../mongo/spaceRepository';
 export class FileSpaceEntity implements FileSpace {
   id: string;
   @IsNotEmpty()
   name: string;
   spaceAdminRole: string;
+  repository: FileSpaceRepository;
   @IsNotEmpty()
   types: {
     [id: string]: FileTypeEntity;
   };
 
   @AssertRole('create file space', ServiceUserRoles.Admin)
-  static create(user: User, repository: FileSpaceRepository, space: Omit<FileSpace, 'types'>) {
+  static async create(user: User, repository: FileSpaceRepository, space: Omit<FileSpace, 'types'>) {
     const entity = new FileSpaceEntity(repository, { types: {}, ...space });
     return repository.save(entity);
   }
 
-  constructor(private repository: FileSpaceRepository, space: FileSpace) {
+  constructor(repository: FileSpaceRepository, space: FileSpace) {
     this.id = space.id;
     this.name = space.name;
     this.spaceAdminRole = space.spaceAdminRole;
+
+    this.repository = repository;
     this.types = Object.entries(space.types).reduce((types, [id, type]) => {
-      types[id] = new FileTypeEntity(this, type);
+      types[id] = new FileTypeEntity(type);
       return types;
     }, {});
   }
@@ -37,7 +40,7 @@ export class FileSpaceEntity implements FileSpace {
     return path.join(storageRoot, this.id);
   }
 
-  update(user: User, update: Update<FileSpace>) {
+  async update(user: User, update: Update<FileSpace>) {
     if (!this.canUpdate(user)) {
       throw new UnauthorizedError('User not authorized to updated space.');
     }
@@ -53,14 +56,27 @@ export class FileSpaceEntity implements FileSpace {
     return this.repository.save(this);
   }
 
+  async deleteType(user: User, typeId: string) {
+    if (this.canUpdate(user)) {
+      delete this.types[typeId];
+      this.repository.save(this);
+    } else {
+      throw new UnauthorizedError('User not authorized to delete type.');
+    }
+  }
+
   updateType(user: User, typeId: string, update: Update<FileType>) {
-    const type = this.types[typeId];
+    const type = Object.values(this.types).find((type) => type.id === typeId);
     type.update(user, update);
 
     return this.repository.save(this);
   }
 
-  addType(user: User, rootStoragePath: string, typeId: string, type: New<FileType>) {
+  async addType(user, rootStoragePath: string, typeId: string, type: New<FileType>) {
+    if (!this.canUpdate(user)) {
+      throw new UnauthorizedError('User not authorized to create type.');
+    }
+
     const existing = this.types[typeId];
     if (existing) {
       throw new InvalidOperationError(`Type with ID '${typeId}' already exists.`);
@@ -70,17 +86,38 @@ export class FileSpaceEntity implements FileSpace {
       throw new InvalidOperationError(`Type ID '${typeId}' is not valid.`);
     }
 
-    const fileType = FileTypeEntity.create(user, this, typeId, type);
-    this.types[typeId] = fileType;
+    const fileType = await FileTypeEntity.create(
+      typeId,
+      type.name,
+      type.anonymousRead,
+      type.readRoles,
+      type.updateRoles
+    );
+    this.types[fileType.id] = fileType;
 
-    return this.repository.save(this).then((created) => mkdirp(fileType.getPath(rootStoragePath)).then(() => created));
+    const created = await this.repository.save(this);
+
+    if (created) {
+      const typeFolder = fileType.getPath(rootStoragePath);
+      mkdirp(typeFolder);
+    }
+    return created;
   }
 
   canAccess(user: User) {
-    return user && (user.roles.includes(ServiceUserRoles.Admin) || user.roles.includes(this.spaceAdminRole));
+    return (
+      user && user.roles && (user.roles.includes(ServiceUserRoles.Admin) || user.roles.includes(this.spaceAdminRole))
+    );
   }
 
   canUpdate(user: User) {
-    return user && (user.roles.includes(ServiceUserRoles.Admin) || user.roles.includes(this.spaceAdminRole));
+    return (
+      user && user.roles && (user.roles.includes(ServiceUserRoles.Admin) || user.roles.includes(this.spaceAdminRole))
+    );
+  }
+
+  delete(entity: FileSpaceEntity) {
+    const mongoFileTypeRepo = fileSpaceRepository();
+    return mongoFileTypeRepo.delete(entity);
   }
 }

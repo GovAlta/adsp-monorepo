@@ -32,10 +32,10 @@ export const createMetaDefenderScan = ({ rootStoragePath, host, port }: ScanProp
   };
 
   const service: ScanService = {
-    scan: (file) => {
+    scan: async (file) => {
       const filePath = file.getFilePath(rootStoragePath);
-      return hashLookupRequest(filePath)
-        .then((result) => (!result ? scanRequest(file, filePath) : result))
+      return hashLookupRequest(await filePath)
+        .then(async (result) => (!result ? scanRequest(file, await filePath) : result))
         .then((result) => ({
           scanned: !!result,
           infected: result && result.scan_all_result_i !== 0,

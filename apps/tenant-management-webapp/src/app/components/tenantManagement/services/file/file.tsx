@@ -5,12 +5,12 @@ import { useSelector, useDispatch } from 'react-redux';
 
 import FileOverview from './fileOverview';
 import FileHeader from './fileHeader';
-import InitSetup from './fileInitSetup';
-import FileSpace from './fileSpace';
+import FileTypes from './fileTypes';
 import FileSettings from './fileSettings';
-import { RootState } from '@store/index';
 import './file.css';
-import { FetchFileSpace, SetActiveTab } from '@store/file/actions';
+import InitSetup from './fileInitSetup';
+import { RootState } from '@store/index';
+import { FetchFileSpace, SetActiveTab, FetchFileSpaceFromFileApiService } from '@store/file/actions';
 
 const Templates = () => {
   return (
@@ -56,9 +56,7 @@ const TabsForSetup = () => {
         <FileOverview />
       </Tab>
 
-      <Tab eventKey="space" title="Space Config" disabled={!isActive}>
-        <FileSpace />
-      </Tab>
+      <Tab eventKey="space" title="Space Config" disabled={!isActive}></Tab>
 
       <Tab eventKey="templates" title="Templates" disabled={!isActive}>
         <Templates />
@@ -70,6 +68,10 @@ const TabsForSetup = () => {
 
       <Tab eventKey="api-integration" title="API integration" disabled={!isActive}>
         <APIIntegration />
+      </Tab>
+
+      <Tab eventKey="file-types" title="File Types" disabled={!isActive}>
+        <FileTypes />
       </Tab>
 
       <Tab eventKey="file-setting" title="Settings" disabled={!isActive}>
@@ -97,6 +99,7 @@ export default function File() {
 
   useEffect(() => {
     dispatch(FetchFileSpace());
+    dispatch(FetchFileSpaceFromFileApiService());
   }, [dispatch]);
 
   const FileOverviewTab = setupRequired ? <TabsForInit /> : <TabsForSetup />;

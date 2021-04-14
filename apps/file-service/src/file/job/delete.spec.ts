@@ -106,7 +106,9 @@ describe('Delete Job', () => {
     });
 
     const fileEntityMock = new Mock<FileEntity>();
-    fileEntityMock.setup((instance) => instance.getFilePath('./files')).returns('./files/test-file');
+    fileEntityMock
+      .setup(async (instance) => await instance.getFilePath('./files'))
+      .returns(Promise.resolve('./files/test-file'));
 
     fileEntityMock
       .setup((instance) => instance.delete('./files'))

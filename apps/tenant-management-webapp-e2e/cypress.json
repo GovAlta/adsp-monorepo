@@ -9,6 +9,7 @@
     "notificationServiceUrl": "",
     "keycloakUrl": "",
     "tenantManagementApi": "",
+    "fileApi": "",
     "accessManagementApi": "",
     "uiComponentUrl": "",
     "email": "auto.test@gov.ab.ca",

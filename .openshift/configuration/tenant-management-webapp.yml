@@ -16,5 +16,6 @@ items:
             "keycloakUrl": "https://access-uat.alpha.alberta.ca",
             "tenantManagementApi": "https://tenant-management-api-core-services-dev.os99.gov.ab.ca",
             "accessManagementApi": "https://access-dev.os99.gov.ab.ca/auth",
-            "uiComponentUrl": "https://ui-components-ui-components-dev.os99.gov.ab.ca"
+            "uiComponentUrl": "https://ui-components-ui-components-dev.os99.gov.ab.ca",
+            "fileApi": "https://file-service-core-services-dev.os99.gov.ab.ca"
         }
