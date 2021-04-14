@@ -59,6 +59,7 @@ Cypress.Commands.add('getConfig', () => {
     Cypress.env('tenantManagementApi', response.body.tenantManagementApi);
     Cypress.env('accessManagementApi', response.body.accessManagementApi);
     Cypress.env('uiComponentUrl', response.body.uiComponentUrl);
+    Cypress.env('fileApi', response.body.fileApi);
   });
 });
 //

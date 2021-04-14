@@ -12,6 +12,7 @@
     "fileApi": "",
     "accessManagementApi": "",
     "uiComponentUrl": "",
+    "fileApi":"",
     "email": "auto.test@gov.ab.ca",
     "password": "autotest",
     "realm": "autotest",
