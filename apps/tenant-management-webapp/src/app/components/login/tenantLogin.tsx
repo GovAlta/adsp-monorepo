@@ -23,7 +23,7 @@ function TenantLogin() {
   return (
     <div>
       <div>
-        <Header isLoginLink={false} />
+        <Header hasLoginLink={false} />
       </div>
       <Row>
         <Col md={1}></Col>
