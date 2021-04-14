@@ -179,7 +179,7 @@ export const createAdminRouter = ({
   adminRouter.put('/:space/types/:type', assertAuthenticatedHandler, async (req, res, next) => {
     const user = req.user as User;
     const { space, type } = req.params;
-    const { name, anonymousRead, readRoles, updateRoles } = req.body;
+    const { name, anonymousRead, readRoles, updateRoles, spaceId } = req.body;
 
     try {
       const spaceEntity = await spaceRepository.get(space);
@@ -198,6 +198,7 @@ export const createAdminRouter = ({
           anonymousRead,
           readRoles,
           updateRoles,
+          spaceId,
         });
 
         const typeEntity = entity.types[type];
@@ -210,6 +211,7 @@ export const createAdminRouter = ({
               anonymousRead: typeEntity.anonymousRead,
               readRoles: typeEntity.readRoles,
               updateRoles: typeEntity.updateRoles,
+              spaceId: typeEntity.spaceId,
             },
             user,
             new Date()
@@ -221,6 +223,7 @@ export const createAdminRouter = ({
           anonymousRead,
           readRoles,
           updateRoles,
+          spaceId,
         });
 
         const typeEntity = entity.types[type];
@@ -233,6 +236,7 @@ export const createAdminRouter = ({
               anonymousRead: typeEntity.anonymousRead,
               readRoles: typeEntity.readRoles,
               updateRoles: typeEntity.updateRoles,
+              spaceId: typeEntity.spaceId,
             },
             user,
             new Date()
@@ -252,6 +256,7 @@ export const createAdminRouter = ({
         anonymousRead: fileType.anonymousRead,
         readRoles: fileType.readRoles,
         updateRoles: fileType.updateRoles,
+        spaceId: fileType.spaceId,
       });
     } catch (err) {
       next(err);

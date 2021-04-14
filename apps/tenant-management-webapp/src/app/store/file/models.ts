@@ -1,3 +1,13 @@
+export interface FileTypeItem {
+  name: string;
+  updateRoles: string[];
+  readRoles: string[];
+  anonymousRead: boolean;
+  tableData: {
+    id: string;
+  };
+}
+
 export interface FileService {
   status: {
     isActive: boolean;
@@ -10,11 +20,13 @@ export interface FileService {
     activeTab: string;
   };
   spaces: string[];
+  space: string;
+  fileTypes: Array<FileTypeItem>;
 }
 
 export const FILE_INIT: FileService = {
   status: {
-    isActive: true,
+    isActive: false,
     isDisabled: true,
   },
   requirements: {
@@ -24,4 +36,6 @@ export const FILE_INIT: FileService = {
     activeTab: 'overall-view',
   },
   spaces: [],
+  space: '',
+  fileTypes: [],
 };

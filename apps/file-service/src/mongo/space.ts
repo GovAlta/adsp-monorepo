@@ -35,6 +35,11 @@ export class MongoFileSpaceRepository implements FileSpaceRepository {
     });
   }
 
+  async getIdByName(name: string) {
+    const res = await this.model.findOne({ name: name });
+    return Promise.resolve(res ? res.id : null);
+  }
+
   get(id: string): Promise<FileSpaceEntity> {
     const entity: FileSpaceEntity = this.cache.get(this.getCacheKey(id));
     if (entity) {
@@ -100,11 +105,12 @@ export class MongoFileSpaceRepository implements FileSpaceRepository {
           spaceAdminRole: doc.spaceAdminRole,
           types: Object.entries(doc.types || {}).reduce((types, [id, type]) => {
             types[id] = {
-              id,
+              id: type._id,
               name: type.name,
               anonymousRead: type.anonymousRead,
               readRoles: type.readRoles,
               updateRoles: type.updateRoles,
+              spaceId: type.spaceId,
             };
             return types;
           }, {}),
@@ -118,11 +124,15 @@ export class MongoFileSpaceRepository implements FileSpaceRepository {
       spaceAdminRole: entity.spaceAdminRole,
       types: Object.entries(entity.types || {}).reduce((types, [id, type]) => {
         types[id] = {
+          _id: type.id,
+          id: type.id,
           name: type.name,
           anonymousRead: type.anonymousRead,
           readRoles: type.readRoles,
           updateRoles: type.updateRoles,
+          spaceId: entity.id,
         };
+
         return types;
       }, {}),
     };

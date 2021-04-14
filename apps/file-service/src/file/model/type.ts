@@ -1,8 +1,10 @@
 import * as path from 'path';
 import { IsNotEmpty, IsDefined } from 'class-validator';
-import { User, New, UnauthorizedError, Update } from '@core-services/core-common';
-import { FileType } from '../types';
-import { FileSpaceEntity } from './space';
+import { User, UnauthorizedError, Update } from '@core-services/core-common';
+import { FileType, ServiceUserRoles } from '../types';
+import { Logger } from 'winston';
+import { fileSpaceRepository } from '../../mongo/spaceRepository';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Represents a type of file with specific access and update policy.
@@ -15,6 +17,7 @@ import { FileSpaceEntity } from './space';
  */
 export class FileTypeEntity implements FileType {
   id: string;
+  logger?: Logger;
   @IsNotEmpty()
   name: string;
   anonymousRead = false;
@@ -22,26 +25,30 @@ export class FileTypeEntity implements FileType {
   readRoles: string[] = [];
   @IsDefined()
   updateRoles: string[] = [];
+  spaceId?: string;
 
-  static create(user: User, space: FileSpaceEntity, id: string, type: New<FileType>) {
-    if (!space.canUpdate(user)) {
-      throw new UnauthorizedError('User not authorized to create type.');
-    }
-
-    return new FileTypeEntity(space, { id, ...type });
+  static create(id: string, name: string, anonymousRead: boolean, readRoles: string[], updateRoles: string[]) {
+    const newType: FileType = {
+      id,
+      name,
+      anonymousRead,
+      readRoles,
+      updateRoles,
+    };
+    return new FileTypeEntity(newType);
   }
 
-  constructor(public space: FileSpaceEntity, type: FileType) {
+  constructor(type: FileType) {
     this.id = type.id;
     this.name = type.name;
     this.anonymousRead = type.anonymousRead;
     this.readRoles = type.readRoles || [];
     this.updateRoles = type.updateRoles || [];
+    this.spaceId = type.spaceId;
   }
 
-  getPath(storageRoot: string) {
-    const spacePath = this.space.getPath(storageRoot);
-    return path.join(spacePath, this.id);
+  async currentSpace() {
+    return await fileSpaceRepository().get(this.spaceId);
   }
 
   canAccessFile(user: User) {
@@ -53,7 +60,7 @@ export class FileTypeEntity implements FileType {
   }
 
   update(user: User, update: Update<FileType>) {
-    if (!this.space.canUpdate(user)) {
+    if (!this.canUpdate(user)) {
       throw new UnauthorizedError('User not authorized to update type.');
     }
 
@@ -72,5 +79,20 @@ export class FileTypeEntity implements FileType {
     if (update.updateRoles) {
       this.updateRoles = update.updateRoles;
     }
+  }
+
+  canUpdate(user: User) {
+    return (
+      (user && user.roles && user.roles.includes(ServiceUserRoles.Admin)) ||
+      user.roles.find((role) => this.updateRoles.includes(role))
+    );
+  }
+
+  getPath(storageRoot: string) {
+    return path.join(storageRoot, this.name);
+  }
+
+  canAccess(user: User) {
+    return this.canAccessFile(user);
   }
 }

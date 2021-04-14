@@ -32,7 +32,6 @@ export const createRepositories = ({ MONGO_URI, MONGO_DB, MONGO_USER, MONGO_PASS
           const cache = new NodeCache({ stdTTL: 86400, useClones: false });
           const spaceRepository = new MongoFileSpaceRepository(logger, cache);
           const fileRepository = new MongoFileRepository(spaceRepository);
-
           resolve({
             spaceRepository,
             fileRepository,

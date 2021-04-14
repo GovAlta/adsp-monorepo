@@ -23,6 +23,7 @@ export interface ServiceUrls {
   tenantManagementApi: string;
   accessManagementApi: string;
   uiComponentUrl: string;
+  fileApi?: string;
 }
 
 export interface ConfigState {

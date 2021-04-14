@@ -1,7 +1,7 @@
 import { Schema } from 'mongoose';
 
-const fileTypeDefinition = {
-  _id: false,
+export const fileTypeSchema = new Schema({
+  _id: String,
   name: {
     type: String,
     required: true,
@@ -18,7 +18,12 @@ const fileTypeDefinition = {
     type: [String],
     default: [],
   },
-};
+  spaceId: {
+    type: String,
+    ref: 'filespace',
+    required: true,
+  },
+});
 
 export const fileSpaceSchema = new Schema({
   _id: String,
@@ -32,7 +37,7 @@ export const fileSpaceSchema = new Schema({
   },
   types: {
     type: Map,
-    of: fileTypeDefinition,
+    of: fileTypeSchema,
   },
 });
 

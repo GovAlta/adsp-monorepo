@@ -11,6 +11,7 @@ describe('File Type Entity', () => {
     anonymousRead: false,
     updateRoles: ['test-admin'],
     readRoles: ['test-admin'],
+    spaceId: 'space1234',
   };
 
   const user: User = {
@@ -20,7 +21,6 @@ describe('File Type Entity', () => {
     organizationId: null,
     roles: ['test-admin'],
   };
-  const storagePath = 'files';
 
   let spaceMock: Mock<FileSpaceEntity>;
 
@@ -30,7 +30,7 @@ describe('File Type Entity', () => {
   });
 
   it('can be initialized', () => {
-    const entity = new FileTypeEntity(spaceMock.object(), type);
+    const entity = new FileTypeEntity(type);
 
     expect(entity).toBeTruthy();
     expect(entity.id).toEqual(type.id);
@@ -41,33 +41,16 @@ describe('File Type Entity', () => {
   });
 
   it('can create new', () => {
-    const { id, ...newType } = type;
-    const entity = FileTypeEntity.create(user, spaceMock.object(), id, newType);
+    const entity = FileTypeEntity.create(type.id, type.name, type.anonymousRead, type.readRoles, type.updateRoles);
 
     expect(entity).toBeTruthy();
-  });
-
-  it('can prevent unauthorized user create new', () => {
-    spaceMock.setup((m) => m.canUpdate(user)).returns(false);
-
-    const { id, ...newType } = type;
-    expect(() => {
-      FileTypeEntity.create(user, spaceMock.object(), id, newType);
-    }).toThrowError(UnauthorizedError);
   });
 
   describe('instance', () => {
     let entity: FileTypeEntity = null;
 
     beforeEach(() => {
-      entity = new FileTypeEntity(spaceMock.object(), type);
-    });
-
-    it('can get path', () => {
-      spaceMock.setup((m) => m.getPath(storagePath)).returns(`${storagePath}/test`);
-
-      const typePath = entity.getPath(storagePath);
-      expect(typePath).toEqual(`${storagePath}/test/${entity.id}`);
+      entity = new FileTypeEntity(type);
     });
 
     it('can check access for user with read role', () => {
@@ -116,23 +99,27 @@ describe('File Type Entity', () => {
       };
 
       entity.update(user, update);
-
       expect(entity.name).toEqual(update.name);
       expect(entity.anonymousRead).toEqual(update.anonymousRead);
       expect(entity.readRoles).toEqual(update.readRoles);
       expect(entity.updateRoles).toEqual(update.updateRoles);
     });
 
-    it('can prevent unauthorized user update', () => {
-      expect(() => {
-        entity.update(
+    it('can prevent unauthorized user update', async () => {
+      function update(entity) {
+        return entity.update(
           {
             ...user,
             roles: [],
           },
           { anonymousRead: true }
         );
-      }).toThrowError(UnauthorizedError);
+      }
+      try {
+        await update(entity);
+      } catch (e) {
+        expect(e).toEqual(new UnauthorizedError('User not authorized to update type.'));
+      }
     });
   });
 });

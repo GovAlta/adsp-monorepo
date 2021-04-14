@@ -15,6 +15,7 @@ import { environment } from './environments/environment';
 import { applyFileMiddleware } from './file';
 import { createRepositories } from './mongo';
 import { createEventService } from './amqp';
+import * as cors from 'cors';
 
 const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
 
@@ -23,6 +24,7 @@ const app = express();
 app.use(compression());
 app.use(helmet());
 app.use(express.json({ limit: '1mb' }));
+app.use(cors());
 
 passport.use('jwt', createKeycloakStrategy());
 passport.use(new AnonymousStrategy());
@@ -39,6 +41,7 @@ app.use(passport.initialize());
 app.use('/space', passport.authenticate(['jwt'], { session: false }));
 app.use('/file-admin', passport.authenticate(['jwt'], { session: false }));
 app.use('/file', passport.authenticate(['jwt', 'anonymous'], { session: false }));
+app.use('/file-type', passport.authenticate(['jwt'], { session: false }));
 
 Promise.all([
   createRepositories({ ...environment, logger }),

@@ -3,7 +3,7 @@ import { Application } from 'express';
 import { Logger } from 'winston';
 import { DomainEventService } from '@core-services/core-common';
 import { Repositories } from './repository';
-import { createSpaceRouter, createFileRouter, createAdminRouter } from './router';
+import { createSpaceRouter, createFileRouter, createAdminRouter, createFileTypeRouter } from './router';
 import { scheduleFileJobs } from './job';
 import { createScanService } from './scan';
 
@@ -21,6 +21,7 @@ interface FileMiddlewareProps extends Repositories {
 }
 
 export const applyFileMiddleware = (app: Application, props: FileMiddlewareProps) => {
+  const fileTypeRouter = createFileTypeRouter(props);
   const spaceRouter = createSpaceRouter(props);
   const adminRouter = createAdminRouter(props);
   const fileRouter = createFileRouter(props);
@@ -33,6 +34,7 @@ export const applyFileMiddleware = (app: Application, props: FileMiddlewareProps
 
   scheduleFileJobs({ ...props, scanService });
 
+  app.use('/file-type/v1', fileTypeRouter);
   app.use('/space/v1', spaceRouter);
   app.use('/file-admin/v1', adminRouter);
   app.use('/file/v1', fileRouter);

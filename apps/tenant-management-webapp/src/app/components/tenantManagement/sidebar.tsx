@@ -5,6 +5,7 @@ import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 
 import PulseIcon from '@icons/pulse-outline.svg';
+import FileIcon from '@icons/file-outline.svg';
 import AdminIcon from '@icons/options-outline.svg';
 import DashboardIcon from '@icons/home-outline.svg';
 import LogoutIcon from '@icons/log-out-outline.svg';
@@ -37,6 +38,10 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
           <NavLink to="/tenant-admin/access" activeClassName="current" title="Access">
             <img src={PulseIcon} width="16" alt="Access" />
             <span>Access</span>
+          </NavLink>
+          <NavLink to="/tenant-admin/services/file" activeClassName="current" title="Access">
+            <img src={FileIcon} width="16" alt="Access" />
+            <span>File Services</span>
           </NavLink>
         </>
       )}

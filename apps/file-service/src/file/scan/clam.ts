@@ -24,7 +24,7 @@ export const createClamScan = ({ rootStoragePath, host, port }: ScanProps) => {
   const service: ScanService = {
     scan: (file) =>
       scanPromise
-        .then((clamscan) => clamscan.is_infected(file.getFilePath(rootStoragePath)))
+        .then(async (clamscan) => clamscan.is_infected(await file.getFilePath(rootStoragePath)))
         .then((scan) => ({
           scanned: true,
           infected: scan.is_infected,

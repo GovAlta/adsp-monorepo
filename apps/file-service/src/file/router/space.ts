@@ -10,6 +10,7 @@ import {
 import { FileSpaceRepository } from '../repository';
 import { FileSpaceEntity } from '../model';
 import { createdFileSpace, updatedFileSpace } from '../event/space';
+import { v4 as uuidv4 } from 'uuid';
 
 interface SpaceRouterProps {
   logger: Logger;
@@ -91,6 +92,27 @@ export const createSpaceRouter = ({ logger, eventService, spaceRepository }: Spa
     }
   });
 
+  spaceRouter.get('/spaces/userspace', assertAuthenticatedHandler, async (req, res, next) => {
+    const user = req.user as User;
+    const { top, after } = req.query;
+
+    try {
+      const spaces = await spaceRepository.find(parseInt((top as string) || '10', 100000), after as string);
+      res.send({
+        page: spaces.page,
+        results: spaces.results
+          .filter((n) => n.canAccess(user))
+          .map((n) => ({
+            id: n.id,
+            name: n.name,
+            spaceAdminRole: n.spaceAdminRole,
+          })),
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   /**
    * @swagger
    *
@@ -151,7 +173,7 @@ export const createSpaceRouter = ({ logger, eventService, spaceRepository }: Spa
   /**
    * @swagger
    *
-   * /space/v1/spaces/{space}:
+   * /space/v1/spaces:
    *   put:
    *     tags:
    *     - File Space
@@ -191,19 +213,18 @@ export const createSpaceRouter = ({ logger, eventService, spaceRepository }: Spa
    *       401:
    *         description: User not authorized to update file space.
    */
-  spaceRouter.put('/spaces/:space', assertAuthenticatedHandler, async (req, res, next) => {
+  spaceRouter.put('/spaces', assertAuthenticatedHandler, async (req, res, next) => {
     const user = req.user as User;
-    const { space } = req.params;
-    const { spaceAdminRole, name } = req.body;
+    const { spaceAdminRole } = req.body;
 
     try {
-      const spaceEntity = await spaceRepository.get(space);
+      const spaceId = await spaceRepository.getIdByName(user.tenantName);
 
-      if (!spaceEntity) {
+      if (!spaceId) {
         const entity = await FileSpaceEntity.create(user, spaceRepository, {
-          id: space,
+          id: uuidv4(),
           spaceAdminRole,
-          name,
+          name: user.tenantName,
         });
 
         eventService.send(
@@ -217,10 +238,19 @@ export const createSpaceRouter = ({ logger, eventService, spaceRepository }: Spa
             new Date()
           )
         );
+        logger.info(`Space ${entity.name} (ID: ${entity.id}) created by ` + `user ${user.name} (ID: ${user.id}).`);
+
+        res.send({
+          id: entity.id,
+          name: entity.name,
+          spaceAdminRole: entity.spaceAdminRole,
+        });
       } else {
+        const spaceEntity = await spaceRepository.get(spaceId);
+
         const entity = await spaceEntity.update(user, {
           spaceAdminRole,
-          name,
+          name: user.tenantName,
         });
 
         eventService.send(
@@ -234,15 +264,17 @@ export const createSpaceRouter = ({ logger, eventService, spaceRepository }: Spa
             new Date()
           )
         );
+
+        logger.info(
+          `Space ${spaceEntity.name} (ID: ${spaceEntity.id}) updated by ` + `user ${user.name} (ID: ${user.id}).`
+        );
+
+        res.send({
+          id: spaceEntity.id,
+          name: spaceEntity.name,
+          spaceAdminRole: spaceEntity.spaceAdminRole,
+        });
       }
-
-      logger.info(`Space ${spaceEntity.name} (ID: ${space}) updated by ` + `user ${user.name} (ID: ${user.id}).`);
-
-      res.send({
-        id: spaceEntity.id,
-        name: spaceEntity.name,
-        spaceAdminRole: spaceEntity.spaceAdminRole,
-      });
     } catch (err) {
       next(err);
     }

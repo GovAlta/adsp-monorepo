@@ -37,11 +37,12 @@ const OverviewBtn = () => {
 
   return (
     <GoAButton
-      content="Enable Service"
       onClick={() => {
         dispatch(EnableFileService());
       }}
-    />
+    >
+      Enable Service
+    </GoAButton>
   );
 };
 
@@ -86,6 +87,7 @@ export default function FileOverview() {
     <div>
       <OverviewContent />
 
+      <p>This service is {active ? 'active' : 'inactive'}</p>
       <div className={active ? 'd-none' : ''}>
         <OverviewBtn />
       </div>
