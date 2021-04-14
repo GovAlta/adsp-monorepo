@@ -10,7 +10,6 @@ import userGroup from '@icons/user-group.svg';
 import puzzleIcon from '@icons/extension-puzzle-outline.svg';
 import Header from '@components/appHeader';
 import { RootState } from '@store/index';
-import AuthContext from '@lib/authContext';
 
 import '@abgov/react-components/react-components.esm.css';
 import Container from '@components/_/Container';
@@ -24,7 +23,6 @@ const LandingPage = () => {
 
   const tenant = useSelector((state: RootState) => state.tenant);
   const session = useSelector((state: RootState) => state.session);
-  const { signIn } = useContext(AuthContext);
 
   useEffect(() => {
     if (session.authenticated && tenant.name) {
@@ -35,29 +33,25 @@ const LandingPage = () => {
   return (
     <>
       <Header serviceName="" />
-      <GoaHeroBanner title="A platform built for government services" backgroundUrl={bannerBackground}>
-        <p>
-          DIO Service management platform will enable you to add, configure, and manage a range of services that can
-          integrate with your existing application.
-        </p>
+      <GoaHeroBanner title="" backgroundUrl={bannerBackground}>
+        <Container>
+          <Grid>
+            <GridItem md={12}>
+              <h2 style={{ color: 'white' }}>The Alberta Digital Service Platform</h2>
+              <p>
+                Enabling you to add, configure, and manage a range of services that can integrate with your new or
+                existing project. Quick to deploy, easy to manage and free to use.
+              </p>
 
-        <div>
-          <GoAButton buttonType="primary" buttonSize="normal" onClick={() => history.push('/sign-up')}>
-            Create an Account
-          </GoAButton>
-
-          {!session.authenticated ? (
-            <GoAButton buttonType="secondary" buttonSize="normal" onClick={() => signIn('/')}>
-              Sign In
-            </GoAButton>
-          ) : (
-            <GoAButton buttonType="secondary" buttonSize="normal" onClick={() => history.push('/Realms/CreateRealm')}>
-              Create Tenant
-            </GoAButton>
-          )}
-        </div>
+              <div>
+                <GoAButton buttonType="primary" buttonSize="normal" onClick={() => history.push('/tenant/start')}>
+                  Get Started
+                </GoAButton>
+              </div>
+            </GridItem>
+          </Grid>
+        </Container>
       </GoaHeroBanner>
-
       <Section>
         <Container>
           <Grid>
@@ -198,9 +192,9 @@ const Section = styled.div<SectionProps>`
   background-color: ${(props: SectionProps) => props.backgroundColor ?? 'transparent'};
 `;
 
-const Footer = styled(Container) `
+const Footer = styled(Container)`
   text-align: center;
-`
+`;
 
 const FooterLinks = styled.div`
   display: flex;

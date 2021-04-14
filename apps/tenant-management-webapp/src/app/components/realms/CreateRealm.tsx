@@ -29,14 +29,17 @@ const CreateRealm = () => {
     setName(event.target.value);
   };
 
-  const { isTenantAdmin, email } = useSelector((state: RootState) => ({
+  const { isTenantAdmin, email, authenticated } = useSelector((state: RootState) => ({
     isTenantAdmin: state.tenant.isTenantAdmin,
     email: state.session.userInfo?.email,
+    authenticated: state.session.authenticated,
   }));
 
   useEffect(() => {
-    dispatch(IsTenantAdmin(email));
-  }, [email]);
+    if (authenticated) {
+      dispatch(IsTenantAdmin(email));
+    }
+  }, [email, authenticated]);
 
   const NewTenantLoginLink = () => {
     const tenantLoginUrl = `/${name}/login`;
@@ -71,38 +74,40 @@ const CreateRealm = () => {
 
   return (
     <Container className="signin-body mt-5">
-      <Row>
-        <Col className={isTenantAdmin ? '' : 'd-none'}>
-          <ErrorMessage email={email} />
-        </Col>
-        <Col lg={{ size: 6 }} md={{ size: 10 }} className={isTenantAdmin ? 'd-none' : 'create-tenant-form-border'}>
-          <div className={'create-tenant-form'}>
-            <div className="signin-title mb-6">
-              <h1 style={{ fontWeight: 'bold', textAlign: 'left' }}>Create tenant</h1>
-            </div>
-            <div>
-              <div className="mb-6">As a reminder, you are only able to create one tenant per user account</div>
-              <br />
-              <label htmlFor="fname" className="signin-small-title">
-                Tenant Name
-              </label>
-              <input className="signin-input" value={name} onChange={onChangeName} />
-              <div className="signin-subset">Names cannot container special characters (ex. ! % &)</div>
-              <div style={{ display: 'flex', flexDirection: 'row' }}>
-                <div style={{ margin: '35px 11px 0 0' }}>
-                  <GoAButton onClick={backToMain} buttonType="secondary">
-                    Back
-                  </GoAButton>
-                </div>
-                <div style={{ margin: '35px 0 0 11px' }}>
-                  <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
+      {authenticated ? (
+        <Row>
+          <Col className={isTenantAdmin ? '' : 'd-none'}>
+            <ErrorMessage email={email} />
+          </Col>
+          <Col lg={{ size: 6 }} md={{ size: 10 }} className={isTenantAdmin ? 'd-none' : 'create-tenant-form-border'}>
+            <div className={'create-tenant-form'}>
+              <div className="signin-title mb-6">
+                <h1 style={{ fontWeight: 'bold', textAlign: 'left' }}>Create tenant</h1>
+              </div>
+              <div>
+                <div className="mb-6">As a reminder, you are only able to create one tenant per user account</div>
+                <br />
+                <label htmlFor="fname" className="signin-small-title">
+                  Tenant Name
+                </label>
+                <input className="signin-input" value={name} onChange={onChangeName} />
+                <div className="signin-subset">Names cannot container special characters (ex. ! % &)</div>
+                <div style={{ display: 'flex', flexDirection: 'row' }}>
+                  <div style={{ margin: '35px 11px 0 0' }}>
+                    <GoAButton onClick={backToMain} buttonType="secondary">
+                      Back
+                    </GoAButton>
+                  </div>
+                  <div style={{ margin: '35px 0 0 11px' }}>
+                    <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
+                  </div>
                 </div>
               </div>
+              <NewTenantLoginLink />
             </div>
-            <NewTenantLoginLink />
-          </div>
-        </Col>
-      </Row>
+          </Col>
+        </Row>
+      ) : null}
     </Container>
   );
 };

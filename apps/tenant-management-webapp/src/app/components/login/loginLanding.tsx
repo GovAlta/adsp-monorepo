@@ -11,7 +11,7 @@ const LoginLanding = () => {
 
   return (
     <div>
-      <Header isLoginLink={false} />
+      <Header hasLoginLink={false} />
       <Container>
         <Row>
           <Col></Col>

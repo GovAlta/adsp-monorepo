@@ -9,7 +9,11 @@ import Sidebar from '@components/tenantManagement/sidebar';
 import MenuIcon from '@icons/menu-outline.svg';
 import CloseIcon from '@icons/close-outline.svg';
 
-const ActionsMenu = () => {
+interface HeaderMenuProps {
+  hasLoginLink: boolean;
+}
+
+const ActionsMenu = (props: HeaderMenuProps) => {
   const authenticated = useSelector((state: RootState) => state.session.authenticated);
   const authCtx = useContext(AuthContext);
 
@@ -32,22 +36,24 @@ const ActionsMenu = () => {
         </div>
       </section>
 
-      <section className="desktop">
-        {authenticated ? (
-          <AuthLink onClick={() => authCtx.signOut()}>Sign Out</AuthLink>
-        ) : (
-          <AuthLink onClick={() => authCtx.signIn('/')}>Sign In</AuthLink>
-        )}
-      </section>
+      {props.hasLoginLink ? (
+        <section className="desktop">
+          {authenticated ? (
+            <AuthLink onClick={() => authCtx.signOut()}>Sign Out</AuthLink>
+          ) : (
+            <AuthLink onClick={() => authCtx.signIn('/')}>Sign In</AuthLink>
+          )}
+        </section>
+      ) : null}
     </Actions>
   );
 };
 
-function AppHeader({ serviceName = '', isLoginLink = true }) {
+function AppHeader({ serviceName = '', hasLoginLink = true }) {
   return (
     <HeaderContainer>
       <GoaHeader serviceHome="/" serviceLevel="alpha" serviceName={serviceName} />
-      <ActionsMenu />
+      <ActionsMenu hasLoginLink={hasLoginLink} />
     </HeaderContainer>
   );
 }

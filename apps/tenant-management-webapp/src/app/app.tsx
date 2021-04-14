@@ -21,6 +21,7 @@ import CreatingRealm from '@components/realms/CreatingRealm';
 import AddClientRole from '@components/realms/AddClientRole';
 import CreateErrorPage from '@components/realms/CreateErrorPage';
 import ActivateErrorPage from '@components/realms/ActivateErrorPage';
+import GetStartedPage from '@components/realms/GetStarted';
 import Realms from '@components/realms/Realms';
 import { store, persistor, RootState } from '@store/index';
 import { PersistGate } from 'redux-persist/integration/react';
@@ -30,7 +31,7 @@ import { SessionLoginSuccess, SessionLogout } from '@store/session/actions';
 import AuthContext from '@lib/authContext';
 import { keycloak, createKeycloakInstance, convertToSession } from '@lib/session';
 
-import './app.css'
+import './app.css';
 
 const AppRouters = () => {
   return (
@@ -41,6 +42,10 @@ const AppRouters = () => {
         </Route>
         <Route path="/:tenantName/login">
           <TenantLogin />
+        </Route>
+
+        <Route exact path="/tenant/start">
+          <GetStartedPage />
         </Route>
         <Route path="/logout">
           <Logout />
@@ -71,7 +76,7 @@ const AppRouters = () => {
 
 export const App = () => {
   return (
-    <div style={{height: '100vh', overflowX: 'hidden'}}>
+    <div style={{ height: '100vh', overflowX: 'hidden' }}>
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
           <AppWithAuthContext />
