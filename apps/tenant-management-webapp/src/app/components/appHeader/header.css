@@ -1,17 +1,17 @@
 
 a.header-link:link {
- color: hsl(206, 100%, 38);
+ color: hsl(206, 100%, 38%);
 }
 
 
 a.header-link:active {
 
-  color: hsl(206, 100%, 38);
+  color: hsl(206, 100%, 38%);
 
  }
 
 .logout-icon path {
-  stroke: hsl(206, 100%, 38);
+  stroke: hsl(206, 100%, 38%);
   stroke-width: 0.1;
  }
 
