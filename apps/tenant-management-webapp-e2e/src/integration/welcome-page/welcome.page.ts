@@ -1,6 +1,7 @@
+/// <reference types="cypress-xpath" />
 class WelcomePage {
-  signinButton() {
-    return cy.get('button:contains("Sign In")');
+  signinDiv() {
+    return cy.xpath('//div[contains(text(), "Sign In")]');
   }
 
   createTenantButton() {
@@ -8,7 +9,7 @@ class WelcomePage {
   }
 
   signoutDiv() {
-    return cy.contains('Sign Out');
+    return cy.xpath('//div[contains(text(), "Sign Out")]');
   }
 
   userHasOneTenantMessage() {
