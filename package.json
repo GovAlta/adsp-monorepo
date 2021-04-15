@@ -161,6 +161,7 @@
     "chalk": "^2.4.2",
     "cypress": "^6.2.1",
     "cypress-cucumber-preprocessor": "^4.0.0",
+    "cypress-xpath": "^1.6.2",
     "dotenv": "6.2.0",
     "dotenv-webpack": "^6.0.0",
     "eslint": "6.8.0",
