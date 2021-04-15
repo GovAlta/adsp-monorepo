@@ -1,11 +1,14 @@
+import { Aside, Main, Page } from '@components/_/Html';
 import React from 'react';
-import { Container } from 'react-bootstrap';
 
 function AppStatus() {
   return (
-    <Container>
-      <h2>Future app status</h2>
-    </Container>
+    <Page>
+      <Main>
+        <h1>Future app status</h1>
+      </Main>
+      <Aside></Aside>
+    </Page>
   );
 }
 

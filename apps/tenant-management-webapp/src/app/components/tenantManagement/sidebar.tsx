@@ -41,7 +41,7 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
           </NavLink>
           <NavLink to="/tenant-admin/services/file" activeClassName="current" title="Access">
             <img src={FileIcon} width="16" alt="Access" />
-            <span>File Services</span>
+            <span>Files</span>
           </NavLink>
         </>
       )}
@@ -78,7 +78,7 @@ const SignOutLink = styled.div`
 `;
 
 const Links = styled.div`
-  padding: 0 0.5rem;
+  padding: 0.5rem;
   a {
     color: #000;
     display: flex;
@@ -89,6 +89,7 @@ const Links = styled.div`
     overflow-x: hidden;
     white-space: nowrap;
     transition: background-color 100ms;
+    text-decoration: none;
 
     &:first-of-type {
       margin-top: 0;
@@ -124,9 +125,10 @@ const Links = styled.div`
 `;
 
 const Title = styled.div`
-  font-size: var(--fs-base);
-  font-weight: var(--fw-medium);
-  padding: 0.5rem;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  padding: 0 0.5rem;
   overflow-x: hidden;
   white-space: nowrap;
   display: none;

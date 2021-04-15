@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Container, Tabs, Tab } from 'react-bootstrap';
+import { Tabs, Tab } from 'react-bootstrap';
 import '@abgov/react-components/react-components.esm.css';
 import { useSelector, useDispatch } from 'react-redux';
 
@@ -11,6 +11,7 @@ import './file.css';
 import InitSetup from './fileInitSetup';
 import { RootState } from '@store/index';
 import { FetchFileSpace, SetActiveTab, FetchFileSpaceFromFileApiService } from '@store/file/actions';
+import { Main } from '@components/_/Html';
 
 const Templates = () => {
   return (
@@ -105,11 +106,9 @@ export default function File() {
   const FileOverviewTab = setupRequired ? <TabsForInit /> : <TabsForSetup />;
 
   return (
-    <div>
-      <Container>
-        <FileHeader />
-        {FileOverviewTab}
-      </Container>
-    </div>
+    <Main>
+      <FileHeader />
+      {FileOverviewTab}
+    </Main>
   );
 }

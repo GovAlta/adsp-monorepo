@@ -2,17 +2,11 @@
   /* font-size */
   --fs-xs: 0.75rem;
   --fs-sm: 0.875rem;
-  --fs-base: 1rem;
-  --fs-lg: 1.125rem;
-  --fs-xl: 1.25rem;
-  --fs-2xl: 1.5rem;
-  --fs-3xl: 1.875rem;
-  --fs-4xl: 2.25rem;
-  --fs-5xl: 3rem;
-  --fs-6xl: 3.75rem;
-  --fs-7xl: 4.5rem;
-  --fs-8xl: 6rem;
-  --fs-9xl: 8rem;
+  --fs-base: 1.125rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.5rem;
+  --fs-2xl: 1.875rem;
+  --fs-3xl: 2.25rem;
 
   /* font-weight */
   --fw-thin: 100;
@@ -21,6 +15,12 @@
   --fw-medium: 500;
   --fw-bold: 700;
   --fw-black: 900;
+
+  /* colors */
+
+  --color-primary: #0070c4;
+  --color-primary-dark: #004f84;
+  --color-primary-link: #0067b5;
 }
 
 *,
@@ -29,66 +29,48 @@
   box-sizing: border-box;
 }
 
-/* OVERRIDES */
+body {
+  margin: 0;
+}
+
+hr {
+  border-width: 0;
+  border-top: 1px solid #ccc;
+}
+
+/* == OVERRIDES */
 .goa-header {
   padding-left: 1rem;
 }
-
-@media (min-width: 640px) {
-  .goa-card {
-    width: auto;
-    flex-basis: auto;
-  }
+a.goa-link-button,
+.goa-button {
+  margin-top: 1rem !important;
 }
-
-.goa-card .card-content {
-  padding: 1rem;
-}
-.goa-card .goa-footer {
-  justify-content: flex-end;
-}
-
-.goa-card .goa-footer button:first-of-type {
-  margin-right: 0;
-}
-
-/* Base header margins */
-h1,
-h2,
-h3,
-h4 {
-  margin-bottom: 1rem;
-  margin-top: 2rem;
-}
-
-/* Prevent gaps at the start of content  */
-main > h1:first-child,
-main > h2:first-child,
-main > h3:first-child {
-  margin-top: 0;
-}
-
-h1 ~ h2:first-of-type,
-h1 ~ h3:first-of-type,
-h1 ~ h4:first-of-type,
-h2 ~ h3:first-of-type,
-h2 ~ h4:first-of-type,
-h3 ~ h4:first-of-type {
-  margin-top: 2rem;
-}
-
-p {
-  margin-bottom: 1rem;
-  font-size: var(--fs-base);
-}
-
-button {
+a.goa-link-button,
+button.goa-button {
   display: block;
   width: 100%;
+  text-align: center;
+  margin-top: 1rem !important;
 }
 @media (min-width: 640px) {
-  button {
-    display: inline-block;
-    width: fit-content;
+  a.goa-link-button,
+  button.goa-button {
+    display: inline-block !important;
+    width: fit-content !important;
+  }
+  a.goa-link-button:last-to-type,
+  button.goa-button:last-of-type {
+    margin-right: 0;
   }
 }
+a.goa-link-button.goa--secondary,
+a.goa-link-button.goa--secondary:link,
+a.goa-link-button.goa--secondary:visited {
+  color: var(--color-primary);
+}
+a.goa-link-button.goa--secondary:hover,
+a.goa-link-button.goa--secondary:focus {
+  color: var(--color-primary-dark);
+}
+/* == OVERRIDES END */

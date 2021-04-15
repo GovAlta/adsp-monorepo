@@ -12,6 +12,7 @@ import Dashboard from './dashboard';
 import Adminstration from './administration';
 import File from './services/file';
 import AccessPage from './services/access/access';
+import Container from '@components/_/Container';
 
 const TenantManagement = () => {
   const { setTitle } = useContext(HeaderCtx);
@@ -44,7 +45,7 @@ const TenantManagement = () => {
       <SidebarWrapper>
         <Sidebar type="desktop" />
       </SidebarWrapper>
-      <ContentWrapper>
+      <Container hs={1}>
         <Switch>
           <Route exact path="/tenant-admin/">
             <Dashboard />
@@ -62,7 +63,7 @@ const TenantManagement = () => {
             <File />
           </Route>
         </Switch>
-      </ContentWrapper>
+      </Container>
     </AdminLayout>
   );
 };
@@ -83,9 +84,4 @@ const SidebarWrapper = styled.nav`
   @media (min-width: 768px) {
     flex-basis: 12rem;
   }
-`;
-
-const ContentWrapper = styled.div`
-  padding: 0 1rem;
-  margin-top: 0.5rem;
 `;

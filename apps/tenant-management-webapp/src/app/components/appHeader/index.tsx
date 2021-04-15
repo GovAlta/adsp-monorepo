@@ -25,7 +25,7 @@ const ActionsMenu = (props: HeaderMenuProps) => {
   return (
     <Actions>
       <section className="mobile">
-        <div onClick={toggleMenu}>
+        <SidebarController onClick={toggleMenu}>
           <img src={MenuIcon} width="24" alt="Menu" />
           <SidebarWrapper state={menuState.state}>
             <div className="close">
@@ -33,7 +33,7 @@ const ActionsMenu = (props: HeaderMenuProps) => {
             </div>
             <Sidebar type="mobile" />
           </SidebarWrapper>
-        </div>
+        </SidebarController>
       </section>
 
       {props.hasLoginLink ? (
@@ -67,6 +67,11 @@ export default AppHeader;
 interface MenuState {
   state: 'open' | 'closed';
 }
+
+const SidebarController = styled.div`
+  display: flex;
+  align-items: center;
+`;
 
 const SidebarWrapper = styled.div<MenuState>`
   position: absolute;

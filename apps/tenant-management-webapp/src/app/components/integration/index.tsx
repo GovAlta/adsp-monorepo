@@ -1,11 +1,14 @@
+import { Aside, Main, Page } from '@components/_/Html';
 import React from 'react';
-import { Container } from 'react-bootstrap';
 
 function Integration() {
   return (
-    <Container>
-      <h2>Integration help coming soon</h2>
-    </Container>
+    <Page>
+      <Main>
+        <h1>Future integration</h1>
+      </Main>
+      <Aside></Aside>
+    </Page>
   );
 }
 

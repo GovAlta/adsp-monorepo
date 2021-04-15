@@ -5,8 +5,6 @@ import { GoARadioGroup, GoAButton } from '@abgov/react-components';
 import { DisableFileService, DeleteFileService } from '@store/file/actions';
 import { FILE_INIT } from '@store/file/models';
 
-import './file.css';
-
 const FileSettings = () => {
   const Space = () => {
     const style = {

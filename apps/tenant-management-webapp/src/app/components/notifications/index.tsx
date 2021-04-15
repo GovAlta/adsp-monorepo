@@ -1,16 +1,22 @@
 import React from 'react';
-import { Container } from 'react-bootstrap';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
+import { Aside, Main, Page } from '@components/_/Html';
+import SupportLinks from '@components/_/SupportLinks';
 
 function Notifications() {
   const notificationServiceUrl = useSelector((state: RootState) => state.config.serviceUrls.notificationServiceUrl);
 
   return (
-    <Container>
-      <h2>Future notifications</h2>
-      {notificationServiceUrl && `Notification Url: ${notificationServiceUrl}`}
-    </Container>
+    <Page>
+      <Main>
+        <h1>Future notifications</h1>
+        {notificationServiceUrl && `Notification Url: ${notificationServiceUrl}`}
+      </Main>
+      <Aside>
+        <SupportLinks />
+      </Aside>
+    </Page>
   );
 }
 
