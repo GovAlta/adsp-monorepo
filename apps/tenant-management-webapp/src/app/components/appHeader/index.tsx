@@ -6,9 +6,11 @@ import styled from 'styled-components';
 import { RootState } from '@store/index';
 import AuthContext from '@lib/authContext';
 import Sidebar from '@components/tenantManagement/sidebar';
-import MenuIcon from '@icons/menu-outline.svg';
-import CloseIcon from '@icons/close-outline.svg';
+import { ReactComponent as MenuIcon } from '@icons/menu-outline.svg';
+import { ReactComponent as CloseIcon } from '@icons/close-outline.svg';
+import { ReactComponent as UserIcon } from '@icons/user-login.svg';
 
+import './header.css';
 interface HeaderMenuProps {
   hasLoginLink: boolean;
 }
@@ -26,10 +28,10 @@ const ActionsMenu = (props: HeaderMenuProps) => {
     <Actions>
       <section className="mobile">
         <div onClick={toggleMenu}>
-          <img src={MenuIcon} width="24" alt="Menu" />
+          <MenuIcon width="24" />
           <SidebarWrapper state={menuState.state}>
             <div className="close">
-              <img src={CloseIcon} width="24" alt="Close" />
+              <CloseIcon width="24" />
             </div>
             <Sidebar type="mobile" />
           </SidebarWrapper>
@@ -39,9 +41,16 @@ const ActionsMenu = (props: HeaderMenuProps) => {
       {props.hasLoginLink ? (
         <section className="desktop">
           {authenticated ? (
-            <AuthLink onClick={() => authCtx.signOut()}>Sign Out</AuthLink>
+            <div>
+              <UserIcon className={'logout-icon'} />
+              <a className={'header-link'} onClick={() => authCtx.signOut()}>
+                Sign Out
+              </a>
+            </div>
           ) : (
-            <AuthLink onClick={() => authCtx.signIn('/')}>Sign In</AuthLink>
+            <a className={'header-link'} onClick={() => authCtx.signIn('/')}>
+              Sign In
+            </a>
           )}
         </section>
       ) : null}
@@ -90,10 +99,6 @@ const SidebarWrapper = styled.div<MenuState>`
     margin-right: 1rem;
     min-height: 66px;
   }
-`;
-
-const AuthLink = styled.div`
-  cursor: pointer;
 `;
 
 const HeaderContainer = styled.div`
