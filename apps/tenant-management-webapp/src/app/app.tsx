@@ -7,7 +7,6 @@ import '@abgov/core-css/goa-core.css';
 
 import LandingPage from '@components/landingPage';
 import { TenantLogin } from '@components/login';
-import Logout from '@components/logout/';
 import CaseStudy from '@components/caseStudy/';
 import FileService from '@components/file-service';
 import ServiceMeasure from '@components/serviceMeasure';
@@ -16,20 +15,17 @@ import Integration from '@components/integration';
 import SignUp from '@components/signUp';
 import Notifications from '@components/notifications';
 import TenantManagement from '@components/tenantManagement';
-import CreateRealm from '@components/realms/CreateRealm';
-import CreatingRealm from '@components/realms/CreatingRealm';
-import AddClientRole from '@components/realms/AddClientRole';
-import CreateErrorPage from '@components/realms/CreateErrorPage';
-import ActivateErrorPage from '@components/realms/ActivateErrorPage';
-import GetStartedPage from '@components/realms/GetStarted';
-import Realms from '@components/realms/Realms';
+import Tenants from '@components/tenants';
 import { store, persistor, RootState } from '@store/index';
 import { PersistGate } from 'redux-persist/integration/react';
 import { PrivateApp, PrivateRoute } from './privateApp';
-import { fetchConfig } from '@store/config/actions';
+import { ConfigLogout, fetchConfig } from '@store/config/actions';
 import { SessionLoginSuccess, SessionLogout } from '@store/session/actions';
 import AuthContext from '@lib/authContext';
 import { keycloak, createKeycloakInstance, convertToSession } from '@lib/session';
+import { ThemeProvider } from 'styled-components';
+import { theme } from 'theme';
+import { TenantLogout } from '@store/tenant/actions';
 
 import './app.css';
 
@@ -44,12 +40,6 @@ const AppRouters = () => {
           <TenantLogin />
         </Route>
 
-        <Route exact path="/tenant/start">
-          <GetStartedPage />
-        </Route>
-        <Route path="/logout">
-          <Logout />
-        </Route>
         <Route path="/sign-up">
           <SignUp />
         </Route>
@@ -61,13 +51,7 @@ const AppRouters = () => {
           <PrivateRoute path="/notifications" component={Notifications} />
           <PrivateRoute path="/integration" component={Integration} />
           <PrivateRoute path="/tenant-admin" component={TenantManagement} />
-
-          <Route path="/Realms" exact component={Realms} />
-          <Route path="/Realms/CreateRealm" exact component={CreateRealm} />
-          <Route path="/Realms/CreatingRealm" exact component={CreatingRealm} />
-          <Route path="/Realms/AddClientRole" exact component={AddClientRole} />
-          <Route path="/Realms/CreateErrorPage" exact component={CreateErrorPage} />
-          <Route path="/Realms/ActivateErrorPage" exact component={ActivateErrorPage} />
+          <PrivateRoute path="/tenants" component={Tenants} />
         </PrivateApp>
       </Switch>
     </Router>
@@ -76,12 +60,14 @@ const AppRouters = () => {
 
 export const App = () => {
   return (
-    <div style={{ height: '100vh', overflowX: 'hidden' }}>
-      <Provider store={store}>
-        <PersistGate loading={null} persistor={persistor}>
-          <AppWithAuthContext />
-        </PersistGate>
-      </Provider>
+    <div style={{ overflowX: 'hidden' }}>
+      <ThemeProvider theme={theme}>
+        <Provider store={store}>
+          <PersistGate loading={null} persistor={persistor}>
+            <AppWithAuthContext />
+          </PersistGate>
+        </Provider>
+      </ThemeProvider>
     </div>
   );
 };
@@ -138,10 +124,10 @@ function AppWithAuthContext() {
   }
 
   function signOut() {
-    const redirectUri = `${window.location.origin}/logout`;
-    keycloak.logout({
-      redirectUri,
-    });
+    dispatch(SessionLogout());
+    dispatch(TenantLogout());
+    dispatch(ConfigLogout());
+    keycloak.logout({ redirectUri: window.location.origin });
   }
 
   return <AuthContext.Provider value={{ signIn, signOut }}>{hasSession && <AppRouters />}</AuthContext.Provider>;

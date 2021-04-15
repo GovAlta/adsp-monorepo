@@ -5,6 +5,10 @@ import { RootState } from '@store/index';
 import { fetchAccess } from '@store/access/actions';
 import { User } from '@store/access/models';
 import styled from 'styled-components';
+import DataTable from '@components/_/DataTable';
+import { Grid, GridItem } from '@components/_/Grid';
+import { Aside, Main, Page } from '@components/_/Html';
+import SupportLinks from '@components/_/SupportLinks';
 
 export default function () {
   const dispatch = useDispatch();
@@ -32,9 +36,9 @@ export default function () {
   }
 
   return (
-    <AccessPage>
-      <main>
-        <h2>Access</h2>
+    <Page>
+      <Main>
+        <h1>Access</h1>
         <p>
           Access allows you to add a secure sign in to you application and services with minimum effort and
           configuration. No need to deal with storing or authenticating users. It's all available out of the box.
@@ -42,7 +46,7 @@ export default function () {
 
         <section id="keycloak-user-info">
           <TitleLinkHeader>
-            <h3>Keycloak user information</h3>
+            <Title>Keycloak user information</Title>
             <a
               href={getKeycloakAdminPortal()}
               rel="noopener noreferrer"
@@ -55,18 +59,18 @@ export default function () {
           </TitleLinkHeader>
 
           <UserStats>
-            <div>
+            <UserStatsItem md={4}>
               <Count id="user-count">{users.length}</Count>
-              <div>Total number of users</div>
-            </div>
-            <div>
+              Total number of users
+            </UserStatsItem>
+            <UserStatsItem md={4}>
               <Count id="role-count">{roles?.length ?? '-'}</Count>
-              <div>Types of user roles</div>
-            </div>
-            <div>
+              Types of user roles
+            </UserStatsItem>
+            <UserStatsItem md={4}>
               <Count id="active-user-count">{activeUsers().length}</Count>
-              <div>Active users</div>
-            </div>
+              Active users
+            </UserStatsItem>
           </UserStats>
         </section>
 
@@ -102,15 +106,16 @@ export default function () {
             </tbody>
           </DataTable>
         </section>
-      </main>
+      </Main>
 
-      <Links>
+      <Aside>
         <h5>Helpful Links</h5>
         <a rel="noopener noreferrer" target="_blank" href="/keycloak/support">
           Keycloak Support
         </a>
-      </Links>
-    </AccessPage>
+        <SupportLinks />
+      </Aside>
+    </Page>
   );
 }
 
@@ -121,6 +126,7 @@ export default function () {
 const Count = styled.div`
   font-size: var(--fs-3xl);
   font-weight: var(--fw-bold);
+  padding-bottom: 1rem;
 `;
 
 const TitleLinkHeader = styled.div`
@@ -128,70 +134,26 @@ const TitleLinkHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5rem;
-
-  h3 {
-    margin: 0;
-  }
 `;
 
-const AccessPage = styled.div`
-  display: flex;
-  flex-direction: column;
-  @media (min-width: 1024px) {
-    flex-direction: row;
-  }
+const Title = styled.div`
+  font-size: var(--fs-xl);
 `;
 
-const Links = styled.section`
-  @media (min-width: 1024px) {
-    flex: 0 0 200px;
-    padding-left: 2rem;
+const UserStats = styled(Grid)``;
+
+const UserStatsItem = styled(GridItem)`
+  border: 1px solid #ccc;
+  border-bottom-width: 0;
+  padding: 1rem;
+  &:last-child {
+    border-bottom-width: 1px;
   }
-`;
-
-const UserStats = styled.div`
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 1rem;
-
   @media (min-width: 768px) {
-    flex-direction: row;
-  }
-
-  > div {
-    flex: 1 1 33%;
     border: 1px solid #ccc;
-    border-bottom-width: 0;
-    padding: 1rem;
+    border-right-width: 0;
     &:last-child {
-      border-bottom-width: 1px;
+      border-right-width: 1px;
     }
-    @media (min-width: 768px) {
-      border: 1px solid #ccc;
-      border-right-width: 0;
-      &:last-child {
-        border-right-width: 1px;
-      }
-    }
-  }
-
-  h4 {
-    font-size: var(--fs-4xl);
-    font-weight: var(--fw-bold);
-  }
-`;
-
-const DataTable = styled.table`
-  margin-bottom: 1.5rem;
-  width: 100%;
-  thead th {
-    font-size: var(--fs-lg);
-    border-bottom: 2px solid #ccc;
-  }
-  tbody tr:nth-child(even) {
-    background-color: #fafafa;
-  }
-  tbody td {
-    padding: 0.5rem 0;
   }
 `;

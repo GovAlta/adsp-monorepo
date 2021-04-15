@@ -5,7 +5,8 @@ import { Redirect, Route } from 'react-router-dom';
 import Header from '@components/appHeader';
 import { RootState } from '@store/index';
 import { ApiUptimeFetch } from '@store/api-status/actions';
-import { HeaderCtx } from '@lib/headerContext'
+import { HeaderCtx } from '@lib/headerContext';
+import Container from '@components/_/Container';
 
 export function PrivateApp({ children }) {
   const [title, setTitle] = useState<string>('');
@@ -19,14 +20,13 @@ export function PrivateApp({ children }) {
   return (
     <HeaderCtx.Provider value={{ setTitle }}>
       <Header serviceName={title} />
-      {children}
+      <Container>{children}</Container>
     </HeaderCtx.Provider>
   );
 }
 
 export function PrivateRoute({ component: Component, ...rest }) {
-  const homePath = '/';
-  const isAuthenticated = useSelector((state: RootState) => state.session.authenticated);
+  const isAuthenticated = useSelector((state: RootState) => state.session?.authenticated ?? false);
 
   return (
     <Route
@@ -35,7 +35,7 @@ export function PrivateRoute({ component: Component, ...rest }) {
         isAuthenticated ? (
           <Component {...props} />
         ) : (
-          <Redirect to={{ pathname: homePath, state: { from: props.location } }} />
+          <Redirect to={{ pathname: '/', state: { from: props.location } }} />
         )
       }
     />

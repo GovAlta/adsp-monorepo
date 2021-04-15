@@ -1,13 +1,13 @@
+import Container from '@components/_/Container';
 import React from 'react';
-import { Container, Row, Col } from 'react-bootstrap';
-import Header from '../appHeader';
+import Header from '@components/appHeader';
 
 function SignUp() {
   return (
     <div>
       <Header serviceName="" />
       <Container>
-        <h2>Future sign up page</h2>
+        <h1>Future sign up page</h1>
       </Container>
     </div>
   );
