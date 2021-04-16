@@ -10,7 +10,6 @@ import Sidebar from '@components/tenantManagement/sidebar';
 import MenuIcon from '@icons/menu-outline.svg';
 import CloseIcon from '@icons/close-outline.svg';
 import { ReactComponent as UserIcon } from '@icons/user-login.svg';
-import GoALinkButton from '@components/_/LinkButton';
 interface HeaderMenuProps {
   hasLoginLink: boolean;
 }

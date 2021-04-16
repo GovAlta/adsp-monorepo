@@ -26,6 +26,7 @@ import { keycloak, createKeycloakInstance, convertToSession } from '@lib/session
 import { ThemeProvider } from 'styled-components';
 import { theme } from 'theme';
 import { TenantLogout } from '@store/tenant/actions';
+import PublicApp from './publicApp';
 
 import './app.css';
 
@@ -36,14 +37,17 @@ const AppRouters = () => {
         <Route exact path="/">
           <LandingPage />
         </Route>
-        <Route path="/:tenantName/login">
-          <TenantLogin />
-        </Route>
-        <Route path="/tenants/start" exact component={GetStarted} />
 
-        <Route path="/sign-up">
-          <SignUp />
-        </Route>
+        <PublicApp>
+          <Route path="/:tenantName/login">
+            <TenantLogin />
+          </Route>
+          <Route path="/tenants/start" exact component={GetStarted} />
+          <Route path="/sign-up">
+            <SignUp />
+          </Route>
+        </PublicApp>
+
         <PrivateApp>
           <PrivateRoute path="/case-study" component={CaseStudy} />
           <PrivateRoute path="/file-service" component={FileService} />
