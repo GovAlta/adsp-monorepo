@@ -45,7 +45,7 @@ const ActionsMenu = (props: HeaderMenuProps) => {
               <UserIcon />
               <Link to={'/'} onClick={() => authCtx.signOut()}>
                 Sign Out
-              </Link>{' '}
+              </Link>
             </UserIconBox>
           ) : (
             <Link to={'/'} onClick={() => authCtx.signIn('/')}>
