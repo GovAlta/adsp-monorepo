@@ -6,9 +6,6 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { Page, Main } from '@components/_/Html';
 import GoALinkButton from '@components/_/LinkButton';
-import Container from '@components/_/Container';
-import { Grid, GridItem } from '@components/_/Grid';
-import Header from '@components/appHeader';
 
 const GetStarted = () => {
   const { signIn } = useContext(AuthContext);
@@ -17,43 +14,28 @@ const GetStarted = () => {
   }));
 
   return (
-    <div>
-      <Header serviceName="" hasLoginLink={false} />
-      <Page>
-        <Main>
-          <Container>
-            <Grid>
-              <GridItem md={1.5} />
-              <GridItem md={9.5}>
-                <br />
-                <h1>
-                  <b> Let's get you signed in</b>
-                </h1>
-                <h3>
-                  Currently, the Alberta Digital Service Platform only uses the Government of Alberta's account as
-                  authentication, with plans to expand to other federated login providers in the future.
-                </h3>
+    <Page>
+      <Main>
+        <h1>Let's get you signed in</h1>
+        <p>
+          Currently, the Alberta Digital Service Platform only uses the Government of Alberta's account as
+          authentication, with plans to expand to other federated login providers in the future.
+        </p>
 
-                {!authenticated ? (
-                  <>
-                    <GoAButton buttonType="primary" onClick={() => signIn('/tenants/start')}>
-                      Continue with Government Alberta account
-                    </GoAButton>
-
-                    <GoALinkButton buttonType="secondary" to="/">
-                      Back to main page
-                    </GoALinkButton>
-                  </>
-                ) : (
-                  <Redirect to="/tenants/create" />
-                )}
-              </GridItem>
-              <GridItem md={1.5} />
-            </Grid>
-          </Container>
-        </Main>
-      </Page>
-    </div>
+        {!authenticated ? (
+          <>
+            <GoAButton buttonType="primary" onClick={() => signIn('/tenants/start')}>
+              Continue with Government Alberta account
+            </GoAButton>
+            <GoALinkButton buttonType="secondary" to="/">
+              Back to main page
+            </GoALinkButton>
+          </>
+        ) : (
+          <Redirect to="/tenants/create" />
+        )}
+      </Main>
+    </Page>
   );
 };
 
