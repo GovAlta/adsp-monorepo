@@ -37,17 +37,15 @@ const LandingPage = () => {
       <Header serviceName="" />
       <GoaHeroBanner title="" backgroundUrl={bannerBackground}>
         <Container hs={1}>
-          <div>
-            <h1>The Alberta Digital Service Platform</h1>
-            <p>
-              Enabling you to add, configure, and manage a range of services that can integrate with your new or
-              existing project. Quick to deploy, easy to manage and free to use.
-            </p>
+          <h1>The Alberta Digital Service Platform</h1>
+          <p>
+            Enabling you to add, configure, and manage a range of services that can integrate with your new or existing
+            project. Quick to deploy, easy to manage and free to use.
+          </p>
 
-            <GoALinkButton buttonType="primary" to="/tenants/start">
-              Get Started
-            </GoALinkButton>
-          </div>
+          <GoALinkButton buttonType="primary" to="/tenants/start">
+            Get Started
+          </GoALinkButton>
         </Container>
       </GoaHeroBanner>
       <Main>
