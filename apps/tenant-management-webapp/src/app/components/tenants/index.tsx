@@ -14,7 +14,6 @@ function TenantsRouter() {
     <Container hs={1} vs={2}>
       <Switch>
         <Route path="/tenants" exact component={Tenants} />
-        <Route path="/tenants/start" component={GetStarted} />
         <Route path="/tenants/create" component={CreateTenant} />
         <Route path="/tenants/creating" component={CreatingTenant} />
         <Route path="/tenants/add-role" component={AddClientRole} />
@@ -25,4 +24,4 @@ function TenantsRouter() {
   );
 }
 
-export default TenantsRouter;
+export { TenantsRouter as Tenants, GetStarted };

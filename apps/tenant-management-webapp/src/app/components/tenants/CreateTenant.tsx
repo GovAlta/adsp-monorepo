@@ -56,21 +56,25 @@ const CreateRealm = () => {
           </>
         ) : (
           <>
-            <h1>Create tenant</h1>
-            <p>As a reminder, you are only able to create one tenant per user account.</p>
-            <GoAForm>
-              <GoAFormItem>
-                <label htmlFor="name">Tenant Name</label>
-                <input id="name" type="text" value={name} onChange={onChangeName} />
-                <em>Names cannot container special characters (ex. ! % &amp;)</em>
-              </GoAFormItem>
-              <GoAFormButtons>
-                <GoALinkButton to="/tenants" buttonType="secondary">
-                  Back
-                </GoALinkButton>
-                <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
-              </GoAFormButtons>
-            </GoAForm>
+            {!isTenantAdmin ? (
+              <div>
+                <h1>Create tenant</h1>
+                <p>As a reminder, you are only able to create one tenant per user account.</p>
+                <GoAForm>
+                  <GoAFormItem>
+                    <label htmlFor="name">Tenant Name</label>
+                    <input id="name" type="text" value={name} onChange={onChangeName} />
+                    <em>Names cannot container special characters (ex. ! % &amp;)</em>
+                  </GoAFormItem>
+                  <GoAFormButtons>
+                    <GoALinkButton to="/tenants" buttonType="secondary">
+                      Back
+                    </GoALinkButton>
+                    <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
+                  </GoAFormButtons>
+                </GoAForm>
+              </div>
+            ) : null}
           </>
         )}
       </Main>

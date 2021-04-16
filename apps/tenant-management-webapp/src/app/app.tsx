@@ -15,7 +15,7 @@ import Integration from '@components/integration';
 import SignUp from '@components/signUp';
 import Notifications from '@components/notifications';
 import TenantManagement from '@components/tenantManagement';
-import Tenants from '@components/tenants';
+import { Tenants, GetStarted } from '@components/tenants';
 import { store, persistor, RootState } from '@store/index';
 import { PersistGate } from 'redux-persist/integration/react';
 import { PrivateApp, PrivateRoute } from './privateApp';
@@ -39,6 +39,7 @@ const AppRouters = () => {
         <Route path="/:tenantName/login">
           <TenantLogin />
         </Route>
+        <Route path="/tenants/start" exact component={GetStarted} />
 
         <Route path="/sign-up">
           <SignUp />

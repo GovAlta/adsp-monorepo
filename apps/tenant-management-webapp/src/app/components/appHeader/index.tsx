@@ -2,13 +2,15 @@ import React, { useContext, useState } from 'react';
 import { GoaHeader } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
+import { Link } from 'react-router-dom';
 
 import { RootState } from '@store/index';
 import AuthContext from '@lib/authContext';
 import Sidebar from '@components/tenantManagement/sidebar';
 import MenuIcon from '@icons/menu-outline.svg';
 import CloseIcon from '@icons/close-outline.svg';
-
+import { ReactComponent as UserIcon } from '@icons/user-login.svg';
+import GoALinkButton from '@components/_/LinkButton';
 interface HeaderMenuProps {
   hasLoginLink: boolean;
 }
@@ -39,9 +41,16 @@ const ActionsMenu = (props: HeaderMenuProps) => {
       {props.hasLoginLink ? (
         <section className="desktop">
           {authenticated ? (
-            <AuthLink onClick={() => authCtx.signOut()}>Sign Out</AuthLink>
+            <UserIconBox>
+              <UserIcon />
+              <Link to={'/'} onClick={() => authCtx.signOut()}>
+                Sign Out
+              </Link>
+            </UserIconBox>
           ) : (
-            <AuthLink onClick={() => authCtx.signIn('/')}>Sign In</AuthLink>
+            <Link to={'/'} onClick={() => authCtx.signIn('/')}>
+              Sign In
+            </Link>
           )}
         </section>
       ) : null}
@@ -97,8 +106,12 @@ const SidebarWrapper = styled.div<MenuState>`
   }
 `;
 
-const AuthLink = styled.div`
-  cursor: pointer;
+const UserIconBox = styled.div`
+  svg {
+    position: relative;
+    top: 5px;
+    margin-right: 5px;
+  }
 `;
 
 const HeaderContainer = styled.div`
