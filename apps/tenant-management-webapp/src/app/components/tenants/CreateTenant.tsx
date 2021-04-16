@@ -9,8 +9,6 @@ import GoALinkButton from '@components/_/LinkButton';
 import { GoAForm, GoAFormButtons, GoAFormItem } from '@components/_/Form';
 import { Aside, Main, Page } from '@components/_/Html';
 import SupportLinks from '@components/_/SupportLinks';
-import Container from '@components/_/Container';
-import { Grid, GridItem } from '@components/_/Grid';
 
 const CreateRealm = () => {
   const dispatch = useDispatch();
@@ -50,42 +48,35 @@ const CreateRealm = () => {
   return (
     <Page>
       <Main>
-        <Container>
-          <Grid>
-            <GridItem md={1.5} />
-            <GridItem md={10.5}>
-              {userInfo && isTenantAdmin && <ErrorMessage email={userInfo.email} />}
-              {isTenantCreated ? (
-                <>
-                  <p>The '{name}' has been successfully created</p>
-                  <GoAButton onClick={login}>Tenant Login</GoAButton>
-                </>
-              ) : (
-                <>
-                  {!isTenantAdmin ? (
-                    <div>
-                      <h1>Create tenant</h1>
-                      <p>As a reminder, you are only able to create one tenant per user account.</p>
-                      <GoAForm>
-                        <GoAFormItem>
-                          <label htmlFor="name">Tenant Name</label>
-                          <input id="name" type="text" value={name} onChange={onChangeName} />
-                          <em>Names cannot container special characters (ex. ! % &amp;)</em>
-                        </GoAFormItem>
-                        <GoAFormButtons>
-                          <GoALinkButton to="/tenants" buttonType="secondary">
-                            Back
-                          </GoALinkButton>
-                          <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
-                        </GoAFormButtons>
-                      </GoAForm>
-                    </div>
-                  ) : null}
-                </>
-              )}
-            </GridItem>
-          </Grid>
-        </Container>
+        {userInfo && isTenantAdmin && <ErrorMessage email={userInfo.email} />}
+        {isTenantCreated ? (
+          <>
+            <p>The '{name}' has been successfully created</p>
+            <GoAButton onClick={login}>Tenant Login</GoAButton>
+          </>
+        ) : (
+          <>
+            {!isTenantAdmin ? (
+              <div>
+                <h1>Create tenant</h1>
+                <p>As a reminder, you are only able to create one tenant per user account.</p>
+                <GoAForm>
+                  <GoAFormItem>
+                    <label htmlFor="name">Tenant Name</label>
+                    <input id="name" type="text" value={name} onChange={onChangeName} />
+                    <em>Names cannot container special characters (ex. ! % &amp;)</em>
+                  </GoAFormItem>
+                  <GoAFormButtons>
+                    <GoALinkButton to="/tenants" buttonType="secondary">
+                      Back
+                    </GoALinkButton>
+                    <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
+                  </GoAFormButtons>
+                </GoAForm>
+              </div>
+            ) : null}
+          </>
+        )}
       </Main>
       <Aside>
         <SupportLinks />
