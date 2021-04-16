@@ -19,39 +19,30 @@ const GetStarted = () => {
   return (
     <div>
       <Header serviceName="" hasLoginLink={false} />
-
       <Page>
         <Main>
-          <Container>
-            <Grid>
-              <GridItem md={2} />
-              <GridItem md={8}>
-                <br />
-                <h1>
-                  <b> Let's get you signed in</b>
-                </h1>
-                <h3>
-                  Currently, the Alberta Digital Service Platform only uses the Government of Alberta's account as
-                  authentication, with plans to expand to other federated login providers in the future.
-                </h3>
+          <br />
+          <h1>
+            <b> Let's get you signed in</b>
+          </h1>
+          <h3>
+            Currently, the Alberta Digital Service Platform only uses the Government of Alberta's account as
+            authentication, with plans to expand to other federated login providers in the future.
+          </h3>
 
-                {!authenticated ? (
-                  <>
-                    <GoAButton buttonType="primary" onClick={() => signIn('/tenants/start')}>
-                      Continue with Government Alberta account
-                    </GoAButton>
+          {!authenticated ? (
+            <>
+              <GoAButton buttonType="primary" onClick={() => signIn('/tenants/start')}>
+                Continue with Government Alberta account
+              </GoAButton>
 
-                    <GoALinkButton buttonType="secondary" to="/">
-                      Back to main page
-                    </GoALinkButton>
-                  </>
-                ) : (
-                  <Redirect to="/tenants/create" />
-                )}
-              </GridItem>
-              <GridItem md={2} />
-            </Grid>
-          </Container>
+              <GoALinkButton buttonType="secondary" to="/">
+                Back to main page
+              </GoALinkButton>
+            </>
+          ) : (
+            <Redirect to="/tenants/create" />
+          )}
         </Main>
       </Page>
     </div>
