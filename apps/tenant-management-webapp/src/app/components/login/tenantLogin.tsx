@@ -5,7 +5,6 @@ import { SelectTenant } from '@store/tenant/actions';
 import Header from '@components/appHeader';
 import AuthContext from '@lib/authContext';
 import { GoAButton } from '@abgov/react-components';
-import { Row, Col } from 'react-bootstrap';
 
 function TenantLogin() {
   const dispatch = useDispatch();
@@ -21,19 +20,12 @@ function TenantLogin() {
   }
 
   return (
-    <div>
-      <div>
-        <Header hasLoginLink={false} />
-      </div>
-      <Row>
-        <Col md={1}></Col>
-        <Col md={11}>
-          <GoAButton buttonType="primary" buttonSize="normal" onClick={login}>
-            Tenant {tenantName} Login
-          </GoAButton>
-        </Col>
-      </Row>
-    </div>
+    <>
+      <Header hasLoginLink={false} />
+      <GoAButton buttonType="primary" onClick={login}>
+        Tenant {tenantName} Login
+      </GoAButton>
+    </>
   );
 }
 export default TenantLogin;

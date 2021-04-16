@@ -1,12 +1,14 @@
+import { Aside, Main, Page } from '@components/_/Html';
 import React from 'react';
-import { Container } from 'react-bootstrap';
 
 function CaseStudy() {
   return (
-    <Container>
-      <h2>Future case study</h2>
-    </Container>
+    <Page>
+      <Main>
+        <h1>Future case study</h1>
+      </Main>
+      <Aside></Aside>
+    </Page>
   );
 }
-
 export default CaseStudy;

@@ -2,15 +2,15 @@ import React, { useContext, useState } from 'react';
 import { GoaHeader } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
+import { Link } from 'react-router-dom';
 
 import { RootState } from '@store/index';
 import AuthContext from '@lib/authContext';
 import Sidebar from '@components/tenantManagement/sidebar';
-import { ReactComponent as MenuIcon } from '@icons/menu-outline.svg';
-import { ReactComponent as CloseIcon } from '@icons/close-outline.svg';
+import MenuIcon from '@icons/menu-outline.svg';
+import CloseIcon from '@icons/close-outline.svg';
 import { ReactComponent as UserIcon } from '@icons/user-login.svg';
-
-import './header.css';
+import GoALinkButton from '@components/_/LinkButton';
 interface HeaderMenuProps {
   hasLoginLink: boolean;
 }
@@ -27,30 +27,30 @@ const ActionsMenu = (props: HeaderMenuProps) => {
   return (
     <Actions>
       <section className="mobile">
-        <div onClick={toggleMenu}>
-          <MenuIcon width="24" />
+        <SidebarController onClick={toggleMenu}>
+          <img src={MenuIcon} width="24" alt="Menu" />
           <SidebarWrapper state={menuState.state}>
             <div className="close">
-              <CloseIcon width="24" />
+              <img src={CloseIcon} width="24" alt="Close" />
             </div>
             <Sidebar type="mobile" />
           </SidebarWrapper>
-        </div>
+        </SidebarController>
       </section>
 
       {props.hasLoginLink ? (
         <section className="desktop">
           {authenticated ? (
-            <div>
-              <UserIcon className={'logout-icon'} />
-              <a className={'header-link'} onClick={() => authCtx.signOut()}>
+            <UserIconBox>
+              <UserIcon />
+              <Link to={'/'} onClick={() => authCtx.signOut()}>
                 Sign Out
-              </a>
-            </div>
+              </Link>{' '}
+            </UserIconBox>
           ) : (
-            <a className={'header-link'} onClick={() => authCtx.signIn('/')}>
+            <Link to={'/'} onClick={() => authCtx.signIn('/')}>
               Sign In
-            </a>
+            </Link>
           )}
         </section>
       ) : null}
@@ -77,6 +77,11 @@ interface MenuState {
   state: 'open' | 'closed';
 }
 
+const SidebarController = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
 const SidebarWrapper = styled.div<MenuState>`
   position: absolute;
   top: 0;
@@ -98,6 +103,14 @@ const SidebarWrapper = styled.div<MenuState>`
     justify-content: flex-end;
     margin-right: 1rem;
     min-height: 66px;
+  }
+`;
+
+const UserIconBox = styled.div`
+  svg {
+    position: relative;
+    top: 5px;
+    margin-right: 5px;
   }
 `;
 

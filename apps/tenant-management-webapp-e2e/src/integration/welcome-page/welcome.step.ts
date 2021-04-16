@@ -15,17 +15,21 @@ When('the user goes to the tenant management welcome page', function () {
 });
 
 Then('the user views the tenant management welcome page title', function () {
-  getGreeting().contains('A platform built for government services');
+  getGreeting().then((h1) => {
+    expect(h1.length).to.be.gt(0); // h1 element exists
+  });
 });
 
 Given('the user is on the tenant management welcome page', function () {
   const urlToSkipSSO = Cypress.config().baseUrl + '?kc_idp_hint=';
   cy.visit(urlToSkipSSO);
-  getGreeting().contains('A platform built for government services');
+  getGreeting().then((h1) => {
+    expect(h1.length).to.be.gt(0); // h1 element exists
+  });
 });
 
 When('the user clicks the sign in button', function () {
-  welcomPageObj.signinButton().click();
+  welcomPageObj.signinDiv().click();
 });
 
 Then('the user is logged in tenant management web app', function () {
@@ -37,7 +41,7 @@ Given('a user who {string} already created a tenant is logged in on the tenant m
 ) {
   const urlToSkipSSO = Cypress.config().baseUrl + '?kc_idp_hint=';
   cy.visit(urlToSkipSSO);
-  welcomPageObj.signinButton().click();
+  welcomPageObj.signinDiv().click();
   cy.wait(5000); // Wait all the redirects to settle down
   if (hasOrNot == 'has') {
     commonObj.usernameEmailField().type(Cypress.env('email'));

@@ -1,9 +1,8 @@
 import React from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { ApiUptimeFetch } from '@store/api-status/actions';
-import { useSelector } from 'react-redux';
-import { Container } from 'react-bootstrap';
 import { RootState } from '@store/index';
+import Container from '@components/_/Container';
 
 function ServiceMeasure() {
   const apiStatus = useSelector((state: RootState) => state.apiStatus);
@@ -11,7 +10,7 @@ function ServiceMeasure() {
 
   return (
     <Container>
-      <h2>Future Service Measures</h2>
+      <h1>Future Service Measures</h1>
       <button onClick={() => dispatch(ApiUptimeFetch())}>Refresh Uptime</button>
       {apiStatus.status === 'loaded' && <div>Tenant Management Api Uptime: {apiStatus.uptime} seconds</div>}
     </Container>

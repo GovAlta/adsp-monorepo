@@ -1,12 +1,12 @@
+import { Main } from '@components/_/Html';
 import React from 'react';
-import { Container } from 'react-bootstrap';
 
 function Administration() {
   return (
-    <Container>
-      <h2>Administration</h2>
+    <Main>
+      <h1>Administration</h1>
       <p>This is the admin page</p>
-    </Container>
+    </Main>
   );
 }
 
