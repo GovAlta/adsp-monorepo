@@ -36,7 +36,7 @@ const LandingPage = () => {
     <>
       <Header serviceName="" />
       <GoaHeroBanner title="" backgroundUrl={bannerBackground}>
-        <Container>
+        <Container hs={1}>
           <h1>The Alberta Digital Service Platform</h1>
           <p>
             Enabling you to add, configure, and manage a range of services that can integrate with your new or existing
