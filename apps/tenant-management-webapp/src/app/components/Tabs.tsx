@@ -1,0 +1,110 @@
+import React, { Children, ReactNode, useState } from 'react';
+import styled from 'styled-components';
+
+/**
+ *
+ * @example
+ *  <Tabs>
+ *    <Tab label="Assets">Assets Content</Tab>
+ *    <Tab label="Settings">Settings Content</Tab>
+ *    <Tab label="Info">Info Content</Tab>
+ *  </Tabs>
+ */
+
+interface TabsProps {
+  activeIndex?: number;
+  children: ReactNode;
+}
+
+function Tabs(props: TabsProps) {
+  const [activeTabIndex, setActiveTabIndex] = useState(props.activeIndex ?? 0);
+
+  function selectTab(index: number) {
+    setActiveTabIndex(index);
+  }
+
+  return (
+    <>
+      <SCTabs>
+        {Children.map(props.children, (child: any, index) => {
+          return (
+            <TabItem active={activeTabIndex === index} onSelect={() => selectTab(index)}>
+              {child.props.label}
+            </TabItem>
+          );
+        })}
+      </SCTabs>
+      {Children.toArray(props.children).filter((child: any, index) => {
+        return index === activeTabIndex;
+      })}
+    </>
+  );
+}
+
+interface TabProps {
+  label: string;
+}
+
+function Tab(props: TabProps & { children: ReactNode }) {
+  return <TabContent>{props.children}</TabContent>;
+}
+
+export { Tabs, Tab };
+
+// *******
+// Private
+// *******
+
+interface TabItemProps {
+  onSelect: () => void;
+  active?: boolean;
+}
+
+function TabItem(props: TabItemProps & { children: ReactNode }) {
+  function selectTab() {
+    props.onSelect();
+  }
+  return (
+    <SCTab className={props.active && 'active'} onClick={() => selectTab()}>
+      {props.children}
+    </SCTab>
+  );
+}
+
+// *****************
+// Styled Components
+// *****************
+
+const SCTabs = styled.div`
+  display: flex;
+  border-bottom: 1px solid #ccc;
+  overflow-x: auto;
+`;
+
+const SCTab = styled.div`
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  min-width: 6rem;
+  text-align: center;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  transition: background-color 500ms, border-bottom-width 100ms;
+  padding-bottom: calc(0.5rem + 4px);
+  white-space: nowrap;
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+
+  &:hover,
+  &:active {
+    background-color: #eee;
+  }
+
+  &.active {
+    border-bottom: 4px solid var(--color-primary);
+    padding-bottom: 0;
+  }
+`;
+
+const TabContent = styled.div`
+  padding: 1rem 0;
+`;
