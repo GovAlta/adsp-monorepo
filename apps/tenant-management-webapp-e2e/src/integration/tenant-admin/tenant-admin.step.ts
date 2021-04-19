@@ -24,10 +24,10 @@ Then('the {string} landing page is displayed', function (type) {
   let urlPart = 'undefined';
   switch (type) {
     case 'administration':
-      urlPart = '/tenant-admin/admin';
+      urlPart = '/admin/tenant-admin/admin';
       break;
     case 'file services':
-      urlPart = '/tenant-admin/services/file';
+      urlPart = '/admin/tenant-admin/services/file';
       break;
   }
   cy.url().should('include', urlPart);
@@ -37,13 +37,13 @@ When('the user selects the {string} menu item', function (menuItem) {
   let menuItemSelector = '';
   switch (menuItem) {
     case 'Administration':
-      menuItemSelector = '/tenant-admin/admin';
+      menuItemSelector = '/admin/tenant-admin/admin';
       break;
     case 'File Services':
-      menuItemSelector = '/tenant-admin/services/file';
+      menuItemSelector = '/admin/tenant-admin/services/file';
       break;
     case 'Access':
-      menuItemSelector = '/tenant-admin/access';
+      menuItemSelector = '/admin/tenant-admin/access';
       break;
   }
 
@@ -57,7 +57,7 @@ When('the user sends a configuration service request to {string}', function (req
     method: 'GET',
     url: requestURL,
     auth: {
-      bearer: Cypress.env('token'),
+      bearer: Cypress.env('core-api-token'),
     },
   }).then(function (response) {
     responseObj = response;
@@ -95,10 +95,10 @@ Then('the user views the number of users in its tenant realm', function () {
   // Verify user count text is next to the count
   tenantAdminObj
     .userCount()
-    .next()
+    .parent()
     .invoke('text')
     .then((userCountText) => {
-      expect(userCountText).equals('Total number of users');
+      expect(userCountText).includes('Total number of users');
     });
   // Verify role count is present
   tenantAdminObj
@@ -110,10 +110,10 @@ Then('the user views the number of users in its tenant realm', function () {
   // Verify role count text is next to the role count
   tenantAdminObj
     .roleCount()
-    .next()
+    .parent()
     .invoke('text')
     .then((roleCountText) => {
-      expect(roleCountText).equals('Types of user roles');
+      expect(roleCountText).includes('Types of user roles');
     });
   // Verify active user count is present
   tenantAdminObj
@@ -125,10 +125,10 @@ Then('the user views the number of users in its tenant realm', function () {
   // Verify active user count text is next to the active user count
   tenantAdminObj
     .activeUserCount()
-    .next()
+    .parent()
     .invoke('text')
     .then((activeUserText) => {
-      expect(activeUserText).equals('Active users');
+      expect(activeUserText).includes('Active users');
     });
 });
 
@@ -165,7 +165,7 @@ Then('the number of users from admin page should equal to the number of users fr
     method: 'GET',
     url: requestURLUsers,
     auth: {
-      bearer: Cypress.env('token'),
+      bearer: Cypress.env('autotest-admin-token'),
     },
   }).then(function (response) {
     expect(response.body.length).equals(numOfUsers);
@@ -180,7 +180,7 @@ Then('the number of users from admin page should equal to the number of users fr
     method: 'GET',
     url: requestURLRoles,
     auth: {
-      bearer: Cypress.env('token'),
+      bearer: Cypress.env('autotest-admin-token'),
     },
   }).then(function (response) {
     expect(response.body.length).equals(numOfRoles);
@@ -302,7 +302,7 @@ Then(
       method: 'GET',
       url: requestURLRoles,
       auth: {
-        bearer: Cypress.env('token'),
+        bearer: Cypress.env('autotest-admin-token'),
       },
     })
       .then(function (response) {
@@ -320,7 +320,7 @@ Then(
             method: 'GET',
             url: requestURLRoleUsers,
             auth: {
-              bearer: Cypress.env('token'),
+              bearer: Cypress.env('autotest-admin-token'),
             },
           }).then(function (response2) {
             roleUserNumApi[response.body[arrayIndex].name] = response2.body.length;

@@ -13,7 +13,7 @@ Feature: Tenant admin
     When the user selects the "Administration" menu item
     Then the "administration" landing page is displayed
 
-  @TEST_CS-300 @REQ_CS-194 @dashboard @regression @ignore
+  @TEST_CS-300 @REQ_CS-194 @dashboard @regression
   Scenario: As a GoA service owner I can access the File Services module
     Given a service owner user is on tenant admin page
     When the user selects the "File Services" menu item

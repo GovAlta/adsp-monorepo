@@ -31,9 +31,14 @@ Cypress.Commands.add('postToken', () => {
   const grantType = 'password';
   const username = Cypress.env('email');
   const password = Cypress.env('password');
+  const coreApiClientId = Cypress.env('core-api-client-id');
+  const coreApiClientSecret = Cypress.env('core-api-client-secret');
+  const coreApiUsername = Cypress.env('core-api-user');
+  const coreApiPassword = Cypress.env('core-api-user-password');
+  // Get autotest realm admin token
   cy.request({
     method: 'POST',
-    url: Cypress.env('accessManagementApi') + Cypress.env('keycloakTokenUrlSuffix'),
+    url: Cypress.env('accessManagementApi') + '/realms/autotest' + Cypress.env('keycloakTokenUrlSuffix'),
     body: {
       client_id: clientId,
       client_secret: clientSecret,
@@ -43,7 +48,22 @@ Cypress.Commands.add('postToken', () => {
     },
     form: true,
   }).then((response) => {
-    Cypress.env('token', response.body.access_token);
+    Cypress.env('autotest-admin-token', response.body.access_token);
+  });
+  // Get core api token
+  cy.request({
+    method: 'POST',
+    url: Cypress.env('accessManagementApi') + '/realms/core' + Cypress.env('keycloakTokenUrlSuffix'),
+    body: {
+      client_id: coreApiClientId,
+      client_secret: coreApiClientSecret,
+      grant_type: grantType,
+      username: coreApiUsername,
+      password: coreApiPassword,
+    },
+    form: true,
+  }).then((response) => {
+    Cypress.env('core-api-token', response.body.access_token);
   });
 });
 

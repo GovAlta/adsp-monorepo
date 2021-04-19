@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 /* eslint-disable cypress/no-unnecessary-waiting */
 import { getGreeting } from '../../support/app.po';
 import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
@@ -56,13 +57,13 @@ Given('a user who {string} already created a tenant is logged in on the tenant m
   cy.wait(5000); // Wait all the redirects to settle down
 });
 
-When('the user selects create tenant button', function () {
-  welcomPageObj.createTenantButton().click();
+When('the user selects get started button', function () {
+  welcomPageObj.getStartedButton().click();
   cy.wait(5000); // Wait for the web app to check if the user has created a tenant or not
 });
 
 Then('the user views a message of cannot create another tenant', function () {
-  welcomPageObj.userHasOneTenantMessage().contains('has created one tenant');
+  welcomPageObj.userHasOneTenantMessage().contains('has already created a tenant');
 });
 
 Then('the user views create tenant page', function () {
@@ -72,32 +73,41 @@ Then('the user views create tenant page', function () {
 When('the user enters {string} as tenant name and clicks create tenant button', function (tenantName) {
   welcomPageObj.tenantNameField().type(tenantName);
   welcomPageObj.createTenantButton().click();
-  cy.wait(5000); // Wait the tenant creation to finish
+  cy.wait(10000); // Wait the tenant creation to finish
 });
 
 Then('the user views the tenant is successfully created message', function () {
   welcomPageObj.newTenantCreationMessage().contains('successfully created');
 });
 
-Then('the new tenant login link of {string} is presented', function (link) {
-  welcomPageObj
-    .tenantLoginLink()
-    .invoke('attr', 'href')
-    .then((href) => {
-      expect(href).to.equal(link);
-    });
+Then('the new tenant login button is presented', function () {
+  welcomPageObj.tenantLoginButton().contains('Tenant Login');
 });
 
 When('the user sends the delete tenant request for {string}', function (request) {
-  const requestURL = Cypress.env('tenantManagementApi') + '/api/realm/v1?realm=' + request;
+  const tenantAdminBackendTokenRequestURL =
+    Cypress.env('accessManagementApi') + '/realms/core' + Cypress.env('keycloakTokenUrlSuffix');
   cy.request({
-    method: 'DELETE',
-    url: requestURL,
-    auth: {
-      bearer: Cypress.env('token'),
+    method: 'POST',
+    url: tenantAdminBackendTokenRequestURL,
+    body: {
+      client_id: Cypress.env('tenant-admin-backend-client-id'),
+      client_secret: Cypress.env('tenant-admin-backend-client-secret'),
+      grant_type: 'client_credentials',
     },
-  }).then(function (response) {
-    responseObj = response;
+    form: true,
+  }).then((response) => {
+    Cypress.env('tenant-admin-backend-token', response.body.access_token);
+    const tenantDeleteRequestURL = Cypress.env('tenantManagementApi') + '/api/realm/v1?realm=' + request;
+    cy.request({
+      method: 'DELETE',
+      url: tenantDeleteRequestURL,
+      auth: {
+        bearer: Cypress.env('tenant-admin-backend-token'),
+      },
+    }).then(function (response) {
+      responseObj = response;
+    });
   });
 });
 
