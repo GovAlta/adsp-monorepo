@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { Tabs, Tab } from 'react-bootstrap';
 import '@abgov/react-components/react-components.esm.css';
 import { useSelector, useDispatch } from 'react-redux';
 
@@ -10,8 +9,9 @@ import FileSettings from './fileSettings';
 import './file.css';
 import InitSetup from './fileInitSetup';
 import { RootState } from '@store/index';
-import { FetchFileSpace, SetActiveTab, FetchFileSpaceFromFileApiService } from '@store/file/actions';
+import { FetchFileSpace, FetchFileSpaceFromFileApiService } from '@store/file/actions';
 import { Main } from '@components/Html';
+import { Tab, Tabs } from '@components/Tabs';
 
 const Templates = () => {
   return (
@@ -38,44 +38,31 @@ const APIIntegration = () => {
 };
 
 const TabsForSetup = () => {
-  const { isActive, activeTab } = useSelector((state: RootState) => ({
-    isActive: state.file.status.isActive,
-    activeTab: state.file.states.activeTab,
-  }));
-
-  const dispatch = useDispatch();
-
   return (
-    <Tabs
-      defaultActiveKey="overall-view"
-      id="admin-file-service-tab"
-      className="file-tab"
-      activeKey={activeTab}
-      onSelect={(key) => dispatch(SetActiveTab(key))}
-    >
-      <Tab eventKey="overall-view" title="Overview">
+    <Tabs>
+      <Tab label="Overview">
         <FileOverview />
       </Tab>
 
-      <Tab eventKey="space" title="Space Config" disabled={!isActive}></Tab>
+      <Tab label="Space Config">{}</Tab>
 
-      <Tab eventKey="templates" title="Templates" disabled={!isActive}>
+      <Tab label="Templates">
         <Templates />
       </Tab>
 
-      <Tab eventKey="usage" title="Usage" disabled={!isActive}>
+      <Tab label="Usage">
         <Usage />
       </Tab>
 
-      <Tab eventKey="api-integration" title="API integration" disabled={!isActive}>
+      <Tab label="API integration">
         <APIIntegration />
       </Tab>
 
-      <Tab eventKey="file-types" title="File Types" disabled={!isActive}>
+      <Tab label="File Types">
         <FileTypes />
       </Tab>
 
-      <Tab eventKey="file-setting" title="Settings" disabled={!isActive}>
+      <Tab label="Settings">
         <FileSettings />
       </Tab>
     </Tabs>
@@ -83,11 +70,9 @@ const TabsForSetup = () => {
 };
 
 const TabsForInit = () => {
-  const activeTab = useSelector((state: RootState) => state.file.states.activeTab);
-
   return (
-    <Tabs defaultActiveKey="overall-view" id="admin-file-service-tab" className="file-tab" activeKey={activeTab}>
-      <Tab eventKey="overall-view" title="Overview">
+    <Tabs>
+      <Tab label="Overview">
         <InitSetup />
       </Tab>
     </Tabs>
