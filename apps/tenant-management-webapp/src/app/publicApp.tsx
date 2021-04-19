@@ -1,6 +1,6 @@
 import React from 'react';
 
-import Container from '@components/_/Container';
+import Container from '@components/Container';
 import { GoaHeader } from '@abgov/react-components';
 import styled from 'styled-components';
 
