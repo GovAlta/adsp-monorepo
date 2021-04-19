@@ -11,7 +11,7 @@ import { FileSpaceRepository } from '../repository';
 import { FileSpaceEntity } from '../model';
 import * as HttpStatusCodes from 'http-status-codes';
 import { v4 as uuidv4 } from 'uuid';
-
+import { fileServiceAdminMiddleware } from '../middleware/authentication';
 interface FileTypeRouterProps {
   logger: Logger;
   eventService: DomainEventService;
@@ -72,7 +72,7 @@ export const createFileTypeRouter = ({ logger, spaceRepository, rootStoragePath 
    *
    *
    */
-  fileTypeRouter.post('/fileTypes', assertAuthenticatedHandler, async (req, res, next) => {
+  fileTypeRouter.post('/fileTypes', fileServiceAdminMiddleware, async (req, res, next) => {
     const user = req.user as User;
 
     const { name, anonymousRead, readRoles = [], updateRoles = [] } = req.body;
@@ -177,7 +177,7 @@ export const createFileTypeRouter = ({ logger, spaceRepository, rootStoragePath 
     }
   });
 
-  fileTypeRouter.get('/fileTypes', async (req, res, next) => {
+  fileTypeRouter.get('/fileTypes', fileServiceAdminMiddleware, async (req, res, next) => {
     const user = req.user as User;
 
     try {
