@@ -5,17 +5,17 @@ import { Provider, useDispatch, useSelector } from 'react-redux';
 import '@abgov/react-components/react-components.esm.css';
 import '@abgov/core-css/goa-core.css';
 
-import LandingPage from '@components/landingPage';
-import { TenantLogin } from '@components/login';
-import CaseStudy from '@components/caseStudy/';
-import FileService from '@components/file-service';
-import ServiceMeasure from '@components/serviceMeasure';
-import AppStatus from '@components/appStatus';
-import Integration from '@components/integration';
-import SignUp from '@components/signUp';
-import Notifications from '@components/notifications';
-import TenantManagement from '@components/tenantManagement';
-import { Tenants, GetStarted } from '@components/tenants';
+import LandingPage from '@pages/public/Landing';
+import Login from '@pages/public/Login';
+import CaseStudy from '@pages/admin/CaseStudy';
+import FileService from '@pages/public/FileService';
+import ServiceMeasure from '@pages/admin/ServiceMeasure';
+import AppStatus from '@pages/admin/AppStatus';
+import Integration from '@pages/admin/Integration';
+import Notifications from '@pages/admin/Notifications';
+import TenantManagement from '@pages/admin/tenant-management';
+import { TenantsRouter } from '@pages/admin/tenants';
+import GetStarted from '@pages/public/GetStarted';
 import { store, persistor, RootState } from '@store/index';
 import { PersistGate } from 'redux-persist/integration/react';
 import { PrivateApp, PrivateRoute } from './privateApp';
@@ -38,26 +38,31 @@ const AppRouters = () => {
           <LandingPage />
         </Route>
 
+        <Route path="/admin">
+          <PrivateApp>
+            <PrivateRoute path="/admin/case-study" component={CaseStudy} />
+            <PrivateRoute path="/admin/file-service" component={FileService} />
+            <PrivateRoute path="/admin/service-measures" component={ServiceMeasure} />
+            <PrivateRoute path="/admin/app-status" component={AppStatus} />
+            <PrivateRoute path="/admin/notifications" component={Notifications} />
+            <PrivateRoute path="/admin/integration" component={Integration} />
+            <PrivateRoute path="/admin/tenant-admin" component={TenantManagement} />
+
+            <PrivateRoute path="/admin/tenants" component={TenantsRouter} />
+          </PrivateApp>
+        </Route>
+
         <PublicApp>
           <Route path="/:tenantName/login">
-            <TenantLogin />
+            <Login />
           </Route>
-          <Route path="/tenants/start" exact component={GetStarted} />
-          <Route path="/sign-up">
-            <SignUp />
+          <Route path="/get-started">
+            <GetStarted />
+          </Route>
+          <Route path="/login">
+            <Login />
           </Route>
         </PublicApp>
-
-        <PrivateApp>
-          <PrivateRoute path="/case-study" component={CaseStudy} />
-          <PrivateRoute path="/file-service" component={FileService} />
-          <PrivateRoute path="/service-measures" component={ServiceMeasure} />
-          <PrivateRoute path="/app-status" component={AppStatus} />
-          <PrivateRoute path="/notifications" component={Notifications} />
-          <PrivateRoute path="/integration" component={Integration} />
-          <PrivateRoute path="/tenant-admin" component={TenantManagement} />
-          <PrivateRoute path="/tenants" component={Tenants} />
-        </PrivateApp>
       </Switch>
     </Router>
   );
