@@ -87,7 +87,6 @@
     "pg": "^8.3.3",
     "react": "16.13.1",
     "react-bootstrap": "^1.4.0",
-    "react-bootstrap-carousel": "^4.1.1",
     "react-dom": "16.13.1",
     "react-dotenv": "^0.1.2",
     "react-redux": "^7.2.2",
