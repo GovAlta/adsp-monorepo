@@ -248,10 +248,6 @@ export const createFileRouter = ({
   fileRouter.get('/files/:fileId', async (req, res, next) => {
     const user = req.user as User;
     const { fileId } = req.params;
-<<<<<<< HEAD
-=======
-    console.log('file .....');
->>>>>>> 31ffc9c053808a0b220fafa1742a3d4b8c1126ba
     try {
       const fileEntity = await fileRepository.get(fileId);
 
