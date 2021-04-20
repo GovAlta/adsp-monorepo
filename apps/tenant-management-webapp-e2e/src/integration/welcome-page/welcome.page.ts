@@ -17,7 +17,7 @@ class WelcomePage {
   }
 
   createTenantTitle() {
-    return cy.get('h1');
+    return cy.get('h2:contains("Create tenant")');
   }
 
   tenantNameField() {
