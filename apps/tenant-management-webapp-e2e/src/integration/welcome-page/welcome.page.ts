@@ -35,6 +35,10 @@ class WelcomePage {
   tenantLoginButton() {
     return cy.get('button:contains("Tenant Login")');
   }
+
+  userIcon() {
+    return cy.get('div > svg');
+  }
 }
 
 export default WelcomePage;
