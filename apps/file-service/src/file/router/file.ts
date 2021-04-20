@@ -10,11 +10,13 @@ import {
   NotFoundError,
   InvalidOperationError,
   DomainEventService,
+  platformURNs,
 } from '@core-services/core-common';
 import { FileRepository, FileSpaceRepository } from '../repository';
 import { FileEntity } from '../model';
 import { createUpload } from '../upload';
 import { createdFile, deletedFile } from '../event';
+import { FileCriteria } from '../types/file';
 
 interface FileRouterProps {
   logger: Logger;
@@ -107,7 +109,6 @@ export const createFileRouter = ({
         if (!fileType) {
           throw new NotFoundError('Type', type);
         }
-
         const fileEntity = await FileEntity.create(
           user,
           fileRepository,
@@ -137,12 +138,72 @@ export const createFileRouter = ({
           id: fileEntity.id,
           filename: fileEntity.filename,
           size: fileEntity.size,
+          fileURN: `${platformURNs['file-service']}:${spaceEntity.name}/supporting-doc/${fileEntity.id}`,
         });
 
         logger.info(
           `File '${fileEntity.filename}' (ID: ${fileEntity.id}) uploaded by ` + `user '${user.name}' (ID: ${user.id}).`
         );
       }
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  /**
+   * @swagger
+   *
+   * /file/v1/files:
+   *   get:
+   *     tags:
+   *     - File
+   *     description: Retrieves file list metadata.
+   *     parameters:
+   *     responses:
+   *       200:
+   *         description: File metadata
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *                  type: object
+   *               properties:
+   *                 id:
+   *                   type: string
+   *                 filename:
+   *                   type: string
+   *                 size:
+   *                   type: number
+   *                 fileURN:
+   *                   type: string
+   *       404:
+   *         description: file not found
+   */
+  fileRouter.get('/files', async (req, res, next) => {
+    const user = req.user as User;
+    const { top, after } = req.query;
+
+    try {
+      const spaceId = await spaceRepository.getIdByName(user.tenantName);
+      const criteria: FileCriteria = {
+        spaceEquals: spaceId,
+        deleted: false,
+      };
+      const files = await fileRepository.find(parseInt((top as string) || '50', 50), after as string, criteria);
+
+      if (!files) {
+        throw new NotFoundError(`There is no file in ${spaceId}`, spaceId);
+      }
+
+      res.send({
+        page: files.page,
+        results: files.results.map((n) => ({
+          id: n.id,
+          filename: n.filename,
+          size: n.filename,
+          fileURN: `${platformURNs['file-service']}:${user.tenantName}/supporting-doc/${n.id}`,
+        })),
+      });
     } catch (err) {
       next(err);
     }
@@ -187,7 +248,6 @@ export const createFileRouter = ({
   fileRouter.get('/files/:fileId', async (req, res, next) => {
     const user = req.user as User;
     const { fileId } = req.params;
-
     try {
       const fileEntity = await fileRepository.get(fileId);
 

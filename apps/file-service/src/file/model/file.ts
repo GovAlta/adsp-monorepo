@@ -4,11 +4,11 @@ import * as fs from 'fs';
 import { generate } from 'shortid';
 import * as uniqueFilename from 'unique-filename';
 import { IsNotEmpty } from 'class-validator';
-import { User, UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
+import { User, UnauthorizedError, InvalidOperationError, platformURNs } from '@core-services/core-common';
 import { File, NewFile, UserInfo } from '../types';
 import { FileRepository } from '../repository';
 import { FileTypeEntity } from './type';
-
+import { v4 as uuidv4 } from 'uuid';
 export class FileEntity implements File {
   id: string;
   recordId: string;
@@ -61,7 +61,6 @@ export class FileEntity implements File {
     this.createdBy = values.createdBy;
     this.created = values.created;
     this.size = values.size;
-
     const record = values as File;
     if (record.id) {
       this.id = record.id;
@@ -70,7 +69,7 @@ export class FileEntity implements File {
       this.scanned = record.scanned;
       this.deleted = record.deleted;
     } else {
-      this.id = generate();
+      this.id = uuidv4();
       this.storage = uniqueFilename('');
     }
   }
