@@ -3,7 +3,7 @@ import { IsDefined, MinLength } from 'class-validator';
 import validationMiddleware from '../../middleware/requestValidator';
 import * as TenantModel from '../models/tenant';
 import * as HttpStatusCodes from 'http-status-codes';
-import { tenantApiAdminOnly } from '../../middleware/serviceAuth';
+import { adminOnlyMiddleware } from '../../middleware/authentication';
 class TenantByNameDto {
   @IsDefined()
   @MinLength(4)
@@ -105,7 +105,7 @@ tenantRouter.post('/email', validationMiddleware(TenantByEmailDto), getTenantByE
 
 tenantRouter.get('/issuer/:issuer', validationMiddleware(ValidateIssuerDto), validateTokenIssuer);
 
-tenantRouter.get('/realms/names', tenantApiAdminOnly, fetchRealmTenantMapping);
+tenantRouter.get('/realms/names', adminOnlyMiddleware, fetchRealmTenantMapping);
 
 tenantRouter.post('/', validationMiddleware(TenantDto), createTenant);
 

@@ -7,4 +7,5 @@ export interface User<R extends UserRole = UserRole> {
   organizationId: string;
   roles: UserRole[];
   tenantName?: string;
+  client?: string;
 }
