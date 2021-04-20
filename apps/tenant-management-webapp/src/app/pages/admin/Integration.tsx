@@ -5,7 +5,7 @@ function Integration() {
   return (
     <Page>
       <Main>
-        <h1>Future integration</h1>
+        <h2>Future integration</h2>
       </Main>
       <Aside></Aside>
     </Page>

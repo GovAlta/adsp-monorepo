@@ -7,7 +7,7 @@ const Tenants = () => {
   return (
     <Page>
       <Main>
-        <h1>Welcome Platformer!</h1>
+        <h2>Welcome Platformer!</h2>
         <p>
           Creating and activating your own tenant requires a few steps. You must start by creating a tenant. Once the
           tenant has been created, you will be asked to activate the tenant.

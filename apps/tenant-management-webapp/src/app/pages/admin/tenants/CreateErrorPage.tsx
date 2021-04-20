@@ -7,7 +7,7 @@ const CreateErrorPage = () => {
   return (
     <Page>
       <Main>
-        <h1>There was a problem creating your tenant</h1>
+        <h2>There was a problem creating your tenant</h2>
         <p>We apologize for the inconvenience, but we could not successfully create your tenant, please try again.</p>
         <GoALinkButton to="/admin/tenants/create" buttonType="primary">
           Create Tenant

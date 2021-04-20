@@ -58,7 +58,7 @@ const CreateRealm = () => {
           <>
             {!isTenantAdmin ? (
               <>
-                <h1>Create tenant</h1>
+                <h2>Create tenant</h2>
                 <p>As a reminder, you are only able to create one tenant per user account.</p>
                 <GoAForm>
                   <GoAFormItem>

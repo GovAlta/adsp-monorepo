@@ -5,7 +5,7 @@ function CaseStudy() {
   return (
     <Page>
       <Main>
-        <h1>Future case study</h1>
+        <h2>Future case study</h2>
       </Main>
       <Aside></Aside>
     </Page>

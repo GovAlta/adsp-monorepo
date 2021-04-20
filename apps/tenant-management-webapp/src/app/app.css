@@ -2,11 +2,11 @@
   /* font-size */
   --fs-xs: 0.75rem;
   --fs-sm: 0.875rem;
-  --fs-base: 1.125rem;
-  --fs-lg: 1.25rem;
-  --fs-xl: 1.5rem;
-  --fs-2xl: 1.875rem;
-  --fs-3xl: 2.25rem;
+  --fs-base: 1.125rem; /* base */
+  --fs-lg: 1.25rem; /* h4 */
+  --fs-xl: 1.5rem; /* h3 */
+  --fs-2xl: 2.25rem; /* h2 */
+  --fs-3xl: 3rem; /* h1 */
 
   /* font-weight */
   --fw-thin: 100;
@@ -21,6 +21,7 @@
   --color-primary: #0070c4;
   --color-primary-dark: #004f84;
   --color-primary-link: #0067b5;
+  --color-font-header: #333;
 }
 
 *,

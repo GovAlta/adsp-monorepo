@@ -5,7 +5,7 @@ function AppStatus() {
   return (
     <Page>
       <Main>
-        <h1>Future app status</h1>
+        <h2>Future app status</h2>
       </Main>
       <Aside></Aside>
     </Page>

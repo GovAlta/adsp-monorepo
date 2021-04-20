@@ -17,21 +17,6 @@ const Main = styled.main`
     margin-top: 0;
   }
 
-  /* Header sizes */
-  h1 {
-    font-size: var(--fs-4xl);
-    font-weight: var(--fw-bold);
-  }
-  h2 {
-    font-size: var(--fs-3xl);
-  }
-  h3 {
-    font-size: var(--fs-2xl);
-  }
-  h4 {
-    font-size: var(--fs-xl);
-  }
-
   /* Base header margins */
   h1,
   h2,
@@ -86,9 +71,7 @@ const Main = styled.main`
 `;
 
 const Aside = styled.aside`
-  @media (max-width: 1023px) {
-    padding: 1rem 0;
-  }
+  padding: 1rem 0;
   @media (min-width: 1024px) {
     flex: 0 0 200px;
     padding-left: 2rem;
