@@ -16,7 +16,8 @@ export function* fetchSpace() {
   const state: RootState = yield select();
 
   const token = state.session.credentials.token;
-  const api = new FileApi(state.config.tenantApi, token);
+
+  const api = yield new FileApi(state.config.tenantApi, token);
   const { clientId, realm } = state.session;
 
   try {
@@ -30,7 +31,6 @@ export function* fetchSpace() {
 export function* fileEnable(fileType) {
   const state = yield select();
   const fileApi = state.config.serviceUrls.fileApi;
-  const user = state.session.userInfo;
   const url = `${fileApi}/space/v1/spaces`;
   const token = state.session.credentials.token;
 
@@ -96,7 +96,7 @@ export function* deleteFileTypes(fileType) {
     yield fileTypes;
     yield put(DeleteFileTypeSucceededService(fileType.payload.fileInfo));
   } catch (e) {
-    yield put(ErrorNotification({ message: `${e.message} - ${url}` }));
+    yield put(ErrorNotification({ message: e.response.statusText }));
   }
 }
 

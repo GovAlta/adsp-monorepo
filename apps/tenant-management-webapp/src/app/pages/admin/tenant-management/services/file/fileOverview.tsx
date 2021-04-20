@@ -51,12 +51,16 @@ const OverviewContent = () => {
 };
 export default function FileOverview() {
   const active = useSelector((state: RootState) => state.file.status.isActive);
+  const roles = useSelector((state: RootState) => state.session.realmAccess.roles);
+  const accessible = roles.includes('file-service-admin');
 
   return (
     <div>
       <OverviewContent />
-      <p>This service is {active ? 'active' : 'inactive'}</p>
-      {!active && <OverviewBtn />}
+      {accessible
+        ? `This service is ${active ? 'active' : 'inactive'}`
+        : "You don't have permission to access this service"}
+      {accessible && !active && <OverviewBtn />}
     </div>
   );
 }
