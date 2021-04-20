@@ -10,7 +10,7 @@ function Notifications() {
   return (
     <Page>
       <Main>
-        <h1>Future notifications</h1>
+        <h2>Future notifications</h2>
         {notificationServiceUrl && `Notification Url: ${notificationServiceUrl}`}
       </Main>
       <Aside>

@@ -79,7 +79,6 @@ const SidebarWrapper = styled.nav`
   flex: 0 0 0;
   transition: flex-basis 200ms;
   overflow-x: hidden;
-  margin-top: 0.5rem;
 
   @media (min-width: 768px) {
     flex-basis: 12rem;
