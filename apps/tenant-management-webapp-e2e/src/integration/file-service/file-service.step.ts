@@ -17,7 +17,7 @@ Given('a testing mapping of {string}, {string} and {string} is inserted with {st
     method: 'POST',
     url: requestURL,
     auth: {
-      bearer: Cypress.env('token'),
+      bearer: Cypress.env('core-api-token'),
     },
     body: {
       name,
@@ -35,7 +35,7 @@ When('the user sends a discovery request with {string}', function (request) {
     method: 'GET',
     url: requestURL,
     auth: {
-      bearer: Cypress.env('token'),
+      bearer: Cypress.env('core-api-token'),
     },
   }).then(function (response) {
     responseObj = response;
@@ -60,7 +60,7 @@ When('the user sends a delete request of {string} with {string}', function (urnn
     method: 'DELETE',
     url: requestURL,
     auth: {
-      bearer: Cypress.env('token'),
+      bearer: Cypress.env('core-api-token'),
     },
   }).then(function (response) {
     responseObj = response;

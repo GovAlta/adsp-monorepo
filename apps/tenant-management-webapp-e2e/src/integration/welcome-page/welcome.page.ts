@@ -1,15 +1,15 @@
 /// <reference types="cypress-xpath" />
 class WelcomePage {
   signinDiv() {
-    return cy.xpath('//div[contains(text(), "Sign In")]');
+    return cy.xpath('//a[contains(text(), "Sign In")]');
   }
 
-  createTenantButton() {
-    return cy.get('button:contains("Create Tenant")');
+  getStartedButton() {
+    return cy.get('a:contains("Get Started")');
   }
 
   signoutDiv() {
-    return cy.xpath('//div[contains(text(), "Sign Out")]');
+    return cy.xpath('//a[contains(text(), "Sign Out")]');
   }
 
   userHasOneTenantMessage() {
@@ -17,19 +17,27 @@ class WelcomePage {
   }
 
   createTenantTitle() {
-    return cy.get('h1');
+    return cy.get('h2:contains("Create tenant")');
   }
 
   tenantNameField() {
-    return cy.get('.signin-input');
+    return cy.get('#name');
+  }
+
+  createTenantButton() {
+    return cy.get('button:contains("Create Tenant")');
   }
 
   newTenantCreationMessage() {
-    return cy.get('p');
+    return cy.get('p:contains("successfully created")');
   }
 
-  tenantLoginLink() {
-    return cy.contains('Click to tenant login');
+  tenantLoginButton() {
+    return cy.get('button:contains("Tenant Login")');
+  }
+
+  userIcon() {
+    return cy.get('div > svg');
   }
 }
 
