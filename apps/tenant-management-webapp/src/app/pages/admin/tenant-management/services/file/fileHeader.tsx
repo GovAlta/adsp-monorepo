@@ -6,11 +6,14 @@ import { RootState } from '@store/index';
 const FileHeader = () => {
   const setup = useSelector((state: RootState) => state.file.requirements.setup);
   const active = useSelector((state: RootState) => state.file.status.isActive);
+  const roles = useSelector((state: RootState) => state.session.realmAccess.roles);
+
+  const accessible = roles.includes('file-service-admin');
 
   let headerState = '';
   let headerStateClass = '';
 
-  if (setup) {
+  if (setup || !accessible) {
     headerState = 'Disabled';
     headerStateClass = 'file-header-tag-disabled';
   } else {

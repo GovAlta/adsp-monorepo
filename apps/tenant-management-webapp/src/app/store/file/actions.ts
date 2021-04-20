@@ -7,8 +7,6 @@ export const FILE_DISABLE = 'tenant/file-service/activation/';
 export const FILE_ENABLE = 'tenant/file-service/activation/activate';
 export const FILE_SET_ACTIVE_TAB = 'tenant/file-service/states/tabs/active';
 export const FILE_SETUP = 'tenant/file-service/setup'; // The FILE_SETUP is only for testing
-export const FETCH_FILE_SPACE_FROM_FILE_API = 'tenant/file-service/space/fetch';
-export const FETCH_FILE_SPACE_FROM_FILE_API_SUCCEEDED = 'file-service/space/fetch/successeded';
 export const CREATE_FILE_SPACE_SUCCEEDED = 'file-service/fileSpace/createsuccess';
 export const CREATE_FILE_SPACE_FAILED = 'file-service/fileSpace/createfailure';
 export const FETCH_FILE_TYPE = 'tenant/file-service/fileType/fetch';
@@ -32,8 +30,6 @@ export type ActionTypes =
   | FetchFileSpaceAction
   | FetchFileSpaceSuccessAction
   | SetupFileAction
-  | FetchFileSpaceFromFileApiAction
-  | FetchFileSpaceFromFileApiSucceededAction
   | CreateFileSpaceSucceededAction
   | CreateFileSpaceFailedAction
   | FetchFileTypeSucceededAction
@@ -82,17 +78,6 @@ interface SetActiveTabAction {
 
 interface SetupFileAction {
   type: typeof FILE_SETUP;
-}
-
-interface FetchFileSpaceFromFileApiAction {
-  type: typeof FETCH_FILE_SPACE_FROM_FILE_API;
-}
-
-interface FetchFileSpaceFromFileApiSucceededAction {
-  type: typeof FETCH_FILE_SPACE_FROM_FILE_API_SUCCEEDED;
-  payload: {
-    data: string;
-  };
 }
 
 interface CreateFileSpaceSucceededAction {
@@ -203,10 +188,6 @@ export const FetchFileSpaceSuccess = (spaceInfo: { data: string }): FetchFileSpa
 
 export const SetupFileService = (): SetupFileAction => ({
   type: FILE_SETUP,
-});
-
-export const FetchFileSpaceFromFileApiService = (): FetchFileSpaceFromFileApiAction => ({
-  type: FETCH_FILE_SPACE_FROM_FILE_API,
 });
 
 export const CreateFileSpaceSucceededService = (fileInfo: { data: string }): CreateFileSpaceSucceededAction => ({

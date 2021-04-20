@@ -9,7 +9,7 @@ import FileSettings from './fileSettings';
 import './file.css';
 import InitSetup from './fileInitSetup';
 import { RootState } from '@store/index';
-import { FetchFileSpace, FetchFileSpaceFromFileApiService } from '@store/file/actions';
+import { FetchFileSpace } from '@store/file/actions';
 import { Main } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 
@@ -82,10 +82,10 @@ const TabsForInit = () => {
 export default function File() {
   const dispatch = useDispatch();
   const setupRequired = useSelector((state: RootState) => state.file.requirements.setup);
+  const active = useSelector((state: RootState) => state.file.status.isActive);
 
   useEffect(() => {
-    dispatch(FetchFileSpace());
-    dispatch(FetchFileSpaceFromFileApiService());
+    //dispatch(FetchFileSpace()); - I'm always getting a 401 here (from tenant-manangement-api)
   }, [dispatch]);
 
   const FileOverviewTab = setupRequired ? <TabsForInit /> : <TabsForSetup />;
@@ -93,7 +93,7 @@ export default function File() {
   return (
     <Main>
       <FileHeader />
-      {FileOverviewTab}
+      {active ? FileOverviewTab : <FileOverview />}
     </Main>
   );
 }
