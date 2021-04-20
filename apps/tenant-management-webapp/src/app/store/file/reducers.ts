@@ -6,7 +6,6 @@ import {
   FILE_ENABLE,
   FILE_SETUP,
   FILE_SET_ACTIVE_TAB,
-  FETCH_FILE_SPACE_FROM_FILE_API_SUCCEEDED,
   CREATE_FILE_SPACE_SUCCEEDED,
   CREATE_FILE_SPACE_FAILED,
   FETCH_FILE_TYPE_SUCCEEDED,
@@ -16,8 +15,8 @@ import {
 } from './actions';
 import { FILE_INIT, FileService } from './models';
 
-function removeSpecifiedFileType(fileTypes, fileTypeId) {
-  const index = fileTypes.findIndex(({ id }) => id === fileTypeId);
+function removeSpecifiedFileType(fileTypes, fileType) {
+  const index = fileTypes.findIndex(({ id }) => id === fileType.id);
   const newFileTypes = fileTypes;
   newFileTypes.splice(index, 1);
   return newFileTypes;
@@ -109,13 +108,6 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
       };
     }
 
-    case FETCH_FILE_SPACE_FROM_FILE_API_SUCCEEDED: {
-      return {
-        ...state,
-        spaces: [action.payload.data],
-      };
-    }
-
     case FETCH_FILE_TYPE_SUCCEEDED:
       return {
         ...state,
@@ -125,7 +117,7 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
     case DELETE_FILE_TYPE_SUCCEEDED:
       return {
         ...state,
-        fileTypes: removeSpecifiedFileType(state.fileTypes, action.payload.fileInfo.data),
+        fileTypes: removeSpecifiedFileType(state.fileTypes, action.payload.fileInfo),
       };
 
     case UPDATE_FILE_TYPE_SUCCEEDED:

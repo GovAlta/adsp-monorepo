@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import React from 'react';
 import './file.css';
@@ -40,19 +40,11 @@ export default function FileTypes() {
   const [updateUpdateRoleInput, setUpdateUpdateRoleInput] = useState('');
   const [editName, setEditName] = useState('');
   const [editNameInput, setEditNameInput] = useState('');
-  const [lastActiveTab, setLastActiveTab] = useState('');
 
-  const activeTab = useSelector((state: RootState) => state.file.states.activeTab);
-
-  if (activeTab !== lastActiveTab) {
-    setLoading(true);
-    setLastActiveTab(activeTab);
-  }
-
-  if (activeTab === 'file-types' && loading) {
+  useEffect(() => {
     dispatch(FetchFileTypeService());
     setLoading(false);
-  }
+  }, [dispatch]);
 
   const deleteFileType = (fileType) => {
     dispatch(DeleteFileTypeService(fileType));
@@ -436,6 +428,24 @@ export default function FileTypes() {
     );
   };
 
+  const notifications = () => {
+    return state.notifications.notifications.map((notification) => {
+      return (
+        <div
+          style={{ backgroundColor: 'red', padding: '8px', margin: '5px 0 5px 0', color: 'white', borderRadius: '5px' }}
+        >
+          <div>{notification.message}</div>
+        </div>
+      );
+    });
+  };
+
   const fileSpace = useSelector((state: RootState) => state.file.space);
-  return <div>{fileSpace && !loading ? fileTypeTable() : noSpace()}</div>;
+  return (
+    <div>
+      <div>{notifications()}</div>
+      <div></div>
+      <div>{fileSpace && !loading ? fileTypeTable() : noSpace()}</div>
+    </div>
+  );
 }

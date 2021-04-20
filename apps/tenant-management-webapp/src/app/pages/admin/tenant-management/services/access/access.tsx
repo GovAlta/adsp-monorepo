@@ -9,7 +9,6 @@ import DataTable from '@components/DataTable';
 import { Grid, GridItem } from '@components/Grid';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
-import { Tabs, TabItem } from '@components/Tabs';
 
 export default function () {
   const dispatch = useDispatch();
@@ -39,7 +38,7 @@ export default function () {
   return (
     <Page>
       <Main>
-        <h1>Access</h1>
+        <h2>Access</h2>
         <p>
           Access allows you to add a secure sign in to you application and services with minimum effort and
           configuration. No need to deal with storing or authenticating users. It's all available out of the box.
@@ -125,7 +124,7 @@ export default function () {
 // *****************
 
 const Count = styled.div`
-  font-size: var(--fs-3xl);
+  font-size: var(--fs-2xl);
   font-weight: var(--fw-bold);
   padding-bottom: 1rem;
 `;
@@ -137,8 +136,10 @@ const TitleLinkHeader = styled.div`
   margin-bottom: 0.5rem;
 `;
 
-const Title = styled.div`
-  font-size: var(--fs-xl);
+const Title = styled.h3`
+  && {
+    margin: 0;
+  }
 `;
 
 const UserStats = styled(Grid)``;

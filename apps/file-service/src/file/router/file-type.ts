@@ -11,7 +11,9 @@ import { FileSpaceRepository } from '../repository';
 import { FileSpaceEntity } from '../model';
 import * as HttpStatusCodes from 'http-status-codes';
 import { v4 as uuidv4 } from 'uuid';
+import { MongoFileRepository } from '../../mongo/file';
 
+import { fileServiceAdminMiddleware } from '../middleware/authentication';
 interface FileTypeRouterProps {
   logger: Logger;
   eventService: DomainEventService;
@@ -72,7 +74,7 @@ export const createFileTypeRouter = ({ logger, spaceRepository, rootStoragePath 
    *
    *
    */
-  fileTypeRouter.post('/fileTypes', assertAuthenticatedHandler, async (req, res, next) => {
+  fileTypeRouter.post('/fileTypes', fileServiceAdminMiddleware, async (req, res, next) => {
     const user = req.user as User;
 
     const { name, anonymousRead, readRoles = [], updateRoles = [] } = req.body;
@@ -103,12 +105,11 @@ export const createFileTypeRouter = ({ logger, spaceRepository, rootStoragePath 
 
         res.json(space.types[id]);
       } catch (err) {
-        logger.error(err.message);
-        console.log(JSON.stringify(err.message) + '<err.message');
-        // res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
-        //   errors: [`Error adding type: ${err.message}`],
-        // });
-        next(err);
+        const errMessage = `Error creating type: ${err.message}`;
+        logger.error(errMessage);
+        res.statusMessage = errMessage;
+        res.status(400);
+        next(res);
       }
     }
   });
@@ -170,14 +171,13 @@ export const createFileTypeRouter = ({ logger, spaceRepository, rootStoragePath 
     } catch (err) {
       const errMessage = `Error fetching type: ${err.message}`;
       logger.error(errMessage);
-      // res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
-      //   errors: [errMessage],
-      // });
-      next(err);
+      res.statusMessage = errMessage;
+      res.status(400);
+      next(res);
     }
   });
 
-  fileTypeRouter.get('/fileTypes', async (req, res, next) => {
+  fileTypeRouter.get('/fileTypes', fileServiceAdminMiddleware, async (req, res, next) => {
     const user = req.user as User;
 
     try {
@@ -194,13 +194,10 @@ export const createFileTypeRouter = ({ logger, spaceRepository, rootStoragePath 
       res.json(Object.values(space.types));
     } catch (err) {
       const errMessage = `Error fetching type: ${err.message}`;
-
       logger.error(errMessage);
-      res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
-        errors: [errMessage],
-      });
-
-      next(err);
+      res.statusMessage = errMessage;
+      res.status(400);
+      next(res);
     }
   });
 
@@ -235,10 +232,9 @@ export const createFileTypeRouter = ({ logger, spaceRepository, rootStoragePath 
     } catch (err) {
       const errMessage = `Error updating type: ${err.message}`;
       logger.error(errMessage);
-      // res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
-      //   errors: [errMessage],
-      // });
-      next(err);
+      res.statusMessage = errMessage;
+      res.status(400);
+      next(res);
     }
   });
 
@@ -280,18 +276,23 @@ export const createFileTypeRouter = ({ logger, spaceRepository, rootStoragePath 
         throw new NotFoundError('File Type', fileTypeId);
       }
       const spaceEntity: FileSpaceEntity = await spaceRepository.get(spaceId);
-      const deletedItem = await spaceEntity.deleteType(user, fileTypeId);
 
-      res.json(deletedItem);
+      const fileRepository = new MongoFileRepository(spaceRepository);
+
+      const filesOfType = await fileRepository.find(100000, null, { typeEquals: fileTypeId });
+
+      if (filesOfType.results.length === 0) {
+        const deletedItem = await spaceEntity.deleteType(user, fileTypeId);
+        res.json(deletedItem);
+      } else {
+        throw new InvalidOperationError(`There are uploaded files of this File Type`);
+      }
     } catch (err) {
       const errMessage = `Failed deleting type: ${err.message}`;
       logger.error(errMessage);
-      console.log('error message:', JSON.stringify(err.message));
-      // res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
-      //   errors: [errMessage],
-      // });
-
-      next(err);
+      res.statusMessage = errMessage;
+      res.status(400);
+      next(res);
     }
   });
 

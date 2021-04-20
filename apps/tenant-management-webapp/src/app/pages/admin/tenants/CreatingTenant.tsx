@@ -8,7 +8,7 @@ export default () => {
   return (
     <Page>
       <Main>
-        <h1>Your tenant is being created</h1>
+        <h2>Your tenant is being created</h2>
         <div>This should not take long, please explore our features while you wait</div>
 
         <h2>Introducing our Access Service</h2>

@@ -25,7 +25,7 @@ const AddClientRole = () => {
   return (
     <Page>
       <Main>
-        <h1>Activate tenant</h1>
+        <h2>Activate tenant</h2>
         <p>
           If your tenant creation has been successful, you will have received a confirmation email. Please refer to your
           email for the tenant's name.

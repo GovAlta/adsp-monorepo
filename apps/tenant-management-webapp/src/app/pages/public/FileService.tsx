@@ -5,7 +5,7 @@ function FileService() {
   return (
     <Page>
       <Main>
-        <h1>Future file service</h1>
+        <h2>Future file service</h2>
       </Main>
       <Aside></Aside>
     </Page>

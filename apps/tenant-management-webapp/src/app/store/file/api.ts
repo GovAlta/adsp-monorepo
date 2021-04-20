@@ -10,6 +10,8 @@ export class FileApi {
       throw new Error('missing auth token = tenant api');
     }
 
+    this.config = config;
+
     this.http = axios.create({ baseURL: config.host });
     this.http.interceptors.request.use((req: AxiosRequestConfig) => {
       req.headers['Authorization'] = `Bearer ${token}`;
