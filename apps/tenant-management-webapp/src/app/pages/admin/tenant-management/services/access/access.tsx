@@ -9,7 +9,6 @@ import DataTable from '@components/DataTable';
 import { Grid, GridItem } from '@components/Grid';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
-import { Tabs, TabItem } from '@components/Tabs';
 
 export default function () {
   const dispatch = useDispatch();

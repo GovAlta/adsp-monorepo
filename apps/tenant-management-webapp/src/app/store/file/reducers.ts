@@ -12,7 +12,6 @@ import {
   DELETE_FILE_TYPE_SUCCEEDED,
   UPDATE_FILE_TYPE_SUCCEEDED,
   CREATE_FILE_TYPE_SUCCEEDED,
-  ERROR_NO,
 } from './actions';
 import { FILE_INIT, FileService } from './models';
 
