@@ -46,7 +46,7 @@ export function* createTenant(action: CreateTenantAction) {
   const name = action.payload;
 
   try {
-    const tenant = yield api.createTenant(name);
+    yield api.createTenant(name);
     yield put(CreateTenantSuccess());
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to create new tenant: ${e.message}` }));

@@ -6,10 +6,10 @@ import FileOverview from './fileOverview';
 import FileHeader from './fileHeader';
 import FileTypes from './fileTypes';
 import FileSettings from './fileSettings';
+import FileList from './fileList';
 import './file.css';
 import InitSetup from './fileInitSetup';
 import { RootState } from '@store/index';
-import { FetchFileSpace } from '@store/file/actions';
 import { Main } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 
@@ -53,7 +53,9 @@ const TabsForSetup = () => {
       <Tab label="Usage">
         <Usage />
       </Tab>
-
+      <Tab label="File List">
+        <FileList />
+      </Tab>
       <Tab label="API integration">
         <APIIntegration />
       </Tab>

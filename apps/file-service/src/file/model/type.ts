@@ -4,7 +4,6 @@ import { User, UnauthorizedError, Update } from '@core-services/core-common';
 import { FileType, ServiceUserRoles } from '../types';
 import { Logger } from 'winston';
 import { fileSpaceRepository } from '../../mongo/spaceRepository';
-import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Represents a type of file with specific access and update policy.

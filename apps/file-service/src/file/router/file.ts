@@ -166,7 +166,6 @@ export const createFileRouter = ({
    *           application/json:
    *             schema:
    *               type: array
-   *                  type: object
    *               properties:
    *                 id:
    *                   type: string

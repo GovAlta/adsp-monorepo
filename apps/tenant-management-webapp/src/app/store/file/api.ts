@@ -25,4 +25,10 @@ export class FileApi {
     const res = await this.http.post(url, { tenantId, realm });
     return res.data;
   }
+
+  async uploadFile(formData: FormData, endpoint: string): Promise<FileService> {
+    const url = `${this.config.host}${endpoint}`;
+    const res = await this.http.post(url, formData);
+    return res.data;
+  }
 }

@@ -16,6 +16,7 @@ export interface FileService {
   requirements: {
     setup: boolean;
   };
+  fileList: string[];
   states: {
     activeTab: string;
   };
@@ -35,6 +36,7 @@ export const FILE_INIT: FileService = {
   states: {
     activeTab: 'overall-view',
   },
+  fileList: [],
   spaces: [],
   space: '',
   fileTypes: [],
