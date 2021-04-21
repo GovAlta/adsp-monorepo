@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { GoAButton } from '@abgov/react-components';
-import axios from 'axios';
 import GoALinkButton from '@components/LinkButton';
 import { GoAForm, GoAFormButtons, GoAFormItem } from '@components/Form';
 import { Aside, Main, Page } from '@components/Html';
@@ -9,11 +8,6 @@ import SupportLinks from '@components/SupportLinks';
 const AddClientRole = () => {
   const [name, setName] = useState('');
   const [email, setMail] = useState('');
-
-  const onAddClientRole = async () => {
-    const url = `/addClientRoleMapping?realm=${name}&email='${email}`;
-    const res = await axios.get(url);
-  };
 
   const onChangeName = (event) => {
     setName(event.target.value);
@@ -44,7 +38,7 @@ const AddClientRole = () => {
             <GoALinkButton to="/admin/tenants" buttonType="secondary">
               Back
             </GoALinkButton>
-            <GoAButton onClick={onAddClientRole}>Activate Tenant</GoAButton>
+            <GoAButton>Activate Tenant</GoAButton>
           </GoAFormButtons>
         </GoAForm>
         Need to <a href={'/get-started'}>create a tenant?</a>

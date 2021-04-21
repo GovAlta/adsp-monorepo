@@ -1,8 +1,8 @@
 import { put, select } from 'redux-saga/effects';
-
+import axios from 'axios';
 import { ErrorNotification } from '@store/notifications/actions';
 import { FetchFileSpaceSuccess, CreateFileSpaceSucceededService, CreateFileSpaceFailedService } from './actions';
-import axios from 'axios';
+
 import { RootState } from '@store/index';
 import { FileApi } from './api';
 import {
@@ -11,6 +11,30 @@ import {
   CreateFileTypeSucceededService,
   UpdateFileTypeSucceededService,
 } from './actions';
+
+import FormData from 'form-data';
+
+export function* uploadFile(file) {
+  const state = yield select();
+  const token = state.session.credentials.token;
+  const api = yield new FileApi(state.config.tenantApi, token);
+
+  const recordId = 'AthenaTest123';
+  const endpoint = `/file/v1/files/`;
+
+  const formData = new FormData();
+  formData.append('file', file.payload.data);
+  formData.append('space', state.file.space.id);
+  formData.append('type', state.file.fileTypes[0].id);
+  formData.append('filename', file.payload.data.name);
+  formData.append('recordId', recordId);
+
+  try {
+    yield api.uploadFile(formData, endpoint);
+  } catch (e) {
+    yield put(ErrorNotification({ message: e.message }));
+  }
+}
 
 export function* fetchSpace() {
   const state: RootState = yield select();

@@ -1,4 +1,3 @@
-import * as mkdirp from 'mkdirp';
 import { Mock, It } from 'moq.ts';
 import { User, UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
 import { FileSpace, ServiceUserRoles } from '../types';
@@ -7,7 +6,6 @@ import { FileTypeEntity } from './type';
 import { FileSpaceEntity } from './space';
 
 jest.mock('mkdirp', () => jest.fn(() => Promise.resolve()));
-const mkdirpMock = (mkdirp as unknown) as jest.Mock<typeof mkdirp>;
 
 describe('File Space Entity', () => {
   const user: User = {

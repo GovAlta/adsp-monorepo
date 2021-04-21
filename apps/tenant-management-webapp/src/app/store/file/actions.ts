@@ -3,6 +3,9 @@ import { FileService, FileTypeItem } from './models';
 export const FETCH_FILE_SPACE = 'tenant/file-service/space/fetch';
 export const FETCH_FILE_SPACE_SUCCESS = 'tenant/file-service/space/fetch/success';
 export const FILE_DELETE = 'tenant/file-service/delete';
+export const FILE_UPLOAD = 'tenant/file-service/upload';
+export const FILE_UPLOAD_SUCCESSES = 'tenant/file-service/upload/success';
+export const FILE_UPLOAD_FAILED = 'tenant/file-service/upload/fail';
 export const FILE_DISABLE = 'tenant/file-service/activation/';
 export const FILE_ENABLE = 'tenant/file-service/activation/activate';
 export const FILE_SET_ACTIVE_TAB = 'tenant/file-service/states/tabs/active';
@@ -23,6 +26,9 @@ export const UPDATE_FILE_TYPE_SUCCEEDED = 'file-service/fileType/updatesuccess';
 // =============
 
 export type ActionTypes =
+  | UploadFileAction
+  | UploadFileSuccessAction
+  | UploadFileFailAction
   | DisableFileAction
   | EnableFileAction
   | DeleteFileAction
@@ -40,7 +46,19 @@ export type ActionTypes =
   | UpdateFileTypeAction
   | DeleteFileTypeAction
   | CreateFileTypeAction;
-
+// | SetupFileAction;
+interface UploadFileAction {
+  type: typeof FILE_UPLOAD;
+  payload: { data: string };
+}
+interface UploadFileSuccessAction {
+  type: typeof FILE_UPLOAD_SUCCESSES;
+  payload: { data: string };
+}
+interface UploadFileFailAction {
+  type: typeof FILE_UPLOAD_FAILED;
+  payload: { data: string };
+}
 interface FetchFileSpaceAction {
   type: typeof FETCH_FILE_SPACE;
 }
@@ -165,6 +183,19 @@ export const DeleteFileService = (fileService: FileService): DeleteFileAction =>
   type: FILE_DELETE,
   payload: {
     fileService,
+  },
+});
+
+export const UploadFileService = (data: string): UploadFileAction => ({
+  type: FILE_UPLOAD,
+  payload: {
+    data,
+  },
+});
+export const UploadFileSuccessService = (data: string): UploadFileSuccessAction => ({
+  type: FILE_UPLOAD_SUCCESSES,
+  payload: {
+    data,
   },
 });
 

@@ -1,10 +1,9 @@
 import { ENOENT } from 'constants';
 import * as path from 'path';
 import * as fs from 'fs';
-import { generate } from 'shortid';
 import * as uniqueFilename from 'unique-filename';
 import { IsNotEmpty } from 'class-validator';
-import { User, UnauthorizedError, InvalidOperationError, platformURNs } from '@core-services/core-common';
+import { User, UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
 import { File, NewFile, UserInfo } from '../types';
 import { FileRepository } from '../repository';
 import { FileTypeEntity } from './type';

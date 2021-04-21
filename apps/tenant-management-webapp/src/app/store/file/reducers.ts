@@ -2,6 +2,7 @@ import {
   ActionTypes,
   FETCH_FILE_SPACE_SUCCESS,
   FILE_DELETE,
+  FILE_UPLOAD_SUCCESSES,
   FILE_DISABLE,
   FILE_ENABLE,
   FILE_SETUP,
@@ -74,7 +75,11 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
           activeTab: 'overall-view',
         },
       };
-
+    case FILE_UPLOAD_SUCCESSES:
+      return {
+        ...state,
+        fileList: [...(state.fileList || []), action.payload.data],
+      };
     case FILE_SET_ACTIVE_TAB:
       return {
         ...state,
