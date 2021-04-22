@@ -3,7 +3,6 @@ import { IsNotEmpty, IsDefined } from 'class-validator';
 import { User, UnauthorizedError, Update } from '@core-services/core-common';
 import { FileType, ServiceUserRoles } from '../types';
 import { Logger } from 'winston';
-import { fileSpaceRepository } from '../../mongo/spaceRepository';
 
 /**
  * Represents a type of file with specific access and update policy.
@@ -44,10 +43,6 @@ export class FileTypeEntity implements FileType {
     this.readRoles = type.readRoles || [];
     this.updateRoles = type.updateRoles || [];
     this.spaceId = type.spaceId;
-  }
-
-  async currentSpace() {
-    return await fileSpaceRepository().get(this.spaceId);
   }
 
   canAccessFile(user: User) {

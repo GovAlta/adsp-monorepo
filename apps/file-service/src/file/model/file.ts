@@ -21,7 +21,7 @@ export class FileEntity implements File {
   scanned = false;
   deleted = false;
 
-  static create(
+  static async create(
     user: User,
     repository: FileRepository,
     type: FileTypeEntity,

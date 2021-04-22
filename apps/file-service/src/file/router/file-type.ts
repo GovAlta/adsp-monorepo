@@ -7,21 +7,26 @@ import {
   DomainEventService,
   InvalidOperationError,
 } from '@core-services/core-common';
-import { FileSpaceRepository } from '../repository';
+import { FileRepository, FileSpaceRepository } from '../repository';
 import { FileSpaceEntity } from '../model';
 import * as HttpStatusCodes from 'http-status-codes';
 import { v4 as uuidv4 } from 'uuid';
-import { MongoFileRepository } from '../../mongo/file';
 
 import { fileServiceAdminMiddleware } from '../middleware/authentication';
 interface FileTypeRouterProps {
   logger: Logger;
   eventService: DomainEventService;
   spaceRepository: FileSpaceRepository;
+  fileRepository: FileRepository;
   rootStoragePath: string;
 }
 
-export const createFileTypeRouter = ({ logger, spaceRepository, rootStoragePath }: FileTypeRouterProps) => {
+export const createFileTypeRouter = ({
+  logger,
+  spaceRepository,
+  rootStoragePath,
+  fileRepository,
+}: FileTypeRouterProps) => {
   const fileTypeRouter = Router();
   /**
    * @swagger
@@ -276,8 +281,6 @@ export const createFileTypeRouter = ({ logger, spaceRepository, rootStoragePath 
         throw new NotFoundError('File Type', fileTypeId);
       }
       const spaceEntity: FileSpaceEntity = await spaceRepository.get(spaceId);
-
-      const fileRepository = new MongoFileRepository(spaceRepository);
 
       const filesOfType = await fileRepository.find(100000, null, { typeEquals: fileTypeId });
 
