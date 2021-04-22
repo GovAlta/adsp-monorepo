@@ -6,7 +6,6 @@ import { User, UnauthorizedError, Update, InvalidOperationError, New, AssertRole
 import { FileSpace, FileType, ServiceUserRoles } from '../types';
 import { FileSpaceRepository } from '../repository';
 import { FileTypeEntity } from './type';
-import { fileSpaceRepository } from '../../mongo/spaceRepository';
 export class FileSpaceEntity implements FileSpace {
   id: string;
   @IsNotEmpty()
@@ -117,7 +116,6 @@ export class FileSpaceEntity implements FileSpace {
   }
 
   delete(entity: FileSpaceEntity) {
-    const mongoFileTypeRepo = fileSpaceRepository();
-    return mongoFileTypeRepo.delete(entity);
+    return this.repository.delete(entity);
   }
 }
