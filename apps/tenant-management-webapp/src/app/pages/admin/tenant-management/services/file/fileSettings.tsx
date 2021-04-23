@@ -2,7 +2,7 @@ import React from 'react';
 import { useDispatch } from 'react-redux';
 import { GoARadioGroup, GoAButton } from '@abgov/react-components';
 
-import { DisableFileService, DeleteFileService } from '@store/file/actions';
+import { DisableFileService, TerminateFileService } from '@store/file/actions';
 import { FILE_INIT } from '@store/file/models';
 
 const FileSettings = () => {
@@ -79,7 +79,7 @@ const FileSettings = () => {
 
         <GoAButton
           buttonType="secondary"
-          content="Disable Service"
+          content="Disable File Service"
           onClick={() =>
             dispatch(
               DisableFileService(
@@ -92,10 +92,10 @@ const FileSettings = () => {
         <GoAButton
           className="file-disable-btn"
           buttonType="tertiary"
-          content="Delete Service"
+          content="Terminate File Service"
           onClick={() =>
             dispatch(
-              DeleteFileService(
+              TerminateFileService(
                 FILE_INIT // FIXME: this is not right, but currently the method is defined as needing these params
               )
             )

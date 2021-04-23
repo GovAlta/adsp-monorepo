@@ -117,7 +117,7 @@ export default function FileTypes() {
 
   const fileTypes = useSelector((state: RootState) => state.file.fileTypes);
 
-  let types = null;
+  let types: any = null;
   if (fileTypes && fileTypes.length > 0) {
     types = fileTypes.map((fileType, ix) => <Dropdown.Item href={`#/${fileType.name}`}>{fileType.name}</Dropdown.Item>);
   }

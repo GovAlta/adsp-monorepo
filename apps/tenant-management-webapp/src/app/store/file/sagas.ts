@@ -1,7 +1,12 @@
 import { put, select } from 'redux-saga/effects';
 import axios from 'axios';
 import { ErrorNotification } from '@store/notifications/actions';
-import { FetchFileSpaceSuccess, CreateFileSpaceSucceededService, CreateFileSpaceFailedService } from './actions';
+import {
+  FetchFileSpaceSuccess,
+  CreateFileSpaceSucceededService,
+  CreateFileSpaceFailedService,
+  FetchFilesSuccessService,
+} from './actions';
 
 import { RootState } from '@store/index';
 import { FileApi } from './api';
@@ -10,6 +15,8 @@ import {
   DeleteFileTypeSucceededService,
   CreateFileTypeSucceededService,
   UpdateFileTypeSucceededService,
+  DeleteFileSuccessService,
+  DownloadFileSuccessService,
 } from './actions';
 
 import FormData from 'form-data';
@@ -17,7 +24,7 @@ import FormData from 'form-data';
 export function* uploadFile(file) {
   const state = yield select();
   const token = state.session.credentials.token;
-  const api = yield new FileApi(state.config.tenantApi, token);
+  const api = yield new FileApi(state.config, token);
 
   const recordId = 'AthenaTest123';
   const endpoint = `/file/v1/files/`;
@@ -36,12 +43,54 @@ export function* uploadFile(file) {
   }
 }
 
+export function* fetchFiles() {
+  const state = yield select();
+  const token = state.session.credentials.token;
+  const api = yield new FileApi(state.config, token);
+
+  const endpoint = `/file/v1/files/`;
+  try {
+    const files = yield api.fetchFile(endpoint);
+    yield put(FetchFilesSuccessService({ data: files.results }));
+  } catch (e) {
+    yield put(ErrorNotification({ message: e.message }));
+  }
+}
+
+export function* deleteFile(fileId) {
+  const state = yield select();
+  const token = state.session.credentials.token;
+  const api = yield new FileApi(state.config, token);
+
+  const endpoint = `/file/v1/files/${fileId}`;
+  try {
+    const files = yield api.deleteFile(endpoint);
+    yield put(DeleteFileSuccessService(files));
+  } catch (e) {
+    yield put(ErrorNotification({ message: e.message }));
+  }
+}
+
+export function* downloadFile(fileId) {
+  const state = yield select();
+  const token = state.session.credentials.token;
+  const api = yield new FileApi(state.config, token);
+
+  const endpoint = `/file/v1/files/${fileId}/download`;
+  try {
+    const files = yield api.fetchFile(endpoint);
+    yield put(DownloadFileSuccessService(files));
+  } catch (e) {
+    yield put(ErrorNotification({ message: e.message }));
+  }
+}
+
 export function* fetchSpace() {
   const state: RootState = yield select();
 
   const token = state.session.credentials.token;
 
-  const api = yield new FileApi(state.config.tenantApi, token);
+  const api = yield new FileApi(state.config, token);
   const { clientId, realm } = state.session;
 
   try {

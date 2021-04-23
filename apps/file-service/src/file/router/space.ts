@@ -76,7 +76,7 @@ export const createSpaceRouter = ({ logger, eventService, spaceRepository }: Spa
     const { top, after } = req.query;
 
     try {
-      const spaces = await spaceRepository.find(parseInt((top as string) || '10', 10), after as string);
+      const spaces = await spaceRepository.find(parseInt((top as string) || '50', 50), after as string);
       res.send({
         page: spaces.page,
         results: spaces.results
