@@ -98,7 +98,7 @@ export class FileSpaceEntity implements FileSpace {
 
     if (created) {
       const typeFolder = fileType.getPath(rootStoragePath);
-      mkdirp(typeFolder);
+      await mkdirp(typeFolder);
     }
     return created;
   }

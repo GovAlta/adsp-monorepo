@@ -83,7 +83,7 @@ export class FileTypeEntity implements FileType {
   }
 
   getPath(storageRoot: string) {
-    return path.join(storageRoot, this.name);
+    return path.join(storageRoot, this.spaceId, this.id);
   }
 
   canAccess(user: User) {
