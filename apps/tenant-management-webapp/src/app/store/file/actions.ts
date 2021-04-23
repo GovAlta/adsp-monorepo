@@ -1,15 +1,25 @@
-import { FileService, FileTypeItem } from './models';
+import { FileItem, FileService, FileTypeItem } from './models';
+
+export const TERMINATE_FILE_SERVICE = 'tenant/file-service/delete'; // delete file service
+export const DISABLE_FILE_SERVICE = 'tenant/file-service/activation/';
+export const ENABLE_FILE_SERVICE = 'tenant/file-service/activation/activate';
+export const SET_FILE_SERVICE_ACTIVE_TAB = 'tenant/file-service/states/tabs/active';
+export const SETUP_FILE_SERVICE = 'tenant/file-service/setup'; // The SETUP_FILE_SERVICE is only for testing
 
 export const FETCH_FILE_SPACE = 'tenant/file-service/space/fetch';
 export const FETCH_FILE_SPACE_SUCCESS = 'tenant/file-service/space/fetch/success';
-export const FILE_DELETE = 'tenant/file-service/delete';
 export const FILE_UPLOAD = 'tenant/file-service/upload';
 export const FILE_UPLOAD_SUCCESSES = 'tenant/file-service/upload/success';
 export const FILE_UPLOAD_FAILED = 'tenant/file-service/upload/fail';
-export const FILE_DISABLE = 'tenant/file-service/activation/';
-export const FILE_ENABLE = 'tenant/file-service/activation/activate';
-export const FILE_SET_ACTIVE_TAB = 'tenant/file-service/states/tabs/active';
-export const FILE_SETUP = 'tenant/file-service/setup'; // The FILE_SETUP is only for testing
+export const FETCH_FILE_LIST = 'tenant/file-service/file/fetch';
+export const FETCH_FILE_LIST_SUCCESSES = 'tenant/file-service/file/fetch/success';
+export const FETCH_FILE_LIST_FAILED = 'tenant/file-service/file/fetch/fail';
+export const DELETE_FILE = 'tenant/file-service/file/delete';
+export const DELETE_FILE_SUCCESSES = 'tenant/file-service/file/delete/success';
+export const DELETE_FILE_FAILED = 'tenant/file-service/file/delete/fail';
+export const DOWNLOAD_FILE = 'tenant/file-service/file/download';
+export const DOWNLOAD_FILE_SUCCESSES = 'tenant/file-service/file/download/success';
+export const DOWNLOAD_FILE_FAILED = 'tenant/file-service/file/download/fail';
 export const CREATE_FILE_SPACE_SUCCEEDED = 'file-service/fileSpace/createsuccess';
 export const CREATE_FILE_SPACE_FAILED = 'file-service/fileSpace/createfailure';
 export const FETCH_FILE_TYPE = 'tenant/file-service/fileType/fetch';
@@ -29,9 +39,18 @@ export type ActionTypes =
   | UploadFileAction
   | UploadFileSuccessAction
   | UploadFileFailAction
-  | DisableFileAction
-  | EnableFileAction
+  | FetchFilesAction
+  | FetchFilesSuccessAction
+  | FetchFilesFailedAction
   | DeleteFileAction
+  | DeleteFileSuccessAction
+  | DeleteFileFailedAction
+  | DownloadFileAction
+  | DownloadFileSuccessAction
+  | DownloadFileFailedAction
+  | DisableFileServiceAction
+  | EnableFileServiceAction
+  | TerminateFileServiceAction
   | SetActiveTabAction
   | FetchFileSpaceAction
   | FetchFileSpaceSuccessAction
@@ -59,6 +78,50 @@ interface UploadFileFailAction {
   type: typeof FILE_UPLOAD_FAILED;
   payload: { data: string };
 }
+
+interface FetchFilesAction {
+  type: typeof FETCH_FILE_LIST;
+}
+
+interface FetchFilesSuccessAction {
+  type: typeof FETCH_FILE_LIST_SUCCESSES;
+  payload: {
+    results: { data: FileItem[] };
+  };
+}
+
+interface FetchFilesFailedAction {
+  type: typeof FETCH_FILE_LIST_FAILED;
+  payload: { data: string };
+}
+
+interface DeleteFileAction {
+  type: typeof DELETE_FILE;
+  payload: { data: string };
+}
+
+interface DeleteFileSuccessAction {
+  type: typeof DELETE_FILE_SUCCESSES;
+  payload: { data: string };
+}
+interface DeleteFileFailedAction {
+  type: typeof DELETE_FILE_FAILED;
+  payload: { data: string };
+}
+
+interface DownloadFileAction {
+  type: typeof DOWNLOAD_FILE;
+  payload: { data: string };
+}
+interface DownloadFileSuccessAction {
+  type: typeof DOWNLOAD_FILE_SUCCESSES;
+  payload: { data: string };
+}
+interface DownloadFileFailedAction {
+  type: typeof DOWNLOAD_FILE_FAILED;
+  payload: { data: string };
+}
+
 interface FetchFileSpaceAction {
   type: typeof FETCH_FILE_SPACE;
 }
@@ -69,33 +132,33 @@ interface FetchFileSpaceSuccessAction {
   };
 }
 
-interface DeleteFileAction {
-  type: typeof FILE_DELETE;
+interface TerminateFileServiceAction {
+  type: typeof TERMINATE_FILE_SERVICE;
   payload: {
     fileService: FileService;
   };
 }
 
-interface DisableFileAction {
-  type: typeof FILE_DISABLE;
+interface DisableFileServiceAction {
+  type: typeof DISABLE_FILE_SERVICE;
   payload: {
     fileService: FileService;
   };
 }
 
-interface EnableFileAction {
-  type: typeof FILE_ENABLE;
+interface EnableFileServiceAction {
+  type: typeof ENABLE_FILE_SERVICE;
 }
 
 interface SetActiveTabAction {
-  type: typeof FILE_SET_ACTIVE_TAB;
+  type: typeof SET_FILE_SERVICE_ACTIVE_TAB;
   payload: {
     activeTab: string;
   };
 }
 
 interface SetupFileAction {
-  type: typeof FILE_SETUP;
+  type: typeof SETUP_FILE_SERVICE;
 }
 
 interface CreateFileSpaceSucceededAction {
@@ -168,19 +231,19 @@ interface CreateFileTypeAction {
 // Action Methods
 // ==============
 
-export const DisableFileService = (fileService: FileService): DisableFileAction => ({
-  type: FILE_DISABLE,
+export const DisableFileService = (fileService: FileService): DisableFileServiceAction => ({
+  type: DISABLE_FILE_SERVICE,
   payload: {
     fileService,
   },
 });
 
-export const EnableFileService = (): EnableFileAction => ({
-  type: FILE_ENABLE,
+export const EnableFileService = (): EnableFileServiceAction => ({
+  type: ENABLE_FILE_SERVICE,
 });
 
-export const DeleteFileService = (fileService: FileService): DeleteFileAction => ({
-  type: FILE_DELETE,
+export const TerminateFileService = (fileService: FileService): TerminateFileServiceAction => ({
+  type: TERMINATE_FILE_SERVICE,
   payload: {
     fileService,
   },
@@ -199,8 +262,61 @@ export const UploadFileSuccessService = (data: string): UploadFileSuccessAction 
   },
 });
 
+export const FetchFilesService = (): FetchFilesAction => ({
+  type: FETCH_FILE_LIST,
+});
+
+export const FetchFilesSuccessService = (results: { data: FileItem[] }): FetchFilesSuccessAction => ({
+  type: FETCH_FILE_LIST_SUCCESSES,
+  payload: {
+    results,
+  },
+});
+
+export const FetchFilesFailedService = (data: string): FetchFilesFailedAction => ({
+  type: FETCH_FILE_LIST_FAILED,
+  payload: {
+    data,
+  },
+});
+
+export const DeleteFileService = (data: string): DeleteFileAction => ({
+  type: DELETE_FILE,
+  payload: {
+    data,
+  },
+});
+
+export const DeleteFileSuccessService = (data: string): DeleteFileSuccessAction => ({
+  type: DELETE_FILE_SUCCESSES,
+  payload: {
+    data,
+  },
+});
+
+export const DeleteFileFailedService = (data: string): DeleteFileFailedAction => ({
+  type: DELETE_FILE_FAILED,
+  payload: {
+    data,
+  },
+});
+
+export const DownloadFileSuccessService = (data: string): DownloadFileSuccessAction => ({
+  type: DOWNLOAD_FILE_SUCCESSES,
+  payload: {
+    data,
+  },
+});
+
+export const DownloadFileFailedService = (data: string): DownloadFileFailedAction => ({
+  type: DOWNLOAD_FILE_FAILED,
+  payload: {
+    data,
+  },
+});
+
 export const SetActiveTab = (activeTab: string): SetActiveTabAction => ({
-  type: FILE_SET_ACTIVE_TAB,
+  type: SET_FILE_SERVICE_ACTIVE_TAB,
   payload: {
     activeTab,
   },
@@ -218,7 +334,7 @@ export const FetchFileSpaceSuccess = (spaceInfo: { data: string }): FetchFileSpa
 });
 
 export const SetupFileService = (): SetupFileAction => ({
-  type: FILE_SETUP,
+  type: SETUP_FILE_SERVICE,
 });
 
 export const CreateFileSpaceSucceededService = (fileInfo: { data: string }): CreateFileSpaceSucceededAction => ({

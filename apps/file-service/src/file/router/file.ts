@@ -121,7 +121,6 @@ export const createFileRouter = ({
           uploaded.path,
           rootStoragePath
         );
-
         eventService.send(
           createdFile(space, type, {
             id: fileEntity.id,
@@ -138,6 +137,7 @@ export const createFileRouter = ({
           id: fileEntity.id,
           filename: fileEntity.filename,
           size: fileEntity.size,
+          type: fileEntity.type.name,
           fileURN: `${platformURNs['file-service']}:${spaceEntity.name}/supporting-doc/${fileEntity.id}`,
         });
 
@@ -199,7 +199,8 @@ export const createFileRouter = ({
         results: files.results.map((n) => ({
           id: n.id,
           filename: n.filename,
-          size: n.filename,
+          size: n.size,
+          type: n.type.name,
           fileURN: `${platformURNs['file-service']}:${user.tenantName}/supporting-doc/${n.id}`,
         })),
       });
@@ -260,6 +261,7 @@ export const createFileRouter = ({
         id: fileEntity.id,
         filename: fileEntity.filename,
         size: fileEntity.size,
+        fileURN: `${platformURNs['file-service']}:${user.tenantName}/supporting-doc/${fileEntity.id}`,
         scanned: fileEntity.scanned,
         deleted: fileEntity.deleted,
       });

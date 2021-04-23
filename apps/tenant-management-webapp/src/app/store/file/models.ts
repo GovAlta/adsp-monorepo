@@ -8,6 +8,13 @@ export interface FileTypeItem {
   };
 }
 
+export interface FileItem {
+  id: string;
+  filename: string;
+  size: number;
+  fileURN: string;
+}
+
 export interface FileService {
   status: {
     isActive: boolean;
@@ -16,7 +23,7 @@ export interface FileService {
   requirements: {
     setup: boolean;
   };
-  fileList: string[];
+  fileList: Array<FileItem>;
   states: {
     activeTab: string;
   };

@@ -89,5 +89,20 @@ Promise.all([
   const server = app.listen(port, () => {
     logger.info(`Listening at http://localhost:${port}`);
   });
+  const handleExit = async (message, code, err) => {
+    server.close();
+    err === null ? logger.info(message) : logger.error(message, err);
+    process.exit(code);
+  };
+
+  process.on('SIGINT', async () => {
+    handleExit('Tenant management api exit, Byte', 1, null);
+  });
+  process.on('SIGTERM', async () => {
+    handleExit('Tenant management api was termination, Byte', 1, null);
+  });
+  process.on('uncaughtException', async (err: Error) => {
+    handleExit('Tenant management api Uncaught exception', 1, err);
+  });
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
 });

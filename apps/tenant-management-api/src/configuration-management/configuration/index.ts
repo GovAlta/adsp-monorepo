@@ -32,8 +32,6 @@ export const applyConfigMiddleware = (
   app.use('/api/configuration/v1/serviceOptions/', serviceConfigRouter);
   app.use('/api/configuration/v1/tenantConfig/', tenantConfigRouter);
 
-  app.use(errorHandler);
-
   let swagger = null;
   app.use('/swagger/docs/v1', (req, res) => {
     if (swagger) {

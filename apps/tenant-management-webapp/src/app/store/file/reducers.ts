@@ -1,12 +1,15 @@
 import {
   ActionTypes,
   FETCH_FILE_SPACE_SUCCESS,
-  FILE_DELETE,
+  FETCH_FILE_LIST_SUCCESSES,
   FILE_UPLOAD_SUCCESSES,
-  FILE_DISABLE,
-  FILE_ENABLE,
-  FILE_SETUP,
-  FILE_SET_ACTIVE_TAB,
+  DELETE_FILE_SUCCESSES,
+  DOWNLOAD_FILE_SUCCESSES,
+  TERMINATE_FILE_SERVICE,
+  DISABLE_FILE_SERVICE,
+  ENABLE_FILE_SERVICE,
+  SETUP_FILE_SERVICE,
+  SET_FILE_SERVICE_ACTIVE_TAB,
   CREATE_FILE_SPACE_SUCCEEDED,
   CREATE_FILE_SPACE_FAILED,
   FETCH_FILE_TYPE_SUCCEEDED,
@@ -32,7 +35,7 @@ function updateSpecifiedFileType(fileTypes, fileType) {
 
 export default function (state = FILE_INIT, action: ActionTypes): FileService {
   switch (action.type) {
-    case FILE_ENABLE:
+    case ENABLE_FILE_SERVICE:
       return {
         ...state,
         status: {
@@ -41,7 +44,7 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
         },
       };
 
-    case FILE_DISABLE:
+    case DISABLE_FILE_SERVICE:
       return {
         ...state,
         status: {
@@ -54,7 +57,7 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
         },
       };
 
-    case FILE_SETUP:
+    case SETUP_FILE_SERVICE:
       return {
         ...state,
         requirements: {
@@ -63,7 +66,7 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
         },
       };
 
-    case FILE_DELETE:
+    case TERMINATE_FILE_SERVICE:
       return {
         ...state,
         requirements: {
@@ -75,12 +78,25 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
           activeTab: 'overall-view',
         },
       };
-    case FILE_UPLOAD_SUCCESSES:
+    case FILE_UPLOAD_SUCCESSES: // add file to fileList
       return {
         ...state,
-        fileList: [...(state.fileList || []), action.payload.data],
+        // fileList: [...(state.fileList || []), action.payload.data],
       };
-    case FILE_SET_ACTIVE_TAB:
+    case DELETE_FILE_SUCCESSES:
+      return {
+        ...state, // remove delete file from reducer
+      };
+    case DOWNLOAD_FILE_SUCCESSES:
+      return {
+        ...state, // do nothing with reducer
+      };
+    case FETCH_FILE_LIST_SUCCESSES:
+      return {
+        ...state,
+        fileList: action.payload.results.data,
+      };
+    case SET_FILE_SERVICE_ACTIVE_TAB:
       return {
         ...state,
         states: {
