@@ -213,7 +213,7 @@ export const createSpaceRouter = ({ logger, eventService, spaceRepository }: Spa
    *       401:
    *         description: User not authorized to update file space.
    */
-  spaceRouter.put('/spaces', assertAuthenticatedHandler, async (req, res, next) => {
+  spaceRouter.post('/spaces', assertAuthenticatedHandler, async (req, res, next) => {
     const user = req.user as User;
     const { spaceAdminRole } = req.body;
 

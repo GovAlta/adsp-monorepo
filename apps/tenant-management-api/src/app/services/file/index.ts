@@ -72,7 +72,7 @@ export const createSpacePromise = (tenantId, realm, token) => {
 
     const payload = {
       url: url,
-      method: 'PUT',
+      method: 'POST',
       json: data,
       headers: {
         Authorization: token,

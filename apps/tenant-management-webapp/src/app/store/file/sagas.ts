@@ -71,7 +71,7 @@ export function* fileEnable(fileType) {
   };
 
   try {
-    const fileTypes = axios.put(url, data, { headers: headers });
+    const fileTypes = axios.post(url, data, { headers: headers });
     const fileTypeInfo = yield fileTypes;
     yield put(CreateFileSpaceSucceededService(fileTypeInfo));
   } catch (e) {
