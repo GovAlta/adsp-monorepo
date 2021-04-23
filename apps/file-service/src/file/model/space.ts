@@ -90,7 +90,8 @@ export class FileSpaceEntity implements FileSpace {
       type.name,
       type.anonymousRead,
       type.readRoles,
-      type.updateRoles
+      type.updateRoles,
+      this.id
     );
     this.types[fileType.id] = fileType;
 

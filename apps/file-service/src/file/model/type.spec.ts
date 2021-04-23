@@ -41,7 +41,14 @@ describe('File Type Entity', () => {
   });
 
   it('can create new', () => {
-    const entity = FileTypeEntity.create(type.id, type.name, type.anonymousRead, type.readRoles, type.updateRoles);
+    const entity = FileTypeEntity.create(
+      type.id,
+      type.name,
+      type.anonymousRead,
+      type.readRoles,
+      type.updateRoles,
+      type.spaceId
+    );
 
     expect(entity).toBeTruthy();
   });

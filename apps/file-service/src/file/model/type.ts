@@ -25,13 +25,21 @@ export class FileTypeEntity implements FileType {
   updateRoles: string[] = [];
   spaceId?: string;
 
-  static create(id: string, name: string, anonymousRead: boolean, readRoles: string[], updateRoles: string[]) {
+  static create(
+    id: string,
+    name: string,
+    anonymousRead: boolean,
+    readRoles: string[],
+    updateRoles: string[],
+    spaceId: string
+  ) {
     const newType: FileType = {
       id,
       name,
       anonymousRead,
       readRoles,
       updateRoles,
+      spaceId,
     };
     return new FileTypeEntity(newType);
   }
