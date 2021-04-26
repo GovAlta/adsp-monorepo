@@ -40,7 +40,10 @@ export interface CheckIsTenantAdminAction {
 
 interface UpdateTenantAdminInfoAction {
   type: typeof UPDATE_TENANT_ADMIN_INFO;
-  payload: boolean;
+  payload: {
+    isTenantAdmin: boolean;
+    name: string;
+  };
 }
 
 interface CreateTenantSuccessAction {
@@ -83,9 +86,12 @@ export const IsTenantAdmin = (email: string): CheckIsTenantAdminAction => ({
   payload: email,
 });
 
-export const UpdateTenantAdminInfo = (isAdmin: boolean): UpdateTenantAdminInfoAction => ({
+export const UpdateTenantAdminInfo = (isAdmin: boolean, tenantName: string): UpdateTenantAdminInfoAction => ({
   type: 'UPDATE_TENANT_ADMIN_INFO',
-  payload: isAdmin,
+  payload: {
+    isTenantAdmin: isAdmin,
+    name: tenantName,
+  },
 });
 
 export const CreateTenantSuccess = (): CreateTenantSuccessAction => ({

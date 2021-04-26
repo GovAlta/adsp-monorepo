@@ -6,6 +6,6 @@ export interface Tenant {
 
 export const TENANT_INIT: Tenant = {
   name: '',
-  isTenantAdmin: false,
-  isTenantCreated: false,
+  isTenantAdmin: null,
+  isTenantCreated: null,
 };

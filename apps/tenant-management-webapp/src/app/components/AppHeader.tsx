@@ -47,7 +47,7 @@ const ActionsMenu = (props: HeaderMenuProps) => {
               </Link>
             </UserIconBox>
           ) : (
-            <Link to={'/'} onClick={() => authCtx.signIn('/')}>
+            <Link to={'/'} onClick={() => authCtx.signIn('/login/redirect')}>
               Sign In
             </Link>
           )}
