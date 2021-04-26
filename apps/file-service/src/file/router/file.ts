@@ -87,7 +87,7 @@ export const createFileRouter = ({
    */
   fileRouter.post('/files', assertAuthenticatedHandler, upload.single('file'), async (req, res, next) => {
     const user = req.user as User;
-    const { space, type, recordId, filename } = req.body;
+    const { type, recordId, filename } = req.body;
     const uploaded = req.file;
 
     if (filename && !validFilename(filename)) {
@@ -95,9 +95,10 @@ export const createFileRouter = ({
     }
 
     try {
-      if (!uploaded || !space || !type) {
+      if (!uploaded || !type) {
         res.sendStatus(400);
       } else {
+        const space = await spaceRepository.getIdByName(user.tenantName);
         const spaceEntity = await spaceRepository.get(space);
 
         if (!spaceEntity) {
@@ -137,7 +138,10 @@ export const createFileRouter = ({
           id: fileEntity.id,
           filename: fileEntity.filename,
           size: fileEntity.size,
-          type: fileEntity.type.name,
+          typeName: fileEntity.type.name,
+          recordId: fileEntity.recordId,
+          created: fileEntity.created,
+          lastAccessed: fileEntity.lastAccessed,
           fileURN: `${platformURNs['file-service']}:${spaceEntity.name}/supporting-doc/${fileEntity.id}`,
         });
 
@@ -200,7 +204,10 @@ export const createFileRouter = ({
           id: n.id,
           filename: n.filename,
           size: n.size,
-          type: n.type.name,
+          typeName: n.type.name,
+          recordId: n.recordId,
+          created: n.created,
+          lastAccessed: n.lastAccessed,
           fileURN: `${platformURNs['file-service']}:${user.tenantName}/supporting-doc/${n.id}`,
         })),
       });
@@ -261,6 +268,9 @@ export const createFileRouter = ({
         id: fileEntity.id,
         filename: fileEntity.filename,
         size: fileEntity.size,
+        recordId: fileEntity.recordId,
+        created: fileEntity.created,
+        lastAccessed: fileEntity.lastAccessed,
         fileURN: `${platformURNs['file-service']}:${user.tenantName}/supporting-doc/${fileEntity.id}`,
         scanned: fileEntity.scanned,
         deleted: fileEntity.deleted,
@@ -299,10 +309,8 @@ export const createFileRouter = ({
   fileRouter.get('/files/:fileId/download', async (req, res, next) => {
     const user = req.user as User;
     const { fileId } = req.params;
-
     try {
       const fileEntity = await fileRepository.get(fileId);
-
       if (!fileEntity || fileEntity.deleted) {
         throw new NotFoundError('File', fileId);
       } else if (!fileEntity.canAccess(user)) {

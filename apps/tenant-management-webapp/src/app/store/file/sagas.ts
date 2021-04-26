@@ -26,13 +26,12 @@ export function* uploadFile(file) {
   const token = state.session.credentials.token;
   const api = yield new FileApi(state.config, token);
 
-  const recordId = 'AthenaTest123';
+  const recordId = `${state.tenant.name}-${file.payload.data.name}`;
   const endpoint = `/file/v1/files/`;
 
   const formData = new FormData();
   formData.append('file', file.payload.data);
-  formData.append('space', state.file.space.id);
-  formData.append('type', state.file.fileTypes[0].id);
+  formData.append('type', state.file.fileTypes[3].id);
   formData.append('filename', file.payload.data.name);
   formData.append('recordId', recordId);
 
