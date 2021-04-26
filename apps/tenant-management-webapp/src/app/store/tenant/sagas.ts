@@ -10,6 +10,7 @@ import {
   UpdateTenantAdminInfo,
 } from './actions';
 import { TenantApi } from './api';
+import { TENANT_INIT } from './models';
 
 export function* fetchTenant(action: FetchTenantAction) {
   const state: RootState = yield select();
@@ -32,8 +33,12 @@ export function* isTenantAdmin(action: CheckIsTenantAdminAction) {
   const email = action.payload;
 
   try {
-    const tenant = yield api.fetchTenantByEmail(email);
-    yield put(UpdateTenantAdminInfo(tenant.success));
+    const response = yield api.fetchTenantByEmail(email);
+    if (response.success) {
+      yield put(UpdateTenantAdminInfo(response.success, response.tenant.name));
+    } else {
+      yield put(UpdateTenantAdminInfo(response.success, TENANT_INIT.name));
+    }
   } catch (e) {
     yield put(ErrorNotification({ message: 'failed to check tenant admin' }));
   }

@@ -7,6 +7,8 @@ import '@abgov/core-css/goa-core.css';
 
 import LandingPage from '@pages/public/Landing';
 import Login from '@pages/public/Login';
+import LoginRedirect from '@pages/public/LoginRedirect';
+import LogoutRedirect from '@pages/public/LogoutRedirect';
 import CaseStudy from '@pages/admin/CaseStudy';
 import FileService from '@pages/public/FileService';
 import ServiceMeasure from '@pages/admin/ServiceMeasure';
@@ -56,11 +58,18 @@ const AppRouters = () => {
           <Route path="/:tenantName/login">
             <Login />
           </Route>
+          <Route path="/login">
+            <Login />
+          </Route>
           <Route path="/get-started">
             <GetStarted />
           </Route>
-          <Route path="/login">
-            <Login />
+          <Route exact path="/login/redirect">
+            <LoginRedirect />
+          </Route>
+
+          <Route exact path="/logout/redirect">
+            <LogoutRedirect />
           </Route>
         </PublicApp>
       </Switch>
@@ -104,12 +113,14 @@ function AppWithAuthContext() {
 
   useEffect(() => {
     if (!hasSession) return;
+    console.log('app session');
 
     keycloak.init({ onLoad: 'check-sso' }).then((authenticated: boolean) => {
       if (authenticated) {
         keycloak
           .loadUserInfo()
           .then(() => {
+            console.log('check-sso');
             const session = convertToSession(keycloak);
             dispatch(SessionLoginSuccess(session));
           })
@@ -134,10 +145,8 @@ function AppWithAuthContext() {
   }
 
   function signOut() {
-    dispatch(SessionLogout());
-    dispatch(TenantLogout());
-    dispatch(ConfigLogout());
-    keycloak.logout({ redirectUri: window.location.origin });
+    const path = window.location.origin + '/logout/redirect';
+    keycloak.logout({ redirectUri: path });
   }
 
   return <AuthContext.Provider value={{ signIn, signOut }}>{hasSession && <AppRouters />}</AuthContext.Provider>;
