@@ -6,37 +6,36 @@ import {
   CreateFileSpaceSucceededService,
   CreateFileSpaceFailedService,
   FetchFilesSuccessService,
-} from './actions';
-
-import { RootState } from '@store/index';
-import { FileApi } from './api';
-import {
+  UploadFileSuccessService,
   FetchFileTypeSucceededService,
   DeleteFileTypeSucceededService,
   CreateFileTypeSucceededService,
   UpdateFileTypeSucceededService,
   DeleteFileSuccessService,
-  DownloadFileSuccessService,
 } from './actions';
 
+import { RootState } from '@store/index';
+import { FileApi } from './api';
 import FormData from 'form-data';
 
 export function* uploadFile(file) {
+  console.log(file);
   const state = yield select();
   const token = state.session.credentials.token;
   const api = yield new FileApi(state.config, token);
 
-  const recordId = `${state.tenant.name}-${file.payload.data.name}`;
-  const endpoint = `/file/v1/files/`;
+  const recordId = `${state.tenant.name}-${file.payload.data.file.name}`;
+  const endpoint = state.config.tenantApi.endpoints.fileAdmin;
 
   const formData = new FormData();
-  formData.append('file', file.payload.data);
-  formData.append('type', state.file.fileTypes[3].id);
-  formData.append('filename', file.payload.data.name);
+  formData.append('file', file.payload.data.file);
+  formData.append('type', file.payload.data.type);
+  formData.append('filename', file.payload.data.file.name);
   formData.append('recordId', recordId);
 
   try {
-    yield api.uploadFile(formData, endpoint);
+    const uploadFile = yield api.uploadFile(formData, '/file/v1/files');
+    yield put(UploadFileSuccessService(uploadFile));
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
   }
@@ -47,21 +46,21 @@ export function* fetchFiles() {
   const token = state.session.credentials.token;
   const api = yield new FileApi(state.config, token);
 
-  const endpoint = `/file/v1/files/`;
+  const endpoint = state.config.tenantApi.endpoints.fileAdmin;
+
   try {
-    const files = yield api.fetchFile(endpoint);
+    const files = yield api.fetchFiles('/file/v1/files');
     yield put(FetchFilesSuccessService({ data: files.results }));
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
   }
 }
 
-export function* deleteFile(fileId) {
+export function* deleteFile(file) {
   const state = yield select();
   const token = state.session.credentials.token;
   const api = yield new FileApi(state.config, token);
-
-  const endpoint = `/file/v1/files/${fileId}`;
+  const endpoint = `/file/v1/files/${file.payload.data}`;
   try {
     const files = yield api.deleteFile(endpoint);
     yield put(DeleteFileSuccessService(files));
@@ -70,15 +69,18 @@ export function* deleteFile(fileId) {
   }
 }
 
-export function* downloadFile(fileId) {
+export function* downloadFile(file) {
   const state = yield select();
   const token = state.session.credentials.token;
   const api = yield new FileApi(state.config, token);
-
-  const endpoint = `/file/v1/files/${fileId}/download`;
+  const endpoint = `/file/v1/files/${file.payload.data.id}/download`;
   try {
-    const files = yield api.fetchFile(endpoint);
-    yield put(DownloadFileSuccessService(files));
+    const files = yield api.downloadFiles(endpoint, token);
+    const element = document.createElement('a');
+    element.href = URL.createObjectURL(new Blob([files]));
+    element.download = file.payload.data.filename;
+    document.body.appendChild(element);
+    element.click();
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
   }

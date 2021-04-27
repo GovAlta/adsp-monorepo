@@ -8,9 +8,9 @@ export const SETUP_FILE_SERVICE = 'tenant/file-service/setup'; // The SETUP_FILE
 
 export const FETCH_FILE_SPACE = 'tenant/file-service/space/fetch';
 export const FETCH_FILE_SPACE_SUCCESS = 'tenant/file-service/space/fetch/success';
-export const FILE_UPLOAD = 'tenant/file-service/upload';
-export const FILE_UPLOAD_SUCCESSES = 'tenant/file-service/upload/success';
-export const FILE_UPLOAD_FAILED = 'tenant/file-service/upload/fail';
+export const UPLOAD_FILE = 'tenant/file-service/upload';
+export const UPLOAD_FILE_SUCCESSES = 'tenant/file-service/upload/success';
+export const UPLOAD_FILE_FAILED = 'tenant/file-service/upload/fail';
 export const FETCH_FILE_LIST = 'tenant/file-service/file/fetch';
 export const FETCH_FILE_LIST_SUCCESSES = 'tenant/file-service/file/fetch/success';
 export const FETCH_FILE_LIST_FAILED = 'tenant/file-service/file/fetch/fail';
@@ -67,15 +67,15 @@ export type ActionTypes =
   | CreateFileTypeAction;
 // | SetupFileAction;
 interface UploadFileAction {
-  type: typeof FILE_UPLOAD;
-  payload: { data: string };
+  type: typeof UPLOAD_FILE;
+  payload: { data: object };
 }
 interface UploadFileSuccessAction {
-  type: typeof FILE_UPLOAD_SUCCESSES;
-  payload: { data: string };
+  type: typeof UPLOAD_FILE_SUCCESSES;
+  payload: { result: { data: FileItem } };
 }
 interface UploadFileFailAction {
-  type: typeof FILE_UPLOAD_FAILED;
+  type: typeof UPLOAD_FILE_FAILED;
   payload: { data: string };
 }
 
@@ -249,16 +249,16 @@ export const TerminateFileService = (fileService: FileService): TerminateFileSer
   },
 });
 
-export const UploadFileService = (data: string): UploadFileAction => ({
-  type: FILE_UPLOAD,
+export const UploadFileService = (data: object): UploadFileAction => ({
+  type: UPLOAD_FILE,
   payload: {
     data,
   },
 });
-export const UploadFileSuccessService = (data: string): UploadFileSuccessAction => ({
-  type: FILE_UPLOAD_SUCCESSES,
+export const UploadFileSuccessService = (result: { data: FileItem }): UploadFileSuccessAction => ({
+  type: UPLOAD_FILE_SUCCESSES,
   payload: {
-    data,
+    result,
   },
 });
 
@@ -296,6 +296,13 @@ export const DeleteFileSuccessService = (data: string): DeleteFileSuccessAction 
 
 export const DeleteFileFailedService = (data: string): DeleteFileFailedAction => ({
   type: DELETE_FILE_FAILED,
+  payload: {
+    data,
+  },
+});
+
+export const DownloadFileService = (data: string): DownloadFileAction => ({
+  type: DOWNLOAD_FILE,
   payload: {
     data,
   },

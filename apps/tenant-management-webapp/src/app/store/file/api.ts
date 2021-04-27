@@ -32,7 +32,19 @@ export class FileApi {
     return res.data;
   }
 
-  async fetchFile(endpoint: string): Promise<FileService> {
+  async fetchFiles(endpoint: string): Promise<FileService> {
+    const url = `${this.fileApi}${endpoint}`;
+    const res = await this.http.get(url);
+    return res.data;
+  }
+
+  async downloadFiles(endpoint: string, token: string): Promise<FileService> {
+    this.http.interceptors.request.use((req: AxiosRequestConfig) => {
+      req.headers['Authorization'] = `Bearer ${token}`;
+      req.headers['Accept'] = '*/*';
+      req.headers['responseType'] = ['blob'];
+      return req;
+    });
     const url = `${this.fileApi}${endpoint}`;
     const res = await this.http.get(url);
     return res.data;
