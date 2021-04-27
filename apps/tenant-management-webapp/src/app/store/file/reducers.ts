@@ -2,9 +2,8 @@ import {
   ActionTypes,
   FETCH_FILE_SPACE_SUCCESS,
   FETCH_FILE_LIST_SUCCESSES,
-  FILE_UPLOAD_SUCCESSES,
+  UPLOAD_FILE_SUCCESSES,
   DELETE_FILE_SUCCESSES,
-  DOWNLOAD_FILE_SUCCESSES,
   TERMINATE_FILE_SERVICE,
   DISABLE_FILE_SERVICE,
   ENABLE_FILE_SERVICE,
@@ -33,6 +32,18 @@ function updateSpecifiedFileType(fileTypes, fileType) {
   return newFileTypes;
 }
 
+function uploadFile(fileList, file) {
+  const newFileList = fileList;
+  newFileList.push(file);
+  return newFileList;
+}
+
+function deleteFile(fileList, file) {
+  const index = fileList.findIndex(({ id }) => id === file.id);
+  const newFileList = fileList;
+  newFileList.splice(index, 1);
+  return newFileList;
+}
 export default function (state = FILE_INIT, action: ActionTypes): FileService {
   switch (action.type) {
     case ENABLE_FILE_SERVICE:
@@ -78,18 +89,15 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
           activeTab: 'overall-view',
         },
       };
-    case FILE_UPLOAD_SUCCESSES: // add file to fileList
+    case UPLOAD_FILE_SUCCESSES: // add file to fileList
       return {
         ...state,
-        // fileList: [...(state.fileList || []), action.payload.data],
+        fileList: uploadFile(state.fileList, action.payload.result),
       };
     case DELETE_FILE_SUCCESSES:
       return {
         ...state, // remove delete file from reducer
-      };
-    case DOWNLOAD_FILE_SUCCESSES:
-      return {
-        ...state, // do nothing with reducer
+        fileList: deleteFile(state.fileList, action.payload.data),
       };
     case FETCH_FILE_LIST_SUCCESSES:
       return {

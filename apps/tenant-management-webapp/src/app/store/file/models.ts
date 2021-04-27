@@ -6,6 +6,7 @@ export interface FileTypeItem {
   tableData: {
     id: string;
   };
+  id: string;
 }
 
 export interface FileItem {
@@ -13,6 +14,10 @@ export interface FileItem {
   filename: string;
   size: number;
   fileURN: string;
+  typeName?: string;
+  recordId?: string;
+  created?: string;
+  lastAccessed?: string;
 }
 
 export interface FileService {
