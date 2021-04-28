@@ -58,5 +58,5 @@ export function initService(refresh = false) {
 }
 
 if (process.env.APP_ENVIRONMENT !== 'test') {
-  setInterval(initService.bind(true), refreshTimeInterval);
+  setInterval(initService, refreshTimeInterval, true);
 }
