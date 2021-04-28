@@ -84,6 +84,7 @@ const FileList = () => {
           <tr>
             <th>File Name</th>
             <th>Size</th>
+            <th>type</th>
             <th>FileURN</th>
             <th>Action</th>
           </tr>
@@ -94,6 +95,7 @@ const FileList = () => {
               <tr key={file.id}>
                 <td>{file.filename}</td>
                 <td>{file.size}</td>
+                <td>{file.typeName}</td>
                 <td>{file.fileURN}</td>
                 <td>
                   <img src={DownloadIcon} width="26" alt="download file" onClick={(e) => onDownloadFile(file)} />

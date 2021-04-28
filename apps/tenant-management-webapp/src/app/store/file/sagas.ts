@@ -19,7 +19,6 @@ import { FileApi } from './api';
 import FormData from 'form-data';
 
 export function* uploadFile(file) {
-  console.log(file);
   const state = yield select();
   const token = state.session.credentials.token;
   const api = yield new FileApi(state.config, token);
