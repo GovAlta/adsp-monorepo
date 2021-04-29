@@ -7,6 +7,7 @@ import { fetchConfig } from './config/sagas';
 import { fetchSpace, uploadFile, fileEnable, fetchFiles, deleteFile, downloadFile } from './file/sagas';
 import { fetchFileTypes, deleteFileTypes, createFileType, updateFileType } from './file/sagas';
 import { fetchTenant, createTenant, isTenantAdmin } from './tenant/sagas';
+import { fetchHealth } from './health/sagas';
 
 // Actions
 import { FETCH_ACCESS_ACTION } from './access/actions';
@@ -21,6 +22,7 @@ import {
   UPDATE_FILE_TYPE,
 } from './file/actions';
 import { FETCH_TENANT, CREATE_TENANT, CHECK_IS_TENANT_ADMIN } from './tenant/actions';
+import { FETCH_HEALTH_ACTION } from './health/actions';
 
 export function* watchSagas() {
   yield takeEvery(API_UPTIME_FETCH_ACTION, uptimeFetch);
@@ -39,4 +41,7 @@ export function* watchSagas() {
   yield takeEvery(UPDATE_FILE_TYPE, updateFileType);
   yield takeEvery(CREATE_TENANT, createTenant);
   yield takeEvery(CHECK_IS_TENANT_ADMIN, isTenantAdmin);
+
+  // health
+  yield takeEvery(FETCH_HEALTH_ACTION, fetchHealth);
 }

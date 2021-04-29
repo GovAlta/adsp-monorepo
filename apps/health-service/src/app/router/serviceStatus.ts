@@ -25,24 +25,34 @@ export function createServiceStatusRouter({ logger, serviceStatusRepository }: S
   // Get the service for the tenant
   // TODO: determine if this is the best way to pass the tenant id
   // TODO: need to validate the that the user has tenant access
-  router.get('/tenants/:tenantId/health', assertAuthenticatedHandler, async (req, res) => {
+  router.get('/tenants/:tenantId', assertAuthenticatedHandler, async (req, res) => {
     const { tenantId } = req.params;
     logger.info(`Current user: ${req.user}`);
     const serviceStatus = await serviceStatusRepository.getByTenantId(tenantId);
     res.json(serviceStatus);
   });
 
-  // Enable the service
-  router.post('/tenants/:tenantId/health', assertAuthenticatedHandler, (req, res) => {
+  // Create the service
+  router.post('/tenants/:tenantId', assertAuthenticatedHandler, (req, res) => {
     const { tenantId } = req.params;
-
+    console.log('initiating the service');
     // TODO: get it
+    res.json({ msg: 'initiating the service' });
   });
 
-  // Delete the service
-  router.delete('/tenants/:tenantId/health', assertAuthenticatedHandler, (req, res) => {
+  // Enable the service
+  router.patch('/tenants/:tenantId/enable', assertAuthenticatedHandler, (req, res) => {
     const { tenantId } = req.params;
+    console.log('enabling the service');
+    // TODO: get it
+    res.json({ msg: 'enabling the service' });
+  });
 
+  // Disable the service
+  router.patch('/tenants/:tenantId/disable', assertAuthenticatedHandler, (req, res) => {
+    const { tenantId } = req.params;
+    console.log('');
+    res.json({ msg: 'disabling the service' });
     // TODO: get it
   });
 

@@ -12,24 +12,27 @@ interface HealthMiddlewareProps extends Repositories {
   logger: Logger;
 }
 
-export const applyMiddleware = (app: Application, props: HealthMiddlewareProps) => {
+export const applyEndpoints = (app: Application, props: HealthMiddlewareProps) => {
   const serviceStatusRouter = createServiceStatusRouter(props);
 
+  // bind all service endpoints
   app.use('/health/v1', serviceStatusRouter);
 
+  // api docs
   let swagger = null;
   app.use('/swagger/docs/v1', (req, res) => {
     if (swagger) {
       res.json(swagger);
-    } else {
-      fs.readFile(`${__dirname}/swagger.json`, 'utf8', (err, data) => {
-        if (err) {
-          res.sendStatus(404);
-        } else {
-          swagger = JSON.parse(data);
-          res.json(swagger);
-        }
-      });
+      return;
     }
+
+    fs.readFile(`${__dirname}/swagger.json`, 'utf8', (err, data) => {
+      if (err) {
+        res.sendStatus(404);
+        return;
+      }
+      swagger = JSON.parse(data);
+      res.json(swagger);
+    });
   });
 };

@@ -4,13 +4,10 @@ import { AccessState } from './models';
  * Types
  */
 
-const GET_ACCESS_ACTION = 'tenant/access/GET_ACCESS';
-export const FETCH_ACCESS_ACTION = 'tenant/access/FETCH_ACCESS';
+const FETCH_ACCESS_ACTION = 'tenant/access/FETCH_ACCESS';
 const FETCH_ACCESS_SUCCESS_ACTION = 'tenant/access/FETCH_ACCESS_SUCCESS';
 
-interface GetAccessAction {
-  type: typeof GET_ACCESS_ACTION;
-}
+export { FETCH_ACCESS_ACTION };
 
 export interface FetchAccessAction {
   type: typeof FETCH_ACCESS_ACTION;
@@ -21,7 +18,7 @@ export interface FetchAccessSuccessAction {
   payload: AccessState;
 }
 
-export type ActionTypes = GetAccessAction | FetchAccessAction | FetchAccessSuccessAction;
+export type ActionTypes = FetchAccessAction | FetchAccessSuccessAction;
 
 /**
  * Functions

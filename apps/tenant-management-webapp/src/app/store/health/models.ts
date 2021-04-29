@@ -8,7 +8,7 @@ export interface ServiceStatus {
 
 export interface ServiceStatusApplication {
   name: string;
-  metadata?: {};
+  metadata?: unknown;
   status?: ServiceStatusType;
   statusTimestamp?: number;
   // Does there need to be more than one?
@@ -21,7 +21,7 @@ export interface ServiceStatusApplication {
 export interface ServiceStatusNotifications {
   applicationId: string;
   type: string;
-  data: {};
+  data: unknown;
   level: 'severe' | 'meh';
 }
 
