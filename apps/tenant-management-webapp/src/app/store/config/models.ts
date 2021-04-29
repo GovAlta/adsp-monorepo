@@ -24,6 +24,7 @@ export interface ServiceUrls {
   accessManagementApi: string;
   uiComponentUrl: string;
   fileApi?: string;
+  healthApi?: string;
 }
 
 export interface ConfigState {

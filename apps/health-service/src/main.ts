@@ -9,16 +9,13 @@ import {
   UnauthorizedError,
   NotFoundError,
   InvalidOperationError,
-  DomainEventService,
 } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { createRepositories } from './mongo';
-import { createEventService } from './amqp';
-import { applyMiddleware } from './app';
+import { applyEndpoints } from './app';
 import * as cors from 'cors';
 
-const logger = createLogger('health-service', environment.LOG_LEVEL || 'info');
-
+const logger = createLogger('health-service', environment?.LOG_LEVEL || 'info');
 const app = express();
 
 app.use(compression());
@@ -38,25 +35,24 @@ passport.deserializeUser(function (user, done) {
 });
 
 app.use(passport.initialize());
-
-// TODO: Do we need authentication for this?
 app.use('/health', passport.authenticate(['jwt', 'anonymous'], { session: false }));
 
-Promise.all([createRepositories({ ...environment, logger })]).then(([repositories]) => {
-  applyMiddleware(app, {
-    logger,
-    ...repositories,
-  });
+(async () => {
+  const createRepoJob = createRepositories({ ...environment, logger });
+  const [repositories] = [await createRepoJob];
 
-  app.get('/health', (req, res) =>
+  // service endpoints
+  applyEndpoints(app, { logger, ...repositories });
+
+  // non-service endpoints
+  app.get('/health', (_req, res) =>
     res.json({
       db: repositories.isConnected(),
     })
   );
 
-  /*eslint-disable */
-  app.use((err, req, res, next) => {
-    /*eslint-enable */
+  // error handler
+  app.use((err, _req, res, _next) => {
     if (err instanceof UnauthorizedError) {
       res.status(401).send(err.message);
     } else if (err instanceof NotFoundError) {
@@ -69,10 +65,10 @@ Promise.all([createRepositories({ ...environment, logger })]).then(([repositorie
     }
   });
 
+  // start service
   const port = environment.PORT || 3338;
-
   const server = app.listen(port, () => {
     logger.info(`Listening at http://localhost:${port}`);
   });
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
-});
+})();

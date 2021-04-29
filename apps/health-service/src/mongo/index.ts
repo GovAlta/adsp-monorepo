@@ -1,5 +1,4 @@
 import { connect, connection } from 'mongoose';
-import * as NodeCache from 'node-cache';
 import { Logger } from 'winston';
 import { Repositories } from '../app/repository';
 import { MongoHealthRepository } from './health';
@@ -12,37 +11,22 @@ interface MongoRepositoryProps {
   MONGO_PASSWORD: string;
 }
 
-export const createRepositories = ({
-  logger,
-  MONGO_URI,
-  MONGO_DB,
-  MONGO_USER,
-  MONGO_PASSWORD,
-}: MongoRepositoryProps): Promise<Repositories> =>
-  new Promise((resolve, reject) => {
-    const mongoConnectionString = `${MONGO_URI}/${MONGO_DB}`;
-    connect(
-      mongoConnectionString,
-      {
-        user: MONGO_USER,
-        pass: MONGO_PASSWORD,
-        useNewUrlParser: true,
-        useFindAndModify: false,
-        useUnifiedTopology: true,
-      },
-      (err) => {
-        if (err) {
-          reject(err);
-          return;
-        }
+export const createRepositories = async ({ logger, ...props }: MongoRepositoryProps): Promise<Repositories> => {
+  const mongoConnectionString = `${props.MONGO_URI}/${props.MONGO_DB}`;
 
-        const healthRepository = new MongoHealthRepository();
-        resolve({
-          serviceStatusRepository: healthRepository,
-          isConnected: () => connection.readyState === connection.states.connected,
-        });
-
-        logger.info(`Connected to MongoDB at: ${mongoConnectionString}`);
-      }
-    );
+  const mongoInst = await connect(mongoConnectionString, {
+    user: props.MONGO_USER,
+    pass: props.MONGO_PASSWORD,
+    useNewUrlParser: true,
+    useFindAndModify: false,
+    useUnifiedTopology: true,
   });
+
+  logger.info(`Connected to MongoDB at: ${mongoConnectionString}`);
+  const healthRepository = new MongoHealthRepository();
+
+  return Promise.resolve({
+    serviceStatusRepository: healthRepository,
+    isConnected: () => connection.readyState === mongoInst.connection.states.connected,
+  });
+};

@@ -1,14 +1,22 @@
+import React, { useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components';
 import { Page, Main } from '@components/Html';
-import React, { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { fetchHealth } from '@store/health/actions';
+import { RootState } from '@store/index';
+import { useDispatch, useSelector } from 'react-redux';
 
 function Health() {
   const dispatch = useDispatch();
+  const tenant = useSelector((state: RootState) => state.tenant);
+  const health = useSelector((state: RootState) => state.health);
 
   useEffect(() => {
-    // TODO: fetch the service's current status
-  }, [dispatch]);
+    dispatch(fetchHealth(tenant.name));
+  }, [tenant]);
+
+  useEffect(() => {
+    console.log('THE Health', health);
+  }, [health]);
 
   function toggleServiceState() {
     // TODO: toggle the service state here

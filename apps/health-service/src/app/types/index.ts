@@ -1,8 +1,3 @@
-export interface Job {
-  id: string;
-  name: string;
-}
-
 export type ServiceStatusType = 'online' | 'offline';
 
 export interface ServiceStatus {
@@ -13,7 +8,7 @@ export interface ServiceStatus {
 
 export interface ServiceStatusApplication {
   name: string;
-  metadata?: {};
+  metadata?: unknown;
   status?: ServiceStatusType;
   statusTimestamp?: number;
   timeIntervalMin: number;
@@ -29,7 +24,7 @@ export interface ServiceStatusApplicationConfiguration {
 export interface ServiceStatusNotifications {
   applicationId: string;
   type: string;
-  data: {};
+  data: unknown;
   level: 'severe' | '???';
 }
 

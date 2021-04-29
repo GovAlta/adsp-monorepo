@@ -7,7 +7,9 @@ export const environment = {
   AMQP_HOST: 'localhost',
   AMQP_USER: 'guest',
   AMQP_PASSWORD: 'guest',
-  PORT: 3334,
+  PORT: 3338,
 
   production: false,
+
+  LOG_LEVEL: 'debug',
 };
