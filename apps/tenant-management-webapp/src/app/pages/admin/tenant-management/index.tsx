@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from 'react';
-import { Route, Switch } from 'react-router-dom';
+import { Redirect, Route, Switch } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import styled from 'styled-components';
 
@@ -13,6 +13,7 @@ import Adminstration from './administration';
 import File from './services/file';
 import AccessPage from './services/access/access';
 import Container from '@components/Container';
+import Health from './services/health/Health';
 
 const TenantManagement = () => {
   const { setTitle } = useContext(HeaderCtx);
@@ -61,6 +62,13 @@ const TenantManagement = () => {
           </Route>
           <Route exact path="/admin/tenant-admin/services/file">
             <File />
+          </Route>
+          <Route exact path="/admin/tenant-admin/services/health">
+            <Health />
+          </Route>
+
+          <Route path="*">
+            <Redirect to="/404" />
           </Route>
         </Switch>
       </Container>
