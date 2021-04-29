@@ -1,6 +1,6 @@
 import { IsNotEmpty } from 'class-validator';
+import type { User } from '@core-services/core-common';
 import {
-  User,
   UserRole,
   Update,
   AssertRole,
@@ -8,8 +8,9 @@ import {
   InvalidOperationError,
   NotFoundError,
 } from '@core-services/core-common';
-import { Namespace, EventDefinition, ServiceUserRoles } from '../types';
-import { EventRepository } from '../repository';
+import type { Namespace, EventDefinition } from '../types';
+import { ServiceUserRoles } from '../types';
+import type { EventRepository } from '../repository';
 import { EventDefinitionEntity } from './eventDefinition';
 import { AjvValidationService, ValidationService } from '../validation';
 

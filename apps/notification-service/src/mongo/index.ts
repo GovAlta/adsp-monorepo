@@ -1,4 +1,4 @@
-import { connect, connection } from 'mongoose';
+import { connect, connection, ConnectionStates } from 'mongoose';
 import { Logger } from 'winston';
 import { Repositories } from '../notification';
 import { MongoNotificationSpaceRepository } from './space';
@@ -40,7 +40,7 @@ export const createRepositories = ({
             spaceRepository: new MongoNotificationSpaceRepository(),
             typeRepository: new MongoTypeRepository(subscriptionRepository),
             subscriptionRepository,
-            isConnected: () => connection.readyState === connection.states.connected,
+            isConnected: () => connection.readyState === ConnectionStates.connected,
           });
 
           logger.info(`Connected to MongoDB at: ${mongoConnectionString}`);

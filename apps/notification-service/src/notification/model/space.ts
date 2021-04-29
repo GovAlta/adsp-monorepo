@@ -1,6 +1,8 @@
-import { AssertRole, UnauthorizedError, Update, User } from '@core-services/core-common';
-import { NotificationSpaceRepository } from '../repository';
-import { NotificationSpace, ServiceUserRoles } from '../types';
+import type { User } from '@core-services/core-common';
+import { AssertRole, UnauthorizedError, Update } from '@core-services/core-common';
+import type { NotificationSpaceRepository } from '../repository';
+import type { NotificationSpace } from '../types';
+import { ServiceUserRoles } from '../types';
 
 export class NotificationSpaceEntity implements NotificationSpace {
   id: string;

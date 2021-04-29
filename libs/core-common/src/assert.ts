@@ -20,7 +20,9 @@ export const assertAuthenticatedHandler: RequestHandler = (req, res, next) => {
 type AssertRole = (
   operation: string,
   roles: UserRole | UserRole[]
+  // eslint-disable-next-line @typescript-eslint/ban-types
 ) => <T extends Function>(
+  // eslint-disable-next-line @typescript-eslint/ban-types
   target: object,
   propertyKey: string,
   descriptor: TypedPropertyDescriptor<T>

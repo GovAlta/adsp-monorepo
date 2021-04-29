@@ -2,9 +2,10 @@ import * as path from 'path';
 import * as mkdirp from 'mkdirp';
 import { IsNotEmpty } from 'class-validator';
 import * as validFilename from 'valid-filename';
-import { User, UnauthorizedError, Update, InvalidOperationError, New, AssertRole } from '@core-services/core-common';
+import type { User } from '@core-services/core-common';
+import { UnauthorizedError, Update, InvalidOperationError, New, AssertRole } from '@core-services/core-common';
 import { FileSpace, FileType, ServiceUserRoles } from '../types';
-import { FileSpaceRepository } from '../repository';
+import type { FileSpaceRepository } from '../repository';
 import { FileTypeEntity } from './type';
 export class FileSpaceEntity implements FileSpace {
   id: string;

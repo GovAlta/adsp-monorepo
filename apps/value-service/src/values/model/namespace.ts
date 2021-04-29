@@ -1,7 +1,9 @@
 import { IsNotEmpty } from 'class-validator';
-import { User, UserRole, Update, AssertRole, UnauthorizedError, InvalidOperationError, NotFoundError } from '@core-services/core-common';
-import { Namespace, ServiceUserRoles, ValueDefinition } from '../types';
-import { ValuesRepository } from '../repository';
+import type { User } from '@core-services/core-common';
+import { UserRole, Update, AssertRole, UnauthorizedError, InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import type { Namespace } from '../types';
+import { ServiceUserRoles, ValueDefinition } from '../types';
+import type { ValuesRepository } from '../repository';
 import { ValueDefinitionEntity } from './valueDefinition';
 import { AjvValidationService, ValidationService } from '../validation';
 
@@ -16,18 +18,18 @@ export class NamespaceEntity implements Namespace {
 
   @AssertRole('create namespace', ServiceUserRoles.Admin)
   static create(
-    user: User, 
-    repository: ValuesRepository, 
+    user: User,
+    repository: ValuesRepository,
     namespace: Namespace
   ) {
     return repository.save(
       new NamespaceEntity(repository, namespace, true)
     );
   }
-  
+
   constructor(
     private repository: ValuesRepository,
-    namespace: Namespace, 
+    namespace: Namespace,
     public isNew = false
   ) {
     this.validationService = new AjvValidationService(namespace.name);
@@ -37,13 +39,13 @@ export class NamespaceEntity implements Namespace {
     this.definitions = Object.entries(
       namespace.definitions || {}
     ).reduce(
-      (defs, [name, definition]) => 
+      (defs, [name, definition]) =>
         ({
           ...defs,
           [name]: new ValueDefinitionEntity(
-            this.repository, 
-            this.validationService, 
-            this.name, 
+            this.repository,
+            this.validationService,
+            this.name,
             definition
           )
         }),
@@ -83,11 +85,11 @@ export class NamespaceEntity implements Namespace {
     if (this.definitions[definition.name]) {
       throw new InvalidOperationError('Value definition already exists.');
     }
-    
+
     const newDefinition = new ValueDefinitionEntity(
       this.repository,
       this.validationService,
-      this.name, 
+      this.name,
       {
         name: definition.name,
         description: definition.description,
@@ -100,13 +102,13 @@ export class NamespaceEntity implements Namespace {
     );
 
     this.definitions[newDefinition.name] = newDefinition;
-    
+
     return this.repository.saveDefinition(newDefinition);
   }
 
   updateDefinition(
-    user: User, 
-    name: string, 
+    user: User,
+    name: string,
     update: Update<ValueDefinition, 'name'>
   ) {
     if (!this.canUpdate(user)) {
@@ -119,12 +121,12 @@ export class NamespaceEntity implements Namespace {
     }
 
     definition.update(update);
-    
+
     return this.repository.saveDefinition(definition);
   }
 
   canAccess(user: User) {
-    return user && 
+    return user &&
       (user.roles.includes(ServiceUserRoles.Admin) ||
       user.roles.includes(this.adminRole));
   }
@@ -136,9 +138,9 @@ export class NamespaceEntity implements Namespace {
   }
 
   canReadValue(user: User, value: string) {
-    return user && 
+    return user &&
       user.roles.includes(this.adminRole) ||
-      this.definitions[value] && 
+      this.definitions[value] &&
       (
         this.definitions[value].readRoles.length < 1 ||
         this.definitions[value].readRoles.find(r => user.roles.includes(r))
@@ -146,8 +148,8 @@ export class NamespaceEntity implements Namespace {
   }
 
   canWriteValue(user: User, value: string) {
-    return user && 
-      this.definitions[value] && 
+    return user &&
+      this.definitions[value] &&
       this.definitions[value].writeRoles.find(r => user.roles.includes(r));
   }
 }

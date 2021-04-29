@@ -97,7 +97,7 @@ export class FileEntity implements File {
     }
 
     const filePath = this.getFilePath(rootStoragePath);
-    return new Promise((resolve, reject) =>
+    return new Promise<void>((resolve, reject) =>
       // Delete the file first to avoid an orphaned file.
       // If the error is file not found, then proceed with deletion of the record.
       fs.unlink(filePath, (err) => (err && err.errno !== ENOENT ? reject(err) : resolve()))

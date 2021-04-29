@@ -1,4 +1,4 @@
-import { connect, connection } from 'mongoose';
+import { connect, connection, ConnectionStates } from 'mongoose';
 import * as NodeCache from 'node-cache';
 import { Logger } from 'winston';
 import { Repositories } from '../file';
@@ -35,7 +35,7 @@ export const createRepositories = ({ MONGO_URI, MONGO_DB, MONGO_USER, MONGO_PASS
           resolve({
             spaceRepository,
             fileRepository,
-            isConnected: () => connection.readyState === connection.states.connected,
+            isConnected: () => connection.readyState === ConnectionStates.connected,
           });
 
           logger.info(`Connected to MongoDB at: ${mongoConnectionString}`);
