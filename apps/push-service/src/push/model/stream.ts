@@ -13,7 +13,7 @@ export class StreamEntity implements Stream {
   events: StreamEvent[];
   subscriberRoles: string[];
 
-  stream: Observable<object & Pick<DomainEvent, 'correlationId' | 'context'>>;
+  stream: Observable<unknown & Pick<DomainEvent, 'correlationId' | 'context'>>;
 
   static create(repository: StreamRepository, space: PushSpaceEntity, id: string, stream: New<Stream>) {
     return repository.save(new StreamEntity(repository, space, { ...stream, spaceId: space.id, id }));

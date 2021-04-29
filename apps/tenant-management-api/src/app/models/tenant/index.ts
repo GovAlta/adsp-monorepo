@@ -93,7 +93,7 @@ interface FetchIssuersResponse {
 
 interface FetchNameRealmMappingResponse {
   success: boolean;
-  realmToNameMapping?: object;
+  realmToNameMapping?: Record<string, string>;
   errors?: Array<string>;
 }
 

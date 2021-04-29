@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
 import * as request from 'request';
 import { Logger } from 'winston';
 import { TokenRequestProps } from '../keycloak';

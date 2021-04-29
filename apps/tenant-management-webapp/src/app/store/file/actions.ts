@@ -68,7 +68,7 @@ export type ActionTypes =
 // | SetupFileAction;
 interface UploadFileAction {
   type: typeof UPLOAD_FILE;
-  payload: { data: object };
+  payload: { data: Record<string, unknown> };
 }
 interface UploadFileSuccessAction {
   type: typeof UPLOAD_FILE_SUCCESSES;
@@ -249,7 +249,7 @@ export const TerminateFileService = (fileService: FileService): TerminateFileSer
   },
 });
 
-export const UploadFileService = (data: object): UploadFileAction => ({
+export const UploadFileService = (data: Record<string, unknown>): UploadFileAction => ({
   type: UPLOAD_FILE,
   payload: {
     data,

@@ -24,7 +24,10 @@
               "inspect": false,
               "fileReplacements": []
             }
-          }
+          },
+          "outputs": [
+            "{options.outputPath}"
+          ]
         },
         "serve": {
           "builder": "@nrwl/node:execute",
@@ -51,9 +54,11 @@
           "builder": "@nrwl/jest:jest",
           "options": {
             "jestConfig": "apps/file-service/jest.config.js",
-            "tsConfig": "apps/file-service/tsconfig.spec.json",
             "passWithNoTests": true
-          }
+          },
+          "outputs": [
+            "coverage/apps/file-service"
+          ]
         }
       }
     },
@@ -81,9 +86,11 @@
           "builder": "@nrwl/jest:jest",
           "options": {
             "jestConfig": "libs/core-common/jest.config.js",
-            "tsConfig": "libs/core-common/tsconfig.spec.json",
             "passWithNoTests": true
-          }
+          },
+          "outputs": [
+            "coverage/libs/core-common"
+          ]
         }
       }
     },
@@ -111,6 +118,7 @@
               }
             ],
             "scripts": [],
+            "styles": [],
             "webpackConfig": "@nrwl/react/plugins/webpack"
           },
           "configurations": {
@@ -136,7 +144,10 @@
                 }
               ]
             }
-          }
+          },
+          "outputs": [
+            "{options.outputPath}"
+          ]
         },
         "serve": {
           "builder": "@nrwl/web:dev-server",
@@ -168,9 +179,11 @@
           "builder": "@nrwl/jest:jest",
           "options": {
             "jestConfig": "apps/tenant-management-webapp/jest.config.js",
-            "tsConfig": "apps/tenant-management-webapp/tsconfig.spec.json",
             "passWithNoTests": true
-          }
+          },
+          "outputs": [
+            "coverage/apps/tenant-management-webapp"
+          ]
         }
       }
     },
@@ -232,7 +245,10 @@
               "inspect": false,
               "fileReplacements": []
             }
-          }
+          },
+          "outputs": [
+            "{options.outputPath}"
+          ]
         },
         "serve": {
           "builder": "@nrwl/node:execute",
@@ -258,9 +274,11 @@
           "builder": "@nrwl/jest:jest",
           "options": {
             "jestConfig": "apps/tenant-management-api/jest.config.js",
-            "tsConfig": "apps/tenant-management-api/tsconfig.spec.json",
             "passWithNoTests": true
-          }
+          },
+          "outputs": [
+            "coverage/apps/tenant-management-api"
+          ]
         }
       }
     },
@@ -294,7 +312,10 @@
               "inspect": false,
               "fileReplacements": []
             }
-          }
+          },
+          "outputs": [
+            "{options.outputPath}"
+          ]
         },
         "serve": {
           "builder": "@nrwl/node:execute",
@@ -321,9 +342,11 @@
           "builder": "@nrwl/jest:jest",
           "options": {
             "jestConfig": "apps/value-service/jest.config.js",
-            "tsConfig": "apps/value-service/tsconfig.spec.json",
             "passWithNoTests": true
-          }
+          },
+          "outputs": [
+            "coverage/apps/value-service"
+          ]
         }
       }
     },
@@ -350,7 +373,10 @@
               "inspect": false,
               "fileReplacements": []
             }
-          }
+          },
+          "outputs": [
+            "{options.outputPath}"
+          ]
         },
         "serve": {
           "builder": "@nrwl/node:execute",
@@ -377,9 +403,11 @@
           "builder": "@nrwl/jest:jest",
           "options": {
             "jestConfig": "apps/notification-service/jest.config.js",
-            "tsConfig": "apps/notification-service/tsconfig.spec.json",
             "passWithNoTests": true
-          }
+          },
+          "outputs": [
+            "coverage/apps/notification-service"
+          ]
         }
       }
     },
@@ -406,7 +434,10 @@
               "inspect": false,
               "fileReplacements": []
             }
-          }
+          },
+          "outputs": [
+            "{options.outputPath}"
+          ]
         },
         "serve": {
           "builder": "@nrwl/node:execute",
@@ -433,9 +464,11 @@
           "builder": "@nrwl/jest:jest",
           "options": {
             "jestConfig": "apps/event-service/jest.config.js",
-            "tsConfig": "apps/event-service/tsconfig.spec.json",
             "passWithNoTests": true
-          }
+          },
+          "outputs": [
+            "coverage/apps/event-service"
+          ]
         }
       }
     },
@@ -461,7 +494,10 @@
               "inspect": false,
               "fileReplacements": []
             }
-          }
+          },
+          "outputs": [
+            "{options.outputPath}"
+          ]
         },
         "serve": {
           "builder": "@nrwl/node:execute",
@@ -488,9 +524,11 @@
           "builder": "@nrwl/jest:jest",
           "options": {
             "jestConfig": "apps/push-service/jest.config.js",
-            "tsConfig": "apps/push-service/tsconfig.spec.json",
             "passWithNoTests": true
-          }
+          },
+          "outputs": [
+            "coverage/apps/push-service"
+          ]
         }
       }
     },
@@ -531,9 +569,11 @@
           "builder": "@nrwl/jest:jest",
           "options": {
             "jestConfig": "tools/scripts/jest.config.js",
-            "tsConfig": "tools/tsconfig.spec.json",
             "passWithNoTests": true
-          }
+          },
+          "outputs": [
+            "coverage/tools/scripts"
+          ]
         }
       }
     }

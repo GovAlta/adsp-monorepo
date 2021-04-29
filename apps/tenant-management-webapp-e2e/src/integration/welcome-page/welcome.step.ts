@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
 /* eslint-disable cypress/no-unnecessary-waiting */
 import { getGreeting } from '../../support/app.po';
 import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';

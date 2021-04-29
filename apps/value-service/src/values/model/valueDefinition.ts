@@ -12,7 +12,7 @@ export class ValueDefinitionEntity implements ValueDefinition {
   public name: string;
   public description: string;
   public type: string;
-  public jsonSchema: object;
+  public jsonSchema: Record<string, unknown>;
   @IsNotEmpty()
   public readRoles: string[];
   @IsNotEmpty()
@@ -59,14 +59,14 @@ export class ValueDefinitionEntity implements ValueDefinition {
   }
 
   public canWriteValue(user: User) {
-    return user && 
+    return user &&
       user.roles &&
       this.writeRoles.find(r => user.roles.includes(r));
   }
 
   public canReadValue(user: User) {
     return this.readRoles.length < 1 || (
-      user && 
+      user &&
       user.roles &&
       this.readRoles.find(r => user.roles.includes(r))
     );
@@ -101,7 +101,7 @@ export class ValueDefinitionEntity implements ValueDefinition {
       const metrics: {[name: string]: number} = value.value['val-metrics'];
       delete value.value['val-metrics'];
 
-      Object.entries(metrics).forEach(([name, value]) => 
+      Object.entries(metrics).forEach(([name, value]) =>
         this.repository.writeMetric(this, name, valueRecord.timestamp, value)
       );
     }
@@ -118,8 +118,8 @@ export class ValueDefinitionEntity implements ValueDefinition {
   }
 
   public readValueMetric(
-    user: User, 
-    metric: string,  
+    user: User,
+    metric: string,
     criteria?: MetricCriteria
   ) {
     if (!this.canReadValue(user)) {

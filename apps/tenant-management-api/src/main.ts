@@ -16,7 +16,7 @@ import { UnauthorizedError, NotFoundError, InvalidOperationError } from '@core-s
 
 import * as cors from 'cors';
 
-const version = require('../../../package.json').version;
+import { version } from '../../../package.json';
 
 const app = express();
 app.use(express.json());

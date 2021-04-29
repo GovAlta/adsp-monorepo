@@ -4,7 +4,7 @@ import { plainToClass } from 'class-transformer';
 import * as HttpStatusCodes from 'http-status-codes';
 
 interface CustomRequest extends Request {
-  payload?: object;
+  payload?: unknown;
 }
 
 const validationMiddleware = (classValidator) => async (req: CustomRequest, res: Response, next: () => void) => {
@@ -30,7 +30,7 @@ const validationMiddleware = (classValidator) => async (req: CustomRequest, res:
     };
   }
 
-  const dataObj: object = plainToClass(classValidator, data);
+  const dataObj: Record<string, unknown> = plainToClass(classValidator, data);
   const errors = await validate(dataObj);
 
   if (errors.length > 0) {

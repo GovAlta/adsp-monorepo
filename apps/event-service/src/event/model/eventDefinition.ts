@@ -16,7 +16,7 @@ export class EventDefinitionEntity implements EventDefinition {
   @IsNotEmpty()
   public name: string;
   public description: string;
-  public payloadSchema: object;
+  public payloadSchema: Record<string, unknown>;
   @IsNotEmpty()
   public sendRoles: string[];
 

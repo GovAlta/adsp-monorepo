@@ -1,4 +1,4 @@
-import { connect, connection } from 'mongoose';
+import { connect, connection, ConnectionStates } from 'mongoose';
 import { Logger } from 'winston';
 import { Repositories } from '../event';
 import { MongoEventRepository } from './event';
@@ -35,7 +35,7 @@ export const createRepositories = ({
         } else {
           resolve({
             eventRepository: new MongoEventRepository(),
-            isConnected: () => connection.readyState === connection.states.connected,
+            isConnected: () => connection.readyState === ConnectionStates.connected,
           });
 
           logger.info(`Connected to MongoDB at: ${mongoConnectionString}`);

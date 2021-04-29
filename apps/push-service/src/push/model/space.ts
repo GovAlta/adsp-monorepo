@@ -1,6 +1,8 @@
-import { AssertRole, UnauthorizedError, Update, User } from '@core-services/core-common';
-import { PushSpaceRepository } from '../repository';
-import { PushSpace, ServiceUserRoles } from '../types';
+import type { User } from '@core-services/core-common';
+import { AssertRole, UnauthorizedError, Update } from '@core-services/core-common';
+import type { PushSpaceRepository } from '../repository';
+import type { PushSpace } from '../types'
+import { ServiceUserRoles } from '../types';
 
 export class PushSpaceEntity implements PushSpace {
   id: string;

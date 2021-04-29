@@ -104,7 +104,11 @@ export class MongoFileRepository implements FileRepository {
 
   delete(entity: FileEntity): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) =>
-      this.model.findOneAndDelete({ _id: entity.id }, (err, doc) => (err ? reject(err) : resolve(!!doc)))
+      this.model.findOneAndDelete(
+        { _id: entity.id },
+        null,
+        (err, doc) => (err ? reject(err) : resolve(!!doc))
+      )
     );
   }
 

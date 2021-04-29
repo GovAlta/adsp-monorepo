@@ -134,7 +134,6 @@ objects:
       labels:
         app: event-service
         component: queue
-        type: LoadBalancer
         apply-dev: "true"
         apply-test: "true"
         apply-staging: "true"
