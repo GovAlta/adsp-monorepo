@@ -23,8 +23,8 @@ const FileList = () => {
   const dispatch = useDispatch();
   const { fileList, fileTypes } = useSelector((state: RootState) => {
     return {
-      fileList: state.file.fileList || [],
-      fileTypes: state.file.fileTypes || [],
+      fileList: state.fileService.fileList || [],
+      fileTypes: state.fileService.fileTypes || [],
     };
   });
   const getFileTypesValues = () => {

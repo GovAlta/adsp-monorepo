@@ -137,12 +137,12 @@ export function* fetchFileTypes(config) {
     Authorization: `Bearer ${token}`,
   };
 
-  if (state.file === undefined || state.file.space === undefined) {
+  if (state.fileService === undefined || state.fileService.space === undefined) {
     return yield put(ErrorNotification({ message: 'no file space' }));
   }
 
   const data = {
-    spaceId: state.file.space.id,
+    spaceId: state.fileService.space.id,
   };
   try {
     const fileTypes = axios.get(url, { params: data, headers: headers });
@@ -189,7 +189,7 @@ export function* createFileType(fileType) {
     : [];
 
   const data = {
-    spaceId: state.file.space.id,
+    spaceId: state.fileService.space.id,
     name: fileType.payload.fileInfo.name,
     anonymousRead: true,
     readRoles: readRolesArray,
@@ -217,7 +217,7 @@ export function* updateFileType(fileType) {
   };
 
   const data = {
-    spaceId: state.file.space.id,
+    spaceId: state.fileService.space.id,
     name: fileType.payload.fileInfo.name,
     anonymousRead: fileType.payload.fileInfo.anonymousRead,
     readRoles: fileType.payload.fileInfo.readRoles,

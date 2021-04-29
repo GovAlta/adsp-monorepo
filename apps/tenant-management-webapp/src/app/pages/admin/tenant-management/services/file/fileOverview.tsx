@@ -50,7 +50,7 @@ const OverviewContent = () => {
   );
 };
 export default function FileOverview() {
-  const active = useSelector((state: RootState) => state.file.status.isActive);
+  const active = useSelector((state: RootState) => state.fileService.status.isActive);
   const roles = useSelector((state: RootState) => state.session.realmAccess.roles);
   const accessible = roles.includes('file-service-admin');
 

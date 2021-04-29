@@ -115,7 +115,7 @@ export default function FileTypes() {
     setEditNameInput(item.name);
   };
 
-  const fileTypes = useSelector((state: RootState) => state.file.fileTypes);
+  const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
 
   let types: any = null;
   if (fileTypes && fileTypes.length > 0) {
@@ -423,7 +423,7 @@ export default function FileTypes() {
     return (
       <div>
         There is no space
-        {JSON.stringify(state.file)}
+        {JSON.stringify(state.fileService)}
       </div>
     );
   };
@@ -440,7 +440,7 @@ export default function FileTypes() {
     });
   };
 
-  const fileSpace = useSelector((state: RootState) => state.file.space);
+  const fileSpace = useSelector((state: RootState) => state.fileService.space);
   return (
     <div>
       <div>{notifications()}</div>

@@ -83,8 +83,8 @@ const TabsForInit = () => {
 
 export default function File() {
   const dispatch = useDispatch();
-  const setupRequired = useSelector((state: RootState) => state.file.requirements.setup);
-  const active = useSelector((state: RootState) => state.file.status.isActive);
+  const setupRequired = useSelector((state: RootState) => state.fileService.requirements.setup);
+  const active = useSelector((state: RootState) => state.fileService.status.isActive);
 
   useEffect(() => {
     //dispatch(FetchFileSpace()); - I'm always getting a 401 here (from tenant-manangement-api)

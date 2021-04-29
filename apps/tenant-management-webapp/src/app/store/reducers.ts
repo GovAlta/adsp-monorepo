@@ -11,7 +11,7 @@ import Notifications from './notifications/reducers';
 import Tenant from './tenant/reducers';
 
 const rootReducer = combineReducers({
-  file: File,
+  fileService: File,
   apiStatus: ApiStatus,
   session: Session,
   config: Config,

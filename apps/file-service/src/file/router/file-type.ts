@@ -285,6 +285,7 @@ export const createFileTypeRouter = ({
         const deletedItem = await spaceEntity.deleteType(user, fileTypeId);
         res.json(deletedItem);
       } else {
+        logger.info(`The upload file length are ${filesOfType.results.length}`, filesOfType.results);
         throw new InvalidOperationError(`There are uploaded files of this File Type`);
       }
     } catch (err) {
