@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 
 const FileSpace = () => {
-  const spaceName = useSelector((state: RootState) => state.file.spaces[0] ?? 'N/A');
+  const spaceName = useSelector((state: RootState) => state.fileService.space ?? 'N/A');
 
   return (
     <div>
