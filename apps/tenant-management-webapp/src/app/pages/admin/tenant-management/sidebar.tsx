@@ -4,11 +4,12 @@ import { useSelector } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 
-import PulseIcon from '@icons/pulse-outline.svg';
+import BarChartIcon from '@icons/bar-chart-outline.svg';
 import FileIcon from '@icons/file-outline.svg';
 import AdminIcon from '@icons/options-outline.svg';
 import DashboardIcon from '@icons/home-outline.svg';
 import LogoutIcon from '@icons/log-out-outline.svg';
+import FitnessIcon from '@icons/fitness-outline.svg';
 import AuthContext from '@lib/authContext';
 import { RootState } from '@store/index';
 
@@ -36,12 +37,16 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
 
           <Title>Services</Title>
           <NavLink to="/admin/tenant-admin/access" activeClassName="current" title="Access">
-            <img src={PulseIcon} width="16" alt="Access" />
+            <img src={BarChartIcon} width="16" alt="Access" />
             <span>Access</span>
           </NavLink>
-          <NavLink to="/admin/tenant-admin/services/file" activeClassName="current" title="Access">
-            <img src={FileIcon} width="16" alt="Access" />
+          <NavLink to="/admin/tenant-admin/services/file" activeClassName="current" title="Files">
+            <img src={FileIcon} width="16" alt="Files" />
             <span>Files</span>
+          </NavLink>
+          <NavLink to="/admin/tenant-admin/services/health" activeClassName="current" title="Health">
+            <img src={FitnessIcon} width="16" alt="Health" />
+            <span>Health</span>
           </NavLink>
         </>
       )}

@@ -17,7 +17,12 @@
     "default": {
       "runner": "@nrwl/workspace/tasks-runners/default",
       "options": {
-        "cacheableOperations": ["build", "lint", "test", "e2e"]
+        "cacheableOperations": [
+          "build",
+          "lint",
+          "test",
+          "e2e"
+        ]
       }
     }
   },
@@ -33,7 +38,9 @@
     },
     "tenant-management-webapp-e2e": {
       "tags": [],
-      "implicitDependencies": ["tenant-management-webapp"]
+      "implicitDependencies": [
+        "tenant-management-webapp"
+      ]
     },
     "tenant-management-api": {
       "tags": []
@@ -51,6 +58,9 @@
       "tags": []
     },
     "tools-scripts": {
+      "tags": []
+    },
+    "health-service": {
       "tags": []
     }
   }
