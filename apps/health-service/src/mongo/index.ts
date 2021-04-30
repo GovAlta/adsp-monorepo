@@ -1,4 +1,4 @@
-import { connect, connection } from 'mongoose';
+import { connect, connection, ConnectionStates } from 'mongoose';
 import { Logger } from 'winston';
 import { Repositories } from '../app/repository';
 import { MongoHealthRepository } from './health';
@@ -27,6 +27,6 @@ export const createRepositories = async ({ logger, ...props }: MongoRepositoryPr
 
   return Promise.resolve({
     serviceStatusRepository: healthRepository,
-    isConnected: () => connection.readyState === mongoInst.connection.states.connected,
+    isConnected: () => connection.readyState === ConnectionStates.connected,
   });
 };
