@@ -15,7 +15,14 @@ export interface KeycloakApi {
   checkLoginIframe?: boolean;
   flow?: string;
 }
-
+export interface FileApi {
+  host: string;
+  endpoints: {
+    spaceAdmin: string;
+    fileTypeAdmin: string;
+    fileAdmin: string;
+  };
+}
 export interface ServiceUrls {
   eventServiceApiUrl: string;
   notificationServiceUrl: string;
@@ -31,6 +38,7 @@ export interface ConfigState {
   keycloakApi?: KeycloakApi;
   tenantApi?: TenantApi;
   serviceUrls?: ServiceUrls;
+  fileApi?: FileApi;
 }
 
 export const CONFIG_INIT: ConfigState = {};

@@ -32,7 +32,6 @@ export interface FileService {
   states: {
     activeTab: string;
   };
-  spaces: string[];
   space: string;
   fileTypes: Array<FileTypeItem>;
 }
@@ -49,7 +48,6 @@ export const FILE_INIT: FileService = {
     activeTab: 'overall-view',
   },
   fileList: [],
-  spaces: [],
   space: '',
   fileTypes: [],
 };

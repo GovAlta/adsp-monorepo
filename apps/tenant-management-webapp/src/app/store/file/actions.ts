@@ -6,8 +6,6 @@ export const ENABLE_FILE_SERVICE = 'tenant/file-service/activation/activate';
 export const SET_FILE_SERVICE_ACTIVE_TAB = 'tenant/file-service/states/tabs/active';
 export const SETUP_FILE_SERVICE = 'tenant/file-service/setup'; // The SETUP_FILE_SERVICE is only for testing
 
-export const FETCH_FILE_SPACE = 'tenant/file-service/space/fetch';
-export const FETCH_FILE_SPACE_SUCCESS = 'tenant/file-service/space/fetch/success';
 export const UPLOAD_FILE = 'tenant/file-service/upload';
 export const UPLOAD_FILE_SUCCESSES = 'tenant/file-service/upload/success';
 export const UPLOAD_FILE_FAILED = 'tenant/file-service/upload/fail';
@@ -52,8 +50,6 @@ export type ActionTypes =
   | EnableFileServiceAction
   | TerminateFileServiceAction
   | SetActiveTabAction
-  | FetchFileSpaceAction
-  | FetchFileSpaceSuccessAction
   | SetupFileAction
   | CreateFileSpaceSucceededAction
   | CreateFileSpaceFailedAction
@@ -120,16 +116,6 @@ interface DownloadFileSuccessAction {
 interface DownloadFileFailedAction {
   type: typeof DOWNLOAD_FILE_FAILED;
   payload: { data: string };
-}
-
-interface FetchFileSpaceAction {
-  type: typeof FETCH_FILE_SPACE;
-}
-interface FetchFileSpaceSuccessAction {
-  type: typeof FETCH_FILE_SPACE_SUCCESS;
-  payload: {
-    spaceInfo: { data: string };
-  };
 }
 
 interface TerminateFileServiceAction {
@@ -326,17 +312,6 @@ export const SetActiveTab = (activeTab: string): SetActiveTabAction => ({
   type: SET_FILE_SERVICE_ACTIVE_TAB,
   payload: {
     activeTab,
-  },
-});
-
-export const FetchFileSpace = (): FetchFileSpaceAction => ({
-  type: FETCH_FILE_SPACE,
-});
-
-export const FetchFileSpaceSuccess = (spaceInfo: { data: string }): FetchFileSpaceSuccessAction => ({
-  type: FETCH_FILE_SPACE_SUCCESS,
-  payload: {
-    spaceInfo, // FIXME: this type def (-^) needs to be fixed
   },
 });
 

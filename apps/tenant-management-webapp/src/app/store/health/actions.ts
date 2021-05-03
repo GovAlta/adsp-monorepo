@@ -30,7 +30,7 @@ export type ActionTypes = FetchHealthAction | FetchHealthSuccessAction;
 // *********
 const fetchHealth = (name: string): FetchHealthAction => ({
   type: 'health/FETCH_HEALTH',
-  payload: name
+  payload: name,
 });
 
 const fetchHealthSuccess = (payload: ServiceStatus): FetchHealthSuccessAction => ({
