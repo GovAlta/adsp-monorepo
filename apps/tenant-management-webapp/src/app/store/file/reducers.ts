@@ -1,6 +1,5 @@
 import {
   ActionTypes,
-  FETCH_FILE_SPACE_SUCCESS,
   FETCH_FILE_LIST_SUCCESSES,
   UPLOAD_FILE_SUCCESSES,
   DELETE_FILE_SUCCESSES,
@@ -111,12 +110,6 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
           ...state.states,
           activeTab: action.payload.activeTab,
         },
-      };
-
-    case FETCH_FILE_SPACE_SUCCESS:
-      return {
-        ...state,
-        spaces: [action.payload.spaceInfo.data],
       };
 
     case CREATE_FILE_SPACE_SUCCEEDED: {

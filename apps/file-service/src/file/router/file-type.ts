@@ -280,7 +280,11 @@ export const createFileTypeRouter = ({
         throw new NotFoundError('File Type', fileTypeId);
       }
       const spaceEntity: FileSpaceEntity = await spaceRepository.get(spaceId);
-      const filesOfType = await fileRepository.find(100000, null, { typeEquals: fileTypeId, spaceEquals: spaceId });
+      const filesOfType = await fileRepository.find(100000, null, {
+        typeEquals: fileTypeId,
+        spaceEquals: spaceId,
+        deleted: false,
+      });
       if (filesOfType.results.length === 0) {
         const deletedItem = await spaceEntity.deleteType(user, fileTypeId);
         res.json(deletedItem);
