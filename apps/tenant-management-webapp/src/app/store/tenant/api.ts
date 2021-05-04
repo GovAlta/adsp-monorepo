@@ -28,8 +28,7 @@ export class TenantApi {
   async createTenant(name: string): Promise<Tenant> {
     const url = `${this.config.host}${this.config.endpoints.createTenant}`;
     const res = await this.http.post(url, {
-      tenantName: name,
-      realm: name,
+      name: name,
     });
     return res.data;
   }

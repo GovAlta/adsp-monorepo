@@ -1,0 +1,103 @@
+Ok: &Ok
+  description: OK
+
+admin401: &admin401
+  description: |
+    Unauthorized. The allowed user groups are listed as follows:
+      | Group Name    | Keycloak Realm| Client  |
+      | ------------- |:-------------:| -------:|
+      | platformAdmin  | core | tenant-api |
+
+webInit401: &webInit401
+  description: |
+    Unauthorized. The allowed user groups are listed as follows:
+      | Group Name    | Keycloak Realm| Client  |
+      | ------------- |:-------------:| -------:|
+      | tenantInit  | core | tenant-platform-webapp |
+
+'/api/tenant/v1':
+  post:
+    tags:
+      - Tenant
+    description:
+      Create a new tenant.
+    responses:
+      200: *Ok
+      401: *webInit401
+      400:
+        description: Bad Request
+      409:
+        description: The tenant name is used.
+    requestBody:
+      content:
+        application/json:
+          schema:      # Request body contents
+            type: object
+            properties:
+              name:
+                type: string
+            example:   # Sample object
+              name: god-new-tenant
+  delete:
+    tags:
+      - Tenant
+    description:
+      Delete a tenant.
+    responses:
+      200: *Ok
+      401: *admin401
+    parameters:
+      - in: query
+        name: name
+        schema:
+          type: string
+        description: Tenant Name
+
+'/api/tenant/v1/issuers':
+  get:
+    tags:
+      - Tenant
+    description:
+      Fetch the allowed issuer list. The endpoint is mainly used for backend token validation
+    responses:
+      200: *Ok
+      401: *admin401
+'/api/tenant/v1/email':
+  post:
+    tags:
+      - Tenant
+    description:
+      Fetch the tenant admin information by email.
+    requestBody:
+      content:
+        application/json:
+          schema:      # Request body contents
+            type: object
+            properties:
+              email:
+                type: string
+            example:   # Sample object
+              email: tenantAdmin@gov.ab.ca
+    responses:
+      200: *Ok
+      401: *webInit401
+
+'/api/tenant/v1/db':
+  post:
+    tags:
+      - Tenant
+    description:
+      Update or create the tenant information in database.
+    requestBody:
+      content:
+        application/json:
+          schema:      # Request body contents
+            type: object
+            properties:
+              name:
+                type: string
+              realm:
+                type: string
+    responses:
+      200: *Ok
+      401: *admin401

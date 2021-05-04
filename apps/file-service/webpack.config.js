@@ -8,10 +8,8 @@ module.exports = (config) => {
       ...config.plugins,
       new SwaggerJSDocWebpackPlugin({
         swaggerDefinition,
-        apis: [
-          'apps/file-service/src/**/*.ts'
-        ]
-      })
-    ]
-  }
+        apis: ['apps/file-service/src/**/*.ts', 'apps/file-service/src/**/*.swagger.yml'],
+      }),
+    ],
+  };
 };

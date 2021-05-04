@@ -5,7 +5,7 @@ import { TenantConfigEntity } from '../model';
 import HttpException from '../errorHandlers/httpException';
 import * as HttpStatusCodes from 'http-status-codes';
 import { errorHandler } from '../errorHandlers';
-
+import { User } from '@core-services/core-common';
 interface TenantConfigRouterProps {
   tenantConfigurationRepository: TenantConfigurationRepository;
 }
@@ -13,19 +13,7 @@ interface TenantConfigRouterProps {
 export const createTenantConfigurationRouter = ({ tenantConfigurationRepository }: TenantConfigRouterProps) => {
   const tenantConfigRouter = Router();
 
-  /**
-   * @swagger
-   *
-   * /configuration/v1/tenantConfig/:
-   *   get:
-   *     tags: [ServiceOption]
-   *     description: Retrieves all tenant configurations
-   *
-   *     responses:
-   *       200:
-   *         description: Tenant configurations successfully retrieved.
-   */
-  tenantConfigRouter.get('/', async (req: Request, res: Response, next) => {
+  tenantConfigRouter.get('/list', async (req: Request, res: Response, next) => {
     const { top, after } = req.query;
 
     try {
@@ -40,32 +28,12 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
     }
   });
 
-  /**
-   * @swagger
-   *
-   * /configuration/v1/tenantConfig/{id}:
-   *   get:
-   *     tags: [TenantConfig]
-   *     description: Retrieves tenant configuration for a realm.
-   *     parameters:
-   *     - name: id
-   *       description: Name of the realm.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         $ref: '#.../model/TenantConfigEntity'
-   *
-   *     responses:
-   *       200:
-   *         description: Tenant configuration successfully retrieved.
-   *       404:
-   *         description: Tenant Configuration not found.
-   */
-  tenantConfigRouter.get('/:id', async (req, res, next) => {
+  tenantConfigRouter.get('/', async (req, res, next) => {
     const { id } = req.params;
-
+    const user = req.user as User;
+    const tenant = user.tenantName;
     try {
-      const results = await tenantConfigurationRepository.get(id);
+      const results = await tenantConfigurationRepository.getTenantConfig(tenant);
 
       if (!results) {
         throw new HttpException(HttpStatusCodes.NOT_FOUND, `Tenant Config for ID ${id} not found`);
@@ -76,44 +44,24 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
     }
   });
 
-  /**
-   * @swagger
-   *
-   * /configuration/v1/tenantConfig/:
-   *   post:
-   *     tags: [TenantConfig]
-   *     description: Creates a tenant realm configuration.
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             $ref: '#.../model/TenantConfigEntity'
-   *     responses:
-   *       200:
-   *         description: Tenant Configuration successfully created.
-   */
   tenantConfigRouter.post('/', async (req: Request, res: Response, next) => {
     const data = req.body;
-    const { realmName, configurationSettingsList } = data;
-
+    const { configurationSettingsList } = data;
+    const user = req.user as User;
+    const tenant = user.tenantName;
     try {
-      if (!realmName) {
-        throw new HttpException(HttpStatusCodes.BAD_REQUEST, 'Tenant Realm Name is required.');
-      }
-
       if (!configurationSettingsList) {
         throw new HttpException(HttpStatusCodes.BAD_REQUEST, 'Tenant Realm Configuration Settings are required');
       }
 
-      const results = await tenantConfigurationRepository.getTenantConfig(realmName);
+      const results = await tenantConfigurationRepository.getTenantConfig(tenant);
 
       if (results) {
-        throw new HttpException(HttpStatusCodes.BAD_REQUEST, `Tenant Config for Realm ${realmName} already exists.`);
+        throw new HttpException(HttpStatusCodes.BAD_REQUEST, `Tenant Config for tenant ${tenant} already exists.`);
       }
       const entity = await TenantConfigEntity.create(tenantConfigurationRepository, {
         ...data,
-        tenantConfig: data,
+        tenantName: tenant,
       });
 
       res.json(mapTenantConfig(entity));
@@ -122,45 +70,21 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
     }
   });
 
-  /**
-   * @swagger
-   *
-   * /configuration/v1/tenantConfig/:
-   *   put:
-   *     tags: [TenantConfig]
-   *     description: Updates a tenant realm configuration.
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             $ref: '#.../model/TenantConfigEntity'
-   *     responses:
-   *       200:
-   *         description: Tenant Configuration successfully created.
-   *       404:
-   *         description: Tenant Configuration not found.
-   *       400:
-   *         description: Tenant realm name or configuration are null.
-   */
-  tenantConfigRouter.put('/', async (req: Request, res: Response, next) => {
+  tenantConfigRouter.put('/', async (req: Request, res: Response) => {
     const data = req.body;
-    const { realmName, id, configurationSettingsList } = data;
+    const user = req.user as User;
+    const tenant = user.tenantName;
+
+    const { configurationSettingsList } = data;
 
     try {
-      if (!realmName || !configurationSettingsList) {
-        throw new HttpException(
-          HttpStatusCodes.BAD_REQUEST,
-          'Tenant Realm Name and Configuration Settings are required.'
-        );
+      const tenantConfig = await tenantConfigurationRepository.getTenantConfig(tenant);
+
+      if (!tenantConfig) {
+        throw new HttpException(HttpStatusCodes.NOT_FOUND, `Tenant Config for tenant ${tenant} not found`);
       }
 
-      const results = await tenantConfigurationRepository.get(id);
-
-      if (!results) {
-        throw new HttpException(HttpStatusCodes.NOT_FOUND, `Tenant Config for ID ${id} not found`);
-      }
-      const entity = await results.update(data);
+      const entity = await tenantConfig.update(configurationSettingsList);
 
       res.json(mapTenantConfig(entity));
     } catch (err) {
@@ -168,35 +92,15 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
     }
   });
 
-  /**
-   * @swagger
-   *
-   * /configuration/v1/tenantConfig/id:
-   *   delete:
-   *     tags: [TenantConfig]
-   *     description: Deletes tenant configuration for a realm.
-   *     parameters:
-   *     - name: id
-   *       description: Id of the tenant configuration.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         $ref: '#.../model/TenantConfigEntity'
-   *
-   *     responses:
-   *       200:
-   *         description: Tenant configuration successfully deleted.
-   *       404:
-   *         description: Tenant Configuration not found.
-   */
-  tenantConfigRouter.delete('/:id', async (req: Request, res: Response, next) => {
-    const { id } = req.params;
+  tenantConfigRouter.delete('/', async (req: Request, res: Response) => {
+    const user = req.user as User;
+    const tenant = user.tenantName;
 
     try {
-      const results = await tenantConfigurationRepository.get(id);
+      const results = await tenantConfigurationRepository.getTenantConfig(tenant);
 
       if (!results) {
-        throw new HttpException(HttpStatusCodes.NOT_FOUND, `Tenant Config for ID ${id} not found`);
+        throw new HttpException(HttpStatusCodes.NOT_FOUND, `Tenant Config for tenant ${tenant} not found`);
       }
       const success = await results.delete();
       res.json(success);

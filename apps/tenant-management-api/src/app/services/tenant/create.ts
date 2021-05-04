@@ -172,7 +172,7 @@ export const validateEmailInDB = async (email) => {
   const result = await TenantModel.findTenantByEmail(email);
   if (result.success) {
     const errorMessage = `${email} already created ${result.tenant.name}. One user can create only one realm.`;
-    throw new TenantError(errorMessage, HttpStatusCodes.BAD_REQUEST);
+    throw new TenantError(errorMessage, HttpStatusCodes.CONFLICT);
   }
   logger.info(`email - ${email} passed validation`);
 };

@@ -1,6 +1,5 @@
 const SwaggerJSDocWebpackPlugin = require('swagger-jsdoc-webpack-plugin');
 const swaggerDefinition = require('./swagger.config');
-const Dotenv = require('dotenv-webpack');
 
 module.exports = (config) => {
   return {
@@ -9,7 +8,7 @@ module.exports = (config) => {
       ...config.plugins,
       new SwaggerJSDocWebpackPlugin({
         swaggerDefinition,
-        apis: ['apps/tenant-management-api/src/app/**/*.ts', 'apps/tenant-management-api/src/app/**/*.swagger.yml'],
+        apis: ['apps/tenant-management-api/src/**/*.ts', 'apps/tenant-management-api/src/**/*.swagger.yml'],
       }),
     ],
   };

@@ -10,6 +10,9 @@ import {
 import { FileSpaceRepository, FileRepository } from '../repository';
 import { createdFileType, updatedFileType } from '../event';
 
+import { AuthenticationConfig, authenticateToken } from '@core-services/core-common';
+import * as HttpStatusCodes from 'http-status-codes';
+
 interface AdminRouterProps {
   logger: Logger;
   rootStoragePath: string;
@@ -17,6 +20,20 @@ interface AdminRouterProps {
   spaceRepository: FileSpaceRepository;
   fileRepository: FileRepository;
 }
+
+export const adminOnlyMiddleware = async (req, res, next: () => void) => {
+  const authConfig: AuthenticationConfig = {
+    tenantName: 'core',
+    client: 'tenant-api',
+    allowedRoles: ['file-service-admin'],
+  };
+
+  if (authenticateToken(authConfig, req.user)) {
+    next();
+  } else {
+    res.sendStatus(HttpStatusCodes.UNAUTHORIZED);
+  }
+};
 
 export const createAdminRouter = ({
   logger,
@@ -27,59 +44,7 @@ export const createAdminRouter = ({
 }: AdminRouterProps) => {
   const adminRouter = Router();
 
-  /**
-   * @swagger
-   *
-   * /file-admin/v1/{space}/types:
-   *   get:
-   *     tags:
-   *     - File Administration
-   *     description: Retrieves file types.
-   *     parameters:
-   *     - name: space
-   *       description: ID of the space to retrieve types from.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     responses:
-   *       200:
-   *         description: File types successfully retrieved.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 page:
-   *                   type: object
-   *                   properties:
-   *                     size:
-   *                       type: number
-   *                     after:
-   *                       type: string
-   *                     next:
-   *                       type: string
-   *                 results:
-   *                   type: array
-   *                   items:
-   *                     type: object
-   *                     properties:
-   *                       id:
-   *                         type: string
-   *                       name:
-   *                         type: string
-   *                       anonymousRead:
-   *                         type: boolean
-   *                       readRoles:
-   *                         type: array
-   *                         items:
-   *                           type: string
-   *                       updateRoles:
-   *                         type: array
-   *                         items:
-   *                           type: string
-   */
-  adminRouter.get('/:space/types', assertAuthenticatedHandler, async (req, res, next) => {
+  adminRouter.get('/:space/types', [adminOnlyMiddleware, assertAuthenticatedHandler], async (req, res, next) => {
     const user = req.user as User;
     const { space } = req.params;
 
@@ -109,74 +74,28 @@ export const createAdminRouter = ({
     }
   });
 
-  /**
-   * @swagger
-   *
-   * /file-admin/v1/{space}/types/{type}:
-   *   put:
-   *     tags:
-   *     - File Administration
-   *     description: Creates or updates a file type.
-   *     parameters:
-   *     - name: space
-   *       description: ID of the space of the type.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     - name: type
-   *       description: ID of the type.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             type: object
-   *             properties:
-   *               name:
-   *                 type: string
-   *               anonymousRead:
-   *                 type: boolean
-   *               readRoles:
-   *                 type: array
-   *                 items:
-   *                   type: string
-   *               updateRoles:
-   *                 type: array
-   *                 items:
-   *                   type: string
-   *     responses:
-   *       200:
-   *         description: Space successfully created or updated.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 id:
-   *                   type: string
-   *                 name:
-   *                   type: string
-   *                 anonymousRead:
-   *                   type: boolean
-   *                 readRoles:
-   *                   type: array
-   *                   items:
-   *                     type: string
-   *                 updateRoles:
-   *                   type: array
-   *                   items:
-   *                     type: string
-   *       401:
-   *         description: User not authorized to update file type.
-   *       404:
-   *         description: Space not found.
-   */
-  adminRouter.put('/:space/types/:type', assertAuthenticatedHandler, async (req, res, next) => {
+  adminRouter.get('/spaces', [adminOnlyMiddleware, assertAuthenticatedHandler], async (req, res, next) => {
+    const user = req.user as User;
+    const { top, after } = req.query;
+
+    try {
+      const spaces = await spaceRepository.find(parseInt((top as string) || '50', 50), after as string);
+      res.send({
+        page: spaces.page,
+        results: spaces.results
+          .filter((n) => n.canAccess(user))
+          .map((n) => ({
+            id: n.id,
+            name: n.name,
+            spaceAdminRole: n.spaceAdminRole,
+          })),
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  adminRouter.put('/:space/types/:type', [adminOnlyMiddleware, assertAuthenticatedHandler], async (req, res, next) => {
     const user = req.user as User;
     const { space, type } = req.params;
     const { name, anonymousRead, readRoles, updateRoles, spaceId } = req.body;
@@ -263,115 +182,40 @@ export const createAdminRouter = ({
     }
   });
 
-  /**
-   * @swagger
-   *
-   * /file-admin/v1/{space}/types/{type}/files:
-   *   get:
-   *     tags:
-   *     - File Administration
-   *     description: Retrieves files of a type.
-   *     parameters:
-   *     - name: space
-   *       description: Space to retrieve files from.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     - name: type
-   *       description: Type of files to retrieve.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     - name: top
-   *       description: Number of results to retrieve.
-   *       in: query
-   *       required: false
-   *       schema:
-   *         type: number
-   *     - name: after
-   *       description: Cursor to continue a previous request.
-   *       in: query
-   *       required: false
-   *       schema:
-   *         type: string
-   *     responses:
-   *       200:
-   *         description: Files successfully retrieved.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 page:
-   *                   type: object
-   *                   properties:
-   *                     size:
-   *                       type: number
-   *                     after:
-   *                       type: string
-   *                     next:
-   *                       type: string
-   *                 results:
-   *                   type: array
-   *                   items:
-   *                     type: object
-   *                     properties:
-   *                       id:
-   *                         type: string
-   *                       filename:
-   *                         type: string
-   *                       size:
-   *                         type: number
-   *                       createdBy:
-   *                         type: object
-   *                         properties:
-   *                           id:
-   *                             type: string
-   *                           name:
-   *                             type: string
-   *                       created:
-   *                         type: string
-   *                         format: date
-   *                       lastAccessed:
-   *                         type: string
-   *                         format: date
-   *                       scanned:
-   *                         type: boolean
-   *                       deleted:
-   *                         type: boolean
-   */
-  adminRouter.get('/:space/types/:type/files', assertAuthenticatedHandler, async (req, res, next) => {
-    const user = req.user as User;
-    const { space, type } = req.params;
-    const { top, after } = req.query;
+  adminRouter.get(
+    '/:space/types/:type/files',
+    [adminOnlyMiddleware, assertAuthenticatedHandler],
+    async (req, res, next) => {
+      const user = req.user as User;
+      const { space, type } = req.params;
+      const { top, after } = req.query;
 
-    try {
-      const results = await fileRepository.find(parseInt((top as string) || '10', 10), after as string, {
-        spaceEquals: space,
-        typeEquals: type,
-      });
+      try {
+        const results = await fileRepository.find(parseInt((top as string) || '10', 10), after as string, {
+          spaceEquals: space,
+          typeEquals: type,
+        });
 
-      res.json({
-        page: results.page,
-        results: results.results
-          .filter((result) => result.canAccess(user))
-          .map((result) => ({
-            id: result.id,
-            filename: result.filename,
-            size: result.size,
-            created: result.created,
-            createdBy: result.createdBy,
-            lastAccessed: result.lastAccessed,
-            scanned: result.scanned,
-            deleted: result.deleted,
-          })),
-      });
-    } catch (err) {
-      next(err);
+        res.json({
+          page: results.page,
+          results: results.results
+            .filter((result) => result.canAccess(user))
+            .map((result) => ({
+              id: result.id,
+              filename: result.filename,
+              size: result.size,
+              created: result.created,
+              createdBy: result.createdBy,
+              lastAccessed: result.lastAccessed,
+              scanned: result.scanned,
+              deleted: result.deleted,
+            })),
+        });
+      } catch (err) {
+        next(err);
+      }
     }
-  });
+  );
 
   return adminRouter;
 };

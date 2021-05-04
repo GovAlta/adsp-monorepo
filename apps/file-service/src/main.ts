@@ -16,6 +16,7 @@ import { applyFileMiddleware } from './file';
 import { createRepositories } from './mongo';
 import { createEventService } from './amqp';
 import * as cors from 'cors';
+import * as fs from 'fs';
 
 const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
 
@@ -82,6 +83,24 @@ Promise.all([
       logger.warn(`Unexpected error encountered in handler: ${err}`);
       res.sendStatus(500);
     }
+  });
+
+  // Define swagger
+  const swaggerDocument = fs.readFileSync(__dirname + '/swagger.json', 'utf8');
+  app.get('/swagger/json/v1', (req, res) => {
+    const { tenant } = req.query;
+    const swaggerObj = JSON.parse(swaggerDocument);
+    const tenantAuthentication = swaggerObj?.components?.securitySchemes?.tenant?.flows.authorizationCode;
+    if (tenant && tenantAuthentication) {
+      tenantAuthentication.tokenUrl = tenantAuthentication.tokenUrl.replace('realms/autotest', `realms/${tenant}`);
+      tenantAuthentication.authorizationUrl = tenantAuthentication.authorizationUrl.replace(
+        'realms/autotest',
+        `realms/${tenant}`
+      );
+      swaggerObj.components.securitySchemes.tenant.flows.authorizationCode = tenantAuthentication;
+    }
+
+    res.json(swaggerObj);
   });
 
   const port = environment.PORT || 3337;

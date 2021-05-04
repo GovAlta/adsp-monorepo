@@ -1,0 +1,84 @@
+Ok: &Ok
+  description: OK
+
+GoA401: &GoA401
+  description: |
+    Unauthorized. The allowed user groups are listed as follows:
+      | Group Name    | Keycloak Realm| Client  |
+      | ------------- |:-------------:| -------:|
+      | GoA  | any | any |
+
+# Define schema:
+Discovery: &Discovery
+  type: object
+  properties:
+    service:
+      type: string
+    host:
+      type: string
+
+'/api/discovery/v1':
+  get:
+    tags:
+      - Discovery
+    description:
+      Fetch the discovery (URN-service) list.
+    responses:
+      200: *Ok
+      401: *GoA401
+
+  post:
+    tags:
+      - Discovery
+    description:
+      Create a new URN entry
+    requestBody:
+      content:
+        application/json:
+          schema:      # Request body contents
+            type: object
+            properties:
+              name:
+                type: string
+              services:
+                type: array
+                items:
+                  *Discovery
+    responses:
+      200: *Ok
+      401: *GoA401
+  put:
+    tags:
+      - Discovery
+    description:
+      Update the URN entry by name
+    requestBody:
+      content:
+        application/json:
+          schema:      # Request body contents
+            type: object
+            properties:
+              name:
+                type: string
+              services:
+                type: array
+                items:
+                  *Discovery
+    responses:
+      201: *Ok
+      401: *GoA401
+
+  delete:
+    tags:
+     - Discovery
+    description:
+      Delete the URN entry by name
+    parameters:
+      - in: query
+        name: name
+        schema:
+          type: string
+        description: Service Name
+    responses:
+      200: *Ok
+      401: *GoA401

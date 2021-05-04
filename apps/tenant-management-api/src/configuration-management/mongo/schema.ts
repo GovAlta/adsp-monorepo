@@ -26,7 +26,7 @@ export const tenantConfigSchema = new Schema({
     type: String,
     required: true,
   },
-  realmName: {
+  tenantName: {
     type: String,
     required: true,
     unique: true,

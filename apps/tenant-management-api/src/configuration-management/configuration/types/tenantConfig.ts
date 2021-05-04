@@ -1,5 +1,5 @@
 export interface TenantConfig {
   id: string;
-  realmName: string;
+  tenantName: string;
   configurationSettingsList: JSON;
 }
