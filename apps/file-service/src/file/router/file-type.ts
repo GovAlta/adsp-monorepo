@@ -28,57 +28,7 @@ export const createFileTypeRouter = ({
   fileRepository,
 }: FileTypeRouterProps) => {
   const fileTypeRouter = Router();
-  /**
-   * @swagger
-   *
-   * /file-type/v1/fileTypes:
-   *   post:
-   *     tags:
-   *     - File
-   *     description: Upload a file.
-   *     requestBody:
-   *       content:
-   *         multipart/form-data:
-   *           schema:
-   *             type: object
-   *             properties:
-   *               space:
-   *                 type: string
-   *                 description: Space to upload the file to.
-   *               type:
-   *                 type: string
-   *                 description: Type of the file.
-   *               recordId:
-   *                 type: string
-   *                 description: ID of the record associated with the file.
-   *               filename:
-   *                 type: string
-   *                 description: Name of the file.
-   *               file:
-   *                 type: string
-   *                 format: binary
-   *                 description: Contents of the file.
-   *     responses:
-   *       200:
-   *         description: File successfully uploaded.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 id:
-   *                   type: string
-   *                 filename:
-   *                   type: string
-   *                 size:
-   *                   type: number
-   *       400:
-   *         description: Invalid parameters.
-   *       404:
-   *         description: Space or type not found.
-   *
-   *
-   */
+
   fileTypeRouter.post('/fileTypes', fileServiceAdminMiddleware, async (req, res, next) => {
     const user = req.user as User;
 
@@ -119,42 +69,6 @@ export const createFileTypeRouter = ({
     }
   });
 
-  /**
-   * @swagger
-   *
-   * /file-type/v1/fileTypes:
-   *   get:
-   *     tags:
-   *     - File
-   *     description: Retrieves a file's metadata.
-   *     parameters:
-   *     - name: fileId
-   *       description: ID of the file to retrieve.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     responses:
-   *       200:
-   *         description: File metadata
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 id:
-   *                   type: string
-   *                 filename:
-   *                   type: string
-   *                 size:
-   *                   type: number
-   *                 scanned:
-   *                   type: boolean
-   *                 deleted:
-   *                   type: boolean
-   *       404:
-   *         description: file not found
-   */
   fileTypeRouter.get('/fileTypes/:fileTypeId', async (req, res, next) => {
     const { fileTypeId } = req.params;
     const user = req.user as User;
@@ -175,10 +89,10 @@ export const createFileTypeRouter = ({
       throw new NotFoundError('File Type', fileTypeId);
     } catch (err) {
       const errMessage = `Error fetching type: ${err.message}`;
+
       logger.error(errMessage);
       res.statusMessage = errMessage;
-      res.status(400);
-      next(res);
+      next(err);
     }
   });
 
@@ -237,40 +151,10 @@ export const createFileTypeRouter = ({
     } catch (err) {
       const errMessage = `Error updating type: ${err.message}`;
       logger.error(errMessage);
-      res.statusMessage = errMessage;
-      res.status(400);
-      next(res);
+      next(err);
     }
   });
 
-  /**
-   * @swagger
-   *
-   * /file/v1/files/{fileId}:
-   *   delete:
-   *     tags:
-   *     - File
-   *     description: Marks a file for deletion.
-   *     parameters:
-   *     - name: fileId
-   *       description: ID of the file to delete.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     responses:
-   *       200:
-   *         description: Delete result
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 deleted:
-   *                   type: boolean
-   *       404:
-   *         description: file not found
-   */
   fileTypeRouter.delete('/fileTypes/:fileTypeId', assertAuthenticatedHandler, async (req, res, next) => {
     const { fileTypeId } = req.params;
     const user = req.user as User;
@@ -295,9 +179,7 @@ export const createFileTypeRouter = ({
     } catch (err) {
       const errMessage = `Failed deleting type: ${err.message}`;
       logger.error(errMessage);
-      res.statusMessage = errMessage;
-      res.status(400);
-      next(res);
+      next(err);
     }
   });
 

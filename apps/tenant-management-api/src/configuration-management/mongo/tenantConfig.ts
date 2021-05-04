@@ -35,9 +35,9 @@ export class MongoTenantConfigurationRepository implements TenantConfigurationRe
     });
   }
 
-  getTenantConfig(realmName: string): Promise<TenantConfigEntity> {
+  getTenantConfig(tenantName: string): Promise<TenantConfigEntity> {
     return new Promise<TenantConfigEntity>((resolve, reject) =>
-      this.tenantConfigModel.findOne({ realmName: realmName }, null, { lean: true }, (err, doc) =>
+      this.tenantConfigModel.findOne({ tenantName: tenantName }, null, { lean: true }, (err, doc) =>
         err ? reject(err) : resolve(this.fromDoc(doc))
       )
     );
@@ -78,7 +78,7 @@ export class MongoTenantConfigurationRepository implements TenantConfigurationRe
     return doc
       ? new TenantConfigEntity(this, {
           id: `${doc._id}`,
-          realmName: doc.realmName,
+          tenantName: doc.tenantName,
           configurationSettingsList: doc.configurationSettingsList,
         })
       : null;
@@ -86,7 +86,7 @@ export class MongoTenantConfigurationRepository implements TenantConfigurationRe
 
   private toDoc(entity: TenantConfigEntity) {
     return {
-      realmName: entity.realmName,
+      tenantName: entity.tenantName,
       configurationSettingsList: entity.configurationSettingsList,
     };
   }

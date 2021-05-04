@@ -9,6 +9,6 @@ export const mapServiceOption = (type: ServiceOption) => ({
 
 export const mapTenantConfig = (type: TenantConfig) => ({
   id: type.id,
-  realmName: type.realmName,
+  tenantName: type.tenantName,
   configurationSettingsList: type.configurationSettingsList,
 });

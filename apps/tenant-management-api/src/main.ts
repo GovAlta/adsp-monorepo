@@ -11,11 +11,8 @@ import { apiRouter } from './app/router';
 
 import { logger } from './middleware/logger';
 import { Request, Response, NextFunction } from 'express';
-
 import { UnauthorizedError, NotFoundError, InvalidOperationError } from '@core-services/core-common';
-
 import * as cors from 'cors';
-
 import { version } from '../../../package.json';
 
 const app = express();
@@ -36,8 +33,6 @@ passport.serializeUser(function (user, done) {
 passport.deserializeUser(function (user, done) {
   done(null, user);
 });
-
-const swaggerDocument = fs.readFileSync(__dirname + '/swagger.json', 'utf8');
 
 app.use(passport.initialize());
 
@@ -63,6 +58,7 @@ app.use('/', (req: Request, resp: Response, next: NextFunction) => {
 });
 
 app.use('/api', apiRouter);
+createConfigService(app);
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   if (err instanceof UnauthorizedError) {
@@ -77,15 +73,44 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-app.use('/swagger/docs', swaggerUi.serve, swaggerUi.setup(JSON.parse(swaggerDocument)));
+// Start to define swagger. Might need it to a module
+const swaggerDocument = fs.readFileSync(__dirname + '/swagger.json', 'utf8');
+const swaggerDocBaseUrl = '/swagger/docs';
+
+const swaggerHosts = {
+  tenantAPI: process.env.TENANT_MANAGEMENT_API_HOST || 'http://localhost:3333',
+  fileService: process.env.FILE_SERVICE_HOST || 'http://localhost:3337',
+};
+
+const swaggerUITenantAPIOptions = {
+  explorer: true,
+  swaggerOptions: {
+    persistAuthorization: true,
+    oauth2RedirectUrl: process.env.TENANT_MANAGEMENT_API_HOST + swaggerDocBaseUrl + '/oauth2-redirect.html',
+    url: `${swaggerHosts.tenantAPI}/swagger/json/v1`,
+  },
+};
+
+app.use(swaggerDocBaseUrl, swaggerUi.serve, swaggerUi.setup(null, swaggerUITenantAPIOptions));
 
 app.get('/swagger/json/v1', (req, res) => {
-  res.json(JSON.parse(swaggerDocument));
+  const { tenant } = req.query;
+  const swaggerObj = JSON.parse(swaggerDocument);
+  const tenantAuthentication = swaggerObj?.components?.securitySchemes?.tenant?.flows.authorizationCode;
+
+  if (tenant && tenantAuthentication) {
+    tenantAuthentication.tokenUrl = tenantAuthentication.tokenUrl.replace('realms/autotest', `realms/${tenant}`);
+    tenantAuthentication.authorizationUrl = tenantAuthentication.authorizationUrl.replace(
+      'realms/autotest',
+      `realms/${tenant}`
+    );
+    swaggerObj.components.securitySchemes.tenant.flows.authorizationCode = tenantAuthentication;
+  }
+
+  res.json(swaggerObj);
 });
 
 const port = process.env.port || 3333;
-
-createConfigService(app);
 
 const server = app.listen(port, () => {
   logger.info(`Listening at http://localhost:${port}/api`);

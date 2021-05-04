@@ -21,142 +21,19 @@ interface SpaceRouterProps {
 export const createSpaceRouter = ({ logger, eventService, spaceRepository }: SpaceRouterProps) => {
   const spaceRouter = Router();
 
-  /**
-   * @swagger
-   *
-   * /space/v1/spaces:
-   *   get:
-   *     tags:
-   *     - File Space
-   *     description: Retrieves file spaces.
-   *     parameters:
-   *     - name: top
-   *       description: Number of results to retrieve.
-   *       in: query
-   *       required: false
-   *       schema:
-   *         type: number
-   *     - name: after
-   *       description: Cursor to continue a previous request.
-   *       in: query
-   *       required: false
-   *       schema:
-   *         type: string
-   *     responses:
-   *       200:
-   *         description: File spaces successfully retrieved.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 page:
-   *                   type: object
-   *                   properties:
-   *                     size:
-   *                       type: number
-   *                     after:
-   *                       type: string
-   *                     next:
-   *                       type: string
-   *                 results:
-   *                   type: array
-   *                   items:
-   *                     type: object
-   *                     properties:
-   *                       id:
-   *                         type: string
-   *                       name:
-   *                         type: string
-   *                       spaceAdminRole:
-   *                         type: string
-   */
   spaceRouter.get('/spaces', assertAuthenticatedHandler, async (req, res, next) => {
     const user = req.user as User;
-    const { top, after } = req.query;
+    const name = user.tenantName
 
     try {
-      const spaces = await spaceRepository.find(parseInt((top as string) || '50', 50), after as string);
-      res.send({
-        page: spaces.page,
-        results: spaces.results
-          .filter((n) => n.canAccess(user))
-          .map((n) => ({
-            id: n.id,
-            name: n.name,
-            spaceAdminRole: n.spaceAdminRole,
-          })),
-      });
-    } catch (err) {
-      next(err);
-    }
-  });
+      const spaceId = await spaceRepository.getIdByName(name);
+      if (!spaceId) {
+        throw new NotFoundError('Space', name);
+      }
 
-  spaceRouter.get('/spaces/userspace', assertAuthenticatedHandler, async (req, res, next) => {
-    const user = req.user as User;
-    const { top, after } = req.query;
+      const spaceEntity = await spaceRepository.get(spaceId)
 
-    try {
-      const spaces = await spaceRepository.find(parseInt((top as string) || '10', 100000), after as string);
-      res.send({
-        page: spaces.page,
-        results: spaces.results
-          .filter((n) => n.canAccess(user))
-          .map((n) => ({
-            id: n.id,
-            name: n.name,
-            spaceAdminRole: n.spaceAdminRole,
-          })),
-      });
-    } catch (err) {
-      next(err);
-    }
-  });
-
-  /**
-   * @swagger
-   *
-   * /space/v1/spaces/{space}:
-   *   get:
-   *     tags:
-   *     - File Space
-   *     description: Retrieves a specified file space.
-   *     parameters:
-   *     - name: space
-   *       description: ID of the space to retrieve.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     responses:
-   *       200:
-   *         description: Space successfully retrieved.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 id:
-   *                   type: string
-   *                 name:
-   *                   type: string
-   *                 spaceAdminRole:
-   *                   type: string
-   *       401:
-   *         description: User not authorized to access file space.
-   *       404:
-   *         description: File space not found.
-   */
-  spaceRouter.get('/spaces/:space', assertAuthenticatedHandler, async (req, res, next) => {
-    const user = req.user as User;
-    const { space } = req.params;
-
-    try {
-      const spaceEntity = await spaceRepository.get(space);
-
-      if (!spaceEntity) {
-        throw new NotFoundError('Space', space);
-      } else if (!spaceEntity.canAccess(user)) {
+      if (!spaceEntity.canAccess(user)) {
         throw new UnauthorizedError('User not authorized to access space.');
       } else {
         res.json({
@@ -170,49 +47,6 @@ export const createSpaceRouter = ({ logger, eventService, spaceRepository }: Spa
     }
   });
 
-  /**
-   * @swagger
-   *
-   * /space/v1/spaces:
-   *   put:
-   *     tags:
-   *     - File Space
-   *     description: Creates or updates a file space.
-   *     parameters:
-   *     - name: space
-   *       description: ID of the space to create or update.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             type: object
-   *             properties:
-   *               name:
-   *                 type: string
-   *               spaceAdminRole:
-   *                 type: string
-   *     responses:
-   *       200:
-   *         description: Space successfully created or updated.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 id:
-   *                   type: string
-   *                 name:
-   *                   type: string
-   *                 spaceAdminRole:
-   *                   type: string
-   *       401:
-   *         description: User not authorized to update file space.
-   */
   spaceRouter.post('/spaces', assertAuthenticatedHandler, async (req, res, next) => {
     const user = req.user as User;
     const { spaceAdminRole } = req.body;

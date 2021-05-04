@@ -1,0 +1,160 @@
+FileType401: &FileType401
+  description: |
+    Unauthorized. The allowed user groups are listed as follows:
+      | Group Name    | Keycloak Realm| Client  | Role|
+      | ------------- |:-------------:| -------:|-------:|
+      | GoA  | Tenant Realms | any | Space Admin Role (file-service-admin) |
+
+Tenant401: &Tenant401
+  description: |
+    Unauthorized. The allowed user groups are listed as follows:
+      | Group Name    | Keycloak Realm| Client  | Role|
+      | ------------- |:-------------:| -------:|-------:|
+      | GoA  | Tenant Realms | any | file-service-admin |
+
+fileTypeSchema: &fileTypeSchema
+  name:
+    type: string
+    description: The name of the new file type. The name is unique within the file space.
+  anonymousRead:
+    type: boolean
+    description: When anonymousRead is set to true. The file type will be public, even the read roles are set.
+  readRoles:
+    type: array
+    items:
+      type: string
+    description: The read roles of file type. Only users with the read roles can access to the file. The user roles can be set in keycloak.
+  updateRoles:
+    type: array
+    items:
+      type: string
+    description: The update roles of file type. Users with the update roles can upload a file into the file type. The user roles can be set in keycloak.
+
+'/file-type/v1/fileTypes':
+  get:
+    tags:
+      - File Type
+    description: Retrieves a file's metadata.
+    responses:
+      '200':
+        description: File type within the spaces.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  <<: *fileTypeSchema
+      '400':
+        description: Bad request.
+      '401': *FileType401
+      '404':
+        description: Space or type not found.
+
+  post:
+    tags:
+      - File Type
+    description: Create a file type within current file space.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties: *fileTypeSchema
+    responses:
+      '200':
+        description: File type has been successfully created.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                <<: *fileTypeSchema
+      '400':
+        description: Bad request.
+      '404':
+        description: Space or type not found.
+      '401': *Tenant401
+
+'/file-type/v1/fileTypes/{fileTypeId}':
+  delete:
+    tags:
+      - File Type
+    description: Delete a file type.
+    parameters:
+      - name: fileTypeId
+        description: ID of the file to retrieve.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: File type has been successfully deleted
+      '401': *FileType401
+      '404':
+        description: File type not found
+
+  get:
+    tags:
+      - File Type
+    description: Retrieves a file's metadata.
+    parameters:
+      - name: fileTypeId
+        description: Retrieve the metadata of a file type  by ID.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: File metadata
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                <<: *fileTypeSchema
+      '401': *FileType401
+      '404':
+        description: File type not found
+  put:
+    tags:
+      - File Type
+    description: Update a file type by ID.
+    parameters:
+      - name: fileTypeId
+        description: ID of the file to retrieve.
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties: *fileTypeSchema
+    responses:
+      '200':
+        description: File metadata
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                <<: *fileTypeSchema
+      '401': *FileType401
+      '404':
+        description: File type not found

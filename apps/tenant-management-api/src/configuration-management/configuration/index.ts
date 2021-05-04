@@ -7,7 +7,9 @@ import { errorHandler } from './errorHandlers';
 export * from './types';
 export * from './repository';
 export * from './model';
+import * as passport from 'passport';
 
+const passportMiddleware = passport.authenticate(['jwt'], { session: false });
 interface ConfigMiddlewareProps extends Repositories {
   logger: Logger;
 }
@@ -29,22 +31,6 @@ export const applyConfigMiddleware = (
   const serviceConfigRouter = createConfigurationRouter(serviceConfigRouterProps);
   const tenantConfigRouter = createTenantConfigurationRouter(tenantConfigRouterProps);
 
-  app.use('/api/configuration/v1/serviceOptions/', serviceConfigRouter);
-  app.use('/api/configuration/v1/tenantConfig/', tenantConfigRouter);
-
-  let swagger = null;
-  app.use('/swagger/docs/v1', (req, res) => {
-    if (swagger) {
-      res.json(swagger);
-    } else {
-      fs.readFile(`${__dirname}/swagger.json`, 'utf8', (err, data) => {
-        if (err) {
-          res.sendStatus(404);
-        } else {
-          swagger = JSON.parse(data);
-          res.json(swagger);
-        }
-      });
-    }
-  });
+  app.use('/api/configuration/v1/serviceOptions/', passportMiddleware, serviceConfigRouter);
+  app.use('/api/configuration/v1/tenantConfig/', passportMiddleware, tenantConfigRouter);
 };

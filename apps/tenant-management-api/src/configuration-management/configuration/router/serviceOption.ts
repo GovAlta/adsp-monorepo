@@ -13,18 +13,6 @@ interface ServiceOptionRouterProps {
 export const createConfigurationRouter = ({ serviceConfigurationRepository }: ServiceOptionRouterProps) => {
   const serviceOptionRouter = Router();
 
-  /**
-   * @swagger
-   *
-   * /configuration/v1/serviceOptions/:
-   *   get:
-   *     tags: [ServiceOption]
-   *     description: Retrieves all service options
-   *
-   *     responses:
-   *       200:
-   *         description: Service options successfully retrieved.
-   */
   serviceOptionRouter.get('/', async (req: Request, res: Response) => {
     const { top, after } = req.query;
 
@@ -40,27 +28,6 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
     }
   });
 
-  /**
-   * @swagger
-   *
-   * /configuration/v1/serviceOptions/{id}:
-   *   get:
-   *     tags: [ServiceOption]
-   *     description: Retrieves service options for a service type.
-   *     parameters:
-   *     - name: id
-   *       description: Service type.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *
-   *     responses:
-   *       200:
-   *         description: Service options successfully retrieved.
-   *       404:
-   *         description: Service not found.
-   */
   serviceOptionRouter.get('/:id', async (req, res) => {
     const { id } = req.params;
 
@@ -77,24 +44,6 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
     }
   });
 
-  /**
-   * @swagger
-   *
-   * /configuration/v1/serviceOptions/:
-   *   post:
-   *     tags: [ServiceOption]
-   *     description: Creates a service option configuration.
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             $ref: '#.../model/ServiceOptionEntity'
-   *
-   *     responses:
-   *       200:
-   *         description: Service options successfully created.
-   */
   serviceOptionRouter.post('/', async (req: Request, res: Response) => {
     const data = req.body;
     const { service, version } = data;
@@ -119,30 +68,10 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
 
       res.json(mapServiceOption(entity));
     } catch (err) {
-      errorHandler(err, req, res);
+      return errorHandler(err, req, res);
     }
   });
 
-  /**
-   * @swagger
-   *
-   * /configuration/v1/serviceOptions/:
-   *   put:
-   *     tags: [ServiceOption]
-   *     description: Updates a service option configuration.
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             $ref: '#.../model/ServiceOptionEntity'
-   *
-   *     responses:
-   *       200:
-   *         description: Service options successfully Updated.
-   *       404:
-   *         description: Service not found.
-   */
   serviceOptionRouter.put('/', async (req: Request, res: Response) => {
     const data = req.body;
     const { service, id, version } = data;
@@ -166,27 +95,6 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
     }
   });
 
-  /**
-   * @swagger
-   *
-   * /configuration/v1/serviceOptions/id:
-   *   delete:
-   *     tags: [TenantConfig]
-   *     description: Deletes service configuration..
-   *     parameters:
-   *     - name: id
-   *       description: Id of the service.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         $ref: '#.../model/TenantConfigEntity'
-   *
-   *     responses:
-   *       200:
-   *         description: Service configuration successfully deleted.
-   *       404:
-   *         description: Service Configuration not found.
-   */
   serviceOptionRouter.delete('/:id', async (req: Request, res: Response, next) => {
     const { id } = req.params;
 
