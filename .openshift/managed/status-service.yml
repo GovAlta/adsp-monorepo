@@ -22,7 +22,7 @@ parameters:
     required: true
     description: The application name of the service.
     displayName: application name
-    value: service-status
+    value: status-service
   - name: NAME_SUFFIX
     description: Suffix applied to the names of the objects created.
     displayName: Name Suffix
@@ -81,6 +81,19 @@ objects:
       database-password: ${MONGODB_PASSWORD}
       database-user: ${MONGODB_USER}
       database-uri: mongodb://${APP_NAME}-mongodb${NAME_SUFFIX}:27017
+
+  - apiVersion: v1
+    data:
+      KEYCLOAK_CLIENT_SECRET: ""
+    kind: Secret
+    metadata:
+      labels:
+          app: ${APP_NAME}${NAME_SUFFIX}
+          component: database
+          apply-init: "true"
+          apply-branch: "true"
+      name: ${APP_NAME}
+    type: Opaque
 
   - apiVersion: v1
     kind: PersistentVolumeClaim
