@@ -108,7 +108,7 @@ export function* deleteFileTypes(fileType) {
   const api = yield new FileApi(state.config, token);
 
   try {
-    yield api.fetchFileType(fileType.payload.fileInfo.id);
+    yield api.deleteFileType(fileType.payload.fileInfo.id);
 
     yield put(DeleteFileTypeSucceededService(fileType.payload.fileInfo));
   } catch (e) {
