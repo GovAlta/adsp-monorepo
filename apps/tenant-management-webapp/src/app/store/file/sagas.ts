@@ -112,7 +112,7 @@ export function* deleteFileTypes(fileType) {
 
     yield put(DeleteFileTypeSucceededService(fileType.payload.fileInfo));
   } catch (e) {
-    yield put(ErrorNotification({ message: e.response.statusText }));
+    yield put(ErrorNotification({ message: e.response.data }));
   }
 }
 

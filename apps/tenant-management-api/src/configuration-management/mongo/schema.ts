@@ -32,7 +32,15 @@ export const tenantConfigSchema = new Schema({
     unique: true,
   },
   configurationSettingsList: {
-    type: JSON,
-    required: true,
+    fileService: {
+      isActive: {
+        type: Boolean,
+        required: true,
+      },
+      isDisabled: {
+        type: Boolean,
+        required: true,
+      },
+    },
   },
 });
