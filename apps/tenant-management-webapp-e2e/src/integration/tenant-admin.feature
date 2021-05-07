@@ -22,7 +22,7 @@ Feature: Tenant admin
   @regression @smoke-test @api
   Scenario Outline: As a GoA service owner I can get a list of "<Options>"
     When the user sends a configuration service request to "<End Point>"
-    Then the user gets a list of configuration options
+    Then the user gets a list of "<Options>"
     Examples:
       | Options               | End Point                             |
       | Service Options       | /api/configuration/v1/serviceOptions/ |
