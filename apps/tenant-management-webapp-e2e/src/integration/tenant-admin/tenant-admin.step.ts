@@ -64,9 +64,18 @@ When('the user sends a configuration service request to {string}', function (req
   });
 });
 
-Then('the user gets a list of configuration options', function () {
+Then('the user gets a list of {string}', function (options) {
   expect(responseObj.status).to.eq(200);
-  expect(responseObj.body.results).to.be.a('array');
+  switch (options) {
+    case 'Service Options':
+      expect(responseObj.body.results).to.be.a('array');
+      break;
+    case 'Tenant Configurations':
+      expect(responseObj.body.configurationSettingsList).to.not.equal(null);
+      break;
+    default:
+      expect(options).to.be.oneOf(['Service Options', 'Tenant Configurations']);
+  }
 });
 
 Then('the user views a link for the Keycloak admin', function () {
