@@ -1,4 +1,4 @@
-import { FileItem, FileService, FileTypeItem } from './models';
+import { FileItem, FileService, FileTypeItem, FileServiceDocs } from './models';
 
 export const TERMINATE_FILE_SERVICE = 'tenant/file-service/delete'; // delete file service
 export const DISABLE_FILE_SERVICE = 'tenant/file-service/activation/';
@@ -28,6 +28,8 @@ export const CREATE_FILE_TYPE = 'tenant/file-service/fileType/create';
 export const CREATE_FILE_TYPE_SUCCEEDED = 'file-service/fileType/createsuccess';
 export const UPDATE_FILE_TYPE = 'tenant/file-service/fileType/update';
 export const UPDATE_FILE_TYPE_SUCCEEDED = 'file-service/fileType/updatesuccess';
+export const FETCH_FILE_DOCS = 'file-service/docs';
+export const FETCH_FILE_DOCS_SUCCEEDED = 'file-service/docs/fetch/success';
 
 // =============
 // Actions Types
@@ -57,10 +59,12 @@ export type ActionTypes =
   | DeleteFileTypeSucceededAction
   | UpdateFileTypeSucceededAction
   | CreateFileTypeSucceededAction
+  | FetchFileDocsSucceededAction
   | FetchFileTypeAction
   | UpdateFileTypeAction
   | DeleteFileTypeAction
-  | CreateFileTypeAction;
+  | CreateFileTypeAction
+  | FetchFileDocsAction;
 // | SetupFileAction;
 interface UploadFileAction {
   type: typeof UPLOAD_FILE;
@@ -211,6 +215,17 @@ interface CreateFileTypeAction {
   payload: {
     fileInfo: { data: string };
   };
+}
+
+interface FetchFileDocsSucceededAction {
+  type: typeof FETCH_FILE_DOCS_SUCCEEDED;
+  payload: {
+    fileDocs: FileServiceDocs;
+  };
+}
+
+interface FetchFileDocsAction {
+  type: typeof FETCH_FILE_DOCS;
 }
 
 // ==============
@@ -387,4 +402,13 @@ export const CreateFileTypeService = (fileInfo: { data: string }): CreateFileTyp
   payload: {
     fileInfo,
   },
+});
+
+export const FetchFileDocsService = (): FetchFileDocsAction => ({
+  type: FETCH_FILE_DOCS,
+});
+
+export const FetchFileDocsSucceededService = (fileDocs: FileServiceDocs): FetchFileDocsSucceededAction => ({
+  type: FETCH_FILE_DOCS_SUCCEEDED,
+  payload: { fileDocs: fileDocs },
 });

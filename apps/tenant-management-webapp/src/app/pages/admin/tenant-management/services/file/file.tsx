@@ -6,6 +6,7 @@ import FileOverview from './fileOverview';
 import FileHeader from './fileHeader';
 import FileTypes from './fileTypes';
 import FileSettings from './fileSettings';
+import FileDoc from './fileDocs';
 import FileList from './fileList';
 import './file.css';
 import InitSetup from './fileInitSetup';
@@ -66,6 +67,10 @@ const TabsForSetup = () => {
 
       <Tab label="Settings">
         <FileSettings />
+      </Tab>
+
+      <Tab label="Document">
+        <FileDoc />
       </Tab>
     </Tabs>
   );

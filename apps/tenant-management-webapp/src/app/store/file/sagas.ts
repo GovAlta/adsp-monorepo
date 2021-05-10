@@ -10,6 +10,7 @@ import {
   CreateFileTypeSucceededService,
   UpdateFileTypeSucceededService,
   DeleteFileSuccessService,
+  FetchFileDocsSucceededService,
 } from './actions';
 
 import { FileApi } from './api';
@@ -139,5 +140,17 @@ export function* updateFileType(fileType) {
     yield put(UpdateFileTypeSucceededService({ data: fileTypeInfo }));
   } catch (e) {
     yield put(ErrorNotification({ message: `${e.message} - updateFileType` }));
+  }
+}
+
+export function* fetchFileDocs() {
+  const state = yield select();
+  const token = state.session.credentials.token;
+  const api = yield new FileApi(state.config, token);
+  try {
+    const fileDocs = yield api.fetchFileServiceDoc();
+    yield put(FetchFileDocsSucceededService(fileDocs));
+  } catch (e) {
+    yield put(ErrorNotification({ message: `${e.message} - fetchFileDoc` }));
   }
 }
