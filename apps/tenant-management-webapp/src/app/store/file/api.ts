@@ -19,18 +19,18 @@ export class FileApi {
   }
 
   async uploadFile(formData: FormData): Promise<FileService> {
-    const url = `${this.fileConfig.endpoints.fileAdmin}`;
+    const url = this.fileConfig.endpoints.fileAdmin;
     const res = await this.http.post(url, formData);
     return res.data;
   }
 
   async fetchFiles(): Promise<FileService> {
-    const url = `${this.fileConfig.endpoints.fileAdmin}`;
+    const url = this.fileConfig.endpoints.fileAdmin;
     const res = await this.http.get(url);
     return res.data;
   }
 
-  async downloadFiles(id: string, token: string): Promise<FileService> {
+  async downloadFiles(id: string): Promise<FileService> {
     this.http.interceptors.request.use((req: AxiosRequestConfig) => {
       req.headers['responseType'] = ['blob'];
       return req;
@@ -48,13 +48,19 @@ export class FileApi {
   }
 
   async enableFileService(): Promise<FileService> {
-    const url = `${this.fileConfig.endpoints.spaceAdmin}`;
+    const url = this.fileConfig.endpoints.spaceAdmin;
     const res = await this.http.post(url);
     return res.data;
   }
 
   async fetchFileType(): Promise<FileService> {
-    const url = `${this.fileConfig.endpoints.fileTypeAdmin}`;
+    const url = this.fileConfig.endpoints.fileTypeAdmin;
+    const res = await this.http.get(url);
+    return res.data;
+  }
+
+  async fetchSpace(): Promise<FileService> {
+    const url = this.fileConfig.endpoints.spaceAdmin;
     const res = await this.http.get(url);
     return res.data;
   }
@@ -76,7 +82,7 @@ export class FileApi {
       updateRoles: updateRolesArray,
     };
 
-    const url = `${this.fileConfig.endpoints.fileTypeAdmin}`;
+    const url = this.fileConfig.endpoints.fileTypeAdmin;
     const res = await this.http.post(url, data);
     return res.data;
   }

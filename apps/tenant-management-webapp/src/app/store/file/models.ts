@@ -56,13 +56,6 @@ export interface RequestBodySchema {
 }
 
 export interface FileService {
-  status: {
-    isActive: boolean;
-    isDisabled: boolean;
-  };
-  requirements: {
-    setup: boolean;
-  };
   fileList: Array<FileItem>;
   states: {
     activeTab: string;
@@ -73,13 +66,6 @@ export interface FileService {
 }
 
 export const FILE_INIT: FileService = {
-  status: {
-    isActive: false,
-    isDisabled: true,
-  },
-  requirements: {
-    setup: false,
-  },
   states: {
     activeTab: 'overall-view',
   },

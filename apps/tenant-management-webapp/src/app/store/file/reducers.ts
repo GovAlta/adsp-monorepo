@@ -4,9 +4,10 @@ import {
   UPLOAD_FILE_SUCCESSES,
   DELETE_FILE_SUCCESSES,
   TERMINATE_FILE_SERVICE,
-  DISABLE_FILE_SERVICE,
+  //DISABLE_FILE_SERVICE,
   ENABLE_FILE_SERVICE,
-  SETUP_FILE_SERVICE,
+  FETCH_FILE_SPACE_SUCCEEDED,
+  //SETUP_FILE_SERVICE,
   SET_FILE_SERVICE_ACTIVE_TAB,
   CREATE_FILE_SPACE_SUCCEEDED,
   CREATE_FILE_SPACE_FAILED,
@@ -49,41 +50,11 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
     case ENABLE_FILE_SERVICE:
       return {
         ...state,
-        status: {
-          ...state.status,
-          isActive: true,
-        },
-      };
-
-    case DISABLE_FILE_SERVICE:
-      return {
-        ...state,
-        status: {
-          ...state.status,
-          isActive: true,
-        },
-        states: {
-          ...state.states,
-          activeTab: 'overall-view',
-        },
-      };
-
-    case SETUP_FILE_SERVICE:
-      return {
-        ...state,
-        requirements: {
-          ...state.requirements,
-          setup: false,
-        },
       };
 
     case TERMINATE_FILE_SERVICE:
       return {
         ...state,
-        requirements: {
-          ...state.requirements,
-          setup: true,
-        },
         states: {
           ...state.states,
           activeTab: 'overall-view',
@@ -113,7 +84,8 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
         },
       };
 
-    case CREATE_FILE_SPACE_SUCCEEDED: {
+    case CREATE_FILE_SPACE_SUCCEEDED:
+    case FETCH_FILE_SPACE_SUCCEEDED: {
       return {
         ...state,
         space: action.payload.fileInfo.data,
@@ -121,13 +93,9 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
     }
 
     case CREATE_FILE_SPACE_FAILED: {
-      const _status = state.status;
-      _status.isActive = false;
-
       return {
         ...state,
         space: null,
-        status: _status,
       };
     }
 

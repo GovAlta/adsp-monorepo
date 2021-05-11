@@ -5,15 +5,26 @@ import { GoAButton } from '@abgov/react-components';
 import externalLinkIcon from '@assets/external-link.svg';
 import { RootState } from '@store/index';
 import { EnableFileService } from '@store/file/actions';
+import { UpdateTenantConfigService } from '@store/tenantConfig/actions';
 import { Aside, Main } from '@components/Html';
 
 const OverviewBtn = () => {
   const dispatch = useDispatch();
+  const tenantConfig = useSelector((state: RootState) => state.tenantConfig);
+  const space = useSelector((state: RootState) => state.fileService.space);
 
   return (
     <GoAButton
       onClick={() => {
-        dispatch(EnableFileService());
+        // check there is space, if not create space
+        // update tenant config
+        if (Object.keys(space).length === 0) {
+          dispatch(EnableFileService());
+        }
+        const updateConfig = Object.assign({}, tenantConfig);
+        updateConfig.fileService.isActive = true;
+        updateConfig.fileService.isEnabled = true;
+        dispatch(UpdateTenantConfigService(updateConfig));
       }}
     >
       Enable Service
@@ -49,18 +60,18 @@ const OverviewContent = () => {
     </>
   );
 };
-export default function FileOverview() {
-  const active = useSelector((state: RootState) => state.fileService.status.isActive);
+const FileOverview = (props: any) => {
   const roles = useSelector((state: RootState) => state.session.realmAccess.roles);
   const accessible = roles.includes('file-service-admin');
-
   return (
     <div>
       <OverviewContent />
+
       {accessible
-        ? `This service is ${active ? 'active' : 'inactive'}`
+        ? `This service is ${props.isActive ? 'active' : 'inactive'}   `
         : "You don't have permission to access this service"}
-      {accessible && !active && <OverviewBtn />}
+      {accessible && !props.isEnabled && <OverviewBtn />}
     </div>
   );
-}
+};
+export default FileOverview;
