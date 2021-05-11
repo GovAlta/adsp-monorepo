@@ -86,9 +86,11 @@ Promise.all([
   });
 
   // Define swagger
-  const swaggerDocument = fs.readFileSync(__dirname + '/swagger.json', 'utf8');
+  let swaggerDocument = fs.readFileSync(__dirname + '/swagger.json', 'utf8');
   app.get('/swagger/json/v1', (req, res) => {
     const { tenant } = req.query;
+    const keycloakRootTag = '<KEYCLOAK_ROOT>';
+    swaggerDocument = swaggerDocument.replace(keycloakRootTag, process.env.KEYCLOAK_ROOT_URL);
     const swaggerObj = JSON.parse(swaggerDocument);
     const tenantAuthentication = swaggerObj?.components?.securitySchemes?.tenant?.flows.authorizationCode;
     if (tenant && tenantAuthentication) {
