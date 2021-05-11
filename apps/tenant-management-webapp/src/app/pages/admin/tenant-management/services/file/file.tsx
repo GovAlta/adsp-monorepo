@@ -13,7 +13,8 @@ import InitSetup from './fileInitSetup';
 import { RootState } from '@store/index';
 import { Main } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
-
+import { FetchTenantConfigService } from '@store/tenantConfig/actions';
+import { FetchFileSpaceService } from '@store/file/actions';
 const Templates = () => {
   return (
     <div>
@@ -38,11 +39,11 @@ const APIIntegration = () => {
   );
 };
 
-const TabsForSetup = () => {
+const TabsForSetup = (props: any) => {
   return (
     <Tabs>
       <Tab label="Overview">
-        <FileOverview />
+        <FileOverview isActive={props.isActive} isEnabled={props.isEnabled} />
       </Tab>
 
       <Tab label="Space Config">{}</Tab>
@@ -88,19 +89,20 @@ const TabsForInit = () => {
 
 export default function File() {
   const dispatch = useDispatch();
-  const setupRequired = useSelector((state: RootState) => state.fileService.requirements.setup);
-  const active = useSelector((state: RootState) => state.fileService.status.isActive);
-
+  const tenantConfig = useSelector((state: RootState) => state.tenantConfig);
+  const setupRequired = Object.keys(tenantConfig).length === 0 && !('fileService' in tenantConfig);
+  const space = useSelector((state: RootState) => state.fileService.space);
   useEffect(() => {
-    //dispatch(FetchFileSpace()); - I'm always getting a 401 here (from tenant-manangement-api)
+    dispatch(FetchTenantConfigService());
+    dispatch(FetchFileSpaceService());
   }, [dispatch]);
-
-  const FileOverviewTab = setupRequired ? <TabsForInit /> : <TabsForSetup />;
+  const isActive = tenantConfig.fileService?.isActive;
+  const isEnabled = tenantConfig.fileService?.isEnabled && space !== null;
 
   return (
     <Main>
-      <FileHeader />
-      {active ? FileOverviewTab : <FileOverview />}
+      <FileHeader isSetup={setupRequired} isActive={isActive} />
+      {setupRequired ? <TabsForInit /> : <TabsForSetup isActive={isActive} isEnabled={isEnabled} />}
     </Main>
   );
 }

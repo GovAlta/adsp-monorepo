@@ -1,9 +1,10 @@
 import React from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { GoARadioGroup, GoAButton } from '@abgov/react-components';
-
-import { DisableFileService, TerminateFileService } from '@store/file/actions';
+import { UpdateTenantConfigService } from '@store/tenantConfig/actions';
+import { TerminateFileService } from '@store/file/actions';
 import { FILE_INIT } from '@store/file/models';
+import { RootState } from '@store/index';
 
 const FileSettings = () => {
   const Space = () => {
@@ -70,7 +71,7 @@ const FileSettings = () => {
 
   const ServiceManagement = () => {
     const dispatch = useDispatch();
-
+    const tenantConfig = useSelector((state: RootState) => state.tenantConfig);
     return (
       <div>
         <h3>Service Management</h3>
@@ -79,20 +80,20 @@ const FileSettings = () => {
 
         <GoAButton
           buttonType="secondary"
-          content="Disable File Service"
-          onClick={() =>
-            dispatch(
-              DisableFileService(
-                FILE_INIT // FIXME: this is not right, but currently the method is defined as needing these params
-              )
-            )
-          }
-        />
+          onClick={() => {
+            const updateConfig = Object.assign({}, tenantConfig);
+            updateConfig.fileService.isActive = false;
+            updateConfig.fileService.isEnabled = false;
+
+            dispatch(UpdateTenantConfigService(updateConfig));
+          }}
+        >
+          Disable File Service
+        </GoAButton>
 
         <GoAButton
           className="file-disable-btn"
           buttonType="tertiary"
-          content="Terminate File Service"
           onClick={() =>
             dispatch(
               TerminateFileService(
@@ -100,7 +101,9 @@ const FileSettings = () => {
               )
             )
           }
-        />
+        >
+          Terminate File Service
+        </GoAButton>
       </div>
     );
   };

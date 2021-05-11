@@ -37,7 +37,7 @@ export const tenantConfigSchema = new Schema({
         type: Boolean,
         required: true,
       },
-      isDisabled: {
+      isEnabled: {
         type: Boolean,
         required: true,
       },

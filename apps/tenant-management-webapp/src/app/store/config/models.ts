@@ -5,6 +5,7 @@ export interface TenantApi {
     createTenant: string;
     tenantNameByRealm: string;
     tenantByEmail: string;
+    tenantConfig: string;
   };
 }
 

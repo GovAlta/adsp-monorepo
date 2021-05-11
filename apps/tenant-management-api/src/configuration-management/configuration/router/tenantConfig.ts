@@ -44,7 +44,7 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
     }
   });
 
-  tenantConfigRouter.post('/', async (req: Request, res: Response, next) => {
+  tenantConfigRouter.post('/', async (req: Request, res: Response) => {
     const data = req.body;
     const { configurationSettingsList } = data;
     const user = req.user as User;
@@ -74,7 +74,6 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
     const data = req.body;
     const user = req.user as User;
     const tenant = user.tenantName;
-
     const { configurationSettingsList } = data;
 
     try {
@@ -83,7 +82,6 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
       if (!tenantConfig) {
         throw new HttpException(HttpStatusCodes.NOT_FOUND, `Tenant Config for tenant ${tenant} not found`);
       }
-
       const entity = await tenantConfig.update(configurationSettingsList);
 
       res.json(mapTenantConfig(entity));

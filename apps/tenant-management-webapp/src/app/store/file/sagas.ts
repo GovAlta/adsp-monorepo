@@ -90,6 +90,18 @@ export function* enableFileService() {
   }
 }
 
+export function* fetchSpace() {
+  const state = yield select();
+  const token = state.session.credentials.token;
+  const api = yield new FileApi(state.config, token);
+  try {
+    const enableFile = yield api.fetchSpace();
+    yield put(CreateFileSpaceSucceededService({ data: enableFile }));
+  } catch (e) {
+    yield put(CreateFileSpaceFailedService(e.message));
+  }
+}
+
 export function* fetchFileTypes() {
   const state = yield select();
   const token = state.session.credentials.token;

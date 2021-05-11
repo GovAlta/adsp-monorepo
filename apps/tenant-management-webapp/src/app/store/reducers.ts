@@ -10,6 +10,7 @@ import Session from './session/reducers';
 import Notifications from './notifications/reducers';
 import Tenant from './tenant/reducers';
 import ServiceStatus from './health/reducers';
+import TenantConfig from './tenantConfig/reducers';
 
 const rootReducer = combineReducers({
   fileService: File,
@@ -20,6 +21,7 @@ const rootReducer = combineReducers({
   tenant: Tenant,
   notifications: Notifications,
   health: ServiceStatus,
+  tenantConfig: TenantConfig,
 });
 
 const persistConfig = {

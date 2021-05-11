@@ -3,21 +3,18 @@ import './file.css';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 
-const FileHeader = () => {
-  const setup = useSelector((state: RootState) => state.fileService.requirements.setup);
-  const active = useSelector((state: RootState) => state.fileService.status.isActive);
+const FileHeader = (props: any) => {
   const roles = useSelector((state: RootState) => state.session.realmAccess.roles);
-
   const accessible = roles.includes('file-service-admin');
 
   let headerState = '';
   let headerStateClass = '';
 
-  if (setup || !accessible) {
+  if (props.isSetup || !accessible) {
     headerState = 'Disabled';
     headerStateClass = 'file-header-tag-disabled';
   } else {
-    if (active) {
+    if (props.isActive) {
       headerState = 'Active';
       headerStateClass = 'file-header-tag-active';
     } else {
