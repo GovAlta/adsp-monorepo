@@ -9,8 +9,7 @@ export class TenantConfigApi {
     if (!token) {
       throw new Error('missing auth token = tenant api');
     }
-    this.http = axios.create({ baseURL: 'http://localhost:3333' });
-    //this.http = axios.create({ baseURL: config.host });
+    this.http = axios.create({ baseURL: config.host });
     this.config = config;
     this.http.interceptors.request.use((req: AxiosRequestConfig) => {
       req.headers['Authorization'] = `Bearer ${token}`;
