@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { ConfigState, FileApi as FileApiConfig } from '@store/config/models';
-import { FileService } from './models';
+import { FileService, FileServiceDocs } from './models';
 
 export class FileApi {
   private http: AxiosInstance;
@@ -92,5 +92,65 @@ export class FileApi {
     const url = `${this.fileConfig.endpoints.fileTypeAdmin}/${fileInfo.id}`;
     const res = await this.http.put(url, data);
     return res.data;
+  }
+
+  swaggerDocToFileDocs(swaggerDocs) {
+    const fileTypeDocs = [];
+    const fileDocs = [];
+    const fileTypeTag = 'File Type';
+    const fileTag = 'File';
+    let fileDescription = '';
+    let fileTypeDescription = '';
+    // Extract the fileType and file Docs from swagger
+    for (const [path, content] of Object.entries(swaggerDocs.paths)) {
+      // Not all object within the swagger paths are paths. Only the ones include '/' are paths
+      if (path.includes('/')) {
+        for (const [method, detail] of Object.entries(content)) {
+          if (detail.tags.includes(fileTypeTag)) {
+            fileTypeDocs.push({
+              method: method,
+              path: path,
+              ...detail,
+            });
+          }
+
+          if (detail.tags.includes(fileTag)) {
+            fileDocs.push({
+              method: method,
+              path: path,
+              ...detail,
+            });
+          }
+        }
+      }
+    }
+
+    for (const tag of swaggerDocs.tags) {
+      if (tag.name === fileTag) {
+        fileDescription = tag.description;
+      }
+
+      if (tag.name === fileTypeTag) {
+        fileTypeDescription = tag.description;
+      }
+    }
+
+    return {
+      fileTypeDoc: {
+        apiDocs: fileTypeDocs,
+        description: fileTypeDescription,
+      },
+      fileDoc: {
+        apiDocs: fileDocs,
+        description: fileDescription,
+      },
+    };
+  }
+
+  async fetchFileServiceDoc(): Promise<FileServiceDocs> {
+    const url = `/swagger/json/v1`;
+    const res = await this.http.get(url);
+    const docs = this.swaggerDocToFileDocs(res.data);
+    return docs;
   }
 }

@@ -14,6 +14,7 @@ import {
   DELETE_FILE_TYPE_SUCCEEDED,
   UPDATE_FILE_TYPE_SUCCEEDED,
   CREATE_FILE_TYPE_SUCCEEDED,
+  FETCH_FILE_DOCS_SUCCEEDED,
 } from './actions';
 import { FILE_INIT, FileService } from './models';
 
@@ -152,6 +153,12 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
       return {
         ...state,
         fileTypes: [...(state.fileTypes || []), action.payload.fileInfo.data],
+      };
+
+    case FETCH_FILE_DOCS_SUCCEEDED:
+      return {
+        ...state,
+        docs: action.payload.fileDocs,
       };
 
     default:
