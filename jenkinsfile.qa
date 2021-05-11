@@ -25,6 +25,11 @@ pipeline {
           defaultValue: '@regression and not @ignore',
           description: 'tags for tests to be executed.'
         )
+        string(
+          name: 'cypress_config',
+          defaultValue: 'cypress.test.json',
+          description: 'cypress json file to be used.'
+        )
     }
 
     stages {
@@ -54,12 +59,12 @@ pipeline {
             script {
                 // def source = new File('source.txt') //Hello World
                 // Update cypress.json file with tags before run the tests
-                def text = readFile file: "apps/tenant-management-webapp-e2e/cypress.json"
+                def text = readFile file: "apps/tenant-management-webapp-e2e/${cypress_config}"
                 text = text.replaceAll(/"TAGS":.+/, "\"TAGS\": \"${tags}\",")
                 echo text
-                writeFile file: "apps/tenant-management-webapp-e2e/cypress.json", text: text
+                writeFile file: "apps/tenant-management-webapp-e2e/${cypress_config}", text: text
             }
-          sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --baseUrl=${base_url}"
+          sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --baseUrl=${base_url} --cypress-config='apps/tenant-management-webapp-e2e/${cypress_config}'"
         }
         post {
           always {

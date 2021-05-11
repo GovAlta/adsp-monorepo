@@ -36,8 +36,28 @@ class WelcomePage {
     return cy.get('button:contains("Tenant Login")');
   }
 
+  tenantNameLabel() {
+    return cy.get('label:contains("Please enter tenant name:")');
+  }
+
+  tenantNameInput() {
+    return cy.get('input');
+  }
+
+  loginButton() {
+    return cy.get('button:contains("Login")');
+  }
+
   userIcon() {
     return cy.get('div > svg');
+  }
+
+  realmHeader() {
+    return cy.get('#kc-header-wrapper');
+  }
+
+  getStartedContinueButton() {
+    return cy.get('button:contains("Continue")');
   }
 }
 

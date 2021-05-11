@@ -171,7 +171,7 @@ pipeline {
                 text = text.replaceAll(/"TAGS":.+/, "\"TAGS\": \"@smoke-test and not @ignore\",")
                 writeFile file: "apps/tenant-management-webapp-e2e/cypress.json", text: text
             }
-        sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --baseUrl=https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca"
+        sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --baseUrl=https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca --cypress-config='apps/tenant-management-webapp-e2e/cypress.json'"
       }
       post {
         always {
@@ -254,11 +254,11 @@ pipeline {
       steps {
             script {
                 // Update cypress.json file with tags before run the tests
-                def text = readFile file: "apps/tenant-management-webapp-e2e/cypress.json"
+                def text = readFile file: "apps/tenant-management-webapp-e2e/cypress.test.json"
                 text = text.replaceAll(/"TAGS":.+/, "\"TAGS\": \"@regression and not @ignore\",")
-                writeFile file: "apps/tenant-management-webapp-e2e/cypress.json", text: text
+                writeFile file: "apps/tenant-management-webapp-e2e/cypress.test.json", text: text
             }
-        sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --baseUrl=https://tenant-management-webapp-core-services-test.os99.gov.ab.ca"
+        sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --baseUrl=https://tenant-management-webapp-core-services-test.os99.gov.ab.ca --cypress-config='apps/tenant-management-webapp-e2e/cypress.test.json'"
       }
       post {
         always {

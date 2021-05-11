@@ -168,6 +168,7 @@
     "eslint": "7.22.0",
     "eslint-config-prettier": "8.1.0",
     "eslint-plugin-cypress": "^2.10.3",
+    "form-data": "^4.0.0",
     "fs-extra": "^8.1.0",
     "jest": "25.2.3",
     "js-base64": "^3.6.0",
