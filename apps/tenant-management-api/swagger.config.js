@@ -1,13 +1,6 @@
-const envPath = __dirname + '/.env';
-const ENVS = require('dotenv').config({ path: envPath });
-
 const tenant = 'autotest';
-let keycloakRoot = 'https://access-dev.os99.gov.ab.ca';
 
-if (ENVS && ENVS.parsed && ENVS.parsed.KEYCLOAK_ROOT_URL) {
-  keycloakRoot = ENVS.parsed.KEYCLOAK_ROOT_URL;
-}
-
+//<KEYCLOAK_ROOT> is the in-house defined tag, which will be updated in the main.ts
 module.exports = {
   openapi: '3.0.0',
   info: {
@@ -22,7 +15,7 @@ module.exports = {
         description: 'Authentication flow for platform admin',
         flows: {
           password: {
-            tokenUrl: `${keycloakRoot}/auth/realms/core/protocol/openid-connect/token`,
+            tokenUrl: `<KEYCLOAK_ROOT>/auth/realms/core/protocol/openid-connect/token`,
             clientId: 'tenant-api',
             scopes: {
               email: '',
@@ -35,8 +28,8 @@ module.exports = {
         description: 'Authentication flow for tenant login through GoA SSO in core realm.',
         flows: {
           authorizationCode: {
-            authorizationUrl: `${keycloakRoot}/auth/realms/core/protocol/openid-connect/auth`,
-            tokenUrl: `${keycloakRoot}/auth/realms/core/protocol/openid-connect/token`,
+            authorizationUrl: `<KEYCLOAK_ROOT>/auth/realms/core/protocol/openid-connect/auth`,
+            tokenUrl: `<KEYCLOAK_ROOT>/auth/realms/core/protocol/openid-connect/token`,
             scopes: {
               email: '',
             },
@@ -49,8 +42,8 @@ module.exports = {
         description: 'Authentication flow for tenant login through GoA SSO in tenant realm.',
         flows: {
           authorizationCode: {
-            authorizationUrl: `${keycloakRoot}/auth/realms/${tenant}/protocol/openid-connect/auth`,
-            tokenUrl: `${keycloakRoot}/auth/realms/${tenant}/protocol/openid-connect/token`,
+            authorizationUrl: `<KEYCLOAK_ROOT>/auth/realms/${tenant}/protocol/openid-connect/auth`,
+            tokenUrl: `<KEYCLOAK_ROOT>/auth/realms/${tenant}/protocol/openid-connect/token`,
             scopes: {
               email: '',
             },
