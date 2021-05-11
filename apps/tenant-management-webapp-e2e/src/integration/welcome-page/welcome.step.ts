@@ -37,29 +37,41 @@ Then('the user is logged in tenant management web app', function () {
   welcomPageObj.userIcon().next().contains('Sign Out'); //user icon is next to sign out
 });
 
-Given('a user who {string} already created a tenant is logged in on the tenant management landing page', function (
-  hasOrNot
-) {
-  const urlToSkipSSO = Cypress.config().baseUrl + '?kc_idp_hint=';
-  cy.visit(urlToSkipSSO);
-  welcomPageObj.signinDiv().click();
-  cy.wait(5000); // Wait all the redirects to settle down
-  if (hasOrNot == 'has') {
-    commonObj.usernameEmailField().type(Cypress.env('email'));
-    commonObj.passwordField().type(Cypress.env('password'));
-  } else if (hasOrNot == 'has not') {
-    commonObj.usernameEmailField().type(Cypress.env('email2'));
-    commonObj.passwordField().type(Cypress.env('password2'));
-  } else {
-    expect.fail('Only has or has not can be passed in to this step. Got ' + hasOrNot);
+Then('the user views the page of {string} based on if the user created a tenant before or not', function (page) {
+  switch (page) {
+    case 'Tenant Login':
+      welcomPageObj.realmHeader().invoke('text').should('be.a', 'string');
+      commonObj.loginButton().invoke('val').should('eq', 'Log In');
+      break;
+    case 'Tenant Name':
+      welcomPageObj.tenantNameLabel().then((element) => {
+        expect(element.length).to.equal(1);
+      });
+      welcomPageObj.tenantNameInput().then((element) => {
+        expect(element.length).to.equal(1);
+      });
+      welcomPageObj.loginButton().then((element) => {
+        expect(element.length).to.equal(1);
+      });
+      break;
+    default:
+      expect(page).to.be.oneOf(['Tenant Login', 'Tenant Name']);
   }
-  commonObj.loginButton().click();
-  cy.wait(5000); // Wait all the redirects to settle down
 });
 
 When('the user selects get started button', function () {
   welcomPageObj.getStartedButton().click();
   cy.wait(5000); // Wait for the web app to check if the user has created a tenant or not
+});
+
+When('the user clicks continue with Government Alberta account button', function () {
+  welcomPageObj.getStartedContinueButton().click();
+  cy.wait(5000); // Wait for the web app to check if the user has created a tenant or not
+});
+
+Then('the user views a login page for an existing tenant', function () {
+  welcomPageObj.realmHeader().invoke('text').should('be.a', 'string');
+  commonObj.loginButton().invoke('val').should('eq', 'Log In');
 });
 
 Then('the user views a message of cannot create another tenant', function () {
@@ -85,33 +97,19 @@ Then('the new tenant login button is presented', function () {
 });
 
 When('the user sends the delete tenant request for {string}', function (request) {
-  const tenantAdminBackendTokenRequestURL =
-    Cypress.env('accessManagementApi') + '/realms/core' + Cypress.env('keycloakTokenUrlSuffix');
+  const tenantDeleteRequestURL = Cypress.env('tenantManagementApi') + '/api/tenant/v1?name=' + request;
   cy.request({
-    method: 'POST',
-    url: tenantAdminBackendTokenRequestURL,
-    body: {
-      client_id: Cypress.env('tenant-admin-backend-client-id'),
-      client_secret: Cypress.env('tenant-admin-backend-client-secret'),
-      grant_type: 'client_credentials',
+    method: 'DELETE',
+    url: tenantDeleteRequestURL,
+    auth: {
+      bearer: Cypress.env('core-api-token'),
     },
-    form: true,
-  }).then((response) => {
-    Cypress.env('tenant-admin-backend-token', response.body.access_token);
-    const tenantDeleteRequestURL = Cypress.env('tenantManagementApi') + '/api/realm/v1?realm=' + request;
-    cy.request({
-      method: 'DELETE',
-      url: tenantDeleteRequestURL,
-      auth: {
-        bearer: Cypress.env('tenant-admin-backend-token'),
-      },
-    }).then(function (response) {
-      responseObj = response;
-    });
+  }).then(function (response) {
+    responseObj = response;
   });
 });
 
 Then('the new tenant is deleted', function () {
   expect(responseObj.status).to.eq(200);
-  expect(responseObj.body).to.have.property('status').to.contain('ok');
+  expect(responseObj.body.success).to.equal(true);
 });
