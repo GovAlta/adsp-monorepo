@@ -84,11 +84,14 @@ const RequestBody = (props: RequestBodyProps) => {
         </HeaderRow>
         {Object.entries(props.properties).map(([name, type], i) => {
           const propertyType = type as RequestBodyProperties;
+
           return (
             <BodyRow key={i}>
               <td>{name}</td>
               <td>{propertyType.description}</td>
-              <td>{propertyType.type}</td>
+              <td>
+                {propertyType.type} {propertyType.format}
+              </td>
             </BodyRow>
           );
         })}
@@ -149,11 +152,11 @@ const APIDocTable = (props: APIDocTableProps) => {
         {doc.requestBody ? (
           <div>
             <APITableContainer>
-              <h4>Request Body (application/json)</h4>
               {Object.entries(doc.requestBody.content).map(([contentType, schema], i) => {
                 const requestBodySchema = schema as RequestBodySchema;
                 return (
                   <div key={i}>
+                    <h4>Request Body ({contentType})</h4>
                     <RequestBody properties={requestBodySchema.schema.properties} />
                   </div>
                 );

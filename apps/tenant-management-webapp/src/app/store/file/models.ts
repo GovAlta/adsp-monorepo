@@ -48,6 +48,7 @@ export interface FileServiceDocs {
 export interface RequestBodyProperties {
   type?: string;
   description?: string;
+  format?: string;
 }
 export interface RequestBodySchema {
   schema: {
