@@ -81,11 +81,17 @@ const FileSettings = () => {
         <GoAButton
           buttonType="secondary"
           onClick={() => {
-            const updateConfig = Object.assign({}, tenantConfig);
-            updateConfig.fileService.isActive = false;
-            updateConfig.fileService.isEnabled = false;
+            const oldConfig = Object.assign({}, tenantConfig);
 
-            dispatch(UpdateTenantConfigService(updateConfig));
+            const updatedConfig = {
+              ...oldConfig,
+              fileService: {
+                isActive: false,
+                isEnabled: false,
+              },
+            };
+
+            dispatch(UpdateTenantConfigService(updatedConfig));
           }}
         >
           Disable File Service
