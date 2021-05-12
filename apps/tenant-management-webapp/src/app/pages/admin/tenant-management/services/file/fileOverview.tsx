@@ -21,9 +21,13 @@ const OverviewBtn = () => {
         if (Object.keys(space).length === 0) {
           dispatch(EnableFileService());
         }
-        const updateConfig = Object.assign({}, tenantConfig);
-        updateConfig.fileService.isActive = true;
-        updateConfig.fileService.isEnabled = true;
+
+        const updateConfig = Object.assign({ fileService: {} }, tenantConfig);
+        updateConfig.fileService = {
+          ...updateConfig.fileService,
+          isEnabled: true,
+          isActive: true,
+        };
         dispatch(UpdateTenantConfigService(updateConfig));
       }}
     >
@@ -60,7 +64,13 @@ const OverviewContent = () => {
     </>
   );
 };
-const FileOverview = (props: any) => {
+
+interface FileOverviewProps {
+  isActive: boolean;
+  isEnabled: boolean;
+}
+
+const FileOverview = (props: FileOverviewProps) => {
   const roles = useSelector((state: RootState) => state.session.realmAccess.roles);
   const accessible = roles.includes('file-service-admin');
   return (
