@@ -6,6 +6,8 @@ import '@abgov/react-components/react-components.esm.css';
 import '@abgov/core-css/goa-core.css';
 
 import LandingPage from '@pages/public/Landing';
+import { MockPage } from '@pages/public/Mock';
+
 import Login from '@pages/public/Login';
 import LoginRedirect from '@pages/public/LoginRedirect';
 import LogoutRedirect from '@pages/public/LogoutRedirect';
@@ -57,6 +59,10 @@ const AppRouters = () => {
         <PublicApp>
           <Route path="/:tenantName/login">
             <Login />
+          </Route>
+
+          <Route path="/mock">
+            <MockPage />
           </Route>
           <Route path="/login">
             <Login />
