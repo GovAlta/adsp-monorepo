@@ -15,7 +15,7 @@ Tenant401: &Tenant401
 fileTypeSchema: &fileTypeSchema
   name:
     type: string
-    description: The name of the new file type. The name is unique within the file space.
+    description: The name of the new file type. The name shall be unique.
   anonymousRead:
     type: boolean
     description: When anonymousRead is set to true. The file type will be public, even the read roles are set.
@@ -34,7 +34,7 @@ fileTypeSchema: &fileTypeSchema
   get:
     tags:
       - File Type
-    description: Retrieves a file's metadata.
+    description: Retrieves a file type's metadata.
     responses:
       '200':
         description: File type within the spaces.
@@ -57,7 +57,7 @@ fileTypeSchema: &fileTypeSchema
   post:
     tags:
       - File Type
-    description: Create a file type within current file space.
+    description: Create a file type.
     requestBody:
       required: true
       content:
