@@ -2,8 +2,6 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoARadioGroup, GoAButton } from '@abgov/react-components';
 import { UpdateTenantConfigService } from '@store/tenantConfig/actions';
-import { TerminateFileService } from '@store/file/actions';
-import { FILE_INIT } from '@store/file/models';
 import { RootState } from '@store/index';
 
 const FileSettings = () => {
@@ -72,6 +70,8 @@ const FileSettings = () => {
   const ServiceManagement = () => {
     const dispatch = useDispatch();
     const tenantConfig = useSelector((state: RootState) => state.tenantConfig);
+    const isEnabled = tenantConfig.fileService.isEnabled;
+
     return (
       <div>
         <h3>Service Management</h3>
@@ -79,36 +79,22 @@ const FileSettings = () => {
         <p>Vestibulum eget egestas diam. Fusce est massa, venenatis a condimentum sed, elementum vel diam.</p>
 
         <GoAButton
-          buttonType="secondary"
+          buttonType={isEnabled ? 'secondary' : 'primary'}
           onClick={() => {
             const oldConfig = Object.assign({}, tenantConfig);
 
             const updatedConfig = {
               ...oldConfig,
               fileService: {
-                isActive: false,
-                isEnabled: false,
+                isActive: !oldConfig.fileService.isActive,
+                isEnabled: !oldConfig.fileService.isEnabled,
               },
             };
 
             dispatch(UpdateTenantConfigService(updatedConfig));
           }}
         >
-          Disable File Service
-        </GoAButton>
-
-        <GoAButton
-          className="file-disable-btn"
-          buttonType="tertiary"
-          onClick={() =>
-            dispatch(
-              TerminateFileService(
-                FILE_INIT // FIXME: this is not right, but currently the method is defined as needing these params
-              )
-            )
-          }
-        >
-          Terminate File Service
+          {isEnabled ? 'Disable File Service' : 'Enable File Service'}
         </GoAButton>
       </div>
     );
