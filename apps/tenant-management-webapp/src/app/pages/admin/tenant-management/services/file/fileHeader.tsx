@@ -10,10 +10,7 @@ const FileHeader = (props: any) => {
   let headerState = '';
   let headerStateClass = '';
 
-  if (props.isSetup || !accessible) {
-    headerState = 'Disabled';
-    headerStateClass = 'file-header-tag-disabled';
-  } else {
+  if (!props.isSetup || !accessible) {
     if (props.isActive) {
       headerState = 'Active';
       headerStateClass = 'file-header-tag-active';

@@ -5,7 +5,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import FileOverview from './fileOverview';
 import FileHeader from './fileHeader';
 import FileTypes from './fileTypes';
-import FileSettings from './fileSettings';
 import FileDoc from './fileDocs';
 import FileList from './fileList';
 import './file.css';
@@ -15,29 +14,6 @@ import { Main } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { FetchTenantConfigService } from '@store/tenantConfig/actions';
 import { FetchFileSpaceService } from '@store/file/actions';
-const Templates = () => {
-  return (
-    <div>
-      <p>test</p>
-    </div>
-  );
-};
-
-const Usage = () => {
-  return (
-    <div>
-      <p>TODO</p>
-    </div>
-  );
-};
-
-const APIIntegration = () => {
-  return (
-    <div>
-      <p>TODO</p>
-    </div>
-  );
-};
 
 const TabsForSetup = (props: any) => {
   return (
@@ -45,31 +21,12 @@ const TabsForSetup = (props: any) => {
       <Tab label="Overview">
         <FileOverview isActive={props.isActive} isEnabled={props.isEnabled} />
       </Tab>
-
-      <Tab label="Space Config">{}</Tab>
-
-      <Tab label="Templates">
-        <Templates />
-      </Tab>
-
-      <Tab label="Usage">
-        <Usage />
-      </Tab>
-      <Tab label="File List">
+      <Tab label="Test Files">
         <FileList />
       </Tab>
-      <Tab label="API integration">
-        <APIIntegration />
-      </Tab>
-
       <Tab label="File Types">
         <FileTypes />
       </Tab>
-
-      <Tab label="Settings">
-        <FileSettings />
-      </Tab>
-
       <Tab label="Document">
         <FileDoc />
       </Tab>

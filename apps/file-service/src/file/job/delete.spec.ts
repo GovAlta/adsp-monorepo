@@ -11,6 +11,7 @@ describe('Delete Job', () => {
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
+    error: jest.fn(),
   } as unknown) as Logger;
   let repositoryMock: Mock<FileRepository> = null;
 

@@ -8,7 +8,7 @@ interface DeleteJobProps {
 }
 
 export const createDeleteJob = ({ logger, rootStoragePath, fileRepository }: DeleteJobProps) => () => {
-  logger.debug('Starting file delete job...');
+  logger.info('Starting file delete job...');
 
   return fileRepository
     .find(20, null, { deleted: true })
@@ -16,7 +16,7 @@ export const createDeleteJob = ({ logger, rootStoragePath, fileRepository }: Del
       Promise.all(
         results.results.map((result) =>
           result.delete(rootStoragePath).catch((err) => {
-            logger.warn(
+            logger.error(
               `Error encountered deleting file ` + `${result.getFilePath(rootStoragePath)} (ID: ${result.id}): ${err}`
             );
 
