@@ -8,6 +8,7 @@ import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as passport from 'passport';
 import { createKeycloakStrategy } from '@core-services/core-common';
 import { apiRouter } from './app/router';
+import * as HttpStatusCodes from 'http-status-codes';
 
 import { logger } from './middleware/logger';
 import { Request, Response, NextFunction } from 'express';
@@ -94,7 +95,10 @@ const swaggerUITenantAPIOptions = {
   },
 };
 
-app.use(swaggerDocBaseUrl, swaggerUi.serve, swaggerUi.setup(null, swaggerUITenantAPIOptions));
+// Only allow swagger UI when ALLOW_SWAGGER_UI presents
+if (process.env.ALLOW_SWAGGER_UI) {
+  app.use(swaggerDocBaseUrl, swaggerUi.serve, swaggerUi.setup(null, swaggerUITenantAPIOptions));
+}
 
 app.get('/swagger/json/v1', (req, res) => {
   const { tenant } = req.query;
