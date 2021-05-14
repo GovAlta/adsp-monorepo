@@ -47,7 +47,7 @@ Given('a service owner user is on tenant admin page', function () {
       commonObj.usernameEmailField().type(Cypress.env('email'));
       commonObj.passwordField().type(Cypress.env('password'));
       commonObj.loginButton().click();
-      cy.wait(5000); // Wait all the redirects to settle down
+      cy.wait(10000); // Wait all the redirects to settle down
     }
   });
   cy.url().should('include', '/tenant-admin');
