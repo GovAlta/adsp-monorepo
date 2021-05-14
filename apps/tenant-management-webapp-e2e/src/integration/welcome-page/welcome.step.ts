@@ -85,7 +85,7 @@ Then('the user views create tenant page', function () {
 When('the user enters {string} as tenant name and clicks create tenant button', function (tenantName) {
   welcomPageObj.tenantNameField().type(tenantName);
   welcomPageObj.createTenantButton().click();
-  cy.wait(10000); // Wait the tenant creation to finish
+  cy.wait(20000); // Wait the tenant creation to finish
 });
 
 Then('the user views the tenant is successfully created message', function () {
