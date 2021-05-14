@@ -27,7 +27,7 @@ const TabsForSetup = (props: any) => {
       <Tab label="File Types">
         <FileTypes />
       </Tab>
-      <Tab label="Document">
+      <Tab label="Documentation">
         <FileDoc />
       </Tab>
     </Tabs>
@@ -39,6 +39,9 @@ const TabsForInit = () => {
     <Tabs>
       <Tab label="Overview">
         <InitSetup />
+      </Tab>
+      <Tab label="Documentation">
+        <FileDoc />
       </Tab>
     </Tabs>
   );
@@ -59,7 +62,11 @@ export default function File() {
   return (
     <Main>
       <FileHeader isSetup={setupRequired} isActive={isActive} />
-      {setupRequired ? <TabsForInit /> : <TabsForSetup isActive={isActive} isEnabled={isEnabled} />}
+      {setupRequired ? (
+        <TabsForInit />
+      ) : (
+        <TabsForSetup isActive={isActive} isEnabled={isEnabled} isSetup={setupRequired} />
+      )}
     </Main>
   );
 }
