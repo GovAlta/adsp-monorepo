@@ -7,32 +7,30 @@ let axiosResponse: AxiosResponse;
 let axiosError;
 let fileId;
 
-Given('a testing mapping of {string}, {string} and {string} is inserted with {string}', function (
-  urnname,
-  urnservice,
-  serviceurl,
-  request
-) {
-  const requestURL = Cypress.env('tenantManagementApi') + request;
-  const name = urnname;
-  const service = urnservice;
-  const host = serviceurl;
+Given(
+  'a testing mapping of {string}, {string} and {string} is inserted with {string}',
+  function (urnname, urnservice, serviceurl, request) {
+    const requestURL = Cypress.env('tenantManagementApi') + request;
+    const name = urnname;
+    const service = urnservice;
+    const host = serviceurl;
 
-  cy.request({
-    method: 'POST',
-    url: requestURL,
-    auth: {
-      bearer: Cypress.env('core-api-token'),
-    },
-    body: {
-      name,
-      services: [{ service, host }],
-    },
-    timeout: 1200000,
-  }).then(function (response) {
-    expect(response.status).equals(201);
-  });
-});
+    cy.request({
+      method: 'POST',
+      url: requestURL,
+      auth: {
+        bearer: Cypress.env('core-api-token'),
+      },
+      body: {
+        name,
+        services: [{ service, host }],
+      },
+      timeout: 1200000,
+    }).then(function (response) {
+      expect(response.status).equals(201);
+    });
+  }
+);
 
 When('the user sends a discovery request with {string}', function (request) {
   const requestURL = Cypress.env('tenantManagementApi') + request;
@@ -146,31 +144,32 @@ When(
   }
 );
 
-Then('{string} is returned for the file upload request as well as a file urn with a successful upload', function (
-  statusCode
-) {
-  if (axiosError == undefined) {
-    expect(axiosResponse.status).to.equal(Number(statusCode));
-    if (statusCode == '200') {
-      // A file urn in response
-      expect(axiosResponse.data.fileURN).is.not.empty;
+Then(
+  '{string} is returned for the file upload request as well as a file urn with a successful upload',
+  function (statusCode) {
+    if (axiosError == undefined) {
+      expect(axiosResponse.status).to.equal(Number(statusCode));
+      if (statusCode == '200') {
+        // A file urn in response
+        expect(axiosResponse.data.fileURN).is.not.empty;
 
-      // Delete the uploaded file
-      const deleteFileRequestURL = Cypress.env('fileApi') + '/file/v1/files/' + fileId;
-      cy.request({
-        method: 'DELETE',
-        url: deleteFileRequestURL,
-        auth: {
-          bearer: Cypress.env('autotest-admin-token'),
-        },
-      }).then(async function (response) {
-        expect(response.status).to.equal(200);
-      });
+        // Delete the uploaded file
+        const deleteFileRequestURL = Cypress.env('fileApi') + '/file/v1/files/' + fileId;
+        cy.request({
+          method: 'DELETE',
+          url: deleteFileRequestURL,
+          auth: {
+            bearer: Cypress.env('autotest-admin-token'),
+          },
+        }).then(async function (response) {
+          expect(response.status).to.equal(200);
+        });
+      }
+    } else {
+      expect(JSON.stringify(axiosError)).to.include('status code ' + statusCode);
     }
-  } else {
-    expect(JSON.stringify(axiosError)).to.include('status code ' + statusCode);
   }
-});
+);
 
 // Get file id with file name, file type name and record id for the space the user token has
 function getFileId(fileName, fileTypeName, recordId, token) {
