@@ -42,7 +42,7 @@ const CreateRealm = () => {
 
   function login() {
     dispatch(SelectTenant(name));
-    authContext.signIn('/admin/tenant-admin');
+    authContext.signIn(`/login?direct=true&tenantName=${name}`);
   }
 
   return (
