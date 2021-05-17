@@ -5,7 +5,6 @@ import { CreateTenantConfigService } from '@store/tenantConfig/actions';
 
 const InitSetup = () => {
   const dispatch = useDispatch();
-
   return (
     <div>
       <p>

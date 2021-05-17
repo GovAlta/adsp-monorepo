@@ -2,8 +2,12 @@ import React from 'react';
 import './file.css';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
+interface FileHeaderProps {
+  isActive: boolean;
+  isSetup: boolean;
+}
 
-const FileHeader = (props: any) => {
+const FileHeader = (props: FileHeaderProps) => {
   const roles = useSelector((state: RootState) => state.session.realmAccess.roles);
   const accessible = roles.includes('file-service-admin');
 
