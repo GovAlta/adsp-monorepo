@@ -15,17 +15,30 @@ import { Tab, Tabs } from '@components/Tabs';
 import { FetchTenantConfigService } from '@store/tenantConfig/actions';
 import { FetchFileSpaceService } from '@store/file/actions';
 
-const TabsForSetup = (props: any) => {
+const TabsForEnable = (props: any) => {
   return (
     <Tabs>
       <Tab label="Overview">
-        <FileOverview isActive={props.isActive} isEnabled={props.isEnabled} />
+        <FileOverview isActive={props.isActive} />
       </Tab>
       <Tab label="Test Files">
         <FileList />
       </Tab>
       <Tab label="File Types">
         <FileTypes />
+      </Tab>
+      <Tab label="Documentation">
+        <FileDoc />
+      </Tab>
+    </Tabs>
+  );
+};
+
+const TabsForDisable = (props: any) => {
+  return (
+    <Tabs>
+      <Tab label="Overview">
+        <FileOverview isActive={props.isActive} />
       </Tab>
       <Tab label="Documentation">
         <FileDoc />
@@ -64,8 +77,10 @@ export default function File() {
       <FileHeader isSetup={setupRequired} isActive={isActive} />
       {setupRequired ? (
         <TabsForInit />
+      ) : isEnabled ? (
+        <TabsForEnable isActive={isActive} />
       ) : (
-        <TabsForSetup isActive={isActive} isEnabled={isEnabled} isSetup={setupRequired} />
+        <TabsForDisable isActive={isActive} />
       )}
     </Main>
   );

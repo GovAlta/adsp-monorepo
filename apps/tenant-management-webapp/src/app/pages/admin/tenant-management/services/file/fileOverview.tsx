@@ -59,7 +59,9 @@ const OverviewContent = () => {
           The file service provides the capability to upload and download files. Consumers are registered with their own
           space (tenant) containing file types that include role based access policy, and can associate files to domain
           records.
-          <h3>Service Management</h3>
+        </p>
+        <h3>Service Management</h3>
+        <p>
           File service management is a cross-cutting concern for multiple projects, tenant owner can enable/disable
           service, config files types ...
         </p>
@@ -73,7 +75,6 @@ const OverviewContent = () => {
 
 interface FileOverviewProps {
   isActive: boolean;
-  isEnabled: boolean;
 }
 
 const FileOverview = (props: FileOverviewProps) => {
@@ -82,12 +83,7 @@ const FileOverview = (props: FileOverviewProps) => {
   return (
     <div>
       <OverviewContent />
-
-      {accessible
-        ? `This service is ${props.isActive ? 'active' : 'inactive'}   `
-        : "You don't have permission to access this service"}
       <OverviewBtn />
-      {/* {accessible && !props.isEnabled && <OverviewBtn />} */}
     </div>
   );
 };

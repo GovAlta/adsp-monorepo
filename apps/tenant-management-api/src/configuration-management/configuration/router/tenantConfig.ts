@@ -54,15 +54,16 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
         throw new HttpException(HttpStatusCodes.BAD_REQUEST, 'Tenant Realm Configuration Settings are required');
       }
 
-      const results = await tenantConfigurationRepository.getTenantConfig(tenant);
-
-      if (results) {
-        throw new HttpException(HttpStatusCodes.BAD_REQUEST, `Tenant Config for tenant ${tenant} already exists.`);
+      const tenantConfig = await tenantConfigurationRepository.getTenantConfig(tenant);
+      let entity;
+      if (tenantConfig) {
+        entity = await tenantConfig.update(configurationSettingsList);
+      } else {
+        entity = await TenantConfigEntity.create(tenantConfigurationRepository, {
+          ...data,
+          tenantName: tenant,
+        });
       }
-      const entity = await TenantConfigEntity.create(tenantConfigurationRepository, {
-        ...data,
-        tenantName: tenant,
-      });
 
       res.json(mapTenantConfig(entity));
     } catch (err) {
@@ -75,7 +76,7 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
     const user = req.user as User;
     const tenant = user.tenantName;
     const { configurationSettingsList } = data;
-
+    console.log('put ', configurationSettingsList);
     try {
       const tenantConfig = await tenantConfigurationRepository.getTenantConfig(tenant);
 
