@@ -6,7 +6,6 @@ import '@abgov/react-components/react-components.esm.css';
 import '@abgov/core-css/goa-core.css';
 
 import LandingPage from '@pages/public/Landing';
-import { MockPage } from '@pages/public/Mock';
 
 import Login from '@pages/public/Login';
 import LoginRedirect from '@pages/public/LoginRedirect';
@@ -23,13 +22,12 @@ import GetStarted from '@pages/public/GetStarted';
 import { store, persistor, RootState } from '@store/index';
 import { PersistGate } from 'redux-persist/integration/react';
 import { PrivateApp, PrivateRoute } from './privateApp';
-import { ConfigLogout, fetchConfig } from '@store/config/actions';
+import { fetchConfig } from '@store/config/actions';
 import { SessionLoginSuccess, SessionLogout } from '@store/session/actions';
 import AuthContext from '@lib/authContext';
 import { keycloak, createKeycloakInstance, convertToSession } from '@lib/session';
 import { ThemeProvider } from 'styled-components';
 import { theme } from 'theme';
-import { TenantLogout } from '@store/tenant/actions';
 import PublicApp from './publicApp';
 
 import './app.css';
@@ -61,9 +59,6 @@ const AppRouters = () => {
             <Login />
           </Route>
 
-          <Route path="/mock">
-            <MockPage />
-          </Route>
           <Route path="/login">
             <Login />
           </Route>

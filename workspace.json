@@ -506,20 +506,20 @@
         }
       }
     },
-    "health-service": {
-      "root": "apps/health-service",
-      "sourceRoot": "apps/health-service/src",
+    "status-service": {
+      "root": "apps/status-service",
+      "sourceRoot": "apps/status-service/src",
       "projectType": "application",
-      "prefix": "health-service",
+      "prefix": "status-service",
       "schematics": {},
       "architect": {
         "build": {
           "builder": "@nrwl/node:build",
           "options": {
-            "outputPath": "dist/apps/health-service",
-            "main": "apps/health-service/src/main.ts",
-            "tsConfig": "apps/health-service/tsconfig.app.json",
-            "assets": ["apps/health-service/src/assets"]
+            "outputPath": "dist/apps/status-service",
+            "main": "apps/status-service/src/main.ts",
+            "tsConfig": "apps/status-service/tsconfig.app.json",
+            "assets": ["apps/status-service/src/assets"]
           },
           "configurations": {
             "production": {
@@ -528,8 +528,8 @@
               "inspect": false,
               "fileReplacements": [
                 {
-                  "replace": "apps/health-service/src/environments/environment.ts",
-                  "with": "apps/health-service/src/environments/environment.prod.ts"
+                  "replace": "apps/status-service/src/environments/environment.ts",
+                  "with": "apps/status-service/src/environments/environment.prod.ts"
                 }
               ]
             }
@@ -538,19 +538,19 @@
         "serve": {
           "builder": "@nrwl/node:execute",
           "options": {
-            "buildTarget": "health-service:build"
+            "buildTarget": "status-service:build"
           }
         },
         "lint": {
           "builder": "@nrwl/linter:eslint",
           "options": {
-            "lintFilePatterns": ["apps/health-service/**/*.ts"]
+            "lintFilePatterns": ["apps/status-service/**/*.ts"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
-            "jestConfig": "apps/health-service/jest.config.js",
+            "jestConfig": "apps/status-service/jest.config.js",
             "passWithNoTests": true
           }
         }

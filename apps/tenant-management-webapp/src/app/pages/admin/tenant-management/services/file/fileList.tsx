@@ -12,8 +12,8 @@ import { GoAForm } from '@components/Form';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
 import { Main } from '@components/Html';
-import DownloadIcon from '@icons/download.svg';
-import DeleteIcon from '@icons/delete.svg';
+import DownloadIcon from '@icons/download-outline.svg';
+import DeleteIcon from '@icons/trash-outline.svg';
 import './file.css';
 
 const FileList = () => {

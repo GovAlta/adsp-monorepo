@@ -32,7 +32,7 @@ export interface ServiceUrls {
   accessManagementApi: string;
   uiComponentUrl: string;
   fileApi?: string;
-  healthApi?: string;
+  serviceStatusApiUrl?: string;
 }
 
 export interface ConfigState {

@@ -1,0 +1,12 @@
+import { Repository } from '@core-services/core-common';
+import { ServiceStatusApplicationEntity } from '../model';
+import { ServiceStatusApplication } from '../types';
+
+export interface ServiceStatusRepository extends Repository<ServiceStatusApplicationEntity, ServiceStatusApplication> {
+  findQueuedDisabledApplications(queuedApplicationIds: string[]): Promise<ServiceStatusApplicationEntity[]>;
+  findNonQueuedApplications(queuedApplicationIds: string[]): Promise<ServiceStatusApplicationEntity[]>;
+  findQueuedDeletedApplicationIds(queuedApplicationIds: string[]): Promise<string[]>;
+  find(filter: Partial<ServiceStatusApplication>): Promise<ServiceStatusApplicationEntity[]>;
+  enable(entity: ServiceStatusApplicationEntity): Promise<ServiceStatusApplicationEntity>;
+  disable(entity: ServiceStatusApplicationEntity): Promise<ServiceStatusApplicationEntity>;
+}

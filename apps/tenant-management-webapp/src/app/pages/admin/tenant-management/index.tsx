@@ -13,9 +13,9 @@ import Adminstration from './administration';
 import File from './services/file';
 import AccessPage from './services/access/access';
 import Container from '@components/Container';
-import Health from './services/health/Health';
+import Status from './services/status';
 
-const TenantManagement = () => {
+const TenantManagement = (): JSX.Element => {
   const { setTitle } = useContext(HeaderCtx);
   const dispatch = useDispatch();
 
@@ -63,8 +63,8 @@ const TenantManagement = () => {
           <Route exact path="/admin/tenant-admin/services/file">
             <File />
           </Route>
-          <Route exact path="/admin/tenant-admin/services/health">
-            <Health />
+          <Route path="/admin/tenant-admin/services/service-status">
+            <Status />
           </Route>
 
           <Route path="*">
