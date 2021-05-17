@@ -12,18 +12,22 @@ import { useLocation } from 'react-router-dom';
 const LoginLanding = () => {
   const { signIn } = useContext(AuthContext);
   const dispatch = useDispatch();
-  const { tenantName } = useParams<{ tenantName: string }>();
+  let { tenantName } = useParams<{ tenantName: string }>();
   const nameRef = useRef(null);
 
   const search = useLocation().search;
   const isDirectLogin = new URLSearchParams(search).get('direct');
+
+  if (!tenantName) {
+    tenantName = new URLSearchParams(search).get('tenantName');
+  }
 
   useEffect(() => {
     if (tenantName) {
       dispatch(SelectTenant(tenantName));
       // For direct login, we shall hide the tenant login form and invoke the keycloak
       if (isDirectLogin === 'true') {
-        signIn('/admin/tenant-admin');
+        delayedLogin();
       }
     }
   }, [dispatch, tenantName, isDirectLogin]);
@@ -32,6 +36,12 @@ const LoginLanding = () => {
     const name = nameRef.current.value;
     dispatch(SelectTenant(name));
     signIn('/admin/tenant-admin');
+  }
+
+  function delayedLogin() {
+    setTimeout(function() {
+      signIn('/admin/tenant-admin');
+    }, 1)
   }
 
   return (

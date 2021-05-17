@@ -20,7 +20,7 @@ const OverviewBtn = () => {
       onClick={() => {
         // check there is space, if not create space
         // update tenant config
-        if (Object.keys(space).length === 0) {
+        if (!space || Object.keys(space).length === 0) {
           dispatch(EnableFileService());
         }
         const oldConfig = Object.assign({}, tenantConfig);
