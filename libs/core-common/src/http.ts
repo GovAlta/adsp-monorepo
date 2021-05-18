@@ -1,6 +1,5 @@
 import axios from 'axios';
-import * as Logging from './logging';
-const logger = Logging.createLogger('[CORE COMMON][HTTP]', 'info');
+import { logger } from './logger';
 
 export const HOSTS = {
   tenantAPI: process.env.TENANT_MANAGEMENT_API_HOST,
