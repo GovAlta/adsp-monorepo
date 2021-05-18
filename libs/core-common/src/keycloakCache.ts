@@ -1,6 +1,6 @@
-import * as Logging from './logging';
 import { executeAdminGet, HOSTS } from './http';
 import * as util from 'util';
+import { logger } from './logger';
 
 // Initial issuer is required to prevent infinite loop
 const DEFAULT_TOKEN_ISSUER = `${HOSTS.keycloakHost}/auth/realms/core`;
@@ -9,7 +9,6 @@ const DEFAULT_REALM_TENANT_NAME_MAPPING = {
   core: 'core',
 };
 
-const logger = Logging.createLogger('[Auth][JWT][CACHE]', 'info');
 let mappingCache = DEFAULT_REALM_TENANT_NAME_MAPPING;
 
 const issuerCache = [DEFAULT_TOKEN_ISSUER];

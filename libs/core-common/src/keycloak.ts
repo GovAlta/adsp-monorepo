@@ -1,5 +1,5 @@
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
-import * as Logging from './logging';
+import { logger } from './logger';
 import jwtDecode from 'jwt-decode';
 import * as jwksRsa from 'jwks-rsa';
 import * as serviceInit from './serviceInit';
@@ -10,7 +10,6 @@ serviceInit.initService();
 const createJwkClient = (jwksRsa as unknown) as (options: jwksRsa.ClientOptions) => jwksRsa.JwksClient;
 
 // Must set default Issuer appropriately. Otherwise,the code will in an infinite loop
-const logger = Logging.createLogger('[Auth][JWT]', 'info');
 
 interface JWkClientConfig {
   timeout: number;

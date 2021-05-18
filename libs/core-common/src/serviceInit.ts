@@ -1,9 +1,8 @@
 import KcAdminClient from 'keycloak-admin';
-import * as Logging from './logging';
+import { logger } from './logger';
 import { setAdminAuthToken } from './http';
 import { fetchConfig } from './config';
 
-const logger = Logging.createLogger('[JWT][KeyCloak][INIT]', 'info');
 const refreshTimeInterval = (parseInt(process.env.KEYCLOAK_TENANT_API_TOKEN_EXPIRY_INTERVAL) || 3600) * 1000;
 
 let tenantAPIClient;

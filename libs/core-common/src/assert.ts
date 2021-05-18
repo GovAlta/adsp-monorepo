@@ -4,10 +4,8 @@ import { RequestHandler } from 'express';
 import * as passport from 'passport';
 import { UserRole, User } from './types';
 import { UnauthorizedError } from './errors';
-import { createLogger } from './logging';
+import { logger } from './logger';
 import * as util from 'util';
-
-const logger = createLogger('[Authentication][JWT]', 'info');
 
 export const assertAuthenticatedHandler: RequestHandler = (req, res, next) => {
   if (!req.isAuthenticated || !req.user) {

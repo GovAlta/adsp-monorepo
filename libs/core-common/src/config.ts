@@ -1,8 +1,7 @@
 import { executeAdminGet, HOSTS } from './http';
-import { createLogger } from './logging';
+import { logger } from './logger';
 import * as util from 'util';
 
-const logger = createLogger('[Config]', process.env.LOG_LEVEL || 'info');
 export const serviceHosts = {};
 export const platformURNs = {
   'file-service': 'urn:ads:platform:file-service:v1',
