@@ -15,7 +15,6 @@ export const createDeleteJob = ({ logger, rootStoragePath, fileRepository }: Del
       Promise.all(
         results.results.map((result) =>
           result.delete(rootStoragePath).catch((err) => {
-            logger.info(`Error on result`, result);
             logger.error(
               `Error encountered deleting file ` + `${result.getFilePath(rootStoragePath)} (ID: ${result.id}): ${err}`
             );

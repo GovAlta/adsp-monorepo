@@ -16,7 +16,7 @@ const OverviewBtn = () => {
 
   return (
     <GoAButton
-      buttonType={isEnabled ? 'secondary' : 'primary'}
+      buttonType="primary"
       onClick={() => {
         // check there is space, if not create space
         // update tenant config
