@@ -3,6 +3,7 @@
     "streetsidesoftware.code-spell-checker",
     "esbenp.prettier-vscode",
     "dbaeumer.vscode-eslint",
-    "jpoissonnier.vscode-styled-components"
+    "jpoissonnier.vscode-styled-components",
+    "firsttris.vscode-jest-runner"
   ]
 }

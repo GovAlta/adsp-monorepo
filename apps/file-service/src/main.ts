@@ -1,16 +1,11 @@
 import * as express from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import * as passport from 'passport';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as helmet from 'helmet';
-import {
-  createLogger,
-  createKeycloakStrategy,
-  UnauthorizedError,
-  NotFoundError,
-  InvalidOperationError,
-  DomainEventService,
-} from '@core-services/core-common';
+import { createLogger, UnauthorizedError, NotFoundError, InvalidOperationError } from '@core-services/core-common';
+import { adspId, createCoreStrategy, initializePlatform } from '@abgov/adsp-service-sdk';
 import { environment } from './environments/environment';
 import { applyFileMiddleware } from './file';
 import { createRepositories } from './mongo';
@@ -20,39 +15,61 @@ import * as fs from 'fs';
 
 const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
 
-const app = express();
+async function initializeApp(): Promise<express.Application> {
+  const app = express();
 
-app.use(compression());
-app.use(helmet());
-app.use(express.json({ limit: '1mb' }));
-app.use(cors());
+  app.use(compression());
+  app.use(helmet());
+  app.use(express.json({ limit: '1mb' }));
+  app.use(cors());
 
-passport.use('jwt', createKeycloakStrategy());
-passport.use(new AnonymousStrategy());
+  const serviceId = adspId`urn:ads:platform:file-service`;
+  const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
+  const { tenantStrategy, tenantHandler } = await initializePlatform(
+    {
+      serviceId,
+      clientSecret: environment.CLIENT_SECRET,
+      accessServiceUrl,
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+    },
+    { logger }
+  );
 
-passport.serializeUser(function (user, done) {
-  done(null, user);
-});
+  passport.use('jwt', tenantStrategy);
+  passport.use(
+    'jwt-core',
+    createCoreStrategy({
+      logger,
+      serviceId,
+      accessServiceUrl,
+    })
+  );
+  passport.use(new AnonymousStrategy());
 
-passport.deserializeUser(function (user, done) {
-  done(null, user);
-});
+  passport.serializeUser(function (user, done) {
+    done(null, user);
+  });
 
-app.use(passport.initialize());
-app.use('/space', passport.authenticate(['jwt'], { session: false }));
-app.use('/file-admin', passport.authenticate(['jwt'], { session: false }));
-app.use('/file', passport.authenticate(['jwt', 'anonymous'], { session: false }));
-app.use('/file-type', passport.authenticate(['jwt'], { session: false }));
+  passport.deserializeUser(function (user, done) {
+    done(null, user);
+  });
 
-Promise.all([
-  createRepositories({ ...environment, logger }),
-  environment.AMQP_HOST
-    ? createEventService({ ...environment, logger })
-    : Promise.resolve<DomainEventService>({
+  app.use(passport.initialize());
+
+  app.use('/space', passport.authenticate(['jwt'], { session: false }), tenantHandler);
+  app.use('/file-admin', passport.authenticate(['jwt-core'], { session: false }), tenantHandler);
+  app.use('/file', passport.authenticate(['jwt', 'anonymous'], { session: false }), tenantHandler);
+  app.use('/file-type', passport.authenticate(['jwt'], { session: false }), tenantHandler);
+
+  const repositories = await createRepositories({ ...environment, logger });
+
+  const eventService = environment.AMQP_HOST
+    ? await createEventService({ ...environment, logger })
+    : {
         send: (event) => logger.debug(`Event sink received event '${event.namespace}:${event.name}'`),
         isConnected: () => true,
-      }),
-]).then(([repositories, eventService]) => {
+      };
+
   applyFileMiddleware(app, {
     logger,
     rootStoragePath: environment.FILE_PATH,
@@ -63,15 +80,14 @@ Promise.all([
     ...repositories,
   });
 
-  app.get('/health', (req, res) =>
+  app.get('/health', (_req, res) =>
     res.json({
       db: repositories.isConnected(),
       msg: eventService.isConnected(),
     })
   );
 
-  /*eslint-disable */
-  app.use((err, req, res, next) => {
+  app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     /*eslint-enable */
     if (err instanceof UnauthorizedError) {
       res.status(401).send(err.message);
@@ -88,7 +104,8 @@ Promise.all([
   // Define swagger
   const swaggerDocument = fs
     .readFileSync(__dirname + '/swagger.json', 'utf8')
-    .replace(/<KEYCLOAK_ROOT>/g, process.env.KEYCLOAK_ROOT_URL);
+    .replace(/<KEYCLOAK_ROOT>/g, environment.KEYCLOAK_ROOT_URL);
+
   app.get('/swagger/json/v1', (req, res) => {
     const { tenant } = req.query;
     const swaggerObj = JSON.parse(swaggerDocument);
@@ -105,25 +122,32 @@ Promise.all([
     res.json(swaggerObj);
   });
 
-  const port = environment.PORT || 3337;
+  return app;
+}
 
-  const server = app.listen(port, () => {
-    logger.info(`Listening at http://localhost:${port}`);
-  });
-  const handleExit = async (message, code, err) => {
-    server.close();
-    err === null ? logger.info(message) : logger.error(message, err);
-    process.exit(code);
-  };
+initializeApp()
+  .then((app) => {
+    const port = environment.PORT || 3337;
 
-  process.on('SIGINT', async () => {
-    handleExit('Tenant management api exit, Byte', 1, null);
-  });
-  process.on('SIGTERM', async () => {
-    handleExit('Tenant management api was termination, Byte', 1, null);
-  });
-  process.on('uncaughtException', async (err: Error) => {
-    handleExit('Tenant management api Uncaught exception', 1, err);
-  });
-  server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
-});
+    const server = app.listen(port, () => {
+      logger.info(`Listening at http://localhost:${port}`);
+    });
+
+    const handleExit = async (message, code, err) => {
+      server.close();
+      err === null ? logger.info(message) : logger.error(message, err);
+      process.exit(code);
+    };
+
+    process.on('SIGINT', async () => {
+      handleExit('Tenant management api exit, Byte', 1, null);
+    });
+    process.on('SIGTERM', async () => {
+      handleExit('Tenant management api was termination, Byte', 1, null);
+    });
+    process.on('uncaughtException', async (err: Error) => {
+      handleExit('Tenant management api Uncaught exception', 1, err);
+    });
+    server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
+  })
+  .catch((err) => console.log(err));

@@ -1,10 +1,17 @@
 import { AuthenticationConfig, authenticateToken } from '@core-services/core-common';
+import type { RequestHandler } from 'express';
 import * as HttpStatusCodes from 'http-status-codes';
 
-export const adminOnlyMiddleware = async (req, res, next: () => void) => {
+enum TenantServiceRoles {
+  TenantServiceAdmin = 'tenant-service-admin',
+  PlatformService = 'platform-service',
+  DirectoryAdmin = 'directory-admin',
+}
+
+export const requireTenantServiceAdmin: RequestHandler = async (req, res, next: () => void) => {
   const authConfig: AuthenticationConfig = {
-    tenantName: 'core',
-    client: 'tenant-api',
+    requireCore: true,
+    allowedRoles: [TenantServiceRoles.TenantServiceAdmin],
   };
 
   if (authenticateToken(authConfig, req.user)) {
@@ -14,10 +21,23 @@ export const adminOnlyMiddleware = async (req, res, next: () => void) => {
   }
 };
 
-export const tenantInitOnlyMiddleware = async (req, res, next: () => void) => {
+export const requireDirectoryAdmin: RequestHandler = async (req, res, next: () => void) => {
   const authConfig: AuthenticationConfig = {
-    tenantName: 'core',
-    client: 'tenant-platform-webapp',
+    requireCore: true,
+    allowedRoles: [TenantServiceRoles.DirectoryAdmin],
+  };
+
+  if (authenticateToken(authConfig, req.user)) {
+    next();
+  } else {
+    res.sendStatus(HttpStatusCodes.UNAUTHORIZED);
+  }
+};
+
+export const requirePlatformService: RequestHandler = (req, res, next) => {
+  const authConfig: AuthenticationConfig = {
+    requireCore: true,
+    allowedRoles: [TenantServiceRoles.PlatformService],
   };
 
   if (authenticateToken(authConfig, req.user)) {

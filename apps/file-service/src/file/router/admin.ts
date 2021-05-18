@@ -1,5 +1,5 @@
-import { Logger } from 'winston';
-import { Router } from 'express';
+import type { Logger } from 'winston';
+import { RequestHandler, Router } from 'express';
 import {
   assertAuthenticatedHandler,
   User,
@@ -21,10 +21,9 @@ interface AdminRouterProps {
   fileRepository: FileRepository;
 }
 
-export const adminOnlyMiddleware = async (req, res, next: () => void) => {
+export const adminOnlyMiddleware: RequestHandler = async (req, res, next: () => void) => {
   const authConfig: AuthenticationConfig = {
-    tenantName: 'core',
-    client: 'tenant-api',
+    requireCore: true,
     allowedRoles: ['file-service-admin'],
   };
 
@@ -41,7 +40,7 @@ export const createAdminRouter = ({
   eventService,
   spaceRepository,
   fileRepository,
-}: AdminRouterProps) => {
+}: AdminRouterProps): Router => {
   const adminRouter = Router();
 
   adminRouter.get('/:space/types', [adminOnlyMiddleware, assertAuthenticatedHandler], async (req, res, next) => {

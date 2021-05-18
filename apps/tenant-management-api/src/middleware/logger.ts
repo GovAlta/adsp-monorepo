@@ -1,15 +1,17 @@
+import type { RequestHandler } from 'express';
 import { createLogger } from '@core-services/core-common';
-import { Request, Response, NextFunction } from 'express';
+import { environment } from '../environments/environment';
 
-export const WinstonLogger = (req, res, next) => {
+export const WinstonLogger: RequestHandler = (req, _res, next): void => {
   // TODO: add api or http request logger here
-  req.logger = createLogger('tenant-management-api', process.env.LOG_LEVEL || 'info');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (req as any).logger = createLogger('tenant-management-api', environment.LOG_LEVEL || 'debug');
 
   next();
 };
 
-export const logger = createLogger('tenant-management-api', process.env.LOG_LEVEL || 'info');
+export const logger = createLogger('tenant-management-api', environment.LOG_LEVEL || 'debug');
 
-export const loggerApi = (req: Request, resp: Response, NextFunction) => {
+export const loggerApi: RequestHandler = (req, _resp, _next): void => {
   logger.info(`${req.method}  ${req.path}`);
 };

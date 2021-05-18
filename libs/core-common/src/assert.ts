@@ -50,35 +50,17 @@ export const AssertRole: AssertRole = (operation, roles) => (target, propertyKey
 };
 
 export interface AuthenticationConfig {
-  realm?: string;
-  client?: string;
-  tenantName?: string;
+  requireCore?: boolean;
   allowedRoles?: Array<string>;
-  roles?: UserRole[];
 }
 
 export const authenticateToken = (authConfig: AuthenticationConfig, user) => {
-  logger.info(`tenant: ${user.client}`);
+  logger.debug(`Checking access for user ${user.name} (${user.id}) via tenant: ${user.tenantId || 'core'}`);
 
   try {
-    if (authConfig.realm) {
-      const realm = user.tokenIssuer.split('/').slice(-1)[0];
-      if (realm !== authConfig.realm) {
-        logger.warn(`Expect realm ${authConfig.realm}, but current realm is ${user.realm}`);
-        return false;
-      }
-    }
-
-    if (authConfig.tenantName) {
-      if (user.tenantName !== authConfig.tenantName) {
-        logger.warn(`Expect tenant ${authConfig.tenantName}, but current tenantName is ${user.tenantName}`);
-        return false;
-      }
-    }
-
-    if (authConfig.client) {
-      if (user.client !== authConfig.client) {
-        logger.warn(`Expect client ${util.inspect(authConfig.client)}, but current client is ${user.client}`);
+    if (authConfig.requireCore) {
+      if (!user.isCore) {
+        logger.warn(`Expect core tenant, but access token is not for core.`);
         return false;
       }
     }

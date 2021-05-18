@@ -7,6 +7,7 @@ dotenv.config();
 export const environment = envalid.cleanEnv(
   process.env,
   {
+    ALLOW_SWAGGER_UI: envalid.bool({ default: false }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     MONGO_USER: envalid.str({ default: '' }),
     MONGO_PASSWORD: envalid.str({ default: '' }),
@@ -14,13 +15,12 @@ export const environment = envalid.cleanEnv(
     MONGO_DB: envalid.str({ default: 'tenantDb' }),
     PORT: envalid.num({ default: 3333 }),
     KEYCLOAK_ROOT_URL: envalid.str({ default: 'https://access-dev.os99.gov.ab.ca' }),
-    FILE_SERVICE_HOST: envalid.str({ default: 'https://file-service-core-services-dev.os99.gov.ab.ca' }),
-    WEB_SERVICE_HOST: envalid.str({ default: 'https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca' }),
+    WEB_SERVICE_HOST: envalid.str({ default: 'http://localhost:3333' }),
     KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_ID: envalid.str({ default: 'tenant-realm-admin' }),
     KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_SECRET: envalid.str(),
-    KEYCLOAK_TENANT_API_CLIENT: envalid.str({ default: 'tenant-api' }),
-    KEYCLOAK_TENANT_API_CLIENT_SECRET: envalid.str(),
-    APP_ENVIRONMENT: envalid.str(),
+    CLIENT_ID: envalid.str({ default: 'urn:ads:platform:tenant-service' }),
+    CLIENT_SECRET: envalid.str(),
+    APP_ENVIRONMENT: envalid.str({ default: 'dev' }),
   },
   {
     reporter: ({ errors }) => {

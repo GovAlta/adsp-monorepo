@@ -8,7 +8,6 @@ export const environment = envalid.cleanEnv(
   process.env,
   {
     KEYCLOAK_ROOT_URL: envalid.str({ default: 'https://access-dev.os99.gov.ab.ca' }),
-    KEYCLOAK_REALM: envalid.str({ default: 'core' }),
     FILE_PATH: envalid.str({ default: 'data/file/' }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     MONGO_URI: envalid.str({ default: 'mongodb://localhost:27017' }),
@@ -22,8 +21,9 @@ export const environment = envalid.cleanEnv(
     AV_PORT: envalid.num({ default: 3310 }),
     AV_PROVIDER: envalid.str({ default: 'clam' }),
     PORT: envalid.num({ default: 3337 }),
-    KEYCLOAK_TENANT_API_CLIENT: envalid.str({ default: 'tenant-api' }),
-    KEYCLOAK_TENANT_API_CLIENT_SECRET: envalid.str(),
+    CLIENT_ID: envalid.str({ default: 'urn:ads:platform:file-service' }),
+    CLIENT_SECRET: envalid.str(),
+    DIRECTORY_URL: envalid.str({ default: 'https://tenant-management-api-core-services-dev.os99.gov.ab.ca' }),
   },
   {
     reporter: ({ errors }) => {
