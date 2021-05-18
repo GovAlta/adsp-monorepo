@@ -10,7 +10,6 @@ import {
   NotFoundError,
   InvalidOperationError,
   DomainEventService,
-  platformURNs,
 } from '@core-services/core-common';
 import { FileRepository, FileSpaceRepository } from '../repository';
 import { FileEntity } from '../model';
@@ -32,12 +31,12 @@ export const createFileRouter = ({
   eventService,
   spaceRepository,
   fileRepository,
-}: FileRouterProps) => {
+}: FileRouterProps): Router => {
   const upload = createUpload({ rootStoragePath });
   const fileRouter = Router();
 
   fileRouter.post('/files', assertAuthenticatedHandler, upload.single('file'), async (req, res, next) => {
-    const user = req.user as User;
+    const user = req.user;
     const { type, recordId, filename } = req.body;
     const uploaded = req.file;
 
@@ -49,7 +48,7 @@ export const createFileRouter = ({
       if (!uploaded || !type) {
         res.sendStatus(400);
       } else {
-        const space = await spaceRepository.getIdByName(user.tenantName);
+        const space = await spaceRepository.getIdByTenant(req.tenant);
         const spaceEntity = await spaceRepository.get(space);
 
         if (!spaceEntity) {
@@ -93,7 +92,6 @@ export const createFileRouter = ({
           recordId: fileEntity.recordId,
           created: fileEntity.created,
           lastAccessed: fileEntity.lastAccessed,
-          fileURN: `${platformURNs['file-service']}:${spaceEntity.name}/supporting-doc/${fileEntity.id}`,
         });
 
         logger.info(
@@ -106,12 +104,10 @@ export const createFileRouter = ({
   });
 
   fileRouter.get('/files', async (req, res, next) => {
-    const user = req.user as User;
     const { top, after } = req.query;
 
     try {
-      const spaceId = await spaceRepository.getIdByName(user.tenantName);
-
+      const spaceId = await spaceRepository.getIdByTenant(req.tenant);
       if (!spaceId) {
         throw new NotFoundError(`Space Not Found`, spaceId);
       }
@@ -136,7 +132,6 @@ export const createFileRouter = ({
           recordId: n.recordId,
           created: n.created,
           lastAccessed: n.lastAccessed,
-          fileURN: `${platformURNs['file-service']}:${user.tenantName}/supporting-doc/${n.id}`,
         })),
       });
     } catch (err) {
@@ -164,7 +159,6 @@ export const createFileRouter = ({
         recordId: fileEntity.recordId,
         created: fileEntity.created,
         lastAccessed: fileEntity.lastAccessed,
-        fileURN: `${platformURNs['file-service']}:${user.tenantName}/supporting-doc/${fileEntity.id}`,
         scanned: fileEntity.scanned,
         deleted: fileEntity.deleted,
       });

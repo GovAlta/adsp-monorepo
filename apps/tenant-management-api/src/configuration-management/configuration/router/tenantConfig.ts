@@ -30,8 +30,8 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
 
   tenantConfigRouter.get('/', async (req, res, next) => {
     const { id } = req.params;
-    const user = req.user as User;
-    const tenant = user.tenantName;
+    const user = req.user;
+    const tenant = `${user.tenantId}`;
     try {
       const results = await tenantConfigurationRepository.getTenantConfig(tenant);
 
@@ -47,8 +47,8 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
   tenantConfigRouter.post('/', async (req: Request, res: Response) => {
     const data = req.body;
     const { configurationSettingsList } = data;
-    const user = req.user as User;
-    const tenant = user.tenantName;
+    const user = req.user;
+    const tenant = `${user.tenantId}`;
     try {
       if (!configurationSettingsList) {
         throw new HttpException(HttpStatusCodes.BAD_REQUEST, 'Tenant Realm Configuration Settings are required');
@@ -73,8 +73,8 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
 
   tenantConfigRouter.put('/', async (req: Request, res: Response) => {
     const data = req.body;
-    const user = req.user as User;
-    const tenant = user.tenantName;
+    const user = req.user;
+    const tenant = `${user.tenantId}`;
     const { configurationSettingsList } = data;
     console.log('put ', configurationSettingsList);
     try {
@@ -92,8 +92,8 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
   });
 
   tenantConfigRouter.delete('/', async (req: Request, res: Response) => {
-    const user = req.user as User;
-    const tenant = user.tenantName;
+    const user = req.user;
+    const tenant = `${user.tenantId}`;
 
     try {
       const results = await tenantConfigurationRepository.getTenantConfig(tenant);

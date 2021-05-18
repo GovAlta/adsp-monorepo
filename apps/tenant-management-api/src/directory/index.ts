@@ -1,0 +1,1 @@
+export { directoryRouter } from './router';

@@ -3,13 +3,13 @@ import { Application } from 'express';
 import { Repositories } from './repository';
 import { createConfigurationRouter, createTenantConfigurationRouter } from './router';
 import { Logger } from 'winston';
-import { errorHandler } from './errorHandlers';
 export * from './types';
 export * from './repository';
 export * from './model';
 import * as passport from 'passport';
 
-const passportMiddleware = passport.authenticate(['jwt'], { session: false });
+const passportMiddleware = passport.authenticate(['jwt-tenant', 'jwt'], { session: false });
+
 interface ConfigMiddlewareProps extends Repositories {
   logger: Logger;
 }
@@ -17,7 +17,7 @@ interface ConfigMiddlewareProps extends Repositories {
 export const applyConfigMiddleware = (
   app: Application,
   { logger, serviceConfigurationRepository, tenantConfigurationRepository }: ConfigMiddlewareProps
-) => {
+): Application => {
   const serviceConfigRouterProps = {
     logger,
     serviceConfigurationRepository,
@@ -33,4 +33,6 @@ export const applyConfigMiddleware = (
 
   app.use('/api/configuration/v1/serviceOptions/', passportMiddleware, serviceConfigRouter);
   app.use('/api/configuration/v1/tenantConfig/', passportMiddleware, tenantConfigRouter);
+
+  return app;
 };

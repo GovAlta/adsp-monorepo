@@ -5,6 +5,7 @@ import { FileSpaceRepository, FileSpaceEntity, FileSpace } from '../file';
 import { fileSpaceSchema } from './schema';
 import { FileSpaceDoc } from './types';
 import { Logger } from 'winston';
+import type { Tenant } from '@abgov/adsp-service-sdk';
 
 export class MongoFileSpaceRepository implements FileSpaceRepository {
   private model: Model<FileSpaceDoc>;
@@ -35,8 +36,8 @@ export class MongoFileSpaceRepository implements FileSpaceRepository {
     });
   }
 
-  async getIdByName(name: string) {
-    const res = await this.model.findOne({ name: name });
+  async getIdByTenant(tenant: Tenant): Promise<string> {
+    const res = await this.model.findOne({ name: tenant.name });
     return Promise.resolve(res ? res.id : null);
   }
 

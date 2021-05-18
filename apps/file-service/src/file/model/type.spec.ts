@@ -18,7 +18,6 @@ describe('File Type Entity', () => {
     id: 'user-2',
     name: 'testy',
     email: 'test@testco.org',
-    organizationId: null,
     roles: ['test-admin'],
   };
 

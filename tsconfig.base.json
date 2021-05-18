@@ -16,7 +16,8 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@core-services/core-common": ["libs/core-common/src/index.ts"]
+      "@core-services/core-common": ["libs/core-common/src/index.ts"],
+      "@abgov/adsp-service-sdk": ["libs/adsp-service-sdk/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

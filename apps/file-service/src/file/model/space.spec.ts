@@ -12,7 +12,6 @@ describe('File Space Entity', () => {
     id: 'user-2',
     name: 'testy',
     email: 'test@testco.org',
-    organizationId: null,
     roles: [ServiceUserRoles.Admin],
   };
 

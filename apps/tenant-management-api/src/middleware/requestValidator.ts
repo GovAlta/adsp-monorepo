@@ -16,6 +16,13 @@ const validationMiddleware = (classValidator) => async (req: CustomRequest, res:
     };
   }
 
+  if (req.method === 'PUT') {
+    data = {
+      ...req.query,
+      ...req.body,
+    };
+  }
+
   if (req.method === 'GET') {
     data = {
       ...req.query,

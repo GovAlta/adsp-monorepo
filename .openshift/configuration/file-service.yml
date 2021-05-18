@@ -12,9 +12,8 @@ items:
       AV_PROVIDER: meta
       AV_HOST: http://vnn4457.gov.ab.ca
       AV_PORT: "8008"
-      KEYCLOAK_REALM: core
-      KEYCLOAK_ROOT_URL: https://access-dev.os99.gov.ab.ca/auth
-      TENANT_MAGEMENT_API_HOST: https://tenant-management-api.core-services-dev.svc.cluster.local
+      KEYCLOAK_ROOT_URL: https://access-dev.os99.gov.ab.ca
+      DIRECTORY_URL: https://tenant-management-api.core-services-dev.svc.cluster.local
   - apiVersion: v1
     kind: Secret
     metadata:
@@ -23,5 +22,5 @@ items:
         component: api
       name: file-service
     stringData:
-      KEYCLOAK_TENANT_API_CLIENT: tenant-api
-      KEYCLOAK_TENANT_API_CLIENT_SECRET:
+      CLIENT_ID: "urn:ads:platform:file-service"
+      CLIENT_SECRET:

@@ -26,11 +26,11 @@ export const createFileTypeRouter = ({
   spaceRepository,
   rootStoragePath,
   fileRepository,
-}: FileTypeRouterProps) => {
+}: FileTypeRouterProps): Router => {
   const fileTypeRouter = Router();
 
   fileTypeRouter.post('/fileTypes', fileServiceAdminMiddleware, async (req, res, next) => {
-    const user = req.user as User;
+    const user = req.user;
 
     const { name, anonymousRead, readRoles = [], updateRoles = [] } = req.body;
 
@@ -38,8 +38,7 @@ export const createFileTypeRouter = ({
       res.sendStatus(HttpStatusCodes.BAD_REQUEST);
     } else {
       try {
-        const spaceId = await spaceRepository.getIdByName(user.tenantName);
-
+        const spaceId = await spaceRepository.getIdByTenant(req.tenant);
         if (!spaceId) {
           throw new NotFoundError('File space', null);
         }
@@ -71,11 +70,10 @@ export const createFileTypeRouter = ({
 
   fileTypeRouter.get('/fileTypes/:fileTypeId', async (req, res, next) => {
     const { fileTypeId } = req.params;
-    const user = req.user as User;
+    const user = req.user;
 
     try {
-      const tenantName = user.tenantName;
-      const spaceId = await spaceRepository.getIdByName(tenantName);
+      const spaceId = await spaceRepository.getIdByTenant(req.tenant);
       if (!spaceId) {
         throw new NotFoundError('File Type', fileTypeId);
       }
@@ -97,13 +95,10 @@ export const createFileTypeRouter = ({
   });
 
   fileTypeRouter.get('/fileTypes', fileServiceAdminMiddleware, async (req, res, next) => {
-    const user = req.user as User;
+    const user = req.user;
 
     try {
-      const tenantName = user.tenantName;
-
-      const spaceId = await spaceRepository.getIdByName(tenantName);
-
+      const spaceId = await spaceRepository.getIdByTenant(req.tenant);
       if (!spaceId) {
         throw new NotFoundError('File Type', null);
       }
@@ -121,15 +116,13 @@ export const createFileTypeRouter = ({
   });
 
   fileTypeRouter.put('/fileTypes/:fileTypeId', assertAuthenticatedHandler, async (req, res, next) => {
-    const user = req.user as User;
+    const user = req.user;
     const { fileTypeId } = req.params;
 
     const { updateRoles, readRoles, anonymousRead, name } = req.body;
 
     try {
-      const tenantName = user.tenantName;
-      const spaceId = await spaceRepository.getIdByName(tenantName);
-
+      const spaceId = await spaceRepository.getIdByTenant(req.tenant);
       if (!spaceId) {
         throw new NotFoundError('File Space', null);
       }
@@ -157,9 +150,9 @@ export const createFileTypeRouter = ({
 
   fileTypeRouter.delete('/fileTypes/:fileTypeId', assertAuthenticatedHandler, async (req, res, next) => {
     const { fileTypeId } = req.params;
-    const user = req.user as User;
+    const user = req.user;
     try {
-      const spaceId = await spaceRepository.getIdByName(user.tenantName);
+      const spaceId = await spaceRepository.getIdByTenant(req.tenant);
       if (!spaceId) {
         throw new NotFoundError('File Type', fileTypeId);
       }

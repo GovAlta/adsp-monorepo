@@ -2,7 +2,6 @@ import { Logger } from 'winston';
 import { Router } from 'express';
 import {
   assertAuthenticatedHandler,
-  User,
   UnauthorizedError,
   NotFoundError,
   DomainEventService,
@@ -18,20 +17,19 @@ interface SpaceRouterProps {
   spaceRepository: FileSpaceRepository;
 }
 
-export const createSpaceRouter = ({ logger, eventService, spaceRepository }: SpaceRouterProps) => {
+export const createSpaceRouter = ({ logger, eventService, spaceRepository }: SpaceRouterProps): Router => {
   const spaceRouter = Router();
 
   spaceRouter.get('/spaces', assertAuthenticatedHandler, async (req, res, next) => {
-    const user = req.user as User;
-    const name = user.tenantName
+    const user = req.user;
 
     try {
-      const spaceId = await spaceRepository.getIdByName(name);
+      const spaceId = await spaceRepository.getIdByTenant(req.tenant);
       if (!spaceId) {
-        throw new NotFoundError('Space', name);
+        throw new NotFoundError('Space', `${user.tenantId}`);
       }
 
-      const spaceEntity = await spaceRepository.get(spaceId)
+      const spaceEntity = await spaceRepository.get(spaceId);
 
       if (!spaceEntity.canAccess(user)) {
         throw new UnauthorizedError('User not authorized to access space.');
@@ -48,17 +46,16 @@ export const createSpaceRouter = ({ logger, eventService, spaceRepository }: Spa
   });
 
   spaceRouter.post('/spaces', assertAuthenticatedHandler, async (req, res, next) => {
-    const user = req.user as User;
+    const user = req.user;
     const { spaceAdminRole } = req.body;
 
     try {
-      const spaceId = await spaceRepository.getIdByName(user.tenantName);
-
+      const spaceId = await spaceRepository.getIdByTenant(req.tenant);
       if (!spaceId) {
         const entity = await FileSpaceEntity.create(user, spaceRepository, {
           id: uuidv4(),
           spaceAdminRole,
-          name: user.tenantName,
+          name: `${user.tenantId}`,
         });
 
         eventService.send(
@@ -84,7 +81,6 @@ export const createSpaceRouter = ({ logger, eventService, spaceRepository }: Spa
 
         const entity = await spaceEntity.update(user, {
           spaceAdminRole,
-          name: user.tenantName,
         });
 
         eventService.send(

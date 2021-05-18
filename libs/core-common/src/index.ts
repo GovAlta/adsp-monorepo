@@ -10,3 +10,4 @@ export * from './amqp';
 export * from './work';
 export * from './client';
 export * from './config';
+export * from './serviceInit';
