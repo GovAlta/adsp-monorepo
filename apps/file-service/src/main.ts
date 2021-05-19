@@ -31,6 +31,7 @@ async function initializeApp(): Promise<express.Application> {
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
+      ignoreServiceAud: true,
     },
     { logger }
   );
@@ -42,6 +43,7 @@ async function initializeApp(): Promise<express.Application> {
       logger,
       serviceId,
       accessServiceUrl,
+      ignoreServiceAud: true,
     })
   );
   passport.use(new AnonymousStrategy());

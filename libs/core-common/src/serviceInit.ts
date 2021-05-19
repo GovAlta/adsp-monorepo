@@ -25,7 +25,7 @@ export const isReady = () => {
 };
 
 export function initService(refresh = false) {
-  (async () => {
+  const renew = async () => {
     try {
       if (locker) {
         logger.info(`Another module are trying to load the tenant token as well. Skip the loading`);
@@ -53,9 +53,10 @@ export function initService(refresh = false) {
         );
       }
     }
-  })();
-}
+  };
 
-if (process.env.APP_ENVIRONMENT !== 'test') {
-  setInterval(initService, refreshTimeInterval, true);
+  renew();
+  if (process.env.APP_ENVIRONMENT !== 'test') {
+    setInterval(renew, refreshTimeInterval, true);
+  }
 }

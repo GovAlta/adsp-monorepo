@@ -34,6 +34,7 @@ async function initializeApp(): Promise<express.Application> {
       clientSecret: environment.CLIENT_SECRET,
       directoryUrl: null,
       accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
+      ignoreServiceAud: true,
     },
     { logger },
     {
@@ -48,6 +49,7 @@ async function initializeApp(): Promise<express.Application> {
       logger,
       serviceId,
       accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
+      ignoreServiceAud: true,
     })
   );
   passport.use('jwt-tenant', tenantStrategy);
@@ -114,8 +116,8 @@ async function initializeApp(): Promise<express.Application> {
   const swaggerDocBaseUrl = '/swagger/docs';
 
   const swaggerHosts = {
-    tenantAPI: await directory.getServiceUrl(adspId`urn:ads:platform:tenant-service`),
-    fileService: await directory.getServiceUrl(adspId`urn:ads:platform:file-service`),
+    tenantAPI: (await directory.getServiceUrl(adspId`urn:ads:platform:tenant-service`))?.href || '',
+    fileService: (await directory.getServiceUrl(adspId`urn:ads:platform:file-service`))?.href || '',
   };
 
   const swaggerUITenantAPIOptions = {
