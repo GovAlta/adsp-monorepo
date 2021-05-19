@@ -27,7 +27,7 @@ async function initializeApp(): Promise<express.Application> {
   app.use(express.json());
   app.use(cors());
 
-  const serviceId = AdspId.parse(environment.CLIENT_SECRET);
+  const serviceId = AdspId.parse(environment.CLIENT_ID);
   const { tenantStrategy, directory } = await initializePlatform(
     {
       serviceId,
