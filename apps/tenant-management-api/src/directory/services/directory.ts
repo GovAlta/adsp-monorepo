@@ -75,7 +75,7 @@ const validateServices = (services) => {
   }
 };
 
-export const discovery = async (urn) => {
+export const discovery = async (urn: string): Promise<Response | ApiError> => {
   //resolve the urn to object
   logger.info(`Starting discover URL for urn ${urn}`);
   const component: URNComponent = {};
@@ -91,7 +91,7 @@ export const discovery = async (urn) => {
       return new ApiError(
         HttpStatusCodes.BAD_REQUEST,
         'Please give right format URN! urn format should looks like urn:ads:{tenant|core}:{service}'
-      ).getJson();
+      );
     }
 
     if (urnArray[4]) {
@@ -242,7 +242,7 @@ export const deleteDirectory = async (name: string) => {
 };
 
 export const getServiceUrl = async (id: AdspId): Promise<URL> => {
-  return discovery(id).then((result) => {
+  return discovery(`${id}`).then((result) => {
     if (result instanceof ApiError) {
       throw result;
     } else {
