@@ -154,7 +154,7 @@ export const createFileTypeRouter = ({
     try {
       const spaceId = await spaceRepository.getIdByTenant(req.tenant);
       if (!spaceId) {
-        throw new NotFoundError(`Could not find space for ${user.tenantName}`, fileTypeId);
+        throw new NotFoundError(`Could not find space for ${user.name}`, fileTypeId);
       }
       const spaceEntity: FileSpaceEntity = await spaceRepository.get(spaceId);
       const filesOfType = await fileRepository.find(100000, null, {
