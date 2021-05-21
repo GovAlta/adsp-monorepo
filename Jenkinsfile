@@ -1,6 +1,23 @@
 def baseCommand = '--all'
 def affectedApps = []
 def affectedManifests = []
+def vaultSecretEnvMapping = [
+    [path: 'secret/core-services-jenkins/dev', engineVersion: 2, secretValues: [
+        [envVar: 'cyDevCoreAPIClientSecret', vaultKey: 'core-api-client-secret'],
+        [envVar: 'cyDevCoreAPIUserPassword', vaultKey: 'core-api-user-password'],
+        [envVar: 'cyDevClientSecret', vaultKey: 'client-secret'],
+        [envVar: 'cyDevPassword', vaultKey: 'password'],
+        [envVar: 'cyDevPassword2', vaultKey: 'password2']]
+
+    ],
+    [path: 'secret/core-services-jenkins/test', engineVersion: 2, secretValues: [
+        [envVar: 'cyTestCoreAPIClientSecret', vaultKey: 'core-api-client-secret'],
+        [envVar: 'cyTestCoreAPIUserPassword', vaultKey: 'core-api-user-password'],
+        [envVar: 'cyTestClientSecret', vaultKey: 'client-secret'],
+        [envVar: 'cyTestPassword', vaultKey: 'password'],
+        [envVar: 'cyTestPassword2', vaultKey: 'password2']]
+    ]
+]
 
 pipeline {
   options {
@@ -166,12 +183,19 @@ pipeline {
     stage("Smoke Test"){
       steps {
             script {
-                // Update cypress.json file with tags before run the tests
-                def text = readFile file: "apps/tenant-management-webapp-e2e/cypress.json"
-                text = text.replaceAll(/"TAGS":.+/, "\"TAGS\": \"@smoke-test and not @ignore\",")
-                writeFile file: "apps/tenant-management-webapp-e2e/cypress.json", text: text
+                // Update cypress json file with tags and secrets before run the tests
+                def text = readFile file: "apps/tenant-management-webapp-e2e/cypress.dev.json"
+                withVault([ vaultSecrets: vaultSecretEnvMapping]) {
+                  text = text.replaceAll(/"TAGS":.+/, "\"TAGS\": \"@smoke-test and not @ignore\",")
+                  text = text.replaceAll(/"core-api-client-secret": \"\",/, "\"core-api-client-secret\": \"$cyDevCoreAPIClientSecret\",")
+                  text = text.replaceAll(/"core-api-user-password": \"\",/, "\"core-api-user-password\": \"$cyDevCoreAPIUserPassword\",")
+                  text = text.replaceAll(/"client-secret": \"\",/, "\"client-secret\": \"$cyDevClientSecret\",")
+                  text = text.replaceAll(/"password": \"\",/, "\"password\": \"$cyDevPassword\",")
+                  text = text.replaceAll(/"password2": \"\",/, "\"password2\": \"$cyDevPassword2\",")
+                }
+                writeFile file: "apps/tenant-management-webapp-e2e/cypress.dev.json", text: text
             }
-        sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --baseUrl=https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca --cypress-config='apps/tenant-management-webapp-e2e/cypress.json'"
+        sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --baseUrl=https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca --cypress-config='apps/tenant-management-webapp-e2e/cypress.dev.json'"
       }
       post {
         always {
@@ -253,9 +277,16 @@ pipeline {
     stage("Regression Test") {
       steps {
             script {
-                // Update cypress.json file with tags before run the tests
+                // Update cypress json file with tags and secrets before run the tests
                 def text = readFile file: "apps/tenant-management-webapp-e2e/cypress.test.json"
-                text = text.replaceAll(/"TAGS":.+/, "\"TAGS\": \"@regression and not @ignore\",")
+                withVault([ vaultSecrets: vaultSecretEnvMapping]) {
+                  text = text.replaceAll(/"TAGS":.+/, "\"TAGS\": \"@regression and not @ignore\",")
+                  text = text.replaceAll(/"core-api-client-secret": \"\",/, "\"core-api-client-secret\": \"$cyTestCoreAPIClientSecret\",")
+                  text = text.replaceAll(/"core-api-user-password": \"\",/, "\"core-api-user-password\": \"$cyTestCoreAPIUserPassword\",")
+                  text = text.replaceAll(/"client-secret": \"\",/, "\"client-secret\": \"$cyTestClientSecret\",")
+                  text = text.replaceAll(/"password": \"\",/, "\"password\": \"$cyTestPassword\",")
+                  text = text.replaceAll(/"password2": \"\",/, "\"password2\": \"$cyTestPassword2\",")
+                }
                 writeFile file: "apps/tenant-management-webapp-e2e/cypress.test.json", text: text
             }
         sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --baseUrl=https://tenant-management-webapp-core-services-test.os99.gov.ab.ca --cypress-config='apps/tenant-management-webapp-e2e/cypress.test.json'"

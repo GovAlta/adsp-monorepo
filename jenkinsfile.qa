@@ -1,3 +1,20 @@
+def vaultSecretEnvMapping = [
+    [path: 'secret/core-services-jenkins/dev', engineVersion: 2, secretValues: [
+        [envVar: 'cyDevCoreAPIClientSecret', vaultKey: 'core-api-client-secret'],
+        [envVar: 'cyDevCoreAPIUserPassword', vaultKey: 'core-api-user-password'],
+        [envVar: 'cyDevClientSecret', vaultKey: 'client-secret'],
+        [envVar: 'cyDevPassword', vaultKey: 'password'],
+        [envVar: 'cyDevPassword2', vaultKey: 'password2']]
+
+    ],
+    [path: 'secret/core-services-jenkins/test', engineVersion: 2, secretValues: [
+        [envVar: 'cyTestCoreAPIClientSecret', vaultKey: 'core-api-client-secret'],
+        [envVar: 'cyTestCoreAPIUserPassword', vaultKey: 'core-api-user-password'],
+        [envVar: 'cyTestClientSecret', vaultKey: 'client-secret'],
+        [envVar: 'cyTestPassword', vaultKey: 'password'],
+        [envVar: 'cyTestPassword2', vaultKey: 'password2']]
+    ]
+]
 pipeline {
   agent {
     node {
@@ -58,11 +75,27 @@ pipeline {
         steps {
             script {
                 // def source = new File('source.txt') //Hello World
-                // Update cypress.json file with tags before run the tests
-                def text = readFile file: "apps/tenant-management-webapp-e2e/${cypress_config}"
-                text = text.replaceAll(/"TAGS":.+/, "\"TAGS\": \"${tags}\",")
-                echo text
-                writeFile file: "apps/tenant-management-webapp-e2e/${cypress_config}", text: text
+                // Update cypress json files with tags and secrets before run the tests
+                def text = readFile file: "apps/tenant-management-webapp-e2e/cypress.test.json"
+                def text2 = readFile file: "apps/tenant-management-webapp-e2e/cypress.dev.json"
+                withVault([ vaultSecrets: vaultSecretEnvMapping]) {
+                  text = text.replaceAll(/"TAGS":.+/, "\"TAGS\": \"${tags}\",")
+                  text = text.replaceAll(/"core-api-client-secret": \"\",/, "\"core-api-client-secret\": \"$cyTestCoreAPIClientSecret\",")
+                  text = text.replaceAll(/"core-api-user-password": \"\",/, "\"core-api-user-password\": \"$cyTestCoreAPIUserPassword\",")
+                  text = text.replaceAll(/"client-secret": \"\",/, "\"client-secret\": \"$cyTestClientSecret\",")
+                  text = text.replaceAll(/"password": \"\",/, "\"password\": \"$cyTestPassword\",")
+                  text = text.replaceAll(/"password2": \"\",/, "\"password2\": \"$cyTestPassword2\",")
+                  text2 = text2.replaceAll(/"TAGS":.+/, "\"TAGS\": \"${tags}\",")
+                  text2 = text2.replaceAll(/"core-api-client-secret": \"\",/, "\"core-api-client-secret\": \"$cyDevCoreAPIClientSecret\",")
+                  text2 = text2.replaceAll(/"core-api-user-password": \"\",/, "\"core-api-user-password\": \"$cyDevCoreAPIUserPassword\",")
+                  text2 = text2.replaceAll(/"client-secret": \"\",/, "\"client-secret\": \"$cyDevClientSecret\",")
+                  text2 = text2.replaceAll(/"password": \"\",/, "\"password\": \"$cyDevPassword\",")
+                  text2 = text2.replaceAll(/"password2": \"\",/, "\"password2\": \"$cyDevPassword2\",")
+                }
+                writeFile file: "apps/tenant-management-webapp-e2e/cypress.test.json", text: text
+                writeFile file: "apps/tenant-management-webapp-e2e/cypress.dev.json", text: text2
+                def text3 = readFile file: "apps/tenant-management-webapp-e2e/${cypress_config}"
+                echo text3
             }
           sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --baseUrl=${base_url} --cypress-config='apps/tenant-management-webapp-e2e/${cypress_config}'"
         }
