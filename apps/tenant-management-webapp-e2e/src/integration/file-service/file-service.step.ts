@@ -150,9 +150,6 @@ Then(
     if (axiosError == undefined) {
       expect(axiosResponse.status).to.equal(Number(statusCode));
       if (statusCode == '200') {
-        // A file urn in response
-        expect(axiosResponse.data.fileURN).is.not.empty;
-
         // Delete the uploaded file
         const deleteFileRequestURL = Cypress.env('fileApi') + '/file/v1/files/' + fileId;
         cy.request({

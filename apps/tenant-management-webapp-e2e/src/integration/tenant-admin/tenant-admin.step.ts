@@ -57,7 +57,7 @@ When('the user sends a configuration service request to {string}', function (req
     method: 'GET',
     url: requestURL,
     auth: {
-      bearer: Cypress.env('core-api-token'),
+      bearer: Cypress.env('autotest-admin-token'),
     },
   }).then(function (response) {
     responseObj = response;

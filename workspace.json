@@ -170,7 +170,7 @@
         "e2e": {
           "builder": "@nrwl/cypress:cypress",
           "options": {
-            "cypressConfig": "apps/tenant-management-webapp-e2e/cypress.json",
+            "cypressConfig": "apps/tenant-management-webapp-e2e/cypress.dev.json",
             "tsConfig": "apps/tenant-management-webapp-e2e/tsconfig.e2e.json",
             "devServerTarget": "tenant-management-webapp:serve"
           },
