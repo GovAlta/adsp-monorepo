@@ -1,0 +1,17 @@
+{
+  "name": "platform",
+  "services": [
+    {
+      "service": "tenant-service",
+      "host": "http://tenant-management-api:3333"
+    },
+    {
+      "service": "tenant-service:v2",
+      "host": "http://tenant-management-api:3333/api/tenant/v2"
+    },
+    {
+      "service": "file-service",
+      "host": "http://file-service:3337"
+    }
+  ]
+}

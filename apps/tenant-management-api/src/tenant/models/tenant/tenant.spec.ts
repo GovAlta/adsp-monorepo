@@ -1,5 +1,5 @@
 import * as TenantModel from '.';
-import { createMockMongoServer, disconnect } from '../../../mongo';
+import { createMockMongoServer, disconnect } from '../../../mongo/mock';
 import * as UserModel from '../user';
 describe('Tenant Entity', () => {
   beforeAll(async () => {

@@ -6,5 +6,5 @@ export interface Service {
 }
 export interface Directory {
   name: string;
-  host: Array<Service>;
+  services: Service[];
 }

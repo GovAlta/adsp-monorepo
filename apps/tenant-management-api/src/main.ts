@@ -10,7 +10,7 @@ import { UnauthorizedError, NotFoundError, InvalidOperationError } from '@core-s
 import { createConfigService } from './configuration-management';
 import { connectMongo, disconnect } from './mongo/index';
 import { tenantRouter } from './tenant';
-import { directoryRouter } from './directory';
+import { directoryRouter, bootstrapDirectory } from './directory';
 import { logger } from './middleware/logger';
 import { environment } from './environments/environment';
 
@@ -22,6 +22,10 @@ import { tenantV2Router } from './tenant/router';
 async function initializeApp(): Promise<express.Application> {
   /* Connect to mongo db */
   await connectMongo();
+
+  if (environment.DIRECTORY_BOOTSTRAP) {
+    await bootstrapDirectory(logger, environment.DIRECTORY_BOOTSTRAP);
+  }
 
   const app = express();
   app.use(express.json());
@@ -86,7 +90,7 @@ async function initializeApp(): Promise<express.Application> {
 
   // TODO: For now these endpoints authenticate core realm as well as tenant realm, but
   // need to verify which endpoints require which type of authentication.
-  const authenticate = passport.authenticate(['jwt-tenant', 'jwt'], { session: false });
+  const authenticate = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
   const authenticateCore = passport.authenticate(['jwt'], { session: false });
   app.use('/api/tenant/v1', authenticate, tenantRouter);
   app.use('/api/discovery/v1', authenticate, directoryRouter);
@@ -157,7 +161,7 @@ async function initializeApp(): Promise<express.Application> {
 
 initializeApp()
   .then((app) => {
-    const port = process.env.port || 3333;
+    const port = environment.PORT || 3333;
 
     const server = app.listen(port, () => {
       logger.info(`Listening at http://localhost:${port}/api`);

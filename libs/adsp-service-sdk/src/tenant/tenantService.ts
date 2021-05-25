@@ -72,7 +72,7 @@ export class TenantServiceImpl implements TenantService {
         });
       }
 
-      this.logger.info(`Retrieved and cached tenant information.'`, this.LOG_CONTEXT);
+      this.logger.info(`Retrieved and cached tenant information.`, this.LOG_CONTEXT);
 
       return tenants;
     } catch (err) {

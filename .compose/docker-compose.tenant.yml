@@ -7,30 +7,38 @@ services:
   tenant-management-webapp:
     build:
       context: ../
-      dockerfile: .compose/service/DockerfileReact
+      dockerfile: .compose/app/Dockerfile
       args:
         - SERVICE=tenant-management-webapp
     ports:
-      - 4020:4020
-    expose:
-      - 4020
+      - 4200:8080
     volumes:
-      - ../data/webapp:/webapp/file    
+      - ./app/config.json:/opt/app-root/src/config.v2/config.json
   tenant-management-api:
     build:
       context: ../
       dockerfile: .compose/service/Dockerfile
       args:
         - SERVICE=tenant-management-api
-      depends_on:
-      - tenant-management-mongodb  
+    depends_on:
+      - keycloak
+      - tenant-management-mongo
     ports:
-      - 3338:3338
-    expose:
-      - 3338
+      - 3333:3333
     volumes:
-      - ../data/api:/api/file
+      - ../directory.platform.json:/home/directory.platform.json
+    expose:
+      - 3333
     environment:
-      - MONGO_URI=mongodb://tenant-management-mongodb:27017
+      - LOG_LEVEL=debug
+      - MONGO_URI=mongodb://tenant-management-mongo:27017
       - MONGO_DB=tenantDb
-      
+      - KEYCLOAK_ROOT_URL=http://keycloak:8080
+      - KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_ID=tenant-service
+      - KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_SECRET=649e2739-6430-4c58-a48d-a51b57414874
+      - CLIENT_ID=urn:ads:platform:tenant-service
+      - CLIENT_SECRET=2b3f47b6-a8b3-48b2-8265-e14cc0f3793b
+      - ALLOW_SWAGGER_UI=true
+      - TENANT_WEB_APP_HOST=http://localhost:4200
+      - TENANT_WEB_APP_CLIENT_ID=urn:ads:platform:tenant-admin-app
+      - DIRECTORY_BOOTSTRAP=/home/directory.platform.json

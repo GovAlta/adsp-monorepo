@@ -11,6 +11,7 @@ export interface AccessStrategyOptions {
   logger: Logger;
 }
 
+const CORE_ISS_PATH = '/auth/realms/core';
 const CORE_JWKS_PATH = '/auth/realms/core/protocol/openid-connect/certs';
 
 export const createCoreStrategy = ({
@@ -21,27 +22,25 @@ export const createCoreStrategy = ({
   assertAdspId(serviceId, null, 'service');
 
   const serviceAud = serviceId.toString();
-  const coreIssUrl = new URL(CORE_JWKS_PATH, accessServiceUrl);
+  const coreIssUrl = new URL(CORE_ISS_PATH, accessServiceUrl);
   const coreIss = coreIssUrl.href;
+  const coreJwksUrl = new URL(CORE_JWKS_PATH, accessServiceUrl);
+  const coreJwks = coreJwksUrl.href;
 
   const verifyCallback: VerifyCallbackWithRequest = async (req, payload, done) => {
-    if (!ignoreServiceAud && !payload.aud?.includes(serviceAud)) {
-      done(new Error(`Token audience does not include service ${serviceAud}.`), null, null);
-    } else {
-      const user: Express.User = {
-        id: payload.sub,
-        name: payload.name || payload.preferred_username,
-        email: payload.email,
-        roles: [...payload.realm_access.roles, ...(payload.resource_access[serviceAud]?.roles || [])],
-        isCore: true,
-        token: {
-          ...payload,
-          bearer: req.headers.authorization,
-        },
-      };
+    const user: Express.User = {
+      id: payload.sub,
+      name: payload.name || payload.preferred_username,
+      email: payload.email,
+      roles: [...payload.realm_access.roles, ...(payload.resource_access[serviceAud]?.roles || [])],
+      isCore: true,
+      token: {
+        ...payload,
+        bearer: req.headers.authorization,
+      },
+    };
 
-      done(null, user);
-    }
+    done(null, user);
   };
 
   const strategy = new JwtStrategy(
@@ -49,12 +48,14 @@ export const createCoreStrategy = ({
       jwtFromRequest: ExtractJwt.fromExtractors([ExtractJwt.fromAuthHeaderAsBearerToken()]),
       secretOrKeyProvider: (req, token, done) => {
         passportJwtSecret({
-          jwksUri: coreIss,
+          jwksUri: coreJwks,
           cache: true,
           strictSsl: true,
         })(req, token, done);
       },
       passReqToCallback: true,
+      audience: !ignoreServiceAud ? serviceAud : null,
+      issuer: coreIss
     },
     verifyCallback
   );

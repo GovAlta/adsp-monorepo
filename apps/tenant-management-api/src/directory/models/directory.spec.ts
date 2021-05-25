@@ -1,5 +1,5 @@
 import { createDirectory } from './directory';
-import { createMockMongoServer, disconnect } from '../../mongo';
+import { createMockMongoServer, disconnect } from '../../mongo/mock';
 
 describe('Directory Unit test', () => {
   beforeAll(async (done) => {

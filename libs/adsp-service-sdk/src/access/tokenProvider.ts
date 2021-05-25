@@ -44,7 +44,7 @@ export class TokenProviderImpl implements TokenProvider {
         this.#token = data.access_token;
         this.#expiry = Date.now() + (data.expires_in - 60) * 1000;
 
-        this.logger.debug(`Retrieved and cached access token.'`, this.LOG_CONTEXT);
+        this.logger.debug(`Retrieved and cached access token.`, this.LOG_CONTEXT);
 
         return data.access_token;
       } catch (err) {
