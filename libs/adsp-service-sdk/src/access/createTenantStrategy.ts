@@ -24,25 +24,21 @@ export const createTenantStrategy = ({
   const keyProvider = new TenantKeyProvider(logger, accessServiceUrl, issuerCache);
 
   const verifyCallback: VerifyCallbackWithRequest = async (req, payload, done) => {
-    if (!ignoreServiceAud && !payload.aud?.includes(serviceAud)) {
-      done(new Error(`Token audience does not include service '${serviceAud}'.`), null, null);
-    } else {
-      const tenant = await issuerCache.getTenantByIssuer(payload.iss);
-      const user: Express.User = {
-        id: payload.sub,
-        name: payload.name || payload.preferred_username,
-        email: payload.email,
-        roles: [...payload.realm_access.roles, ...(payload.resource_access[serviceAud]?.roles || [])],
-        tenantId: tenant?.id,
-        isCore: false,
-        token: {
-          ...payload,
-          bearer: req.headers.authorization,
-        },
-      };
+    const tenant = await issuerCache.getTenantByIssuer(payload.iss);
+    const user: Express.User = {
+      id: payload.sub,
+      name: payload.name || payload.preferred_username,
+      email: payload.email,
+      roles: [...payload.realm_access.roles, ...(payload.resource_access[serviceAud]?.roles || [])],
+      tenantId: tenant?.id,
+      isCore: false,
+      token: {
+        ...payload,
+        bearer: req.headers.authorization,
+      },
+    };
 
-      done(null, user, null);
-    }
+    done(null, user, null);
   };
 
   const strategy = new JwtStrategy(
@@ -50,6 +46,7 @@ export const createTenantStrategy = ({
       jwtFromRequest: ExtractJwt.fromExtractors([ExtractJwt.fromAuthHeaderAsBearerToken()]),
       secretOrKeyProvider: keyProvider.keyRequestHandler,
       passReqToCallback: true,
+      audience: !ignoreServiceAud ? serviceAud : null,
     },
     verifyCallback
   );

@@ -4,24 +4,26 @@ services:
     image: mongo:3.6
     expose:
       - 27017
-  file-service-av:
-    build: ../apps/file-service/av-scanner
-    volumes: 
-      - ../data/file-av:/store
-    expose:
-      - 3310
+  # Include this if you want to run clam av.
+  # file-service-av:
+  #   build: ../apps/file-service/av-scanner
+  #   volumes:
+  #     - ../data/file-av:/store
+  #   expose:
+  #     - 3310
   file-service:
-    build: 
+    build:
       context: ../
       dockerfile: .compose/service/Dockerfile
       args:
         - SERVICE=file-service
     depends_on:
+      - tenant-management-api
       - file-service-mongo
-      - file-service-av
+      # - file-service-av
     ports:
       - 3337:3337
-    expose: 
+    expose:
       - 3337
     volumes:
       - ../data/file:/data/file
@@ -32,10 +34,12 @@ services:
       - AMQP_HOST=rabbitmq
       - AMQP_USER=guest
       - AMQP_PASSWORD=guest
+      - DIRECTORY_URL=http://tenant-management-api:3333
       - KEYCLOAK_ROOT_URL=http://keycloak:8080
-      - KEYCLOAK_REALM=core
-      - KEYCLOAK_CLIENT_ID=file-service
-      - KEYCLOAK_CLIENT_SECRET=63c023f4-6764-4146-af50-8481c6fdbeaa
+      - CLIENT_ID=urn:ads:platform:file-service
+      - CLIENT_SECRET=63c023f4-6764-4146-af50-8481c6fdbeaa
       - MONGO_URI=mongodb://file-service-mongo:27017
       - MONGO_DB=file
       - FILE_PATH=/data/file/
+      - PORT=3337
+      - LOG_LEVEL=debug

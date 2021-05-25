@@ -11,8 +11,14 @@ services:
     environment:
       - KEYCLOAK_USER=admin
       - KEYCLOAK_PASSWORD=admin
-      - KEYCLOAK_FRONTEND_URL=''
-      - KEYCLOAK_IMPORT='/opt/jboss/keycloak/realms/core.json'
+      - KEYCLOAK_FRONTEND_URL='http://keycloak:8080/auth'
+    command:
+      - '-b 0.0.0.0'
+      - '-Dkeycloak.migration.action=import'
+      - '-Dkeycloak.migration.provider=singleFile'
+      - "-Dkeycloak.migration.file='/opt/jboss/keycloak/realms/import.json'"
+      - '-Dkeycloak.migration.strategy=IGNORE_EXISTING'
+
   rabbitmq:
     hostname: rabbitmq
     image: rabbitmq:3-management

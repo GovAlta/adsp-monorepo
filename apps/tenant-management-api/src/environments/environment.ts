@@ -15,12 +15,14 @@ export const environment = envalid.cleanEnv(
     MONGO_DB: envalid.str({ default: 'tenantDb' }),
     PORT: envalid.num({ default: 3333 }),
     KEYCLOAK_ROOT_URL: envalid.str({ default: 'https://access-dev.os99.gov.ab.ca' }),
-    WEB_SERVICE_HOST: envalid.str({ default: 'http://localhost:3333' }),
     KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_ID: envalid.str({ default: 'tenant-realm-admin' }),
     KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_SECRET: envalid.str(),
+    TENANT_WEB_APP_CLIENT_ID: envalid.str({ default: 'urn:ads:platform:tenant-admin-app' }),
+    TENANT_WEB_APP_HOST: envalid.str({ default: 'http://localhost:4200' }),
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:tenant-service' }),
     CLIENT_SECRET: envalid.str(),
     APP_ENVIRONMENT: envalid.str({ default: 'dev' }),
+    DIRECTORY_BOOTSTRAP: envalid.str({ default: '' })
   },
   {
     reporter: ({ errors }) => {

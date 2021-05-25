@@ -1,13 +1,17 @@
-import { createkcAdminClient } from '../../../keycloak';
 import { v4 as uuidv4 } from 'uuid';
-import { logger } from '../../../middleware/logger';
 import * as util from 'util';
-import { TenantError } from './error';
 import * as HttpStatusCodes from 'http-status-codes';
+import { AdspId, adspId } from '@abgov/adsp-service-sdk';
+import { createkcAdminClient } from '../../../keycloak';
+import { logger } from '../../../middleware/logger';
+import { environment } from '../../../environments/environment';
 import * as TenantModel from '../../models/tenant';
 import * as UserModel from '../../models/user';
 import { FLOW_ALIAS, createAuthenticationFlow } from './createAuthenticationFlow';
-import { environment } from '../../../environments/environment';
+import { TenantError } from './error';
+import type ClientRepresentation from 'keycloak-admin/lib/defs/clientRepresentation';
+import type RealmRepresentation from 'keycloak-admin/lib/defs/realmRepresentation';
+import type RoleRepresentation from 'keycloak-admin/lib/defs/roleRepresentation';
 
 export const tenantManagementRealm = 'core';
 
@@ -15,22 +19,40 @@ export const brokerClientName = (realm) => {
   return `broker-${realm}`;
 };
 
-const createWebappClientConfig = (id) => {
-  const config = {
-    id: id,
-    clientId: 'tenant-platform-webapp',
+// TODO: Service bearer client and roles should be added when tenant activates service?
+const createPlatformServiceConfig = (
+  serviceId: AdspId,
+  ...roles: string[]
+): { client: ClientRepresentation; clientRoles: RoleRepresentation[] } => {
+  const client: ClientRepresentation = {
+    id: uuidv4(),
+    clientId: `${serviceId}`,
+    description: `Bearer client containing roles for access to ${serviceId.service}`,
+    bearerOnly: true,
+    publicClient: false,
+    implicitFlowEnabled: false,
+    directAccessGrantsEnabled: false,
+    standardFlowEnabled: false,
+  };
+
+  const clientRoles: RoleRepresentation[] = roles.map((r) => ({
+    name: r,
+  }));
+
+  return {
+    client,
+    clientRoles,
+  };
+};
+
+const createWebappClientConfig = (id: string): ClientRepresentation => {
+  const config: ClientRepresentation = {
+    id,
+    clientId: environment.TENANT_WEB_APP_CLIENT_ID,
     publicClient: true,
     directAccessGrantsEnabled: false,
-    redirectUris: [
-      'https://tenant-management-webapp-core-services-test.os99.gov.ab.ca/*',
-      'http://localhost:4200/*',
-      `${environment.WEB_SERVICE_HOST}/*`,
-    ],
-    webOrigins: [
-      'https://tenant-management-webapp-core-services-test.os99.gov.ab.ca',
-      'http://localhost:4200',
-      environment.WEB_SERVICE_HOST,
-    ],
+    redirectUris: [`${environment.TENANT_WEB_APP_HOST}/*`],
+    webOrigins: [environment.TENANT_WEB_APP_HOST],
     description: 'Client created by platform team to support the frontend. Please do not delete it',
   };
 
@@ -142,9 +164,13 @@ const createIdpConfig = (secret, client, firstFlowAlias, realm) => {
   return config;
 };
 
-const createBrokerClientConfig = (realm, secret, client) => {
+const createBrokerClientConfig = (
+  realm: string,
+  secret: string,
+  client: string
+): ClientRepresentation & { realm: string } => {
   const redirectUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/realms/${realm}/broker/core/endpoint`;
-  const config = {
+  const config: ClientRepresentation & { realm: string } = {
     id: uuidv4(),
     clientId: client,
     description: `Client used to support the IdP of realm ${realm}`,
@@ -214,10 +240,25 @@ export const createRealm = async (realm, email) => {
     const publicClientConfig = createWebappClientConfig(tenantPublicClientId);
     const idpConfig = createIdpConfig(brokerClientSecret, brokerClient, FLOW_ALIAS, realm);
 
-    const realmConfig = {
+    const { client: tenantClient, clientRoles: tenantClientRoles } = createPlatformServiceConfig(
+      adspId`urn:ads:platform:tenant-service`,
+      'tenant-service-admin'
+    );
+    const { client: fileClient, clientRoles: fileClientRoles } = createPlatformServiceConfig(
+      adspId`urn:ads:platform:file-service`,
+      'file-service-admin'
+    );
+
+    const realmConfig: RealmRepresentation = {
       id: realm,
       realm: realm,
-      clients: [publicClientConfig],
+      clients: [publicClientConfig, tenantClient, fileClient],
+      roles: {
+        client: {
+          [tenantClient.clientId]: tenantClientRoles,
+          [fileClient.clientId]: fileClientRoles,
+        },
+      },
       enabled: true,
     };
 

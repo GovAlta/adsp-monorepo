@@ -55,7 +55,7 @@ export const createSpaceRouter = ({ logger, eventService, spaceRepository }: Spa
         const entity = await FileSpaceEntity.create(user, spaceRepository, {
           id: uuidv4(),
           spaceAdminRole,
-          name: `${user.tenantId}`,
+          name: req.tenant.name,
         });
 
         eventService.send(
