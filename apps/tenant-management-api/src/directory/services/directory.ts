@@ -37,9 +37,6 @@ const getUrn = (component: URNComponent) => {
   return urn;
 };
 
-const isStartWithHttp = (service: string) => {
-  return service.toLowerCase().startsWith('http');
-};
 const getUrlResponse = (services, component) => {
   let host = null;
   if (services) {
@@ -56,7 +53,7 @@ const getUrlResponse = (services, component) => {
     const discoveryRes: Response = {};
     discoveryRes.urn = getUrn(component);
 
-    let responseUrl = component.apiVersion ? `${HTTPS}${host}/application/${component.apiVersion}` : `${HTTPS}${host}`;
+    let responseUrl = component.apiVersion ? `${host}/application/${component.apiVersion}` : `${host}`;
 
     responseUrl = component.resource ? `${responseUrl}${component.resource}` : responseUrl;
     discoveryRes.url = responseUrl;
@@ -161,7 +158,7 @@ export const getDirectories = async () => {
 
           element.urn = getUrn(component);
           const serviceName: string = service['host'].toString();
-          element.url = isStartWithHttp(serviceName) ? serviceName : `${HTTPS}${serviceName}`;
+          element.url = serviceName;
           response.push(element);
         }
       }

@@ -116,8 +116,7 @@ async function createTenant(req, res) {
     const tenantName = payload.name;
     const email = req.user.email;
     const username = req.user.name;
-
-    let tokenIssuer = req.user.tokenIssuer;
+    let tokenIssuer = req.user.token.iss;
 
     tokenIssuer = tokenIssuer.replace('core', tenantName);
 
