@@ -9,7 +9,7 @@ export const createConfigurationHandler = (service: ConfigurationService): Reque
   const tenant = req.user?.tenantId;
   if (tenant) {
     try {
-      const configuration = await service.getConfiguration(tenant);
+      const configuration = await service.getConfiguration(tenant, req.user.token.bearer);
       req.getConfiguration = <C>() => configuration as C;
     } catch (err) {
       next(err);

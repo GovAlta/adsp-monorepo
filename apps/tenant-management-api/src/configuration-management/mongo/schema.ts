@@ -21,6 +21,21 @@ export const serviceOptionSchema = new Schema({
 
 serviceOptionSchema.index({ service: 1, version: 1 }, { unique: true });
 
+const serviceConfiguration = {
+  _id: false,
+  isActive: {
+    type: Boolean,
+    required: true,
+  },
+  isEnabled: {
+    type: Boolean,
+    required: true,
+  },
+  configuration: {
+    type: Object
+  }
+}
+
 export const tenantConfigSchema = new Schema({
   _id: {
     type: String,
@@ -32,15 +47,7 @@ export const tenantConfigSchema = new Schema({
     unique: true,
   },
   configurationSettingsList: {
-    fileService: {
-      isActive: {
-        type: Boolean,
-        required: true,
-      },
-      isEnabled: {
-        type: Boolean,
-        required: true,
-      },
-    },
+    type: Map,
+    of: serviceConfiguration,
   },
 });

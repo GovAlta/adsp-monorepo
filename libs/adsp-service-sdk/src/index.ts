@@ -58,7 +58,7 @@ export async function initializePlatform(
   const tenantHandler = createTenantHandler(tenantService);
   const tenantStrategy = createTenantStrategy({ logger, serviceId, accessServiceUrl, tenantService, ignoreServiceAud });
   const configurationService =
-    service?.configurationService || createConfigurationService({ logger, directory, tokenProvider });
+    service?.configurationService || createConfigurationService({ logger, serviceId, directory });
   const configurationHandler = createConfigurationHandler(configurationService);
 
   return {

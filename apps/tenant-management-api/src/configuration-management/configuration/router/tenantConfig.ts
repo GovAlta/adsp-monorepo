@@ -5,15 +5,14 @@ import { TenantConfigEntity } from '../model';
 import HttpException from '../errorHandlers/httpException';
 import * as HttpStatusCodes from 'http-status-codes';
 import { errorHandler } from '../errorHandlers';
-import { User } from '@core-services/core-common';
 interface TenantConfigRouterProps {
   tenantConfigurationRepository: TenantConfigurationRepository;
 }
 
-export const createTenantConfigurationRouter = ({ tenantConfigurationRepository }: TenantConfigRouterProps) => {
+export const createTenantConfigurationRouter = ({ tenantConfigurationRepository }: TenantConfigRouterProps): Router => {
   const tenantConfigRouter = Router();
 
-  tenantConfigRouter.get('/list', async (req: Request, res: Response, next) => {
+  tenantConfigRouter.get('/list', async (req: Request, res: Response, _next) => {
     const { top, after } = req.query;
 
     try {
@@ -28,17 +27,32 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
     }
   });
 
-  tenantConfigRouter.get('/', async (req, res, next) => {
-    const { id } = req.params;
+  tenantConfigRouter.get('/', async (req, res, _next) => {
     const user = req.user;
     const tenant = `${user.tenantId}`;
     try {
       const results = await tenantConfigurationRepository.getTenantConfig(tenant);
 
       if (!results) {
-        throw new HttpException(HttpStatusCodes.NOT_FOUND, `Tenant Config for ID ${id} not found`);
+        throw new HttpException(HttpStatusCodes.NOT_FOUND, `Tenant Config for tenant '${tenant}' not found`);
       }
       res.json(mapTenantConfig(results));
+    } catch (err) {
+      errorHandler(err, req, res);
+    }
+  });
+
+  tenantConfigRouter.get('/:service', async (req, res, _next) => {
+    const { service } = req.params;
+    const user = req.user;
+    const tenant = `${user.tenantId}`;
+    try {
+      const results = await tenantConfigurationRepository.getTenantConfig(tenant);
+
+      if (!results) {
+        throw new HttpException(HttpStatusCodes.NOT_FOUND, `Tenant Config for tenant '${tenant}' not found`);
+      }
+      res.json(mapTenantConfig(results).configurationSettingsList[service] || {});
     } catch (err) {
       errorHandler(err, req, res);
     }

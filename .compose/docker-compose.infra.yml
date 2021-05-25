@@ -9,8 +9,9 @@ services:
     ports:
       - 8080:8080
     environment:
-      - KEYCLOAK_USER=admin
-      - KEYCLOAK_PASSWORD=admin
+      # This is already part of the realm import and shouldn't be needed.
+      # - KEYCLOAK_USER=admin
+      # - KEYCLOAK_PASSWORD=admin
       - KEYCLOAK_FRONTEND_URL='http://keycloak:8080/auth'
     command:
       - '-b 0.0.0.0'

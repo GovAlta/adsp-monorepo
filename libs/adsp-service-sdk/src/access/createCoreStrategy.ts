@@ -36,7 +36,7 @@ export const createCoreStrategy = ({
       isCore: true,
       token: {
         ...payload,
-        bearer: req.headers.authorization,
+        bearer: req.headers.authorization?.substring(7),
       },
     };
 
