@@ -11,4 +11,3 @@ export * from './work';
 export * from './client';
 export * from './config';
 export * from './serviceInit';
-export * from './mock';
