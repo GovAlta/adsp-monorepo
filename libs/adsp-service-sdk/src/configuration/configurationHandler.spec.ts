@@ -25,10 +25,11 @@ describe('createTenantHandler', () => {
     const config = 'this is config';
     serviceMock.getConfiguration.mockReturnValue(config);
 
-    const req: Request = { user: { tenantId } } as Request;
+    const req: Request = { user: { tenantId, token: { bearer: 'test' } } } as Request;
     const next = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((req as any).getConfiguration).toBeTruthy();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((req as any).getConfiguration()).toBe(config);
 
       done();

@@ -4,7 +4,13 @@ import { TenantConfig } from '../types';
 export class TenantConfigEntity implements TenantConfig {
   id: string;
   tenantName: string;
-  configurationSettingsList: JSON;
+  configurationSettingsList: {
+    [service: string]: {
+      isEnabled: boolean;
+      isActive: boolean;
+      configuration: unknown;
+    };
+  };
 
   constructor(private repository: TenantConfigurationRepository, config: TenantConfig) {
     this.id = config.id;

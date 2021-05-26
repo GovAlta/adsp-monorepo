@@ -25,21 +25,20 @@ describe('ConfigurationService', () => {
     getServiceUrl: jest.fn(() => Promise.resolve(new URL('http://totally-real-directory'))),
   };
 
-  const tokenProviderMock = {
-    getAccessToken: jest.fn(),
-  };
-
   it('can be constructed', () => {
-    const service = new ConfigurationServiceImpl(logger, directoryMock, tokenProviderMock);
+    const service = new ConfigurationServiceImpl(logger, directoryMock, adspId`urn:ads:platform:test`);
     expect(service).toBeTruthy();
   });
 
   it('can getConfiguration from cache', async (done) => {
-    const service = new ConfigurationServiceImpl(logger, directoryMock, tokenProviderMock);
+    const service = new ConfigurationServiceImpl(logger, directoryMock, adspId`urn:ads:platform:test`);
 
     const config = 'this is config';
     cacheMock.mockReturnValueOnce(config);
-    const result = await service.getConfiguration<string>(adspId`urn:ads:platform:tenant-service:v2:/tenants/test`);
+    const result = await service.getConfiguration<string>(
+      adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
+      'test'
+    );
 
     expect(result).toBe(config);
 
@@ -47,13 +46,16 @@ describe('ConfigurationService', () => {
   });
 
   it('can retrieve from API on cache miss', async (done) => {
-    const service = new ConfigurationServiceImpl(logger, directoryMock, tokenProviderMock);
+    const service = new ConfigurationServiceImpl(logger, directoryMock, adspId`urn:ads:platform:test`);
 
     const config = 'this is config';
     cacheMock.mockReturnValueOnce(null);
     axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: config }));
 
-    const result = await service.getConfiguration<string>(adspId`urn:ads:platform:tenant-service:v2:/tenants/test`);
+    const result = await service.getConfiguration<string>(
+      adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
+      'test'
+    );
 
     expect(result).toBe(config);
     done();

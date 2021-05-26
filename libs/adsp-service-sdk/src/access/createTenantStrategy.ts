@@ -34,7 +34,7 @@ export const createTenantStrategy = ({
       isCore: false,
       token: {
         ...payload,
-        bearer: req.headers.authorization,
+        bearer: req.headers.authorization?.substring(7),
       },
     };
 
