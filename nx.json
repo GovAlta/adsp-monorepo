@@ -25,7 +25,7 @@
     "event-service": { "tags": [] },
     "push-service": { "tags": [] },
     "tools-scripts": { "tags": [] },
-    "health-service": { "tags": [] },
+    "status-service": { "tags": [] },
     "adsp-service-sdk": { "tags": [] }
   }
 }

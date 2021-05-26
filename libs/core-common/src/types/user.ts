@@ -1,10 +1,10 @@
 export type UserRole = string;
 
-export interface User<R extends UserRole = UserRole> {
+export interface User {
   id: string;
   email: string;
   name: string;
-  roles: UserRole[];
+  roles: string[];
   tenantName?: string;
   client?: string;
 }

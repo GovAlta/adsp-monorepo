@@ -22,6 +22,26 @@
       {
         "service": "event-service",
         "host": "event-service-core-services-dev.os99.gov.ab.ca"
+      },
+      {
+        "host": "localhost:3337",
+        "service": "file-service"
+      },
+      {
+        "host": "notify-service-core-services-dev.os99.gov.ab.ca",
+        "service": "notify-service"
+      },
+      {
+        "host": "event-service-core-services-dev.os99.gov.ab.ca",
+        "service": "event-service"
+      },
+      {
+        "host": "http://localhost:3333",
+        "service": "tenant-service"
+      },
+      {
+        "host": "http://localhost:3333/api/tenant/v2",
+        "service": "tenant-service:v2"
       }
     ]
   }

@@ -1,15 +1,20 @@
 import React, { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, LinkProps } from 'react-router-dom';
 
 interface LinkButtonProps {
   to: string;
   buttonType: 'primary' | 'secondary' | 'tertiary';
 }
 
-function GoALinkButton(props: LinkButtonProps & { children: ReactNode }) {
+function GoALinkButton({
+  to,
+  buttonType,
+  children,
+  ...props
+}: LinkButtonProps & LinkProps & { children: ReactNode }): JSX.Element {
   return (
-    <Link to={props.to} className={`goa-link-button goa--${props.buttonType}`}>
-      {props.children}
+    <Link to={to} className={`goa-link-button goa--${buttonType}`} {...props}>
+      {children}
     </Link>
   );
 }

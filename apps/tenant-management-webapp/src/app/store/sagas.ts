@@ -7,15 +7,17 @@ import { fetchConfig } from './config/sagas';
 import { uploadFile, enableFileService, fetchFiles, deleteFile, downloadFile, fetchSpace } from './file/sagas';
 import { fetchFileTypes, deleteFileTypes, createFileType, updateFileType, fetchFileDocs } from './file/sagas';
 import { fetchTenant, createTenant, isTenantAdmin } from './tenant/sagas';
-import { fetchHealth } from './health/sagas';
 import { fetchTenantConfig, createTenantConfig, updateTenantConfig } from './tenantConfig/sagas';
 
 // Actions
 import { FETCH_ACCESS_ACTION } from './access/actions';
 import { API_UPTIME_FETCH_ACTION } from './api-status/actions';
 import { FETCH_CONFIG_ACTION } from './config/actions';
-import { UPLOAD_FILE, FETCH_FILE_LIST, DELETE_FILE, DOWNLOAD_FILE } from './file/actions';
 import {
+  UPLOAD_FILE,
+  FETCH_FILE_LIST,
+  DELETE_FILE,
+  DOWNLOAD_FILE,
   ENABLE_FILE_SERVICE,
   FETCH_FILE_TYPE,
   DELETE_FILE_TYPE,
@@ -25,8 +27,10 @@ import {
   FETCH_FILE_DOCS,
 } from './file/actions';
 import { FETCH_TENANT, CREATE_TENANT, CHECK_IS_TENANT_ADMIN } from './tenant/actions';
-import { FETCH_HEALTH_ACTION } from './health/actions';
 import { FETCH_TENANT_CONFIG, CREATE_TENANT_CONFIG, UPDATE_TENANT_CONFIG } from './tenantConfig/actions';
+import { DELETE_APPLICATION_ACTION, FETCH_SERVICE_STATUS_APPS_ACTION, SAVE_APPLICATION_ACTION } from './status/actions';
+import { deleteApplication, fetchServiceStatusApps, saveApplication, toggleApplication } from './status/sagas';
+import { TOGGLE_APPLICATION_ACTION } from './status/actions/toggleApplication';
 
 export function* watchSagas() {
   yield takeEvery(API_UPTIME_FETCH_ACTION, uptimeFetch);
@@ -52,6 +56,9 @@ export function* watchSagas() {
   yield takeEvery(UPDATE_TENANT_CONFIG, updateTenantConfig);
   yield takeEvery(FETCH_FILE_DOCS, fetchFileDocs);
 
-  // health
-  yield takeEvery(FETCH_HEALTH_ACTION, fetchHealth);
+  // service status
+  yield takeEvery(FETCH_SERVICE_STATUS_APPS_ACTION, fetchServiceStatusApps);
+  yield takeEvery(SAVE_APPLICATION_ACTION, saveApplication);
+  yield takeEvery(DELETE_APPLICATION_ACTION, deleteApplication);
+  yield takeEvery(TOGGLE_APPLICATION_ACTION, toggleApplication);
 }

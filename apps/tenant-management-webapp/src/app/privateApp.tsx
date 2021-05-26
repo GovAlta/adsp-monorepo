@@ -12,7 +12,7 @@ export function PrivateApp({ children }) {
   const [title, setTitle] = useState<string>('');
   const dispatch = useDispatch();
 
-  // initiate the get API health reoccurring request
+  // initiate the get API service status reoccurring request
   useEffect(() => {
     setInterval(async () => dispatch(ApiUptimeFetch()), 10 * 1000);
   }, [dispatch]);

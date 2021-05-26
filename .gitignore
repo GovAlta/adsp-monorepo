@@ -45,6 +45,7 @@ Thumbs.db
 # env file
 /apps/tenant-management-api/.env
 /apps/file-service/.env
+/apps/status-service/.env
 
 # oc env configuration
 /.openshift/configuration/*.encoded.yml

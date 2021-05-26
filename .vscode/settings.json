@@ -26,6 +26,7 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "cSpell.words": [
+    "Adsp",
     "Albertans",
     "COVID",
     "Objs",
@@ -52,7 +53,9 @@
     "openid",
     "originalname",
     "persistor",
+    "reduxjs",
     "signin",
+    "testid",
     "upsert",
     "uuidv"
   ]

@@ -9,7 +9,7 @@ import AuthContext from '@lib/authContext';
 import Sidebar from '@pages/admin/tenant-management/sidebar';
 import MenuIcon from '@icons/menu-outline.svg';
 import CloseIcon from '@icons/close-outline.svg';
-import { ReactComponent as UserIcon } from '@icons/user-login.svg';
+import { ReactComponent as UserIcon } from '@icons/person-circle-outline.svg';
 interface HeaderMenuProps {
   hasLoginLink: boolean;
 }
@@ -106,10 +106,17 @@ const SidebarWrapper = styled.div<MenuState>`
 `;
 
 const UserIconBox = styled.div`
+  display: flex;
+  white-space: nowrap;
+  align-items: center;
   svg {
     position: relative;
-    top: 5px;
-    margin-right: 5px;
+    width: 1.5rem;
+    height: auto;
+    margin-right: 0.25rem;
+  }
+  a {
+    text-decoration: none;
   }
 `;
 

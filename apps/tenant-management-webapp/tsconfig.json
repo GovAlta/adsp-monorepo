@@ -7,12 +7,24 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": "./src",
     "paths": {
-      "@components/*": ["app/components/*"],
-      "@pages/*": ["app/pages/*"],
-      "@store/*": ["app/store/*"],
-      "@lib/*": ["app/lib/*"],
-      "@assets/*": ["assets/*"],
-      "@icons/*": ["assets/icons/*"]
+      "@assets/*": [
+        "assets/*"
+      ],
+      "@components/*": [
+        "app/components/*"
+      ],
+      "@icons/*": [
+        "assets/icons/*"
+      ],
+      "@lib/*": [
+        "app/lib/*"
+      ],
+      "@pages/*": [
+        "app/pages/*"
+      ],
+      "@store/*": [
+        "app/store/*"
+      ],
     }
   },
   "files": [],

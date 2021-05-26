@@ -9,9 +9,8 @@ import File from './file/reducers';
 import Session from './session/reducers';
 import Notifications from './notifications/reducers';
 import Tenant from './tenant/reducers';
-import ServiceStatus from './health/reducers';
+import ServiceStatus from './status/reducers';
 import TenantConfig from './tenantConfig/reducers';
-import counterSlice from './mock/counterSlice';
 
 const rootReducer = combineReducers({
   fileService: File,
@@ -21,9 +20,8 @@ const rootReducer = combineReducers({
   access: Access,
   tenant: Tenant,
   notifications: Notifications,
-  health: ServiceStatus,
   tenantConfig: TenantConfig,
-  mock: counterSlice,
+  serviceStatus: ServiceStatus,
 });
 
 const persistConfig = {
