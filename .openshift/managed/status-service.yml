@@ -278,7 +278,7 @@ objects:
         dockerStrategy:
           buildArgs:
             - name: SERVICE
-              value: ${BUILD_TAG}
+              value: ${APP_NAME}
           dockerfilePath: .openshift/service/Dockerfile
         type: Docker
 
