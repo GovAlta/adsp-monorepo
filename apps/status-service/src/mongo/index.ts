@@ -13,6 +13,7 @@ interface MongoRepositoryProps {
 
 export const createRepositories = async ({ logger, ...props }: MongoRepositoryProps): Promise<Repositories> => {
   const mongoConnectionString = `${props.MONGO_URI}/${props.MONGO_DB}`;
+  logger.info(`Connected to MongoDB at: ${mongoConnectionString}`);
 
   await connect(mongoConnectionString, {
     user: props.MONGO_USER,
@@ -22,7 +23,6 @@ export const createRepositories = async ({ logger, ...props }: MongoRepositoryPr
     useUnifiedTopology: true,
   });
 
-  logger.info(`Connected to MongoDB at: ${mongoConnectionString}`);
   const serviceStatusRepository = new MongoServiceStatusRepository();
 
   return Promise.resolve({
