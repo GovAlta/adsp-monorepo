@@ -10,6 +10,7 @@ import { bindEndpoints } from './app';
 import * as cors from 'cors';
 import { scheduleServiceStatusJobs } from './app/jobs';
 import { AdspId, createCoreStrategy, initializePlatform } from '@abgov/adsp-service-sdk';
+import * as util from 'util';
 
 const logger = createLogger('status-service', environment?.LOG_LEVEL || 'info');
 const app = express();
@@ -18,6 +19,8 @@ app.use(cors());
 app.use(compression());
 app.use(helmet());
 app.use(express.json({ limit: '1mb' }));
+
+logger.debug(`Environment variables: ${util.inspect(environment)}`);
 
 (async () => {
   const createRepoJob = createRepositories({ ...environment, logger });
