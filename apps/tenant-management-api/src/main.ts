@@ -8,6 +8,7 @@ import * as swaggerUi from 'swagger-ui-express';
 import { AdspId, adspId, createCoreStrategy, initializePlatform } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError, NotFoundError, InvalidOperationError } from '@core-services/core-common';
 import { createConfigService } from './configuration-management';
+import { createDirectoryService } from './directory-service';
 import { connectMongo, disconnect } from './mongo/index';
 import { tenantRouter } from './tenant';
 import { directoryRouter, bootstrapDirectory } from './directory';
@@ -98,6 +99,7 @@ async function initializeApp(): Promise<express.Application> {
   app.use('/api/tenant/v2', authenticateCore, tenantV2Router);
 
   createConfigService(app);
+  createDirectoryService(app);
 
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     if (err instanceof UnauthorizedError) {
@@ -121,7 +123,7 @@ async function initializeApp(): Promise<express.Application> {
 
   const swaggerHosts = {
     tenantAPI: (await directory.getServiceUrl(adspId`urn:ads:platform:tenant-service`))?.href || '',
-    fileService: (await directory.getServiceUrl(adspId`urn:ads:platform:file-service`))?.href || '',
+    // fileService: (await directory.getServiceUrl(adspId`urn:ads:platform:file-service`))?.href || '',
   };
 
   const swaggerUITenantAPIOptions = {
