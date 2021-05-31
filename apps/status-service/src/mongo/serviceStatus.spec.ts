@@ -2,6 +2,7 @@ import { createMockMongoServer, disconnectMockMongo } from './mock';
 import { MongoServiceStatusRepository } from './serviceStatus';
 import { ServiceStatusApplicationEntity } from '../app';
 
+const defaultTimeout = 20000;
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
@@ -20,6 +21,7 @@ describe('Service status mongo repository', () => {
   let mongoose: typeof import('mongoose');
 
   beforeEach(async () => {
+    jest.setTimeout(defaultTimeout);
     mongoose = await createMockMongoServer();
     repo = new MongoServiceStatusRepository();
   });
