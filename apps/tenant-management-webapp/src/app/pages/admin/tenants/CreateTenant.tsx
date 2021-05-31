@@ -9,6 +9,7 @@ import GoALinkButton from '@components/LinkButton';
 import { GoAForm, GoAFormButtons, GoAFormItem } from '@components/Form';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
+import styled from 'styled-components';
 
 const CreateRealm = () => {
   const dispatch = useDispatch();
@@ -45,38 +46,44 @@ const CreateRealm = () => {
     authContext.signIn(`/login?direct=true&tenantName=${name}`);
   }
 
+  interface ToggleDivProps {
+    show: boolean;
+  }
+
+  const ToggleDiv = styled.div`
+    /* Adapt the colors based on primary prop */
+    display: ${(props: ToggleDivProps) => (props.show ? 'block' : 'none')};
+  `;
+
+  const displayLoginLink = isTenantCreated && !isTenantAdmin;
+  const displayCreateBtn = !isTenantCreated && !isTenantAdmin;
+
   return (
     <Page>
       <Main>
         {userInfo && isTenantAdmin && <ErrorMessage email={userInfo.email} />}
-        {isTenantCreated ? (
-          <>
-            <p>The '{name}' has been successfully created</p>
-            <GoAButton onClick={login}>Tenant Login</GoAButton>
-          </>
-        ) : (
-          <>
-            {!isTenantAdmin ? (
-              <>
-                <h2>Create tenant</h2>
-                <p>As a reminder, you are only able to create one tenant per user account.</p>
-                <GoAForm>
-                  <GoAFormItem>
-                    <label htmlFor="name">Tenant Name</label>
-                    <input id="name" type="text" value={name} onChange={onChangeName} />
-                    <em>Names cannot container special characters (ex. ! % &amp;)</em>
-                  </GoAFormItem>
-                  <GoAFormButtons>
-                    <GoALinkButton to="/admin/tenants" buttonType="secondary">
-                      Back
-                    </GoALinkButton>
-                    <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
-                  </GoAFormButtons>
-                </GoAForm>
-              </>
-            ) : null}
-          </>
-        )}
+
+        <ToggleDiv show={displayLoginLink}>
+          <p>The '{name}' has been successfully created</p>
+          <GoAButton onClick={login}>Tenant Login</GoAButton>
+        </ToggleDiv>
+        <ToggleDiv show={displayCreateBtn}>
+          <h2>Create tenant</h2>
+          <p>As a reminder, you are only able to create one tenant per user account.</p>
+          <GoAForm>
+            <GoAFormItem>
+              <label htmlFor="name">Tenant Name</label>
+              <input id="name" type="text" value={name} onChange={onChangeName} />
+              <em>Names cannot container special characters (ex. ! % &amp;)</em>
+            </GoAFormItem>
+            <GoAFormButtons>
+              <GoALinkButton to="/admin/tenants" buttonType="secondary">
+                Back
+              </GoALinkButton>
+              <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
+            </GoAFormButtons>
+          </GoAForm>
+        </ToggleDiv>
       </Main>
       <Aside>
         <SupportLinks />
