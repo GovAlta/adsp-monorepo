@@ -57,6 +57,10 @@ parameters:
     generate: expression
     name: MONGODB_ADMIN_PASSWORD
     required: true
+  - description: Database name used for the application
+    displayName: MongoDB Database Name
+    value: status
+    name: MONGODB_DB_NAME
 
 objects:
   # MongoDB Objects
@@ -77,7 +81,7 @@ objects:
       name: ${APP_NAME}-mongodb${NAME_SUFFIX}
     stringData:
       database-admin-password: ${MONGODB_ADMIN_PASSWORD}
-      database-name: ${APP_NAME}
+      database-name: ${MONGODB_DB_NAME}
       database-password: ${MONGODB_PASSWORD}
       database-user: ${MONGODB_USER}
       database-uri: mongodb://${APP_NAME}-mongodb${NAME_SUFFIX}:27017
@@ -303,7 +307,7 @@ objects:
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-      name: ${APP_NAME}${NAME_SUFFIX}
+        name: ${APP_NAME}${NAME_SUFFIX}
     spec:
       replicas: 1
       revisionHistoryLimit: 3
