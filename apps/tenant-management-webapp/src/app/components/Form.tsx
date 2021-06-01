@@ -1,14 +1,10 @@
-import React, { FormEvent, ReactNode } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 
-interface GoAFormProps {
-  onSubmit?: (e: FormEvent<Element>) => void;
-}
-
-function GoAForm(props: GoAFormProps & { children: ReactNode }): JSX.Element {
+function GoAForm(props) {
   return (
     <div className="goa-form" style={{ marginBottom: '2rem' }}>
-      <form {...props}>{props.children}</form>
+      {props.children}
     </div>
   );
 }
@@ -23,12 +19,8 @@ const GoAFormButtons = styled.div`
     align-items: flex-end;
   }
 
-  button {
-    margin: 0;
-  }
-
-  button + button {
-    margin-left: 1rem;
+  button:last-of-type {
+    margin-right: 0;
   }
 `;
 
