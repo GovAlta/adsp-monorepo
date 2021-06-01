@@ -1,4 +1,3 @@
-/* eslint-disable cypress/no-unnecessary-waiting */
 import { Given, When } from 'cypress-cucumber-preprocessor/steps';
 import common from './common.page';
 

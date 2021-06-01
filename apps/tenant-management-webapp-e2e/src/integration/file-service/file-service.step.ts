@@ -1,7 +1,13 @@
 import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import fd = require('form-data');
 import axios, { AxiosResponse } from 'axios';
+import common from '../common/common.page';
+import fileServicePage from './file-service.page';
+import tenantAdminPage from '../tenant-admin/tenant-admin.page';
 
+const fileServiceObj = new fileServicePage();
+const tenantAdminObj = new tenantAdminPage();
+const commonObj = new common();
 let responseObj: Cypress.Response;
 let axiosResponse: AxiosResponse;
 let axiosError;
@@ -278,3 +284,102 @@ Then(
     responseObj.status = 0; // Set status code to be ZERO after validation to avoid the same response status to be used later
   }
 );
+
+Given('a service owner user is on file services overview page', function () {
+  const urlToTenantLogin = Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/login';
+  cy.visit(urlToTenantLogin);
+  commonObj.tenantLoginButton().click();
+  cy.wait(5000); // Wait all the redirects to settle down
+  cy.url().then(function (urlString) {
+    if (urlString.includes('openid-connect')) {
+      commonObj.usernameEmailField().type(Cypress.env('email'));
+      commonObj.passwordField().type(Cypress.env('password'));
+      commonObj.loginButton().click();
+      cy.wait(5000); // Wait all the redirects to settle down
+    }
+  });
+  cy.url().should('include', '/tenant-admin');
+  tenantAdminObj
+    .dashboardMenuItem('/admin/tenant-admin/services/file')
+    .click()
+    .then(function () {
+      cy.url().should('include', '/admin/tenant-admin/services/file');
+      cy.wait(2000);
+    });
+});
+
+When('the user {string} file service', function (action) {
+  // Verify action
+  expect(action).to.be.oneOf(['enables', 'disables']);
+  // Check file services status
+  fileServiceObj
+    .fileHeaderTag()
+    .invoke('text')
+    .then((text) => {
+      // Check if it's already in the desired status
+      switch (text) {
+        case 'Inactive':
+          if (action == 'enables') {
+            fileServiceObj.enableServiceButton().click();
+            cy.wait(1000);
+          } else if (action == 'disables') {
+            cy.log('The status is already Inactive');
+          }
+          break;
+        case 'Active':
+          if (action == 'disables') {
+            fileServiceObj.disableServiceButton().click();
+            cy.wait(1000);
+          } else if (action == 'enables') {
+            cy.log('The status is already Active');
+          }
+          break;
+        default:
+          expect(text).to.be.oneOf(['Inactive', 'Active']);
+      }
+    });
+});
+
+Then('file service status is {string}', function (expectedStatus) {
+  fileServiceObj.fileHeaderTag().invoke('text').should('eq', expectedStatus);
+});
+
+When('the user disables file service', function () {
+  fileServiceObj.disableServiceButton().click();
+  cy.wait(1000);
+});
+
+Then('{string} file service tabs are {string}', function (tabStrings, visibility) {
+  const tabArray = tabStrings.split(',');
+  cy.log(tabArray);
+  switch (visibility) {
+    case 'visible':
+      fileServiceObj.fileServiceTabs().each((element, index) => {
+        cy.wrap(element).invoke('text').should('eq', tabArray[index].trim());
+      });
+      break;
+    case 'invisible':
+      fileServiceObj.fileServiceTabs().each((element) => {
+        for (let i = 0; i < tabArray.length; i++) {
+          cy.wrap(element).invoke('text').should('not.equal', tabArray[i].trim());
+        }
+      });
+      break;
+    default:
+      expect(visibility).to.be.oneOf(['visiable', 'invisible']);
+  }
+});
+
+When('user goes to {string} tab', function (tabText) {
+  fileServiceObj.fileServiceTab(tabText).click();
+});
+
+Then('user views file service api documentation', function () {
+  // Verify the api titles
+  fileServiceObj.fileTypesAPIsTitle().then((fileTypesAPITitle) => {
+    expect(fileTypesAPITitle.length).to.be.gt(0); // title element exists
+  });
+  fileServiceObj.filesAPIsTitle().then((filesAPITitle) => {
+    expect(filesAPITitle.length).to.be.gt(0); // title element exists
+  });
+});

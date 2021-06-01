@@ -12,7 +12,7 @@ class Common {
   }
 
   tenantLoginButton() {
-    return cy.get('.goa-button');
+    return cy.get('button:contains("Login")');
   }
 }
 

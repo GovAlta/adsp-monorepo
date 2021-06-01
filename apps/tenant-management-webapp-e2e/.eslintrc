@@ -1,5 +1,8 @@
 {
-  "rules": {},
+  "rules": {
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "cypress/no-unnecessary-waiting": "off"
+  },
   "extends": [
     "plugin:cypress/recommended",
     "../../.eslintrc"
