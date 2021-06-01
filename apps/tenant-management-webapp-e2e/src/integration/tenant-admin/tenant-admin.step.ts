@@ -1,4 +1,3 @@
-/* eslint-disable cypress/no-unnecessary-waiting */
 import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import tenantAdminPage from './tenant-admin.page';
 import common from '../common/common.page';
@@ -56,6 +55,7 @@ When('the user sends a configuration service request to {string}', function (req
   cy.request({
     method: 'GET',
     url: requestURL,
+    failOnStatusCode: false,
     auth: {
       bearer: Cypress.env('autotest-admin-token'),
     },
@@ -65,13 +65,22 @@ When('the user sends a configuration service request to {string}', function (req
 });
 
 Then('the user gets a list of {string}', function (options) {
-  expect(responseObj.status).to.eq(200);
   switch (options) {
     case 'Service Options':
+      expect(responseObj.status).to.eq(200);
       expect(responseObj.body.results).to.be.a('array');
       break;
     case 'Tenant Configurations':
-      expect(responseObj.body.configurationSettingsList).to.not.equal(null);
+      switch (responseObj.status) {
+        case 200:
+          expect(responseObj.body.configurationSettingsList).to.not.equal(null);
+          break;
+        case 404: //The case that the tenant was created without any service set up for it
+          expect(responseObj.body.error.message).contains('not found');
+          break;
+        default:
+          expect(responseObj.status).to.be.oneOf([200, 404]);
+      }
       break;
     default:
       expect(options).to.be.oneOf(['Service Options', 'Tenant Configurations']);

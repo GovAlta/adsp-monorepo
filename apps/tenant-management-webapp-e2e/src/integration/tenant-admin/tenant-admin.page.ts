@@ -9,7 +9,7 @@ class TenantAdminPage {
   }
 
   dashboardServicesMenuCategory() {
-    cy.contains('Services');
+    return cy.contains('Services');
   }
 
   keycloakLink() {
