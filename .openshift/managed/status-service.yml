@@ -307,7 +307,7 @@ objects:
         apply-test: "true"
         apply-staging: "true"
         apply-prod: "true"
-        name: ${APP_NAME}${NAME_SUFFIX}
+      name: ${APP_NAME}${NAME_SUFFIX}
     spec:
       replicas: 1
       revisionHistoryLimit: 3
