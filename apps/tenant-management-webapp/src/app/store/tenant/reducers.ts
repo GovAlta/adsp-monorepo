@@ -10,13 +10,17 @@ export default (state = TENANT_INIT, action: ActionType): Tenant => {
       return { ...state, ...action.payload };
 
     case 'CREATE_TENANT_SUCCESS':
-      return { ...state, isTenantCreated: action.payload };
+      return {
+        ...state,
+        isTenantCreated: true,
+        realm: action.payload,
+      };
 
     case 'SELECT_TENANT':
       return {
         ...state,
         isTenantCreated: true,
-        name: action.payload,
+        realm: action.payload,
       };
 
     case 'LOGOUT_TENANT':

@@ -21,27 +21,27 @@ import { FILE_INIT, FileService } from './models';
 
 function removeSpecifiedFileType(fileTypes, fileType) {
   const index = fileTypes.findIndex(({ id }) => id === fileType.id);
-  const newFileTypes = fileTypes;
+  const newFileTypes = fileTypes.map((x) => Object.assign({}, x));
   newFileTypes.splice(index, 1);
   return newFileTypes;
 }
 
 function updateSpecifiedFileType(fileTypes, fileType) {
   const index = fileTypes.findIndex(({ id }) => id === fileType.id);
-  const newFileTypes = fileTypes;
+  const newFileTypes = fileTypes.map((x) => Object.assign({}, x));
   newFileTypes[index] = fileType;
   return newFileTypes;
 }
 
 function uploadFile(fileList, file) {
-  const newFileList = fileList;
+  const newFileList = fileList.map((x) => Object.assign({}, x));
   newFileList.push(file);
   return newFileList;
 }
 
 function deleteFile(fileList, file) {
   const index = fileList.findIndex(({ id }) => id === file.id);
-  const newFileList = fileList;
+  const newFileList = fileList.map((x) => Object.assign({}, x));
   newFileList.splice(index, 1);
   return newFileList;
 }

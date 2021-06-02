@@ -6,6 +6,7 @@ import * as HttpStatusCodes from 'http-status-codes';
 import { requireTenantServiceAdmin } from '../../middleware/authentication';
 import * as TenantService from '../services/tenant';
 import { logger } from '../../middleware/logger';
+import { v4 as uuidv4 } from 'uuid';
 
 class CreateTenantDto {
   @IsDefined()
@@ -110,8 +111,6 @@ async function fetchRealmTenantMapping(req, res) {
 
 async function createTenant(req, res) {
   {
-    const data = { status: 'ok', message: 'Create Realm Success!' };
-
     const payload = req.payload;
     const tenantName = payload.name;
     const email = req.user.email;
@@ -123,9 +122,13 @@ async function createTenant(req, res) {
     try {
       logger.info('Starting create realm....');
 
+      const generatedRealmName = uuidv4();
+
       await TenantService.validateEmailInDB(email);
-      await TenantService.createRealm(tenantName, email);
-      await TenantService.createNewTenantInDB(username, email, tenantName, tenantName, tokenIssuer);
+      await TenantService.createRealm(generatedRealmName, email);
+      await TenantService.createNewTenantInDB(username, email, generatedRealmName, tenantName, tokenIssuer);
+
+      const data = { status: 'ok', message: 'Create Realm Success!', realm: generatedRealmName };
 
       return res.status(HttpStatusCodes.OK).json(data);
     } catch (err) {

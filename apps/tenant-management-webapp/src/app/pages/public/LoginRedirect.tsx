@@ -12,12 +12,12 @@ const LoginTypes = {
 };
 
 interface CoreAdminRedirectProps {
-  tenantName: string;
+  tenantRealm: string;
 }
 const CoreAdminRedirect = (props: CoreAdminRedirectProps) => {
   const history = useHistory();
   useEffect(() => {
-    history.push(`/${props.tenantName}/login?direct=true`);
+    history.push(`/${props.tenantRealm}/login?direct=true`);
   });
   return (
     <div>
@@ -41,17 +41,17 @@ const LoginRedirect = () => {
 
   const [loginType, setLoginType] = useState('');
 
-  const { realm, userInfo, isTenantAdmin, tenantName } = useSelector((state: RootState) => ({
+  const { realm, userInfo, isTenantAdmin, tenantRealm } = useSelector((state: RootState) => ({
     realm: state.session.realm,
     userInfo: state.session.userInfo,
     isTenantAdmin: state.tenant.isTenantAdmin,
-    tenantName: state.tenant.name,
+    tenantRealm: state.tenant.realm,
   }));
 
   useEffect(() => {
-    if (realm && realm !== defaultRealm && tenantName) {
+    if (realm && realm !== defaultRealm && tenantRealm) {
       /**
-       * If user has tenantName. The user might be a login user. Redirect to admin portal. The auth layer in the admin portal will handle the rest.
+       * If user has tenantRealm. The user might be a login user. Redirect to admin portal. The auth layer in the admin portal will handle the rest.
        */
       history.push('/admin/tenant-admin');
     }
@@ -70,11 +70,11 @@ const LoginRedirect = () => {
         }
       }
     }
-  }, [dispatch, userInfo, isTenantAdmin, tenantName]);
+  }, [dispatch, userInfo, isTenantAdmin, tenantRealm]);
 
   return (
     <Page>
-      {loginType === LoginTypes.coreTenantAdmin && <CoreAdminRedirect tenantName={tenantName} />}
+      {loginType === LoginTypes.coreTenantAdmin && <CoreAdminRedirect tenantRealm={tenantRealm} />}
       {loginType === LoginTypes.coreNonTenantAdmin && <CoreNonAdminRedirect />}
     </Page>
   );

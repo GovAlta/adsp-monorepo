@@ -21,7 +21,7 @@ export function* uploadFile(file) {
   const token = state.session.credentials.token;
   const api = yield new FileApi(state.config, token);
 
-  const recordId = `${state.tenant.name}-${file.payload.data.file.name}`;
+  const recordId = `${state.tenant.realm}-${file.payload.data.file.name}`;
 
   const formData = new FormData();
   formData.append('file', file.payload.data.file);

@@ -1,10 +1,11 @@
-import React, { useContext, useEffect, useRef } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 
 import { GoAForm, GoAFormButtons, GoAFormItem } from '@components/Form';
 import { Page, Main } from '@components/Html';
 import AuthContext from '@lib/authContext';
 import { SelectTenant } from '@store/tenant/actions';
-import { useDispatch } from 'react-redux';
+import { RootState } from '@store/index';
+import { useSelector, useDispatch } from 'react-redux';
 import { GoAButton } from '@abgov/react-components';
 import { useParams } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
@@ -12,6 +13,7 @@ import { useLocation } from 'react-router-dom';
 const LoginLanding = () => {
   const { signIn } = useContext(AuthContext);
   const dispatch = useDispatch();
+  const [loginTrigger, setLoginTrigger] = useState(false);
   let { tenantName } = useParams<{ tenantName: string }>();
   const nameRef = useRef(null);
 
@@ -22,7 +24,23 @@ const LoginLanding = () => {
     tenantName = new URLSearchParams(search).get('tenantName');
   }
 
+  const { tenantRealm } = useSelector((state: RootState) => ({
+    tenantRealm: state.tenant.realm,
+  }));
+
   useEffect(() => {
+    if (tenantRealm && loginTrigger) {
+      signIn(`/login/redirect?direct=true&tenantName=${tenantRealm}`);
+    }
+  }, [tenantRealm, signIn, loginTrigger]);
+
+  useEffect(() => {
+    function delayedLogin() {
+      setTimeout(function () {
+        signIn('/admin/tenant-admin');
+      }, 1);
+    }
+
     if (tenantName) {
       dispatch(SelectTenant(tenantName));
       // For direct login, we shall hide the tenant login form and invoke the keycloak
@@ -30,18 +48,12 @@ const LoginLanding = () => {
         delayedLogin();
       }
     }
-  }, [dispatch, tenantName, isDirectLogin]);
+  }, [dispatch, tenantName, isDirectLogin, signIn]);
 
   function login() {
     const name = nameRef.current.value;
     dispatch(SelectTenant(name));
-    signIn('/admin/tenant-admin');
-  }
-
-  function delayedLogin() {
-    setTimeout(function() {
-      signIn('/admin/tenant-admin');
-    }, 1)
+    setLoginTrigger(true);
   }
 
   return (

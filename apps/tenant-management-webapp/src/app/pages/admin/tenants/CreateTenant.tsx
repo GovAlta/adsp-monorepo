@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { GoAButton, GoANotification } from '@abgov/react-components';
 
-import { CreateTenant, SelectTenant, IsTenantAdmin } from '@store/tenant/actions';
+import { CreateTenant, IsTenantAdmin, SelectTenant } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 import AuthContext from '@lib/authContext';
 import GoALinkButton from '@components/LinkButton';
@@ -13,6 +13,7 @@ import SupportLinks from '@components/SupportLinks';
 const CreateRealm = () => {
   const dispatch = useDispatch();
   const [name, setName] = useState('');
+  const [loginTrigger, setLoginTrigger] = useState(false);
   const authContext = useContext(AuthContext);
 
   const onCreateRealm = async () => {
@@ -23,10 +24,11 @@ const CreateRealm = () => {
     setName(event.target.value);
   };
 
-  const { isTenantAdmin, userInfo, isTenantCreated } = useSelector((state: RootState) => ({
+  const { isTenantAdmin, userInfo, isTenantCreated, tenantRealm } = useSelector((state: RootState) => ({
     isTenantAdmin: state.tenant.isTenantAdmin,
     userInfo: state.session.userInfo,
     isTenantCreated: state.tenant.isTenantCreated,
+    tenantRealm: state.tenant.realm,
   }));
 
   useEffect(() => {
@@ -35,14 +37,20 @@ const CreateRealm = () => {
     }
   }, [dispatch, userInfo]);
 
+  useEffect(() => {
+    if (tenantRealm && loginTrigger) {
+      authContext.signIn(`/login?direct=true&tenantName=${tenantRealm}`);
+    }
+  }, [loginTrigger, authContext, tenantRealm]);
+
   const ErrorMessage = (props) => {
     const message = `${props.email} has already created a tenant. Currently only one tenant is allowed per person.`;
     return <GoANotification type="information" title="Notification Title" message={message} />;
   };
 
   function login() {
-    dispatch(SelectTenant(name));
-    authContext.signIn(`/login?direct=true&tenantName=${name}`);
+    dispatch(SelectTenant(tenantRealm));
+    setLoginTrigger(true);
   }
 
   return (

@@ -35,9 +35,9 @@ export function* isTenantAdmin(action: CheckIsTenantAdminAction) {
   try {
     const response = yield api.fetchTenantByEmail(email);
     if (response.success) {
-      yield put(UpdateTenantAdminInfo(response.success, response.tenant.name));
+      yield put(UpdateTenantAdminInfo(response.success, response.tenant.name, response.tenant.realm));
     } else {
-      yield put(UpdateTenantAdminInfo(response.success, TENANT_INIT.name));
+      yield put(UpdateTenantAdminInfo(response.success, TENANT_INIT.name, TENANT_INIT.realm));
     }
   } catch (e) {
     yield put(ErrorNotification({ message: 'failed to check tenant admin' }));
@@ -51,8 +51,8 @@ export function* createTenant(action: CreateTenantAction) {
   const name = action.payload;
 
   try {
-    yield api.createTenant(name);
-    yield put(CreateTenantSuccess());
+    const result = yield api.createTenant(name);
+    yield put(CreateTenantSuccess(result.realm));
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to create new tenant: ${e.message}` }));
   }

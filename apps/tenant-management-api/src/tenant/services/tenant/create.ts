@@ -197,7 +197,7 @@ export const validateEmailInDB = async (email) => {
   logger.info(`Start to validate email -${email} for tenant creation in database`);
   const result = await TenantModel.findTenantByEmail(email);
   if (result.success) {
-    const errorMessage = `${email} already created ${result.tenant.name}. One user can create only one realm.`;
+    const errorMessage = `${email} already created ${result.tenant.realm}->${result.tenant.name}. One user can create only one realm.`;
     throw new TenantError(errorMessage, HttpStatusCodes.CONFLICT);
   }
   logger.info(`email - ${email} passed validation`);

@@ -4,7 +4,7 @@ export const FETCH_TENANT = 'FETCH_TENANT';
 const SELECT_TENANT = 'SELECT_TENANT';
 const FETCH_TENANT_SUCCESS = 'FETCH_TENANT_SUCCESS';
 const UPDATE_TENANT_ADMIN_INFO = 'UPDATE_TENANT_ADMIN_INFO';
-export const CREATE_TENANT = 'FETCH_TENANT';
+export const CREATE_TENANT = 'CREATE_TENANT';
 const CREATE_TENANT_SUCCESS = 'CREATE_TENANT_SUCCESS';
 export const CHECK_IS_TENANT_ADMIN = 'CHECK_IS_ADMIN';
 export const LOGOUT_TENANT = 'LOGOUT_TENANT';
@@ -43,12 +43,13 @@ interface UpdateTenantAdminInfoAction {
   payload: {
     isTenantAdmin: boolean;
     name: string;
+    realm: string;
   };
 }
 
 interface CreateTenantSuccessAction {
   type: typeof CREATE_TENANT_SUCCESS;
-  payload: boolean;
+  payload: string;
 }
 
 export type ActionType =
@@ -77,7 +78,7 @@ export const FetchTenantSuccess = (tenant: Tenant): FetchTenantSuccessAction => 
 });
 
 export const CreateTenant = (tenantName: string): CreateTenantAction => ({
-  type: 'FETCH_TENANT',
+  type: 'CREATE_TENANT',
   payload: tenantName,
 });
 
@@ -86,17 +87,22 @@ export const IsTenantAdmin = (email: string): CheckIsTenantAdminAction => ({
   payload: email,
 });
 
-export const UpdateTenantAdminInfo = (isAdmin: boolean, tenantName: string): UpdateTenantAdminInfoAction => ({
+export const UpdateTenantAdminInfo = (
+  isAdmin: boolean,
+  tenantName: string,
+  tenantRealm: string
+): UpdateTenantAdminInfoAction => ({
   type: 'UPDATE_TENANT_ADMIN_INFO',
   payload: {
     isTenantAdmin: isAdmin,
     name: tenantName,
+    realm: tenantRealm,
   },
 });
 
-export const CreateTenantSuccess = (): CreateTenantSuccessAction => ({
+export const CreateTenantSuccess = (realm: string): CreateTenantSuccessAction => ({
   type: 'CREATE_TENANT_SUCCESS',
-  payload: true,
+  payload: realm,
 });
 
 export const TenantLogout = (): LogoutTenantAction => ({

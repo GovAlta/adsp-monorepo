@@ -4,6 +4,7 @@ export interface TenantApi {
     spaceAdmin: string;
     createTenant: string;
     tenantNameByRealm: string;
+    tenantByName: string;
     tenantByEmail: string;
     tenantConfig: string;
   };

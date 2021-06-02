@@ -42,9 +42,11 @@ export default function FileTypes() {
   const [editNameInput, setEditNameInput] = useState('');
 
   useEffect(() => {
-    dispatch(FetchFileTypeService());
-    setLoading(false);
-  }, [dispatch]);
+    if (loading) {
+      dispatch(FetchFileTypeService());
+      setLoading(false);
+    }
+  }, [dispatch, loading]);
 
   const deleteFileType = (fileType) => {
     dispatch(DeleteFileTypeService(fileType));
@@ -59,7 +61,8 @@ export default function FileTypes() {
   };
 
   const addUpdateRoleSubmit = (item, e) => {
-    const { tableData, ...fileTypeToUpdate } = item;
+    const newItem = Object.assign({}, item);
+    const { tableData, ...fileTypeToUpdate } = newItem;
     fileTypeToUpdate.updateRoles.push(updateRoleInput);
     setUpdateRoleInput(null);
     e.preventDefault();
@@ -68,7 +71,8 @@ export default function FileTypes() {
   };
 
   const addReadRoleSubmit = (item, e) => {
-    const { tableData, ...fileTypeToUpdate } = item;
+    const newItem = Object.assign({}, item);
+    const { tableData, ...fileTypeToUpdate } = newItem;
     fileTypeToUpdate.readRoles.push(readRoleInput);
     setReadRoleInput(null);
     setAddReadRole(null);
@@ -77,7 +81,8 @@ export default function FileTypes() {
   };
 
   const updateReadRoleSubmit = (item, e) => {
-    const { tableData, ...fileTypeToUpdate } = item;
+    const newItem = Object.assign({}, item);
+    const { tableData, ...fileTypeToUpdate } = newItem;
     fileTypeToUpdate.readRoles = updateReadRoleInput.split(',');
     setUpdateReadRoleInput(null);
     setUpdateReadRole(null);
@@ -86,7 +91,8 @@ export default function FileTypes() {
   };
 
   const updateUpdateRoleSubmit = (item, e) => {
-    const { tableData, ...fileTypeToUpdate } = item;
+    const newItem = Object.assign({}, item);
+    const { tableData, ...fileTypeToUpdate } = newItem;
     fileTypeToUpdate.updateRoles = updateUpdateRoleInput.split(',');
     setUpdateUpdateRoleInput(null);
     e.preventDefault();
@@ -95,7 +101,8 @@ export default function FileTypes() {
   };
 
   const updateNameSubmit = (item, e) => {
-    const { tableData, ...fileTypeToUpdate } = item;
+    const newItem = Object.assign({}, item);
+    const { tableData, ...fileTypeToUpdate } = newItem;
     fileTypeToUpdate.name = editNameInput;
     setEditNameInput(null);
     e.preventDefault();
@@ -105,7 +112,8 @@ export default function FileTypes() {
 
   const updateAnonSubmit = (item, e) => {
     e.preventDefault();
-    const { tableData, ...fileTypeToUpdate } = item;
+    const newItem = Object.assign({}, item);
+    const { tableData, ...fileTypeToUpdate } = newItem;
     fileTypeToUpdate.anonymousRead = e.target.value === 'true';
     updateFileType(fileTypeToUpdate);
   };
@@ -115,10 +123,10 @@ export default function FileTypes() {
     setEditNameInput(item.name);
   };
 
-  const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
+  const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes) || [];
 
   let types: any = null;
-  if (fileTypes && fileTypes.length > 0) {
+  if (fileTypes.length > 0) {
     types = fileTypes.map((fileType, ix) => <Dropdown.Item href={`#/${fileType.name}`}>{fileType.name}</Dropdown.Item>);
   }
 
@@ -165,7 +173,7 @@ export default function FileTypes() {
             field: 'name',
             render: (rowData: FileTypeItem) => {
               return (
-                <div>
+                <div key={rowData.id}>
                   {rowData.tableData.id !== editName ? (
                     <Button className="blended-button" onClick={() => setEditNameStates(rowData)}>
                       {rowData.name}
@@ -208,7 +216,7 @@ export default function FileTypes() {
 
               if (rowData && rowData.readRoles) {
                 readRoles = rowData.readRoles.map((role, ix) => (
-                  <React.Fragment>
+                  <React.Fragment key={ix}>
                     {role} {ix === rowData.readRoles.length - 1 ? '' : ','}
                   </React.Fragment>
                 ));
@@ -291,7 +299,7 @@ export default function FileTypes() {
               if (rowData && rowData.updateRoles) {
                 updateRoles = rowData.updateRoles.map((role, ix) => {
                   return (
-                    <React.Fragment>
+                    <React.Fragment key={ix}>
                       {role} {ix === rowData.updateRoles.length - 1 ? '' : ','}
                     </React.Fragment>
                   );
@@ -378,13 +386,13 @@ export default function FileTypes() {
               return (
                 <div>
                   <Form.Group controlId="controlSelect1">
-                    <Form.Control as="select" onChange={(e) => updateAnonSubmit(rowData, e)}>
-                      <option value="true" selected={rowData.anonymousRead ? true : false}>
-                        true
-                      </option>
-                      <option value="false" selected={rowData.anonymousRead ? false : true}>
-                        false
-                      </option>
+                    <Form.Control
+                      as="select"
+                      value={rowData.anonymousRead ? 'true' : 'false'}
+                      onChange={(e) => updateAnonSubmit(rowData, e)}
+                    >
+                      <option value="true">true</option>
+                      <option value="false">false</option>
                     </Form.Control>
                   </Form.Group>
                 </div>
@@ -392,7 +400,7 @@ export default function FileTypes() {
             },
           },
         ]}
-        data={fileTypes}
+        data={fileTypes.map((x) => Object.assign({}, x))}
         title="File Types"
         options={{
           paging: false,
@@ -420,18 +428,14 @@ export default function FileTypes() {
   };
   const state = useSelector((state: RootState) => state);
   const noSpace = () => {
-    return (
-      <div>
-        There is no space
-        {JSON.stringify(state.fileService)}
-      </div>
-    );
+    return <div>There is no space</div>;
   };
 
   const notifications = () => {
-    return state.notifications.notifications.map((notification) => {
+    return state.notifications.notifications.map((notification, i) => {
       return (
         <div
+          key={i}
           style={{ backgroundColor: 'red', padding: '8px', margin: '5px 0 5px 0', color: 'white', borderRadius: '5px' }}
         >
           <div>{notification.message}</div>

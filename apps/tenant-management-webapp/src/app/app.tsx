@@ -107,7 +107,7 @@ function AppWithAuthContext() {
 
   useEffect(() => {
     if (keycloakConfig?.realm) {
-      createKeycloakInstance(tenant.name ? { ...keycloakConfig, realm: tenant.name } : keycloakConfig);
+      createKeycloakInstance(tenant.realm ? { ...keycloakConfig, realm: tenant.realm } : keycloakConfig);
       setHasSession(true);
     }
   }, [keycloakConfig, tenant]);
