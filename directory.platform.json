@@ -10,12 +10,24 @@
       "host": "http://tenant-management-api:3333/api/tenant/v2"
     },
     {
+      "service": "configuration-service",
+      "host": "http://tenant-management-api:3333"
+    },
+    {
       "service": "configuration-service:v1",
       "host": "http://tenant-management-api:3333/api/configuration/v1"
     },
     {
       "service": "file-service",
       "host": "http://file-service:3337"
+    },
+    {
+      "service": "event-service",
+      "host": "http://event-service:3334"
+    },
+    {
+      "service": "event-service:v1",
+      "host": "http://event-service:3334/event/v1"
     }
   ]
 }

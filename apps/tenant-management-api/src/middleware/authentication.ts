@@ -1,12 +1,9 @@
 import { AuthenticationConfig, authenticateToken } from '@core-services/core-common';
 import type { RequestHandler } from 'express';
 import * as HttpStatusCodes from 'http-status-codes';
+import { TenantServiceRoles } from '../roles';
 
-enum TenantServiceRoles {
-  TenantServiceAdmin = 'tenant-service-admin',
-  PlatformService = 'platform-service',
-  DirectoryAdmin = 'directory-admin',
-}
+
 
 export const requireTenantServiceAdmin: RequestHandler = async (req, res, next: () => void) => {
   const authConfig: AuthenticationConfig = {

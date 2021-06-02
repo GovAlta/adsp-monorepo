@@ -2511,7 +2511,7 @@
         "urn:ads:platform:event-service": [
           {
             "id": "3fd83fb1-ca72-401a-b9e9-9de77e010727",
-            "name": "event-service-admin",
+            "name": "event-sender",
             "description": "Administrator role for the event-service",
             "composite": false,
             "clientRole": true,
@@ -2611,6 +2611,9 @@
           ],
           "urn:ads:platform:tenant-service": [
             "platform-service"
+          ],
+          "urn:ads:platform:event-service": [
+            "event-sender"
           ]
         },
         "notBefore": 0,

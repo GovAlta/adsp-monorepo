@@ -1,4 +1,5 @@
-import { NewOrExisting, UnauthorizedError, Update, User } from '@core-services/core-common';
+import type { User } from '@abgov/adsp-service-sdk';
+import { NewOrExisting, UnauthorizedError, Update } from '@core-services/core-common';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { ServiceStatusApplication, ServiceStatusEndpoint } from '../types';
 

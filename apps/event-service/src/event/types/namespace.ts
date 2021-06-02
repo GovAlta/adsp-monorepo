@@ -1,11 +1,10 @@
-import { UserRole } from '@core-services/core-common';
-import { EventDefinition } from './eventDefinition';
+import { AdspId } from '@abgov/adsp-service-sdk';
+import { EventDefinition } from './definition';
 
 export interface Namespace {
+  tenantId?: AdspId;
   name: string;
-  description: string;
-  definitions?: {
+  definitions: {
     [name: string]: EventDefinition;
   };
-  adminRole: UserRole;
 }

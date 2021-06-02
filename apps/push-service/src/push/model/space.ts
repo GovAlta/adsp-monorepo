@@ -1,5 +1,6 @@
-import type { User } from '@core-services/core-common';
-import { AssertRole, UnauthorizedError, Update } from '@core-services/core-common';
+import { AssertRole } from '@abgov/adsp-service-sdk';
+import type { User } from '@abgov/adsp-service-sdk';
+import { UnauthorizedError, Update } from '@core-services/core-common';
 import type { PushSpaceRepository } from '../repository';
 import type { PushSpace } from '../types'
 import { ServiceUserRoles } from '../types';

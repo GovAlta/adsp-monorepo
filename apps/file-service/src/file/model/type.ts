@@ -1,6 +1,7 @@
 import * as path from 'path';
 import { IsNotEmpty, IsDefined } from 'class-validator';
-import { User, UnauthorizedError, Update } from '@core-services/core-common';
+import type { User } from '@abgov/adsp-service-sdk';
+import { UnauthorizedError, Update } from '@core-services/core-common';
 import { FileType, ServiceUserRoles } from '../types';
 import { Logger } from 'winston';
 

@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { User, assertAuthenticatedHandler, Update, NotFoundError, UnauthorizedError } from '@core-services/core-common';
+import type { User } from '@abgov/adsp-service-sdk';
+import { assertAuthenticatedHandler, Update, NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import { ValuesRepository } from '../repository';
 import { NamespaceEntity } from '../model';
 import { Namespace } from '../types';

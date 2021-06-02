@@ -1,6 +1,7 @@
 import { Logger } from 'winston';
 import { Router } from 'express';
-import { assertAuthenticatedHandler, User, UnauthorizedError, NotFoundError } from '@core-services/core-common';
+import type { User } from '@abgov/adsp-service-sdk';
+import { assertAuthenticatedHandler, UnauthorizedError, NotFoundError } from '@core-services/core-common';
 import { PushSpaceRepository } from '../repository';
 import { PushSpaceEntity } from '../model';
 

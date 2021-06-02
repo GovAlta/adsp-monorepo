@@ -1,3 +1,3 @@
 export * from './namespace';
-export * from './eventDefinition';
-export * from './user';
+export * from './definition';
+export * from './event';

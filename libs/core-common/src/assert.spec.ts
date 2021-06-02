@@ -1,10 +1,9 @@
 import { authenticateToken, AuthenticationConfig } from './assert';
-import { User, UserRole } from './types';
 
 describe('Token authentication', () => {
-  const adminRole: UserRole = 'admin';
+  const adminRole = 'admin';
 
-  const user: User = {
+  const user = {
     id: 'mock-user-id',
     name: 'tester',
     email: 'mock-user@gov.ab.ca',
@@ -12,6 +11,7 @@ describe('Token authentication', () => {
     client: 'mock-client',
     roles: [adminRole],
   };
+
   it('Can pass', () => {
     const emptyConfig: AuthenticationConfig = {};
     expect(authenticateToken(emptyConfig, user)).toBe(true);

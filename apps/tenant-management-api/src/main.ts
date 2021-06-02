@@ -5,7 +5,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as healthCheck from 'express-healthcheck';
 import * as passport from 'passport';
 import * as swaggerUi from 'swagger-ui-express';
-import { AdspId, adspId, createCoreStrategy, initializePlatform } from '@abgov/adsp-service-sdk';
+import { AdspId, adspId, createCoreStrategy, initializePlatform, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError, NotFoundError, InvalidOperationError } from '@core-services/core-common';
 import { createConfigService } from './configuration-management';
 import { createDirectoryService } from './directory-service';
@@ -36,6 +36,8 @@ async function initializeApp(): Promise<express.Application> {
   const { tenantStrategy, directory } = await initializePlatform(
     {
       serviceId,
+      displayName: 'Tenant Service',
+      description: 'Service for management of ADSP tenants.',
       clientSecret: environment.CLIENT_SECRET,
       directoryUrl: null,
       accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
@@ -103,6 +105,8 @@ async function initializeApp(): Promise<express.Application> {
 
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     if (err instanceof UnauthorizedError) {
+      res.status(401).send(err.message);
+    } else if (err instanceof UnauthorizedUserError) {
       res.status(401).send(err.message);
     } else if (err instanceof NotFoundError) {
       res.status(404).send(err.message);

@@ -1,29 +1,28 @@
 import * as fs from 'fs';
 import { Application } from 'express';
 import { Logger } from 'winston';
-import { DomainEventService } from '@core-services/core-common';
-import { Repositories } from './repository';
-import { createAdministrationRouter, createEventRouter, createNamespaceRouter } from './router';
-import { createJobs, JobProps } from './job';
+import { createEventRouter } from './router';
+import { DomainEventService, ValidationService } from './service';
 
-export * from './model';
-export * from './repository';
-export * from './types';
+export type { DomainEvent, EventDefinition, Namespace } from './types';
+export type {
+  DomainEventService,
+  DomainEventSubscriberService,
+  DomainEventWorkItem,
+  ValidationService,
+} from './service';
 
-interface EventMiddlewareProps extends JobProps, Repositories {
+export { EventServiceRoles } from './role';
+
+interface EventMiddlewareProps {
   logger: Logger;
   eventService: DomainEventService;
+  validationService: ValidationService;
 }
 
-export const applyEventMiddleware = (app: Application, props: EventMiddlewareProps) => {
-  createJobs(props);
-
-  const namespaceRouter = createNamespaceRouter(props);
-  const adminRouter = createAdministrationRouter(props);
+export const applyEventMiddleware = (app: Application, props: EventMiddlewareProps): Application => {
   const eventRouter = createEventRouter(props);
 
-  app.use('/namespace/v1', namespaceRouter);
-  app.use('/event-admin/v1', adminRouter);
   app.use('/event/v1', eventRouter);
 
   let swagger = null;
@@ -41,4 +40,6 @@ export const applyEventMiddleware = (app: Application, props: EventMiddlewarePro
       });
     }
   });
+
+  return app;
 };

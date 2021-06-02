@@ -1,4 +1,3 @@
-import * as fs from 'fs';
 import { Application } from 'express';
 import { Repositories } from './repository';
 import { createConfigurationRouter, createTenantConfigurationRouter } from './router';
@@ -8,7 +7,7 @@ export * from './repository';
 export * from './model';
 import * as passport from 'passport';
 
-const passportMiddleware = passport.authenticate(['jwt-tenant', 'jwt'], { session: false });
+const passportMiddleware = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
 
 interface ConfigMiddlewareProps extends Repositories {
   logger: Logger;

@@ -14,12 +14,12 @@ describe('createTenantHandler', () => {
   });
 
   it('can create handler', () => {
-    const handler = createConfigurationHandler(serviceMock);
+    const handler = createConfigurationHandler(serviceMock, adspId`urn:ads:platform:test`);
     expect(handler).toBeTruthy();
   });
 
   it('can add configuration getter', async (done) => {
-    const handler = createConfigurationHandler(serviceMock);
+    const handler = createConfigurationHandler(serviceMock, adspId`urn:ads:platform:test`);
 
     const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
     const config = 'this is config';
@@ -39,7 +39,7 @@ describe('createTenantHandler', () => {
   });
 
   it('can return error if service throws.', async (done) => {
-    const handler = createConfigurationHandler(serviceMock);
+    const handler = createConfigurationHandler(serviceMock, adspId`urn:ads:platform:test`);
 
     const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
 

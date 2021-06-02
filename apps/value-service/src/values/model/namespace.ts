@@ -1,6 +1,7 @@
 import { IsNotEmpty } from 'class-validator';
-import type { User } from '@core-services/core-common';
-import { UserRole, Update, AssertRole, UnauthorizedError, InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { AssertRole } from '@abgov/adsp-service-sdk';
+import type { User } from '@abgov/adsp-service-sdk';
+import { Update, UnauthorizedError, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import type { Namespace } from '../types';
 import { ServiceUserRoles, ValueDefinition } from '../types';
 import type { ValuesRepository } from '../repository';
@@ -14,7 +15,7 @@ export class NamespaceEntity implements Namespace {
   public description: string;
   @IsNotEmpty()
   public definitions: { [name: string]: ValueDefinitionEntity };
-  public adminRole: UserRole;
+  public adminRole: string;
 
   @AssertRole('create namespace', ServiceUserRoles.Admin)
   static create(

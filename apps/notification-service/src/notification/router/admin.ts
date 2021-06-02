@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Logger } from 'winston';
-import { assertAuthenticatedHandler, User } from '@core-services/core-common';
+import type { User } from '@abgov/adsp-service-sdk';
+import { assertAuthenticatedHandler } from '@core-services/core-common';
 import { NotificationSpaceRepository, NotificationTypeRepository } from '../repository';
 import { NotificationSpaceEntity, NotificationTypeEntity } from '../model';
 import { mapType } from './mappers';

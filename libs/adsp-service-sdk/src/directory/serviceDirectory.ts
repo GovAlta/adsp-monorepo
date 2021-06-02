@@ -1,5 +1,7 @@
 import axios from 'axios';
 import * as NodeCache from 'node-cache';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const retry = require('promise-retry');
 import type { Logger } from 'winston';
 import { TokenProvider } from '../access';
 import { AdspId, assertAdspId } from '../utils';
@@ -27,27 +29,38 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
     private readonly tokenProvider: TokenProvider
   ) {}
 
+  #tryRetrieveDirectory = async (requestUrl: URL, count: number): Promise<{ urn: string; serviceUrl: URL }[]> => {
+    this.logger.debug(`Try ${count}: retrieve directory entries...`, this.LOG_CONTEXT);
+
+    const token = await this.tokenProvider.getAccessToken();
+    const { data } = await axios.get<DirectoryEntry[]>(requestUrl.href, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return data.map(({ urn, url }) => {
+      let serviceUrl = null;
+      try {
+        serviceUrl = new URL(url);
+        this.logger.debug(`Cached service directory entry ${urn} -> ${serviceUrl}`, this.LOG_CONTEXT);
+      } catch (err) {
+        this.logger.error(
+          `Error encountered caching entry '${urn}'; entry url may be invalid: ${url}`,
+          this.LOG_CONTEXT
+        );
+      }
+
+      return { urn, serviceUrl };
+    });
+  };
+
   #retrieveDirectory = async (): Promise<void> => {
     const url = new URL('/api/discovery/v1', this.directoryUrl);
-    this.logger.debug(`Retrieving service directory from ${url}...`, this.LOG_CONTEXT);
 
     try {
-      const token = await this.tokenProvider.getAccessToken();
-      const { data } = await axios.get<DirectoryEntry[]>(url.href, { headers: { Authorization: `Bearer ${token}` } });
-
-      data.forEach(({ urn, url }) => {
-        try {
-          const serviceUrl = new URL(url);
-          this.#directoryCache.set(urn, serviceUrl);
-          this.logger.debug(`Cached service directory entry ${urn} -> ${serviceUrl}`, this.LOG_CONTEXT);
-        } catch (err) {
-          this.logger.error(
-            `Error encountered caching entry '${urn}'; entry url may be invalid: ${url}`,
-            this.LOG_CONTEXT
-          );
-        }
+      const results = await retry((next, count) => this.#tryRetrieveDirectory(url, count).catch(next));
+      results.forEach(({ urn, serviceUrl }) => {
+        this.#directoryCache.set(urn, serviceUrl);
       });
-
       this.logger.info(`Retrieved service directory from ${url}.`, this.LOG_CONTEXT);
     } catch (err) {
       this.logger.error(`Error encountered retrieving directory. ${err}`, this.LOG_CONTEXT);

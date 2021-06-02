@@ -7,9 +7,8 @@ import * as helmet from 'helmet';
 import { createLogger, UnauthorizedError, NotFoundError, InvalidOperationError } from '@core-services/core-common';
 import { AdspId, createCoreStrategy, initializePlatform } from '@abgov/adsp-service-sdk';
 import { environment } from './environments/environment';
-import { applyFileMiddleware } from './file';
+import { applyFileMiddleware, ServiceUserRoles } from './file';
 import { createRepositories } from './mongo';
-import { createEventService } from './amqp';
 import * as cors from 'cors';
 import * as fs from 'fs';
 
@@ -25,9 +24,46 @@ async function initializeApp(): Promise<express.Application> {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { tenantStrategy, tenantHandler } = await initializePlatform(
+  const { tenantStrategy, tenantHandler, healthCheck, eventService } = await initializePlatform(
     {
       serviceId,
+      displayName: 'File Service',
+      description: 'Service for upload and download of files.',
+      roles: [ServiceUserRoles.Admin],
+      configurationSchema: {
+        type: 'object',
+        additionalProperties: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            name: { type: 'string' },
+            anonymousRead: { type: 'boolean' },
+            readRoles: { type: 'array', items: { type: 'string' } },
+            updateRoles: { type: 'array', items: { type: 'string' } },
+          },
+          required: ['id', 'name', 'anonymousRead', 'readRoles', 'updateRoles'],
+          additionalProperties: false,
+        },
+      },
+      events: [
+        // TODO: This is just an example. Real domain events to be defined.
+        {
+          name: 'file-uploaded',
+          description: 'Signalled when a file is uploaded.',
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              file: {
+                type: 'object',
+                properties: {
+                  filename: { type: 'string' },
+                },
+              },
+            },
+            required: ['file'],
+          },
+        },
+      ],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
@@ -65,13 +101,6 @@ async function initializeApp(): Promise<express.Application> {
 
   const repositories = await createRepositories({ ...environment, logger });
 
-  const eventService = environment.AMQP_HOST
-    ? await createEventService({ ...environment, logger })
-    : {
-        send: (event) => logger.debug(`Event sink received event '${event.namespace}:${event.name}'`),
-        isConnected: () => true,
-      };
-
   applyFileMiddleware(app, {
     logger,
     rootStoragePath: environment.FILE_PATH,
@@ -82,12 +111,13 @@ async function initializeApp(): Promise<express.Application> {
     ...repositories,
   });
 
-  app.get('/health', (_req, res) =>
+  app.get('/health', async (_req, res) => {
+    const platform = await healthCheck();
     res.json({
+      ...platform,
       db: repositories.isConnected(),
-      msg: eventService.isConnected(),
-    })
-  );
+    });
+  });
 
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     /*eslint-enable */
