@@ -1,0 +1,40 @@
+/event/v1/event:
+  post:
+    tags:
+      - Event
+    description: Send an event.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              namespace:
+                type: string
+              name:
+                type: string
+              tenantId:
+                type: string
+              correlationId:
+                type: string
+              context:
+                type: object
+              timestamp:
+                type: string
+                format: datetime
+              payload:
+                type: object
+            required:
+              - namespace
+              - name
+              - timestamp
+              - payload
+            additionalProperties: true
+    responses:
+      200:
+        description: Event successfully sent.
+      401:
+        description: User not authorized to send event.
+      404:
+        description: Event definition not found.

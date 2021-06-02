@@ -4,33 +4,31 @@ import { Router } from 'express';
 import * as validFilename from 'valid-filename';
 import { Logger } from 'winston';
 import {
-  User,
   assertAuthenticatedHandler,
   UnauthorizedError,
   NotFoundError,
   InvalidOperationError,
-  DomainEventService,
 } from '@core-services/core-common';
 import { FileRepository, FileSpaceRepository } from '../repository';
 import { FileEntity } from '../model';
 import { createUpload } from '../upload';
-import { createdFile, deletedFile } from '../event';
 import { FileCriteria } from '../types/file';
+import { EventService } from '@abgov/adsp-service-sdk';
 
 interface FileRouterProps {
   logger: Logger;
   rootStoragePath: string;
-  eventService: DomainEventService;
   spaceRepository: FileSpaceRepository;
   fileRepository: FileRepository;
+  eventService: EventService;
 }
 
 export const createFileRouter = ({
   logger,
   rootStoragePath,
-  eventService,
   spaceRepository,
   fileRepository,
+  eventService,
 }: FileRouterProps): Router => {
   const upload = createUpload({ rootStoragePath });
   const fileRouter = Router();
@@ -72,19 +70,8 @@ export const createFileRouter = ({
           uploaded.path,
           rootStoragePath
         );
-        eventService.send(
-          createdFile(space, type, {
-            id: fileEntity.id,
-            filename: fileEntity.filename,
-            size: fileEntity.size,
-            recordId: fileEntity.recordId,
-            createdBy: fileEntity.createdBy,
-            created: fileEntity.created,
-            scanned: fileEntity.scanned,
-          })
-        );
 
-        res.json({
+        const file = {
           id: fileEntity.id,
           filename: fileEntity.filename,
           size: fileEntity.size,
@@ -92,6 +79,19 @@ export const createFileRouter = ({
           recordId: fileEntity.recordId,
           created: fileEntity.created,
           lastAccessed: fileEntity.lastAccessed,
+        };
+
+        res.json(file);
+
+        // This is an example.
+        eventService.send({
+          name: 'file-uploaded',
+          tenantId: user.tenantId,
+          timestamp: new Date(),
+          correlationId: fileEntity.recordId,
+          payload: {
+            file,
+          },
         });
 
         logger.info(
@@ -140,7 +140,7 @@ export const createFileRouter = ({
   });
 
   fileRouter.get('/files/:fileId', async (req, res, next) => {
-    const user = req.user as User;
+    const user = req.user;
     const { fileId } = req.params;
     try {
       const fileEntity = await fileRepository.get(fileId);
@@ -168,7 +168,7 @@ export const createFileRouter = ({
   });
 
   fileRouter.get('/files/:fileId/download', async (req, res, next) => {
-    const user = req.user as User;
+    const user = req.user;
     const { fileId } = req.params;
     try {
       const fileEntity = await fileRepository.get(fileId);
@@ -194,7 +194,7 @@ export const createFileRouter = ({
   });
 
   fileRouter.delete('/files/:fileId', assertAuthenticatedHandler, async (req, res, next) => {
-    const user = req.user as User;
+    const user = req.user;
     const { fileId } = req.params;
     try {
       const fileEntity = await fileRepository.get(fileId);
@@ -203,24 +203,6 @@ export const createFileRouter = ({
         throw new NotFoundError('File', fileId);
       }
       fileEntity.markForDeletion(user);
-
-      eventService.send(
-        deletedFile(
-          fileEntity.type.spaceId,
-          fileEntity.type.id,
-          {
-            id: fileEntity.id,
-            filename: fileEntity.filename,
-            size: fileEntity.size,
-            recordId: fileEntity.recordId,
-            createdBy: fileEntity.createdBy,
-            created: fileEntity.created,
-            scanned: fileEntity.scanned,
-          },
-          user,
-          new Date()
-        )
-      );
 
       logger.info(
         `File '${fileEntity.filename}' (ID: ${fileEntity.id}) marked for deletion by ` +

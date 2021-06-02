@@ -1,32 +1,24 @@
 version: '3.2'
 services:
-  event-service-mongo:
-    image: mongo:3.6
-    expose:
-      - 27017
-    ports:
-      - 27017:27017
   event-service:
-    build: 
+    build:
       context: ../
       dockerfile: .compose/service/Dockerfile
       args:
         - SERVICE=event-service
     depends_on:
       - rabbitmq
-      - event-service-mongo
     ports:
       - 3334:3334
-    expose: 
+    expose:
       - 3334
     environment:
       - KEYCLOAK_ROOT_URL=http://keycloak:8080
-      - KEYCLOAK_REALM=core
-      - KEYCLOAK_CLIENT_ID=event-service
-      - KEYCLOAK_CLIENT_SECRET=8c535ae3-ecd5-4a21-92bd-7025ce319d23
-      - MONGO_URI=mongodb://event-service-mongo:27017
-      - MONGO_DB=event
+      - DIRECTORY_URL=http://tenant-management-api:3333
+      - CLIENT_ID=urn:ads:platform:event-service
+      - CLIENT_SECRET=8c535ae3-ecd5-4a21-92bd-7025ce319d23
       - AMQP_HOST=rabbitmq
       - AMQP_USER=guest
       - AMQP_PASSWORD=guest
-      - VALUE_SERVICE_URL=http://value-service:3336
+      - PORT=3334
+      - LOG_LEVEL=debug

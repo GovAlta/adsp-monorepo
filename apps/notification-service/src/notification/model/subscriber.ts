@@ -1,4 +1,5 @@
-import { New, UnauthorizedError, Update, User } from '@core-services/core-common';
+import type { User } from '@abgov/adsp-service-sdk';
+import { New, UnauthorizedError, Update } from '@core-services/core-common';
 import { SubscriptionRepository } from '../repository';
 import { Subscriber, Channel } from '../types';
 

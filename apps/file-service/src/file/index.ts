@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { Application } from 'express';
 import { Logger } from 'winston';
-import { DomainEventService } from '@core-services/core-common';
+import { EventService } from '@abgov/adsp-service-sdk';
 import { Repositories } from './repository';
 import { createSpaceRouter, createFileRouter, createAdminRouter, createFileTypeRouter } from './router';
 import { scheduleFileJobs } from './job';
@@ -13,14 +13,14 @@ export * from './model';
 
 interface FileMiddlewareProps extends Repositories {
   logger: Logger;
+  eventService: EventService;
   rootStoragePath: string;
   avProvider: string;
   avHost: string;
   avPort: number;
-  eventService: DomainEventService;
 }
 
-export const applyFileMiddleware = (app: Application, props: FileMiddlewareProps) => {
+export const applyFileMiddleware = (app: Application, props: FileMiddlewareProps): Application => {
   const fileTypeRouter = createFileTypeRouter(props);
   const spaceRouter = createSpaceRouter(props);
   const adminRouter = createAdminRouter(props);
@@ -54,4 +54,6 @@ export const applyFileMiddleware = (app: Application, props: FileMiddlewareProps
       });
     }
   });
+
+  return app;
 };

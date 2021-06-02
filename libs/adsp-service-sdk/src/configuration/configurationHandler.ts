@@ -1,20 +1,21 @@
 import type { RequestHandler } from 'express';
-import { ConfigurationService } from './configurationService';
+import { AdspId } from '../utils';
+import type { ConfigurationService } from './configurationService';
 
-export const createConfigurationHandler = (service: ConfigurationService): RequestHandler => async (
+export const createConfigurationHandler = (service: ConfigurationService, serviceId: AdspId): RequestHandler => async (
   req,
   _res,
   next
 ) => {
-  const tenant = req.user?.tenantId;
-  if (tenant) {
-    try {
-      const configuration = await service.getConfiguration(tenant, req.user.token.bearer);
-      req.getConfiguration = <C>() => configuration as C;
-    } catch (err) {
-      next(err);
-      return;
-    }
+  const contextTenantId = req.user?.tenantId;
+
+  try {
+    req['getConfiguration'] = <C, O = undefined>(tenantId?: AdspId) =>
+      service.getConfiguration<C, O>(serviceId, req.user.token.bearer, tenantId || contextTenantId);
+
+    next();
+  } catch (err) {
+    next(err);
+    return;
   }
-  next();
 };

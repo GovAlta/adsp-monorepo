@@ -1,84 +1,125 @@
 import * as express from 'express';
 import * as passport from 'passport';
 import * as compression from 'compression';
+import * as cors from 'cors';
 import * as helmet from 'helmet';
-import {
-  createLogger,
-  createKeycloakStrategy,
-  UnauthorizedError,
-  NotFoundError,
-  InvalidOperationError,
-  ValueServiceClient,
-  getKeycloakTokenRequestProps,
-} from '@core-services/core-common';
+import { AdspId, createCoreStrategy, initializePlatform } from '@abgov/adsp-service-sdk';
+import { createLogger, UnauthorizedError, NotFoundError, InvalidOperationError } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { createEventService } from './amqp';
-import { applyEventMiddleware } from './event';
-import { createRepositories } from './mongo';
+import { applyEventMiddleware, EventServiceRoles } from './event';
+import { AjvValidationService } from './ajv';
 
-const logger = createLogger('event-service', environment.LOG_LEVEL || 'info');
+const logger = createLogger('event-service', environment.LOG_LEVEL);
 
-const app = express();
+const initializeApp = async (): Promise<express.Application> => {
+  const app = express();
 
-app.use(compression());
-app.use(helmet());
-app.use(express.json({ limit: '1mb' }));
+  app.use(compression());
+  app.use(helmet());
+  app.use(express.json({ limit: '1mb' }));
+  app.use(cors());
 
-passport.use('jwt', createKeycloakStrategy());
+  const serviceId = AdspId.parse(environment.CLIENT_ID);
+  const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
+  const { tenantStrategy, tenantHandler, configurationHandler, healthCheck } = await initializePlatform({
+    serviceId,
+    displayName: 'Event Service',
+    description: 'Service for sending of domain events.',
+    roles: [EventServiceRoles.sender],
+    configurationSchema: {
+      type: 'object',
+      additionalProperties: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          definitions: {
+            type: 'object',
+            additionalProperties: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                description: { type: 'string' },
+                payloadSchema: { type: 'object' },
+              },
+              required: ['name', 'description', 'payloadSchema'],
+              additionalProperties: false,
+            },
+          },
+        },
+        required: ['name', 'definitions'],
+        additionalProperties: false,
+      },
+    },
+    clientSecret: environment.CLIENT_SECRET,
+    accessServiceUrl,
+    directoryUrl: new URL(environment.DIRECTORY_URL),
+  });
 
-passport.serializeUser(function (user, done) {
-  done(null, user);
+  const coreStrategy = createCoreStrategy({
+    logger,
+    serviceId,
+    accessServiceUrl
+  });
+
+  passport.use('core', coreStrategy);
+  passport.use('tenant', tenantStrategy);
+
+  passport.serializeUser(function (user, done) {
+    done(null, user);
+  });
+
+  passport.deserializeUser(function (user, done) {
+    done(null, user);
+  });
+
+  app.use(passport.initialize());
+  app.use('/event', passport.authenticate(['core', 'tenant'], { session: false }), tenantHandler, configurationHandler);
+
+  const eventService = await createEventService({
+    amqpHost: environment.AMQP_HOST,
+    amqpUser: environment.AMQP_USER,
+    amqpPassword: environment.AMQP_PASSWORD,
+    logger,
+  });
+
+  const validationService = new AjvValidationService(logger);
+
+  applyEventMiddleware(app, {
+    logger,
+    eventService,
+    validationService,
+  });
+
+  app.get('/health', async (_req, res) => {
+    const { event: _event, ...platform } = await healthCheck();
+    res.json({
+      msg: eventService.isConnected(),
+      ...platform,
+    });
+  });
+
+  app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    if (err instanceof UnauthorizedError) {
+      res.status(401).send(err.message);
+    } else if (err instanceof NotFoundError) {
+      res.status(404).send(err.message);
+    } else if (err instanceof InvalidOperationError) {
+      res.status(400).send(err.message);
+    } else {
+      logger.warn(`Unexpected error encountered in handler: ${err}`);
+      res.sendStatus(500);
+    }
+  });
+
+  return app;
+};
+
+initializeApp().then((app) => {
+  const port = environment.PORT || 3334;
+
+  const server = app.listen(port, () => {
+    logger.info(`Listening at http://localhost:${port}`);
+  });
+  server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
 });
-
-passport.deserializeUser(function (user, done) {
-  done(null, user);
-});
-
-app.use(passport.initialize());
-app.use('/namespace', passport.authenticate(['jwt'], { session: false }));
-app.use('/event-admin', passport.authenticate(['jwt'], { session: false }));
-app.use('/event', passport.authenticate(['jwt'], { session: false }));
-
-Promise.all([createRepositories({ ...environment, logger }), createEventService({ ...environment, logger })]).then(
-  ([repositories, eventService]) => {
-    app.get('/health', (_req, res) =>
-      res.json({
-        db: repositories.isConnected(),
-        msg: eventService.isConnected(),
-      })
-    );
-
-    applyEventMiddleware(app, {
-      ...repositories,
-      logger,
-      eventService,
-      valueService: new ValueServiceClient(
-        logger,
-        getKeycloakTokenRequestProps(environment),
-        environment.VALUE_SERVICE_URL
-      ),
-      events: eventService.getEvents(),
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    app.use((err, _req, res, _next) => {
-      if (err instanceof UnauthorizedError) {
-        res.status(401).send(err.message);
-      } else if (err instanceof NotFoundError) {
-        res.status(404).send(err.message);
-      } else if (err instanceof InvalidOperationError) {
-        res.status(400).send(err.message);
-      } else {
-        logger.warn(`Unexpected error encountered in handler: ${err}`);
-        res.sendStatus(500);
-      }
-    });
-
-    const port = environment.PORT || 3334;
-
-    const server = app.listen(port, () => {
-      logger.info(`Listening at http://localhost:${port}`);
-    });
-    server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
-  }
-);

@@ -1,23 +1,16 @@
 import { Logger } from 'winston';
 import { Router } from 'express';
-import {
-  assertAuthenticatedHandler,
-  UnauthorizedError,
-  NotFoundError,
-  DomainEventService,
-} from '@core-services/core-common';
+import { assertAuthenticatedHandler, UnauthorizedError, NotFoundError } from '@core-services/core-common';
 import { FileSpaceRepository } from '../repository';
 import { FileSpaceEntity } from '../model';
-import { createdFileSpace, updatedFileSpace } from '../event/space';
 import { v4 as uuidv4 } from 'uuid';
 
 interface SpaceRouterProps {
   logger: Logger;
-  eventService: DomainEventService;
   spaceRepository: FileSpaceRepository;
 }
 
-export const createSpaceRouter = ({ logger, eventService, spaceRepository }: SpaceRouterProps): Router => {
+export const createSpaceRouter = ({ logger, spaceRepository }: SpaceRouterProps): Router => {
   const spaceRouter = Router();
 
   spaceRouter.get('/spaces', assertAuthenticatedHandler, async (req, res, next) => {
@@ -58,17 +51,6 @@ export const createSpaceRouter = ({ logger, eventService, spaceRepository }: Spa
           name: req.tenant.name,
         });
 
-        eventService.send(
-          createdFileSpace(
-            {
-              id: entity.id,
-              name: entity.name,
-              spaceAdminRole: entity.spaceAdminRole,
-            },
-            user,
-            new Date()
-          )
-        );
         logger.info(`Space ${entity.name} (ID: ${entity.id}) created by ` + `user ${user.name} (ID: ${user.id}).`);
 
         res.send({
@@ -79,21 +61,9 @@ export const createSpaceRouter = ({ logger, eventService, spaceRepository }: Spa
       } else {
         const spaceEntity = await spaceRepository.get(spaceId);
 
-        const entity = await spaceEntity.update(user, {
+        await spaceEntity.update(user, {
           spaceAdminRole,
         });
-
-        eventService.send(
-          updatedFileSpace(
-            {
-              id: entity.id,
-              name: entity.name,
-              spaceAdminRole: entity.spaceAdminRole,
-            },
-            user,
-            new Date()
-          )
-        );
 
         logger.info(
           `Space ${spaceEntity.name} (ID: ${spaceEntity.id}) updated by ` + `user ${user.name} (ID: ${user.id}).`

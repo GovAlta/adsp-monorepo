@@ -1,5 +1,6 @@
 import { Mock, It } from 'moq.ts';
-import { User, UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
+import { adspId, User } from '@abgov/adsp-service-sdk';
+import { UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
 import { FileSpace, ServiceUserRoles } from '../types';
 import { FileSpaceRepository } from '../repository';
 import { FileTypeEntity } from './type';
@@ -13,6 +14,9 @@ describe('File Space Entity', () => {
     name: 'testy',
     email: 'test@testco.org',
     roles: [ServiceUserRoles.Admin],
+    tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
+    isCore: false,
+    token: null
   };
 
   const space: FileSpace = {
@@ -68,11 +72,9 @@ describe('File Space Entity', () => {
         space
       );
     }
-    try {
+    expect(() => {
       createFileSpaceEntity();
-    } catch (e) {
-      expect(e).toEqual(new UnauthorizedError('User not permitted to create file space.'));
-    }
+    }).toThrow(/User testy \(ID: user-2\) not permitted to create file space/);
   });
 
   describe('instance', () => {
@@ -111,11 +113,7 @@ describe('File Space Entity', () => {
           }
         );
       }
-      try {
-        await update(entity);
-      } catch (e) {
-        expect(e).toEqual(new UnauthorizedError('User not authorized to updated space.'));
-      }
+      await expect(update(entity)).rejects.toThrow(/User not authorized to updated space./);
     });
 
     it('can check access for user with file service admin role', () => {

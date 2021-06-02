@@ -1,4 +1,5 @@
-import { assertAuthenticatedHandler, UnauthorizedError, User } from '@core-services/core-common';
+import type { User } from '@abgov/adsp-service-sdk';
+import { assertAuthenticatedHandler, UnauthorizedError } from '@core-services/core-common';
 import { Router } from 'express';
 import { Logger } from 'winston';
 import { ServiceStatusApplicationEntity } from '../model';

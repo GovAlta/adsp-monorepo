@@ -1,6 +1,8 @@
 import axios from 'axios';
 import * as NodeCache from 'node-cache';
 import type { Logger } from 'winston';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const retry = require('promise-retry');
 import type { TokenProvider } from '../access';
 import type { ServiceDirectory } from '../directory';
 import { AdspId, adspId, assertAdspId } from '../utils';
@@ -43,26 +45,29 @@ export class TenantServiceImpl implements TenantService {
     this.#retrieveTenants().catch((err) => logger.error(`Encountered error during initialization of tenants. ${err}`));
   }
 
-  #retrieveTenants = async (): Promise<Tenant[]> => {
-    this.logger.debug(`Retrieving tenants...'`, this.LOG_CONTEXT);
+  #tryRetrieveTenants = async (requestUrl: URL, count: number): Promise<Tenant[]> => {
+    this.logger.debug(`Try ${count}: retrieving tenants from ${requestUrl}...'`, this.LOG_CONTEXT);
 
+    const token = await this.tokenProvider.getAccessToken();
+    const { data } = await axios.get<TenantsResponse>(requestUrl.href, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const tenants = data?.results?.map((r) => ({
+      id: AdspId.parse(r.id),
+      name: r.name,
+      realm: r.realm,
+    }));
+
+    return tenants;
+  };
+
+  #retrieveTenants = async (): Promise<Tenant[]> => {
     const tenantServiceUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:tenant-service:v2`);
     const tenantsUrl = new URL('v2/tenants', tenantServiceUrl);
 
-    this.logger.debug(`Requesting tenants from ${tenantsUrl}...'`, this.LOG_CONTEXT);
-
-    const token = await this.tokenProvider.getAccessToken();
-
     try {
-      const { data } = await axios.get<TenantsResponse>(tenantsUrl.href, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const tenants = data?.results?.map((r) => ({
-        id: AdspId.parse(r.id),
-        name: r.name,
-        realm: r.realm,
-      }));
+      const tenants = await retry((next, count) => this.#tryRetrieveTenants(tenantsUrl, count).catch(next));
 
       if (tenants) {
         tenants.forEach((t) => {
@@ -89,9 +94,8 @@ export class TenantServiceImpl implements TenantService {
 
     this.logger.debug(`Requesting tenant '${tenantId}' from ${tenantUrl}...'`, this.LOG_CONTEXT);
 
-    const token = await this.tokenProvider.getAccessToken();
-
     try {
+      const token = await this.tokenProvider.getAccessToken();
       const { data } = await axios.get<TenantResponse>(tenantUrl.href, {
         headers: { Authorization: `Bearer ${token}` },
       });

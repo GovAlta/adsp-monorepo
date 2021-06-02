@@ -1,7 +1,7 @@
+import type { User } from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
   NotFoundError,
-  User,
 } from '@core-services/core-common';
 import { Router } from 'express';
 import { ValuesRepository } from '../repository';

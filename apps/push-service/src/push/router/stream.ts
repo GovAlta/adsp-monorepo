@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { Instance as WsApplication } from 'express-ws';
 import { map, share } from 'rxjs/operators';
 import { Logger } from 'winston';
-import { DomainEventSubscriberService, NotFoundError, User } from '@core-services/core-common';
+import type { User } from '@abgov/adsp-service-sdk';
+import { DomainEventSubscriberService, NotFoundError } from '@core-services/core-common';
 import { StreamRepository } from '../repository';
 import { EventCriteria } from '../types';
 

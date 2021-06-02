@@ -1,22 +1,18 @@
 import type { Logger } from 'winston';
 import { RequestHandler, Router } from 'express';
+import * as HttpStatusCodes from 'http-status-codes';
 import {
+  AuthenticationConfig,
+  authenticateToken,
   assertAuthenticatedHandler,
-  User,
   UnauthorizedError,
   NotFoundError,
-  DomainEventService,
 } from '@core-services/core-common';
 import { FileSpaceRepository, FileRepository } from '../repository';
-import { createdFileType, updatedFileType } from '../event';
-
-import { AuthenticationConfig, authenticateToken } from '@core-services/core-common';
-import * as HttpStatusCodes from 'http-status-codes';
 
 interface AdminRouterProps {
   logger: Logger;
   rootStoragePath: string;
-  eventService: DomainEventService;
   spaceRepository: FileSpaceRepository;
   fileRepository: FileRepository;
 }
@@ -37,14 +33,13 @@ export const adminOnlyMiddleware: RequestHandler = async (req, res, next: () => 
 export const createAdminRouter = ({
   logger,
   rootStoragePath,
-  eventService,
   spaceRepository,
   fileRepository,
 }: AdminRouterProps): Router => {
   const adminRouter = Router();
 
-  adminRouter.get('/:space/types', [adminOnlyMiddleware, assertAuthenticatedHandler], async (req, res, next) => {
-    const user = req.user as User;
+  adminRouter.get('/:space/types', adminOnlyMiddleware, assertAuthenticatedHandler, async (req, res, next) => {
+    const user = req.user;
     const { space } = req.params;
 
     try {
@@ -73,8 +68,8 @@ export const createAdminRouter = ({
     }
   });
 
-  adminRouter.get('/spaces', [adminOnlyMiddleware, assertAuthenticatedHandler], async (req, res, next) => {
-    const user = req.user as User;
+  adminRouter.get('/spaces', adminOnlyMiddleware, assertAuthenticatedHandler, async (req, res, next) => {
+    const user = req.user;
     const { top, after } = req.query;
 
     try {
@@ -94,8 +89,8 @@ export const createAdminRouter = ({
     }
   });
 
-  adminRouter.put('/:space/types/:type', [adminOnlyMiddleware, assertAuthenticatedHandler], async (req, res, next) => {
-    const user = req.user as User;
+  adminRouter.put('/:space/types/:type', adminOnlyMiddleware, assertAuthenticatedHandler, async (req, res, next) => {
+    const user = req.user;
     const { space, type } = req.params;
     const { name, anonymousRead, readRoles, updateRoles, spaceId } = req.body;
 
@@ -111,55 +106,21 @@ export const createAdminRouter = ({
       const fileType = spaceEntity.types[type];
 
       if (!fileType) {
-        const entity = await spaceEntity.addType(user, rootStoragePath, type, {
+        await spaceEntity.addType(user, rootStoragePath, type, {
           name,
           anonymousRead,
           readRoles,
           updateRoles,
           spaceId,
         });
-
-        const typeEntity = entity.types[type];
-        eventService.send(
-          createdFileType(
-            space,
-            {
-              id: typeEntity.id,
-              name: typeEntity.name,
-              anonymousRead: typeEntity.anonymousRead,
-              readRoles: typeEntity.readRoles,
-              updateRoles: typeEntity.updateRoles,
-              spaceId: typeEntity.spaceId,
-            },
-            user,
-            new Date()
-          )
-        );
       } else {
-        const entity = await spaceEntity.updateType(user, type, {
+        await spaceEntity.updateType(user, type, {
           name,
           anonymousRead,
           readRoles,
           updateRoles,
           spaceId,
         });
-
-        const typeEntity = entity.types[type];
-        eventService.send(
-          updatedFileType(
-            space,
-            {
-              id: typeEntity.id,
-              name: typeEntity.name,
-              anonymousRead: typeEntity.anonymousRead,
-              readRoles: typeEntity.readRoles,
-              updateRoles: typeEntity.updateRoles,
-              spaceId: typeEntity.spaceId,
-            },
-            user,
-            new Date()
-          )
-        );
       }
 
       logger.info(
@@ -183,9 +144,10 @@ export const createAdminRouter = ({
 
   adminRouter.get(
     '/:space/types/:type/files',
-    [adminOnlyMiddleware, assertAuthenticatedHandler],
+    adminOnlyMiddleware,
+    assertAuthenticatedHandler,
     async (req, res, next) => {
-      const user = req.user as User;
+      const user = req.user;
       const { space, type } = req.params;
       const { top, after } = req.query;
 

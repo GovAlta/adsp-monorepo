@@ -1,7 +1,8 @@
 import * as _ from 'lodash';
 import { Observable } from 'rxjs';
-import { map, filter, share } from 'rxjs/operators';
-import { DomainEvent, InvalidOperationError, New, UnauthorizedError, Update, User } from '@core-services/core-common';
+import { map, filter } from 'rxjs/operators';
+import type { User } from '@abgov/adsp-service-sdk';
+import { DomainEvent, InvalidOperationError, New, UnauthorizedError, Update } from '@core-services/core-common';
 import { EventCriteria, Stream, StreamEvent } from '../types';
 import { StreamRepository } from '../repository';
 import { PushSpaceEntity } from './space';

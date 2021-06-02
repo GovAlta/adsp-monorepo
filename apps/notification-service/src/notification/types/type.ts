@@ -1,4 +1,3 @@
-import { UserRole } from '@core-services/core-common';
 import { Channel } from './channel';
 import { Template } from './template';
 
@@ -19,7 +18,7 @@ export interface NotificationType {
   name: string;
   description: string;
   publicSubscribe: boolean;
-  subscriberRoles: UserRole[];
+  subscriberRoles: string[];
   events: EventNotificationType[];
 }
 

@@ -1,20 +1,10 @@
+// This import adds type definitions for req.User
+import '@abgov/adsp-service-sdk';
 import { createMockMongoServer, disconnectMockMongo } from './mock';
 import { MongoServiceStatusRepository } from './serviceStatus';
 import { ServiceStatusApplicationEntity } from '../app';
 
 const defaultTimeout = 20000;
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Express {
-    interface User {
-      tenantId?: string;
-    }
-
-    interface Request {
-      user?: User;
-    }
-  }
-}
 
 describe('Service status mongo repository', () => {
   let repo: MongoServiceStatusRepository;

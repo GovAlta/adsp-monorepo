@@ -1,25 +1,13 @@
 import type { Logger } from 'winston';
 import type { AdspId } from '../utils';
 import { TokenProvider, TokenProviderImpl } from './tokenProvider';
+import type { User as BaseUser } from './user';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
-    interface User {
-      id: string;
-      name: string;
-      email: string;
-      roles: string[];
-      tenantId?: AdspId;
-      isCore: boolean;
-      token: {
-        azp: string;
-        aud: string;
-        iss: string;
-        bearer: string;
-        [x:string]: unknown;
-      }
-    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    interface User extends BaseUser {}
 
     interface Request {
       user?: User;
@@ -27,6 +15,9 @@ declare global {
   }
 }
 
+export type { User } from './user';
+
+export { AssertRole, AssertCoreRole, UnauthorizedUserError } from './assert';
 export { createCoreStrategy } from './createCoreStrategy';
 export { createTenantStrategy } from './createTenantStrategy';
 export type { TokenProvider } from './tokenProvider';

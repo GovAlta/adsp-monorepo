@@ -1,5 +1,6 @@
 import { Mock } from 'moq.ts';
-import { User, UnauthorizedError } from '@core-services/core-common';
+import { adspId, User } from '@abgov/adsp-service-sdk';
+import { UnauthorizedError } from '@core-services/core-common';
 import { FileSpaceEntity } from './space';
 import { FileTypeEntity } from './type';
 import { FileType } from '../types';
@@ -19,6 +20,9 @@ describe('File Type Entity', () => {
     name: 'testy',
     email: 'test@testco.org',
     roles: ['test-admin'],
+    tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
+    isCore: false,
+    token: null
   };
 
   let spaceMock: Mock<FileSpaceEntity>;

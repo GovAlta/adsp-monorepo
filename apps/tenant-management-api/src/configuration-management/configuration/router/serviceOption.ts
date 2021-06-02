@@ -14,10 +14,16 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
   const serviceOptionRouter = Router();
 
   serviceOptionRouter.get('/', async (req: Request, res: Response) => {
-    const { top, after } = req.query;
+    const { top, after, service } = req.query;
 
     try {
-      const results = await serviceConfigurationRepository.find(parseInt((top as string) || '10', 10), after as string);
+      const results = service
+        ? await serviceConfigurationRepository.findServiceOptions(
+            service as string,
+            ((top as string) || '10', 10),
+            after as string
+          )
+        : await serviceConfigurationRepository.find(parseInt((top as string) || '10', 10), after as string);
 
       res.json({
         page: results.page,
@@ -61,7 +67,7 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
           `Service Options ${service} version ${version} already exists`
         );
       }
-      const entity = await ServiceOptionEntity.create(serviceConfigurationRepository, {
+      const entity = await ServiceOptionEntity.create(req.user, serviceConfigurationRepository, {
         ...data,
         serviceOption: results,
       });
@@ -72,9 +78,10 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
     }
   });
 
-  serviceOptionRouter.put('/', async (req: Request, res: Response) => {
+  serviceOptionRouter.put('/:id', async (req: Request, res: Response) => {
     const data = req.body;
-    const { service, id, version } = data;
+    const { id } = req.params;
+    const { service, version } = data;
 
     try {
       if (!service || !version) {
@@ -87,7 +94,7 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
         throw new HttpException(HttpStatusCodes.NOT_FOUND, `Service Options for ID ${id} was not found`);
       }
 
-      const entity = await results.update(data);
+      const entity = await results.update(req.user, data);
 
       res.json(mapServiceOption(entity));
     } catch (err) {
@@ -105,7 +112,7 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
         throw new HttpException(HttpStatusCodes.NOT_FOUND, `Service Options for ID ${id} was not found`);
       }
 
-      const success = await results.delete();
+      const success = await results.delete(req.user);
 
       res.json(success);
     } catch (err) {

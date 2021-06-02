@@ -4,12 +4,13 @@ import type { Logger } from 'winston';
 import { createTenantStrategy, createTokenProvider, TokenProvider } from './access';
 import { ConfigurationService, createConfigurationHandler, createConfigurationService } from './configuration';
 import { createDirectory, ServiceDirectory } from './directory';
+import { createEventService, EventService } from './event';
+import { createHealthCheck, PlatformHealthCheck } from './healthCheck';
+import { registerService, ServiceRegistration } from './registration';
 import { createTenantHandler, createTenantService, TenantService } from './tenant';
-import { AdspId, createLogger } from './utils';
+import { createLogger } from './utils';
 
-interface AdspOptions {
-  /** Service ID: ADSP ID of the platform service. */
-  serviceId: AdspId;
+interface AdspOptions extends ServiceRegistration {
   /** Client Secret: Client secret of the service. */
   clientSecret: string;
   /** Directory URL: URL to the Directory of Services. */
@@ -27,6 +28,8 @@ interface PlatformServices {
   tenantService: TenantService;
   /** ConfigurationService: Service for accessing tenant specific configuration. */
   configurationService: ConfigurationService;
+  /** EventService: Service for emitting domain events. */
+  eventService: EventService;
 }
 
 interface Platform extends PlatformServices {
@@ -38,6 +41,8 @@ interface Platform extends PlatformServices {
   tenantHandler: RequestHandler;
   /** ConfigurationHandler: Express request handler that sets req.configuration. */
   configurationHandler: RequestHandler;
+  /** HealthCheck: Function to retrieve platform health. */
+  healthCheck: PlatformHealthCheck;
 }
 
 interface LogOptions {
@@ -46,7 +51,7 @@ interface LogOptions {
 }
 
 export async function initializePlatform(
-  { serviceId, clientSecret, directoryUrl, accessServiceUrl, ignoreServiceAud }: AdspOptions,
+  { serviceId, clientSecret, directoryUrl, accessServiceUrl, ignoreServiceAud, ...registration }: AdspOptions,
   logOptions?: LogOptions,
   service?: Partial<PlatformServices>
 ): Promise<Platform> {
@@ -54,12 +59,24 @@ export async function initializePlatform(
 
   const tokenProvider = createTokenProvider({ logger, serviceId, clientSecret, accessServiceUrl });
   const directory = service?.directory || createDirectory({ logger, directoryUrl, tokenProvider });
+  await registerService(directory, { ...registration, serviceId });
+
   const tenantService = service?.tenantService || createTenantService({ logger, directory, tokenProvider });
   const tenantHandler = createTenantHandler(tenantService);
   const tenantStrategy = createTenantStrategy({ logger, serviceId, accessServiceUrl, tenantService, ignoreServiceAud });
-  const configurationService =
-    service?.configurationService || createConfigurationService({ logger, serviceId, directory });
-  const configurationHandler = createConfigurationHandler(configurationService);
+  const configurationService = service?.configurationService || createConfigurationService({ logger, directory });
+  const configurationHandler = createConfigurationHandler(configurationService, serviceId);
+
+  let eventService = service?.eventService;
+  if (!eventService) {
+    const eventServiceImpl = createEventService({ logger, serviceId, directory, tokenProvider });
+    if (registration.events) {
+      await eventServiceImpl.register(...registration.events);
+    }
+    eventService = eventServiceImpl;
+  }
+
+  const healthCheck = createHealthCheck(logger, accessServiceUrl, directoryUrl, directory);
 
   return {
     tokenProvider,
@@ -68,10 +85,16 @@ export async function initializePlatform(
     tenantHandler,
     configurationService,
     configurationHandler,
+    eventService,
     directory,
+    healthCheck,
   };
 }
 
 export { adspId, AdspId } from './utils';
-export { createCoreStrategy } from './access';
-export type { Tenant } from './tenant';
+export { createCoreStrategy, AssertCoreRole, AssertRole, UnauthorizedUserError } from './access';
+export type { User } from './access';
+export type { ServiceDirectory } from './directory';
+export type { Tenant, TenantService } from './tenant';
+export type { ConfigurationService } from './configuration';
+export type { DomainEvent, DomainEventDefinition, EventService } from './event';

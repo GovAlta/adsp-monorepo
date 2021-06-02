@@ -2,11 +2,13 @@ import * as path from 'path';
 import * as mkdirp from 'mkdirp';
 import { IsNotEmpty } from 'class-validator';
 import * as validFilename from 'valid-filename';
-import type { User } from '@core-services/core-common';
-import { UnauthorizedError, Update, InvalidOperationError, New, AssertRole } from '@core-services/core-common';
+import { AssertRole } from '@abgov/adsp-service-sdk';
+import type { User } from '@abgov/adsp-service-sdk';
+import { UnauthorizedError, Update, InvalidOperationError, New } from '@core-services/core-common';
 import { FileSpace, FileType, ServiceUserRoles } from '../types';
 import type { FileSpaceRepository } from '../repository';
 import { FileTypeEntity } from './type';
+
 export class FileSpaceEntity implements FileSpace {
   id: string;
   @IsNotEmpty()

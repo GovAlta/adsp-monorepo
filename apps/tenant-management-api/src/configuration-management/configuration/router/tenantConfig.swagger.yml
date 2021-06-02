@@ -5,17 +5,17 @@ GoA401: &GoA401
       | ------------- |:-------------:| -------:|
       | GoA  | any | any |
 
-'/api/configuration/v1/tenantConfig':
+"/api/configuration/v1/tenantConfig":
   delete:
     tags: [TenantConfig]
     description: Deletes tenant configuration for a realm.
     parameters:
-    - name: id
-      description: Id of the tenant configuration.
-      in: path
-      required: true
-      schema:
-        $ref: '#.../model/TenantConfigEntity'
+      - name: id
+        description: Id of the tenant configuration.
+        in: path
+        required: true
+        schema:
+          $ref: "#.../model/TenantConfigEntity"
     responses:
       200:
         description: Tenant configuration successfully deleted.
@@ -64,7 +64,7 @@ GoA401: &GoA401
       200:
         description: Tenant configurations successfully retrieved.
 
-'/api/configuration/v1/tenantConfig/list':
+"/api/configuration/v1/tenantConfig/list":
   get:
     tags: [TenantConfig]
     description: Retrieves all tenant configurations
@@ -72,3 +72,18 @@ GoA401: &GoA401
       200:
         description: Tenant configurations successfully retrieved.
       401: *GoA401
+
+"/api/configuration/v1/tenantConfig/{serviceName}":
+  get:
+    tags: [TenantConfig]
+    description: Retrieves tenant service configuration.
+    parameters:
+      - name: serviceName
+        description: Name of the service to retrieve configuration for.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Tenant service configurations successfully retrieved.

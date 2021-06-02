@@ -1,10 +1,10 @@
 import { Doc, Results, decodeAfter, encodeNext } from '@core-services/core-common';
-import { model, Types } from 'mongoose';
+import { model, Types, Model, Document } from 'mongoose';
 import { ServiceConfigurationRepository, ServiceOptionEntity, ServiceOption } from '../configuration';
 import { serviceOptionSchema } from './schema';
 
 export class MongoServiceOptionRepository implements ServiceConfigurationRepository {
-  private serviceModel;
+  private serviceModel: Model<Doc<ServiceOption> & Document>;
 
   constructor() {
     this.serviceModel = model('serviceOption', serviceOptionSchema);
@@ -37,6 +37,7 @@ export class MongoServiceOptionRepository implements ServiceConfigurationReposit
     return new Promise<Results<ServiceOptionEntity>>((resolve, reject) => {
       this.serviceModel
         .find({ service: service }, null, { lean: true })
+        .sort({ version: -1 })
         .skip(skip)
         .limit(top)
         .exec((err, docs) =>
@@ -89,7 +90,7 @@ export class MongoServiceOptionRepository implements ServiceConfigurationReposit
 
   delete(entity: ServiceOptionEntity): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) =>
-      this.serviceModel.findOneAndDelete({ service: entity.service }, (err, doc) =>
+      this.serviceModel.findOneAndDelete({ service: entity.service }, {}, (err, doc) =>
         err ? reject(err) : resolve(!!doc)
       )
     );

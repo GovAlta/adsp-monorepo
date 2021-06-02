@@ -1,4 +1,5 @@
-import { DomainEvent, New, UnauthorizedError, Update, User, UserRole } from '@core-services/core-common';
+import type { User } from '@abgov/adsp-service-sdk';
+import { DomainEvent, New, UnauthorizedError, Update } from '@core-services/core-common';
 import { NotificationTypeRepository, SubscriptionRepository } from '../repository';
 import { TemplateService } from '../template';
 import {
@@ -18,7 +19,7 @@ export class NotificationTypeEntity implements NotificationType {
   name: string;
   description: string;
   publicSubscribe: boolean;
-  subscriberRoles: UserRole[] = [];
+  subscriberRoles: string[] = [];
   events: EventNotificationType[] = [];
 
   static create(

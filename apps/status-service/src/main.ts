@@ -28,9 +28,11 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { tenantStrategy, tenantHandler } = await initializePlatform(
+  const { tenantStrategy } = await initializePlatform(
     {
       serviceId,
+      displayName: 'Status Service',
+      description: 'Service for publishing service status information.',
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),

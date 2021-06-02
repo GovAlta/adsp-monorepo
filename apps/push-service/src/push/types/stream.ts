@@ -1,4 +1,3 @@
-import { UserRole } from '@core-services/core-common';
 import { Map } from './map';
 
 export interface StreamEvent {
@@ -13,7 +12,7 @@ export interface Stream {
   id: string;
   name: string;
   events: StreamEvent[];
-  subscriberRoles: UserRole[];
+  subscriberRoles: string[];
 }
 
 export interface EventCriteria {

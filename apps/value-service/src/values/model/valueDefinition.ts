@@ -1,5 +1,6 @@
 import { IsNotEmpty } from 'class-validator';
-import { InvalidOperationError, UnauthorizedError, Update, User } from '@core-services/core-common';
+import type { User } from '@abgov/adsp-service-sdk';
+import { InvalidOperationError, UnauthorizedError, Update } from '@core-services/core-common';
 import { ValuesRepository } from '../repository';
 import { MetricCriteria, Value, ValueCriteria, ValueDefinition } from '../types';
 import { ValidationService } from '../validation';

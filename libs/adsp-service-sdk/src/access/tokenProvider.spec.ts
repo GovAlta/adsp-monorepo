@@ -67,13 +67,12 @@ describe('TokenProvider', () => {
     done();
   });
 
-  it ('can handle request error', async (done) => {
+  it('can handle throw request error', async (done) => {
     const provider = new TokenProviderImpl(logger, adspId`urn:ads:platform:test`, '', new URL('http://totally-access'));
 
     axiosMock.post.mockRejectedValueOnce(new Error('Something went terribly wrong.'));
 
-    const result = await provider.getAccessToken();
-    expect(result).toBe(null);
+    await expect(provider.getAccessToken()).rejects.toThrow(/Something went terribly wrong./);
 
     done();
   });

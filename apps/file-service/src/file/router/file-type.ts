@@ -1,21 +1,14 @@
 import { Router } from 'express';
 import { Logger } from 'winston';
-import {
-  User,
-  assertAuthenticatedHandler,
-  NotFoundError,
-  DomainEventService,
-  InvalidOperationError,
-} from '@core-services/core-common';
-import { FileRepository, FileSpaceRepository } from '../repository';
-import { FileSpaceEntity } from '../model';
 import * as HttpStatusCodes from 'http-status-codes';
 import { v4 as uuidv4 } from 'uuid';
+import { assertAuthenticatedHandler, NotFoundError, InvalidOperationError } from '@core-services/core-common';
+import { FileRepository, FileSpaceRepository } from '../repository';
+import { FileSpaceEntity } from '../model';
 
 import { fileServiceAdminMiddleware } from '../middleware/authentication';
 interface FileTypeRouterProps {
   logger: Logger;
-  eventService: DomainEventService;
   spaceRepository: FileSpaceRepository;
   fileRepository: FileRepository;
   rootStoragePath: string;
@@ -70,7 +63,6 @@ export const createFileTypeRouter = ({
 
   fileTypeRouter.get('/fileTypes/:fileTypeId', async (req, res, next) => {
     const { fileTypeId } = req.params;
-    const user = req.user;
 
     try {
       const spaceId = await spaceRepository.getIdByTenant(req.tenant);
@@ -95,8 +87,6 @@ export const createFileTypeRouter = ({
   });
 
   fileTypeRouter.get('/fileTypes', fileServiceAdminMiddleware, async (req, res, next) => {
-    const user = req.user;
-
     try {
       const spaceId = await spaceRepository.getIdByTenant(req.tenant);
       if (!spaceId) {

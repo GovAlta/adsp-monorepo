@@ -49,7 +49,7 @@ export class TokenProviderImpl implements TokenProvider {
         return data.access_token;
       } catch (err) {
         this.logger.error(`Error encountered retrieving access token. ${err}`, this.LOG_CONTEXT);
-        return null;
+        throw err;
       }
     }
   };

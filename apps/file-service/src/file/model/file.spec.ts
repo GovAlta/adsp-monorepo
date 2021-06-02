@@ -1,6 +1,7 @@
 import { rename, unlink } from 'fs';
 import { Mock, It } from 'moq.ts';
-import { User, UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
+import { adspId, User } from '@abgov/adsp-service-sdk';
+import { UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
 import { FileRepository } from '../repository';
 import { File } from '../types';
 import { FileEntity } from './file';
@@ -19,7 +20,11 @@ describe('File Entity', () => {
     name: 'testy',
     email: 'test@testco.org',
     roles: ['test-admin'],
+    tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
+    isCore: false,
+    token: null
   };
+
   const storagePath = 'files';
   const typePath = `${storagePath}/test/file-type-1`;
   let repositoryMock: Mock<FileRepository> = null;
