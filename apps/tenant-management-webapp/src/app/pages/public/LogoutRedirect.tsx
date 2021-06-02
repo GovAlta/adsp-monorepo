@@ -11,21 +11,21 @@ const LogoutRedirect = () => {
    * Validate logout using authenticated and authenticated.
    * Even we invoke the ConfigLogout. But, it is a constant - hard for testing.
    * */
-  const { authenticated, tenantName } = useSelector((state: RootState) => ({
+  const { authenticated, tenantRealm } = useSelector((state: RootState) => ({
     authenticated: state.session.authenticated,
-    tenantName: state.tenant.name,
+    tenantRealm: state.tenant.realm,
   }));
   const dispatch = useDispatch();
   const history = useHistory();
   useEffect(() => {
-    if (authenticated || tenantName !== '') {
+    if (authenticated || tenantRealm !== '') {
       dispatch(TenantLogout());
       dispatch(ConfigLogout());
       dispatch(SessionLogout());
     } else {
       history.push('/');
     }
-  }, [authenticated, tenantName]);
+  }, [authenticated, tenantRealm]);
 
   return <div></div>;
 };

@@ -27,7 +27,7 @@ const LandingPage = () => {
   const session = useSelector((state: RootState) => state.session);
 
   useEffect(() => {
-    if (session.authenticated && tenant.name) {
+    if (session.authenticated && tenant.realm) {
       history.push('/admin/tenant-admin');
     }
   }, [history, tenant, session]);

@@ -55,16 +55,16 @@ const OverviewContent = () => {
   return (
     <>
       <Main>
-        <p>
+        <div>
           The file service provides the capability to upload and download files. Consumers are registered with their own
           space (tenant) containing file types that include role based access policy, and can associate files to domain
           records.
-        </p>
+        </div>
         <h3>Service Management</h3>
-        <p>
+        <div>
           File service management is a cross-cutting concern for multiple projects, tenant owner can enable/disable
           service, config files types ...
-        </p>
+        </div>
       </Main>
       <Aside>
         <HelpLink />

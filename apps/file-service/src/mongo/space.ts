@@ -87,11 +87,7 @@ export class MongoFileSpaceRepository implements FileSpaceRepository {
 
   delete(entity: FileSpaceEntity): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) =>
-      this.model.findOneAndDelete(
-        { _id: entity.id },
-        null,
-        (err, doc) => (err ? reject(err) : resolve(!!doc))
-      )
+      this.model.findOneAndDelete({ _id: entity.id }, null, (err, doc) => (err ? reject(err) : resolve(!!doc)))
     ).then((deleted) => {
       this.cache.del(entity.id);
       return deleted;

@@ -25,6 +25,12 @@ export class TenantApi {
     return res.data;
   }
 
+  async fetchTenantByName(name: string): Promise<Tenant> {
+    const url = `${this.config.host}${this.config.endpoints.tenantByName}/${name}`;
+    const res = await this.http.get(url);
+    return res.data;
+  }
+
   async createTenant(name: string): Promise<Tenant> {
     const url = `${this.config.host}${this.config.endpoints.createTenant}`;
     const res = await this.http.post(url, {
