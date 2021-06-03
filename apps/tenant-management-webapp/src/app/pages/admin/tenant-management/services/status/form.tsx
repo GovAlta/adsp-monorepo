@@ -17,6 +17,7 @@ function ApplicationForm(): JSX.Element {
     name: '',
     tenantId: '',
     enabled: false,
+    description: '',
     timeIntervalMin: 10,
     endpoints: [],
   });
@@ -64,6 +65,11 @@ function ApplicationForm(): JSX.Element {
       <GoAFormItem>
         <label>Application Name</label>
         <input type="text" name="name" value={application?.name} onChange={setValue} />
+      </GoAFormItem>
+
+      <GoAFormItem>
+        <label>Description</label>
+        <textarea name="description" value={application?.description} onChange={setValue} />
       </GoAFormItem>
 
       <GoAFormItem>
