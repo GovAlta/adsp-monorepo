@@ -34,15 +34,15 @@ function Status(): JSX.Element {
         <h2>Service Status</h2>
         This service allows for easy monitoring of application downtime.
         {/* <p>
-            --- The following paragraphs only make sense if multiple URLs for a single app are allowed ---
+            --- The following paragraph only make sense if multiple URLs for a single app are allowed ---
             You can use multiple endpoint URLs for a single application, including internal services you depend on, in
             order to assess which components within an application may be down or malfunctioning (ie. web server,
             database, storage servers, etc)
-          </p>
-          <p>
-            Distinct services that a user may want to access, such as child care subsidy and child care certification
-            should be distinct 'Applications'
-          </p> */}
+          </p>*/}
+        <p>
+          Each Application should represent a service that is useful to the end user by itself, such as child care
+          subsidy and child care certification
+        </p>
         <h4>Guidelines for choosing a health check endpoint:</h4>
         <ol>
           <li>A Health check endpoint needs to be publicly accessible over the internet</li>
