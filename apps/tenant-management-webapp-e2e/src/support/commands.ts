@@ -70,7 +70,7 @@ Cypress.Commands.add('postToken', () => {
 Cypress.Commands.add('getConfig', () => {
   cy.request({
     method: 'GET',
-    url: 'config.v2/config.json',
+    url: 'config/config.json',
   }).then((response) => {
     Cypress.env('eventServiceApiUrl', response.body.serviceUrls.eventServiceApiUrl);
     Cypress.env('notificationServiceUrl', response.body.serviceUrls.notificationServiceUrl);

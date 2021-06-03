@@ -9,7 +9,7 @@ export function* fetchConfig() {
 
   try {
     if (!state.config?.keycloakApi?.realm) {
-      const res = yield axios.get('/config.v2/config.json');
+      const res = yield axios.get('/config/config.json?v=1');
       const action: FetchConfigSuccessAction = {
         type: 'config/fetch-config-success',
         payload: res.data,

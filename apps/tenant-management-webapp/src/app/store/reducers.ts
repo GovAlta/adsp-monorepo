@@ -27,7 +27,7 @@ const rootReducer = combineReducers({
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['config', 'session', 'tenant'],
+  whitelist: ['session', 'tenant'],
 };
 
 export const persistedReducer = persistReducer(persistConfig, rootReducer);
