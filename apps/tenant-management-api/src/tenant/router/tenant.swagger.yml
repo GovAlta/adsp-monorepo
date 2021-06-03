@@ -48,7 +48,7 @@ webInit401: &webInit401
       401: *admin401
     parameters:
       - in: query
-        name: name
+        name: realm
         schema:
           type: string
         description: Tenant Name

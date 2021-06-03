@@ -14,7 +14,7 @@ class CreateTenantDto {
 }
 class DeleteTenantDto {
   @IsDefined()
-  name: string;
+  realm: string;
 }
 class TenantByNameDto {
   @IsDefined()
@@ -143,10 +143,10 @@ async function createTenant(req, res) {
 
 async function deleteTenant(req, res) {
   const payload = req.payload;
-  const tenantName = payload.name;
+  const keycloakRealm = payload.realm;
 
   try {
-    const results = await TenantService.deleteTenant(tenantName);
+    const results = await TenantService.deleteTenant(keycloakRealm);
     return res.status(HttpStatusCodes.OK).json({
       success: results.IdPBrokerClient.isDeleted && results.keycloakRealm.isDeleted && results.db.isDeleted,
       ...results,
