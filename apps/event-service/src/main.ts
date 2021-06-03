@@ -22,44 +22,47 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { tenantStrategy, tenantHandler, configurationHandler, healthCheck } = await initializePlatform({
-    serviceId,
-    displayName: 'Event Service',
-    description: 'Service for sending of domain events.',
-    roles: [EventServiceRoles.sender],
-    configurationSchema: {
-      type: 'object',
-      additionalProperties: {
+  const { tenantStrategy, tenantHandler, configurationHandler, healthCheck } = await initializePlatform(
+    {
+      serviceId,
+      displayName: 'Event Service',
+      description: 'Service for sending of domain events.',
+      roles: [EventServiceRoles.sender],
+      configurationSchema: {
         type: 'object',
-        properties: {
-          name: { type: 'string' },
-          definitions: {
-            type: 'object',
-            additionalProperties: {
+        additionalProperties: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            definitions: {
               type: 'object',
-              properties: {
-                name: { type: 'string' },
-                description: { type: 'string' },
-                payloadSchema: { type: 'object' },
+              additionalProperties: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  description: { type: 'string' },
+                  payloadSchema: { type: 'object' },
+                },
+                required: ['name', 'description', 'payloadSchema'],
+                additionalProperties: false,
               },
-              required: ['name', 'description', 'payloadSchema'],
-              additionalProperties: false,
             },
           },
+          required: ['name', 'definitions'],
+          additionalProperties: false,
         },
-        required: ['name', 'definitions'],
-        additionalProperties: false,
       },
+      clientSecret: environment.CLIENT_SECRET,
+      accessServiceUrl,
+      directoryUrl: new URL(environment.DIRECTORY_URL),
     },
-    clientSecret: environment.CLIENT_SECRET,
-    accessServiceUrl,
-    directoryUrl: new URL(environment.DIRECTORY_URL),
-  });
+    { logger }
+  );
 
   const coreStrategy = createCoreStrategy({
     logger,
     serviceId,
-    accessServiceUrl
+    accessServiceUrl,
   });
 
   passport.use('core', coreStrategy);
@@ -92,10 +95,21 @@ const initializeApp = async (): Promise<express.Application> => {
   });
 
   app.get('/health', async (_req, res) => {
-    const { event: _event, ...platform } = await healthCheck();
+    const platform = await healthCheck();
     res.json({
       msg: eventService.isConnected(),
       ...platform,
+    });
+  });
+
+  app.get('/', async (req, res) => {
+    const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
+    res.json({
+      _links: {
+        self: new URL(req.originalUrl, rootUrl).href,
+        health: new URL('/health', rootUrl).href,
+        api: new URL('/event/v1', rootUrl).href,
+      },
     });
   });
 

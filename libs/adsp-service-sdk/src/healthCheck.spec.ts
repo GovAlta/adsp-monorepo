@@ -1,38 +1,159 @@
 import axios from 'axios';
 import { Logger } from 'winston';
-import { checkServiceHealth } from './healthCheck';
+import { checkServiceHealth, createHealthCheck } from './healthCheck';
+
+const cacheMock = jest.fn();
+jest.mock('node-cache', () => {
+  return class FakeCache {
+    get = cacheMock;
+    set = jest.fn();
+  };
+});
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
 
-describe('checkServiceHealth', () => {
+describe('healthCheck', () => {
   const logger: Logger = ({
     debug: jest.fn(),
     info: jest.fn(),
     error: jest.fn(),
   } as unknown) as Logger;
 
-  it('can check health', async (done) => {
-    axiosMock.get.mockResolvedValueOnce({ status: 200 });
-    const result = await checkServiceHealth(logger, new URL('http://test-co.org/health'));
-
-    expect(result).toBeTruthy();
-    done();
+  beforeEach(() => {
+    cacheMock.mockReset();
+    axiosMock.get.mockReset();
   });
 
-  it('can return unhealthy for non-200', async (done) => {
-    axiosMock.get.mockResolvedValueOnce({ status: 400 });
-    const result = await checkServiceHealth(logger, new URL('http://test-co.org/health'));
+  describe('checkServiceHealth', () => {
+    it('can check health', async (done) => {
+      axiosMock.get.mockResolvedValueOnce({ status: 200 });
+      const result = await checkServiceHealth(logger, new URL('http://test-co.org/health'));
 
-    expect(result).toBeFalsy();
-    done();
+      expect(result).toBeTruthy();
+      done();
+    });
+
+    it('can return unhealthy for non-200', async (done) => {
+      axiosMock.get.mockResolvedValueOnce({ status: 400 });
+      const result = await checkServiceHealth(logger, new URL('http://test-co.org/health'));
+
+      expect(result).toBeFalsy();
+      done();
+    });
+
+    it('can return unhealthy for error', async (done) => {
+      axiosMock.get.mockRejectedValueOnce(new Error('Something went terribly wrong.'));
+      const result = await checkServiceHealth(logger, new URL('http://test-co.org/health'));
+
+      expect(result).toBeFalsy();
+      done();
+    });
   });
 
-  it('can return unhealthy for error', async (done) => {
-    axiosMock.get.mockRejectedValueOnce(new Error('Something went terribly wrong.'));
-    const result = await checkServiceHealth(logger, new URL('http://test-co.org/health'));
+  describe('createHealthCheck', () => {
+    const directoryMock = {
+      getServiceUrl: jest.fn(() => Promise.resolve(new URL('http://totally-real-service'))),
+    };
 
-    expect(result).toBeFalsy();
-    done();
+    it('can create health check', () => {
+      const healthCheck = createHealthCheck(
+        logger,
+        new URL('http://totally-real-access'),
+        new URL('http://totally-real-directory'),
+        directoryMock,
+        {}
+      );
+
+      expect(healthCheck).toBeTruthy();
+    });
+
+    it('can check health from cache', async (done) => {
+      const healthCheck = createHealthCheck(
+        logger,
+        new URL('http://totally-real-access'),
+        new URL('http://totally-real-directory'),
+        directoryMock,
+        {}
+      );
+
+      const cached = {
+        access: true,
+        directory: true,
+        tenant: true,
+        configuration: true,
+        event: false,
+      };
+
+      cacheMock.mockReturnValueOnce(cached);
+      const results = await healthCheck();
+
+      expect(results).toEqual(cached);
+
+      done();
+    });
+
+    it('can check health', async (done) => {
+      const healthCheck = createHealthCheck(
+        logger,
+        new URL('http://totally-real-access'),
+        new URL('http://totally-real-directory'),
+        directoryMock,
+        {}
+      );
+
+      axiosMock.get.mockResolvedValue({ status: 200 });
+      const { access, directory, tenant, configuration, event } = await healthCheck();
+
+      expect(access).toBeTruthy();
+      expect(directory).toBeTruthy();
+      expect(tenant).toBeTruthy();
+      expect(configuration).toBeTruthy();
+      expect(event).toBeTruthy();
+
+      done();
+    });
+
+    it('can exclude checks', async (done) => {
+      const healthCheck = createHealthCheck(
+        logger,
+        new URL('http://totally-real-access'),
+        new URL('http://totally-real-directory'),
+        directoryMock,
+        { event: true, directory: true }
+      );
+
+      axiosMock.get.mockResolvedValue({ status: 200 });
+      const results = await healthCheck();
+
+      expect(results.access).toBeTruthy();
+      expect(results.tenant).toBeTruthy();
+      expect(results.configuration).toBeTruthy();
+      expect(Object.keys(results).includes('event')).toBeFalsy();
+      expect(Object.keys(results).includes('directory')).toBeFalsy();
+
+      done();
+    });
+
+    it('can ignore extraneous exclude', async (done) => {
+      const healthCheck = createHealthCheck(
+        logger,
+        new URL('http://totally-real-access'),
+        new URL('http://totally-real-directory'),
+        directoryMock,
+        { service: true }
+      );
+
+      axiosMock.get.mockResolvedValue({ status: 200 });
+      const { access, directory, tenant, configuration, event } = await healthCheck();
+
+      expect(access).toBeTruthy();
+      expect(directory).toBeTruthy();
+      expect(tenant).toBeTruthy();
+      expect(configuration).toBeTruthy();
+      expect(event).toBeTruthy();
+
+      done();
+    });
   });
 });
