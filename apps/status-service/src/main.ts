@@ -11,6 +11,7 @@ import * as cors from 'cors';
 import { scheduleServiceStatusJobs } from './app/jobs';
 import { AdspId, createCoreStrategy, initializePlatform } from '@abgov/adsp-service-sdk';
 import * as util from 'util';
+import { GoAError } from './app/common/errors';
 
 const logger = createLogger('status-service', environment?.LOG_LEVEL || 'info');
 const app = express();
@@ -79,14 +80,9 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
 
   // error handler
   app.use((err, _req, res, _next) => {
-    if (err instanceof UnauthorizedError) {
-      res.status(401).send(err.message);
-    } else if (err instanceof NotFoundError) {
-      res.status(404).send(err.message);
-    } else if (err instanceof InvalidOperationError) {
-      res.status(400).send(err.message);
+    if (err instanceof GoAError) {
+      res.status(err.statusCode).send(err.message);
     } else {
-      logger.warn(`Unexpected error encountered in handler: ${err}`);
       res.sendStatus(500);
     }
   });
