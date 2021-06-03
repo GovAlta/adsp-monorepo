@@ -9,11 +9,6 @@
     "secure": true,
     "changeOrigin": true
   },
-  "/config.v2/*": {
-    "target": "https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca",
-    "secure": true,
-    "changeOrigin": true
-  },
   "/auth/*": {
     "target": "https://access-dev.os99.gov.ab.ca",
     "secure": true,
