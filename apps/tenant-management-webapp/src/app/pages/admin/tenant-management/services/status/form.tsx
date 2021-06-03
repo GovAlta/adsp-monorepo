@@ -31,23 +31,21 @@ function ApplicationForm(): JSX.Element {
 
   function setValue(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, customValue?: unknown) {
     const { name, value } = e.target;
-    setApplication({ ...application, [name]: customValue || value.trim() });
+    setApplication({ ...application, [name]: customValue || value });
   }
 
   function submit(e: FormEvent) {
     const form = new FormData(e.target as HTMLFormElement);
-    const applicationName = form.get('name') as string;
     const urls = form.get('endpoints') as string;
-    const interval = form.get('timeIntervalMin') as string;
 
     const getStatus = (url: string): ServiceStatusType =>
       application.endpoints.find((endpoint) => endpoint.url === url)?.status ?? 'unknown';
 
     const params = {
       ...application,
-      name: applicationName,
-      timeIntervalMin: parseInt(interval),
-      endpoints: urls.split('\r\n').map((url) => ({ url, status: getStatus(url) } as ServiceStatusEndpoint)),
+      endpoints: urls
+        .split('\r\n').map((url) => ({ url: url.trim(), status: getStatus(url) } as ServiceStatusEndpoint))
+        .filter(endpoint => endpoint.url.length > 0)
     };
 
     dispatch(saveApplication(params));
