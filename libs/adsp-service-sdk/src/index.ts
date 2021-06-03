@@ -52,10 +52,12 @@ interface LogOptions {
 
 export async function initializePlatform(
   { serviceId, clientSecret, directoryUrl, accessServiceUrl, ignoreServiceAud, ...registration }: AdspOptions,
-  logOptions?: LogOptions,
+  logOptions: Logger | LogOptions,
   service?: Partial<PlatformServices>
 ): Promise<Platform> {
-  const logger = logOptions?.logger || createLogger(serviceId.toString(), logOptions?.logLevel);
+  const logger =
+    ('debug' in logOptions ? logOptions : logOptions?.logger) ||
+    createLogger(serviceId.toString(), (logOptions as LogOptions)?.logLevel);
 
   const tokenProvider = createTokenProvider({ logger, serviceId, clientSecret, accessServiceUrl });
   const directory = service?.directory || createDirectory({ logger, directoryUrl, tokenProvider });
@@ -76,7 +78,13 @@ export async function initializePlatform(
     eventService = eventServiceImpl;
   }
 
-  const healthCheck = createHealthCheck(logger, accessServiceUrl, directoryUrl, directory);
+  // Skip health checks on anything that's injected or anything not configured (assumed not used).
+  const healthCheck = createHealthCheck(logger, accessServiceUrl, directoryUrl, directory, {
+    directory: !!service?.directory,
+    tenant: !!service?.tenantService,
+    configuration: !!service?.configurationService || !registration.configurationSchema,
+    event: !!service?.eventService || !registration.events || !registration.events.length,
+  });
 
   return {
     tokenProvider,
