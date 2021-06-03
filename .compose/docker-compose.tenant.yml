@@ -13,7 +13,7 @@ services:
     ports:
       - 4200:8080
     volumes:
-      - ./app/config.json:/opt/app-root/src/config.v2/config.json
+      - ./app/config.json:/opt/app-root/src/config/config.json
   tenant-management-api:
     build:
       context: ../
