@@ -125,7 +125,7 @@ async function createTenant(req, res) {
       const generatedRealmName = uuidv4();
 
       await TenantService.validateEmailInDB(email);
-      await TenantService.createRealm(generatedRealmName, email);
+      await TenantService.createRealm(generatedRealmName, email, tenantName);
       await TenantService.createNewTenantInDB(username, email, generatedRealmName, tenantName, tokenIssuer);
 
       const data = { status: 'ok', message: 'Create Realm Success!', realm: generatedRealmName };
