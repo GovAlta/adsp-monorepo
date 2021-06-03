@@ -225,7 +225,7 @@ export const validateRealmCreation = async (realm) => {
   }
 };
 
-export const createRealm = async (realm, email) => {
+export const createRealm = async (realm, email, tenantName) => {
   logger.info(`Start to create ${realm} realm`);
   try {
     const brokerClientSecret = uuidv4();
@@ -252,6 +252,8 @@ export const createRealm = async (realm, email) => {
     const realmConfig: RealmRepresentation = {
       id: realm,
       realm: realm,
+      displayName: tenantName,
+      displayNameHtml: tenantName,
       clients: [publicClientConfig, tenantClient, fileClient],
       roles: {
         client: {
