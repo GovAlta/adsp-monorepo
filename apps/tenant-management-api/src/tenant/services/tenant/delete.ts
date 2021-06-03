@@ -15,20 +15,19 @@ interface DeleteTenantResponse {
   db: DeleteResponse;
 }
 
-const deleteKeycloakRealm = async (tenantName): Promise<DeleteResponse> => {
+const deleteKeycloakRealm = async (realm): Promise<DeleteResponse> => {
   try {
     /**
      * As default, the tenant name is same as realm name
      * We might need to update this part in the future
      *  */
-    const realmName = tenantName;
 
-    logger.info(`Start to delete keycloak realm ${realmName}`);
+    logger.info(`Start to delete keycloak realm ${realm}`);
 
     const kcClient = await createkcAdminClient();
 
     await kcClient.realms.del({
-      realm: realmName,
+      realm: realm,
     });
 
     return Promise.resolve({
@@ -44,7 +43,7 @@ const deleteKeycloakRealm = async (tenantName): Promise<DeleteResponse> => {
   }
 };
 
-const deleteKeycloakBrokerClient = async (tenantName): Promise<DeleteResponse> => {
+const deleteKeycloakBrokerClient = async (keycloakRealm): Promise<DeleteResponse> => {
   try {
     logger.info(`Start to delete IdP client in core`);
 
@@ -54,8 +53,9 @@ const deleteKeycloakBrokerClient = async (tenantName): Promise<DeleteResponse> =
       realm: 'core',
     });
     const brokerClient = clientsOnCore.find((client) => {
-      return client.clientId === brokerClientName(tenantName);
+      return client.clientId === brokerClientName(keycloakRealm);
     });
+
     logger.info(brokerClient.id);
     await kcClient.clients.del({
       id: brokerClient.id,
@@ -76,9 +76,9 @@ const deleteKeycloakBrokerClient = async (tenantName): Promise<DeleteResponse> =
   }
 };
 
-const deleteTenantFromDB = async (tenantName): Promise<DeleteResponse> => {
+const deleteTenantFromDB = async (keycloakName): Promise<DeleteResponse> => {
   try {
-    await TenantModel.deleteTenantByName(tenantName);
+    await TenantModel.deleteTenantByRealm(keycloakName);
     return Promise.resolve({
       isDeleted: true,
     });
@@ -92,11 +92,11 @@ const deleteTenantFromDB = async (tenantName): Promise<DeleteResponse> => {
   }
 };
 
-export const deleteTenant = async (tenantName): Promise<DeleteTenantResponse> => {
+export const deleteTenant = async (keycloakRealm): Promise<DeleteTenantResponse> => {
   const deleteTenantResponse: DeleteTenantResponse = {
-    keycloakRealm: await deleteKeycloakRealm(tenantName),
-    IdPBrokerClient: await deleteKeycloakBrokerClient(tenantName),
-    db: await deleteTenantFromDB(tenantName),
+    keycloakRealm: await deleteKeycloakRealm(keycloakRealm),
+    IdPBrokerClient: await deleteKeycloakBrokerClient(keycloakRealm),
+    db: await deleteTenantFromDB(keycloakRealm),
   };
   return Promise.resolve(deleteTenantResponse);
 };
