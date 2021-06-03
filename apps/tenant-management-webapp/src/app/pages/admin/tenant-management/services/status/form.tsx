@@ -17,6 +17,7 @@ function ApplicationForm(): JSX.Element {
     name: '',
     tenantId: '',
     enabled: false,
+    description: '',
     timeIntervalMin: 10,
     endpoints: [],
   });
@@ -30,20 +31,21 @@ function ApplicationForm(): JSX.Element {
 
   function setValue(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, customValue?: unknown) {
     const { name, value } = e.target;
-    setApplication({ ...application, [name]: customValue || value.trim() });
+    setApplication({ ...application, [name]: customValue || value });
   }
 
   function submit(e: FormEvent) {
     const form = new FormData(e.target as HTMLFormElement);
-    const applicationName = form.get('name').valueOf() as string;
-    const urls = form.get('endpoints').valueOf() as string;
+    const urls = form.get('endpoints') as string;
+
     const getStatus = (url: string): ServiceStatusType =>
       application.endpoints.find((endpoint) => endpoint.url === url)?.status ?? 'unknown';
+
     const params = {
       ...application,
-      name: applicationName,
-      timeIntervalMin: 1,
-      endpoints: urls.split('\r\n').map((url) => ({ url, status: getStatus(url) } as ServiceStatusEndpoint)),
+      endpoints: urls
+        .split('\r\n').map((url) => ({ url: url.trim(), status: getStatus(url) } as ServiceStatusEndpoint))
+        .filter(endpoint => endpoint.url.length > 0)
     };
 
     dispatch(saveApplication(params));
@@ -61,6 +63,11 @@ function ApplicationForm(): JSX.Element {
       <GoAFormItem>
         <label>Application Name</label>
         <input type="text" name="name" value={application?.name} onChange={setValue} />
+      </GoAFormItem>
+
+      <GoAFormItem>
+        <label>Description</label>
+        <textarea name="description" value={application?.description} onChange={setValue} />
       </GoAFormItem>
 
       <GoAFormItem>

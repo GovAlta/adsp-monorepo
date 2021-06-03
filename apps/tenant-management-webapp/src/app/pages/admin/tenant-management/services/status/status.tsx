@@ -80,7 +80,7 @@ function Application(props: ServiceStatusApplication) {
 
   const contextItems: ContextMenuItem[] = [
     { name: 'edit', icon: EditIcon, title: 'Edit' },
-    { name: 'toggle', icon: enabled ? PauseIcon : PlayIcon, title: 'Toggle Status' },
+    { name: 'toggle', icon: enabled ? PauseIcon : PlayIcon, title: enabled ? "Disable Monitoring" : 'Enable Monitoring' },
     { name: 'delete', icon: TrashIcon, title: 'Remove' },
   ];
 

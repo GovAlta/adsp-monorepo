@@ -60,7 +60,7 @@ export function createServiceStatusRouter({ logger, serviceStatusRepository }: S
     logger.info(`${req.method} - ${req.url}`);
 
     const user = req.user;
-    const { enabled, name, timeIntervalMin, endpoints, metadata } = req.body;
+    const { enabled, name, description, timeIntervalMin, endpoints, metadata } = req.body;
     const tenantId = user.tenantId?.toString() ?? '';
 
     if (!tenantId) {
@@ -69,6 +69,7 @@ export function createServiceStatusRouter({ logger, serviceStatusRepository }: S
 
     const app = await ServiceStatusApplicationEntity.create({ ...(req.user as User) }, serviceStatusRepository, {
       name,
+      description,
       tenantId,
       timeIntervalMin,
       endpoints,
@@ -83,7 +84,7 @@ export function createServiceStatusRouter({ logger, serviceStatusRepository }: S
     logger.info(`${req.method} - ${req.url}`);
 
     const user = req.user as Express.User;
-    const { enabled, name, timeIntervalMin, endpoints } = req.body;
+    const { enabled, name, description, timeIntervalMin, endpoints } = req.body;
     const { id } = req.params;
     const tenantId = user.tenantId?.toString() ?? '';
 
@@ -99,6 +100,7 @@ export function createServiceStatusRouter({ logger, serviceStatusRepository }: S
 
     const updatedApplication = await application.update({ ...user } as User, {
       name,
+      description,
       timeIntervalMin,
       endpoints,
       enabled,

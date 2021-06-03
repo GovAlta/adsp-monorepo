@@ -9,6 +9,7 @@ export interface ServiceStatusApplication {
   id?: string;
   tenantId: string;
   name: string;
+  description: string;
   metadata?: unknown;
   enabled: boolean;
   statusTimestamp?: number;

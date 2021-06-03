@@ -18,11 +18,15 @@ export const serviceStatusApplicationSchema = new Schema(
   {
     tenantId: {
       type: String,
-      required: true
+      required: true,
     },
     name: {
       type: String,
       required: true,
+    },
+    description: {
+      type: String,
+      required: false,
     },
     metadata: {
       type: Schema.Types.Mixed,

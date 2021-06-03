@@ -9,6 +9,7 @@ export class ServiceStatusApplicationEntity {
   endpoints: ServiceStatusEndpoint[];
   metadata: unknown;
   name: string;
+  description: string;
   statusTimestamp: number;
   tenantId: string;
   timeIntervalMin: number;
@@ -31,6 +32,7 @@ export class ServiceStatusApplicationEntity {
     this.endpoints = application.endpoints;
     this.metadata = application.metadata;
     this.name = application.name;
+    this.description = application.description;
     this.statusTimestamp = application.statusTimestamp;
     this.tenantId = application.tenantId;
     this.timeIntervalMin = application.timeIntervalMin;
@@ -52,6 +54,9 @@ export class ServiceStatusApplicationEntity {
     if (update.name) {
       this.name = update.name;
     }
+    if (update.description) {
+      this.description = update.description;
+    }
     if (update.statusTimestamp) {
       this.statusTimestamp = update.statusTimestamp;
     }
@@ -62,6 +67,7 @@ export class ServiceStatusApplicationEntity {
       this.timeIntervalMin = update.timeIntervalMin;
     }
 
+    console.log('update this', this)
     return this.repository.save(this);
   }
 
