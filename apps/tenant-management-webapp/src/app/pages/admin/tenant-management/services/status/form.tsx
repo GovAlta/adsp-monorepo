@@ -59,7 +59,7 @@ function ApplicationForm(): JSX.Element {
   }
 
   return (
-    <GoAForm onSubmit={submit}>
+    <GoAForm onSubmit={submit} style={{ width: '40vw' }}>
       <GoAFormItem>
         <label>Application Name</label>
         <input type="text" name="name" value={application?.name} onChange={setValue} />
@@ -100,7 +100,7 @@ function ApplicationForm(): JSX.Element {
           Cancel
         </GoAButton>
         <GoAButton buttonType="primary" type="submit">
-          Save Application
+          Save
         </GoAButton>
       </GoAFormButtons>
     </GoAForm>

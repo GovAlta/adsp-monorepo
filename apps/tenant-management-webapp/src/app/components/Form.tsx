@@ -8,7 +8,7 @@ interface GoAFormProps {
 function GoAForm(props: GoAFormProps & { children: ReactNode }): JSX.Element {
   const { children, onSubmit, ..._props } = props;
   return (
-    <div className="goa-form" style={{ marginBottom: '2rem' }}>
+    <div className="goa-form">
       {onSubmit ? (
         <form onSubmit={onSubmit} {..._props}>
           {children}
@@ -29,8 +29,12 @@ const GoAFormButtons = styled.div`
     justify-content: flex-end;
     align-items: flex-end;
 
+    button {
+      min-width: 6rem;
+    }
+
     button + button {
-      margin-left: 1rem;
+      margin-left: 0.5rem;
     }
   }
 

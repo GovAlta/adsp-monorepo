@@ -4,7 +4,7 @@ import { deleteApplication, fetchServiceStatusApps } from '@store/status/actions
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import { ServiceStatusApplication, ServiceStatusEndpoint } from '@store/status/models';
-import { useHistory, useLocation } from 'react-router-dom';
+import { Route, Switch, useHistory, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import TrashIcon from '../../../../../../assets/icons/trash-outline.svg';
 import PlayIcon from '../../../../../../assets/icons/play-circle-outline.svg';
@@ -13,6 +13,8 @@ import EditIcon from '../../../../../../assets/icons/create-outline.svg';
 import ContextMenu, { ContextMenuItem } from '@components/ContextMenu';
 import GoALinkButton from '@components/LinkButton';
 import { toggleApplication } from '@store/status/actions/toggleApplication';
+import Dialog from '@components/Dialog';
+import ApplicationForm from './form';
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
@@ -33,31 +35,15 @@ function Status(): JSX.Element {
       <Main>
         <h2>Service Status</h2>
         This service allows for easy monitoring of application downtime.
-        {/* <p>
-            --- The following paragraph only make sense if multiple URLs for a single app are allowed ---
-            You can use multiple endpoint URLs for a single application, including internal services you depend on, in
-            order to assess which components within an application may be down or malfunctioning (ie. web server,
-            database, storage servers, etc)
-          </p>*/}
+        <p>
+          You can use multiple endpoint URLs for a single application, including internal services you depend on, in
+          order to assess which components within an application may be down or malfunctioning (ie. web server,
+          database, storage servers, etc)
+        </p>
         <p>
           Each Application should represent a service that is useful to the end user by itself, such as child care
           subsidy and child care certification
         </p>
-        <h4>Guidelines for choosing a health check endpoint:</h4>
-        <ol>
-          <li>A Health check endpoint needs to be publicly accessible over the internet</li>
-          <li>
-            A Health check endpoint needs to return
-            <ul style={{ marginTop: 0 }}>
-              <li>A 200 level status code to indicate good health</li>
-              <li>A non-200 level status code to indicate bad health.</li>
-            </ul>
-          </li>
-          <li>
-            To be most accurate, the health check endpoint should reference a URL that makes comprehensive use of your
-            app, and checks connectivity to any databases, for instance.
-          </li>
-        </ol>
         <GoALinkButton data-testid="add-application" to={`${location.pathname}/new`} buttonType="primary">
           Add Application
         </GoALinkButton>
@@ -67,6 +53,19 @@ function Status(): JSX.Element {
           ))}
         </ApplicationList>
       </Main>
+
+      <Switch>
+        <Route path="/admin/tenant-admin/services/service-status/new">
+          <Dialog open={true}>
+            <ApplicationForm />
+          </Dialog>
+        </Route>
+        <Route path="/admin/tenant-admin/services/service-status/:applicationId/edit">
+          <Dialog open={true}>
+            <ApplicationForm />
+          </Dialog>
+        </Route>
+      </Switch>
     </Page>
   );
 }

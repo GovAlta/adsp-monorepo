@@ -143,7 +143,6 @@ interface DialogBackgroundProps {
 
 function DialogBackground({ visible }: DialogBackgroundProps): ReactElement {
   const opacity = visible ? 1 : 0;
-  console.log('opacity', opacity);
   return <DialogBackgroundContainer style={{ opacity }}></DialogBackgroundContainer>;
 }
 
@@ -164,8 +163,7 @@ function getScrollbarWidth() {
   // Creating invisible container
   const outer = document.createElement('div');
   outer.style.visibility = 'hidden';
-  outer.style.overflow = 'scroll'; // forcing scrollbar to appear
-  outer.style.msOverflowStyle = 'scrollbar'; // needed for WinJS apps
+  outer.style.overflow = 'scroll';
   document.body.appendChild(outer);
 
   // Creating inner element and placing it in the container
