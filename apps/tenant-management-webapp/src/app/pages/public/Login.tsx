@@ -4,8 +4,7 @@ import { GoAForm, GoAFormButtons, GoAFormItem } from '@components/Form';
 import { Page, Main } from '@components/Html';
 import AuthContext from '@lib/authContext';
 import { SelectTenant } from '@store/tenant/actions';
-import { RootState } from '@store/index';
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { GoAButton } from '@abgov/react-components';
 import { useParams } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
@@ -13,47 +12,26 @@ import { useLocation } from 'react-router-dom';
 const LoginLanding = () => {
   const { signIn } = useContext(AuthContext);
   const dispatch = useDispatch();
-  const [loginTrigger, setLoginTrigger] = useState(false);
-  let { tenantName } = useParams<{ tenantName: string }>();
   const nameRef = useRef(null);
-
   const search = useLocation().search;
   const isDirectLogin = new URLSearchParams(search).get('direct');
-
-  if (!tenantName) {
-    tenantName = new URLSearchParams(search).get('tenantName');
-  }
-
-  const { tenantRealm } = useSelector((state: RootState) => ({
-    tenantRealm: state.tenant.realm,
-  }));
+  const tenantName = useParams<{ tenantName: string }>().tenantName;
 
   useEffect(() => {
-    if (tenantRealm && loginTrigger) {
-      signIn(`/login/redirect?direct=true&tenantName=${tenantRealm}`);
-    }
-  }, [tenantRealm, signIn, loginTrigger]);
-
-  useEffect(() => {
-    function delayedLogin() {
-      setTimeout(function () {
-        signIn('/admin/tenant-admin');
-      }, 1);
-    }
-
     if (tenantName) {
       dispatch(SelectTenant(tenantName));
       // For direct login, we shall hide the tenant login form and invoke the keycloak
       if (isDirectLogin === 'true') {
-        delayedLogin();
+        dispatch(SelectTenant(tenantName));
+        signIn('/login-redirect');
       }
     }
-  }, [dispatch, tenantName, isDirectLogin, signIn]);
+  }, [tenantName, isDirectLogin]);
 
   function login() {
     const name = nameRef.current.value;
     dispatch(SelectTenant(name));
-    setLoginTrigger(true);
+    signIn('/login-redirect');
   }
 
   return (

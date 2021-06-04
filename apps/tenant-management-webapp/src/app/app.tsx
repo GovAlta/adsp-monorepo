@@ -65,11 +65,12 @@ const AppRouters = () => {
           <Route path="/get-started">
             <GetStarted />
           </Route>
-          <Route exact path="/login/redirect">
+
+          <Route exact path="/login-redirect">
             <LoginRedirect />
           </Route>
 
-          <Route exact path="/logout/redirect">
+          <Route exact path="/logout-redirect">
             <LogoutRedirect />
           </Route>
         </PublicApp>
@@ -146,7 +147,7 @@ function AppWithAuthContext() {
   }
 
   function signOut() {
-    const path = window.location.origin + '/logout/redirect';
+    const path = window.location.origin + '/logout-redirect';
     keycloak.logout({ redirectUri: path });
   }
 
