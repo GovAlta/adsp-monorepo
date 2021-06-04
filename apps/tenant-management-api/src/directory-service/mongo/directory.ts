@@ -43,33 +43,59 @@ export class MongoDirectoryRepository implements DirectoryRepository {
     );
   }
 
-  save(entity: DirectoryEntity): Promise<DirectoryEntity> {
-    return new Promise<DirectoryEntity>((resolve, reject) =>
-      this.directoryModel.findOneAndUpdate(
-        { _id: entity._id || new Types.ObjectId() },
-        this.toDoc(entity),
-        { upsert: true, new: true, lean: true },
-        (err, doc) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(this.fromDoc(doc));
+  async save(entity: DirectoryEntity): Promise<DirectoryEntity> {
+    const directory = new this.directoryModel({
+      name: entity.name,
+      services: entity.services,
+    });
+
+    try {
+      await directory.save();
+      return new Promise<DirectoryEntity>((resolve, reject) =>
+        this.directoryModel.findOneAndUpdate(
+          { _id: entity.id || new Types.ObjectId() },
+          this.toDoc(entity),
+          { upsert: true, new: true, lean: true },
+          (err, doc) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(this.fromDoc(doc));
+            }
           }
-        }
-      )
-    );
+        )
+      );
+    } catch (err) {
+      return err.message;
+    }
   }
 
   delete(entity: DirectoryEntity): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) =>
-      this.directoryModel.findOneAndDelete({ _id: entity._id }, (err, doc) => (err ? reject(err) : resolve(!!doc)))
+      this.directoryModel.findOneAndDelete({ _id: entity.id }, (err, doc) => (err ? reject(err) : resolve(!!doc)))
     );
+  }
+
+  getDirectories(name: string): Promise<DirectoryEntity> {
+    return new Promise<DirectoryEntity>((resolve, reject) =>
+      this.directoryModel.findOne({ name: name }, null, { lean: true }, (err, doc) =>
+        err ? reject(err) : resolve(this.fromDoc(doc))
+      )
+    );
+  }
+
+  async exists(name: string): Promise<boolean> {
+    const result = await this.directoryModel.findOne({
+      where: { name: name },
+    });
+
+    return !!result === true;
   }
 
   private fromDoc(doc: Doc<Directory>) {
     return doc
       ? new DirectoryEntity(this, {
-          _id: `${doc._id}`,
+          id: `${doc._id}`,
           name: doc.name,
           services: doc.services,
         })

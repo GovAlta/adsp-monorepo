@@ -2,9 +2,12 @@ import { Request, Response, Router } from 'express';
 import { DirectoryRepository } from '../repository';
 
 import { DirectoryEntity } from '../model';
-
+import validationMiddleware from '../../middleware/requestValidator';
 import { Logger } from 'winston';
 import { NotFoundError } from '@core-services/core-common';
+import { Directory } from '../../directory/validator/directory/directoryValidator';
+import { v4 as uuidv4 } from 'uuid';
+import { type } from 'node:os';
 
 interface DirectoryRouterProps {
   logger: Logger;
@@ -14,7 +17,7 @@ interface DirectoryRouterProps {
 export const createDirectoryRouter = ({ logger, directoryRepository }: DirectoryRouterProps): Router => {
   const directoryRouter = Router();
 
-  directoryRouter.get('/directory', async (req: Request, res: Response, _next) => {
+  directoryRouter.get('/directory', validationMiddleware(null), async (req: Request, res: Response, _next) => {
     const { top, after } = req.query;
 
     try {
@@ -22,7 +25,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
 
       res.send({
         results: results.results.map((n) => ({
-          id: n._id,
+          id: n.id,
           name: n.name,
           services: n.services,
         })),
@@ -32,11 +35,11 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
     }
   });
 
-  directoryRouter.get('/directory/:name', async (req, res, _next) => {
+  directoryRouter.get('/directory/:name', validationMiddleware(null), async (req, res, _next) => {
     const { name } = req.params;
 
     try {
-      const directory = await directoryRepository.get(name);
+      const directory = await directoryRepository.getDirectories(name);
 
       res.send({
         name: directory.name,
@@ -47,10 +50,11 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
     }
   });
 
-  directoryRouter.post('/directory/', async (req: Request, res: Response) => {
+  directoryRouter.post('/directory/', validationMiddleware(Directory), async (req: Request, res: Response) => {
     const data = req.body;
     try {
-      const directory = await directoryRepository.get(data.name);
+      const directory = await directoryRepository.getDirectories(data.name);
+      console.log('directory', directory);
       let entity;
       if (directory) {
         entity = await directory.update(data);
@@ -59,15 +63,21 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
           ...data,
         });
       }
-      res.json(entity);
+      if (typeof entity === 'string') {
+        res.status(400).json(entity);
+      }
+      res.send({
+        name: entity.name,
+        services: entity.services,
+      });
     } catch (err) {
       logger.error(err);
     }
   });
 
-  directoryRouter.delete('/directory/:name', async (req: Request, res: Response) => {
+  directoryRouter.delete('/directory/:name', validationMiddleware(null), async (req: Request, res: Response) => {
     const { name } = req.params;
-    const directoryEntity = await directoryRepository.get(name);
+    const directoryEntity = await directoryRepository.getDirectories(name);
     if (!directoryEntity) {
       throw new NotFoundError('File', name);
     }
