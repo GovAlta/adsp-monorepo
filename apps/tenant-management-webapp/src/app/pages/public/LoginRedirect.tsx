@@ -4,6 +4,8 @@ import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
 import { IsTenantAdmin } from '@store/tenant/actions';
 import { useHistory } from 'react-router-dom';
+import { TenantLogout } from '@store/tenant/actions';
+import { SessionLogout } from '@store/session/actions';
 
 const LoginTypes = {
   coreNonTenantAdmin: 'core-non-tenant-admin',
@@ -14,9 +16,15 @@ const LoginTypes = {
 interface CoreAdminRedirectProps {
   tenantRealm: string;
 }
+
+// TODO: deprecate the CoreAdminRedirect in CS-524
 const CoreAdminRedirect = (props: CoreAdminRedirectProps) => {
   const history = useHistory();
+  const dispatch = useDispatch();
   useEffect(() => {
+    dispatch(TenantLogout());
+    dispatch(SessionLogout());
+    dispatch(SessionLogout());
     history.push(`/${props.tenantRealm}/login?direct=true`);
   });
   return (
@@ -38,7 +46,6 @@ const LoginRedirect = () => {
   const dispatch = useDispatch();
   const defaultRealm = 'core';
   const history = useHistory();
-
   const [loginType, setLoginType] = useState('');
 
   const { realm, userInfo, isTenantAdmin, tenantRealm } = useSelector((state: RootState) => ({
@@ -48,17 +55,13 @@ const LoginRedirect = () => {
     tenantRealm: state.tenant.realm,
   }));
 
-  useEffect(() => {
-    if (realm && realm !== defaultRealm && tenantRealm) {
-      /**
-       * If user has tenantRealm. The user might be a login user. Redirect to admin portal. The auth layer in the admin portal will handle the rest.
-       */
-      history.push('/admin/tenant-admin');
-    }
+  // TODO: isAuthenticated shall be same as the validation in the PrivateApp. Need to create a global function for both.
+  const isAuthenticated = useSelector((state: RootState) => state.session?.authenticated ?? false);
 
+  useEffect(() => {
     if (realm && realm === defaultRealm) {
       if (userInfo && isTenantAdmin === null) {
-        // isTenantAdmin and tenantName need to be updated
+        // The email will be used to fetch the tenant realm.
         dispatch(IsTenantAdmin(userInfo.email));
       }
       // Do not remove the !== here. isTenantAdmin has 3 states null, false, true
@@ -69,8 +72,15 @@ const LoginRedirect = () => {
           setLoginType(LoginTypes.coreNonTenantAdmin);
         }
       }
+    } else {
+      if (tenantRealm && tenantRealm != defaultRealm) {
+        // Tenant Login redirect
+        if (isAuthenticated) {
+          history.push('/admin/tenant-admin');
+        }
+      }
     }
-  }, [dispatch, userInfo, isTenantAdmin, tenantRealm]);
+  }, [dispatch, userInfo, isTenantAdmin, tenantRealm, isAuthenticated]);
 
   return (
     <Page>

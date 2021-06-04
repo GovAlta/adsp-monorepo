@@ -9,11 +9,11 @@ import GoALinkButton from '@components/LinkButton';
 import { GoAForm, GoAFormButtons, GoAFormItem } from '@components/Form';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
+import { SessionLogout } from '@store/session/actions';
 
 const CreateRealm = () => {
   const dispatch = useDispatch();
   const [name, setName] = useState('');
-  const [loginTrigger, setLoginTrigger] = useState(false);
   const authContext = useContext(AuthContext);
 
   const onCreateRealm = async () => {
@@ -37,20 +37,15 @@ const CreateRealm = () => {
     }
   }, [dispatch, userInfo]);
 
-  useEffect(() => {
-    if (tenantRealm && loginTrigger) {
-      authContext.signIn(`/login?direct=true&tenantName=${tenantRealm}`);
-    }
-  }, [loginTrigger, authContext, tenantRealm]);
-
   const ErrorMessage = (props) => {
     const message = `${props.email} has already created a tenant. Currently only one tenant is allowed per person.`;
     return <GoANotification type="information" title="Notification Title" message={message} />;
   };
 
   function login() {
+    dispatch(SessionLogout());
     dispatch(SelectTenant(tenantRealm));
-    setLoginTrigger(true);
+    authContext.signIn(`/login-redirect`);
   }
 
   return (
