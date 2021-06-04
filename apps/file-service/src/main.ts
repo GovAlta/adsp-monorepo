@@ -5,7 +5,7 @@ import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as helmet from 'helmet';
 import { createLogger, UnauthorizedError, NotFoundError, InvalidOperationError } from '@core-services/core-common';
-import { AdspId, createCoreStrategy, initializePlatform } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import { environment } from './environments/environment';
 import { applyFileMiddleware, ServiceUserRoles } from './file';
 import { createRepositories } from './mongo';
@@ -24,7 +24,7 @@ async function initializeApp(): Promise<express.Application> {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { tenantStrategy, tenantHandler, healthCheck, eventService } = await initializePlatform(
+  const { coreStrategy, tenantStrategy, tenantHandler, healthCheck, eventService } = await initializePlatform(
     {
       serviceId,
       displayName: 'File Service',
@@ -73,15 +73,7 @@ async function initializeApp(): Promise<express.Application> {
   );
 
   passport.use('jwt', tenantStrategy);
-  passport.use(
-    'jwt-core',
-    createCoreStrategy({
-      logger,
-      serviceId,
-      accessServiceUrl,
-      ignoreServiceAud: true,
-    })
-  );
+  passport.use('jwt-core', coreStrategy);
   passport.use(new AnonymousStrategy());
 
   passport.serializeUser(function (user, done) {

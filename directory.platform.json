@@ -28,6 +28,14 @@
     {
       "service": "event-service:v1",
       "host": "http://event-service:3334/event/v1"
+    },
+    {
+      "service": "value-service",
+      "host": "http://value-service:3336"
+    },
+    {
+      "service": "value-service:v1",
+      "host": "http://value-service:3336/value/v1"
     }
   ]
 }

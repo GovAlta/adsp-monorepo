@@ -1,18 +1,25 @@
-import { Observable } from 'rxjs';
-import { Logger } from 'winston';
-import { DomainEventWorkItem, ValueServiceClient } from '@core-services/core-common';
+import type { Subscribable } from 'rxjs';
+import type { Logger } from 'winston';
+import { adspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { createLogEventJob } from './logEvent';
-import { DomainEvent } from '../types';
+import type { DomainEventWorkItem } from '../service';
 
 export interface JobProps {
   logger: Logger;
-  valueService: ValueServiceClient;
-  events: Observable<DomainEventWorkItem>;
+  directory: ServiceDirectory;
+  tokenProvider: TokenProvider;
+  events: Subscribable<DomainEventWorkItem>;
 }
 
-export const createJobs = ({ logger, valueService, events }: JobProps): void => {
-  const logEventJob = createLogEventJob({ logger, valueService });
-  events.subscribe((next) => {
-    logEventJob((next.event as unknown) as DomainEvent, next.done);
-  });
+export const createJobs = async ({ logger, directory, events, tokenProvider }: JobProps): Promise<void> => {
+  try {
+    const valueServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:value-service:v1`);
+
+    const logEventJob = createLogEventJob({ logger, valueServiceUrl, tokenProvider });
+    events.subscribe((next) => {
+      logEventJob(next.event, next.done);
+    });
+  } catch (err) {
+    logger.error(`Error encountered in creation of event jobs.`, { context: 'EventJobs' });
+  }
 };

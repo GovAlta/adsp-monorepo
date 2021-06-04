@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { Application } from 'express';
 import { Logger } from 'winston';
-import { DomainEventSubscriberService, EventServiceClient, WorkQueueService } from '@core-services/core-common';
+import { DomainEventSubscriberService, WorkQueueService } from '@core-services/core-common';
 import { Repositories } from './repository';
 import { createJobs } from './job';
 import { TemplateService } from './template';
@@ -16,7 +16,6 @@ export * from './template';
 interface NotificationMiddlewareProps extends Repositories {
   logger: Logger;
   templateService: TemplateService;
-  eventService: EventServiceClient;
   eventSubscriber: DomainEventSubscriberService;
   queueService: WorkQueueService<Notification>;
   providers: Providers;
@@ -30,7 +29,6 @@ export const applyNotificationMiddleware = (
     typeRepository,
     subscriptionRepository,
     templateService,
-    eventService,
     eventSubscriber,
     queueService,
     providers,
@@ -39,7 +37,6 @@ export const applyNotificationMiddleware = (
   createJobs({
     logger,
     templateService,
-    eventService,
     events: eventSubscriber.getEvents(),
     queueService,
     typeRepository,

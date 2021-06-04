@@ -1,51 +1,31 @@
-import type { User } from '@abgov/adsp-service-sdk';
+import { AdspId, User } from '@abgov/adsp-service-sdk';
 import {
+  AjvValidationService,
   assertAuthenticatedHandler,
   NotFoundError,
+  UnauthorizedError,
 } from '@core-services/core-common';
 import { Router } from 'express';
+import { Logger } from 'winston';
+import { NamespaceEntity } from '../model';
 import { ValuesRepository } from '../repository';
-import { MetricCriteria, MetricInterval, Value, ValueCriteria } from '../types';
+import { MetricCriteria, MetricInterval, ServiceUserRoles, Value, ValueCriteria } from '../types';
 
 interface ValueRouterProps {
-  valueRepository: ValuesRepository;
+  logger: Logger;
+  repository: ValuesRepository;
 }
 
-export const createValueRouter = ({
-  valueRepository,
-}: ValueRouterProps): Router => {
+export const createValueRouter = ({ logger, repository }: ValueRouterProps): Router => {
   const valueRouter = Router();
 
-  /**
-   * @swagger
-   *
-   * '/{namespace}/values':
-   *   get:
-   *     tags:
-   *     - Value
-   *     description: Reads namespace values.
-   *     parameters:
-   *     - name: namespace
-   *       description: Namespace to read values from.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     responses:
-   *       '200':
-   *         description: Values successfully read.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   */
   valueRouter.get('/:namespace/values', async (req, res, next) => {
-    const user = req.user as User;
+    const user = req.user;
     const namespace = req.params.namespace;
 
     try {
-      const entity = await valueRepository.getNamespace(namespace);
-
+      const namespaces = await req.getConfiguration<Record<string, NamespaceEntity>>();
+      const entity = namespaces[namespace];
       if (!entity) {
         throw new NotFoundError('namespace', namespace);
       }
@@ -54,107 +34,40 @@ export const createValueRouter = ({
         ? (req.query.names as string).split(',').map((name) => name.trim())
         : Object.keys(entity.definitions);
 
-      const results = Promise.all(
-        names.map((name) =>
-          entity.definitions[name]
-            ? new Promise((resolve) => {
-                try {
-                  resolve(
-                    entity.definitions[name]
-                      .readValues(user, { top: 1 })
-                      .then(([value]) => ({ name, value }))
-                  );
-                } catch (err) {
-                  resolve({ name });
-                }
-              })
-            : Promise.resolve({ name })
-        )
+      const results: { name: string; value: Value }[] = await Promise.all(
+        names.map(async (name) => ({
+          name,
+          value: (await entity.definitions[name].readValues(user, { top: 1 }))[0],
+        }))
       );
 
-      (results: { name: string; value: Value }[]) =>
-        res.send({
-          [namespace]: results.reduce(
-            (v, c) => ({ ...v, [c.name]: c.value }),
-            {}
-          ),
-        });
+      res.send({
+        [namespace]: results.reduce((v, c) => ({ ...v, [c.name]: c.value }), {}),
+      });
     } catch (err) {
       next(err);
     }
   });
 
-  /**
-   * @swagger
-   *
-   * '/{namespace}/values/{name}':
-   *   get:
-   *     tags:
-   *     - Value
-   *     description: Reads a namespace value.
-   *     parameters:
-   *     - name: namespace
-   *       description: Namespace to read value from.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     - name: name
-   *       description: Name of the value to read.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     - name: criteria
-   *       description: Criteria for the read.
-   *       in: query
-   *       required: false
-   *       schema:
-   *         type: object
-   *         properties:
-   *           top:
-   *             type: number
-   *           timestampMax:
-   *             type: string
-   *             format: date-time
-   *           timestampMin:
-   *             type: string
-   *             format: date-time
-   *     responses:
-   *       '200':
-   *         description: Value successfully read.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   */
   valueRouter.get('/:namespace/values/:name', async (req, res, next) => {
     const user = req.user as User;
     const namespace = req.params.namespace;
     const name = req.params.name;
-    const criteriaParam = req.query.criteria
-      ? JSON.parse(req.query.criteria as string)
-      : {};
+    const criteriaParam = req.query.criteria ? JSON.parse(req.query.criteria as string) : {};
 
     const criteria: ValueCriteria = {
       top: criteriaParam.top,
-      timestampMax: criteriaParam.timestampMax
-        ? new Date(criteriaParam.timestampMax)
-        : null,
-      timestampMin: criteriaParam.timestampMin
-        ? new Date(criteriaParam.timestampMin)
-        : null,
+      timestampMax: criteriaParam.timestampMax ? new Date(criteriaParam.timestampMax) : null,
+      timestampMin: criteriaParam.timestampMin ? new Date(criteriaParam.timestampMin) : null,
     };
 
+    if (!user?.roles?.includes(ServiceUserRoles.Reader)) {
+      next(new UnauthorizedError('User not authorized to read values.'));
+      return;
+    }
+
     try {
-      const entity = await valueRepository.getNamespace(namespace);
-      const valDef = entity && entity.definitions[name];
-
-      if (!valDef) {
-        throw new NotFoundError('value definition', `${namespace}:${name}`);
-      }
-
-      const results = await valDef.readValues(user, criteria);
+      const results = await repository.readValues(user.tenantId, namespace, name, criteria);
 
       res.send({
         [namespace]: {
@@ -166,180 +79,82 @@ export const createValueRouter = ({
     }
   });
 
-  /**
-   * @swagger
-   *
-   * '/{namespace}/values/{name}/metrics/{metric}':
-   *   get:
-   *     tags:
-   *     - Value
-   *     description: Retrieves value metric in a namespace
-   *     parameters:
-   *     - name: namespace
-   *       description: Namespace to read value metric from.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     - name: name
-   *       description: Name of the value.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     - name: metric
-   *       description: Name of the metric to read.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     - name: criteria
-   *       description: Criteria for the read.
-   *       in: query
-   *       required: false
-   *       schema:
-   *         type: object
-   *         properties:
-   *           interval:
-   *             type: string
-   *             enum:
-   *             - hourly
-   *             - daily
-   *             - weekly
-   *           intervalMax:
-   *             type: string
-   *             format: date-time
-   *           intervalMin:
-   *             type: string
-   *             format: date-time
-   *     responses:
-   *       '200':
-   *         description: Metric successfully read.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   */
-  valueRouter.get(
-    '/:namespace/values/:name/metrics/:metric',
-    async (req, res, next) => {
-      const user = req.user as User;
-      const namespace = req.params.namespace;
-      const name = req.params.name;
-      const metric = req.params.metric;
-      const interval = (req.query.interval as string) || 'daily';
-      const criteriaParam = req.query.criteria
-        ? JSON.parse(req.query.criteria as string)
-        : {};
+  valueRouter.get('/:namespace/values/:name/metrics/:metric', async (req, res, next) => {
+    const user = req.user as User;
+    const namespace = req.params.namespace;
+    const name = req.params.name;
+    const metric = req.params.metric;
+    const interval = (req.query.interval as string) || 'daily';
+    const criteriaParam = req.query.criteria ? JSON.parse(req.query.criteria as string) : {};
 
-      const criteria: MetricCriteria = {
-        interval: interval as MetricInterval,
-        intervalMax: criteriaParam.intervalMax
-          ? new Date(criteriaParam.intervalMax)
-          : null,
-        intervalMin: criteriaParam.intervalMin
-          ? new Date(criteriaParam.intervalMin)
-          : null,
-      };
+    const criteria: MetricCriteria = {
+      interval: interval as MetricInterval,
+      intervalMax: criteriaParam.intervalMax ? new Date(criteriaParam.intervalMax) : null,
+      intervalMin: criteriaParam.intervalMin ? new Date(criteriaParam.intervalMin) : null,
+    };
 
-      try {
-        const entity = await valueRepository.getNamespace(namespace);
-        const valDef = entity && entity.definitions[name];
-
-        if (!valDef) {
-          throw new NotFoundError('value definition', `${namespace}:${name}`);
-        }
-
-        const result = await valDef.readValueMetric(user, metric, criteria);
-
-        res.send({
-          [namespace]: {
-            [name]: {
-              [metric]: result,
-            },
-          },
-        });
-      } catch (err) {
-        next(err);
+    try {
+      const namespaces = await req.getConfiguration<Record<string, NamespaceEntity>>();
+      const entity = namespaces[namespace];
+      if (!entity) {
+        throw new NotFoundError('namespace', namespace);
       }
-    }
-  );
-
-  /**
-   * @swagger
-   * '/{namespace}/values/{name}':
-   *   post:
-   *     tags:
-   *     - Value
-   *     description: Writes namespace value.
-   *     parameters:
-   *     - name: namespace
-   *       description: Namespace to read value from.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     - name: name
-   *       description: Name of the value to read.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             oneOf:
-   *             - type: object
-   *               properties:
-   *                 correlationId:
-   *                   type: string
-   *                 context:
-   *                   type: object
-   *                 timestamp:
-   *                   type: string
-   *                   format: date-time
-   *                 value:
-   *                   type: object
-   *             - type: object
-   *     responses:
-   *       '200':
-   *         description: Value successfully written.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   */
-  valueRouter.post(
-    '/:namespace/values/:name',
-    assertAuthenticatedHandler,
-    async (req, res, next) => {
-      const user = req.user as User;
-      const namespace = req.params.namespace;
-      const name = req.params.name;
-
-      try {
-        const entity = await valueRepository.getNamespace(namespace);
-
-        const valDef = entity && entity.definitions[name];
-
-        if (!valDef) {
-          throw new NotFoundError('value definition', `${namespace}: ${name}`);
-        }
-
-        const result = valDef.writeValue(user, req.body);
-
-        res.send({
-          [namespace]: {
-            [name]: [result],
-          },
-        });
-      } catch (err) {
-        next(err);
+      const valDef = entity.definitions[name];
+      if (!valDef) {
+        throw new NotFoundError('value definition', `${namespace}:${name}`);
       }
+
+      const result = await valDef.readValueMetric(user, metric, criteria);
+
+      res.send({
+        [namespace]: {
+          [name]: {
+            [metric]: result,
+          },
+        },
+      });
+    } catch (err) {
+      next(err);
     }
-  );
+  });
+
+  valueRouter.post('/:namespace/values/:name', assertAuthenticatedHandler, async (req, res, next) => {
+    const user = req.user as User;
+    const namespace = req.params.namespace;
+    const name = req.params.name;
+    const { tenantId, ...value } = req.body;
+
+    try {
+      const namespaces = await req.getConfiguration<Record<string, NamespaceEntity>>();
+      const entity =
+        namespaces[namespace] ||
+        new NamespaceEntity(
+          new AjvValidationService(logger),
+          repository,
+          {
+            name: namespace,
+            description: null,
+            definitions: { [name]: { name, description: null, type: null, jsonSchema: null } },
+          },
+          user.tenantId
+        );
+
+      const valDef = entity.definitions[name];
+      if (!valDef) {
+        throw new NotFoundError('value definition', `${namespace}: ${name}`);
+      }
+
+      const result = valDef.writeValue(user, tenantId ? AdspId.parse(tenantId) : null, value);
+
+      res.send({
+        [namespace]: {
+          [name]: [result],
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
 
   return valueRouter;
 };

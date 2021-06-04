@@ -10,6 +10,7 @@ describe('EventDescriptionEntity', () => {
   };
 
   const validationMock = {
+    setSchema: jest.fn(),
     validate: jest.fn(),
   };
 
@@ -20,7 +21,7 @@ describe('EventDescriptionEntity', () => {
 
   it('can be created', () => {
     const entity = new EventDefinitionEntity(
-      new NamespaceEntity({
+      new NamespaceEntity(serviceMock, validationMock, {
         tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
         name: 'test',
         definitions: {},
@@ -37,7 +38,7 @@ describe('EventDescriptionEntity', () => {
 
   it('can indicate user with role can send', () => {
     const entity = new EventDefinitionEntity(
-      new NamespaceEntity({
+      new NamespaceEntity(serviceMock, validationMock, {
         tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
         name: 'test',
         definitions: {},
@@ -63,7 +64,7 @@ describe('EventDescriptionEntity', () => {
 
   it('can indicate user without role cannot send', () => {
     const entity = new EventDefinitionEntity(
-      new NamespaceEntity({
+      new NamespaceEntity(serviceMock, validationMock, {
         tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
         name: 'test',
         definitions: {},
@@ -89,7 +90,7 @@ describe('EventDescriptionEntity', () => {
 
   it('can send event', () => {
     const entity = new EventDefinitionEntity(
-      new NamespaceEntity({
+      new NamespaceEntity(serviceMock, validationMock, {
         tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
         name: 'test',
         definitions: {},
@@ -104,8 +105,6 @@ describe('EventDescriptionEntity', () => {
     validationMock.validate.mockReturnValueOnce(true);
 
     entity.send(
-      serviceMock,
-      validationMock,
       {
         id: '1',
         name: 'core-user',

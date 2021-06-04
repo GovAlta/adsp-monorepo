@@ -20,7 +20,7 @@ export const environment = envalid.cleanEnv(
   {
     reporter: ({ errors }) => {
       if (Object.keys(errors).length !== 0) {
-        console.error(`Invalidated env vars: ${util.inspect(errors)}`);
+        console.error(`Invalid env vars: ${util.inspect(errors)}`);
       }
     },
   }

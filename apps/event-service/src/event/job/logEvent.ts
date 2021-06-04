@@ -1,31 +1,44 @@
-import { Logger } from 'winston';
-import { ValueServiceClient } from '@core-services/core-common';
-import { DomainEvent } from '../types';
+import { TokenProvider } from '@abgov/adsp-service-sdk';
+import axios from 'axios';
+import type { Logger } from 'winston';
+import type { DomainEvent } from '../types';
 
 interface LogEventJobProps {
   logger: Logger;
-  valueService: ValueServiceClient;
+  valueServiceUrl: URL;
+  tokenProvider: TokenProvider;
 }
 
-export const createLogEventJob = ({ logger, valueService }: LogEventJobProps) => async (
+export const createLogEventJob = ({ logger, valueServiceUrl, tokenProvider }: LogEventJobProps) => async (
   event: DomainEvent,
-  done: () => void
+  done: (err?: unknown) => void
 ): Promise<void> => {
-  logger.debug(`Writing event to log (event:${event.namespace}-${event.name})...`);
-  const { timestamp, correlationId, context, namespace, name, payload } = event;
+  const writeUrl = new URL('v1/event-service/values/event', valueServiceUrl);
+  const { timestamp, correlationId, tenantId, context, namespace, name, payload } = event;
 
-  await valueService.write('event', `${event.namespace}-${event.name}`, {
-    timestamp,
-    correlationId,
-    context: {
-      ...(context || {}),
-      'event-namespace': namespace,
-      'event-name': name,
-    },
-    value: payload,
-  });
+  logger.debug(`Writing event to log (event:${event.namespace}-${event.name})...`, { context: 'EventLog', tenantId });
 
-  logger.info(`Wrote event to log (event:${event.namespace}-${event.name}).`);
+  try {
+    const token = await tokenProvider.getAccessToken();
+    await axios.post(
+      writeUrl.href,
+      {
+        timestamp,
+        correlationId,
+        tenantId,
+        context: {
+          ...(context || {}),
+          namespace,
+          name,
+        },
+        value: payload,
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-  done();
+    logger.info(`Wrote event '${event.namespace}:${event.name}' to log.`, { context: 'EventLog', tenantId });
+    done();
+  } catch (err) {
+    done(err);
+  }
 };

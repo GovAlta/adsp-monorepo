@@ -1,8 +1,6 @@
 import type { User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
-import { DomainEventService } from '../service';
 import { DomainEvent, EventDefinition } from '../types';
-import { ValidationService } from '../service';
 import { NamespaceEntity } from './namespace';
 import { EventServiceRoles } from '../role';
 
@@ -23,7 +21,7 @@ export class EventDefinitionEntity implements EventDefinition {
     return this.namespace.canSend(user) && user.roles && user.roles.includes(EventServiceRoles.sender);
   }
 
-  send(service: DomainEventService, validationService: ValidationService, user: User, event: DomainEvent): void {
+  send(user: User, event: DomainEvent): void {
     if (!this.canSend(user)) {
       throw new UnauthorizedError('User not authorized to send event.');
     }
@@ -38,10 +36,14 @@ export class EventDefinitionEntity implements EventDefinition {
       payload,
     } = event;
 
-    if (!payload || !validationService.validate(this.namespace.name, this, payload)) {
+    if (!payload || !this.namespace.validationService.validate(this.getSchemaKey(), payload)) {
       throw new InvalidOperationError('Event payload does not match schema.');
     }
 
-    service.send(event);
+    this.namespace.service.send(event);
+  }
+
+  getSchemaKey(): string {
+    return `${this.namespace.name}:${this.name}`;
   }
 }

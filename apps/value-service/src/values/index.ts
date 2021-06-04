@@ -1,32 +1,20 @@
 import * as fs from 'fs';
 import { Application } from 'express';
 import { ValuesRepository } from './repository';
-import { 
-  createNamespaceRouter, 
-  createAdministrationRouter,
-  createValueRouter
-} from './router';
+import { createValueRouter } from './router';
+import { Logger } from 'winston';
 
 export * from './types';
 export * from './model';
 export * from './repository';
-export * from './validation';
 
 interface ValuesMiddlewareProps {
-  valueRepository: ValuesRepository
+  logger: Logger;
+  repository: ValuesRepository;
 }
 
-export const applyValuesMiddleware = (
-  app: Application, 
-  props: ValuesMiddlewareProps
-) => {
-  const namespaceRouter = createNamespaceRouter(props)
-  app.use('/namespace/v1/', namespaceRouter);
-
-  const administrationRouter = createAdministrationRouter(props)
-  app.use('/value-admin/v1/', administrationRouter);
-
-  const valueRouter = createValueRouter(props)
+export const applyValuesMiddleware = (app: Application, props: ValuesMiddlewareProps): Application => {
+  const valueRouter = createValueRouter(props);
   app.use('/value/v1/', valueRouter);
 
   let swagger = null;
@@ -42,6 +30,8 @@ export const applyValuesMiddleware = (
           res.json(swagger);
         }
       });
-    } 
+    }
   });
-}
+
+  return app;
+};

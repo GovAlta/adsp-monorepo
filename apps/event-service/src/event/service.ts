@@ -1,5 +1,5 @@
 import type { Subscribable } from 'rxjs';
-import { DomainEvent, EventDefinition } from './types';
+import { DomainEvent } from './types';
 
 export interface DomainEventService {
   isConnected(): boolean;
@@ -8,14 +8,10 @@ export interface DomainEventService {
 
 export interface DomainEventWorkItem {
   event: DomainEvent;
-  done: () => void;
+  done: (err: unknown) => void;
 }
 
 export interface DomainEventSubscriberService {
   isConnected(): boolean;
   getEvents(): Subscribable<DomainEventWorkItem>;
-}
-
-export interface ValidationService {
-  validate(namespace: string, definition: EventDefinition, value: unknown): boolean;
 }

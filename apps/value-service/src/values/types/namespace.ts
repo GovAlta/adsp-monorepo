@@ -1,10 +1,9 @@
 import { ValueDefinition } from './valueDefinition';
 
 export interface Namespace {
-  name: string
-  description: string
-  definitions?: {
-    [name: string]: ValueDefinition
-  }
-  adminRole: string
+  name: string;
+  description: string;
+  definitions: {
+    [name: string]: ValueDefinition;
+  };
 }

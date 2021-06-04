@@ -2,7 +2,7 @@ import { Connection, Channel } from 'amqplib';
 import * as dashify from 'dashify';
 import { Logger } from 'winston';
 import { InvalidOperationError } from '@core-services/core-common';
-import { Observable, Subscribable } from 'rxjs';
+import { Observable, Subscribable, Subscriber } from 'rxjs';
 import { DomainEvent, DomainEventService, DomainEventSubscriberService, DomainEventWorkItem } from '../event';
 
 export class AmqpDomainEventService implements DomainEventService, DomainEventSubscriberService {
@@ -22,8 +22,17 @@ export class AmqpDomainEventService implements DomainEventService, DomainEventSu
   async connect(): Promise<boolean> {
     try {
       const channel = await this.connection.createChannel();
+      await channel.assertExchange('event-log-dead-letter', 'direct');
+      await channel.assertQueue('undelivered-event-log');
+      await channel.bindQueue('undelivered-event-log', 'event-log-dead-letter', '#');
+
       await channel.assertExchange('domain-events', 'topic');
-      await channel.assertQueue('event-log');
+      await channel.assertQueue('event-log', {
+        arguments: {
+          'x-dead-letter-exchange': 'event-log-dead-letter',
+          'x-message-ttl': 300000,
+        },
+      });
       await channel.bindQueue('event-log', 'domain-events', '#');
 
       this.connected = true;
@@ -67,24 +76,29 @@ export class AmqpDomainEventService implements DomainEventService, DomainEventSu
     }
   }
 
+  #onSubscribed = async (sub: Subscriber<DomainEventWorkItem>): Promise<void> => {
+    if (!this.channel) {
+      this.channel = await this.connection.createChannel();
+    }
+    const channel = this.channel;
+    channel.consume('event-log', (msg) => {
+      const payload = JSON.parse(msg.content.toString());
+      const headers = msg.properties['headers'];
+
+      try {
+        sub.next({
+          event: { ...headers, payload } as DomainEvent,
+          done: (err) => (err ? channel.nack(msg, false, true) : channel.ack(msg)),
+        });
+      } catch (err) {
+        channel.nack(msg, false, true);
+      }
+    });
+  };
+
   getEvents(): Subscribable<DomainEventWorkItem> {
     return new Observable<DomainEventWorkItem>((sub) => {
-      (this.channel
-        ? Promise.resolve(this.channel)
-        : this.connection.createChannel().then((channel) => {
-            this.channel = channel;
-            return channel;
-          })
-      ).then((channel) =>
-        channel.consume('event-log', (msg) => {
-          const payload = JSON.parse(msg.content.toString());
-          const headers = msg.properties['headers'];
-          sub.next({
-            event: { ...headers, payload } as DomainEvent,
-            done: () => channel.ack(msg),
-          });
-        })
-      );
+      this.#onSubscribed(sub).catch((err) => sub.error(err));
     });
   }
 

@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 import { Logger } from 'winston';
-import { DomainEventWorkItem, EventServiceClient, WorkQueueService } from '@core-services/core-common';
+import { DomainEventWorkItem, WorkQueueService } from '@core-services/core-common';
 import { createProcessEventJob } from './processEvent';
 import { NotificationTypeRepository, SubscriptionRepository } from '../repository';
 import { TemplateService } from '../template';
@@ -10,7 +10,6 @@ import { createSendNotificationJob } from './sendNotification';
 interface JobProps {
   logger: Logger;
   templateService: TemplateService;
-  eventService: EventServiceClient;
   events: Observable<DomainEventWorkItem>;
   queueService: WorkQueueService<Notification>;
   typeRepository: NotificationTypeRepository;
@@ -21,7 +20,6 @@ interface JobProps {
 export const createJobs = ({
   logger,
   templateService,
-  eventService,
   events,
   queueService,
   typeRepository,
@@ -36,7 +34,6 @@ export const createJobs = ({
   // TODO: Notification send jobs should use a producer consumer queue to decouple sending
   // from event processing and provide mechanism for retries.
   const processEventJob = createProcessEventJob({
-    eventService,
     templateService,
     typeRepository,
     subscriptionRepository,

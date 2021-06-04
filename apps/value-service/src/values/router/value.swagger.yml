@@ -1,0 +1,151 @@
+"/{namespace}/values":
+  get:
+    tags:
+      - Value
+    description: Reads namespace values.
+    parameters:
+      - name: namespace
+        description: Namespace to read values from.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      "200":
+        description: Values successfully read.
+        content:
+          application/json:
+            schema:
+              type: object
+"/{namespace}/values/{name}":
+  get:
+    tags:
+      - Value
+    description: Reads a namespace value.
+    parameters:
+      - name: namespace
+        description: Namespace to read value from.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the value to read.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: criteria
+        description: Criteria for the read.
+        in: query
+        required: false
+        schema:
+          type: object
+          properties:
+            top:
+              type: number
+            timestampMax:
+              type: string
+              format: date-time
+            timestampMin:
+              type: string
+              format: date-time
+    responses:
+      "200":
+        description: Value successfully read.
+        content:
+          application/json:
+            schema:
+              type: object
+  post:
+    tags:
+      - Value
+    description: Writes namespace value.
+    parameters:
+      - name: namespace
+        description: Namespace to read value from.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the value to read.
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - type: object
+                properties:
+                  correlationId:
+                    type: string
+                  context:
+                    type: object
+                  timestamp:
+                    type: string
+                    format: date-time
+                  value:
+                    type: object
+              - type: object
+    responses:
+      "200":
+        description: Value successfully written.
+        content:
+          application/json:
+            schema:
+              type: object
+"/{namespace}/values/{name}/metrics/{metric}":
+  get:
+    tags:
+      - Value
+    description: Retrieves value metric in a namespace
+    parameters:
+      - name: namespace
+        description: Namespace to read value metric from.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the value.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: metric
+        description: Name of the metric to read.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: criteria
+        description: Criteria for the read.
+        in: query
+        required: false
+        schema:
+          type: object
+          properties:
+            interval:
+              type: string
+              enum:
+                - hourly
+                - daily
+                - weekly
+            intervalMax:
+              type: string
+              format: date-time
+            intervalMin:
+              type: string
+              format: date-time
+    responses:
+      "200":
+        description: Metric successfully read.
+        content:
+          application/json:
+            schema:
+              type: object

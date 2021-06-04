@@ -37,18 +37,4 @@ describe('createTenantHandler', () => {
 
     handler(req, ({} as unknown) as Response, next);
   });
-
-  it('can return error if service throws.', async (done) => {
-    const handler = createConfigurationHandler(serviceMock, adspId`urn:ads:platform:test`);
-
-    const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
-
-    const req: Request = { user: { tenantId } } as Request;
-
-    serviceMock.getConfiguration.mockRejectedValueOnce(new Error('Something went terribly wrong.'));
-    handler(req, ({} as unknown) as Response, (err: unknown) => {
-      expect(err).toBeTruthy();
-      done();
-    });
-  });
 });

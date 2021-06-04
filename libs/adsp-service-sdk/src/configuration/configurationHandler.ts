@@ -9,13 +9,8 @@ export const createConfigurationHandler = (service: ConfigurationService, servic
 ) => {
   const contextTenantId = req.user?.tenantId;
 
-  try {
-    req['getConfiguration'] = <C, O = undefined>(tenantId?: AdspId) =>
-      service.getConfiguration<C, O>(serviceId, req.user.token.bearer, tenantId || contextTenantId);
+  req['getConfiguration'] = <C, O = undefined>(tenantId?: AdspId) =>
+    service.getConfiguration<C, O>(serviceId, req.user.token.bearer, tenantId || contextTenantId);
 
-    next();
-  } catch (err) {
-    next(err);
-    return;
-  }
+  next();
 };

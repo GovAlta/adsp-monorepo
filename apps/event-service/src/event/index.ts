@@ -2,25 +2,23 @@ import * as fs from 'fs';
 import { Application } from 'express';
 import { Logger } from 'winston';
 import { createEventRouter } from './router';
-import { DomainEventService, ValidationService } from './service';
+import { DomainEventSubscriberService } from './service';
+import { createJobs, JobProps } from './job';
 
 export type { DomainEvent, EventDefinition, Namespace } from './types';
-export type {
-  DomainEventService,
-  DomainEventSubscriberService,
-  DomainEventWorkItem,
-  ValidationService,
-} from './service';
-
+export { NamespaceEntity } from './model';
+export type { DomainEventService, DomainEventSubscriberService, DomainEventWorkItem } from './service';
 export { EventServiceRoles } from './role';
 
-interface EventMiddlewareProps {
+interface EventMiddlewareProps extends Omit<JobProps, 'events'> {
   logger: Logger;
-  eventService: DomainEventService;
-  validationService: ValidationService;
+  eventService: DomainEventSubscriberService;
 }
 
-export const applyEventMiddleware = (app: Application, props: EventMiddlewareProps): Application => {
+export const applyEventMiddleware = (
+  app: Application,
+  { eventService, directory, tokenProvider, ...props }: EventMiddlewareProps
+): Application => {
   const eventRouter = createEventRouter(props);
 
   app.use('/event/v1', eventRouter);
@@ -39,6 +37,13 @@ export const applyEventMiddleware = (app: Application, props: EventMiddlewarePro
         }
       });
     }
+  });
+
+  createJobs({
+    logger: props.logger,
+    directory,
+    tokenProvider,
+    events: eventService.getEvents(),
   });
 
   return app;

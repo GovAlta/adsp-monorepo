@@ -1,5 +1,7 @@
 import { connect } from 'amqplib';
 import { Logger } from 'winston';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const retry = require('promise-retry');
 import { AmqpDomainEventService } from './service';
 
 interface AmqpEventServiceProps {
@@ -15,16 +17,26 @@ export const createEventService = async ({
   amqpPassword,
   logger,
 }: AmqpEventServiceProps): Promise<AmqpDomainEventService> => {
-  const connection = await connect({
-    heartbeat: 160,
-    hostname: amqpHost,
-    username: amqpUser,
-    password: amqpPassword,
+  const service = await retry(async (next, count) => {
+    logger.debug(`Try ${count}: connecting to RabbitMQ - ${amqpHost}...`, { context: 'AmqpDomainEventService' });
+
+    try {
+      const connection = await connect({
+        heartbeat: 160,
+        hostname: amqpHost,
+        username: amqpUser,
+        password: amqpPassword,
+      });
+
+      const service = new AmqpDomainEventService(logger, connection);
+      await service.connect();
+
+      return service;
+    } catch (err) {
+      next(err);
+    }
   });
 
-  const service = new AmqpDomainEventService(logger, connection);
-  await service.connect();
-
-  logger.info(`Connected to RabbitMQ at: ${amqpHost}`);
+  logger.info(`Connected to RabbitMQ at: ${amqpHost}`, { context: 'AmqpDomainEventService' });
   return service;
 };
