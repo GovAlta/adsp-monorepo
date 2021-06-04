@@ -127,7 +127,7 @@ async function initializeApp(): Promise<express.Application> {
 
   const swaggerHosts = {
     tenantAPI: (await directory.getServiceUrl(adspId`urn:ads:platform:tenant-service`))?.href || '',
-    // fileService: (await directory.getServiceUrl(adspId`urn:ads:platform:file-service`))?.href || '',
+    fileService: (await directory.getServiceUrl(adspId`urn:ads:platform:file-service`))?.href || '',
   };
 
   const swaggerUITenantAPIOptions = {

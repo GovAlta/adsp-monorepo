@@ -3,13 +3,12 @@ import { IsNotEmpty } from 'class-validator';
 import { DirectoryRepository } from '../repository';
 
 export class DirectoryEntity implements Directory {
-  _id: string;
+  id: string;
   @IsNotEmpty()
   name: string;
   @IsNotEmpty()
   services: Service[];
   constructor(private repository: DirectoryRepository, directory: Directory) {
-    this._id = directory._id;
     this.name = directory.name;
     this.services = directory.services;
   }
@@ -25,5 +24,8 @@ export class DirectoryEntity implements Directory {
 
   delete() {
     return this.repository.delete(this);
+  }
+  getDirectories(name: string) {
+    return this.repository.getDirectories(name);
   }
 }
