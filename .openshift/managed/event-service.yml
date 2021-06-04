@@ -232,13 +232,13 @@ objects:
               livenessProbe:
                 exec:
                   command: ["rabbitmqctl", "status"]
-                initialDelaySeconds: 30
-                timeoutSeconds: 10
+                initialDelaySeconds: 60
+                timeoutSeconds: 30
               readinessProbe:
                 exec:
                   command: ["rabbitmqctl", "status"]
-                initialDelaySeconds: 10
-                timeoutSeconds: 10
+                initialDelaySeconds: 60
+                timeoutSeconds: 30
               env:
                 - name: RABBITMQ_DEFAULT_USER
                   valueFrom:

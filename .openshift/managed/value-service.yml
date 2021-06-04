@@ -1,0 +1,384 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: value-service
+  annotations:
+    tags: core-services, value-service
+    template.openshift.io/provider-display-name: platform team
+    description: Value Service
+labels:
+  application: value-service
+parameters:
+  - name: INFRA_NAMESPACE
+    description: Name of the infrastructure project.
+    displayName: Infra Namespace
+    value: core-services-infra
+    required: true
+  - name: NAMESPACE
+    description: Namespace of the environment.
+    displayName: Namespace
+    value: core-services-dev
+    required: true
+  - name: NAME_SUFFIX
+    description: Suffix applied to the names of the objects created.
+    displayName: Name Suffix
+    value: ""
+  - name: BUILD_TAG
+    description: Name of the ImageStreamTag to build.
+    displayName: Build Tag
+    value: latest
+  - name: DEPLOY_TAG
+    description: Name of the ImageStreamTag to deploy.
+    displayName: Deploy Tag
+    value: latest
+  - name: ROUTE_HOST
+    description: Host for the route.
+    displayName: Route Host
+    value: ""
+  - name: DATABASE_NAME
+    displayName: "Database Name"
+    description: "Name of the database accessed."
+    value: valueDb
+    required: true
+  - name: DATABASE_USER
+    displayName: "Database Connection User"
+    description: User for accessing the database.
+    value: postgres
+    required: true
+  - name: DATABASE_PASSWORD
+    displayName: "Database Connection Password"
+    description: "Password for the database user used to access the database."
+    generate: expression
+    from: "[a-zA-Z0-9]{16}"
+    required: true
+objects:
+  # TimescaleDb Objects
+  # NOTE: Secret will generate new values if updated, so this is only for branch deployments.
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        app: value-service${NAME_SUFFIX}
+        component: database
+        apply-init: "true"
+        apply-branch: "true"
+      name: value-service-timescaledb${NAME_SUFFIX}
+    stringData:
+      database-host: value-service-timescaledb${NAME_SUFFIX}
+      database-port: "5432"
+      database-name: ${DATABASE_NAME}
+      database-password: ${DATABASE_PASSWORD}
+      database-user: ${DATABASE_USER}
+  # PersistentVolumeClaim is only generated for branch deployment to avoid losing persistent data.
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: value-service${NAME_SUFFIX}
+        component: database
+        apply-init: "true"
+        apply-branch: "true"
+      name: value-service-timescaledb${NAME_SUFFIX}
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: value-service${NAME_SUFFIX}
+        component: database
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: value-service-timescaledb${NAME_SUFFIX}
+    spec:
+      ports:
+        - name: postgresql
+          port: 5432
+          protocol: TCP
+          targetPort: 5432
+      selector:
+        app: value-service${NAME_SUFFIX}
+        component: database
+      sessionAffinity: None
+      type: ClusterIP
+    status:
+      loadBalancer: {}
+  - kind: ImageStream
+    apiVersion: v1
+    metadata:
+      labels:
+        app: value-service
+        component: database
+        apply-infra: "true"
+      name: timescaledb
+    spec:
+      lookupPolicy:
+        local: false
+      tags:
+        - name: 1.7.1-pg12-bitnami
+          annotations:
+            openshift.io/imported-from: timescale/timescaledb:1.7.1-pg12-bitnami
+          from:
+            kind: DockerImage
+            name: timescale/timescaledb:1.7.1-pg12-bitnami
+          referencePolicy:
+            type: Source
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      labels:
+        app: value-service${NAME_SUFFIX}
+        component: database
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: value-service-timescaledb${NAME_SUFFIX}
+    spec:
+      replicas: 1
+      selector:
+        app: value-service${NAME_SUFFIX}
+        component: database
+      strategy:
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            app: value-service${NAME_SUFFIX}
+            component: database
+        spec:
+          containers:
+            - env:
+                - name: POSTGRESQL_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-password
+                      name: value-service-timescaledb
+                - name: POSTGRESQL_DATABASE
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-name
+                      name: value-service-timescaledb
+              imagePullPolicy: IfNotPresent
+              name: timescaledb
+              ports:
+                - containerPort: 5432
+                  protocol: TCP
+              resources:
+                limits:
+                  memory: 512Mi
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              volumeMounts:
+                - mountPath: /bitnami/postgresql
+                  name: value-service-timescaledb-data
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+          volumes:
+            - name: value-service-timescaledb-data
+              persistentVolumeClaim:
+                claimName: value-service-timescaledb${NAME_SUFFIX}
+      triggers:
+        - imageChangeParams:
+            automatic: true
+            containerNames:
+              - timescaledb
+            from:
+              kind: ImageStreamTag
+              name: timescaledb:1.7.1-pg12-bitnami
+              namespace: ${INFRA_NAMESPACE}
+          type: ImageChange
+
+  # Value Service Objects
+
+  # ImageStream is here for reference.
+  # There is a single ImageStream created in the infra project.
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      labels:
+        app: value-service
+        component: api
+        apply-infra: "true"
+      name: value-service
+      namespace: ${INFRA_NAMESPACE}
+    spec: {}
+
+  # BuildConfig is created for the primary pipeline as well as branch deployment.
+  # NOTE: Each instance should publish a unique Tag to the common ImageStream in infra.
+  - apiVersion: v1
+    kind: BuildConfig
+    metadata:
+      labels:
+        app: value-service${NAME_SUFFIX}
+        component: api
+        apply-infra: "true"
+        apply-branch: "true"
+      name: value-service${NAME_SUFFIX}
+    spec:
+      output:
+        to:
+          kind: ImageStreamTag
+          name: value-service:${BUILD_TAG}
+          namespace: ${INFRA_NAMESPACE}
+      postCommit: {}
+      resources: {}
+      source:
+        binary: {}
+        type: Binary
+      strategy:
+        dockerStrategy:
+          buildArgs:
+            - name: SERVICE
+              value: value-service
+          dockerfilePath: .openshift/service/Dockerfile
+        type: Docker
+
+  # DeploymentConfig (and Service and Route) is created in each environment of the
+  # primary pipeline as well as branch deployment.
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      labels:
+        app: value-service${NAME_SUFFIX}
+        component: api
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: value-service${NAME_SUFFIX}
+    spec:
+      replicas: 1
+      revisionHistoryLimit: 3
+      selector:
+        app: value-service${NAME_SUFFIX}
+        component: api
+      strategy:
+        activeDeadlineSeconds: 21600
+        recreateParams:
+          timeoutSeconds: 600
+        resources: {}
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            app: value-service${NAME_SUFFIX}
+            component: api
+        spec:
+          containers:
+            - envFrom:
+                - configMapRef:
+                    name: value-service
+                - secretRef:
+                    name: value-service
+              env:
+                - name: PORT
+                  value: "3333"
+                - name: LOG_LEVEL
+                  value: info
+                - name: DB_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-host
+                      name: value-service-timescaledb${NAME_SUFFIX}
+                - name: DB_PORT
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-port
+                      name: value-service-timescaledb${NAME_SUFFIX}
+                - name: DB_USER
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-user
+                      name: value-service-timescaledb${NAME_SUFFIX}
+                - name: DB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-password
+                      name: value-service-timescaledb${NAME_SUFFIX}
+                - name: DB_NAME
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-name
+                      name: value-service-timescaledb${NAME_SUFFIX}
+              imagePullPolicy: IfNotPresent
+              name: value-service
+              ports:
+                - containerPort: 3333
+                  name: http
+                  protocol: TCP
+              resources: {}
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+      triggers:
+        - imageChangeParams:
+            containerNames:
+              - value-service
+            from:
+              kind: ImageStreamTag
+              name: value-service:${DEPLOY_TAG}
+              namespace: ${INFRA_NAMESPACE}
+          type: ImageChange
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: value-service${NAME_SUFFIX}
+        component: api
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: value-service${NAME_SUFFIX}
+    spec:
+      ports:
+        - name: http
+          port: 3333
+          protocol: TCP
+          targetPort: 3333
+      selector:
+        app: value-service${NAME_SUFFIX}
+        component: api
+      sessionAffinity: None
+      type: ClusterIP
+  - apiVersion: v1
+    kind: Route
+    metadata:
+      labels:
+        app: value-service${NAME_SUFFIX}
+        component: api
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: value-service${NAME_SUFFIX}
+    spec:
+      host: ${ROUTE_HOST}
+      port:
+        targetPort: http
+      tls:
+        termination: edge
+      to:
+        kind: Service
+        name: value-service${NAME_SUFFIX}
+        weight: 100
+      wildcardPolicy: None

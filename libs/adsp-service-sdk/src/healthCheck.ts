@@ -18,7 +18,7 @@ export interface PlatformHealthCheck {
 
 export const checkServiceHealth = async (logger: Logger, healthUrl: URL): Promise<boolean> => {
   try {
-    const { status } = await axios.get(healthUrl.href, { timeout: 100 });
+    const { status } = await axios.get(healthUrl.href, { timeout: 250 });
     return status >= 200 && status < 300;
   } catch (err) {
     logger.debug(`Encountered error in health check. ${err}`, { context: 'checkHealth' });

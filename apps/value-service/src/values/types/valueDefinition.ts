@@ -3,6 +3,4 @@ export interface ValueDefinition {
   description: string
   type: string
   jsonSchema: Record<string, unknown>
-  readRoles: string[]
-  writeRoles: string[]
 }

@@ -1,4 +1,4 @@
-import { DomainEvent, EventServiceClient, WorkQueueService } from '@core-services/core-common';
+import { DomainEvent, WorkQueueService } from '@core-services/core-common';
 import { Notification } from '../types';
 import { NotificationTypeRepository, SubscriptionRepository } from '../repository';
 import { TemplateService } from '../template';
@@ -9,7 +9,6 @@ interface ProcessEventJobProps {
   typeRepository: NotificationTypeRepository;
   subscriptionRepository: SubscriptionRepository;
   queueService: WorkQueueService<Notification>;
-  eventService: EventServiceClient;
 }
 
 export const createProcessEventJob = ({
@@ -17,7 +16,6 @@ export const createProcessEventJob = ({
   typeRepository,
   subscriptionRepository,
   queueService,
-  eventService,
 }: ProcessEventJobProps) => (event: DomainEvent, done: () => void) => {
   typeRepository
     .find(100, null, { eventCriteria: { name: event.name, namespace: event.namespace } })
@@ -37,10 +35,6 @@ export const createProcessEventJob = ({
           event,
           typeSubscription.subscriptions
         );
-
-        if (typeNotifications.length > 0) {
-          eventService.send(generatedNotifications(event, typeSubscription.type, typeNotifications.length));
-        }
 
         return [...notifications, ...typeNotifications];
       }, [])

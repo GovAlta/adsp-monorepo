@@ -2512,10 +2512,30 @@
           {
             "id": "3fd83fb1-ca72-401a-b9e9-9de77e010727",
             "name": "event-sender",
-            "description": "Administrator role for the event-service",
+            "description": "Sender role for the event-service",
             "composite": false,
             "clientRole": true,
             "containerId": "5ec5219b-24c1-45d0-92e7-4b08b4ccceb9",
+            "attributes": {}
+          }
+        ],
+        "urn:ads:platform:value-service": [
+          {
+            "id": "64179ae2-f821-4db1-8d6d-1a8feb957e0d",
+            "name": "value-writer",
+            "description": "Writer role for the value-service",
+            "composite": false,
+            "clientRole": true,
+            "containerId": "0e6531dc-eb2d-40b9-9304-a21af574972d",
+            "attributes": {}
+          },
+          {
+            "id": "5a53f8e5-ce73-441c-9f30-344661db0821",
+            "name": "value-reader",
+            "description": "Reader role for the value-service",
+            "composite": false,
+            "clientRole": true,
+            "containerId": "0e6531dc-eb2d-40b9-9304-a21af574972d",
             "attributes": {}
           }
         ]
@@ -2572,6 +2592,35 @@
         "totp": false,
         "emailVerified": false,
         "serviceAccountClientId": "urn:ads:platform:event-service",
+        "disableableCredentialTypes": [],
+        "requiredActions": [],
+        "realmRoles": [
+          "offline_access",
+          "uma_authorization"
+        ],
+        "clientRoles": {
+          "account": [
+            "manage-account",
+            "view-profile"
+          ],
+          "urn:ads:platform:tenant-service": [
+            "platform-service"
+          ],
+          "urn:ads:platform:value-service": [
+            "value-writer"
+          ]
+        },
+        "notBefore": 0,
+        "groups": []
+      },
+      {
+        "id": "fea0cfee-44cc-4290-b3d6-8a677868fd77",
+        "createdTimestamp": 1607448208769,
+        "username": "service-account-urn:ads:platform:value-service",
+        "enabled": true,
+        "totp": false,
+        "emailVerified": false,
+        "serviceAccountClientId": "urn:ads:platform:value-service",
         "disableableCredentialTypes": [],
         "requiredActions": [],
         "realmRoles": [
@@ -3016,6 +3065,105 @@
           },
           {
             "id": "603f08f6-ae12-4e5d-8fa5-9b1b9ec31d4e",
+            "name": "Client Host",
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-usersessionmodel-note-mapper",
+            "consentRequired": false,
+            "config": {
+              "user.session.note": "clientHost",
+              "userinfo.token.claim": "true",
+              "id.token.claim": "true",
+              "access.token.claim": "true",
+              "claim.name": "clientHost",
+              "jsonType.label": "String"
+            }
+          }
+        ],
+        "defaultClientScopes": [
+          "web-origins",
+          "role_list",
+          "roles",
+          "profile",
+          "email"
+        ],
+        "optionalClientScopes": [
+          "address",
+          "phone",
+          "offline_access",
+          "microprofile-jwt"
+        ]
+      },
+      {
+        "id": "0e6531dc-eb2d-40b9-9304-a21af574972d",
+        "clientId": "urn:ads:platform:value-service",
+        "surrogateAuthRequired": false,
+        "enabled": true,
+        "alwaysDisplayInConsole": false,
+        "clientAuthenticatorType": "client-secret",
+        "secret": "7110bbaa-b3b7-488c-9d6a-a5675e03127d",
+        "redirectUris": [],
+        "webOrigins": [],
+        "notBefore": 0,
+        "bearerOnly": false,
+        "consentRequired": false,
+        "standardFlowEnabled": false,
+        "implicitFlowEnabled": false,
+        "directAccessGrantsEnabled": false,
+        "serviceAccountsEnabled": true,
+        "publicClient": false,
+        "frontchannelLogout": false,
+        "protocol": "openid-connect",
+        "attributes": {
+          "saml.assertion.signature": "false",
+          "saml.force.post.binding": "false",
+          "saml.multivalued.roles": "false",
+          "saml.encrypt": "false",
+          "saml.server.signature": "false",
+          "saml.server.signature.keyinfo.ext": "false",
+          "exclude.session.state.from.auth.response": "false",
+          "saml_force_name_id_format": "false",
+          "saml.client.signature": "false",
+          "tls.client.certificate.bound.access.tokens": "false",
+          "saml.authnstatement": "false",
+          "display.on.consent.screen": "false",
+          "saml.onetimeuse.condition": "false"
+        },
+        "authenticationFlowBindingOverrides": {},
+        "fullScopeAllowed": true,
+        "nodeReRegistrationTimeout": -1,
+        "protocolMappers": [
+          {
+            "id": "e4854a14-ede3-4798-a7d5-c836f1e3a8f1",
+            "name": "Client ID",
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-usersessionmodel-note-mapper",
+            "consentRequired": false,
+            "config": {
+              "user.session.note": "clientId",
+              "userinfo.token.claim": "true",
+              "id.token.claim": "true",
+              "access.token.claim": "true",
+              "claim.name": "clientId",
+              "jsonType.label": "String"
+            }
+          },
+          {
+            "id": "3fb1aebc-a32c-4582-a9a9-6a891b3116c5",
+            "name": "Client IP Address",
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-usersessionmodel-note-mapper",
+            "consentRequired": false,
+            "config": {
+              "user.session.note": "clientAddress",
+              "userinfo.token.claim": "true",
+              "id.token.claim": "true",
+              "access.token.claim": "true",
+              "claim.name": "clientAddress",
+              "jsonType.label": "String"
+            }
+          },
+          {
+            "id": "4452a98b-05eb-464d-a73d-4247b1bad97b",
             "name": "Client Host",
             "protocol": "openid-connect",
             "protocolMapper": "oidc-usersessionmodel-note-mapper",

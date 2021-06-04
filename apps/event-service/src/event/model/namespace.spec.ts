@@ -2,8 +2,22 @@ import { adspId } from '@abgov/adsp-service-sdk';
 import { NamespaceEntity } from './namespace';
 
 describe('NamespaceEntity', () => {
+  const serviceMock = {
+    isConnected: jest.fn(() => true),
+    send: jest.fn(),
+  };
+
+  const validationMock = {
+    setSchema: jest.fn(),
+    validate: jest.fn(),
+  };
+
+  beforeEach(() => {
+    serviceMock.send.mockReset();
+    validationMock.validate.mockReset();
+  });
   it('can be created', () => {
-    const entity = new NamespaceEntity({
+    const entity = new NamespaceEntity(serviceMock, validationMock, {
       tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       name: 'test',
       definitions: {
@@ -20,7 +34,7 @@ describe('NamespaceEntity', () => {
   });
 
   it('can indicate null user cannot send', () => {
-    const entity = new NamespaceEntity({
+    const entity = new NamespaceEntity(serviceMock, validationMock, {
       tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       name: 'test',
       definitions: {
@@ -36,7 +50,7 @@ describe('NamespaceEntity', () => {
   });
 
   it('can indicate core user can send for tenant', () => {
-    const entity = new NamespaceEntity({
+    const entity = new NamespaceEntity(serviceMock, validationMock, {
       tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       name: 'test',
       definitions: {
@@ -61,7 +75,7 @@ describe('NamespaceEntity', () => {
   });
 
   it('can indicate tenant user can send', () => {
-    const entity = new NamespaceEntity({
+    const entity = new NamespaceEntity(serviceMock, validationMock, {
       tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       name: 'test',
       definitions: {
@@ -87,7 +101,7 @@ describe('NamespaceEntity', () => {
   });
 
   it('can indicate tenant user cannot send for different tenant', () => {
-    const entity = new NamespaceEntity({
+    const entity = new NamespaceEntity(serviceMock, validationMock, {
       tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       name: 'test',
       definitions: {

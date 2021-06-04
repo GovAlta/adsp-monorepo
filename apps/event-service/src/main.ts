@@ -3,12 +3,17 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, createCoreStrategy, initializePlatform } from '@abgov/adsp-service-sdk';
-import { createLogger, UnauthorizedError, NotFoundError, InvalidOperationError } from '@core-services/core-common';
+import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
+import {
+  AjvValidationService,
+  createLogger,
+  UnauthorizedError,
+  NotFoundError,
+  InvalidOperationError,
+} from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { createEventService } from './amqp';
-import { applyEventMiddleware, EventServiceRoles } from './event';
-import { AjvValidationService } from './ajv';
+import { applyEventMiddleware, EventServiceRoles, Namespace, NamespaceEntity } from './event';
 
 const logger = createLogger('event-service', environment.LOG_LEVEL);
 
@@ -20,9 +25,24 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(express.json({ limit: '1mb' }));
   app.use(cors());
 
+  const eventService = await createEventService({
+    amqpHost: environment.AMQP_HOST,
+    amqpUser: environment.AMQP_USER,
+    amqpPassword: environment.AMQP_PASSWORD,
+    logger,
+  });
+
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { tenantStrategy, tenantHandler, configurationHandler, healthCheck } = await initializePlatform(
+  const {
+    coreStrategy,
+    directory,
+    tenantStrategy,
+    tenantHandler,
+    tokenProvider,
+    configurationHandler,
+    healthCheck,
+  } = await initializePlatform(
     {
       serviceId,
       displayName: 'Event Service',
@@ -52,18 +72,28 @@ const initializeApp = async (): Promise<express.Application> => {
           additionalProperties: false,
         },
       },
+      configurationConverter: (config: Record<string, Namespace>, tenantId) => {
+        return config
+          ? Object.getOwnPropertyNames(config).reduce(
+              (namespaces, namespace) => ({
+                ...namespaces,
+                [namespace]: new NamespaceEntity(
+                  eventService,
+                  new AjvValidationService(logger),
+                  config[namespace],
+                  tenantId
+                ),
+              }),
+              {}
+            )
+          : null;
+      },
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
     },
     { logger }
   );
-
-  const coreStrategy = createCoreStrategy({
-    logger,
-    serviceId,
-    accessServiceUrl,
-  });
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
@@ -79,19 +109,11 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(passport.initialize());
   app.use('/event', passport.authenticate(['core', 'tenant'], { session: false }), tenantHandler, configurationHandler);
 
-  const eventService = await createEventService({
-    amqpHost: environment.AMQP_HOST,
-    amqpUser: environment.AMQP_USER,
-    amqpPassword: environment.AMQP_PASSWORD,
-    logger,
-  });
-
-  const validationService = new AjvValidationService(logger);
-
   applyEventMiddleware(app, {
     logger,
+    directory,
+    tokenProvider,
     eventService,
-    validationService,
   });
 
   app.get('/health', async (_req, res) => {
@@ -109,6 +131,7 @@ const initializeApp = async (): Promise<express.Application> => {
         self: new URL(req.originalUrl, rootUrl).href,
         health: new URL('/health', rootUrl).href,
         api: new URL('/event/v1', rootUrl).href,
+        doc: new URL('/swagger/docs/v1', rootUrl).href,
       },
     });
   });

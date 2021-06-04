@@ -1,26 +1,22 @@
-import { Results } from '@core-services/core-common';
-import { NamespaceEntity, ValueDefinitionEntity } from '../model';
+import { AdspId } from '@abgov/adsp-service-sdk';
+import { ValueDefinitionEntity } from '../model';
 import { Metric, MetricValue, Value, ValueCriteria, MetricCriteria } from '../types';
 
 export interface ValuesRepository {
-  getNamespace(name: string): Promise<NamespaceEntity>
-  getNamespaces(top: number, after: string): Promise<Results<NamespaceEntity>>
-  
-  save(entity: NamespaceEntity): Promise<NamespaceEntity>
-  saveDefinition(definitionEntity: ValueDefinitionEntity): Promise<ValueDefinitionEntity>
-  
-  writeValue(definition: ValueDefinitionEntity, value: Value): Promise<Value>
-  readValues(definition: ValueDefinitionEntity, criteria: ValueCriteria): Promise<Value[]>
+  writeValue(tenantId: AdspId, definition: ValueDefinitionEntity, value: Value): Promise<Value>;
+  readValues(tenantId: AdspId, namespace: string, name: string, criteria: ValueCriteria): Promise<Value[]>;
 
   readMetric(
-    definition: ValueDefinitionEntity, 
+    tenantId: AdspId,
+    definition: ValueDefinitionEntity,
     metric: string,
     readMetric: MetricCriteria
-  ): Promise<Metric>
+  ): Promise<Metric>;
   writeMetric(
-    definition: ValueDefinitionEntity, 
-    metric: string, 
-    timestamp: Date, 
+    tenantId: AdspId,
+    definition: ValueDefinitionEntity,
+    metric: string,
+    timestamp: Date,
     value: number
-  ): Promise<MetricValue>
+  ): Promise<MetricValue>;
 }

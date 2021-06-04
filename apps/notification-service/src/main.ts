@@ -11,7 +11,6 @@ import {
   NotFoundError,
   InvalidOperationError,
   createAmqpQueueService,
-  EventServiceClient,
   getKeycloakTokenRequestProps,
 } from '@core-services/core-common';
 import { environment } from './environments/environment';
@@ -68,11 +67,6 @@ Promise.all([
     ...repositories,
     logger,
     templateService,
-    eventService: new EventServiceClient(
-      logger,
-      getKeycloakTokenRequestProps(environment),
-      environment.EVENT_SERVICE_URL
-    ),
     eventSubscriber,
     queueService,
     providers: {

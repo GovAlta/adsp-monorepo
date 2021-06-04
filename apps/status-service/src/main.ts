@@ -9,7 +9,7 @@ import { createRepositories } from './mongo';
 import { bindEndpoints } from './app';
 import * as cors from 'cors';
 import { scheduleServiceStatusJobs } from './app/jobs';
-import { AdspId, createCoreStrategy, initializePlatform } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import * as util from 'util';
 import { GoAError } from './app/common/errors';
 
@@ -29,7 +29,7 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { tenantStrategy } = await initializePlatform(
+  const { coreStrategy, tenantStrategy } = await initializePlatform(
     {
       serviceId,
       displayName: 'Status Service',
@@ -42,15 +42,7 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
     { logger }
   );
 
-  passport.use(
-    'jwt',
-    createCoreStrategy({
-      logger,
-      serviceId,
-      accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
-      ignoreServiceAud: true,
-    })
-  );
+  passport.use('jwt', coreStrategy);
   passport.use('jwt-tenant', tenantStrategy);
 
   passport.use(new AnonymousStrategy());

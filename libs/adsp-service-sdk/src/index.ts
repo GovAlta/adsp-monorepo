@@ -1,8 +1,13 @@
 import { RequestHandler } from 'express';
 import { Strategy } from 'passport';
 import type { Logger } from 'winston';
-import { createTenantStrategy, createTokenProvider, TokenProvider } from './access';
-import { ConfigurationService, createConfigurationHandler, createConfigurationService } from './configuration';
+import { createCoreStrategy, createTenantStrategy, createTokenProvider, TokenProvider } from './access';
+import {
+  ConfigurationConverter,
+  ConfigurationService,
+  createConfigurationHandler,
+  createConfigurationService,
+} from './configuration';
 import { createDirectory, ServiceDirectory } from './directory';
 import { createEventService, EventService } from './event';
 import { createHealthCheck, PlatformHealthCheck } from './healthCheck';
@@ -19,6 +24,8 @@ interface AdspOptions extends ServiceRegistration {
   accessServiceUrl: URL;
   /** Ignore Service Aud: Skip verification of Service ID in token audience. */
   ignoreServiceAud?: boolean;
+  /** Configuration Converter: Converter function for configuration; converted value is cached. */
+  configurationConverter?: ConfigurationConverter;
 }
 
 interface PlatformServices {
@@ -35,6 +42,8 @@ interface PlatformServices {
 interface Platform extends PlatformServices {
   /** TokenProvider: Provides service account access token. */
   tokenProvider: TokenProvider;
+  /** CoreStrategy: PassportJS strategy for core access tokens. */
+  coreStrategy: Strategy;
   /** TenantStrategy: PassportJS strategy for tenant access tokens. */
   tenantStrategy: Strategy;
   /** TenantHandler: Express request handler that sets req.tenant. */
@@ -51,7 +60,15 @@ interface LogOptions {
 }
 
 export async function initializePlatform(
-  { serviceId, clientSecret, directoryUrl, accessServiceUrl, ignoreServiceAud, ...registration }: AdspOptions,
+  {
+    serviceId,
+    clientSecret,
+    directoryUrl,
+    accessServiceUrl,
+    ignoreServiceAud,
+    configurationConverter,
+    ...registration
+  }: AdspOptions,
   logOptions: Logger | LogOptions,
   service?: Partial<PlatformServices>
 ): Promise<Platform> {
@@ -63,10 +80,15 @@ export async function initializePlatform(
   const directory = service?.directory || createDirectory({ logger, directoryUrl, tokenProvider });
   await registerService(directory, { ...registration, serviceId });
 
+  const coreStrategy = createCoreStrategy({ logger, serviceId, accessServiceUrl, ignoreServiceAud });
+
   const tenantService = service?.tenantService || createTenantService({ logger, directory, tokenProvider });
   const tenantHandler = createTenantHandler(tenantService);
   const tenantStrategy = createTenantStrategy({ logger, serviceId, accessServiceUrl, tenantService, ignoreServiceAud });
-  const configurationService = service?.configurationService || createConfigurationService({ logger, directory });
+
+  const configurationService =
+    service?.configurationService ||
+    createConfigurationService({ logger, directory, converter: configurationConverter });
   const configurationHandler = createConfigurationHandler(configurationService, serviceId);
 
   let eventService = service?.eventService;
@@ -88,6 +110,7 @@ export async function initializePlatform(
 
   return {
     tokenProvider,
+    coreStrategy,
     tenantService,
     tenantStrategy,
     tenantHandler,
@@ -100,8 +123,8 @@ export async function initializePlatform(
 }
 
 export { adspId, AdspId } from './utils';
-export { createCoreStrategy, AssertCoreRole, AssertRole, UnauthorizedUserError } from './access';
-export type { User } from './access';
+export { AssertCoreRole, AssertRole, UnauthorizedUserError } from './access';
+export type { TokenProvider, User } from './access';
 export type { ServiceDirectory } from './directory';
 export type { Tenant, TenantService } from './tenant';
 export type { ConfigurationService } from './configuration';

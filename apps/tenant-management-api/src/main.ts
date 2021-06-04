@@ -5,7 +5,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as healthCheck from 'express-healthcheck';
 import * as passport from 'passport';
 import * as swaggerUi from 'swagger-ui-express';
-import { AdspId, adspId, createCoreStrategy, initializePlatform, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AdspId, adspId, initializePlatform, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError, NotFoundError, InvalidOperationError } from '@core-services/core-common';
 import { createConfigService } from './configuration-management';
 import { createDirectoryService } from './directory-service';
@@ -33,7 +33,7 @@ async function initializeApp(): Promise<express.Application> {
   app.use(cors());
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
-  const { tenantStrategy, directory } = await initializePlatform(
+  const { coreStrategy, tenantStrategy, directory } = await initializePlatform(
     {
       serviceId,
       displayName: 'Tenant Service',
@@ -50,15 +50,7 @@ async function initializeApp(): Promise<express.Application> {
     }
   );
 
-  passport.use(
-    'jwt',
-    createCoreStrategy({
-      logger,
-      serviceId,
-      accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
-      ignoreServiceAud: true,
-    })
-  );
+  passport.use('jwt', coreStrategy);
   passport.use('jwt-tenant', tenantStrategy);
 
   passport.serializeUser(function (user, done) {

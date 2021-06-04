@@ -4,10 +4,10 @@ import * as NodeCache from 'node-cache';
 import type { Logger } from 'winston';
 import { ServiceDirectory } from '../directory';
 import { adspId, AdspId, assertAdspId } from '../utils';
-import type { Configuration } from './configuration';
+import type { Configuration, ConfigurationConverter } from './configuration';
 
 export interface ConfigurationService {
-  getConfiguration<C, O = undefined>(serviceId: AdspId, token: string, tenantId?: AdspId): Promise<C & { options: O }>;
+  getConfiguration<C, O = undefined>(serviceId: AdspId, token: string, tenantId: AdspId): Promise<C & { options: O }>;
 }
 
 export class ConfigurationServiceImpl implements ConfigurationService {
@@ -18,7 +18,17 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     useClones: false,
   });
 
-  constructor(private readonly logger: Logger, private readonly directory: ServiceDirectory) {}
+  #converter: ConfigurationConverter = (value: unknown) => value;
+
+  constructor(
+    private readonly logger: Logger,
+    private readonly directory: ServiceDirectory,
+    converter: ConfigurationConverter = null
+  ) {
+    if (converter) {
+      this.#converter = converter;
+    }
+  }
 
   #retrieveConfiguration = async <C>(tenantId: AdspId, serviceId: AdspId, token: string): Promise<C> => {
     this.logger.debug(`Retrieving tenant '${tenantId}' configuration...'`, this.LOG_CONTEXT);
@@ -32,8 +42,9 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     this.logger.debug(`Retrieving tenant configuration from ${configUrl}...'`, this.LOG_CONTEXT);
 
     try {
-      const { data: config } = await axios.get<C>(configUrl.href, { headers: { Authorization: `Bearer ${token}` } });
+      const { data } = await axios.get<C>(configUrl.href, { headers: { Authorization: `Bearer ${token}` } });
 
+      const config = this.#converter(data, tenantId) as C;
       if (config) {
         this.#configuration.set(`${tenantId}-${serviceId}`, config);
         this.logger.info(`Retrieved and cached tenant '${tenantId}' configuration for ${service}.`, this.LOG_CONTEXT);
@@ -67,7 +78,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const options = data.results[0]?.configOptions;
+      const options = this.#converter(data.results[0]?.configOptions) as O;
       if (options) {
         this.#configuration.set(`${serviceId}`, options);
         this.logger.info(`Retrieved and cached service '${service}' options.`, this.LOG_CONTEXT);
@@ -87,12 +98,15 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     token: string,
     tenantId?: AdspId
   ): Promise<Configuration<C, O>> => {
-    assertAdspId(tenantId, 'Provided ID is not for a tenant', 'resource');
+    let configuration = {};
+    if (tenantId) {
+      assertAdspId(tenantId, 'Provided ID is not for a tenant', 'resource');
 
-    const configuration =
-      this.#configuration.get<C>(`${tenantId}-${serviceId}`) ||
-      (await this.#retrieveConfiguration<C>(tenantId, serviceId, token)) ||
-      {};
+      configuration =
+        this.#configuration.get<C>(`${tenantId}-${serviceId}`) ||
+        (await this.#retrieveConfiguration<C>(tenantId, serviceId, token)) ||
+        {};
+    }
 
     const options = this.#configuration.get<O>(`${serviceId}`) || (await this.#retrieveOptions<O>(serviceId, token));
 
