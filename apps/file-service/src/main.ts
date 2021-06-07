@@ -53,14 +53,20 @@ async function initializeApp(): Promise<express.Application> {
           payloadSchema: {
             type: 'object',
             properties: {
-              file: {
-                type: 'object',
-                properties: {
-                  filename: { type: 'string' },
-                },
-              },
+              id: { type: 'string' },
+              filename: { type: 'string' },
             },
-            required: ['file'],
+          },
+        },
+        {
+          name: 'file-deleted',
+          description: 'Signalled when a file is deleted.',
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              filename: { type: 'string' },
+            },
           },
         },
       ],

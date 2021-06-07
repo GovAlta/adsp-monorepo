@@ -1,8 +1,9 @@
 import * as fs from 'fs';
 import { Application } from 'express';
+import { Logger } from 'winston';
+import { EventService } from '@abgov/adsp-service-sdk';
 import { ValuesRepository } from './repository';
 import { createValueRouter } from './router';
-import { Logger } from 'winston';
 
 export * from './types';
 export * from './model';
@@ -11,6 +12,7 @@ export * from './repository';
 interface ValuesMiddlewareProps {
   logger: Logger;
   repository: ValuesRepository;
+  eventService: EventService;
 }
 
 export const applyValuesMiddleware = (app: Application, props: ValuesMiddlewareProps): Application => {

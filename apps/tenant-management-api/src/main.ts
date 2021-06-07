@@ -10,15 +10,13 @@ import { UnauthorizedError, NotFoundError, InvalidOperationError } from '@core-s
 import { createConfigService } from './configuration-management';
 import { createDirectoryService } from './directory-service';
 import { connectMongo, disconnect } from './mongo/index';
-import { tenantRouter } from './tenant';
+import { createTenantRouter, createTenantV2Router, tenantService } from './tenant';
 import { directoryRouter, bootstrapDirectory } from './directory';
 import { logger } from './middleware/logger';
 import { environment } from './environments/environment';
 
 import { version } from '../../../package.json';
 import * as directoryService from './directory/services';
-import * as tenantService from './tenant/services';
-import { tenantV2Router } from './tenant/router';
 
 async function initializeApp(): Promise<express.Application> {
   /* Connect to mongo db */
@@ -33,7 +31,7 @@ async function initializeApp(): Promise<express.Application> {
   app.use(cors());
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
-  const { coreStrategy, tenantStrategy, directory } = await initializePlatform(
+  const { coreStrategy, tenantStrategy, directory, eventService } = await initializePlatform(
     {
       serviceId,
       displayName: 'Tenant Service',
@@ -42,6 +40,23 @@ async function initializeApp(): Promise<express.Application> {
       directoryUrl: null,
       accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
       ignoreServiceAud: true,
+      skipPublishEvents: true,
+      events: [
+        {
+          name: 'tenant-created',
+          description: 'Signalled when a tenant is created.',
+          payloadSchema: {
+            type: 'object',
+          },
+        },
+        {
+          name: 'tenant-deleted',
+          description: 'Signalled when a tenant is deleted.',
+          payloadSchema: {
+            type: 'object',
+          },
+        },
+      ],
     },
     { logger },
     {
@@ -87,10 +102,14 @@ async function initializeApp(): Promise<express.Application> {
   // need to verify which endpoints require which type of authentication.
   const authenticate = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
   const authenticateCore = passport.authenticate(['jwt'], { session: false });
-  app.use('/api/tenant/v1', authenticate, tenantRouter);
-  app.use('/api/discovery/v1', authenticate, directoryRouter);
 
+  const tenantRouter = createTenantRouter({ eventService });
+  app.use('/api/tenant/v1', authenticate, tenantRouter);
+
+  const tenantV2Router = createTenantV2Router();
   app.use('/api/tenant/v2', authenticateCore, tenantV2Router);
+
+  app.use('/api/discovery/v1', authenticate, directoryRouter);
 
   createConfigService(app);
   createDirectoryService(app);

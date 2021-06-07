@@ -2634,6 +2634,9 @@
           ],
           "urn:ads:platform:tenant-service": [
             "platform-service"
+          ],
+          "urn:ads:platform:event-service": [
+            "event-sender"
           ]
         },
         "notBefore": 0,
@@ -2689,6 +2692,9 @@
           ],
           "urn:ads:platform:tenant-service": [
             "platform-service"
+          ],
+          "urn:ads:platform:event-service": [
+            "event-sender"
           ]
         },
         "notBefore": 0,

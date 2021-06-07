@@ -1,4 +1,4 @@
-import { AdspId, User } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService, User } from '@abgov/adsp-service-sdk';
 import {
   AjvValidationService,
   assertAuthenticatedHandler,
@@ -14,9 +14,10 @@ import { MetricCriteria, MetricInterval, ServiceUserRoles, Value, ValueCriteria 
 interface ValueRouterProps {
   logger: Logger;
   repository: ValuesRepository;
+  eventService: EventService;
 }
 
-export const createValueRouter = ({ logger, repository }: ValueRouterProps): Router => {
+export const createValueRouter = ({ logger, repository, eventService }: ValueRouterProps): Router => {
   const valueRouter = Router();
 
   valueRouter.get('/:namespace/values', async (req, res, next) => {
@@ -144,11 +145,22 @@ export const createValueRouter = ({ logger, repository }: ValueRouterProps): Rou
         throw new NotFoundError('value definition', `${namespace}: ${name}`);
       }
 
-      const result = valDef.writeValue(user, tenantId ? AdspId.parse(tenantId) : null, value);
+      const result = await valDef.writeValue(user, tenantId ? AdspId.parse(tenantId) : null, value);
 
       res.send({
         [namespace]: {
           [name]: [result],
+        },
+      });
+
+      eventService.send({
+        name: 'value-written',
+        timestamp: new Date(),
+        correlationId: result.correlationId,
+        payload: {
+          namespace,
+          name,
+          value: result,
         },
       });
     } catch (err) {

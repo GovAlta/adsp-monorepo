@@ -1,8 +1,7 @@
-import type { User } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
+import { InvalidOperationError } from '@core-services/core-common';
 import { DomainEvent, EventDefinition } from '../types';
 import { NamespaceEntity } from './namespace';
-import { EventServiceRoles } from '../role';
+import { DomainEventService } from '../service';
 
 export class EventDefinitionEntity implements EventDefinition {
   public namespace: NamespaceEntity;
@@ -17,15 +16,7 @@ export class EventDefinitionEntity implements EventDefinition {
     this.payloadSchema = definition.payloadSchema || {};
   }
 
-  canSend(user: User): boolean {
-    return this.namespace.canSend(user) && user.roles && user.roles.includes(EventServiceRoles.sender);
-  }
-
-  send(user: User, event: DomainEvent): void {
-    if (!this.canSend(user)) {
-      throw new UnauthorizedError('User not authorized to send event.');
-    }
-
+  validate(event: DomainEvent): void {
     const {
       namespace: _namespace,
       name: _name,
@@ -39,8 +30,6 @@ export class EventDefinitionEntity implements EventDefinition {
     if (!payload || !this.namespace.validationService.validate(this.getSchemaKey(), payload)) {
       throw new InvalidOperationError('Event payload does not match schema.');
     }
-
-    this.namespace.service.send(event);
   }
 
   getSchemaKey(): string {

@@ -1,1 +1,3 @@
-export { tenantRouter } from './router';
+export { createTenantRouter, createTenantV2Router } from './router';
+import * as tenantService from './services';
+export { tenantService };

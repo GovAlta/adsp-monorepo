@@ -314,6 +314,7 @@ export const createNewTenantInDB = async (username, email, realmName, tenantName
   };
 
   const createTenantResult = await TenantModel.create(tenant);
+  return { tenant, id: createTenantResult.id };
 
   if (!createTenantResult.success) {
     const errorMessage = `Cannot create new tenant ${util.inspect(tenant)} in database.`;

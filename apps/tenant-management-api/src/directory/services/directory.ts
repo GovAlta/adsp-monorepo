@@ -239,11 +239,11 @@ export const deleteDirectory = async (name: string) => {
 };
 
 export const getServiceUrl = async (id: AdspId): Promise<URL> => {
-  return discovery(`${id}`).then((result) => {
-    if (result instanceof ApiError) {
-      throw result;
-    } else {
-      return (result as Response).url ? new URL((result as Response).url) : null;
-    }
-  });
+  const directory = (await getDirectories()) as { urn: string; url: string }[];
+
+  const entry = directory.find((entry) => entry.urn === `${id}`);
+  if (!entry) {
+    throw new Error(`Directory entry for ${id} not found.`);
+  }
+  return new URL(entry.url);
 };
