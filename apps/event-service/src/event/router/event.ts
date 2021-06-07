@@ -1,23 +1,45 @@
 import { assertAuthenticatedHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
-import { Router } from 'express';
+import { RequestHandler, Router } from 'express';
 import { Logger } from 'winston';
 import { NamespaceEntity } from '../model';
 import { AdspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { DomainEventService } from '../service';
+import { EventServiceRoles } from '../role';
 
 interface EventRouterProps {
   logger: Logger;
+  eventService: DomainEventService;
 }
 
-export const createEventRouter = ({ logger }: EventRouterProps): Router => {
+export const assertUserCanSend: RequestHandler = async (req, res, next) => {
+  const user = req.user;
+  const { tenantId } = req.body;
+
+  if (!user?.roles?.includes(EventServiceRoles.sender)) {
+    next(new UnauthorizedUserError('send event', user));
+  }
+
+  // If tenant is explicity specified, then the user must be a core user.
+  let tenant = tenantId ? AdspId.parse(tenantId as string) : null;
+  if (tenant && !user.isCore) {
+    next(new UnauthorizedUserError('send tenant event.', user));
+  }
+  tenant = tenant || user.tenantId;
+  req['tenantId'] = tenant;
+
+  next();
+};
+
+export const createEventRouter = ({ logger, eventService }: EventRouterProps): Router => {
   const eventRouter = Router();
 
-  eventRouter.post('/events', assertAuthenticatedHandler, async (req, res, next) => {
+  eventRouter.post('/events', assertAuthenticatedHandler, assertUserCanSend, async (req, res, next) => {
     const user = req.user;
-    const { tenantId, namespace, name, timestamp: timeValue } = req.body;
+    const { namespace, name, timestamp: timeValue } = req.body;
+    const tenantId: AdspId = req['tenantId'];
 
-    const tenant = tenantId ? AdspId.parse(tenantId as string) : user.tenantId;
-    if (tenant && !user.isCore) {
-      throw new UnauthorizedUserError('send tenant event.', user);
+    if (!namespace || !name) {
+      next(new InvalidOperationError('Event must include namespace and name of the event.'));
     }
 
     if (!timeValue) {
@@ -26,7 +48,7 @@ export const createEventRouter = ({ logger }: EventRouterProps): Router => {
     const timestamp = new Date(timeValue);
 
     const configuration = (await req.getConfiguration<Record<string, NamespaceEntity>, Record<string, NamespaceEntity>>(
-      tenant
+      tenantId
     )) || {
       options: null,
     };
@@ -37,18 +59,16 @@ export const createEventRouter = ({ logger }: EventRouterProps): Router => {
       options: undefined,
     };
 
-    if (!namespaces[namespace] || !namespaces[namespace].definitions[name]) {
-      next(new NotFoundError('Event Definition', `${namespace}:${name}`));
-    }
-
-    const entity = namespaces[namespace];
-    const definition = entity.definitions[name];
-    if (!definition) {
-      next(new NotFoundError('Event Definition', `${namespace}:${name}`));
-    }
+    // If the namespace or definition doesn't exist, then we treat it as an ad hoc event and skip validation.
+    const entity: NamespaceEntity = namespaces[namespace];
+    const definition = entity?.definitions[name];
 
     try {
-      definition.send(user, { ...req.body, timestamp, tenantId: tenant });
+      const event = { ...req.body, timestamp, tenantId };
+      if (definition) {
+        definition.validate(event);
+      }
+      eventService.send(event);
 
       res.sendStatus(200);
       logger.debug(`Event ${namespace}:${name} sent by user ${user.name} (ID: ${user.id}).`);

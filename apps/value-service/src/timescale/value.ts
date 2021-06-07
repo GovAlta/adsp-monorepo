@@ -51,6 +51,8 @@ export class TimescaleValuesRepository implements ValuesRepository {
 
     if (criteria.top) {
       query = query.limit(criteria.top);
+    } else {
+      query = query.limit(100);
     }
 
     if (criteria.timestampMax) {

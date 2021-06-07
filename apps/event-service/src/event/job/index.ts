@@ -20,6 +20,6 @@ export const createJobs = async ({ logger, directory, events, tokenProvider }: J
       logEventJob(next.event, next.done);
     });
   } catch (err) {
-    logger.error(`Error encountered in creation of event jobs.`, { context: 'EventJobs' });
+    logger.error(`Error encountered in creation of event jobs. ${err}`, { context: 'EventJobs' });
   }
 };

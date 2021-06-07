@@ -90,12 +90,17 @@ export class EventServiceImpl implements EventService {
     }
   };
 
-  async register(...events: DomainEventDefinition[]): Promise<void> {
+  async register(skipPublish: boolean, ...events: DomainEventDefinition[]): Promise<void> {
     const configurationServiceId = adspId`urn:ads:platform:configuration-service:v1`;
     const serviceUrl = await this.directory.getServiceUrl(configurationServiceId);
 
     try {
-      await retry((next, count) => this.#tryRegister(serviceUrl, count, events).catch(next));
+      if (!skipPublish) {
+        await retry((next, count) => this.#tryRegister(serviceUrl, count, events).catch(next));
+      } else {
+        this.logger.info('Skipping publish of event definitions.');
+      }
+
       this.definitions.push(...events.map((e) => e.name));
 
       this.logger.info(
@@ -118,13 +123,15 @@ export class EventServiceImpl implements EventService {
 
     try {
       const token = await this.tokenProvider.getAccessToken();
+
+      this.logger.debug(`Sending event ${this.namespace}:${event.name} to: ${sendUrl}...`);
       await axios.post(
         sendUrl.href,
         { ...event, namespace: this.namespace, tenantId: event.tenantId ? `${event.tenantId}` : null },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      this.logger.debug(`Sent domain event ${this.namespace}:${event.name}.`, this.LOG_CONTEXT);
+      this.logger.info(`Sent domain event ${this.namespace}:${event.name}.`, this.LOG_CONTEXT);
     } catch (err) {
       this.logger.error(`Error encountered on sending of event ${this.namespace}:${event.name}. ${err}`);
     }

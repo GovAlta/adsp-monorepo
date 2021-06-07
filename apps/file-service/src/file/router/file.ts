@@ -90,7 +90,7 @@ export const createFileRouter = ({
           timestamp: new Date(),
           correlationId: fileEntity.recordId,
           payload: {
-            file,
+            ...file,
           },
         });
 
@@ -210,6 +210,23 @@ export const createFileRouter = ({
       );
 
       res.json({ deleted: fileEntity.deleted });
+
+      // This is an example.
+      eventService.send({
+        name: 'file-uploaded',
+        tenantId: user.tenantId,
+        timestamp: new Date(),
+        correlationId: fileEntity.recordId,
+        payload: {
+          id: fileEntity.id,
+          filename: fileEntity.filename,
+          size: fileEntity.size,
+          typeName: fileEntity.type.name,
+          recordId: fileEntity.recordId,
+          created: fileEntity.created,
+          lastAccessed: fileEntity.lastAccessed,
+        },
+      });
     } catch (err) {
       next(err);
     }
