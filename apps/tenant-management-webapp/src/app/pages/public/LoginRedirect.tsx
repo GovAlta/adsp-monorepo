@@ -19,6 +19,7 @@ interface CoreAdminRedirectProps {
 
 // TODO: deprecate the CoreAdminRedirect in CS-524
 const CoreAdminRedirect = (props: CoreAdminRedirectProps) => {
+  console.log('should not be core right? CoreAdminRedirect');
   const history = useHistory();
   const dispatch = useDispatch();
   useEffect(() => {
@@ -35,6 +36,7 @@ const CoreAdminRedirect = (props: CoreAdminRedirectProps) => {
 };
 
 const CoreNonAdminRedirect = () => {
+  console.log('CoreNonAdminRedirect');
   const history = useHistory();
   useEffect(() => {
     history.push(`/login`);
@@ -58,14 +60,21 @@ const LoginRedirect = () => {
   // TODO: isAuthenticated shall be same as the validation in the PrivateApp. Need to create a global function for both.
   const isAuthenticated = useSelector((state: RootState) => state.session?.authenticated ?? false);
 
+  console.log('are we hitting redirect page at all');
+
   useEffect(() => {
+    console.log(JSON.stringify(realm) + '<realm');
+    console.log(JSON.stringify(defaultRealm) + '<defaultRealm');
+    console.log(JSON.stringify(tenantRealm) + '<tenantRealm');
     if (realm && realm === defaultRealm) {
       if (userInfo && isTenantAdmin === null) {
-        // The email will be used to fetch the tenant realm.
+        // isTenantAdmin and tenantName need to be updated
+        console.log('IsTenantAdmin(userInfo.email)');
         dispatch(IsTenantAdmin(userInfo.email));
       }
       // Do not remove the !== here. isTenantAdmin has 3 states null, false, true
       if (userInfo && isTenantAdmin !== null) {
+        console.log('userInfo && isTenantAdmin');
         if (isTenantAdmin) {
           setLoginType(LoginTypes.coreTenantAdmin);
         } else {
@@ -73,9 +82,11 @@ const LoginRedirect = () => {
         }
       }
     } else {
-      if (tenantRealm && tenantRealm != defaultRealm) {
+      if (tenantRealm && tenantRealm !== defaultRealm) {
         // Tenant Login redirect
+        console.log('if authenticated: ' + isAuthenticated);
         if (isAuthenticated) {
+          console.log('we redirect');
           history.push('/admin/tenant-admin');
         }
       }
