@@ -213,7 +213,7 @@ export const createFileRouter = ({
 
       // This is an example.
       eventService.send({
-        name: 'file-uploaded',
+        name: 'file-deleted',
         tenantId: user.tenantId,
         timestamp: new Date(),
         correlationId: fileEntity.recordId,
