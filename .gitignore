@@ -47,3 +47,6 @@ Thumbs.db
 
 # oc env configuration
 /.openshift/configuration/*.encoded.yml
+
+# Cypress.json for local dev only
+apps/tenant-management-webapp-e2e/cypress.json

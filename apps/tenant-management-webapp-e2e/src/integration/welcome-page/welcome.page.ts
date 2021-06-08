@@ -59,6 +59,10 @@ class WelcomePage {
   getStartedContinueButton() {
     return cy.get('button:contains("Continue")');
   }
+
+  tenantLoginTenantDisplayName() {
+    return cy.xpath('//div[@class="login-pf-page"]/div/div[@id="kc-header-wrapper"]', { timeout: 10000 });
+  }
 }
 
 export default WelcomePage;
