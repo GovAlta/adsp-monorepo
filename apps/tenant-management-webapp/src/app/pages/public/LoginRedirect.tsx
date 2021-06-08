@@ -39,7 +39,7 @@ const CoreNonAdminRedirect = () => {
   console.log('CoreNonAdminRedirect');
   const history = useHistory();
   useEffect(() => {
-    history.push(`/login`);
+    history.push(`/admin/tenant-admin`);
   });
   return <div></div>;
 };
