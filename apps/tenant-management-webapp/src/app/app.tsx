@@ -8,6 +8,7 @@ import '@abgov/core-css/goa-core.css';
 import LandingPage from '@pages/public/Landing';
 
 import Login from '@pages/public/Login';
+import AutoLogin from '@pages/public/AutoLogin';
 import LoginRedirect from '@pages/public/LoginRedirect';
 import LogoutRedirect from '@pages/public/LogoutRedirect';
 import CaseStudy from '@pages/admin/CaseStudy';
@@ -59,6 +60,10 @@ const AppRouters = () => {
             <Login />
           </Route>
 
+          <Route path="/:tenantName/autologin">
+            <AutoLogin />
+          </Route>
+
           <Route path="/login">
             <Login />
           </Route>
@@ -94,10 +99,14 @@ export const App = () => {
 };
 
 function AppWithAuthContext() {
+  const config = useSelector((state: RootState) => state.config);
+  console.log(JSON.stringify(config) + '<state.config');
   const keycloakConfig = useSelector((state: RootState) => state.config.keycloakApi);
+  const stateSession = useSelector((state: RootState) => state.session);
   const tenant = useSelector((state: RootState) => state.tenant);
   const dispatch = useDispatch();
   const [hasSession, setHasSession] = useState<boolean>(false);
+  const [keyCloakAction, setKeyCloakAction] = useState<boolean>(false);
 
   const location: string = window.location.href;
   const skipSSO = location.indexOf('kc_idp_hint') > -1;
@@ -107,8 +116,15 @@ function AppWithAuthContext() {
   }, [dispatch]);
 
   useEffect(() => {
+    console.log(JSON.stringify(keycloakConfig?.realm) + '<keycloakConfig?.realm');
+
     if (keycloakConfig?.realm) {
+      console.log(
+        JSON.stringify(tenant.realm ? { ...keycloakConfig, realm: tenant.realm } : keycloakConfig) +
+          '<tenant.realm ? { ...keycloakConfig, realm: tenant.realm } : keycloakConfig'
+      );
       createKeycloakInstance(tenant.realm ? { ...keycloakConfig, realm: tenant.realm } : keycloakConfig);
+      console.log('has session - true');
       setHasSession(true);
     }
   }, [keycloakConfig, tenant]);
@@ -118,13 +134,18 @@ function AppWithAuthContext() {
     console.log('app session');
 
     keycloak.init({ onLoad: 'check-sso' }).then((authenticated: boolean) => {
+      console.log('are we authed: ' + authenticated);
       if (authenticated) {
         keycloak
           .loadUserInfo()
           .then(() => {
             console.log('check-sso');
             const session = convertToSession(keycloak);
+            console.log(JSON.stringify(stateSession) + '<stateSession');
             dispatch(SessionLoginSuccess(session));
+            console.log(JSON.stringify(stateSession) + '<stateSession2');
+
+            setKeyCloakAction(true);
           })
           .catch((e) => {
             console.error('failed loading user info', e);
@@ -132,17 +153,24 @@ function AppWithAuthContext() {
       } else {
         dispatch(SessionLogout());
       }
+      console.log('do we get here');
     });
   }, [dispatch, hasSession]);
 
   function signIn(redirectPath: string) {
+    console.log('redirecting:xx' + JSON.stringify(`${window.location.origin}${redirectPath}`));
     const redirectUri = `${window.location.origin}${redirectPath}`;
     if (skipSSO) {
       keycloak.init({}).then(() => {
         keycloak.login({ idpHint: ' ', redirectUri });
       });
     } else {
-      keycloak.init({ onLoad: 'login-required', redirectUri });
+      console.log('redirecting' + JSON.stringify(redirectUri));
+      try {
+        keycloak.init({ onLoad: 'login-required', redirectUri });
+      } catch (e) {
+        console.log('error' + e);
+      }
     }
   }
 
@@ -151,7 +179,13 @@ function AppWithAuthContext() {
     keycloak.logout({ redirectUri: path });
   }
 
-  return <AuthContext.Provider value={{ signIn, signOut }}>{hasSession && <AppRouters />}</AuthContext.Provider>;
+  console.log(JSON.stringify(hasSession) + '<hasSessions sss');
+
+  return (
+    <AuthContext.Provider value={{ signIn, signOut }}>
+      {hasSession && keyCloakAction && <AppRouters />}
+    </AuthContext.Provider>
+  );
 }
 
 export default App;
