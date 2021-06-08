@@ -153,6 +153,7 @@ function AppWithAuthContext() {
       } else {
         dispatch(SessionLogout());
       }
+      setKeyCloakAction(true);
       console.log('do we get here');
     });
   }, [dispatch, hasSession]);

@@ -24,6 +24,11 @@ const LoginLanding = () => {
   const isAuthenticated = useSelector((state: RootState) => state.session?.authenticated ?? false);
 
   useEffect(() => {
+    if (tenantName) {
+      console.log(JSON.stringify(tenantName) + '<tenantNamexx');
+      //const name = nameRef.current.value;
+      dispatch(SelectTenant(tenantName));
+    }
     console.log(JSON.stringify(isAuthenticated) + '<isAuthenticatedxxx');
     if (!isAuthenticated) {
       setTimeout(function () {
@@ -31,19 +36,19 @@ const LoginLanding = () => {
         signIn('/admin/tenant-admin');
         //signIn('/login');
       }, 20);
-    } else {
-      console.log(JSON.stringify(tenantName) + '<tenantNamexx');
-      if (tenantName) {
-        console.log(JSON.stringify(tenantName) + '<tenantNamexx');
-        //const name = nameRef.current.value;
-        dispatch(SelectTenant(tenantName));
-        // For direct login, we shall hide the tenant login form and invoke the keycloak
-        //if (isDirectLogin === 'true') {
-        //dispatch(SelectTenant(tenantName));
-        signIn('/login-redirect');
-        //}
-      }
-    }
+    } //else {
+    // console.log(JSON.stringify(tenantName) + '<tenantNamexx');
+    // if (tenantName) {
+    //   console.log(JSON.stringify(tenantName) + '<tenantNamexx');
+    //   //const name = nameRef.current.value;
+    //   dispatch(SelectTenant(tenantName));
+    //   // For direct login, we shall hide the tenant login form and invoke the keycloak
+    //   //if (isDirectLogin === 'true') {
+    //   //dispatch(SelectTenant(tenantName));
+    //   signIn('/login-redirect');
+    //   //}
+    // }
+    //}
   }, [tenantName, isDirectLogin]);
 
   return (
