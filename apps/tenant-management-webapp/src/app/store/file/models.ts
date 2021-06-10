@@ -58,18 +58,12 @@ export interface RequestBodySchema {
 
 export interface FileService {
   fileList: Array<FileItem>;
-  states: {
-    activeTab: string;
-  };
   space: string;
   fileTypes: Array<FileTypeItem>;
   docs?: FileServiceDocs;
 }
 
 export const FILE_INIT: FileService = {
-  states: {
-    activeTab: 'overall-view',
-  },
   fileList: [],
   space: '',
   fileTypes: [],
