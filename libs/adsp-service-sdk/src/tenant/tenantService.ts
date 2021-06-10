@@ -90,7 +90,8 @@ export class TenantServiceImpl implements TenantService {
     this.logger.debug(`Retrieving tenant information...'`, this.LOG_CONTEXT);
 
     const tenantServiceUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:tenant-service:v2`);
-    const tenantUrl = new URL(tenantId.resource, tenantServiceUrl);
+    // Need the v2 prefix for a relative url of the form v2/tenants/... so the url resolves properly
+    const tenantUrl = new URL(`v2${tenantId.resource}`, tenantServiceUrl);
 
     this.logger.debug(`Requesting tenant '${tenantId}' from ${tenantUrl}...'`, this.LOG_CONTEXT);
 

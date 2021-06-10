@@ -22,7 +22,7 @@ describe('TenantService', () => {
   } as unknown) as Logger;
 
   const directoryMock = {
-    getServiceUrl: jest.fn(() => Promise.resolve(new URL('http://totally-real-directory'))),
+    getServiceUrl: jest.fn(() => Promise.resolve(new URL('http://totally-real-service/api/tenant/v2'))),
   };
 
   const tokenProviderMock = {
@@ -60,9 +60,10 @@ describe('TenantService', () => {
   it('can retrieve from API on cache miss', async (done) => {
     const id = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
     const result = { id, name: 'test' };
-    axiosMock.get.mockImplementation((url) =>
-      Promise.resolve(url.includes('test') ? { data: { ...result, id: `${result.id}` } } : { data: [] })
-    );
+    axiosMock.get.mockImplementation((url) => {
+      expect(url).toBe("http://totally-real-service/api/tenant/v2/tenants/test");
+      return Promise.resolve(url.includes('test') ? { data: { ...result, id: `${result.id}` } } : { data: [] })
+    });
 
     const service = new TenantServiceImpl(logger, directoryMock, tokenProviderMock);
 
