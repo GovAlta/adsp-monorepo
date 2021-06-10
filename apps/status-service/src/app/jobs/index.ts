@@ -20,48 +20,48 @@ export async function scheduleServiceStatusJobs(props: ServiceStatusJobProps): P
   props.logger.info('Scheduling endpoint checks...');
 
   // start enabled apps
-  const applications = await props.serviceStatusRepository.find({ enabled: true });
+  const applications = await props.serviceStatusRepository.findEnabledApplications();
   applications.forEach(async (application) => {
     scheduleServiceStatusJob({ ...props, application });
   });
 
-  scheduleJob('* */1 * * *', watchForActivatedApps(props));
-  scheduleJob('* */1 * * *', watchForDeactivatedApps(props));
-  scheduleJob('* */1 * * *', watchForDeletedApps(props));
+  scheduleJob('* */1 * * *', watchApps(props));
 }
 
 // *******
 // Private
 // *******
 
-function watchForDeletedApps(props: ServiceStatusJobProps) {
+function watchApps(props: ServiceStatusJobProps) {
   return async () => {
-    const deletedAppIds = await fetchQueuedDeletedApplications({ ...props, scheduledJobs });
-    props.logger.info(`${deletedAppIds.length} deleted apps found`);
-    deletedAppIds.forEach((applicationId) => {
-      unscheduleServiceStatusJob(applicationId);
-    });
+    await watchForDeletedApps(props);
+    await watchForDeactivatedApps(props);
+    await watchForActivatedApps(props);
   };
 }
 
-function watchForDeactivatedApps(props: ServiceStatusJobProps) {
-  return async () => {
-    const disabledApps = await fetchQueuedDisabledApplications({ ...props, scheduledJobs });
-    props.logger.info(`${disabledApps.length} disabled apps found`);
-    disabledApps.forEach((application) => {
-      unscheduleServiceStatusJob(application.id);
-    });
-  };
+async function watchForDeletedApps(props: ServiceStatusJobProps) {
+  const deletedAppIds = await fetchQueuedDeletedApplications({ ...props, scheduledJobs });
+  props.logger.info(`${deletedAppIds.length} deleted apps found`);
+  deletedAppIds.forEach((applicationId) => {
+    unscheduleServiceStatusJob(applicationId);
+  });
 }
 
-function watchForActivatedApps(props: ServiceStatusJobProps) {
-  return async () => {
-    const nonQueuedApps = await fetchNonQueuedApplications({ ...props, scheduledJobs });
-    props.logger.info(`${nonQueuedApps.length} non-queued apps found`);
-    nonQueuedApps.forEach((application) => {
-      scheduleServiceStatusJob({ ...props, application });
-    });
-  };
+async function watchForDeactivatedApps(props: ServiceStatusJobProps) {
+  const disabledApps = await fetchQueuedDisabledApplications({ ...props, scheduledJobs });
+  props.logger.info(`${disabledApps.length} disabled apps found`);
+  disabledApps.forEach((application) => {
+    unscheduleServiceStatusJob(application.id);
+  });
+}
+
+async function watchForActivatedApps(props: ServiceStatusJobProps) {
+  const nonQueuedApps = await fetchNonQueuedApplications({ ...props, scheduledJobs });
+  props.logger.info(`${nonQueuedApps.length} non-queued apps found`);
+  nonQueuedApps.forEach((application) => {
+    scheduleServiceStatusJob({ ...props, application });
+  });
 }
 
 function scheduleServiceStatusJob(props: CreateCheckEndpointProps) {

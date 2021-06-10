@@ -1,13 +1,13 @@
 import React from 'react';
 
 import Container from '@components/Container';
-import { GoaHeader } from '@abgov/react-components';
+import { GoAHeader } from '@abgov/react-components';
 import styled from 'styled-components';
 
 export function PublicApp({ children }) {
   return (
     <PublicCss>
-      <GoaHeader serviceHome="/" serviceLevel="alpha" serviceName="" />
+      <GoAHeader serviceHome="/" serviceLevel="alpha" serviceName="" />
       <Container hs={4} vs={2}>
         {children}
       </Container>

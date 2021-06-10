@@ -5,8 +5,8 @@ import { fireEvent, render, waitFor, screen } from '@testing-library/react';
 
 import ServiceStatusPage from './status';
 import { BrowserRouter as Router } from 'react-router-dom';
-import { ToggleApplicationAction, TOGGLE_APPLICATION_ACTION } from '@store/status/actions';
 import { RootState } from '@store/index';
+import { SetApplicationStatusAction, SET_APPLICATION_STATUS_ACTION } from '@store/status/actions';
 
 describe('ServiceStatus Page', () => {
   const mockStore = configureStore([]);
@@ -29,7 +29,7 @@ describe('ServiceStatus Page', () => {
             id: '99',
             tenantId: '11',
             name: 'facebook',
-            enabled: true,
+            status: 'operational',
             timeIntervalMin: 2,
             endpoints: [
               { url: 'https://facebook.com/api', status: 'online' },
@@ -40,7 +40,7 @@ describe('ServiceStatus Page', () => {
             id: '33',
             tenantId: '11',
             name: 'twitter',
-            enabled: true,
+            status: 'operational',
             timeIntervalMin: 2,
             endpoints: [
               { url: 'https://twitter.com/api', status: 'offline' },
@@ -51,7 +51,7 @@ describe('ServiceStatus Page', () => {
             id: '11',
             tenantId: '11',
             name: 'alberta.ca',
-            enabled: true,
+            status: 'operational',
             timeIntervalMin: 2,
             endpoints: [
               { url: 'https://alberta.ca/api', status: 'pending' },
@@ -109,7 +109,7 @@ describe('ServiceStatus Page', () => {
             id: '11',
             tenantId: '11',
             name: 'alberta.ca',
-            enabled: false,
+            status: 'disabled',
             timeIntervalMin: 2,
             endpoints: [],
           },
@@ -124,13 +124,15 @@ describe('ServiceStatus Page', () => {
       fireEvent.click(toggleLink);
 
       const actions = store.getActions();
-      const toggleAction: ToggleApplicationAction = actions.find((action) => action.type === TOGGLE_APPLICATION_ACTION);
+      const toggleAction: SetApplicationStatusAction = actions.find(
+        (action) => action.type === SET_APPLICATION_STATUS_ACTION
+      );
 
       const state = store.getState() as RootState;
-      const { applicationId, enabled, tenantId } = toggleAction.payload;
+      const { applicationId, status, tenantId } = toggleAction.payload;
       expect(applicationId).toEqual('11');
       expect(tenantId).toEqual('11');
-      expect(enabled).toEqual(!state.serviceStatus.applications[0].enabled);
+      expect(status).toEqual(!state.serviceStatus.applications[0].status);
     });
   });
 });

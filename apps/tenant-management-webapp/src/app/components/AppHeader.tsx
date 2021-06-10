@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { GoaHeader } from '@abgov/react-components';
+import { GoAHeader } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
@@ -60,7 +60,7 @@ const ActionsMenu = (props: HeaderMenuProps) => {
 function AppHeader({ serviceName = '', hasLoginLink = true }) {
   return (
     <HeaderContainer>
-      <GoaHeader serviceHome="/" serviceLevel="alpha" serviceName={serviceName} />
+      <GoAHeader serviceHome="/" serviceLevel="alpha" serviceName={serviceName} />
       <ActionsMenu hasLoginLink={hasLoginLink} />
     </HeaderContainer>
   );

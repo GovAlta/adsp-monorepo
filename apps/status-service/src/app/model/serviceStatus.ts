@@ -2,16 +2,16 @@ import type { User } from '@abgov/adsp-service-sdk';
 import { NewOrExisting, Update } from '@core-services/core-common';
 import { MissingParamsError, UnauthorizedError } from '../common/errors';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
-import { ServiceStatusApplication, ServiceStatusEndpoint } from '../types';
+import { ServiceStatusApplication, ServiceStatusEndpoint, ServiceStatusType } from '../types';
 
 export class ServiceStatusApplicationEntity {
   id: string;
-  enabled: boolean;
   endpoints: ServiceStatusEndpoint[];
   metadata: unknown;
   name: string;
   description: string;
   statusTimestamp: number;
+  status: ServiceStatusType;
   tenantId: string;
   timeIntervalMin: number;
 
@@ -29,7 +29,6 @@ export class ServiceStatusApplicationEntity {
 
   constructor(private repository: ServiceStatusRepository, application: NewOrExisting<ServiceStatusApplication>) {
     this.id = application?.id;
-    this.enabled = application.enabled;
     this.endpoints = application.endpoints;
     this.metadata = application.metadata;
     this.name = application.name;
@@ -37,38 +36,21 @@ export class ServiceStatusApplicationEntity {
     this.statusTimestamp = application.statusTimestamp;
     this.tenantId = application.tenantId;
     this.timeIntervalMin = application.timeIntervalMin;
+    this.status = application.status;
   }
 
   update(user: User, update: Update<ServiceStatusApplication>): Promise<ServiceStatusApplicationEntity> {
     if (!this.canUpdate(user)) {
       throw new UnauthorizedError('User not authorized to update service status.');
     }
-    if (update.enabled) {
-      this.enabled = update.enabled;
-    }
-    if (update.endpoints) {
-      this.endpoints = update.endpoints;
-    }
-    if (update.metadata) {
-      this.metadata = update.metadata;
-    }
-    if (update.name) {
-      this.name = update.name;
-    }
-    if (update.description) {
-      this.description = update.description;
-    }
-    if (update.statusTimestamp) {
-      this.statusTimestamp = update.statusTimestamp;
-    }
-    if (update.tenantId) {
-      this.tenantId = update.tenantId;
-    }
-    if (update.timeIntervalMin) {
-      this.timeIntervalMin = update.timeIntervalMin;
-    }
+    this.endpoints = update.endpoints ?? this.endpoints;
+    this.metadata = update.metadata ?? this.metadata;
+    this.name = update.name ?? this.name;
+    this.description = update.description ?? this.description;
+    this.statusTimestamp = update.statusTimestamp ?? this.statusTimestamp;
+    this.status = update.status ?? this.status;
+    this.timeIntervalMin = update.timeIntervalMin ?? this.timeIntervalMin;
 
-    console.log('update this', this)
     return this.repository.save(this);
   }
 
@@ -116,21 +98,39 @@ export class ServiceStatusApplicationEntity {
     return await this.repository.delete(this);
   }
 
+  async setStatus(user: User, status: ServiceStatusType): Promise<ServiceStatusApplicationEntity> {
+    if (!this.canUpdate(user)) {
+      throw new UnauthorizedError('User not authorized to set application status');
+    }
+
+    this.status = status;
+    this.statusTimestamp = Date.now();
+    // ensure the endpoints are in sync with the service state
+    switch (status) {
+      case 'disabled':
+      case 'maintenance':
+        this.endpoints.forEach((endpoint) => (endpoint.status = 'disabled'));
+        break;
+      case 'pending':
+        this.endpoints.forEach((endpoint) => (endpoint.status = 'pending'));
+        break;
+    }
+
+    return await this.repository.save(this);
+  }
+
   private canUpdate(user: User): boolean {
     // TODO: determine the roles
-    console.log('canUpdate', user);
     return true;
   }
 
   private canDelete(user: User): boolean {
     // TODO: determine the roles
-    console.log('canDelete', user);
     return true;
   }
 
   private canCreate(user: User): boolean {
     // TODO: determine the roles
-    console.log('canCreate', user);
     return true;
   }
 }
