@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
 
 import { GoAForm, GoAFormButtons, GoAFormItem } from '@components/Form';
 import { Page, Main } from '@components/Html';
@@ -12,7 +13,6 @@ import { useLocation } from 'react-router-dom';
 const LoginLanding = () => {
   const { signIn } = useContext(AuthContext);
   const dispatch = useDispatch();
-  const nameRef = useRef(null);
   const search = useLocation().search;
   const isDirectLogin = new URLSearchParams(search).get('direct');
   const tenantName = useParams<{ tenantName: string }>().tenantName;
@@ -28,38 +28,21 @@ const LoginLanding = () => {
     }
   }, [tenantName, isDirectLogin]);
 
-  function login() {
-    const name = nameRef.current.value;
-    dispatch(SelectTenant(name));
-    signIn('/login-redirect');
-  }
-
   return (
     <Page>
       {!isDirectLogin && (
         <Main>
-          <GoAForm>
-            <GoAFormItem>
-              {tenantName && (
-                <>
-                  <label>Please enter tenant name:</label>
-                  <input ref={nameRef} value={tenantName} readOnly />
-                </>
-              )}
-              {!tenantName && (
-                <>
-                  <label>Please enter tenant name:</label>
-                  <input ref={nameRef} />
-                </>
-              )}
-            </GoAFormItem>
-
-            <GoAFormButtons>
-              <GoAButton buttonType="primary" onClick={login}>
-                Login
-              </GoAButton>
-            </GoAFormButtons>
-          </GoAForm>
+          <h2>Tenant Login</h2>
+          <div>
+            <p>If you meant to create a tenant, please click below</p>
+            <GoAButton buttonType="primary" onClick={() => signIn('/get-started')}>
+              Create Tenant
+            </GoAButton>
+            <p>
+              If you want to log into a tenant created by an administrator, please ask the administrator for the login
+              url
+            </p>
+          </div>
         </Main>
       )}
     </Page>

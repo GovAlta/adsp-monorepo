@@ -73,7 +73,7 @@ const LoginRedirect = () => {
         }
       }
     } else {
-      if (tenantRealm && tenantRealm != defaultRealm) {
+      if (tenantRealm && tenantRealm !== defaultRealm) {
         // Tenant Login redirect
         if (isAuthenticated) {
           history.push('/admin/tenant-admin');

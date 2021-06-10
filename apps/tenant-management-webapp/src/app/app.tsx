@@ -8,6 +8,7 @@ import '@abgov/core-css/goa-core.css';
 import LandingPage from '@pages/public/Landing';
 
 import Login from '@pages/public/Login';
+import AutoLogin from '@pages/public/AutoLogin';
 import LoginRedirect from '@pages/public/LoginRedirect';
 import LogoutRedirect from '@pages/public/LogoutRedirect';
 import CaseStudy from '@pages/admin/CaseStudy';
@@ -57,6 +58,10 @@ const AppRouters = () => {
         <PublicApp>
           <Route path="/:tenantName/login">
             <Login />
+          </Route>
+
+          <Route path="/:tenantName/autologin">
+            <AutoLogin />
           </Route>
 
           <Route path="/login">
