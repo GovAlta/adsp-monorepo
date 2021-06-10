@@ -1,6 +1,10 @@
 import { RootState } from '@store/index';
 import { saveApplication } from '@store/status/actions';
-import { ServiceStatusApplication, ServiceStatusEndpoint, ServiceStatusType } from '@store/status/models';
+import {
+  EndpointStatusType,
+  ServiceStatusApplication,
+  ServiceStatusEndpoint,
+} from '@store/status/models';
 import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useParams } from 'react-router-dom';
@@ -18,6 +22,7 @@ function ApplicationForm(): JSX.Element {
     tenantId: '',
     enabled: false,
     description: '',
+    status: 'disabled',
     timeIntervalMin: 10,
     endpoints: [],
   });
@@ -38,14 +43,15 @@ function ApplicationForm(): JSX.Element {
     const form = new FormData(e.target as HTMLFormElement);
     const urls = form.get('endpoints') as string;
 
-    const getStatus = (url: string): ServiceStatusType =>
-      application.endpoints.find((endpoint) => endpoint.url === url)?.status ?? 'unknown';
+    const getStatus = (url: string): EndpointStatusType =>
+      application.endpoints.find((endpoint) => endpoint.url === url)?.status;
 
     const params = {
       ...application,
       endpoints: urls
-        .split('\r\n').map((url) => ({ url: url.trim(), status: getStatus(url) } as ServiceStatusEndpoint))
-        .filter(endpoint => endpoint.url.length > 0)
+        .split('\r\n')
+        .map((url) => ({ url: url.trim(), status: getStatus(url) } as ServiceStatusEndpoint))
+        .filter((endpoint) => endpoint.url.length > 0),
     };
 
     dispatch(saveApplication(params));
@@ -74,7 +80,7 @@ function ApplicationForm(): JSX.Element {
         <label>Endpoint Urls</label>
         <textarea
           name="endpoints"
-          rows={4}
+          rows={2}
           value={application?.endpoints?.map((endpoint) => endpoint.url).join('\r\n')}
           onChange={(e) =>
             setValue(
@@ -100,7 +106,7 @@ function ApplicationForm(): JSX.Element {
           Cancel
         </GoAButton>
         <GoAButton buttonType="primary" type="submit">
-          Save Application
+          Save
         </GoAButton>
       </GoAFormButtons>
     </GoAForm>

@@ -9,13 +9,15 @@ import {
   DeleteApplicationAction,
   deleteApplicationSuccess,
 } from './actions';
-import { ToggleApplicationAction, toggleApplicationSuccess } from './actions/toggleApplication';
+import { Session } from '@store/session/models';
+import { ConfigState } from '@store/config/models';
+import { SetApplicationStatusAction, setApplicationStatusSuccess } from './actions/setApplicationStatus';
 
 export function* fetchServiceStatusApps() {
   const currentState: RootState = yield select();
 
-  const baseUrl = currentState.config.serviceUrls?.serviceStatusApiUrl;
-  const token = currentState.session.credentials.token;
+  const baseUrl = getServiceStatusUrl(currentState.config);
+  const token = getToken(currentState.session);
 
   try {
     const api = new StatusApi(baseUrl, token);
@@ -30,8 +32,8 @@ export function* fetchServiceStatusApps() {
 export function* saveApplication(action: SaveApplicationAction) {
   const currentState: RootState = yield select();
 
-  const baseUrl = currentState.config.serviceUrls?.serviceStatusApiUrl;
-  const token = currentState.session.credentials.token;
+  const baseUrl = getServiceStatusUrl(currentState.config);
+  const token = getToken(currentState.session);
 
   try {
     const api = new StatusApi(baseUrl, token);
@@ -45,8 +47,8 @@ export function* saveApplication(action: SaveApplicationAction) {
 export function* deleteApplication(action: DeleteApplicationAction) {
   const currentState: RootState = yield select();
 
-  const baseUrl = currentState.config.serviceUrls?.serviceStatusApiUrl;
-  const token = currentState.session.credentials.token;
+  const baseUrl = getServiceStatusUrl(currentState.config);
+  const token = getToken(currentState.session);
 
   try {
     const api = new StatusApi(baseUrl, token);
@@ -58,19 +60,26 @@ export function* deleteApplication(action: DeleteApplicationAction) {
   }
 }
 
-export function* toggleApplication(action: ToggleApplicationAction) {
+export function* setApplicationStatus(action: SetApplicationStatusAction) {
   const currentState: RootState = yield select();
 
-  const baseUrl = currentState.config.serviceUrls?.serviceStatusApiUrl;
-  const token = currentState.session.credentials.token;
+  const baseUrl = getServiceStatusUrl(currentState.config);
+  const token = getToken(currentState.session);
 
   try {
     const api = new StatusApi(baseUrl, token);
+    const data = yield api.setStatus(action.payload.applicationId, action.payload.status);
 
-    const data = yield api.toggleApplication(action.payload.applicationId, action.payload.enabled);
-
-    yield put(toggleApplicationSuccess(data));
+    yield put(setApplicationStatusSuccess(data));
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
   }
+}
+
+function getToken(session: Session): string {
+  return session.credentials.token;
+}
+
+function getServiceStatusUrl(config: ConfigState): string {
+  return config.serviceUrls.serviceStatusApiUrl;
 }

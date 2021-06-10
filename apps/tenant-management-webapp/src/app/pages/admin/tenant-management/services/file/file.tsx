@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import '@abgov/react-components/react-components.esm.css';
 import { useSelector, useDispatch } from 'react-redux';
 
 import FileOverview from './fileOverview';

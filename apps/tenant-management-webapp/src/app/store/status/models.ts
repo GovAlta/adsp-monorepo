@@ -1,5 +1,5 @@
-export type ServiceStatusType = 'unknown' | 'online' | 'offline';
-export type ServiceStatusState = 'loading' | 'success' | 'error';
+export type ServiceStatusType = 'operational' | 'maintenance' | 'reported-issues' | 'outage' | 'pending' | 'disabled';
+export type EndpointStatusType = 'online' | 'offline' | 'pending' | 'disabled';
 
 export interface ServiceStatus {
   applications: ServiceStatusApplication[];
@@ -14,12 +14,13 @@ export interface ServiceStatusApplication {
   enabled: boolean;
   statusTimestamp?: number;
   timeIntervalMin: number;
+  status: ServiceStatusType;
   endpoints: ServiceStatusEndpoint[];
 }
 
 export interface ServiceStatusEndpoint {
   url: string;
-  status: ServiceStatusType;
+  status: EndpointStatusType;
 }
 
 export interface ServiceStatusNotifications {

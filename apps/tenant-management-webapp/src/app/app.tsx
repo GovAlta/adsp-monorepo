@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 
-import '@abgov/react-components/react-components.esm.css';
+// TODO: remove this
 import '@abgov/core-css/goa-core.css';
 
 import LandingPage from '@pages/public/Landing';

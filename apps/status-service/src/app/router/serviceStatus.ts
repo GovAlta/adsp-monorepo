@@ -2,9 +2,10 @@ import type { User } from '@abgov/adsp-service-sdk';
 import { assertAuthenticatedHandler } from '@core-services/core-common';
 import { Router } from 'express';
 import { Logger } from 'winston';
-import { UnauthorizedError } from '../common/errors';
+import { InvalidParamsError, UnauthorizedError } from '../common/errors';
 import { ServiceStatusApplicationEntity } from '../model';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
+import { ServiceStatusType } from '../types';
 
 export interface ServiceStatusRouterProps {
   logger: Logger;
@@ -61,7 +62,7 @@ export function createServiceStatusRouter({ logger, serviceStatusRepository }: S
     logger.info(`${req.method} - ${req.url}`);
 
     const user = req.user;
-    const { enabled, name, description, timeIntervalMin, endpoints, metadata } = req.body;
+    const { name, description, timeIntervalMin, endpoints, metadata } = req.body;
     const tenantId = user.tenantId?.toString() ?? '';
 
     if (!tenantId) {
@@ -74,9 +75,9 @@ export function createServiceStatusRouter({ logger, serviceStatusRepository }: S
       tenantId,
       timeIntervalMin,
       endpoints,
-      enabled,
       metadata,
       statusTimestamp: 0,
+      status: 'disabled',
     });
     res.status(201).json(app);
   });
@@ -85,7 +86,7 @@ export function createServiceStatusRouter({ logger, serviceStatusRepository }: S
     logger.info(`${req.method} - ${req.url}`);
 
     const user = req.user as Express.User;
-    const { enabled, name, description, timeIntervalMin, endpoints } = req.body;
+    const { name, description, timeIntervalMin, endpoints } = req.body;
     const { id } = req.params;
     const tenantId = user.tenantId?.toString() ?? '';
 
@@ -104,7 +105,6 @@ export function createServiceStatusRouter({ logger, serviceStatusRepository }: S
       description,
       timeIntervalMin,
       endpoints,
-      enabled,
     });
     res.status(200).json(updatedApplication);
   });
@@ -123,6 +123,22 @@ export function createServiceStatusRouter({ logger, serviceStatusRepository }: S
     await application.delete({ ...user } as User);
 
     res.sendStatus(204);
+  });
+
+  router.patch('/applications/:id/status', assertAuthenticatedHandler, async (req, res) => {
+    logger.info(`${req.method} - ${req.url}`);
+
+    const user = req.user as Express.User;
+    const { id } = req.params;
+    const { status } = req.body;
+    const application = await serviceStatusRepository.get(id);
+
+    if (user.tenantId?.toString() !== application.tenantId) {
+      throw new UnauthorizedError('invalid tenant id');
+    }
+
+    const updatedApplication = await application.setStatus(user, status as ServiceStatusType);
+    res.status(200).json(updatedApplication);
   });
 
   return router;
