@@ -27,19 +27,11 @@ export function PrivateApp({ children }) {
 
 export function PrivateRoute({ component: Component, ...rest }) {
   const isAuthenticated = useSelector((state: RootState) => state.session?.authenticated ?? false);
-  const stateSession = useSelector((state: RootState) => state.session);
-
-  console.log(JSON.stringify(isAuthenticated) + '<are we authenticated');
-  console.log(JSON.stringify(stateSession) + '<are stateSession');
-  console.log(stateSession + '<are stateSession2');
 
   return (
     <Route
       {...rest}
       render={(props) => {
-        // if (Object.keys(stateSession).length === 0) {
-        //   return <div></div>;
-        // }
         return isAuthenticated ? (
           <Component {...props} />
         ) : (
