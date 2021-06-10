@@ -1,6 +1,5 @@
-import { AdspId, User } from '@abgov/adsp-service-sdk';
+import { AdspId } from '@abgov/adsp-service-sdk';
 import { ValidationService } from '@core-services/core-common';
-import { DomainEventService } from '../service';
 import type { Namespace } from '../types';
 import { EventDefinitionEntity } from './definition';
 
@@ -9,7 +8,6 @@ export class NamespaceEntity implements Namespace {
   public definitions: { [name: string]: EventDefinitionEntity };
 
   constructor(
-    public service: DomainEventService,
     public validationService: ValidationService,
     namespace: Namespace,
     public tenantId: AdspId = null
@@ -24,9 +22,5 @@ export class NamespaceEntity implements Namespace {
         [name]: entity,
       };
     }, {});
-  }
-
-  canSend(user: User): boolean {
-    return user && (!this.tenantId || user.isCore || `${this.tenantId}` === `${user.tenantId}`);
   }
 }

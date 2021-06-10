@@ -1,6 +1,6 @@
 import { Doc } from '@core-services/core-common';
 import { Model, model, Document } from 'mongoose';
-import { ServiceStatusApplication, ServiceStatusApplicationEntity } from '../app';
+import { ServiceStatusApplication, ServiceStatusApplicationEntity, ServiceStatusType } from '../app';
 import { ServiceStatusRepository } from '../app/repository/serviceStatus';
 import { serviceStatusApplicationSchema } from './schema';
 
@@ -9,15 +9,21 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
   constructor() {
     this.model = model('ServiceStatus', serviceStatusApplicationSchema);
   }
+  async findEnabledApplications(): Promise<ServiceStatusApplicationEntity[]> {
+    const docs = await this.model.find({ status: { $ne: 'disabled' } });
+    return docs.map((doc) => this.fromDoc(doc));
+  }
   async get(id: string): Promise<ServiceStatusApplicationEntity> {
     const doc = await this.model.findById(id);
     return Promise.resolve(this.fromDoc(doc));
   }
 
   async findQueuedDisabledApplications(queuedApplicationIds: string[]): Promise<ServiceStatusApplicationEntity[]> {
-    const docs = await this.model.find({ enabled: false, _id: { $in: queuedApplicationIds } });
-    const entities = docs.map((doc) => this.fromDoc(doc));
-    return Promise.resolve(entities);
+    const docs = await this.model.find({
+      _id: { $in: queuedApplicationIds },
+      status: { $in: ['disabled', 'maintenance'] },
+    });
+    return docs.map((doc) => this.fromDoc(doc));
   }
 
   async findQueuedDeletedApplicationIds(queuedApplicationIds: string[]): Promise<string[]> {
@@ -27,26 +33,30 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
     return queuedApplicationIds.filter((appId) => !existingAppIds.includes(appId.toString()));
   }
   async findNonQueuedApplications(queuedApplicationIds: string[]): Promise<ServiceStatusApplicationEntity[]> {
-    const docs = await this.model.find({ enabled: true, _id: { $nin: queuedApplicationIds } });
-    const entities = docs.map((doc) => this.fromDoc(doc));
-    return Promise.resolve(entities);
+    const docs = await this.model.find({
+      _id: { $nin: queuedApplicationIds },
+      status: { $nin: ['disabled', 'maintenance'] },
+    });
+    return docs.map((doc) => this.fromDoc(doc));
   }
 
   async find(filter: Partial<ServiceStatusApplication>): Promise<ServiceStatusApplicationEntity[]> {
     const docs = await this.model.find(filter);
-    const applications = docs.map((doc) => this.fromDoc(doc));
-    return Promise.resolve(applications);
+    return docs.map((doc) => this.fromDoc(doc));
   }
 
   async enable(entity: ServiceStatusApplicationEntity): Promise<ServiceStatusApplicationEntity> {
-    const doc = await this.model.findByIdAndUpdate(entity.id, { enabled: true }, { new: true });
-    return this.fromDoc(doc);
+    const application = await this.model.findById(entity.id);
+    application.endpoints.forEach((endpoint) => (endpoint.status = 'pending'));
+    application.status = 'pending';
+    await application.save();
+    return this.fromDoc(application);
   }
 
   async disable(entity: ServiceStatusApplicationEntity): Promise<ServiceStatusApplicationEntity> {
     const application = await this.model.findById(entity.id);
-    application.endpoints.forEach((endpoint) => (endpoint.status = 'pending'));
-    application.enabled = false;
+    application.endpoints.forEach((endpoint) => (endpoint.status = 'disabled'));
+    application.status = 'disabled';
     await application.save();
     return this.fromDoc(application);
   }
@@ -60,26 +70,25 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
         useFindAndModify: false,
       });
 
-      return Promise.resolve(this.fromDoc(doc));
+      return this.fromDoc(doc);
     }
 
     const doc = await this.model.create(this.toDoc(entity));
-    return Promise.resolve(this.fromDoc(doc));
+    return this.fromDoc(doc);
   }
 
   async delete(entity: ServiceStatusApplicationEntity): Promise<boolean> {
     try {
       await this.model.findOneAndDelete({ _id: entity.id });
-      return Promise.resolve(true);
+      return true;
     } catch (e) {
-      return Promise.resolve(false);
+      return false;
     }
   }
 
   private toDoc(application: ServiceStatusApplicationEntity): Doc<ServiceStatusApplication> {
     return {
       _id: application.id,
-      enabled: application.enabled,
       endpoints: application.endpoints,
       metadata: application.metadata,
       name: application.name,
@@ -87,6 +96,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
       statusTimestamp: application.statusTimestamp,
       tenantId: application.tenantId,
       timeIntervalMin: application.timeIntervalMin,
+      status: application.status,
     };
   }
 
@@ -96,7 +106,6 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
     }
     return new ServiceStatusApplicationEntity(this, {
       id: doc._id,
-      enabled: doc.enabled,
       endpoints: doc.endpoints,
       metadata: doc.metadata,
       name: doc.name,
@@ -104,6 +113,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
       statusTimestamp: doc.statusTimestamp,
       tenantId: doc.tenantId,
       timeIntervalMin: doc.timeIntervalMin,
+      status: doc.status,
     });
   }
 }

@@ -25,7 +25,14 @@ const initializeApp = async () => {
 
   const repositories = await createRepositories({ ...environment, logger });
 
-  const { coreStrategy, tenantStrategy, tenantHandler, configurationHandler, healthCheck } = await initializePlatform(
+  const {
+    coreStrategy,
+    tenantStrategy,
+    tenantHandler,
+    configurationHandler,
+    eventService,
+    healthCheck,
+  } = await initializePlatform(
     {
       serviceId: AdspId.parse(environment.CLIENT_ID),
       displayName: 'Value Service',
@@ -54,6 +61,20 @@ const initializeApp = async () => {
           required: ['name', 'definitions'],
         },
       },
+      events: [
+        {
+          name: 'value-written',
+          description: 'Signalled when a value is written to',
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              namespace: { type: 'string' },
+              name: { type: 'string' },
+              value: { type: 'object' },
+            },
+          },
+        },
+      ],
       clientSecret: environment.CLIENT_SECRET,
       directoryUrl: new URL(environment.DIRECTORY_URL),
       accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
@@ -97,7 +118,7 @@ const initializeApp = async () => {
     configurationHandler
   );
 
-  applyValuesMiddleware(app, { logger, repository: repositories.valueRepository });
+  applyValuesMiddleware(app, { logger, repository: repositories.valueRepository, eventService });
 
   app.use((err: Error, _req: express.Request, res: express.Response, next: express.NextFunction) => {
     if (err instanceof UnauthorizedError) {

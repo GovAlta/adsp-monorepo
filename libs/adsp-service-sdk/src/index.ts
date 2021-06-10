@@ -24,6 +24,8 @@ interface AdspOptions extends ServiceRegistration {
   accessServiceUrl: URL;
   /** Ignore Service Aud: Skip verification of Service ID in token audience. */
   ignoreServiceAud?: boolean;
+  /** Skip Publish Events: Skip publishing of event definitions. */
+  skipPublishEvents?: boolean;
   /** Configuration Converter: Converter function for configuration; converted value is cached. */
   configurationConverter?: ConfigurationConverter;
 }
@@ -66,6 +68,7 @@ export async function initializePlatform(
     directoryUrl,
     accessServiceUrl,
     ignoreServiceAud,
+    skipPublishEvents,
     configurationConverter,
     ...registration
   }: AdspOptions,
@@ -95,7 +98,7 @@ export async function initializePlatform(
   if (!eventService) {
     const eventServiceImpl = createEventService({ logger, serviceId, directory, tokenProvider });
     if (registration.events) {
-      await eventServiceImpl.register(...registration.events);
+      await eventServiceImpl.register(skipPublishEvents, ...registration.events);
     }
     eventService = eventServiceImpl;
   }

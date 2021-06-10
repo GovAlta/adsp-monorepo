@@ -78,7 +78,6 @@ const initializeApp = async (): Promise<express.Application> => {
               (namespaces, namespace) => ({
                 ...namespaces,
                 [namespace]: new NamespaceEntity(
-                  eventService,
                   new AjvValidationService(logger),
                   config[namespace],
                   tenantId

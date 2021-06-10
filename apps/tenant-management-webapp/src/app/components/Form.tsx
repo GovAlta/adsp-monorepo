@@ -8,7 +8,8 @@ interface GoAFormProps {
 function GoAForm(props: GoAFormProps & { children: ReactNode }): JSX.Element {
   const { children, onSubmit, ..._props } = props;
   return (
-    <div className="goa-form" style={{ marginBottom: '2rem' }}>
+    // FIXME: position: relative is required to allow the height of the dropdown menu to be calculated wrt to the form, rather than the page
+    <div className="goa-form" style={{ position: 'relative' }}>
       {onSubmit ? (
         <form onSubmit={onSubmit} {..._props}>
           {children}
@@ -29,8 +30,12 @@ const GoAFormButtons = styled.div`
     justify-content: flex-end;
     align-items: flex-end;
 
+    button {
+      min-width: 6rem;
+    }
+
     button + button {
-      margin-left: 1rem;
+      margin-left: 0.5rem;
     }
   }
 

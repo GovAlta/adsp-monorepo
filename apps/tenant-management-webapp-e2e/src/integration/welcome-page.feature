@@ -35,6 +35,8 @@ Feature: Tenant management welcome page
         When the user enters "autotest-signup" as tenant name and clicks create tenant button
         Then the user views the tenant is successfully created message
         And the new tenant login button is presented
+        When the user clicks the tenant login button
+        Then the user views the tenant login page for "autotest-signup"
         # Delete the created tenant for the next test run
-        When the user sends the delete tenant request for "autotest-signup"
+        When the user sends the delete tenant request
         Then the new tenant is deleted

@@ -7,6 +7,7 @@ import common from '../common/common.page';
 const commonObj = new common();
 const welcomPageObj = new WelcomPage();
 let responseObj: Cypress.Response;
+let tenantId;
 
 When('the user goes to the tenant management welcome page', function () {
   const urlToSkipSSO = Cypress.config().baseUrl + '?kc_idp_hint=';
@@ -95,8 +96,9 @@ Then('the new tenant login button is presented', function () {
   welcomPageObj.tenantLoginButton().contains('Tenant Login');
 });
 
-When('the user sends the delete tenant request for {string}', function (request) {
-  const tenantDeleteRequestURL = Cypress.env('tenantManagementApi') + '/api/tenant/v1?name=' + request;
+When('the user sends the delete tenant request', function () {
+  expect(tenantId).not.equals(null);
+  const tenantDeleteRequestURL = Cypress.env('tenantManagementApi') + '/api/tenant/v1?realm=' + tenantId;
   cy.request({
     method: 'DELETE',
     url: tenantDeleteRequestURL,
@@ -111,4 +113,22 @@ When('the user sends the delete tenant request for {string}', function (request)
 Then('the new tenant is deleted', function () {
   expect(responseObj.status).to.eq(200);
   expect(responseObj.body.success).to.equal(true);
+});
+
+When('the user clicks the tenant login button', function () {
+  welcomPageObj.tenantLoginButton().click();
+});
+
+Then('the user views the tenant login page for {string}', function (tenantName) {
+  welcomPageObj.tenantLoginTenantDisplayName().invoke('text').should('eq', tenantName);
+  cy.url().then(function (urlString) {
+    // Store tenant id to be used by the later tenant deletion requrest step
+    tenantId = urlString.match(/(?<=auth\/realms\/).+(?=\/protocol\/openid-connect\/auth)/g);
+    expect(tenantId).not.equals(null);
+    // Output to cypress console for information only
+    Cypress.log({
+      name: 'New tenant ID: ',
+      message: tenantId,
+    });
+  });
 });

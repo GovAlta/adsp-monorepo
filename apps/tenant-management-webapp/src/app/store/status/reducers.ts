@@ -14,10 +14,8 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
         ...state,
         applications: action.payload.sort(compareIds),
       };
-    case 'status/TOGGLE_APPLICATION_SUCCESS':
     case 'status/SAVE_APPLICATION_SUCCESS': {
       const applications = [...state.applications.filter((app) => app.id !== action.payload.id), action.payload];
-      console.log('applications', applications);
       return {
         ...state,
         applications: applications.sort(compareIds),
@@ -27,6 +25,13 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
       return {
         ...state,
         applications: [...state.applications.filter((app) => app.id !== action.payload)].sort(compareIds),
+      };
+    case 'status/SET_APPLICATION_STATUS_SUCCESS':
+      return {
+        ...state,
+        applications: [...state.applications.filter((app) => app.id !== action.payload.id), action.payload].sort(
+          compareIds
+        ),
       };
 
     default:

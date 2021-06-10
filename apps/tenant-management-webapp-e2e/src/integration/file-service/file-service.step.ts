@@ -304,7 +304,7 @@ Given('a service owner user is on file services overview page', function () {
     .click()
     .then(function () {
       cy.url().should('include', '/admin/tenant-admin/services/file');
-      cy.wait(2000);
+      cy.wait(4000);
     });
 });
 

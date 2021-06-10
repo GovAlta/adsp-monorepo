@@ -1,2 +1,2 @@
-export { tenantRouter } from './tenant';
-export { tenantV2Router } from './tenantV2';
+export { createTenantRouter } from './tenant';
+export { createTenantV2Router } from './tenantV2';
