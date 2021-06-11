@@ -433,14 +433,22 @@ export default function FileTypes() {
 
   const notifications = () => {
     return state.notifications.notifications.map((notification, i) => {
-      return (
-        <div
-          key={i}
-          style={{ backgroundColor: 'red', padding: '8px', margin: '5px 0 5px 0', color: 'white', borderRadius: '5px' }}
-        >
-          <div>{notification.message}</div>
-        </div>
-      );
+      if (!notification.message.includes('uptime')) {
+        return (
+          <div
+            key={i}
+            style={{
+              backgroundColor: 'red',
+              padding: '8px',
+              margin: '5px 0 5px 0',
+              color: 'white',
+              borderRadius: '5px',
+            }}
+          >
+            <div>{notification.message}</div>
+          </div>
+        );
+      }
     });
   };
 

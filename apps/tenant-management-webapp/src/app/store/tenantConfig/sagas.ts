@@ -1,5 +1,5 @@
 import { put, select } from 'redux-saga/effects';
-import { ErrorNotification } from '@store/notifications/actions';
+import { BasicNotification, ErrorNotification } from '@store/notifications/actions';
 import {
   FetchTenantConfigSuccessService,
   CreateTenantConfigSuccessService,
@@ -16,7 +16,7 @@ export function* fetchTenantConfig() {
     const tenantConfig = yield api.fetchTenantConfig();
     yield put(FetchTenantConfigSuccessService(tenantConfig.configurationSettingsList));
   } catch (e) {
-    yield put(ErrorNotification({ message: e.message }));
+    yield put(BasicNotification({ message: e.message }));
   }
 }
 
