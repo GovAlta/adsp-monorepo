@@ -19,7 +19,6 @@ export interface Response {
   urn?: string;
 }
 const URN_SEPARATOR = ':';
-const HTTPS = 'https://';
 
 const getName = (directory, core: string) => {
   for (const obj of directory) {
