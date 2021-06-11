@@ -38,7 +38,7 @@ function Status(): JSX.Element {
     <Page>
       <Main>
         <h2>Service Status</h2>
-        <p>This service allows for easy monitoring of application downtime.</p>
+        This service allows for easy monitoring of application downtime.
         <p>
           You can use multiple endpoint URLs for a single application, including internal services you depend on, in
           order to assess which components within an application may be down or malfunctioning (ie. web server,
@@ -48,6 +48,21 @@ function Status(): JSX.Element {
           Each Application should represent a service that is useful to the end user by itself, such as child care
           subsidy and child care certification
         </p>
+        <h4>Guidelines for choosing a health check endpoint:</h4>
+        <ol>
+          <li>A Health check endpoint needs to be publicly accessible over the internet</li>
+          <li>
+            A Health check endpoint needs to return
+            <ul>
+              <li>A 200 level status code to indicate good health</li>
+              <li>A non-200 level status code to indicate bad health.</li>
+            </ul>
+          </li>
+          <li>
+            To be most accurate, the health check endpoint should reference a URL that makes comprehensive use of your
+            app, and checks connectivity to any databases, for instance.
+          </li>
+        </ol>
         <GoALinkButton data-testid="add-application" to={`${location.pathname}/new`} buttonType="primary">
           Add Application
         </GoALinkButton>
