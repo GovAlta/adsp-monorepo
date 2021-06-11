@@ -3,7 +3,6 @@ import { FileItem, FileService, FileTypeItem, FileServiceDocs } from './models';
 export const TERMINATE_FILE_SERVICE = 'tenant/file-service/delete'; // delete file service
 export const DISABLE_FILE_SERVICE = 'tenant/file-service/activation/';
 export const ENABLE_FILE_SERVICE = 'tenant/file-service/activation/activate';
-export const SET_FILE_SERVICE_ACTIVE_TAB = 'tenant/file-service/states/tabs/active';
 export const SETUP_FILE_SERVICE = 'tenant/file-service/setup'; // The SETUP_FILE_SERVICE is only for testing
 
 export const UPLOAD_FILE = 'tenant/file-service/upload';
@@ -56,7 +55,6 @@ export type ActionTypes =
   | DisableFileServiceAction
   | EnableFileServiceAction
   | TerminateFileServiceAction
-  | SetActiveTabAction
   | SetupFileAction
   | CreateFileSpaceSucceededAction
   | CreateFileSpaceFailedAction
@@ -162,13 +160,6 @@ interface FetchFileSpaceFailedAction {
 
 interface EnableFileServiceAction {
   type: typeof ENABLE_FILE_SERVICE;
-}
-
-interface SetActiveTabAction {
-  type: typeof SET_FILE_SERVICE_ACTIVE_TAB;
-  payload: {
-    activeTab: string;
-  };
 }
 
 interface SetupFileAction {
@@ -344,13 +335,6 @@ export const DownloadFileFailedService = (data: string): DownloadFileFailedActio
   type: DOWNLOAD_FILE_FAILED,
   payload: {
     data,
-  },
-});
-
-export const SetActiveTab = (activeTab: string): SetActiveTabAction => ({
-  type: SET_FILE_SERVICE_ACTIVE_TAB,
-  payload: {
-    activeTab,
   },
 });
 

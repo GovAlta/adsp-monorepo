@@ -26,7 +26,7 @@ export function createCheckEndpointJob({ logger, application, serviceStatusRepos
       return;
     }
     // exit in the case where the application has not yet been removed from the job queue
-    if (!application.enabled) {
+    if (application.status === 'disabled') {
       return;
     }
 
@@ -42,12 +42,17 @@ export function createCheckEndpointJob({ logger, application, serviceStatusRepos
       })
     ).then((endpointStatusList) => {
       endpointStatusList.forEach(({ ok, url }: EndpointStatus) => {
+        let allEndpointsUp = true;
         application.endpoints.forEach((endpoint) => {
           if (endpoint.url === url) {
             endpoint.status = ok ? 'online' : 'offline';
+            allEndpointsUp = allEndpointsUp && ok;
             logger.info(`  ${application.name} - ${endpoint.url}: ${ok ? 'OK' : 'FAIL'}`);
           }
         });
+
+        // set the application status based on the endpoints
+        application.status = allEndpointsUp ? 'operational' : 'reported-issues';
 
         serviceStatusRepository
           .save(application)

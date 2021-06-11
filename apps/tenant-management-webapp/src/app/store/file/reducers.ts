@@ -8,7 +8,6 @@ import {
   ENABLE_FILE_SERVICE,
   FETCH_FILE_SPACE_SUCCEEDED,
   //SETUP_FILE_SERVICE,
-  SET_FILE_SERVICE_ACTIVE_TAB,
   CREATE_FILE_SPACE_SUCCEEDED,
   CREATE_FILE_SPACE_FAILED,
   FETCH_FILE_TYPE_SUCCEEDED,
@@ -55,10 +54,6 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
     case TERMINATE_FILE_SERVICE:
       return {
         ...state,
-        states: {
-          ...state.states,
-          activeTab: 'overall-view',
-        },
       };
     case UPLOAD_FILE_SUCCESSES: // add file to fileList
       return {
@@ -74,14 +69,6 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
       return {
         ...state,
         fileList: action.payload.results.data,
-      };
-    case SET_FILE_SERVICE_ACTIVE_TAB:
-      return {
-        ...state,
-        states: {
-          ...state.states,
-          activeTab: action.payload.activeTab,
-        },
       };
 
     case CREATE_FILE_SPACE_SUCCEEDED:

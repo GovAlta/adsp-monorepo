@@ -12,34 +12,20 @@ export class MongoFileRepository implements FileRepository {
     this.model = model('file', fileSchema);
   }
 
+  async exists(criteria: FileCriteria): Promise<boolean> {
+    const query: any = this.getQuery(criteria);
+    const result = await this.model.findOne({
+      where: query,
+    });
+
+    return !!result === true;
+  }
+
   find(top: number, after: string, criteria: FileCriteria): Promise<Results<FileEntity>> {
     const skip = decodeAfter(after);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const query: any = {};
-
-    if (criteria.spaceEquals) {
-      query.spaceId = criteria.spaceEquals;
-    }
-
-    if (criteria.typeEquals) {
-      query.typeId = criteria.typeEquals;
-    }
-
-    if (criteria.scanned !== undefined) {
-      query.scanned = criteria.scanned;
-    }
-
-    if (criteria.deleted !== undefined) {
-      query.deleted = criteria.deleted;
-    }
-
-    if (criteria.filenameContains) {
-      query.filename = {
-        $regex: criteria.filenameContains,
-        $options: 'i',
-      };
-    }
+    const query: any = this.getQuery(criteria);
 
     return new Promise<FileEntity[]>((resolve, reject) => {
       this.model
@@ -104,11 +90,7 @@ export class MongoFileRepository implements FileRepository {
 
   delete(entity: FileEntity): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) =>
-      this.model.findOneAndDelete(
-        { _id: entity.id },
-        null,
-        (err, doc) => (err ? reject(err) : resolve(!!doc))
-      )
+      this.model.findOneAndDelete({ _id: entity.id }, null, (err, doc) => (err ? reject(err) : resolve(!!doc)))
     );
   }
 
@@ -143,5 +125,33 @@ export class MongoFileRepository implements FileRepository {
       scanned: entity.scanned,
       deleted: entity.deleted,
     };
+  }
+
+  getQuery(criteria: FileCriteria) {
+    const query: any = {};
+
+    if (criteria.spaceEquals) {
+      query.spaceId = criteria.spaceEquals;
+    }
+
+    if (criteria.typeEquals) {
+      query.typeId = criteria.typeEquals;
+    }
+
+    if (criteria.scanned !== undefined) {
+      query.scanned = criteria.scanned;
+    }
+
+    if (criteria.deleted !== undefined) {
+      query.deleted = criteria.deleted;
+    }
+
+    if (criteria.filenameContains) {
+      query.filename = {
+        $regex: criteria.filenameContains,
+        $options: 'i',
+      };
+    }
+    return query;
   }
 }

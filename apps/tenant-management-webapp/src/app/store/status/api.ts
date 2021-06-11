@@ -9,11 +9,6 @@ export class StatusApi {
     addAuthTokenInterceptor(this.http, token);
   }
 
-  async toggleApplication(applicationId: string, enabled: boolean): Promise<ServiceStatusApplication> {
-    const res = await this.http.patch(`/applications/${applicationId}/${enabled ? 'enable' : 'disable'}`);
-    return res.data;
-  }
-
   async getApplications(): Promise<ServiceStatusApplication[]> {
     const res = await this.http.get(`/applications`);
     return res.data;
@@ -31,5 +26,10 @@ export class StatusApi {
 
   async deleteApplication(applicationId: string): Promise<void> {
     await this.http.delete(`/applications/${applicationId}`);
+  }
+
+  async setStatus(applicationId: string, status: string): Promise<ServiceStatusApplication> {
+    const res = await this.http.patch(`/applications/${applicationId}/status`, { status });
+    return res.data;
   }
 }

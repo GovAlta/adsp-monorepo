@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 
-import '@abgov/react-components/react-components.esm.css';
+// TODO: remove this
 import '@abgov/core-css/goa-core.css';
 
 import LandingPage from '@pages/public/Landing';
@@ -22,7 +22,6 @@ import { store, RootState } from '@store/index';
 import { PrivateApp, PrivateRoute } from './privateApp';
 import { fetchConfig } from '@store/config/actions';
 import AuthContext from '@lib/authContext';
-import { keycloakAuth, LOGIN_TYPES } from '@lib/keycloak';
 import CreateTenant from '@pages/admin/tenants/CreateTenant';
 
 import { ThemeProvider } from 'styled-components';

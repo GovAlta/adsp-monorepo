@@ -3,7 +3,7 @@ import { Link, useHistory } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
-import { GoaHeroBanner, GoACard } from '@abgov/react-components';
+import { GoAHeroBanner, GoACard } from '@abgov/react-components';
 import caseStudy from '@assets/CaseStudy.png';
 import bannerBackground from '@assets/BannerBackground.jpg';
 import userGroup from '@icons/user-group.svg';
@@ -11,7 +11,6 @@ import puzzleIcon from '@icons/extension-puzzle-outline.svg';
 import Header from '@components/AppHeader';
 import { RootState } from '@store/index';
 
-import '@abgov/react-components/react-components.esm.css';
 import Container from '@components/Container';
 import { Grid, GridItem } from '@components/Grid';
 import { Main } from '@components/Html';
@@ -25,7 +24,7 @@ const LandingPage = () => {
   return (
     <>
       <Header serviceName="" />
-      <GoaHeroBanner title="" backgroundUrl={bannerBackground}>
+      <GoAHeroBanner title="" backgroundUrl={bannerBackground}>
         <Container hs={1}>
           <h1>The Alberta Digital Service Platform</h1>
           <p>
@@ -37,7 +36,7 @@ const LandingPage = () => {
             Get Started
           </GoALinkButton>
         </Container>
-      </GoaHeroBanner>
+      </GoAHeroBanner>
       <Main>
         <Section>
           <Container vs={3} hs={1}>

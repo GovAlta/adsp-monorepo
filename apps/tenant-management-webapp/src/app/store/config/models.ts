@@ -30,6 +30,7 @@ export interface ServiceUrls {
   notificationServiceUrl: string;
   keycloakUrl: string;
   tenantManagementApi: string;
+  tenantManagementWebApp?: string;
   accessManagementApi: string;
   uiComponentUrl: string;
   fileApi?: string;

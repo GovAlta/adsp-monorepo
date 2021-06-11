@@ -147,18 +147,18 @@ export const createFileTypeRouter = ({
         throw new NotFoundError(`Could not find space for ${user.name}`, fileTypeId);
       }
       const spaceEntity: FileSpaceEntity = await spaceRepository.get(spaceId);
-      const filesOfType = await fileRepository.find(100000, null, {
+      const filesOfType = await fileRepository.exists({
         typeEquals: fileTypeId,
       });
-      if (filesOfType.results.length === 0) {
+      if (filesOfType) {
         const deletedItem = await spaceEntity.deleteType(user, fileTypeId);
         res.json(deletedItem);
       } else {
-        const markForDelete = await fileRepository.find(100000, null, {
+        const markForDelete = await fileRepository.exists({
           typeEquals: fileTypeId,
           deleted: true,
         });
-        if (markForDelete.results.length > 0) {
+        if (markForDelete) {
           throw new InvalidOperationError(`There are mark for delete files, please try delete ${fileTypeId} later.`);
         }
         throw new InvalidOperationError(`There are uploaded files of this File Type`);

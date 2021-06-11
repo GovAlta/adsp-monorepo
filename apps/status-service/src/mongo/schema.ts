@@ -8,6 +8,7 @@ export const serviceStatusEndpointSchema = new Schema(
     },
     status: {
       type: String,
+      default: 'disabled',
       required: true,
     },
   },
@@ -31,15 +32,16 @@ export const serviceStatusApplicationSchema = new Schema(
     metadata: {
       type: Schema.Types.Mixed,
     },
-    enabled: {
-      type: Boolean,
-      default: false,
-    },
     statusTimestamp: {
       type: Number,
     },
     timeIntervalMin: {
       type: Number,
+      required: true,
+    },
+    status: {
+      type: String,
+      default: 'disabled',
       required: true,
     },
     endpoints: [serviceStatusEndpointSchema],

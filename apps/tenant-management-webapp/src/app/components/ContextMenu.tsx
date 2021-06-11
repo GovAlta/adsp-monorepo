@@ -1,23 +1,29 @@
-import React, { Component, ReactElement } from 'react';
+import React, { Component, CSSProperties, ReactElement } from 'react';
 import styled from 'styled-components';
 
 export interface ContextMenuItem {
   icon: string | JSX.Element;
   text?: string;
   name: string;
-
   title?: string;
 }
 
 interface Props {
   onAction: (name: string) => void;
   items: ContextMenuItem[];
+  border?: boolean;
 }
 
-function ContextMenu({ onAction, items }: Props): JSX.Element {
+function ContextMenu({ onAction, items, ...props }: Props): JSX.Element {
+  const borderStyles: CSSProperties = {
+    boxShadow: '0 0 8px -2px rgba(0, 0, 0, 0.1)',
+    border: '1px solid #ccc',
+    borderRadius: '0.25rem',
+  };
+
   return (
     <Root>
-      <Menu>
+      <Menu style={props.border ? borderStyles : {}} className={props.border ? 'menu-border' : ''}>
         {items.map((item) => (
           <div
             data-testid={`context-menu--${item.name}`}
@@ -37,12 +43,9 @@ export default ContextMenu;
 
 const Menu = styled.div`
   display: flex;
-  border: 1px solid #ccc;
-  border-radius: 0.25rem;
   align-items: center;
   padding: 0.25rem 0.5rem;
   background-color: #fff;
-  box-shadow: 0 0 8px -2px rgba(0, 0, 0, 0.1);
 
   > div {
     display: flex;

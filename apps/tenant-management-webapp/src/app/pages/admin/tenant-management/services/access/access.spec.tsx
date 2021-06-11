@@ -33,7 +33,11 @@ describe('Access Page', () => {
     ];
 
     const store = mockStore({
-      config: { keycloakApi: mockKeycloak, tenantApi: { host: 'foo' } },
+      config: {
+        keycloakApi: mockKeycloak,
+        tenantApi: { host: 'foo' },
+        serviceUrls: { tenantManagementWebApp: 'http://localhost' },
+      },
       access: { users: users, roles: roles },
       user: { jwt: { token: '' } },
       session: { realm: 'core' },
@@ -60,7 +64,11 @@ describe('Access Page', () => {
 
   it('uses the keycloak realm within the store config', async () => {
     const store = mockStore({
-      config: { keycloakApi: mockKeycloak, tenantApi: { host: 'foo' } },
+      config: {
+        keycloakApi: mockKeycloak,
+        tenantApi: { host: 'foo' },
+        serviceUrls: { tenantManagementWebApp: 'http://localhost' },
+      },
       access: { users: [], roles: [] },
       user: { jwt: { token: '' } },
       session: { realm: 'core' },
@@ -73,7 +81,8 @@ describe('Access Page', () => {
     );
 
     await waitFor(() => {
-      const state = store.getState();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const state: any = store.getState();
 
       const link = queryByTitle('Keycloak Admin');
       expect(link).not.toBeNull();

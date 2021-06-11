@@ -49,12 +49,13 @@ import {
 } from './tenant/actions';
 import { FETCH_TENANT_CONFIG, CREATE_TENANT_CONFIG, UPDATE_TENANT_CONFIG } from './tenantConfig/actions';
 import { DELETE_APPLICATION_ACTION, FETCH_SERVICE_STATUS_APPS_ACTION, SAVE_APPLICATION_ACTION } from './status/actions';
-import { deleteApplication, fetchServiceStatusApps, saveApplication, toggleApplication } from './status/sagas';
-import { TOGGLE_APPLICATION_ACTION } from './status/actions/toggleApplication';
+import { deleteApplication, fetchServiceStatusApps, saveApplication, setApplicationStatus } from './status/sagas';
+import { SET_APPLICATION_STATUS_ACTION } from './status/actions/setApplicationStatus';
 
 export function* watchSagas() {
   yield takeEvery(FETCH_CONFIG_ACTION, fetchConfig);
   yield takeEvery(FETCH_ACCESS_ACTION, fetchAccess);
+
   //file service
   yield takeEvery(UPLOAD_FILE, uploadFile);
   yield takeEvery(DOWNLOAD_FILE, downloadFile);
@@ -70,6 +71,8 @@ export function* watchSagas() {
   yield takeEvery(CREATE_TENANT, createTenant);
   // tenant and keycloak
   yield takeEvery(CHECK_IS_TENANT_ADMIN, isTenantAdmin);
+
+  //tenant config
   yield takeEvery(FETCH_TENANT_CONFIG, fetchTenantConfig);
   yield takeEvery(CREATE_TENANT_CONFIG, createTenantConfig);
   yield takeEvery(UPDATE_TENANT_CONFIG, updateTenantConfig);
@@ -91,5 +94,5 @@ export function* watchSagas() {
   yield takeEvery(FETCH_SERVICE_STATUS_APPS_ACTION, fetchServiceStatusApps);
   yield takeEvery(SAVE_APPLICATION_ACTION, saveApplication);
   yield takeEvery(DELETE_APPLICATION_ACTION, deleteApplication);
-  yield takeEvery(TOGGLE_APPLICATION_ACTION, toggleApplication);
+  yield takeEvery(SET_APPLICATION_STATUS_ACTION, setApplicationStatus);
 }

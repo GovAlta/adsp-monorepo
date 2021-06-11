@@ -37,9 +37,9 @@ describe('Service status mongo repository', () => {
 
   it('should contain the mock data', async (done) => {
     const applications = await insertMockData([
-      { name: 'app 1', endpoints: [], enabled: true, timeIntervalMin: 2, tenantId: '99' },
-      { name: 'app 2', endpoints: [], enabled: true, timeIntervalMin: 2, tenantId: '99' },
-      { name: 'app 3', endpoints: [], enabled: true, timeIntervalMin: 2, tenantId: '99' },
+      { name: 'app 1', endpoints: [], status: 'operational', timeIntervalMin: 2, tenantId: '99' },
+      { name: 'app 2', endpoints: [], status: 'operational', timeIntervalMin: 2, tenantId: '99' },
+      { name: 'app 3', endpoints: [], status: 'operational', timeIntervalMin: 2, tenantId: '99' },
     ]);
     const apps = await repo.find({});
     expect(apps.length).toEqual(applications.length);
@@ -48,9 +48,9 @@ describe('Service status mongo repository', () => {
 
   it('find the queued disabled applications', async (done) => {
     const applications = await insertMockData([
-      { name: 'app 1', endpoints: [], enabled: false, timeIntervalMin: 2, tenantId: '99' },
-      { name: 'app 2', endpoints: [], enabled: false, timeIntervalMin: 2, tenantId: '99' },
-      { name: 'app 3', endpoints: [], enabled: true, timeIntervalMin: 2, tenantId: '99' },
+      { name: 'app 1', endpoints: [], status: 'disabled', timeIntervalMin: 2, tenantId: '99' },
+      { name: 'app 2', endpoints: [], status: 'disabled', timeIntervalMin: 2, tenantId: '99' },
+      { name: 'app 3', endpoints: [], status: 'operational', timeIntervalMin: 2, tenantId: '99' },
     ]);
     const queuedIds = applications.map((app) => app.id);
     const actual = await repo.findQueuedDisabledApplications(queuedIds);
@@ -60,10 +60,10 @@ describe('Service status mongo repository', () => {
 
   it('finds the enabled applications that are not yet on the process queue', async (done) => {
     const applications = await insertMockData([
-      { name: 'app 1', endpoints: [], enabled: true, timeIntervalMin: 2, tenantId: '99' },
-      { name: 'app 2', endpoints: [], enabled: true, timeIntervalMin: 2, tenantId: '99' }, // non-queued
-      { name: 'app 3', endpoints: [], enabled: false, timeIntervalMin: 2, tenantId: '99' }, // not enabled so shouldn't be queued
-      { name: 'app 4', endpoints: [], enabled: true, timeIntervalMin: 2, tenantId: '33' },
+      { name: 'app 1', endpoints: [], status: 'operational', timeIntervalMin: 2, tenantId: '99' },
+      { name: 'app 2', endpoints: [], status: 'operational', timeIntervalMin: 2, tenantId: '99' }, // non-queued
+      { name: 'app 3', endpoints: [], status: 'disabled', timeIntervalMin: 2, tenantId: '99' }, // not enabled so shouldn't be queued
+      { name: 'app 4', endpoints: [], status: 'operational', timeIntervalMin: 2, tenantId: '33' },
     ]);
     const queuedApps = ['app 1', 'app 4'];
     const queuedIds = applications.filter((app) => queuedApps.includes(app.name)).map((app) => app.id);
@@ -74,10 +74,10 @@ describe('Service status mongo repository', () => {
 
   it('finds the applications that exist in the process queue, but have been deleted in the db', async (done) => {
     const applications = await insertMockData([
-      { name: 'app 1', endpoints: [], enabled: true, timeIntervalMin: 2, tenantId: '99' },
-      { name: 'app 2', endpoints: [], enabled: true, timeIntervalMin: 2, tenantId: '99' }, // non-queued
-      { name: 'app 3', endpoints: [], enabled: false, timeIntervalMin: 2, tenantId: '99' }, // not enabled so shouldn't be queued
-      { name: 'app 4', endpoints: [], enabled: true, timeIntervalMin: 2, tenantId: '33' },
+      { name: 'app 1', endpoints: [], status: 'operational', timeIntervalMin: 2, tenantId: '99' },
+      { name: 'app 2', endpoints: [], status: 'operational', timeIntervalMin: 2, tenantId: '99' }, // non-queued
+      { name: 'app 3', endpoints: [], status: 'disabled', timeIntervalMin: 2, tenantId: '99' }, // not enabled so shouldn't be queued
+      { name: 'app 4', endpoints: [], status: 'operational', timeIntervalMin: 2, tenantId: '33' },
     ]);
     const queuedApps = ['app 1', 'app 4'];
     const queuedIds = applications.filter((app) => queuedApps.includes(app.name)).map((app) => app.id);
@@ -89,12 +89,12 @@ describe('Service status mongo repository', () => {
 
   it('enables an application', async (done) => {
     const applications = await insertMockData([
-      { name: 'app 1', endpoints: [], enabled: false, timeIntervalMin: 2, tenantId: '99' },
-      { name: 'app 2', endpoints: [], enabled: false, timeIntervalMin: 2, tenantId: '99' },
+      { name: 'app 1', endpoints: [], status: 'disabled', timeIntervalMin: 2, tenantId: '99' },
+      { name: 'app 2', endpoints: [], status: 'disabled', timeIntervalMin: 2, tenantId: '99' },
     ]);
     await repo.enable(applications[0]);
 
-    const enabledApplications = await repo.find({ enabled: true });
+    const enabledApplications = await repo.findEnabledApplications();
     expect(enabledApplications.length).toEqual(1);
     done();
   });
@@ -107,25 +107,25 @@ describe('Service status mongo repository', () => {
           { status: 'online', url: 'foo.com' },
           { status: 'offline', url: 'bar.com' },
         ],
-        enabled: true,
+        status: 'operational',
         timeIntervalMin: 2,
         tenantId: '99',
       },
-      { name: 'app 2', endpoints: [], enabled: true, timeIntervalMin: 2, tenantId: '99' },
+      { name: 'app 2', endpoints: [], status: 'operational', timeIntervalMin: 2, tenantId: '99' },
     ]);
     await repo.disable(applications[0]);
 
-    const disabledApplications = await repo.find({ enabled: false });
+    const disabledApplications = await repo.find({ status: 'disabled' });
     expect(disabledApplications.length).toEqual(1);
-    expect(disabledApplications[0].endpoints[0].status).toEqual('pending');
-    expect(disabledApplications[0].endpoints[1].status).toEqual('pending');
+    expect(disabledApplications[0].endpoints[0].status).toEqual('disabled');
+    expect(disabledApplications[0].endpoints[1].status).toEqual('disabled');
     done();
   });
 
   it('deletes the application', async (done) => {
     const applications = await insertMockData([
-      { name: 'app 1', endpoints: [], enabled: false, timeIntervalMin: 2, tenantId: '99' },
-      { name: 'app 2', endpoints: [], enabled: false, timeIntervalMin: 2, tenantId: '99' },
+      { name: 'app 1', endpoints: [], status: 'disabled', timeIntervalMin: 2, tenantId: '99' },
+      { name: 'app 2', endpoints: [], status: 'disabled', timeIntervalMin: 2, tenantId: '99' },
     ]);
     await repo.delete(applications[0]);
     const apps = await repo.find({});
@@ -135,8 +135,8 @@ describe('Service status mongo repository', () => {
 
   it('gets an application by id', async (done) => {
     const applications = await insertMockData([
-      { name: 'app 1', endpoints: [], enabled: false, timeIntervalMin: 2, tenantId: '99' },
-      { name: 'app 2', endpoints: [], enabled: false, timeIntervalMin: 2, tenantId: '99' },
+      { name: 'app 1', endpoints: [], status: 'disabled', timeIntervalMin: 2, tenantId: '99' },
+      { name: 'app 2', endpoints: [], status: 'disabled', timeIntervalMin: 2, tenantId: '99' },
     ]);
     const app = await repo.get(applications[0].id);
     expect(app).not.toBeNull();
@@ -146,11 +146,11 @@ describe('Service status mongo repository', () => {
 
   it('saves the existing app', async (done) => {
     const applications = await insertMockData([
-      { name: 'app 1', endpoints: [], enabled: false, timeIntervalMin: 2, tenantId: '99' },
-      { name: 'app 2', endpoints: [], enabled: false, timeIntervalMin: 2, tenantId: '99' },
+      { name: 'app 1', endpoints: [], status: 'disabled', timeIntervalMin: 2, tenantId: '99' },
+      { name: 'app 2', endpoints: [], status: 'disabled', timeIntervalMin: 2, tenantId: '99' },
     ]);
     const editedApp = applications[0];
-    editedApp.name = 'editted app';
+    editedApp.name = 'edited app';
     await repo.save(editedApp);
 
     const appCheck = await repo.get(editedApp.id);
