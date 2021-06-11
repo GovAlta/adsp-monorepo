@@ -1,15 +1,16 @@
 import React, { useContext, useState } from 'react';
 import { GoaHeader } from '@abgov/react-components';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
-
 import { RootState } from '@store/index';
 import AuthContext from '@lib/authContext';
 import Sidebar from '@pages/admin/tenant-management/sidebar';
 import MenuIcon from '@icons/menu-outline.svg';
 import CloseIcon from '@icons/close-outline.svg';
 import { ReactComponent as UserIcon } from '@icons/person-circle-outline.svg';
+import { TenantAdminLogin, TenantLogout } from '@store/tenant/actions';
+
 interface HeaderMenuProps {
   hasLoginLink: boolean;
 }
@@ -17,7 +18,7 @@ interface HeaderMenuProps {
 const ActionsMenu = (props: HeaderMenuProps) => {
   const authenticated = useSelector((state: RootState) => state.session.authenticated);
   const authCtx = useContext(AuthContext);
-
+  const dispatch = useDispatch();
   const [menuState, setMenuState] = useState<MenuState>({ state: 'closed' });
 
   function toggleMenu() {
@@ -42,12 +43,17 @@ const ActionsMenu = (props: HeaderMenuProps) => {
           {authenticated ? (
             <UserIconBox>
               <UserIcon />
-              <Link to={'/'} onClick={() => authCtx.signOut()}>
+              <Link to={''} onClick={() => dispatch(TenantLogout())}>
                 Sign Out
               </Link>
             </UserIconBox>
           ) : (
-            <Link to={'/'} onClick={() => authCtx.signIn('/login-redirect')}>
+            <Link
+              to={''}
+              onClick={() => {
+                dispatch(TenantAdminLogin());
+              }}
+            >
               Sign In
             </Link>
           )}

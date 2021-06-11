@@ -1,17 +1,22 @@
-import React, { useContext } from 'react';
+import React, { useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components';
-import AuthContext from '@lib/authContext';
 import { Redirect } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@store/index';
 import { Page, Main } from '@components/Html';
 import GoALinkButton from '@components/LinkButton';
+import { TenantCreationLoginInit } from '@store/tenant/actions';
+import { KeycloakCheckSSO } from '@store/tenant/actions';
 
 const GetStarted = () => {
-  const { signIn } = useContext(AuthContext);
   const { authenticated } = useSelector((state: RootState) => ({
     authenticated: state.session.authenticated,
   }));
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(KeycloakCheckSSO('core'));
+  }, []);
 
   return (
     <Page>
@@ -24,7 +29,12 @@ const GetStarted = () => {
 
         {!authenticated ? (
           <>
-            <GoAButton buttonType="primary" onClick={() => signIn('/get-started')}>
+            <GoAButton
+              buttonType="primary"
+              onClick={() => {
+                dispatch(TenantCreationLoginInit());
+              }}
+            >
               Continue with Government Alberta account
             </GoAButton>
             <GoALinkButton buttonType="secondary" to="/">
@@ -32,7 +42,7 @@ const GetStarted = () => {
             </GoALinkButton>
           </>
         ) : (
-          <Redirect to="/admin/tenants/create" />
+          <Redirect to="/tenant/creation" />
         )}
       </Main>
     </Page>

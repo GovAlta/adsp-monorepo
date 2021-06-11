@@ -1,9 +1,5 @@
 import React from 'react';
-
-interface Actions {
-  signIn: (redirectPath: string) => void;
-  signOut: () => void;
-}
+interface Actions {}
 
 const AuthContext = React.createContext<Actions>(null);
 export default AuthContext;

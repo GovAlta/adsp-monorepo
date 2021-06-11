@@ -1,20 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Redirect, Route } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+
+import { Route } from 'react-router-dom';
 
 import Header from '@components/AppHeader';
-import { RootState } from '@store/index';
-import { ApiUptimeFetch } from '@store/api-status/actions';
 import { HeaderCtx } from '@lib/headerContext';
 import Container from '@components/Container';
+import { KeycloakCheckSSOWithLogout, KeycloakRefreshToken } from '@store/tenant/actions';
 
 export function PrivateApp({ children }) {
   const [title, setTitle] = useState<string>('');
   const dispatch = useDispatch();
+  const urlParams = new URLSearchParams(window.location.search);
+  const realm = urlParams.get('realm');
 
-  // initiate the get API service status reoccurring request
   useEffect(() => {
-    setInterval(async () => dispatch(ApiUptimeFetch()), 10 * 1000);
+    dispatch(KeycloakCheckSSOWithLogout(realm));
+  }, []);
+
+  useEffect(() => {
+    setInterval(async () => {
+      dispatch(KeycloakRefreshToken());
+    }, 25000);
   }, [dispatch]);
 
   return (
@@ -26,20 +33,7 @@ export function PrivateApp({ children }) {
 }
 
 export function PrivateRoute({ component: Component, ...rest }) {
-  const isAuthenticated = useSelector((state: RootState) => state.session?.authenticated ?? false);
-
-  return (
-    <Route
-      {...rest}
-      render={(props) =>
-        isAuthenticated ? (
-          <Component {...props} />
-        ) : (
-          <Redirect to={{ pathname: '/', state: { from: props.location } }} />
-        )
-      }
-    />
-  );
+  return <Route {...rest} render={(props) => <Component {...props} />} />;
 }
 
 export default PrivateApp;

@@ -2,9 +2,7 @@ import React, { useContext, useEffect } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import styled from 'styled-components';
-
 import { HeaderCtx } from '@lib/headerContext';
-import { keycloak } from '@lib/session';
 import { CredentialRefresh } from '@store/session/actions';
 
 import Sidebar from './sidebar';
@@ -23,23 +21,23 @@ const TenantManagement = (): JSX.Element => {
     setTitle('Alberta Digital Service Platform - Tenant Management');
   }, [setTitle]);
 
-  useEffect(() => {
-    setInterval(async () => {
-      try {
-        const expiringSoon = await keycloak.updateToken(60);
-        if (expiringSoon) {
-          dispatch(
-            CredentialRefresh({
-              token: keycloak.token,
-              tokenExp: keycloak.tokenParsed.exp,
-            })
-          );
-        }
-      } catch (e) {
-        console.log(e);
-      }
-    }, 20000);
-  }, [dispatch]);
+  // useEffect(() => {
+  //   setInterval(async () => {
+  //     try {
+  //       const expiringSoon = await keycloak.updateToken(60);
+  //       if (expiringSoon) {
+  //         dispatch(
+  //           CredentialRefresh({
+  //             token: keycloak.token,
+  //             tokenExp: keycloak.tokenParsed.exp,
+  //           })
+  //         );
+  //       }
+  //     } catch (e) {
+  //       console.log(e);
+  //     }
+  //   }, 20000);
+  // }, [dispatch]);
 
   return (
     <AdminLayout>

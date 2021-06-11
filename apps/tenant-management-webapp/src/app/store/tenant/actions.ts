@@ -7,15 +7,16 @@ const UPDATE_TENANT_ADMIN_INFO = 'UPDATE_TENANT_ADMIN_INFO';
 export const CREATE_TENANT = 'CREATE_TENANT';
 const CREATE_TENANT_SUCCESS = 'CREATE_TENANT_SUCCESS';
 export const CHECK_IS_TENANT_ADMIN = 'CHECK_IS_ADMIN';
-export const LOGOUT_TENANT = 'LOGOUT_TENANT';
-
+export const TENANT_ADMIN_LOGIN = 'TENANT_ADMIN_LOGIN';
+export const TENANT_CREATION_LOGIN_INIT = 'TENANT_CREATION_LOGIN_INIT';
+export const TENANT_LOGIN = 'TENANT_LOGIN';
+export const KEYCLOAK_CHECK_SSO = 'KEYCLOAK_CHECK_SSO';
+export const KEYCLOAK_CHECK_SSO_WITH_LOGOUT = 'KEYCLOAK_CHECK_SSO_WITH_LOGOUT';
+export const KEYCLOAK_REFRESH_TOKEN = 'KEYCLOAK_REFRESH_TOKEN';
+export const TENANT_LOGOUT = 'TENANT_LOGOUT';
 interface SelectTenantAction {
   type: typeof SELECT_TENANT;
   payload: string;
-}
-
-interface LogoutTenantAction {
-  type: typeof LOGOUT_TENANT;
 }
 
 export interface FetchTenantAction {
@@ -51,6 +52,40 @@ interface CreateTenantSuccessAction {
   type: typeof CREATE_TENANT_SUCCESS;
   payload: string;
 }
+interface TenantLogin {
+  type: typeof CREATE_TENANT_SUCCESS;
+  payload: string;
+}
+export interface TenantAdminLoginAction {
+  type: typeof TENANT_ADMIN_LOGIN;
+}
+
+export interface TenantCreationLoginInitAction {
+  type: typeof TENANT_CREATION_LOGIN_INIT;
+}
+
+export interface KeycloakCheckSSOAction {
+  type: typeof KEYCLOAK_CHECK_SSO;
+  payload: string;
+}
+
+export interface KeycloakCheckSSOWithLogOutAction {
+  type: typeof KEYCLOAK_CHECK_SSO_WITH_LOGOUT;
+  payload: string;
+}
+
+export interface TenantLoginAction {
+  type: typeof TENANT_LOGIN;
+  payload: string;
+}
+
+interface KeycloakRefreshTokenAction {
+  type: typeof KEYCLOAK_REFRESH_TOKEN;
+}
+
+interface TenantLogoutAction {
+  type: typeof TENANT_LOGOUT;
+}
 
 export type ActionType =
   | FetchTenantAction
@@ -59,8 +94,13 @@ export type ActionType =
   | CheckIsTenantAdminAction
   | CreateTenantSuccessAction
   | SelectTenantAction
-  | LogoutTenantAction
-  | UpdateTenantAdminInfoAction;
+  | UpdateTenantAdminInfoAction
+  | TenantAdminLoginAction
+  | TenantCreationLoginInitAction
+  | TenantLoginAction
+  | KeycloakRefreshTokenAction
+  | TenantLogoutAction
+  | KeycloakCheckSSOAction;
 
 export const SelectTenant = (realm: string): SelectTenantAction => ({
   type: 'SELECT_TENANT',
@@ -87,6 +127,33 @@ export const IsTenantAdmin = (email: string): CheckIsTenantAdminAction => ({
   payload: email,
 });
 
+export const TenantAdminLogin = (): TenantAdminLoginAction => ({
+  type: 'TENANT_ADMIN_LOGIN',
+});
+
+export const TenantCreationLoginInit = (): TenantCreationLoginInitAction => ({
+  type: 'TENANT_CREATION_LOGIN_INIT',
+});
+
+export const TenantLogin = (realm: string): TenantLoginAction => ({
+  type: 'TENANT_LOGIN',
+  payload: realm,
+});
+
+export const KeycloakCheckSSO = (realm: string): KeycloakCheckSSOAction => ({
+  type: 'KEYCLOAK_CHECK_SSO',
+  payload: realm,
+});
+
+export const KeycloakCheckSSOWithLogout = (realm: string): KeycloakCheckSSOWithLogOutAction => ({
+  type: 'KEYCLOAK_CHECK_SSO_WITH_LOGOUT',
+  payload: realm,
+});
+
+export const KeycloakRefreshToken = (): KeycloakRefreshTokenAction => ({
+  type: 'KEYCLOAK_REFRESH_TOKEN',
+});
+
 export const UpdateTenantAdminInfo = (
   isAdmin: boolean,
   tenantName: string,
@@ -105,6 +172,6 @@ export const CreateTenantSuccess = (realm: string): CreateTenantSuccessAction =>
   payload: realm,
 });
 
-export const TenantLogout = (): LogoutTenantAction => ({
-  type: 'LOGOUT_TENANT',
+export const TenantLogout = (): TenantLogoutAction => ({
+  type: 'TENANT_LOGOUT',
 });

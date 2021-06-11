@@ -1,20 +1,17 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { GoAButton, GoANotification } from '@abgov/react-components';
-
-import { CreateTenant, IsTenantAdmin, SelectTenant } from '@store/tenant/actions';
+import { CreateTenant, IsTenantAdmin } from '@store/tenant/actions';
 import { RootState } from '@store/index';
-import AuthContext from '@lib/authContext';
 import GoALinkButton from '@components/LinkButton';
 import { GoAForm, GoAFormButtons, GoAFormItem } from '@components/Form';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
-import { SessionLogout } from '@store/session/actions';
+import { KeycloakCheckSSO, TenantLogin } from '@store/tenant/actions';
 
 const CreateRealm = () => {
   const dispatch = useDispatch();
   const [name, setName] = useState('');
-  const authContext = useContext(AuthContext);
 
   const onCreateRealm = async () => {
     dispatch(CreateTenant(name));
@@ -32,30 +29,36 @@ const CreateRealm = () => {
   }));
 
   useEffect(() => {
+    if (!IsTenantAdmin) {
+      dispatch(KeycloakCheckSSO('core'));
+    }
+  }, [IsTenantAdmin]);
+
+  useEffect(() => {
     if (userInfo) {
       dispatch(IsTenantAdmin(userInfo.email));
     }
-  }, [dispatch, userInfo]);
+  }, [isTenantCreated]);
 
   const ErrorMessage = (props) => {
     const message = `${props.email} has already created a tenant. Currently only one tenant is allowed per person.`;
     return <GoANotification type="information" title="Notification Title" message={message} />;
   };
 
-  function login() {
-    dispatch(SessionLogout());
-    dispatch(SelectTenant(tenantRealm));
-    authContext.signIn(`/login-redirect`);
-  }
-
   return (
     <Page>
       <Main>
-        {userInfo && isTenantAdmin && <ErrorMessage email={userInfo.email} />}
+        {userInfo && isTenantAdmin && !isTenantCreated && <ErrorMessage email={userInfo.email} />}
         {isTenantCreated ? (
           <>
             <p>The '{name}' has been successfully created</p>
-            <GoAButton onClick={login}>Tenant Login</GoAButton>
+            <GoAButton
+              onClick={() => {
+                dispatch(TenantLogin(tenantRealm));
+              }}
+            >
+              Tenant Login
+            </GoAButton>
           </>
         ) : (
           <>
