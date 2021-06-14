@@ -10,7 +10,13 @@ import { UnauthorizedError, NotFoundError, InvalidOperationError } from '@core-s
 import { createConfigService } from './configuration-management';
 import { createDirectoryService } from './directory-service';
 import { connectMongo, disconnect } from './mongo/index';
-import { createTenantRouter, createTenantV2Router, tenantService } from './tenant';
+import {
+  createTenantRouter,
+  createTenantV2Router,
+  tenantService,
+  TenantCreatedDefinition,
+  TenantDeletedDefinition,
+} from './tenant';
 import { directoryRouter, bootstrapDirectory } from './directory';
 import { logger } from './middleware/logger';
 import { environment } from './environments/environment';
@@ -41,22 +47,7 @@ async function initializeApp(): Promise<express.Application> {
       accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
       ignoreServiceAud: true,
       skipPublishEvents: true,
-      events: [
-        {
-          name: 'tenant-created',
-          description: 'Signalled when a tenant is created.',
-          payloadSchema: {
-            type: 'object',
-          },
-        },
-        {
-          name: 'tenant-deleted',
-          description: 'Signalled when a tenant is deleted.',
-          payloadSchema: {
-            type: 'object',
-          },
-        },
-      ],
+      events: [TenantCreatedDefinition, TenantDeletedDefinition],
     },
     { logger },
     {
@@ -94,7 +85,7 @@ async function initializeApp(): Promise<express.Application> {
         logger.error('404 Not Found, Please input valid request resource', `${JSON.stringify(req.query)}`);
       }
     });
-    logger.info(`${req.method}  ${req.path} Status Code : ${resp.statusCode}`);
+    logger.debug(`${req.method} ${req.path}`);
     next();
   });
 

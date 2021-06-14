@@ -14,6 +14,7 @@ import { FileEntity } from '../model';
 import { createUpload } from '../upload';
 import { FileCriteria } from '../types/file';
 import { EventService } from '@abgov/adsp-service-sdk';
+import { fileDeleted, fileUploaded } from '../events';
 
 interface FileRouterProps {
   logger: Logger;
@@ -84,15 +85,17 @@ export const createFileRouter = ({
         res.json(file);
 
         // This is an example.
-        eventService.send({
-          name: 'file-uploaded',
-          tenantId: user.tenantId,
-          timestamp: new Date(),
-          correlationId: fileEntity.recordId,
-          payload: {
-            ...file,
-          },
-        });
+        eventService.send(
+          fileUploaded(user, {
+            id: fileEntity.id,
+            filename: fileEntity.filename,
+            size: fileEntity.size,
+            recordId: fileEntity.recordId,
+            created: fileEntity.created,
+            lastAccessed: fileEntity.lastAccessed,
+            createdBy: fileEntity.createdBy,
+          })
+        );
 
         logger.info(
           `File '${fileEntity.filename}' (ID: ${fileEntity.id}) uploaded by ` + `user '${user.name}' (ID: ${user.id}).`
@@ -202,7 +205,7 @@ export const createFileRouter = ({
       if (!fileEntity) {
         throw new NotFoundError('File', fileId);
       }
-      fileEntity.markForDeletion(user);
+      await fileEntity.markForDeletion(user);
 
       logger.info(
         `File '${fileEntity.filename}' (ID: ${fileEntity.id}) marked for deletion by ` +
@@ -211,22 +214,17 @@ export const createFileRouter = ({
 
       res.json({ deleted: fileEntity.deleted });
 
-      // This is an example.
-      eventService.send({
-        name: 'file-deleted',
-        tenantId: user.tenantId,
-        timestamp: new Date(),
-        correlationId: fileEntity.recordId,
-        payload: {
+      eventService.send(
+        fileDeleted(user, {
           id: fileEntity.id,
           filename: fileEntity.filename,
           size: fileEntity.size,
-          typeName: fileEntity.type.name,
           recordId: fileEntity.recordId,
           created: fileEntity.created,
           lastAccessed: fileEntity.lastAccessed,
-        },
-      });
+          createdBy: fileEntity.createdBy,
+        })
+      );
     } catch (err) {
       next(err);
     }

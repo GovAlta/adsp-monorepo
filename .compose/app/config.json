@@ -32,6 +32,7 @@
     "tenantManagementWebApp": "https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca",
     "accessManagementApi": "http://keycloak:8080/auth",
     "uiComponentUrl": "https://ui-components-ui-components-dev.os99.gov.ab.ca",
-    "fileApi": "https://file-service-core-services-dev.os99.gov.ab.ca"
+    "fileApi": "https://file-service-core-services-dev.os99.gov.ab.ca",
+    "valueServiceApiUrl": "http://value-service:3336"
   }
 }

@@ -7,7 +7,7 @@ import * as helmet from 'helmet';
 import { createLogger, UnauthorizedError, NotFoundError, InvalidOperationError } from '@core-services/core-common';
 import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import { environment } from './environments/environment';
-import { applyFileMiddleware, ServiceUserRoles } from './file';
+import { applyFileMiddleware, FileDeletedDefinition, FileUploadedDefinition, ServiceUserRoles } from './file';
 import { createRepositories } from './mongo';
 import * as cors from 'cors';
 import * as fs from 'fs';
@@ -45,31 +45,7 @@ async function initializeApp(): Promise<express.Application> {
           additionalProperties: false,
         },
       },
-      events: [
-        // TODO: This is just an example. Real domain events to be defined.
-        {
-          name: 'file-uploaded',
-          description: 'Signalled when a file is uploaded.',
-          payloadSchema: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              filename: { type: 'string' },
-            },
-          },
-        },
-        {
-          name: 'file-deleted',
-          description: 'Signalled when a file is deleted.',
-          payloadSchema: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              filename: { type: 'string' },
-            },
-          },
-        },
-      ],
+      events: [FileUploadedDefinition, FileDeletedDefinition],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),

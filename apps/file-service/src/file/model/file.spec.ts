@@ -3,7 +3,7 @@ import { Mock, It } from 'moq.ts';
 import { adspId, User } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
 import { FileRepository } from '../repository';
-import { File } from '../types';
+import { File, FileRecord } from '../types';
 import { FileEntity } from './file';
 import { FileTypeEntity } from './type';
 
@@ -65,7 +65,7 @@ describe('File Entity', () => {
   });
 
   it('can be initialized for existing record', () => {
-    const file: File = {
+    const file: FileRecord = {
       id: 'file-1',
       storage: 'file-store-1',
       filename: 'test.txt',
@@ -152,7 +152,7 @@ describe('File Entity', () => {
   describe('instance', () => {
     let entity: FileEntity = null;
     beforeEach(() => {
-      const file: File = {
+      const file: FileRecord = {
         id: 'file-1',
         storage: 'file-store-1',
         filename: 'test.txt',

@@ -53,16 +53,17 @@ export class AmqpDomainEventService implements DomainEventService, DomainEventSu
     }
 
     const routingKey = this.getRoutingKey(event);
-    const { namespace, name, timestamp, tenantId, correlationId, payload } = event;
+    const { namespace, name, timestamp, tenantId, correlationId, context, payload } = event;
 
     try {
-      this.channel.publish('domain-events', routingKey, Buffer.from(JSON.stringify(payload)), {
+      await this.channel.publish('domain-events', routingKey, Buffer.from(JSON.stringify(payload)), {
         contentType: 'application/json',
         headers: {
           namespace,
           name,
           tenantId: `${tenantId}`,
           correlationId,
+          context,
           timestamp: timestamp.toISOString(),
         },
         correlationId,
@@ -83,7 +84,7 @@ export class AmqpDomainEventService implements DomainEventService, DomainEventSu
     const channel = this.channel;
     channel.consume('event-log', (msg) => {
       const payload = JSON.parse(msg.content.toString());
-      const headers = msg.properties['headers'];
+      const headers = msg.properties.headers;
 
       try {
         sub.next({
@@ -91,14 +92,21 @@ export class AmqpDomainEventService implements DomainEventService, DomainEventSu
           done: (err) => (err ? channel.nack(msg, false, true) : channel.ack(msg)),
         });
       } catch (err) {
-        channel.nack(msg, false, true);
+        this.logger.error(
+          `Processing of event with routing key ${msg.fields.routingKey} failed and will NOT be retried. ${err}`
+        );
+        channel.nack(msg, false, false);
       }
     });
   };
 
   getEvents(): Subscribable<DomainEventWorkItem> {
+    if (!this.connected) {
+      throw new InvalidOperationError('Service must be connected before events can be subscribed.');
+    }
+
     return new Observable<DomainEventWorkItem>((sub) => {
-      this.#onSubscribed(sub).catch((err) => sub.error(err));
+      this.#onSubscribed(sub);
     });
   }
 

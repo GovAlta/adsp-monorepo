@@ -35,6 +35,7 @@ export interface ServiceUrls {
   uiComponentUrl: string;
   fileApi?: string;
   serviceStatusApiUrl?: string;
+  valueServiceApiUrl?: string;
 }
 
 export interface ConfigState {

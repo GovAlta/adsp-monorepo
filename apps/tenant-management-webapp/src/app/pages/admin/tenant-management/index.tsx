@@ -14,6 +14,7 @@ import File from './services/file';
 import AccessPage from './services/access/access';
 import Container from '@components/Container';
 import Status from './services/status';
+import { EventLog } from './event-log';
 
 const TenantManagement = (): JSX.Element => {
   const { setTitle } = useContext(HeaderCtx);
@@ -53,6 +54,9 @@ const TenantManagement = (): JSX.Element => {
           </Route>
           <Route exact path="/admin/tenant-admin/admin">
             <Adminstration />
+          </Route>
+          <Route exact path="/admin/tenant-admin/event-log">
+            <EventLog />
           </Route>
           <Route path="/admin/tenant-admin/access">
             <AccessPage />
