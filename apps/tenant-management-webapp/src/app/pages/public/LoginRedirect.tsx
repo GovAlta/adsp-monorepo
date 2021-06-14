@@ -33,6 +33,13 @@ const LoginRedirect = (props) => {
           pathname: `/${tenantRealm}/autologin`,
         });
       }
+
+      if (isTenantAdmin === false) {
+        // non-admin user login through tenantAdmin
+        history.push({
+          pathname: `/login-error`,
+        });
+      }
     }
 
     if (type === LOGIN_TYPES.tenant) {
@@ -52,7 +59,7 @@ const LoginRedirect = (props) => {
         state: { from: props.location },
       });
     }
-  }, [tenantRealm, isTenantAdmin, isAuthenticated]);
+  }, [tenantRealm, isTenantAdmin]);
 
   return <Page></Page>;
 };

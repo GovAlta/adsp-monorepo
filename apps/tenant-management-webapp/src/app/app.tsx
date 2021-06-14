@@ -6,6 +6,8 @@ import { Provider, useDispatch, useSelector } from 'react-redux';
 import '@abgov/core-css/goa-core.css';
 
 import LandingPage from '@pages/public/Landing';
+import { SignInError } from '@pages/public/SignInError';
+
 import Login from '@pages/public/Login';
 import LoginRedirect from '@pages/public/LoginRedirect';
 import LogoutRedirect from '@pages/public/LogoutRedirect';
@@ -61,6 +63,10 @@ const AppRouters = () => {
 
           <Route exact path="/login-redirect">
             <LoginRedirect />
+          </Route>
+
+          <Route exact path="/login-error">
+            <SignInError />
           </Route>
 
           <Route exact path="/logout-redirect">
