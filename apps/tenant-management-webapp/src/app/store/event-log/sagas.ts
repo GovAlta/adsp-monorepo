@@ -6,8 +6,7 @@ import { RootState } from '..';
 import { FetchEventLogEntriesAction, FETCH_EVENT_LOG_ENTRIES_ACTION, getEventLogEntriesSucceeded } from './actions';
 
 export function* fetchEventLogEntries(action: FetchEventLogEntriesAction) {
-  const baseUrl = 'http://value-service:3336';
-  // const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
 
   if (baseUrl && token) {
