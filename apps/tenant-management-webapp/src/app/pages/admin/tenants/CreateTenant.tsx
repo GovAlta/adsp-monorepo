@@ -1,6 +1,7 @@
+////
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { GoAButton, GoANotification } from '@abgov/react-components';
+import { GoAButton, GoANotification, GoAElementLoader } from '@abgov/react-components';
 import { CreateTenant, IsTenantAdmin } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 import GoALinkButton from '@components/LinkButton';
@@ -13,13 +14,19 @@ import { TenantLogout } from '@store/tenant/actions';
 const CreateRealm = () => {
   const dispatch = useDispatch();
   const [name, setName] = useState('');
+  const [isLoaded, setIsLoaded] = useState(true);
 
   const onCreateRealm = async () => {
     dispatch(CreateTenant(name));
+    handleIsLoadedToggle();
   };
 
   const onChangeName = (event) => {
     setName(event.target.value);
+  };
+
+  const handleIsLoadedToggle = () => {
+    setIsLoaded((currentIsLoaded) => !currentIsLoaded);
   };
 
   const { isTenantAdmin, userInfo, isTenantCreated, tenantRealm } = useSelector((state: RootState) => ({
@@ -73,18 +80,19 @@ const CreateRealm = () => {
                     <input id="name" type="text" value={name} onChange={onChangeName} />
                     <em>Names cannot container special characters (ex. ! % &amp;)</em>
                   </GoAFormItem>
-                  <GoAFormButtons>
-                    <GoALinkButton
-                      to=""
-                      buttonType="secondary"
-                      onClick={() => {
-                        dispatch(TenantLogout());
-                      }}
-                    >
-                      Back
-                    </GoALinkButton>
-                    <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
-                  </GoAFormButtons>
+                  {isLoaded ? (
+                    <GoAFormButtons>
+                      <GoALinkButton to="/admin/tenants" buttonType="secondary">
+                        Back
+                      </GoALinkButton>
+                      <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
+                    </GoAFormButtons>
+                  ) : (
+                    <GoAButton buttonType="primary" buttonSize="normal">
+                      Creating Tenant...
+                      <GoAElementLoader visible={true} size={25} baseColour="#c8eef9" spinnerColour="#0070c4" />
+                    </GoAButton>
+                  )}
                 </GoAForm>
               </>
             ) : null}
