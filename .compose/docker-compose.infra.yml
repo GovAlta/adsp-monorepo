@@ -1,7 +1,9 @@
 version: '3.2'
 services:
   keycloak:
-    image: jboss/keycloak:latest
+    build:
+      context: access
+      dockerfile: Dockerfile
     volumes:
       - ./realms:/opt/jboss/keycloak/realms
     expose:
@@ -12,7 +14,9 @@ services:
       # This is already part of the realm import and shouldn't be needed.
       # - KEYCLOAK_USER=admin
       # - KEYCLOAK_PASSWORD=admin
-      - KEYCLOAK_FRONTEND_URL='http://keycloak:8080/auth'
+      - KEYCLOAK_FRONTEND_URL=http://keycloak:8080/auth
+      - EVENT_SERVICE_URL=http://event-service:3334
+      - TENANT_SERVICE_URL=http://tenant-management-api:3333
     command:
       - '-b 0.0.0.0'
       - '-Dkeycloak.migration.action=import'

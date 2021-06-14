@@ -35,6 +35,9 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
             <img src={AdminIcon} width="16" alt="Admin" />
             <span>Administration</span>
           </NavLink>
+          <NavLink to="/admin/tenant-admin/event-log" activeClassName="current" title="Event log">
+            <span>Event log</span>
+          </NavLink>
 
           <Title>Services</Title>
           <NavLink to="/admin/tenant-admin/access" activeClassName="current" title="Access">

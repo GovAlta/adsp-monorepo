@@ -10,6 +10,7 @@ import { createScanService } from './scan';
 export * from './types';
 export * from './repository';
 export * from './model';
+export * from './events';
 
 interface FileMiddlewareProps extends Repositories {
   logger: Logger;

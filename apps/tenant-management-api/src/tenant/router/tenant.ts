@@ -8,6 +8,7 @@ import * as TenantService from '../services/tenant';
 import { logger } from '../../middleware/logger';
 import { v4 as uuidv4 } from 'uuid';
 import { adspId, EventService } from '@abgov/adsp-service-sdk';
+import { tenantCreated } from '../events';
 
 class CreateTenantDto {
   @IsDefined()
@@ -133,7 +134,7 @@ export const createTenantRouter = ({ eventService }: TenantRouterProps): Router 
 
         await TenantService.validateEmailInDB(email);
         await TenantService.createRealm(generatedRealmName, email, tenantName);
-        const tenant = await TenantService.createNewTenantInDB(
+        const { id, ...tenant } = await TenantService.createNewTenantInDB(
           username,
           email,
           generatedRealmName,
@@ -143,12 +144,9 @@ export const createTenantRouter = ({ eventService }: TenantRouterProps): Router 
 
         const data = { status: 'ok', message: 'Create Realm Success!', realm: generatedRealmName };
 
-        eventService.send({
-          name: 'tenant-created',
-          timestamp: new Date(),
-          tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}`,
-          payload: {},
-        });
+        eventService.send(
+          tenantCreated(req.user, { ...tenant, id: adspId`urn:ads:platform:tenant-service:v2:/tenants/${id}` })
+        );
 
         return res.status(HttpStatusCodes.OK).json(data);
       } catch (err) {

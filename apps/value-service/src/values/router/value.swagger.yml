@@ -35,21 +35,32 @@
         required: true
         schema:
           type: string
-      - name: criteria
-        description: Criteria for the read.
+      - name: top
+        description: Number of results to read.
         in: query
         required: false
         schema:
-          type: object
-          properties:
-            top:
-              type: number
-            timestampMax:
-              type: string
-              format: date-time
-            timestampMin:
-              type: string
-              format: date-time
+          type: number
+      - name: after
+        description: Cursor for next set of results.
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: timestampMin
+        description: Inclusive min value of timestamp.
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: timestampMax
+        description: Inclusive max value of timestamp.
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
     responses:
       "200":
         description: Value successfully read.
@@ -82,6 +93,8 @@
             oneOf:
               - type: object
                 properties:
+                  tenantId:
+                    type: string
                   correlationId:
                     type: string
                   context:

@@ -13,6 +13,7 @@ export function convertToSession(kc: KeycloakInstance): Session {
       emailVerified: kc.userInfo?.['email_verified'],
     },
     realmAccess: kc.realmAccess,
+    resourceAccess: kc.resourceAccess,
     credentials: {
       token: kc.token,
       tokenExp: kc.tokenParsed.exp,

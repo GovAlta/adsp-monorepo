@@ -51,6 +51,7 @@ import { FETCH_TENANT_CONFIG, CREATE_TENANT_CONFIG, UPDATE_TENANT_CONFIG } from 
 import { DELETE_APPLICATION_ACTION, FETCH_SERVICE_STATUS_APPS_ACTION, SAVE_APPLICATION_ACTION } from './status/actions';
 import { deleteApplication, fetchServiceStatusApps, saveApplication, setApplicationStatus } from './status/sagas';
 import { SET_APPLICATION_STATUS_ACTION } from './status/actions/setApplicationStatus';
+import { watchEventLogSagas } from './event-log/sagas';
 
 export function* watchSagas() {
   yield takeEvery(FETCH_CONFIG_ACTION, fetchConfig);
@@ -95,4 +96,7 @@ export function* watchSagas() {
   yield takeEvery(SAVE_APPLICATION_ACTION, saveApplication);
   yield takeEvery(DELETE_APPLICATION_ACTION, deleteApplication);
   yield takeEvery(SET_APPLICATION_STATUS_ACTION, setApplicationStatus);
+
+  // event log
+  yield watchEventLogSagas();
 }

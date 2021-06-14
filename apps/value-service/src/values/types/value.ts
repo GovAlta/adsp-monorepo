@@ -3,6 +3,7 @@ import { AdspId } from '@abgov/adsp-service-sdk';
 export interface Value {
   timestamp: Date;
   correlationId: string;
+  tenantId: AdspId;
   context: {
     [key: string]: boolean | string | number;
   };
@@ -11,8 +12,9 @@ export interface Value {
 }
 
 export interface ValueCriteria {
+  namespace?: string;
+  name?: string;
   tenantId?: AdspId;
-  top?: number;
   timestampMin?: Date;
   timestampMax?: Date;
 }

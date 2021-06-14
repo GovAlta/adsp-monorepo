@@ -8,7 +8,7 @@ export interface DomainEventService {
 
 export interface DomainEventWorkItem {
   event: DomainEvent;
-  done: (err: unknown) => void;
+  done: (err?: unknown) => void;
 }
 
 export interface DomainEventSubscriberService {

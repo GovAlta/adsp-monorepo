@@ -5,11 +5,11 @@ import * as uniqueFilename from 'unique-filename';
 import { IsNotEmpty } from 'class-validator';
 import { User } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
-import { File, NewFile, UserInfo } from '../types';
+import { FileRecord, NewFile, UserInfo } from '../types';
 import { FileRepository } from '../repository';
 import { FileTypeEntity } from './type';
 import { v4 as uuidv4 } from 'uuid';
-export class FileEntity implements File {
+export class FileEntity implements FileRecord {
   id: string;
   recordId: string;
   @IsNotEmpty()
@@ -54,14 +54,14 @@ export class FileEntity implements File {
   constructor(
     private repository: FileRepository,
     public type: FileTypeEntity,
-    values: (NewFile & { createdBy: UserInfo; created: Date }) | File
+    values: (NewFile & { createdBy: UserInfo; created: Date }) | FileRecord
   ) {
     this.recordId = values.recordId;
     this.filename = values.filename;
     this.createdBy = values.createdBy;
     this.created = values.created;
     this.size = values.size;
-    const record = values as File;
+    const record = values as FileRecord;
     if (record.id) {
       this.id = record.id;
       this.storage = record.storage;

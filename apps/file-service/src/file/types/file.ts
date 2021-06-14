@@ -8,10 +8,13 @@ export interface File {
   recordId: string;
   filename: string;
   size: number;
-  storage: string;
   createdBy: UserInfo;
   created: Date;
   lastAccessed?: Date;
+}
+
+export interface FileRecord extends File {
+  storage: string;
   deleted: boolean;
   scanned: boolean;
 }

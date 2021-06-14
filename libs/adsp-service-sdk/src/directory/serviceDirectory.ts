@@ -57,7 +57,14 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
     const url = new URL('/api/discovery/v1', this.directoryUrl);
 
     try {
-      const results = await retry((next, count) => this.#tryRetrieveDirectory(url, count).catch(next));
+      const results = await retry(async (next, count) => {
+        try {
+          return await this.#tryRetrieveDirectory(url, count);
+        } catch (err) {
+          this.logger.debug(`Try ${count} failed with error. ${err}`, this.LOG_CONTEXT);
+          next(err);
+        }
+      });
       results.forEach(({ urn, serviceUrl }) => {
         this.#directoryCache.set(urn, serviceUrl);
       });

@@ -48,6 +48,7 @@ export const createRepositories = async ({
     try {
       await knex.migrate.latest();
     } catch (err) {
+      logger.debug(`Try ${count} failed with error. ${err}`, { context: 'createRepositories' });
       next(err);
     }
   });

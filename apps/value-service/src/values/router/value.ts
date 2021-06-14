@@ -1,12 +1,8 @@
-import { AdspId, EventService, User } from '@abgov/adsp-service-sdk';
-import {
-  AjvValidationService,
-  assertAuthenticatedHandler,
-  NotFoundError,
-  UnauthorizedError,
-} from '@core-services/core-common';
-import { Router } from 'express';
+import { AdspId, EventService, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { NotFoundError, UnauthorizedError } from '@core-services/core-common';
+import { RequestHandler, Router } from 'express';
 import { Logger } from 'winston';
+import { valueWritten } from '../events';
 import { NamespaceEntity } from '../model';
 import { ValuesRepository } from '../repository';
 import { MetricCriteria, MetricInterval, ServiceUserRoles, Value, ValueCriteria } from '../types';
@@ -16,6 +12,28 @@ interface ValueRouterProps {
   repository: ValuesRepository;
   eventService: EventService;
 }
+
+export const assertUserCanWrite: RequestHandler = async (req, res, next) => {
+  const user = req.user;
+  const { tenantId: tenantIdValue } = req.body;
+
+  if (!user?.roles?.includes(ServiceUserRoles.Writer)) {
+    next(new UnauthorizedUserError('write value', user));
+    return;
+  }
+
+  // If tenant is explicity specified, then the user must be a core user.
+  if (tenantIdValue && !user.isCore) {
+    next(new UnauthorizedUserError('write tenant tenant.', user));
+    return;
+  }
+
+  // Use the specified tenantId or the user's tenantId.
+  const tenantId = tenantIdValue ? AdspId.parse(tenantIdValue as string) : user.tenantId;
+  req['tenantId'] = tenantId;
+
+  next();
+};
 
 export const createValueRouter = ({ logger, repository, eventService }: ValueRouterProps): Router => {
   const valueRouter = Router();
@@ -38,7 +56,7 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
       const results: { name: string; value: Value }[] = await Promise.all(
         names.map(async (name) => ({
           name,
-          value: (await entity.definitions[name].readValues(user, { top: 1 }))[0],
+          value: (await entity.definitions[name].readValues(user, user.tenantId, 1)).results[0],
         }))
       );
 
@@ -51,16 +69,22 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
   });
 
   valueRouter.get('/:namespace/values/:name', async (req, res, next) => {
-    const user = req.user as User;
-    const namespace = req.params.namespace;
-    const name = req.params.name;
-    const criteriaParam = req.query.criteria ? JSON.parse(req.query.criteria as string) : {};
+    const user = req.user;
+    const { namespace, name } = req.params;
+    const { top: topValue, after, timestampMax: timestampMaxValue, timestampMin: timestampMinValue } = req.query;
 
+    const top = topValue ? parseInt(topValue as string) : 10;
     const criteria: ValueCriteria = {
-      top: criteriaParam.top,
-      timestampMax: criteriaParam.timestampMax ? new Date(criteriaParam.timestampMax) : null,
-      timestampMin: criteriaParam.timestampMin ? new Date(criteriaParam.timestampMin) : null,
+      namespace,
+      name,
+      timestampMax: timestampMaxValue ? new Date(timestampMaxValue as string) : null,
+      timestampMin: timestampMinValue ? new Date(timestampMinValue as string) : null,
     };
+
+    // For non Core users, the tenant criteria is set based on the user's tenant.
+    if (!user.isCore) {
+      criteria.tenantId = user.tenantId;
+    }
 
     if (!user?.roles?.includes(ServiceUserRoles.Reader)) {
       next(new UnauthorizedError('User not authorized to read values.'));
@@ -68,12 +92,13 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
     }
 
     try {
-      const results = await repository.readValues(user.tenantId, namespace, name, criteria);
+      const result = await repository.readValues(top, after as string, criteria);
 
       res.send({
         [namespace]: {
-          [name]: results,
+          [name]: result.results,
         },
+        page: result.page,
       });
     } catch (err) {
       next(err);
@@ -119,33 +144,37 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
     }
   });
 
-  valueRouter.post('/:namespace/values/:name', assertAuthenticatedHandler, async (req, res, next) => {
-    const user = req.user as User;
+  valueRouter.post('/:namespace/values/:name', assertUserCanWrite, async (req, res, next) => {
     const namespace = req.params.namespace;
     const name = req.params.name;
-    const { tenantId, ...value } = req.body;
+
+    logger.debug(`Processing write value ${namespace}:${name}...`);
+
+    const { tenantId: _tenantId, ...value } = req.body;
+    const tenantId: AdspId = req['tenantId'];
 
     try {
-      const namespaces = await req.getConfiguration<Record<string, NamespaceEntity>>();
-      const entity =
-        namespaces[namespace] ||
-        new NamespaceEntity(
-          new AjvValidationService(logger),
-          repository,
-          {
-            name: namespace,
-            description: null,
-            definitions: { [name]: { name, description: null, type: null, jsonSchema: null } },
-          },
-          user.tenantId
-        );
+      const namespaces = (await req.getConfiguration<Record<string, NamespaceEntity>>(tenantId)) || {};
 
-      const valDef = entity.definitions[name];
-      if (!valDef) {
-        throw new NotFoundError('value definition', `${namespace}: ${name}`);
+      // Handle either value write with envelop included or not.
+      const valueRecord: Omit<Value, 'tenantId'> =
+        (value as Value).value === undefined
+          ? {
+              context: {},
+              correlationId: null,
+              timestamp: new Date(),
+              value,
+            }
+          : value;
+
+      // Write via the definition (which will validate) or directly if there is no definition.
+      const definition = namespaces[namespace]?.definitions[name];
+      let result: Value = null;
+      if (definition) {
+        result = await definition.writeValue(tenantId, valueRecord);
+      } else {
+        result = await repository.writeValue(namespace, name, tenantId, valueRecord);
       }
-
-      const result = await valDef.writeValue(user, tenantId ? AdspId.parse(tenantId) : null, value);
 
       res.send({
         [namespace]: {
@@ -153,16 +182,9 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
         },
       });
 
-      eventService.send({
-        name: 'value-written',
-        timestamp: new Date(),
-        correlationId: result.correlationId,
-        payload: {
-          namespace,
-          name,
-          value: result,
-        },
-      });
+      eventService.send(valueWritten(req.user, namespace, name, result));
+
+      logger.info(`Value ${namespace}:${name} written by user ${req.user.name} (ID: ${req.user.id}).`);
     } catch (err) {
       next(err);
     }
