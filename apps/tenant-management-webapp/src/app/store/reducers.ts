@@ -11,6 +11,7 @@ import Notifications from './notifications/reducers';
 import Tenant from './tenant/reducers';
 import ServiceStatus from './status/reducers';
 import TenantConfig from './tenantConfig/reducers';
+import EventLog from './event-log/reducers';
 
 const rootReducer = combineReducers({
   fileService: File,
@@ -22,6 +23,7 @@ const rootReducer = combineReducers({
   notifications: Notifications,
   tenantConfig: TenantConfig,
   serviceStatus: ServiceStatus,
+  eventLog: EventLog
 });
 
 const persistConfig = {

@@ -8,6 +8,7 @@ import { createValueRouter } from './router';
 export * from './types';
 export * from './model';
 export * from './repository';
+export * from './events';
 
 interface ValuesMiddlewareProps {
   logger: Logger;

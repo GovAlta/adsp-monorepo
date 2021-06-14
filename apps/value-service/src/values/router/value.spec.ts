@@ -1,17 +1,17 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 import { Request, Response } from 'express';
-import { EventServiceRoles } from '../role';
-import { assertUserCanSend } from './event';
+import { ServiceUserRoles } from '../types';
+import { assertUserCanWrite } from './value';
 
 describe('event router', () => {
-  describe('assertUserCanSend', () => {
+  describe('assertUserCanWrite', () => {
     it('can pass for core user', (done) => {
       const next = (err) => {
         expect(err).toBeFalsy();
         done();
       };
-      assertUserCanSend(
-        { user: { roles: [EventServiceRoles.sender], isCore: true }, body: {} } as Request,
+      assertUserCanWrite(
+        { user: { roles: [ServiceUserRoles.Writer], isCore: true }, body: {} } as Request,
         {} as Response,
         next
       );
@@ -20,7 +20,7 @@ describe('event router', () => {
     it('can pass for core user sending for tenant', (done) => {
       const tenantId = 'urn:ads:platform:tenant-service:v2:/tenants/test';
       const req = {
-        user: { roles: [EventServiceRoles.sender], isCore: true },
+        user: { roles: [ServiceUserRoles.Writer], isCore: true },
         body: { tenantId: tenantId },
       } as Request;
 
@@ -29,7 +29,7 @@ describe('event router', () => {
         expect(`${req['tenantId']}`).toBe(tenantId);
         done();
       };
-      assertUserCanSend(req, {} as Response, next);
+      assertUserCanWrite(req, {} as Response, next);
     });
 
     it('can fail for core user without role.', (done) => {
@@ -41,14 +41,14 @@ describe('event router', () => {
           done(err);
         }
       };
-      assertUserCanSend({ user: { roles: [], isCore: true }, body: {} } as Request, {} as Response, next);
+      assertUserCanWrite({ user: { roles: [], isCore: true }, body: {} } as Request, {} as Response, next);
     });
 
     it('can pass for tenant user.', (done) => {
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
       const req = {
         user: {
-          roles: [EventServiceRoles.sender],
+          roles: [ServiceUserRoles.Writer],
           isCore: false,
           tenantId,
         },
@@ -61,7 +61,7 @@ describe('event router', () => {
         done();
       };
 
-      assertUserCanSend(req, {} as Response, next);
+      assertUserCanWrite(req, {} as Response, next);
     });
 
     it('can fail for tenant user specifying tenantId.', (done) => {
@@ -73,10 +73,10 @@ describe('event router', () => {
           done(err);
         }
       };
-      assertUserCanSend(
+      assertUserCanWrite(
         {
           user: {
-            roles: [EventServiceRoles.sender],
+            roles: [ServiceUserRoles.Writer],
             isCore: false,
             tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
           },

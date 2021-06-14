@@ -1,12 +1,15 @@
 import { IsNotEmpty } from 'class-validator';
 import { AdspId, AssertRole } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
+import { InvalidOperationError, Results, UnauthorizedError } from '@core-services/core-common';
 import { ServiceUserRoles } from '../types';
 import type { Metric, MetricCriteria, Value, ValueCriteria, ValueDefinition } from '../types';
 import { NamespaceEntity } from './namespace';
 
 export class ValueDefinitionEntity implements ValueDefinition {
+  public static METRICS_KEY = 'metrics';
+  public static METRIC_META_KEY = 'metric';
+
   @IsNotEmpty()
   public name: string;
   public description: string;
@@ -22,49 +25,45 @@ export class ValueDefinitionEntity implements ValueDefinition {
     namespace.validationService.setSchema(this.getSchemaKey(), definition.jsonSchema || {});
   }
 
-  @AssertRole('write value', ServiceUserRoles.Writer)
-  public writeValue(user: User, tenantId: AdspId, value: Value): Promise<Value> {
-    if (tenantId && !user?.isCore) {
-      throw new UnauthorizedError(`User not authorized to write for tenant: ${tenantId}`);
-    } else if (!tenantId) {
-      tenantId = user.tenantId;
-    }
-
-    if ((value as Value).value === undefined) {
-      value = {
-        context: {},
-        correlationId: null,
-        timestamp: new Date(),
-        value,
-      };
-    }
-
+  public writeValue(tenantId: AdspId, value: Omit<Value, 'tenantId'>): Promise<Value> {
     if (!this.namespace.validationService.validate(this.getSchemaKey(), value.value)) {
       throw new InvalidOperationError('Value does not match schema.');
     }
 
-    const valueRecord = {
+    const valueRecord: Value = {
       context: value.context,
       timestamp: value.timestamp || new Date(),
+      tenantId,
       correlationId: value.correlationId,
       value: value.value,
     };
 
-    if (value.value && value.value['val-metrics']) {
-      const metrics: { [name: string]: number } = value.value['val-metrics'];
-      delete value.value['val-metrics'];
+    if (value.value && value.value['metrics']) {
+      const metrics: { [name: string]: number } = value.value['metrics'];
+      delete value.value['metrics'];
 
       Object.entries(metrics).forEach(([name, value]) =>
         this.namespace.repository.writeMetric(tenantId, this, name, valueRecord.timestamp, value)
       );
     }
 
-    return this.namespace.repository.writeValue(tenantId, this, valueRecord);
+    return this.namespace.repository.writeValue(this.namespace.name, this.name, tenantId, valueRecord);
   }
 
   @AssertRole('read value', ServiceUserRoles.Reader)
-  public readValues(user: User, criteria: ValueCriteria): Promise<Value[]> {
-    return this.namespace.repository.readValues(user.tenantId, this.namespace.name, this.name, criteria);
+  public readValues(
+    _user: User,
+    tenantId?: AdspId,
+    top?: number,
+    after?: string,
+    criteria?: ValueCriteria
+  ): Promise<Results<Value>> {
+    return this.namespace.repository.readValues(top, after, {
+      ...criteria,
+      namespace: this.namespace.name,
+      name: this.name,
+      tenantId,
+    });
   }
 
   @AssertRole('read value', ServiceUserRoles.Reader)

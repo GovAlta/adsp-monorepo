@@ -3,7 +3,7 @@ import { Logger } from 'winston';
 import { ValidationService } from './service';
 
 export class AjvValidationService implements ValidationService {
-  private ajv: Ajv.Ajv = new Ajv();
+  protected ajv: Ajv.Ajv = new Ajv();
 
   constructor(private logger: Logger) {}
 

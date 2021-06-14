@@ -13,19 +13,22 @@ interface EventRouterProps {
 
 export const assertUserCanSend: RequestHandler = async (req, res, next) => {
   const user = req.user;
-  const { tenantId } = req.body;
+  const { tenantId: tenantIdValue } = req.body;
 
   if (!user?.roles?.includes(EventServiceRoles.sender)) {
     next(new UnauthorizedUserError('send event', user));
+    return;
   }
 
   // If tenant is explicity specified, then the user must be a core user.
-  let tenant = tenantId ? AdspId.parse(tenantId as string) : null;
-  if (tenant && !user.isCore) {
+  if (tenantIdValue && !user.isCore) {
     next(new UnauthorizedUserError('send tenant event.', user));
+    return;
   }
-  tenant = tenant || user.tenantId;
-  req['tenantId'] = tenant;
+
+  // Use specified tenantId or the user's tenantId.
+  const tenantId = tenantIdValue ? AdspId.parse(tenantIdValue as string) : user.tenantId;
+  req['tenantId'] = tenantId;
 
   next();
 };
@@ -38,12 +41,16 @@ export const createEventRouter = ({ logger, eventService }: EventRouterProps): R
     const { namespace, name, timestamp: timeValue } = req.body;
     const tenantId: AdspId = req['tenantId'];
 
+    logger.debug(`Processing sent event: ${namespace}:${name}...`);
+
     if (!namespace || !name) {
       next(new InvalidOperationError('Event must include namespace and name of the event.'));
+      return;
     }
 
     if (!timeValue) {
       next(new InvalidOperationError('Event must include a timestamp representing the time when the event occurred.'));
+      return;
     }
     const timestamp = new Date(timeValue);
 
@@ -71,7 +78,7 @@ export const createEventRouter = ({ logger, eventService }: EventRouterProps): R
       eventService.send(event);
 
       res.sendStatus(200);
-      logger.debug(`Event ${namespace}:${name} sent by user ${user.name} (ID: ${user.id}).`);
+      logger.info(`Event ${namespace}:${name} sent by user ${user.name} (ID: ${user.id}).`);
     } catch (err) {
       next(err);
     }

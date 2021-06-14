@@ -67,7 +67,14 @@ export class TenantServiceImpl implements TenantService {
     const tenantsUrl = new URL('v2/tenants', tenantServiceUrl);
 
     try {
-      const tenants = await retry((next, count) => this.#tryRetrieveTenants(tenantsUrl, count).catch(next));
+      const tenants = await retry(async (next, count) => {
+        try {
+          return await this.#tryRetrieveTenants(tenantsUrl, count);
+        } catch (err) {
+          this.logger.debug(`Try ${count} failed with error. ${err}`, this.LOG_CONTEXT);
+          next(err);
+        }
+      });
 
       if (tenants) {
         tenants.forEach((t) => {

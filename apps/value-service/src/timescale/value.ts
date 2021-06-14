@@ -1,5 +1,5 @@
 import * as Knex from 'knex';
-import { InvalidOperationError } from '@core-services/core-common';
+import { decodeAfter, encodeNext, InvalidOperationError, Results } from '@core-services/core-common';
 import {
   Value,
   ValueCriteria,
@@ -16,11 +16,11 @@ type ValueRecord = Value & { namespace: string; name: string; tenant: string };
 export class TimescaleValuesRepository implements ValuesRepository {
   constructor(private knex: Knex) {}
 
-  async writeValue(tenantId: AdspId, definition: ValueDefinitionEntity, value: Value): Promise<Value> {
+  async writeValue(namespace: string, name: string, tenantId: AdspId, value: Omit<Value, 'tenantId'>): Promise<Value> {
     const [row] = await this.knex<ValueRecord>('values')
       .insert({
-        namespace: definition.namespace.name,
-        name: definition.name,
+        namespace,
+        name,
         timestamp: value.timestamp,
         tenant: tenantId?.toString(),
         correlationId: value.correlationId,
@@ -32,48 +32,63 @@ export class TimescaleValuesRepository implements ValuesRepository {
     return {
       timestamp: row.timestamp,
       correlationId: row.correlationId,
+      tenantId: row.tenant ? AdspId.parse(row.tenant) : null,
       context: row.context,
       value: row.value,
     };
   }
 
-  async readValues(tenantId: AdspId, namespace: string, name: string, criteria: ValueCriteria): Promise<Value[]> {
-    const queryCriteria = {
-      namespace,
-      name,
-    };
+  async readValues(top = 10, after?: string, criteria?: ValueCriteria): Promise<Results<Value>> {
+    const skip = decodeAfter(after);
 
-    if (tenantId) {
-      queryCriteria['tenant'] = tenantId.toString();
-    }
+    let query = this.knex<ValueRecord>('values');
+    query = query.offset(skip).limit(top);
 
-    let query = this.knex<ValueRecord>('values').where(queryCriteria);
+    if (criteria) {
+      const queryCriteria = {};
+      if (criteria.tenantId) {
+        queryCriteria['tenant'] = criteria.tenantId.toString();
+      }
 
-    if (criteria.top) {
-      query = query.limit(criteria.top);
-    } else {
-      query = query.limit(100);
-    }
+      if (criteria.namespace) {
+        queryCriteria['namespace'] = criteria.namespace;
+      }
 
-    if (criteria.timestampMax) {
-      query = query.where('timestamp', '<=', criteria.timestampMax);
-    }
+      if (criteria.name) {
+        queryCriteria['name'] = criteria.name;
+      }
 
-    if (criteria.timestampMin) {
-      query = query.where('timestamp', '>=', criteria.timestampMin);
+      query.where(queryCriteria);
+
+      if (criteria.timestampMax) {
+        query = query.where('timestamp', '<=', criteria.timestampMax);
+      }
+
+      if (criteria.timestampMin) {
+        query = query.where('timestamp', '>=', criteria.timestampMin);
+      }
     }
 
     const rows = await query.orderBy('timestamp', 'desc');
-    return rows.map((row) => ({
+    const results: Value[] = rows.map((row) => ({
       timestamp: row.timestamp,
       correlationId: row.correlationId,
-      tenantId: row.tenant,
+      tenantId: row.tenant ? AdspId.parse(row.tenant) : null,
       context: row.context,
       value: row.value,
     }));
+
+    return {
+      results,
+      page: {
+        after,
+        next: encodeNext(results.length, top, skip),
+        size: results.length,
+      },
+    };
   }
 
-  readMetric(
+  async readMetric(
     tenantId: AdspId,
     definition: ValueDefinitionEntity,
     metric: string,

@@ -33,6 +33,7 @@ export const createEventService = async ({
 
       return service;
     } catch (err) {
+      logger.debug(`Try ${count} failed with error. ${err}`, { context: 'createEventService' });
       next(err);
     }
   });

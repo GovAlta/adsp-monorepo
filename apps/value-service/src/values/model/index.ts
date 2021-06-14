@@ -1,2 +1,2 @@
 export * from './namespace';
-export * from './valueDefinition';
+export * from './definition';

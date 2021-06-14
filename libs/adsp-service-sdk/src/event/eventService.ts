@@ -96,7 +96,14 @@ export class EventServiceImpl implements EventService {
 
     try {
       if (!skipPublish) {
-        await retry((next, count) => this.#tryRegister(serviceUrl, count, events).catch(next));
+        await retry(async (next, count) => {
+          try {
+            await this.#tryRegister(serviceUrl, count, events);
+          } catch (err) {
+            this.logger.debug(`Try ${count} failed with error. ${err}`, this.LOG_CONTEXT);
+            next(err);
+          }
+        });
       } else {
         this.logger.info('Skipping publish of event definitions.');
       }

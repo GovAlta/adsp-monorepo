@@ -1,8 +1,8 @@
 import { Repository, Results } from '@core-services/core-common';
 import { FileEntity } from '../model';
-import { File, FileCriteria } from '../types';
+import { FileRecord, FileCriteria } from '../types';
 
-export interface FileRepository extends Repository<FileEntity, File> {
+export interface FileRepository extends Repository<FileEntity, FileRecord> {
   find(top: number, after: string, criteria: FileCriteria): Promise<Results<FileEntity>>;
   exists(criteria: FileCriteria): Promise<boolean>;
 }

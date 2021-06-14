@@ -11,6 +11,7 @@ export interface Session {
   realmAccess?: {
     roles?: string[];
   };
+  resourceAccess?: Record<string, { roles: string[] }>;
   credentials?: Credentials;
 }
 

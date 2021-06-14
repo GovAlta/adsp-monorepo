@@ -60,97 +60,159 @@ describe('AmqpDomainEventService', () => {
     done();
   });
 
-  it('can send event', async (done) => {
-    const channel = {
-      assertExchange: jest.fn(),
-      assertQueue: jest.fn(),
-      bindQueue: jest.fn(),
-      publish: jest.fn(),
-    };
+  describe('Publisher', () => {
+    it('can send event', async (done) => {
+      const channel = {
+        assertExchange: jest.fn(),
+        assertQueue: jest.fn(),
+        bindQueue: jest.fn(),
+        publish: jest.fn(),
+      };
 
-    const connection = {
-      on: jest.fn(),
-      createChannel: jest.fn(() => channel),
-    };
+      const connection = {
+        on: jest.fn(),
+        createChannel: jest.fn(() => channel),
+      };
 
-    const event = {
-      namespace: 'test',
-      name: 'test-started',
-      timestamp: new Date(),
-      context: {
-        value: 'a',
-      },
-      tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
-      correlationId: 'urn:ads:platform:file-service:v1:/files/123',
-      payload: {},
-    };
+      const event = {
+        namespace: 'test',
+        name: 'test-started',
+        timestamp: new Date(),
+        context: {
+          value: 'a',
+        },
+        tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
+        correlationId: 'urn:ads:platform:file-service:v1:/files/123',
+        payload: {},
+      };
 
-    const service = new AmqpDomainEventService(logger, (connection as unknown) as Connection);
-    await service.connect();
-    await service.send(event);
-    expect(channel.publish).toHaveBeenCalledTimes(1);
+      const service = new AmqpDomainEventService(logger, (connection as unknown) as Connection);
+      await service.connect();
+      await service.send(event);
+      expect(channel.publish).toHaveBeenCalledTimes(1);
 
-    done();
+      done();
+    });
+
+    it('can raise error on send if not connected', async (done) => {
+      const connection = {
+        on: jest.fn(),
+      };
+
+      const event = {
+        namespace: 'test',
+        name: 'test-started',
+        timestamp: new Date(),
+        context: {
+          value: 'a',
+        },
+        tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
+        correlationId: 'urn:ads:platform:file-service:v1:/files/123',
+        payload: {},
+      };
+
+      const service = new AmqpDomainEventService(logger, (connection as unknown) as Connection);
+      await expect(service.send(event)).rejects.toThrow(/Service must be connected before events can be sent./);
+
+      done();
+    });
+
+    it('can recreate channel on send error', async (done) => {
+      const channel = {
+        assertExchange: jest.fn(),
+        assertQueue: jest.fn(),
+        bindQueue: jest.fn(),
+        publish: jest.fn(),
+        close: jest.fn(),
+      };
+
+      const connection = {
+        on: jest.fn(),
+        createChannel: jest.fn(() => channel),
+      };
+
+      const event = {
+        namespace: 'test',
+        name: 'test-started',
+        timestamp: new Date(),
+        context: {
+          value: 'a',
+        },
+        tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
+        correlationId: 'urn:ads:platform:file-service:v1:/files/123',
+        payload: {},
+      };
+
+      const service = new AmqpDomainEventService(logger, (connection as unknown) as Connection);
+      await service.connect();
+
+      channel.publish.mockRejectedValueOnce(new Error('Something went terribly wrong.'));
+      await service.send(event);
+      await service.send(event);
+
+      expect(connection.createChannel).toHaveBeenCalledTimes(3);
+
+      done();
+    });
   });
 
-  it('can raise error on send if not connected', async (done) => {
-    const connection = {
-      on: jest.fn(),
-    };
+  describe('Subscriber', () => {
+    it('can receive event', async (done) => {
+      const event = {
+        namespace: 'test',
+        name: 'test-started',
+        timestamp: new Date(),
+        context: {
+          value: 'a',
+        },
+        tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
+        correlationId: 'urn:ads:platform:file-service:v1:/files/123',
+        payload: {},
+      };
 
-    const event = {
-      namespace: 'test',
-      name: 'test-started',
-      timestamp: new Date(),
-      context: {
-        value: 'a',
-      },
-      tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
-      correlationId: 'urn:ads:platform:file-service:v1:/files/123',
-      payload: {},
-    };
+      const { payload, ...headers } = event;
 
-    const service = new AmqpDomainEventService(logger, (connection as unknown) as Connection);
-    await expect(service.send(event)).rejects.toThrow(/Service must be connected before events can be sent./);
+      const subChannel = {
+        assertExchange: jest.fn(),
+        assertQueue: jest.fn(),
+        bindQueue: jest.fn(),
+        publish: jest.fn(),
+        consume: jest.fn((_queue, cb) => {
+          cb({ properties: { headers }, content: JSON.stringify(payload) });
+        }),
+        ack: jest.fn(),
+      };
 
-    done();
-  });
+      const connection = {
+        on: jest.fn(),
+        createChannel: jest.fn(() => subChannel),
+      };
 
-  it('can recreate channel on send error', async (done) => {
-    const channel = {
-      assertExchange: jest.fn(),
-      assertQueue: jest.fn(),
-      bindQueue: jest.fn(),
-      publish: jest.fn(),
-      close: jest.fn(),
-    };
+      const service = new AmqpDomainEventService(logger, (connection as unknown) as Connection);
+      await service.connect();
 
-    const connection = {
-      on: jest.fn(),
-      createChannel: jest.fn(() => channel),
-    };
+      service.getEvents().subscribe((item) => {
+        expect(item.event).toEqual(event);
+        item.done();
+        done();
+      });
+    });
 
-    const event = {
-      namespace: 'test',
-      name: 'test-started',
-      timestamp: new Date(),
-      context: {
-        value: 'a',
-      },
-      tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
-      correlationId: 'urn:ads:platform:file-service:v1:/files/123',
-      payload: {},
-    };
+    it('raise error on send if not connected', () => {
+      const channel = {
+        assertExchange: jest.fn(),
+        assertQueue: jest.fn(),
+        bindQueue: jest.fn(),
+        publish: jest.fn(),
+      };
 
-    const service = new AmqpDomainEventService(logger, (connection as unknown) as Connection);
-    await service.connect();
+      const connection = {
+        on: jest.fn(),
+        createChannel: jest.fn(() => channel),
+      };
 
-    channel.publish.mockRejectedValueOnce(new Error('Something went terribly wrong.'));
-    await service.send(event);
-    await service.send(event);
-
-    expect(connection.createChannel).toHaveBeenCalledTimes(2);
-
-    done();
+      const service = new AmqpDomainEventService(logger, (connection as unknown) as Connection);
+      expect(() => service.getEvents()).toThrow(/Service must be connected before events can be subscribed./);
+    });
   });
 });
