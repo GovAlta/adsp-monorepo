@@ -8,6 +8,7 @@ import { GoAForm, GoAFormButtons, GoAFormItem } from '@components/Form';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import { KeycloakCheckSSO, TenantLogin } from '@store/tenant/actions';
+import { TenantLogout } from '@store/tenant/actions';
 
 const CreateRealm = () => {
   const dispatch = useDispatch();
@@ -73,9 +74,16 @@ const CreateRealm = () => {
                     <em>Names cannot container special characters (ex. ! % &amp;)</em>
                   </GoAFormItem>
                   <GoAFormButtons>
-                    <GoALinkButton to="/admin/tenants" buttonType="secondary">
+                    <GoALinkButton
+                      to=""
+                      buttonType="secondary"
+                      onClick={() => {
+                        dispatch(TenantLogout());
+                      }}
+                    >
                       Back
                     </GoALinkButton>
+
                     <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
                   </GoAFormButtons>
                 </GoAForm>
