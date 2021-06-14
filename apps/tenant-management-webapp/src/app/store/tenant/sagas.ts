@@ -117,7 +117,7 @@ export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAc
     const realm = action.payload;
     const keycloakConfig = state.config.keycloakApi;
     createKeycloakAuth({ ...keycloakConfig, realm });
-    console.log('Run keycloak check SSO with logout');
+    console.debug('Checkout keycloak SSO');
     keycloakAuth.checkSSO(
       (keycloak) => {
         const session = convertToSession(keycloak);
