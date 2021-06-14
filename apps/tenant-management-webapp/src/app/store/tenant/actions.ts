@@ -14,6 +14,8 @@ export const KEYCLOAK_CHECK_SSO = 'KEYCLOAK_CHECK_SSO';
 export const KEYCLOAK_CHECK_SSO_WITH_LOGOUT = 'KEYCLOAK_CHECK_SSO_WITH_LOGOUT';
 export const KEYCLOAK_REFRESH_TOKEN = 'KEYCLOAK_REFRESH_TOKEN';
 export const TENANT_LOGOUT = 'TENANT_LOGOUT';
+export const UPDATE_TENANT_CREATED = 'UPDATE_TENANT_CREATED';
+
 interface SelectTenantAction {
   type: typeof SELECT_TENANT;
   payload: string;
@@ -37,6 +39,10 @@ export interface CreateTenantAction {
 export interface CheckIsTenantAdminAction {
   type: typeof CHECK_IS_TENANT_ADMIN;
   payload: string;
+}
+
+export interface UpdateTenantCreatedAction {
+  type: typeof UPDATE_TENANT_CREATED;
 }
 
 interface UpdateTenantAdminInfoAction {
@@ -100,7 +106,8 @@ export type ActionType =
   | TenantLoginAction
   | KeycloakRefreshTokenAction
   | TenantLogoutAction
-  | KeycloakCheckSSOAction;
+  | KeycloakCheckSSOAction
+  | UpdateTenantCreatedAction;
 
 export const SelectTenant = (realm: string): SelectTenantAction => ({
   type: 'SELECT_TENANT',
@@ -120,6 +127,10 @@ export const FetchTenantSuccess = (tenant: Tenant): FetchTenantSuccessAction => 
 export const CreateTenant = (tenantName: string): CreateTenantAction => ({
   type: 'CREATE_TENANT',
   payload: tenantName,
+});
+
+export const UpdateTenantCreated = (): UpdateTenantCreatedAction => ({
+  type: 'UPDATE_TENANT_CREATED',
 });
 
 export const IsTenantAdmin = (email: string): CheckIsTenantAdminAction => ({

@@ -4,7 +4,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { RootState } from '@store/index';
-import AuthContext from '@lib/authContext';
 import Sidebar from '@pages/admin/tenant-management/sidebar';
 import MenuIcon from '@icons/menu-outline.svg';
 import CloseIcon from '@icons/close-outline.svg';
@@ -17,7 +16,6 @@ interface HeaderMenuProps {
 
 const ActionsMenu = (props: HeaderMenuProps) => {
   const authenticated = useSelector((state: RootState) => state.session.authenticated);
-  const authCtx = useContext(AuthContext);
   const dispatch = useDispatch();
   const [menuState, setMenuState] = useState<MenuState>({ state: 'closed' });
 
