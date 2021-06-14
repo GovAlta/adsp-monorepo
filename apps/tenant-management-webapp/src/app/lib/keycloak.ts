@@ -137,7 +137,7 @@ class KeycloakAuth {
       this.keycloak
         .updateToken(60)
         .then(() => {
-          console.log('Keycloak token was refreshed');
+          console.debug('Keycloak token was refreshed');
         })
         .catch((e) => {
           console.error(`Failed to refresh the keycloak token: ${e.message}`);
