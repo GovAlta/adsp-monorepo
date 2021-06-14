@@ -16,10 +16,15 @@ export default (state = TENANT_INIT, action: ActionType): Tenant => {
         realm: action.payload,
       };
 
+    case 'UPDATE_TENANT_CREATED':
+      return {
+        ...state,
+        isTenantCreated: false,
+      };
+
     case 'SELECT_TENANT':
       return {
         ...state,
-        isTenantCreated: true,
         realm: action.payload,
       };
 

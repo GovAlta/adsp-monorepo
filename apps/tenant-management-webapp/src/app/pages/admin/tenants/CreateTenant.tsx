@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { GoAButton, GoANotification } from '@abgov/react-components';
 
-import { CreateTenant, IsTenantAdmin, SelectTenant } from '@store/tenant/actions';
+import { CreateTenant, IsTenantAdmin, SelectTenant, UpdateTenantCreated } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 import AuthContext from '@lib/authContext';
 import GoALinkButton from '@components/LinkButton';
@@ -14,6 +14,7 @@ import { SessionLogout } from '@store/session/actions';
 const CreateRealm = () => {
   const dispatch = useDispatch();
   const [name, setName] = useState('');
+  const [isTenantCreatedState, setIsTenantCreatedState] = useState(false);
   const authContext = useContext(AuthContext);
 
   const onCreateRealm = async () => {
@@ -39,8 +40,15 @@ const CreateRealm = () => {
 
   const ErrorMessage = (props) => {
     const message = `${props.email} has already created a tenant. Currently only one tenant is allowed per person.`;
-    return <GoANotification type="information" title="Notification Title" message={message} />;
+    return <GoANotification type="information" title="Notification Title" message={message} isDismissable={false} />;
   };
+
+  useEffect(() => {
+    if (isTenantCreated) {
+      setIsTenantCreatedState(true);
+      dispatch(UpdateTenantCreated());
+    }
+  }, [isTenantCreated, dispatch]);
 
   function login() {
     dispatch(SessionLogout());
@@ -51,8 +59,14 @@ const CreateRealm = () => {
   return (
     <Page>
       <Main>
-        {userInfo && isTenantAdmin && <ErrorMessage email={userInfo.email} />}
-        {isTenantCreated ? (
+        {userInfo && isTenantAdmin && (
+          <div>
+            <ErrorMessage email={userInfo.email} />
+            <p>Log into your existing tenant:</p>
+            <GoAButton onClick={login}>Tenant Login</GoAButton>
+          </div>
+        )}
+        {isTenantCreatedState ? (
           <>
             <p>The '{name}' has been successfully created</p>
             <GoAButton onClick={login}>Tenant Login</GoAButton>

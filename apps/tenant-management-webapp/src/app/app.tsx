@@ -153,7 +153,9 @@ function AppWithAuthContext() {
 
   function signOut() {
     const path = window.location.origin + '/logout-redirect';
-    keycloak.logout({ redirectUri: path });
+    keycloak.init({}).then(() => {
+      keycloak.logout({ redirectUri: path });
+    });
   }
 
   return <AuthContext.Provider value={{ signIn, signOut }}>{hasSession && <AppRouters />}</AuthContext.Provider>;
