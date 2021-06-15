@@ -23,6 +23,7 @@ import { environment } from './environments/environment';
 
 import { version } from '../../../package.json';
 import * as directoryService from './directory/services';
+import type { User } from '@abgov/adsp-service-sdk';
 
 async function initializeApp(): Promise<express.Application> {
   /* Connect to mongo db */
@@ -63,7 +64,7 @@ async function initializeApp(): Promise<express.Application> {
     done(null, user);
   });
   passport.deserializeUser(function (user, done) {
-    done(null, user);
+    done(null, user as User);
   });
 
   app.use(passport.initialize());

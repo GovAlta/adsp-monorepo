@@ -14,6 +14,7 @@ import {
 import { environment } from './environments/environment';
 import { createEventService } from './amqp';
 import { applyEventMiddleware, EventServiceRoles, Namespace, NamespaceEntity } from './event';
+import type { User } from '@abgov/adsp-service-sdk';
 
 const logger = createLogger('event-service', environment.LOG_LEVEL);
 
@@ -77,11 +78,7 @@ const initializeApp = async (): Promise<express.Application> => {
           ? Object.getOwnPropertyNames(config).reduce(
               (namespaces, namespace) => ({
                 ...namespaces,
-                [namespace]: new NamespaceEntity(
-                  new AjvValidationService(logger),
-                  config[namespace],
-                  tenantId
-                ),
+                [namespace]: new NamespaceEntity(new AjvValidationService(logger), config[namespace], tenantId),
               }),
               {}
             )
@@ -102,7 +99,7 @@ const initializeApp = async (): Promise<express.Application> => {
   });
 
   passport.deserializeUser(function (user, done) {
-    done(null, user);
+    done(null, user as User);
   });
 
   app.use(passport.initialize());

@@ -11,6 +11,7 @@ import { applyFileMiddleware, FileDeletedDefinition, FileUploadedDefinition, Ser
 import { createRepositories } from './mongo';
 import * as cors from 'cors';
 import * as fs from 'fs';
+import type { User } from '@abgov/adsp-service-sdk';
 
 const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
 
@@ -63,7 +64,7 @@ async function initializeApp(): Promise<express.Application> {
   });
 
   passport.deserializeUser(function (user, done) {
-    done(null, user);
+    done(null, user as User);
   });
 
   app.use(passport.initialize());
