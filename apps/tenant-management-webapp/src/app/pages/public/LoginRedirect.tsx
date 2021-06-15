@@ -21,7 +21,7 @@ const LoginRedirect = (props) => {
   const realm = urlParams.get('realm');
   useEffect(() => {
     dispatch(KeycloakCheckSSO(realm));
-  }, [isTenantAdmin, isAuthenticated]);
+  }, []);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);

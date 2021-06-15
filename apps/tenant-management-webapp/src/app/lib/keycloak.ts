@@ -109,14 +109,19 @@ class KeycloakAuth {
   }
 
   loginByIdP(idp: string, realm: string) {
+    this.updateRealmWithInit(realm);
+
     const location: string = window.location.href;
     const skipSSO = location.indexOf('kc_idp_hint') > -1;
 
-    this.updateRealmWithInit(realm);
+    const urlParams = new URLSearchParams(window.location.search);
+    const idpFromUrl = urlParams.get('kc_idp_hint');
+
     const redirectUri = `${this.loginRedirect}?realm=${realm}&type=${LOGIN_TYPES.tenant}`;
     console.debug(`Keycloak redirect URL: ${redirectUri}`);
 
-    if (skipSSO) {
+    if (skipSSO && !idpFromUrl) {
+      // kc_idp_hint with empty value, skip checkSSO
       Promise.all([
         this.keycloak.init({ checkLoginIframe: false }),
         this.keycloak.login({ idpHint: ' ', redirectUri }),
@@ -125,6 +130,11 @@ class KeycloakAuth {
       /**
        * Paul Li - Tried to use keycloak.init().then(()=>{keycloak.login}). But, it does not work.
        */
+
+      if (idpFromUrl) {
+        idp = idpFromUrl;
+      }
+
       Promise.all([
         this.keycloak.init({ checkLoginIframe: false }),
         this.keycloak.login({ idpHint: idp, redirectUri }),
