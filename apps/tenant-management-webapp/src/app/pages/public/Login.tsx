@@ -1,52 +1,24 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
 
-import { GoAForm, GoAFormButtons, GoAFormItem } from '@components/Form';
-import { Page, Main } from '@components/Html';
-import AuthContext from '@lib/authContext';
-import { SelectTenant } from '@store/tenant/actions';
-import { useDispatch } from 'react-redux';
-import { GoAButton } from '@abgov/react-components';
+import { Page } from '@components/Html';
+import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
+import { TenantLogin } from '@store/tenant/actions';
+import { RootState } from '@store/index';
 
 const LoginLanding = () => {
-  const { signIn } = useContext(AuthContext);
+  const realm = useParams<{ realm: string }>().realm;
+  const keycloakConfig = useSelector((state: RootState) => state.config.keycloakApi);
+
   const dispatch = useDispatch();
-  const search = useLocation().search;
-  const isDirectLogin = new URLSearchParams(search).get('direct');
-  const tenantName = useParams<{ tenantName: string }>().tenantName;
 
   useEffect(() => {
-    if (tenantName) {
-      dispatch(SelectTenant(tenantName));
-      // For direct login, we shall hide the tenant login form and invoke the keycloak
-      if (isDirectLogin === 'true') {
-        dispatch(SelectTenant(tenantName));
-        signIn('/login-redirect');
-      }
+    if (realm) {
+      dispatch(TenantLogin(realm));
     }
-  }, [tenantName, isDirectLogin]);
+  }, [keycloakConfig]);
 
-  return (
-    <Page>
-      {!isDirectLogin && (
-        <Main>
-          <h2>Tenant Login</h2>
-          <div>
-            <p>If you meant to create a tenant, please click below</p>
-            <GoAButton buttonType="primary" onClick={() => signIn('/get-started')}>
-              Create Tenant
-            </GoAButton>
-            <p>
-              If you want to log into a tenant created by an administrator, please ask the administrator for the login
-              url
-            </p>
-          </div>
-        </Main>
-      )}
-    </Page>
-  );
+  return <Page></Page>;
 };
 
 export default LoginLanding;

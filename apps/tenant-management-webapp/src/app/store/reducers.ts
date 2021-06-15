@@ -1,7 +1,4 @@
 import { combineReducers } from 'redux';
-import { persistReducer } from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
-
 import Access from './access/reducers';
 import ApiStatus from './api-status/reducers';
 import Config from './config/reducers';
@@ -13,7 +10,7 @@ import ServiceStatus from './status/reducers';
 import TenantConfig from './tenantConfig/reducers';
 import EventLog from './event-log/reducers';
 
-const rootReducer = combineReducers({
+export const rootReducer = combineReducers({
   fileService: File,
   apiStatus: ApiStatus,
   session: Session,
@@ -25,11 +22,3 @@ const rootReducer = combineReducers({
   serviceStatus: ServiceStatus,
   eventLog: EventLog
 });
-
-const persistConfig = {
-  key: 'root',
-  storage,
-  whitelist: ['session', 'tenant'],
-};
-
-export const persistedReducer = persistReducer(persistConfig, rootReducer);

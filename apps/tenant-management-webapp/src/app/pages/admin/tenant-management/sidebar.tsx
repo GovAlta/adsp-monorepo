@@ -1,6 +1,6 @@
 import { withRouter, RouteComponentProps } from 'react-router';
 import React, { useContext } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -12,14 +12,15 @@ import LogoutIcon from '@icons/log-out-outline.svg';
 import FitnessIcon from '@icons/fitness-outline.svg';
 import AuthContext from '@lib/authContext';
 import { RootState } from '@store/index';
+import { TenantAdminLogin, TenantLogout } from '@store/tenant/actions';
 
 interface SidebarProps {
   type: 'mobile' | 'desktop';
 }
 
 const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
-  const authCtx = useContext(AuthContext);
   const authenticated = useSelector((state: RootState) => state.session.authenticated);
+  const dispatch = useDispatch();
 
   return (
     <Links>
@@ -60,9 +61,15 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
           <LogoutWrapper>
             <img src={LogoutIcon} width="16" alt="Access" />
             {authenticated ? (
-              <span onClick={() => authCtx.signOut()}>Sign Out</span>
+              <span
+                onClick={() => {
+                  dispatch(TenantLogout());
+                }}
+              >
+                Sign Out
+              </span>
             ) : (
-              <span onClick={() => authCtx.signIn('/admin/tenant-admin')}>Sign In</span>
+              <span onClick={() => dispatch(TenantAdminLogin())}>Sign In</span>
             )}
           </LogoutWrapper>
         </SignOutLink>

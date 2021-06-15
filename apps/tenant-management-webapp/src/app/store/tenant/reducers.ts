@@ -28,9 +28,6 @@ export default (state = TENANT_INIT, action: ActionType): Tenant => {
         realm: action.payload,
       };
 
-    case 'LOGOUT_TENANT':
-      return TENANT_INIT;
-
     default:
       return state;
   }
