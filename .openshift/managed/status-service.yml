@@ -87,19 +87,6 @@ objects:
       database-uri: mongodb://${APP_NAME}-mongodb${NAME_SUFFIX}:27017
 
   - apiVersion: v1
-    data:
-      KEYCLOAK_CLIENT_SECRET: ""
-    kind: Secret
-    metadata:
-      labels:
-          app: ${APP_NAME}${NAME_SUFFIX}
-          component: database
-          apply-init: "true"
-          apply-branch: "true"
-      name: ${APP_NAME}
-    type: Opaque
-
-  - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
       labels:
@@ -286,14 +273,6 @@ objects:
           dockerfilePath: .openshift/service/Dockerfile
         type: Docker
 
-  - apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      name: ${APP_NAME}
-      labels:
-        app: ${APP_NAME}
-        apply-init: "true"
-
   # DeploymentConfig (and Service and Route) is created in each environment of the
   # primary pipline as well as branch deployment.
   - apiVersion: v1
@@ -335,8 +314,6 @@ objects:
               env:
                 - name: PORT
                   value: "3333"
-                - name: LOG_LEVEL
-                  value: info
                 - name: MONGO_USER
                   valueFrom:
                     secretKeyRef:

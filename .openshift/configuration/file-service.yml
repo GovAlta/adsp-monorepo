@@ -14,6 +14,7 @@ items:
       AV_PORT: "8008"
       KEYCLOAK_ROOT_URL: https://access-dev.os99.gov.ab.ca
       DIRECTORY_URL: https://tenant-management-api.core-services-dev.svc.cluster.local
+      LOG_LEVEL: info
   - apiVersion: v1
     kind: Secret
     metadata:

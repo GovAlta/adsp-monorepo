@@ -5,9 +5,9 @@ items:
     kind: ConfigMap
     metadata:
       labels:
-        app: value-service
+        app: status-service
         component: api
-      name: value-service
+      name: status-service
     data:
       KEYCLOAK_ROOT_URL: https://access-dev.os99.gov.ab.ca
       DIRECTORY_URL: https://tenant-management-api-core-services-dev.os99.gov.ab.ca
@@ -16,9 +16,9 @@ items:
     kind: Secret
     metadata:
       labels:
-        app: value-service
+        app: status-service
         component: api
-      name: value-service
+      name: status-service
     stringData:
-      CLIENT_ID: urn:ads:platform:value-service
+      CLIENT_ID: urn:ads:platform:status-service
       CLIENT_SECRET:
