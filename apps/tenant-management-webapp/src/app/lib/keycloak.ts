@@ -66,7 +66,7 @@ class KeycloakAuth {
 
       if (skipSSO && !idpFromUrl) {
         redirectUri += `&kc_idp_hint=`;
-        Promise.all([this.keycloak.init({}), this.keycloak.login({ idpHint: 'default', redirectUri })]);
+        Promise.all([this.keycloak.init({}), this.keycloak.login({ idpHint: ' ', redirectUri })]);
       } else {
         if (idpFromUrl) {
           redirectUri += `&kc_idp_hint=${idpFromUrl}`;
