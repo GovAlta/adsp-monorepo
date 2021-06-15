@@ -1,5 +1,4 @@
 import React from 'react';
-interface Actions {}
 
-const AuthContext = React.createContext<Actions>(null);
+const AuthContext = React.createContext(null);
 export default AuthContext;
