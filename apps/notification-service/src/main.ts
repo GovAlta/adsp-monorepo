@@ -18,6 +18,7 @@ import { applyNotificationMiddleware, Channel, Notification } from './notificati
 import { createRepositories } from './mongo';
 import { createABNotifySmsProvider, createGoAEmailProvider } from './provider';
 import { templateService } from './handlebars';
+import type { User } from '@abgov/adsp-service-sdk';
 
 const logger = createLogger('notification-service', environment.LOG_LEVEL || 'info');
 
@@ -35,7 +36,7 @@ passport.serializeUser(function (user, done) {
 });
 
 passport.deserializeUser(function (user, done) {
-  done(null, user);
+  done(null, user as User);
 });
 
 app.use(passport.initialize());

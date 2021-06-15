@@ -12,6 +12,7 @@ import { scheduleServiceStatusJobs } from './app/jobs';
 import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import * as util from 'util';
 import { GoAError } from './app/common/errors';
+import type { User } from '@abgov/adsp-service-sdk';
 
 const logger = createLogger('status-service', environment?.LOG_LEVEL || 'info');
 const app = express();
@@ -55,7 +56,7 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
   });
 
   passport.deserializeUser(function (user, done) {
-    done(null, user);
+    done(null, user as User);
   });
 
   app.use(passport.initialize());

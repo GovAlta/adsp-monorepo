@@ -16,6 +16,7 @@ import {
 import { environment } from './environments/environment';
 import { applyPushMiddleware } from './push';
 import { createRepositories } from './mongo';
+import type { User } from '@abgov/adsp-service-sdk';
 
 const logger = createLogger('push-service', environment.LOG_LEVEL || 'info');
 
@@ -34,7 +35,7 @@ passport.serializeUser(function (user, done) {
 });
 
 passport.deserializeUser(function (user, done) {
-  done(null, user);
+  done(null, user as User);
 });
 
 app.use(passport.initialize());
