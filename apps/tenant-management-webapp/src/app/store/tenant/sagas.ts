@@ -104,7 +104,9 @@ export function* keycloakCheckSSO(action: KeycloakCheckSSOAction) {
           store.dispatch(IsTenantAdmin(session.userInfo.email)),
         ]);
       },
-      () => {}
+      () => {
+        console.error('Failed to check the SSO');
+      }
     );
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to check keycloak SSO: ${e.message}` }));
@@ -140,6 +142,7 @@ export function* tenantLogin(action: TenantLoginAction) {
     const state: RootState = yield select();
     const keycloakConfig = state.config.keycloakApi;
     createKeycloakAuth(keycloakConfig);
+
     keycloakAuth.loginByIdP('core', action.payload);
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to tenant login: ${e.message}` }));
@@ -161,7 +164,7 @@ export function* keycloakRefreshToken() {
 export function* tenantLogout() {
   try {
     if (keycloakAuth) {
-      keycloakAuth.logout();
+      Promise.resolve(keycloakAuth.logout());
     }
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to tenant out: ${e.message}` }));
