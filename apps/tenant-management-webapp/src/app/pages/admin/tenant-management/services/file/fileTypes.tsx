@@ -433,7 +433,7 @@ export default function FileTypes() {
 
   const notifications = () => {
     return state.notifications.notifications.map((notification, i) => {
-      if (!notification.message.includes('uptime')) {
+      if (notification.message.includes('FileType')) {
         return (
           <div
             key={i}
