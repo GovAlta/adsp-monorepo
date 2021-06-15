@@ -3,10 +3,11 @@ import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import GoALinkButton from '@components/LinkButton';
 import { useDispatch } from 'react-redux';
-import { TenantLogout } from '@store/tenant/actions';
+import { useHistory } from 'react-router-dom';
 
 export const SignInError = () => {
   const dispatch = useDispatch();
+  const history = useHistory();
   return (
     <Page>
       <Main>
@@ -19,20 +20,10 @@ export const SignInError = () => {
 
         <h4>If you like to create a new tenant</h4>
         <ul>
-          <li>Click the button below to the main page</li>
-          <li>
-            Click the <b>Get Started</b> Button to create a new tenant.
-          </li>
+          <li>Click the button below</li>
         </ul>
-
-        <GoALinkButton
-          buttonType="primary"
-          to=""
-          onClick={() => {
-            dispatch(TenantLogout());
-          }}
-        >
-          Back to Main Page
+        <GoALinkButton buttonType="primary" to="/tenant/creation">
+          Create Tenant
         </GoALinkButton>
       </Main>
       <Aside>

@@ -55,19 +55,34 @@ class KeycloakAuth {
   }
 
   loginByCore(type: string) {
+    const location: string = window.location.href;
+    const skipSSO = location.indexOf('kc_idp_hint') > -1;
+    const urlParams = new URLSearchParams(window.location.search);
+    const idpFromUrl = urlParams.get('kc_idp_hint');
+    let redirectUri = `${this.loginRedirect}?type=${type}&realm=core`;
+
     try {
       this.updateRealmWithInit('core');
-      const redirectUri = `${this.loginRedirect}?type=${type}&realm=core`;
-      this.keycloak
-        .init({ onLoad: 'login-required', redirectUri })
-        .then((authenticated) => {
-          if (authenticated) {
-            console.debug(`Keycloak IdP login is successful`);
-          }
-        })
-        .catch((e) => {
-          console.error(`Failed to login`, e);
-        });
+
+      if (skipSSO && !idpFromUrl) {
+        redirectUri += `&kc_idp_hint=`;
+        Promise.all([this.keycloak.init({}), this.keycloak.login({ idpHint: 'default', redirectUri })]);
+      } else {
+        if (idpFromUrl) {
+          redirectUri += `&kc_idp_hint=${idpFromUrl}`;
+        }
+
+        this.keycloak
+          .init({ onLoad: 'login-required', redirectUri })
+          .then((authenticated) => {
+            if (authenticated) {
+              console.debug(`Keycloak IdP login is successful`);
+            }
+          })
+          .catch((e) => {
+            console.error(`Failed to login`, e);
+          });
+      }
     } catch (e) {
       console.error(`Failed to login`, e);
     }
