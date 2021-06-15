@@ -117,11 +117,12 @@ class KeycloakAuth {
     const urlParams = new URLSearchParams(window.location.search);
     const idpFromUrl = urlParams.get('kc_idp_hint');
 
-    const redirectUri = `${this.loginRedirect}?realm=${realm}&type=${LOGIN_TYPES.tenant}`;
+    let redirectUri = `${this.loginRedirect}?realm=${realm}&type=${LOGIN_TYPES.tenant}`;
     console.debug(`Keycloak redirect URL: ${redirectUri}`);
 
     if (skipSSO && !idpFromUrl) {
       // kc_idp_hint with empty value, skip checkSSO
+      redirectUri += `&kc_idp_hint=`;
       Promise.all([
         this.keycloak.init({ checkLoginIframe: false }),
         this.keycloak.login({ idpHint: ' ', redirectUri }),
@@ -133,6 +134,7 @@ class KeycloakAuth {
 
       if (idpFromUrl) {
         idp = idpFromUrl;
+        redirectUri += `&kc_idp_hint=${idp}`;
       }
 
       Promise.all([

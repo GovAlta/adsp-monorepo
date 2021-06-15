@@ -44,6 +44,8 @@ const LoginRedirect = (props) => {
 
     if (type === LOGIN_TYPES.tenant) {
       if (isAuthenticated) {
+        localStorage.setItem('realm', `${tenantRealm}`);
+
         history.push({
           pathname: '/admin/tenant-admin',
           search: `?realm=${realm}`,

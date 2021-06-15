@@ -2,6 +2,7 @@ import React, { useContext, useEffect } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 import styled from 'styled-components';
 import { HeaderCtx } from '@lib/headerContext';
+import { useSelector } from 'react-redux';
 
 import Sidebar from './sidebar';
 import Dashboard from './dashboard';
@@ -11,16 +12,18 @@ import AccessPage from './services/access/access';
 import Container from '@components/Container';
 import Status from './services/status';
 import { EventLog } from './event-log';
+import { RootState } from '@store/index';
 
 const TenantManagement = (): JSX.Element => {
   const { setTitle } = useContext(HeaderCtx);
+  const isAuthenticated = useSelector((state: RootState) => state.session?.authenticated ?? false);
 
   useEffect(() => {
     setTitle('Alberta Digital Service Platform - Tenant Management');
   }, [setTitle]);
 
   return (
-    <AdminLayout>
+    <AdminLayout ready={isAuthenticated}>
       <SidebarWrapper>
         <Sidebar type="desktop" />
       </SidebarWrapper>
@@ -59,8 +62,11 @@ const TenantManagement = (): JSX.Element => {
 
 export default TenantManagement;
 
+interface AdminLayoutProps {
+  ready: boolean;
+}
 const AdminLayout = styled.div`
-  display: flex;
+  display: ${(p: AdminLayoutProps) => (p.ready ? 'flex' : 'none')};
   min-height: 100vh;
 `;
 
