@@ -90,7 +90,7 @@ const CreateRealm = () => {
                   ) : (
                     <GoAButton buttonType="primary" buttonSize="normal">
                       Creating Tenant...
-                      <GoAElementLoader visible={true} size={25} baseColour="#c8eef9" spinnerColour="#0070c4" />
+                      <GoAElementLoader visible={true} size={15} baseColour="#c8eef9" spinnerColour="#0070c4" />
                     </GoAButton>
                   )}
                 </GoAForm>
