@@ -12,6 +12,7 @@ import { TenantAdminLogin, TenantLogout } from '@store/tenant/actions';
 
 interface HeaderMenuProps {
   hasLoginLink: boolean;
+  admin: boolean;
 }
 
 const ActionsMenu = (props: HeaderMenuProps) => {
@@ -22,6 +23,7 @@ const ActionsMenu = (props: HeaderMenuProps) => {
   function toggleMenu() {
     setMenuState({ state: menuState.state === 'closed' ? 'open' : 'closed' });
   }
+
   return (
     <Actions>
       <section className="mobile">
@@ -38,14 +40,17 @@ const ActionsMenu = (props: HeaderMenuProps) => {
 
       {props.hasLoginLink ? (
         <section className="desktop">
-          {authenticated ? (
+          {/* For admin pages, only logout is required */}
+          {(authenticated === true || props.admin) && (
             <UserIconBox>
               <UserIcon />
               <Link to={''} onClick={() => dispatch(TenantLogout())}>
                 Sign Out
               </Link>
             </UserIconBox>
-          ) : (
+          )}
+
+          {!authenticated && !props.admin && (
             <Link
               to={''}
               onClick={() => {
@@ -61,11 +66,11 @@ const ActionsMenu = (props: HeaderMenuProps) => {
   );
 };
 
-function AppHeader({ serviceName = '', hasLoginLink = true }) {
+function AppHeader({ serviceName = '', hasLoginLink = true, admin = false }) {
   return (
     <HeaderContainer>
       <GoAHeader serviceHome="/" serviceLevel="alpha" serviceName={serviceName} />
-      <ActionsMenu hasLoginLink={hasLoginLink} />
+      <ActionsMenu hasLoginLink={hasLoginLink} admin={admin} />
     </HeaderContainer>
   );
 }

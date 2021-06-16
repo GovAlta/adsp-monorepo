@@ -77,7 +77,7 @@ const LoginRedirect = (props) => {
         search = '?kc_idp_hint=';
       }
       history.push({
-        pathname: '/get-started',
+        pathname: '/tenant/creation',
         search: search,
         state: { from: props.location },
       });

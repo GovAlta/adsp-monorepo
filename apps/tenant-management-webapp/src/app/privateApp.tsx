@@ -24,7 +24,7 @@ export function PrivateApp({ children }) {
 
   return (
     <HeaderCtx.Provider value={{ setTitle }}>
-      <Header serviceName={title} />
+      <Header serviceName={title} admin={true} />
       <Container>{children}</Container>
     </HeaderCtx.Provider>
   );
