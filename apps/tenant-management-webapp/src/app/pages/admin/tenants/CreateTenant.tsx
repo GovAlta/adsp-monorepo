@@ -50,7 +50,18 @@ const CreateRealm = () => {
 
   const ErrorMessage = (props) => {
     const message = `${props.email} has already created a tenant. Currently only one tenant is allowed per person.`;
-    return <GoANotification type="information" title="Notification Title" message={message} />;
+    return (
+      <div>
+        <GoANotification type="information" title="Notification Title" message={message} />
+        <GoAButton
+          onClick={() => {
+            dispatch(TenantLogout());
+          }}
+        >
+          Back to main page
+        </GoAButton>
+      </div>
+    );
   };
 
   return (
