@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { GoAPageLoader } from '@abgov/react-components';
 
 import FileOverview from './fileOverview';
 import FileHeader from './fileHeader';
@@ -61,25 +62,33 @@ const TabsForInit = () => {
 
 export default function File() {
   const dispatch = useDispatch();
+  const [isLoaded, setIsLoaded] = useState(false);
   const tenantConfig = useSelector((state: RootState) => state.tenantConfig);
   const setupRequired = Object.keys(tenantConfig).length === 0 && !('fileService' in tenantConfig);
   const space = useSelector((state: RootState) => state.fileService.space);
   useEffect(() => {
     dispatch(FetchTenantConfigService());
     dispatch(FetchFileSpaceService());
+    setIsLoaded(true);
   }, [dispatch]);
   const isActive = tenantConfig.fileService?.isActive;
   const isEnabled = tenantConfig.fileService?.isEnabled && space !== null;
 
   return (
     <Main>
-      <FileHeader isSetup={setupRequired} isActive={isActive} />
-      {setupRequired ? (
-        <TabsForInit />
-      ) : isEnabled ? (
-        <TabsForEnable isActive={isActive} />
+      {isLoaded ? (
+        <>
+          <FileHeader isSetup={setupRequired} isActive={isActive} />
+          {setupRequired ? (
+            <TabsForInit />
+          ) : isEnabled ? (
+            <TabsForEnable isActive={isActive} />
+          ) : (
+            <TabsForDisable isActive={isActive} />
+          )}
+        </>
       ) : (
-        <TabsForDisable isActive={isActive} />
+        <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
       )}
     </Main>
   );
