@@ -1,5 +1,6 @@
 {
   "env": {
+    "env-name": "TEST",
     "TAGS": "@regression and not @ignore",
     "keycloakTokenUrlSuffix": "/protocol/openid-connect/token",
     "core-api-client-id": "tenant-api",
@@ -23,7 +24,7 @@
     "uiComponentUrl": "",
     "fileApi":""
   },
-  "baseUrl": "http://localhost:4200/",
+  "baseUrl": "https://tenant-management-webapp-core-services-test.os99.gov.ab.ca",
   "fileServerFolder": ".",
   "fixturesFolder": "./src/fixtures",
   "integrationFolder": "./src/integration",
