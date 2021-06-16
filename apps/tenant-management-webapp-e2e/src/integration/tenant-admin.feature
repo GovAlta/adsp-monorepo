@@ -7,17 +7,24 @@ Feature: Tenant admin
     When the user enters credentials and clicks login button
     Then the tenant management admin page is displayed
 
-  @TEST_CS-299 @REQ_CS-194 @dashboard @regression
-  Scenario: As a GoA service owner, I can access the Administration module
-    Given a service owner user is on tenant admin page
-    When the user selects the "Administration" menu item
-    Then the "administration" landing page is displayed
+  # Administration menu is removed
+  # @TEST_CS-299 @REQ_CS-194 @dashboard @regression
+  # Scenario: As a GoA service owner, I can access the Administration module
+  #   Given a service owner user is on tenant admin page
+  #   When the user selects the "Administration" menu item
+  #   Then the "administration" landing page is displayed
 
   @TEST_CS-300 @REQ_CS-194 @dashboard @regression
   Scenario: As a GoA service owner I can access the File Services module
     Given a service owner user is on tenant admin page
     When the user selects the "File Services" menu item
     Then the "file services" landing page is displayed
+
+  @dashboard @regression
+  Scenario: As a GoA service owner I can access the Service Status module
+    Given a service owner user is on tenant admin page
+    When the user selects the "Status" menu item
+    Then the "service status" landing page is displayed
 
   @regression @smoke-test @api
   Scenario Outline: As a GoA service owner I can get a list of "<Options>"
