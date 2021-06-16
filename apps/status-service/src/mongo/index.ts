@@ -1,6 +1,7 @@
 import { connect, connection } from 'mongoose';
 import { Logger } from 'winston';
 import { Repositories } from '../app/repository';
+import MongoEndpointStatusEntryRepository from './endpointStatusEntry';
 import { MongoServiceStatusRepository } from './serviceStatus';
 
 interface MongoRepositoryProps {
@@ -24,9 +25,11 @@ export const createRepositories = async ({ logger, ...props }: MongoRepositoryPr
   });
 
   const serviceStatusRepository = new MongoServiceStatusRepository();
+  const endpointStatusEntryRepository = new MongoEndpointStatusEntryRepository();
 
   return Promise.resolve({
     serviceStatusRepository: serviceStatusRepository,
+    endpointStatusEntryRepository: endpointStatusEntryRepository,
     isConnected: () => connection.readyState === 1, // FIXME: ConnectionStatus is always undefined -> ConnectionStates.connected,
   });
 };

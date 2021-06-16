@@ -15,6 +15,25 @@ export const serviceStatusEndpointSchema = new Schema(
   { _id: false }
 );
 
+export const endpointStatusEntrySchema = new Schema({
+  ok: {
+    type: Boolean,
+  },
+  url: {
+    type: String,
+    required: true,
+  },
+  status: {
+    type: String,
+  },
+  responseTime: {
+    type: Number,
+  },
+  timestamp: {
+    type: Number,
+  },
+});
+
 export const serviceStatusApplicationSchema = new Schema(
   {
     tenantId: {
@@ -39,7 +58,11 @@ export const serviceStatusApplicationSchema = new Schema(
       type: Number,
       required: true,
     },
-    status: {
+    publicStatus: {
+      type: String,
+      required: false,
+    },
+    internalStatus: {
       type: String,
       default: 'disabled',
       required: true,

@@ -21,7 +21,7 @@ describe('Service status mongo repository', () => {
   ): Promise<ServiceStatusApplicationEntity[]> {
     return Promise.all(
       applications.map(async (entity: ServiceStatusApplicationEntity) => {
-        entity.id = generateId();
+        entity._id = generateId();
         return await repo.save(entity);
       })
     );
@@ -52,7 +52,7 @@ describe('Service status mongo repository', () => {
       { name: 'app 2', endpoints: [], status: 'disabled', timeIntervalMin: 2, tenantId: '99' },
       { name: 'app 3', endpoints: [], status: 'operational', timeIntervalMin: 2, tenantId: '99' },
     ]);
-    const queuedIds = applications.map((app) => app.id);
+    const queuedIds = applications.map((app) => app._id);
     const actual = await repo.findQueuedDisabledApplications(queuedIds);
     expect(actual.length).toEqual(2);
     done();
@@ -66,7 +66,7 @@ describe('Service status mongo repository', () => {
       { name: 'app 4', endpoints: [], status: 'operational', timeIntervalMin: 2, tenantId: '33' },
     ]);
     const queuedApps = ['app 1', 'app 4'];
-    const queuedIds = applications.filter((app) => queuedApps.includes(app.name)).map((app) => app.id);
+    const queuedIds = applications.filter((app) => queuedApps.includes(app.name)).map((app) => app._id);
     const actual = await repo.findNonQueuedApplications(queuedIds);
     expect(actual.length).toEqual(1);
     done();
@@ -80,7 +80,7 @@ describe('Service status mongo repository', () => {
       { name: 'app 4', endpoints: [], status: 'operational', timeIntervalMin: 2, tenantId: '33' },
     ]);
     const queuedApps = ['app 1', 'app 4'];
-    const queuedIds = applications.filter((app) => queuedApps.includes(app.name)).map((app) => app.id);
+    const queuedIds = applications.filter((app) => queuedApps.includes(app.name)).map((app) => app._id);
     queuedIds.push(generateId(), generateId());
     const actual = await repo.findQueuedDeletedApplicationIds(queuedIds);
     expect(actual.length).toEqual(2);
@@ -138,7 +138,7 @@ describe('Service status mongo repository', () => {
       { name: 'app 1', endpoints: [], status: 'disabled', timeIntervalMin: 2, tenantId: '99' },
       { name: 'app 2', endpoints: [], status: 'disabled', timeIntervalMin: 2, tenantId: '99' },
     ]);
-    const app = await repo.get(applications[0].id);
+    const app = await repo.get(applications[0]._id);
     expect(app).not.toBeNull();
     expect(app.name).toEqual(applications[0].name);
     done();
@@ -153,7 +153,7 @@ describe('Service status mongo repository', () => {
     editedApp.name = 'edited app';
     await repo.save(editedApp);
 
-    const appCheck = await repo.get(editedApp.id);
+    const appCheck = await repo.get(editedApp._id);
 
     expect(appCheck).not.toBeNull();
     expect(appCheck.name).toEqual(editedApp.name);

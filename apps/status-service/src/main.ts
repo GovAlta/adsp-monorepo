@@ -62,7 +62,11 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
   app.use(passport.initialize());
 
   // start the endpoint checking jobs
-  scheduleServiceStatusJobs({ logger, serviceStatusRepository: repositories.serviceStatusRepository });
+  scheduleServiceStatusJobs({
+    logger,
+    serviceStatusRepository: repositories.serviceStatusRepository,
+    endpointStatusEntryRepository: repositories.endpointStatusEntryRepository,
+  });
 
   // service endpoints
   bindEndpoints(app, { logger, authenticate, ...repositories });

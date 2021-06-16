@@ -1,6 +1,6 @@
 import { Doc } from '@core-services/core-common';
 import { Model, model, Document } from 'mongoose';
-import { ServiceStatusApplication, ServiceStatusApplicationEntity, ServiceStatusType } from '../app';
+import { ServiceStatusApplication, ServiceStatusApplicationEntity } from '../app';
 import { ServiceStatusRepository } from '../app/repository/serviceStatus';
 import { serviceStatusApplicationSchema } from './schema';
 
@@ -28,7 +28,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
 
   async findQueuedDeletedApplicationIds(queuedApplicationIds: string[]): Promise<string[]> {
     const existingApps = await this.model.find({ _id: { $in: queuedApplicationIds } });
-    const existingAppIds = existingApps.map((app) => app.id);
+    const existingAppIds = existingApps.map((app) => app._id);
 
     return queuedApplicationIds.filter((appId) => !existingAppIds.includes(appId.toString()));
   }
@@ -46,24 +46,24 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
   }
 
   async enable(entity: ServiceStatusApplicationEntity): Promise<ServiceStatusApplicationEntity> {
-    const application = await this.model.findById(entity.id);
+    const application = await this.model.findById(entity._id);
     application.endpoints.forEach((endpoint) => (endpoint.status = 'pending'));
-    application.status = 'pending';
+    application.internalStatus = 'pending';
     await application.save();
     return this.fromDoc(application);
   }
 
   async disable(entity: ServiceStatusApplicationEntity): Promise<ServiceStatusApplicationEntity> {
-    const application = await this.model.findById(entity.id);
+    const application = await this.model.findById(entity._id);
     application.endpoints.forEach((endpoint) => (endpoint.status = 'disabled'));
-    application.status = 'disabled';
+    application.internalStatus = 'disabled';
     await application.save();
     return this.fromDoc(application);
   }
 
   async save(entity: ServiceStatusApplicationEntity): Promise<ServiceStatusApplicationEntity> {
-    if (entity.id) {
-      const doc = await this.model.findOneAndUpdate({ _id: entity.id }, this.toDoc(entity), {
+    if (entity._id) {
+      const doc = await this.model.findOneAndUpdate({ _id: entity._id }, this.toDoc(entity), {
         upsert: true,
         new: true,
         lean: true,
@@ -79,7 +79,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
 
   async delete(entity: ServiceStatusApplicationEntity): Promise<boolean> {
     try {
-      await this.model.findOneAndDelete({ _id: entity.id });
+      await this.model.findOneAndDelete({ _id: entity._id });
       return true;
     } catch (e) {
       return false;
@@ -88,7 +88,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
 
   private toDoc(application: ServiceStatusApplicationEntity): Doc<ServiceStatusApplication> {
     return {
-      _id: application.id,
+      _id: application._id,
       endpoints: application.endpoints,
       metadata: application.metadata,
       name: application.name,
@@ -96,7 +96,8 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
       statusTimestamp: application.statusTimestamp,
       tenantId: application.tenantId,
       timeIntervalMin: application.timeIntervalMin,
-      status: application.status,
+      internalStatus: application.internalStatus,
+      publicStatus: application.publicStatus,
     };
   }
 
@@ -105,7 +106,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
       return null;
     }
     return new ServiceStatusApplicationEntity(this, {
-      id: doc._id,
+      _id: doc._id,
       endpoints: doc.endpoints,
       metadata: doc.metadata,
       name: doc.name,
@@ -113,7 +114,8 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
       statusTimestamp: doc.statusTimestamp,
       tenantId: doc.tenantId,
       timeIntervalMin: doc.timeIntervalMin,
-      status: doc.status,
+      internalStatus: doc.internalStatus,
+      publicStatus: doc.publicStatus,
     });
   }
 }

@@ -1,10 +1,6 @@
 import { RootState } from '@store/index';
 import { saveApplication } from '@store/status/actions';
-import {
-  EndpointStatusType,
-  ServiceStatusApplication,
-  ServiceStatusEndpoint,
-} from '@store/status/models';
+import { EndpointStatusType, ServiceStatusApplication, ServiceStatusEndpoint } from '@store/status/models';
 import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useParams } from 'react-router-dom';
@@ -22,14 +18,15 @@ function ApplicationForm(): JSX.Element {
     tenantId: '',
     enabled: false,
     description: '',
-    status: 'disabled',
+    internalStatus: 'disabled',
+    publicStatus: 'disabled',
     timeIntervalMin: 10,
     endpoints: [],
   });
 
   useEffect(() => {
     if (applicationId) {
-      const app = serviceStatus.applications.find((app) => applicationId === app.id);
+      const app = serviceStatus.applications.find((app) => applicationId === app._id);
       setApplication(app);
     }
   }, [applicationId, serviceStatus]);
