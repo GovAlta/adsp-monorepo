@@ -77,7 +77,7 @@ export function* setApplicationStatus(action: SetApplicationStatusAction) {
 }
 
 function getToken(session: Session): string {
-  return session.credentials.token;
+  return session?.credentials?.token;
 }
 
 function getServiceStatusUrl(config: ConfigState): string {

@@ -8,8 +8,8 @@ interface FileHeaderProps {
 }
 
 const FileHeader = (props: FileHeaderProps) => {
-  const roles = useSelector((state: RootState) => state.session.realmAccess.roles);
-  const accessible = roles.includes('file-service-admin');
+  const roles = useSelector((state: RootState) => state.session?.realmAccess?.roles);
+  const accessible = roles && roles.includes('file-service-admin');
 
   let headerState = '';
   let headerStateClass = '';

@@ -4,6 +4,7 @@ import { useHistory } from 'react-router-dom';
 const LogoutRedirect = () => {
   const history = useHistory();
   useEffect(() => {
+    localStorage.removeItem('realm');
     history.push('/');
   }, []);
 

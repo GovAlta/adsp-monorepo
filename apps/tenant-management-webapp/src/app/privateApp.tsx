@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
-
 import { Route } from 'react-router-dom';
-
 import Header from '@components/AppHeader';
 import { HeaderCtx } from '@lib/headerContext';
 import Container from '@components/Container';
@@ -12,7 +10,7 @@ export function PrivateApp({ children }) {
   const [title, setTitle] = useState<string>('');
   const dispatch = useDispatch();
   const urlParams = new URLSearchParams(window.location.search);
-  const realm = urlParams.get('realm');
+  const realm = urlParams.get('realm') || localStorage.getItem('realm');
 
   useEffect(() => {
     dispatch(KeycloakCheckSSOWithLogout(realm));

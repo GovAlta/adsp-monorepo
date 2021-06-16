@@ -26,12 +26,27 @@ const LoginRedirect = (props) => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const type = urlParams.get('type');
+    const idpFromUrl = urlParams.get('kc_idp_hint');
+    const location: string = window.location.href;
+    const skipSSO = location.indexOf('kc_idp_hint') > -1;
 
     if (type === LOGIN_TYPES.tenantAdmin) {
       if (isTenantAdmin) {
-        history.push({
-          pathname: `/${tenantRealm}/autologin`,
-        });
+        if (skipSSO && !idpFromUrl) {
+          history.push({
+            pathname: `/${tenantRealm}/autologin`,
+            search: `?kc_idp_hint=`,
+          });
+        } else if (idpFromUrl) {
+          history.push({
+            pathname: `/${tenantRealm}/autologin`,
+            search: `?kc_idp_hint=${idpFromUrl}`,
+          });
+        } else {
+          history.push({
+            pathname: `/${tenantRealm}/autologin`,
+          });
+        }
       }
 
       if (isTenantAdmin === false) {
@@ -44,6 +59,8 @@ const LoginRedirect = (props) => {
 
     if (type === LOGIN_TYPES.tenant) {
       if (isAuthenticated) {
+        localStorage.setItem('realm', `${tenantRealm}`);
+
         history.push({
           pathname: '/admin/tenant-admin',
           search: `?realm=${realm}`,
