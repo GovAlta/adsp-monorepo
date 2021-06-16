@@ -13,6 +13,7 @@ import Container from '@components/Container';
 import Status from './services/status';
 import { EventLog } from './event-log';
 import { RootState } from '@store/index';
+import { Events } from './services/events';
 
 const TenantManagement = (): JSX.Element => {
   const { setTitle } = useContext(HeaderCtx);
@@ -49,6 +50,9 @@ const TenantManagement = (): JSX.Element => {
           </Route>
           <Route path="/admin/tenant-admin/services/service-status">
             <Status />
+          </Route>
+          <Route path="/admin/tenant-admin/services/event-service">
+            <Events />
           </Route>
 
           <Route path="*">

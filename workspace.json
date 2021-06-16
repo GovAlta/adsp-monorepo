@@ -101,7 +101,7 @@
             ],
             "scripts": [],
             "styles": [],
-            "webpackConfig": "@nrwl/react/plugins/webpack"
+            "webpackConfig": "apps/tenant-management-webapp/webpack.config.js"
           },
           "configurations": {
             "production": {
