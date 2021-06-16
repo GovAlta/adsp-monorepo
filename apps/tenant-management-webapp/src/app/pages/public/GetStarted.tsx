@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components';
-import { Redirect } from 'react-router-dom';
+import { Redirect, useHistory } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@store/index';
 import { Page, Main } from '@components/Html';
@@ -14,9 +14,27 @@ const GetStarted = () => {
   }));
   const dispatch = useDispatch();
 
+  const location: string = window.location.href;
+  const skipSSO = location.indexOf('kc_idp_hint') > -1;
+  const history = useHistory();
+
   useEffect(() => {
     dispatch(KeycloakCheckSSO('core'));
   }, []);
+
+  useEffect(() => {
+    if (authenticated) {
+      let search = '';
+      if (skipSSO) {
+        search = '?kc_idp_hint=';
+      }
+
+      history.push({
+        pathname: '/tenant/creation',
+        search: search,
+      });
+    }
+  }, [authenticated]);
 
   return (
     <Page>
@@ -27,7 +45,7 @@ const GetStarted = () => {
           authentication, with plans to expand to other federated login providers in the future.
         </p>
 
-        {!authenticated ? (
+        {!authenticated && (
           <>
             <GoAButton
               buttonType="primary"
@@ -41,8 +59,6 @@ const GetStarted = () => {
               Back to main page
             </GoALinkButton>
           </>
-        ) : (
-          <Redirect to="/tenant/creation" />
         )}
       </Main>
     </Page>
