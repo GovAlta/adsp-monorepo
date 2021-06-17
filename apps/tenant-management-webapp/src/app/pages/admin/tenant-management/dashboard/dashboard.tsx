@@ -31,7 +31,13 @@ const Dashboard = () => {
             <GridItem md={6} vSpacing={1} hSpacing={0.5}>
               <GoACard
                 title={<Link to="/admin/tenant-admin/services/service-status">Status</Link>}
-                description="This service allows for easy monitoring of application downtime. Each Application should represent a service that is useful to the end user by itself, such as child care subsidy and child care certification."
+                description="The status service allows for easy monitoring of application downtime. Each Application should represent a service that is useful to the end user by itself, such as child care subsidy and child care certification."
+              />
+            </GridItem>
+            <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+              <GoACard
+                title={<Link to="/admin/tenant-admin/services/event-service">Events</Link>}
+                description="The event service provides tenant applications with the ability to send domain events. Applications are able to leverage additional capabilities as side effects through these events."
               />
             </GridItem>
           </Grid>
