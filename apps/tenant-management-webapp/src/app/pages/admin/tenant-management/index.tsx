@@ -17,14 +17,13 @@ import { Events } from './services/events';
 
 const TenantManagement = (): JSX.Element => {
   const { setTitle } = useContext(HeaderCtx);
-  const isAuthenticated = useSelector((state: RootState) => state.session?.authenticated ?? false);
 
   useEffect(() => {
     setTitle('Alberta Digital Service Platform - Tenant Management');
   }, [setTitle]);
 
   return (
-    <AdminLayout ready={isAuthenticated}>
+    <AdminLayout>
       <SidebarWrapper>
         <Sidebar type="desktop" />
       </SidebarWrapper>
@@ -66,11 +65,8 @@ const TenantManagement = (): JSX.Element => {
 
 export default TenantManagement;
 
-interface AdminLayoutProps {
-  ready: boolean;
-}
 const AdminLayout = styled.div`
-  display: ${(p: AdminLayoutProps) => (p.ready ? 'flex' : 'none')};
+  display: flex;
   min-height: 100vh;
 `;
 
