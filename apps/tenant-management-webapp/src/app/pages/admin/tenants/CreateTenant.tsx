@@ -93,7 +93,13 @@ const CreateRealm = () => {
                   </GoAFormItem>
                   {isLoaded ? (
                     <GoAFormButtons>
-                      <GoALinkButton to="/admin/tenants" buttonType="secondary">
+                      <GoALinkButton
+                        to=""
+                        onClick={() => {
+                          dispatch(TenantLogout());
+                        }}
+                        buttonType="secondary"
+                      >
                         Back
                       </GoALinkButton>
                       <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
