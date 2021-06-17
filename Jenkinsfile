@@ -200,7 +200,7 @@ pipeline {
       post {
         always {
           sh "node ./apps/tenant-management-webapp-e2e/src/support/multiple-cucumber-html-reporter.js"
-          zip zipFile: 'cypress-smoke-test-html-report.zip', archive: false, dir: 'dist/cypress', overwrite: true
+          zip zipFile: 'cypress-smoke-test-html-report.zip', archive: false, dir: 'dist/cypress'
           archiveArtifacts artifacts: 'cypress-smoke-test-html-report.zip'
         }
         success {
@@ -296,7 +296,7 @@ pipeline {
           junit "**/results/*.xml"
           cucumber "**/cucumber-json/*.json"
           sh "node ./apps/tenant-management-webapp-e2e/src/support/multiple-cucumber-html-reporter.js"
-          zip zipFile: 'cypress-regression-test-html-report.zip', archive: false, dir: 'dist/cypress', overwrite: true
+          zip zipFile: 'cypress-regression-test-html-report.zip', archive: false, dir: 'dist/cypress'
           archiveArtifacts artifacts: 'cypress-regression-test-html-report.zip'
         }
       }
