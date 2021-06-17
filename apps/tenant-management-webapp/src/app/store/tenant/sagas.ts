@@ -123,10 +123,7 @@ export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAc
     keycloakAuth.checkSSO(
       (keycloak) => {
         const session = convertToSession(keycloak);
-        Promise.all([
-          store.dispatch(SessionLoginSuccess(session)),
-          store.dispatch(IsTenantAdmin(session.userInfo.email)),
-        ]);
+        Promise.all([store.dispatch(SessionLoginSuccess(session))]);
       },
       () => {
         window.location.replace('/');

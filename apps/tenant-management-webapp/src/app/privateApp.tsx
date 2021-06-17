@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Route } from 'react-router-dom';
 import Header from '@components/AppHeader';
 import { HeaderCtx } from '@lib/headerContext';
 import Container from '@components/Container';
+import { RootState } from '@store/index';
 import { KeycloakCheckSSOWithLogout, KeycloakRefreshToken } from '@store/tenant/actions';
 
 export function PrivateApp({ children }) {
@@ -31,7 +32,10 @@ export function PrivateApp({ children }) {
 }
 
 export function PrivateRoute({ component: Component, ...rest }) {
-  return <Route {...rest} render={(props) => <Component {...props} />} />;
+  const userInfo = useSelector((state: RootState) => state.session?.userInfo);
+  const tenantRealm = useSelector((state: RootState) => state.tenant?.realm);
+  const ready = userInfo !== undefined && tenantRealm === '';
+  return <Route {...rest} render={(props) => ready && <Component {...props} />} />;
 }
 
 export default PrivateApp;
