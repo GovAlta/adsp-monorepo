@@ -20,21 +20,22 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
-  const authenticated = useSelector((state: RootState) => state.session.authenticated);
+  const { tenantName, authenticated } = useSelector((state: RootState) => {
+    return {
+      tenantName: state.tenant.name,
+      authenticated: state.session.authenticated,
+    };
+  });
   const dispatch = useDispatch();
 
   return (
     <Links>
       {authenticated && (
         <>
-          <Title>Tenant</Title>
+          <Title>{tenantName}</Title>
           <NavLink to="/admin/tenant-admin" exact={true} activeClassName="current" title="Dashboard">
             <img src={DashboardIcon} width="16" alt="Dashboard" />
             <span>Dashboard</span>
-          </NavLink>
-          <NavLink to="/admin/tenant-admin/admin" activeClassName="current" title="Administration">
-            <img src={AdminIcon} width="16" alt="Admin" />
-            <span>Administration</span>
           </NavLink>
           <NavLink to="/admin/tenant-admin/event-log" activeClassName="current" title="Event log">
             <img src={ReceiptIcon} width="16" alt="Admin" />
