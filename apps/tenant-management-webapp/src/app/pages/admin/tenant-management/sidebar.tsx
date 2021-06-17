@@ -7,10 +7,11 @@ import styled from 'styled-components';
 import BarChartIcon from '@icons/bar-chart-outline.svg';
 import FileIcon from '@icons/file-outline.svg';
 import AdminIcon from '@icons/options-outline.svg';
+import ReceiptIcon from '@icons/receipt-outline.svg';
 import DashboardIcon from '@icons/home-outline.svg';
 import LogoutIcon from '@icons/log-out-outline.svg';
 import FitnessIcon from '@icons/fitness-outline.svg';
-import AuthContext from '@lib/authContext';
+import MegaphoneIcon from '@icons/megaphone-outline.svg';
 import { RootState } from '@store/index';
 import { TenantAdminLogin, TenantLogout } from '@store/tenant/actions';
 
@@ -37,6 +38,7 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
             <span>Dashboard</span>
           </NavLink>
           <NavLink to="/admin/tenant-admin/event-log" activeClassName="current" title="Event log">
+            <img src={ReceiptIcon} width="16" alt="Admin" />
             <span>Event log</span>
           </NavLink>
 
@@ -52,6 +54,10 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
           <NavLink to="/admin/tenant-admin/services/service-status" activeClassName="current" title="Status">
             <img src={FitnessIcon} width="16" alt="Status" />
             <span>Status</span>
+          </NavLink>
+          <NavLink to="/admin/tenant-admin/services/event-service" activeClassName="current" title="Events">
+            <img src={MegaphoneIcon} width="16" alt="Status" />
+            <span>Events</span>
           </NavLink>
         </>
       )}

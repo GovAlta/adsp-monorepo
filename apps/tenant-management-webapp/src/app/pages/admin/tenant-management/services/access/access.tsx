@@ -121,8 +121,8 @@ export default function () {
 
       <Aside>
         <h5>Helpful Links</h5>
-        <a rel="noopener noreferrer" target="_blank" href="/keycloak/support">
-          Keycloak Support
+        <a rel="noopener noreferrer" target="_blank" href="https://gitlab.gov.ab.ca/dio/keycloak-themes">
+          See the code
         </a>
         <SupportLinks />
       </Aside>

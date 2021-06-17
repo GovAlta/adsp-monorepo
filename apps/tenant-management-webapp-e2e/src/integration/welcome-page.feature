@@ -13,9 +13,9 @@ Feature: Tenant management welcome page
         Then the user views the page of "<Page>" based on if the user created a tenant before or not
 
         Examples:
-            | Username    | Password       | Page         |
-            | env{email}  | env{password}  | Tenant Login |
-            | env{email2} | env{password2} | Tenant Name  |
+            | Username    | Password       | Page            |
+            | env{email}  | env{password}  | Tenant Login    |
+            | env{email2} | env{password2} | Tenant Creation |
 
     @TEST_CS-331 @REQ_CS-370 @regression @tenantSignup
     Scenario: User created a tenant cannot create another tenant

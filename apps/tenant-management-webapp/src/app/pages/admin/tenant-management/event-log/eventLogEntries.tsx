@@ -19,20 +19,22 @@ const EventLogEntryComponent: FunctionComponent<EventLogEntryComponentProps> = (
   return (
     <>
       <tr>
-        <td>
+        <td headers="timestamp">
           <span>{entry.timestamp.toLocaleDateString()}</span>
           <span>{entry.timestamp.toLocaleTimeString()}</span>
         </td>
-        <td>{entry.namespace}</td>
-        <td>{entry.name}</td>
-        <td>
-          <GoAButton onClick={() => setShowDetails(!showDetails)}>Show details</GoAButton>
+        <td headers="namespace">{entry.namespace}</td>
+        <td headers="name">{entry.name}</td>
+        <td headers="details">
+          <GoAButton onClick={() => setShowDetails(!showDetails)}>
+            {showDetails ? 'Hide details' : 'Show details'}
+          </GoAButton>
         </td>
       </tr>
       {showDetails && (
         <tr>
-          <td colSpan={4}>
-            <div className="event-details">{JSON.stringify(entry.details, null, 2)}</div>
+          <td headers="timestamp namespace name details" colSpan={4} className="event-details">
+            <div>{JSON.stringify(entry.details, null, 2)}</div>
           </td>
         </tr>
       )}
@@ -47,6 +49,7 @@ interface EventLogEntriesComponentProps {
 const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps> = ({ className }) => {
   const entries = useSelector((state: RootState) => state.eventLog.entries);
   const next = useSelector((state: RootState) => state.eventLog.next);
+  const isLoading = useSelector((state: RootState) => state.eventLog.isLoading);
   const dispatch = useDispatch();
 
   return (
@@ -54,10 +57,10 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
       <DataTable>
         <thead>
           <tr>
-            <th>Timestamp</th>
-            <th>Namespace</th>
-            <th>Name</th>
-            <th>Details</th>
+            <th id="timestamp">Timestamp</th>
+            <th id="namespace">Namespace</th>
+            <th id="name">Name</th>
+            <th id="details">Details</th>
           </tr>
         </thead>
         <tbody>
@@ -66,19 +69,26 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
           ))}
         </tbody>
       </DataTable>
-      {next && <GoAButton onClick={() => dispatch(getEventLogEntries(next))}>Load more</GoAButton>}
+      {next && (
+        <GoAButton disabled={isLoading} onClick={() => dispatch(getEventLogEntries(next))}>
+          Load more...
+        </GoAButton>
+      )}
     </div>
   );
 };
 
 export const EventLogEntries = styled(EventLogEntriesComponent)`
   & .event-details {
-    background: #f3f3f3;
-    white-space: pre-wrap;
-    font-family: monospace;
-    font-size: 12px;
-    line-height: 16px;
-    padding: 8px;
+    div {
+      background: #f3f3f3;
+      white-space: pre-wrap;
+      font-family: monospace;
+      font-size: 12px;
+      line-height: 16px;
+      padding: 16px;
+    }
+    padding: 0;
   }
   & span {
     margin-right: 8px;

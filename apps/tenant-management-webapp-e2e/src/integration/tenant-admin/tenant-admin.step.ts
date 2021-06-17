@@ -1,15 +1,12 @@
 import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import tenantAdminPage from './tenant-admin.page';
-import common from '../common/common.page';
 
-const commonObj = new common();
 const tenantAdminObj = new tenantAdminPage();
 let responseObj: Cypress.Response;
 
 Given('the user goes to tenant management login link', function () {
-  const urlToTenantLogin = Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/login';
+  const urlToTenantLogin = Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/autologin?kc_idp_hint=';
   cy.visit(urlToTenantLogin);
-  commonObj.tenantLoginButton().click();
   cy.wait(2000); // Wait all the redirects to settle down
 });
 
@@ -28,6 +25,11 @@ Then('the {string} landing page is displayed', function (type) {
     case 'file services':
       urlPart = '/admin/tenant-admin/services/file';
       break;
+    case 'service status':
+      urlPart = '/admin/tenant-admin/services/service-status';
+      break;
+    default:
+      expect(type).to.be.oneOf(['administration', 'file services', 'service status']);
   }
   cy.url().should('include', urlPart);
 });
@@ -44,6 +46,11 @@ When('the user selects the {string} menu item', function (menuItem) {
     case 'Access':
       menuItemSelector = '/admin/tenant-admin/access';
       break;
+    case 'Status':
+      menuItemSelector = '/admin/tenant-admin/services/service-status';
+      break;
+    default:
+      expect(menuItem).to.be.oneOf(['Administration', 'File Services', 'Access', 'Status']);
   }
 
   tenantAdminObj.dashboardMenuItem(menuItemSelector).click();

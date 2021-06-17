@@ -37,26 +37,37 @@ const CreateRealm = () => {
   }));
 
   useEffect(() => {
-    if (!IsTenantAdmin) {
-      dispatch(KeycloakCheckSSO('core'));
-    }
-  }, [IsTenantAdmin]);
+    dispatch(KeycloakCheckSSO('core'));
+  }, []);
 
   useEffect(() => {
     if (userInfo) {
       dispatch(IsTenantAdmin(userInfo.email));
     }
-  }, [isTenantCreated]);
+  }, [userInfo]);
 
   const ErrorMessage = (props) => {
     const message = `${props.email} has already created a tenant. Currently only one tenant is allowed per person.`;
-    return <GoANotification type="information" title="Notification Title" message={message} />;
+    return (
+      <div>
+        <GoANotification type="information" title="Notification Title" message={message} />
+        <GoAButton
+          onClick={() => {
+            dispatch(TenantLogout());
+          }}
+        >
+          Back to main page
+        </GoAButton>
+      </div>
+    );
   };
 
+  const ready = userInfo !== undefined && isTenantAdmin !== undefined;
+
   return (
-    <Page>
+    <Page ready={ready}>
       <Main>
-        {userInfo && isTenantAdmin && !isTenantCreated && <ErrorMessage email={userInfo.email} />}
+        {isTenantAdmin == true && !isTenantCreated && <ErrorMessage email={userInfo.email} />}
         {isTenantCreated ? (
           <>
             <p>The '{name}' has been successfully created</p>
@@ -70,7 +81,7 @@ const CreateRealm = () => {
           </>
         ) : (
           <>
-            {!isTenantAdmin ? (
+            {isTenantAdmin === false ? (
               <>
                 <h2>Create tenant</h2>
                 <p>As a reminder, you are only able to create one tenant per user account.</p>

@@ -71,8 +71,14 @@ const LoginRedirect = (props) => {
 
     if (type === LOGIN_TYPES.tenantCreationInit) {
       // TODO: state check for navigation
+
+      let search = '';
+      if (skipSSO) {
+        search = '?kc_idp_hint=';
+      }
       history.push({
-        pathname: '/get-started',
+        pathname: '/tenant/creation',
+        search: search,
         state: { from: props.location },
       });
     }
