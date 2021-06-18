@@ -52,7 +52,6 @@ export interface ServiceStatusApplication {
   publicStatus: PublicServiceStatusType;
   statusTimestamp: number;
   tenantId: string;
-  timeIntervalMin: number;
 }
 
 export type ServiceStatusApplicationModel = ServiceStatusApplication & Document;

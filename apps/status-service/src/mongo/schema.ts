@@ -54,10 +54,6 @@ export const serviceStatusApplicationSchema = new Schema(
     statusTimestamp: {
       type: Number,
     },
-    timeIntervalMin: {
-      type: Number,
-      required: true,
-    },
     publicStatus: {
       type: String,
       required: false,

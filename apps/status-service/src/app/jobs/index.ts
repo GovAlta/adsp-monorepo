@@ -10,6 +10,8 @@ import {
   fetchQueuedDisabledApplications,
 } from './watchApplications';
 
+const JOB_TIME_INTERVAL_MIN = 1;
+
 interface ServiceStatusJobProps {
   logger: Logger;
   serviceStatusRepository: ServiceStatusRepository;
@@ -81,7 +83,7 @@ async function watchForActivatedApps(props: ServiceStatusJobProps) {
 
 function scheduleServiceStatusJob(props: CreateCheckEndpointProps) {
   const job = createCheckEndpointJob(props);
-  const scheduledJob = scheduleJob(`* */${props.application.timeIntervalMin} * * *`, job);
+  const scheduledJob = scheduleJob(`* */${JOB_TIME_INTERVAL_MIN} * * *`, job);
 
   scheduledJobs[props.application._id] = scheduledJob;
 }

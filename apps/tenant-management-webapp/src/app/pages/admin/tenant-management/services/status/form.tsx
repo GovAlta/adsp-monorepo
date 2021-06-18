@@ -20,7 +20,6 @@ function ApplicationForm(): JSX.Element {
     description: '',
     internalStatus: 'disabled',
     publicStatus: 'disabled',
-    timeIntervalMin: 10,
     endpoints: [],
   });
 
@@ -85,16 +84,6 @@ function ApplicationForm(): JSX.Element {
               e.target.value.split('\r\n').map((url) => ({ url, status: 'unknown' }))
             )
           }
-        />
-      </GoAFormItem>
-
-      <GoAFormItem>
-        <label>Test Interval (minutes)</label>
-        <input
-          type="number"
-          name="timeIntervalMin"
-          value={application?.timeIntervalMin}
-          onChange={(e) => setValue(e)}
         />
       </GoAFormItem>
 

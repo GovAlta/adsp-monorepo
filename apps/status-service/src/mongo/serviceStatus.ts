@@ -95,7 +95,6 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
       description: application.description,
       statusTimestamp: application.statusTimestamp,
       tenantId: application.tenantId,
-      timeIntervalMin: application.timeIntervalMin,
       internalStatus: application.internalStatus,
       publicStatus: application.publicStatus,
     };
@@ -113,7 +112,6 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
       description: doc.description,
       statusTimestamp: doc.statusTimestamp,
       tenantId: doc.tenantId,
-      timeIntervalMin: doc.timeIntervalMin,
       internalStatus: doc.internalStatus,
       publicStatus: doc.publicStatus,
     });

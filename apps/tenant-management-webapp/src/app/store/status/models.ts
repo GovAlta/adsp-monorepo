@@ -15,7 +15,6 @@ export interface ServiceStatusApplication {
   metadata?: unknown;
   enabled: boolean;
   statusTimestamp?: number;
-  timeIntervalMin: number;
   internalStatus: InternalServiceStatusType;
   publicStatus: PublicServiceStatusType;
   endpoints: ServiceStatusEndpoint[];

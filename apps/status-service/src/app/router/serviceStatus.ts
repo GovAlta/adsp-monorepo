@@ -69,7 +69,7 @@ export function createServiceStatusRouter({
     logger.info(`${req.method} - ${req.url}`);
 
     const user = req.user;
-    const { name, description, timeIntervalMin, endpoints, metadata } = req.body;
+    const { name, description, endpoints, metadata } = req.body;
     const tenantId = user.tenantId?.toString() ?? '';
 
     if (!tenantId) {
@@ -80,7 +80,6 @@ export function createServiceStatusRouter({
       name,
       description,
       tenantId,
-      timeIntervalMin,
       endpoints,
       metadata,
       statusTimestamp: 0,
@@ -94,7 +93,7 @@ export function createServiceStatusRouter({
     logger.info(`${req.method} - ${req.url}`);
 
     const user = req.user as Express.User;
-    const { name, description, timeIntervalMin, endpoints } = req.body;
+    const { name, description, endpoints } = req.body;
     const { id } = req.params;
     const tenantId = user.tenantId?.toString() ?? '';
 
@@ -111,7 +110,6 @@ export function createServiceStatusRouter({
     const updatedApplication = await application.update({ ...user } as User, {
       name,
       description,
-      timeIntervalMin,
       endpoints,
     });
     res.status(200).json(updatedApplication);

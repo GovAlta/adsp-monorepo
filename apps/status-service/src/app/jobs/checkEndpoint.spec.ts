@@ -32,7 +32,6 @@ describe('Validate endpoint checking', () => {
       name: 'app 1',
       publicStatus: 'enabled',
       tenantId: '99',
-      timeIntervalMin: 2,
     };
     return await serviceStatusRepository.save(appData as ServiceStatusApplicationEntity);
   }

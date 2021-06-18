@@ -31,7 +31,6 @@ describe('ServiceStatus Page', () => {
             name: 'facebook',
             internalStatus: 'operational',
             publicStatus: 'enabled',
-            timeIntervalMin: 2,
             endpoints: [
               { url: 'https://facebook.com/api', status: 'online' },
               { url: 'https://facebook.com', status: 'online' },
@@ -43,7 +42,6 @@ describe('ServiceStatus Page', () => {
             name: 'twitter',
             internalStatus: 'operational',
             publicStatus: 'enabled',
-            timeIntervalMin: 2,
             endpoints: [
               { url: 'https://twitter.com/api', status: 'offline' },
               { url: 'https://twitter.com', status: 'online' },
@@ -55,7 +53,6 @@ describe('ServiceStatus Page', () => {
             name: 'alberta.ca',
             internalStatus: 'operational',
             publicStatus: 'enabled',
-            timeIntervalMin: 2,
             endpoints: [
               { url: 'https://alberta.ca/api', status: 'pending' },
               { url: 'https://alberta.ca', status: 'offline' },
@@ -113,7 +110,6 @@ describe('ServiceStatus Page', () => {
             tenantId: '11',
             name: 'alberta.ca',
             status: 'disabled',
-            timeIntervalMin: 2,
             endpoints: [],
           },
         ],

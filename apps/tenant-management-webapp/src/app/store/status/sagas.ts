@@ -6,6 +6,7 @@ import {
   SaveApplicationAction,
   saveApplicationSuccess,
   fetchServiceStatusAppsSuccess,
+  fetchServiceStatusApps as refreshServiceStatusApps,
   DeleteApplicationAction,
   deleteApplicationSuccess,
 } from './actions';
@@ -47,6 +48,7 @@ export function* saveApplication(action: SaveApplicationAction) {
     const api = new StatusApi(baseUrl, token);
     const data = yield api.saveApplication(action.payload);
     yield put(saveApplicationSuccess(data));
+    yield put(refreshServiceStatusApps());
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
   }

@@ -20,7 +20,6 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
   publicStatus: PublicServiceStatusType;
   statusTimestamp: number;
   tenantId: string;
-  timeIntervalMin: number;
 
   static create(
     user: User,
@@ -42,7 +41,6 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     this.description = application.description;
     this.statusTimestamp = application.statusTimestamp;
     this.tenantId = application.tenantId;
-    this.timeIntervalMin = application.timeIntervalMin;
     this.internalStatus = application.internalStatus;
     this.publicStatus = application.publicStatus;
   }
@@ -58,7 +56,6 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     this.statusTimestamp = update.statusTimestamp ?? this.statusTimestamp;
     this.internalStatus = update.internalStatus ?? this.internalStatus;
     this.publicStatus = update.publicStatus ?? this.publicStatus;
-    this.timeIntervalMin = update.timeIntervalMin ?? this.timeIntervalMin;
 
     return this.repository.save(this);
   }
