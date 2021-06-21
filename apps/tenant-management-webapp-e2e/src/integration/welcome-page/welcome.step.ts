@@ -118,8 +118,11 @@ When('the user clicks the tenant login button', function () {
   welcomPageObj.tenantLoginButton().click();
 });
 
-Then('the user views the tenant login page for {string}', function (tenantName) {
-  welcomPageObj.tenantLoginTenantDisplayName().invoke('text').should('eq', tenantName);
+Then('the user views the tenant login page', function () {
+  // Verify the sign in title
+  welcomPageObj.tenantSignInTitle().then((tenantSignInTitle) => {
+    expect(tenantSignInTitle.length).to.be.gt(0); // title element exists
+  });
   cy.url().then(function (urlString) {
     // Store tenant id to be used by the later tenant deletion requrest step
     tenantId = urlString.match(/(?<=auth\/realms\/).+(?=\/protocol\/openid-connect\/auth)/g);
