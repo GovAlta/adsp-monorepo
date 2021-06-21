@@ -84,6 +84,9 @@ const CreateRealm = () => {
             {isTenantAdmin === false ? (
               <>
                 <h2>Create tenant</h2>
+                <p>
+                  Current user email: <b>{userInfo.email}</b>
+                </p>
                 <p>As a reminder, you are only able to create one tenant per user account.</p>
                 <GoAForm>
                   <GoAFormItem>
@@ -93,7 +96,13 @@ const CreateRealm = () => {
                   </GoAFormItem>
                   {isLoaded ? (
                     <GoAFormButtons>
-                      <GoALinkButton to="/admin/tenants" buttonType="secondary">
+                      <GoALinkButton
+                        to=""
+                        onClick={() => {
+                          dispatch(TenantLogout());
+                        }}
+                        buttonType="secondary"
+                      >
                         Back
                       </GoALinkButton>
                       <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
