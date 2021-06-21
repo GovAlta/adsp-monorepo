@@ -109,7 +109,7 @@ describe('ServiceStatus Page', () => {
             id: '11',
             tenantId: '11',
             name: 'alberta.ca',
-            status: 'disabled',
+            internalStatus: 'disabled',
             endpoints: [],
           },
         ],
@@ -131,7 +131,7 @@ describe('ServiceStatus Page', () => {
       const { applicationId, status, tenantId } = toggleAction.payload;
       expect(applicationId).toEqual('11');
       expect(tenantId).toEqual('11');
-      expect(status).toEqual(!state.serviceStatus.applications[0].status);
+      expect(status).toEqual(!state.serviceStatus.applications[0].internalStatus);
     });
   });
 });

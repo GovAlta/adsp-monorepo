@@ -5,18 +5,20 @@ import MongoEndpointStatusEntryRepository from '../../mongo/endpointStatusEntry'
 import { createCheckEndpointJob } from '../jobs/checkEndpoint';
 import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
 
-const defaultTimeout = 20000;
-
 describe('Validate endpoint checking', () => {
   let serviceStatusRepository: MongoServiceStatusRepository;
   let endpointStatusEntryRepository: MongoEndpointStatusEntryRepository;
   let mongoose: typeof import('mongoose');
 
   beforeEach(async (done) => {
-    jest.setTimeout(defaultTimeout);
     mongoose = await createMockMongoServer();
     serviceStatusRepository = new MongoServiceStatusRepository();
     endpointStatusEntryRepository = new MongoEndpointStatusEntryRepository();
+    done();
+  });
+
+  afterEach(async (done) => {
+    await disconnectMockMongo();
     done();
   });
 
@@ -35,11 +37,6 @@ describe('Validate endpoint checking', () => {
     };
     return await serviceStatusRepository.save(appData as ServiceStatusApplicationEntity);
   }
-
-  afterEach(async (done) => {
-    await disconnectMockMongo();
-    done();
-  });
 
   async function mockRequest(application: ServiceStatusApplicationEntity, res: { status: number }) {
     const job = createCheckEndpointJob({
@@ -61,7 +58,7 @@ describe('Validate endpoint checking', () => {
     await job();
   }
 
-  it('should mock api request', async (done) => {
+  it('should mock api request', async () => {
     const application = await createMockApplication('operational');
     const url = application.endpoints[0].url;
 
@@ -70,11 +67,9 @@ describe('Validate endpoint checking', () => {
     const entries = await endpointStatusEntryRepository.findByUrl(url);
     expect(entries.length).toEqual(1);
     expect(entries[0].ok).toEqual(true);
-
-    done();
   });
 
-  it('should update the service state to `operational` after 3 successful requests', async (done) => {
+  it('should update the service state to `operational` after 3 successful requests', async () => {
     const application = await createMockApplication('reported-issues');
     const url = application.endpoints[0].url;
 
@@ -126,11 +121,9 @@ describe('Validate endpoint checking', () => {
       expect(service.internalStatus).toBe('operational');
       expect(service.endpoints[0].status).toBe('up');
     }
-
-    done();
   });
 
-  it('should update the service state to `reported-issues` after 3 failed requests', async (done) => {
+  it('should update the service state to `reported-issues` after 3 failed requests', async () => {
     const application = await createMockApplication('operational');
     const url = application.endpoints[0].url;
 
@@ -182,11 +175,9 @@ describe('Validate endpoint checking', () => {
       expect(service.internalStatus).toBe('reported-issues');
       expect(service.endpoints[0].status).toBe('down');
     }
-
-    done();
   });
 
-  it('should go up, then back down', async (done) => {
+  it('should go up, then back down', async () => {
     const application = await createMockApplication('operational');
 
     // init state check
@@ -229,7 +220,5 @@ describe('Validate endpoint checking', () => {
       expect(service.internalStatus).toBe('reported-issues');
       expect(service.endpoints[0].status).toBe('down');
     }
-
-    done();
   });
 });
