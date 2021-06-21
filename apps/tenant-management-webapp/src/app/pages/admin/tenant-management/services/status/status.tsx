@@ -12,11 +12,6 @@ import {
 } from '@store/status/models';
 import { Route, Switch, useHistory, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
-import TrashIcon from '../../../../../../assets/icons/trash-outline.svg';
-import PlayIcon from '../../../../../../assets/icons/play-circle-outline.svg';
-import PauseIcon from '../../../../../../assets/icons/pause-circle-outline.svg';
-import EditIcon from '../../../../../../assets/icons/create-outline.svg';
-import WrenchIcon from '../../../../../../assets/icons/build-outline.svg';
 import ContextMenu, { ContextMenuItem } from '@components/ContextMenu';
 import GoALinkButton from '@components/LinkButton';
 import Dialog, { DialogActions, DialogContent, DialogTitle } from '@components/Dialog';
@@ -25,6 +20,13 @@ import { GoAButton } from '@abgov/react-components';
 import { GoAForm, GoAFormItem } from '@components/Form';
 import { setApplicationStatus } from '@store/status/actions/setApplicationStatus';
 import GoAChip, { ChipType } from '@components/Chip';
+
+// icons
+import TrashIcon from '@assets/icons/trash-outline.svg';
+import PlayIcon from '@assets/icons/play-circle-outline.svg';
+import PauseIcon from '@assets/icons/pause-circle-outline.svg';
+import EditIcon from '@assets/icons/create-outline.svg';
+import WrenchIcon from '@assets/icons/build-outline.svg';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import Hourglass from '@components/icons/Hourglass';

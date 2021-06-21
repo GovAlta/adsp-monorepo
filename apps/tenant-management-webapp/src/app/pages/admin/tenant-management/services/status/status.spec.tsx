@@ -26,7 +26,7 @@ describe('ServiceStatus Page', () => {
       serviceStatus: {
         applications: [
           {
-            id: '99',
+            _id: '99',
             tenantId: '11',
             name: 'facebook',
             internalStatus: 'operational',
@@ -37,7 +37,7 @@ describe('ServiceStatus Page', () => {
             ],
           },
           {
-            id: '33',
+            _id: '33',
             tenantId: '11',
             name: 'twitter',
             internalStatus: 'operational',
@@ -48,7 +48,7 @@ describe('ServiceStatus Page', () => {
             ],
           },
           {
-            id: '11',
+            _id: '11',
             tenantId: '11',
             name: 'alberta.ca',
             internalStatus: 'operational',
@@ -106,7 +106,7 @@ describe('ServiceStatus Page', () => {
       serviceStatus: {
         applications: [
           {
-            id: '11',
+            _id: '11',
             tenantId: '11',
             name: 'alberta.ca',
             internalStatus: 'disabled',
