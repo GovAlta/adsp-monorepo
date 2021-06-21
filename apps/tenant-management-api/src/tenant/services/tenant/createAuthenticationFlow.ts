@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { environment } from '../../../environments/environment';
 export const FLOW_ALIAS = 'GOA SSO Login Flow';
 
-const createFlowExecutions = async (realm, flowAlias, token, flowId) => {
+const createFlowExecutions = async (realm, flowAlias, token) => {
   const executionUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/admin/realms/${realm}/authentication/flows/${flowAlias}/executions/execution`;
   const executionsUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/admin/realms/${realm}/authentication/flows/${flowAlias}/executions`;
   try {
@@ -49,7 +49,7 @@ const createFlowExecutions = async (realm, flowAlias, token, flowId) => {
   }
 };
 
-export const creatFlowConfig = (realm, flowAlias, flowId) => {
+export const creatFlowConfig = (realm: string, flowAlias: string, flowId: string) => {
   const config = {
     id: flowId,
     alias: flowAlias,
@@ -74,7 +74,7 @@ export const createAuthenticationFlow = async (realm) => {
     await client.authenticationManagement.createFlow(authFlow);
 
     // Have issue of creating executions with the authentication flow and try to add executions separately
-    await createFlowExecutions(realm, FLOW_ALIAS, client.accessToken, flowId);
+    await createFlowExecutions(realm, FLOW_ALIAS, client.accessToken);
 
     logger.info('Start to add authentication flow');
   } catch (err) {

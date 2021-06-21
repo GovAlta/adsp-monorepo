@@ -3,7 +3,6 @@ export * from './errors';
 export * from './logging';
 export * from './assert';
 export * from './repository';
-export * from './keycloak';
 export * from './cursor';
 export * from './event';
 export * from './amqp';

@@ -5,17 +5,17 @@ import { AdspId, adspId } from '@abgov/adsp-service-sdk';
 import { createkcAdminClient } from '../../../keycloak';
 import { logger } from '../../../middleware/logger';
 import { environment } from '../../../environments/environment';
-import * as TenantModel from '../../models/tenant';
-import * as UserModel from '../../models/user';
 import { FLOW_ALIAS, createAuthenticationFlow } from './createAuthenticationFlow';
 import { TenantError } from './error';
 import type ClientRepresentation from 'keycloak-admin/lib/defs/clientRepresentation';
 import type RealmRepresentation from 'keycloak-admin/lib/defs/realmRepresentation';
 import type RoleRepresentation from 'keycloak-admin/lib/defs/roleRepresentation';
+import { tenantRepository } from '../../repository';
+import { TenantEntity } from '../../models';
 
 export const tenantManagementRealm = 'core';
 
-export const brokerClientName = (realm) => {
+export const brokerClientName = (realm: string): string => {
   return `broker-${realm}`;
 };
 
@@ -193,14 +193,14 @@ const createBrokerClient = async (realm, secret, brokerClient) => {
   await client.clients.create(config);
 };
 
-export const validateEmailInDB = async (email) => {
-  logger.info(`Start to validate email -${email} for tenant creation in database`);
-  const result = await TenantModel.findTenantByEmail(email);
-  if (result.success) {
-    const errorMessage = `${email} already created ${result.tenant.realm}->${result.tenant.name}. One user can create only one realm.`;
+export const validateEmailInDB = async (email: string): Promise<void> => {
+  logger.info(`Validate - has user created tenant realm before?`);
+  const isTenantAdmin = await tenantRepository.isTenantAdmin(email);
+
+  if (isTenantAdmin) {
+    const errorMessage = `${email} is the tenant admin in our record. One user can create only one realm.`;
     throw new TenantError(errorMessage, HttpStatusCodes.CONFLICT);
   }
-  logger.info(`email - ${email} passed validation`);
 };
 
 export const validateRealmCreation = async (realm) => {
@@ -225,7 +225,7 @@ export const validateRealmCreation = async (realm) => {
   }
 };
 
-export const createRealm = async (realm, email, tenantName) => {
+export const createRealm = async (realm: string, email: string, tenantName: string) => {
   logger.info(`Start to create ${realm} realm`);
   try {
     const brokerClientSecret = uuidv4();
@@ -289,36 +289,14 @@ export const createRealm = async (realm, email, tenantName) => {
   }
 };
 
-export const createNewTenantInDB = async (username, email, realmName, tenantName, tokenIssuer) => {
-  let userId = null;
-
-  const fetchUserResponse = await UserModel.findUserByEmail(email);
-  if (fetchUserResponse.success) {
-    logger.info(`Found user in database, user info: ${util.inspect(fetchUserResponse)}`);
-    userId = fetchUserResponse.user._id;
-  } else {
-    logger.info(`Cannot find ${email} in database and start to create a new entry`);
-    const newAdminUser = {
-      email: email,
-      username: username,
-    };
-    const newUserResponse = await UserModel.create(newAdminUser);
-    userId = newUserResponse.id;
-  }
-
-  const tenant = {
-    name: tenantName,
-    realm: realmName,
-    createdBy: userId,
-    adminEmail: email,
-    tokenIssuer: tokenIssuer,
-  };
-
-  const createTenantResult = await TenantModel.create(tenant);
-  return { ...tenant, id: createTenantResult.id };
-
-  if (!createTenantResult.success) {
-    const errorMessage = `Cannot create new tenant ${util.inspect(tenant)} in database.`;
-    throw new TenantError(errorMessage, HttpStatusCodes.INTERNAL_SERVER_ERROR);
-  }
+export const createNewTenantInDB = async (
+  email: string,
+  realmName: string,
+  tenantName: string,
+  tokenIssuer: string
+): Promise<TenantEntity> => {
+  tokenIssuer = tokenIssuer.replace('core', tenantName);
+  const tenantEntity = new TenantEntity(tenantRepository, uuidv4(), realmName, email, tokenIssuer, tenantName);
+  const tenant = await tenantEntity.save();
+  return tenant;
 };
