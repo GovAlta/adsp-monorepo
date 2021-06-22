@@ -6,6 +6,7 @@ import { HeaderCtx } from '@lib/headerContext';
 import Container from '@components/Container';
 import { RootState } from '@store/index';
 import { KeycloakCheckSSOWithLogout, KeycloakRefreshToken } from '@store/tenant/actions';
+import { GoAPageLoader } from '@abgov/react-components';
 
 export function PrivateApp({ children }) {
   const [title, setTitle] = useState<string>('');
@@ -31,11 +32,15 @@ export function PrivateApp({ children }) {
   );
 }
 
+const PageLoader = () => {
+  return <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />;
+};
+
 export function PrivateRoute({ component: Component, ...rest }) {
   const userInfo = useSelector((state: RootState) => state.session?.userInfo);
   const tenantRealm = useSelector((state: RootState) => state.tenant?.realm);
   const ready = userInfo !== undefined && tenantRealm === '';
-  return <Route {...rest} render={(props) => ready && <Component {...props} />} />;
+  return <Route {...rest} render={(props) => (ready ? <Component {...props} /> : <PageLoader />)} />;
 }
 
 export default PrivateApp;
