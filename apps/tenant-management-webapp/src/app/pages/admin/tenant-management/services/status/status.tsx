@@ -121,7 +121,7 @@ function Application(props: ServiceStatusApplication) {
     {
       name: 'toggle',
       icon: status === 'disabled' ? PlayIcon : PauseIcon,
-      title: status === 'disabled' ? 'Enable Monitoring' : 'Disable Monitoring',
+      title: status === 'disabled' ? 'Start Monitoring' : 'Stop Monitoring',
     },
     { name: 'delete', icon: TrashIcon, title: 'Remove' },
   ];
@@ -183,7 +183,7 @@ function Application(props: ServiceStatusApplication) {
   }
 
   const publicStatusMap: { [key: string]: ChipType } = {
-    enabled: 'success',
+    operational: 'success',
     maintenance: 'warning',
     outage: 'danger',
     disabled: 'secondary',
@@ -249,7 +249,7 @@ function Application(props: ServiceStatusApplication) {
                   onClick={() => doManualStatusChange(statusType as PublicServiceStatusType)}
                   buttonType="primary"
                 >
-                  {statusType}
+                 <span style={{textTransform: "capitalize"}}>{statusType}</span>
                 </GoAButton>
               ))}
             </GoAFormItem>

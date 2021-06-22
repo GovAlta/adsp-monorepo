@@ -5,6 +5,7 @@ import { ServiceStatusApplicationEntity } from '../model';
 import { EndpointStatusEntry, ServiceStatusEndpoint } from '../types';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
+import { application } from 'express';
 
 const ENTRY_SAMPLE_SIZE = 5;
 const MIN_PASS_COUNT = 3;
@@ -29,12 +30,13 @@ export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
 
     // ensure the application state is in sync with the database
     application = await serviceStatusRepository.get(application._id);
+    props.application = application;
 
     if (!application) {
       return;
     }
     // exit in the case where the application has not yet been removed from the job queue
-    if (application.internalStatus === 'disabled') {
+    if (application.internalStatus === 'stopped') {
       return;
     }
 
