@@ -1,22 +1,17 @@
 import styled from 'styled-components';
 
-const colors = {
-  primary: '#2F70FF',
-  secondary: '#444',
-  success: '#308752',
-  warning: '#F9C000',
-  danger: '#D33242',
-};
+export type ChipType = 'primary' | 'secondary' | 'success' | 'warning' | 'danger';
 
 interface Props {
-  type: 'primary' | 'secondary' | 'success' | 'warning' | 'danger';
+  type: ChipType
 }
 
 export const GoAChip = styled.div<Props>`
+  display: inline-block;
   border-radius: 999px;
   padding: 0 0.5rem;
-  color: ${(props) => colors[props.type]};
-  border: 1px solid ${(props) => colors[props.type]};
+  color: ${(props) => `var(--color-notice-${props.type})`};
+  border: 1px solid ${(props) => `var(--color-notice-${props.type})`};
   background-color: transparent;
   font-size: var(--fs-xs);
   line-height: 1.2rem;

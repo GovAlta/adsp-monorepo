@@ -5,7 +5,7 @@ const initialState: ServiceStatus = {
   applications: [],
 };
 
-const compareIds = (a: { id?: string }, b: { id?: string }): number => (a.id <= b.id ? 1 : -1);
+const compareIds = (a: { _id?: string }, b: { _id?: string }): number => (a._id <= b._id ? 1 : -1);
 
 export default function statusReducer(state: ServiceStatus = initialState, action: ActionTypes): ServiceStatus {
   switch (action.type) {
@@ -15,7 +15,7 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
         applications: action.payload.sort(compareIds),
       };
     case 'status/SAVE_APPLICATION_SUCCESS': {
-      const applications = [...state.applications.filter((app) => app.id !== action.payload.id), action.payload];
+      const applications = [...state.applications.filter((app) => app._id !== action.payload._id), action.payload];
       return {
         ...state,
         applications: applications.sort(compareIds),
@@ -24,12 +24,12 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
     case 'status/DELETE_APPLICATION_SUCCESS':
       return {
         ...state,
-        applications: [...state.applications.filter((app) => app.id !== action.payload)].sort(compareIds),
+        applications: [...state.applications.filter((app) => app._id !== action.payload)].sort(compareIds),
       };
     case 'status/SET_APPLICATION_STATUS_SUCCESS':
       return {
         ...state,
-        applications: [...state.applications.filter((app) => app.id !== action.payload.id), action.payload].sort(
+        applications: [...state.applications.filter((app) => app._id !== action.payload._id), action.payload].sort(
           compareIds
         ),
       };

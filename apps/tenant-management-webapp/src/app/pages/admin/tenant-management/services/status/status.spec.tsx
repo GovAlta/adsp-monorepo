@@ -26,33 +26,33 @@ describe('ServiceStatus Page', () => {
       serviceStatus: {
         applications: [
           {
-            id: '99',
+            _id: '99',
             tenantId: '11',
             name: 'facebook',
-            status: 'operational',
-            timeIntervalMin: 2,
+            internalStatus: 'operational',
+            publicStatus: 'enabled',
             endpoints: [
               { url: 'https://facebook.com/api', status: 'online' },
               { url: 'https://facebook.com', status: 'online' },
             ],
           },
           {
-            id: '33',
+            _id: '33',
             tenantId: '11',
             name: 'twitter',
-            status: 'operational',
-            timeIntervalMin: 2,
+            internalStatus: 'operational',
+            publicStatus: 'enabled',
             endpoints: [
               { url: 'https://twitter.com/api', status: 'offline' },
               { url: 'https://twitter.com', status: 'online' },
             ],
           },
           {
-            id: '11',
+            _id: '11',
             tenantId: '11',
             name: 'alberta.ca',
-            status: 'operational',
-            timeIntervalMin: 2,
+            internalStatus: 'operational',
+            publicStatus: 'enabled',
             endpoints: [
               { url: 'https://alberta.ca/api', status: 'pending' },
               { url: 'https://alberta.ca', status: 'offline' },
@@ -106,11 +106,10 @@ describe('ServiceStatus Page', () => {
       serviceStatus: {
         applications: [
           {
-            id: '11',
+            _id: '11',
             tenantId: '11',
             name: 'alberta.ca',
-            status: 'disabled',
-            timeIntervalMin: 2,
+            internalStatus: 'disabled',
             endpoints: [],
           },
         ],
@@ -132,7 +131,7 @@ describe('ServiceStatus Page', () => {
       const { applicationId, status, tenantId } = toggleAction.payload;
       expect(applicationId).toEqual('11');
       expect(tenantId).toEqual('11');
-      expect(status).toEqual(!state.serviceStatus.applications[0].status);
+      expect(status).toEqual(!state.serviceStatus.applications[0].internalStatus);
     });
   });
 });

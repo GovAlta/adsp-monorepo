@@ -1,6 +1,6 @@
 import { Repository } from '@core-services/core-common';
 import { ServiceStatusApplicationEntity } from '../model';
-import { ServiceStatusApplication, ServiceStatusType } from '../types';
+import { ServiceStatusApplication } from '../types';
 
 export interface ServiceStatusRepository extends Repository<ServiceStatusApplicationEntity, ServiceStatusApplication> {
   findEnabledApplications(): Promise<ServiceStatusApplicationEntity[]>;

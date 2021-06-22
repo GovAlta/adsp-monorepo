@@ -1,9 +1,11 @@
-import { ServiceStatusApplication, ServiceStatusType } from '../models';
+import { ServiceStatusApplication, PublicServiceStatusType, InternalServiceStatusType } from '../models';
 
 interface Params {
   tenantId: string;
   applicationId: string;
-  status: ServiceStatusType;
+
+  type: 'internal' | 'public';
+  status: PublicServiceStatusType | InternalServiceStatusType;
 }
 
 export const SET_APPLICATION_STATUS_ACTION = 'status/SET_APPLICATION_STATUS';
