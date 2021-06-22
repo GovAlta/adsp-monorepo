@@ -10,3 +10,4 @@ export * from './work';
 export * from './config';
 export * from './serviceInit';
 export * from './jsonSchema';
+export * from './keycloak';
