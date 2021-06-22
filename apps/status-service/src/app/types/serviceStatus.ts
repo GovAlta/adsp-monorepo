@@ -1,15 +1,13 @@
-import { ObjectId } from 'mongoose';
+export type InternalServiceStatusType = 'operational' | 'reported-issues' | 'pending' | 'stopped';
 
-export type InternalServiceStatusType = 'operational' | 'reported-issues' | 'pending' | 'disabled';
-
-export type PublicServiceStatusType = 'enabled' | 'maintenance' | 'outage' | 'disabled';
+export type PublicServiceStatusType = 'operational' | 'maintenance' | 'outage' | 'disabled';
 
 export type EndpointStatusType = 'up' | 'down' | 'pending' | 'disabled';
 
 export function isValidPublicServiceStatusType(status: PublicServiceStatusType): boolean {
   switch (status) {
     case 'maintenance':
-    case 'enabled':
+    case 'operational':
     case 'outage':
     case 'disabled':
       return true;
@@ -23,7 +21,7 @@ export function isValidInternalServiceStatusType(status: InternalServiceStatusTy
     case 'operational':
     case 'reported-issues':
     case 'pending':
-    case 'disabled':
+    case 'stopped':
       return true;
     default:
       return false;
