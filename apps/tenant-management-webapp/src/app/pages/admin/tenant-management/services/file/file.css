@@ -1,10 +1,5 @@
 .file-header {
-  display: inline;
-}
-
-.file-header-div {
-  margin-top: 58px;
-  margin-bottom: 26px;
+  display: inline-block;
 }
 
 .file-header-tag-active {

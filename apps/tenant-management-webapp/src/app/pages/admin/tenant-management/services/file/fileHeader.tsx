@@ -24,10 +24,10 @@ const FileHeader = (props: FileHeaderProps) => {
     }
   }
   return (
-    <div className="file-header-div">
+    <>
       <h2 className="file-header">File Services</h2>
       <span className={headerStateClass}>{headerState}</span>
-    </div>
+    </>
   );
 };
 
