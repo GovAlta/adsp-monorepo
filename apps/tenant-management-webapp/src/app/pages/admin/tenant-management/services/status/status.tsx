@@ -3,14 +3,15 @@ import { Page, Main } from '@components/Html';
 import { deleteApplication, fetchServiceStatusApps } from '@store/status/actions';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
-import { ServiceStatusApplication, ServiceStatusEndpoint, ServiceStatusType } from '@store/status/models';
+import {
+  InternalServiceStatusType,
+  PublicServiceStatusType,
+  PublicServiceStatusTypes,
+  ServiceStatusApplication,
+  ServiceStatusEndpoint,
+} from '@store/status/models';
 import { Route, Switch, useHistory, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
-import TrashIcon from '../../../../../../assets/icons/trash-outline.svg';
-import PlayIcon from '../../../../../../assets/icons/play-circle-outline.svg';
-import PauseIcon from '../../../../../../assets/icons/pause-circle-outline.svg';
-import EditIcon from '../../../../../../assets/icons/create-outline.svg';
-import WrenchIcon from '../../../../../../assets/icons/build-outline.svg';
 import ContextMenu, { ContextMenuItem } from '@components/ContextMenu';
 import GoALinkButton from '@components/LinkButton';
 import Dialog, { DialogActions, DialogContent, DialogTitle } from '@components/Dialog';
@@ -18,7 +19,17 @@ import ApplicationForm from './form';
 import { GoAButton } from '@abgov/react-components';
 import { GoAForm, GoAFormItem } from '@components/Form';
 import { setApplicationStatus } from '@store/status/actions/setApplicationStatus';
-import GoAChip from '@components/Chip';
+import GoAChip, { ChipType } from '@components/Chip';
+
+// icons
+import TrashIcon from '@assets/icons/trash-outline.svg';
+import PlayIcon from '@assets/icons/play-circle-outline.svg';
+import PauseIcon from '@assets/icons/pause-circle-outline.svg';
+import EditIcon from '@assets/icons/create-outline.svg';
+import WrenchIcon from '@assets/icons/build-outline.svg';
+import CheckmarkCircle from '@components/icons/CheckmarkCircle';
+import CloseCircle from '@components/icons/CloseCircle';
+import Hourglass from '@components/icons/Hourglass';
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
@@ -68,7 +79,7 @@ function Status(): JSX.Element {
         </GoALinkButton>
         <ApplicationList>
           {applications.map((app) => (
-            <Application key={app.id} {...app} />
+            <Application key={app._id} {...app} />
           ))}
         </ApplicationList>
       </Main>
@@ -96,13 +107,11 @@ function Status(): JSX.Element {
 }
 
 function Application(props: ServiceStatusApplication) {
-  const serviceStatusTypes = ['operational', 'maintenance', 'reported-issues', 'outage', 'pending'];
-
   const location = useLocation();
   const history = useHistory();
   const dispatch = useDispatch();
 
-  const [status, setStatus] = useState<ServiceStatusType>(props.status);
+  const [status, setStatus] = useState<InternalServiceStatusType>(props.internalStatus);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false);
   const [showStatusForm, setShowStatusForm] = useState<boolean>(false);
 
@@ -123,18 +132,21 @@ function Application(props: ServiceStatusApplication) {
         setShowStatusForm(true);
         break;
       case 'edit':
-        history.push(`${location.pathname}/${props.id}/edit`);
+        history.push(`${location.pathname}/${props._id}/edit`);
         break;
-      case 'toggle':
-        setStatus(status === 'disabled' ? 'pending' : 'disabled');
+      case 'toggle': {
+        const toggledStatus = status === 'disabled' ? 'pending' : 'disabled';
+        setStatus(toggledStatus);
         dispatch(
           setApplicationStatus({
             tenantId: props.tenantId,
-            applicationId: props.id,
-            status: status === 'disabled' ? 'pending' : 'disabled',
+            applicationId: props._id,
+            type: 'internal',
+            status: toggledStatus,
           })
         );
         break;
+      }
       case 'delete': {
         setShowDeleteConfirmation(true);
         break;
@@ -148,7 +160,7 @@ function Application(props: ServiceStatusApplication) {
   }
 
   function doDelete() {
-    dispatch(deleteApplication({ tenantId: props.tenantId, applicationId: props.id }));
+    dispatch(deleteApplication({ tenantId: props.tenantId, applicationId: props._id }));
     setShowDeleteConfirmation(false);
   }
 
@@ -156,8 +168,8 @@ function Application(props: ServiceStatusApplication) {
     setShowDeleteConfirmation(false);
   }
 
-  function doManualStatusChange(status: ServiceStatusType) {
-    dispatch(setApplicationStatus({ tenantId: props.tenantId, applicationId: props.id, status }));
+  function doManualStatusChange(status: PublicServiceStatusType) {
+    dispatch(setApplicationStatus({ tenantId: props.tenantId, applicationId: props._id, type: 'public', status }));
     setShowStatusForm(false);
   }
 
@@ -166,8 +178,16 @@ function Application(props: ServiceStatusApplication) {
   }
 
   function humanizeText(value: string): string {
+    if (!value) return 'n/a';
     return value.replace(/[\W]/, ' ');
   }
+
+  const publicStatusMap: { [key: string]: ChipType } = {
+    enabled: 'success',
+    maintenance: 'warning',
+    outage: 'danger',
+    disabled: 'secondary',
+  };
 
   return (
     <App data-testid="application">
@@ -177,21 +197,31 @@ function Application(props: ServiceStatusApplication) {
 
       <AppHeader>
         <AppName>{props.name}</AppName>
-        &nbsp; &nbsp;
-        {props.status === 'operational' ? (
-          <GoAChip type="success">{humanizeText(props.status)}</GoAChip>
-        ) : (
-          <GoAChip type="danger">{humanizeText(props.status)}</GoAChip>
+        {props.publicStatus && (
+          <>
+            <span className="space-1"></span>
+            <GoAChip type={publicStatusMap[props.publicStatus]}>{humanizeText(props.publicStatus)}</GoAChip>
+          </>
         )}
       </AppHeader>
       <em>Last updated: {getTimestamp()}</em>
 
       {/* Endpoint List for watched service */}
-      <AppEndpoints>
-        {props.endpoints.map((endpoint) => (
-          <AppEndpoint data-testid="endpoint" key={endpoint.url} endpoint={endpoint}></AppEndpoint>
-        ))}
-      </AppEndpoints>
+      {props.internalStatus !== 'disabled' && (
+        <>
+          <AppEndpointsStatus status={props.internalStatus}>
+            {props.internalStatus === 'operational' && <CheckmarkCircle size="medium" />}
+            {props.internalStatus === 'reported-issues' && <CloseCircle size="medium" />}
+            {props.internalStatus === 'pending' && <Hourglass size="medium" />}
+            {humanizeText(props.internalStatus)}
+          </AppEndpointsStatus>
+          <AppEndpoints>
+            {props.endpoints.map((endpoint) => (
+              <AppEndpoint data-testid="endpoint" key={endpoint.url} endpoint={endpoint}></AppEndpoint>
+            ))}
+          </AppEndpoints>
+        </>
+      )}
 
       {/* Delete confirmation dialog */}
       <Dialog open={showDeleteConfirmation} onClose={cancelDelete}>
@@ -213,10 +243,10 @@ function Application(props: ServiceStatusApplication) {
         <DialogContent>
           <GoAForm>
             <GoAFormItem>
-              {serviceStatusTypes.map((statusType) => (
+              {PublicServiceStatusTypes.map((statusType) => (
                 <GoAButton
                   key={statusType}
-                  onClick={() => doManualStatusChange(statusType as ServiceStatusType)}
+                  onClick={() => doManualStatusChange(statusType as PublicServiceStatusType)}
                   buttonType="primary"
                 >
                   {statusType}
@@ -246,13 +276,27 @@ interface AppEndpointProps {
   endpoint: ServiceStatusEndpoint;
 }
 
-function AppEndpoint({ endpoint, ...other }: AppEndpointProps) {
+function AppEndpoint({ endpoint }: AppEndpointProps) {
   return (
-    <AppEndpointRoot {...other} className={endpoint.status}>
-      <div data-testid="endpoint-url">{endpoint.url}</div>
-    </AppEndpointRoot>
+    <div data-testid="endpoint-url">
+      <b>{endpoint.url}</b>
+      {endpoint.statusEntries?.map((entry) => (
+        <EndpointStatusEntry key={entry.timestamp}>
+          {entry.ok ? <CheckmarkCircle size="small" /> : <CloseCircle size="small" />}
+          <div>
+            {entry.status}: {entry.timestamp && new Date(entry.timestamp).toLocaleTimeString()}
+          </div>
+        </EndpointStatusEntry>
+      ))}
+    </div>
   );
 }
+
+const EndpointStatusEntry = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+`;
 
 // =================
 // Styled Components
@@ -297,26 +341,21 @@ const AppName = styled.div`
   text-transform: capitalize;
 `;
 
-const AppEndpoints = styled.div`
+const AppEndpointsStatus = styled.div<{ status: string }>`
   margin-top: 1rem;
-`;
-
-const AppEndpointRoot = styled.div`
+  text-transform: capitalize;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.25rem;
+  font-weight: var(--fw-bold);
+  color: ${(props) => (props.status === 'operational' ? 'var(--color-notice-success)' : 'var(--color--notice-error)')};
+`;
 
-  &::before {
-    content: '●';
-  }
+const AppEndpoints = styled.div`
+  margin-left: 1.75rem;
+  font-size: var(--fs-sm);
 
-  &.offline::before {
-    color: var(--color-red-400);
-  }
-  &.online::before {
-    color: var(--color-green-600);
-  }
-  &.pending::before {
-    color: var(--color-gray-400);
+  b {
+    color: var(--color-gray-800);
   }
 `;

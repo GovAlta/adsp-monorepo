@@ -9,17 +9,19 @@ import DataTable from '@components/DataTable';
 import { Grid, GridItem } from '@components/Grid';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
+import { GoAPageLoader } from '@abgov/react-components';
 
 export default function () {
   const dispatch = useDispatch();
 
-  const { users, roles, keycloakConfig, session, tenantManagementWebApp } = useSelector((state: RootState) => {
+  const { users, roles, keycloakConfig, session, tenantManagementWebApp, status } = useSelector((state: RootState) => {
     return {
       users: state.access.users || [],
       roles: state.access.roles || [],
       keycloakConfig: state.config.keycloakApi,
       session: state.session,
       tenantManagementWebApp: state.config.serviceUrls.tenantManagementWebApp,
+      status: state.access.status,
     };
   });
 
@@ -38,6 +40,16 @@ export default function () {
 
   function getSharedTenantLoginUrl() {
     return `${tenantManagementWebApp}/${session.realm}/autologin`;
+  }
+
+  if (status === 'loading') {
+    return (
+      <Page>
+        <Main>
+          <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
+        </Main>
+      </Page>
+    );
   }
 
   return (

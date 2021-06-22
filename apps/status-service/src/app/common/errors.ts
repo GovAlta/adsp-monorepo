@@ -34,7 +34,7 @@ export class ServerError extends GoAError {
 }
 
 export class RecordNotFoundError extends GoAError {
-  constructor(message: string, err?: GoAError) {
+  constructor(message?: string, err?: GoAError) {
     super(message, { ...err, name: 'RecordNotFoundError ', statusCode: 404, parent: err });
   }
 }

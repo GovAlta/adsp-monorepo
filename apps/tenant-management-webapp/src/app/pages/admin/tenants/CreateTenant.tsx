@@ -94,25 +94,28 @@ const CreateRealm = () => {
                     <input id="name" type="text" value={name} onChange={onChangeName} />
                     <em>Names cannot container special characters (ex. ! % &amp;)</em>
                   </GoAFormItem>
-                  {isLoaded ? (
-                    <GoAFormButtons>
-                      <GoALinkButton
-                        to=""
-                        onClick={() => {
-                          dispatch(TenantLogout());
-                        }}
-                        buttonType="secondary"
-                      >
-                        Back
-                      </GoALinkButton>
-                      <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
-                    </GoAFormButtons>
-                  ) : (
-                    <GoAButton buttonType="primary" buttonSize="normal">
-                      Creating Tenant...
-                      <GoAElementLoader visible={true} size={15} baseColour="#c8eef9" spinnerColour="#0070c4" />
-                    </GoAButton>
-                  )}
+
+                  <GoAFormButtons>
+                    {isLoaded ? (
+                      <>
+                        <GoALinkButton
+                          to=""
+                          onClick={() => {
+                            dispatch(TenantLogout());
+                          }}
+                          buttonType="secondary"
+                        >
+                          Back
+                        </GoALinkButton>
+                        <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
+                      </>
+                    ) : (
+                      <GoAButton buttonType="primary" buttonSize="normal">
+                        Creating Tenant...
+                        <GoAElementLoader visible={true} size={15} baseColour="#c8eef9" spinnerColour="#0070c4" />
+                      </GoAButton>
+                    )}
+                  </GoAFormButtons>
                 </GoAForm>
               </>
             ) : null}
