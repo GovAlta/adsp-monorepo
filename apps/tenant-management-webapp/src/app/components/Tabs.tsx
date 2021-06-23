@@ -107,4 +107,13 @@ const SCTab = styled.div`
 
 const TabContent = styled.div`
   padding: 1rem 0;
+
+  > h1,
+  > h2,
+  > h3,
+  > h4,
+  > ul,
+  > ol {
+    margin-top: 0;
+  }
 `;

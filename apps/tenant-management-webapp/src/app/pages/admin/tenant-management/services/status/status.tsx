@@ -30,6 +30,7 @@ import WrenchIcon from '@assets/icons/build-outline.svg';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import Hourglass from '@components/icons/Hourglass';
+import { Tab, Tabs } from '@components/Tabs';
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
@@ -49,31 +50,37 @@ function Status(): JSX.Element {
     <Page>
       <Main>
         <h2>Service Status</h2>
-        This service allows for easy monitoring of application downtime.
-        <p>
-          You can use multiple endpoint URLs for a single application, including internal services you depend on, in
-          order to assess which components within an application may be down or malfunctioning (ie. web server,
-          database, storage servers, etc)
-        </p>
-        <p>
-          Each Application should represent a service that is useful to the end user by itself, such as child care
-          subsidy and child care certification
-        </p>
-        <h4>Guidelines for choosing a health check endpoint:</h4>
-        <ol>
-          <li>A Health check endpoint needs to be publicly accessible over the internet</li>
-          <li>
-            A Health check endpoint needs to return
-            <ul>
-              <li>A 200 level status code to indicate good health</li>
-              <li>A non-200 level status code to indicate bad health.</li>
-            </ul>
-          </li>
-          <li>
-            To be most accurate, the health check endpoint should reference a URL that makes comprehensive use of your
-            app, and checks connectivity to any databases, for instance.
-          </li>
-        </ol>
+        <Tabs>
+          <Tab label="Overview">
+            This service allows for easy monitoring of application downtime.
+            <p>
+              You can use multiple endpoint URLs for a single application, including internal services you depend on, in
+              order to assess which components within an application may be down or malfunctioning (ie. web server,
+              database, storage servers, etc)
+            </p>
+            <p>
+              Each Application should represent a service that is useful to the end user by itself, such as child care
+              subsidy and child care certification
+            </p>
+          </Tab>
+          <Tab label="Guidelines">
+            Guidelines for choosing a health check endpoint:
+            <ol>
+              <li>A Health check endpoint needs to be publicly accessible over the internet</li>
+              <li>
+                A Health check endpoint needs to return
+                <ul>
+                  <li>A 200 level status code to indicate good health</li>
+                  <li>A non-200 level status code to indicate bad health.</li>
+                </ul>
+              </li>
+              <li>
+                To be most accurate, the health check endpoint should reference a URL that makes comprehensive use of
+                your app, and checks connectivity to any databases, for instance.
+              </li>
+            </ol>
+          </Tab>
+        </Tabs>
         <GoALinkButton data-testid="add-application" to={`${location.pathname}/new`} buttonType="primary">
           Add Application
         </GoALinkButton>
@@ -249,7 +256,7 @@ function Application(props: ServiceStatusApplication) {
                   onClick={() => doManualStatusChange(statusType as PublicServiceStatusType)}
                   buttonType="primary"
                 >
-                 <span style={{textTransform: "capitalize"}}>{statusType}</span>
+                  <span style={{ textTransform: 'capitalize' }}>{statusType}</span>
                 </GoAButton>
               ))}
             </GoAFormItem>
