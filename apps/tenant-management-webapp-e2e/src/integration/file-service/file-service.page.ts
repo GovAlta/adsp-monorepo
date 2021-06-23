@@ -12,12 +12,12 @@ class FileServicePage {
   }
 
   fileServiceTabs() {
-    return cy.xpath('//div[@class="file-header-div"]/following-sibling::div[1]//descendant::div');
+    return cy.xpath('//h2[@class="file-header"]/following-sibling::div[1]//descendant::div');
   }
 
   fileServiceTab(text: string) {
     return cy.xpath(
-      `//div[@class="file-header-div"]/following-sibling::div[1]//descendant::div[contains(text(), "${text}")]`
+      `//h2[@class="file-header"]/following-sibling::div[1]//descendant::div[contains(text(), "${text}")]`
     );
   }
 
