@@ -1,9 +1,8 @@
 import { createkcAdminClient } from '../../../keycloak';
 import { logger } from '../../../middleware/logger';
-import { TenantError } from './error';
-import * as HttpStatusCodes from 'http-status-codes';
-import * as TenantModel from '../../models/tenant';
 import { brokerClientName } from './create';
+import { tenantRepository } from '../../repository';
+
 interface DeleteResponse {
   isDeleted: boolean;
   errors?: string[];
@@ -76,9 +75,9 @@ const deleteKeycloakBrokerClient = async (keycloakRealm): Promise<DeleteResponse
   }
 };
 
-const deleteTenantFromDB = async (keycloakName): Promise<DeleteResponse> => {
+const deleteTenantFromDB = async (realmName): Promise<DeleteResponse> => {
   try {
-    await TenantModel.deleteTenantByRealm(keycloakName);
+    await tenantRepository.delete(realmName);
     return Promise.resolve({
       isDeleted: true,
     });
@@ -92,7 +91,7 @@ const deleteTenantFromDB = async (keycloakName): Promise<DeleteResponse> => {
   }
 };
 
-export const deleteTenant = async (keycloakRealm): Promise<DeleteTenantResponse> => {
+export const deleteTenant = async (keycloakRealm: string): Promise<DeleteTenantResponse> => {
   const deleteTenantResponse: DeleteTenantResponse = {
     keycloakRealm: await deleteKeycloakRealm(keycloakRealm),
     IdPBrokerClient: await deleteKeycloakBrokerClient(keycloakRealm),

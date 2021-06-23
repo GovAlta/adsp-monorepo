@@ -2,6 +2,7 @@ import { adspId } from '@abgov/adsp-service-sdk';
 import { Router } from 'express';
 import { requirePlatformService } from '../../middleware/authentication';
 import * as tenantService from '../services/tenant';
+import { logger } from '../../middleware/logger';
 
 export const createTenantV2Router = (): Router => {
   const tenantV2Router: Router = Router();
@@ -17,6 +18,7 @@ export const createTenantV2Router = (): Router => {
         },
       });
     } catch (err) {
+      logger.error(`Failed to get tenants with error: ${err.message}`);
       next(err);
     }
   });
@@ -25,9 +27,10 @@ export const createTenantV2Router = (): Router => {
     const { id } = req.params;
 
     try {
-      const tenant = await tenantService.getTenant(adspId`urn:ads:platform:tenant-service:v2:/tenants/${id}`);
-      res.json(tenant);
+      const tenant = await tenantService.getTenant(adspId`urn:ads:platform:tenant-service:v2:${id}`);
+      res.json(tenant.obj());
     } catch (err) {
+      logger.error(`Failed to get tenant with error: ${err.message}`);
       next(err);
     }
   });

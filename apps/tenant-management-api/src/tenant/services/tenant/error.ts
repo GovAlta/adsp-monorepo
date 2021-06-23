@@ -2,7 +2,7 @@ import { logger } from '../../../middleware/logger';
 
 export class TenantError extends Error {
   errorCode: number;
-  constructor(message, errorCode) {
+  constructor(message: string, errorCode: number) {
     super(message);
 
     Error.captureStackTrace(this, this.constructor);
