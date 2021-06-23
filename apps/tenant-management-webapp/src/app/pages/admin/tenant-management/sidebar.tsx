@@ -1,5 +1,5 @@
 import { withRouter, RouteComponentProps } from 'react-router';
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
@@ -13,20 +13,28 @@ import LogoutIcon from '@icons/log-out-outline.svg';
 import FitnessIcon from '@icons/fitness-outline.svg';
 import MegaphoneIcon from '@icons/megaphone-outline.svg';
 import { RootState } from '@store/index';
-import { TenantAdminLogin, TenantLogout } from '@store/tenant/actions';
+import { TenantAdminLogin, TenantLogout, FetchTenant } from '@store/tenant/actions';
 
 interface SidebarProps {
   type: 'mobile' | 'desktop';
 }
 
 const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
-  const { tenantName, authenticated } = useSelector((state: RootState) => {
+  const dispatch = useDispatch();
+
+  const { tenantName, authenticated, userInfo } = useSelector((state: RootState) => {
     return {
       tenantName: state.tenant.name,
       authenticated: state.session.authenticated,
+      userInfo: state.session?.userInfo,
     };
   });
-  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (userInfo) {
+      dispatch(FetchTenant(userInfo.email));
+    }
+  }, [userInfo, dispatch]);
 
   return (
     <Links>

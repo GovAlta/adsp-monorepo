@@ -5,25 +5,18 @@ import Header from '@components/AppHeader';
 import { HeaderCtx } from '@lib/headerContext';
 import Container from '@components/Container';
 import { RootState } from '@store/index';
-import { KeycloakCheckSSOWithLogout, KeycloakRefreshToken, FetchTenant } from '@store/tenant/actions';
+import { KeycloakCheckSSOWithLogout, KeycloakRefreshToken } from '@store/tenant/actions';
 import { GoAPageLoader } from '@abgov/react-components';
 
 export function PrivateApp({ children }) {
   const [title, setTitle] = useState<string>('');
   const dispatch = useDispatch();
-  const userInfo = useSelector((state: RootState) => state.session?.userInfo);
   const urlParams = new URLSearchParams(window.location.search);
   const realm = urlParams.get('realm') || localStorage.getItem('realm');
 
   useEffect(() => {
     dispatch(KeycloakCheckSSOWithLogout(realm));
   }, []);
-
-  useEffect(() => {
-    if (userInfo) {
-      dispatch(FetchTenant(userInfo.email));
-    }
-  }, [userInfo, dispatch]);
 
   useEffect(() => {
     setInterval(async () => {
