@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { UserManager } from 'oidc-client';
 import { UserState } from 'redux-oidc';
 import { GoAButton, GoAHeader } from '@abgov/react-components';
 
@@ -21,11 +20,7 @@ import {
   privateResourceSelector,
 } from './start.slice';
 
-interface AppProps {
-  userManager: UserManager;
-}
-
-export function App({ userManager }: AppProps) {
+export function App() {
   const user = useSelector((state: { user: UserState }) => state.user.user);
   const publicResource = useSelector(publicResourceSelector);
   const privateResource = useSelector(privateResourceSelector);

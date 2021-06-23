@@ -6,6 +6,7 @@
     "nx": "nx",
     "start": "nx serve",
     "start:tenant-management-webapp": "nx run tenant-management-webapp:serve",
+    "start:status-app": "nx serve status-app --port 4250",
     "start:tenant-management-api": "nx run tenant-management-api:serve",
     "start:status-service": "nx run status-service:serve",
     "build": "nx build",

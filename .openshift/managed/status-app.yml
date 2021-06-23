@@ -99,7 +99,7 @@ objects:
     spec:
       replicas: 1
       selector:
-        app: status${NAME_SUFFIX}
+        app: ${APP_NAME}${NAME_SUFFIX}
         component: app
       strategy:
         type: Recreate
