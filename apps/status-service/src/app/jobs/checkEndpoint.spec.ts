@@ -32,7 +32,7 @@ describe('Validate endpoint checking', () => {
       endpoints: [{ url: 'http://foo.bar', status: initStatus === 'operational' ? 'up' : 'down' }],
       internalStatus: initStatus,
       name: 'app 1',
-      publicStatus: 'enabled',
+      publicStatus: 'operational',
       tenantId: '99',
     };
     return await serviceStatusRepository.save(appData as ServiceStatusApplicationEntity);

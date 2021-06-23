@@ -8,12 +8,12 @@ export default function accessReducer(state: AccessState = ACCESS_INIT, action: 
         ...state,
         users: action.payload.users,
         roles: action.payload.roles,
-        status: 'idle',
+        loadingState: 'idle',
       };
     case 'tenant/access/FETCH_ACCESS':
       return {
         ...state,
-        status: 'loading',
+        loadingState: 'loading',
       };
     default:
       return state;

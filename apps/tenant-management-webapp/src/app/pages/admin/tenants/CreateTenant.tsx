@@ -61,6 +61,46 @@ const CreateRealm = () => {
       </div>
     );
   };
+  const ButtonLoader = () => {
+    return (
+      <GoAButton buttonType="primary" buttonSize="normal" disabled>
+        Creating Tenant...
+        <GoAElementLoader visible={true} size={15} baseColour="#c8eef9" spinnerColour="#0070c4" />
+      </GoAButton>
+    );
+  };
+
+  const TenantCreated = () => {
+    return (
+      <>
+        <p>The '{name}' has been successfully created</p>
+        <GoAButton
+          onClick={() => {
+            dispatch(TenantLogin(tenantRealm));
+          }}
+        >
+          Tenant Login
+        </GoAButton>
+      </>
+    );
+  };
+
+  const TenantCreateView = () => {
+    return (
+      <>
+        <GoALinkButton
+          to=""
+          onClick={() => {
+            dispatch(TenantLogout());
+          }}
+          buttonType="secondary"
+        >
+          Back
+        </GoALinkButton>
+        <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
+      </>
+    );
+  };
 
   const ready = userInfo !== undefined && isTenantAdmin !== undefined;
 
@@ -69,16 +109,7 @@ const CreateRealm = () => {
       <Main>
         {isTenantAdmin == true && !isTenantCreated && <ErrorMessage email={userInfo.email} />}
         {isTenantCreated ? (
-          <>
-            <p>The '{name}' has been successfully created</p>
-            <GoAButton
-              onClick={() => {
-                dispatch(TenantLogin(tenantRealm));
-              }}
-            >
-              Tenant Login
-            </GoAButton>
-          </>
+          <TenantCreated />
         ) : (
           <>
             {isTenantAdmin === false ? (
@@ -95,27 +126,7 @@ const CreateRealm = () => {
                     <em>Names cannot container special characters (ex. ! % &amp;)</em>
                   </GoAFormItem>
 
-                  <GoAFormButtons>
-                    {isLoaded ? (
-                      <>
-                        <GoALinkButton
-                          to=""
-                          onClick={() => {
-                            dispatch(TenantLogout());
-                          }}
-                          buttonType="secondary"
-                        >
-                          Back
-                        </GoALinkButton>
-                        <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
-                      </>
-                    ) : (
-                      <GoAButton buttonType="primary" buttonSize="normal">
-                        Creating Tenant...
-                        <GoAElementLoader visible={true} size={15} baseColour="#c8eef9" spinnerColour="#0070c4" />
-                      </GoAButton>
-                    )}
-                  </GoAFormButtons>
+                  <GoAFormButtons>{isLoaded ? <TenantCreateView /> : <ButtonLoader />}</GoAFormButtons>
                 </GoAForm>
               </>
             ) : null}

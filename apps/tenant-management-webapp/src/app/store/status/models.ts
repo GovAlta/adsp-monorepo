@@ -1,6 +1,6 @@
 export type InternalServiceStatusType = 'operational' | 'reported-issues' | 'pending' | 'disabled';
-export type PublicServiceStatusType = 'enabled' | 'maintenance' | 'outage' | 'disabled';
-export const PublicServiceStatusTypes = ['enabled', 'maintenance', 'outage', 'disabled'];
+export type PublicServiceStatusType = 'operational' | 'maintenance' | 'outage' | 'disabled';
+export const PublicServiceStatusTypes = ['operational', 'maintenance', 'outage', 'disabled'];
 export type EndpointStatusType = 'up' | 'down' | 'pending' | 'disabled';
 
 export interface ServiceStatus {

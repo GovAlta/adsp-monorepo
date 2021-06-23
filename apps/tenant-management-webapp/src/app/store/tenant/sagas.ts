@@ -24,11 +24,11 @@ export function* fetchTenant(action: FetchTenantAction) {
   const state: RootState = yield select();
   const token = state.session.credentials.token;
   const api = new TenantApi(state.config.tenantApi, token);
-  const realm = action.payload;
+  const email = action.payload;
 
   try {
-    const tenant = yield api.fetchTenantByRealm(realm);
-    yield put(FetchTenantSuccess(tenant));
+    const response = yield api.fetchTenantByEmail(email);
+    yield put(FetchTenantSuccess(response.tenant));
   } catch (e) {
     yield put(ErrorNotification({ message: 'failed to fetch tenant' }));
   }

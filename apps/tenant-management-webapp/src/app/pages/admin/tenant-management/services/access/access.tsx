@@ -21,7 +21,7 @@ export default function () {
       keycloakConfig: state.config.keycloakApi,
       session: state.session,
       tenantManagementWebApp: state.config.serviceUrls.tenantManagementWebApp,
-      status: state.access.status,
+      status: state.access.loadingState,
     };
   });
 

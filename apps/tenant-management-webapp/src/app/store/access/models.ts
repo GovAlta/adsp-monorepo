@@ -19,14 +19,18 @@ export interface Role {
   userIds: string[];
 }
 
+interface LoadingState {
+  loadingState: 'idle' | 'isLoading';
+}
+
 export interface AccessState {
   users: User[];
   roles: Role[];
-  status?: string;
+  loadingState?: string;
 }
 
 export const ACCESS_INIT: AccessState = {
   users: [],
   roles: [],
-  status: 'idle',
+  loadingState: 'idle',
 };

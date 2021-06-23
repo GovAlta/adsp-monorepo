@@ -10,7 +10,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
     this.model = model('ServiceStatus', serviceStatusApplicationSchema);
   }
   async findEnabledApplications(): Promise<ServiceStatusApplicationEntity[]> {
-    const docs = await this.model.find({ internalStatus: { $ne: 'disabled' } });
+    const docs = await this.model.find({ internalStatus: { $ne: 'stopped' } });
     return docs.map((doc) => this.fromDoc(doc));
   }
   async get(id: string): Promise<ServiceStatusApplicationEntity> {
@@ -21,7 +21,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
   async findQueuedDisabledApplications(queuedApplicationIds: string[]): Promise<ServiceStatusApplicationEntity[]> {
     const docs = await this.model.find({
       _id: { $in: queuedApplicationIds },
-      internalStatus: { $in: ['disabled'] },
+      internalStatus: { $in: ['stopped'] },
     });
     return docs.map((doc) => this.fromDoc(doc));
   }
@@ -38,7 +38,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
   async findNonQueuedApplications(queuedApplicationIds: string[]): Promise<ServiceStatusApplicationEntity[]> {
     const docs = await this.model.find({
       _id: { $nin: queuedApplicationIds },
-      internalStatus: { $nin: ['disabled'] },
+      internalStatus: { $nin: ['stopped'] },
     });
     return docs.map((doc) => this.fromDoc(doc));
   }
@@ -59,7 +59,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
   async disable(entity: ServiceStatusApplicationEntity): Promise<ServiceStatusApplicationEntity> {
     const application = await this.model.findById(entity._id);
     application.endpoints.forEach((endpoint) => (endpoint.status = 'disabled'));
-    application.internalStatus = 'disabled';
+    application.internalStatus = 'stopped';
     await application.save();
     return this.fromDoc(application);
   }
