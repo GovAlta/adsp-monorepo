@@ -23,5 +23,8 @@ Given('a service owner user is on service status page', function () {
 });
 
 Then('the user views the health check guidelines', function () {
-  statusServiceObj.guidelinesHeader().invoke('text').should('contains', 'Guidelines');
+  statusServiceObj.statusTab('Guidelines').click();
+  statusServiceObj.guidelinesTitle().then((guidelinesTitle) => {
+    expect(guidelinesTitle.length).to.be.gt(0);
+  });
 });
