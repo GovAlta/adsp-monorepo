@@ -42,12 +42,10 @@ export function* isTenantAdmin(action: CheckIsTenantAdminAction) {
 
   try {
     const response = yield api.fetchTenantByEmail(email);
-    if (response.success) {
-      yield put(UpdateTenantAdminInfo(response.success, response.tenant.name, response.tenant.realm));
-    } else {
-      yield put(UpdateTenantAdminInfo(response.success, TENANT_INIT.name, TENANT_INIT.realm));
-    }
+    yield put(UpdateTenantAdminInfo(true, response.name, response.realm));
   } catch (e) {
+    yield put(UpdateTenantAdminInfo(false, TENANT_INIT.name, TENANT_INIT.realm));
+
     yield put(ErrorNotification({ message: 'failed to check tenant admin' }));
   }
 }
