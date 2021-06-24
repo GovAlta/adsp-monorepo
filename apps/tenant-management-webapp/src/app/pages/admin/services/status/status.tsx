@@ -20,6 +20,7 @@ import { GoAButton } from '@abgov/react-components';
 import { GoAForm, GoAFormItem } from '@components/Form';
 import { setApplicationStatus } from '@store/status/actions/setApplicationStatus';
 import GoAChip, { ChipType } from '@components/Chip';
+import { Tab, Tabs } from '@components/Tabs';
 
 // icons
 import TrashIcon from '@assets/icons/trash-outline.svg';
@@ -30,7 +31,6 @@ import WrenchIcon from '@assets/icons/build-outline.svg';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import Hourglass from '@components/icons/Hourglass';
-import { Tab, Tabs } from '@components/Tabs';
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
@@ -92,7 +92,7 @@ function Status(): JSX.Element {
       </Main>
 
       <Switch>
-        <Route path="/admin/tenant-admin/services/service-status/new">
+        <Route path="/admin/services/status/new">
           <Dialog open={true}>
             <DialogTitle>New Application</DialogTitle>
             <DialogContent>
@@ -100,7 +100,7 @@ function Status(): JSX.Element {
             </DialogContent>
           </Dialog>
         </Route>
-        <Route path="/admin/tenant-admin/services/service-status/:applicationId/edit">
+        <Route path="/admin/services/status/:applicationId/edit">
           <Dialog open={true}>
             <DialogTitle>Edit Application</DialogTitle>
             <DialogContent>

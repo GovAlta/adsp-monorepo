@@ -53,11 +53,11 @@ function ApplicationForm(): JSX.Element {
     dispatch(saveApplication(params));
     e.preventDefault();
 
-    history.push('/admin/tenant-admin/services/service-status');
+    history.push('/admin/services/status');
   }
 
   function cancel() {
-    history.push('/admin/tenant-admin/services/service-status');
+    history.push('/admin/services/status');
   }
 
   return (

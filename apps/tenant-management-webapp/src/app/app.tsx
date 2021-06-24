@@ -11,13 +11,7 @@ import { SignInError } from '@pages/public/SignInError';
 import Login from '@pages/public/Login';
 import LoginRedirect from '@pages/public/LoginRedirect';
 import LogoutRedirect from '@pages/public/LogoutRedirect';
-import CaseStudy from '@pages/admin/CaseStudy';
-import FileService from '@pages/public/FileService';
-import ServiceMeasure from '@pages/admin/ServiceMeasure';
-import AppStatus from '@pages/admin/AppStatus';
-import Integration from '@pages/admin/Integration';
-import Notifications from '@pages/admin/Notifications';
-import TenantManagement from '@pages/admin/tenant-management';
+import Admin from '@pages/admin';
 import { TenantsRouter } from '@pages/admin/tenants';
 import GetStarted from '@pages/public/GetStarted';
 import { store, RootState } from '@store/index';
@@ -42,13 +36,7 @@ const AppRouters = () => {
 
         <Route path="/admin">
           <PrivateApp>
-            <PrivateRoute path="/admin/case-study" component={CaseStudy} />
-            <PrivateRoute path="/admin/file-service" component={FileService} />
-            <PrivateRoute path="/admin/service-measures" component={ServiceMeasure} />
-            <PrivateRoute path="/admin/app-status" component={AppStatus} />
-            <PrivateRoute path="/admin/notifications" component={Notifications} />
-            <PrivateRoute path="/admin/integration" component={Integration} />
-            <PrivateRoute path="/admin/tenant-admin" component={TenantManagement} />
+            <PrivateRoute path="/admin" component={Admin} />
             <PrivateRoute path="/admin/tenants" component={TenantsRouter} />
           </PrivateApp>
         </Route>
