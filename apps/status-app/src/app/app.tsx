@@ -1,14 +1,12 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UserState } from 'redux-oidc';
-import { GoAButton, GoAHeader } from '@abgov/react-components';
+import { GoAHeader } from '@abgov/react-components';
 
-import styles from './app.module.css';
 import '@abgov/core-css/goa-core.css';
 import '@abgov/core-css/goa-components.css';
 import '@abgov/core-css/src/lib/stories/page-template/page-template.story.scss';
 import { Grid, GridItem } from '@components/Grid';
-import Container from '@components/Container';
 import ServiceStatus from './components/ServiceStatus';
 
 import styled from 'styled-components';
@@ -35,107 +33,116 @@ export function App() {
   }, [user, dispatch]);
 
   return (
-    <div className={styles.app}>
-      <AppCss>
-        <GoAHeader serviceLevel="alpha" serviceName="Alberta Digital Service Platform" serviceHome="/" />
-        <div className="goa-banner">
-          <div className="small-font">Alberta Digital Service Platform &rarr; Status & Outages</div>
-          <hr />
-          <h1>Status & Outages</h1>
-          <div className="descriptor">Real time monitoring of our applications and services</div>
-        </div>
-        <main>
-          <section>
-            <Container vs={1} hs={3} className="small-container">
-              <h2>All platform services</h2>
-              <p>
-                These are the services currently being offered by the Alberta Digital Service Platform. All statuses are
-                in real time and reflect current states of the individual services. Please{' '}
-                <a href="mailto: DIO@gov.ab.ca">contact support</a> for additional information or any other inquiries
-                regarding service statuses.
-              </p>
-              <br />
-              <div className="align-right">
-                <i className="time-updated">Updated at: 8:03AM</i>
-              </div>
-              <Grid>
-                <GridItem md={12} vSpacing={1} hSpacing={0.5}>
-                  <ServiceStatus
-                    name="Access Service"
-                    state="Outage"
-                    date="Today at 5:36AM"
-                    assignmentStatus="Assigned"
-                    description="Description - Duis aute irure dolor in rerehenderit"
-                  />
-                </GridItem>
-
-                <GridItem md={12} vSpacing={1} hSpacing={0.5}>
-                  <ServiceStatus
-                    name="File Service"
-                    state="Reported Issue"
-                    date="Today at 5:36AM"
-                    assignmentStatus="Awaiting Assignment"
-                    description="Description - Duis aute irure dolor in rerehenderit in velutate veleit velit eu"
-                  />
-                </GridItem>
-                <GridItem md={12} vSpacing={1} hSpacing={0.5}>
-                  <ServiceStatus
-                    name="Status Service"
-                    state="Operational"
-                    date="Today at 4:20AM"
-                    description="Description - Duis aute irure dolor in rerehenderit in volupate"
-                  />
-                </GridItem>
-                <GridItem md={12} vSpacing={1} hSpacing={0.5}>
-                  <ServiceStatus
-                    name="Test Service"
-                    state="Operational"
-                    date="Today at 3:15AM"
-                    description="Description - Duis aute irure dolor in rerehenderit in voluptate vele"
-                  />
-                </GridItem>
-                <GoAButton style={{ marginTop: '5px' }} buttonType="tertiary">
-                  View Status History
-                </GoAButton>
-              </Grid>
-            </Container>
-          </section>
-        </main>
-        <footer>
-          <div className="footer">
-            <div className="flex-row">
-              <div className="flex">
-                <div className="flex-row">
-                  <div className="margin-15">
-                    <a href="https://www.alberta.ca">Go to Alberta.ca</a>
-                  </div>
-                  <div className="margin-15">
-                    <a href="https://www.alberta.ca/disclaimer.aspx">Disclaimer</a>
-                  </div>
-                  <div className="margin-15">
-                    <a href="https://www.alberta.ca/privacystatement.aspx">Privacy</a>
-                  </div>
-                  <div className="margin-15">
-                    <a href="https://www.alberta.ca/accessibility.aspx">Accessibility</a>
-                  </div>
-                </div>
-              </div>
-              <div style={{ margin: '15px', textAlign: 'right' }}>
-                <div>&#169; 2020 Government of Alberta</div>
-              </div>
+    <AppCss>
+      <GoAHeader serviceLevel="alpha" serviceName="Alberta Digital Service Platform" serviceHome="/" />
+      <div className="goa-banner">
+        <div className="small-font">Alberta Digital Service Platform &rarr; Status & Outages</div>
+        <hr />
+        <h1>Status & Outages</h1>
+        <div className="descriptor">Real time monitoring of our applications and services</div>
+      </div>
+      <main>
+        <section>
+          <div className="small-container">
+            <h2>All platform services</h2>
+            <p>
+              These are the services currently being offered by the Alberta Digital Service Platform. All statuses are
+              in real time and reflect current states of the individual services. Please{' '}
+              <a href="mailto: DIO@gov.ab.ca">contact support</a> for additional information or any other inquiries
+              regarding service statuses.
+            </p>
+            <br />
+            <div className="align-right">
+              <i className="time-updated">Updated at: 8:03AM</i>
             </div>
+            <Grid>
+              <GridItem md={12} vSpacing={1} hSpacing={0.5}>
+                <ServiceStatus
+                  name="Access Service"
+                  state="Outage"
+                  date="Today at 5:36AM"
+                  assignmentStatus="Assigned"
+                  description="Description - Duis aute irure dolor in rerehenderit"
+                />
+              </GridItem>
+
+              <GridItem md={12} vSpacing={1} hSpacing={0.5}>
+                <ServiceStatus
+                  name="File Service"
+                  state="Reported Issue"
+                  date="Today at 5:36AM"
+                  assignmentStatus="Awaiting Assignment"
+                  description="Description - Duis aute irure dolor in rerehenderit in velutate veleit velit eu"
+                />
+              </GridItem>
+              <GridItem md={12} vSpacing={1} hSpacing={0.5}>
+                <ServiceStatus
+                  name="Status Service"
+                  state="Operational"
+                  date="Today at 4:20AM"
+                  description="Description - Duis aute irure dolor in rerehenderit in volupate"
+                />
+              </GridItem>
+              <GridItem md={12} vSpacing={1} hSpacing={0.5}>
+                <ServiceStatus
+                  name="Test Service"
+                  state="Operational"
+                  date="Today at 3:15AM"
+                  description="Description - Duis aute irure dolor in rerehenderit in voluptate vele"
+                />
+              </GridItem>
+            </Grid>
           </div>
-        </footer>
-      </AppCss>
-    </div>
+        </section>
+      </main>
+      <Footer>
+        <a href="https://www.alberta.ca">Go to Alberta.ca</a>
+        <FooterLinks>
+          <a href="https://www.alberta.ca/disclaimer.aspx">Disclaimer</a>
+          <a href="https://www.alberta.ca/privacystatement.aspx">Privacy</a>
+          <a href="https://www.alberta.ca/accessibility.aspx">Accessibility</a>
+        </FooterLinks>
+        <FooterCopyright>&#169; 2020 Government of Alberta</FooterCopyright>
+      </Footer>
+    </AppCss>
   );
 }
 
 export default App;
 
+const Footer = styled.div`
+  padding-top: 20px;
+  text-align: center;
+  background-color: #f1f1f1;
+`;
+
+const FooterLinks = styled.div`
+  display: flex;
+  justify-content: center;
+  margin: 0 1rem;
+  > * {
+    display: inline-block;
+    margin-right: 1rem;
+    &:last-of-type {
+      margin-right: 0;
+    }
+  }
+`;
+
+const FooterCopyright = styled.div`
+  text-align: center;
+  padding: 1rem;
+`;
+
 const AppCss = styled.div`
+  .main-container {
+    position: relative;
+  }
+
   .small-container {
     max-width: 700px;
+    padding: 20px;
+    margin: 0 auto;
   }
 
   .small-font {
@@ -151,11 +158,6 @@ const AppCss = styled.div`
     padding-right: 15px;
   }
 
-  .footer {
-    padding: 20px 80px;
-    background-color: #f1f1f1;
-  }
-
   .flex {
     flex: 1;
   }
@@ -163,10 +165,6 @@ const AppCss = styled.div`
   .flex-row {
     display: flex;
     flex-direction: row;
-  }
-
-  .margin-15 {
-    margin: 15px;
   }
 
   .goa-error {
