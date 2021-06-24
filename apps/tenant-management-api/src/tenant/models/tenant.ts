@@ -35,7 +35,7 @@ export class TenantEntity implements Tenant {
       realm: this.realm,
       adminEmail: this.adminEmail,
       tokenIssuer: this.tokenIssuer,
-      name: this.tokenIssuer,
+      name: this.name,
     };
   }
 }

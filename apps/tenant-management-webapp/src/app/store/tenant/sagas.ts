@@ -28,7 +28,7 @@ export function* fetchTenant(action: FetchTenantAction) {
 
   try {
     const response = yield api.fetchTenantByEmail(email);
-    yield put(FetchTenantSuccess(response.tenant));
+    yield put(FetchTenantSuccess(response));
   } catch (e) {
     yield put(ErrorNotification({ message: 'failed to fetch tenant' }));
   }
