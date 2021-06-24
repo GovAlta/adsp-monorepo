@@ -72,6 +72,34 @@ const Main = styled.main`
   section {
     padding: 1rem 0;
   }
+
+  .mb-2 {
+    margin-bottom: 20px;
+  }
+
+  .copy-url {
+    font-size: 11px;
+    background-color: #f9f9f9;
+    border: 2px solid #e1e1e1;
+    border-radius: 2px;
+    padding: 4px;
+  }
+
+  .copy-url-padding {
+    padding: 7em 1em 0 3em;
+
+    @media (max-width: 1024px) {
+      padding: 3em 0 0 0;
+    }
+  }
+
+  .beta-padding {
+    padding: 0 1.5em 0 3.5em;
+
+    @media (max-width: 1024px) {
+      padding: 0 0 0 0;
+    }
+  }
 `;
 
 const Aside = styled.aside`
