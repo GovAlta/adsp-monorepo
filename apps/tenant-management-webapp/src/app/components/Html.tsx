@@ -74,37 +74,6 @@ const Main = styled.main`
   }
 `;
 
-const DashboardSide = styled.aside`
-  .mb-2 {
-    margin-bottom: 20px;
-  }
-
-  .copy-url {
-    font-size: 11px;
-    background-color: #f9f9f9;
-    border: 2px solid #e1e1e1;
-    border-radius: 2px;
-    padding: 4px;
-    line-height: normal;
-  }
-
-  .copy-url-padding {
-    padding: 7rem 1rem 0 3rem;
-
-    @media (max-width: 1024px) {
-      padding: 3rem 0 0 0;
-    }
-  }
-
-  .beta-padding {
-    padding: 0 1.5rem 0 3.5rem;
-
-    @media (max-width: 1024px) {
-      padding: 0 0 0 0;
-    }
-  }
-`;
-
 const Aside = styled.aside`
   padding: 1rem 0;
   @media (min-width: 1024px) {
@@ -123,4 +92,4 @@ const Aside = styled.aside`
   }
 `;
 
-export { Page, Main, Aside, DashboardSide };
+export { Page, Main, Aside };
