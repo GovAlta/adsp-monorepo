@@ -14,13 +14,12 @@ import { GoAPageLoader } from '@abgov/react-components';
 export default function () {
   const dispatch = useDispatch();
 
-  const { users, roles, keycloakConfig, session, tenantManagementWebApp, status } = useSelector((state: RootState) => {
+  const { users, roles, keycloakConfig, session, status } = useSelector((state: RootState) => {
     return {
       users: state.access.users || [],
       roles: state.access.roles || [],
       keycloakConfig: state.config.keycloakApi,
       session: state.session,
-      tenantManagementWebApp: state.config.serviceUrls.tenantManagementWebApp,
       status: state.access.loadingState,
     };
   });
@@ -36,10 +35,6 @@ export default function () {
 
   function getKeycloakAdminPortal() {
     return session?.realm ? `${keycloakConfig.url}/admin/${session.realm}/console` : keycloakConfig.url;
-  }
-
-  function getSharedTenantLoginUrl() {
-    return `${tenantManagementWebApp}/${session.realm}/autologin`;
   }
 
   if (status === 'loading') {
@@ -122,12 +117,6 @@ export default function () {
                 })}
             </tbody>
           </DataTable>
-        </section>
-
-        <section id="sharing-tenant-access">
-          <h3>Sharing Tenant Access</h3>
-          <p>To give another user limited access to your realm, send them the url below</p>
-          <h4>{getSharedTenantLoginUrl()}</h4>
         </section>
       </Main>
 
