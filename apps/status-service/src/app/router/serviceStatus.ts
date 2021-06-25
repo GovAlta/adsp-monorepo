@@ -83,7 +83,7 @@ export function createServiceStatusRouter({
       endpoints,
       metadata,
       statusTimestamp: 0,
-      internalStatus: 'stopped',
+      internalStatus: 'disabled',
       publicStatus: 'disabled',
     });
     res.status(201).json(app);

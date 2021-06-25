@@ -132,7 +132,7 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     this.statusTimestamp = Date.now();
     // ensure the endpoints are in sync with the service state
     switch (status) {
-      case 'stopped':
+      case 'disabled':
         this.endpoints.forEach((endpoint) => (endpoint.status = 'disabled'));
         break;
       case 'pending':

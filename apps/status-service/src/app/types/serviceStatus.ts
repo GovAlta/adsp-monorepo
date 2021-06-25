@@ -1,4 +1,4 @@
-export type InternalServiceStatusType = 'operational' | 'reported-issues' | 'pending' | 'stopped';
+export type InternalServiceStatusType = 'operational' | 'reported-issues' | 'pending' | 'disabled';
 
 export type PublicServiceStatusType = 'operational' | 'maintenance' | 'outage' | 'disabled';
 
@@ -21,7 +21,7 @@ export function isValidInternalServiceStatusType(status: InternalServiceStatusTy
     case 'operational':
     case 'reported-issues':
     case 'pending':
-    case 'stopped':
+    case 'disabled':
       return true;
     default:
       return false;

@@ -64,8 +64,8 @@ describe('Service status mongo repository', () => {
 
   it('find the queued disabled applications', async () => {
     const applications = await insertMockData([
-      { name: 'app 1', endpoints: [], internalStatus: 'stopped', tenantId: '99' },
-      { name: 'app 2', endpoints: [], internalStatus: 'stopped', tenantId: '99' },
+      { name: 'app 1', endpoints: [], internalStatus: 'disabled', tenantId: '99' },
+      { name: 'app 2', endpoints: [], internalStatus: 'disabled', tenantId: '99' },
       { name: 'app 3', endpoints: [], internalStatus: 'operational', tenantId: '99' },
     ]);
     const queuedIds = applications.map((app) => app._id);
@@ -77,7 +77,7 @@ describe('Service status mongo repository', () => {
     const applications = await insertMockData([
       { name: 'app 1', endpoints: [], internalStatus: 'operational', tenantId: '99' },
       { name: 'app 2', endpoints: [], internalStatus: 'operational', tenantId: '99' }, // non-queued
-      { name: 'app 3', endpoints: [], internalStatus: 'stopped', tenantId: '99' }, // not enabled so shouldn't be queued
+      { name: 'app 3', endpoints: [], internalStatus: 'disabled', tenantId: '99' }, // not enabled so shouldn't be queued
       { name: 'app 4', endpoints: [], internalStatus: 'operational', tenantId: '33' },
     ]);
     const queuedApps = ['app 1', 'app 4'];
@@ -90,7 +90,7 @@ describe('Service status mongo repository', () => {
     const applications = await insertMockData([
       { name: 'app 1', endpoints: [], internalStatus: 'operational', tenantId: '99' },
       { name: 'app 2', endpoints: [], internalStatus: 'operational', tenantId: '99' }, // non-queued
-      { name: 'app 3', endpoints: [], internalStatus: 'stopped', tenantId: '99' }, // not enabled so shouldn't be queued
+      { name: 'app 3', endpoints: [], internalStatus: 'disabled', tenantId: '99' }, // not enabled so shouldn't be queued
       { name: 'app 4', endpoints: [], internalStatus: 'operational', tenantId: '33' },
     ]);
     const queuedApps = ['app 1', 'app 4'];
@@ -106,8 +106,8 @@ describe('Service status mongo repository', () => {
 
   it('enables an application', async () => {
     const applications = await insertMockData([
-      { name: 'app 1', endpoints: [], internalStatus: 'stopped', tenantId: '99' },
-      { name: 'app 2', endpoints: [], internalStatus: 'stopped', tenantId: '99' },
+      { name: 'app 1', endpoints: [], internalStatus: 'disabled', tenantId: '99' },
+      { name: 'app 2', endpoints: [], internalStatus: 'disabled', tenantId: '99' },
     ]);
     await repo.enable(applications[0]);
 
@@ -132,7 +132,7 @@ describe('Service status mongo repository', () => {
     ]);
     await repo.disable(applications[0]);
 
-    const disabledApplications = await repo.find({ internalStatus: 'stopped' });
+    const disabledApplications = await repo.find({ internalStatus: 'disabled' });
     expect(disabledApplications.length).toEqual(1);
     expect(disabledApplications[0].endpoints[0].status).toEqual('disabled');
     expect(disabledApplications[0].endpoints[1].status).toEqual('disabled');
@@ -140,8 +140,8 @@ describe('Service status mongo repository', () => {
 
   it('deletes the application', async () => {
     const applications = await insertMockData([
-      { name: 'app 1', endpoints: [], internalStatus: 'stopped', tenantId: '99' },
-      { name: 'app 2', endpoints: [], internalStatus: 'stopped', tenantId: '99' },
+      { name: 'app 1', endpoints: [], internalStatus: 'disabled', tenantId: '99' },
+      { name: 'app 2', endpoints: [], internalStatus: 'disabled', tenantId: '99' },
     ]);
     await repo.delete(applications[0]);
     const apps = await repo.find({});
@@ -150,8 +150,8 @@ describe('Service status mongo repository', () => {
 
   it('gets an application by id', async () => {
     const applications = await insertMockData([
-      { name: 'app 1', endpoints: [], internalStatus: 'stopped', tenantId: '99' },
-      { name: 'app 2', endpoints: [], internalStatus: 'stopped', tenantId: '99' },
+      { name: 'app 1', endpoints: [], internalStatus: 'disabled', tenantId: '99' },
+      { name: 'app 2', endpoints: [], internalStatus: 'disabled', tenantId: '99' },
     ]);
     const app = await repo.get(applications[0]._id);
     expect(app).not.toBeNull();
@@ -160,8 +160,8 @@ describe('Service status mongo repository', () => {
 
   it('saves the existing app', async () => {
     const applications = await insertMockData([
-      { name: 'app 1', endpoints: [], internalStatus: 'stopped', tenantId: '99' },
-      { name: 'app 2', endpoints: [], internalStatus: 'stopped', tenantId: '99' },
+      { name: 'app 1', endpoints: [], internalStatus: 'disabled', tenantId: '99' },
+      { name: 'app 2', endpoints: [], internalStatus: 'disabled', tenantId: '99' },
     ]);
     const editedApp = applications[0];
     editedApp.name = 'edited app';

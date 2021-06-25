@@ -36,7 +36,7 @@ export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
       return;
     }
     // exit in the case where the application has not yet been removed from the job queue
-    if (application.internalStatus === 'stopped') {
+    if (application.internalStatus === 'disabled') {
       return;
     }
 
