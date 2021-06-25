@@ -2,8 +2,9 @@ import React from 'react';
 import { GoACard, GoAButton } from '@abgov/react-components';
 import { Link } from 'react-router-dom';
 import ProductFeatures from '@assets/ProductFeatures.png';
+import ReactTooltip from 'react-tooltip';
 import { Grid, GridItem } from '@components/Grid';
-import { Main } from '@components/Html';
+import { Main, DashboardSide } from '@components/Html';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 
@@ -17,7 +18,10 @@ const Dashboard = () => {
   });
 
   const autoLoginUrl = `${tenantManagementWebApp}/${session.realm}/autologin`;
-  console.log(autoLoginUrl + '<autoLoginUrl');
+
+  const _afterShow = () => {
+    navigator.clipboard.writeText(autoLoginUrl);
+  };
 
   return (
     <Main>
@@ -52,24 +56,30 @@ const Dashboard = () => {
           </Grid>
         </GridItem>
         <GridItem xl={4} lg={4} md={12} vSpacing={0} hSpacing={0}>
-          <div className="beta-padding">
-            This service is in <b>BETA</b> release. If you have any questions, please email{' '}
-            <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a>
-          </div>
-          <div className="copy-url-padding">
-            <h3>Sharing Tenant Access</h3>
-            <p>To give another user limited access to your realm, send them the url below</p>
-            <div className="copy-url">{autoLoginUrl}</div>
-            <div className="mb-2">
-              <GoAButton
-                onClick={() => {
-                  navigator.clipboard.writeText(autoLoginUrl);
-                }}
-              >
-                Click to copy
-              </GoAButton>
+          <DashboardSide>
+            <div className="beta-padding">
+              This service is in <b>BETA</b> release. If you have any questions, please email{' '}
+              <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a>
             </div>
-          </div>
+            <div className="copy-url-padding">
+              <h3>Sharing Tenant Access</h3>
+              <p>To give another user limited access to your realm, send them the url below</p>
+              <div className="copy-url">{autoLoginUrl}</div>
+              <div className="mb-2">
+                <GoAButton data-tip="Copied!" data-for="registerTip">
+                  Click to copy
+                </GoAButton>
+                <ReactTooltip
+                  id="registerTip"
+                  place="top"
+                  event="click"
+                  eventOff="blur"
+                  effect="solid"
+                  afterShow={_afterShow}
+                />
+              </div>
+            </div>
+          </DashboardSide>
         </GridItem>
       </Grid>
     </Main>

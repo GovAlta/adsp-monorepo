@@ -72,7 +72,9 @@ const Main = styled.main`
   section {
     padding: 1rem 0;
   }
+`;
 
+const DashboardSide = styled.aside`
   .mb-2 {
     margin-bottom: 20px;
   }
@@ -86,15 +88,15 @@ const Main = styled.main`
   }
 
   .copy-url-padding {
-    padding: 7em 1em 0 3em;
+    padding: 7rem 1rem 0 3rem;
 
     @media (max-width: 1024px) {
-      padding: 3em 0 0 0;
+      padding: 3rem 0 0 0;
     }
   }
 
   .beta-padding {
-    padding: 0 1.5em 0 3.5em;
+    padding: 0 1.5rem 0 3.5rem;
 
     @media (max-width: 1024px) {
       padding: 0 0 0 0;
@@ -120,4 +122,4 @@ const Aside = styled.aside`
   }
 `;
 
-export { Page, Main, Aside };
+export { Page, Main, Aside, DashboardSide };
