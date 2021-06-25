@@ -13,8 +13,6 @@ describe('DirectoryEntity', () => {
   beforeEach(() => {
     serviceMock.send.mockReset();
   });
-
-  const repositoryMock = new Mock<DirectoryRepository>();
   const testDirectory: Directory = {
     id: '60d4fadbb662612a75295749',
     name: 'platform',
@@ -25,10 +23,13 @@ describe('DirectoryEntity', () => {
       },
     ],
   };
+  const repositoryMock = new Mock<DirectoryRepository>();
+  const entity = new DirectoryEntity(repositoryMock.object(), testDirectory);
+  repositoryMock.setup((m) => m.save(entity)).returns(Promise.resolve(entity));
+
   it('Created directory', (done) => {
     const id = uuidv4();
 
-    const entity = new DirectoryEntity(repositoryMock.object(), testDirectory);
     expect(entity).toBeTruthy();
     expect(entity.name).toBeTruthy();
     expect(entity.services).toBeTruthy();

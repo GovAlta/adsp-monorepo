@@ -69,7 +69,7 @@ const ActionsMenu = (props: HeaderMenuProps) => {
 function AppHeader({ serviceName = '', hasLoginLink = true, admin = false }) {
   return (
     <HeaderContainer>
-      <GoAHeader serviceHome="/" serviceLevel="alpha" serviceName={serviceName} />
+      <GoAHeader serviceHome="/" serviceLevel="beta" serviceName={serviceName} />
       <ActionsMenu hasLoginLink={hasLoginLink} admin={admin} />
     </HeaderContainer>
   );
