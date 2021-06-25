@@ -9,7 +9,6 @@ export const directorySchema = new Schema({
   name: {
     type: String,
     required: [true, 'directory name required'],
-    enum: ['platform', 'ccds', 'ArcGIS'],
     minlength: [5, 'Minimum code length 5 characters'],
   },
   services: [

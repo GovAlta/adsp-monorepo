@@ -1,10 +1,14 @@
-import * as data from './directory.json';
-import Directory, { DirectoryMap, createDirectory } from '../models/directory';
 import { logger } from '../../middleware/logger';
 import { ApiError } from '../../util/apiError';
 import * as HttpStatusCodes from 'http-status-codes';
 import { validateUrn, validateHostname, validateVersion, validatePath } from './util/patternUtil';
 import { AdspId } from '@abgov/adsp-service-sdk';
+import { DirectoryRepository } from '../repository';
+import { MongoDirectoryRepository } from '../mongo/directory';
+
+interface ServiceProps {
+  directoryRepository: DirectoryRepository;
+}
 
 export interface URNComponent {
   scheme?: string;
@@ -71,12 +75,11 @@ const validateServices = (services) => {
   }
 };
 
-export const discovery = async (urn: string): Promise<Response | ApiError> => {
+export const discovery = async (urn: string, { directoryRepository }: ServiceProps): Promise<Response | ApiError> => {
   //resolve the urn to object
   logger.info(`Starting discover URL for urn ${urn}`);
   const component: URNComponent = {};
   const urnArray = urn.toLowerCase().split(URN_SEPARATOR);
-
   if (urnArray.length > 3) {
     component.scheme = urnArray[0];
     component.nic = urnArray[1];
@@ -104,24 +107,19 @@ export const discovery = async (urn: string): Promise<Response | ApiError> => {
     }
 
     try {
-      let directory: DirectoryMap[] = await Directory.find();
+      const directory = await directoryRepository.find(1, null, null);
 
-      if (!directory || directory.length === 0) {
+      if (!directory || directory.results.length === 0) {
         // No directory in mongo db will read from json file.
-
-        // eslint-disable-next-line
-        const directoryJson = (data as any).default;
-
-        createDirectory(directoryJson);
-
-        const services = getName(directoryJson, component.core);
-        return getUrlResponse(services, component);
+        logger.error(
+          'There is no record in directory DB, Please insert data by calling  "nx run tools-scripts:execute --script=loadDirectoryData"'
+        );
       }
 
       // get url from mongo
-      directory = await Directory.find({ name: component.core });
-      const services = directory[0]['services'];
+      const result = await directoryRepository.find(1, null, { name: component.core });
 
+      const services = result.results[0]['services'];
       return getUrlResponse(services, component);
     } catch (err) {
       return new ApiError(
@@ -141,8 +139,9 @@ export const getDirectories = async () => {
   logger.info('Starting get directory from mongo db...');
   try {
     const response = [];
-
-    const directories: DirectoryMap[] = await Directory.find({});
+    const directoryRepository: DirectoryRepository = new MongoDirectoryRepository();
+    const result = await directoryRepository.find(100, null, null);
+    const directories = result.results;
     if (directories && directories.length > 0) {
       for (const directory of directories) {
         const services = directory['services'];
@@ -171,75 +170,8 @@ export const getDirectories = async () => {
   }
 };
 
-export const addDirectory = async (directories) => {
-  logger.info('directory service add directory');
-  try {
-    const directory: DirectoryMap[] = await Directory.find({
-      name: directories['name'],
-    });
-
-    if (directory.length === 0) {
-      const services = directories['services'];
-      validateServices(services);
-
-      // Create
-      await Directory.create(JSON.parse(JSON.stringify(directories).toLowerCase()));
-      return HttpStatusCodes.CREATED;
-    }
-    return new ApiError(HttpStatusCodes.BAD_REQUEST, `There exist directory ${directories['name']}`);
-  } catch (err) {
-    return new ApiError(
-      HttpStatusCodes.BAD_REQUEST,
-      'Empty in urn! urn format should looks like urn:ads:{tenant|core}:{service}'
-    );
-  }
-};
-
-export const updateDirectory = async (directories) => {
-  logger.info('directory service  updateDirectory');
-  try {
-    const directory: DirectoryMap[] = await Directory.find({
-      name: directories['name'],
-    });
-
-    if (directory && directory.length > 0) {
-      // Update
-      const services = directories['services'];
-      validateServices(services);
-      await Directory.findOneAndUpdate(
-        { name: directories['name'] },
-        {
-          services: JSON.parse(JSON.stringify(directories['services']).toLowerCase()),
-        },
-        { new: true }
-      );
-      return HttpStatusCodes.CREATED;
-    }
-  } catch (err) {
-    return new ApiError(
-      HttpStatusCodes.BAD_REQUEST,
-      'Empty in urn! urn format should looks like urn:ads:{tenant|core}:{service}'
-    );
-  }
-};
-
-export const deleteDirectory = async (name: string) => {
-  try {
-    logger.info(`Start delete directory :  ${name}...`);
-    await Directory.deleteMany({ name: name.toLowerCase() });
-
-    return HttpStatusCodes.ACCEPTED;
-  } catch (err) {
-    return new ApiError(
-      HttpStatusCodes.BAD_REQUEST,
-      'Empty in urn! urn format should looks like urn:ads:{tenant|core}:{service}'
-    );
-  }
-};
-
 export const getServiceUrl = async (id: AdspId): Promise<URL> => {
   const directory = (await getDirectories()) as { urn: string; url: string }[];
-
   const entry = directory.find((entry) => entry.urn === `${id}`);
   if (!entry) {
     throw new Error(`Directory entry for ${id} not found.`);

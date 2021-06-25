@@ -16,16 +16,9 @@ export class DirectoryEntity implements Directory {
     const entity = new DirectoryEntity(repository, directory);
     return repository.save(entity);
   }
-  update(directory) {
+  async update(directory) {
     this.name = directory.name;
     this.services = directory.services;
     return this.repository.save(this);
-  }
-
-  delete() {
-    return this.repository.delete(this);
-  }
-  getDirectories(name: string) {
-    return this.repository.getDirectories(name);
   }
 }

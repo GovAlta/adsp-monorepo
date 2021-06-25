@@ -44,16 +44,10 @@ export class MongoDirectoryRepository implements DirectoryRepository {
   }
 
   async save(entity: DirectoryEntity): Promise<DirectoryEntity> {
-    const directory = new this.directoryModel({
-      name: entity.name,
-      services: entity.services,
-    });
-
     try {
-      await directory.save();
       return new Promise<DirectoryEntity>((resolve, reject) =>
         this.directoryModel.findOneAndUpdate(
-          { _id: entity.id || new Types.ObjectId() },
+          { name: entity.name || new Types.ObjectId() },
           this.toDoc(entity),
           { upsert: true, new: true, lean: true },
           (err, doc) => {
@@ -72,7 +66,13 @@ export class MongoDirectoryRepository implements DirectoryRepository {
 
   delete(entity: DirectoryEntity): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) =>
-      this.directoryModel.findOneAndDelete({ _id: entity.id }, (err, doc) => (err ? reject(err) : resolve(!!doc)))
+      this.directoryModel.deleteOne({ name: entity.name }, (err, doc) => (err ? reject(err) : resolve(!!doc)))
+    );
+  }
+
+  create(directories): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) =>
+      this.directoryModel.create(directories, (err, doc) => (err ? reject(err) : resolve(!!doc)))
     );
   }
 
@@ -83,7 +83,13 @@ export class MongoDirectoryRepository implements DirectoryRepository {
       )
     );
   }
-
+  update(directory): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) =>
+      this.directoryModel.findOneAndUpdate({ name: directory.name }, directory, { upsert: true }, (err, doc) =>
+        err ? reject(err) : resolve(!!doc)
+      )
+    );
+  }
   async exists(name: string): Promise<boolean> {
     const result = await this.directoryModel.findOne({
       where: { name: name },
