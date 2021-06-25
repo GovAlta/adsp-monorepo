@@ -34,7 +34,7 @@ export function App() {
 
   return (
     <AppCss>
-      <GoAHeader serviceLevel="alpha" serviceName="Alberta Digital Service Platform" serviceHome="/" />
+      <GoAHeader serviceLevel="beta" serviceName="Alberta Digital Service Platform" serviceHome="/" />
       <div className="goa-banner">
         <div className="small-font">Alberta Digital Service Platform &rarr; Status & Outages</div>
         <hr />
