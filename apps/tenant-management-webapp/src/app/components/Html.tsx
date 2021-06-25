@@ -85,6 +85,7 @@ const DashboardSide = styled.aside`
     border: 2px solid #e1e1e1;
     border-radius: 2px;
     padding: 4px;
+    line-height: normal;
   }
 
   .copy-url-padding {
