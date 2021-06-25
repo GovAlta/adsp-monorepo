@@ -1,7 +1,8 @@
 {
   "rules": {
     "@typescript-eslint/explicit-module-boundary-types": "off",
-    "cypress/no-unnecessary-waiting": "off"
+    "cypress/no-unnecessary-waiting": "off",
+    "@typescript-eslint/no-non-null-assertion": "off"
   },
   "extends": [
     "plugin:cypress/recommended",

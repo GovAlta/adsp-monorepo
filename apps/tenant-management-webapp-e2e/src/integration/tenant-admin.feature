@@ -56,7 +56,12 @@ Feature: Tenant admin
     Then the user views the number of users in top 5 roles in its tenant realm
     And the number of users in roles from admin page should equal to the number of users in roles from the realm API
 
-
+  @accessibility @regression
+  Scenario: As a service owner, I can use the tenant admin app without any critical or serious accessibility issues
+    Given a service owner user is on tenant admin page
+    Then no critical or serious accessibility issues on the web page
+    When the user selects the "Access" menu item
+    Then no critical or serious accessibility issues on the web page
 
 
 

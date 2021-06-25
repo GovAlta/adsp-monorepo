@@ -1,6 +1,6 @@
 Feature: Tenant management welcome page
 
-    @smoke-test @regression @smoke-test
+    @smoke-test @regression
     Scenario: As a tenant management user, I can see the welcome page
         When the user goes to the tenant management welcome page
         Then the user views the tenant management welcome page title
@@ -40,3 +40,8 @@ Feature: Tenant management welcome page
         # Delete the created tenant for the next test run
         When the user sends the delete tenant request
         Then the new tenant is deleted
+
+    @accessibility @regression
+    Scenario: As a tenant management user, I can see the welcome page with any critical and serious accessibility issues
+        When the user goes to the tenant management welcome page
+        Then no critical or serious accessibility issues on the web page

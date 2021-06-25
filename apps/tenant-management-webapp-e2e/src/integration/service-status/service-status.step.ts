@@ -14,10 +14,10 @@ Given('a service owner user is on service status page', function () {
     Cypress.env('password')
   );
   tenantAdminObj
-    .dashboardMenuItem('/admin/tenant-admin/services/service-status')
+    .dashboardMenuItem('/admin/services/status')
     .click()
     .then(function () {
-      cy.url().should('include', '/admin/tenant-admin/services/service-status');
+      cy.url().should('include', '/admin/services/status');
       cy.wait(4000);
     });
 });
