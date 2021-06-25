@@ -6,7 +6,6 @@ import { useSelector } from 'react-redux';
 
 import Sidebar from './sidebar';
 import Dashboard from './dashboard';
-import Adminstration from './administration';
 import File from './services/file';
 import AccessPage from './services/access/access';
 import Container from '@components/Container';
@@ -29,28 +28,22 @@ const TenantManagement = (): JSX.Element => {
       </SidebarWrapper>
       <Container hs={1}>
         <Switch>
-          <Route exact path="/admin/tenant-admin/">
+          <Route exact path="/admin">
             <Dashboard />
           </Route>
-          <Route exact path="/admin/tenant-admin/admin">
-            <Adminstration />
-          </Route>
-          <Route exact path="/admin/tenant-admin/event-log">
+          <Route exact path="/admin/event-log">
             <EventLog />
           </Route>
-          <Route path="/admin/tenant-admin/access">
+          <Route path="/admin/access">
             <AccessPage />
           </Route>
-          <Route exact path="/admin/tenant-admin/admin">
-            <Adminstration />
-          </Route>
-          <Route exact path="/admin/tenant-admin/services/file">
+          <Route exact path="/admin/services/files">
             <File />
           </Route>
-          <Route path="/admin/tenant-admin/services/service-status">
+          <Route path="/admin/services/status">
             <Status />
           </Route>
-          <Route path="/admin/tenant-admin/services/event-service">
+          <Route path="/admin/services/events">
             <Events />
           </Route>
 

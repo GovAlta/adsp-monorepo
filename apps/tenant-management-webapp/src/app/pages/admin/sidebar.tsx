@@ -41,29 +41,29 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
       {authenticated && (
         <>
           <Title>{tenantName}</Title>
-          <NavLink to="/admin/tenant-admin" exact={true} activeClassName="current" title="Dashboard">
+          <NavLink to="/admin" exact={true} activeClassName="current" title="Dashboard">
             <img src={DashboardIcon} width="16" alt="Dashboard" />
             <span>Dashboard</span>
           </NavLink>
-          <NavLink to="/admin/tenant-admin/event-log" activeClassName="current" title="Event log">
+          <NavLink to="/admin/event-log" activeClassName="current" title="Event log">
             <img src={ReceiptIcon} width="16" alt="Admin" />
             <span>Event log</span>
           </NavLink>
 
           <Title>Services</Title>
-          <NavLink to="/admin/tenant-admin/access" activeClassName="current" title="Access">
+          <NavLink to="/admin/access" activeClassName="current" title="Access">
             <img src={BarChartIcon} width="16" alt="Access" />
             <span>Access</span>
           </NavLink>
-          <NavLink to="/admin/tenant-admin/services/file" activeClassName="current" title="Files">
+          <NavLink to="/admin/services/files" activeClassName="current" title="Files">
             <img src={FileIcon} width="16" alt="Files" />
             <span>Files</span>
           </NavLink>
-          <NavLink to="/admin/tenant-admin/services/service-status" activeClassName="current" title="Status">
+          <NavLink to="/admin/services/status" activeClassName="current" title="Status">
             <img src={FitnessIcon} width="16" alt="Status" />
             <span>Status</span>
           </NavLink>
-          <NavLink to="/admin/tenant-admin/services/event-service" activeClassName="current" title="Events">
+          <NavLink to="/admin/services/events" activeClassName="current" title="Events">
             <img src={MegaphoneIcon} width="16" alt="Status" />
             <span>Events</span>
           </NavLink>

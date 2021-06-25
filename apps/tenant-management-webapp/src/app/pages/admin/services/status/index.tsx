@@ -6,7 +6,7 @@ import StatusPage from './status';
 function index(): JSX.Element {
   return (
     <Switch>
-      <Route path="/admin/tenant-admin/services/service-status">
+      <Route path="/admin/services/status">
         <StatusPage />
       </Route>
     </Switch>

@@ -18,25 +18,25 @@ const Dashboard = () => {
           <Grid>
             <GridItem md={6} vSpacing={1} hSpacing={0.5}>
               <GoACard
-                title={<Link to="/admin/tenant-admin/access">Access</Link>}
+                title={<Link to="/admin/access">Access</Link>}
                 description="Access allows you to add a secure sign in to you application and services with minimum effort and configuration. No need to deal with storing or authenticating users. It's all available out of the box."
               />
             </GridItem>
             <GridItem md={6} vSpacing={1} hSpacing={0.5}>
               <GoACard
-                title={<Link to="/admin/tenant-admin/services/file">File Service</Link>}
+                title={<Link to="/admin/services/files">File Service</Link>}
                 description="The file service provides the capability to upload and download files. Consumers are registered with their own space (tenant) containing file types that include role based access policy, and can associate files to domain records."
               />
             </GridItem>
             <GridItem md={6} vSpacing={1} hSpacing={0.5}>
               <GoACard
-                title={<Link to="/admin/tenant-admin/services/service-status">Status</Link>}
+                title={<Link to="/admin/services/status">Status</Link>}
                 description="The status service allows for easy monitoring of application downtime. Each Application should represent a service that is useful to the end user by itself, such as child care subsidy and child care certification."
               />
             </GridItem>
             <GridItem md={6} vSpacing={1} hSpacing={0.5}>
               <GoACard
-                title={<Link to="/admin/tenant-admin/services/event-service">Events</Link>}
+                title={<Link to="/admin/services/events">Events</Link>}
                 description="The event service provides tenant applications with the ability to send domain events. Applications are able to leverage additional capabilities as side effects through these events."
               />
             </GridItem>
