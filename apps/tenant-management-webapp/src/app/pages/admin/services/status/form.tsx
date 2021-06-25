@@ -18,8 +18,7 @@ function ApplicationForm(): JSX.Element {
     tenantId: '',
     enabled: false,
     description: '',
-    internalStatus: 'disabled',
-    publicStatus: 'disabled',
+    status: 'disabled',
     endpoints: [],
   });
 

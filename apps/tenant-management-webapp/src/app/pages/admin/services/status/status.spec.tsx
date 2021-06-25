@@ -29,8 +29,7 @@ describe('ServiceStatus Page', () => {
             _id: '99',
             tenantId: '11',
             name: 'facebook',
-            internalStatus: 'operational',
-            publicStatus: 'enabled',
+            status: 'operational',
             endpoints: [
               { url: 'https://facebook.com/api', status: 'online' },
               { url: 'https://facebook.com', status: 'online' },
@@ -40,8 +39,7 @@ describe('ServiceStatus Page', () => {
             _id: '33',
             tenantId: '11',
             name: 'twitter',
-            internalStatus: 'operational',
-            publicStatus: 'enabled',
+            status: 'operational',
             endpoints: [
               { url: 'https://twitter.com/api', status: 'offline' },
               { url: 'https://twitter.com', status: 'online' },
@@ -51,8 +49,7 @@ describe('ServiceStatus Page', () => {
             _id: '11',
             tenantId: '11',
             name: 'alberta.ca',
-            internalStatus: 'operational',
-            publicStatus: 'enabled',
+            status: 'operational',
             endpoints: [
               { url: 'https://alberta.ca/api', status: 'pending' },
               { url: 'https://alberta.ca', status: 'offline' },
@@ -109,7 +106,7 @@ describe('ServiceStatus Page', () => {
             _id: '11',
             tenantId: '11',
             name: 'alberta.ca',
-            internalStatus: 'disabled',
+            status: 'disabled',
             endpoints: [],
           },
         ],
@@ -131,7 +128,7 @@ describe('ServiceStatus Page', () => {
       const { applicationId, status, tenantId } = toggleAction.payload;
       expect(applicationId).toEqual('11');
       expect(tenantId).toEqual('11');
-      expect(status).toEqual(!state.serviceStatus.applications[0].internalStatus);
+      expect(status).toEqual(!state.serviceStatus.applications[0].status);
     });
   });
 });

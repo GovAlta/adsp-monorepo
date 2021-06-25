@@ -36,7 +36,7 @@ export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
       return;
     }
     // exit in the case where the application has not yet been removed from the job queue
-    if (application.internalStatus === 'disabled') {
+    if (application.status === 'disabled') {
       return;
     }
 
@@ -112,7 +112,7 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
 
   // set the application status based on the endpoints
   if (isStatusChanged) {
-    application.internalStatus = allEndpointsUp ? 'operational' : 'reported-issues';
+    application.status = allEndpointsUp ? 'operational' : 'reported-issues';
     await serviceStatusRepository
       .save(application)
       .catch((err) => console.error('failed to update service status: ', err));

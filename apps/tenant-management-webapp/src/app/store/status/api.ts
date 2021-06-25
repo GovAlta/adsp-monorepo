@@ -33,13 +33,8 @@ export class StatusApi {
     await this.http.delete(`/applications/${applicationId}`);
   }
 
-  async setInternalStatus(applicationId: string, status: string): Promise<ServiceStatusApplication> {
-    const res = await this.http.patch(`/applications/${applicationId}/internal-status`, { status });
-    return res.data;
-  }
-
-  async setPublicStatus(applicationId: string, status: string): Promise<ServiceStatusApplication> {
-    const res = await this.http.patch(`/applications/${applicationId}/public-status`, { status });
+  async setStatus(applicationId: string, status: string): Promise<ServiceStatusApplication> {
+    const res = await this.http.patch(`/applications/${applicationId}/status`, { status });
     return res.data;
   }
 }

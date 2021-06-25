@@ -2,6 +2,8 @@ export type InternalServiceStatusType = 'operational' | 'reported-issues' | 'pen
 
 export type PublicServiceStatusType = 'operational' | 'maintenance' | 'outage' | 'disabled';
 
+export type ServiceStatusType = InternalServiceStatusType | PublicServiceStatusType;
+
 export type EndpointStatusType = 'up' | 'down' | 'pending' | 'disabled';
 
 export function isValidPublicServiceStatusType(status: PublicServiceStatusType): boolean {
@@ -44,10 +46,9 @@ export interface ServiceStatusApplication {
   _id?: string;
   description: string;
   endpoints: ServiceStatusEndpoint[];
-  internalStatus: InternalServiceStatusType;
+  status: ServiceStatusType;
   metadata: unknown;
   name: string;
-  publicStatus: PublicServiceStatusType;
   statusTimestamp: number;
   tenantId: string;
 }
@@ -69,5 +70,5 @@ export interface ServiceStatusNotifications {
 export interface ServiceStatusLog {
   applicationId: string;
   timestamp: number;
-  status: InternalServiceStatusType;
+  status: ServiceStatusType;
 }

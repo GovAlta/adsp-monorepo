@@ -1,4 +1,4 @@
-import { InternalServiceStatusType, ServiceStatusApplicationEntity } from '..';
+import { ServiceStatusType, ServiceStatusApplicationEntity } from '..';
 import { createMockMongoServer, disconnectMockMongo } from '../../mongo/mock';
 import MongoServiceStatusRepository from '../../mongo/serviceStatus';
 import MongoEndpointStatusEntryRepository from '../../mongo/endpointStatusEntry';
@@ -26,13 +26,12 @@ describe('Validate endpoint checking', () => {
     return new mongoose.Types.ObjectId().toHexString();
   }
 
-  async function createMockApplication(initStatus: InternalServiceStatusType): Promise<ServiceStatusApplicationEntity> {
+  async function createMockApplication(initStatus: ServiceStatusType): Promise<ServiceStatusApplicationEntity> {
     const appData: Partial<ServiceStatusApplicationEntity> = {
       _id: generateId(),
       endpoints: [{ url: 'http://foo.bar', status: initStatus === 'operational' ? 'up' : 'down' }],
-      internalStatus: initStatus,
       name: 'app 1',
-      publicStatus: 'operational',
+      status: initStatus,
       tenantId: '99',
     };
     return await serviceStatusRepository.save(appData as ServiceStatusApplicationEntity);
@@ -78,7 +77,7 @@ describe('Validate endpoint checking', () => {
 
     // init state check
     service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-    expect(service.internalStatus).toBe('reported-issues');
+    expect(service.status).toBe('reported-issues');
 
     // pass 1 - should be `reported-issues`
     {
@@ -89,7 +88,7 @@ describe('Validate endpoint checking', () => {
       expect(entries[0].ok).toBe(true);
 
       service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-      expect(service.internalStatus).toBe('reported-issues');
+      expect(service.status).toBe('reported-issues');
       expect(service.endpoints[0].status).toBe('down');
     }
 
@@ -103,7 +102,7 @@ describe('Validate endpoint checking', () => {
       expect(entries[1].ok).toBe(true);
 
       service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-      expect(service.internalStatus).toBe('reported-issues');
+      expect(service.status).toBe('reported-issues');
       expect(service.endpoints[0].status).toBe('down');
     }
 
@@ -118,7 +117,7 @@ describe('Validate endpoint checking', () => {
       expect(entries[2].ok).toBe(true);
 
       service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-      expect(service.internalStatus).toBe('operational');
+      expect(service.status).toBe('operational');
       expect(service.endpoints[0].status).toBe('up');
     }
   });
@@ -132,7 +131,7 @@ describe('Validate endpoint checking', () => {
 
     // init state check
     service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-    expect(service.internalStatus).toBe('operational');
+    expect(service.status).toBe('operational');
 
     // pass 1 - should be `operational`
     {
@@ -143,7 +142,7 @@ describe('Validate endpoint checking', () => {
       expect(entries[0].ok).toBe(false);
 
       service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-      expect(service.internalStatus).toBe('operational');
+      expect(service.status).toBe('operational');
       expect(service.endpoints[0].status).toBe('up');
     }
 
@@ -157,7 +156,7 @@ describe('Validate endpoint checking', () => {
       expect(entries[1].ok).toBe(false);
 
       service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-      expect(service.internalStatus).toBe('operational');
+      expect(service.status).toBe('operational');
       expect(service.endpoints[0].status).toBe('up');
     }
 
@@ -172,7 +171,7 @@ describe('Validate endpoint checking', () => {
       expect(entries[2].ok).toBe(false);
 
       service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-      expect(service.internalStatus).toBe('reported-issues');
+      expect(service.status).toBe('reported-issues');
       expect(service.endpoints[0].status).toBe('down');
     }
   });
@@ -188,7 +187,7 @@ describe('Validate endpoint checking', () => {
       await mockRequest(application, { status: 500 });
 
       const service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-      expect(service.internalStatus).toBe('reported-issues');
+      expect(service.status).toBe('reported-issues');
       expect(service.endpoints[0].status).toBe('down');
     }
 
@@ -198,7 +197,7 @@ describe('Validate endpoint checking', () => {
       await mockRequest(application, { status: 200 });
       await mockRequest(application, { status: 200 });
       const service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-      expect(service.internalStatus).toBe('operational');
+      expect(service.status).toBe('operational');
       expect(service.endpoints[0].status).toBe('up');
     }
 
@@ -207,7 +206,7 @@ describe('Validate endpoint checking', () => {
       await mockRequest(application, { status: 500 });
 
       const service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-      expect(service.internalStatus).toBe('operational');
+      expect(service.status).toBe('operational');
       expect(service.endpoints[0].status).toBe('up');
     }
 
@@ -217,7 +216,7 @@ describe('Validate endpoint checking', () => {
       await mockRequest(application, { status: 500 });
 
       const service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-      expect(service.internalStatus).toBe('reported-issues');
+      expect(service.status).toBe('reported-issues');
       expect(service.endpoints[0].status).toBe('down');
     }
   });

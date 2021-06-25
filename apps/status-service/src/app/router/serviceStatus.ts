@@ -6,7 +6,7 @@ import { RecordNotFoundError, UnauthorizedError } from '../common/errors';
 import { ServiceStatusApplicationEntity } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
-import { EndpointStatusEntry, InternalServiceStatusType, PublicServiceStatusType } from '../types';
+import { EndpointStatusEntry, ServiceStatusType } from '../types';
 
 export interface ServiceStatusRouterProps {
   logger: Logger;
@@ -83,8 +83,7 @@ export function createServiceStatusRouter({
       endpoints,
       metadata,
       statusTimestamp: 0,
-      internalStatus: 'disabled',
-      publicStatus: 'disabled',
+      status: 'disabled',
     });
     res.status(201).json(app);
   });
@@ -131,7 +130,7 @@ export function createServiceStatusRouter({
     res.sendStatus(204);
   });
 
-  router.patch('/applications/:id/public-status', assertAuthenticatedHandler, async (req, res) => {
+  router.patch('/applications/:id/status', assertAuthenticatedHandler, async (req, res) => {
     logger.info(`${req.method} - ${req.url}`);
 
     const user = req.user as Express.User;
@@ -143,23 +142,7 @@ export function createServiceStatusRouter({
       throw new UnauthorizedError('invalid tenant id');
     }
 
-    const updatedApplication = await application.setPublicStatus(user, status as PublicServiceStatusType);
-    res.status(200).json(updatedApplication);
-  });
-
-  router.patch('/applications/:id/internal-status', assertAuthenticatedHandler, async (req, res) => {
-    logger.info(`${req.method} - ${req.url}`);
-
-    const user = req.user as Express.User;
-    const { id } = req.params;
-    const { status } = req.body;
-    const application = await serviceStatusRepository.get(id);
-
-    if (user.tenantId?.toString() !== application.tenantId) {
-      throw new UnauthorizedError('invalid tenant id');
-    }
-
-    const updatedApplication = await application.setInternalStatus(user, status as InternalServiceStatusType);
+    const updatedApplication = await application.setStatus(user, status as ServiceStatusType);
     res.status(200).json(updatedApplication);
   });
 

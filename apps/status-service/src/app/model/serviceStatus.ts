@@ -3,21 +3,15 @@ import { ObjectId } from 'mongoose';
 import { NewOrExisting, Update } from '@core-services/core-common';
 import { MissingParamsError, UnauthorizedError } from '../common/errors';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
-import {
-  InternalServiceStatusType,
-  PublicServiceStatusType,
-  ServiceStatusApplication,
-  ServiceStatusEndpoint,
-} from '../types';
+import { ServiceStatusApplication, ServiceStatusEndpoint, ServiceStatusType } from '../types';
 
 export class ServiceStatusApplicationEntity implements ServiceStatusApplication {
   _id?: string;
   description: string;
   endpoints: ServiceStatusEndpoint[];
-  internalStatus: InternalServiceStatusType;
+  status: ServiceStatusType;
   metadata: unknown;
   name: string;
-  publicStatus: PublicServiceStatusType;
   statusTimestamp: number;
   tenantId: string;
 
@@ -41,8 +35,7 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     this.description = application.description;
     this.statusTimestamp = application.statusTimestamp;
     this.tenantId = application.tenantId;
-    this.internalStatus = application.internalStatus;
-    this.publicStatus = application.publicStatus;
+    this.status = application.status;
   }
 
   update(user: User, update: Update<ServiceStatusApplication>): Promise<ServiceStatusApplicationEntity> {
@@ -54,8 +47,7 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     this.name = update.name ?? this.name;
     this.description = update.description ?? this.description;
     this.statusTimestamp = update.statusTimestamp ?? this.statusTimestamp;
-    this.internalStatus = update.internalStatus ?? this.internalStatus;
-    this.publicStatus = update.publicStatus ?? this.publicStatus;
+    this.status = update.status ?? this.status;
 
     return this.repository.save(this);
   }
@@ -104,34 +96,16 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     return await this.repository.delete(this);
   }
 
-  async setPublicStatus(user: Express.User, status: PublicServiceStatusType): Promise<ServiceStatusApplicationEntity> {
+  async setStatus(user: Express.User, status: ServiceStatusType): Promise<ServiceStatusApplicationEntity> {
     if (!this.canUpdate(user)) {
       throw new UnauthorizedError('User not authorized to set application status');
     }
 
-    this.publicStatus = status;
+    this.status = status;
     this.statusTimestamp = Date.now();
     // ensure the endpoints are in sync with the service state
     switch (status) {
       case 'maintenance':
-        this.endpoints.forEach((endpoint) => (endpoint.status = 'disabled'));
-        break;
-    }
-
-    return await this.repository.save(this);
-  }
-  async setInternalStatus(
-    user: Express.User,
-    status: InternalServiceStatusType
-  ): Promise<ServiceStatusApplicationEntity> {
-    if (!this.canUpdate(user)) {
-      throw new UnauthorizedError('User not authorized to set application status');
-    }
-
-    this.internalStatus = status;
-    this.statusTimestamp = Date.now();
-    // ensure the endpoints are in sync with the service state
-    switch (status) {
       case 'disabled':
         this.endpoints.forEach((endpoint) => (endpoint.status = 'disabled'));
         break;
