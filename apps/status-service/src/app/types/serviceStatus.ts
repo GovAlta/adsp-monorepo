@@ -1,8 +1,12 @@
-export type InternalServiceStatusType = 'operational' | 'reported-issues' | 'pending' | 'stopped';
+export type InternalServiceStatusType = 'operational' | 'reported-issues' | 'pending' | 'disabled';
 
-export type PublicServiceStatusType = 'operational' | 'maintenance' | 'outage' | 'disabled';
+export type PublicServiceStatusType = 'operational' | 'maintenance' | 'outage' | 'pending' | 'disabled';
+
+export type ServiceStatusType = InternalServiceStatusType | PublicServiceStatusType;
 
 export type EndpointStatusType = 'up' | 'down' | 'pending' | 'disabled';
+
+export type ManualOverrideState = 'on' | 'off';
 
 export function isValidPublicServiceStatusType(status: PublicServiceStatusType): boolean {
   switch (status) {
@@ -21,7 +25,7 @@ export function isValidInternalServiceStatusType(status: InternalServiceStatusTy
     case 'operational':
     case 'reported-issues':
     case 'pending':
-    case 'stopped':
+    case 'disabled':
       return true;
     default:
       return false;
@@ -44,12 +48,12 @@ export interface ServiceStatusApplication {
   _id?: string;
   description: string;
   endpoints: ServiceStatusEndpoint[];
-  internalStatus: InternalServiceStatusType;
+  status: ServiceStatusType;
   metadata: unknown;
   name: string;
-  publicStatus: PublicServiceStatusType;
   statusTimestamp: number;
   tenantId: string;
+  manualOverride: ManualOverrideState;
 }
 
 export type ServiceStatusApplicationModel = ServiceStatusApplication & Document;
@@ -69,5 +73,5 @@ export interface ServiceStatusNotifications {
 export interface ServiceStatusLog {
   applicationId: string;
   timestamp: number;
-  status: InternalServiceStatusType;
+  status: ServiceStatusType;
 }

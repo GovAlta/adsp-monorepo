@@ -4,8 +4,7 @@ import { deleteApplication, fetchServiceStatusApps } from '@store/status/actions
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  InternalServiceStatusType,
-  PublicServiceStatusType,
+  ServiceStatusType,
   PublicServiceStatusTypes,
   ServiceStatusApplication,
   ServiceStatusEndpoint,
@@ -30,7 +29,6 @@ import EditIcon from '@assets/icons/create-outline.svg';
 import WrenchIcon from '@assets/icons/build-outline.svg';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
-import Hourglass from '@components/icons/Hourglass';
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
@@ -118,7 +116,7 @@ function Application(props: ServiceStatusApplication) {
   const history = useHistory();
   const dispatch = useDispatch();
 
-  const [status, setStatus] = useState<InternalServiceStatusType>(props.internalStatus);
+  const [status, setStatus] = useState<ServiceStatusType>(props.status);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false);
   const [showStatusForm, setShowStatusForm] = useState<boolean>(false);
 
@@ -148,7 +146,6 @@ function Application(props: ServiceStatusApplication) {
           setApplicationStatus({
             tenantId: props.tenantId,
             applicationId: props._id,
-            type: 'internal',
             status: toggledStatus,
           })
         );
@@ -175,8 +172,8 @@ function Application(props: ServiceStatusApplication) {
     setShowDeleteConfirmation(false);
   }
 
-  function doManualStatusChange(status: PublicServiceStatusType) {
-    dispatch(setApplicationStatus({ tenantId: props.tenantId, applicationId: props._id, type: 'public', status }));
+  function doManualStatusChange(status: ServiceStatusType) {
+    dispatch(setApplicationStatus({ tenantId: props.tenantId, applicationId: props._id, status }));
     setShowStatusForm(false);
   }
 
@@ -192,43 +189,41 @@ function Application(props: ServiceStatusApplication) {
   const publicStatusMap: { [key: string]: ChipType } = {
     operational: 'success',
     maintenance: 'warning',
+    'reported-issues': 'danger',
     outage: 'danger',
+    pending: 'secondary',
     disabled: 'secondary',
   };
 
   return (
     <App data-testid="application">
+      {/* Toolbar */}
+
       <div className="context-menu">
         <ContextMenu items={contextItems} onAction={(action) => handleContextAction(action)} />
       </div>
 
+      {/* Main component content */}
+
       <AppHeader>
         <AppName>{props.name}</AppName>
-        {props.publicStatus && (
-          <>
-            <span className="space-1"></span>
-            <GoAChip type={publicStatusMap[props.publicStatus]}>{humanizeText(props.publicStatus)}</GoAChip>
-          </>
-        )}
+        <>
+          <span className="space-1"></span>
+          <GoAChip type={publicStatusMap[props.status]}>{humanizeText(props.status)}</GoAChip>
+        </>
       </AppHeader>
       <em>Last updated: {getTimestamp()}</em>
 
       {/* Endpoint List for watched service */}
-      {props.internalStatus !== 'disabled' && (
-        <>
-          <AppEndpointsStatus status={props.internalStatus}>
-            {props.internalStatus === 'operational' && <CheckmarkCircle size="medium" />}
-            {props.internalStatus === 'reported-issues' && <CloseCircle size="medium" />}
-            {props.internalStatus === 'pending' && <Hourglass size="medium" />}
-            {humanizeText(props.internalStatus)}
-          </AppEndpointsStatus>
-          <AppEndpoints>
-            {props.endpoints.map((endpoint) => (
-              <AppEndpoint data-testid="endpoint" key={endpoint.url} endpoint={endpoint}></AppEndpoint>
-            ))}
-          </AppEndpoints>
-        </>
+      {props.status !== 'disabled' && (
+        <AppEndpoints>
+          {props.endpoints.map((endpoint) => (
+            <AppEndpoint data-testid="endpoint" key={endpoint.url} endpoint={endpoint}></AppEndpoint>
+          ))}
+        </AppEndpoints>
       )}
+
+      {/* Dialogs */}
 
       {/* Delete confirmation dialog */}
       <Dialog open={showDeleteConfirmation} onClose={cancelDelete}>
@@ -253,7 +248,7 @@ function Application(props: ServiceStatusApplication) {
               {PublicServiceStatusTypes.map((statusType) => (
                 <GoAButton
                   key={statusType}
-                  onClick={() => doManualStatusChange(statusType as PublicServiceStatusType)}
+                  onClick={() => doManualStatusChange(statusType as ServiceStatusType)}
                   buttonType="primary"
                 >
                   <span style={{ textTransform: 'capitalize' }}>{statusType}</span>
@@ -348,18 +343,7 @@ const AppName = styled.div`
   text-transform: capitalize;
 `;
 
-const AppEndpointsStatus = styled.div<{ status: string }>`
-  margin-top: 1rem;
-  text-transform: capitalize;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-weight: var(--fw-bold);
-  color: ${(props) => (props.status === 'operational' ? 'var(--color-notice-success)' : 'var(--color--notice-error)')};
-`;
-
 const AppEndpoints = styled.div`
-  margin-left: 1.75rem;
   font-size: var(--fs-sm);
 
   b {
