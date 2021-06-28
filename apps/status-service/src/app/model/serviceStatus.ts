@@ -1,9 +1,14 @@
 import type { User } from '@abgov/adsp-service-sdk';
-import { ObjectId } from 'mongoose';
 import { NewOrExisting, Update } from '@core-services/core-common';
 import { MissingParamsError, UnauthorizedError } from '../common/errors';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
-import { ServiceStatusApplication, ServiceStatusEndpoint, ServiceStatusType } from '../types';
+import {
+  ManualOverrideState,
+  PublicServiceStatusType,
+  ServiceStatusApplication,
+  ServiceStatusEndpoint,
+  ServiceStatusType,
+} from '../types';
 
 export class ServiceStatusApplicationEntity implements ServiceStatusApplication {
   _id?: string;
@@ -14,7 +19,7 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
   name: string;
   statusTimestamp: number;
   tenantId: string;
-
+  manualOverride: ManualOverrideState;
   static create(
     user: User,
     repository: ServiceStatusRepository,
@@ -36,6 +41,7 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     this.statusTimestamp = application.statusTimestamp;
     this.tenantId = application.tenantId;
     this.status = application.status;
+    this.manualOverride = application.manualOverride;
   }
 
   update(user: User, update: Update<ServiceStatusApplication>): Promise<ServiceStatusApplicationEntity> {
@@ -48,6 +54,7 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     this.description = update.description ?? this.description;
     this.statusTimestamp = update.statusTimestamp ?? this.statusTimestamp;
     this.status = update.status ?? this.status;
+    this.manualOverride = update.manualOverride ?? this.manualOverride;
 
     return this.repository.save(this);
   }
@@ -96,13 +103,14 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     return await this.repository.delete(this);
   }
 
-  async setStatus(user: Express.User, status: ServiceStatusType): Promise<ServiceStatusApplicationEntity> {
+  async setStatus(user: Express.User, status: PublicServiceStatusType): Promise<ServiceStatusApplicationEntity> {
     if (!this.canUpdate(user)) {
       throw new UnauthorizedError('User not authorized to set application status');
     }
 
     this.status = status;
     this.statusTimestamp = Date.now();
+    this.manualOverride = 'on';
     // ensure the endpoints are in sync with the service state
     switch (status) {
       case 'maintenance':
@@ -110,6 +118,7 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
         this.endpoints.forEach((endpoint) => (endpoint.status = 'disabled'));
         break;
       case 'pending':
+        this.manualOverride = 'off';
         this.endpoints.forEach((endpoint) => (endpoint.status = 'pending'));
         break;
     }

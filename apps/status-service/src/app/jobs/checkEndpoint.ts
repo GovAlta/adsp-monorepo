@@ -5,7 +5,6 @@ import { ServiceStatusApplicationEntity } from '../model';
 import { EndpointStatusEntry, ServiceStatusEndpoint } from '../types';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
-import { application } from 'express';
 
 const ENTRY_SAMPLE_SIZE = 5;
 const MIN_PASS_COUNT = 3;
@@ -35,6 +34,7 @@ export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
     if (!application) {
       return;
     }
+
     // exit in the case where the application has not yet been removed from the job queue
     if (application.status === 'disabled') {
       return;
@@ -85,9 +85,12 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
   let allEndpointsUp = true;
   let isStatusChanged = false;
 
+  const initApplicationStatus = application.status;
+
   // create endpoint status entry before determining if the state is changed
   await EndpointStatusEntryEntity.create(endpointStatusEntryRepository, statusEntry);
 
+  // determine application's state
   await Promise.all(
     application.endpoints.map(async (endpoint) => {
       if (endpoint.url === statusEntry.url) {
@@ -112,7 +115,9 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
 
   // set the application status based on the endpoints
   if (isStatusChanged) {
-    application.status = allEndpointsUp ? 'operational' : 'reported-issues';
+    application.status =
+      application.manualOverride === 'on' ? initApplicationStatus : allEndpointsUp ? 'operational' : 'reported-issues';
+
     await serviceStatusRepository
       .save(application)
       .catch((err) => console.error('failed to update service status: ', err));

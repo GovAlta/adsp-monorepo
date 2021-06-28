@@ -6,7 +6,7 @@ import { RecordNotFoundError, UnauthorizedError } from '../common/errors';
 import { ServiceStatusApplicationEntity } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
-import { EndpointStatusEntry, ServiceStatusType } from '../types';
+import { EndpointStatusEntry, PublicServiceStatusType } from '../types';
 
 export interface ServiceStatusRouterProps {
   logger: Logger;
@@ -84,6 +84,7 @@ export function createServiceStatusRouter({
       metadata,
       statusTimestamp: 0,
       status: 'disabled',
+      manualOverride: 'off',
     });
     res.status(201).json(app);
   });
@@ -142,7 +143,7 @@ export function createServiceStatusRouter({
       throw new UnauthorizedError('invalid tenant id');
     }
 
-    const updatedApplication = await application.setStatus(user, status as ServiceStatusType);
+    const updatedApplication = await application.setStatus(user, status as PublicServiceStatusType);
     res.status(200).json(updatedApplication);
   });
 

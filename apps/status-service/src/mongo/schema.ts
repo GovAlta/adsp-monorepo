@@ -57,8 +57,12 @@ export const serviceStatusApplicationSchema = new Schema(
     status: {
       type: String,
       default: 'disabled',
-      required: true,
     },
+    manualOverride: {
+      type: String,
+      default: 'off',
+    },
+
     endpoints: [serviceStatusEndpointSchema],
   },
   { timestamps: true }

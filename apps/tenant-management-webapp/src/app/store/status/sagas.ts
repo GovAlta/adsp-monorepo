@@ -91,6 +91,5 @@ function getToken(session: Session): string {
 }
 
 function getServiceStatusUrl(config: ConfigState): string {
-  // return config.serviceUrls.serviceStatusApiUrl;
-  return 'http://localhost:3338'
+  return config.serviceUrls.serviceStatusApiUrl;
 }

@@ -99,6 +99,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
       statusTimestamp: application.statusTimestamp,
       tenantId: application.tenantId,
       status: application.status,
+      manualOverride: application.manualOverride,
     };
   }
 
@@ -115,6 +116,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
       statusTimestamp: doc.statusTimestamp,
       tenantId: doc.tenantId,
       status: doc.status,
+      manualOverride: doc.manualOverride,
     });
   }
 }

@@ -182,7 +182,6 @@ function Application(props: ServiceStatusApplication) {
   }
 
   function humanizeText(value: string): string {
-    console.log(value)
     if (!value) return 'n/a';
     return value.replace(/[\W]/, ' ');
   }
@@ -190,15 +189,21 @@ function Application(props: ServiceStatusApplication) {
   const publicStatusMap: { [key: string]: ChipType } = {
     operational: 'success',
     maintenance: 'warning',
+    'reported-issues': 'danger',
     outage: 'danger',
+    pending: 'secondary',
     disabled: 'secondary',
   };
 
   return (
     <App data-testid="application">
+      {/* Toolbar */}
+
       <div className="context-menu">
         <ContextMenu items={contextItems} onAction={(action) => handleContextAction(action)} />
       </div>
+
+      {/* Main component content */}
 
       <AppHeader>
         <AppName>{props.name}</AppName>
@@ -217,6 +222,8 @@ function Application(props: ServiceStatusApplication) {
           ))}
         </AppEndpoints>
       )}
+
+      {/* Dialogs */}
 
       {/* Delete confirmation dialog */}
       <Dialog open={showDeleteConfirmation} onClose={cancelDelete}>
@@ -337,7 +344,6 @@ const AppName = styled.div`
 `;
 
 const AppEndpoints = styled.div`
-  margin-left: 1.75rem;
   font-size: var(--fs-sm);
 
   b {

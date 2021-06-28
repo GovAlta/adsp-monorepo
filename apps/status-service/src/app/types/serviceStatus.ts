@@ -1,10 +1,12 @@
 export type InternalServiceStatusType = 'operational' | 'reported-issues' | 'pending' | 'disabled';
 
-export type PublicServiceStatusType = 'operational' | 'maintenance' | 'outage' | 'disabled';
+export type PublicServiceStatusType = 'operational' | 'maintenance' | 'outage' | 'pending' | 'disabled';
 
 export type ServiceStatusType = InternalServiceStatusType | PublicServiceStatusType;
 
 export type EndpointStatusType = 'up' | 'down' | 'pending' | 'disabled';
+
+export type ManualOverrideState = 'on' | 'off';
 
 export function isValidPublicServiceStatusType(status: PublicServiceStatusType): boolean {
   switch (status) {
@@ -51,6 +53,7 @@ export interface ServiceStatusApplication {
   name: string;
   statusTimestamp: number;
   tenantId: string;
+  manualOverride: ManualOverrideState;
 }
 
 export type ServiceStatusApplicationModel = ServiceStatusApplication & Document;
