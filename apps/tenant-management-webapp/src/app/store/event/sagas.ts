@@ -24,9 +24,10 @@ export function* fetchEventDefinitions(action: FetchEventDefinitionsAction) {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const tenantDefinitions = Object.getOwnPropertyNames(tenantData).reduce((defs, namespace) => {
-        Object.getOwnPropertyNames(tenantData[namespace].definitions).forEach((name) => {
-          defs.push(tenantData[namespace].definitions[name]);
+      const configuration = tenantData?.configuration;
+      const tenantDefinitions = Object.getOwnPropertyNames(configuration || {}).reduce((defs, namespace) => {
+        Object.getOwnPropertyNames(configuration[namespace].definitions).forEach((name) => {
+          defs.push({ ...configuration[namespace].definitions[name], namespace, isCore: false });
         });
         return defs;
       }, []);
@@ -63,20 +64,35 @@ export function* updateEventDefinition(action: UpdateEventDefinitionAction) {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      settings[action.definition.namespace] = {
+      const configuration = settings.configuration || {};
+      configuration[action.definition.namespace] = {
         ...(settings[action.definition.namespace] || {}),
-        [action.definition.name]: {
-          name: action.definition.name,
-          description: action.definition.description,
-          payloadSchema: action.definition.payloadSchema,
+        definitions: {
+          ...(settings[action.definition.namespace]?.definitions || {}),
+          [action.definition.name]: {
+            name: action.definition.name,
+            description: action.definition.description,
+            payloadSchema: action.definition.payloadSchema,
+          },
         },
       };
 
-      const { data } = yield call(axios.put, `${baseUrl}/api/configuration/v1/tenantConfig/eventService`, settings, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data } = yield call(
+        axios.put,
+        `${baseUrl}/api/configuration/v1/tenantConfig/eventService`,
+        { configuration },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
-      yield put(updateEventDefinitionSuccess(data[action.definition.namespace][action.definition.name]));
+      yield put(
+        updateEventDefinitionSuccess({
+          ...data.configuration[action.definition.namespace].definitions[action.definition.name],
+          namespace: action.definition.namespace,
+          isCore: false,
+        })
+      );
     } catch (err) {
       yield put(ErrorNotification({ message: err.message }));
     }

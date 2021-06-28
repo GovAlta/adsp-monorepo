@@ -12,7 +12,7 @@ export const EventDefinitions: FunctionComponent = () => {
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(getEventDefinitions());
-  });
+  }, [dispatch]);
 
   return (
     <div>

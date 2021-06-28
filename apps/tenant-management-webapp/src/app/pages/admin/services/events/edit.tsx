@@ -64,7 +64,8 @@ export const EventDefinitionEdit: FunctionComponent<EventDefinitionEditFormProps
         <label>Payload schema</label>
         <Editor
           height={200}
-          defaultValue={definition.payloadSchema}
+          value={definition.payloadSchema}
+          onChange={(value) => setDefinition({ ...definition, payloadSchema: value})}
           language="json"
           options={{ automaticLayout: true, scrollBeyondLastLine: false, tabSize: 2, minimap: { enabled: false } }}
         />
