@@ -100,3 +100,9 @@ Feature: File service
     When user goes to "Documentation" tab
     Then user views file service api documentation
 
+  @accessibility @regression
+  Scenario: As a service owner, I can manage file services without any critical or serious accessibility issues
+    Given a service owner user is on file services overview page
+    Then no critical or serious accessibility issues on the web page
+    When user goes to "Documentation" tab
+    Then no critical or serious accessibility issues on the web page

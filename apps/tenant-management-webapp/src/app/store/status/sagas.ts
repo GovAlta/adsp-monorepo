@@ -78,15 +78,7 @@ export function* setApplicationStatus(action: SetApplicationStatusAction) {
 
   try {
     const api = new StatusApi(baseUrl, token);
-    let data: ServiceStatusApplication;
-    switch (action.payload.type) {
-      case 'internal':
-        data = yield api.setInternalStatus(action.payload.applicationId, action.payload.status);
-        break;
-      case 'public':
-        data = yield api.setPublicStatus(action.payload.applicationId, action.payload.status);
-        break;
-    }
+    const data: ServiceStatusApplication = yield api.setStatus(action.payload.applicationId, action.payload.status);
 
     yield put(setApplicationStatusSuccess(data));
   } catch (e) {

@@ -17,6 +17,7 @@
 // Import commands.js using ES2015 syntax:
 import './commands';
 import 'cypress-xpath';
+import 'cypress-axe';
 
 it('Get config settings and store them in environment variables', function () {
   cy.getConfig();

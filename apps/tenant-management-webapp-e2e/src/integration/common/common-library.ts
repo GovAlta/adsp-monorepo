@@ -14,7 +14,7 @@ export function tenantAdminDirectURLLogin(url, id, user, password) {
       cy.wait(10000); // Wait all the redirects to settle down
     }
   });
-  cy.url().should('include', '/tenant-admin');
+  cy.url().should('include', '/admin');
 }
 
 export default { tenantAdminDirectURLLogin };

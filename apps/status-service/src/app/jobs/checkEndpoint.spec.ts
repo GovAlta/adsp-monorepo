@@ -1,4 +1,4 @@
-import { InternalServiceStatusType, ServiceStatusApplicationEntity } from '..';
+import { ServiceStatusType, ServiceStatusApplicationEntity } from '..';
 import { createMockMongoServer, disconnectMockMongo } from '../../mongo/mock';
 import MongoServiceStatusRepository from '../../mongo/serviceStatus';
 import MongoEndpointStatusEntryRepository from '../../mongo/endpointStatusEntry';
@@ -26,19 +26,18 @@ describe('Validate endpoint checking', () => {
     return new mongoose.Types.ObjectId().toHexString();
   }
 
-  async function createMockApplication(initStatus: InternalServiceStatusType): Promise<ServiceStatusApplicationEntity> {
+  async function createMockApplication(initStatus: ServiceStatusType): Promise<ServiceStatusApplicationEntity> {
     const appData: Partial<ServiceStatusApplicationEntity> = {
       _id: generateId(),
       endpoints: [{ url: 'http://foo.bar', status: initStatus === 'operational' ? 'up' : 'down' }],
-      internalStatus: initStatus,
       name: 'app 1',
-      publicStatus: 'operational',
+      status: initStatus,
       tenantId: '99',
     };
     return await serviceStatusRepository.save(appData as ServiceStatusApplicationEntity);
   }
 
-  async function mockRequest(application: ServiceStatusApplicationEntity, res: { status: number }) {
+  async function checkServiceStatus(application: ServiceStatusApplicationEntity, res: { status: number }) {
     const job = createCheckEndpointJob({
       application,
       serviceStatusRepository,
@@ -62,7 +61,7 @@ describe('Validate endpoint checking', () => {
     const application = await createMockApplication('operational');
     const url = application.endpoints[0].url;
 
-    await mockRequest(application, { status: 200 });
+    await checkServiceStatus(application, { status: 200 });
 
     const entries = await endpointStatusEntryRepository.findByUrl(url);
     expect(entries.length).toEqual(1);
@@ -78,24 +77,24 @@ describe('Validate endpoint checking', () => {
 
     // init state check
     service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-    expect(service.internalStatus).toBe('reported-issues');
+    expect(service.status).toBe('reported-issues');
 
     // pass 1 - should be `reported-issues`
     {
-      await mockRequest(application, { status: 200 });
+      await checkServiceStatus(application, { status: 200 });
 
       entries = await endpointStatusEntryRepository.findByUrl(url);
       expect(entries.length).toEqual(1);
       expect(entries[0].ok).toBe(true);
 
       service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-      expect(service.internalStatus).toBe('reported-issues');
+      expect(service.status).toBe('reported-issues');
       expect(service.endpoints[0].status).toBe('down');
     }
 
     // pass 2 - should still be `reported-issues`
     {
-      await mockRequest(application, { status: 200 });
+      await checkServiceStatus(application, { status: 200 });
 
       entries = await endpointStatusEntryRepository.findByUrl(url);
       expect(entries.length).toEqual(2);
@@ -103,13 +102,13 @@ describe('Validate endpoint checking', () => {
       expect(entries[1].ok).toBe(true);
 
       service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-      expect(service.internalStatus).toBe('reported-issues');
+      expect(service.status).toBe('reported-issues');
       expect(service.endpoints[0].status).toBe('down');
     }
 
     // pass 3 - should now be `operational`
     {
-      await mockRequest(application, { status: 200 });
+      await checkServiceStatus(application, { status: 200 });
 
       entries = await endpointStatusEntryRepository.findByUrl(url);
       expect(entries.length).toEqual(3);
@@ -118,7 +117,7 @@ describe('Validate endpoint checking', () => {
       expect(entries[2].ok).toBe(true);
 
       service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-      expect(service.internalStatus).toBe('operational');
+      expect(service.status).toBe('operational');
       expect(service.endpoints[0].status).toBe('up');
     }
   });
@@ -132,24 +131,24 @@ describe('Validate endpoint checking', () => {
 
     // init state check
     service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-    expect(service.internalStatus).toBe('operational');
+    expect(service.status).toBe('operational');
 
     // pass 1 - should be `operational`
     {
-      await mockRequest(application, { status: 500 });
+      await checkServiceStatus(application, { status: 500 });
 
       entries = await endpointStatusEntryRepository.findByUrl(url);
       expect(entries.length).toEqual(1);
       expect(entries[0].ok).toBe(false);
 
       service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-      expect(service.internalStatus).toBe('operational');
+      expect(service.status).toBe('operational');
       expect(service.endpoints[0].status).toBe('up');
     }
 
     // pass 2 - should still be `operational`
     {
-      await mockRequest(application, { status: 500 });
+      await checkServiceStatus(application, { status: 500 });
 
       entries = await endpointStatusEntryRepository.findByUrl(url);
       expect(entries.length).toEqual(2);
@@ -157,13 +156,13 @@ describe('Validate endpoint checking', () => {
       expect(entries[1].ok).toBe(false);
 
       service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-      expect(service.internalStatus).toBe('operational');
+      expect(service.status).toBe('operational');
       expect(service.endpoints[0].status).toBe('up');
     }
 
     // pass 3 - should now be `reported-issues`
     {
-      await mockRequest(application, { status: 500 });
+      await checkServiceStatus(application, { status: 500 });
 
       entries = await endpointStatusEntryRepository.findByUrl(url);
       expect(entries.length).toEqual(3);
@@ -172,7 +171,7 @@ describe('Validate endpoint checking', () => {
       expect(entries[2].ok).toBe(false);
 
       service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-      expect(service.internalStatus).toBe('reported-issues');
+      expect(service.status).toBe('reported-issues');
       expect(service.endpoints[0].status).toBe('down');
     }
   });
@@ -182,42 +181,78 @@ describe('Validate endpoint checking', () => {
 
     // init state check
     {
-      await mockRequest(application, { status: 500 });
-      await mockRequest(application, { status: 500 });
-      await mockRequest(application, { status: 500 });
-      await mockRequest(application, { status: 500 });
+      await checkServiceStatus(application, { status: 500 });
+      await checkServiceStatus(application, { status: 500 });
+      await checkServiceStatus(application, { status: 500 });
 
       const service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-      expect(service.internalStatus).toBe('reported-issues');
+      expect(service.status).toBe('reported-issues');
       expect(service.endpoints[0].status).toBe('down');
     }
 
     // now up
     {
-      await mockRequest(application, { status: 200 });
-      await mockRequest(application, { status: 200 });
-      await mockRequest(application, { status: 200 });
+      await checkServiceStatus(application, { status: 200 });
+      await checkServiceStatus(application, { status: 200 });
+      await checkServiceStatus(application, { status: 200 });
       const service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-      expect(service.internalStatus).toBe('operational');
+      expect(service.status).toBe('operational');
       expect(service.endpoints[0].status).toBe('up');
     }
 
     // still up
     {
-      await mockRequest(application, { status: 500 });
+      await checkServiceStatus(application, { status: 500 });
 
       const service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-      expect(service.internalStatus).toBe('operational');
+      expect(service.status).toBe('operational');
       expect(service.endpoints[0].status).toBe('up');
     }
 
     // back down
     {
-      await mockRequest(application, { status: 500 });
-      await mockRequest(application, { status: 500 });
+      await checkServiceStatus(application, { status: 500 });
+      await checkServiceStatus(application, { status: 500 });
 
       const service = (await serviceStatusRepository.find({ _id: application._id }))[0];
-      expect(service.internalStatus).toBe('reported-issues');
+      expect(service.status).toBe('reported-issues');
+      expect(service.endpoints[0].status).toBe('down');
+    }
+  });
+
+  it('should not update the application state if manualOverride is on', async () => {
+    let application = await createMockApplication('operational');
+
+    // enable manual override
+    application.manualOverride = 'on';
+    application = await serviceStatusRepository.save(application);
+
+    {
+      const service = (await serviceStatusRepository.find({ _id: application._id }))[0];
+      expect(service.status).toBe('operational');
+    }
+
+    // init state check, due to manualOverride, should still be operational
+    {
+      await checkServiceStatus(application, { status: 500 });
+      await checkServiceStatus(application, { status: 500 });
+      await checkServiceStatus(application, { status: 500 });
+
+      const service = (await serviceStatusRepository.find({ _id: application._id }))[0];
+      expect(service.status).toBe('operational');
+      expect(service.endpoints[0].status).toBe('down');
+    }
+
+    // disable manual override
+    application.manualOverride = 'off';
+    application = await serviceStatusRepository.save(application);
+
+    // should now get set to `off`
+    {
+      await checkServiceStatus(application, { status: 500 });
+
+      const service = (await serviceStatusRepository.find({ _id: application._id }))[0];
+      expect(service.status).toBe('reported-issues');
       expect(service.endpoints[0].status).toBe('down');
     }
   });

@@ -7,7 +7,7 @@ import styled from 'styled-components';
 export function PublicApp({ children }) {
   return (
     <PublicCss>
-      <GoAHeader serviceHome="/" serviceLevel="alpha" serviceName="" />
+      <GoAHeader serviceHome="/" serviceLevel="beta" serviceName="" />
       <Container hs={4} vs={2}>
         {children}
       </Container>

@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { RootState } from '@store/index';
-import Sidebar from '@pages/admin/tenant-management/sidebar';
+import Sidebar from '@pages/admin/sidebar';
 import MenuIcon from '@icons/menu-outline.svg';
 import CloseIcon from '@icons/close-outline.svg';
 import { ReactComponent as UserIcon } from '@icons/person-circle-outline.svg';
@@ -69,7 +69,7 @@ const ActionsMenu = (props: HeaderMenuProps) => {
 function AppHeader({ serviceName = '', hasLoginLink = true, admin = false }) {
   return (
     <HeaderContainer>
-      <GoAHeader serviceHome="/" serviceLevel="alpha" serviceName={serviceName} />
+      <GoAHeader serviceHome="/" serviceLevel="beta" serviceName={serviceName} />
       <ActionsMenu hasLoginLink={hasLoginLink} admin={admin} />
     </HeaderContainer>
   );

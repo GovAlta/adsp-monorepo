@@ -1,6 +1,5 @@
 import { combineReducers } from 'redux';
 import Access from './access/reducers';
-import ApiStatus from './api-status/reducers';
 import Config from './config/reducers';
 import File from './file/reducers';
 import Session from './session/reducers';
@@ -8,11 +7,10 @@ import Notifications from './notifications/reducers';
 import Tenant from './tenant/reducers';
 import ServiceStatus from './status/reducers';
 import TenantConfig from './tenantConfig/reducers';
-import EventLog from './event-log/reducers';
+import Event from './event/reducers';
 
 export const rootReducer = combineReducers({
   fileService: File,
-  apiStatus: ApiStatus,
   session: Session,
   config: Config,
   access: Access,
@@ -20,5 +18,5 @@ export const rootReducer = combineReducers({
   notifications: Notifications,
   tenantConfig: TenantConfig,
   serviceStatus: ServiceStatus,
-  eventLog: EventLog
+  event: Event,
 });

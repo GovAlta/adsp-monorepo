@@ -255,6 +255,7 @@ export const createRealm = async (realm: string, email: string, tenantName: stri
       displayName: tenantName,
       displayNameHtml: tenantName,
       loginTheme: 'ads-theme',
+      accountTheme: 'ads-theme',
       clients: [publicClientConfig, tenantClient, fileClient],
       roles: {
         client: {

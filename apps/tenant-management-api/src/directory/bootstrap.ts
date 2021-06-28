@@ -1,8 +1,9 @@
 import * as fs from 'fs';
 import * as util from 'util';
 import { Logger } from 'winston';
-import DirectoryModel from './models/directory';
 import { Directory } from './types/directory';
+import { DirectoryRepository } from './repository';
+import { MongoDirectoryRepository } from './mongo/directory';
 
 export const bootstrapDirectory = async (logger: Logger, file: string): Promise<void> => {
   logger.debug(`Bootstrapping directory data from: ${file}...`);
@@ -10,11 +11,8 @@ export const bootstrapDirectory = async (logger: Logger, file: string): Promise<
   const directory: Directory = JSON.parse(fileData);
 
   logger.debug(`Parsed directory bootstrap file '${file}' and importing...`);
-  await new Promise<void>((resolve, reject) => {
-    DirectoryModel.findOneAndUpdate({ name: directory.name }, directory, { upsert: true }, (err) =>
-      err ? reject(err) : resolve()
-    );
-  });
 
+  const directoryRepository: DirectoryRepository = new MongoDirectoryRepository();
+  await directoryRepository.update(directory);
   logger.info(`Bootstrapped directory data from: ${file}.`);
 };

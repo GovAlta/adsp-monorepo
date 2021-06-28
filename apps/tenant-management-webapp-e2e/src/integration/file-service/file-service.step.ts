@@ -292,10 +292,10 @@ Given('a service owner user is on file services overview page', function () {
     Cypress.env('password')
   );
   tenantAdminObj
-    .dashboardMenuItem('/admin/tenant-admin/services/file')
+    .dashboardMenuItem('/admin/services/files')
     .click()
     .then(function () {
-      cy.url().should('include', '/admin/tenant-admin/services/file');
+      cy.url().should('include', '/admin/services/files');
       cy.wait(4000);
     });
 });

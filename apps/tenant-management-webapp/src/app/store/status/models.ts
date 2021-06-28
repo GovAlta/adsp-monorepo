@@ -1,6 +1,7 @@
 export type InternalServiceStatusType = 'operational' | 'reported-issues' | 'pending' | 'disabled';
-export type PublicServiceStatusType = 'operational' | 'maintenance' | 'outage' | 'disabled';
-export const PublicServiceStatusTypes = ['operational', 'maintenance', 'outage', 'disabled'];
+export type PublicServiceStatusType = 'operational' | 'maintenance' | 'outage' | 'pending' | 'disabled';
+export type ServiceStatusType = InternalServiceStatusType | PublicServiceStatusType;
+export const PublicServiceStatusTypes = ['operational', 'maintenance', 'outage', 'pending', 'disabled'];
 export type EndpointStatusType = 'up' | 'down' | 'pending' | 'disabled';
 
 export interface ServiceStatus {
@@ -15,8 +16,7 @@ export interface ServiceStatusApplication {
   metadata?: unknown;
   enabled: boolean;
   statusTimestamp?: number;
-  internalStatus: InternalServiceStatusType;
-  publicStatus: PublicServiceStatusType;
+  status: ServiceStatusType;
   endpoints: ServiceStatusEndpoint[];
 }
 
@@ -37,7 +37,7 @@ export interface ServiceStatusNotifications {
 export interface ServiceStatusLog {
   applicationId: string;
   timestamp: number;
-  status: InternalServiceStatusType & PublicServiceStatusType;
+  status: InternalServiceStatusType | PublicServiceStatusType;
 }
 
 export interface EndpointStatusEntry {

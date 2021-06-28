@@ -62,7 +62,7 @@ const LoginRedirect = (props) => {
         localStorage.setItem('realm', `${tenantRealm}`);
 
         history.push({
-          pathname: '/admin/tenant-admin',
+          pathname: '/admin',
           search: `?realm=${realm}`,
           state: { from: props.location },
         });
