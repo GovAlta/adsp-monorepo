@@ -1,6 +1,6 @@
 import { Main } from '@components/Html';
 import { RootState } from '@store/index';
-import { getEventLogEntries } from '@store/event-log/actions';
+import { getEventLogEntries } from '@store/event/actions';
 import React, { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { EventLogEntries } from './eventLogEntries';

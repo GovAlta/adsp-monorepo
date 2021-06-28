@@ -5,6 +5,7 @@ import { Tab, Tabs } from '@components/Tabs';
 import { RootState } from '@store/index';
 import React, { FunctionComponent } from 'react';
 import { useSelector } from 'react-redux';
+import { EventDefinitions } from './definitions';
 import { EventsOverview } from './overview';
 
 export const Events: FunctionComponent = () => {
@@ -18,7 +19,7 @@ export const Events: FunctionComponent = () => {
             <EventsOverview />
           </Tab>
           <Tab label="Definitions">
-            <section></section>
+            <EventDefinitions />
           </Tab>
           <Tab label="Documentation">
             {eventServiceUrl && <ApiDocumentation specUrl={`${eventServiceUrl}/swagger/docs/v1`} />}

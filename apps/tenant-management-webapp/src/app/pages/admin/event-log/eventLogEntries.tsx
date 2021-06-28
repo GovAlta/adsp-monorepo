@@ -1,8 +1,8 @@
 import { GoAButton } from '@abgov/react-components';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
-import { getEventLogEntries } from '@store/event-log/actions';
-import { EventLogEntry } from '@store/event-log/models';
+import { getEventLogEntries } from '@store/event/actions';
+import { EventLogEntry } from '@store/event/models';
 import React, { FunctionComponent, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
@@ -26,7 +26,7 @@ const EventLogEntryComponent: FunctionComponent<EventLogEntryComponentProps> = (
         <td headers="namespace">{entry.namespace}</td>
         <td headers="name">{entry.name}</td>
         <td headers="details">
-          <GoAButton onClick={() => setShowDetails(!showDetails)}>
+          <GoAButton buttonType="secondary" onClick={() => setShowDetails(!showDetails)}>
             {showDetails ? 'Hide details' : 'Show details'}
           </GoAButton>
         </td>
@@ -47,9 +47,9 @@ interface EventLogEntriesComponentProps {
 }
 
 const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps> = ({ className }) => {
-  const entries = useSelector((state: RootState) => state.eventLog.entries);
-  const next = useSelector((state: RootState) => state.eventLog.next);
-  const isLoading = useSelector((state: RootState) => state.eventLog.isLoading);
+  const entries = useSelector((state: RootState) => state.event.entries);
+  const next = useSelector((state: RootState) => state.event.nextEntries);
+  const isLoading = useSelector((state: RootState) => state.event.isLoading.log);
   const dispatch = useDispatch();
 
   return (

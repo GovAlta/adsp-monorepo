@@ -85,6 +85,25 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
     }
   });
 
+  tenantConfigRouter.put('/:service', async (req: Request, res: Response) => {
+    const { service } = req.params;
+    const serviceSettings = req.body;
+    const user = req.user;
+    const tenant = `${user.tenantId}`;
+    try {
+      if (!serviceSettings) {
+        throw new HttpException(HttpStatusCodes.BAD_REQUEST, 'Tenant Realm Configuration Settings are required');
+      }
+
+      const tenantConfig = await tenantConfigurationRepository.getTenantConfig(tenant);
+      const entity = await tenantConfig.updateService(service, serviceSettings);
+
+      res.json(mapTenantConfig(entity).configurationSettingsList[service]);
+    } catch (err) {
+      errorHandler(err, req, res);
+    }
+  });
+
   tenantConfigRouter.put('/', async (req: Request, res: Response) => {
     const data = req.body;
     const user = req.user;
