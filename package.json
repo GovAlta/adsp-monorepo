@@ -125,6 +125,7 @@
     "@babel/preset-env": "7.9.6",
     "@babel/preset-react": "7.9.4",
     "@babel/preset-typescript": "7.9.0",
+    "@monaco-editor/react": "^4.2.1",
     "@nrwl/cli": "12.3.3",
     "@nrwl/cypress": "12.3.3",
     "@nrwl/eslint-plugin-nx": "12.3.3",
