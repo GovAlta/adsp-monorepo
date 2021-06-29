@@ -9,5 +9,5 @@ export interface Directory {
 }
 
 export interface Criteria {
-  name: string;
+  name: { $regex: string; $options: 'i' };
 }
