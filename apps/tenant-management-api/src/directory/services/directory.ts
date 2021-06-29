@@ -117,7 +117,7 @@ export const discovery = async (urn: string, { directoryRepository }: ServicePro
       }
 
       // get url from mongo
-      const result = await directoryRepository.find(1, null, { name: component.core });
+      const result = await directoryRepository.find(1, null, { name: { $regex: component.core, $options: 'i' } });
 
       const services = result.results[0]['services'];
       return getUrlResponse(services, component);
