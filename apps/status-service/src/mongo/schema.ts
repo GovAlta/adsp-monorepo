@@ -48,3 +48,41 @@ export const serviceStatusApplicationSchema = new Schema(
   },
   { timestamps: true }
 );
+
+export const noticeEndpointSchema = new Schema(
+  {
+    url: {
+      type: String,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
+export const noticeApplicationSchema = new Schema(
+  {
+    message: {
+      type: String,
+      required: true,
+    },
+    tennantServRef: {
+      type: String,
+      required: true,
+    },
+    startDate: {
+      type: Date,
+      required: true,
+    },
+    endDate: {
+      type: Date,
+      required: true,
+    },
+    mode: {
+      type: String,
+      defualt: 'draft',
+      required: true,
+    },
+    endpoints: [noticeEndpointSchema],
+  },
+  { timestamps: true }
+);
