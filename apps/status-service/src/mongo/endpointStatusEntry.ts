@@ -5,6 +5,16 @@ import { EndpointStatusEntryEntity } from '../app/model/endpointStatusEntry';
 import { EndpointStatusEntryRepository } from '../app/repository/endpointStatusEntry';
 import { endpointStatusEntrySchema } from './schema';
 
+export interface FindRecentOptions {
+  limit: number;
+  timeSpanMin: number;
+}
+
+const defaultFindRecentOptions: FindRecentOptions = {
+  limit: 5,
+  timeSpanMin: 5,
+};
+
 export default class MongoEndpointStatusEntryRepository implements EndpointStatusEntryRepository {
   model: Model<EndpointStatusEntry & Document>;
   constructor() {
@@ -14,10 +24,16 @@ export default class MongoEndpointStatusEntryRepository implements EndpointStatu
     throw new Error('not implemented');
   }
 
-  async findRecentByUrl(url: string): Promise<EndpointStatusEntryEntity[]> {
-    const period = 5 * 60 * 1000;
+  async findRecentByUrl(
+    url: string,
+    opts: FindRecentOptions = defaultFindRecentOptions
+  ): Promise<EndpointStatusEntryEntity[]> {
+    const period = opts.timeSpanMin * 60 * 1000;
     const after = Date.now() - period;
-    const docs = await this.model.find({ url: url, timestamp: { $gt: after } }).sort({ timestamp: -1 });
+    const docs = await this.model
+      .find({ url: url, timestamp: { $gt: after } })
+      .sort({ timestamp: -1 })
+      .limit(opts.limit);
     return docs.map((doc) => this.fromDoc(doc));
   }
 
