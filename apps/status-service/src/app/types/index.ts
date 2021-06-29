@@ -1,4 +1,5 @@
 import { Document } from 'mongoose';
+import { ManualOverrideState } from './serviceStatus';
 
 export type ServiceStatusType = 'operational' | 'maintenance' | 'reported-issues' | 'outage' | 'pending' | 'disabled';
 export function isValidServiceStatusType(status: ServiceStatusType): boolean {
@@ -30,15 +31,15 @@ export function isValidEndpointStatusType(status: EndpointStatusType): boolean {
 }
 
 export interface ServiceStatusApplication {
-  id: string;
+  _id?: string;
   tenantId: string;
   name: string;
   description: string;
   metadata: unknown;
   statusTimestamp: number;
-  timeIntervalMin: number;
   endpoints: ServiceStatusEndpoint[];
   status: ServiceStatusType;
+  manualOverride: ManualOverrideState;
 }
 
 export type ServiceStatusApplicationModel = ServiceStatusApplication & Document;
@@ -73,8 +74,8 @@ export function isValidNoticeModeType(mode: NoticeModeType): boolean {
   }
 }
 
-export interface NoticeApplication{
-  id:string;
+export interface NoticeApplication {
+  id: string;
   message: string;
   tennantServRef: string;
   startDate: Date;
