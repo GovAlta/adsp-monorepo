@@ -11,7 +11,7 @@ import {
 } from '../types';
 
 export class ServiceStatusApplicationEntity implements ServiceStatusApplication {
-  _id?: string;
+  _id: string;
   description: string;
   endpoints: ServiceStatusEndpoint[];
   status: ServiceStatusType;
@@ -141,3 +141,5 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     return true;
   }
 }
+
+export default ServiceStatusApplicationEntity;

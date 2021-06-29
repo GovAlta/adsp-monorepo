@@ -168,7 +168,7 @@ export function createServiceStatusRouter({
 
     const data = await Promise.all(
       application.endpoints.map(async (endpoint) => {
-        const entries = await endpointStatusEntryRepository.findByUrl(endpoint.url, 5);
+        const entries = await endpointStatusEntryRepository.findRecentByUrl(endpoint.url);
         return {
           url: endpoint.url,
           entries,
