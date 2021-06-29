@@ -147,7 +147,15 @@ export function* tenantLogin(action: TenantLoginAction) {
 export function* keycloakRefreshToken() {
   try {
     if (keycloakAuth) {
-      keycloakAuth.refreshToken();
+      keycloakAuth.refreshToken(
+        (keycloak) => {
+          const session = convertToSession(keycloak);
+          Promise.all([store.dispatch(SessionLoginSuccess(session))]);
+        },
+        () => {
+          window.location.replace('/');
+        }
+      );
     } else {
       console.warn(`Try to fresh keycloak token. But, keycloak instance is empty.`);
     }
