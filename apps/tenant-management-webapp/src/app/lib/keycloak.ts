@@ -159,14 +159,16 @@ class KeycloakAuth {
     }
   }
 
-  refreshToken() {
+  refreshToken(successHandler: checkSSOSuccess, errorHandler: checkSSOError) {
     try {
       this.keycloak
-        .updateToken(60)
+        .updateToken(70)
         .then(() => {
+          successHandler(this.keycloak);
           console.debug('Keycloak token was refreshed');
         })
         .catch((e) => {
+          errorHandler();
           console.error(`Failed to refresh the keycloak token: ${e.message}`);
         });
     } catch (e) {
