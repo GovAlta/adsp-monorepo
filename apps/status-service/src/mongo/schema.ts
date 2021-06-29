@@ -98,8 +98,7 @@ export const noticeApplicationSchema = new Schema(
     },
     mode: {
       type: String,
-      defualt: 'draft',
-      required: true,
+      default: 'draft',
     },
     endpoints: [noticeEndpointSchema],
   },
