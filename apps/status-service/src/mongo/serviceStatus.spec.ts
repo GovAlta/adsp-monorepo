@@ -122,8 +122,8 @@ describe('Service status mongo repository', () => {
       {
         name: 'app 1',
         endpoints: [
-          { status: 'up', url: 'foo.com' },
-          { status: 'down', url: 'bar.com' },
+          { status: 'online', url: 'foo.com' },
+          { status: 'offline', url: 'bar.com' },
         ],
         status: 'operational',
         tenantId: '99',
