@@ -28,24 +28,16 @@ class WelcomePage {
     return cy.get('button:contains("Create Tenant")');
   }
 
+  createTenantLinkButton() {
+    return cy.get('a:contains("Create Tenant")');
+  }
+
   newTenantCreationMessage() {
     return cy.get('p:contains("successfully created")');
   }
 
   tenantLoginButton() {
     return cy.get('button:contains("Tenant Login")');
-  }
-
-  tenantNameLabel() {
-    return cy.get('label:contains("Please enter tenant name:")');
-  }
-
-  tenantNameInput() {
-    return cy.get('input');
-  }
-
-  loginButton() {
-    return cy.get('button:contains("Login")');
   }
 
   userIcon() {
@@ -60,8 +52,8 @@ class WelcomePage {
     return cy.get('button:contains("Continue")');
   }
 
-  tenantLoginTenantDisplayName() {
-    return cy.xpath('//div[@class="login-pf-page"]/div/div[@id="kc-header-wrapper"]', { timeout: 10000 });
+  tenantSignInTitle() {
+    return cy.get('h1:contains("Sign In")');
   }
 }
 

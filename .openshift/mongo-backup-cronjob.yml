@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: mongo-backup-cronjob
+  annotations:
+    template.openshift.io/provider-display-name: platform team
+    description: CronJob for MongoDB backups
+parameters:
+  - name: SERVICE_NAME
+    description: Name of the service associated with the mongoDb to backup.
+    displayName: Service Name
+    required: true
+  - name: BACKUPS_RETAINED
+    description: Number of backups to retain.
+    displayName: Backups Retained
+    value: "5"
+    required: true
+objects:
+  - apiVersion: batch/v1beta1
+    kind: CronJob
+    metadata:
+      name: ${SERVICE_NAME}-mongodb-backup
+      labels:
+        app: ${SERVICE_NAME}
+        component: database
+    spec:
+      concurrencyPolicy: Forbid
+      failedJobsHistoryLimit: 1
+      jobTemplate:
+        spec:
+          template:
+            spec:
+              containers:
+                - command:
+                    - bash
+                    - -c
+                    - ls -rdt /var/lib/mongodb-backup/dump-* |
+                      head -n -$MONGODB_BACKUP_KEEP |
+                      xargs rm -rf && DIR=/var/lib/mongodb-backup/dump-`date +%F-%T` &&
+                      mongodump -j 1 -u admin -p $MONGODB_ADMIN_PASSWORD --host $MONGODB_SERVICE_HOST --port 27017 --authenticationDatabase=admin --gzip --out=$DIR &&
+                      echo &&
+                      echo "To restore, use:" && echo "~# mongorestore -u admin -p \$MONGODB_ADMIN_PASSWORD --authenticationDatabase admin --gzip $DIR/DB_TO_RESTORE -d DB_TO_RESTORE_INTO"
+                  env:
+                    - name: MONGODB_BACKUP_KEEP
+                      value: ${BACKUPS_RETAINED}
+                    - name: MONGODB_ADMIN_PASSWORD
+                      valueFrom:
+                        secretKeyRef:
+                          name: ${SERVICE_NAME}-mongodb
+                          key: database-admin-password
+                    - name: MONGODB_SERVICE_HOST
+                      value: ${SERVICE_NAME}-mongodb
+                  image: docker-registry.default.svc:5000/openshift/mongodb:3.6
+                  imagePullPolicy: IfNotPresent
+                  name: mongodb-backup
+                  resources: {}
+                  terminationMessagePath: /dev/termination-log
+                  terminationMessagePolicy: File
+                  volumeMounts:
+                    - mountPath: /var/lib/mongodb-backup
+                      name: mongodb-backup
+              dnsPolicy: ClusterFirst
+              restartPolicy: Never
+              schedulerName: default-scheduler
+              securityContext: {}
+              terminationGracePeriodSeconds: 30
+              volumes:
+                - name: mongodb-backup
+                  persistentVolumeClaim:
+                    claimName: ${SERVICE_NAME}-backups
+      schedule: 15 2 * * *
+      successfulJobsHistoryLimit: 3
+      suspend: false
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: ${SERVICE_NAME}
+        component: database
+      name: ${SERVICE_NAME}-backups
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 5Gi

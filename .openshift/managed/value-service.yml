@@ -286,8 +286,6 @@ objects:
               env:
                 - name: PORT
                   value: "3333"
-                - name: LOG_LEVEL
-                  value: info
                 - name: DB_HOST
                   valueFrom:
                     secretKeyRef:

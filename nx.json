@@ -1,6 +1,4 @@
 {
-  "npmScope": "core-services",
-  "affected": { "defaultBase": "master" },
   "implicitDependencies": {
     "workspace.json": "*",
     "package.json": { "dependencies": "*", "devDependencies": "*" },
@@ -8,6 +6,8 @@
     "tslint.json": "*",
     "nx.json": "*"
   },
+  "affected": { "defaultBase": "master" },
+  "npmScope": "core-services",
   "tasksRunnerOptions": {
     "default": {
       "runner": "@nrwl/workspace/tasks-runners/default",
@@ -26,6 +26,8 @@
     "push-service": { "tags": [] },
     "tools-scripts": { "tags": [] },
     "status-service": { "tags": [] },
-    "adsp-service-sdk": { "tags": [] }
+    "adsp-service-sdk": { "tags": [] },
+    "status-app": { "tags": [] },
+    "status-app-e2e": { "tags": [], "implicitDependencies": ["status-app"] }
   }
 }

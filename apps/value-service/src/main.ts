@@ -15,6 +15,7 @@ import { applyValuesMiddleware, Namespace, NamespaceEntity, ServiceUserRoles, Va
 import { createRepositories } from './timescale';
 import { AdspId, initializePlatform, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { AjvValueValidationService } from './ajv';
+import type { User } from '@abgov/adsp-service-sdk';
 
 const initializeApp = async () => {
   const app = express();
@@ -95,7 +96,7 @@ const initializeApp = async () => {
   });
 
   passport.deserializeUser(function (user, done) {
-    done(null, user);
+    done(null, user as User);
   });
 
   app.use(passport.initialize());

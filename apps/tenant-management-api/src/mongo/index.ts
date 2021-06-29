@@ -2,7 +2,7 @@ import { connect, ConnectionOptions, connection } from 'mongoose';
 import { logger } from '../middleware/logger';
 import { environment } from '../environments/environment';
 
-export const connectMongo = async () => {
+export const connectMongo = async (): Promise<void> => {
   try {
     const mongoHost = environment.MONGO_URI;
     const mongoDb = environment.MONGO_DB;

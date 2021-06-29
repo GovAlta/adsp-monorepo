@@ -1,5 +1,7 @@
+import axios from 'axios';
 import { scheduleJob, Job } from 'node-schedule';
 import { Logger } from 'winston';
+import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { createCheckEndpointJob, CreateCheckEndpointProps } from './checkEndpoint';
 import {
@@ -8,9 +10,12 @@ import {
   fetchQueuedDisabledApplications,
 } from './watchApplications';
 
+const JOB_TIME_INTERVAL_MIN = 1;
+
 interface ServiceStatusJobProps {
   logger: Logger;
   serviceStatusRepository: ServiceStatusRepository;
+  endpointStatusEntryRepository: EndpointStatusEntryRepository;
 }
 
 // TODO: determine if the `scheduledJobs` property within the node-schedule, can also work
@@ -22,7 +27,13 @@ export async function scheduleServiceStatusJobs(props: ServiceStatusJobProps): P
   // start enabled apps
   const applications = await props.serviceStatusRepository.findEnabledApplications();
   applications.forEach(async (application) => {
-    scheduleServiceStatusJob({ ...props, application });
+    scheduleServiceStatusJob({
+      ...props,
+      application,
+      getter: async (url: string) => {
+        return await axios.get(url);
+      },
+    });
   });
 
   scheduleJob('* */1 * * *', watchApps(props));
@@ -52,7 +63,7 @@ async function watchForDeactivatedApps(props: ServiceStatusJobProps) {
   const disabledApps = await fetchQueuedDisabledApplications({ ...props, scheduledJobs });
   props.logger.info(`${disabledApps.length} disabled apps found`);
   disabledApps.forEach((application) => {
-    unscheduleServiceStatusJob(application.id);
+    unscheduleServiceStatusJob(application._id);
   });
 }
 
@@ -60,15 +71,21 @@ async function watchForActivatedApps(props: ServiceStatusJobProps) {
   const nonQueuedApps = await fetchNonQueuedApplications({ ...props, scheduledJobs });
   props.logger.info(`${nonQueuedApps.length} non-queued apps found`);
   nonQueuedApps.forEach((application) => {
-    scheduleServiceStatusJob({ ...props, application });
+    scheduleServiceStatusJob({
+      ...props,
+      application,
+      getter: async (url: string) => {
+        return await axios.get(url);
+      },
+    });
   });
 }
 
 function scheduleServiceStatusJob(props: CreateCheckEndpointProps) {
   const job = createCheckEndpointJob(props);
-  const scheduledJob = scheduleJob(`* */${props.application.timeIntervalMin} * * *`, job);
+  const scheduledJob = scheduleJob(`* */${JOB_TIME_INTERVAL_MIN} * * *`, job);
 
-  scheduledJobs[props.application.id] = scheduledJob;
+  scheduledJobs[props.application._id] = scheduledJob;
 }
 
 function unscheduleServiceStatusJob(applicationId: string): boolean {

@@ -30,6 +30,7 @@ Given('the user is on the tenant management welcome page', function () {
 
 When('the user clicks the sign in button', function () {
   welcomPageObj.signinDiv().click();
+  cy.wait(5000);
 });
 
 Then('the user is logged in tenant management web app', function () {
@@ -43,24 +44,22 @@ Then('the user views the page of {string} based on if the user created a tenant 
       welcomPageObj.realmHeader().invoke('text').should('be.a', 'string');
       commonObj.loginButton().invoke('val').should('eq', 'Log In');
       break;
-    case 'Tenant Name':
-      welcomPageObj.tenantNameLabel().then((element) => {
-        expect(element.length).to.equal(1);
-      });
-      welcomPageObj.tenantNameInput().then((element) => {
-        expect(element.length).to.equal(1);
-      });
-      welcomPageObj.loginButton().then((element) => {
+    case 'Tenant Creation':
+      welcomPageObj.createTenantLinkButton().then((element) => {
         expect(element.length).to.equal(1);
       });
       break;
     default:
-      expect(page).to.be.oneOf(['Tenant Login', 'Tenant Name']);
+      expect(page).to.be.oneOf(['Tenant Login', 'Tenant Creation']);
   }
 });
 
 When('the user selects get started button', function () {
+  // Click get started button and verify the button directs users to /get-started page
   welcomPageObj.getStartedButton().click();
+  cy.url().should('include', '/get-started');
+  // Pass in kc_idp_hint= to avoid SSO login
+  cy.visit('/get-started?kc_idp_hint=');
   cy.wait(5000); // Wait for the web app to check if the user has created a tenant or not
 });
 
@@ -119,8 +118,11 @@ When('the user clicks the tenant login button', function () {
   welcomPageObj.tenantLoginButton().click();
 });
 
-Then('the user views the tenant login page for {string}', function (tenantName) {
-  welcomPageObj.tenantLoginTenantDisplayName().invoke('text').should('eq', tenantName);
+Then('the user views the tenant login page', function () {
+  // Verify the sign in title
+  welcomPageObj.tenantSignInTitle().then((tenantSignInTitle) => {
+    expect(tenantSignInTitle.length).to.be.gt(0); // title element exists
+  });
   cy.url().then(function (urlString) {
     // Store tenant id to be used by the later tenant deletion requrest step
     tenantId = urlString.match(/(?<=auth\/realms\/).+(?=\/protocol\/openid-connect\/auth)/g);

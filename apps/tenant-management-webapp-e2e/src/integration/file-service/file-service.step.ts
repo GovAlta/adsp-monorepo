@@ -1,13 +1,12 @@
 import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import fd = require('form-data');
 import axios, { AxiosResponse } from 'axios';
-import common from '../common/common.page';
+import commonlib from '../common/common-library';
 import fileServicePage from './file-service.page';
 import tenantAdminPage from '../tenant-admin/tenant-admin.page';
 
 const fileServiceObj = new fileServicePage();
 const tenantAdminObj = new tenantAdminPage();
-const commonObj = new common();
 let responseObj: Cypress.Response;
 let axiosResponse: AxiosResponse;
 let axiosError;
@@ -286,24 +285,17 @@ Then(
 );
 
 Given('a service owner user is on file services overview page', function () {
-  const urlToTenantLogin = Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/login';
-  cy.visit(urlToTenantLogin);
-  commonObj.tenantLoginButton().click();
-  cy.wait(5000); // Wait all the redirects to settle down
-  cy.url().then(function (urlString) {
-    if (urlString.includes('openid-connect')) {
-      commonObj.usernameEmailField().type(Cypress.env('email'));
-      commonObj.passwordField().type(Cypress.env('password'));
-      commonObj.loginButton().click();
-      cy.wait(5000); // Wait all the redirects to settle down
-    }
-  });
-  cy.url().should('include', '/tenant-admin');
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
   tenantAdminObj
-    .dashboardMenuItem('/admin/tenant-admin/services/file')
+    .dashboardMenuItem('/admin/services/files')
     .click()
     .then(function () {
-      cy.url().should('include', '/admin/tenant-admin/services/file');
+      cy.url().should('include', '/admin/services/files');
       cy.wait(4000);
     });
 });
@@ -372,6 +364,7 @@ Then('{string} file service tabs are {string}', function (tabStrings, visibility
 
 When('user goes to {string} tab', function (tabText) {
   fileServiceObj.fileServiceTab(tabText).click();
+  cy.wait(2000);
 });
 
 Then('user views file service api documentation', function () {

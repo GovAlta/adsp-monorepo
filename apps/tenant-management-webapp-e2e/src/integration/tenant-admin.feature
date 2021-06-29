@@ -7,17 +7,24 @@ Feature: Tenant admin
     When the user enters credentials and clicks login button
     Then the tenant management admin page is displayed
 
-  @TEST_CS-299 @REQ_CS-194 @dashboard @regression
-  Scenario: As a GoA service owner, I can access the Administration module
-    Given a service owner user is on tenant admin page
-    When the user selects the "Administration" menu item
-    Then the "administration" landing page is displayed
+  # Administration menu is removed
+  # @TEST_CS-299 @REQ_CS-194 @dashboard @regression
+  # Scenario: As a GoA service owner, I can access the Administration module
+  #   Given a service owner user is on tenant admin page
+  #   When the user selects the "Administration" menu item
+  #   Then the "administration" landing page is displayed
 
   @TEST_CS-300 @REQ_CS-194 @dashboard @regression
   Scenario: As a GoA service owner I can access the File Services module
     Given a service owner user is on tenant admin page
     When the user selects the "File Services" menu item
     Then the "file services" landing page is displayed
+
+  @dashboard @regression
+  Scenario: As a GoA service owner I can access the Service Status module
+    Given a service owner user is on tenant admin page
+    When the user selects the "Status" menu item
+    Then the "service status" landing page is displayed
 
   @regression @smoke-test @api
   Scenario Outline: As a GoA service owner I can get a list of "<Options>"
@@ -49,7 +56,12 @@ Feature: Tenant admin
     Then the user views the number of users in top 5 roles in its tenant realm
     And the number of users in roles from admin page should equal to the number of users in roles from the realm API
 
-
+  @accessibility @regression
+  Scenario: As a service owner, I can use the tenant admin app without any critical or serious accessibility issues
+    Given a service owner user is on tenant admin page
+    Then no critical or serious accessibility issues on the web page
+    When the user selects the "Access" menu item
+    Then no critical or serious accessibility issues on the web page
 
 
 

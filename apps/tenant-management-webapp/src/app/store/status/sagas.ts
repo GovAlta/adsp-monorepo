@@ -6,12 +6,14 @@ import {
   SaveApplicationAction,
   saveApplicationSuccess,
   fetchServiceStatusAppsSuccess,
+  fetchServiceStatusApps as refreshServiceStatusApps,
   DeleteApplicationAction,
   deleteApplicationSuccess,
 } from './actions';
 import { Session } from '@store/session/models';
 import { ConfigState } from '@store/config/models';
 import { SetApplicationStatusAction, setApplicationStatusSuccess } from './actions/setApplicationStatus';
+import { EndpointStatusEntry, ServiceStatusApplication } from './models';
 
 export function* fetchServiceStatusApps() {
   const currentState: RootState = yield select();
@@ -21,9 +23,16 @@ export function* fetchServiceStatusApps() {
 
   try {
     const api = new StatusApi(baseUrl, token);
-    const data = yield api.getApplications();
+    const applications: ServiceStatusApplication[] = yield api.getApplications();
+    for (const application of applications) {
+      const entryMap: { [key: string]: EndpointStatusEntry[] } = yield api.getEndpointStatusEntries(application._id);
+      for (const [url, entries] of Object.entries(entryMap)) {
+        const endpoint = application.endpoints.find((endpoint) => endpoint.url === url);
+        endpoint.statusEntries = entries;
+      }
+    }
 
-    yield put(fetchServiceStatusAppsSuccess(data));
+    yield put(fetchServiceStatusAppsSuccess(applications));
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
   }
@@ -39,6 +48,7 @@ export function* saveApplication(action: SaveApplicationAction) {
     const api = new StatusApi(baseUrl, token);
     const data = yield api.saveApplication(action.payload);
     yield put(saveApplicationSuccess(data));
+    yield put(refreshServiceStatusApps());
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
   }
@@ -68,7 +78,7 @@ export function* setApplicationStatus(action: SetApplicationStatusAction) {
 
   try {
     const api = new StatusApi(baseUrl, token);
-    const data = yield api.setStatus(action.payload.applicationId, action.payload.status);
+    const data: ServiceStatusApplication = yield api.setStatus(action.payload.applicationId, action.payload.status);
 
     yield put(setApplicationStatusSuccess(data));
   } catch (e) {
@@ -77,7 +87,7 @@ export function* setApplicationStatus(action: SetApplicationStatusAction) {
 }
 
 function getToken(session: Session): string {
-  return session.credentials.token;
+  return session?.credentials?.token;
 }
 
 function getServiceStatusUrl(config: ConfigState): string {

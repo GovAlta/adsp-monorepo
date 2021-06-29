@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Link, useHistory } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
@@ -17,19 +17,9 @@ import { Main } from '@components/Html';
 import GoALinkButton from '@components/LinkButton';
 
 const LandingPage = () => {
-  const history = useHistory();
   const { serviceUrls } = useSelector((store: RootState) => ({
-    serviceUrls: store.config.serviceUrls,
+    serviceUrls: store.config?.serviceUrls,
   }));
-
-  const tenant = useSelector((state: RootState) => state.tenant);
-  const session = useSelector((state: RootState) => state.session);
-
-  useEffect(() => {
-    if (session.authenticated && tenant.realm) {
-      history.push('/admin/tenant-admin');
-    }
-  }, [history, tenant, session]);
 
   return (
     <>
@@ -98,9 +88,9 @@ const LandingPage = () => {
                   title="UI Component Libraries"
                   description="Common UI components that implement common Government of Alberta styles that can be used across various projects."
                 >
-                  <a href={`${serviceUrls.uiComponentUrl}/react`}>React</a>&nbsp;|&nbsp;
-                  <a href={`${serviceUrls.uiComponentUrl}/vue`}>Vue</a>&nbsp;|&nbsp;
-                  <a href={`${serviceUrls.uiComponentUrl}/angular`}>Angular</a>
+                  <a href={`${serviceUrls?.uiComponentUrl}/react`}>React</a>&nbsp;|&nbsp;
+                  <a href={`${serviceUrls?.uiComponentUrl}/vue`}>Vue</a>&nbsp;|&nbsp;
+                  <a href={`${serviceUrls?.uiComponentUrl}/angular`}>Angular</a>
                 </GoACard>
               </GridItem>
 
@@ -109,7 +99,7 @@ const LandingPage = () => {
                   title="Keycloak Access Management"
                   description="Many GoA Services require secure transmission, storage, and records management of files."
                 >
-                  <a href={serviceUrls.accessManagementApi}>Learn More</a>
+                  <a href={serviceUrls?.accessManagementApi}>Learn More</a>
                 </GoACard>
               </GridItem>
               <GridItem md={4} vSpacing={1} hSpacing={0.5}>

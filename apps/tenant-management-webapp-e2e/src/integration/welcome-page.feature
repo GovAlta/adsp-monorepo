@@ -1,6 +1,6 @@
 Feature: Tenant management welcome page
 
-    @smoke-test @regression @smoke-test
+    @smoke-test @regression
     Scenario: As a tenant management user, I can see the welcome page
         When the user goes to the tenant management welcome page
         Then the user views the tenant management welcome page title
@@ -13,9 +13,9 @@ Feature: Tenant management welcome page
         Then the user views the page of "<Page>" based on if the user created a tenant before or not
 
         Examples:
-            | Username    | Password       | Page         |
-            | env{email}  | env{password}  | Tenant Login |
-            | env{email2} | env{password2} | Tenant Name  |
+            | Username    | Password       | Page            |
+            | env{email}  | env{password}  | Tenant Login    |
+            | env{email2} | env{password2} | Tenant Creation |
 
     @TEST_CS-331 @REQ_CS-370 @regression @tenantSignup
     Scenario: User created a tenant cannot create another tenant
@@ -36,7 +36,12 @@ Feature: Tenant management welcome page
         Then the user views the tenant is successfully created message
         And the new tenant login button is presented
         When the user clicks the tenant login button
-        Then the user views the tenant login page for "autotest-signup"
+        Then the user views the tenant login page
         # Delete the created tenant for the next test run
         When the user sends the delete tenant request
         Then the new tenant is deleted
+
+    @accessibility @regression
+    Scenario: As a tenant management user, I can see the welcome page with any critical and serious accessibility issues
+        When the user goes to the tenant management welcome page
+        Then no critical or serious accessibility issues on the web page

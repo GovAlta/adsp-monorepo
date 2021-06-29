@@ -1,28 +1,29 @@
 import React, { useContext, useState } from 'react';
 import { GoAHeader } from '@abgov/react-components';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
-
 import { RootState } from '@store/index';
-import AuthContext from '@lib/authContext';
-import Sidebar from '@pages/admin/tenant-management/sidebar';
+import Sidebar from '@pages/admin/sidebar';
 import MenuIcon from '@icons/menu-outline.svg';
 import CloseIcon from '@icons/close-outline.svg';
 import { ReactComponent as UserIcon } from '@icons/person-circle-outline.svg';
+import { TenantAdminLogin, TenantLogout } from '@store/tenant/actions';
+
 interface HeaderMenuProps {
   hasLoginLink: boolean;
+  admin: boolean;
 }
 
 const ActionsMenu = (props: HeaderMenuProps) => {
   const authenticated = useSelector((state: RootState) => state.session.authenticated);
-  const authCtx = useContext(AuthContext);
-
+  const dispatch = useDispatch();
   const [menuState, setMenuState] = useState<MenuState>({ state: 'closed' });
 
   function toggleMenu() {
     setMenuState({ state: menuState.state === 'closed' ? 'open' : 'closed' });
   }
+
   return (
     <Actions>
       <section className="mobile">
@@ -39,15 +40,23 @@ const ActionsMenu = (props: HeaderMenuProps) => {
 
       {props.hasLoginLink ? (
         <section className="desktop">
-          {authenticated ? (
+          {/* For admin pages, only logout is required */}
+          {(authenticated === true || props.admin) && (
             <UserIconBox>
               <UserIcon />
-              <Link to={'/'} onClick={() => authCtx.signOut()}>
+              <Link to={''} onClick={() => dispatch(TenantLogout())}>
                 Sign Out
               </Link>
             </UserIconBox>
-          ) : (
-            <Link to={'/'} onClick={() => authCtx.signIn('/login-redirect')}>
+          )}
+
+          {!authenticated && !props.admin && (
+            <Link
+              to={''}
+              onClick={() => {
+                dispatch(TenantAdminLogin());
+              }}
+            >
               Sign In
             </Link>
           )}
@@ -57,11 +66,11 @@ const ActionsMenu = (props: HeaderMenuProps) => {
   );
 };
 
-function AppHeader({ serviceName = '', hasLoginLink = true }) {
+function AppHeader({ serviceName = '', hasLoginLink = true, admin = false }) {
   return (
     <HeaderContainer>
-      <GoAHeader serviceHome="/" serviceLevel="alpha" serviceName={serviceName} />
-      <ActionsMenu hasLoginLink={hasLoginLink} />
+      <GoAHeader serviceHome="/" serviceLevel="beta" serviceName={serviceName} />
+      <ActionsMenu hasLoginLink={hasLoginLink} admin={admin} />
     </HeaderContainer>
   );
 }

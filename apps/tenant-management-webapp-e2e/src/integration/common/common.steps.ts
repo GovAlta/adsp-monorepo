@@ -1,5 +1,7 @@
-import { Given, When } from 'cypress-cucumber-preprocessor/steps';
+import { Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
 import common from './common.page';
+import commonlib from './common-library';
+import { injectAxe } from '../../support/app.po';
 
 const commonObj = new common();
 
@@ -7,7 +9,7 @@ When('the user enters credentials and clicks login button', function () {
   commonObj.usernameEmailField().type(Cypress.env('email'));
   commonObj.passwordField().type(Cypress.env('password'));
   commonObj.loginButton().click();
-  cy.wait(5000); // Wait all the redirects to settle down
+  cy.wait(10000); // Wait all the redirects to settle down
 });
 
 When('the user enters {string} and {string}, and clicks login button', function (username, password) {
@@ -33,21 +35,21 @@ When('the user enters {string} and {string}, and clicks login button', function 
   commonObj.usernameEmailField().type(user);
   commonObj.passwordField().type(pwd);
   commonObj.loginButton().click();
-  cy.wait(5000); // Wait all the redirects to settle down
+  cy.wait(10000); // Wait all the redirects to settle down
 });
 
 Given('a service owner user is on tenant admin page', function () {
-  const urlToTenantLogin = Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/login';
-  cy.visit(urlToTenantLogin);
-  commonObj.tenantLoginButton().click();
-  cy.wait(5000); // Wait all the redirects to settle down
-  cy.url().then(function (urlString) {
-    if (urlString.includes('openid-connect')) {
-      commonObj.usernameEmailField().type(Cypress.env('email'));
-      commonObj.passwordField().type(Cypress.env('password'));
-      commonObj.loginButton().click();
-      cy.wait(10000); // Wait all the redirects to settle down
-    }
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
+});
+
+Then('no critical or serious accessibility issues on the web page', function () {
+  injectAxe();
+  cy.checkA11y(null!, {
+    includedImpacts: ['critical', 'serious'],
   });
-  cy.url().should('include', '/tenant-admin');
 });

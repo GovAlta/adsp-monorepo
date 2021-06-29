@@ -275,7 +275,7 @@ objects:
       name: file-service-files${NAME_SUFFIX}
     spec:
       accessModes:
-        - ReadWriteOnce
+        - ReadWriteMany
       resources:
         requests:
           storage: 1Gi
@@ -323,8 +323,6 @@ objects:
                   value: "3333"
                 - name: FILE_PATH
                   value: /data/files
-                - name: LOG_LEVEL
-                  value: info
                 - name: MONGO_USER
                   valueFrom:
                     secretKeyRef:

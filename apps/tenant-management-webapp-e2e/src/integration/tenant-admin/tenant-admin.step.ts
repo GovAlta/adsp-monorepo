@@ -1,20 +1,17 @@
 import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import tenantAdminPage from './tenant-admin.page';
-import common from '../common/common.page';
 
-const commonObj = new common();
 const tenantAdminObj = new tenantAdminPage();
 let responseObj: Cypress.Response;
 
 Given('the user goes to tenant management login link', function () {
-  const urlToTenantLogin = Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/login';
+  const urlToTenantLogin = Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/autologin?kc_idp_hint=';
   cy.visit(urlToTenantLogin);
-  commonObj.tenantLoginButton().click();
   cy.wait(2000); // Wait all the redirects to settle down
 });
 
 Then('the tenant management admin page is displayed', function () {
-  cy.url().should('include', '/tenant-admin');
+  cy.url().should('include', '/admin');
   tenantAdminObj.dashboardTitle().contains('Tenant Management');
   tenantAdminObj.dashboardServicesMenuCategory();
 });
@@ -22,12 +19,14 @@ Then('the tenant management admin page is displayed', function () {
 Then('the {string} landing page is displayed', function (type) {
   let urlPart = 'undefined';
   switch (type) {
-    case 'administration':
-      urlPart = '/admin/tenant-admin/admin';
-      break;
     case 'file services':
-      urlPart = '/admin/tenant-admin/services/file';
+      urlPart = '/admin/services/files';
       break;
+    case 'service status':
+      urlPart = '/admin/services/status';
+      break;
+    default:
+      expect(type).to.be.oneOf(['file services', 'service status']);
   }
   cy.url().should('include', urlPart);
 });
@@ -35,15 +34,17 @@ Then('the {string} landing page is displayed', function (type) {
 When('the user selects the {string} menu item', function (menuItem) {
   let menuItemSelector = '';
   switch (menuItem) {
-    case 'Administration':
-      menuItemSelector = '/admin/tenant-admin/admin';
-      break;
     case 'File Services':
-      menuItemSelector = '/admin/tenant-admin/services/file';
+      menuItemSelector = '/admin/services/files';
       break;
     case 'Access':
-      menuItemSelector = '/admin/tenant-admin/access';
+      menuItemSelector = '/admin/access';
       break;
+    case 'Status':
+      menuItemSelector = '/admin/services/status';
+      break;
+    default:
+      expect(menuItem).to.be.oneOf(['File Services', 'Access', 'Status']);
   }
 
   tenantAdminObj.dashboardMenuItem(menuItemSelector).click();

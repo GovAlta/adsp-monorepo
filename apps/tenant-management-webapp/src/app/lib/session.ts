@@ -1,11 +1,5 @@
-import Keycloak, { KeycloakConfig, KeycloakInstance } from 'keycloak-js';
 import { Session } from '@store/session/models';
-
-export let keycloak: KeycloakInstance;
-
-export function createKeycloakInstance(config: KeycloakConfig) {
-  keycloak = Keycloak(config);
-}
+import { KeycloakInstance } from 'keycloak-js';
 
 export function convertToSession(kc: KeycloakInstance): Session {
   return {
@@ -27,10 +21,4 @@ export function convertToSession(kc: KeycloakInstance): Session {
       refreshTokenExp: kc.refreshTokenParsed.exp,
     },
   };
-}
-
-export function logout() {
-  if (keycloak?.authenticated) {
-    keycloak.logout();
-  }
 }

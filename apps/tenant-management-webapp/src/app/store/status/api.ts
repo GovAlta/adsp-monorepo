@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import addAuthTokenInterceptor from './authTokenInterceptor';
-import { ServiceStatusApplication } from './models';
+import { EndpointStatusEntry, ServiceStatusApplication } from './models';
 
 export class StatusApi {
   private http: AxiosInstance;
@@ -14,9 +14,14 @@ export class StatusApi {
     return res.data;
   }
 
+  async getEndpointStatusEntries(applicationId: string): Promise<EndpointStatusEntry[]> {
+    const res = await this.http.get(`/applications/${applicationId}/endpoint-status-entries`);
+    return res.data;
+  }
+
   async saveApplication(props: ServiceStatusApplication): Promise<ServiceStatusApplication> {
-    if (props.id) {
-      const res = await this.http.put(`/applications/${props.id}`, props);
+    if (props._id) {
+      const res = await this.http.put(`/applications/${props._id}`, props);
       return res.data;
     } else {
       const res = await this.http.post(`/applications`, props);

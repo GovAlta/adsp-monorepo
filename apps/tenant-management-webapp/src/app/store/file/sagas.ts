@@ -39,10 +39,10 @@ export function* uploadFile(file) {
 
 export function* fetchFiles() {
   const state = yield select();
-  const token = state.session.credentials.token;
-  const api = yield new FileApi(state.config, token);
-
   try {
+    const token = state.session?.credentials?.token;
+    const api = yield new FileApi(state.config, token);
+
     const files = yield api.fetchFiles();
     yield put(FetchFilesSuccessService({ data: files.results }));
   } catch (e) {
@@ -52,9 +52,9 @@ export function* fetchFiles() {
 
 export function* deleteFile(file) {
   const state = yield select();
-  const token = state.session.credentials.token;
-  const api = yield new FileApi(state.config, token);
   try {
+    const token = state.session?.credentials?.token;
+    const api = yield new FileApi(state.config, token);
     const files = yield api.deleteFile(file.payload.data);
     yield put(DeleteFileSuccessService(files));
   } catch (e) {
@@ -64,9 +64,9 @@ export function* deleteFile(file) {
 
 export function* downloadFile(file) {
   const state = yield select();
-  const token = state.session.credentials.token;
-  const api = yield new FileApi(state.config, token);
   try {
+    const token = state.session?.credentials?.token;
+    const api = yield new FileApi(state.config, token);
     const files = yield api.downloadFiles(file.payload.data.id, token);
     const element = document.createElement('a');
     element.href = URL.createObjectURL(new Blob([files]));
@@ -80,9 +80,9 @@ export function* downloadFile(file) {
 
 export function* enableFileService() {
   const state = yield select();
-  const token = state.session.credentials.token;
-  const api = yield new FileApi(state.config, token);
   try {
+    const token = state.session?.credentials?.token;
+    const api = yield new FileApi(state.config, token);
     const enableFile = yield api.enableFileService();
     yield put(CreateFileSpaceSucceededService({ data: enableFile }));
   } catch (e) {
@@ -92,9 +92,9 @@ export function* enableFileService() {
 
 export function* fetchSpace() {
   const state = yield select();
-  const token = state.session.credentials.token;
-  const api = yield new FileApi(state.config, token);
   try {
+    const token = state.session?.credentials?.token;
+    const api = yield new FileApi(state.config, token);
     const enableFile = yield api.fetchSpace();
     yield put(CreateFileSpaceSucceededService({ data: enableFile }));
   } catch (e) {
@@ -104,10 +104,9 @@ export function* fetchSpace() {
 
 export function* fetchFileTypes() {
   const state = yield select();
-  const token = state.session.credentials.token;
-  const api = yield new FileApi(state.config, token);
-
   try {
+    const token = state.session.credentials?.token;
+    const api = yield new FileApi(state.config, token);
     const fileTypeInfo = yield api.fetchFileType();
     yield put(FetchFileTypeSucceededService({ data: fileTypeInfo }));
   } catch (e) {
@@ -117,15 +116,15 @@ export function* fetchFileTypes() {
 
 export function* deleteFileTypes(fileType) {
   const state = yield select();
-  const token = state.session.credentials.token;
-  const api = yield new FileApi(state.config, token);
-
   try {
+    const token = state.session?.credentials?.token;
+    const api = yield new FileApi(state.config, token);
+
     yield api.deleteFileType(fileType.payload.fileInfo.id);
 
     yield put(DeleteFileTypeSucceededService(fileType.payload.fileInfo));
   } catch (e) {
-    yield put(ErrorNotification({ message: e.response.data }));
+    yield put(ErrorNotification({ message: `${e.response.data} - deleteFileTypes` }));
   }
 }
 

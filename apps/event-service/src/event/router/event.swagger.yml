@@ -30,11 +30,8 @@
               - name
               - timestamp
               - payload
-            additionalProperties: true
     responses:
       200:
         description: Event successfully sent.
       401:
         description: User not authorized to send event.
-      404:
-        description: Event definition not found.

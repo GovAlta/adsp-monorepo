@@ -405,8 +405,6 @@ objects:
               env:
                 - name: PORT
                   value: "3333"
-                - name: LOG_LEVEL
-                  value: info
                 - name: AMQP_HOST
                   value: event-service-rabbitmq-balancer
               imagePullPolicy: IfNotPresent
