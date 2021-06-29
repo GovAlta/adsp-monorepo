@@ -101,11 +101,11 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
 
         // if it doesn't pass or fail, it retains the initial value
         if (pass) {
-          endpoint.status = 'up';
+          endpoint.status = 'online';
           allEndpointsUp = allEndpointsUp && true;
           isStatusChanged = true;
         } else if (fail) {
-          endpoint.status = 'down';
+          endpoint.status = 'offline';
           allEndpointsUp = allEndpointsUp && false;
           isStatusChanged = true;
         }
