@@ -63,7 +63,7 @@ describe('Validate endpoint checking', () => {
 
     await checkServiceStatus(application, { status: 200 });
 
-    const entries = await endpointStatusEntryRepository.findByUrl(url);
+    const entries = await endpointStatusEntryRepository.findRecentByUrl(url);
     expect(entries.length).toEqual(1);
     expect(entries[0].ok).toEqual(true);
   });
@@ -83,7 +83,7 @@ describe('Validate endpoint checking', () => {
     {
       await checkServiceStatus(application, { status: 200 });
 
-      entries = await endpointStatusEntryRepository.findByUrl(url);
+      entries = await endpointStatusEntryRepository.findRecentByUrl(url);
       expect(entries.length).toEqual(1);
       expect(entries[0].ok).toBe(true);
 
@@ -96,7 +96,7 @@ describe('Validate endpoint checking', () => {
     {
       await checkServiceStatus(application, { status: 200 });
 
-      entries = await endpointStatusEntryRepository.findByUrl(url);
+      entries = await endpointStatusEntryRepository.findRecentByUrl(url);
       expect(entries.length).toEqual(2);
       expect(entries[0].ok).toBe(true);
       expect(entries[1].ok).toBe(true);
@@ -110,7 +110,7 @@ describe('Validate endpoint checking', () => {
     {
       await checkServiceStatus(application, { status: 200 });
 
-      entries = await endpointStatusEntryRepository.findByUrl(url);
+      entries = await endpointStatusEntryRepository.findRecentByUrl(url);
       expect(entries.length).toEqual(3);
       expect(entries[0].ok).toBe(true);
       expect(entries[1].ok).toBe(true);
@@ -137,7 +137,7 @@ describe('Validate endpoint checking', () => {
     {
       await checkServiceStatus(application, { status: 500 });
 
-      entries = await endpointStatusEntryRepository.findByUrl(url);
+      entries = await endpointStatusEntryRepository.findRecentByUrl(url);
       expect(entries.length).toEqual(1);
       expect(entries[0].ok).toBe(false);
 
@@ -150,7 +150,7 @@ describe('Validate endpoint checking', () => {
     {
       await checkServiceStatus(application, { status: 500 });
 
-      entries = await endpointStatusEntryRepository.findByUrl(url);
+      entries = await endpointStatusEntryRepository.findRecentByUrl(url);
       expect(entries.length).toEqual(2);
       expect(entries[0].ok).toBe(false);
       expect(entries[1].ok).toBe(false);
@@ -164,7 +164,7 @@ describe('Validate endpoint checking', () => {
     {
       await checkServiceStatus(application, { status: 500 });
 
-      entries = await endpointStatusEntryRepository.findByUrl(url);
+      entries = await endpointStatusEntryRepository.findRecentByUrl(url);
       expect(entries.length).toEqual(3);
       expect(entries[0].ok).toBe(false);
       expect(entries[1].ok).toBe(false);

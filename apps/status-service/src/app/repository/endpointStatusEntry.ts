@@ -3,5 +3,5 @@ import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
 import { EndpointStatusEntry } from '../types';
 
 export interface EndpointStatusEntryRepository extends Repository<EndpointStatusEntryEntity, EndpointStatusEntry> {
-  findByUrl(url: string, limit: number): Promise<EndpointStatusEntryEntity[]>;
+  findRecentByUrl(url: string): Promise<EndpointStatusEntryEntity[]>;
 }

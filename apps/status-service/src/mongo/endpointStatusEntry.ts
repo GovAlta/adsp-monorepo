@@ -14,8 +14,10 @@ export default class MongoEndpointStatusEntryRepository implements EndpointStatu
     throw new Error('not implemented');
   }
 
-  async findByUrl(url: string, limit = 5): Promise<EndpointStatusEntryEntity[]> {
-    const docs = await this.model.find({ url: url }).sort({ timestamp: -1 }).limit(limit);
+  async findRecentByUrl(url: string): Promise<EndpointStatusEntryEntity[]> {
+    const period = 5 * 60 * 1000;
+    const after = Date.now() - period;
+    const docs = await this.model.find({ url: url, timestamp: { $gt: after } }).sort({ timestamp: -1 });
     return docs.map((doc) => this.fromDoc(doc));
   }
 
