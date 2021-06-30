@@ -66,6 +66,13 @@ objects:
           kind: ImageStreamTag
           name: tenant-management-webapp:${BUILD_TAG}
           namespace: ${INFRA_NAMESPACE}
+      resources:
+        limits:
+          cpu: 200m
+          memory: 200Mi
+        requests:
+          cpu: 20m
+          memory: 50Mi
       source:
         binary: {}
         type: Binary
@@ -117,6 +124,13 @@ objects:
               volumeMounts:
                 - mountPath: /opt/app-root/src/config
                   name: config-volume
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 200Mi
+                requests:
+                  cpu: 20m
+                  memory: 50Mi
           volumes:
             - configMap:
                 defaultMode: 420

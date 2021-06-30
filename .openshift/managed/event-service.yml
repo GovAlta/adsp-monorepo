@@ -275,6 +275,13 @@ objects:
                   value: "rabbit@$(POD_NAME).event-service-rabbitmq.$(POD_NAMESPACE).svc.cluster.local"
                 - name: RABBITMQ_CONFIG_FILE
                   value: /var/lib/rabbitmq/rabbitmq
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 1Gi
+                requests:
+                  cpu: 100m
+                  memory: 200Mi
           volumes:
             - name: config-volume
               configMap:
@@ -352,7 +359,13 @@ objects:
           name: event-service:${BUILD_TAG}
           namespace: ${INFRA_NAMESPACE}
       postCommit: {}
-      resources: {}
+      resources:
+        limits:
+          cpu: 200m
+          memory: 200Mi
+        requests:
+          cpu: 20m
+          memory: 50Mi
       source:
         binary: {}
         type: Binary
@@ -413,7 +426,13 @@ objects:
                 - containerPort: 3333
                   name: http
                   protocol: TCP
-              resources: {}
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 200Mi
+                requests:
+                  cpu: 20m
+                  memory: 50Mi
               terminationMessagePath: /dev/termination-log
           dnsPolicy: ClusterFirst
           restartPolicy: Always
