@@ -32,84 +32,10 @@ describe('EventService', () => {
       logger,
       directoryMock,
       tokenProviderMock,
-      adspId`urn:ads:platform:test-service`
+      adspId`urn:ads:platform:test-service`,
+      []
     );
     expect(service).toBeTruthy();
-  });
-
-  it('can register events', async (done) => {
-    const service = new EventServiceImpl(
-      logger,
-      directoryMock,
-      tokenProviderMock,
-      adspId`urn:ads:platform:test-service`
-    );
-
-    axiosMock.get.mockResolvedValue({ data: { results: [{ id: 'test-123', configOptions: {} }] } });
-
-    await service.register(false, {
-      name: 'test-event',
-      description: 'signalled when unit testing',
-      payloadSchema: {
-        type: 'object',
-      },
-    });
-
-    expect(axiosMock.get).toHaveBeenCalledTimes(1);
-    expect(axiosMock.put).toHaveBeenCalledTimes(1);
-    expect(axiosMock.put.mock.calls[0][0]).toContain('test-123');
-    expect(axiosMock.put.mock.calls[0][1].configOptions).toHaveProperty('test-service');
-
-    done();
-  });
-
-  it('can register events with new event service options', async (done) => {
-    const service = new EventServiceImpl(
-      logger,
-      directoryMock,
-      tokenProviderMock,
-      adspId`urn:ads:platform:test-service`
-    );
-
-    axiosMock.get.mockResolvedValue({ data: { results: [] } });
-
-    await service.register(false, {
-      name: 'test-event',
-      description: 'signalled when unit testing',
-      payloadSchema: {
-        type: 'object',
-      },
-    });
-
-    expect(axiosMock.get).toHaveBeenCalledTimes(1);
-    expect(axiosMock.post).toHaveBeenCalledTimes(1);
-    expect(axiosMock.post.mock.calls[0][1].configOptions).toHaveProperty('test-service');
-
-    done();
-  });
-
-  it('can register events and skip publishing', async (done) => {
-    const service = new EventServiceImpl(
-      logger,
-      directoryMock,
-      tokenProviderMock,
-      adspId`urn:ads:platform:test-service`
-    );
-
-    axiosMock.get.mockResolvedValue({ data: { results: [{ id: 'test-123', configOptions: {} }] } });
-
-    await service.register(true, {
-      name: 'test-event',
-      description: 'signalled when unit testing',
-      payloadSchema: {
-        type: 'object',
-      },
-    });
-
-    expect(axiosMock.get).toHaveBeenCalledTimes(0);
-    expect(axiosMock.put).toHaveBeenCalledTimes(0);
-
-    done();
   });
 
   it('can send event', async (done) => {
@@ -117,18 +43,19 @@ describe('EventService', () => {
       logger,
       directoryMock,
       tokenProviderMock,
-      adspId`urn:ads:platform:test-service`
+      adspId`urn:ads:platform:test-service`,
+      [
+        {
+          name: 'test-event',
+          description: 'signalled when unit testing',
+          payloadSchema: {
+            type: 'object',
+          },
+        },
+      ]
     );
 
     axiosMock.get.mockResolvedValue({ data: { results: [{ id: 'test-123', configOptions: {} }] } });
-
-    await service.register(false, {
-      name: 'test-event',
-      description: 'signalled when unit testing',
-      payloadSchema: {
-        type: 'object',
-      },
-    });
 
     const event = {
       name: 'test-event',
@@ -149,7 +76,8 @@ describe('EventService', () => {
       logger,
       directoryMock,
       tokenProviderMock,
-      adspId`urn:ads:platform:test-service`
+      adspId`urn:ads:platform:test-service`,
+      []
     );
 
     await expect(

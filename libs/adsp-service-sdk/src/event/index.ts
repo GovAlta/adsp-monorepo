@@ -2,6 +2,7 @@ import { Logger } from 'winston';
 import { TokenProvider } from '../access';
 import { ServiceDirectory } from '../directory';
 import { AdspId } from '../utils';
+import { DomainEventDefinition } from './event';
 import { EventServiceImpl } from './eventService';
 
 export type { DomainEvent, DomainEventDefinition } from './event';
@@ -12,6 +13,7 @@ interface EventServiceOptions {
   tokenProvider: TokenProvider;
   logger: Logger;
   serviceId: AdspId;
+  events: DomainEventDefinition[];
 }
 
 export const createEventService = ({
@@ -19,6 +21,7 @@ export const createEventService = ({
   directory,
   tokenProvider,
   serviceId,
+  events,
 }: EventServiceOptions): EventServiceImpl => {
-  return new EventServiceImpl(logger, directory, tokenProvider, serviceId);
+  return new EventServiceImpl(logger, directory, tokenProvider, serviceId, events);
 };

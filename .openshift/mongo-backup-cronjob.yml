@@ -68,7 +68,7 @@ objects:
                 - name: mongodb-backup
                   persistentVolumeClaim:
                     claimName: ${SERVICE_NAME}-backups
-      schedule: 15 2 * * *
+      schedule: 15 */1 * * *
       successfulJobsHistoryLimit: 3
       suspend: false
   - apiVersion: v1
