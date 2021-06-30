@@ -11,7 +11,7 @@ import {
 import { createDirectory, ServiceDirectory } from './directory';
 import { createEventService, EventService } from './event';
 import { createHealthCheck, PlatformHealthCheck } from './healthCheck';
-import { registerService, ServiceRegistration } from './registration';
+import { createServiceRegistrar, ServiceRegistrar, ServiceRegistration } from './registration';
 import { createTenantHandler, createTenantService, TenantService } from './tenant';
 import { createLogger } from './utils';
 
@@ -24,8 +24,6 @@ interface AdspOptions extends ServiceRegistration {
   accessServiceUrl: URL;
   /** Ignore Service Aud: Skip verification of Service ID in token audience. */
   ignoreServiceAud?: boolean;
-  /** Skip Publish Events: Skip publishing of event definitions. */
-  skipPublishEvents?: boolean;
   /** Configuration Converter: Converter function for configuration; converted value is cached. */
   configurationConverter?: ConfigurationConverter;
 }
@@ -39,6 +37,8 @@ interface PlatformServices {
   configurationService: ConfigurationService;
   /** EventService: Service for emitting domain events. */
   eventService: EventService;
+  /** ServiceRegistrar: Provides registration of services. */
+  registrar: ServiceRegistrar;
 }
 
 interface Platform extends PlatformServices {
@@ -68,7 +68,6 @@ export async function initializePlatform(
     directoryUrl,
     accessServiceUrl,
     ignoreServiceAud,
-    skipPublishEvents,
     configurationConverter,
     ...registration
   }: AdspOptions,
@@ -81,7 +80,9 @@ export async function initializePlatform(
 
   const tokenProvider = createTokenProvider({ logger, serviceId, clientSecret, accessServiceUrl });
   const directory = service?.directory || createDirectory({ logger, directoryUrl, tokenProvider });
-  await registerService(directory, { ...registration, serviceId });
+
+  const registrar = service?.registrar || createServiceRegistrar({ logger, directory, tokenProvider });
+  await registrar.register({ ...registration, serviceId });
 
   const coreStrategy = createCoreStrategy({ logger, serviceId, accessServiceUrl, ignoreServiceAud });
 
@@ -94,14 +95,15 @@ export async function initializePlatform(
     createConfigurationService({ logger, directory, converter: configurationConverter });
   const configurationHandler = createConfigurationHandler(configurationService, serviceId);
 
-  let eventService = service?.eventService;
-  if (!eventService) {
-    const eventServiceImpl = createEventService({ logger, serviceId, directory, tokenProvider });
-    if (registration.events) {
-      await eventServiceImpl.register(skipPublishEvents, ...registration.events);
-    }
-    eventService = eventServiceImpl;
-  }
+  const eventService =
+    service?.eventService ||
+    createEventService({
+      logger,
+      serviceId,
+      directory,
+      tokenProvider,
+      events: registration.events,
+    });
 
   // Skip health checks on anything that's injected or anything not configured (assumed not used).
   const healthCheck = createHealthCheck(logger, accessServiceUrl, directoryUrl, directory, {
@@ -122,6 +124,7 @@ export async function initializePlatform(
     eventService,
     directory,
     healthCheck,
+    registrar,
   };
 }
 
@@ -132,3 +135,4 @@ export type { ServiceDirectory } from './directory';
 export type { Tenant, TenantService } from './tenant';
 export type { ConfigurationService } from './configuration';
 export type { DomainEvent, DomainEventDefinition, EventService } from './event';
+export type { ServiceRegistrar, ServiceRegistration, ServiceRole } from './registration';
