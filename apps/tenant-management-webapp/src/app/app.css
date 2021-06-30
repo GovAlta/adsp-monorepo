@@ -23,15 +23,15 @@
   --color-primary-link: #0067b5;
   --color-font-header: #333;
 
-  --color-gray-100: hsla(200, 18%, 99%, 1);
-  --color-gray-200: hsla(200, 18%, 95%, 1);
-  --color-gray-300: hsla(200, 18%, 90%, 1);
-  --color-gray-400: hsla(200, 18%, 82%, 1);
-  --color-gray-500: hsla(200, 18%, 72%, 1);
-  --color-gray-600: hsla(200, 18%, 58%, 1);
-  --color-gray-700: hsla(200, 18%, 40%, 1);
-  --color-gray-800: hsla(200, 18%, 29%, 1);
-  --color-gray-900: hsla(200, 18%, 19%, 1);
+  --color-gray-100: hsla(216, 10%, 99%, 1);
+  --color-gray-200: hsla(216, 10%, 95%, 1);
+  --color-gray-300: hsla(216, 10%, 90%, 1);
+  --color-gray-400: hsla(216, 10%, 82%, 1);
+  --color-gray-500: hsla(216, 10%, 72%, 1);
+  --color-gray-600: hsla(216, 10%, 58%, 1);
+  --color-gray-700: hsla(216, 10%, 40%, 1);
+  --color-gray-800: hsla(216, 10%, 29%, 1);
+  --color-gray-900: hsla(216, 10%, 19%, 1);
 
   --color-green-100: hsla(88, 50%, 90%, 1);
   --color-green-200: hsla(88, 50%, 80%, 1);

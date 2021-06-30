@@ -2,9 +2,6 @@ import React, { useEffect } from 'react';
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 
-// TODO: remove this
-import '@abgov/core-css/goa-core.css';
-
 import LandingPage from '@pages/public/Landing';
 import { SignInError } from '@pages/public/SignInError';
 
