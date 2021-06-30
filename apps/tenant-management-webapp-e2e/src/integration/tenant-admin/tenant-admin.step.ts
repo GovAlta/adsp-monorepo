@@ -34,6 +34,9 @@ Then('the {string} landing page is displayed', function (type) {
 When('the user selects the {string} menu item', function (menuItem) {
   let menuItemSelector = '';
   switch (menuItem) {
+    case 'Dashboard':
+      menuItemSelector = '/admin';
+      break;
     case 'File Services':
       menuItemSelector = '/admin/services/files';
       break;
@@ -356,3 +359,59 @@ Then(
       });
   }
 );
+
+Then('the user views the tenant name of {string}', function (tenantName) {
+  tenantAdminObj.tenantName().should('have.text', tenantName);
+});
+
+Then('the user views the release info and DIO contact info', function () {
+  tenantAdminObj.releaseContactInfo().should('contain.text', 'This service is in BETA release');
+  tenantAdminObj.releaseContactInfo().should('contain.text', 'DIO@gov.ab.ca');
+});
+
+Then('the user views the autologin link with a copy button', function () {
+  tenantAdminObj
+    .tenantAutoLoginUrl()
+    .should('contain.text', Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/autologin');
+  tenantAdminObj.clickToCopyButton().then((button) => {
+    expect(button.length).to.be.gt(0); // button element exists
+  });
+});
+
+When('the user clicks click to copy button', function () {
+  tenantAdminObj.clickToCopyButton().click();
+});
+
+Then('the autologin link is copied to the clipboard', function () {
+  cy.task('getClipboard').should('eq', Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/autologin');
+});
+
+Then(
+  'the user views introductions and links for {string}, {string}, {string} and {string}',
+  function (access, fileService, status, events) {
+    const cardTextArray = [
+      'Access allows',
+      'The file service provides',
+      'The status service allows',
+      'The event service provides',
+    ];
+    const cardTitleArray = [access, fileService, status, events];
+    tenantAdminObj.goaCardTexts().should('have.length', cardTextArray.length);
+    tenantAdminObj.goaCardTitles().should('have.length', cardTitleArray.length);
+    tenantAdminObj.goaCardTexts().each((element, index) => {
+      cy.wrap(element).invoke('text').should('contain', cardTextArray[index]);
+    });
+    tenantAdminObj.goaCardTitles().each((element, index) => {
+      cy.wrap(element).invoke('text').should('contain', cardTitleArray[index]);
+    });
+  }
+);
+
+When('the user clicks {string} link', function (link) {
+  tenantAdminObj.goaCardLink(link).click();
+  cy.wait(2000);
+});
+
+Then('the user is directed to {string} page', function (page) {
+  tenantAdminObj.servicePageTitle(page);
+});

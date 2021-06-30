@@ -78,7 +78,7 @@ When('the user sends a delete request of {string} with {string}', function (urnn
 });
 
 Then('the testing mapping is removed', function () {
-  expect(responseObj.status).equals(202);
+  expect(responseObj.status).equals(200);
   responseObj.status = 0; // Set status code to be ZERO after validation to avoid the same response status to be used later
 });
 

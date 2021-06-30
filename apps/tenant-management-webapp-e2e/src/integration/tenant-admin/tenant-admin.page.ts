@@ -35,6 +35,38 @@ class TenantAdminPage {
   roleTableHead() {
     return cy.get('thead');
   }
+
+  tenantName() {
+    return cy.xpath('//nav[contains(@class, "sc")]//a[@title="Dashboard"]//preceding-sibling::div');
+  }
+
+  releaseContactInfo() {
+    return cy.xpath('//div[@class="beta-padding"]');
+  }
+
+  tenantAutoLoginUrl() {
+    return cy.xpath('//div[@class="copy-url"]');
+  }
+
+  clickToCopyButton() {
+    return cy.get('button:contains("Click to copy")');
+  }
+
+  goaCardTitles() {
+    return cy.xpath('//div[@class="goa-card"]//div[@class="goa-title"]/a');
+  }
+
+  goaCardTexts() {
+    return cy.xpath('//div[@class="goa-card"]//div[@class="goa-text"]');
+  }
+
+  goaCardLink(text) {
+    return cy.xpath(`//div[@class="goa-title"]//a[contains(text(), "${text}")]`);
+  }
+
+  servicePageTitle(text) {
+    return cy.xpath(`//h2[contains(text(), "${text}")]`);
+  }
 }
 
 export default TenantAdminPage;

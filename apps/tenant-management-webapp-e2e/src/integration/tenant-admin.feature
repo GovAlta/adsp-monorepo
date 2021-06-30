@@ -63,9 +63,26 @@ Feature: Tenant admin
     When the user selects the "Access" menu item
     Then no critical or serious accessibility issues on the web page
 
-
-
-
+  @TEST_CS-588 @regression
+  Scenario: As a GoA admin user, I should be able to see useful information on the landing page
+    Given a service owner user is on tenant admin page
+    Then the user views the tenant name of "autotest"
+    And the user views the release info and DIO contact info
+    And the user views the autologin link with a copy button
+    When the user clicks click to copy button
+    Then the autologin link is copied to the clipboard
+    And the user views introductions and links for "Access", "File Service", "Status" and "Events"
+    When the user clicks "Access" link
+    Then the user is directed to "Access" page
+    When the user selects the "Dashboard" menu item
+    And the user clicks "File Service" link
+    Then the user is directed to "File Service" page
+    When the user selects the "Dashboard" menu item
+    And the user clicks "Status" link
+    Then the user is directed to "Status" page
+    When the user selects the "Dashboard" menu item
+    And the user clicks "Events" link
+    Then the user is directed to "Events" page
 
 
 

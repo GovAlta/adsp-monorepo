@@ -14,6 +14,7 @@
 const cucumber = require('cypress-cucumber-preprocessor').default;
 const browserify = require('@cypress/browserify-preprocessor');
 const resolve = require('resolve');
+const clipboardy = require('clipboardy');
 
 module.exports = (on, config) => {
   const options = {
@@ -27,5 +28,10 @@ module.exports = (on, config) => {
       launchOptions.args.push('--disable-dev-shm-usage');
       return launchOptions;
     }
+  });
+  on('task', {
+    async getClipboard() {
+      return clipboardy.read();
+    },
   });
 };
