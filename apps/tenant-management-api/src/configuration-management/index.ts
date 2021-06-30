@@ -1,22 +1,32 @@
 import { Application } from 'express';
 import { createLogger } from '@core-services/core-common';
-import { applyConfigMiddleware } from './configuration';
+import { ServiceRegistration, ServiceRegistrationImpl } from './registration';
 import { createRepositories } from './mongo';
 import { environment } from '../environments/environment';
+import { applyConfigMiddleware } from './configuration';
 
-export const createConfigService = (app: Application) => {
-  const logger = createLogger('configuration-management-service', environment.LOG_LEVEL || 'info');
+export type { ServiceRegistration } from './registration';
 
-  Promise.all([createRepositories({ ...environment, logger })]).then(([repositories]) => {
-    app.get('/configuration/health', (req, res) =>
-      res.json({
-        db: repositories.isConnected(),
-      })
-    );
+const logger = createLogger('configuration-management-service', environment.LOG_LEVEL || 'info');
 
-    applyConfigMiddleware(app, {
-      ...repositories,
-      logger,
-    });
+const repositoriesPromise = createRepositories({ ...environment, logger });
+export const createServiceRegistration = async (): Promise<ServiceRegistration> => {
+  const { serviceConfigurationRepository } = await repositoriesPromise;
+  return new ServiceRegistrationImpl(serviceConfigurationRepository);
+};
+
+export const createConfigService = async (app: Application): Promise<Application> => {
+  const repositories = await repositoriesPromise;
+  app.get('/configuration/health', (req, res) =>
+    res.json({
+      db: repositories.isConnected(),
+    })
+  );
+
+  applyConfigMiddleware(app, {
+    ...repositories,
+    logger,
   });
+
+  return app;
 };

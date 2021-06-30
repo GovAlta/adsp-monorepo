@@ -2,7 +2,7 @@ import { Doc, decodeAfter, encodeNext, Results } from '@core-services/core-commo
 
 import { model, Types } from 'mongoose';
 
-import { DirectoryRepository, Directory, DirectoryEntity } from '../';
+import { DirectoryRepository, Directory, DirectoryEntity, Criteria } from '../';
 
 import { directorySchema } from './schema';
 
@@ -13,11 +13,11 @@ export class MongoDirectoryRepository implements DirectoryRepository {
     this.directoryModel = model('directories', directorySchema);
   }
 
-  find(top: number, after: string): Promise<Results<DirectoryEntity>> {
+  find(top: number, after: string, criteria: Criteria): Promise<Results<DirectoryEntity>> {
     const skip = decodeAfter(after);
     return new Promise<Results<DirectoryEntity>>((resolve, reject) => {
       this.directoryModel
-        .find({}, null, { lean: true })
+        .find(criteria, null, { lean: true })
         .skip(skip)
         .limit(top)
         .exec((err, docs) =>

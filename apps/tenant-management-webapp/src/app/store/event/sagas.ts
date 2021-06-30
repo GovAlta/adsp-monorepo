@@ -20,7 +20,7 @@ export function* fetchEventDefinitions(action: FetchEventDefinitionsAction) {
 
   if (baseUrl && token) {
     try {
-      const { data: tenantData } = yield call(axios.get, `${baseUrl}/api/configuration/v1/tenantConfig/eventService`, {
+      const { data: tenantData } = yield call(axios.get, `${baseUrl}/api/configuration/v1/tenantConfig/event-service`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -32,13 +32,15 @@ export function* fetchEventDefinitions(action: FetchEventDefinitionsAction) {
         return defs;
       }, []);
 
-      const {
-        data: { results },
-      } = yield call(axios.get, `${baseUrl}/api/configuration/v1/serviceOptions?service=eventService&top=1`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data: result } = yield call(
+        axios.get,
+        `${baseUrl}/api/configuration/v1/serviceOptions/event-service/v1`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
-      const serviceData = results[0]?.configOptions || {};
+      const serviceData = result?.configOptions || {};
 
       const serviceDefinitions = Object.getOwnPropertyNames(serviceData).reduce((defs, namespace) => {
         Object.getOwnPropertyNames(serviceData[namespace].definitions).forEach((name) => {
@@ -60,7 +62,7 @@ export function* updateEventDefinition(action: UpdateEventDefinitionAction) {
 
   if (baseUrl && token) {
     try {
-      const { data: settings } = yield call(axios.get, `${baseUrl}/api/configuration/v1/tenantConfig/eventService`, {
+      const { data: settings } = yield call(axios.get, `${baseUrl}/api/configuration/v1/tenantConfig/event-service`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -79,7 +81,7 @@ export function* updateEventDefinition(action: UpdateEventDefinitionAction) {
 
       const { data } = yield call(
         axios.put,
-        `${baseUrl}/api/configuration/v1/tenantConfig/eventService`,
+        `${baseUrl}/api/configuration/v1/tenantConfig/event-service`,
         { configuration },
         {
           headers: { Authorization: `Bearer ${token}` },

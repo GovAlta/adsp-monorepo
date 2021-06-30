@@ -102,7 +102,38 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
     }
   });
 
-  serviceOptionRouter.delete('/:id', async (req: Request, res: Response, next) => {
+  serviceOptionRouter.get('/:service/:version', async (req, res) => {
+    const { service, version } = req.params;
+
+    try {
+      const result = await serviceConfigurationRepository.getConfigOptionByVersion(service, version);
+      if (!result) {
+        throw new HttpException(HttpStatusCodes.NOT_FOUND, `Service Options for ${service}:${version} was not found`);
+      }
+
+      res.json(mapServiceOption(result));
+    } catch (err) {
+      errorHandler(err, req, res);
+    }
+  });
+
+  serviceOptionRouter.post('/:service/:version', async (req, res) => {
+    const data = req.body;
+    const { service, version } = req.params;
+
+    try {
+      const entity = await serviceConfigurationRepository.getConfigOptionByVersion(service, version);
+      const result = entity
+        ? await entity.update(req.user, data)
+        : await ServiceOptionEntity.create(req.user, serviceConfigurationRepository, data);
+
+      res.json(mapServiceOption(result));
+    } catch (err) {
+      errorHandler(err, req, res);
+    }
+  });
+
+  serviceOptionRouter.delete('/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
 
     try {

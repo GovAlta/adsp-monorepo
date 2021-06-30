@@ -7,7 +7,7 @@ import * as passport from 'passport';
 import * as swaggerUi from 'swagger-ui-express';
 import { AdspId, adspId, initializePlatform, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError, NotFoundError, InvalidOperationError } from '@core-services/core-common';
-import { createConfigService } from './configuration-management';
+import { createConfigService, createServiceRegistration } from './configuration-management';
 import { createDirectoryService } from './directory';
 import { connectMongo, disconnect } from './mongo/index';
 import {
@@ -37,6 +37,8 @@ async function initializeApp(): Promise<express.Application> {
   app.use(express.json());
   app.use(cors());
 
+  const serviceRegistration = await createServiceRegistration();
+
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const { coreStrategy, tenantStrategy, directory, eventService } = await initializePlatform(
     {
@@ -47,13 +49,13 @@ async function initializeApp(): Promise<express.Application> {
       directoryUrl: null,
       accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
       ignoreServiceAud: true,
-      skipPublishEvents: true,
       events: [TenantCreatedDefinition, TenantDeletedDefinition],
     },
     { logger },
     {
       directory: directoryService,
       tenantService,
+      registrar: serviceRegistration,
     }
   );
 

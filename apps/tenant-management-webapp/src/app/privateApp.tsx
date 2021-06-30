@@ -52,6 +52,7 @@ export function PrivateRoute({ component: Component, ...rest }) {
   const userInfo = useSelector((state: RootState) => state.session?.userInfo);
   const tenantRealm = useSelector((state: RootState) => state.tenant?.realm);
   const ready = userInfo !== undefined && tenantRealm === '';
+
   return <Route {...rest} render={(props) => (ready ? <Component {...props} /> : <PageLoader />)} />;
 }
 

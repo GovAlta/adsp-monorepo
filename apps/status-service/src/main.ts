@@ -28,6 +28,10 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
   const createRepoJob = createRepositories({ ...environment, logger });
   const [repositories] = [await createRepoJob];
 
+  // const mongoRepoProps ={...environment, logger};
+  // mongoRepoProps.MONGO_DB = 'notice';
+  // const createNoticeRepoJob = createNoticeRepositories(mongoRepoProps);
+
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
   const { coreStrategy, tenantStrategy } = await initializePlatform(

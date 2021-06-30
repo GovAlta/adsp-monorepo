@@ -24,11 +24,11 @@ export function* fetchTenant(action: FetchTenantAction) {
   const state: RootState = yield select();
   const token = state.session.credentials.token;
   const api = new TenantApi(state.config.tenantApi, token);
-  const email = action.payload;
+  const realm = action.payload;
 
   try {
-    const response = yield api.fetchTenantByEmail(email);
-    yield put(FetchTenantSuccess(response));
+    const response = yield api.fetchTenantByRealm(realm);
+    yield put(FetchTenantSuccess(response.tenant));
   } catch (e) {
     yield put(ErrorNotification({ message: 'failed to fetch tenant' }));
   }
@@ -147,7 +147,15 @@ export function* tenantLogin(action: TenantLoginAction) {
 export function* keycloakRefreshToken() {
   try {
     if (keycloakAuth) {
-      keycloakAuth.refreshToken();
+      keycloakAuth.refreshToken(
+        (keycloak) => {
+          const session = convertToSession(keycloak);
+          Promise.all([store.dispatch(SessionLoginSuccess(session))]);
+        },
+        () => {
+          window.location.replace('/');
+        }
+      );
     } else {
       console.warn(`Try to fresh keycloak token. But, keycloak instance is empty.`);
     }

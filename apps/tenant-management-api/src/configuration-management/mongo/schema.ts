@@ -14,8 +14,30 @@ export const serviceOptionSchema = new Schema({
     required: true,
     minlength: 1,
   },
+  displayName: {
+    type: String,
+    required: false,
+  },
+  description: {
+    type: String,
+    required: false,
+  },
   configOptions: {
     type: JSON,
+  },
+  configSchema: {
+    type: Schema.Types.Mixed,
+    required: false,
+  },
+  roles: {
+    type: [
+      {
+        _id: false,
+        role: { type: String, required: true },
+        description: { type: String, required: false },
+      },
+    ],
+    required: false,
   },
 });
 
@@ -32,9 +54,9 @@ const serviceConfiguration = {
     required: true,
   },
   configuration: {
-    type: Object
-  }
-}
+    type: Object,
+  },
+};
 
 export const tenantConfigSchema = new Schema({
   _id: {

@@ -22,19 +22,19 @@ interface SidebarProps {
 const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
   const dispatch = useDispatch();
 
-  const { tenantName, authenticated, userInfo } = useSelector((state: RootState) => {
+  const { tenantName, authenticated, realm } = useSelector((state: RootState) => {
     return {
       tenantName: state.tenant.name,
       authenticated: state.session.authenticated,
-      userInfo: state.session?.userInfo,
+      realm: state.session.realm,
     };
   });
 
   useEffect(() => {
-    if (userInfo) {
-      dispatch(FetchTenant(userInfo.email));
+    if (realm && authenticated) {
+      dispatch(FetchTenant(realm));
     }
-  }, [userInfo, dispatch]);
+  }, [realm, authenticated, dispatch]);
 
   return (
     <Links>

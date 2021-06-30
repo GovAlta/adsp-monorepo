@@ -101,8 +101,12 @@ export class MongoServiceOptionRepository implements ServiceConfigurationReposit
       ? new ServiceOptionEntity(this, {
           service: doc.service,
           version: doc.version,
+          displayName: doc.displayName,
+          description: doc.description,
+          roles: doc.roles,
           id: `${doc._id}`,
           configOptions: doc.configOptions,
+          configSchema: doc.configSchema,
         })
       : null;
   }
@@ -111,7 +115,11 @@ export class MongoServiceOptionRepository implements ServiceConfigurationReposit
     return {
       service: entity.service,
       version: entity.version,
+      displayName: entity.displayName,
+      description: entity.description,
+      roles: entity.roles,
       configOptions: entity.configOptions,
+      configSchema: entity.configSchema,
     };
   }
 }

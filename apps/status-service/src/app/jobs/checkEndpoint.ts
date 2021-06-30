@@ -94,18 +94,18 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
   await Promise.all(
     application.endpoints.map(async (endpoint) => {
       if (endpoint.url === statusEntry.url) {
-        // verify that the out of the last [ENTRY_SAMPLE_SIZE], at least [MIN_OK_COUNT] are ok
-        const history = await endpointStatusEntryRepository.findByUrl(endpoint.url, ENTRY_SAMPLE_SIZE);
+        // verify that in the last [ENTRY_SAMPLE_SIZE] minutes, at least [MIN_OK_COUNT] are ok
+        const history = await endpointStatusEntryRepository.findRecentByUrl(endpoint.url);
         const pass = history.filter((h) => h.ok).length >= MIN_PASS_COUNT;
         const fail = history.filter((h) => !h.ok).length >= MIN_FAIL_COUNT;
 
         // if it doesn't pass or fail, it retains the initial value
         if (pass) {
-          endpoint.status = 'up';
+          endpoint.status = 'online';
           allEndpointsUp = allEndpointsUp && true;
           isStatusChanged = true;
         } else if (fail) {
-          endpoint.status = 'down';
+          endpoint.status = 'offline';
           allEndpointsUp = allEndpointsUp && false;
           isStatusChanged = true;
         }
