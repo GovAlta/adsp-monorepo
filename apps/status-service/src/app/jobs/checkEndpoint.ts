@@ -117,6 +117,7 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
   if (isStatusChanged) {
     application.status =
       application.manualOverride === 'on' ? initApplicationStatus : allEndpointsUp ? 'operational' : 'reported-issues';
+    application.statusTimestamp = Date.now();
 
     await serviceStatusRepository
       .save(application)

@@ -4,11 +4,21 @@ import MongoServiceStatusRepository from '../../mongo/serviceStatus';
 import MongoEndpointStatusEntryRepository from '../../mongo/endpointStatusEntry';
 import { createCheckEndpointJob } from '../jobs/checkEndpoint';
 import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
+import { User } from '@abgov/adsp-service-sdk';
 
 describe('Validate endpoint checking', () => {
   let serviceStatusRepository: MongoServiceStatusRepository;
   let endpointStatusEntryRepository: MongoEndpointStatusEntryRepository;
   let mongoose: typeof import('mongoose');
+
+  const user: User = {
+    id: '',
+    name: '',
+    email: '',
+    roles: [],
+    isCore: false,
+    token: null,
+  };
 
   beforeEach(async (done) => {
     mongoose = await createMockMongoServer();
@@ -255,5 +265,45 @@ describe('Validate endpoint checking', () => {
       expect(service.status).toBe('reported-issues');
       expect(service.endpoints[0].status).toBe('offline');
     }
+  });
+
+  it('should set the statusTimestamp when the status is manually changed', async () => {
+    let application = await createMockApplication('operational');
+
+    // enable manual override
+    application.manualOverride = 'on';
+    application.setStatus(user, 'maintenance');
+
+    const initTimestamp = application.statusTimestamp;
+
+    application = (await serviceStatusRepository.find({ _id: application._id }))[0];
+    application.setStatus(user, 'operational');
+    application = (await serviceStatusRepository.find({ _id: application._id }))[0];
+
+    expect(initTimestamp).not.toBeNull();
+    expect(application.statusTimestamp).not.toBeNull();
+    expect(application.statusTimestamp).toBeGreaterThan(initTimestamp);
+  });
+
+  it('should set the statusTimestamp when the status is automatically changed', async () => {
+    let application = await createMockApplication('operational');
+
+    // manual change
+    application.manualOverride = 'on';
+    application.setStatus(user, 'maintenance');
+    const initTimestamp = application.statusTimestamp;
+
+    // automatic change
+    application.manualOverride = 'off';
+    application = await serviceStatusRepository.save(application);
+    await checkServiceStatus(application, { status: 200 });
+    await checkServiceStatus(application, { status: 200 });
+    await checkServiceStatus(application, { status: 200 });
+
+    application = (await serviceStatusRepository.find({ _id: application._id }))[0];
+
+    expect(initTimestamp).not.toBeNull();
+    expect(application.statusTimestamp).not.toBeNull();
+    expect(application.statusTimestamp).toBeGreaterThan(initTimestamp);
   });
 });
