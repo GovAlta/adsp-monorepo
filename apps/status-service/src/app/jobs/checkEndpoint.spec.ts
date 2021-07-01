@@ -86,7 +86,7 @@ describe('Validate endpoint checking', () => {
     let entries: EndpointStatusEntryEntity[];
 
     // init state check
-    service = (await serviceStatusRepository.find({ _id: application._id }))[0];
+    service = await serviceStatusRepository.get(application._id);
     expect(service.status).toBe('reported-issues');
 
     // pass 1 - should be `reported-issues`
@@ -97,7 +97,7 @@ describe('Validate endpoint checking', () => {
       expect(entries.length).toEqual(1);
       expect(entries[0].ok).toBe(true);
 
-      service = (await serviceStatusRepository.find({ _id: application._id }))[0];
+      service = await serviceStatusRepository.get(application._id);
       expect(service.status).toBe('reported-issues');
       expect(service.endpoints[0].status).toBe('offline');
     }
@@ -111,7 +111,7 @@ describe('Validate endpoint checking', () => {
       expect(entries[0].ok).toBe(true);
       expect(entries[1].ok).toBe(true);
 
-      service = (await serviceStatusRepository.find({ _id: application._id }))[0];
+      service = await serviceStatusRepository.get(application._id);
       expect(service.status).toBe('reported-issues');
       expect(service.endpoints[0].status).toBe('offline');
     }
@@ -126,7 +126,7 @@ describe('Validate endpoint checking', () => {
       expect(entries[1].ok).toBe(true);
       expect(entries[2].ok).toBe(true);
 
-      service = (await serviceStatusRepository.find({ _id: application._id }))[0];
+      service = await serviceStatusRepository.get(application._id);
       expect(service.status).toBe('operational');
       expect(service.endpoints[0].status).toBe('online');
     }
@@ -140,7 +140,7 @@ describe('Validate endpoint checking', () => {
     let entries: EndpointStatusEntryEntity[];
 
     // init state check
-    service = (await serviceStatusRepository.find({ _id: application._id }))[0];
+    service = await serviceStatusRepository.get(application._id);
     expect(service.status).toBe('operational');
 
     // pass 1 - should be `operational`
@@ -151,7 +151,7 @@ describe('Validate endpoint checking', () => {
       expect(entries.length).toEqual(1);
       expect(entries[0].ok).toBe(false);
 
-      service = (await serviceStatusRepository.find({ _id: application._id }))[0];
+      service = await serviceStatusRepository.get(application._id);
       expect(service.status).toBe('operational');
       expect(service.endpoints[0].status).toBe('online');
     }
@@ -165,7 +165,7 @@ describe('Validate endpoint checking', () => {
       expect(entries[0].ok).toBe(false);
       expect(entries[1].ok).toBe(false);
 
-      service = (await serviceStatusRepository.find({ _id: application._id }))[0];
+      service = await serviceStatusRepository.get(application._id);
       expect(service.status).toBe('operational');
       expect(service.endpoints[0].status).toBe('online');
     }
@@ -180,7 +180,7 @@ describe('Validate endpoint checking', () => {
       expect(entries[1].ok).toBe(false);
       expect(entries[2].ok).toBe(false);
 
-      service = (await serviceStatusRepository.find({ _id: application._id }))[0];
+      service = await serviceStatusRepository.get(application._id);
       expect(service.status).toBe('reported-issues');
       expect(service.endpoints[0].status).toBe('offline');
     }
@@ -195,7 +195,7 @@ describe('Validate endpoint checking', () => {
       await checkServiceStatus(application, { status: 500 });
       await checkServiceStatus(application, { status: 500 });
 
-      const service = (await serviceStatusRepository.find({ _id: application._id }))[0];
+      const service = await serviceStatusRepository.get(application._id);
       expect(service.status).toBe('reported-issues');
       expect(service.endpoints[0].status).toBe('offline');
     }
@@ -205,7 +205,7 @@ describe('Validate endpoint checking', () => {
       await checkServiceStatus(application, { status: 200 });
       await checkServiceStatus(application, { status: 200 });
       await checkServiceStatus(application, { status: 200 });
-      const service = (await serviceStatusRepository.find({ _id: application._id }))[0];
+      const service = await serviceStatusRepository.get(application._id);
       expect(service.status).toBe('operational');
       expect(service.endpoints[0].status).toBe('online');
     }
@@ -214,7 +214,7 @@ describe('Validate endpoint checking', () => {
     {
       await checkServiceStatus(application, { status: 500 });
 
-      const service = (await serviceStatusRepository.find({ _id: application._id }))[0];
+      const service = await serviceStatusRepository.get(application._id);
       expect(service.status).toBe('operational');
       expect(service.endpoints[0].status).toBe('online');
     }
@@ -224,7 +224,7 @@ describe('Validate endpoint checking', () => {
       await checkServiceStatus(application, { status: 500 });
       await checkServiceStatus(application, { status: 500 });
 
-      const service = (await serviceStatusRepository.find({ _id: application._id }))[0];
+      const service = await serviceStatusRepository.get(application._id);
       expect(service.status).toBe('reported-issues');
       expect(service.endpoints[0].status).toBe('offline');
     }
@@ -238,7 +238,7 @@ describe('Validate endpoint checking', () => {
     application = await serviceStatusRepository.save(application);
 
     {
-      const service = (await serviceStatusRepository.find({ _id: application._id }))[0];
+      const service = await serviceStatusRepository.get(application._id);
       expect(service.status).toBe('operational');
     }
 
@@ -248,7 +248,7 @@ describe('Validate endpoint checking', () => {
       await checkServiceStatus(application, { status: 500 });
       await checkServiceStatus(application, { status: 500 });
 
-      const service = (await serviceStatusRepository.find({ _id: application._id }))[0];
+      const service = await serviceStatusRepository.get(application._id);
       expect(service.status).toBe('operational');
       expect(service.endpoints[0].status).toBe('offline');
     }
@@ -261,7 +261,7 @@ describe('Validate endpoint checking', () => {
     {
       await checkServiceStatus(application, { status: 500 });
 
-      const service = (await serviceStatusRepository.find({ _id: application._id }))[0];
+      const service = await serviceStatusRepository.get(application._id);
       expect(service.status).toBe('reported-issues');
       expect(service.endpoints[0].status).toBe('offline');
     }
@@ -277,7 +277,7 @@ describe('Validate endpoint checking', () => {
     application = await serviceStatusRepository.save(application);
 
     application.setStatus(user, 'operational');
-    application = (await serviceStatusRepository.find({ _id: application._id }))[0];
+    application = await serviceStatusRepository.get(application._id);
 
     expect(application.statusTimestamp).not.toBeNull();
     expect(application.statusTimestamp).toBeGreaterThan(0);
@@ -299,7 +299,7 @@ describe('Validate endpoint checking', () => {
     await checkServiceStatus(application, { status: 200 });
     await checkServiceStatus(application, { status: 200 });
 
-    application = (await serviceStatusRepository.find({ _id: application._id }))[0];
+    application = await serviceStatusRepository.get(application._id);
 
     expect(application.statusTimestamp).not.toBeNull();
     expect(application.statusTimestamp).toBeGreaterThan(0);
