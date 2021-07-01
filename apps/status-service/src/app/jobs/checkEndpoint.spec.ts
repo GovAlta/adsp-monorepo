@@ -272,17 +272,15 @@ describe('Validate endpoint checking', () => {
 
     // enable manual override
     application.manualOverride = 'on';
-    application.setStatus(user, 'maintenance');
+    application.status = 'maintenance';
+    application.statusTimestamp = 0;
+    application = await serviceStatusRepository.save(application);
 
-    const initTimestamp = application.statusTimestamp;
-
-    application = (await serviceStatusRepository.find({ _id: application._id }))[0];
     application.setStatus(user, 'operational');
     application = (await serviceStatusRepository.find({ _id: application._id }))[0];
 
-    expect(initTimestamp).not.toBeNull();
     expect(application.statusTimestamp).not.toBeNull();
-    expect(application.statusTimestamp).toBeGreaterThan(initTimestamp);
+    expect(application.statusTimestamp).toBeGreaterThan(0);
   });
 
   it('should set the statusTimestamp when the status is automatically changed', async () => {
@@ -290,8 +288,9 @@ describe('Validate endpoint checking', () => {
 
     // manual change
     application.manualOverride = 'on';
-    application.setStatus(user, 'maintenance');
-    const initTimestamp = application.statusTimestamp;
+    application.status = 'maintenance';
+    application.statusTimestamp = 0;
+    application = await serviceStatusRepository.save(application);
 
     // automatic change
     application.manualOverride = 'off';
@@ -302,8 +301,7 @@ describe('Validate endpoint checking', () => {
 
     application = (await serviceStatusRepository.find({ _id: application._id }))[0];
 
-    expect(initTimestamp).not.toBeNull();
     expect(application.statusTimestamp).not.toBeNull();
-    expect(application.statusTimestamp).toBeGreaterThan(initTimestamp);
+    expect(application.statusTimestamp).toBeGreaterThan(0);
   });
 });
