@@ -380,6 +380,7 @@ Then('the user views the autologin link with a copy button', function () {
 
 When('the user clicks click to copy button', function () {
   tenantAdminObj.clickToCopyButton().click();
+  cy.wait(2000);
 });
 
 Then('the autologin link is copied to the clipboard', function () {
