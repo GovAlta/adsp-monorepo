@@ -54,7 +54,10 @@ const GoAFormButtons = styled.div`
       min-width: 6rem;
     }
 
-    button + button {
+    button + button,
+    button + .goa-link-button,
+    .goa-link-button + button,
+    .goa-link-button + .goa-link-button {
       margin-left: 0.5rem;
     }
   }
