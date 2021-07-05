@@ -17,11 +17,17 @@ const EventDefinitionComponent: FunctionComponent<EventDefinitionProps> = ({ def
   return (
     <>
       <tr>
-        <td headers="namespace">{definition.namespace}</td>
-        <td headers="name">{definition.name}</td>
-        <td headers="description">{definition.description}</td>
-        <td headers="payload">
-          <GoAButton buttonType="secondary" onClick={() => setShowDetails(!showDetails)}>
+        <td headers="namespace" data-testid="namespace">
+          {definition.namespace}
+        </td>
+        <td headers="name" data-testid="name">
+          {definition.name}
+        </td>
+        <td headers="description" data-testid="description">
+          {definition.description}
+        </td>
+        <td headers="payload" data-testid="payload">
+          <GoAButton buttonType="secondary" onClick={() => setShowDetails(!showDetails)} data-testid="toggle-details-visibility">
             {showDetails ? 'Hide details' : 'Show details'}
           </GoAButton>
         </td>
@@ -44,7 +50,7 @@ interface EventDefinitionsListComponentProps {
 export const EventDefinitionsListComponent: FunctionComponent<EventDefinitionsListComponentProps> = ({ className }) => {
   const definitions = useSelector((state: RootState) => state.event.results.map((r) => state.event.definitions[r]));
   return (
-    <DataTable className={className}>
+    <DataTable className={className} data-testid="events-definitions-table">
       <thead>
         <tr>
           <th id="namespace">Namespace</th>
