@@ -53,7 +53,7 @@ describe('ConfigurationService', () => {
     cacheMock.mockReturnValueOnce(null);
 
     const config = { value: 'this is config' };
-    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: config }));
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { configuration: config } }));
     const options = 'this is options';
     axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { results: [{ configOptions: options }] } }));
 
@@ -77,7 +77,7 @@ describe('ConfigurationService', () => {
     cacheMock.mockReturnValueOnce(null);
 
     const config = { value: 'this is config' };
-    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: config }));
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { configuration: config } }));
     const options = 'this is options';
     axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { results: [{ configOptions: options }] } }));
 
@@ -99,7 +99,7 @@ describe('ConfigurationService', () => {
     cacheMock.mockReturnValueOnce(null);
 
     const config = { value: 'this is config' };
-    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: config }));
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { configuration: config } }));
     const options = 'this is options';
     axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { results: [{ configOptions: options }] } }));
 

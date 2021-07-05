@@ -41,9 +41,11 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     this.logger.debug(`Retrieving tenant configuration from ${configUrl}...'`, this.LOG_CONTEXT);
 
     try {
-      const { data } = await axios.get<C>(configUrl.href, { headers: { Authorization: `Bearer ${token}` } });
+      const { data } = await axios.get<{ configuration: C }>(configUrl.href, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      const config = this.#converter(data, tenantId) as C;
+      const config = (data.configuration ? this.#converter(data.configuration, tenantId) : null) as C;
       if (config) {
         this.#configuration.set(`${tenantId}-${serviceId}`, config);
         this.logger.info(`Retrieved and cached tenant '${tenantId}' configuration for ${service}.`, this.LOG_CONTEXT);
