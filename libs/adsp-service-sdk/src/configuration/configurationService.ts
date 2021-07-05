@@ -1,5 +1,4 @@
 import axios from 'axios';
-import * as camelcase from 'camelcase';
 import * as NodeCache from 'node-cache';
 import type { Logger } from 'winston';
 import { ServiceDirectory } from '../directory';
@@ -36,7 +35,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     const configurationServiceUrl = await this.directory.getServiceUrl(
       adspId`urn:ads:platform:configuration-service:v1`
     );
-    const service = camelcase(serviceId.service);
+    const service = serviceId.service;
 
     const configUrl = new URL(`v1/tenantConfig/${service}`, configurationServiceUrl);
     this.logger.debug(`Retrieving tenant configuration from ${configUrl}...'`, this.LOG_CONTEXT);
@@ -68,7 +67,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     const configurationServiceUrl = await this.directory.getServiceUrl(
       adspId`urn:ads:platform:configuration-service:v1`
     );
-    const service = camelcase(serviceId.service);
+    const service = serviceId.service;
 
     const optionsUrl = new URL(`v1/serviceOptions?service=${service}&top=1`, configurationServiceUrl);
     this.logger.debug(`Retrieving service options from ${optionsUrl}...'`, this.LOG_CONTEXT);
