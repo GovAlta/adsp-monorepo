@@ -5,3 +5,8 @@ export interface EndpointStatusEntry {
   responseTime: number;
   status: number | string;
 }
+
+export interface EndpointStatusEntryRepositoryOptions {
+  limit: number;
+  everyMilliseconds: number;
+}
