@@ -5,14 +5,14 @@ import { EndpointStatusEntryEntity } from '../app/model/endpointStatusEntry';
 import { EndpointStatusEntryRepository } from '../app/repository/endpointStatusEntry';
 import { endpointStatusEntrySchema } from './schema';
 
-export const defaultOptions: EndpointStatusEntryRepositoryOptions = {
+export const defaultStatusEntryOptions: EndpointStatusEntryRepositoryOptions = {
   limit: 5,
-  everyMilliseconds: 5000,
+  everyMilliseconds: 1000,
 };
 
 export default class MongoEndpointStatusEntryRepository implements EndpointStatusEntryRepository {
   model: Model<EndpointStatusEntry & Document>;
-  constructor(private opts: EndpointStatusEntryRepositoryOptions) {
+  constructor(private opts: EndpointStatusEntryRepositoryOptions = defaultStatusEntryOptions) {
     this.model = model('EndpointStatusEntry', endpointStatusEntrySchema);
   }
   async get(_id: string): Promise<EndpointStatusEntryEntity> {
