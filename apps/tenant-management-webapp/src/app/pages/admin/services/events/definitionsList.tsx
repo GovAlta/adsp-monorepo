@@ -27,7 +27,11 @@ const EventDefinitionComponent: FunctionComponent<EventDefinitionProps> = ({ def
           {definition.description}
         </td>
         <td headers="payload" data-testid="payload">
-          <GoAButton buttonType="secondary" onClick={() => setShowDetails(!showDetails)} data-testid="toggle-details-visibility">
+          <GoAButton
+            buttonType="secondary"
+            onClick={() => setShowDetails(!showDetails)}
+            data-testid="toggle-details-visibility"
+          >
             {showDetails ? 'Hide details' : 'Show details'}
           </GoAButton>
         </td>
@@ -35,7 +39,7 @@ const EventDefinitionComponent: FunctionComponent<EventDefinitionProps> = ({ def
       {showDetails && (
         <tr>
           <td className="payload-details" headers="namespace name description payload" colSpan={5}>
-            <div>{JSON.stringify(definition.payloadSchema, null, 2)}</div>
+            <div data-testid="details">{JSON.stringify(definition.payloadSchema, null, 2)}</div>
           </td>
         </tr>
       )}
