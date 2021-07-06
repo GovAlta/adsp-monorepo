@@ -23,7 +23,10 @@ describe('Validate endpoint checking', () => {
   beforeEach(async (done) => {
     mongoose = await createMockMongoServer();
     serviceStatusRepository = new MongoServiceStatusRepository();
-    endpointStatusEntryRepository = new MongoEndpointStatusEntryRepository();
+    endpointStatusEntryRepository = new MongoEndpointStatusEntryRepository({
+      everyMilliseconds: 1,
+      limit: 100,
+    });
     done();
   });
 
