@@ -7,7 +7,7 @@ import { endpointStatusEntrySchema } from './schema';
 
 export const defaultStatusEntryOptions: EndpointStatusEntryRepositoryOptions = {
   limit: 5,
-  everyMilliseconds: 1000,
+  everyMilliseconds: 60 * 1000,
 };
 
 export default class MongoEndpointStatusEntryRepository implements EndpointStatusEntryRepository {
