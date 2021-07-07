@@ -1,32 +1,26 @@
-import { SubscriptionEntity } from '../model';
-import { NotificationSpace, NotificationType, Subscriber } from '../types';
+import { NotificationTypeEntity, SubscriberEntity, SubscriptionEntity } from '../model';
+import { NotificationType, Subscriber, Subscription } from '../types';
 
-export const mapSpace = (space: NotificationSpace) => ({
-  id: space.id,
-  name: space.name,
-  spaceAdminRole: space.spaceAdminRole,
-});
-
-export const mapSubscriber = (subscriber: Subscriber) => ({
-  spaceId: subscriber.spaceId,
+export const mapSubscriber = (subscriber: SubscriberEntity): Subscriber => ({
+  tenantId: subscriber.tenantId,
   id: subscriber.id,
   addressAs: subscriber.addressAs,
   channels: subscriber.channels,
 });
 
-export const mapSubscription = (subscription: SubscriptionEntity) => ({
+export const mapSubscription = (
+  subscription: SubscriptionEntity
+): Omit<Subscription, 'subscriberId'> & { subscriber: Subscriber } => ({
   subscriber: subscription.subscriber ? mapSubscriber(subscription.subscriber) : null,
-  spaceId: subscription.spaceId,
+  tenantId: subscription.tenantId,
   typeId: subscription.typeId,
   criteria: subscription.criteria,
 });
 
-export const mapType = (type: NotificationType) => ({
-  spaceId: type.spaceId,
+export const mapType = (type: NotificationTypeEntity): NotificationType => ({
   id: type.id,
   name: type.name,
   description: type.description,
-  publicSubscribe: type.publicSubscribe,
   subscriberRoles: type.subscriberRoles,
   events: type.events,
 });

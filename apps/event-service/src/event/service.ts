@@ -1,17 +1,7 @@
-import type { Subscribable } from 'rxjs';
-import { DomainEvent } from './types';
+import type { DomainEvent } from '@abgov/adsp-service-sdk';
+import type { DomainEventSubscriberService } from '@core-services/core-common';
 
-export interface DomainEventService {
+export interface DomainEventService extends DomainEventSubscriberService {
   isConnected(): boolean;
   send(event: DomainEvent): void;
-}
-
-export interface DomainEventWorkItem {
-  event: DomainEvent;
-  done: (err?: unknown) => void;
-}
-
-export interface DomainEventSubscriberService {
-  isConnected(): boolean;
-  getEvents(): Subscribable<DomainEventWorkItem>;
 }

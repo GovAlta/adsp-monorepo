@@ -1,4 +1,4 @@
-/event/v1/event:
+/event/v1/events:
   post:
     tags:
       - Event

@@ -2,7 +2,7 @@ import { Channel } from './channel';
 import { Message } from './message';
 
 export interface Notification {
-  spaceId: string;
+  tenantId: string;
   typeId: string;
   correlationId?: string;
   channel: Channel;

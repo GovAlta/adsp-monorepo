@@ -8,10 +8,8 @@ module.exports = (config) => {
       ...config.plugins,
       new SwaggerJSDocWebpackPlugin({
         swaggerDefinition,
-        apis: [
-          'apps/notification-service/src/**/*.ts'
-        ]
-      })
-    ]
-  }
+        apis: ['apps/notification-service/src/**/*.ts', 'apps/notification-service/src/**/*.swagger.yml'],
+      }),
+    ],
+  };
 };

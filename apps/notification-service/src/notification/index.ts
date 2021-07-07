@@ -6,7 +6,8 @@ import { Repositories } from './repository';
 import { createJobs } from './job';
 import { TemplateService } from './template';
 import { Notification, Providers } from './types';
-import { createSpaceRouter, createAdminRouter, createSubscriptionRouter } from './router';
+import { createSubscriptionRouter } from './router';
+import { AdspId, ConfigurationService, TokenProvider } from '@abgov/adsp-service-sdk';
 
 export * from './types';
 export * from './repository';
@@ -14,7 +15,10 @@ export * from './model';
 export * from './template';
 
 interface NotificationMiddlewareProps extends Repositories {
+  serviceId: AdspId;
   logger: Logger;
+  tokenProvider: TokenProvider;
+  configurationService: ConfigurationService;
   templateService: TemplateService;
   eventSubscriber: DomainEventSubscriberService;
   queueService: WorkQueueService<Notification>;
@@ -24,38 +28,35 @@ interface NotificationMiddlewareProps extends Repositories {
 export const applyNotificationMiddleware = (
   app: Application,
   {
+    serviceId,
     logger,
-    spaceRepository,
-    typeRepository,
+    tokenProvider,
+    configurationService,
     subscriptionRepository,
     templateService,
     eventSubscriber,
     queueService,
     providers,
   }: NotificationMiddlewareProps
-) => {
+): Application => {
   createJobs({
+    serviceId,
     logger,
+    tokenProvider,
+    configurationService,
     templateService,
-    events: eventSubscriber.getEvents(),
+    events: eventSubscriber.getItems(),
     queueService,
-    typeRepository,
     subscriptionRepository,
     providers,
   });
 
   const routerProps = {
     logger,
-    spaceRepository,
-    typeRepository,
     subscriptionRepository,
   };
-  const spaceRouter = createSpaceRouter(routerProps);
-  const adminRouter = createAdminRouter(routerProps);
   const subscriptionRouter = createSubscriptionRouter(routerProps);
 
-  app.use('/space/v1', spaceRouter);
-  app.use('/notification-admin/v1', adminRouter);
   app.use('/subscription/v1', subscriptionRouter);
 
   let swagger = null;
@@ -73,4 +74,6 @@ export const applyNotificationMiddleware = (
       });
     }
   });
+
+  return app;
 };

@@ -1,6 +1,6 @@
 import { connect } from 'amqplib';
 import { Logger } from 'winston';
-import { WorkQueueService } from '../work';
+import type { WorkQueueService } from '../work';
 import { AmqpEventSubscriberService } from './event';
 import { AmqpWorkQueueService } from './work';
 
@@ -51,3 +51,5 @@ export const createAmqpQueueService = <T>({
       return service;
     });
 };
+
+export { AmqpEventSubscriberService } from './event';

@@ -15,15 +15,13 @@ export const createABNotifySmsProvider = ({
   const client = new NotifyClient(NOTIFY_URL, NOTIFY_API_KEY);
 
   return {
-    send: (notification: Notification) => {
-      return client
-        .sendSms(NOTIFY_TEMPLATE_ID, notification.to, {
-          personalisation: {
-            subject: notification.message.subject,
-            body: notification.message.body,
-          },
-        })
-        .then((res) => !!res);
+    send: async (notification: Notification) => {
+      await client.sendSms(NOTIFY_TEMPLATE_ID, notification.to, {
+        personalisation: {
+          subject: notification.message.subject,
+          body: notification.message.body,
+        },
+      });
     },
   };
 };

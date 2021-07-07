@@ -1,8 +1,9 @@
 import type { Subscribable } from 'rxjs';
 import type { Logger } from 'winston';
-import { adspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
+import { adspId } from '@abgov/adsp-service-sdk';
+import type { ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
+import type { DomainEventWorkItem } from '@core-services/core-common';
 import { createLogEventJob } from './logEvent';
-import type { DomainEventWorkItem } from '../service';
 
 export interface JobProps {
   logger: Logger;
@@ -17,7 +18,7 @@ export const createJobs = async ({ logger, directory, events, tokenProvider }: J
 
     const logEventJob = createLogEventJob({ logger, valueServiceUrl, tokenProvider });
     events.subscribe((next) => {
-      logEventJob(next.event, next.done);
+      logEventJob(next.item, next.done);
     });
   } catch (err) {
     logger.error(`Error encountered in creation of event jobs. ${err}`, { context: 'EventJobs' });

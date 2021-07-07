@@ -45,7 +45,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const config = (data.configuration ? this.#converter(data.configuration, tenantId) : null) as C;
+      const config = this.#converter(data.configuration, tenantId) as C;
       if (config) {
         this.#configuration.set(`${tenantId}-${serviceId}`, config);
         this.logger.info(`Retrieved and cached tenant '${tenantId}' configuration for ${service}.`, this.LOG_CONTEXT);
@@ -59,7 +59,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
       return config;
     } catch (err) {
       this.logger.warn(`Error encountered in request for tenant '${tenantId}' configuration for ${service}. ${err}`);
-      return null;
+      return this.#converter(null, tenantId) as C;
     }
   };
 
@@ -90,7 +90,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
       return options;
     } catch (err) {
       this.logger.warn(`Error encountered in request for service '${service}' options. ${err}`);
-      return null;
+      return this.#converter(null) as O;
     }
   };
 
@@ -110,7 +110,8 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     }
 
     const options = this.#configuration.get<O>(`${serviceId}`) || (await this.#retrieveOptions<O>(serviceId, token));
+    configuration['options'] = options;
 
-    return { ...configuration, options } as Configuration<C, O>;
+    return configuration as Configuration<C, O>;
   };
 }
