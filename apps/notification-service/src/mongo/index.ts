@@ -1,9 +1,7 @@
 import { connect, connection, ConnectionStates } from 'mongoose';
 import { Logger } from 'winston';
 import { Repositories } from '../notification';
-import { MongoNotificationSpaceRepository } from './space';
 import { MongoSubscriptionRepository } from './subscription';
-import { MongoTypeRepository } from './type';
 
 interface MongoRepositoryProps {
   logger: Logger;
@@ -35,12 +33,9 @@ export const createRepositories = ({
         if (err) {
           reject(err);
         } else {
-          const subscriptionRepository = new MongoSubscriptionRepository();
           resolve({
-            spaceRepository: new MongoNotificationSpaceRepository(),
-            typeRepository: new MongoTypeRepository(subscriptionRepository),
-            subscriptionRepository,
-            isConnected: () => connection.readyState === ConnectionStates.connected,
+            subscriptionRepository: new MongoSubscriptionRepository(),
+            isConnected: () => Promise.resolve(connection.readyState === ConnectionStates.connected),
           });
 
           logger.info(`Connected to MongoDB at: ${mongoConnectionString}`);

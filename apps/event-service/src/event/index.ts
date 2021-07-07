@@ -1,18 +1,18 @@
 import * as fs from 'fs';
-import { Application } from 'express';
-import { Logger } from 'winston';
+import type { Application } from 'express';
+import type { Logger } from 'winston';
 import { createEventRouter } from './router';
-import { DomainEventService, DomainEventSubscriberService } from './service';
+import type { DomainEventService } from './service';
 import { createJobs, JobProps } from './job';
 
-export type { DomainEvent, EventDefinition, Namespace } from './types';
+export type { EventDefinition, Namespace } from './types';
 export { NamespaceEntity } from './model';
-export type { DomainEventService, DomainEventSubscriberService, DomainEventWorkItem } from './service';
+export type { DomainEventService } from './service';
 export { EventServiceRoles } from './role';
 
 interface EventMiddlewareProps extends Omit<JobProps, 'events'> {
   logger: Logger;
-  eventService: DomainEventSubscriberService & DomainEventService;
+  eventService: DomainEventService;
 }
 
 export const applyEventMiddleware = (
@@ -43,7 +43,7 @@ export const applyEventMiddleware = (
     logger,
     directory,
     tokenProvider,
-    events: eventService.getEvents(),
+    events: eventService.getItems(),
   });
 
   return app;

@@ -1,29 +1,23 @@
 import { Channel } from './channel';
 import { Template } from './template';
 
-export interface EventNotificationType {
+export interface NotificationTypeEvent {
   namespace: string;
   name: string;
-  templates: {
-    [Channel.email]: Template;
-    [Channel.mail]: Template;
-    [Channel.sms]: Template;
-  };
+  templates: Partial<Record<Channel, Template>>;
   channels: Channel[];
 }
 
 export interface NotificationType {
-  spaceId: string;
   id: string;
   name: string;
   description: string;
-  publicSubscribe: boolean;
   subscriberRoles: string[];
-  events: EventNotificationType[];
+  events: NotificationTypeEvent[];
 }
 
 export interface NotificationTypeCriteria {
-  spaceIdEquals?: string;
+  tenantIdEquals?: string;
   eventCriteria?: {
     namespace?: string;
     name?: string;

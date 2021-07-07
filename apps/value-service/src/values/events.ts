@@ -1,5 +1,4 @@
 import { DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
-import { Users } from 'keycloak-admin/lib/resources/users';
 import { Value } from './types';
 
 export const ValueWrittenDefinition: DomainEventDefinition = {

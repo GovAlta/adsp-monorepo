@@ -4,8 +4,10 @@ services:
     image: mongo:3.6
     expose:
       - 27017
+    ports:
+      - 27017:27017
   notification-service:
-    build: 
+    build:
       context: ../
       dockerfile: .compose/service/Dockerfile
       args:
@@ -15,13 +17,13 @@ services:
       - notification-service-mongo
     ports:
       - 3335:3335
-    expose: 
+    expose:
       - 3335
     environment:
+      - DIRECTORY_URL=http://tenant-management-api:3333
       - KEYCLOAK_ROOT_URL=http://keycloak:8080
-      - KEYCLOAK_REALM=core
-      - KEYCLOAK_CLIENT_ID=notification-service
-      - KEYCLOAK_CLIENT_SECRET=98216839-8b7a-4af9-ad39-86823714ecfd
+      - CLIENT_ID=urn:ads:platform:notification-service
+      - CLIENT_SECRET=98216839-8b7a-4af9-ad39-86823714ecfd
       - MONGO_URI=mongodb://notification-service-mongo:27017
       - MONGO_DB=notification
       - AMQP_HOST=rabbitmq
@@ -29,4 +31,7 @@ services:
       - AMQP_PASSWORD=guest
       - SMTP_USER=37c00d28ed3e47
       - SMTP_PASSWORD=4618d2b7f6dd50
-      - EVENT_SERVICE_URL=http://event-service:3334
+      - NOTIFY_URL=https://rest-api.notify.alberta.ca
+      - NOTIFY_API_KEY=notificationpocdev-004a5aa7-9ca5-4dc2-aa92-dd2fa93c1379-2c941032-16d9-4d62-95e9-7bda6ebf4d95
+      - NOTIFY_TEMPLATE_ID=04729cea-4899-4b59-9403-85de92c9c5dd
+      - PORT=3335

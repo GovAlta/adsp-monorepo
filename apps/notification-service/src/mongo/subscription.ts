@@ -1,15 +1,15 @@
-import { decodeAfter, Doc, encodeNext, Results } from '@core-services/core-common';
+import { AdspId } from '@abgov/adsp-service-sdk';
+import { decodeAfter, encodeNext, Results } from '@core-services/core-common';
 import { model, Types } from 'mongoose';
 import {
   NotificationTypeEntity,
-  Subscriber,
   SubscriberCriteria,
   SubscriberEntity,
-  Subscription,
   SubscriptionEntity,
   SubscriptionRepository,
 } from '../notification';
 import { subscriberSchema, subscriptionSchema } from './schema';
+import { SubscriberDoc, SubscriptionDoc } from './types';
 
 export class MongoSubscriptionRepository implements SubscriptionRepository {
   private subscriberModel;
@@ -20,20 +20,30 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     this.subscriptionModel = model('subscription', subscriptionSchema);
   }
 
-  getSubscriber(subscriberId: string): Promise<SubscriberEntity> {
+  getSubscriber(tenantId: AdspId, subscriberId: string, byUserId = false): Promise<SubscriberEntity> {
+    const criteria: Record<string, string> = {
+      tenantId: tenantId?.toString(),
+    };
+
+    if (!byUserId) {
+      criteria._id = subscriberId;
+    } else {
+      criteria.userId = subscriberId;
+    }
+
     return new Promise<SubscriberEntity>((resolve, reject) =>
-      this.subscriberModel.findOne({ _id: subscriberId }, null, { lean: true }, (err, doc) =>
+      this.subscriberModel.findOne(criteria, null, { lean: true }, (err, doc) =>
         err ? reject(err) : resolve(this.fromDoc(doc))
       )
     );
   }
 
-  getSubscription(type: NotificationTypeEntity, subscriberId: string) {
+  getSubscription(type: NotificationTypeEntity, subscriberId: string): Promise<SubscriptionEntity> {
     return new Promise<SubscriptionEntity>((resolve, reject) =>
       this.subscriptionModel
         .findOne(
           {
-            spaceId: type.spaceId,
+            tenantId: type.tenantId,
             typeId: type.id,
             subscriberId,
           },
@@ -49,7 +59,7 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     const skip = decodeAfter(after);
     return new Promise<Results<SubscriptionEntity>>((resolve, reject) => {
       this.subscriptionModel
-        .find({ spaceId: type.spaceId, typeId: type.id }, null, { lean: true })
+        .find({ tenantId: type.tenantId, typeId: type.id }, null, { lean: true })
         .populate('subscriberId')
         .skip(skip)
         .limit(top)
@@ -73,8 +83,8 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query: any = {};
-    if (criteria.spaceIdEquals) {
-      query.spaceId = criteria.spaceIdEquals;
+    if (criteria.tenantIdEquals) {
+      query.tenantId = criteria.tenantIdEquals;
     }
 
     return new Promise<Results<SubscriberEntity>>((resolve, reject) => {
@@ -118,7 +128,7 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     return new Promise<SubscriptionEntity>((resolve, reject) =>
       this.subscriptionModel.findOneAndUpdate(
         {
-          spaceId: subscription.spaceId,
+          tenantId: subscription.tenantId,
           typeId: subscription.typeId,
           subscriberId: subscription.subscriberId,
         },
@@ -135,11 +145,11 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     );
   }
 
-  deleteSubscriptions(spaceId: string, typeId: string, subscriberId: string): Promise<boolean> {
+  deleteSubscriptions(tenantId: AdspId, typeId: string, subscriberId: string): Promise<boolean> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query: any = {};
-    if (spaceId && typeId) {
-      query.spaceId = spaceId;
+    if (tenantId && typeId) {
+      query.tenantId = tenantId.toString();
       query.typeId = typeId;
     }
 
@@ -158,10 +168,10 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     );
   }
 
-  private fromDoc(doc: Doc<Subscriber>) {
+  private fromDoc(doc: SubscriberDoc) {
     return doc
       ? new SubscriberEntity(this, {
-          spaceId: doc.spaceId,
+          tenantId: AdspId.parse(doc.tenantId),
           userId: doc.userId,
           id: `${doc._id}`,
           addressAs: doc.addressAs,
@@ -170,37 +180,37 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
       : null;
   }
 
-  private fromSubscriptionDoc(doc: Doc<Subscription>) {
+  private fromSubscriptionDoc(doc: SubscriptionDoc) {
     return doc
       ? new SubscriptionEntity(
           this,
           {
-            spaceId: doc.spaceId,
+            tenantId: AdspId.parse(doc.tenantId),
             typeId: doc.typeId,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             subscriberId: `${((doc.subscriberId as any) || {})._id || doc.subscriberId}`,
             criteria: doc.criteria,
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ((doc.subscriberId as any) || {})._id
-            ? new SubscriberEntity(this, this.fromDoc((doc.subscriberId as unknown) as Doc<Subscriber>))
+          doc.subscriberId?.['tenantId']
+            ? new SubscriberEntity(this, this.fromDoc((doc.subscriberId as unknown) as SubscriberDoc))
             : null
         )
       : null;
   }
 
-  private toDoc(entity: SubscriberEntity): Doc<Subscriber> {
+  private toDoc(entity: SubscriberEntity): SubscriberDoc {
     return {
-      spaceId: entity.spaceId,
+      tenantId: entity.tenantId.toString(),
       addressAs: entity.addressAs,
       userId: entity.userId,
       channels: entity.channels,
     };
   }
 
-  private toSubscriptionDoc(entity: SubscriptionEntity): Subscription {
+  private toSubscriptionDoc(entity: SubscriptionEntity): SubscriptionDoc {
     return {
-      spaceId: entity.spaceId,
+      tenantId: entity.tenantId.toString(),
       typeId: entity.typeId,
       subscriberId: entity.subscriberId,
       criteria: entity.criteria,

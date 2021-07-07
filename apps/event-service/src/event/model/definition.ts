@@ -1,7 +1,7 @@
+import type { DomainEvent } from '@core-services/core-common';
 import { InvalidOperationError } from '@core-services/core-common';
-import { DomainEvent, EventDefinition } from '../types';
+import type { EventDefinition } from '../types';
 import { NamespaceEntity } from './namespace';
-import { DomainEventService } from '../service';
 
 export class EventDefinitionEntity implements EventDefinition {
   public namespace: NamespaceEntity;

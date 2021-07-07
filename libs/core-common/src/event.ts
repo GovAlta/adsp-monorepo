@@ -1,27 +1,10 @@
-import { Observable } from 'rxjs';
+import type { DomainEvent as BaseDomainEvent } from '@abgov/adsp-service-sdk';
+import { WorkItem, WorkQueueService } from './work';
 
-export interface DomainEvent {
+export interface DomainEvent extends BaseDomainEvent {
   namespace: string;
-  name: string;
-  timestamp: Date;
-  correlationId?: string;
-  context?: {
-    [key: string]: boolean | number | string;
-  };
-  [key: string]: unknown;
 }
 
-export interface DomainEventService {
-  isConnected(): boolean;
-  send(event: DomainEvent): void;
-}
+export type DomainEventWorkItem = WorkItem<DomainEvent>;
 
-export interface DomainEventWorkItem {
-  event: DomainEvent;
-  done: () => void;
-}
-
-export interface DomainEventSubscriberService {
-  isConnected(): boolean;
-  getEvents(): Observable<DomainEventWorkItem>;
-}
+export type DomainEventSubscriberService = WorkQueueService<DomainEvent>;

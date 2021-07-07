@@ -17,10 +17,10 @@ export const createStreamRouter = (
   ws: WsApplication,
   { logger, eventService, streamRepository }: StreamRouterProps
 ) => {
-  const events = eventService.getEvents().pipe(
-    map(({ event, done }) => {
+  const events = eventService.getItems().pipe(
+    map(({ item, done }) => {
       done();
-      return event;
+      return item;
     }),
     share()
   );

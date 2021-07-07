@@ -1,4 +1,4 @@
-import { DomainEvent } from '@core-services/core-common';
+import type { DomainEvent } from '@abgov/adsp-service-sdk';
 import { Message, Subscriber, Template } from './types';
 
 export interface TemplateService {
