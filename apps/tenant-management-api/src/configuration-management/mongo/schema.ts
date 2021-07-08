@@ -35,6 +35,7 @@ export const serviceOptionSchema = new Schema({
         _id: false,
         role: { type: String, required: true },
         description: { type: String, required: false },
+        inTenantAdmin: { type: Boolean, required: false },
       },
     ],
     required: false,

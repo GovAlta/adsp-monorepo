@@ -3,29 +3,31 @@ import {
   ServiceRegistrar,
   ServiceRole,
   User,
+  AdspId,
+  adspId,
 } from '@abgov/adsp-service-sdk';
 import { TenantServiceRoles } from '../roles';
 import { ServiceOptionEntity, ServiceConfigurationRepository } from './configuration';
 
-interface ServicesClient {
-  clientId: string;
+export interface ServiceClient {
+  serviceId: AdspId;
   roles: ServiceRole[];
 }
 export interface ServiceRegistration extends ServiceRegistrar {
-  getServiceClients(): Promise<ServicesClient[]>;
+  getServiceClients(): Promise<ServiceClient[]>;
 }
 
 export class ServiceRegistrationImpl implements ServiceRegistration {
   constructor(private readonly repository: ServiceConfigurationRepository) {}
 
-  async getServiceClients(): Promise<ServicesClient[]> {
+  async getServiceClients(): Promise<ServiceClient[]> {
     const result = await this.repository.find(500, null);
 
     // Services are all registered as v1 for now.
     const services = result.results.filter((r) => r.version === 'v1');
     return services.map((s) => ({
-      clientId: `urn:ads:platform:${s.service}`,
-      roles: s.roles.map((r) => ({ role: r.role, description: r.description })),
+      serviceId: adspId`urn:ads:platform:${s.service}`,
+      roles: s.roles.map((r) => ({ role: r.role, description: r.description, inTenantAdmin: r.inTenantAdmin })),
     }));
   }
 

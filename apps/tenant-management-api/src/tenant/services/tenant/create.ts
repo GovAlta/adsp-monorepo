@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as util from 'util';
 import * as HttpStatusCodes from 'http-status-codes';
-import { AdspId, adspId } from '@abgov/adsp-service-sdk';
+import { AdspId, adspId, ServiceRole } from '@abgov/adsp-service-sdk';
 import { createkcAdminClient } from '../../../keycloak';
 import { logger } from '../../../middleware/logger';
 import { environment } from '../../../environments/environment';
@@ -12,6 +12,8 @@ import type RealmRepresentation from 'keycloak-admin/lib/defs/realmRepresentatio
 import type RoleRepresentation from 'keycloak-admin/lib/defs/roleRepresentation';
 import { tenantRepository } from '../../repository';
 import { TenantEntity } from '../../models';
+import { ServiceClient, ServiceRegistration } from '../../../configuration-management';
+import { TenantServiceRoles } from '../../../roles';
 
 export const tenantManagementRealm = 'core';
 
@@ -22,11 +24,11 @@ export const brokerClientName = (realm: string): string => {
 // TODO: Service bearer client and roles should be added when tenant activates service?
 const createPlatformServiceConfig = (
   serviceId: AdspId,
-  ...roles: string[]
+  ...roles: ServiceRole[]
 ): { client: ClientRepresentation; clientRoles: RoleRepresentation[] } => {
   const client: ClientRepresentation = {
     id: uuidv4(),
-    clientId: `${serviceId}`,
+    clientId: serviceId.toString(),
     description: `Bearer client containing roles for access to ${serviceId.service}`,
     bearerOnly: true,
     publicClient: false,
@@ -36,7 +38,8 @@ const createPlatformServiceConfig = (
   };
 
   const clientRoles: RoleRepresentation[] = roles.map((r) => ({
-    name: r,
+    name: r.role,
+    description: r.description,
   }));
 
   return {
@@ -59,7 +62,46 @@ const createWebappClientConfig = (id: string): ClientRepresentation => {
   return config;
 };
 
-const createAdminUser = async (realm, email) => {
+const createTenantAdminComposite = async (registeredClients: ServiceClient[], realm: string, tenantAdminRole: RoleRepresentation) => {
+  const client = await createkcAdminClient();
+  // Unfortunately the keycloak client isn't very friendly around creating composite roles.
+  // Find all the client roles that should be included as part of tenant admin.
+  const tenantAdminRoles: RoleRepresentation[] = [];
+  for (let i = 0; i < registeredClients.length; i++) {
+    const registeredClient = registeredClients[i];
+    const adminRoles = registeredClient.roles.filter((r) => r.inTenantAdmin);
+    for (let j = 0; j < adminRoles.length; j++) {
+      const serviceClient = (
+        await client.clients.find({
+          realm,
+          clientId: registeredClient.serviceId.toString(),
+        })
+      )[0];
+      logger.debug(`Found ${registeredClient.serviceId} service client : ${serviceClient?.id}`);
+
+      const adminRole = adminRoles[j];
+
+      const serviceClientRole = await client.clients.findRole({
+        realm,
+        id: serviceClient.id,
+        roleName: adminRole.role,
+      });
+      logger.debug(
+        `Found ${registeredClient.serviceId} service client role ${adminRole?.role}: ${serviceClientRole.id}`
+      );
+      tenantAdminRoles.push(serviceClientRole);
+    }
+  }
+
+  await client.roles.createComposite({ realm, roleId: tenantAdminRole.id }, tenantAdminRoles);
+};
+
+const createAdminUser = async (
+  realm: string,
+  email: string,
+  tenantServiceClientId: string,
+  tenantAdminRole: RoleRepresentation
+) => {
   logger.info('Start to create admin user');
   const kcClient = await createkcAdminClient();
   const username = email;
@@ -101,34 +143,19 @@ const createAdminUser = async (realm, email) => {
   logger.info(`Add realm management roles to user: ${util.inspect(roleMapping)}`);
   await kcClient.users.addClientRoleMappings(roleMapping);
 
-  // Add default service roles
-  const defaultServiceRoles = ['file-service-admin'];
-
-  const serviceRoles = [];
-
-  for (const serviceRole of defaultServiceRoles) {
-    await kcClient.roles.create({
-      name: serviceRole,
-      realm: realm,
-    });
-
-    const currentRole = await kcClient.roles.findOneByName({
-      name: serviceRole,
-      realm: realm,
-    });
-    serviceRoles.push({
-      id: currentRole.id,
-      name: currentRole.name,
-    });
-  }
-
-  logger.info(`Add service roles to user: ${util.inspect(serviceRoles)}`);
-
-  await kcClient.users.addRealmRoleMappings({
+  await kcClient.users.addClientRoleMappings({
     id: user.id,
     realm: realm,
-    roles: serviceRoles,
+    clientUniqueId: tenantServiceClientId,
+    roles: [
+      {
+        id: tenantAdminRole.id,
+        name: tenantAdminRole.name,
+      },
+    ],
   });
+
+  logger.info('Add tenant admin role to user.');
 
   logger.info('Created admin user');
 };
@@ -225,7 +252,7 @@ export const validateRealmCreation = async (realm) => {
   }
 };
 
-export const createRealm = async (realm: string, email: string, tenantName: string) => {
+export const createRealm = async (services: ServiceRegistration, realm: string, email: string, tenantName: string) => {
   logger.info(`Start to create ${realm} realm`);
   try {
     const brokerClientSecret = uuidv4();
@@ -240,13 +267,9 @@ export const createRealm = async (realm: string, email: string, tenantName: stri
     const publicClientConfig = createWebappClientConfig(tenantPublicClientId);
     const idpConfig = createIdpConfig(brokerClientSecret, brokerClient, FLOW_ALIAS, realm);
 
-    const { client: tenantClient, clientRoles: tenantClientRoles } = createPlatformServiceConfig(
-      adspId`urn:ads:platform:tenant-service`,
-      'tenant-service-admin'
-    );
-    const { client: fileClient, clientRoles: fileClientRoles } = createPlatformServiceConfig(
-      adspId`urn:ads:platform:file-service`,
-      'file-service-admin'
+    const registeredClients = await services.getServiceClients();
+    const clients = registeredClients.map((registeredClient) =>
+      createPlatformServiceConfig(registeredClient.serviceId, ...registeredClient.roles)
     );
 
     const realmConfig: RealmRepresentation = {
@@ -256,12 +279,9 @@ export const createRealm = async (realm: string, email: string, tenantName: stri
       displayNameHtml: tenantName,
       loginTheme: 'ads-theme',
       accountTheme: 'ads-theme',
-      clients: [publicClientConfig, tenantClient, fileClient],
+      clients: [publicClientConfig, ...clients.map((c) => c.client)],
       roles: {
-        client: {
-          [tenantClient.clientId]: tenantClientRoles,
-          [fileClient.clientId]: fileClientRoles,
-        },
+        client: clients.reduce((cs, c) => ({ ...cs, [c.client.clientId]: c.clientRoles }), {}),
       },
       enabled: true,
     };
@@ -270,6 +290,26 @@ export const createRealm = async (realm: string, email: string, tenantName: stri
 
     await client.realms.create(realmConfig);
 
+    // Find the tenant admin role
+    client = await createkcAdminClient();
+    const tenantServiceClient = (
+      await client.clients.find({
+        realm,
+        clientId: 'urn:ads:platform:tenant-service',
+      })
+    )[0];
+    logger.debug(`Found tenant service client: ${tenantServiceClient?.id}`);
+
+    const tenantAdminRole = await client.clients.findRole({
+      realm,
+      id: tenantServiceClient.id,
+      roleName: TenantServiceRoles.TenantAdmin,
+    });
+    logger.debug(`Found tenant service client admin role: ${tenantAdminRole?.id}`);
+
+    await createTenantAdminComposite(registeredClients, realm, tenantAdminRole);
+    logger.info(`Created tenant admin composite role.`);
+
     await createAuthenticationFlow(realm);
 
     client = await createkcAdminClient();
@@ -277,7 +317,7 @@ export const createRealm = async (realm: string, email: string, tenantName: stri
     // IdP shall be created after authentication flow
     await client.identityProviders.create(idpConfig);
 
-    await createAdminUser(realm, email);
+    await createAdminUser(realm, email, tenantServiceClient.id, tenantAdminRole);
 
     validateRealmCreation(realm);
   } catch (err) {

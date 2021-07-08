@@ -52,7 +52,13 @@ async function initializeApp() {
           payloadSchema: {},
         },
       ],
-      roles: [ServiceUserRoles.Admin, ServiceUserRoles.SubscriptionAdmin],
+      roles: [
+        {
+          role: ServiceUserRoles.SubscriptionAdmin,
+          description: 'Administrator role for managing subscriptions',
+          inTenantAdmin: true,
+        },
+      ],
     },
     { logger }
   );
@@ -68,12 +74,7 @@ async function initializeApp() {
   });
 
   app.use(passport.initialize());
-  app.use(
-    '/subscription',
-    passport.authenticate(['jwt'], { session: false }),
-    tenantHandler,
-    configurationHandler
-  );
+  app.use('/subscription', passport.authenticate(['jwt'], { session: false }), tenantHandler, configurationHandler);
 
   const repositories = await createRepositories({ ...environment, logger });
 
@@ -110,6 +111,18 @@ async function initializeApp() {
       ...platform,
       db: repositories.isConnected(),
       msg: eventSubscriber.isConnected(),
+    });
+  });
+
+  app.get('/', async (req, res) => {
+    const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
+    res.json({
+      _links: {
+        self: new URL(req.originalUrl, rootUrl).href,
+        health: new URL('/health', rootUrl).href,
+        api: new URL('/subscription/v1', rootUrl).href,
+        doc: new URL('/swagger/docs/v1', rootUrl).href,
+      },
     });
   });
 

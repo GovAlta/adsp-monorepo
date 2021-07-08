@@ -40,7 +40,17 @@ const initializeApp = async () => {
       serviceId: AdspId.parse(environment.CLIENT_ID),
       displayName: 'Value Service',
       description: 'Service for time-series values.',
-      roles: [ServiceUserRoles.Reader, ServiceUserRoles.Writer],
+      roles: [
+        {
+          role: ServiceUserRoles.Reader,
+          description: 'Reader role for accessing values.',
+          inTenantAdmin: true,
+        },
+        {
+          role: ServiceUserRoles.Writer,
+          description: 'Writer role for writing new values.',
+        },
+      ],
       configurationSchema: {
         type: 'object',
         additionalProperties: {
