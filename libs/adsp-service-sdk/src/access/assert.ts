@@ -38,6 +38,11 @@ export const AssertRole: AssertRole = (operation, roles) => (_target, _propertyK
   descriptor.value = function (...args: unknown[]) {
     const [user] = args;
 
+    // Require a tenant authenticated user.
+    if (!(user as User)?.tenantId) {
+      throw new UnauthorizedUserError(operation, user as User);
+    }
+
     assertHasRoles(operation, user as User, roles);
 
     return method.apply(this, args);

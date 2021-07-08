@@ -71,9 +71,9 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
       const tenantConfig = await tenantConfigurationRepository.getTenantConfig(tenant);
       let entity;
       if (tenantConfig) {
-        entity = await tenantConfig.update(configurationSettingsList);
+        entity = await tenantConfig.update(user, configurationSettingsList);
       } else {
-        entity = await TenantConfigEntity.create(tenantConfigurationRepository, {
+        entity = await TenantConfigEntity.create(user, tenantConfigurationRepository, {
           ...data,
           tenantName: tenant,
         });
@@ -96,7 +96,7 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
       }
 
       const tenantConfig = await tenantConfigurationRepository.getTenantConfig(tenant);
-      const entity = await tenantConfig.updateService(service, serviceSettings);
+      const entity = await tenantConfig.updateService(user, service, serviceSettings);
 
       res.json(mapTenantConfig(entity).configurationSettingsList[service]);
     } catch (err) {
@@ -116,7 +116,7 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
       if (!tenantConfig) {
         throw new HttpException(HttpStatusCodes.NOT_FOUND, `Tenant Config for tenant ${tenant} not found`);
       }
-      const entity = await tenantConfig.update(configurationSettingsList);
+      const entity = await tenantConfig.update(user, configurationSettingsList);
 
       res.json(mapTenantConfig(entity));
     } catch (err) {
@@ -134,7 +134,7 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
       if (!results) {
         throw new HttpException(HttpStatusCodes.NOT_FOUND, `Tenant Config for tenant ${tenant} not found`);
       }
-      const success = await results.delete();
+      const success = await results.delete(user);
       res.json(success);
     } catch (err) {
       errorHandler(err, req, res);

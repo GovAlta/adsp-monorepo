@@ -8,6 +8,7 @@ import { ServiceRegistrarImpl } from './registration';
 export interface ServiceRole {
   role: string;
   description: string;
+  inTenantAdmin?: boolean;
 }
 
 export interface ServiceRegistration {

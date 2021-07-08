@@ -5,7 +5,7 @@ import { createRepositories } from './mongo';
 import { environment } from '../environments/environment';
 import { applyConfigMiddleware } from './configuration';
 
-export type { ServiceRegistration } from './registration';
+export type { ServiceClient, ServiceRegistration } from './registration';
 
 const logger = createLogger('configuration-management-service', environment.LOG_LEVEL || 'info');
 
