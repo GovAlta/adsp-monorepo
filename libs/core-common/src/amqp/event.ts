@@ -14,10 +14,6 @@ export class AmqpEventSubscriberService
     super(queue, logger, connection);
   }
 
-  isConnected(): boolean {
-    return this.connected;
-  }
-
   getItems(): Observable<WorkItem<DomainEvent>> {
     return super
       .getItems()
