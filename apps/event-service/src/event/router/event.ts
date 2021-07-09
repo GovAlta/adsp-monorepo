@@ -54,16 +54,14 @@ export const createEventRouter = ({ logger, eventService }: EventRouterProps): R
     }
     const timestamp = new Date(timeValue);
 
-    const configuration = (await req.getConfiguration<Record<string, NamespaceEntity>, Record<string, NamespaceEntity>>(
-      tenantId
-    )) || {
-      options: null,
-    };
+    const [configuration, options] = await req.getConfiguration<
+      Record<string, NamespaceEntity>,
+      Record<string, NamespaceEntity>
+    >(tenantId);
 
     const namespaces: Record<string, NamespaceEntity> = {
-      ...configuration,
-      ...(configuration.options || {}),
-      options: undefined,
+      ...(configuration || {}),
+      ...(options || {}),
     };
 
     // If the namespace or definition doesn't exist, then we treat it as an ad hoc event and skip validation.

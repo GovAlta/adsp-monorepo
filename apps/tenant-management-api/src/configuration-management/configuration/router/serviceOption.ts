@@ -1,4 +1,4 @@
-import { Request, Response, Router } from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 import { ServiceConfigurationRepository } from '../repository';
 import { mapServiceOption } from './mappers';
 import { ServiceOptionEntity } from '../model';
@@ -13,7 +13,7 @@ interface ServiceOptionRouterProps {
 export const createConfigurationRouter = ({ serviceConfigurationRepository }: ServiceOptionRouterProps) => {
   const serviceOptionRouter = Router();
 
-  serviceOptionRouter.get('/', async (req: Request, res: Response) => {
+  serviceOptionRouter.get('/', async (req, res, next) => {
     const { top, after, service } = req.query;
 
     try {
@@ -30,11 +30,11 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
         results: results.results.map(mapServiceOption),
       });
     } catch (err) {
-      errorHandler(err, req, res);
+      errorHandler(err, req, res, next);
     }
   });
 
-  serviceOptionRouter.get('/:id', async (req, res) => {
+  serviceOptionRouter.get('/:id', async (req, res, next) => {
     const { id } = req.params;
 
     try {
@@ -46,11 +46,11 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
 
       res.json(mapServiceOption(results));
     } catch (err) {
-      errorHandler(err, req, res);
+      errorHandler(err, req, res, next);
     }
   });
 
-  serviceOptionRouter.post('/', async (req: Request, res: Response) => {
+  serviceOptionRouter.post('/', async (req, res, next) => {
     const data = req.body;
     const { service, version } = data;
 
@@ -74,11 +74,11 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
 
       res.json(mapServiceOption(entity));
     } catch (err) {
-      return errorHandler(err, req, res);
+      return errorHandler(err, req, res, next);
     }
   });
 
-  serviceOptionRouter.put('/:id', async (req: Request, res: Response) => {
+  serviceOptionRouter.put('/:id', async (req, res, next) => {
     const data = req.body;
     const { id } = req.params;
     const { service, version } = data;
@@ -98,11 +98,11 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
 
       res.json(mapServiceOption(entity));
     } catch (err) {
-      errorHandler(err, req, res);
+      errorHandler(err, req, res, next);
     }
   });
 
-  serviceOptionRouter.get('/:service/:version', async (req, res) => {
+  serviceOptionRouter.get('/:service/:version', async (req, res, next) => {
     const { service, version } = req.params;
 
     try {
@@ -113,11 +113,11 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
 
       res.json(mapServiceOption(result));
     } catch (err) {
-      errorHandler(err, req, res);
+      errorHandler(err, req, res, next);
     }
   });
 
-  serviceOptionRouter.post('/:service/:version', async (req, res) => {
+  serviceOptionRouter.post('/:service/:version', async (req, res, next) => {
     const data = req.body;
     const { service, version } = req.params;
 
@@ -129,11 +129,11 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
 
       res.json(mapServiceOption(result));
     } catch (err) {
-      errorHandler(err, req, res);
+      errorHandler(err, req, res, next);
     }
   });
 
-  serviceOptionRouter.delete('/:id', async (req: Request, res: Response) => {
+  serviceOptionRouter.delete('/:id', async (req, res, next) => {
     const { id } = req.params;
 
     try {
@@ -147,7 +147,7 @@ export const createConfigurationRouter = ({ serviceConfigurationRepository }: Se
 
       res.json(success);
     } catch (err) {
-      errorHandler(err, req, res);
+      errorHandler(err, req, res, next);
     }
   });
 

@@ -85,7 +85,7 @@ describe('createProcessEventJob', () => {
         tenantId
       );
       tokenProviderMock.getAccessToken.mockResolvedValue('token');
-      configurationServiceMock.getConfiguration.mockResolvedValue(configuration);
+      configurationServiceMock.getConfiguration.mockResolvedValue([configuration]);
       repositoryMock.getSubscriptions.mockResolvedValue({
         results: [],
         page: {},

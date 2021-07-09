@@ -28,9 +28,17 @@ export const createProcessEventJob = ({
   const { tenantId, namespace, name } = event;
   logger.debug(`Processing event ${namespace}:${name} for tenant ${tenantId}...`);
 
+  // Skip processing of any event from the notification-service namespace.
+  // Sending notifications for notification related events could result in infinite loops.
+  if (namespace === serviceId.service) {
+    done();
+    logger.debug(`Skip processing ${namespace}:${name} for notifications since it's a ${serviceId} event`);
+    return;
+  }
+
   try {
     const token = await tokenProvider.getAccessToken();
-    const configuration = await configurationService.getConfiguration<NotificationConfiguration>(
+    const [configuration] = await configurationService.getConfiguration<NotificationConfiguration>(
       serviceId,
       token,
       tenantId
