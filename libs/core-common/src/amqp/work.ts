@@ -25,8 +25,8 @@ export class AmqpWorkQueueService<T> implements WorkQueueService<T> {
 
     await channel.assertQueue(this.queue, {
       arguments: {
+        'x-queue-type': 'quorum',
         'x-dead-letter-exchange': `${this.queue}-dead-letter`,
-        'x-message-ttl': 300000,
       },
     });
   }
@@ -73,10 +73,23 @@ export class AmqpWorkQueueService<T> implements WorkQueueService<T> {
     }
     const channel = this.channel;
     channel.consume(this.queue, (msg) => {
+      // If the message is redelivered, then don't requeue on failure, and let it go to dead letter.
+      const requeueOnFail = !msg.fields?.redelivered;
       try {
         sub.next({
           item: this.convertMessage(msg),
-          done: (err) => (err ? channel.nack(msg, false, true) : channel.ack(msg)),
+          done: (err) => {
+            if (err) {
+              channel.nack(msg, false, requeueOnFail);
+              if (!requeueOnFail) {
+                this.logger.error(
+                  `Redelivered message ${msg.fields.routingKey} processing failed and will be dead lettered.`
+                );
+              }
+            } else {
+              channel.ack(msg);
+            }
+          },
         });
       } catch (err) {
         this.logger.error(
