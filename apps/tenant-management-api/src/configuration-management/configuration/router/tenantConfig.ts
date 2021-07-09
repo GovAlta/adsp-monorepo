@@ -1,10 +1,12 @@
-import { Request, Response, Router } from 'express';
+import { Router } from 'express';
 import { TenantConfigurationRepository } from '../repository';
 import { mapTenantConfig } from './mappers';
 import { TenantConfigEntity } from '../model';
 import HttpException from '../errorHandlers/httpException';
 import * as HttpStatusCodes from 'http-status-codes';
 import { errorHandler } from '../errorHandlers';
+import { TenantServiceRoles } from '../../../roles';
+
 interface TenantConfigRouterProps {
   tenantConfigurationRepository: TenantConfigurationRepository;
 }
@@ -12,7 +14,7 @@ interface TenantConfigRouterProps {
 export const createTenantConfigurationRouter = ({ tenantConfigurationRepository }: TenantConfigRouterProps): Router => {
   const tenantConfigRouter = Router();
 
-  tenantConfigRouter.get('/list', async (req: Request, res: Response, _next) => {
+  tenantConfigRouter.get('/list', async (req, res, next) => {
     const { top, after } = req.query;
 
     try {
@@ -23,11 +25,11 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
         results: results.results.map(mapTenantConfig),
       });
     } catch (err) {
-      errorHandler(err, req, res);
+      errorHandler(err, req, res, next);
     }
   });
 
-  tenantConfigRouter.get('/', async (req, res, _next) => {
+  tenantConfigRouter.get('/', async (req, res, next) => {
     const user = req.user;
     const tenant = `${user.tenantId}`;
     try {
@@ -38,14 +40,18 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
       }
       res.json(mapTenantConfig(results));
     } catch (err) {
-      errorHandler(err, req, res);
+      errorHandler(err, req, res, next);
     }
   });
 
-  tenantConfigRouter.get('/:service', async (req, res, _next) => {
+  tenantConfigRouter.get('/:service', async (req, res, next) => {
     const { service } = req.params;
     const user = req.user;
-    const tenant = `${user.tenantId}`;
+    const tenant =
+      user.isCore && user.roles.includes(TenantServiceRoles.PlatformService)
+        ? `${req.query.tenantId}`
+        : `${user.tenantId}`;
+
     try {
       const results = await tenantConfigurationRepository.getTenantConfig(tenant);
 
@@ -54,11 +60,11 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
       }
       res.json(mapTenantConfig(results).configurationSettingsList[service] || {});
     } catch (err) {
-      errorHandler(err, req, res);
+      errorHandler(err, req, res, next);
     }
   });
 
-  tenantConfigRouter.post('/', async (req: Request, res: Response) => {
+  tenantConfigRouter.post('/', async (req, res, next) => {
     const data = req.body;
     const { configurationSettingsList } = data;
     const user = req.user;
@@ -81,11 +87,11 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
 
       res.json(mapTenantConfig(entity));
     } catch (err) {
-      errorHandler(err, req, res);
+      errorHandler(err, req, res, next);
     }
   });
 
-  tenantConfigRouter.put('/:service', async (req: Request, res: Response) => {
+  tenantConfigRouter.put('/:service', async (req, res, next) => {
     const { service } = req.params;
     const serviceSettings = req.body;
     const user = req.user;
@@ -100,11 +106,11 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
 
       res.json(mapTenantConfig(entity).configurationSettingsList[service]);
     } catch (err) {
-      errorHandler(err, req, res);
+      errorHandler(err, req, res, next);
     }
   });
 
-  tenantConfigRouter.put('/', async (req: Request, res: Response) => {
+  tenantConfigRouter.put('/', async (req, res, next) => {
     const data = req.body;
     const user = req.user;
     const tenant = `${user.tenantId}`;
@@ -120,11 +126,11 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
 
       res.json(mapTenantConfig(entity));
     } catch (err) {
-      errorHandler(err, req, res);
+      errorHandler(err, req, res, next);
     }
   });
 
-  tenantConfigRouter.delete('/', async (req: Request, res: Response) => {
+  tenantConfigRouter.delete('/', async (req, res, next) => {
     const user = req.user;
     const tenant = `${user.tenantId}`;
 
@@ -137,7 +143,7 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
       const success = await results.delete(user);
       res.json(success);
     } catch (err) {
-      errorHandler(err, req, res);
+      errorHandler(err, req, res, next);
     }
   });
 

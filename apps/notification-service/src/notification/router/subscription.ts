@@ -17,8 +17,8 @@ export const createSubscriptionRouter = ({ logger, subscriptionRepository }: Sub
   const subscriptionRouter = Router();
 
   subscriptionRouter.get('/types', assertAuthenticatedHandler, async (req, res) => {
-    const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
-    const types = [...configuration.getNotificationTypes(), configuration.options.getNotificationTypes()];
+    const [configuration] = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
+    const types = [...(configuration?.getNotificationTypes() || [])];
 
     res.send(types.map(mapType));
   });
@@ -26,15 +26,14 @@ export const createSubscriptionRouter = ({ logger, subscriptionRepository }: Sub
   subscriptionRouter.get('/types/:type', assertAuthenticatedHandler, async (req, res, next) => {
     const { type } = req.params;
 
-    const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
-    const entity = configuration.options.getNotificationType(type) || configuration.getNotificationType(type);
-
-    if (!entity) {
+    const [configuration] = await req.getConfiguration<NotificationConfiguration>();
+    const typeEntity = configuration?.getNotificationType(type);
+    if (!typeEntity) {
       next(new NotFoundError('Notification Type', type));
       return;
     }
 
-    res.send(mapType(entity));
+    res.send(mapType(typeEntity));
   });
 
   subscriptionRouter.get('/types/:type/subscriptions', assertAuthenticatedHandler, async (req, res, next) => {
@@ -42,8 +41,12 @@ export const createSubscriptionRouter = ({ logger, subscriptionRepository }: Sub
     const top = req.query.top ? parseInt(req.query.top as string, 10) : 10;
     const after = req.query.after as string;
 
-    const typeEntities = await req.getConfiguration<NotificationConfiguration>();
-    const typeEntity = typeEntities.getNotificationType(type);
+    const [configuration] = await req.getConfiguration<NotificationConfiguration>();
+    const typeEntity = configuration?.getNotificationType(type);
+    if (!typeEntity) {
+      next(new NotFoundError('Notification Type', type));
+      return;
+    }
 
     try {
       const result = await subscriptionRepository.getSubscriptions(typeEntity, top, after);
@@ -73,10 +76,14 @@ export const createSubscriptionRouter = ({ logger, subscriptionRepository }: Sub
             },
           ],
         }
-      : req.body;
+      : { tenantId: user.tenantId, ...req.body };
 
-    const typeEntities = await req.getConfiguration<NotificationConfiguration>();
-    const typeEntity = typeEntities.getNotificationType(type);
+    const [configuration] = await req.getConfiguration<NotificationConfiguration>();
+    const typeEntity = configuration?.getNotificationType(type);
+    if (!typeEntity) {
+      next(new NotFoundError('Notification Type', type));
+      return;
+    }
 
     try {
       let subscriberEntity: SubscriberEntity = null;
@@ -103,8 +110,12 @@ export const createSubscriptionRouter = ({ logger, subscriptionRepository }: Sub
       const user = req.user as User;
       const { type, subscriber } = req.params;
 
-      const typeEntities = await req.getConfiguration<NotificationConfiguration>();
-      const typeEntity = typeEntities.getNotificationType(type);
+      const [configuration] = await req.getConfiguration<NotificationConfiguration>();
+      const typeEntity = configuration?.getNotificationType(type);
+      if (!typeEntity) {
+        next(new NotFoundError('Notification Type', type));
+        return;
+      }
 
       try {
         const subscriberEntity = await subscriptionRepository.getSubscriber(req.user.tenantId, subscriber, false);
@@ -127,8 +138,12 @@ export const createSubscriptionRouter = ({ logger, subscriptionRepository }: Sub
     async (req, res, next) => {
       const { type, subscriber } = req.params;
 
-      const typeEntities = await req.getConfiguration<NotificationConfiguration>();
-      const typeEntity = typeEntities.getNotificationType(type);
+      const [configuration] = await req.getConfiguration<NotificationConfiguration>();
+      const typeEntity = configuration?.getNotificationType(type);
+      if (!typeEntity) {
+        next(new NotFoundError('Notification Type', type));
+        return;
+      }
 
       try {
         const subscription = await subscriptionRepository.getSubscription(typeEntity, subscriber);
@@ -146,8 +161,12 @@ export const createSubscriptionRouter = ({ logger, subscriptionRepository }: Sub
       const user = req.user as User;
       const { type, subscriber } = req.params;
 
-      const typeEntities = await req.getConfiguration<NotificationConfiguration>();
-      const typeEntity = typeEntities.getNotificationType(type);
+      const [configuration] = await req.getConfiguration<NotificationConfiguration>();
+      const typeEntity = configuration?.getNotificationType(type);
+      if (!typeEntity) {
+        next(new NotFoundError('Notification Type', type));
+        return;
+      }
 
       try {
         const subscriberEntity = await subscriptionRepository.getSubscriber(user.tenantId, subscriber);
