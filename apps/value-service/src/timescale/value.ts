@@ -25,7 +25,10 @@ export class TimescaleValuesRepository implements ValuesRepository {
       const keys = Object.keys(value.metrics);
       for (let i = 0; i < keys.length; i++) {
         const key = keys[i];
-        await this.writeMetric(tenantId, namespace, name, key, value.timestamp, value.metrics[i]);
+        const metric = value.metrics[key];
+        if (typeof metric === 'number') {
+          await this.writeMetric(tenantId, namespace, name, key, value.timestamp, metric);
+        }
       }
     }
 
