@@ -3,10 +3,10 @@ import fd = require('form-data');
 import axios, { AxiosResponse } from 'axios';
 import commonlib from '../common/common-library';
 import fileServicePage from './file-service.page';
-import tenantAdminPage from '../tenant-admin/tenant-admin.page';
+import common from '../common/common.page';
 
 const fileServiceObj = new fileServicePage();
-const tenantAdminObj = new tenantAdminPage();
+const commonObj = new common();
 let responseObj: Cypress.Response;
 let axiosResponse: AxiosResponse;
 let axiosError;
@@ -291,8 +291,8 @@ Given('a service owner user is on file services overview page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  tenantAdminObj
-    .dashboardMenuItem('/admin/services/files')
+  commonObj
+    .adminMenuItem('/admin/services/files')
     .click()
     .then(function () {
       cy.url().should('include', '/admin/services/files');

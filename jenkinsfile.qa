@@ -33,11 +33,6 @@ pipeline {
           description: 'Ref to build.'
         )
         string(
-          name: 'base_url',
-          defaultValue: 'https://tenant-management-webapp-core-services-test.os99.gov.ab.ca',
-          description: 'base url for running tests against.'
-        )
-        string(
           name: 'tags',
           defaultValue: '@regression and not @ignore',
           description: 'tags for tests to be executed.'
@@ -97,7 +92,7 @@ pipeline {
                 def text3 = readFile file: "apps/tenant-management-webapp-e2e/${cypress_config}"
                 echo text3
             }
-          sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --baseUrl=${base_url} --cypress-config='apps/tenant-management-webapp-e2e/${cypress_config}'"
+          sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config='apps/tenant-management-webapp-e2e/${cypress_config}'"
         }
         post {
           always {

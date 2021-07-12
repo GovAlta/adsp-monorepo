@@ -1,10 +1,10 @@
 import { Given, Then } from 'cypress-cucumber-preprocessor/steps';
 import commonlib from '../common/common-library';
-import tenantAdminPage from '../tenant-admin/tenant-admin.page';
-import statusServicePage from './service-status.page';
+import common from '../common/common.page';
+import serviceStatusPage from './service-status.page';
 
-const tenantAdminObj = new tenantAdminPage();
-const statusServiceObj = new statusServicePage();
+const commonObj = new common();
+const statusServiceObj = new serviceStatusPage();
 
 Given('a service owner user is on service status page', function () {
   commonlib.tenantAdminDirectURLLogin(
@@ -13,8 +13,8 @@ Given('a service owner user is on service status page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  tenantAdminObj
-    .dashboardMenuItem('/admin/services/status')
+  commonObj
+    .adminMenuItem('/admin/services/status')
     .click()
     .then(function () {
       cy.url().should('include', '/admin/services/status');

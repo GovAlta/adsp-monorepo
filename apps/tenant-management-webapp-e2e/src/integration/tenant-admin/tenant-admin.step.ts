@@ -31,29 +31,6 @@ Then('the {string} landing page is displayed', function (type) {
   cy.url().should('include', urlPart);
 });
 
-When('the user selects the {string} menu item', function (menuItem) {
-  let menuItemSelector = '';
-  switch (menuItem) {
-    case 'Dashboard':
-      menuItemSelector = '/admin';
-      break;
-    case 'File Services':
-      menuItemSelector = '/admin/services/files';
-      break;
-    case 'Access':
-      menuItemSelector = '/admin/access';
-      break;
-    case 'Status':
-      menuItemSelector = '/admin/services/status';
-      break;
-    default:
-      expect(menuItem).to.be.oneOf(['File Services', 'Access', 'Status']);
-  }
-
-  tenantAdminObj.dashboardMenuItem(menuItemSelector).click();
-  cy.wait(2000); // wait for the page to load tenant data such as tenant user/role stats
-});
-
 When('the user sends a configuration service request to {string}', function (request) {
   const requestURL = Cypress.env('tenantManagementApi') + request;
   cy.request({
