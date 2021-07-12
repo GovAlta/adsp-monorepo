@@ -53,3 +53,29 @@ Then('no critical or serious accessibility issues on the web page', function () 
     includedImpacts: ['critical', 'serious'],
   });
 });
+
+When('the user selects the {string} menu item', function (menuItem) {
+  let menuItemSelector = '';
+  switch (menuItem) {
+    case 'Dashboard':
+      menuItemSelector = '/admin';
+      break;
+    case 'File Services':
+      menuItemSelector = '/admin/services/files';
+      break;
+    case 'Access':
+      menuItemSelector = '/admin/access';
+      break;
+    case 'Status':
+      menuItemSelector = '/admin/services/status';
+      break;
+    case 'Events':
+      menuItemSelector = '/admin/services/events';
+      break;
+    default:
+      expect(menuItem).to.be.oneOf(['File Services', 'Access', 'Status', 'Events']);
+  }
+
+  commonObj.adminMenuItem(menuItemSelector).click();
+  cy.wait(2000); // wait for the page to load tenant data such as tenant user/role stats
+});

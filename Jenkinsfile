@@ -195,7 +195,7 @@ pipeline {
                 }
                 writeFile file: "apps/tenant-management-webapp-e2e/cypress.dev.json", text: text
             }
-        sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --baseUrl=https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca --cypress-config='apps/tenant-management-webapp-e2e/cypress.dev.json'"
+        sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config='apps/tenant-management-webapp-e2e/cypress.dev.json'"
       }
       post {
         always {
@@ -289,7 +289,7 @@ pipeline {
                 }
                 writeFile file: "apps/tenant-management-webapp-e2e/cypress.test.json", text: text
             }
-        sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --baseUrl=https://tenant-management-webapp-core-services-test.os99.gov.ab.ca --cypress-config='apps/tenant-management-webapp-e2e/cypress.test.json'"
+        sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config='apps/tenant-management-webapp-e2e/cypress.test.json'"
       }
       post {
         always {
