@@ -28,9 +28,9 @@ describe('createTenantHandler', () => {
     const req: Request = { user: { tenantId, token: { bearer: 'test' } } } as Request;
     const next = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((req as any).getConfiguration).toBeTruthy();
+      expect((req as Request).getConfiguration).toBeTruthy();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((req as any).getConfiguration()).toBe(config);
+      expect((req as Request).getConfiguration()).toBe(config);
 
       done();
     };

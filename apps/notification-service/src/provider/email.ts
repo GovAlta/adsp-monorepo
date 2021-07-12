@@ -8,7 +8,7 @@ interface EmailProviderProps {
   SMTP_PASSWORD: string;
 }
 
-export const createGoAEmailProvider = ({
+export const createEmailProvider = ({
   SMTP_HOST,
   SMTP_PORT,
   SMTP_USER,
@@ -28,12 +28,13 @@ export const createGoAEmailProvider = ({
   });
 
   return {
-    send: (notification) =>
-      transport.sendMail({
-        from: 'test@test.co',
+    send: async (notification) => {
+      await transport.sendMail({
+        from: 'noreply@gov.ab.ca',
         to: notification.to,
         subject: notification.message.subject,
         html: notification.message.body,
-      }),
+      });
+    },
   };
 };

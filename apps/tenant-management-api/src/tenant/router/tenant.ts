@@ -9,6 +9,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { EventService } from '@abgov/adsp-service-sdk';
 import { tenantCreated } from '../events';
 import { tenantRepository } from '../repository';
+import { ServiceRegistration } from '../../configuration-management';
+
 class CreateTenantDto {
   @IsDefined()
   name: string;
@@ -29,9 +31,10 @@ class TenantByRealmDto {
 
 interface TenantRouterProps {
   eventService: EventService;
+  services: ServiceRegistration;
 }
 
-export const createTenantRouter = ({ eventService }: TenantRouterProps): Router => {
+export const createTenantRouter = ({ eventService, services }: TenantRouterProps): Router => {
   const tenantRouter = Router();
 
   async function getTenantByEmail(req, res, next) {
@@ -95,7 +98,7 @@ export const createTenantRouter = ({ eventService }: TenantRouterProps): Router 
         const generatedRealmName = uuidv4();
 
         await TenantService.validateEmailInDB(email);
-        await TenantService.createRealm(generatedRealmName, email, tenantName);
+        await TenantService.createRealm(services, generatedRealmName, email, tenantName);
         const { ...tenant } = await TenantService.createNewTenantInDB(
           email,
           generatedRealmName,

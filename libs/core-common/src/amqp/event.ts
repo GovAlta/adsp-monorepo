@@ -1,57 +1,35 @@
-import { Connection, Channel } from 'amqplib';
-import { Logger } from 'winston';
+import { AdspId } from '@abgov/adsp-service-sdk';
+import { Connection, Channel, ConsumeMessage } from 'amqplib';
 import { Observable } from 'rxjs';
-import { DomainEventSubscriberService, DomainEventWorkItem } from '../event';
+import { map } from 'rxjs/operators';
+import type { Logger } from 'winston';
+import type { DomainEvent, DomainEventSubscriberService } from '../event';
+import { WorkItem } from '../work';
+import { AmqpWorkQueueService } from './work';
 
-export class AmqpEventSubscriberService implements DomainEventSubscriberService {
-  connected = false;
-  channel: Channel = null;
-
-  constructor(private queue: string, private logger: Logger, private connection: Connection) {
-    connection.on('close', () => {
-      this.connected = false;
-    });
+export class AmqpEventSubscriberService
+  extends AmqpWorkQueueService<DomainEvent>
+  implements DomainEventSubscriberService {
+  constructor(queue: string, logger: Logger, connection: Connection) {
+    super(queue, logger, connection);
   }
 
-  isConnected() {
-    return this.connected;
+  getItems(): Observable<WorkItem<DomainEvent>> {
+    return super
+      .getItems()
+      .pipe(map((e) => ({ item: { ...e.item, tenantId: AdspId.parse(`${e.item.tenantId}`) }, done: e.done })));
   }
 
-  connect() {
-    return this.connection
-      .createChannel()
-      .then((channel) =>
-        channel
-          .assertExchange('domain-events', 'topic')
-          .then(() => channel.assertQueue(this.queue))
-          .then(() => channel.bindQueue(this.queue, 'domain-events', '#'))
-      )
-      .then(() => {
-        this.connected = true;
-      })
-      .catch((err) => {
-        this.logger.error(`Error encountered initializing domain events exchange: ${err}`);
-      });
+  protected convertMessage(msg: ConsumeMessage): DomainEvent {
+    const payload = JSON.parse(msg.content.toString());
+    const headers = msg.properties.headers;
+
+    return ({ ...headers, payload } as unknown) as DomainEvent;
   }
 
-  getEvents(): Observable<DomainEventWorkItem> {
-    return new Observable<DomainEventWorkItem>((sub) => {
-      (this.channel
-        ? Promise.resolve(this.channel)
-        : this.connection.createChannel().then((channel) => {
-            this.channel = channel;
-            return channel;
-          })
-      ).then((channel) =>
-        channel.consume(this.queue, (msg) => {
-          const payload = JSON.parse(msg.content.toString());
-          const headers = msg.properties['headers'];
-          sub.next({
-            event: { ...headers, ...payload },
-            done: () => channel.ack(msg),
-          });
-        })
-      );
-    });
+  protected async assertQueueConfiguration(channel: Channel): Promise<void> {
+    await super.assertQueueConfiguration(channel);
+    await channel.assertExchange('domain-events', 'topic');
+    await channel.bindQueue(this.queue, 'domain-events', '#');
   }
 }

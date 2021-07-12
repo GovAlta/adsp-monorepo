@@ -1,13 +1,19 @@
+import { AdspId } from '@abgov/adsp-service-sdk';
 import { Channel } from './channel';
 
+export interface SubscriberChannel {
+  channel: Channel;
+  address: string;
+}
+
 export interface Subscriber {
-  spaceId: string;
+  tenantId: AdspId;
   id: string;
-  channels: { channel: Channel; address: string }[];
+  channels: SubscriberChannel[];
   userId?: string;
   addressAs: string;
 }
 
 export interface SubscriberCriteria {
-  spaceIdEquals?: string;
+  tenantIdEquals?: AdspId;
 }

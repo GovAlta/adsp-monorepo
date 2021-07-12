@@ -36,7 +36,7 @@ describe('ConfigurationService', () => {
 
     const config = { value: 'this is config' };
     cacheMock.mockReturnValueOnce(config);
-    const result = await service.getConfiguration<{ value: string }>(
+    const [result] = await service.getConfiguration<{ value: string }>(
       adspId`urn:ads:platform:test`,
       'test',
       adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
@@ -53,18 +53,18 @@ describe('ConfigurationService', () => {
     cacheMock.mockReturnValueOnce(null);
 
     const config = { value: 'this is config' };
-    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: config }));
-    const options = 'this is options';
-    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { results: [{ configOptions: options }] } }));
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { configuration: config } }));
+    const configOptions = 'this is options';
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { results: [{ configOptions }] } }));
 
-    const result = await service.getConfiguration<{ value: string }, string>(
+    const [result, options] = await service.getConfiguration<{ value: string }, string>(
       adspId`urn:ads:platform:test`,
       'test',
       adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
     );
 
     expect(result.value).toBe(config.value);
-    expect(result.options).toBe(options);
+    expect(options).toBe(configOptions);
     done();
   });
 
@@ -77,18 +77,18 @@ describe('ConfigurationService', () => {
     cacheMock.mockReturnValueOnce(null);
 
     const config = { value: 'this is config' };
-    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: config }));
-    const options = 'this is options';
-    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { results: [{ configOptions: options }] } }));
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { configuration: config } }));
+    const configOptions = 'this is options';
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { results: [{ configOptions }] } }));
 
-    const result = await service.getConfiguration<{ value: string }, string>(
+    const [result, options] = await service.getConfiguration<{ value: string }, string>(
       adspId`urn:ads:platform:test`,
       'test',
       adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
     );
 
     expect(result.value).toBe('converted');
-    expect(result.options).toBe('converted');
+    expect(options).toBe('converted');
     done();
   });
 
@@ -99,18 +99,18 @@ describe('ConfigurationService', () => {
     cacheMock.mockReturnValueOnce(null);
 
     const config = { value: 'this is config' };
-    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: config }));
-    const options = 'this is options';
-    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { results: [{ configOptions: options }] } }));
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { configuration: config } }));
+    const configOptions = 'this is options';
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { results: [{ configOptions }] } }));
 
-    const result = await service.getConfiguration<{ value: string }, string>(
+    const [result, options] = await service.getConfiguration<{ value: string }, string>(
       adspId`urn:ads:platform:test`,
       'test',
       adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
     );
 
     expect(result.value).toBe(config.value);
-    expect(result.options).toBe(options);
+    expect(options).toBe(configOptions);
     done();
   });
 });

@@ -8,8 +8,7 @@ interface GoAFormProps {
 function GoAForm(props: GoAFormProps & { children: ReactNode }): JSX.Element {
   const { children, onSubmit, ..._props } = props;
   return (
-    // FIXME: position: relative is required to allow the height of the dropdown menu to be calculated wrt to the form, rather than the page
-    <div className="goa-form" style={{ position: 'relative' }}>
+    <GoAFormContainer>
       {onSubmit ? (
         <form onSubmit={onSubmit} {..._props}>
           {children}
@@ -17,11 +16,32 @@ function GoAForm(props: GoAFormProps & { children: ReactNode }): JSX.Element {
       ) : (
         children
       )}
-    </div>
+    </GoAFormContainer>
   );
 }
 
-const GoAFormItem = styled.div``;
+const GoAFormContainer = styled.div`
+  // FIXME: position: relative is required to allow the height of the dropdown menu to be calculated wrt to the form, rather than the page
+  /* position: relative; */
+`;
+
+const GoAFormItem = styled.div`
+  margin-bottom: 1rem;
+
+  label {
+    display: block;
+    font-weight: var(--fw-bold);
+    color: #333;
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    border-radius: 4px;
+    border: 1px solid var(--color-gray-600);
+    padding: 0.5rem;
+  }
+`;
 
 const GoAFormButtons = styled.div`
   margin-top: 2rem;
@@ -34,7 +54,10 @@ const GoAFormButtons = styled.div`
       min-width: 6rem;
     }
 
-    button + button {
+    button + button,
+    button + .goa-link-button,
+    .goa-link-button + button,
+    .goa-link-button + .goa-link-button {
       margin-left: 0.5rem;
     }
   }

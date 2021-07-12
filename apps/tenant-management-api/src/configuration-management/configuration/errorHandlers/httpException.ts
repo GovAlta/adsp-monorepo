@@ -9,5 +9,7 @@ export default class HttpException extends Error {
     this.statusCode = statusCode;
     this.message = message;
     this.error = error || null;
+
+    Object.setPrototypeOf(this, HttpException.prototype);
   }
 }

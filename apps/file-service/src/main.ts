@@ -30,7 +30,13 @@ async function initializeApp(): Promise<express.Application> {
       serviceId,
       displayName: 'File Service',
       description: 'Service for upload and download of files.',
-      roles: [ServiceUserRoles.Admin],
+      roles: [
+        {
+          role: ServiceUserRoles.Admin,
+          description: 'Administrator role for the file service.',
+          inTenantAdmin: true,
+        },
+      ],
       configurationSchema: {
         type: 'object',
         additionalProperties: {

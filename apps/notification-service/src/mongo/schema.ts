@@ -1,94 +1,9 @@
 import { Schema } from 'mongoose';
 
-export const spaceSchema = new Schema({
-  _id: {
-    type: String,
-    required: true,
-  },
-  name: {
-    type: String,
-    required: true,
-  },
-  spaceAdminRole: {
-    type: String,
-  },
-  subscriberAdminRole: {
-    type: String,
-  },
-});
-
-const templateSchema = {
-  subject: String,
-  body: String,
-};
-
-export const typeSchema = new Schema(
-  {
-    spaceId: {
-      type: String,
-      ref: 'space',
-      required: true,
-    },
-    _id: {
-      type: String,
-      required: true,
-    },
-    name: {
-      type: String,
-      required: true,
-    },
-    events: {
-      type: [
-        {
-          _id: false,
-          namespace: {
-            type: String,
-            required: true,
-          },
-          name: {
-            type: String,
-            required: true,
-          },
-          templates: {
-            email: templateSchema,
-            mail: templateSchema,
-            sms: templateSchema,
-          },
-          channels: {
-            type: [
-              {
-                type: String,
-                enum: ['email', 'mail', 'sms'],
-              },
-            ],
-            required: true,
-          },
-        },
-      ],
-      required: true,
-    },
-    description: String,
-    publicSubscribe: {
-      type: Boolean,
-    },
-    subscriberRoles: {
-      type: [String],
-      required: true,
-    },
-  },
-  { _id: false }
-);
-
-typeSchema.index({ spaceId: 1, _id: 1 }, { unique: true });
-typeSchema.index({
-  'events.namespace': 1,
-  'events.name': 1,
-});
-
 export const subscriberSchema = new Schema({
-  spaceId: {
+  tenantId: {
     type: String,
-    ref: 'space',
+    required: true,
   },
   userId: String,
   addressAs: {
@@ -113,17 +28,19 @@ export const subscriberSchema = new Schema({
     required: true,
   },
 });
+subscriberSchema.index(
+  { tenantId: 1, userId: 1 },
+  { unique: true, partialFilterExpression: { userId: { $exists: true } } }
+);
 
 export const subscriptionSchema = new Schema(
   {
-    spaceId: {
+    tenantId: {
       type: String,
-      ref: 'space',
       required: true,
     },
     typeId: {
       type: String,
-      ref: 'notificationtype',
       required: true,
     },
     subscriberId: {
@@ -143,4 +60,4 @@ export const subscriptionSchema = new Schema(
   { _id: false }
 );
 
-subscriptionSchema.index({ spaceId: 1, typeId: 1, subscriberId: 1 }, { unique: true });
+subscriptionSchema.index({ tenantId: 1, typeId: 1, subscriberId: 1 }, { unique: true });

@@ -1,223 +1,193 @@
 import { Router } from 'express';
 import { Logger } from 'winston';
 import type { User } from '@abgov/adsp-service-sdk';
-import { assertAuthenticatedHandler } from '@core-services/core-common';
-import { NotificationSpaceRepository, NotificationTypeRepository, SubscriptionRepository } from '../repository';
+import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
+import { SubscriptionRepository } from '../repository';
 import { SubscriberEntity } from '../model';
-import { mapSubscriber, mapSubscription } from './mappers';
+import { mapSubscriber, mapSubscription, mapType } from './mappers';
+import { NotificationConfiguration } from '../configuration';
+import { Channel, ServiceUserRoles, Subscriber } from '../types';
 
 interface SubscriptionRouterProps {
   logger: Logger;
-  spaceRepository: NotificationSpaceRepository;
-  typeRepository: NotificationTypeRepository;
   subscriptionRepository: SubscriptionRepository;
 }
 
-export const createSubscriptionRouter = ({
-  logger,
-  spaceRepository,
-  typeRepository,
-  subscriptionRepository,
-}: SubscriptionRouterProps) => {
+export const createSubscriptionRouter = ({ logger, subscriptionRepository }: SubscriptionRouterProps): Router => {
   const subscriptionRouter = Router();
 
-  /**
-   * @swagger
-   *
-   * /subscription/v1/{space}/{type}/subscriptions:
-   *   get:
-   *     tags:
-   *     - Subscription
-   *     description: Retrieves subscriptions for a notification type.
-   *     parameters:
-   *     - name: space
-   *       description: Notification space of the type.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     - name: type
-   *       description: Notification type to get subscriptions for.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     responses:
-   *       200:
-   *         description: Subscriptions successfully retrieved.
-   */
-  subscriptionRouter.get('/:space/:type/subscriptions', assertAuthenticatedHandler, (req, res, next) => {
-    const { space, type } = req.params;
+  subscriptionRouter.get('/types', assertAuthenticatedHandler, async (req, res) => {
+    const [configuration] = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
+    const types = [...(configuration?.getNotificationTypes() || [])];
+
+    res.send(types.map(mapType));
+  });
+
+  subscriptionRouter.get('/types/:type', assertAuthenticatedHandler, async (req, res, next) => {
+    const { type } = req.params;
+
+    const [configuration] = await req.getConfiguration<NotificationConfiguration>();
+    const typeEntity = configuration?.getNotificationType(type);
+    if (!typeEntity) {
+      next(new NotFoundError('Notification Type', type));
+      return;
+    }
+
+    res.send(mapType(typeEntity));
+  });
+
+  subscriptionRouter.get('/types/:type/subscriptions', assertAuthenticatedHandler, async (req, res, next) => {
+    const { type } = req.params;
     const top = req.query.top ? parseInt(req.query.top as string, 10) : 10;
     const after = req.query.after as string;
 
-    spaceRepository
-      .get(space)
-      .then((spaceEntity) => typeRepository.get(spaceEntity, type))
-      .then((typeEntity) => subscriptionRepository.getSubscriptions(typeEntity, top, after))
-      .then((result) =>
-        res.send({
-          results: result.results.map(mapSubscription),
-          page: result.page,
-        })
-      )
-      .catch((err) => next(err));
+    const [configuration] = await req.getConfiguration<NotificationConfiguration>();
+    const typeEntity = configuration?.getNotificationType(type);
+    if (!typeEntity) {
+      next(new NotFoundError('Notification Type', type));
+      return;
+    }
+
+    try {
+      const result = await subscriptionRepository.getSubscriptions(typeEntity, top, after);
+
+      res.send({
+        results: result.results.map(mapSubscription),
+        page: result.page,
+      });
+    } catch (err) {
+      next(err);
+    }
   });
 
-  /**
-   * @swagger
-   *
-   * /subscription/v1/{space}/{type}/subscriptions:
-   *   post:
-   *     tags:
-   *     - Subscription
-   *     description: Creates a subscription for a notification type.
-   *     parameters:
-   *     - name: space
-   *       description: Notification space of the type.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     - name: type
-   *       description: Notification type to get subscriptions for.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     responses:
-   *       200:
-   *         description: Subscriptions successfully retrieved.
-   */
-  subscriptionRouter.post('/:space/:type/subscriptions', assertAuthenticatedHandler, (req, res, next) => {
+  subscriptionRouter.post('/types/:type/subscriptions', assertAuthenticatedHandler, async (req, res, next) => {
     const user = req.user as User;
-    const { space, type } = req.params;
-    const subscriberId = req.body.subscriberId as string;
-    const subscriber = req.body;
+    const { type } = req.params;
+    const forSelf = !!req.query.userSub;
+    const subscriber: Subscriber = forSelf
+      ? {
+          tenantId: user.tenantId,
+          userId: user.id,
+          addressAs: user.name,
+          channels: [
+            {
+              channel: Channel.email,
+              address: user.email,
+            },
+          ],
+        }
+      : { tenantId: user.tenantId, ...req.body };
 
-    Promise.all([
-      spaceRepository.get(space).then((spaceEntity) => typeRepository.get(spaceEntity, type)),
-      subscriberId
-        ? subscriptionRepository.getSubscriber(subscriberId)
-        : SubscriberEntity.create(subscriptionRepository, { ...subscriber, spaceId: space }),
-    ])
-      .then(([typeEntity, subscriberEntity]) => typeEntity.subscribe(subscriptionRepository, user, subscriberEntity))
-      .then((subEntity) => res.send(mapSubscription(subEntity)))
-      .catch((err) => next(err));
+    const [configuration] = await req.getConfiguration<NotificationConfiguration>();
+    const typeEntity = configuration?.getNotificationType(type);
+    if (!typeEntity) {
+      next(new NotFoundError('Notification Type', type));
+      return;
+    }
+
+    try {
+      let subscriberEntity: SubscriberEntity = null;
+      if (forSelf) {
+        // Try to find an existing subscriber associated with the user ID.
+        subscriberEntity = await subscriptionRepository.getSubscriber(user.tenantId, user.id, true);
+      }
+
+      if (!subscriberEntity) {
+        subscriberEntity = await SubscriberEntity.create(user, subscriptionRepository, { ...subscriber });
+      }
+
+      const subscription = await typeEntity.subscribe(subscriptionRepository, user, subscriberEntity);
+      res.send(mapSubscription(subscription));
+    } catch (err) {
+      next(err);
+    }
   });
 
-  /**
-   * @swagger
-   *
-   * /subscription/v1/{space}/{type}/subscriptions/{subscriber}:
-   *   get:
-   *     tags:
-   *     - Subscription
-   *     description: Creates a subscription for a notification type.
-   *     parameters:
-   *     - name: space
-   *       description: Notification space of the type.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     - name: type
-   *       description: Notification type to get subscription for.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     - name: subscriber
-   *       description: Subscriber to get subscription for.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     responses:
-   *       200:
-   *         description: Subscriptions successfully retrieved.
-   */
-  subscriptionRouter.get('/:space/:type/subscriptions/:subscriber', assertAuthenticatedHandler, (req, res, next) => {
-    const { space, type, subscriber } = req.params;
+  subscriptionRouter.post(
+    '/types/:type/subscriptions/:subscriber',
+    assertAuthenticatedHandler,
+    async (req, res, next) => {
+      const user = req.user as User;
+      const { type, subscriber } = req.params;
 
-    spaceRepository
-      .get(space)
-      .then((spaceEntity) => typeRepository.get(spaceEntity, type))
-      .then((typeEntity) => subscriptionRepository.getSubscription(typeEntity, subscriber))
-      .then((entity) => res.send(mapSubscription(entity)))
-      .catch((err) => next(err));
-  });
+      const [configuration] = await req.getConfiguration<NotificationConfiguration>();
+      const typeEntity = configuration?.getNotificationType(type);
+      if (!typeEntity) {
+        next(new NotFoundError('Notification Type', type));
+        return;
+      }
 
-  /**
-   * @swagger
-   *
-   * /subscription/v1/{space}/{type}/subscriptions/{subscriber}:
-   *   delete:
-   *     tags:
-   *     - Subscription
-   *     description: Removes a subscription from a notification type.
-   *     parameters:
-   *     - name: space
-   *       description: Notification space of the type.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     - name: type
-   *       description: Notification type to of the subscription.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     - name: subscriber
-   *       description: Subscriber to remove the subscription for.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     responses:
-   *       200:
-   *         description: Subscriptions successfully removed.
-   */
-  subscriptionRouter.delete('/:space/:type/subscriptions/:subscriber', assertAuthenticatedHandler, (req, res, next) => {
-    const user = req.user as User;
-    const { space, type, subscriber } = req.params;
+      try {
+        const subscriberEntity = await subscriptionRepository.getSubscriber(req.user.tenantId, subscriber, false);
+        if (!subscriberEntity) {
+          next(new NotFoundError('Subscriber', subscriber));
+          return;
+        }
 
-    Promise.all([
-      spaceRepository.get(space).then((spaceEntity) => typeRepository.get(spaceEntity, type)),
-      subscriptionRepository.getSubscriber(subscriber),
-    ])
-      .then(([typeEntity, subscriberEntity]) => typeEntity.unsubscribe(subscriptionRepository, user, subscriberEntity))
-      .then((result) => res.send(result))
-      .catch((err) => next(err));
-  });
+        const subscription = await typeEntity.subscribe(subscriptionRepository, user, subscriberEntity);
+        res.send(mapSubscription(subscription));
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
 
-  /**
-   * @swagger
-   *
-   * /subscription/v1/{space}/subscribers:
-   *   get:
-   *     tags:
-   *     - Subscription
-   *     description: Retrieves subscriptions for a notification type.
-   *     parameters:
-   *     - name: space
-   *       description: Notification space of the subscribers.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     responses:
-   *       200:
-   *         description: Subscribers successfully retrieved.
-   */
-  subscriptionRouter.get('/:space/subscribers', assertAuthenticatedHandler, (req, res, next) => {
-    const { space } = req.params;
+  subscriptionRouter.get(
+    '/types/:type/subscriptions/:subscriber',
+    assertAuthenticatedHandler,
+    async (req, res, next) => {
+      const { type, subscriber } = req.params;
+
+      const [configuration] = await req.getConfiguration<NotificationConfiguration>();
+      const typeEntity = configuration?.getNotificationType(type);
+      if (!typeEntity) {
+        next(new NotFoundError('Notification Type', type));
+        return;
+      }
+
+      try {
+        const subscription = await subscriptionRepository.getSubscription(typeEntity, subscriber);
+        res.send(mapSubscription(subscription));
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  subscriptionRouter.delete(
+    '/types/:type/subscriptions/:subscriber',
+    assertAuthenticatedHandler,
+    async (req, res, next) => {
+      const user = req.user as User;
+      const { type, subscriber } = req.params;
+
+      const [configuration] = await req.getConfiguration<NotificationConfiguration>();
+      const typeEntity = configuration?.getNotificationType(type);
+      if (!typeEntity) {
+        next(new NotFoundError('Notification Type', type));
+        return;
+      }
+
+      try {
+        const subscriberEntity = await subscriptionRepository.getSubscriber(user.tenantId, subscriber);
+        const result = await typeEntity.unsubscribe(subscriptionRepository, user, subscriberEntity);
+        res.send(result);
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  subscriptionRouter.get('/subscribers', assertAuthenticatedHandler, (req, res, next) => {
     const top = req.query.top ? parseInt(req.query.top as string, 10) : 10;
     const after = req.query.after as string;
+
+    if (!req.user?.roles?.includes(ServiceUserRoles.SubscriptionAdmin)) {
+      next(new UnauthorizedError('User not authorized to get subscribers'));
+    }
 
     subscriptionRepository
-      .findSubscribers(top, after, { spaceIdEquals: space })
+      .findSubscribers(top, after, { tenantIdEquals: req.user.tenantId })
       .then((result) =>
         res.send({
           results: result.results.map(mapSubscriber),
@@ -227,70 +197,22 @@ export const createSubscriptionRouter = ({
       .catch((err) => next(err));
   });
 
-  /**
-   * @swagger
-   *
-   * /subscription/v1/{space}/subscribers/{subscriber}:
-   *   get:
-   *     tags:
-   *     - Subscription
-   *     description: Retrieves a subscriber of a notification space.
-   *     parameters:
-   *     - name: space
-   *       description: Notification space of the subscriber.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     - name: subscriber
-   *       description: Subscriber to get.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     responses:
-   *       200:
-   *         description: Subscriber successfully retrieved.
-   */
-  subscriptionRouter.get('/:space/subscribers/:subscriber', assertAuthenticatedHandler, (req, res, next) => {
+  subscriptionRouter.get('/subscribers/:subscriber', assertAuthenticatedHandler, (req, res, next) => {
+    const user = req.user;
     const { subscriber } = req.params;
 
     subscriptionRepository
-      .getSubscriber(subscriber)
+      .getSubscriber(user.tenantId, subscriber)
       .then((subscriberEntity) => res.send(mapSubscriber(subscriberEntity)))
       .catch((err) => next(err));
   });
 
-  /**
-   * @swagger
-   *
-   * /subscription/v1/{space}/subscribers/{subscriber}:
-   *   delete:
-   *     tags:
-   *     - Subscription
-   *     description: Deletes a subscriber of a notification space.
-   *     parameters:
-   *     - name: space
-   *       description: Notification space of the subscriber.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     - name: subscriber
-   *       description: Subscriber to get.
-   *       in: path
-   *       required: true
-   *       schema:
-   *         type: string
-   *     responses:
-   *       200:
-   *         description: Subscriber successfully deleted.
-   */
-  subscriptionRouter.delete('/:space/subscribers/:subscriber', assertAuthenticatedHandler, (req, res, next) => {
+  subscriptionRouter.delete('/subscribers/:subscriber', assertAuthenticatedHandler, (req, res, next) => {
+    const user = req.user;
     const { subscriber } = req.params;
 
     subscriptionRepository
-      .getSubscriber(subscriber)
+      .getSubscriber(user.tenantId, subscriber)
       .then((subscriberEntity) => subscriptionRepository.deleteSubscriber(subscriberEntity))
       .then((deleted) => res.send({ deleted }))
       .catch((err) => next(err));

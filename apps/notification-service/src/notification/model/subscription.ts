@@ -1,16 +1,20 @@
-import { DomainEvent } from '@core-services/core-common';
+import { AdspId, DomainEvent } from '@abgov/adsp-service-sdk';
 import { SubscriptionRepository } from '../repository';
-import { EventNotificationType, Subscription, SubscriptionCriteria } from '../types';
+import { NotificationTypeEvent, SubscriberChannel, Subscription, SubscriptionCriteria } from '../types';
 import { SubscriberEntity } from './subscriber';
 
 export class SubscriptionEntity implements Subscription {
-  spaceId: string;
+  tenantId: AdspId;
   typeId: string;
   criteria: SubscriptionCriteria;
   subscriberId: string;
 
-  static create(repository: SubscriptionRepository, subscription: Subscription) {
-    const entity = new SubscriptionEntity(repository, subscription);
+  static async create(
+    repository: SubscriptionRepository,
+    subscriber: SubscriberEntity,
+    subscription: Subscription
+  ): Promise<SubscriptionEntity> {
+    const entity = new SubscriptionEntity(repository, subscription, subscriber);
     return repository.saveSubscription(entity);
   }
 
@@ -19,20 +23,18 @@ export class SubscriptionEntity implements Subscription {
     subscription: Subscription,
     public subscriber: SubscriberEntity = null
   ) {
-    (this.spaceId = subscription.spaceId), (this.typeId = subscription.typeId);
+    this.tenantId = subscription.tenantId;
+    this.typeId = subscription.typeId;
     this.subscriberId = subscription.subscriberId;
     this.criteria = subscription.criteria || {};
   }
 
-  shouldSend(event: DomainEvent) {
+  shouldSend(event: DomainEvent): boolean {
     return event && (!this.criteria.correlationId || this.criteria.correlationId === event.correlationId);
   }
 
-  getSubscriberChannel(notificationType: EventNotificationType) {
-    const channel = this.subscriber
-      ? this.subscriber.channels.find(({ channel }) => notificationType.channels.includes(channel))
-      : { address: null, channel: null };
-
+  getSubscriberChannel(notificationType: NotificationTypeEvent): SubscriberChannel {
+    const channel = this.subscriber?.channels.find(({ channel }) => notificationType.channels.includes(channel));
     return channel;
   }
 }

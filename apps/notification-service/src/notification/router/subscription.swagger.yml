@@ -1,0 +1,109 @@
+/subscription/v1/types/{type}/subscriptions:
+  get:
+    tags:
+      - Subscription
+    description: Retrieves subscriptions for a notification type.
+    parameters:
+      - name: type
+        description: Notification type to get subscriptions for.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Subscriptions successfully retrieved.
+  post:
+    tags:
+      - Subscription
+    description: Creates a subscription for a notification type.
+    parameters:
+      - name: type
+        description: Notification type to get subscriptions for.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Subscriptions successfully retrieved.
+/subscription/v1/types/{type}/subscriptions/{subscriber}:
+  get:
+    tags:
+      - Subscription
+    description: Gets a subscription for a notification type and subscriber.
+    parameters:
+      - name: type
+        description: Notification type to get subscription for.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: subscriber
+        description: Subscriber to get subscription for.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Subscriptions successfully retrieved.
+  delete:
+    tags:
+      - Subscription
+    description: Removes a subscription from a notification type.
+    parameters:
+      - name: type
+        description: Notification type to of the subscription.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: subscriber
+        description: Subscriber to remove the subscription for.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Subscriptions successfully removed.
+
+/subscription/v1/subscribers:
+  get:
+    tags:
+      - Subscription
+    description: Retrieves subscriptions for a notification type.
+    parameters:
+    responses:
+      200:
+        description: Subscribers successfully retrieved.
+/subscription/v1/subscribers/{subscriber}:
+  get:
+    tags:
+      - Subscription
+    description: Retrieves a subscriber of a notification space.
+    parameters:
+      - name: subscriber
+        description: Subscriber to get.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Subscriber successfully retrieved.
+  delete:
+    tags:
+      - Subscription
+    description: Deletes a subscriber of a notification space.
+    parameters:
+      - name: subscriber
+        description: Subscriber to get.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Subscriber successfully deleted.

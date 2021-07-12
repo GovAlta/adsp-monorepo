@@ -1,82 +1,131 @@
 import * as express from 'express';
 import * as passport from 'passport';
-import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as helmet from 'helmet';
+import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
 import {
   createLogger,
-  createKeycloakStrategy,
   createAmqpEventService,
   UnauthorizedError,
   NotFoundError,
   InvalidOperationError,
   createAmqpQueueService,
-  getKeycloakTokenRequestProps,
 } from '@core-services/core-common';
 import { environment } from './environments/environment';
-import { applyNotificationMiddleware, Channel, Notification } from './notification';
+import { applyNotificationMiddleware, Channel, Notification, NotificationType, ServiceUserRoles } from './notification';
 import { createRepositories } from './mongo';
-import { createABNotifySmsProvider, createGoAEmailProvider } from './provider';
+import { createABNotifySmsProvider, createEmailProvider } from './provider';
 import { templateService } from './handlebars';
-import type { User } from '@abgov/adsp-service-sdk';
+import { NotificationConfiguration } from './notification/configuration';
 
 const logger = createLogger('notification-service', environment.LOG_LEVEL || 'info');
 
-const app = express();
+async function initializeApp() {
+  const app = express();
 
-app.use(compression());
-app.use(helmet());
-app.use(express.json({ limit: '1mb' }));
+  app.use(compression());
+  app.use(helmet());
+  app.use(express.json({ limit: '1mb' }));
 
-passport.use('jwt', createKeycloakStrategy());
-passport.use(new AnonymousStrategy());
+  const serviceId = AdspId.parse(environment.CLIENT_ID);
+  const {
+    tenantStrategy,
+    tenantHandler,
+    tokenProvider,
+    configurationHandler,
+    configurationService,
+    healthCheck,
+  } = await initializePlatform(
+    {
+      displayName: 'Notification Service',
+      description: 'Service for subscription based notifications.',
+      serviceId,
+      accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
+      clientSecret: environment.CLIENT_SECRET,
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+      configurationConverter: (config: Record<string, NotificationType>, tenantId?: AdspId) =>
+        new NotificationConfiguration(config, tenantId),
+      events: [
+        {
+          name: 'notification-sent',
+          description: 'Signalled when a notification is sent.',
+          payloadSchema: {},
+        },
+      ],
+      roles: [
+        {
+          role: ServiceUserRoles.SubscriptionAdmin,
+          description: 'Administrator role for managing subscriptions',
+          inTenantAdmin: true,
+        },
+      ],
+    },
+    { logger }
+  );
 
-passport.serializeUser(function (user, done) {
-  done(null, user);
-});
+  passport.use('jwt', tenantStrategy);
 
-passport.deserializeUser(function (user, done) {
-  done(null, user as User);
-});
+  passport.serializeUser(function (user, done) {
+    done(null, user);
+  });
 
-app.use(passport.initialize());
-app.use('/space', passport.authenticate(['jwt'], { session: false }));
-app.use('/notification-admin', passport.authenticate(['jwt'], { session: false }));
-app.use('/subscription', passport.authenticate(['jwt', 'anonymous'], { session: false }));
+  passport.deserializeUser(function (user, done) {
+    done(null, user as User);
+  });
 
-Promise.all([
-  createRepositories({ ...environment, logger }),
-  createAmqpEventService({
+  app.use(passport.initialize());
+  app.use('/subscription', passport.authenticate(['jwt'], { session: false }), tenantHandler, configurationHandler);
+
+  const repositories = await createRepositories({ ...environment, logger });
+
+  const eventSubscriber = await createAmqpEventService({
     ...environment,
     queue: 'event-notification',
     logger,
-  }),
-  createAmqpQueueService<Notification>({
+  });
+
+  const queueService = await createAmqpQueueService<Notification>({
     ...environment,
     queue: 'notification-send',
     logger,
-  }),
-]).then(([repositories, eventSubscriber, queueService]) => {
-  app.get('/health', (req, res) =>
-    res.json({
-      db: repositories.isConnected(),
-      msg: eventSubscriber.isConnected(),
-    })
-  );
+  });
 
   applyNotificationMiddleware(app, {
     ...repositories,
+    serviceId,
     logger,
+    tokenProvider,
+    configurationService,
     templateService,
     eventSubscriber,
     queueService,
     providers: {
-      [Channel.email]: createGoAEmailProvider(environment),
+      [Channel.email]: createEmailProvider(environment),
       [Channel.sms]: createABNotifySmsProvider(environment),
     },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  app.get('/health', async (req, res) => {
+    const platform = await healthCheck();
+    res.json({
+      ...platform,
+      db: repositories.isConnected(),
+      msg: eventSubscriber.isConnected(),
+    });
+  });
+
+  app.get('/', async (req, res) => {
+    const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
+    res.json({
+      _links: {
+        self: new URL(req.originalUrl, rootUrl).href,
+        health: new URL('/health', rootUrl).href,
+        api: new URL('/subscription/v1', rootUrl).href,
+        doc: new URL('/swagger/docs/v1', rootUrl).href,
+      },
+    });
+  });
+
   app.use((err, _req, res, _next) => {
     if (err instanceof UnauthorizedError) {
       res.status(401).send(err.message);
@@ -90,6 +139,10 @@ Promise.all([
     }
   });
 
+  return app;
+}
+
+initializeApp().then((app) => {
   const port = environment.PORT || 3335;
 
   const server = app.listen(port, () => {

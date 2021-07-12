@@ -1,7 +1,7 @@
-import { TokenProvider } from '@abgov/adsp-service-sdk';
+import type { TokenProvider } from '@abgov/adsp-service-sdk';
+import type { DomainEvent } from '@core-services/core-common';
 import axios from 'axios';
 import type { Logger } from 'winston';
-import type { DomainEvent } from '../types';
 
 interface LogEventJobProps {
   logger: Logger;
@@ -38,7 +38,7 @@ export const createLogEventJob = ({ logger, valueServiceUrl, tokenProvider }: Lo
       {
         timestamp,
         correlationId,
-        tenantId,
+        tenantId: `${tenantId}`,
         context: {
           ...(context || {}),
           namespace,

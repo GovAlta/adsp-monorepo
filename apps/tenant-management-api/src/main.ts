@@ -24,6 +24,7 @@ import { environment } from './environments/environment';
 import { version } from '../../../package.json';
 import * as directoryService from './directory/services';
 import type { User } from '@abgov/adsp-service-sdk';
+import { TenantServiceRoles } from './roles';
 
 async function initializeApp(): Promise<express.Application> {
   /* Connect to mongo db */
@@ -50,6 +51,13 @@ async function initializeApp(): Promise<express.Application> {
       accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
       ignoreServiceAud: true,
       events: [TenantCreatedDefinition, TenantDeletedDefinition],
+      roles: [
+        // Note: Tenant Admin role is a special composite role.
+        {
+          role: TenantServiceRoles.TenantAdmin,
+          description: 'Administrator role for accessing the ADSP tenant admin.',
+        },
+      ],
     },
     { logger },
     {
@@ -97,7 +105,7 @@ async function initializeApp(): Promise<express.Application> {
   const authenticate = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
   const authenticateCore = passport.authenticate(['jwt'], { session: false });
 
-  const tenantRouter = createTenantRouter({ eventService });
+  const tenantRouter = createTenantRouter({ eventService, services: serviceRegistration });
   app.use('/api/tenant/v1', authenticate, tenantRouter);
 
   const tenantV2Router = createTenantV2Router();

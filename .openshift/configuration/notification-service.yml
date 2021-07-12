@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: notification-service
+        component: api
+      name: notification-service
+    data:
+      KEYCLOAK_ROOT_URL: https://access-test.os99.gov.ab.ca
+      DIRECTORY_URL: https://tenant-management-api-core-services-test.os99.gov.ab.ca
+      LOG_LEVEL: info
+      AMQP_HOST: event-service-rabbitmq
+      SMTP_HOST: smtp.gov.ab.ca
+      SMTP_PORT: "25"
+      NOTIFY_URL: https://rest-api.notify.alberta.ca
+      NOTIFY_TEMPLATE_ID: 04729cea-4899-4b59-9403-85de92c9c5dd
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        app: notification-service
+        component: api
+      name: notification-service
+    stringData:
+      CLIENT_ID: urn:ads:platform:notification-service
+      CLIENT_SECRET:
+      AMQP_USER: notification-service
+      AMQP_PASSWORD:
+      NOTIFY_API_KEY: 

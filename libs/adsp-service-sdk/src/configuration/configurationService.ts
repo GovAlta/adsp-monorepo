@@ -1,5 +1,4 @@
 import axios from 'axios';
-import * as camelcase from 'camelcase';
 import * as NodeCache from 'node-cache';
 import type { Logger } from 'winston';
 import { ServiceDirectory } from '../directory';
@@ -7,7 +6,7 @@ import { adspId, AdspId, assertAdspId } from '../utils';
 import type { Configuration, ConfigurationConverter } from './configuration';
 
 export interface ConfigurationService {
-  getConfiguration<C, O = undefined>(serviceId: AdspId, token: string, tenantId: AdspId): Promise<C & { options: O }>;
+  getConfiguration<C, O = void>(serviceId: AdspId, token: string, tenantId: AdspId): Promise<Configuration<C, O>>;
 }
 
 export class ConfigurationServiceImpl implements ConfigurationService {
@@ -36,15 +35,17 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     const configurationServiceUrl = await this.directory.getServiceUrl(
       adspId`urn:ads:platform:configuration-service:v1`
     );
-    const service = camelcase(serviceId.service);
+    const service = serviceId.service;
 
-    const configUrl = new URL(`v1/tenantConfig/${service}`, configurationServiceUrl);
+    const configUrl = new URL(`v1/tenantConfig/${service}?tenantId=${tenantId}`, configurationServiceUrl);
     this.logger.debug(`Retrieving tenant configuration from ${configUrl}...'`, this.LOG_CONTEXT);
 
     try {
-      const { data } = await axios.get<C>(configUrl.href, { headers: { Authorization: `Bearer ${token}` } });
+      const { data } = await axios.get<{ configuration: C }>(configUrl.href, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      const config = this.#converter(data, tenantId) as C;
+      const config = (data.configuration ? this.#converter(data.configuration, tenantId) : null) as C;
       if (config) {
         this.#configuration.set(`${tenantId}-${serviceId}`, config);
         this.logger.info(`Retrieved and cached tenant '${tenantId}' configuration for ${service}.`, this.LOG_CONTEXT);
@@ -58,7 +59,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
       return config;
     } catch (err) {
       this.logger.warn(`Error encountered in request for tenant '${tenantId}' configuration for ${service}. ${err}`);
-      return null;
+      return null as C;
     }
   };
 
@@ -68,7 +69,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     const configurationServiceUrl = await this.directory.getServiceUrl(
       adspId`urn:ads:platform:configuration-service:v1`
     );
-    const service = camelcase(serviceId.service);
+    const service = serviceId.service;
 
     const optionsUrl = new URL(`v1/serviceOptions?service=${service}&top=1`, configurationServiceUrl);
     this.logger.debug(`Retrieving service options from ${optionsUrl}...'`, this.LOG_CONTEXT);
@@ -78,7 +79,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const options = this.#converter(data.results[0]?.configOptions) as O;
+      const options = (data.results[0] ? this.#converter(data.results[0].configOptions) : null) as O;
       if (options) {
         this.#configuration.set(`${serviceId}`, options);
         this.logger.info(`Retrieved and cached service '${service}' options.`, this.LOG_CONTEXT);
@@ -89,11 +90,11 @@ export class ConfigurationServiceImpl implements ConfigurationService {
       return options;
     } catch (err) {
       this.logger.warn(`Error encountered in request for service '${service}' options. ${err}`);
-      return null;
+      return null as O;
     }
   };
 
-  getConfiguration = async <C, O = undefined>(
+  getConfiguration = async <C, O = void>(
     serviceId: AdspId,
     token: string,
     tenantId?: AdspId
@@ -105,11 +106,12 @@ export class ConfigurationServiceImpl implements ConfigurationService {
       configuration =
         this.#configuration.get<C>(`${tenantId}-${serviceId}`) ||
         (await this.#retrieveConfiguration<C>(tenantId, serviceId, token)) ||
-        {};
+        null;
     }
 
-    const options = this.#configuration.get<O>(`${serviceId}`) || (await this.#retrieveOptions<O>(serviceId, token));
+    const options =
+      this.#configuration.get<O>(`${serviceId}`) || (await this.#retrieveOptions<O>(serviceId, token)) || null;
 
-    return { ...configuration, options } as Configuration<C, O>;
+    return [configuration, options] as Configuration<C, O>;
   };
 }

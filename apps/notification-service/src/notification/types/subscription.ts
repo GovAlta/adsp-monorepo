@@ -1,3 +1,5 @@
+import { AdspId } from '@abgov/adsp-service-sdk';
+
 export interface SubscriptionCriteria {
   correlationId?: string;
   context?: {
@@ -6,7 +8,7 @@ export interface SubscriptionCriteria {
 }
 
 export interface Subscription {
-  spaceId: string;
+  tenantId: AdspId;
   typeId: string;
   criteria: SubscriptionCriteria;
   subscriberId: string;

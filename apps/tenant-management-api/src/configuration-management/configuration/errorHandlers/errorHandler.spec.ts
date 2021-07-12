@@ -24,7 +24,8 @@ describe('http exception handler tests', () => {
       },
     };
 
-    errorHandler(exception as HttpException, request as Request, response);
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    errorHandler(exception as HttpException, request as Request, response, () => {});
 
     expect(response.statusCode == HttpStatusCodes.INTERNAL_SERVER_ERROR);
     expect(responseObject).toEqual(expectedResponse);
@@ -50,9 +51,29 @@ describe('http exception handler tests', () => {
       },
     };
 
-    errorHandler(exception as HttpException, request as Request, response);
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    errorHandler(exception as HttpException, request as Request, response, () => {});
 
     expect(response.statusCode == HttpStatusCodes.NOT_FOUND);
     expect(responseObject).toEqual(expectedResponse);
+  });
+
+  it('can call next function for unrecognized error', (done) => {
+    const request = {};
+    const response = {
+      json: jest.fn(),
+      send: jest.fn(),
+      status: jest.fn(() => response),
+    };
+
+    const exception = new Error('something went terribly wrong.');
+
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    errorHandler(exception as HttpException, request as Request, response, (err: unknown) => {
+      expect(err).toBe(exception);
+      expect(response.status).toHaveBeenCalledTimes(0);
+      expect(response.json).toHaveBeenCalledTimes(0);
+      done();
+    });
   });
 });

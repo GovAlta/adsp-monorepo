@@ -6,7 +6,6 @@ import { EndpointStatusEntry, ServiceStatusEndpoint } from '../types';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
 
-const ENTRY_SAMPLE_SIZE = 5;
 const MIN_PASS_COUNT = 3;
 const MIN_FAIL_COUNT = 3;
 
@@ -96,8 +95,24 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
       if (endpoint.url === statusEntry.url) {
         // verify that in the last [ENTRY_SAMPLE_SIZE] minutes, at least [MIN_OK_COUNT] are ok
         const history = await endpointStatusEntryRepository.findRecentByUrl(endpoint.url);
-        const pass = history.filter((h) => h.ok).length >= MIN_PASS_COUNT;
-        const fail = history.filter((h) => !h.ok).length >= MIN_FAIL_COUNT;
+
+        let pass = false,
+          fail = false;
+        let failCount = 0,
+          passCount = 0;
+        for (const h of history) {
+          passCount += h.ok ? 1 : 0;
+          failCount += h.ok ? 0 : 1;
+
+          if (passCount >= MIN_PASS_COUNT) {
+            pass = true;
+            break;
+          }
+          if (failCount >= MIN_FAIL_COUNT) {
+            fail = true;
+            break;
+          }
+        }
 
         // if it doesn't pass or fail, it retains the initial value
         if (pass) {
@@ -117,6 +132,7 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
   if (isStatusChanged) {
     application.status =
       application.manualOverride === 'on' ? initApplicationStatus : allEndpointsUp ? 'operational' : 'reported-issues';
+    application.statusTimestamp = Date.now();
 
     await serviceStatusRepository
       .save(application)
