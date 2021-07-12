@@ -10,8 +10,12 @@ describe('createSendNotificationJob', () => {
     error: jest.fn(),
   } as unknown) as Logger;
 
+  const eventService = {
+    send: jest.fn(),
+  };
+
   it('can create job', () => {
-    const job = createSendNotificationJob({ logger, providers: {} });
+    const job = createSendNotificationJob({ logger, eventService, providers: {} });
     expect(job).toBeTruthy();
   });
 
@@ -19,36 +23,42 @@ describe('createSendNotificationJob', () => {
     const providerMock = { send: jest.fn() };
     beforeEach(() => {
       providerMock.send.mockReset();
+      eventService.send.mockReset();
     });
 
     it('can send notification', (done) => {
-      const job = createSendNotificationJob({ logger, providers: { [Channel.email]: providerMock } });
+      const job = createSendNotificationJob({ logger, eventService, providers: { [Channel.email]: providerMock } });
       job(
         {
           tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/test',
           to: 'test@test.co',
-          typeId: 'test',
+          type: { id: 'test', name: 'test' },
+          event: { namespace: 'test', name: 'test' },
           message: { subject: 'testing', body: '123' },
           channel: Channel.email,
+          subscriber: { id: 'test', userId: 'test', addressAs: 'Testy McTester' },
         },
         (err) => {
           expect(err).toBeFalsy();
           expect(providerMock.send).toHaveBeenCalledTimes(1);
+          expect(eventService.send).toHaveBeenCalledTimes(1);
           done();
         }
       );
     });
 
     it('can throw for missing provider', async () => {
-      const job = createSendNotificationJob({ logger, providers: { [Channel.email]: providerMock } });
+      const job = createSendNotificationJob({ logger, eventService, providers: { [Channel.email]: providerMock } });
       await expect(
         job(
           {
             tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/test',
             to: 'test@test.co',
-            typeId: 'test',
+            type: { id: 'test', name: 'test' },
+            event: { namespace: 'test', name: 'test' },
             message: { subject: 'testing', body: '123' },
             channel: Channel.sms,
+            subscriber: { id: 'test', userId: 'test', addressAs: 'Testy McTester' },
           },
           null
         )
@@ -56,7 +66,7 @@ describe('createSendNotificationJob', () => {
     });
 
     it('can handle provider error', (done) => {
-      const job = createSendNotificationJob({ logger, providers: { [Channel.email]: providerMock } });
+      const job = createSendNotificationJob({ logger, eventService, providers: { [Channel.email]: providerMock } });
 
       const error = new Error('Something is wrong.');
       providerMock.send.mockRejectedValue(error);
@@ -64,13 +74,16 @@ describe('createSendNotificationJob', () => {
         {
           tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/test',
           to: 'test@test.co',
-          typeId: 'test',
+          type: { id: 'test', name: 'test' },
+          event: { namespace: 'test', name: 'test' },
           message: { subject: 'testing', body: '123' },
           channel: Channel.email,
+          subscriber: { id: 'test', userId: 'test', addressAs: 'Testy McTester' },
         },
         (err) => {
           expect(err).toBe(error);
           expect(providerMock.send).toHaveBeenCalledTimes(1);
+          expect(eventService.send).toHaveBeenCalledTimes(0);
           done();
         }
       );

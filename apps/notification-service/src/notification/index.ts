@@ -1,24 +1,26 @@
 import * as fs from 'fs';
 import { Application } from 'express';
 import { Logger } from 'winston';
+import { AdspId, ConfigurationService, EventService, TokenProvider } from '@abgov/adsp-service-sdk';
 import { DomainEventSubscriberService, WorkQueueService } from '@core-services/core-common';
 import { Repositories } from './repository';
 import { createJobs } from './job';
 import { TemplateService } from './template';
 import { Notification, Providers } from './types';
 import { createSubscriptionRouter } from './router';
-import { AdspId, ConfigurationService, TokenProvider } from '@abgov/adsp-service-sdk';
 
 export * from './types';
 export * from './repository';
 export * from './model';
 export * from './template';
+export * from './events';
 
 interface NotificationMiddlewareProps extends Repositories {
   serviceId: AdspId;
   logger: Logger;
   tokenProvider: TokenProvider;
   configurationService: ConfigurationService;
+  eventService: EventService;
   templateService: TemplateService;
   eventSubscriber: DomainEventSubscriberService;
   queueService: WorkQueueService<Notification>;
@@ -32,6 +34,7 @@ export const applyNotificationMiddleware = (
     logger,
     tokenProvider,
     configurationService,
+    eventService,
     subscriptionRepository,
     templateService,
     eventSubscriber,
@@ -44,6 +47,7 @@ export const applyNotificationMiddleware = (
     logger,
     tokenProvider,
     configurationService,
+    eventService,
     templateService,
     events: eventSubscriber.getItems(),
     queueService,

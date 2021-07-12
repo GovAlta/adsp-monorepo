@@ -1,6 +1,6 @@
 import { Subscribable } from 'rxjs';
 import { Logger } from 'winston';
-import { AdspId, ConfigurationService, TokenProvider } from '@abgov/adsp-service-sdk';
+import { AdspId, ConfigurationService, EventService, TokenProvider } from '@abgov/adsp-service-sdk';
 import { DomainEventWorkItem, WorkQueueService } from '@core-services/core-common';
 import { createProcessEventJob } from './processEvent';
 import { SubscriptionRepository } from '../repository';
@@ -13,6 +13,7 @@ interface JobProps {
   logger: Logger;
   tokenProvider: TokenProvider;
   configurationService: ConfigurationService;
+  eventService: EventService;
   templateService: TemplateService;
   events: Subscribable<DomainEventWorkItem>;
   queueService: WorkQueueService<Notification>;
@@ -25,6 +26,7 @@ export const createJobs = ({
   logger,
   tokenProvider,
   configurationService,
+  eventService,
   templateService,
   events,
   queueService,
@@ -33,6 +35,7 @@ export const createJobs = ({
 }: JobProps): void => {
   const sendNotificationJob = createSendNotificationJob({
     logger,
+    eventService,
     providers,
   });
 
@@ -41,6 +44,7 @@ export const createJobs = ({
     logger,
     tokenProvider,
     configurationService,
+    eventService,
     templateService,
     subscriptionRepository,
     queueService,
