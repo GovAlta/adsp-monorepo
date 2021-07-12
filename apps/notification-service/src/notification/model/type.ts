@@ -92,8 +92,16 @@ export class NotificationTypeEntity implements NotificationType {
     return address
       ? {
           tenantId: this.tenantId.toString(),
-          typeId: this.id,
+          type: {
+            id: this.id,
+            name: this.name,
+          },
+          event: {
+            namespace: event.namespace,
+            name: event.name,
+          },
           correlationId: event.correlationId,
+          context: event.context,
           to: address,
           channel,
           message: templateService.generateMessage(
@@ -101,6 +109,11 @@ export class NotificationTypeEntity implements NotificationType {
             event,
             subscription.subscriber
           ),
+          subscriber: {
+            id: subscription.subscriber.id,
+            userId: subscription.subscriber.userId,
+            addressAs: subscription.subscriber.addressAs,
+          },
         }
       : null;
   }

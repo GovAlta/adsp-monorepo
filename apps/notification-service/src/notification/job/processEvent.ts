@@ -1,16 +1,18 @@
-import type { AdspId, ConfigurationService, TokenProvider } from '@abgov/adsp-service-sdk';
+import type { AdspId, ConfigurationService, EventService, TokenProvider } from '@abgov/adsp-service-sdk';
 import type { DomainEvent, WorkQueueService } from '@core-services/core-common';
 import { Logger } from 'winston';
 import type { Notification } from '../types';
 import type { SubscriptionRepository } from '../repository';
 import type { TemplateService } from '../template';
 import { NotificationConfiguration } from '../configuration';
+import { notificationsGenerated } from '../events';
 
 interface ProcessEventJobProps {
   logger: Logger;
   serviceId: AdspId;
   tokenProvider: TokenProvider;
   configurationService: ConfigurationService;
+  eventService: EventService;
   templateService: TemplateService;
   subscriptionRepository: SubscriptionRepository;
   queueService: WorkQueueService<Notification>;
@@ -21,6 +23,7 @@ export const createProcessEventJob = ({
   serviceId,
   tokenProvider,
   configurationService,
+  eventService,
   templateService,
   subscriptionRepository,
   queueService,
@@ -60,6 +63,8 @@ export const createProcessEventJob = ({
       } while (after);
 
       notifications.forEach((notification) => queueService.enqueue(notification));
+      eventService.send(notificationsGenerated(event, type, notifications.length));
+
       count += notifications.length;
       logger.debug(
         `Generated ${notifications.length} notifications of type ${type.name} (ID: ${type.id}) for ${namespace}:${name} for tenant ${tenantId}.`
