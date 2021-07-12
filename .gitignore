@@ -50,3 +50,4 @@ Thumbs.db
 
 # Cypress.json for local dev only
 apps/tenant-management-webapp-e2e/cypress.json
+apps/status-app-e2e/cypress.json

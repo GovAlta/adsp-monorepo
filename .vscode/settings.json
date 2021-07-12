@@ -1,6 +1,7 @@
 {
   "cucumberautocomplete.steps": [
-    "apps/tenant-management-webapp-e2e/src/integration/**/*.ts"
+    "apps/tenant-management-webapp-e2e/src/integration/**/*.ts",
+    "apps/status-app-e2e/src/integration/**/*.ts"
   ],
   "cucumberautocomplete.syncfeatures": "apps/tenant-management-webapp-e2e/src/integration/**/*.feature",
   "cucumberautocomplete.strictGherkinCompletion": false,

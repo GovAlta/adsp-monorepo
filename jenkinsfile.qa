@@ -73,6 +73,8 @@ pipeline {
                 // Update cypress json files with tags and secrets before run the tests
                 def text = readFile file: "apps/tenant-management-webapp-e2e/cypress.test.json"
                 def text2 = readFile file: "apps/tenant-management-webapp-e2e/cypress.dev.json"
+                def text3 = readFile file: "apps/status-app-e2e/cypress.test.json"
+                def text4 = readFile file: "apps/status-app-e2e/cypress.dev.json"
                 withVault([ vaultSecrets: vaultSecretEnvMapping]) {
                   text = text.replaceAll(/"TAGS":.+/, "\"TAGS\": \"${tags}\",")
                   text = text.replaceAll(/"core-api-client-secret": \"\",/, "\"core-api-client-secret\": \"$cyTestCoreAPIClientSecret\",")
@@ -86,19 +88,27 @@ pipeline {
                   text2 = text2.replaceAll(/"client-secret": \"\",/, "\"client-secret\": \"$cyDevClientSecret\",")
                   text2 = text2.replaceAll(/"password": \"\",/, "\"password\": \"$cyDevPassword\",")
                   text2 = text2.replaceAll(/"password2": \"\",/, "\"password2\": \"$cyDevPassword2\",")
+                  text3 = text3.replaceAll(/"TAGS":.+/, "\"TAGS\": \"${tags}\",")
+                  text4 = text4.replaceAll(/"TAGS":.+/, "\"TAGS\": \"${tags}\",")
                 }
                 writeFile file: "apps/tenant-management-webapp-e2e/cypress.test.json", text: text
                 writeFile file: "apps/tenant-management-webapp-e2e/cypress.dev.json", text: text2
-                def text3 = readFile file: "apps/tenant-management-webapp-e2e/${cypress_config}"
-                echo text3
+                writeFile file: "apps/status-app-e2e/cypress.test.json", text: text3
+                writeFile file: "apps/status-app-e2e/cypress.dev.json", text: text4
+                def tmwConfig = readFile file: "apps/tenant-management-webapp-e2e/${cypress_config}"
+                echo tmwConfig
+                def saConfig = readFile file: "apps/status-app-e2e/${cypress_config}"
+                echo saConfig
             }
           sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config='apps/tenant-management-webapp-e2e/${cypress_config}'"
+          sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config='apps/status-app-e2e/${cypress_config}'"
         }
         post {
           always {
             junit "**/results/*.xml"
             cucumber "**/cucumber-json/*.json"
             sh "node ./apps/tenant-management-webapp-e2e/src/support/multiple-cucumber-html-reporter.js"
+            sh "node ./apps/status-app-e2e/src/support/multiple-cucumber-html-reporter.js"
             zip zipFile: "cypress-regression-test-html-report-${env.BUILD_NUMBER}.zip", archive: false, dir: 'dist/cypress'
             archiveArtifacts artifacts: "cypress-regression-test-html-report-${env.BUILD_NUMBER}.zip"
           }
