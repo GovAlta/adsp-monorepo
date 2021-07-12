@@ -9,35 +9,39 @@ export class TimescaleValuesRepository implements ValuesRepository {
   constructor(private knex: Knex) {}
 
   async writeValue(namespace: string, name: string, tenantId: AdspId, value: Omit<Value, 'tenantId'>): Promise<Value> {
-    const [row] = await this.knex<ValueRecord>('values')
-      .insert({
-        namespace,
-        name,
-        timestamp: value.timestamp,
-        tenant: tenantId?.toString(),
-        correlationId: value.correlationId,
-        context: value.context || {},
-        value: value.value,
-      })
-      .returning('*');
+    const record = await this.knex.transaction(async (ts) => {
+      const [row] = await ts<ValueRecord>('values')
+        .insert({
+          namespace,
+          name,
+          timestamp: value.timestamp,
+          tenant: tenantId?.toString(),
+          correlationId: value.correlationId,
+          context: value.context || {},
+          value: value.value,
+        })
+        .returning('*');
 
-    if (value.metrics) {
-      const keys = Object.keys(value.metrics);
-      for (let i = 0; i < keys.length; i++) {
-        const key = keys[i];
-        const metric = value.metrics[key];
-        if (typeof metric === 'number') {
-          await this.writeMetric(tenantId, namespace, name, key, value.timestamp, metric);
+      if (value.metrics) {
+        const keys = Object.keys(value.metrics);
+        for (let i = 0; i < keys.length; i++) {
+          const key = keys[i];
+          const metric = value.metrics[key];
+          if (typeof metric === 'number') {
+            await this.writeMetric(tenantId, namespace, name, key, value.timestamp, metric);
+          }
         }
       }
-    }
+
+      return row;
+    });
 
     return {
-      timestamp: row.timestamp,
-      correlationId: row.correlationId,
-      tenantId: row.tenant ? AdspId.parse(row.tenant) : null,
-      context: row.context,
-      value: row.value,
+      timestamp: record.timestamp,
+      correlationId: record.correlationId,
+      tenantId: record.tenant ? AdspId.parse(record.tenant) : null,
+      context: record.context,
+      value: record.value,
     };
   }
 
@@ -76,7 +80,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
       }
 
       if (criteria.context) {
-        query.whereRaw(`context @> '?'::jsonb`, [JSON.stringify(criteria.context)]);
+        query.whereRaw(`context @> ?::jsonb`, [JSON.stringify(criteria.context)]);
       }
     }
 
@@ -157,7 +161,21 @@ export class TimescaleValuesRepository implements ValuesRepository {
     timestamp: Date,
     value: number
   ): Promise<MetricValue> {
-    const [row] = await this.knex<MetricValue & { tenant: string }>('metrics')
+    return await this.knex.transaction((ts) =>
+      this.writeMetricRecord(ts, tenantId, namespace, name, metric, timestamp, value)
+    );
+  }
+
+  private async writeMetricRecord(
+    transaction: Knex.Transaction,
+    tenantId: AdspId,
+    namespace: string,
+    name: string,
+    metric: string,
+    timestamp: Date,
+    value: number
+  ): Promise<MetricValue> {
+    const [row] = await transaction<MetricValue & { tenant: string }>('metrics')
       .insert({
         namespace,
         name,

@@ -80,27 +80,27 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
       correlationId,
     } = req.query;
 
-    const top = topValue ? parseInt(topValue as string) : 10;
-    const criteria: ValueCriteria = {
-      namespace,
-      name,
-      timestampMax: timestampMaxValue ? new Date(timestampMaxValue as string) : null,
-      timestampMin: timestampMinValue ? new Date(timestampMinValue as string) : null,
-      context: contextValue ? JSON.parse(contextValue as string) : null,
-      correlationId: correlationId as string,
-    };
-
-    // For non Core users, the tenant criteria is set based on the user's tenant.
-    if (!user.isCore) {
-      criteria.tenantId = user.tenantId;
-    }
-
     if (!user?.roles?.includes(ServiceUserRoles.Reader)) {
       next(new UnauthorizedError('User not authorized to read values.'));
       return;
     }
 
     try {
+      const top = topValue ? parseInt(topValue as string) : 10;
+      const criteria: ValueCriteria = {
+        namespace,
+        name,
+        timestampMax: timestampMaxValue ? new Date(timestampMaxValue as string) : null,
+        timestampMin: timestampMinValue ? new Date(timestampMinValue as string) : null,
+        context: contextValue ? JSON.parse(contextValue as string) : null,
+        correlationId: correlationId as string,
+      };
+
+      // For non Core users, the tenant criteria is set based on the user's tenant.
+      if (!user.isCore) {
+        criteria.tenantId = user.tenantId;
+      }
+
       const result = await repository.readValues(top, after as string, criteria);
 
       res.send({
