@@ -1,14 +1,6 @@
 import * as Knex from 'knex';
 import { decodeAfter, encodeNext, InvalidOperationError, Results } from '@core-services/core-common';
-import {
-  Value,
-  ValueCriteria,
-  ValueDefinitionEntity,
-  ValuesRepository,
-  MetricValue,
-  Metric,
-  MetricCriteria,
-} from '../values';
+import { Value, ValueCriteria, ValuesRepository, MetricValue, Metric, MetricCriteria } from '../values';
 import { AdspId } from '@abgov/adsp-service-sdk';
 
 type ValueRecord = Value & { namespace: string; name: string; tenant: string };
@@ -28,6 +20,14 @@ export class TimescaleValuesRepository implements ValuesRepository {
         value: value.value,
       })
       .returning('*');
+
+    if (value.metrics) {
+      const keys = Object.keys(value.metrics);
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        await this.writeMetric(tenantId, namespace, name, key, value.timestamp, value.metrics[i]);
+      }
+    }
 
     return {
       timestamp: row.timestamp,
@@ -58,6 +58,10 @@ export class TimescaleValuesRepository implements ValuesRepository {
         queryCriteria['name'] = criteria.name;
       }
 
+      if (criteria.correlationId) {
+        queryCriteria['correlationId'] = criteria.correlationId;
+      }
+
       query.where(queryCriteria);
 
       if (criteria.timestampMax) {
@@ -66,6 +70,10 @@ export class TimescaleValuesRepository implements ValuesRepository {
 
       if (criteria.timestampMin) {
         query = query.where('timestamp', '>=', criteria.timestampMin);
+      }
+
+      if (criteria.context) {
+        query.whereRaw(`context @> '?'::jsonb`, [JSON.stringify(criteria.context)]);
       }
     }
 
@@ -90,7 +98,8 @@ export class TimescaleValuesRepository implements ValuesRepository {
 
   async readMetric(
     tenantId: AdspId,
-    definition: ValueDefinitionEntity,
+    namespace: string,
+    name: string,
     metric: string,
     criteria: MetricCriteria
   ): Promise<Metric> {
@@ -106,8 +115,8 @@ export class TimescaleValuesRepository implements ValuesRepository {
     }
 
     const queryCriteria = {
-      namespace: definition.namespace.name,
-      name: definition.name,
+      namespace,
+      name,
       metric,
     };
 
@@ -139,15 +148,16 @@ export class TimescaleValuesRepository implements ValuesRepository {
 
   async writeMetric(
     tenantId: AdspId,
-    definition: ValueDefinitionEntity,
+    namespace: string,
+    name: string,
     metric: string,
     timestamp: Date,
     value: number
   ): Promise<MetricValue> {
     const [row] = await this.knex<MetricValue & { tenant: string }>('metrics')
       .insert({
-        namespace: definition.namespace.name,
-        name: definition.name,
+        namespace,
+        name,
         tenant: tenantId?.toString(),
         metric,
         timestamp,

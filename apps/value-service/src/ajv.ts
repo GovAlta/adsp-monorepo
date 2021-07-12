@@ -1,4 +1,5 @@
 import { AjvValidationService } from '@core-services/core-common';
+import { ValidateFunction } from 'ajv';
 import { Logger } from 'winston';
 import { ValueDefinitionEntity } from './values';
 
@@ -9,7 +10,7 @@ export class AjvValueValidationService extends AjvValidationService {
       valid: true,
       modifying: true,
       type: ['integer', 'number'],
-      compile: (schema) => (data, _dataPath, _parentData, _parentDataProperty, rootData) => {
+      compile: (schema): ValidateFunction => (data, _dataPath, _parentData, _parentDataProperty, rootData) => {
         const name = `${schema}`;
         if (name && typeof data === 'number') {
           rootData[ValueDefinitionEntity.METRICS_KEY] = {

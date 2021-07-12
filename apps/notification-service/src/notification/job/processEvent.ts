@@ -63,7 +63,9 @@ export const createProcessEventJob = ({
       } while (after);
 
       notifications.forEach((notification) => queueService.enqueue(notification));
-      eventService.send(notificationsGenerated(event, type, notifications.length));
+      if (notifications.length > 0) {
+        eventService.send(notificationsGenerated(event, type, notifications.length));
+      }
 
       count += notifications.length;
       logger.debug(
