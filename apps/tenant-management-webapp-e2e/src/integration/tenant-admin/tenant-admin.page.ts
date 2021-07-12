@@ -3,11 +3,6 @@ class TenantAdminPage {
     return cy.get('.name');
   }
 
-  dashboardMenuItem(menuItemKey: string) {
-    const menuItemSelector = `nav > div > [href="${menuItemKey}"] > span`;
-    return cy.get(menuItemSelector);
-  }
-
   dashboardServicesMenuCategory() {
     return cy.contains('Services');
   }
