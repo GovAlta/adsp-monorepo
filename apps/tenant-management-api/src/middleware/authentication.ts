@@ -17,8 +17,6 @@ export const requireTenantServiceAdmin: RequestHandler = async (req, res, next: 
 };
 
 export const requireTenantAdmin: RequestHandler = async (req, res, next: () => void) => {
-  console.log(req.user);
-
   const authConfig: AuthenticationConfig = {
     requireCore: false,
     allowedRoles: [TenantServiceRoles.TenantAdmin],
