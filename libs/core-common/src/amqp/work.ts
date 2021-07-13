@@ -19,10 +19,13 @@ export class AmqpWorkQueueService<T> implements WorkQueueService<T> {
   }
 
   protected async assertQueueConfiguration(channel: Channel): Promise<void> {
-    await channel.assertExchange(`${this.queue}-dead-letter`, 'direct');
-    await channel.assertQueue(`undelivered-${this.queue}`);
+    await channel.assertExchange(`${this.queue}-dead-letter`, 'topic');
+    await channel.assertQueue(`undelivered-${this.queue}`, {
+      arguments: {
+        'x-queue-type': 'quorum',
+      },
+    });
     await channel.bindQueue(`undelivered-${this.queue}`, `${this.queue}-dead-letter`, '#');
-
     await channel.assertQueue(this.queue, {
       arguments: {
         'x-queue-type': 'quorum',
