@@ -6,12 +6,18 @@ import HttpException from '../errorHandlers/httpException';
 import * as HttpStatusCodes from 'http-status-codes';
 import { errorHandler } from '../errorHandlers';
 import { TenantServiceRoles } from '../../../roles';
+import { EventService } from '@abgov/adsp-service-sdk';
+import { configurationUpdated } from '../../events';
 
 interface TenantConfigRouterProps {
+  eventService: EventService;
   tenantConfigurationRepository: TenantConfigurationRepository;
 }
 
-export const createTenantConfigurationRouter = ({ tenantConfigurationRepository }: TenantConfigRouterProps): Router => {
+export const createTenantConfigurationRouter = ({
+  eventService,
+  tenantConfigurationRepository,
+}: TenantConfigRouterProps): Router => {
   const tenantConfigRouter = Router();
 
   tenantConfigRouter.get('/list', async (req, res, next) => {
@@ -86,6 +92,7 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
       }
 
       res.json(mapTenantConfig(entity));
+      eventService.send(configurationUpdated(user, user.tenantId));
     } catch (err) {
       errorHandler(err, req, res, next);
     }
@@ -105,6 +112,7 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
       const entity = await tenantConfig.updateService(user, service, serviceSettings);
 
       res.json(mapTenantConfig(entity).configurationSettingsList[service]);
+      eventService.send(configurationUpdated(user, user.tenantId, service));
     } catch (err) {
       errorHandler(err, req, res, next);
     }
@@ -125,6 +133,7 @@ export const createTenantConfigurationRouter = ({ tenantConfigurationRepository 
       const entity = await tenantConfig.update(user, configurationSettingsList);
 
       res.json(mapTenantConfig(entity));
+      eventService.send(configurationUpdated(user, user.tenantId));
     } catch (err) {
       errorHandler(err, req, res, next);
     }

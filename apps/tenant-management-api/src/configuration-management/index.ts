@@ -4,8 +4,10 @@ import { ServiceRegistration, ServiceRegistrationImpl } from './registration';
 import { createRepositories } from './mongo';
 import { environment } from '../environments/environment';
 import { applyConfigMiddleware } from './configuration';
+import { EventService } from '@abgov/adsp-service-sdk';
 
 export type { ServiceClient, ServiceRegistration } from './registration';
+export * from './events';
 
 const logger = createLogger('configuration-management-service', environment.LOG_LEVEL || 'info');
 
@@ -15,7 +17,7 @@ export const createServiceRegistration = async (): Promise<ServiceRegistration> 
   return new ServiceRegistrationImpl(serviceConfigurationRepository);
 };
 
-export const createConfigService = async (app: Application): Promise<Application> => {
+export const createConfigService = async (app: Application, eventService: EventService): Promise<Application> => {
   const repositories = await repositoriesPromise;
   app.get('/configuration/health', (req, res) =>
     res.json({
@@ -26,6 +28,7 @@ export const createConfigService = async (app: Application): Promise<Application
   applyConfigMiddleware(app, {
     ...repositories,
     logger,
+    eventService,
   });
 
   return app;

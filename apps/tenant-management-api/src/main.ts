@@ -111,7 +111,7 @@ async function initializeApp(): Promise<express.Application> {
   const tenantV2Router = createTenantV2Router();
   app.use('/api/tenant/v2', authenticateCore, tenantV2Router);
 
-  createConfigService(app);
+  createConfigService(app, eventService);
   createDirectoryService(app);
 
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
