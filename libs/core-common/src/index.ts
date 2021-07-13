@@ -7,7 +7,4 @@ export * from './cursor';
 export * from './event';
 export * from './amqp';
 export * from './work';
-export * from './config';
-export * from './serviceInit';
 export * from './jsonSchema';
-export * from './keycloak';

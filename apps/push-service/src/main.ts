@@ -7,7 +7,6 @@ import * as compression from 'compression';
 import * as helmet from 'helmet';
 import {
   createLogger,
-  createKeycloakStrategy,
   createAmqpEventService,
   UnauthorizedError,
   NotFoundError,
@@ -27,7 +26,7 @@ app.use(compression());
 app.use(helmet());
 app.use(express.json({ limit: '1mb' }));
 
-passport.use('jwt', createKeycloakStrategy());
+// passport.use('jwt', createKeycloakStrategy());
 passport.use(new AnonymousStrategy());
 
 passport.serializeUser(function (user, done) {
