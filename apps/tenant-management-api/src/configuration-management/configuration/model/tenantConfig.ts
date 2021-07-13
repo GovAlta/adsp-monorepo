@@ -1,4 +1,4 @@
-import { AssertRole } from '@abgov/adsp-service-sdk';
+import { AssertCoreRole, AssertRole } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { TenantServiceRoles } from '../../../roles';
 import type { TenantConfigurationRepository } from '../repository';
@@ -47,7 +47,7 @@ export class TenantConfigEntity implements TenantConfig {
     return this.repository.save(this);
   }
 
-  @AssertRole('delete tenant config', TenantServiceRoles.TenantAdmin)
+  @AssertCoreRole('delete tenant config', TenantServiceRoles.TenantServiceAdmin)
   delete(_user: User): Promise<boolean> {
     return this.repository.delete(this);
   }
