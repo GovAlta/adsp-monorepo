@@ -47,6 +47,7 @@ export const createLogEventJob = ({ logger, valueServiceUrl, tokenProvider }: Lo
         value: { payload },
         metrics: {
           [`${namespace}:${name}:count`]: 1,
+          count: 1,
         },
       },
       { headers: { Authorization: `Bearer ${token}` } }
