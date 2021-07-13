@@ -7,7 +7,11 @@ import * as passport from 'passport';
 import * as swaggerUi from 'swagger-ui-express';
 import { AdspId, adspId, initializePlatform, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError, NotFoundError, InvalidOperationError } from '@core-services/core-common';
-import { createConfigService, createServiceRegistration } from './configuration-management';
+import {
+  ConfigurationUpdatedDefinition,
+  createConfigService,
+  createServiceRegistration,
+} from './configuration-management';
 import { createDirectoryService } from './directory';
 import { connectMongo, disconnect } from './mongo/index';
 import {
@@ -50,7 +54,7 @@ async function initializeApp(): Promise<express.Application> {
       directoryUrl: null,
       accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
       ignoreServiceAud: true,
-      events: [TenantCreatedDefinition, TenantDeletedDefinition],
+      events: [TenantCreatedDefinition, TenantDeletedDefinition, ConfigurationUpdatedDefinition],
       roles: [
         // Note: Tenant Admin role is a special composite role.
         {
