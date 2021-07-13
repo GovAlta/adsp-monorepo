@@ -8,6 +8,13 @@ admin401: &admin401
       | ------------- |:-------------:| -------:|
       | platformAdmin  | core | tenant-api |
 
+tenantAdmin401: &tenantAdmin401
+  description: |
+    Unauthorized. The allowed user groups are listed as follows:
+      | Keycloak Realm| Roles  |
+      |:-------------:| -------:|
+      |   Tenant Realm| tenant-admin |
+
 webInit401: &webInit401
   description: |
     Unauthorized. The allowed user groups are listed as follows:
@@ -62,6 +69,17 @@ webInit401: &webInit401
     responses:
       200: *Ok
       401: *admin401
+
+'/api/tenant/v1/realm/roles':
+  get:
+    tags:
+      - Tenant
+    description:
+      Return the realm roles of the tenant
+    responses:
+      200: *Ok
+      401: *tenantAdmin401
+
 '/api/tenant/v1/email':
   post:
     tags:
