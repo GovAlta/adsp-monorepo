@@ -31,11 +31,12 @@ export class TenantEntity implements Tenant {
 
   obj(): Tenant {
     return {
-      id: this.id.resource.split('/').pop(),
+      id: adspId`${this.id.resource.split('/').pop()}`,
       realm: this.realm,
       adminEmail: this.adminEmail,
       tokenIssuer: this.tokenIssuer,
       name: this.name,
+      createdBy: this.createdBy,
     };
   }
 }
