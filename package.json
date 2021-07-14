@@ -12,6 +12,7 @@
     "build": "nx build",
     "build:affected": "nx affected --target=build",
     "test": "nx run-many --all --target=test --parallel",
+    "coverage:tenant-management-api": "npx nx test tenant-management-api --code-coverage",
     "lint": "nx workspace-lint && nx lint",
     "e2e": "nx e2e",
     "affected:apps": "nx affected:apps",
