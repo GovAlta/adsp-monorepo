@@ -1,0 +1,24 @@
+{
+  "env": {
+    "env-name": "DEV",
+    "TAGS": "@regression and not @ignore"
+  },
+  "baseUrl": "https://status-app-core-services-dev.os99.gov.ab.ca/",
+  "fileServerFolder": ".",
+  "fixturesFolder": "./src/fixtures",
+  "integrationFolder": "./src/integration",
+  "modifyObstructiveCode": false,
+  "pluginsFile": "./src/plugins/index",
+  "supportFile": "./src/support/index.ts",
+  "video": true,
+  "videosFolder": "../../dist/cypress/apps/status-app-e2e/videos",
+  "screenshotsFolder": "../../dist/cypress/apps/status-app-e2e/screenshots",
+  "chromeWebSecurity": false,
+  "testFiles": "**/*.feature",
+  "ignoreTestFiles": "*.js",
+  "videoUploadOnPasses": false,
+  "reporter": "junit",
+  "reporterOptions": {
+    "mochaFile": "../../dist/cypress/apps/status-app-e2e/results/results-[hash].xml"
+  }
+}

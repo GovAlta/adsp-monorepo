@@ -11,12 +11,27 @@
 // This function is called when a project is opened or re-opened (e.g. due to
 // the project's config changing)
 
-const { preprocessTypescript } = require('@nrwl/cypress/plugins/preprocessor');
+const cucumber = require('cypress-cucumber-preprocessor').default;
+const browserify = require('@cypress/browserify-preprocessor');
+const resolve = require('resolve');
+const clipboardy = require('clipboardy');
 
 module.exports = (on, config) => {
-  // `on` is used to hook into various events Cypress emits
-  // `config` is the resolved Cypress config
-
-  // Preprocess Typescript file using Nx helper
-  on('file:preprocessor', preprocessTypescript(config));
+  const options = {
+    ...browserify.defaultOptions,
+    typescript: resolve.sync('typescript', { baseDir: config.projectRoot }),
+  };
+  options.browserifyOptions.plugin.unshift(['tsify']);
+  on('file:preprocessor', cucumber(options));
+  on('before:browser:launch', (browser = {}, launchOptions) => {
+    if (browser.name === 'chrome') {
+      launchOptions.args.push('--disable-dev-shm-usage');
+      return launchOptions;
+    }
+  });
+  on('task', {
+    async getClipboard() {
+      return clipboardy.read();
+    },
+  });
 };
