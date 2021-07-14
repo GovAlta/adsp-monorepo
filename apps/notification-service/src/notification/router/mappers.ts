@@ -6,6 +6,7 @@ export const mapSubscriber = (subscriber: SubscriberEntity): Subscriber => ({
   id: subscriber.id,
   addressAs: subscriber.addressAs,
   channels: subscriber.channels,
+  userId: subscriber.userId,
 });
 
 export const mapSubscription = (

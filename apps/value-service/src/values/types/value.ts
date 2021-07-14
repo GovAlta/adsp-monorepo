@@ -4,11 +4,9 @@ export interface Value {
   timestamp: Date;
   correlationId: string;
   tenantId: AdspId;
-  context: {
-    [key: string]: boolean | string | number;
-  };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  value: any;
+  context: Record<string, boolean | string | number>;
+  value: unknown;
+  metrics?: Record<string, number>;
 }
 
 export interface ValueCriteria {
@@ -17,6 +15,8 @@ export interface ValueCriteria {
   tenantId?: AdspId;
   timestampMin?: Date;
   timestampMax?: Date;
+  correlationId?: string;
+  context?: Record<string, boolean | string | number>;
 }
 
 export const VALUES_READ = 'READ';

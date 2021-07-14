@@ -1,4 +1,4 @@
-import { assertAuthenticatedHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { assertAuthenticatedHandler, InvalidOperationError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { Logger } from 'winston';
 import { NamespaceEntity } from '../model';

@@ -6,16 +6,18 @@ export * from './types';
 export * from './repository';
 export * from './model';
 import * as passport from 'passport';
+import { EventService } from '@abgov/adsp-service-sdk';
 
 const passportMiddleware = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
 
 interface ConfigMiddlewareProps extends Repositories {
   logger: Logger;
+  eventService: EventService;
 }
 
 export const applyConfigMiddleware = (
   app: Application,
-  { logger, serviceConfigurationRepository, tenantConfigurationRepository }: ConfigMiddlewareProps
+  { logger, eventService, serviceConfigurationRepository, tenantConfigurationRepository }: ConfigMiddlewareProps
 ): Application => {
   const serviceConfigRouterProps = {
     logger,
@@ -24,6 +26,7 @@ export const applyConfigMiddleware = (
 
   const tenantConfigRouterProps = {
     logger,
+    eventService,
     tenantConfigurationRepository,
   };
 

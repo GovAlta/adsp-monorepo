@@ -43,8 +43,8 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
     const namespace = req.params.namespace;
 
     try {
-      const namespaces = await req.getConfiguration<Record<string, NamespaceEntity>>();
-      const entity = namespaces[namespace];
+      const [namespaces] = await req.getConfiguration<Record<string, NamespaceEntity>>();
+      const entity = namespaces?.[namespace];
       if (!entity) {
         throw new NotFoundError('namespace', namespace);
       }
@@ -71,20 +71,14 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
   valueRouter.get('/:namespace/values/:name', async (req, res, next) => {
     const user = req.user;
     const { namespace, name } = req.params;
-    const { top: topValue, after, timestampMax: timestampMaxValue, timestampMin: timestampMinValue } = req.query;
-
-    const top = topValue ? parseInt(topValue as string) : 10;
-    const criteria: ValueCriteria = {
-      namespace,
-      name,
-      timestampMax: timestampMaxValue ? new Date(timestampMaxValue as string) : null,
-      timestampMin: timestampMinValue ? new Date(timestampMinValue as string) : null,
-    };
-
-    // For non Core users, the tenant criteria is set based on the user's tenant.
-    if (!user.isCore) {
-      criteria.tenantId = user.tenantId;
-    }
+    const {
+      top: topValue,
+      after,
+      timestampMax: timestampMaxValue,
+      timestampMin: timestampMinValue,
+      context: contextValue,
+      correlationId,
+    } = req.query;
 
     if (!user?.roles?.includes(ServiceUserRoles.Reader)) {
       next(new UnauthorizedError('User not authorized to read values.'));
@@ -92,6 +86,21 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
     }
 
     try {
+      const top = topValue ? parseInt(topValue as string) : 10;
+      const criteria: ValueCriteria = {
+        namespace,
+        name,
+        timestampMax: timestampMaxValue ? new Date(timestampMaxValue as string) : null,
+        timestampMin: timestampMinValue ? new Date(timestampMinValue as string) : null,
+        context: contextValue ? JSON.parse(contextValue as string) : null,
+        correlationId: correlationId as string,
+      };
+
+      // For non Core users, the tenant criteria is set based on the user's tenant.
+      if (!user.isCore) {
+        criteria.tenantId = user.tenantId;
+      }
+
       const result = await repository.readValues(top, after as string, criteria);
 
       res.send({
@@ -119,19 +128,15 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
       intervalMin: criteriaParam.intervalMin ? new Date(criteriaParam.intervalMin) : null,
     };
 
+    const tenantId = user.isCore ? AdspId.parse(criteriaParam.tenantId) : user.tenantId;
+
+    if (!user?.roles?.includes(ServiceUserRoles.Reader)) {
+      next(new UnauthorizedError('User not authorized to read values.'));
+      return;
+    }
+
     try {
-      const namespaces = await req.getConfiguration<Record<string, NamespaceEntity>>();
-      const entity = namespaces[namespace];
-      if (!entity) {
-        throw new NotFoundError('namespace', namespace);
-      }
-      const valDef = entity.definitions[name];
-      if (!valDef) {
-        throw new NotFoundError('value definition', `${namespace}:${name}`);
-      }
-
-      const result = await valDef.readValueMetric(user, metric, criteria);
-
+      const result = await repository.readMetric(tenantId, namespace, name, metric, criteria);
       res.send({
         [namespace]: {
           [name]: {
@@ -154,7 +159,7 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
     const tenantId: AdspId = req['tenantId'];
 
     try {
-      const namespaces = (await req.getConfiguration<Record<string, NamespaceEntity>>(tenantId)) || {};
+      const [namespaces] = await req.getConfiguration<Record<string, NamespaceEntity>>(tenantId);
 
       // Handle either value write with envelop included or not.
       const valueRecord: Omit<Value, 'tenantId'> =
@@ -168,7 +173,7 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
           : value;
 
       // Write via the definition (which will validate) or directly if there is no definition.
-      const definition = namespaces[namespace]?.definitions[name];
+      const definition = namespaces?.[namespace]?.definitions[name];
       let result: Value = null;
       if (definition) {
         result = await definition.writeValue(tenantId, valueRecord);

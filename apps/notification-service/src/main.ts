@@ -12,7 +12,15 @@ import {
   createAmqpQueueService,
 } from '@core-services/core-common';
 import { environment } from './environments/environment';
-import { applyNotificationMiddleware, Channel, Notification, NotificationType, ServiceUserRoles } from './notification';
+import {
+  applyNotificationMiddleware,
+  Channel,
+  Notification,
+  NotificationSentDefinition,
+  NotificationsGeneratedDefinition,
+  NotificationType,
+  ServiceUserRoles,
+} from './notification';
 import { createRepositories } from './mongo';
 import { createABNotifySmsProvider, createEmailProvider } from './provider';
 import { templateService } from './handlebars';
@@ -34,6 +42,7 @@ async function initializeApp() {
     tokenProvider,
     configurationHandler,
     configurationService,
+    eventService,
     healthCheck,
   } = await initializePlatform(
     {
@@ -45,13 +54,7 @@ async function initializeApp() {
       directoryUrl: new URL(environment.DIRECTORY_URL),
       configurationConverter: (config: Record<string, NotificationType>, tenantId?: AdspId) =>
         new NotificationConfiguration(config, tenantId),
-      events: [
-        {
-          name: 'notification-sent',
-          description: 'Signalled when a notification is sent.',
-          payloadSchema: {},
-        },
-      ],
+      events: [NotificationsGeneratedDefinition, NotificationSentDefinition],
       roles: [
         {
           role: ServiceUserRoles.SubscriptionAdmin,
@@ -96,6 +99,7 @@ async function initializeApp() {
     logger,
     tokenProvider,
     configurationService,
+    eventService,
     templateService,
     eventSubscriber,
     queueService,

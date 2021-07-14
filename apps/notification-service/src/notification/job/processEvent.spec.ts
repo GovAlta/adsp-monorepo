@@ -22,6 +22,10 @@ describe('createProcessEventJob', () => {
     getConfiguration: jest.fn(),
   };
 
+  const eventServiceMock = {
+    send: jest.fn(),
+  };
+
   const templateServiceMock = {
     generateMessage: jest.fn(),
   };
@@ -40,6 +44,7 @@ describe('createProcessEventJob', () => {
       serviceId: adspId`urn:ads:platform:notification-service`,
       tokenProvider: tokenProviderMock,
       configurationService: configurationServiceMock,
+      eventService: eventServiceMock,
       templateService: templateServiceMock,
       subscriptionRepository: (repositoryMock as unknown) as SubscriptionRepository,
       queueService: (queueServiceMock as unknown) as WorkQueueService<Notification>,
@@ -54,6 +59,7 @@ describe('createProcessEventJob', () => {
         serviceId: adspId`urn:ads:platform:notification-service`,
         tokenProvider: tokenProviderMock,
         configurationService: configurationServiceMock,
+        eventService: eventServiceMock,
         templateService: templateServiceMock,
         subscriptionRepository: (repositoryMock as unknown) as SubscriptionRepository,
         queueService: (queueServiceMock as unknown) as WorkQueueService<Notification>,

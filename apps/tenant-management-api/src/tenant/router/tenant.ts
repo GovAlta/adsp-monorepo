@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { IsDefined } from 'class-validator';
 import validationMiddleware from '../../middleware/requestValidator';
 import * as HttpStatusCodes from 'http-status-codes';
-import { requireTenantServiceAdmin } from '../../middleware/authentication';
+import { requireTenantServiceAdmin, requireTenantAdmin } from '../../middleware/authentication';
 import * as TenantService from '../services/tenant';
 import { logger } from '../../middleware/logger';
 import { v4 as uuidv4 } from 'uuid';
@@ -140,10 +140,27 @@ export const createTenantRouter = ({ eventService, services }: TenantRouterProps
     }
   }
 
+  async function getRealmRoles(req, res, next) {
+    //TODO: suppose we can use the req.tenant to fetch the realm
+    const tenant = req.user.token.iss.split('/').pop();
+
+    try {
+      const roles = await TenantService.getRealmRoles(tenant);
+      res.json({
+        roles: roles,
+      });
+    } catch (err) {
+      logger.error(`Failed to get tenant realm roles with error: ${err.message}`);
+
+      next(err);
+    }
+  }
+
   /**
    * @deprecated Used for issuers cache and mappings to tenants.
    */
   tenantRouter.get('/issuers', requireTenantServiceAdmin, fetchIssuers);
+  tenantRouter.get('/realm/roles', requireTenantAdmin, getRealmRoles);
   tenantRouter.get('/realms/names', requireTenantServiceAdmin, fetchRealmTenantMapping);
 
   // Tenant admin only APIs

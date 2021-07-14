@@ -1,14 +1,6 @@
 import * as Knex from 'knex';
 import { decodeAfter, encodeNext, InvalidOperationError, Results } from '@core-services/core-common';
-import {
-  Value,
-  ValueCriteria,
-  ValueDefinitionEntity,
-  ValuesRepository,
-  MetricValue,
-  Metric,
-  MetricCriteria,
-} from '../values';
+import { Value, ValueCriteria, ValuesRepository, MetricValue, Metric, MetricCriteria } from '../values';
 import { AdspId } from '@abgov/adsp-service-sdk';
 
 type ValueRecord = Value & { namespace: string; name: string; tenant: string };
@@ -17,24 +9,39 @@ export class TimescaleValuesRepository implements ValuesRepository {
   constructor(private knex: Knex) {}
 
   async writeValue(namespace: string, name: string, tenantId: AdspId, value: Omit<Value, 'tenantId'>): Promise<Value> {
-    const [row] = await this.knex<ValueRecord>('values')
-      .insert({
-        namespace,
-        name,
-        timestamp: value.timestamp,
-        tenant: tenantId?.toString(),
-        correlationId: value.correlationId,
-        context: value.context || {},
-        value: value.value,
-      })
-      .returning('*');
+    const record = await this.knex.transaction(async (ts) => {
+      const [row] = await ts<ValueRecord>('values')
+        .insert({
+          namespace,
+          name,
+          timestamp: value.timestamp,
+          tenant: tenantId?.toString(),
+          correlationId: value.correlationId,
+          context: value.context || {},
+          value: value.value,
+        })
+        .returning('*');
+
+      if (value.metrics) {
+        const keys = Object.keys(value.metrics);
+        for (let i = 0; i < keys.length; i++) {
+          const key = keys[i];
+          const metric = value.metrics[key];
+          if (typeof metric === 'number') {
+            await this.writeMetric(tenantId, namespace, name, key, value.timestamp, metric);
+          }
+        }
+      }
+
+      return row;
+    });
 
     return {
-      timestamp: row.timestamp,
-      correlationId: row.correlationId,
-      tenantId: row.tenant ? AdspId.parse(row.tenant) : null,
-      context: row.context,
-      value: row.value,
+      timestamp: record.timestamp,
+      correlationId: record.correlationId,
+      tenantId: record.tenant ? AdspId.parse(record.tenant) : null,
+      context: record.context,
+      value: record.value,
     };
   }
 
@@ -58,6 +65,10 @@ export class TimescaleValuesRepository implements ValuesRepository {
         queryCriteria['name'] = criteria.name;
       }
 
+      if (criteria.correlationId) {
+        queryCriteria['correlationId'] = criteria.correlationId;
+      }
+
       query.where(queryCriteria);
 
       if (criteria.timestampMax) {
@@ -66,6 +77,10 @@ export class TimescaleValuesRepository implements ValuesRepository {
 
       if (criteria.timestampMin) {
         query = query.where('timestamp', '>=', criteria.timestampMin);
+      }
+
+      if (criteria.context) {
+        query.whereRaw(`context @> ?::jsonb`, [JSON.stringify(criteria.context)]);
       }
     }
 
@@ -90,7 +105,8 @@ export class TimescaleValuesRepository implements ValuesRepository {
 
   async readMetric(
     tenantId: AdspId,
-    definition: ValueDefinitionEntity,
+    namespace: string,
+    name: string,
     metric: string,
     criteria: MetricCriteria
   ): Promise<Metric> {
@@ -106,8 +122,8 @@ export class TimescaleValuesRepository implements ValuesRepository {
     }
 
     const queryCriteria = {
-      namespace: definition.namespace.name,
-      name: definition.name,
+      namespace,
+      name,
       metric,
     };
 
@@ -139,15 +155,30 @@ export class TimescaleValuesRepository implements ValuesRepository {
 
   async writeMetric(
     tenantId: AdspId,
-    definition: ValueDefinitionEntity,
+    namespace: string,
+    name: string,
     metric: string,
     timestamp: Date,
     value: number
   ): Promise<MetricValue> {
-    const [row] = await this.knex<MetricValue & { tenant: string }>('metrics')
+    return await this.knex.transaction((ts) =>
+      this.writeMetricRecord(ts, tenantId, namespace, name, metric, timestamp, value)
+    );
+  }
+
+  private async writeMetricRecord(
+    transaction: Knex.Transaction,
+    tenantId: AdspId,
+    namespace: string,
+    name: string,
+    metric: string,
+    timestamp: Date,
+    value: number
+  ): Promise<MetricValue> {
+    const [row] = await transaction<MetricValue & { tenant: string }>('metrics')
       .insert({
-        namespace: definition.namespace.name,
-        name: definition.name,
+        namespace,
+        name,
         tenant: tenantId?.toString(),
         metric,
         timestamp,

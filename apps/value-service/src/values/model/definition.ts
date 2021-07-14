@@ -1,9 +1,9 @@
 import { IsNotEmpty } from 'class-validator';
 import { AdspId, AssertRole } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, Results, UnauthorizedError } from '@core-services/core-common';
+import { InvalidOperationError, Results } from '@core-services/core-common';
 import { ServiceUserRoles } from '../types';
-import type { Metric, MetricCriteria, Value, ValueCriteria, ValueDefinition } from '../types';
+import type { Value, ValueCriteria, ValueDefinition } from '../types';
 import { NamespaceEntity } from './namespace';
 
 export class ValueDefinitionEntity implements ValueDefinition {
@@ -38,13 +38,13 @@ export class ValueDefinitionEntity implements ValueDefinition {
       value: value.value,
     };
 
-    if (value.value && value.value['metrics']) {
-      const metrics: { [name: string]: number } = value.value['metrics'];
-      delete value.value['metrics'];
-
-      Object.entries(metrics).forEach(([name, value]) =>
-        this.namespace.repository.writeMetric(tenantId, this, name, valueRecord.timestamp, value)
-      );
+    const metrics: Record<string, number> = value.value?.[ValueDefinitionEntity.METRICS_KEY];
+    if (metrics) {
+      value.metrics = {
+        ...(value.metrics || {}),
+        ...metrics,
+      };
+      delete value.value[ValueDefinitionEntity.METRICS_KEY];
     }
 
     return this.namespace.repository.writeValue(this.namespace.name, this.name, tenantId, valueRecord);
@@ -64,11 +64,6 @@ export class ValueDefinitionEntity implements ValueDefinition {
       name: this.name,
       tenantId,
     });
-  }
-
-  @AssertRole('read value', ServiceUserRoles.Reader)
-  public readValueMetric(user: User, metric: string, criteria?: MetricCriteria): Promise<Metric> {
-    return this.namespace.repository.readMetric(user.tenantId, this, metric, criteria);
   }
 
   public getSchemaKey(): string {
