@@ -181,11 +181,12 @@ pipeline {
       }
     }
     stage("Smoke Test"){
-      steps {
+      parallel {
+        stage("Tenant management webapp") {
+          steps {
             script {
                 // Update cypress json file with tags and secrets before run the tests
                 def text = readFile file: "apps/tenant-management-webapp-e2e/cypress.dev.json"
-                def text2 = readFile file: "apps/status-app-e2e/cypress.dev.json"
                 withVault([ vaultSecrets: vaultSecretEnvMapping]) {
                   text = text.replaceAll(/"TAGS":.+/, "\"TAGS\": \"@smoke-test and not @ignore\",")
                   text = text.replaceAll(/"core-api-client-secret": \"\",/, "\"core-api-client-secret\": \"$cyDevCoreAPIClientSecret\",")
@@ -193,13 +194,22 @@ pipeline {
                   text = text.replaceAll(/"client-secret": \"\",/, "\"client-secret\": \"$cyDevClientSecret\",")
                   text = text.replaceAll(/"password": \"\",/, "\"password\": \"$cyDevPassword\",")
                   text = text.replaceAll(/"password2": \"\",/, "\"password2\": \"$cyDevPassword2\",")
-                  text2 = text2.replaceAll(/"TAGS":.+/, "\"TAGS\": \"@smoke-test and not @ignore\",")
                 }
                 writeFile file: "apps/tenant-management-webapp-e2e/cypress.dev.json", text: text
-                writeFile file: "apps/status-app-e2e/cypress.dev.json", text: text2
             }
-        sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config='apps/tenant-management-webapp-e2e/cypress.dev.json'"
-        sh "npx nx e2e status-app-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config='apps/status-app-e2e/cypress.dev.json'"
+            sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config='apps/tenant-management-webapp-e2e/cypress.dev.json'"
+          }
+        }
+        stage("Status App") {
+          steps{
+            script{
+              def text2 = readFile file: "apps/status-app-e2e/cypress.dev.json"
+              text2 = text2.replaceAll(/"TAGS":.+/, "\"TAGS\": \"@smoke-test and not @ignore\"")
+              writeFile file: "apps/status-app-e2e/cypress.dev.json", text: text2
+            }
+            sh "npx nx e2e status-app-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config='apps/status-app-e2e/cypress.dev.json'"
+          }
+        }
       }
       post {
         always {
@@ -280,11 +290,12 @@ pipeline {
       }
     }
     stage("Regression Test") {
-      steps {
+      parallel {
+        stage("Tenant management webapp") {
+          steps {
             script {
                 // Update cypress json file with tags and secrets before run the tests
                 def text = readFile file: "apps/tenant-management-webapp-e2e/cypress.test.json"
-                def text2 = readFile file: "apps/status-app-e2e/cypress.test.json"
                 withVault([ vaultSecrets: vaultSecretEnvMapping]) {
                   text = text.replaceAll(/"TAGS":.+/, "\"TAGS\": \"@regression and not @ignore\",")
                   text = text.replaceAll(/"core-api-client-secret": \"\",/, "\"core-api-client-secret\": \"$cyTestCoreAPIClientSecret\",")
@@ -292,13 +303,22 @@ pipeline {
                   text = text.replaceAll(/"client-secret": \"\",/, "\"client-secret\": \"$cyTestClientSecret\",")
                   text = text.replaceAll(/"password": \"\",/, "\"password\": \"$cyTestPassword\",")
                   text = text.replaceAll(/"password2": \"\",/, "\"password2\": \"$cyTestPassword2\",")
-                  text2 = text2.replaceAll(/"TAGS":.+/, "\"TAGS\": \"@regression and not @ignore\",")
                 }
                 writeFile file: "apps/tenant-management-webapp-e2e/cypress.test.json", text: text
-                writeFile file: "apps/status-app-e2e/cypress.test.json", text: text2
             }
-        sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config='apps/tenant-management-webapp-e2e/cypress.test.json'"
-        sh "npx nx e2e status-app-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config='apps/status-app-e2e/cypress.test.json'"
+            sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config='apps/tenant-management-webapp-e2e/cypress.test.json'"
+          }
+        }
+        stage("Status App") {
+          steps{
+            script{
+              def text2 = readFile file: "apps/status-app-e2e/cypress.test.json"
+              text2 = text2.replaceAll(/"TAGS":.+/, "\"TAGS\": \"@regression and not @ignore\"")
+              writeFile file: "apps/status-app-e2e/cypress.test.json", text: text2
+            }
+            sh "npx nx e2e status-app-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config='apps/status-app-e2e/cypress.test.json'"
+          }
+        }
       }
       post {
         always {

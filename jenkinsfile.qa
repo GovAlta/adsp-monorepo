@@ -67,41 +67,51 @@ pipeline {
         }
       }
       stage("Test") {
-        steps {
-            script {
-                // def source = new File('source.txt') //Hello World
-                // Update cypress json files with tags and secrets before run the tests
-                def text = readFile file: "apps/tenant-management-webapp-e2e/cypress.test.json"
-                def text2 = readFile file: "apps/tenant-management-webapp-e2e/cypress.dev.json"
+        parallel{
+          stage("Tenant management webapp") {
+            steps {
+                script {
+                    // def source = new File('source.txt') //Hello World
+                    // Update cypress json files with tags and secrets before run the tests
+                    def text = readFile file: "apps/tenant-management-webapp-e2e/cypress.test.json"
+                    def text2 = readFile file: "apps/tenant-management-webapp-e2e/cypress.dev.json"
+                    withVault([ vaultSecrets: vaultSecretEnvMapping]) {
+                      text = text.replaceAll(/"TAGS":.+/, "\"TAGS\": \"${tags}\",")
+                      text = text.replaceAll(/"core-api-client-secret": \"\",/, "\"core-api-client-secret\": \"$cyTestCoreAPIClientSecret\",")
+                      text = text.replaceAll(/"core-api-user-password": \"\",/, "\"core-api-user-password\": \"$cyTestCoreAPIUserPassword\",")
+                      text = text.replaceAll(/"client-secret": \"\",/, "\"client-secret\": \"$cyTestClientSecret\",")
+                      text = text.replaceAll(/"password": \"\",/, "\"password\": \"$cyTestPassword\",")
+                      text = text.replaceAll(/"password2": \"\",/, "\"password2\": \"$cyTestPassword2\",")
+                      text2 = text2.replaceAll(/"TAGS":.+/, "\"TAGS\": \"${tags}\",")
+                      text2 = text2.replaceAll(/"core-api-client-secret": \"\",/, "\"core-api-client-secret\": \"$cyDevCoreAPIClientSecret\",")
+                      text2 = text2.replaceAll(/"core-api-user-password": \"\",/, "\"core-api-user-password\": \"$cyDevCoreAPIUserPassword\",")
+                      text2 = text2.replaceAll(/"client-secret": \"\",/, "\"client-secret\": \"$cyDevClientSecret\",")
+                      text2 = text2.replaceAll(/"password": \"\",/, "\"password\": \"$cyDevPassword\",")
+                      text2 = text2.replaceAll(/"password2": \"\",/, "\"password2\": \"$cyDevPassword2\",")
+                    }
+                    writeFile file: "apps/tenant-management-webapp-e2e/cypress.test.json", text: text
+                    writeFile file: "apps/tenant-management-webapp-e2e/cypress.dev.json", text: text2
+                    def tmwConfig = readFile file: "apps/tenant-management-webapp-e2e/${cypress_config}"
+                    echo tmwConfig
+                }
+                sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config='apps/tenant-management-webapp-e2e/${cypress_config}'"
+            }
+          }
+          stage("Status App") {
+            steps{
+              script {
                 def text3 = readFile file: "apps/status-app-e2e/cypress.test.json"
                 def text4 = readFile file: "apps/status-app-e2e/cypress.dev.json"
-                withVault([ vaultSecrets: vaultSecretEnvMapping]) {
-                  text = text.replaceAll(/"TAGS":.+/, "\"TAGS\": \"${tags}\",")
-                  text = text.replaceAll(/"core-api-client-secret": \"\",/, "\"core-api-client-secret\": \"$cyTestCoreAPIClientSecret\",")
-                  text = text.replaceAll(/"core-api-user-password": \"\",/, "\"core-api-user-password\": \"$cyTestCoreAPIUserPassword\",")
-                  text = text.replaceAll(/"client-secret": \"\",/, "\"client-secret\": \"$cyTestClientSecret\",")
-                  text = text.replaceAll(/"password": \"\",/, "\"password\": \"$cyTestPassword\",")
-                  text = text.replaceAll(/"password2": \"\",/, "\"password2\": \"$cyTestPassword2\",")
-                  text2 = text2.replaceAll(/"TAGS":.+/, "\"TAGS\": \"${tags}\",")
-                  text2 = text2.replaceAll(/"core-api-client-secret": \"\",/, "\"core-api-client-secret\": \"$cyDevCoreAPIClientSecret\",")
-                  text2 = text2.replaceAll(/"core-api-user-password": \"\",/, "\"core-api-user-password\": \"$cyDevCoreAPIUserPassword\",")
-                  text2 = text2.replaceAll(/"client-secret": \"\",/, "\"client-secret\": \"$cyDevClientSecret\",")
-                  text2 = text2.replaceAll(/"password": \"\",/, "\"password\": \"$cyDevPassword\",")
-                  text2 = text2.replaceAll(/"password2": \"\",/, "\"password2\": \"$cyDevPassword2\",")
-                  text3 = text3.replaceAll(/"TAGS":.+/, "\"TAGS\": \"${tags}\",")
-                  text4 = text4.replaceAll(/"TAGS":.+/, "\"TAGS\": \"${tags}\",")
-                }
-                writeFile file: "apps/tenant-management-webapp-e2e/cypress.test.json", text: text
-                writeFile file: "apps/tenant-management-webapp-e2e/cypress.dev.json", text: text2
+                text3 = text3.replaceAll(/"TAGS":.+/, "\"TAGS\": \"${tags}\"")
+                text4 = text4.replaceAll(/"TAGS":.+/, "\"TAGS\": \"${tags}\"")
                 writeFile file: "apps/status-app-e2e/cypress.test.json", text: text3
                 writeFile file: "apps/status-app-e2e/cypress.dev.json", text: text4
-                def tmwConfig = readFile file: "apps/tenant-management-webapp-e2e/${cypress_config}"
-                echo tmwConfig
                 def saConfig = readFile file: "apps/status-app-e2e/${cypress_config}"
                 echo saConfig
+              }
+              sh "npx nx e2e status-app-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config='apps/status-app-e2e/${cypress_config}'"
             }
-          sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config='apps/tenant-management-webapp-e2e/${cypress_config}'"
-          sh "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config='apps/status-app-e2e/${cypress_config}'"
+          }
         }
         post {
           always {
