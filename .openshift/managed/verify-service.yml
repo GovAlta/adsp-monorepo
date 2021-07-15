@@ -264,26 +264,11 @@ objects:
               env:
                 - name: PORT
                   value: "3333"
-                - name: MONGO_USER
+                - name: REDIS_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       key: database-user
-                      name: verify-service-mongodb${NAME_SUFFIX}
-                - name: MONGO_URI
-                  valueFrom:
-                    secretKeyRef:
-                      key: database-uri
-                      name: verify-service-mongodb${NAME_SUFFIX}
-                - name: MONGO_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      key: database-password
-                      name: verify-service-mongodb${NAME_SUFFIX}
-                - name: MONGO_DB
-                  valueFrom:
-                    secretKeyRef:
-                      key: database-name
-                      name: verify-service-mongodb${NAME_SUFFIX}
+                      name: verify-service-redis${NAME_SUFFIX}
               imagePullPolicy: IfNotPresent
               name: verify-service
               ports:
