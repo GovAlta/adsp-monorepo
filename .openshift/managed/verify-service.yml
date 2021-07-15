@@ -264,10 +264,12 @@ objects:
               env:
                 - name: PORT
                   value: "3333"
+                - name: REDIS_HOST
+                  value: verify-service-redis
                 - name: REDIS_PASSWORD
                   valueFrom:
                     secretKeyRef:
-                      key: database-user
+                      key: database-password
                       name: verify-service-redis${NAME_SUFFIX}
               imagePullPolicy: IfNotPresent
               name: verify-service
