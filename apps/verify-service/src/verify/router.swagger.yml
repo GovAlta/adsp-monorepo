@@ -1,0 +1,36 @@
+/verify/v1/codes/{key}:
+  post:
+    tags:
+      - Verify
+    description: Generates a new code or verifies a code.
+    parameters:
+      - name: key
+        description: Key for the code to generate or verify.
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - type: object
+                properties:
+                  key:
+                    type: string
+                  code:
+                    type: string
+                  expiresAt:
+                    type: string
+                    format: date-time
+              - type: object
+                properties:
+                  verified:
+                    type: boolean
+    responses:
+      200:
+        description: Request completed successfully.
+      401:
+        description: User not authorized to generate or verify code.
