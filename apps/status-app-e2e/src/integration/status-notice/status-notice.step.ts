@@ -1,6 +1,8 @@
 import { Given, Then } from 'cypress-cucumber-preprocessor/steps';
 import ServiceStatusPage from './status-notice.page';
 const statusNoticeObj = new ServiceStatusPage();
+import { injectAxe } from '../../support/app.po';
+import { htmlReport } from '../../support/axe-html-reporter-util';
 
 Given('a user is on the public service status page', function () {
   cy.visit('/');
@@ -17,5 +19,12 @@ Then('the user views the correct header and release version', function () {
   });
   statusNoticeObj.goaMicrositeHeader().then((header) => {
     expect(header.length).to.be.gt(0); // element exists
+  });
+});
+
+Then('no critical or serious accessibility issues on public service status page', function () {
+  injectAxe();
+  cy.checkA11y(null!, {}, (violations) => {
+    htmlReport(violations, true, 'public service status page');
   });
 });

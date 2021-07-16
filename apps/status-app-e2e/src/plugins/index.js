@@ -15,6 +15,7 @@ const cucumber = require('cypress-cucumber-preprocessor').default;
 const browserify = require('@cypress/browserify-preprocessor');
 const resolve = require('resolve');
 const clipboardy = require('clipboardy');
+import { createHtmlReport } from 'axe-html-reporter';
 
 module.exports = (on, config) => {
   const options = {
@@ -32,6 +33,24 @@ module.exports = (on, config) => {
   on('task', {
     async getClipboard() {
       return clipboardy.read();
+    },
+    // logs message to console
+    log(message) {
+      console.log(message);
+
+      return null;
+    },
+    // logs message as table to console
+    table(message) {
+      console.table(message);
+
+      return null;
+    },
+    // must be created as a task since it required the fs lib which is not accessible via the browser
+    htmlReport({ violations, axeHtmlReporterOptions }) {
+      createHtmlReport({ results: { violations: violations }, options: axeHtmlReporterOptions });
+
+      return null;
     },
   });
 };
