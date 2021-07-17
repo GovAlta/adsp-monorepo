@@ -2,6 +2,7 @@ import { Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
 import common from './common.page';
 import commonlib from './common-library';
 import { injectAxe } from '../../support/app.po';
+import { htmlReport } from '../../support/axe-html-reporter-util';
 
 const commonObj = new common();
 
@@ -47,10 +48,10 @@ Given('a service owner user is on tenant admin page', function () {
   );
 });
 
-Then('no critical or serious accessibility issues on the web page', function () {
+Then('no critical or serious accessibility issues on {string}', function (pageName) {
   injectAxe();
-  cy.checkA11y(null!, {
-    includedImpacts: ['critical', 'serious'],
+  cy.checkA11y(null!, { includedImpacts: ['critical', 'serious'] }, (violations) => {
+    htmlReport(violations, true, pageName);
   });
 });
 

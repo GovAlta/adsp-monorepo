@@ -59,9 +59,9 @@ Feature: Tenant admin
   @accessibility @regression
   Scenario: As a service owner, I can use the tenant admin app without any critical or serious accessibility issues
     Given a service owner user is on tenant admin page
-    Then no critical or serious accessibility issues on the web page
+    Then no critical or serious accessibility issues on "tenant admin dashboard page"
     When the user selects the "Access" menu item
-    Then no critical or serious accessibility issues on the web page
+    Then no critical or serious accessibility issues on "tenant admin access page"
 
   @TEST_CS-588 @regression
   Scenario: As a GoA admin user, I should be able to see useful information on the landing page

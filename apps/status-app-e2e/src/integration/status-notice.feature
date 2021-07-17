@@ -5,3 +5,8 @@ Feature: public site for service status and notice
     Given a user is on the public service status page
     Then the user views the status and outages page
     And the user views the correct header and release version
+
+  @accessibility @regression
+  Scenario: As an interested member of the public, I can see the public service status page without any critical and serious accessibility issues
+    Given a user is on the public service status page
+    Then no critical or serious accessibility issues on public service status page
