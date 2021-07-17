@@ -1,0 +1,28 @@
+version: '3.2'
+services:
+  verify-service-redis:
+    image: redis:5.0
+    expose:
+      - 6379
+  verify-service:
+    build:
+      context: ../
+      dockerfile: .compose/service/Dockerfile
+      args:
+        - SERVICE=verify-service
+    depends_on:
+      - verify-service-redis
+    ports:
+      - 3340:3340
+    expose:
+      - 3340
+    environment:
+      - KEYCLOAK_ROOT_URL=http://keycloak:8080
+      - DIRECTORY_URL=http://tenant-management-api:3333
+      - CLIENT_ID=urn:ads:platform:verify-service
+      - CLIENT_SECRET=37f9134a-4c8e-40cf-bdbd-fbaf0b4c1e1a
+      - REDIS_HOST=verify-service-redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - PORT=3340
+      - LOG_LEVEL=debug
