@@ -24,7 +24,7 @@ Then('the user views the correct header and release version', function () {
 
 Then('no critical or serious accessibility issues on public service status page', function () {
   injectAxe();
-  cy.checkA11y(null!, {}, (violations) => {
+  cy.checkA11y(null!, { includedImpacts: ['critical', 'serious'] }, (violations) => {
     htmlReport(violations, true, 'public service status page');
   });
 });
