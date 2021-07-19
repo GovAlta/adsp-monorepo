@@ -1,6 +1,7 @@
 import * as express from 'express';
 import * as passport from 'passport';
 import * as compression from 'compression';
+import * as cors from 'cors';
 import * as helmet from 'helmet';
 import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
 import {
@@ -34,6 +35,7 @@ async function initializeApp() {
   app.use(compression());
   app.use(helmet());
   app.use(express.json({ limit: '1mb' }));
+  app.use(cors());
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const {
