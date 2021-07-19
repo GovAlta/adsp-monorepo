@@ -822,12 +822,7 @@
               "optimization": true,
               "extractLicenses": true,
               "inspect": false,
-              "fileReplacements": [
-                {
-                  "replace": "apps/api-docs-app/src/environments/environment.ts",
-                  "with": "apps/api-docs-app/src/environments/environment.prod.ts"
-                }
-              ]
+              "fileReplacements": []
             }
           }
         },
