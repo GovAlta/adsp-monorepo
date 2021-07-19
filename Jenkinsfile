@@ -114,7 +114,7 @@ pipeline {
                 def bc = openshift.selector("bc", affected)
 
                 if ( bc.exists() ) {
-                  if(affected.endsWith("app")){
+                  if(affected.endsWith("webapp")){
                      bc.startBuild("--from-dir=dist/apps/${affected}", "--wait", "--follow")
                   } else {
                      bc.startBuild("--from-dir=.", "--wait", "--follow")
