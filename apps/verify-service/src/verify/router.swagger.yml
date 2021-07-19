@@ -15,22 +15,29 @@
       content:
         application/json:
           schema:
-            oneOf:
-              - type: object
-                properties:
-                  key:
-                    type: string
-                  code:
-                    type: string
-                  expiresAt:
-                    type: string
-                    format: date-time
-              - type: object
-                properties:
-                  verified:
-                    type: boolean
+            type: object
+            properties:
+              code:
+                type: string
     responses:
       200:
         description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  properties:
+                    key:
+                      type: string
+                    code:
+                      type: string
+                    expiresAt:
+                      type: string
+                      format: date-time
+                - type: object
+                  properties:
+                    verified:
+                      type: boolean
       401:
         description: User not authorized to generate or verify code.

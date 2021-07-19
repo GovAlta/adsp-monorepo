@@ -94,9 +94,7 @@
               "fileReplacements": []
             }
           },
-          "outputs": [
-            "{options.outputPath}"
-          ]
+          "outputs": ["{options.outputPath}"]
         },
         "serve": {
           "builder": "@nrwl/node:execute",
@@ -109,14 +107,8 @@
           "builder": "@nrwl/linter:lint",
           "options": {
             "linter": "eslint",
-            "tsConfig": [
-              "apps/file-service/tsconfig.app.json",
-              "apps/file-service/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**",
-              "!apps/file-service/**/*"
-            ]
+            "tsConfig": ["apps/file-service/tsconfig.app.json", "apps/file-service/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!apps/file-service/**/*"]
           }
         },
         "test": {
@@ -125,9 +117,7 @@
             "jestConfig": "apps/file-service/jest.config.js",
             "passWithNoTests": true
           },
-          "outputs": [
-            "coverage/apps/file-service"
-          ]
+          "outputs": ["coverage/apps/file-service"]
         }
       }
     },
@@ -141,14 +131,8 @@
           "builder": "@nrwl/linter:lint",
           "options": {
             "linter": "eslint",
-            "tsConfig": [
-              "libs/core-common/tsconfig.lib.json",
-              "libs/core-common/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**",
-              "!libs/core-common/**/*"
-            ]
+            "tsConfig": ["libs/core-common/tsconfig.lib.json", "libs/core-common/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!libs/core-common/**/*"]
           }
         },
         "test": {
@@ -157,9 +141,7 @@
             "jestConfig": "libs/core-common/jest.config.js",
             "passWithNoTests": true
           },
-          "outputs": [
-            "coverage/libs/core-common"
-          ]
+          "outputs": ["coverage/libs/core-common"]
         }
       }
     },
@@ -214,9 +196,7 @@
               ]
             }
           },
-          "outputs": [
-            "{options.outputPath}"
-          ]
+          "outputs": ["{options.outputPath}"]
         },
         "serve": {
           "builder": "@nrwl/web:dev-server",
@@ -238,10 +218,7 @@
               "apps/tenant-management-webapp/tsconfig.app.json",
               "apps/tenant-management-webapp/tsconfig.spec.json"
             ],
-            "exclude": [
-              "**/node_modules/**",
-              "!apps/tenant-management-webapp/**/*"
-            ]
+            "exclude": ["**/node_modules/**", "!apps/tenant-management-webapp/**/*"]
           }
         },
         "test": {
@@ -250,9 +227,7 @@
             "jestConfig": "apps/tenant-management-webapp/jest.config.js",
             "passWithNoTests": true
           },
-          "outputs": [
-            "coverage/apps/tenant-management-webapp"
-          ]
+          "outputs": ["coverage/apps/tenant-management-webapp"]
         }
       }
     },
@@ -278,13 +253,8 @@
           "builder": "@nrwl/linter:lint",
           "options": {
             "linter": "eslint",
-            "tsConfig": [
-              "apps/tenant-management-webapp-e2e/tsconfig.e2e.json"
-            ],
-            "exclude": [
-              "**/node_modules/**",
-              "!apps/tenant-management-webapp-e2e/**/*"
-            ]
+            "tsConfig": ["apps/tenant-management-webapp-e2e/tsconfig.e2e.json"],
+            "exclude": ["**/node_modules/**", "!apps/tenant-management-webapp-e2e/**/*"]
           }
         }
       }
@@ -302,9 +272,7 @@
             "outputPath": "dist/apps/tenant-management-api",
             "main": "apps/tenant-management-api/src/main.ts",
             "tsConfig": "apps/tenant-management-api/tsconfig.app.json",
-            "assets": [
-              "apps/tenant-management-api/src/assets"
-            ],
+            "assets": ["apps/tenant-management-api/src/assets"],
             "webpackConfig": "apps/tenant-management-api/webpack.config.js"
           },
           "configurations": {
@@ -315,9 +283,7 @@
               "fileReplacements": []
             }
           },
-          "outputs": [
-            "{options.outputPath}"
-          ]
+          "outputs": ["{options.outputPath}"]
         },
         "serve": {
           "builder": "@nrwl/node:execute",
@@ -334,10 +300,7 @@
               "apps/tenant-management-api/tsconfig.app.json",
               "apps/tenant-management-api/tsconfig.spec.json"
             ],
-            "exclude": [
-              "**/node_modules/**",
-              "!apps/tenant-management-api/**/*"
-            ]
+            "exclude": ["**/node_modules/**", "!apps/tenant-management-api/**/*"]
           }
         },
         "test": {
@@ -346,9 +309,7 @@
             "jestConfig": "apps/tenant-management-api/jest.config.js",
             "passWithNoTests": true
           },
-          "outputs": [
-            "coverage/apps/tenant-management-api"
-          ]
+          "outputs": ["coverage/apps/tenant-management-api"]
         }
       }
     },
@@ -383,9 +344,7 @@
               "fileReplacements": []
             }
           },
-          "outputs": [
-            "{options.outputPath}"
-          ]
+          "outputs": ["{options.outputPath}"]
         },
         "serve": {
           "builder": "@nrwl/node:execute",
@@ -398,14 +357,8 @@
           "builder": "@nrwl/linter:lint",
           "options": {
             "linter": "eslint",
-            "tsConfig": [
-              "apps/value-service/tsconfig.app.json",
-              "apps/value-service/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**",
-              "!apps/value-service/**/*"
-            ]
+            "tsConfig": ["apps/value-service/tsconfig.app.json", "apps/value-service/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!apps/value-service/**/*"]
           }
         },
         "test": {
@@ -414,9 +367,7 @@
             "jestConfig": "apps/value-service/jest.config.js",
             "passWithNoTests": true
           },
-          "outputs": [
-            "coverage/apps/value-service"
-          ]
+          "outputs": ["coverage/apps/value-service"]
         }
       }
     },
@@ -444,9 +395,7 @@
               "fileReplacements": []
             }
           },
-          "outputs": [
-            "{options.outputPath}"
-          ]
+          "outputs": ["{options.outputPath}"]
         },
         "serve": {
           "builder": "@nrwl/node:execute",
@@ -459,14 +408,8 @@
           "builder": "@nrwl/linter:lint",
           "options": {
             "linter": "eslint",
-            "tsConfig": [
-              "apps/notification-service/tsconfig.app.json",
-              "apps/notification-service/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**",
-              "!apps/notification-service/**/*"
-            ]
+            "tsConfig": ["apps/notification-service/tsconfig.app.json", "apps/notification-service/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!apps/notification-service/**/*"]
           }
         },
         "test": {
@@ -475,9 +418,7 @@
             "jestConfig": "apps/notification-service/jest.config.js",
             "passWithNoTests": true
           },
-          "outputs": [
-            "coverage/apps/notification-service"
-          ]
+          "outputs": ["coverage/apps/notification-service"]
         }
       }
     },
@@ -505,9 +446,7 @@
               "fileReplacements": []
             }
           },
-          "outputs": [
-            "{options.outputPath}"
-          ]
+          "outputs": ["{options.outputPath}"]
         },
         "serve": {
           "builder": "@nrwl/node:execute",
@@ -520,14 +459,8 @@
           "builder": "@nrwl/linter:lint",
           "options": {
             "linter": "eslint",
-            "tsConfig": [
-              "apps/event-service/tsconfig.app.json",
-              "apps/event-service/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**",
-              "!apps/event-service/**/*"
-            ]
+            "tsConfig": ["apps/event-service/tsconfig.app.json", "apps/event-service/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!apps/event-service/**/*"]
           }
         },
         "test": {
@@ -536,9 +469,7 @@
             "jestConfig": "apps/event-service/jest.config.js",
             "passWithNoTests": true
           },
-          "outputs": [
-            "coverage/apps/event-service"
-          ]
+          "outputs": ["coverage/apps/event-service"]
         }
       }
     },
@@ -565,9 +496,7 @@
               "fileReplacements": []
             }
           },
-          "outputs": [
-            "{options.outputPath}"
-          ]
+          "outputs": ["{options.outputPath}"]
         },
         "serve": {
           "builder": "@nrwl/node:execute",
@@ -580,14 +509,8 @@
           "builder": "@nrwl/linter:lint",
           "options": {
             "linter": "eslint",
-            "tsConfig": [
-              "apps/push-service/tsconfig.app.json",
-              "apps/push-service/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**",
-              "!apps/push-service/**/*"
-            ]
+            "tsConfig": ["apps/push-service/tsconfig.app.json", "apps/push-service/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!apps/push-service/**/*"]
           }
         },
         "test": {
@@ -596,9 +519,7 @@
             "jestConfig": "apps/push-service/jest.config.js",
             "passWithNoTests": true
           },
-          "outputs": [
-            "coverage/apps/push-service"
-          ]
+          "outputs": ["coverage/apps/push-service"]
         }
       }
     },
@@ -617,9 +538,7 @@
             "assets": [],
             "buildLibsFromSource": true
           },
-          "outputs": [
-            "{options.outputPath}"
-          ]
+          "outputs": ["{options.outputPath}"]
         },
         "build-loadDirectoryData": {
           "builder": "@nrwl/node:build",
@@ -630,9 +549,7 @@
             "assets": [],
             "buildLibsFromSource": true
           },
-          "outputs": [
-            "{options.outputPath}"
-          ]
+          "outputs": ["{options.outputPath}"]
         },
         "execute": {
           "builder": "@nrwl/workspace:run-commands",
@@ -654,9 +571,7 @@
             "jestConfig": "tools/scripts/jest.config.js",
             "passWithNoTests": true
           },
-          "outputs": [
-            "coverage/tools/scripts"
-          ]
+          "outputs": ["coverage/tools/scripts"]
         }
       }
     },
@@ -673,9 +588,7 @@
             "outputPath": "dist/apps/status-service",
             "main": "apps/status-service/src/main.ts",
             "tsConfig": "apps/status-service/tsconfig.app.json",
-            "assets": [
-              "apps/status-service/src/assets"
-            ]
+            "assets": ["apps/status-service/src/assets"]
           },
           "configurations": {
             "production": {
@@ -695,9 +608,7 @@
         "lint": {
           "builder": "@nrwl/linter:eslint",
           "options": {
-            "lintFilePatterns": [
-              "apps/status-service/**/*.ts"
-            ]
+            "lintFilePatterns": ["apps/status-service/**/*.ts"]
           }
         },
         "test": {
@@ -717,16 +628,12 @@
         "lint": {
           "builder": "@nrwl/linter:eslint",
           "options": {
-            "lintFilePatterns": [
-              "libs/adsp-service-sdk/**/*.ts"
-            ]
+            "lintFilePatterns": ["libs/adsp-service-sdk/**/*.ts"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/libs/adsp-service-sdk"
-          ],
+          "outputs": ["coverage/libs/adsp-service-sdk"],
           "options": {
             "jestConfig": "libs/adsp-service-sdk/jest.config.js",
             "passWithNoTests": true
@@ -734,17 +641,13 @@
         },
         "build": {
           "builder": "@nrwl/node:package",
-          "outputs": [
-            "{options.outputPath}"
-          ],
+          "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/libs/adsp-service-sdk",
             "tsConfig": "libs/adsp-service-sdk/tsconfig.lib.json",
             "packageJson": "libs/adsp-service-sdk/package.json",
             "main": "libs/adsp-service-sdk/src/index.ts",
-            "assets": [
-              "libs/adsp-service-sdk/*.md"
-            ]
+            "assets": ["libs/adsp-service-sdk/*.md"]
           }
         }
       }
@@ -756,9 +659,7 @@
       "architect": {
         "build": {
           "builder": "@nrwl/web:build",
-          "outputs": [
-            "{options.outputPath}"
-          ],
+          "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/apps/status-app",
             "index": "apps/status-app/src/index.html",
@@ -774,9 +675,7 @@
                 "output": "./"
               }
             ],
-            "styles": [
-              "apps/status-app/src/styles.css"
-            ],
+            "styles": ["apps/status-app/src/styles.css"],
             "scripts": [],
             "webpackConfig": "apps/status-app/webpack.conf.js"
           },
@@ -819,16 +718,12 @@
         "lint": {
           "builder": "@nrwl/linter:eslint",
           "options": {
-            "lintFilePatterns": [
-              "apps/status-app/**/*.{ts,tsx,js,jsx}"
-            ]
+            "lintFilePatterns": ["apps/status-app/**/*.{ts,tsx,js,jsx}"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/apps/status-app"
-          ],
+          "outputs": ["coverage/apps/status-app"],
           "options": {
             "jestConfig": "apps/status-app/jest.config.js",
             "passWithNoTests": true
@@ -857,9 +752,7 @@
         "lint": {
           "builder": "@nrwl/linter:eslint",
           "options": {
-            "lintFilePatterns": [
-              "apps/status-app-e2e/**/*.{js,ts}"
-            ]
+            "lintFilePatterns": ["apps/status-app-e2e/**/*.{js,ts}"]
           }
         }
       }
@@ -871,9 +764,7 @@
       "architect": {
         "build": {
           "builder": "@nrwl/node:build",
-          "outputs": [
-            "{options.outputPath}"
-          ],
+          "outputs": ["{options.outputPath}"],
           "options": {
             "webpackConfig": "apps/verify-service/webpack.config.js",
             "outputPath": "dist/apps/verify-service",
@@ -899,18 +790,65 @@
         "lint": {
           "builder": "@nrwl/linter:eslint",
           "options": {
-            "lintFilePatterns": [
-              "apps/verify-service/**/*.ts"
-            ]
+            "lintFilePatterns": ["apps/verify-service/**/*.ts"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/apps/verify-service"
-          ],
+          "outputs": ["coverage/apps/verify-service"],
           "options": {
             "jestConfig": "apps/verify-service/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "api-docs-app": {
+      "root": "apps/api-docs-app",
+      "sourceRoot": "apps/api-docs-app/src",
+      "projectType": "application",
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/api-docs-app",
+            "main": "apps/api-docs-app/src/main.ts",
+            "tsConfig": "apps/api-docs-app/tsconfig.app.json",
+            "assets": ["apps/api-docs-app/src/assets"]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/api-docs-app/src/environments/environment.ts",
+                  "with": "apps/api-docs-app/src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "api-docs-app:build",
+            "port": 7779
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/api-docs-app/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/api-docs-app"],
+          "options": {
+            "jestConfig": "apps/api-docs-app/jest.config.js",
             "passWithNoTests": true
           }
         }
