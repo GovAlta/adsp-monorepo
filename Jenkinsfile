@@ -114,7 +114,8 @@ pipeline {
                 def bc = openshift.selector("bc", affected)
 
                 if ( bc.exists() ) {
-                  if(affected.endsWith("webapp")){
+                  def bcDetails = bc.object()
+                  if(bcDetails.spec.strategy.type == 'Source'){
                      bc.startBuild("--from-dir=dist/apps/${affected}", "--wait", "--follow")
                   } else {
                      bc.startBuild("--from-dir=.", "--wait", "--follow")

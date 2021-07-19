@@ -184,7 +184,8 @@ pipeline {
 
                   def bc = deployed.narrow('bc')
                   if ( bc.exists() ) {
-                    if(deployApp.endsWith("webapp")){
+                    def bcDetails = bc.object()
+                    if(bcDetails.spec.strategy.type == 'Source'){
                       bc.startBuild("--from-dir=dist/apps/${deployApp}", "--wait", "--follow")
                     } else {
                       bc.startBuild("--from-dir=.", "--wait", "--follow")
