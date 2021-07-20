@@ -1,0 +1,9 @@
+@import url("/assets/goa-core.css");
+
+.swagger-ui div.topbar {
+  background-color: #0081a2;
+}
+
+.topbar img {
+  display: none;
+}

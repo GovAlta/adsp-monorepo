@@ -1,7 +1,6 @@
 import * as express from 'express';
 import * as fs from 'fs';
 import * as passport from 'passport';
-import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
@@ -45,7 +44,6 @@ const initializeApp = async (): Promise<express.Application> => {
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
-  passport.use(new AnonymousStrategy());
 
   passport.serializeUser(function (user, done) {
     done(null, user);

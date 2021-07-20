@@ -68,6 +68,9 @@
     },
     "verify-service": {
       "tags": []
+    },
+    "api-docs-app": {
+      "tags": []
     }
   }
 }

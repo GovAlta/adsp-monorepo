@@ -3,20 +3,12 @@ module.exports = {
   info: {
     title: 'Value Service',
     version: '0.0.0',
-    description: '' 
+    description: 'The Value Service provides a time-series append only store for json documents.'
   },
   tags: [
-    { 
-      name: 'Value Namespace', 
-      description: 'API to manage namespaces (tenants) in the value service.' 
-    },
-    { 
-      name: 'Value Administration', 
-      description: 'API to administer a particular namespace including management of value types.' 
-    },
-    { 
-      name: 'Value', 
-      description: 'API to store and retrieve value.' 
+    {
+      name: 'Value',
+      description: 'API to store and retrieve values.'
     }
   ],
   components: {
