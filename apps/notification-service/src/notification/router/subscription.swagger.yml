@@ -1,3 +1,26 @@
+/subscription/v1/types:
+  get:
+    tags:
+      - Subscription
+    description: Retrieves notification types available to subscribe to.
+    response:
+      200:
+        description: Notification types successfully retrieved.
+/subscription/v1/types/{type}:
+  get:
+    tags:
+      - Subscription
+    description: Retrieves a notification type.
+    parameters:
+      - name: type
+        description: Notification type to get subscriptions for.
+        in: path
+        required: true
+        schema:
+          type: string
+    response:
+      200:
+        description: Notification type successfully retrieved.
 /subscription/v1/types/{type}/subscriptions:
   get:
     tags:

@@ -1,5 +1,5 @@
 import * as nodemailer from 'nodemailer';
-import { NotificationProvider } from '../notification/types';
+import { NotificationProvider } from '../notification';
 
 interface EmailProviderProps {
   SMTP_HOST: string;
