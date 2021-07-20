@@ -12,6 +12,7 @@ import {
   KeycloakCheckSSOAction,
   TenantLoginAction,
   KeycloakCheckSSOWithLogOutAction,
+  FetchRealmRolesSuccess,
 } from './actions';
 
 import { SessionLoginSuccess } from '@store/session/actions';
@@ -171,5 +172,17 @@ export function* tenantLogout() {
     }
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to tenant out: ${e.message}` }));
+  }
+}
+
+export function* fetchRealmRoles() {
+  try {
+    const state: RootState = yield select();
+    const token = state?.session?.credentials?.token;
+    const api = new TenantApi(state.config.tenantApi, token);
+    const roles = yield api.fetchRealmRoles();
+    yield put(FetchRealmRolesSuccess(roles));
+  } catch (e) {
+    yield put(ErrorNotification({ message: `Failed to fetch realm roles: ${e.message}` }));
   }
 }

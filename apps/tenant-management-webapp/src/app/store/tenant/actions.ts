@@ -1,4 +1,4 @@
-import { Tenant } from './models';
+import { Tenant, Role } from './models';
 
 export const FETCH_TENANT = 'FETCH_TENANT';
 const SELECT_TENANT = 'SELECT_TENANT';
@@ -15,6 +15,8 @@ export const KEYCLOAK_CHECK_SSO_WITH_LOGOUT = 'KEYCLOAK_CHECK_SSO_WITH_LOGOUT';
 export const KEYCLOAK_REFRESH_TOKEN = 'KEYCLOAK_REFRESH_TOKEN';
 export const TENANT_LOGOUT = 'TENANT_LOGOUT';
 export const UPDATE_TENANT_CREATED = 'UPDATE_TENANT_CREATED';
+export const FETCH_REALM_ROLES = 'FETCH_REALM_ROLES';
+export const FETCH_REALM_ROLES_SUCCESS = 'FETCH_REALM_ROLES_SUCCESS';
 
 interface SelectTenantAction {
   type: typeof SELECT_TENANT;
@@ -93,6 +95,15 @@ interface TenantLogoutAction {
   type: typeof TENANT_LOGOUT;
 }
 
+interface FetchRealmRolesAction {
+  type: typeof FETCH_REALM_ROLES;
+}
+
+interface FetchRealmRolesSuccessAction {
+  type: typeof FETCH_REALM_ROLES_SUCCESS;
+  payload: Role[];
+}
+
 export type ActionType =
   | FetchTenantAction
   | FetchTenantSuccessAction
@@ -107,6 +118,8 @@ export type ActionType =
   | KeycloakRefreshTokenAction
   | TenantLogoutAction
   | KeycloakCheckSSOAction
+  | FetchRealmRolesAction
+  | FetchRealmRolesSuccessAction
   | UpdateTenantCreatedAction;
 
 export const SelectTenant = (realm: string): SelectTenantAction => ({
@@ -185,4 +198,13 @@ export const CreateTenantSuccess = (realm: string): CreateTenantSuccessAction =>
 
 export const TenantLogout = (): TenantLogoutAction => ({
   type: 'TENANT_LOGOUT',
+});
+
+export const FetchRealmRoles = (): FetchRealmRolesAction => ({
+  type: 'FETCH_REALM_ROLES',
+});
+
+export const FetchRealmRolesSuccess = (roles: Role[]): FetchRealmRolesSuccessAction => ({
+  type: 'FETCH_REALM_ROLES_SUCCESS',
+  payload: roles,
 });

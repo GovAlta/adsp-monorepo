@@ -28,6 +28,12 @@ export default (state = TENANT_INIT, action: ActionType): Tenant => {
         realm: action.payload,
       };
 
+    case 'FETCH_REALM_ROLES_SUCCESS':
+      return {
+        ...state,
+        realmRoles: action.payload,
+      };
+
     default:
       return state;
   }
