@@ -14,12 +14,24 @@ describe('Service Option Router', () => {
   );
 
   describe('GET /', () => {
-    it('returns a 200 OK', () => {
-      request(app).get('/').expect(200);
+    it('returns a 200 OK', async () => {
+      mockRepo
+        .setup((inst) => inst.find(10, ''))
+        .returns(
+          Promise.resolve({
+            results: [],
+            page: {
+              after: '',
+              size: 1,
+              next: '',
+            },
+          })
+        );
+      await request(app).get('/').query({ top: 10, after: '' }).expect(200);
     });
 
-    it.skip('returns a 500 when an error occurs', () => {
-      //
+    it('returns a 500 when an error occurs', async () => {
+      await request(app).get('/').expect(500);
     });
   });
 
