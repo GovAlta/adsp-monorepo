@@ -12,7 +12,7 @@ import { Logger } from 'winston';
 import { NotFoundError } from '@core-services/core-common';
 
 interface DirectoryRouterProps {
-  logger: Logger;
+  logger?: Logger;
   directoryRepository: DirectoryRepository;
 }
 export const createDirectoryRouter = ({ logger, directoryRepository }: DirectoryRouterProps): Router => {
@@ -22,10 +22,10 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
    */
   directoryRouter.get('/', async (req: Request, res: Response, _next) => {
     try {
-      const results = (await getDirectories()) as { urn: string; url: string }[];
+      const results = await getDirectories(directoryRepository);
       res.send(results);
     } catch (err) {
-      logger.error(err);
+      logger?.error(err);
       res.status(HttpStatusCodes.BAD_REQUEST).json({
         errors: [err.message],
       });
@@ -40,7 +40,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
       const { urn } = req.query;
       return res.send(await discovery(urn as string, { directoryRepository }));
     }
-    logger.error('There is error on getting directory from urn');
+    logger?.error('There is error on getting directory from urn');
     return res.status(HttpStatusCodes.BAD_REQUEST).json({ errors: 'There is no context in post' });
   });
 
@@ -58,7 +58,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
         services: directory.services,
       });
     } catch (err) {
-      logger.error(err);
+      logger?.error(err);
       res.status(HttpStatusCodes.BAD_REQUEST).json({
         errors: [err.message],
       });
@@ -82,7 +82,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
         return res.status(HttpStatusCodes.CREATED).json(entity);
       }
 
-      logger.error('post add error');
+      logger?.error('post add error');
       return res.sendStatus(HttpStatusCodes.BAD_REQUEST).json({ errors: 'There is no context in post' });
     }
   );
@@ -101,7 +101,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
         return res.status(HttpStatusCodes.CREATED).json(entity);
       }
 
-      logger.error('post add/update error');
+      logger?.error('post add/update error');
       return res.sendStatus(HttpStatusCodes.BAD_REQUEST).json({ errors: 'There is no context in post' });
     }
   );
@@ -124,7 +124,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
 
         res.json(results);
       } catch (err) {
-        logger.error(err);
+        logger?.error(err);
         res.status(HttpStatusCodes.BAD_REQUEST).json({
           errors: [err.message],
         });
