@@ -20,6 +20,7 @@ export const authenticateToken = (authConfig: AuthenticationConfig, user: User):
   logger.debug(`Checking access for user ${user.name} (${user.id}) via tenant: ${user.tenantId || 'core'}`);
 
   try {
+    logger.debug(`Checking access for user ${user.name} (${user.id}) via tenant: ${user.tenantId || 'core'}`);
     if (authConfig.requireCore) {
       if (!user.isCore) {
         logger.warn(`Expect core tenant, but access token is not for core.`);
