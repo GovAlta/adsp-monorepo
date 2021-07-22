@@ -46,9 +46,6 @@ const FileList = () => {
   const onChange = (event) => {
     setSelectFile(event.target.files[0]);
   };
-  const onSelectionChanged = (type) => {
-    setUploadFileType(type.id);
-  };
 
   const onDownloadFile = async (file) => {
     dispatch(DownloadFileService(file));

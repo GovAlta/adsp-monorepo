@@ -1,4 +1,4 @@
-import React, { Component, CSSProperties, ReactElement } from 'react';
+import React, { Component, CSSProperties } from 'react';
 import styled from 'styled-components';
 
 export interface ContextMenuItem {

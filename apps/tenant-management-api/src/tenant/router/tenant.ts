@@ -41,7 +41,7 @@ interface TenantRouterProps {
 export const createTenantRouter = ({ eventService, services }: TenantRouterProps): Router => {
   const tenantRouter = Router();
 
-  async function getTenantByEmail(req, res, next) {
+  async function getTenantByEmail(req, res) {
     try {
       const { email } = req.payload;
       const tenant = await tenantRepository.findBy({ adminEmail: email });

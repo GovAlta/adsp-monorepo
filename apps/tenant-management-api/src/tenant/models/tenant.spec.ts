@@ -1,7 +1,7 @@
 import { TenantEntity } from './tenant';
 import { v4 as uuidv4 } from 'uuid';
 import { TenantRepository } from '../repository';
-import { Mock, It } from 'moq.ts';
+import { Mock } from 'moq.ts';
 
 describe('TenantEntity', () => {
   const serviceMock = {

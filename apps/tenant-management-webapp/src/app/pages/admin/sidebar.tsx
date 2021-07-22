@@ -1,12 +1,11 @@
 import { withRouter, RouteComponentProps } from 'react-router';
-import React, { useContext, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 
 import BarChartIcon from '@icons/bar-chart-outline.svg';
 import FileIcon from '@icons/file-outline.svg';
-import AdminIcon from '@icons/options-outline.svg';
 import ReceiptIcon from '@icons/receipt-outline.svg';
 import DashboardIcon from '@icons/home-outline.svg';
 import LogoutIcon from '@icons/log-out-outline.svg';

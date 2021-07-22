@@ -48,7 +48,7 @@ class KeycloakAuth {
   }
 
   updateRealmWithInit(realm: string) {
-    if (realm != this.config.realm) {
+    if (realm !== this.config.realm) {
       this.updateRealm(realm);
       this.keycloak = this.initKeycloak();
     }

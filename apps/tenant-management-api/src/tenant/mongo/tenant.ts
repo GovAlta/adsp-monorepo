@@ -17,7 +17,7 @@ export class TenantMongoRepository implements TenantRepository {
     return Promise.resolve(this.fromDoc(doc));
   }
 
-  async delete(realm: string) {
+  async delete(realm: string): Promise<void> {
     await this.tenantModel.deleteOne({ realm: realm });
   }
 
