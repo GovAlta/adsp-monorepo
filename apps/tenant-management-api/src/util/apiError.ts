@@ -1,5 +1,10 @@
+interface apiError {
+  code: number;
+  message: string;
+  isOperational: boolean;
+}
 export class ApiError extends Error {
-  statusCode: string;
+  statusCode: number;
   /**
    * Operational errors are not bugs and can occur from time to time mostly
    * because of one or a combination of several external factors like a database
@@ -10,13 +15,13 @@ export class ApiError extends Error {
   isOperational: boolean;
   message: string;
 
-  constructor(statusCode, message, isOperational = true) {
+  constructor(statusCode: number, message: string, isOperational = true) {
     super(message);
     this.statusCode = statusCode;
     this.isOperational = isOperational;
     this.message = message;
   }
-  getJson = () => {
+  getJson = (): apiError => {
     return {
       code: this.statusCode,
       message: this.message,

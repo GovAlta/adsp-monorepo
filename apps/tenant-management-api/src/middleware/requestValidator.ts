@@ -7,6 +7,7 @@ interface CustomRequest extends Request {
   payload?: unknown;
 }
 
+// eslint-disable-next-line
 const validationMiddleware = (classValidator) => async (req: CustomRequest, res: Response, next: () => void) => {
   let data = {};
   if (req.method === 'POST') {

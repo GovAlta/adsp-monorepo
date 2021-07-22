@@ -2,6 +2,7 @@ import { adspId } from '@abgov/adsp-service-sdk';
 import { WorkQueueService } from '@core-services/core-common';
 import { Logger } from 'winston';
 import { NotificationConfiguration } from '../configuration';
+import { SubscriberEntity, SubscriptionEntity } from '../model';
 import { SubscriptionRepository } from '../repository';
 import { Channel, Notification } from '../types';
 import { createProcessEventJob } from './processEvent';
@@ -90,10 +91,27 @@ describe('createProcessEventJob', () => {
         },
         tenantId
       );
-      tokenProviderMock.getAccessToken.mockResolvedValue('token');
-      configurationServiceMock.getConfiguration.mockResolvedValue([configuration]);
-      repositoryMock.getSubscriptions.mockResolvedValue({
-        results: [],
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
+      configurationServiceMock.getConfiguration.mockResolvedValueOnce([configuration]);
+
+      const subscriber = new SubscriberEntity((repositoryMock as unknown) as SubscriptionRepository, {
+        tenantId,
+        addressAs: 'Tester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'test@testco.org',
+          },
+        ],
+      });
+
+      const subscription = new SubscriptionEntity(
+        (repositoryMock as unknown) as SubscriptionRepository,
+        { tenantId, typeId: 'test', subscriberId: 'test', criteria: {} },
+        subscriber
+      );
+      repositoryMock.getSubscriptions.mockResolvedValueOnce({
+        results: [subscription],
         page: {},
       });
 
@@ -106,6 +124,34 @@ describe('createProcessEventJob', () => {
         },
         (err) => {
           expect(err).toBeFalsy();
+          done();
+        }
+      );
+    });
+
+    it('can handle error on processing', (done) => {
+      const job = createProcessEventJob({
+        logger,
+        serviceId: adspId`urn:ads:platform:notification-service`,
+        tokenProvider: tokenProviderMock,
+        configurationService: configurationServiceMock,
+        eventService: eventServiceMock,
+        templateService: templateServiceMock,
+        subscriptionRepository: (repositoryMock as unknown) as SubscriptionRepository,
+        queueService: (queueServiceMock as unknown) as WorkQueueService<Notification>,
+      });
+      const error = new Error('Something is terribly wrong.');
+      tokenProviderMock.getAccessToken.mockRejectedValueOnce(error);
+
+      job(
+        {
+          namespace: 'test',
+          name: 'test-run',
+          timestamp: new Date(),
+          payload: {},
+        },
+        (err) => {
+          expect(err).toBe(error);
           done();
         }
       );

@@ -5,16 +5,18 @@
     "allowJs": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
     "baseUrl": "./src",
     "paths": {
       "@components/*": [
         "app/components/*"
       ],
-    },
+      "@pages/*": [
+        "app/pages/*"
+      ],
+      "@store/*": [
+        "app/store/*"
+      ],
+    }
   },
   "files": [],
   "include": [],

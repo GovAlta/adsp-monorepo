@@ -15,26 +15,40 @@ interface DescriptiveStrings {
 }
 
 export function ServiceStatus({ name, date, assignmentStatus = '', state, description }: ServiceOptions) {
+  const stateProper = state.charAt(0).toUpperCase() + state.slice(1);
+
   const backgroundColors: DescriptiveStrings = {
     Outage: '#ec0417',
-    'Reported Issue': '#feba35',
+    'Issues Reported': '#ec0417',
+    'Reported Issue': '#ec0417',
+    Maintenance: '#feba35',
+    Pending: '#feba35',
+    Disabled: '#feba35',
     Operational: '#00853f',
   };
 
   const textColor: DescriptiveStrings = {
     Outage: 'white',
-    'Reported Issue': 'black',
+    'Issues Reported': 'white',
+    'Reported Issue': 'white',
+    Maintenance: 'black',
+    Pending: 'black',
+    Disabled: 'black',
     Operational: 'white',
   };
 
   const icons: DescriptiveStrings = {
     Outage: 'error',
-    'Reported Issue': 'warning',
+    'Issues Reported': 'error',
+    'Reported Issue': 'error',
+    Maintenance: 'warning',
+    Pending: 'warning',
+    Disabled: 'warning',
     Operational: '',
   };
 
   return (
-    <PublicCss>
+    <ServiceStatusCss>
       <div className="grey-border">
         <div className="flex-column">
           <div className="flex">
@@ -46,36 +60,34 @@ export function ServiceStatus({ name, date, assignmentStatus = '', state, descri
                 <div
                   className="status-button"
                   style={{
-                    backgroundColor: backgroundColors[state],
-                    color: textColor[state],
+                    backgroundColor: backgroundColors[stateProper],
+                    color: textColor[stateProper],
                   }}
                 >
-                  <div className={`goa-${icons[state]}`}>{state}</div>
+                  <div className={`goa-${icons[stateProper]}`}>{stateProper}</div>
                 </div>
               </div>
             </div>
           </div>
           <div className="date-assignment-status">
-            <i>
-              {date} | {assignmentStatus}
-            </i>
+            <i>{date}</i>
           </div>
           <div className="flex">{description}</div>
         </div>
       </div>
-    </PublicCss>
+    </ServiceStatusCss>
   );
 }
 
 export default ServiceStatus;
 
-const PublicCss = styled.div`
+const ServiceStatusCss = styled.div`
   h4 {
     margin-top: '4px';
   }
 
   .grey-border {
-    border: 1px solid #888888;
+    border: 1px solid #dcdcdc;
     border-radius: 3px;
     padding: 10px;
   }

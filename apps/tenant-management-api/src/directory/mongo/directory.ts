@@ -70,12 +70,6 @@ export class MongoDirectoryRepository implements DirectoryRepository {
     );
   }
 
-  create(directories): Promise<boolean> {
-    return new Promise<boolean>((resolve, reject) =>
-      this.directoryModel.create(directories, (err, doc) => (err ? reject(err) : resolve(!!doc)))
-    );
-  }
-
   getDirectories(name: string): Promise<DirectoryEntity> {
     return new Promise<DirectoryEntity>((resolve, reject) =>
       this.directoryModel.findOne({ name: name }, null, { lean: true }, (err, doc) =>
@@ -83,7 +77,7 @@ export class MongoDirectoryRepository implements DirectoryRepository {
       )
     );
   }
-  update(directory): Promise<boolean> {
+  update(directory: Directory): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) =>
       this.directoryModel.findOneAndUpdate({ name: directory.name }, directory, { upsert: true }, (err, doc) =>
         err ? reject(err) : resolve(!!doc)

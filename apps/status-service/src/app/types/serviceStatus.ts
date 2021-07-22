@@ -53,6 +53,8 @@ export interface ServiceStatusApplication {
   name: string;
   statusTimestamp: number;
   tenantId: string;
+  tenantName: string;
+  tenantRealm: string;
   manualOverride: ManualOverrideState;
 }
 

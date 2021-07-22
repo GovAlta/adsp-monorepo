@@ -8,6 +8,16 @@ import { v4 as uuidv4 } from 'uuid';
 import { environment } from '../../../environments/environment';
 export const FLOW_ALIAS = 'GOA SSO Login Flow';
 
+interface authConfig {
+  id: string;
+  alias: string;
+  realm: string;
+  description: string;
+  providerId: string;
+  topLevel: boolean;
+  builtIn: boolean;
+}
+
 const createFlowExecutions = async (realm, flowAlias, token) => {
   const executionUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/admin/realms/${realm}/authentication/flows/${flowAlias}/executions/execution`;
   const executionsUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/admin/realms/${realm}/authentication/flows/${flowAlias}/executions`;
@@ -49,7 +59,7 @@ const createFlowExecutions = async (realm, flowAlias, token) => {
   }
 };
 
-export const creatFlowConfig = (realm: string, flowAlias: string, flowId: string) => {
+export const creatFlowConfig = (realm: string, flowAlias: string, flowId: string): authConfig => {
   const config = {
     id: flowId,
     alias: flowAlias,
@@ -64,7 +74,7 @@ export const creatFlowConfig = (realm: string, flowAlias: string, flowId: string
   return config;
 };
 
-export const createAuthenticationFlow = async (realm) => {
+export const createAuthenticationFlow = async (realm: string): Promise<void> => {
   try {
     const client = await createkcAdminClient();
 

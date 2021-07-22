@@ -12,11 +12,11 @@ export class DirectoryEntity implements Directory {
     this.name = directory.name;
     this.services = directory.services;
   }
-  static create(repository: DirectoryRepository, directory: Directory) {
+  static create(repository: DirectoryRepository, directory: Directory): Promise<DirectoryEntity> {
     const entity = new DirectoryEntity(repository, directory);
     return repository.save(entity);
   }
-  async update(directory) {
+  async update(directory: Directory): Promise<DirectoryEntity> {
     this.name = directory.name;
     this.services = directory.services;
     return this.repository.save(this);

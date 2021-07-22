@@ -1,4 +1,4 @@
-import type { AdspId, ServiceRole, User } from '@abgov/adsp-service-sdk';
+import type { ServiceRole, User } from '@abgov/adsp-service-sdk';
 import { AssertCoreRole } from '@abgov/adsp-service-sdk';
 import type { Update } from '@core-services/core-common';
 import { TenantServiceRoles } from '../../../roles';

@@ -47,7 +47,7 @@ export class NotificationTypeEntity implements NotificationType {
       throw new UnauthorizedError('User not authorized to subscribe.');
     }
 
-    return SubscriptionEntity.create(repository, subscriber, {
+    return await SubscriptionEntity.create(repository, subscriber, {
       tenantId: subscriber.tenantId,
       typeId: this.id,
       subscriberId: subscriber.id,
@@ -87,34 +87,33 @@ export class NotificationTypeEntity implements NotificationType {
     subscription: SubscriptionEntity
   ): Notification {
     const eventNotification = this.events.find((e) => e.namespace === event.namespace && e.name === event.name);
-    const { address, channel } = subscription.getSubscriberChannel(eventNotification) || {};
+    const { address, channel } = (eventNotification && subscription.getSubscriberChannel(eventNotification)) || {};
 
-    return address
-      ? {
-          tenantId: this.tenantId.toString(),
-          type: {
-            id: this.id,
-            name: this.name,
-          },
-          event: {
-            namespace: event.namespace,
-            name: event.name,
-          },
-          correlationId: event.correlationId,
-          context: event.context,
-          to: address,
-          channel,
-          message: templateService.generateMessage(
-            eventNotification.templates[channel],
-            event,
-            subscription.subscriber
-          ),
-          subscriber: {
-            id: subscription.subscriber.id,
-            userId: subscription.subscriber.userId,
-            addressAs: subscription.subscriber.addressAs,
-          },
-        }
-      : null;
+    if (!address) {
+      // TODO: This should get logged;
+      return null;
+    } else {
+      return {
+        tenantId: this.tenantId.toString(),
+        type: {
+          id: this.id,
+          name: this.name,
+        },
+        event: {
+          namespace: event.namespace,
+          name: event.name,
+        },
+        correlationId: event.correlationId,
+        context: event.context,
+        to: address,
+        channel,
+        message: templateService.generateMessage(eventNotification.templates[channel], event, subscription.subscriber),
+        subscriber: {
+          id: subscription.subscriber.id,
+          userId: subscription.subscriber.userId,
+          addressAs: subscription.subscriber.addressAs,
+        },
+      };
+    }
   }
 }

@@ -171,7 +171,7 @@ export const createSubscriptionRouter = ({ logger, subscriptionRepository }: Sub
       try {
         const subscriberEntity = await subscriptionRepository.getSubscriber(user.tenantId, subscriber);
         const result = await typeEntity.unsubscribe(subscriptionRepository, user, subscriberEntity);
-        res.send(result);
+        res.send({ deleted: result });
       } catch (err) {
         next(err);
       }

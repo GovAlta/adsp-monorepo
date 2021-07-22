@@ -7,9 +7,6 @@ import Container from '@components/Container';
 import { RootState } from '@store/index';
 import { KeycloakCheckSSOWithLogout, KeycloakRefreshToken } from '@store/tenant/actions';
 import { GoAPageLoader } from '@abgov/react-components';
-import { TenantLogout } from '@store/tenant/actions';
-
-import { IdleTimer } from '@components/IdleTimer';
 
 export function PrivateApp({ children }) {
   const [title, setTitle] = useState<string>('');

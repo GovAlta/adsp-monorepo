@@ -35,7 +35,10 @@ export const createRepositories = ({
         } else {
           resolve({
             subscriptionRepository: new MongoSubscriptionRepository(),
-            isConnected: () => Promise.resolve(connection.readyState === ConnectionStates.connected),
+            // NOTE: Typescript seems to have issues with exported enums where enum is null at runtime.
+            // Possible that express js module doesn't actually export anything for ConnectionStates and
+            // type definition is wrong (or intended to be substituted at transpile time... but doesn't happen)
+            isConnected: () => connection.readyState === (ConnectionStates?.connected || 1),
           });
 
           logger.info(`Connected to MongoDB at: ${mongoConnectionString}`);

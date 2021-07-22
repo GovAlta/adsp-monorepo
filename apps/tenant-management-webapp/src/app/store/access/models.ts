@@ -19,10 +19,6 @@ export interface Role {
   userIds: string[];
 }
 
-interface LoadingState {
-  loadingState: 'idle' | 'isLoading';
-}
-
 export interface AccessState {
   users: User[];
   roles: Role[];

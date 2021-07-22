@@ -13,6 +13,7 @@
       "tenantNameByRealm": "/api/tenant/v1/realm",
       "tenantNameByName": "/api/tenant/v1/name",
       "tenantByEmail": "/api/tenant/v1/email",
+      "getTenant": "/api/tenant/v1/id",
       "tenantConfig": "/api/configuration/v1/tenantConfig"
     }
   },

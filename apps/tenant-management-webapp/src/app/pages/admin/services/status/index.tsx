@@ -1,4 +1,3 @@
-import Dialog from '@components/Dialog';
 import React from 'react';
 import { Switch, Route } from 'react-router-dom';
 import StatusPage from './status';

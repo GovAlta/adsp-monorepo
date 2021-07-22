@@ -106,8 +106,22 @@ describe('Service status mongo repository', () => {
 
   it('enables an application', async () => {
     const applications = await insertMockData([
-      { name: 'app 1', endpoints: [], status: 'disabled', tenantId: '99' },
-      { name: 'app 2', endpoints: [], status: 'disabled', tenantId: '99' },
+      {
+        name: 'app 1',
+        endpoints: [],
+        status: 'disabled',
+        tenantId: '99',
+        tenantName: 'Child Services',
+        tenantRealm: '123123-123123-123123-123123',
+      },
+      {
+        name: 'app 2',
+        endpoints: [],
+        status: 'disabled',
+        tenantId: '99',
+        tenantName: 'Child Services',
+        tenantRealm: '123123-123123-123123-123123',
+      },
     ]);
     await repo.enable(applications[0]);
 
@@ -127,8 +141,17 @@ describe('Service status mongo repository', () => {
         ],
         status: 'operational',
         tenantId: '99',
+        tenantName: 'Child Services',
+        tenantRealm: '123123-123123-123123-123123',
       },
-      { name: 'app 2', endpoints: [], status: 'operational', tenantId: '99' },
+      {
+        name: 'app 2',
+        endpoints: [],
+        status: 'operational',
+        tenantId: '99',
+        tenantName: 'Child Services',
+        tenantRealm: '123123-123123-123123-123123',
+      },
     ]);
     await repo.disable(applications[0]);
 

@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import { Router } from 'express';
 import { ServiceConfigurationRepository } from '../repository';
 import { mapServiceOption } from './mappers';
 import { ServiceOptionEntity } from '../model';
@@ -10,7 +10,7 @@ interface ServiceOptionRouterProps {
   serviceConfigurationRepository: ServiceConfigurationRepository;
 }
 
-export const createConfigurationRouter = ({ serviceConfigurationRepository }: ServiceOptionRouterProps) => {
+export const createConfigurationRouter = ({ serviceConfigurationRepository }: ServiceOptionRouterProps): Router => {
   const serviceOptionRouter = Router();
 
   serviceOptionRouter.get('/', async (req, res, next) => {

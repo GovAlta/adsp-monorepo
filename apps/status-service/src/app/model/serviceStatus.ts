@@ -18,6 +18,8 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
   metadata: unknown;
   name: string;
   statusTimestamp: number;
+  tenantName: string;
+  tenantRealm: string;
   tenantId: string;
   manualOverride: ManualOverrideState;
   static create(
@@ -40,6 +42,8 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     this.description = application.description;
     this.statusTimestamp = application.statusTimestamp;
     this.tenantId = application.tenantId;
+    this.tenantName = application.tenantName;
+    this.tenantRealm = application.tenantRealm;
     this.status = application.status;
     this.manualOverride = application.manualOverride;
   }

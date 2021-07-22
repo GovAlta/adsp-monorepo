@@ -107,7 +107,7 @@ const CreateRealm = () => {
   return (
     <Page ready={ready}>
       <Main>
-        {isTenantAdmin == true && !isTenantCreated && <ErrorMessage email={userInfo.email} />}
+        {isTenantAdmin === true && !isTenantCreated && <ErrorMessage email={userInfo.email} />}
         {isTenantCreated ? (
           <TenantCreated />
         ) : (

@@ -10,10 +10,6 @@ interface IdleTimerProps {
   continueFn?;
 }
 
-interface ModalProps {
-  show: boolean;
-}
-
 // TODO: Update the style of modal based on future design. Do NOT user the modal style for other component.
 const Center = styled.div`
   width: 500px;
