@@ -33,6 +33,8 @@ export function isValidEndpointStatusType(status: EndpointStatusType): boolean {
 export interface ServiceStatusApplication {
   _id?: string;
   tenantId: string;
+  tenantName: string;
+  tenantRealm: string;
   name: string;
   description: string;
   metadata: unknown;
