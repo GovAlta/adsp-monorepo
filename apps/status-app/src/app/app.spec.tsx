@@ -1,51 +1,27 @@
 import React from 'react';
-import { Provider } from 'react-redux';
-import { getDefaultMiddleware } from '@reduxjs/toolkit';
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import configureStore from 'redux-mock-store';
 
 import App from './app';
 
-const mockStore = configureStore(getDefaultMiddleware());
-
 describe('App', () => {
-  let store, userManager;
-
-  beforeEach(() => {
-    store = mockStore({
-      user: {},
-      intake: {},
-      start: {},
-    });
-
-    userManager = {
-      signoutRedirect: jest.fn(),
-      signinRedirect: jest.fn(),
-    };
-  });
-
   it('should render successfully', () => {
     const { baseElement } = render(
       <BrowserRouter>
-        <Provider store={store}>
-          <App userManager={userManager} />
-        </Provider>
+        <App />
       </BrowserRouter>
     );
 
     expect(baseElement).toBeTruthy();
   });
 
-  it('should have a greeting as the title', () => {
+  it('should have a greeting as the title', async () => {
     const { getByText } = render(
       <BrowserRouter>
-        <Provider store={store}>
-          <App userManager={userManager} />
-        </Provider>
+        <App />
       </BrowserRouter>
     );
 
-    expect(getByText('Real time monitoring of our applications and services')).toBeTruthy();
+    await waitFor(() => expect(getByText('Real time monitoring of our applications and services')).toBeTruthy());
   });
 });

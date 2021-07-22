@@ -66,10 +66,16 @@ export class TenantMongoRepository implements TenantRepository {
   }
 
   async findBy(filter: Record<string, string>): Promise<TenantEntity> {
-    const tenant = await this.tenantModel.findOne(filter).populate('createdBy');
+    let currentFilter = filter;
+
+    if (currentFilter.id) {
+      currentFilter = { _id: currentFilter.id };
+    }
+
+    const tenant = await this.tenantModel.findOne(currentFilter).populate('createdBy');
 
     if (tenant == null) {
-      throw new NotFoundError('Fetch tenant by filter', filter.toString());
+      throw new NotFoundError('Fetch tenant by filter', currentFilter.toString());
     }
 
     return Promise.resolve(this.fromDoc(tenant));

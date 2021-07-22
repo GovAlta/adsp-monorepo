@@ -1,5 +1,6 @@
 import type { User } from '@abgov/adsp-service-sdk';
 import { assertAuthenticatedHandler } from '@core-services/core-common';
+import axios, { AxiosRequestConfig } from 'axios';
 import { Router } from 'express';
 import { Logger } from 'winston';
 import { RecordNotFoundError, UnauthorizedError } from '../common/errors';
@@ -7,6 +8,7 @@ import { ServiceStatusApplicationEntity } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { EndpointStatusEntry, PublicServiceStatusType } from '../types';
+import { environment } from '../../environments/environment';
 
 export interface ServiceStatusRouterProps {
   logger: Logger;
@@ -76,10 +78,31 @@ export function createServiceStatusRouter({
       throw new UnauthorizedError('missing tenant id');
     }
 
+    const url = `/api/tenant/v1/${tenantId.split('/')[tenantId.split('/').length - 1]}`;
+    const http = axios.create({ baseURL: environment.TENANT_MANAGEMENT_API_HOST });
+    http.interceptors.request.use((req: AxiosRequestConfig) => {
+      req.headers['Authorization'] = `Bearer ${user.token.bearer}`;
+      req.headers['Content-Type'] = 'application/json;charset=UTF-8';
+      return req;
+    });
+
+    let response = null;
+
+    try {
+      response = await http.get(url);
+    } catch (e) {
+      console.log('error:' + e);
+    }
+
+    const tenantName = response.data.tenant.name;
+    const tenantRealm = response.data.tenant.realm;
+
     const app = await ServiceStatusApplicationEntity.create({ ...(req.user as User) }, serviceStatusRepository, {
       name,
       description,
       tenantId,
+      tenantName,
+      tenantRealm,
       endpoints,
       metadata,
       statusTimestamp: 0,

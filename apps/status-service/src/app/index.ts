@@ -3,6 +3,7 @@ import { Application, RequestHandler } from 'express';
 import { Logger } from 'winston';
 import { Repositories } from './repository';
 import { createServiceStatusRouter } from './router/serviceStatus';
+import { createPublicServiceStatusRouter } from './router/publicServiceStatus';
 import { createNoticeRouter } from './router/notice';
 
 export * from './model';
@@ -17,6 +18,7 @@ interface HealthMiddlewareProps extends Repositories {
 export const bindEndpoints = (app: Application, props: HealthMiddlewareProps): void => {
   // bind all service endpoints
   app.use('/status/v1', props.authenticate, createServiceStatusRouter(props));
+  app.use('/public_status/v1', createPublicServiceStatusRouter(props));
   app.use('/notices/v1', props.authenticate, createNoticeRouter(props));
 
   // api docs
