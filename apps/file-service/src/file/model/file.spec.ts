@@ -6,6 +6,7 @@ import { FileRepository } from '../repository';
 import { File, FileRecord } from '../types';
 import { FileEntity } from './file';
 import { FileTypeEntity } from './type';
+import path = require('path');
 
 jest.mock('fs', () => ({
   rename: jest.fn((o, n, cb) => cb(null)),
@@ -22,11 +23,13 @@ describe('File Entity', () => {
     roles: ['test-admin'],
     tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
     isCore: false,
-    token: null
+    token: null,
   };
 
   const storagePath = 'files';
-  const typePath = `${storagePath}/test/file-type-1`;
+  const separator = path.sep === '/' ? '/' : '\\';
+  const typePath = `${storagePath}${separator}test${separator}file-type-1`;
+
   let repositoryMock: Mock<FileRepository> = null;
   let typeMock: Mock<FileTypeEntity> = null;
 
@@ -123,7 +126,7 @@ describe('File Entity', () => {
 
     expect(fileEntity).toBeTruthy();
     expect(renameMock.mock.calls[0][0]).toEqual('tmp-file');
-    expect(renameMock.mock.calls[0][1]).toEqual(`${typePath}/${fileEntity.storage}`);
+    expect(renameMock.mock.calls[0][1]).toEqual(`${typePath}${separator}${fileEntity.storage}`);
     done();
   });
 
@@ -178,7 +181,7 @@ describe('File Entity', () => {
 
     it('can get file path', () => {
       const path = entity.getFilePath(storagePath);
-      expect(path).toEqual(`${typePath}/${entity.storage}`);
+      expect(path).toEqual(`${typePath}${separator}${entity.storage}`);
     });
 
     it('can check user access for user with access to type', () => {
@@ -232,7 +235,8 @@ describe('File Entity', () => {
       entity.deleted = true;
       entity.delete(storagePath).then((deleted) => {
         expect(deleted).toBeTruthy();
-        expect(unlinkMock.mock.calls[0][0]).toEqual(`${typePath}/${entity.storage}`);
+
+        expect(unlinkMock.mock.calls[0][0]).toEqual(`${typePath}${separator}${entity.storage}`);
         done();
       });
     });
