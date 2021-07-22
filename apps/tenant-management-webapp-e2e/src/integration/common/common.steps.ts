@@ -50,8 +50,18 @@ Given('a service owner user is on tenant admin page', function () {
 
 Then('no critical or serious accessibility issues on {string}', function (pageName) {
   injectAxe();
+  // check all accessibility issues and generate a report without failing the step.
+  cy.checkA11y(
+    null!,
+    {},
+    (violations) => {
+      htmlReport(violations, true, pageName + '-all');
+    },
+    true
+  );
+  // check critical and serious accessibility issues and generate a report. Fail the step if there are any.
   cy.checkA11y(null!, { includedImpacts: ['critical', 'serious'] }, (violations) => {
-    htmlReport(violations, true, pageName);
+    htmlReport(violations, true, pageName + '-critical&serious');
   });
 });
 
