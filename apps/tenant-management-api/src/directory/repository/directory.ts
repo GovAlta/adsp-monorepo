@@ -6,6 +6,5 @@ export interface DirectoryRepository extends Repository<DirectoryEntity, Directo
   find(top: number, after: string, criteria: Criteria): Promise<Results<DirectoryEntity>>;
   getDirectories(name: string): Promise<DirectoryEntity>;
   exists(name: string): Promise<boolean>;
-  create(directories: any): Promise<boolean>;
   update(directory: Directory): Promise<boolean>;
 }

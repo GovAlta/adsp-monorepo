@@ -1,5 +1,4 @@
 import { DirectoryEntity } from './directory';
-import { v4 as uuidv4 } from 'uuid';
 import { DirectoryRepository } from '../repository';
 import { Mock } from 'moq.ts';
 import { Directory } from '../types/directory';
@@ -28,8 +27,6 @@ describe('DirectoryEntity', () => {
   repositoryMock.setup((m) => m.save(entity)).returns(Promise.resolve(entity));
 
   it('Created directory', (done) => {
-    const id = uuidv4();
-
     expect(entity).toBeTruthy();
     expect(entity.name).toBeTruthy();
     expect(entity.services).toBeTruthy();
@@ -37,8 +34,6 @@ describe('DirectoryEntity', () => {
     done();
   });
   it('Update directory', () => {
-    const id = uuidv4();
-
     const entity = new DirectoryEntity(repositoryMock.object(), testDirectory);
     expect(entity).toBeTruthy();
     expect(entity.name).toBeTruthy();

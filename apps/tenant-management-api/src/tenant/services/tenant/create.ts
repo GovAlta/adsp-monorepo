@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as util from 'util';
 import * as HttpStatusCodes from 'http-status-codes';
-import { AdspId, adspId, ServiceRole } from '@abgov/adsp-service-sdk';
+import { AdspId, ServiceRole } from '@abgov/adsp-service-sdk';
 import { createkcAdminClient } from '../../../keycloak';
 import { logger } from '../../../middleware/logger';
 import { environment } from '../../../environments/environment';
@@ -62,7 +62,11 @@ const createWebappClientConfig = (id: string): ClientRepresentation => {
   return config;
 };
 
-const createTenantAdminComposite = async (registeredClients: ServiceClient[], realm: string, tenantAdminRole: RoleRepresentation) => {
+const createTenantAdminComposite = async (
+  registeredClients: ServiceClient[],
+  realm: string,
+  tenantAdminRole: RoleRepresentation
+) => {
   const client = await createkcAdminClient();
   // Unfortunately the keycloak client isn't very friendly around creating composite roles.
   // Find all the client roles that should be included as part of tenant admin.
@@ -230,7 +234,7 @@ export const validateEmailInDB = async (email: string): Promise<void> => {
   }
 };
 
-export const validateRealmCreation = async (realm) => {
+export const validateRealmCreation = async (realm: string): Promise<void> => {
   // Re-init the keycloak client after realm creation
   logger.info(`Start to validate the tenant creation: ${realm}`);
   const kcClient = await createkcAdminClient();
@@ -252,7 +256,12 @@ export const validateRealmCreation = async (realm) => {
   }
 };
 
-export const createRealm = async (services: ServiceRegistration, realm: string, email: string, tenantName: string) => {
+export const createRealm = async (
+  services: ServiceRegistration,
+  realm: string,
+  email: string,
+  tenantName: string
+): Promise<void> => {
   logger.info(`Start to create ${realm} realm`);
   try {
     const brokerClientSecret = uuidv4();

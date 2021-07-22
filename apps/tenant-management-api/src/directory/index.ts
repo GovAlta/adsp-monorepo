@@ -12,7 +12,7 @@ import { Application } from 'express';
 import { Repositories } from './repository';
 import { createDirectoryRouter } from './router/directory';
 
-export const createDirectoryService = (app: Application) => {
+export const createDirectoryService = (app: Application): void => {
   const logger = createLogger('directory-management-service', environment.LOG_LEVEL || 'info');
 
   Promise.all([createRepositories({ ...environment, logger })]).then(([repositories]) => {

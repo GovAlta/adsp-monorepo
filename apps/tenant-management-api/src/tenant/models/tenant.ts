@@ -25,7 +25,7 @@ export class TenantEntity implements Tenant {
     this.name = name;
   }
 
-  save() {
+  save(): Promise<TenantEntity> {
     return this.repository.save(this);
   }
 
