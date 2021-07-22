@@ -29,7 +29,7 @@ export class TenantEntity implements Tenant {
     return this.repository.save(this);
   }
 
-  obj() {
+  obj(): Tenant {
     return {
       id: this.id.resource.split('/').pop(),
       realm: this.realm,
