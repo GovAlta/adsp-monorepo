@@ -3,7 +3,7 @@ export interface FileTypeItem {
   updateRoles: string[];
   readRoles: string[];
   anonymousRead: boolean;
-  tableData: {
+  tableData?: {
     id: string;
   };
   id: string;

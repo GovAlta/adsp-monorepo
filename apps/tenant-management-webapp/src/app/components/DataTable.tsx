@@ -17,18 +17,33 @@ const ScrollWrapper = styled.div`
 `;
 
 const Table = styled.table`
+  border-collapse: collapse;
   width: 100%;
-  td,
+
+  td {
+    padding-left: 0.5rem;
+    padding-top: 4px;
+    padding-bottom: 8px;
+    padding-right: 0.5rem;
+  }
+
+  tr {
+    border-bottom: 1px solid #707070;
+  }
+
+  tr.selected {
+    background-color: #f1f1f1;
+  }
+
   th {
     padding: 0.5rem;
+    color: #666666;
   }
+
   thead th {
-    font-size: var(--fs-lg);
-    border-bottom: 2px solid #ccc;
+    font-size: var(--fs-base);
+    border-bottom: 1px solid #707070;
     text-align: left;
     white-space: nowrap;
-  }
-  tbody tr:nth-child(even) {
-    background-color: #fafafa;
   }
 `;

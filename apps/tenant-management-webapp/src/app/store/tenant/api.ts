@@ -48,6 +48,6 @@ export class TenantApi {
   async fetchRealmRoles(): Promise<Role[]> {
     const url = `${this.config.host}/api/tenant/v1/realm/roles`;
     const res = await this.http.get(url);
-    return res.data;
+    return res.data.roles;
   }
 }

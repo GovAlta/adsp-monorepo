@@ -101,13 +101,13 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
     case UPDATE_FILE_TYPE_SUCCEEDED:
       return {
         ...state,
-        fileTypes: updateSpecifiedFileType(state.fileTypes, action.payload.fileInfo.data),
+        fileTypes: updateSpecifiedFileType(state.fileTypes, action.payload),
       };
 
     case CREATE_FILE_TYPE_SUCCEEDED:
       return {
         ...state,
-        fileTypes: [...(state.fileTypes || []), action.payload.fileInfo.data],
+        fileTypes: [...(state.fileTypes || []), action.payload],
       };
 
     case FETCH_FILE_DOCS_SUCCEEDED:

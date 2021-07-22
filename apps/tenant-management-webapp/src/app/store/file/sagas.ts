@@ -134,21 +134,21 @@ export function* createFileType(fileType) {
   const api = yield new FileApi(state.config, token);
 
   try {
-    const fileTypeInfo = yield api.createFileType(fileType.payload.fileInfo);
-    yield put(CreateFileTypeSucceededService({ data: fileTypeInfo }));
+    yield api.createFileType(fileType.payload);
+    yield put(CreateFileTypeSucceededService(fileType.payload));
   } catch (e) {
     yield put(ErrorNotification({ message: `${e.message} - createFileType` }));
   }
 }
 
-export function* updateFileType(fileType) {
+export function* updateFileType(action) {
   const state = yield select();
   const token = state.session.credentials.token;
   const api = yield new FileApi(state.config, token);
 
   try {
-    const fileTypeInfo = yield api.updateFileType(fileType.payload.fileInfo);
-    yield put(UpdateFileTypeSucceededService({ data: fileTypeInfo }));
+    const fileType = yield api.updateFileType(action.payload);
+    yield put(UpdateFileTypeSucceededService(fileType));
   } catch (e) {
     yield put(ErrorNotification({ message: `${e.message} - updateFileType` }));
   }

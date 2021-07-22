@@ -154,7 +154,7 @@ interface FetchFileSpaceSucceededAction {
 interface FetchFileSpaceFailedAction {
   type: typeof FETCH_FILE_SPACE_FAILED;
   payload: {
-    fileInfo: { data: string };
+    fileInfo: { data: FileTypeItem };
   };
 }
 
@@ -195,16 +195,12 @@ interface DeleteFileTypeSucceededAction {
 
 interface UpdateFileTypeSucceededAction {
   type: typeof UPDATE_FILE_TYPE_SUCCEEDED;
-  payload: {
-    fileInfo: { data: string };
-  };
+  payload: FileTypeItem;
 }
 
 interface CreateFileTypeSucceededAction {
   type: typeof CREATE_FILE_TYPE_SUCCEEDED;
-  payload: {
-    fileInfo: { data: FileTypeItem };
-  };
+  payload: FileTypeItem;
 }
 
 interface FetchFileTypeAction {
@@ -213,9 +209,7 @@ interface FetchFileTypeAction {
 
 interface UpdateFileTypeAction {
   type: typeof UPDATE_FILE_TYPE;
-  payload: {
-    fileInfo: { data: string };
-  };
+  payload: FileTypeItem;
 }
 
 interface DeleteFileTypeAction {
@@ -227,9 +221,7 @@ interface DeleteFileTypeAction {
 
 interface CreateFileTypeAction {
   type: typeof CREATE_FILE_TYPE;
-  payload: {
-    fileInfo: { data: string };
-  };
+  payload: FileTypeItem;
 }
 
 interface FetchFileDocsSucceededAction {
@@ -364,7 +356,7 @@ export const FetchFileSpaceSucceededService = (fileInfo: { data: string }): Fetc
     fileInfo,
   },
 });
-export const FetchFileSpaceFailedService = (fileInfo: { data: string }): FetchFileSpaceFailedAction => ({
+export const FetchFileSpaceFailedService = (fileInfo: { data: FileTypeItem }): FetchFileSpaceFailedAction => ({
   type: FETCH_FILE_SPACE_FAILED,
   payload: {
     fileInfo,
@@ -387,19 +379,15 @@ export const DeleteFileTypeSucceededService = (fileInfo: { data: string }): Dele
   };
 };
 
-export const UpdateFileTypeSucceededService = (fileInfo: { data: string }): UpdateFileTypeSucceededAction => ({
+export const UpdateFileTypeSucceededService = (fileType: FileTypeItem): UpdateFileTypeSucceededAction => ({
   type: UPDATE_FILE_TYPE_SUCCEEDED,
-  payload: {
-    fileInfo,
-  },
+  payload: fileType,
 });
 
-export const CreateFileTypeSucceededService = (fileInfo: { data: FileTypeItem }): CreateFileTypeSucceededAction => {
+export const CreateFileTypeSucceededService = (fileType: FileTypeItem): CreateFileTypeSucceededAction => {
   return {
     type: CREATE_FILE_TYPE_SUCCEEDED,
-    payload: {
-      fileInfo,
-    },
+    payload: fileType,
   };
 };
 
@@ -407,11 +395,9 @@ export const FetchFileTypeService = (): FetchFileTypeAction => ({
   type: FETCH_FILE_TYPE,
 });
 
-export const UpdateFileTypeService = (fileInfo: { data: string }): UpdateFileTypeAction => ({
+export const UpdateFileTypeService = (fileType: FileTypeItem): UpdateFileTypeAction => ({
   type: UPDATE_FILE_TYPE,
-  payload: {
-    fileInfo,
-  },
+  payload: fileType,
 });
 
 export const DeleteFileTypeService = (fileInfo: { data: string }): DeleteFileTypeAction => ({
@@ -421,11 +407,9 @@ export const DeleteFileTypeService = (fileInfo: { data: string }): DeleteFileTyp
   },
 });
 
-export const CreateFileTypeService = (fileInfo: { data: string }): CreateFileTypeAction => ({
+export const CreateFileTypeService = (fileType: FileTypeItem): CreateFileTypeAction => ({
   type: CREATE_FILE_TYPE,
-  payload: {
-    fileInfo,
-  },
+  payload: fileType,
 });
 
 export const FetchFileDocsService = (): FetchFileDocsAction => ({
