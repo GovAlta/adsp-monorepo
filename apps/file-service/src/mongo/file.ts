@@ -94,7 +94,7 @@ export class MongoFileRepository implements FileRepository {
     );
   }
 
-  fromDoc(type: FileTypeEntity, values: FileDoc) {
+  fromDoc(type: FileTypeEntity, values: FileDoc): FileEntity {
     return values
       ? new FileEntity(this, type, {
           id: values._id,
@@ -111,7 +111,7 @@ export class MongoFileRepository implements FileRepository {
       : null;
   }
 
-  toDoc(entity: FileEntity) {
+  toDoc(entity: FileEntity): any {
     return {
       spaceId: entity.type.spaceId,
       typeId: entity.type.id,

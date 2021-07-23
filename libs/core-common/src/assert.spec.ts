@@ -1,15 +1,16 @@
 import { authenticateToken, AuthenticationConfig } from './assert';
-
+import { adspId, User } from '@abgov/adsp-service-sdk';
 describe('Token authentication', () => {
   const adminRole = 'admin';
 
-  const user = {
+  const user: User = {
     id: 'mock-user-id',
     name: 'tester',
     email: 'mock-user@gov.ab.ca',
-    tenantName: 'mock-tenant',
-    client: 'mock-client',
+    tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
     roles: [adminRole],
+    isCore: false,
+    token: null,
   };
 
   it('Can pass', () => {
