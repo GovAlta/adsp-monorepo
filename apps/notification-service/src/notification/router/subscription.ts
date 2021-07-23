@@ -13,7 +13,7 @@ interface SubscriptionRouterProps {
   subscriptionRepository: SubscriptionRepository;
 }
 
-export const createSubscriptionRouter = ({ logger, subscriptionRepository }: SubscriptionRouterProps): Router => {
+export const createSubscriptionRouter = ({ subscriptionRepository }: SubscriptionRouterProps): Router => {
   const subscriptionRouter = Router();
 
   subscriptionRouter.get('/types', assertAuthenticatedHandler, async (req, res) => {

@@ -33,7 +33,7 @@ export class FileTypeEntity implements FileType {
     readRoles: string[],
     updateRoles: string[],
     spaceId: string
-  ) {
+  ): FileTypeEntity {
     const newType: FileType = {
       id,
       name,
@@ -54,15 +54,15 @@ export class FileTypeEntity implements FileType {
     this.spaceId = type.spaceId;
   }
 
-  canAccessFile(user: User) {
+  canAccessFile(user: User): boolean {
     return this.anonymousRead || (user && user.roles && !!user.roles.find((role) => this.readRoles.includes(role)));
   }
 
-  canUpdateFile(user: User) {
+  canUpdateFile(user: User): boolean {
     return user && user.roles && !!user.roles.find((role) => this.updateRoles.includes(role));
   }
 
-  update(user: User, update: Update<FileType>) {
+  update(user: User, update: Update<FileType>): void {
     if (!this.canUpdate(user)) {
       throw new UnauthorizedError('User not authorized to update type.');
     }
@@ -84,18 +84,18 @@ export class FileTypeEntity implements FileType {
     }
   }
 
-  canUpdate(user: User) {
+  canUpdate(user: User): boolean | string {
     return (
       (user && user.roles && user.roles.includes(ServiceUserRoles.Admin)) ||
       user.roles.find((role) => this.updateRoles.includes(role))
     );
   }
 
-  getPath(storageRoot: string) {
+  getPath(storageRoot: string): string {
     return path.join(storageRoot, this.spaceId, this.id);
   }
 
-  canAccess(user: User) {
+  canAccess(user: User): boolean {
     return this.canAccessFile(user);
   }
 }

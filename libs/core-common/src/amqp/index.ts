@@ -12,7 +12,13 @@ interface AmqpServiceProps {
   logger: Logger;
 }
 
-export const createAmqpEventService = ({ queue, AMQP_HOST, AMQP_USER, AMQP_PASSWORD, logger }: AmqpServiceProps) => {
+export const createAmqpEventService = ({
+  queue,
+  AMQP_HOST,
+  AMQP_USER,
+  AMQP_PASSWORD,
+  logger,
+}: AmqpServiceProps): Promise<AmqpEventSubscriberService> => {
   return connect({
     heartbeat: 160,
     hostname: AMQP_HOST,

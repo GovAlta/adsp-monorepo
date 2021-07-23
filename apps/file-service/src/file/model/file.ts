@@ -29,7 +29,7 @@ export class FileEntity implements FileRecord {
     values: NewFile,
     file: string,
     rootStoragePath: string
-  ) {
+  ): Promise<FileEntity> {
     if (!type.canUpdateFile(user)) {
       throw new UnauthorizedError('User not authorized to create file.');
     }
@@ -74,7 +74,7 @@ export class FileEntity implements FileRecord {
     }
   }
 
-  markForDeletion(user: User) {
+  markForDeletion(user: User): Promise<FileEntity> {
     if (!this.type.canUpdateFile(user)) {
       throw new UnauthorizedError('User not authorized to delete file.');
     }
@@ -83,7 +83,7 @@ export class FileEntity implements FileRecord {
     return this.repository.save(this);
   }
 
-  updateScanResult(infected: boolean) {
+  updateScanResult(infected: boolean): Promise<FileEntity> {
     this.scanned = true;
     if (infected) {
       this.deleted = true;
@@ -92,7 +92,7 @@ export class FileEntity implements FileRecord {
     return this.repository.save(this);
   }
 
-  delete(rootStoragePath: string) {
+  delete(rootStoragePath: string): Promise<boolean> {
     if (!this.deleted) {
       throw new InvalidOperationError('File not marked for deletion.');
     }
@@ -105,17 +105,17 @@ export class FileEntity implements FileRecord {
     ).then(() => this.repository.delete(this));
   }
 
-  getFilePath(storageRoot: string) {
+  getFilePath(storageRoot: string): string {
     const typePath = this.type.getPath(storageRoot);
     return path.join(typePath, this.storage);
   }
 
-  accessed(date?: Date) {
+  accessed(date?: Date): Promise<FileEntity> {
     this.lastAccessed = date || new Date();
     return this.repository.save(this);
   }
 
-  canAccess(user: User) {
+  canAccess(user: User): boolean {
     return this.type.canAccessFile(user);
   }
 }

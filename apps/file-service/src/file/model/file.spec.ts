@@ -3,7 +3,7 @@ import { Mock, It } from 'moq.ts';
 import { adspId, User } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
 import { FileRepository } from '../repository';
-import { File, FileRecord } from '../types';
+import { FileRecord } from '../types';
 import { FileEntity } from './file';
 import { FileTypeEntity } from './type';
 
@@ -22,7 +22,7 @@ describe('File Entity', () => {
     roles: ['test-admin'],
     tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
     isCore: false,
-    token: null
+    token: null,
   };
 
   const storagePath = 'files';

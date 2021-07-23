@@ -4,7 +4,7 @@ import fetch from 'node-fetch';
 import { ScanService, ScanProps } from '.';
 import { FileEntity } from '../model';
 
-export const createMetaDefenderScan = ({ rootStoragePath, host, port }: ScanProps) => {
+export const createMetaDefenderScan = ({ rootStoragePath, host, port }: ScanProps): ScanService => {
   const apiUrl = `${host}:${port}`;
   const hashUrl = `${apiUrl}/metascan_rest/hash`;
   const hashLookupRequest = (path: string) =>
