@@ -150,7 +150,7 @@ export const createFileTypeRouter = ({
       const filesOfType = await fileRepository.exists({
         typeEquals: fileTypeId,
       });
-      if (filesOfType) {
+      if (!filesOfType) {
         const deletedItem = await spaceEntity.deleteType(user, fileTypeId);
         res.json(deletedItem);
       } else {
