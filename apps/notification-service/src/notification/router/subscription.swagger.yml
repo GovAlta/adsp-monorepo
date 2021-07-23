@@ -1,3 +1,114 @@
+components:
+  schemas:
+    Template:
+      type: object
+      properties:
+        subject:
+          type: string
+        body:
+          type: string
+    NotificationType:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        subscriberRoles:
+          type: array
+          items:
+            type: string
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              namespace:
+                type: string
+              name:
+                type: string
+              template:
+                type: object
+                properties:
+                  email:
+                    $ref: "#/components/schemas/Template"
+                  sms:
+                    $ref: "#/components/schemas/Template"
+              channels:
+                type: array
+                items:
+                  type: string
+                  enum: [email, sms]
+    Subscriber:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        addressAs:
+          type: string
+        channels:
+          type: array
+          items:
+            type: object
+            properties:
+              channel:
+                type: string
+                enum: [email, sms]
+              address:
+                type: string
+    Subscription:
+      type: object
+      properties:
+        typeId:
+          type: string
+        subscriber:
+          $ref: "#/components/schemas/Subscriber"
+        criteria:
+          type: object
+          properties:
+            correlationId:
+              type: string
+            context:
+              type: object
+              additionalProperties: true
+
+/subscription/v1/types:
+  get:
+    tags:
+      - Subscription
+    description: Retrieves notification types available to subscribe to.
+    responses:
+      200:
+        description: Notification types successfully retrieved.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/NotificationType"
+/subscription/v1/types/{type}:
+  get:
+    tags:
+      - Subscription
+    description: Retrieves a notification type.
+    parameters:
+      - name: type
+        description: Notification type to get subscriptions for.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Notification type successfully retrieved.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationType"
 /subscription/v1/types/{type}/subscriptions:
   get:
     tags:
@@ -13,6 +124,24 @@
     responses:
       200:
         description: Subscriptions successfully retrieved.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Subscription"
+                page:
+                  type: object
+                  properties:
+                    after:
+                      type: string
+                    size:
+                      type: number
+                    next:
+                      type: string
   post:
     tags:
       - Subscription
@@ -27,6 +156,11 @@
     responses:
       200:
         description: Subscriptions successfully retrieved.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Subscription"
+
 /subscription/v1/types/{type}/subscriptions/{subscriber}:
   get:
     tags:
@@ -48,6 +182,10 @@
     responses:
       200:
         description: Subscriptions successfully retrieved.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Subscription"
   delete:
     tags:
       - Subscription
@@ -68,16 +206,41 @@
     responses:
       200:
         description: Subscriptions successfully removed.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean
 
 /subscription/v1/subscribers:
   get:
     tags:
       - Subscription
     description: Retrieves subscriptions for a notification type.
-    parameters:
     responses:
       200:
         description: Subscribers successfully retrieved.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Subscriber"
+                page:
+                  type: object
+                  properties:
+                    after:
+                      type: string
+                    size:
+                      type: number
+                    next:
+                      type: string
+
 /subscription/v1/subscribers/{subscriber}:
   get:
     tags:
@@ -93,6 +256,10 @@
     responses:
       200:
         description: Subscriber successfully retrieved.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Subscriber"
   delete:
     tags:
       - Subscription
@@ -107,3 +274,10 @@
     responses:
       200:
         description: Subscriber successfully deleted.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean

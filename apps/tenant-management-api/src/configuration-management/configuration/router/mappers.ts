@@ -1,6 +1,6 @@
 import { TenantConfig, ServiceOption } from '../types';
 
-export const mapServiceOption = (type: ServiceOption) => ({
+export const mapServiceOption = (type: ServiceOption): ServiceOption => ({
   id: type.id,
   service: type.service,
   version: type.version,
@@ -11,7 +11,7 @@ export const mapServiceOption = (type: ServiceOption) => ({
   roles: type.roles,
 });
 
-export const mapTenantConfig = (type: TenantConfig) => ({
+export const mapTenantConfig = (type: TenantConfig): TenantConfig => ({
   id: type.id,
   tenantName: type.tenantName,
   configurationSettingsList: type.configurationSettingsList,

@@ -15,6 +15,10 @@ class CreateTenantDto {
   @IsDefined()
   name: string;
 }
+class GetTenantDto {
+  @IsDefined()
+  id: string;
+}
 class DeleteTenantDto {
   @IsDefined()
   realm: string;
@@ -37,7 +41,7 @@ interface TenantRouterProps {
 export const createTenantRouter = ({ eventService, services }: TenantRouterProps): Router => {
   const tenantRouter = Router();
 
-  async function getTenantByEmail(req, res, next) {
+  async function getTenantByEmail(req, res) {
     try {
       const { email } = req.payload;
       const tenant = await tenantRepository.findBy({ adminEmail: email });
@@ -80,6 +84,24 @@ export const createTenantRouter = ({ eventService, services }: TenantRouterProps
       res.json(mapping);
     } else {
       res.status(HttpStatusCodes.BAD_REQUEST);
+    }
+  }
+
+  async function getTenant(req, res) {
+    const { id } = req.payload;
+
+    try {
+      const tenant = await tenantRepository.findBy({ id });
+      res.json({
+        success: true,
+        tenant: tenant.obj(),
+      });
+    } catch (e) {
+      logger.error(`Failed to get tenant by id: ${e.message}`);
+      res.status(HttpStatusCodes.BAD_REQUEST).json({
+        success: false,
+        errors: [e.message],
+      });
     }
   }
 
@@ -166,6 +188,7 @@ export const createTenantRouter = ({ eventService, services }: TenantRouterProps
   // Tenant admin only APIs
   // Used by the admin web app.
   tenantRouter.post('/', [validationMiddleware(CreateTenantDto)], createTenant);
+  tenantRouter.get('/:id', [validationMiddleware(GetTenantDto)], getTenant);
   tenantRouter.get('/realm/:realm', validationMiddleware(TenantByRealmDto), getTenantByRealm);
   tenantRouter.post('/email', [validationMiddleware(TenantByEmailDto)], getTenantByEmail);
   tenantRouter.delete('/', [requireTenantServiceAdmin, validationMiddleware(DeleteTenantDto)], deleteTenant);

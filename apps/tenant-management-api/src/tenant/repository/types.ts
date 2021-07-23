@@ -1,7 +1,7 @@
 import { TenantEntity } from '../models';
 export interface TenantRepository {
   save(type: TenantEntity): Promise<TenantEntity>;
-  delete(real: string);
+  delete(realm: string): Promise<void>;
   find(): Promise<TenantEntity[]>;
   issuers(): Promise<string[]>;
   findBy(filter: Record<string, string>): Promise<TenantEntity>;

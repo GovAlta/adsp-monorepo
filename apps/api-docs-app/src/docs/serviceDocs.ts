@@ -29,6 +29,8 @@ class ServiceDocsImpl {
   ) {}
 
   #retrieveDocs = async (): Promise<Record<string, ServiceDoc>> => {
+    this.logger.debug('Retrieving service API docs...');
+
     const configurationServiceUrl = await this.directory.getServiceUrl(
       adspId`urn:ads:platform:configuration-service:v1`
     );
@@ -45,6 +47,7 @@ class ServiceDocsImpl {
       if (version === 'v1') {
         try {
           const serviceId = adspId`urn:ads:platform:${service}`;
+          this.logger.debug(`Retrieving API docs for service ${serviceId} ...`);
 
           const serviceUrl = await this.directory.getServiceUrl(serviceId);
           const docUrl = new URL('swagger/docs/v1', serviceUrl);
@@ -67,6 +70,8 @@ class ServiceDocsImpl {
         }
       }
     }
+
+    this.logger.info(`Retrieved service API docs for: ${Object.keys(docs).join(', ')}`);
     return docs;
   };
 

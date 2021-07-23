@@ -30,7 +30,7 @@ export const connectMongo = async (): Promise<void> => {
   }
 };
 
-export const disconnect = async () => {
+export const disconnect = async (): Promise<void> => {
   logger.info('MongoDB disconnected...');
   await connection.close();
 };

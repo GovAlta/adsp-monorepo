@@ -106,6 +106,21 @@ export const createFileRouter = ({
     }
   });
 
+  fileRouter.get('/files/fileType/:fileTypeId', async (req, res, next) => {
+    try {
+      const { fileTypeId } = req.params;
+      const filesOfType = await fileRepository.exists({
+        typeEquals: fileTypeId,
+      });
+
+      res.json({
+        exist: filesOfType,
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   fileRouter.get('/files', async (req, res, next) => {
     const { top, after } = req.query;
 

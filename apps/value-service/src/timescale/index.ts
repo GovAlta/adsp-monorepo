@@ -56,7 +56,7 @@ export const createRepositories = async ({
   return {
     isConnected: async () => {
       try {
-        await knex.select('SELECT 1');
+        await knex.raw('SELECT 1');
         return true;
       } catch (err) {
         return false;

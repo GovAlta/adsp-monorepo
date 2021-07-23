@@ -14,8 +14,6 @@
                 type: string
               name:
                 type: string
-              tenantId:
-                type: string
               correlationId:
                 type: string
               context:

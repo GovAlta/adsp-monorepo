@@ -98,6 +98,8 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
       description: application.description,
       statusTimestamp: application.statusTimestamp,
       tenantId: application.tenantId,
+      tenantName: application.tenantName,
+      tenantRealm: application.tenantRealm,
       status: application.status,
       manualOverride: application.manualOverride,
     };
@@ -115,6 +117,8 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
       description: doc.description,
       statusTimestamp: doc.statusTimestamp,
       tenantId: doc.tenantId,
+      tenantName: doc.tenantName,
+      tenantRealm: doc.tenantRealm,
       status: doc.status,
       manualOverride: doc.manualOverride,
     });

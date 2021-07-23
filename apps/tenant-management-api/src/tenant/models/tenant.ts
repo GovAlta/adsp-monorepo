@@ -25,11 +25,11 @@ export class TenantEntity implements Tenant {
     this.name = name;
   }
 
-  save() {
+  save(): Promise<TenantEntity> {
     return this.repository.save(this);
   }
 
-  obj() {
+  obj(): Tenant {
     return {
       id: this.id.resource.split('/').pop(),
       realm: this.realm,

@@ -40,6 +40,14 @@ export const serviceStatusApplicationSchema = new Schema(
       type: String,
       required: true,
     },
+    tenantRealm: {
+      type: String,
+      required: true,
+    },
+    tenantName: {
+      type: String,
+      required: true,
+    },
     name: {
       type: String,
       required: true,

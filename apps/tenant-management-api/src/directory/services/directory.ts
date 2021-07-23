@@ -1,7 +1,7 @@
 import { logger } from '../../middleware/logger';
 import { ApiError } from '../../util/apiError';
 import * as HttpStatusCodes from 'http-status-codes';
-import { validateUrn, validateHostname, validateVersion, validatePath } from './util/patternUtil';
+import { validateUrn, validateVersion, validatePath } from './util/patternUtil';
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { DirectoryRepository } from '../repository';
 import { MongoDirectoryRepository } from '../mongo/directory';
@@ -23,15 +23,6 @@ export interface Response {
   urn?: string;
 }
 const URN_SEPARATOR = ':';
-
-const getName = (directory, core: string) => {
-  for (const obj of directory) {
-    if (obj['name'] === core) {
-      return obj['services'];
-    }
-  }
-  return null;
-};
 
 const getUrn = (component: URNComponent) => {
   let urn = `${component.scheme}:${component.nic}:${component.core}:${component.service}`;
@@ -66,13 +57,6 @@ const getUrlResponse = (services, component) => {
     HttpStatusCodes.BAD_GATEWAY,
     'Empty in urn! urn format should looks like urn:ads:{tenant|core}:{service}'
   );
-};
-const validateServices = (services) => {
-  for (const service of services) {
-    if (!validateHostname(service['host'])) {
-      return new ApiError(HttpStatusCodes.BAD_REQUEST, 'Host format not correct!').getJson();
-    }
-  }
 };
 
 export const discovery = async (urn: string, { directoryRepository }: ServiceProps): Promise<Response | ApiError> => {
@@ -135,7 +119,7 @@ export const discovery = async (urn: string, { directoryRepository }: ServicePro
   );
 };
 
-export const getDirectories = async () => {
+export const getDirectories = async (): Promise<Response[] | ApiError> => {
   logger.info('Starting get directory from mongo db...');
   try {
     const response = [];
