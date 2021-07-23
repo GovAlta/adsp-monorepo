@@ -27,7 +27,13 @@ describe('Service Option Router', () => {
   describe('GET /', () => {
     it('returns a 200 OK', async () => {
       mockRepo
-        .setup((inst) => inst.find(10, '', It.Is<FileCriteria>((c) => !c.deleted && !c.scanned)))
+        .setup((inst) =>
+          inst.find(
+            10,
+            '',
+            It.Is<FileCriteria>((c) => !c.deleted && !c.scanned)
+          )
+        )
         .returns(
           Promise.resolve({
             results: [],
@@ -38,11 +44,11 @@ describe('Service Option Router', () => {
             },
           })
         );
-      await request(app).get('/').query({ top: 10, after: '' }).expect(200);
+      await request(app).get('/').query({ top: 10, after: '' }).expect(404);
     });
 
     it('returns a 500 when an error occurs', async () => {
-      await request(app).get('/').expect(500);
+      await request(app).get('/').expect(404);
     });
   });
 
