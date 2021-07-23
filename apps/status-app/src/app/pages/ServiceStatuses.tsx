@@ -8,8 +8,9 @@ import '@abgov/core-css/src/lib/stories/page-template/page-template.story.scss';
 import { Grid, GridItem } from '@components/Grid';
 import ServiceStatus from '../components/ServiceStatus';
 import { useLocation } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { GoAPageLoader } from '@abgov/react-components';
-import { environment } from '../environments/environment'
+import { environment } from '../environments/environment';
 
 import styled from 'styled-components';
 
@@ -18,11 +19,14 @@ import { ServiceStatusApplication } from '../api/models';
 import moment from 'moment';
 
 const ServiceStatusPage = () => {
+  const env = useSelector((state) => state);
+  const config = useSelector((state: { config: typeof environment }) => state.config);
   const [applications, setApplications] = useState<ServiceStatusApplication[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
   const location = useLocation();
-  const realm = location.pathname.slice(1) || environment.PLATFORM_TENANT_REALM
-  const api = new StatusApi(environment.SERVICE_STATUS_API_URL, realm);
+  const ready = config.envLoaded && loaded;
+  const realm = location.pathname.slice(1) || config.platformTenantRealm;
+  const api = new StatusApi(config.serviceUrls.serviceStatusApiUrl, realm);
 
   useEffect(() => {
     async function fetchData() {
@@ -31,7 +35,7 @@ const ServiceStatusPage = () => {
       setLoaded(true);
     }
     fetchData();
-  }, []);
+  }, [env]);
 
   const PageLoader = () => {
     return <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />;
@@ -43,8 +47,8 @@ const ServiceStatusPage = () => {
         <h2>All {applications[0].tenantName || 'platform'} services</h2>
         <p>
           These are the services currently being offered by{' '}
-          {location.pathname.slice(1) ? applications[0].tenantName : 'the Alberta Digital Service Platform' }
-          . All statuses are in real time and reflect current states of the individual services. Please{' '}
+          {location.pathname.slice(1) ? applications[0].tenantName : 'the Alberta Digital Service Platform'}. All
+          statuses are in real time and reflect current states of the individual services. Please{' '}
           <a href="mailto: DIO@gov.ab.ca">contact support</a> for additional information or any other inquiries
           regarding service statuses.
         </p>
@@ -91,7 +95,7 @@ const ServiceStatusPage = () => {
       </div>
       <main>
         <section>
-          {!loaded ? (
+          {!ready ? (
             <Padding>
               <PageLoader />
             </Padding>
