@@ -32,3 +32,7 @@ export const getRealmRoles = async (realm: string): Promise<RoleRepresentation[]
     return Promise.reject(e);
   }
 };
+
+export function testGet(): boolean {
+  return true;
+}

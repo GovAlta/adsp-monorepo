@@ -15,7 +15,7 @@ export class ServiceOptionEntity implements ServiceOption {
   description: string;
   roles: ServiceRole[];
 
-  constructor(private repository: ServiceConfigurationRepository, serviceOption: ServiceOption) {
+  constructor(private repository: ServiceConfigurationRepository, serviceOption: Partial<ServiceOption>) {
     this.service = serviceOption.service;
     this.id = serviceOption.id;
     this.version = serviceOption.version;
