@@ -5,12 +5,15 @@ import { createTenantConfigurationRouter } from './tenantConfig';
 import * as request from 'supertest';
 import { adspId } from '@abgov/adsp-service-sdk';
 import { TenantConfigEntity } from '../model';
+import { EventService } from '@abgov/adsp-service-sdk';
 
 describe('Tenant Config Router', () => {
   const app = express();
   const mockRepo = new Mock<TenantConfigurationRepository>();
+  const mockEventService = new Mock<EventService>();
   const router = createTenantConfigurationRouter({
     tenantConfigurationRepository: mockRepo.object(),
+    eventService: mockEventService.object(),
   });
 
   const tenantId = adspId`urn:ads:foobar`;
