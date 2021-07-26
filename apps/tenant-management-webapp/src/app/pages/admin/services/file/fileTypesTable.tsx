@@ -116,6 +116,7 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
   const [updateFileType, setUpdateFileType] = useState<FileTypeItem>(null);
   const [newFileType, setNewFileType] = useState<FileTypeItem>(null);
   const [showDelete, setShowDelete] = useState<boolean>(false);
+
   const { roles, fileTypes } = props;
   if (roles === null || fileTypes === []) {
     return <div />;
@@ -154,7 +155,6 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
           buttonType="secondary"
           key={`${props.id}-confirm-button`}
           onClick={() => {
-            alert('a');
             dispatch(CreateFileTypeService({ ...newFileType, id }));
             setNewFileType(null);
           }}
@@ -496,7 +496,6 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
           Add file type
         </GoAButton>
       </TitleContainer>
-
       {showDelete && <DeleteModal {...updateFileType} />}
       <DataTable>
         <thead>
