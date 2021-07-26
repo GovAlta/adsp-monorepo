@@ -1,4 +1,4 @@
-import { connect, disconnect, createMockData } from '@core-services/core-common';
+import { connect, disconnect, createMockData } from '@core-services/core-common/mongo';
 import { DirectoryEntity } from '../model';
 import { MongoDirectoryRepository } from './directory';
 

@@ -1,5 +1,5 @@
 import { MongoTenantConfigurationRepository } from './tenantConfig';
-import { connect, disconnect, createMockData } from '@core-services/core-common';
+import { connect, disconnect, createMockData } from '@core-services/core-common/mongo';
 import { TenantConfigEntity } from '../configuration';
 
 describe('Mongo: TenantConfig', () => {

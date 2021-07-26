@@ -1,5 +1,5 @@
 import { MongoServiceOptionRepository } from './serviceOption';
-import { connect, disconnect, createMockData } from '@core-services/core-common';
+import { connect, disconnect, createMockData } from '@core-services/core-common/mongo';
 import { ServiceOptionEntity } from '../configuration';
 
 describe('Mongo: ServiceOption', () => {

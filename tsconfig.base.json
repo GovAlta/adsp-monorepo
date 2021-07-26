@@ -24,6 +24,9 @@
       "@core-services/core-common": [
         "libs/core-common/src/index.ts"
       ],
+      "@core-services/core-common/mongo": [
+        "libs/core-common/src/mongo/index.ts"
+      ],
       "@tenant-management-api/*": [
         "apps/tenant-management-api/src/*"
       ],
