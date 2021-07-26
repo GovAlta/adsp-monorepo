@@ -5,7 +5,7 @@ import { DirectoryEntity } from '../model';
 import { DirectoryRepository } from '../repository';
 import { createDirectoryRouter } from './directory';
 
-describe('Service Option Router', () => {
+describe('Directory Router', () => {
   const app = express();
   const mockRepo = new Mock<DirectoryRepository>();
   app.use(

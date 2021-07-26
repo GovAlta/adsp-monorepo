@@ -8,7 +8,6 @@ import { logger } from '../../middleware/logger';
 import { v4 as uuidv4 } from 'uuid';
 import { EventService } from '@abgov/adsp-service-sdk';
 import { tenantCreated } from '../events';
-// import { tenantRepository } from '../repository';
 import { ServiceRegistration } from '../../configuration-management';
 import { TenantRepository } from '../repository';
 
