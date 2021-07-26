@@ -21,10 +21,10 @@ class VerifyServiceImpl implements VerifyService {
       tenant: `${user.tenantId}`,
     });
 
-    const prefix = this.getPrefix(user);
-    const code = random({ length: 6, type: 'distinguishable' });
+    const cacheKey = this.getCacheKey(user, key);
+    const code = await random.async({ length: 6, type: 'distinguishable' });
     const expiresAt = new Date(Date.now() + 600000);
-    await this.repository.set({ key: `${prefix}:${key}`, code }, expiresAt);
+    await this.repository.set({ key: cacheKey, code }, expiresAt);
 
     this.logger.info(`Generated new verify code at key '${key}' for user ${user.name} (ID: ${user.id}).`, {
       ...this.LOG_CONTEXT,
@@ -33,15 +33,28 @@ class VerifyServiceImpl implements VerifyService {
     return { key, code, expiresAt };
   }
 
+  @AssertRole('verify code', VerifyUserRoles.Verifier)
   async verify(user: User, key: string, code: string) {
     this.logger.debug(`Verifying code at key '${key}' for user ${user.name} (ID: ${user.id})...`, {
       ...this.LOG_CONTEXT,
       tenant: `${user.tenantId}`,
     });
 
-    const prefix = this.getPrefix(user);
-    const record = await this.repository.get(`${prefix}:${key}`);
-    const valid = record?.code === code;
+    const cacheKey = this.getCacheKey(user, key);
+    const record = await this.repository.get(cacheKey);
+    let valid = false;
+    if (record) {
+      valid = record.code === code;
+      if (!valid) {
+        // Increment failure and clear if max reached.
+        if (await this.repository.failed(cacheKey, 10)) {
+          this.logger.warn(
+            `Cleared code at key ${key} because verification has failed too many times. ` +
+              `Last failure by user ${user.name} (ID: ${user.id}).`
+          );
+        }
+      }
+    }
 
     this.logger.info(`Verified code at key ${key} for user ${user.name} (ID: ${user.id}) with result '${valid}'.`, {
       ...this.LOG_CONTEXT,
@@ -51,9 +64,9 @@ class VerifyServiceImpl implements VerifyService {
     return valid;
   }
 
-  private getPrefix(user: User) {
+  private getCacheKey(user: User, key: string) {
     const prefix = user.tenantId.resource;
-    return prefix;
+    return `${prefix}:${key}`;
   }
 }
 
