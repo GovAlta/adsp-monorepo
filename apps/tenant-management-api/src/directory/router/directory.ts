@@ -22,7 +22,9 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
    */
   directoryRouter.get('/', async (req: Request, res: Response, _next) => {
     try {
-      const results = await getDirectories(directoryRepository);
+      // FIXME: this endpoint is not testable since the `getDirectories()` function
+      // uses a non-injected mongo repo that cannot be stubbed out
+      const results = await getDirectories();
       res.send(results);
     } catch (err) {
       logger?.error(err);
