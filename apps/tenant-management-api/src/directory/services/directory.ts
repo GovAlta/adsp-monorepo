@@ -124,7 +124,7 @@ export const getDirectories = async (): Promise<{ urn: string; url: string }[]> 
   try {
     const response = [];
     // FIXME: using this repository with dependency injection make this impossible to test
-    const directoryRepository: DirectoryRepository = new MongoDirectoryRepository();
+    const directoryRepository = new MongoDirectoryRepository();
     const result = await directoryRepository.find(100, null, null);
     const directories = result.results;
     if (directories && directories.length > 0) {

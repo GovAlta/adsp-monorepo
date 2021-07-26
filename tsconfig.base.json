@@ -27,9 +27,6 @@
       "@core-services/core-common/mongo": [
         "libs/core-common/src/mongo/index.ts"
       ],
-      "@tenant-management-api/*": [
-        "apps/tenant-management-api/src/*"
-      ],
       "@abgov/adsp-service-sdk": [
         "libs/adsp-service-sdk/src/index.ts"
       ]
