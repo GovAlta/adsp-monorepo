@@ -1,7 +1,6 @@
 import express = require('express');
-import { It, Mock } from 'moq.ts';
+import { Mock } from 'moq.ts';
 import * as request from 'supertest';
-import { TenantEntity } from '../models';
 import { TenantRepository } from '../repository';
 import { createTenantRouter } from './tenant';
 

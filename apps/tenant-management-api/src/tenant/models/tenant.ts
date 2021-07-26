@@ -31,7 +31,7 @@ export class TenantEntity implements Tenant {
 
   obj(): Tenant {
     return {
-      id: adspId`${this.id.resource.split('/').pop()}`,
+      id: this.id,
       realm: this.realm,
       adminEmail: this.adminEmail,
       tokenIssuer: this.tokenIssuer,

@@ -17,8 +17,6 @@ export interface AuthenticationConfig {
 }
 
 export const authenticateToken = (authConfig: AuthenticationConfig, user: User): boolean => {
-  logger.debug(`Checking access for user ${user.name} (${user.id}) via tenant: ${user.tenantId || 'core'}`);
-
   try {
     logger.debug(`Checking access for user ${user.name} (${user.id}) via tenant: ${user.tenantId || 'core'}`);
     if (authConfig.requireCore) {

@@ -1,7 +1,8 @@
 import { TenantEntity } from './tenant';
 import { v4 as uuidv4 } from 'uuid';
 import { TenantRepository } from '../repository';
-import { Mock } from 'moq.ts';
+import { It, Mock } from 'moq.ts';
+import { AdspId } from '@abgov/adsp-service-sdk';
 
 describe('TenantEntity', () => {
   it('can be created', () => {
@@ -51,6 +52,6 @@ describe('TenantEntity', () => {
     );
 
     const obj = entity.obj();
-    expect(obj.id).toBe(id);
+    expect((obj.id as AdspId).resource).toContain(id);
   });
 });
