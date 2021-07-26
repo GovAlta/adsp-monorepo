@@ -43,13 +43,13 @@ describe('Service Option Router', () => {
     });
   });
 
-  describe('GET /:id', () => {
-    it.skip('returns a 200 and json data for valid service', () => {
-      //
-    });
+  // describe('GET /:id', () => {
+  //   it('returns a 200 and json data for valid service', () => {
+  //     //
+  //   });
 
-    it.skip('responds with a 404 on an invalid :id', () => {
-      //
-    });
-  });
+  //   it('responds with a 404 on an invalid :id', () => {
+  //     //
+  //   });
+  // });
 });
