@@ -16,9 +16,7 @@ export const NotificationContainer = styled.div`
 `;
 
 export const Notifications = (props: NotificationProps) => {
-  const notifications = props.notifications.filter((notification) => {
-    notification.message.includes(props.tag);
-  });
+  const notifications = props.notifications;
   return (
     <>
       {notifications.length > 0 ? (

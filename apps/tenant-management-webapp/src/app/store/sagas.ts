@@ -3,7 +3,15 @@ import { takeEvery } from 'redux-saga/effects';
 // Sagas
 import { fetchAccess } from './access/sagas';
 import { fetchConfig } from './config/sagas';
-import { uploadFile, enableFileService, fetchFiles, deleteFile, downloadFile, fetchSpace } from './file/sagas';
+import {
+  uploadFile,
+  enableFileService,
+  fetchFiles,
+  deleteFile,
+  downloadFile,
+  fetchSpace,
+  fetchFileTypeHasFile,
+} from './file/sagas';
 import { fetchFileTypes, deleteFileTypes, createFileType, updateFileType, fetchFileDocs } from './file/sagas';
 import {
   fetchTenant,
@@ -35,6 +43,7 @@ import {
   UPDATE_FILE_TYPE,
   FETCH_FILE_SPACE,
   FETCH_FILE_DOCS,
+  FETCH_FILE_TYPE_HAS_FILE,
 } from './file/actions';
 import {
   FETCH_TENANT,
@@ -64,6 +73,7 @@ export function* watchSagas() {
   yield takeEvery(DOWNLOAD_FILE, downloadFile);
   yield takeEvery(DELETE_FILE, deleteFile);
   yield takeEvery(FETCH_FILE_LIST, fetchFiles);
+  yield takeEvery(FETCH_FILE_TYPE_HAS_FILE, fetchFileTypeHasFile);
 
   yield takeEvery(ENABLE_FILE_SERVICE, enableFileService);
   yield takeEvery(FETCH_FILE_SPACE, fetchSpace);

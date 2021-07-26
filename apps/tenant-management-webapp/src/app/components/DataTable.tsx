@@ -21,10 +21,15 @@ const Table = styled.table`
   width: 100%;
 
   td {
-    padding-left: 0.5rem;
-    padding-top: 4px;
-    padding-bottom: 8px;
-    padding-right: 0.5rem;
+    padding-left: 8px;
+    padding-top: 6px;
+    padding-bottom: 10px;
+    padding-right: 8px;
+
+    button {
+      /* TODO: GoA button with a top margin, which is unexpected. After the fix, we can remove this line */
+      margin-top: 0px !important;
+    }
   }
 
   tr {

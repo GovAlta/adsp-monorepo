@@ -83,6 +83,12 @@ export class FileApi {
     return res.data;
   }
 
+  async fetchFileTypeHasFile(fileTypeId: string): Promise<boolean> {
+    const url = `${this.fileConfig.endpoints.fileAdmin}/fileType/${fileTypeId}`;
+    const res = await this.http.get(url);
+    return res.data.exist;
+  }
+
   swaggerDocToFileDocs(swaggerDocs) {
     const fileTypeDocs = [];
     const fileDocs = [];
