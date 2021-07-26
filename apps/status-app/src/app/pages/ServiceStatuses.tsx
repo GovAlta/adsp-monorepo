@@ -26,15 +26,16 @@ const ServiceStatusPage = () => {
   const location = useLocation();
   const ready = config.envLoaded && loaded;
   const realm = location.pathname.slice(1) || config.platformTenantRealm;
-  const api = new StatusApi(config.serviceUrls.serviceStatusApiUrl, realm);
 
   useEffect(() => {
-    async function fetchData() {
+    const api = new StatusApi(config.serviceUrls.serviceStatusApiUrl, realm);
+    const intervalId = setInterval(async () => {
       const publicApp = await api.getPublicApplications();
       setApplications(publicApp);
       setLoaded(true);
-    }
-    fetchData();
+    }, 5000);
+
+    return () => clearInterval(intervalId); //This is important
   }, [env]);
 
   const PageLoader = () => {
