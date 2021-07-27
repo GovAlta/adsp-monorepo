@@ -43,18 +43,17 @@ describe('Service statuses', () => {
     axiosMock.get.mockReset();
   });
 
-  it('displays a message saying no services are available if there are none', () => {
+  it('displays a message saying no services are available if there are none', async () => {
     const { getByText } = render(
       <Provider store={store}>
         <ServiceStatuses />
       </Provider>
     );
-
-    setTimeout(() => {
+    await waitFor(() =>
       expect(
         getByText('Either there are no services available by this provider, or you have an incorrect ID')
-      ).toBeTruthy();
-    }, 10000);
+      ).toBeTruthy()
+    );
   });
 });
 
@@ -127,17 +126,15 @@ describe('Service statuses (2 of them)', () => {
     axiosMock.get.mockReset();
   });
 
-  it('has service status names', () => {
+  it('has service status names', async () => {
     const { getByText } = render(
       <Provider store={store}>
         <ServiceStatuses />
       </Provider>
     );
 
-    setTimeout(() => {
-      expect(getByText('Status Service')).toBeTruthy();
-      expect(getByText('Tenant Service')).toBeTruthy();
-    }, 10000);
+    await waitFor(() => expect(getByText('Status Service')).toBeTruthy());
+    await waitFor(() => expect(getByText('Tenant Service')).toBeTruthy());
   });
 
   it('has service status descriptions', async () => {
@@ -147,10 +144,12 @@ describe('Service statuses (2 of them)', () => {
       </Provider>
     );
 
-    setTimeout(() => {
-      expect(getByText('This service allows for easy monitoring of application downtime.')).toBeTruthy();
-      expect(getByText('Allows the provisioning of distinct services in their own namespace.')).toBeTruthy();
-    }, 10000);
+    await waitFor(() =>
+      expect(getByText('This service allows for easy monitoring of application downtime.')).toBeTruthy()
+    );
+    await waitFor(() =>
+      expect(getByText('Allows the provisioning of distinct services in their own namespace.')).toBeTruthy()
+    );
   });
 
   it('has service time of last service', async () => {
@@ -159,9 +158,8 @@ describe('Service statuses (2 of them)', () => {
         <ServiceStatuses />
       </Provider>
     );
-    setTimeout(() => {
-      expect(getByText(moment(data[0].statusTimestamp).calendar())).toBeTruthy();
-      expect(getByText(moment(data[1].statusTimestamp).calendar())).toBeTruthy();
-    }, 10000);
+
+    await waitFor(() => expect(getByText(moment(data[0].statusTimestamp).calendar())).toBeTruthy());
+    await waitFor(() => expect(getByText(moment(data[1].statusTimestamp).calendar())).toBeTruthy());
   });
 });
