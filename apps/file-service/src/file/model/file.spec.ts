@@ -3,7 +3,7 @@ import { Mock, It } from 'moq.ts';
 import { adspId, User } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
 import { FileRepository } from '../repository';
-import { File, FileRecord } from '../types';
+import { FileRecord } from '../types';
 import { FileEntity } from './file';
 import { FileTypeEntity } from './type';
 import path = require('path');

@@ -2,7 +2,7 @@ import { RequestHandler } from 'express';
 // Passport enhances type defs on express types; this is needed for type checking on tests.
 import * as _passport from 'passport';
 import { logger } from './logger';
-
+import { User } from '@abgov/adsp-service-sdk';
 export const assertAuthenticatedHandler: RequestHandler = (req, res, next) => {
   if (!req.isAuthenticated || !req.user) {
     res.sendStatus(401);
@@ -16,10 +16,9 @@ export interface AuthenticationConfig {
   allowedRoles?: Array<string>;
 }
 
-export const authenticateToken = (authConfig: AuthenticationConfig, user) => {
-  logger.debug(`Checking access for user ${user.name} (${user.id}) via tenant: ${user.tenantId || 'core'}`);
-
+export const authenticateToken = (authConfig: AuthenticationConfig, user: User): boolean => {
   try {
+    logger.debug(`Checking access for user ${user.name} (${user.id}) via tenant: ${user.tenantId || 'core'}`);
     if (authConfig.requireCore) {
       if (!user.isCore) {
         logger.warn(`Expect core tenant, but access token is not for core.`);

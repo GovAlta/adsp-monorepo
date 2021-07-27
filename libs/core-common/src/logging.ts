@@ -20,7 +20,7 @@ const colors = {
   verbose: 'blue',
 };
 
-export const createLogger = (service: string, level: string) =>
+export const createLogger = (service: string, level: string): winston.Logger =>
   winston.createLogger({
     level: level || 'info',
     levels: levels,

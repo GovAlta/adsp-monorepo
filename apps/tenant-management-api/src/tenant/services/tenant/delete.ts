@@ -99,3 +99,7 @@ export const deleteTenant = async (keycloakRealm: string): Promise<DeleteTenantR
   };
   return Promise.resolve(deleteTenantResponse);
 };
+
+export function testDelete(): boolean {
+  return true;
+}

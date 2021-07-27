@@ -1,5 +1,8 @@
 import React from 'react';
+import { Provider } from 'react-redux';
+import { getDefaultMiddleware } from '@reduxjs/toolkit';
 import { render, waitFor } from '@testing-library/react';
+import configureStore from 'redux-mock-store';
 import ServiceStatuses from './ServiceStatuses';
 import axios from 'axios';
 import moment from 'moment';
@@ -17,8 +20,22 @@ jest.mock('react-router-dom', () => ({
   }),
 }));
 
+const mockStore = configureStore(getDefaultMiddleware());
+
 describe('Service statuses', () => {
+  let store;
+
   beforeEach(() => {
+    store = mockStore({
+      config: {
+        serviceUrls: {
+          serviceStatusApiUrl: 'http://localhost:3338',
+        },
+        platformTenantRealm: '0014430f-abb9-4b57-915c-de9f3c889696',
+        envLoaded: true,
+      },
+    });
+
     axiosMock.get.mockResolvedValueOnce({ data: {} });
   });
 
@@ -26,20 +43,24 @@ describe('Service statuses', () => {
     axiosMock.get.mockReset();
   });
 
-  it('displays a message saying no services are available if there are none', async () => {
+  it('displays a message saying no services are available if there are none', () => {
     const { getByText } = render(
-      <ServiceStatuses />
+      <Provider store={store}>
+        <ServiceStatuses />
+      </Provider>
     );
 
-    await waitFor(() =>
+    setTimeout(() => {
       expect(
         getByText('Either there are no services available by this provider, or you have an incorrect ID')
-      ).toBeTruthy()
-    );
+      ).toBeTruthy();
+    }, 10000);
   });
 });
 
 describe('Service statuses (2 of them)', () => {
+  let store;
+
   const data = [
     {
       repository: {},
@@ -56,7 +77,7 @@ describe('Service statuses (2 of them)', () => {
       statusTimestamp: 1626378840127,
       tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/60e76e9e852db55d8ce1fa80',
       tenantName: 'platform',
-      tenantRealm: '0014430f-abb9-4b57-915c-de9f3c889696',
+      tenantUUID: '0014430f-abb9-4b57-915c-de9f3c889696',
       status: 'operational',
       manualOverride: 'off',
     },
@@ -75,7 +96,7 @@ describe('Service statuses (2 of them)', () => {
       statusTimestamp: 1626380220228,
       tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/60e76e9e852db55d8ce1fa80',
       tenantName: 'platform',
-      tenantRealm: '0014430f-abb9-4b57-915c-de9f3c889696',
+      tenantUUID: '0014430f-abb9-4b57-915c-de9f3c889696',
       status: 'operational',
       manualOverride: 'off',
     },
@@ -90,6 +111,15 @@ describe('Service statuses (2 of them)', () => {
   });
 
   beforeEach(() => {
+    store = mockStore({
+      config: {
+        serviceUrls: {
+          serviceStatusApiUrl: 'http://localhost:3338',
+        },
+        platformTenantRealm: '0014430f-abb9-4b57-915c-de9f3c889696',
+        envLoaded: true,
+      },
+    });
     axiosMock.get.mockResolvedValueOnce({ data: data });
   });
 
@@ -98,14 +128,22 @@ describe('Service statuses (2 of them)', () => {
   });
 
   it('has service status names', async () => {
-    const { getByText } = render(<ServiceStatuses />);
+    const { getByText } = render(
+      <Provider store={store}>
+        <ServiceStatuses />
+      </Provider>
+    );
 
     await waitFor(() => expect(getByText('Status Service')).toBeTruthy());
     await waitFor(() => expect(getByText('Tenant Service')).toBeTruthy());
   });
 
   it('has service status descriptions', async () => {
-    const { getByText } = render(<ServiceStatuses />);
+    const { getByText } = render(
+      <Provider store={store}>
+        <ServiceStatuses />
+      </Provider>
+    );
 
     await waitFor(() =>
       expect(getByText('This service allows for easy monitoring of application downtime.')).toBeTruthy()
@@ -116,7 +154,11 @@ describe('Service statuses (2 of them)', () => {
   });
 
   it('has service time of last service', async () => {
-    const { getByText } = render(<ServiceStatuses />);
+    const { getByText } = render(
+      <Provider store={store}>
+        <ServiceStatuses />
+      </Provider>
+    );
 
     await waitFor(() => expect(getByText(moment(data[0].statusTimestamp).calendar())).toBeTruthy());
     await waitFor(() => expect(getByText(moment(data[1].statusTimestamp).calendar())).toBeTruthy());

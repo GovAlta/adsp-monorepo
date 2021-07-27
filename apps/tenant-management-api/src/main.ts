@@ -29,6 +29,7 @@ import { version } from '../../../package.json';
 import * as directoryService from './directory/services';
 import type { User } from '@abgov/adsp-service-sdk';
 import { TenantServiceRoles } from './roles';
+import { TenantMongoRepository } from './tenant/mongo';
 
 async function initializeApp(): Promise<express.Application> {
   /* Connect to mongo db */
@@ -109,7 +110,8 @@ async function initializeApp(): Promise<express.Application> {
   const authenticate = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
   const authenticateCore = passport.authenticate(['jwt'], { session: false });
 
-  const tenantRouter = createTenantRouter({ eventService, services: serviceRegistration });
+  const tenantRepository = new TenantMongoRepository();
+  const tenantRouter = createTenantRouter({ tenantRepository, eventService, services: serviceRegistration });
   app.use('/api/tenant/v1', authenticate, tenantRouter);
 
   const tenantV2Router = createTenantV2Router();

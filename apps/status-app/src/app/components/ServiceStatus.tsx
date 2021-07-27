@@ -14,13 +14,24 @@ interface DescriptiveStrings {
   [key: string]: string;
 }
 
+function upcaseFirstLetterInEachWord(sentence: string) {
+  const wordArray = sentence.split(' ');
+
+  for (let i = 0; i < wordArray.length; i++) {
+    wordArray[i] = wordArray[i].charAt(0).toUpperCase() + wordArray[i].slice(1);
+  }
+
+  return wordArray.join(' ');
+}
+
 export function ServiceStatus({ name, date, assignmentStatus = '', state, description }: ServiceOptions) {
-  const stateProper = state.charAt(0).toUpperCase() + state.slice(1);
+  let stateProper = state.charAt(0).toUpperCase() + state.slice(1);
+  stateProper = upcaseFirstLetterInEachWord(stateProper.replace('-', ' '));
 
   const backgroundColors: DescriptiveStrings = {
     Outage: '#ec0417',
     'Issues Reported': '#ec0417',
-    'Reported Issue': '#ec0417',
+    'Reported Issues': '#ec0417',
     Maintenance: '#feba35',
     Pending: '#feba35',
     Disabled: '#feba35',
@@ -30,7 +41,7 @@ export function ServiceStatus({ name, date, assignmentStatus = '', state, descri
   const textColor: DescriptiveStrings = {
     Outage: 'white',
     'Issues Reported': 'white',
-    'Reported Issue': 'white',
+    'Reported Issues': 'white',
     Maintenance: 'black',
     Pending: 'black',
     Disabled: 'black',
@@ -40,7 +51,7 @@ export function ServiceStatus({ name, date, assignmentStatus = '', state, descri
   const icons: DescriptiveStrings = {
     Outage: 'error',
     'Issues Reported': 'error',
-    'Reported Issue': 'error',
+    'Reported Issues': 'error',
     Maintenance: 'warning',
     Pending: 'warning',
     Disabled: 'warning',

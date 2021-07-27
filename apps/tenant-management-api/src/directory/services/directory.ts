@@ -119,11 +119,12 @@ export const discovery = async (urn: string, { directoryRepository }: ServicePro
   );
 };
 
-export const getDirectories = async (): Promise<Response[] | ApiError> => {
+export const getDirectories = async (): Promise<{ urn: string; url: string }[]> => {
   logger.info('Starting get directory from mongo db...');
   try {
     const response = [];
-    const directoryRepository: DirectoryRepository = new MongoDirectoryRepository();
+    // FIXME: using this repository with dependency injection make this impossible to test
+    const directoryRepository = new MongoDirectoryRepository();
     const result = await directoryRepository.find(100, null, null);
     const directories = result.results;
     if (directories && directories.length > 0) {
@@ -147,7 +148,7 @@ export const getDirectories = async (): Promise<Response[] | ApiError> => {
     }
     return response;
   } catch (err) {
-    return new ApiError(
+    throw new ApiError(
       HttpStatusCodes.BAD_REQUEST,
       'Empty in urn! urn format should looks like urn:ads:{tenant|core}:{service}'
     );
@@ -155,8 +156,8 @@ export const getDirectories = async (): Promise<Response[] | ApiError> => {
 };
 
 export const getServiceUrl = async (id: AdspId): Promise<URL> => {
-  const directory = (await getDirectories()) as { urn: string; url: string }[];
-  const entry = directory.find((entry) => entry.urn === `${id}`);
+  const directories = await getDirectories();
+  const entry = directories.find((entry) => entry.urn === `${id}`);
   if (!entry) {
     throw new Error(`Directory entry for ${id} not found.`);
   }

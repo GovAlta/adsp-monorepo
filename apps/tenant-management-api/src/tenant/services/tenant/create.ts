@@ -350,3 +350,7 @@ export const createNewTenantInDB = async (
   const tenant = await tenantEntity.save();
   return tenant;
 };
+
+export function testCreate(): boolean {
+  return true;
+}

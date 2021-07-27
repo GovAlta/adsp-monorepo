@@ -12,6 +12,7 @@ describe('createVerifyService', () => {
   const repositoryMock = {
     get: jest.fn(),
     set: jest.fn(),
+    failed: jest.fn()
   };
   beforeEach(() => {
     repositoryMock.get.mockReset();
@@ -83,7 +84,7 @@ describe('createVerifyService', () => {
         const service = createVerifyService({ logger: loggerMock, repository: repositoryMock });
         const result = await service.verify(
           {
-            roles: [],
+            roles: [VerifyUserRoles.Verifier],
             tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
           } as User,
           key,
@@ -101,7 +102,7 @@ describe('createVerifyService', () => {
         const service = createVerifyService({ logger: loggerMock, repository: repositoryMock });
         const result = await service.verify(
           {
-            roles: [],
+            roles: [VerifyUserRoles.Verifier],
             tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
           } as User,
           key,
@@ -119,7 +120,7 @@ describe('createVerifyService', () => {
         const service = createVerifyService({ logger: loggerMock, repository: repositoryMock });
         const result = await service.verify(
           {
-            roles: [],
+            roles: [VerifyUserRoles.Verifier],
             tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
           } as User,
           key,
@@ -127,6 +128,38 @@ describe('createVerifyService', () => {
         );
         expect(repositoryMock.get).toHaveBeenCalledTimes(1);
         expect(result).toBe(false);
+      });
+
+      it('can throw for non-tenant user', async () => {
+        const key = 'test';
+        repositoryMock.set.mockResolvedValueOnce({ key });
+
+        const service = createVerifyService({ logger: loggerMock, repository: repositoryMock });
+        expect(() => {
+          service.verify(
+            {
+              roles: [VerifyUserRoles.Verifier],
+              isCore: true,
+            } as User,
+            key,
+            "123456"
+          );
+        }).toThrow();
+      });
+
+      it('can throw for unauthorized user', async () => {
+        const key = 'test';
+        const service = createVerifyService({ logger: loggerMock, repository: repositoryMock });
+        expect(() =>
+          service.verify(
+            {
+              roles: [],
+              tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
+            } as User,
+            key,
+            "123456"
+          )
+        ).toThrow();
       });
     });
   });

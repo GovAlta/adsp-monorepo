@@ -21,7 +21,11 @@ export class FileSpaceEntity implements FileSpace {
   };
 
   @AssertRole('create file space', ServiceUserRoles.Admin)
-  static async create(user: User, repository: FileSpaceRepository, space: Omit<FileSpace, 'types'>) {
+  static async create(
+    user: User,
+    repository: FileSpaceRepository,
+    space: Omit<FileSpace, 'types'>
+  ): Promise<FileSpaceEntity> {
     const entity = new FileSpaceEntity(repository, { types: {}, ...space });
     return repository.save(entity);
   }
@@ -38,11 +42,11 @@ export class FileSpaceEntity implements FileSpace {
     }, {});
   }
 
-  getPath(storageRoot: string) {
+  getPath(storageRoot: string): string {
     return path.join(storageRoot, this.id);
   }
 
-  async update(user: User, update: Update<FileSpace>) {
+  async update(user: User, update: Update<FileSpace>): Promise<FileSpaceEntity> {
     if (!this.canUpdate(user)) {
       throw new UnauthorizedError('User not authorized to updated space.');
     }
@@ -58,7 +62,7 @@ export class FileSpaceEntity implements FileSpace {
     return this.repository.save(this);
   }
 
-  async deleteType(user: User, typeId: string) {
+  async deleteType(user: User, typeId: string): Promise<void> {
     if (this.canUpdate(user)) {
       delete this.types[typeId];
       this.repository.save(this);
@@ -67,14 +71,14 @@ export class FileSpaceEntity implements FileSpace {
     }
   }
 
-  updateType(user: User, typeId: string, update: Update<FileType>) {
+  updateType(user: User, typeId: string, update: Update<FileType>): Promise<FileSpaceEntity> {
     const type = Object.values(this.types).find((type) => type.id === typeId);
     type.update(user, update);
 
     return this.repository.save(this);
   }
 
-  async addType(user, rootStoragePath: string, typeId: string, type: New<FileType>) {
+  async addType(user: User, rootStoragePath: string, typeId: string, type: New<FileType>): Promise<FileSpaceEntity> {
     if (!this.canUpdate(user)) {
       throw new UnauthorizedError('User not authorized to create type.');
     }
@@ -107,19 +111,19 @@ export class FileSpaceEntity implements FileSpace {
     return created;
   }
 
-  canAccess(user: User) {
+  canAccess(user: User): boolean {
     return (
       user && user.roles && (user.roles.includes(ServiceUserRoles.Admin) || user.roles.includes(this.spaceAdminRole))
     );
   }
 
-  canUpdate(user: User) {
+  canUpdate(user: User): boolean {
     return (
       user && user.roles && (user.roles.includes(ServiceUserRoles.Admin) || user.roles.includes(this.spaceAdminRole))
     );
   }
 
-  delete(entity: FileSpaceEntity) {
+  delete(entity: FileSpaceEntity): Promise<boolean> {
     return this.repository.delete(entity);
   }
 }
