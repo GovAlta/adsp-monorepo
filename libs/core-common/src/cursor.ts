@@ -1,4 +1,4 @@
-export const decodeAfter = (after: string) => {
+export const decodeAfter = (after: string): number => {
   let skip = 0;
   if (after) {
     const cursorBuffer = Buffer.from(after, 'base64');
@@ -8,7 +8,7 @@ export const decodeAfter = (after: string) => {
   return skip;
 };
 
-export const encodeNext = (count: number, top: number, skip: number) => {
+export const encodeNext = (count: number, top: number, skip: number): string => {
   let next: string;
   if (count === top) {
     next = Buffer.from(`${skip + top}`).toString('base64');

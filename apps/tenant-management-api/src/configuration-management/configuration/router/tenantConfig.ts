@@ -36,9 +36,9 @@ export const createTenantConfigurationRouter = ({
   });
 
   tenantConfigRouter.get('/', async (req, res, next) => {
-    const user = req.user;
-    const tenant = `${user.tenantId}`;
     try {
+      const user = req.user;
+      const tenant = `${user.tenantId}`;
       const results = await tenantConfigurationRepository.getTenantConfig(tenant);
 
       if (!results) {

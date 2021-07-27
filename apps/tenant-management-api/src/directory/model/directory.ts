@@ -1,6 +1,7 @@
 import { Service, Directory } from '../types';
 import { IsNotEmpty } from 'class-validator';
 import { DirectoryRepository } from '../repository';
+import { Update } from '@core-services/core-common';
 
 export class DirectoryEntity implements Directory {
   id: string;
@@ -16,9 +17,9 @@ export class DirectoryEntity implements Directory {
     const entity = new DirectoryEntity(repository, directory);
     return repository.save(entity);
   }
-  async update(directory: Directory): Promise<DirectoryEntity> {
-    this.name = directory.name;
-    this.services = directory.services;
+  update(directory: Update<Directory>): Promise<DirectoryEntity> {
+    this.name = directory.name ?? this.name;
+    this.services = directory.services ?? this.services;
     return this.repository.save(this);
   }
 }

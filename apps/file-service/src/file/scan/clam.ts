@@ -11,7 +11,7 @@ interface ClamScan {
   }>;
 }
 
-export const createClamScan = ({ rootStoragePath, host, port }: ScanProps) => {
+export const createClamScan = ({ rootStoragePath, host, port }: ScanProps): ScanService => {
   const scanPromise: Promise<ClamScan> = new NodeClam().init({
     clamdscan: {
       socket: false,

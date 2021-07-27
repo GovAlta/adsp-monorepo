@@ -164,3 +164,29 @@ Tenant401: &Tenant401
       '404':
         description: file not found
       '401': *FileUpdate401
+
+"/files/fileType/:fileTypeId":
+  get:
+    tags:
+      - File
+    description: Get whether have the files of given file type.
+    parameters:
+    - name: fileTypeId
+      description: ID of file type.
+      in: path
+      required: true
+      schema:
+        type: string
+    responses:
+      '200':
+        description: Successfully get whether have the files of given file type.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                exist:
+                  type: boolean
+      '404':
+        description: file not found
+      '401': *FileUpdate401

@@ -8,8 +8,8 @@ import { logger } from '../../middleware/logger';
 import { v4 as uuidv4 } from 'uuid';
 import { EventService } from '@abgov/adsp-service-sdk';
 import { tenantCreated } from '../events';
-import { tenantRepository } from '../repository';
 import { ServiceRegistration } from '../../configuration-management';
+import { TenantRepository } from '../repository';
 
 class CreateTenantDto {
   @IsDefined()
@@ -36,9 +36,10 @@ class TenantByRealmDto {
 interface TenantRouterProps {
   eventService: EventService;
   services: ServiceRegistration;
+  tenantRepository: TenantRepository;
 }
 
-export const createTenantRouter = ({ eventService, services }: TenantRouterProps): Router => {
+export const createTenantRouter = ({ tenantRepository, eventService, services }: TenantRouterProps): Router => {
   const tenantRouter = Router();
 
   async function getTenantByEmail(req, res) {
@@ -106,40 +107,33 @@ export const createTenantRouter = ({ eventService, services }: TenantRouterProps
   }
 
   async function createTenant(req, res) {
-    {
-      const payload = req.payload;
-      const tenantName = payload.name;
-      const email = req.user.email;
+    const payload = req.payload;
+    const tenantName = payload.name;
+    const email = req.user.email;
 
-      let tokenIssuer = req.user.token.iss;
-      tokenIssuer = tokenIssuer.replace('core', tenantName);
+    let tokenIssuer = req.user.token.iss;
+    tokenIssuer = tokenIssuer.replace('core', tenantName);
 
-      try {
-        logger.info('Starting create realm....');
+    try {
+      logger.info('Starting create realm....');
 
-        const generatedRealmName = uuidv4();
+      const generatedRealmName = uuidv4();
 
-        await TenantService.validateEmailInDB(email);
-        await TenantService.createRealm(services, generatedRealmName, email, tenantName);
-        const { ...tenant } = await TenantService.createNewTenantInDB(
-          email,
-          generatedRealmName,
-          tenantName,
-          tokenIssuer
-        );
+      await TenantService.validateEmailInDB(email);
+      await TenantService.createRealm(services, generatedRealmName, email, tenantName);
+      const { ...tenant } = await TenantService.createNewTenantInDB(email, generatedRealmName, tenantName, tokenIssuer);
 
-        const data = { status: 'ok', message: 'Create Realm Success!', realm: generatedRealmName };
+      const data = { status: 'ok', message: 'Create Realm Success!', realm: generatedRealmName };
 
-        eventService.send(tenantCreated(req.user, { ...tenant }));
+      eventService.send(tenantCreated(req.user, { ...tenant }));
 
-        res.status(HttpStatusCodes.OK).json(data);
-      } catch (err) {
-        if (err instanceof TenantService.TenantError) {
-          res.status(err.errorCode).json({ error: err.message });
-        }
-
-        res.status(err.response.status).json({ error: err.message });
+      res.status(HttpStatusCodes.OK).json(data);
+    } catch (err) {
+      if (err instanceof TenantService.TenantError) {
+        res.status(err.errorCode).json({ error: err.message });
       }
+
+      res.status(err.response.status).json({ error: err.message });
     }
   }
 

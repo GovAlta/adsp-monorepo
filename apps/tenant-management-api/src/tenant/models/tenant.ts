@@ -36,6 +36,7 @@ export class TenantEntity implements Tenant {
       adminEmail: this.adminEmail,
       tokenIssuer: this.tokenIssuer,
       name: this.name,
+      createdBy: this.createdBy,
     };
   }
 }

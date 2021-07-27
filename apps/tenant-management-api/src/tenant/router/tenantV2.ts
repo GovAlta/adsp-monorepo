@@ -17,6 +17,7 @@ export const createTenantV2Router = (): Router => {
 
   tenantV2Router.get('/tenants', requirePlatformService, async (_req, res, next) => {
     try {
+      // FIXME: accessing a non-injected dependency makes this hard to test
       const tenants = await tenantService.getTenants();
 
       res.json({

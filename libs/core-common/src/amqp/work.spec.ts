@@ -1,4 +1,3 @@
-import { adspId } from '@abgov/adsp-service-sdk';
 import { Connection } from 'amqplib';
 import { Logger } from 'winston';
 import { AmqpWorkQueueService } from './work';

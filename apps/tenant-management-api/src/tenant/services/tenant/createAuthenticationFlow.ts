@@ -96,3 +96,7 @@ export const createAuthenticationFlow = async (realm: string): Promise<void> => 
     }
   }
 };
+
+export function testCreateAuthenticationFlow(): boolean {
+  return true;
+}

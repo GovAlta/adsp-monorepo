@@ -681,12 +681,7 @@
           },
           "configurations": {
             "production": {
-              "fileReplacements": [
-                {
-                  "replace": "apps/status-app/src/environments/environment.ts",
-                  "with": "apps/status-app/src/environments/environment.prod.ts"
-                }
-              ],
+              "fileReplacements": [],
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,

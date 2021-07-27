@@ -13,7 +13,13 @@ interface MongoRepositoryProps {
   logger: Logger;
 }
 
-export const createRepositories = ({ MONGO_URI, MONGO_DB, MONGO_USER, MONGO_PASSWORD, logger }: MongoRepositoryProps) =>
+export const createRepositories = ({
+  MONGO_URI,
+  MONGO_DB,
+  MONGO_USER,
+  MONGO_PASSWORD,
+  logger,
+}: MongoRepositoryProps): Promise<Repositories> =>
   new Promise<Repositories>((resolve, reject) => {
     const mongoConnectionString = `${MONGO_URI}/${MONGO_DB}`;
     connect(

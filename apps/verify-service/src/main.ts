@@ -34,6 +34,10 @@ const initializeApp = async (): Promise<express.Application> => {
           role: VerifyUserRoles.Generator,
           description: 'Generator role for generating new verification codes.',
         },
+        {
+          role: VerifyUserRoles.Verifier,
+          description: 'Verifier role for verifying codes.',
+        },
       ],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
