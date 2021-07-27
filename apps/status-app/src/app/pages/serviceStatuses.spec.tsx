@@ -43,18 +43,18 @@ describe('Service statuses', () => {
     axiosMock.get.mockReset();
   });
 
-  it('displays a message saying no services are available if there are none', async () => {
+  it('displays a message saying no services are available if there are none', () => {
     const { getByText } = render(
       <Provider store={store}>
         <ServiceStatuses />
       </Provider>
     );
 
-    await waitFor(() =>
+    setTimeout(() => {
       expect(
         getByText('Either there are no services available by this provider, or you have an incorrect ID')
-      ).toBeTruthy()
-    );
+      ).toBeTruthy();
+    }, 10000);
   });
 });
 
