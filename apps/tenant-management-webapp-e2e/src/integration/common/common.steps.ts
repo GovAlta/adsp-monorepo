@@ -71,6 +71,9 @@ When('the user selects the {string} menu item', function (menuItem) {
     case 'Dashboard':
       menuItemSelector = '/admin';
       break;
+    case 'Event log':
+      menuItemSelector = '/admin/event-log';
+      break;
     case 'File Services':
       menuItemSelector = '/admin/services/files';
       break;
