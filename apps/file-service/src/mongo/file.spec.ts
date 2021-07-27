@@ -7,6 +7,7 @@ import { FileEntity } from '../file/model';
 import { adspId } from '@abgov/adsp-service-sdk';
 import { FileCriteria } from '../file/types';
 import { environment } from '../environments/environment';
+import * as fs from 'fs';
 
 describe('Mongo: FileEntity', async () => {
   const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
@@ -33,13 +34,13 @@ describe('Mongo: FileEntity', async () => {
     done();
   });
 
-  it('should create an option', async () => {
+  it('should create a file', async () => {
     const data = await createMockData<FileEntity>(repo, [{ id: '1' }]);
     const { results } = await repo.find(99, '', criteria);
     expect(results.length).toEqual(data.length);
   });
 
-  it('finds a defined record count ', async () => {
+  it('finds a defined file ', async () => {
     const data = await createMockData<FileEntity>(repo, [{}, {}, {}]);
     const { results } = await repo.find(2, '', criteria);
     expect(data.length).toEqual(3);

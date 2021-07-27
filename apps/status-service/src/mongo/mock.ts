@@ -4,7 +4,7 @@ const mongod = new MongoMemoryServer();
 
 export const disconnectMockMongo = async () => {
   await connection.close();
-  await mongod.stop();
+  //await mongod.stop();
 };
 
 export const createMockMongoServer = async (): Promise<typeof import('mongoose')> => {
