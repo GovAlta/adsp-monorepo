@@ -1,30 +1,23 @@
 @REQ_CS-191 @tenant-admin
 Feature: Tenant admin
 
-  @TEST_CS-298 @REQ_CS-194 @dashboard @regression
+  @TEST_CS-298 @REQ_CS-194 @dashboard @smoke-test @regression
   Scenario: As a GoA service owner, I can access the Tenant management webapp
     Given the user goes to tenant management login link
     When the user enters credentials and clicks login button
     Then the tenant management admin page is displayed
 
-  # Administration menu is removed
-  # @TEST_CS-299 @REQ_CS-194 @dashboard @regression
-  # Scenario: As a GoA service owner, I can access the Administration module
-  #   Given a service owner user is on tenant admin page
-  #   When the user selects the "Administration" menu item
-  #   Then the "administration" landing page is displayed
-
-  @TEST_CS-300 @REQ_CS-194 @dashboard @regression
-  Scenario: As a GoA service owner I can access the File Services module
+  @TEST_CS-300 @REQ_CS-194 @regression
+  Scenario Outline: As a GoA service owner I can access "<Page Title>"
     Given a service owner user is on tenant admin page
-    When the user selects the "File Services" menu item
-    Then the "file services" landing page is displayed
+    When the user selects the "<Menu>" menu item
+    Then the "<Page Title>" landing page is displayed
+    Examples:
+      | Menu          | Page Title     |
+      | File Services | File Services  |
+      | Status        | Service Status |
+      | Event log     | Event log      |
 
-  @dashboard @regression
-  Scenario: As a GoA service owner I can access the Service Status module
-    Given a service owner user is on tenant admin page
-    When the user selects the "Status" menu item
-    Then the "service status" landing page is displayed
 
   @regression @smoke-test @api
   Scenario Outline: As a GoA service owner I can get a list of "<Options>"
@@ -68,7 +61,7 @@ Feature: Tenant admin
     When the user selects the "Access" menu item
     Then no critical or serious accessibility issues on "tenant admin access page"
 
-  @TEST_CS-588 @regression
+  @TEST_CS-588 @dashboard @regression
   Scenario: As a GoA admin user, I should be able to see useful information on the landing page
     Given a service owner user is on tenant admin page
     Then the user views the tenant name of "autotest"
