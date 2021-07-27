@@ -86,7 +86,7 @@ const DeleteModalContainer = styled.div`
 `;
 
 const RoleSpan = styled.span`
-  background: #f1f1f1 padding-box;
+  background: var(--color-gray-015) padding-box;
   border-radius: 13px;
   margin-right: 10px;
 `;
