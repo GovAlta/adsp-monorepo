@@ -31,6 +31,7 @@ const TitleContainer = styled.div`
 const FileTypeTableContainer = styled.div`
   table {
     margin-top: 20px;
+    margin-bottom: 100px;
   }
 
   td.right {
@@ -145,7 +146,64 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
   };
 
   const ActionCell = (props: FileTypeRowProps) => {
+    const { rowType } = props;
+    const Edit = () => {
+      return (
+        <a
+          data-testid="edit-file-type"
+          onClick={() => {
+            if (editableId !== props.id) {
+              setEditableId(props.id);
+              // When we select a new line, we will lose unsaved information
+              setShowDelete(false);
+              setUpdateFileType({ ...props });
+            }
+          }}
+        >
+          Edit
+        </a>
+      );
+    };
+
+    const CancelNew = () => {
+      return (
+        <a
+          data-testid="cancel-new"
+          onClick={() => {
+            setStartCreateFileType(false);
+            setNewFileType(null);
+          }}
+        >
+          Cancel
+        </a>
+      );
+    };
+
+    const CancelUpdate = () => {
+      return (
+        <a
+          data-testid="cancel-update"
+          onClick={() => {
+            setEditableId('');
+            setUpdateFileType(null);
+          }}
+        >
+          Cancel
+        </a>
+      );
+    };
+    return (
+      <td>
+        {rowType === 'update' && props.id === editableId && <CancelUpdate />}
+        {rowType === 'update' && props.id !== editableId && <Edit />}
+        {props.rowType === 'new' && <CancelNew />}
+      </td>
+    );
+  };
+
+  const DeleteCell = (props: FileTypeRowProps) => {
     const { rowType, id } = props;
+
     const dispatch = useDispatch();
 
     const Create = () => {
@@ -156,6 +214,7 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
           key={`${props.id}-confirm-button`}
           onClick={() => {
             dispatch(CreateFileTypeService({ ...newFileType, id }));
+
             setNewFileType(null);
           }}
           data-testid="confirm-new"
@@ -173,7 +232,9 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
           data-testid="confirm-update"
           onClick={() => {
             dispatch(UpdateFileTypeService({ ...updateFileType, id }));
+
             setUpdateFileType(null);
+
             setEditableId('');
           }}
         >
@@ -182,37 +243,6 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
       );
     };
 
-    const Edit = () => {
-      return (
-        <GoAButton
-          buttonSize="small"
-          buttonType="secondary"
-          data-testid="edit-file-type"
-          onClick={() => {
-            if (editableId !== props.id) {
-              setEditableId(props.id);
-              // When we select a new line, we will lose unsaved information
-              setShowDelete(false);
-              setUpdateFileType({ ...props });
-            }
-          }}
-        >
-          Edit
-        </GoAButton>
-      );
-    };
-
-    return (
-      <td>
-        {rowType === 'update' && props.id === editableId && <Update />}
-        {rowType === 'update' && props.id !== editableId && <Edit />}
-        {props.rowType === 'new' && <Create />}
-      </td>
-    );
-  };
-
-  const CancelCell = (props: FileTypeRowProps) => {
-    const { rowType } = props;
     const Delete = () => {
       return (
         <GoAButton
@@ -228,43 +258,12 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
         </GoAButton>
       );
     };
-    const CancelNew = () => {
-      return (
-        <GoAButton
-          buttonType="secondary"
-          buttonSize="small"
-          data-testid="cancel-new"
-          onClick={() => {
-            setStartCreateFileType(false);
-            setNewFileType(null);
-          }}
-        >
-          Cancel
-        </GoAButton>
-      );
-    };
-
-    const CancelUpdate = () => {
-      return (
-        <GoAButton
-          buttonType="secondary"
-          buttonSize="small"
-          data-testid="cancel-update"
-          onClick={() => {
-            setEditableId('');
-            setUpdateFileType(null);
-          }}
-        >
-          Cancel
-        </GoAButton>
-      );
-    };
 
     return (
       <td className="right">
-        {rowType === 'update' && props.id === editableId && <CancelUpdate />}
+        {rowType === 'update' && props.id === editableId && <Update />}
         {props.rowType === 'update' && props.id !== editableId && <Delete />}
-        {props.rowType === 'new' && <CancelNew />}
+        {props.rowType === 'new' && <Create />}
       </td>
     );
   };
@@ -373,7 +372,7 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
         <NameCell editable={editable} {...props} />
         <RolesCell {...{ ...props, cellType: 'readRoles', rowType: 'update' }} />
         <RolesCell {...{ ...props, cellType: 'updateRoles', rowType: 'update' }} />
-        <CancelCell {...{ ...props, rowType: 'update' }} />
+        <DeleteCell {...{ ...props, rowType: 'update' }} />
       </tr>
     );
   };
@@ -481,7 +480,7 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
             </td>
             <RolesCell {...{ ...props, rowType: 'new', cellType: 'readRoles' }} data-testid="new-read-roles-cell" />
             <RolesCell {...{ ...props, rowType: 'new', cellType: 'updateRoles' }} data-testid="new-update-roles-cell" />
-            <CancelCell {...{ ...props, rowType: 'new' }} data-testid="cancel-new-cell" />
+            <DeleteCell {...{ ...props, rowType: 'new' }} data-testid="cancel-new-cell" />
           </tr>
         )}
       </>
@@ -564,7 +563,7 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
                 onClick={newEntryFn}
                 data-testid="new-file-type-button-bottom"
               >
-                + New File Type
+                + New file type
               </GoAButton>
             </td>
           </tr>
