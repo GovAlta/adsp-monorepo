@@ -7,7 +7,7 @@ interface FileHeaderProps {
   isSetup: boolean;
 }
 
-const FileHeader = (props: FileHeaderProps) => {
+const FileHeader = (props: FileHeaderProps): JSX.Element => {
   const roles = useSelector((state: RootState) => state.session?.realmAccess?.roles);
   const accessible = roles && roles.includes('file-service-admin');
 

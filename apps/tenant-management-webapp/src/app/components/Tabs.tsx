@@ -16,7 +16,7 @@ interface TabsProps {
   children: ReactNode;
 }
 
-function Tabs(props: TabsProps) {
+function Tabs(props: TabsProps): JSX.Element {
   const [activeTabIndex, setActiveTabIndex] = useState(props.activeIndex ?? 0);
 
   function selectTab(index: number) {
@@ -45,7 +45,7 @@ interface TabProps {
   label: string;
 }
 
-function Tab(props: TabProps & { children: ReactNode }) {
+function Tab(props: TabProps & { children: ReactNode }): JSX.Element {
   return <TabContent>{props.children}</TabContent>;
 }
 

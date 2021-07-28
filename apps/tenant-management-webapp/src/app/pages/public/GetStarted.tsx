@@ -6,7 +6,7 @@ import GoALinkButton from '@components/LinkButton';
 import { TenantCreationLoginInit } from '@store/tenant/actions';
 import { GoAFormButtons } from '@components/Form';
 
-const GetStarted = () => {
+const GetStarted = (): JSX.Element => {
   const dispatch = useDispatch();
 
   return (

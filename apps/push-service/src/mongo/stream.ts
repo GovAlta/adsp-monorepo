@@ -3,7 +3,10 @@ import { model } from 'mongoose';
 import * as NodeCache from 'node-cache';
 import { PushSpaceEntity, PushSpaceRepository, Stream, StreamEntity, StreamRepository } from '../push';
 import { streamSchema } from './schema';
-
+interface streamCriteria {
+  spaceId: string;
+  id: string;
+}
 export class MongoStreamRepository implements StreamRepository {
   private model;
 
@@ -11,7 +14,7 @@ export class MongoStreamRepository implements StreamRepository {
     this.model = model('stream', streamSchema);
   }
 
-  get({ spaceId, id }): Promise<StreamEntity> {
+  get({ spaceId, id }: streamCriteria): Promise<StreamEntity> {
     const entity = this.cache.get<StreamEntity>(this.getCacheKey({ spaceId, id }));
 
     return entity

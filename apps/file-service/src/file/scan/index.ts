@@ -17,7 +17,7 @@ export interface ScanService {
   scan(file: FileEntity): Promise<ScanResult>;
 }
 
-export const createScanService = (provider: string, props: ScanProps) => {
+export const createScanService = (provider: string, props: ScanProps): ScanService => {
   switch (provider) {
     case 'clam':
       return createClamScan(props);

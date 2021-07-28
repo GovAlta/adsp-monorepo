@@ -1,7 +1,7 @@
 import { Model, model } from 'mongoose';
 import * as NodeCache from 'node-cache';
 import { Results, decodeAfter, encodeNext, Doc } from '@core-services/core-common';
-import { FileSpaceRepository, FileSpaceEntity, FileSpace } from '../file';
+import { FileSpaceRepository, FileSpaceEntity, FileSpace, FileTypeEntity } from '../file';
 import { fileSpaceSchema } from './schema';
 import { FileSpaceDoc } from './types';
 import { Logger } from 'winston';
@@ -61,7 +61,7 @@ export class MongoFileSpaceRepository implements FileSpaceRepository {
         });
   }
 
-  getType(spaceId: string, typeId: string) {
+  getType(spaceId: string, typeId: string): Promise<FileTypeEntity> {
     return this.get(spaceId).then((spaceEntity) => (spaceEntity ? spaceEntity.types[typeId] : null));
   }
 

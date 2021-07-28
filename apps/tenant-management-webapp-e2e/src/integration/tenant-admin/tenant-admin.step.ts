@@ -16,19 +16,25 @@ Then('the tenant management admin page is displayed', function () {
   tenantAdminObj.dashboardServicesMenuCategory();
 });
 
-Then('the {string} landing page is displayed', function (type) {
+Then('the {string} landing page is displayed', function (pageTitle) {
   let urlPart = 'undefined';
-  switch (type) {
-    case 'file services':
+  switch (pageTitle) {
+    case 'File Services':
       urlPart = '/admin/services/files';
       break;
-    case 'service status':
+    case 'Service Status':
       urlPart = '/admin/services/status';
       break;
+    case 'Event log':
+      urlPart = '/admin/event-log';
+      break;
     default:
-      expect(type).to.be.oneOf(['file services', 'service status']);
+      expect(pageTitle).to.be.oneOf(['File Services', 'Service Status', 'Event log']);
   }
   cy.url().should('include', urlPart);
+  tenantAdminObj.servicePageTitle(pageTitle).then((title) => {
+    expect(title.length).to.be.gt(0); // element exists
+  });
 });
 
 When('the user sends a configuration service request to {string}', function (request) {
@@ -322,7 +328,15 @@ Then(
               bearer: Cypress.env('autotest-admin-token'),
             },
           }).then(function (response2) {
-            roleUserNumApi[response.body[arrayIndex].name] = response2.body.length;
+            // Only count non-service users
+            let counter = 0;
+            for (let i = 0; i < response2.body.length; i++) {
+              const userData = response2.body[i];
+              if (!userData.username.includes('service-account')) {
+                counter = counter + 1;
+              }
+            }
+            roleUserNumApi[response.body[arrayIndex].name] = counter;
           });
         }
       })

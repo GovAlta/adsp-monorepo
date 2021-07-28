@@ -4,7 +4,7 @@ import CreatingRealmCarousel1 from '@assets/creatingRealmCarousel1.png';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 
-export default () => {
+export default (): JSX.Element => {
   return (
     <Page>
       <Main>
