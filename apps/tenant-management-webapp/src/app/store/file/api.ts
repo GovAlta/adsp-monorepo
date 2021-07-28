@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { ConfigState, FileApi as FileApiConfig } from '@store/config/models';
-import { FileService, FileServiceDocs } from './models';
+import { FileService, FileServiceDocs, FileTypeItem } from './models';
 
 export class FileApi {
   private http: AxiosInstance;
@@ -71,13 +71,13 @@ export class FileApi {
     return res.data;
   }
 
-  async createFileType(fileType): Promise<FileService> {
+  async createFileType(fileType: FileTypeItem): Promise<FileService> {
     const url = this.fileConfig.endpoints.fileTypeAdmin;
     const res = await this.http.post(url, fileType);
     return res.data;
   }
 
-  async updateFileType(fileType): Promise<FileService> {
+  async updateFileType(fileType: FileTypeItem): Promise<FileService> {
     const url = `${this.fileConfig.endpoints.fileTypeAdmin}/${fileType.id}`;
     const res = await this.http.put(url, fileType);
     return res.data;

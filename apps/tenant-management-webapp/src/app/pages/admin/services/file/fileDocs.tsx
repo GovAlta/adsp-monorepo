@@ -190,10 +190,6 @@ const FileDocSection = (props: FileDocSectionProps) => {
   );
 };
 
-interface FileDocSectionsProps {
-  doc: FileServiceDoc;
-}
-
 const FileDoc = () => {
   const dispatch = useDispatch();
   const fileServiceDocs = useSelector((state: RootState) => state.fileService?.docs);
