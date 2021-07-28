@@ -21,10 +21,7 @@ const Table = styled.table`
   width: 100%;
 
   td {
-    padding-left: 0.5rem;
-    padding-top: 0.375rem;
-    padding-bottom: 0.625rem;
-    padding-right: 0.5rem;
+    padding: 0.5rem;
 
     button {
       /* TODO: GoA button with a top margin, which is unexpected. After the fix, we can remove this line */
@@ -42,12 +39,13 @@ const Table = styled.table`
 
   th {
     padding: 0.5rem;
-    color: var(--color-table-th-color);
+    font-weight: var(--fw-bold);
+    color: var(--color-font-header);
   }
 
   thead th {
     font-size: var(--fs-base);
-    border-bottom: 1px solid var(--color-table-border);
+    border-bottom: 2px solid var(--color-table-border);
     text-align: left;
     white-space: nowrap;
   }
