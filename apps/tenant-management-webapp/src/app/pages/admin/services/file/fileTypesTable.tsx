@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import DataTable from '@components/DataTable';
-import { Gutter } from '@components/Gutter';
 import { GoAButton, GoADropdown, GoAOption, GoACallout } from '@abgov/react-components';
 import { FileTypeItem } from '@store/file/models';
 import { useDispatch, useSelector } from 'react-redux';
@@ -429,7 +428,6 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
             </p>
             <div className="right">
               <CancelButton data-testid="cancel-delete-modal-button" />
-              <Gutter />
               <GoAButton
                 data-testid="delete-modal-delete-button"
                 onClick={() => {
@@ -499,19 +497,11 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
       <DataTable>
         <thead>
           <tr>
-            <th id="actions" data-testid="actions">
-              Actions
-            </th>
-            <th id="name" date-testid="name">
-              Name
-            </th>
-            <th id="read-roles" data-testid="read-roles">
-              Who can read
-            </th>
-            <th id="write-roles" data-testid="write-roles">
-              Who can write
-            </th>
-            <th id="cancel" className="right" data-testid="cancel">
+            <th id="actions">Actions</th>
+            <th id="name">Name</th>
+            <th id="read-roles">Who can read</th>
+            <th id="write-roles">Who can write</th>
+            <th id="cancel" className="right">
               Settings
             </th>
           </tr>
