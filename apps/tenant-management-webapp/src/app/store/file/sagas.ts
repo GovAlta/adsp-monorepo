@@ -7,11 +7,11 @@ import {
   FetchFilesSuccessService,
   UploadFileSuccessService,
   FetchFileTypeSucceededService,
-  DeleteFileTypeSucceededService,
-  CreateFileTypeSucceededService,
   UpdateFileTypeSucceededService,
   DeleteFileSuccessService,
   FetchFileDocsSucceededService,
+  FetchFileTypeHasFileSucceededService,
+  FetchFileTypeService,
 } from './actions';
 
 import { FileApi } from './api';
@@ -117,15 +117,14 @@ export function* fetchFileTypes() {
   }
 }
 
-export function* deleteFileTypes(fileType) {
+export function* deleteFileTypes(action) {
+  const fileType = action.payload;
   const state = yield select();
   try {
     const token = state.session?.credentials?.token;
     const api = yield new FileApi(state.config, token);
-
-    yield api.deleteFileType(fileType.payload.fileInfo.id);
-
-    yield put(DeleteFileTypeSucceededService(fileType.payload.fileInfo));
+    yield api.deleteFileType(fileType.id);
+    yield put(FetchFileTypeService());
   } catch (e) {
     yield put(ErrorNotification({ message: `${e.response.data} - deleteFileTypes` }));
   }
@@ -137,21 +136,21 @@ export function* createFileType(fileType) {
   const api = yield new FileApi(state.config, token);
 
   try {
-    const fileTypeInfo = yield api.createFileType(fileType.payload.fileInfo);
-    yield put(CreateFileTypeSucceededService({ data: fileTypeInfo }));
+    yield api.createFileType(fileType.payload);
+    yield put(FetchFileTypeService());
   } catch (e) {
     yield put(ErrorNotification({ message: `${e.message} - createFileType` }));
   }
 }
 
-export function* updateFileType(fileType) {
+export function* updateFileType(action) {
   const state = yield select();
   const token = state.session.credentials.token;
   const api = yield new FileApi(state.config, token);
 
   try {
-    const fileTypeInfo = yield api.updateFileType(fileType.payload.fileInfo);
-    yield put(UpdateFileTypeSucceededService({ data: fileTypeInfo }));
+    const fileType = yield api.updateFileType(action.payload);
+    yield put(UpdateFileTypeSucceededService(fileType));
   } catch (e) {
     yield put(ErrorNotification({ message: `${e.message} - updateFileType` }));
   }
@@ -166,5 +165,17 @@ export function* fetchFileDocs() {
     yield put(FetchFileDocsSucceededService(fileDocs));
   } catch (e) {
     yield put(ErrorNotification({ message: `${e.message} - fetchFileDoc` }));
+  }
+}
+
+export function* fetchFileTypeHasFile(action) {
+  try {
+    const state = yield select();
+    const token = state.session.credentials.token;
+    const api = yield new FileApi(state.config, token);
+    const hasFile = yield api.fetchFileTypeHasFile(action.payload);
+    yield put(FetchFileTypeHasFileSucceededService(hasFile, action.payload));
+  } catch (e) {
+    yield put(ErrorNotification({ message: `${e.message} - fetchFileType.` }));
   }
 }

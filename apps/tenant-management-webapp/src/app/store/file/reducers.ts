@@ -15,6 +15,7 @@ import {
   UPDATE_FILE_TYPE_SUCCEEDED,
   CREATE_FILE_TYPE_SUCCEEDED,
   FETCH_FILE_DOCS_SUCCEEDED,
+  FETCH_FILE_TYPE_HAS_FILE_SUCCEEDED,
 } from './actions';
 import { FILE_INIT, FileService } from './models';
 
@@ -22,7 +23,7 @@ function removeSpecifiedFileType(fileTypes, fileType) {
   const index = fileTypes.findIndex(({ id }) => id === fileType.id);
   const newFileTypes = fileTypes.map((x) => Object.assign({}, x));
   newFileTypes.splice(index, 1);
-  return newFileTypes;
+  return { ...newFileTypes };
 }
 
 function updateSpecifiedFileType(fileTypes, fileType) {
@@ -95,19 +96,19 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
     case DELETE_FILE_TYPE_SUCCEEDED:
       return {
         ...state,
-        fileTypes: removeSpecifiedFileType(state.fileTypes, action.payload.fileInfo),
+        fileTypes: removeSpecifiedFileType(state.fileTypes, action.payload),
       };
 
     case UPDATE_FILE_TYPE_SUCCEEDED:
       return {
         ...state,
-        fileTypes: updateSpecifiedFileType(state.fileTypes, action.payload.fileInfo.data),
+        fileTypes: updateSpecifiedFileType(state.fileTypes, action.payload),
       };
 
     case CREATE_FILE_TYPE_SUCCEEDED:
       return {
         ...state,
-        fileTypes: [...(state.fileTypes || []), action.payload.fileInfo.data],
+        fileTypes: [...(state.fileTypes || []), action.payload],
       };
 
     case FETCH_FILE_DOCS_SUCCEEDED:
@@ -115,6 +116,17 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
         ...state,
         docs: action.payload.fileDocs,
       };
+
+    case FETCH_FILE_TYPE_HAS_FILE_SUCCEEDED: {
+      const newState = { ...state };
+      const { hasFile, fileTypeId } = action.payload;
+      for (const index in newState.fileTypes) {
+        if (newState.fileTypes[index].id === fileTypeId) {
+          newState.fileTypes[index].hasFile = hasFile;
+        }
+      }
+      return newState;
+    }
 
     default:
       return state;
