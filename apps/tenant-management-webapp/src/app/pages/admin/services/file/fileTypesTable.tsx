@@ -48,11 +48,6 @@ const FileTypeTableContainer = styled.div`
     height: 42px;
   }
 
-  th {
-    font-size: 18px !important;
-    font-weight: normal !important;
-  }
-
   i {
     margin-top: 2px !important;
   }
@@ -272,12 +267,17 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
     const realmRoles = props.roles;
     const roles = cellType === 'readRoles' ? readRoles : updateRoles;
     let display = '';
+
     if (anonymousRead && cellType === 'readRoles') {
       display = 'Anonymous';
     } else {
       if (roles) {
         display = roles.join(', ');
       }
+    }
+
+    if (rowType === 'new' && display === '') {
+      display = 'Select group';
     }
 
     const displayOnly = !props.editable && rowType !== 'new';
@@ -490,7 +490,7 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
       <TitleContainer>
         <h3>File Types</h3>
         <GoAButton onClick={newEntryFn} data-testid="new-file-type-button-top">
-          Add file type
+          New file type
         </GoAButton>
       </TitleContainer>
       {showDelete && <DeleteModal {...updateFileType} />}
