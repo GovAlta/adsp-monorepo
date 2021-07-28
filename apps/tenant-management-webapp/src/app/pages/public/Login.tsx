@@ -16,7 +16,7 @@ const LoginLanding = (): JSX.Element => {
     if (realm) {
       dispatch(TenantLogin(realm));
     }
-  }, [keycloakConfig, realm]);
+  }, [keycloakConfig, realm, dispatch]);
 
   return <Page></Page>;
 };

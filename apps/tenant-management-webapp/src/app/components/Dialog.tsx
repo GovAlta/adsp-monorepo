@@ -21,7 +21,7 @@ function Dialog({ children, open, onClose }: DialogProps & { children: ReactNode
     if (!open && state === 'visible') {
       hide();
     }
-  }, [open, state]);
+  }, [open]);
 
   function show() {
     setVisible(true);

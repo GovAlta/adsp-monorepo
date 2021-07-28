@@ -1,5 +1,6 @@
-import { put, select } from 'redux-saga/effects';
+import { put, select, call } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
+import { SagaIterator } from '@redux-saga/core';
 import {
   CreateFileSpaceSucceededService,
   CreateFileSpaceFailedService,
@@ -31,6 +32,8 @@ export function* uploadFile(file) {
 
   try {
     const uploadFile = yield api.uploadFile(formData);
+    //const uploadFile = yield call(api.uploadFile, formData);
+    console.log(uploadFile);
     yield put(UploadFileSuccessService(uploadFile));
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
@@ -41,7 +44,7 @@ export function* fetchFiles() {
   const state = yield select();
   try {
     const token = state.session?.credentials?.token;
-    const api = yield new FileApi(state.config, token);
+    const api = new FileApi(state.config, token);
 
     const files = yield api.fetchFiles();
     yield put(FetchFilesSuccessService({ data: files.results }));

@@ -1,8 +1,6 @@
-import type { User } from '@abgov/adsp-service-sdk';
 import { assertAuthenticatedHandler } from '@core-services/core-common';
 import { Router } from 'express';
 import { Logger } from 'winston';
-import { MissingParamsError, UnauthorizedError } from '../common/errors';
 import { NoticeApplicationEntity } from '../model/notice';
 import { NoticeRepository } from '../repository/notice';
 

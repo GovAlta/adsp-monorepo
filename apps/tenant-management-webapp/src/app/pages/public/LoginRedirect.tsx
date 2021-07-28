@@ -84,7 +84,7 @@ const LoginRedirect = (props: LoginProps): JSX.Element => {
         state: { from: props.location },
       });
     }
-  }, [tenantRealm, isTenantAdmin]);
+  }, [tenantRealm, isTenantAdmin, history, isAuthenticated, realm, props.location]);
 
   return <Page></Page>;
 };

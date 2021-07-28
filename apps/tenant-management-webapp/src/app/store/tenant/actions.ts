@@ -58,10 +58,6 @@ interface CreateTenantSuccessAction {
   type: typeof CREATE_TENANT_SUCCESS;
   payload: string;
 }
-interface TenantLogin {
-  type: typeof CREATE_TENANT_SUCCESS;
-  payload: string;
-}
 export interface TenantAdminLoginAction {
   type: typeof TENANT_ADMIN_LOGIN;
 }
