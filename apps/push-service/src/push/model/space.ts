@@ -2,7 +2,7 @@ import { AssertRole } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError, Update } from '@core-services/core-common';
 import type { PushSpaceRepository } from '../repository';
-import type { PushSpace } from '../types'
+import type { PushSpace } from '../types';
 import { ServiceUserRoles } from '../types';
 
 export class PushSpaceEntity implements PushSpace {
@@ -11,7 +11,7 @@ export class PushSpaceEntity implements PushSpace {
   adminRole: string;
 
   @AssertRole('create push space', ServiceUserRoles.Admin)
-  static create(user: User, repository: PushSpaceRepository, space: PushSpace) {
+  static create(user: User, repository: PushSpaceRepository, space: PushSpace): Promise<PushSpaceEntity> {
     const entity = new PushSpaceEntity(repository, space);
     return repository.save(entity);
   }
@@ -22,7 +22,7 @@ export class PushSpaceEntity implements PushSpace {
     this.adminRole = space.adminRole;
   }
 
-  update(user: User, update: Update<PushSpace>) {
+  update(user: User, update: Update<PushSpace>): Promise<PushSpaceEntity> {
     if (!this.canUpdate(user)) {
       throw new UnauthorizedError('User not authorized to updated space.');
     }
@@ -38,11 +38,11 @@ export class PushSpaceEntity implements PushSpace {
     return this.repository.save(this);
   }
 
-  canAccess(user: User) {
+  canAccess(user: User): boolean {
     return user && (user.roles.includes(ServiceUserRoles.Admin) || user.roles.includes(this.adminRole));
   }
 
-  canUpdate(user: User) {
+  canUpdate(user: User): boolean {
     return user && (user.roles.includes(ServiceUserRoles.Admin) || user.roles.includes(this.adminRole));
   }
 }

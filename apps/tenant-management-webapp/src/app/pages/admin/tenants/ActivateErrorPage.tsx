@@ -3,7 +3,7 @@ import { GoAButton } from '@abgov/react-components';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 
-const CreateErrorPage = () => {
+const CreateErrorPage = (): JSX.Element => {
   return (
     <Page>
       <Main>

@@ -16,7 +16,12 @@ export class StreamEntity implements Stream {
 
   stream: Observable<unknown & Pick<DomainEvent, 'correlationId' | 'context'>>;
 
-  static create(repository: StreamRepository, space: PushSpaceEntity, id: string, stream: New<Stream>) {
+  static create(
+    repository: StreamRepository,
+    space: PushSpaceEntity,
+    id: string,
+    stream: New<Stream>
+  ): Promise<StreamEntity> {
     return repository.save(new StreamEntity(repository, space, { ...stream, spaceId: space.id, id }));
   }
 
@@ -28,7 +33,7 @@ export class StreamEntity implements Stream {
     this.subscriberRoles = stream.subscriberRoles;
   }
 
-  connect(events: Observable<DomainEvent>) {
+  connect(events: Observable<DomainEvent>): StreamEntity {
     if (!this.stream) {
       this.stream = events.pipe(
         map((event) => [
@@ -61,19 +66,19 @@ export class StreamEntity implements Stream {
       : { ...event };
   }
 
-  canAccess(user: User) {
+  canAccess(user: User): boolean {
     return this.space.canAccess(user);
   }
 
-  canSubscribe(user: User) {
+  canSubscribe(user: User): boolean | string {
     return user && user.roles && user.roles.find((r) => this.subscriberRoles.includes(r));
   }
 
-  canUpdate(user: User) {
+  canUpdate(user: User): boolean {
     return this.space.canUpdate(user);
   }
 
-  getEvents(user: User, criteria?: EventCriteria) {
+  getEvents(user: User, criteria?: EventCriteria): Observable<Pick<DomainEvent, 'correlationId' | 'context'>> {
     if (!this.canSubscribe(user)) {
       throw new UnauthorizedError('User not authorized to access stream.');
     }
@@ -85,7 +90,7 @@ export class StreamEntity implements Stream {
     return this.stream.pipe(filter((o) => this.isMatch(o, criteria)));
   }
 
-  update(user: User, update: Update<Stream>) {
+  update(user: User, update: Update<Stream>): Promise<StreamEntity> {
     if (!this.canUpdate(user)) {
       throw new UnauthorizedError('User not authorized to update stream.');
     }
@@ -105,7 +110,7 @@ export class StreamEntity implements Stream {
     return this.repository.save(this);
   }
 
-  delete(user: User) {
+  delete(user: User): Promise<boolean> {
     if (!this.canUpdate(user)) {
       throw new UnauthorizedError('User not authorized to delete stream.');
     }

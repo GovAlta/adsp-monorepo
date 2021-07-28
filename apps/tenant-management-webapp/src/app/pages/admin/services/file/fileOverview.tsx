@@ -8,7 +8,7 @@ import { EnableFileService } from '@store/file/actions';
 import { UpdateTenantConfigService } from '@store/tenantConfig/actions';
 import { Aside, Main } from '@components/Html';
 
-const OverviewBtn = () => {
+const OverviewBtn = (): JSX.Element => {
   const dispatch = useDispatch();
   const tenantConfig = useSelector((state: RootState) => state.tenantConfig);
   const space = useSelector((state: RootState) => state.fileService.space);
@@ -40,7 +40,7 @@ const OverviewBtn = () => {
   );
 };
 
-const HelpLink = () => {
+const HelpLink = (): JSX.Element => {
   return (
     <div className="file-header-div">
       <span className="file-link-title">Helpful Links</span>
@@ -51,7 +51,7 @@ const HelpLink = () => {
   );
 };
 
-const OverviewContent = () => {
+const OverviewContent = (): JSX.Element => {
   return (
     <>
       <Main>
@@ -77,9 +77,7 @@ interface FileOverviewProps {
   isActive: boolean;
 }
 
-const FileOverview = (props: FileOverviewProps) => {
-  const roles = useSelector((state: RootState) => state.session.realmAccess.roles);
-  const accessible = roles.includes('file-service-admin');
+const FileOverview = (props: FileOverviewProps): JSX.Element => {
   return (
     <div>
       <OverviewContent />

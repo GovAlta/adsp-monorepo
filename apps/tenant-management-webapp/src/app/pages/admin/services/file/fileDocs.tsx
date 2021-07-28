@@ -73,7 +73,7 @@ interface RequestBodyProps {
   properties: Record<string, unknown>;
 }
 
-const RequestBody = (props: RequestBodyProps) => {
+const RequestBody = (props: RequestBodyProps): JSX.Element => {
   return (
     <DocTable>
       <tbody>
@@ -100,7 +100,7 @@ const RequestBody = (props: RequestBodyProps) => {
   );
 };
 
-const ParametersTable = (props: APIDocParameterTableProps) => {
+const ParametersTable = (props: APIDocParameterTableProps): JSX.Element => {
   const parameters = props.parameters;
   return (
     <DocTable>
@@ -133,7 +133,7 @@ const DocEnd = styled.div`
   height: 3rem;
 `;
 
-const APIDocTable = (props: APIDocTableProps) => {
+const APIDocTable = (props: APIDocTableProps): JSX.Element => {
   const doc = props.doc;
   return (
     <div>
@@ -170,7 +170,7 @@ const APIDocTable = (props: APIDocTableProps) => {
   );
 };
 
-const FileDocSection = (props: FileDocSectionProps) => {
+const FileDocSection = (props: FileDocSectionProps): JSX.Element => {
   const doc = props.doc;
   return (
     <DocFrame>
@@ -190,11 +190,7 @@ const FileDocSection = (props: FileDocSectionProps) => {
   );
 };
 
-interface FileDocSectionsProps {
-  doc: FileServiceDoc;
-}
-
-const FileDoc = () => {
+const FileDoc = (): JSX.Element => {
   const dispatch = useDispatch();
   const fileServiceDocs = useSelector((state: RootState) => state.fileService?.docs);
   const fileTypeDoc = fileServiceDocs?.fileTypeDoc;
@@ -206,7 +202,7 @@ const FileDoc = () => {
     }
   }, [dispatch, fileServiceDocs]);
 
-  const FileDocSections = () => {
+  const FileDocSections = (): JSX.Element => {
     return (
       <div>
         <FileDocSection name={'File Types APIs'} doc={fileTypeDoc} />

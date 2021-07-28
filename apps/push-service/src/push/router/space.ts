@@ -15,7 +15,7 @@ const mapSpace = (entity: PushSpaceEntity) => ({
   adminRole: entity.adminRole,
 });
 
-export const createSpaceRouter = ({ logger, spaceRepository }: SpaceRouterProps) => {
+export const createSpaceRouter = ({ logger, spaceRepository }: SpaceRouterProps): Router => {
   const spaceRouter = Router();
 
   /**

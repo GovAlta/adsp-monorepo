@@ -16,7 +16,7 @@ import DownloadIcon from '@icons/download-outline.svg';
 import DeleteIcon from '@icons/trash-outline.svg';
 import './file.css';
 
-const FileList = () => {
+const FileList = (): JSX.Element => {
   const [selectedFile, setSelectFile] = useState<string>();
   const [uploadFileType, setUploadFileType] = useState<string>();
 

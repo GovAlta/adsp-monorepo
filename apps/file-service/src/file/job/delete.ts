@@ -6,7 +6,7 @@ interface DeleteJobProps {
   rootStoragePath: string;
   fileRepository: FileRepository;
 }
-
+// eslint-disable-next-line
 export const createDeleteJob = ({ logger, rootStoragePath, fileRepository }: DeleteJobProps) => () => {
   logger.info('Starting file delete job...');
   return fileRepository

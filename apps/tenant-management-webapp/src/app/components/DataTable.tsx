@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-function DataTable({ children, ...props }) {
+function DataTable({ children, ...props }): JSX.Element {
   return (
     <ScrollWrapper>
       <Table {...props}>{children}</Table>

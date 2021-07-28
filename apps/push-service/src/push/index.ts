@@ -16,7 +16,7 @@ interface PushMiddlewareProps extends Repositories {
   eventService: DomainEventSubscriberService;
 }
 
-export const applyPushMiddleware = (app: Application, ws: WsApplication, props: PushMiddlewareProps) => {
+export const applyPushMiddleware = (app: Application, ws: WsApplication, props: PushMiddlewareProps): Application => {
   const spaceRouter = createSpaceRouter(props);
   const adminRouter = createAdminRouter(props);
   const streamRouter = createStreamRouter(ws, props);
