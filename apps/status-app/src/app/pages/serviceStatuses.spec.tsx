@@ -49,8 +49,7 @@ describe('Service statuses', () => {
         <ServiceStatuses />
       </Provider>
     );
-
-    setTimeout(() => {
+    await waitFor(() =>
       expect(
         getByText('Either there are no services available by this provider, or you have an incorrect ID')
       ).toBeTruthy();
