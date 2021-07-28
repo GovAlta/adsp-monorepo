@@ -11,12 +11,12 @@ import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 
 import ServiceStatusPage from './pages/ServiceStatuses';
 
-export function App() {
+export function App(): JSX.Element {
   const dispatch = useDispatch();
   useEffect(() => {
     // Fetch config
     dispatch(fetchConfig());
-  }, []);
+  });
 
   return (
     <Router>
