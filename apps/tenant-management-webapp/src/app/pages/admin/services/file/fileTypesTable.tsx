@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import DataTable from '@components/DataTable';
+import Chip from '@components/Chip';
 import { GoAButton, GoADropdown, GoAOption, GoACallout } from '@abgov/react-components';
 import { FileTypeItem } from '@store/file/models';
 import { useDispatch, useSelector } from 'react-redux';
@@ -15,45 +16,52 @@ import {
   FetchFileTypeHasFileService,
 } from '@store/file/actions';
 const TitleContainer = styled.div`
-  h3 {
-    display: inline;
-    position: relative;
-    top: 1.5rem;
-  }
-
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   button {
-    float: right;
+    margin: 0rem;
   }
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 `;
 
 const FileTypeTableContainer = styled.div`
   table {
-    margin-top: 1.25rem;
-    margin-bottom: 6.25rem;
+    margin-top: 1rem;
+    /* TODO: remove the margin-bottom when the dropdown component is fixed */
+    margin-bottom: 6rem;
+  }
+
+  button {
+    /* TODO: GoA button with a top margin, which is unexpected. After the fix, we can remove this line */
+    margin-top: 0rem !important;
   }
 
   td.right {
     text-align: right !important;
   }
+
   th.right {
     text-align: right !important;
   }
+
   input {
     padding-left: 0.5rem;
     padding-top: 0rem !important;
     padding-bottom: 0rem !important;
     border-radius: 0.25rem;
     margin-top: 0.5rem;
-    height: 2.625rem;
+    height: 2.5rem;
   }
 
   i {
     margin-top: 0.125rem !important;
   }
+
   td:nth-child(1) {
     width: 10%;
   }
+
   td:nth-child(2) {
     width: 15%;
   }
@@ -72,20 +80,13 @@ const DeleteModalContainer = styled.div`
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 650px;
+  width: 42rem;
   transform: translate(-50%, -30%);
   z-index: 9;
   .right {
     text-align: right;
   }
 `;
-
-const RoleSpan = styled.span`
-  background: var(--color-gray-015) padding-box;
-  border-radius: 13px;
-  margin-right: 0.625rem;
-`;
-
 interface FileTypeRowProps {
   name: string;
   readRoles: string[];
@@ -282,19 +283,25 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
 
     const displayOnly = !props.editable && rowType !== 'new';
 
+    const RolesCellContainer = styled.td`
+      div + div {
+        margin-left: 0.25rem;
+      }
+    `;
+
     if (displayOnly) {
       return (
-        <td>
-          {anonymousRead || (cellType === 'readRoles' && <RoleSpan>Anonymous</RoleSpan>)}
+        <RolesCellContainer>
+          {anonymousRead || (cellType === 'readRoles' && <Chip type="secondary">Anonymous</Chip>)}
           {(!anonymousRead || cellType === 'updateRoles') &&
             roles.map((role) => {
               return (
-                <RoleSpan key={`${role}-${props.id}`} data-testid="new-roles">
+                <Chip type="secondary" key={`${role}-${props.id}`} data-testid="new-roles">
                   {role}
-                </RoleSpan>
+                </Chip>
               );
             })}
-        </td>
+        </RolesCellContainer>
       );
     }
 
