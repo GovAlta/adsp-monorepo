@@ -5,7 +5,7 @@ import { GoAForm, GoAFormButtons, GoAFormItem } from '@components/Form';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 
-const AddClientRole = () => {
+const AddClientRole = (): JSX.Element => {
   const [name, setName] = useState('');
   const [email, setMail] = useState('');
 

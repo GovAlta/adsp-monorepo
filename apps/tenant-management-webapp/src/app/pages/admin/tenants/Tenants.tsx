@@ -3,7 +3,7 @@ import GoALinkButton from '@components/LinkButton';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 
-const Tenants = () => {
+const Tenants = (): JSX.Element => {
   return (
     <Page>
       <Main>

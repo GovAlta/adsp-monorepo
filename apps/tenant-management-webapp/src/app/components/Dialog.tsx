@@ -8,7 +8,7 @@ export interface DialogProps {
   onClose?: () => void;
 }
 
-function Dialog({ children, open, onClose }: DialogProps & { children: ReactNode }): ReactElement {
+function Dialog({ children, open, onClose }: DialogProps & { children: ReactNode }): JSX.Element {
   const [state, setState] = useState<DialogState>('init');
 
   const [visible, setVisible] = useState(false);
@@ -21,7 +21,7 @@ function Dialog({ children, open, onClose }: DialogProps & { children: ReactNode
     if (!open && state === 'visible') {
       hide();
     }
-  }, [open]);
+  }, [open, state]);
 
   function show() {
     setVisible(true);

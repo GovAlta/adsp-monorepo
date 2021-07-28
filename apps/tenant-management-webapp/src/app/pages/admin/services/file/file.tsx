@@ -14,8 +14,10 @@ import { Main } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { FetchTenantConfigService } from '@store/tenantConfig/actions';
 import { FetchFileSpaceService } from '@store/file/actions';
-
-const TabsForEnable = (props: any) => {
+interface tapProps {
+  isActive?: boolean;
+}
+const TabsForEnable = (props: tapProps): JSX.Element => {
   return (
     <Tabs>
       <Tab label="Overview">
@@ -34,7 +36,7 @@ const TabsForEnable = (props: any) => {
   );
 };
 
-const TabsForDisable = (props: any) => {
+const TabsForDisable = (props: tapProps) => {
   return (
     <Tabs>
       <Tab label="Overview">
@@ -60,7 +62,7 @@ const TabsForInit = () => {
   );
 };
 
-export default function File() {
+export default function File(): JSX.Element {
   const dispatch = useDispatch();
   const [isLoaded, setIsLoaded] = useState(false);
   const tenantConfig = useSelector((state: RootState) => state.tenantConfig);
