@@ -29,6 +29,13 @@ const ServiceStatusPage = () => {
 
   useEffect(() => {
     const api = new StatusApi(config.serviceUrls.serviceStatusApiUrl, realm);
+    async function fetchData() {
+      const publicApp = await api.getPublicApplications();
+      setApplications(publicApp);
+      setLoaded(true);
+    }
+    fetchData();
+
     const intervalId = setInterval(async () => {
       const publicApp = await api.getPublicApplications();
       setApplications(publicApp);
