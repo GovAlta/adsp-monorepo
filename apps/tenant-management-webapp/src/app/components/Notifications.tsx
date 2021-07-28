@@ -9,13 +9,13 @@ interface NotificationProps {
 
 export const NotificationContainer = styled.div`
   background-color: red;
-  padding: 8px;
-  margin: 5px 0 5px 0px;
+  padding: 1rem;
+  margin: 1rem 0 1rem 0px;
   color: white;
   border-radius: 5px;
 `;
 
-export const Notifications = (props: NotificationProps) => {
+export const Notifications = (props: NotificationProps): JSX.Element => {
   const notifications = props.notifications;
   return (
     <>

@@ -18,19 +18,19 @@ const TitleContainer = styled.div`
   h3 {
     display: inline;
     position: relative;
-    top: 24px;
+    top: 1.5rem;
   }
 
   button {
     float: right;
   }
-  margin-bottom: 12px;
+  margin-bottom: 0.75rem;
 `;
 
 const FileTypeTableContainer = styled.div`
   table {
-    margin-top: 20px;
-    margin-bottom: 100px;
+    margin-top: 1.25rem;
+    margin-bottom: 6.25rem;
   }
 
   td.right {
@@ -41,15 +41,15 @@ const FileTypeTableContainer = styled.div`
   }
   input {
     padding-left: 0.5rem;
-    padding-top: 0px !important;
-    padding-bottom: 0px !important;
-    border-radius: 4px;
-    margin-top: 8px;
-    height: 42px;
+    padding-top: 0rem !important;
+    padding-bottom: 0rem !important;
+    border-radius: 0.25rem;
+    margin-top: 0.5rem;
+    height: 2.625rem;
   }
 
   i {
-    margin-top: 2px !important;
+    margin-top: 0.125rem !important;
   }
   td:nth-child(1) {
     width: 10%;
@@ -105,7 +105,7 @@ interface FileTypeTableProps {
   fileTypes;
 }
 
-export const FileTypeTable = (props: FileTypeTableProps) => {
+export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
   const [editableId, setEditableId] = useState('');
   const [startCreateFileType, setStartCreateFileType] = useState(false);
   const [updateFileType, setUpdateFileType] = useState<FileTypeItem>(null);
@@ -117,7 +117,7 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
     return <div />;
   }
 
-  const NameCell = (props: FileTypeRowProps) => {
+  const NameCell = (props: FileTypeRowProps): JSX.Element => {
     const [name, setName] = useState(props.name);
     return (
       <td date-testid="name">
@@ -139,7 +139,7 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
     );
   };
 
-  const ActionCell = (props: FileTypeRowProps) => {
+  const ActionCell = (props: FileTypeRowProps): JSX.Element => {
     const { rowType } = props;
     const Edit = () => {
       return (
@@ -159,7 +159,7 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
       );
     };
 
-    const CancelNew = () => {
+    const CancelNew = (): JSX.Element => {
       return (
         <a
           data-testid="cancel-new"
@@ -173,7 +173,7 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
       );
     };
 
-    const CancelUpdate = () => {
+    const CancelUpdate = (): JSX.Element => {
       return (
         <a
           data-testid="cancel-update"
@@ -195,7 +195,7 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
     );
   };
 
-  const DeleteCell = (props: FileTypeRowProps) => {
+  const DeleteCell = (props: FileTypeRowProps): JSX.Element => {
     const { rowType, id } = props;
 
     const dispatch = useDispatch();
@@ -218,7 +218,7 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
       );
     };
 
-    const Update = () => {
+    const Update = (): JSX.Element => {
       return (
         <GoAButton
           buttonSize="small"
@@ -237,7 +237,7 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
       );
     };
 
-    const Delete = () => {
+    const Delete = (): JSX.Element => {
       return (
         <GoAButton
           buttonSize="small"
@@ -262,7 +262,7 @@ export const FileTypeTable = (props: FileTypeTableProps) => {
     );
   };
 
-  const RolesCell = (props: FileTypeRowProps) => {
+  const RolesCell = (props: FileTypeRowProps): JSX.Element => {
     const { readRoles, updateRoles, cellType, rowType, anonymousRead } = props;
     const realmRoles = props.roles;
     const roles = cellType === 'readRoles' ? readRoles : updateRoles;
