@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
@@ -16,7 +16,7 @@ import { Grid, GridItem } from '@components/Grid';
 import { Main } from '@components/Html';
 import GoALinkButton from '@components/LinkButton';
 
-const LandingPage = () => {
+const LandingPage = (): JSX.Element => {
   const { serviceUrls } = useSelector((store: RootState) => ({
     serviceUrls: store.config?.serviceUrls,
   }));

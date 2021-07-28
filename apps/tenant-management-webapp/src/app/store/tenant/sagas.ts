@@ -19,6 +19,7 @@ import { TenantApi } from './api';
 import { TENANT_INIT } from './models';
 import { createKeycloakAuth, keycloakAuth, LOGIN_TYPES } from '@lib/keycloak';
 import { convertToSession } from '@lib/session';
+import { SagaIterator } from '@redux-saga/core';
 
 export function* fetchTenant(action: FetchTenantAction) {
   const state: RootState = yield select();
@@ -27,7 +28,7 @@ export function* fetchTenant(action: FetchTenantAction) {
   const realm = action.payload;
 
   try {
-    const response = yield api.fetchTenantByRealm(realm);
+    const { response } = yield api.fetchTenantByRealm(realm);
     yield put(FetchTenantSuccess(response.tenant));
   } catch (e) {
     yield put(ErrorNotification({ message: 'failed to fetch tenant' }));
@@ -64,7 +65,7 @@ export function* createTenant(action: CreateTenantAction) {
   }
 }
 
-export function* tenantAdminLogin() {
+export function* tenantAdminLogin(): SagaIterator {
   try {
     const state: RootState = yield select();
     const keycloakConfig = state.config.keycloakApi;
@@ -75,7 +76,7 @@ export function* tenantAdminLogin() {
   }
 }
 
-export function* tenantCreationInitLogin() {
+export function* tenantCreationInitLogin(): SagaIterator {
   try {
     const state: RootState = yield select();
     const keycloakConfig = state.config.keycloakApi;
@@ -86,7 +87,7 @@ export function* tenantCreationInitLogin() {
   }
 }
 
-export function* keycloakCheckSSO(action: KeycloakCheckSSOAction) {
+export function* keycloakCheckSSO(action: KeycloakCheckSSOAction): SagaIterator {
   try {
     const state: RootState = yield select();
     const realm = action.payload;
@@ -111,7 +112,7 @@ export function* keycloakCheckSSO(action: KeycloakCheckSSOAction) {
   }
 }
 
-export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAction) {
+export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAction): SagaIterator {
   try {
     const state: RootState = yield select();
     const realm = action.payload;
@@ -132,7 +133,7 @@ export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAc
   }
 }
 
-export function* tenantLogin(action: TenantLoginAction) {
+export function* tenantLogin(action: TenantLoginAction): SagaIterator {
   try {
     const state: RootState = yield select();
     const keycloakConfig = state.config.keycloakApi;
@@ -144,7 +145,7 @@ export function* tenantLogin(action: TenantLoginAction) {
   }
 }
 
-export function* keycloakRefreshToken() {
+export function* keycloakRefreshToken(): SagaIterator {
   try {
     if (keycloakAuth) {
       keycloakAuth.refreshToken(
@@ -164,7 +165,7 @@ export function* keycloakRefreshToken() {
   }
 }
 
-export function* tenantLogout() {
+export function* tenantLogout(): SagaIterator {
   try {
     if (keycloakAuth) {
       Promise.resolve(keycloakAuth.logout());

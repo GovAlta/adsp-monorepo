@@ -16,7 +16,7 @@ interface StreamRouterProps {
 export const createStreamRouter = (
   ws: WsApplication,
   { logger, eventService, streamRepository }: StreamRouterProps
-) => {
+): Router => {
   const events = eventService.getItems().pipe(
     map(({ item, done }) => {
       done();

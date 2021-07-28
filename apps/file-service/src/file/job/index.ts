@@ -12,7 +12,7 @@ interface FileJobProps {
   scanService: ScanService;
 }
 
-export const scheduleFileJobs = (props: FileJobProps) => {
+export const scheduleFileJobs = (props: FileJobProps): void => {
   const deleteJob = createDeleteJob(props);
   schedule.scheduleJob('*/10 * * * *', deleteJob);
   props.logger.info(`Scheduled file delete job.`);

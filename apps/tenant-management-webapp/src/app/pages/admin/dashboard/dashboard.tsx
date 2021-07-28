@@ -1,7 +1,6 @@
 import React from 'react';
 import { GoACard, GoAButton } from '@abgov/react-components';
 import { Link } from 'react-router-dom';
-import ProductFeatures from '@assets/ProductFeatures.png';
 import ReactTooltip from 'react-tooltip';
 import { Grid, GridItem } from '@components/Grid';
 import { Main, Aside } from '@components/Html';
@@ -9,7 +8,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 
-const Dashboard = () => {
+const Dashboard = (): JSX.Element => {
   const { session, tenantManagementWebApp, tenantName } = useSelector((state: RootState) => {
     return {
       session: state.session,

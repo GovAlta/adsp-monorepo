@@ -19,10 +19,10 @@ const mapStream = (entity: StreamEntity) => ({
   events: entity.events,
 });
 
-export const createAdminRouter = ({ logger, spaceRepository, streamRepository }: AdminRouterProps) => {
+export const createAdminRouter = ({ logger, spaceRepository, streamRepository }: AdminRouterProps): Router => {
   const adminRouter = Router();
 
-  adminRouter.get('/:space/streams', assertAuthenticatedHandler, (req, res, next) => {
+  adminRouter.get('/:space/streams', assertAuthenticatedHandler, (req, res) => {
     res.sendStatus(404);
   });
 
