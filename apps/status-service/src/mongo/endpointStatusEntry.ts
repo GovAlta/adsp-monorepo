@@ -6,7 +6,7 @@ import { EndpointStatusEntryRepository } from '../app/repository/endpointStatusE
 import { endpointStatusEntrySchema } from './schema';
 
 export const defaultStatusEntryOptions: EndpointStatusEntryRepositoryOptions = {
-  limit: 5,
+  limit: 200,
   everyMilliseconds: 60 * 1000,
 };
 
@@ -21,8 +21,7 @@ export default class MongoEndpointStatusEntryRepository implements EndpointStatu
 
   async findRecentByUrl(url: string): Promise<EndpointStatusEntryEntity[]> {
     const after = Date.now() - this.opts.limit * this.opts.everyMilliseconds;
-    const docs = await this.model.find({ url: url, timestamp: { $gt: after } }).sort({ timestamp: -1 });
-
+    const docs = await this.model.find({ url: url, timestamp: { $gt: after } }).sort({ timestamp: 1 });
     // ensure duplicate status entries are not returned
     const entries = docs.map((doc) => this.fromDoc(doc));
     const urlMap: { [key: number]: EndpointStatusEntryEntity } = {};

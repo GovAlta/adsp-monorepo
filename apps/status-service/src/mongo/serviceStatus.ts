@@ -10,7 +10,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
     this.model = model('ServiceStatus', serviceStatusApplicationSchema);
   }
   async findEnabledApplications(): Promise<ServiceStatusApplicationEntity[]> {
-    const docs = await this.model.find({ status: { $ne: 'disabled' } });
+    const docs = await this.model.find({ enabled: true });
     return docs.map((doc) => this.fromDoc(doc));
   }
   async get(id: string): Promise<ServiceStatusApplicationEntity> {
@@ -21,7 +21,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
   async findQueuedDisabledApplications(queuedApplicationIds: string[]): Promise<ServiceStatusApplicationEntity[]> {
     const docs = await this.model.find({
       _id: { $in: queuedApplicationIds },
-      status: { $in: ['disabled'] },
+      enabled: false,
     });
     return docs.map((doc) => this.fromDoc(doc));
   }
@@ -38,7 +38,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
   async findNonQueuedApplications(queuedApplicationIds: string[]): Promise<ServiceStatusApplicationEntity[]> {
     const docs = await this.model.find({
       _id: { $nin: queuedApplicationIds },
-      status: { $nin: ['disabled'] },
+      enabled: true,
     });
     return docs.map((doc) => this.fromDoc(doc));
   }
@@ -50,16 +50,16 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
 
   async enable(entity: ServiceStatusApplicationEntity): Promise<ServiceStatusApplicationEntity> {
     const application = await this.model.findById(entity._id);
-    application.endpoints.forEach((endpoint) => (endpoint.status = 'pending'));
-    application.status = 'pending';
+    application.internalStatus = 'pending';
+    application.enabled = true;
     await application.save();
     return this.fromDoc(application);
   }
 
   async disable(entity: ServiceStatusApplicationEntity): Promise<ServiceStatusApplicationEntity> {
     const application = await this.model.findById(entity._id);
-    application.endpoints.forEach((endpoint) => (endpoint.status = 'disabled'));
-    application.status = 'disabled';
+    application.endpoint.status = 'disabled';
+    application.enabled = false;
     await application.save();
     return this.fromDoc(application);
   }
@@ -92,7 +92,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
   private toDoc(application: ServiceStatusApplicationEntity): Doc<ServiceStatusApplication> {
     return {
       _id: application._id,
-      endpoints: application.endpoints,
+      endpoint: application.endpoint,
       metadata: application.metadata,
       name: application.name,
       description: application.description,
@@ -101,7 +101,8 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
       tenantName: application.tenantName,
       tenantRealm: application.tenantRealm,
       status: application.status,
-      manualOverride: application.manualOverride,
+      internalStatus: application.internalStatus,
+      enabled: application.enabled,
     };
   }
 
@@ -111,7 +112,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
     }
     return new ServiceStatusApplicationEntity(this, {
       _id: doc._id,
-      endpoints: doc.endpoints,
+      endpoint: doc.endpoint,
       metadata: doc.metadata,
       name: doc.name,
       description: doc.description,
@@ -120,7 +121,8 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
       tenantName: doc.tenantName,
       tenantRealm: doc.tenantRealm,
       status: doc.status,
-      manualOverride: doc.manualOverride,
+      internalStatus: doc.internalStatus,
+      enabled: doc.enabled,
     });
   }
 }

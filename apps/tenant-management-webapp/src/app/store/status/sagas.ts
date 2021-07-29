@@ -9,6 +9,7 @@ import {
   fetchServiceStatusApps as refreshServiceStatusApps,
   DeleteApplicationAction,
   deleteApplicationSuccess,
+  ToggleApplicationStatusAction,
 } from './actions';
 import { Session } from '@store/session/models';
 import { ConfigState } from '@store/config/models';
@@ -25,15 +26,10 @@ export function* fetchServiceStatusApps(): SagaIterator {
   try {
     const api = new StatusApi(baseUrl, token);
     const applications: ServiceStatusApplication[] = yield call([api, api.getApplications]);
+
     for (const application of applications) {
-      const entryMap: { [key: string]: EndpointStatusEntry[] } = yield call(
-        [api, api.getEndpointStatusEntries],
-        application._id
-      );
-      for (const [url, entries] of Object.entries(entryMap)) {
-        const endpoint = application.endpoints.find((endpoint) => endpoint.url === url);
-        endpoint.statusEntries = entries;
-      }
+      const entryMap: EndpointStatusEntry[] = yield call([api, api.getEndpointStatusEntries], application._id);
+      application.endpoint.statusEntries = entryMap;
     }
 
     yield put(fetchServiceStatusAppsSuccess(applications));
@@ -87,6 +83,39 @@ export function* setApplicationStatus(action: SetApplicationStatusAction): SagaI
       action.payload.applicationId,
       action.payload.status
     );
+
+    // status entries
+    const entryMap: EndpointStatusEntry[] = yield call(
+      [api, api.getEndpointStatusEntries],
+      action.payload.applicationId
+    );
+    data.endpoint.statusEntries = entryMap;
+
+    yield put(setApplicationStatusSuccess(data));
+  } catch (e) {
+    yield put(ErrorNotification({ message: e.message }));
+  }
+}
+
+export function* toggleApplicationStatus(action: ToggleApplicationStatusAction) {
+  const currentState: RootState = yield select();
+
+  const baseUrl = getServiceStatusUrl(currentState.config);
+  const token = getToken(currentState.session);
+
+  try {
+    const api = new StatusApi(baseUrl, token);
+    const data: ServiceStatusApplication = yield api.toggleApplication(
+      action.payload.applicationId,
+      action.payload.enabled
+    );
+
+    // status entries
+    const entryMap: EndpointStatusEntry[] = yield call(
+      [api, api.getEndpointStatusEntries],
+      action.payload.applicationId
+    );
+    data.endpoint.statusEntries = entryMap;
 
     yield put(setApplicationStatusSuccess(data));
   } catch (e) {

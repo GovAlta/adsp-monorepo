@@ -1,4 +1,4 @@
-import { ServiceStatusType, ServiceStatusApplicationEntity } from '..';
+import { ServiceStatusApplicationEntity, PublicServiceStatusType } from '..';
 import { createMockMongoServer, disconnectMockMongo } from '../../mongo/mock';
 import MongoServiceStatusRepository from '../../mongo/serviceStatus';
 import MongoEndpointStatusEntryRepository from '../../mongo/endpointStatusEntry';
@@ -25,7 +25,7 @@ describe.skip('Validate endpoint checking', () => {
     serviceStatusRepository = new MongoServiceStatusRepository();
     endpointStatusEntryRepository = new MongoEndpointStatusEntryRepository({
       everyMilliseconds: 1,
-      limit: 100,
+      limit: 1000,
     });
     done();
   });
@@ -39,13 +39,15 @@ describe.skip('Validate endpoint checking', () => {
     return new mongoose.Types.ObjectId().toHexString();
   }
 
-  async function createMockApplication(initStatus: ServiceStatusType): Promise<ServiceStatusApplicationEntity> {
+  async function createMockApplication(initStatus: PublicServiceStatusType): Promise<ServiceStatusApplicationEntity> {
     const appData: Partial<ServiceStatusApplicationEntity> = {
       _id: generateId(),
-      endpoints: [{ url: 'http://foo.bar', status: initStatus === 'operational' ? 'online' : 'offline' }],
+      endpoint: { url: 'http://foo.bar', status: initStatus === 'operational' ? 'online' : 'offline' },
       name: 'app 1',
       status: initStatus,
+      internalStatus: initStatus === 'operational' ? 'healthy' : 'unhealthy',
       tenantId: '99',
+      enabled: true,
     };
     return await serviceStatusRepository.save(appData as ServiceStatusApplicationEntity);
   }
@@ -70,29 +72,30 @@ describe.skip('Validate endpoint checking', () => {
     await job();
   }
 
-  it('should mock api request', async () => {
+  it('should mock api request', async (done) => {
     const application = await createMockApplication('operational');
-    const url = application.endpoints[0].url;
+    const url = application.endpoint.url;
 
     await checkServiceStatus(application, { status: 200 });
 
     const entries = await endpointStatusEntryRepository.findRecentByUrl(url);
     expect(entries.length).toEqual(1);
     expect(entries[0].ok).toEqual(true);
+    done();
   });
 
-  it('should update the service state to `operational` after 3 successful requests', async () => {
+  it('should update the internal service state to `operational` after 3 successful requests', async () => {
     const application = await createMockApplication('reported-issues');
-    const url = application.endpoints[0].url;
+    const url = application.endpoint.url;
 
     let service: ServiceStatusApplicationEntity;
     let entries: EndpointStatusEntryEntity[];
 
     // init state check
     service = await serviceStatusRepository.get(application._id);
-    expect(service.status).toBe('reported-issues');
+    expect(service.internalStatus).toBe('unhealthy');
 
-    // pass 1 - should be `reported-issues`
+    // pass 1 - should be `unhealthy`
     {
       await checkServiceStatus(application, { status: 200 });
 
@@ -101,11 +104,11 @@ describe.skip('Validate endpoint checking', () => {
       expect(entries[0].ok).toBe(true);
 
       service = await serviceStatusRepository.get(application._id);
-      expect(service.status).toBe('reported-issues');
-      expect(service.endpoints[0].status).toBe('offline');
+      expect(service.internalStatus).toBe('unhealthy');
+      expect(service.endpoint.status).toBe('offline');
     }
 
-    // pass 2 - should still be `reported-issues`
+    // pass 2 - should still be `unhealthy`
     {
       await checkServiceStatus(application, { status: 200 });
 
@@ -115,11 +118,11 @@ describe.skip('Validate endpoint checking', () => {
       expect(entries[1].ok).toBe(true);
 
       service = await serviceStatusRepository.get(application._id);
-      expect(service.status).toBe('reported-issues');
-      expect(service.endpoints[0].status).toBe('offline');
+      expect(service.internalStatus).toBe('unhealthy');
+      expect(service.endpoint.status).toBe('offline');
     }
 
-    // pass 3 - should now be `operational`
+    // pass 3 - should now be `healthy`
     {
       await checkServiceStatus(application, { status: 200 });
 
@@ -130,21 +133,21 @@ describe.skip('Validate endpoint checking', () => {
       expect(entries[2].ok).toBe(true);
 
       service = await serviceStatusRepository.get(application._id);
-      expect(service.status).toBe('operational');
-      expect(service.endpoints[0].status).toBe('online');
+      expect(service.internalStatus).toBe('healthy');
+      expect(service.endpoint.status).toBe('online');
     }
   });
 
   it('should update the service state to `reported-issues` after 3 failed requests', async () => {
     const application = await createMockApplication('operational');
-    const url = application.endpoints[0].url;
+    const url = application.endpoint.url;
 
     let service: ServiceStatusApplicationEntity;
     let entries: EndpointStatusEntryEntity[];
 
     // init state check
     service = await serviceStatusRepository.get(application._id);
-    expect(service.status).toBe('operational');
+    expect(service.internalStatus).toBe('healthy');
 
     // pass 1 - should be `operational`
     {
@@ -155,8 +158,8 @@ describe.skip('Validate endpoint checking', () => {
       expect(entries[0].ok).toBe(false);
 
       service = await serviceStatusRepository.get(application._id);
-      expect(service.status).toBe('operational');
-      expect(service.endpoints[0].status).toBe('online');
+      expect(service.internalStatus).toBe('healthy');
+      expect(service.endpoint.status).toBe('online');
     }
 
     // pass 2 - should still be `operational`
@@ -169,8 +172,8 @@ describe.skip('Validate endpoint checking', () => {
       expect(entries[1].ok).toBe(false);
 
       service = await serviceStatusRepository.get(application._id);
-      expect(service.status).toBe('operational');
-      expect(service.endpoints[0].status).toBe('online');
+      expect(service.internalStatus).toBe('healthy');
+      expect(service.endpoint.status).toBe('online');
     }
 
     // pass 3 - should now be `reported-issues`
@@ -184,8 +187,8 @@ describe.skip('Validate endpoint checking', () => {
       expect(entries[2].ok).toBe(false);
 
       service = await serviceStatusRepository.get(application._id);
-      expect(service.status).toBe('reported-issues');
-      expect(service.endpoints[0].status).toBe('offline');
+      expect(service.internalStatus).toBe('unhealthy');
+      expect(service.endpoint.status).toBe('offline');
     }
   });
 
@@ -199,8 +202,8 @@ describe.skip('Validate endpoint checking', () => {
       await checkServiceStatus(application, { status: 500 });
 
       const service = await serviceStatusRepository.get(application._id);
-      expect(service.status).toBe('reported-issues');
-      expect(service.endpoints[0].status).toBe('offline');
+      expect(service.internalStatus).toBe('unhealthy');
+      expect(service.endpoint.status).toBe('offline');
     }
 
     // now up
@@ -209,8 +212,8 @@ describe.skip('Validate endpoint checking', () => {
       await checkServiceStatus(application, { status: 200 });
       await checkServiceStatus(application, { status: 200 });
       const service = await serviceStatusRepository.get(application._id);
-      expect(service.status).toBe('operational');
-      expect(service.endpoints[0].status).toBe('online');
+      expect(service.internalStatus).toBe('healthy');
+      expect(service.endpoint.status).toBe('online');
     }
 
     // still up
@@ -218,8 +221,8 @@ describe.skip('Validate endpoint checking', () => {
       await checkServiceStatus(application, { status: 500 });
 
       const service = await serviceStatusRepository.get(application._id);
-      expect(service.status).toBe('operational');
-      expect(service.endpoints[0].status).toBe('online');
+      expect(service.internalStatus).toBe('healthy');
+      expect(service.endpoint.status).toBe('online');
     }
 
     // back down
@@ -228,53 +231,14 @@ describe.skip('Validate endpoint checking', () => {
       await checkServiceStatus(application, { status: 500 });
 
       const service = await serviceStatusRepository.get(application._id);
-      expect(service.status).toBe('reported-issues');
-      expect(service.endpoints[0].status).toBe('offline');
-    }
-  });
-
-  it('should not update the application state if manualOverride is on', async () => {
-    let application = await createMockApplication('operational');
-
-    // enable manual override
-    application.manualOverride = 'on';
-    application = await serviceStatusRepository.save(application);
-
-    {
-      const service = await serviceStatusRepository.get(application._id);
-      expect(service.status).toBe('operational');
-    }
-
-    // init state check, due to manualOverride, should still be operational
-    {
-      await checkServiceStatus(application, { status: 500 });
-      await checkServiceStatus(application, { status: 500 });
-      await checkServiceStatus(application, { status: 500 });
-
-      const service = await serviceStatusRepository.get(application._id);
-      expect(service.status).toBe('operational');
-      expect(service.endpoints[0].status).toBe('offline');
-    }
-
-    // disable manual override
-    application.manualOverride = 'off';
-    application = await serviceStatusRepository.save(application);
-
-    // should now get set to `off`
-    {
-      await checkServiceStatus(application, { status: 500 });
-
-      const service = await serviceStatusRepository.get(application._id);
-      expect(service.status).toBe('reported-issues');
-      expect(service.endpoints[0].status).toBe('offline');
+      expect(service.internalStatus).toBe('unhealthy');
+      expect(service.endpoint.status).toBe('offline');
     }
   });
 
   it('should set the statusTimestamp when the status is manually changed', async () => {
     let application = await createMockApplication('operational');
 
-    // enable manual override
-    application.manualOverride = 'on';
     application.status = 'maintenance';
     application.statusTimestamp = 0;
     application = await serviceStatusRepository.save(application);
@@ -286,25 +250,21 @@ describe.skip('Validate endpoint checking', () => {
     expect(application.statusTimestamp).toBeGreaterThan(0);
   });
 
-  it('should set the statusTimestamp when the status is automatically changed', async () => {
+  it('should not set the statusTimestamp when the internal status changes', async () => {
     let application = await createMockApplication('operational');
 
-    // manual change
-    application.manualOverride = 'on';
+    // init
     application.status = 'maintenance';
-    application.statusTimestamp = 0;
+    application.statusTimestamp = 0
     application = await serviceStatusRepository.save(application);
 
-    // automatic change
-    application.manualOverride = 'off';
-    application = await serviceStatusRepository.save(application);
+    // status checks
     await checkServiceStatus(application, { status: 200 });
     await checkServiceStatus(application, { status: 200 });
     await checkServiceStatus(application, { status: 200 });
 
     application = await serviceStatusRepository.get(application._id);
 
-    expect(application.statusTimestamp).not.toBeNull();
-    expect(application.statusTimestamp).toBeGreaterThan(0);
+    expect(application.statusTimestamp).toBe(0);
   });
 });

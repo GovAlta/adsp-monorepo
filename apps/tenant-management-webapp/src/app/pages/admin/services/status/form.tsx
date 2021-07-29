@@ -1,6 +1,6 @@
 import { RootState } from '@store/index';
 import { saveApplication } from '@store/status/actions';
-import { EndpointStatusType, ServiceStatusApplication, ServiceStatusEndpoint } from '@store/status/models';
+import { ServiceStatusApplication } from '@store/status/models';
 import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useParams } from 'react-router-dom';
@@ -18,8 +18,7 @@ function ApplicationForm(): JSX.Element {
     tenantId: '',
     enabled: false,
     description: '',
-    status: 'disabled',
-    endpoints: [],
+    endpoint: { url: '', status: 'offline' },
   });
 
   useEffect(() => {
@@ -35,21 +34,8 @@ function ApplicationForm(): JSX.Element {
   }
 
   function submit(e: FormEvent) {
-    const form = new FormData(e.target as HTMLFormElement);
-    const urls = form.get('endpoints') as string;
-
-    const getStatus = (url: string): EndpointStatusType =>
-      application.endpoints.find((endpoint) => endpoint.url === url)?.status;
-
-    const params = {
-      ...application,
-      endpoints: urls
-        .split('\r\n')
-        .map((url) => ({ url: url.trim(), status: getStatus(url) } as ServiceStatusEndpoint))
-        .filter((endpoint) => endpoint.url.length > 0),
-    };
-
-    dispatch(saveApplication(params));
+    console.log(application);
+    dispatch(saveApplication(application));
     e.preventDefault();
 
     history.push('/admin/services/status');
@@ -72,17 +58,12 @@ function ApplicationForm(): JSX.Element {
       </GoAFormItem>
 
       <GoAFormItem>
-        <label>Endpoint Urls</label>
-        <textarea
-          name="endpoints"
-          rows={2}
-          value={application?.endpoints?.map((endpoint) => endpoint.url).join('\r\n')}
-          onChange={(e) =>
-            setValue(
-              e,
-              e.target.value.split('\r\n').map((url) => ({ url, status: 'unknown' }))
-            )
-          }
+        <label>Endpoint Url</label>
+        <input
+          type="text"
+          name="endpoint"
+          value={application?.endpoint?.url}
+          onChange={(e) => setValue(e, { url: e.target.value })}
         />
       </GoAFormItem>
 
