@@ -15,15 +15,6 @@ import {
   UpdateFileTypeService,
   FetchFileTypeHasFileService,
 } from '@store/file/actions';
-const TitleContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  button {
-    margin: 0rem;
-  }
-  margin-bottom: 1rem;
-`;
 
 const FileTypeTableContainer = styled.div`
   table {
@@ -504,12 +495,9 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
 
   return (
     <FileTypeTableContainer>
-      <TitleContainer>
-        <h3>File Types</h3>
-        <GoAButton onClick={newEntryFn} data-testid="new-file-type-button-top">
-          New file type
-        </GoAButton>
-      </TitleContainer>
+      <GoAButton onClick={newEntryFn} data-testid="new-file-type-button-top">
+        New file type
+      </GoAButton>
       {showDelete && <DeleteModal {...updateFileType} />}
       <DataTable>
         <thead>
@@ -561,19 +549,6 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
               />
             );
           })}
-
-          <tr>
-            <td colSpan={5}>
-              <GoAButton
-                buttonType="secondary"
-                buttonSize="small"
-                onClick={newEntryFn}
-                data-testid="new-file-type-button-bottom"
-              >
-                + New file type
-              </GoAButton>
-            </td>
-          </tr>
         </tbody>
       </DataTable>
     </FileTypeTableContainer>
