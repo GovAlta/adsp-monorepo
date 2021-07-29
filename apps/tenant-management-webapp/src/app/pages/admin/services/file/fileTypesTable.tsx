@@ -344,8 +344,14 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           }}
         >
           {cellType === 'readRoles' && (
-            <GoAOption value="anonymousRead" label="Anonymous" key={'anonymous'} data-testid="anonymous-option">
-              Anyone (Anonymous)
+            <GoAOption
+              value="anonymousRead"
+              label="Anonymous"
+              key={'anonymous'}
+              data-testid="anonymous-option"
+              selected={anonymousRead}
+            >
+              {anonymousRead ? 'Deselect Anonymous' : 'Anyone (Anonymous)'}
             </GoAOption>
           )}
 
@@ -428,8 +434,10 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
         )}
 
         {hasFile === false && (
-          <GoACallout type="important" title="File type current in use">
-            <p>{`Deleting the file type (${props.name}) will cause the related endpoints unavailable.`}</p>
+          <GoACallout type="important" title="Deleting File Type">
+            <p>
+              Deleting the file type <b>{`${props.name}`}</b> cannot be undone.
+            </p>
             <p>
               <b>Are you sure you want to continue?</b>
             </p>
@@ -440,7 +448,9 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
                 onClick={() => {
                   dispatch(DeleteFileTypeService(props));
                 }}
-              >{`Delete ${props.name}`}</GoAButton>
+              >
+                Delete
+              </GoAButton>
             </div>
           </GoACallout>
         )}
