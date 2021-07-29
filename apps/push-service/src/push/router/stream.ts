@@ -2,21 +2,17 @@ import { Router } from 'express';
 import { Instance as WsApplication } from 'express-ws';
 import { map, share } from 'rxjs/operators';
 import { Logger } from 'winston';
-import type { User } from '@abgov/adsp-service-sdk';
-import { DomainEventSubscriberService, NotFoundError } from '@core-services/core-common';
-import { StreamRepository } from '../repository';
+import { adspId, User } from '@abgov/adsp-service-sdk';
+import { DomainEventSubscriberService, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { EventCriteria } from '../types';
+import { StreamEntity } from '../model';
 
 interface StreamRouterProps {
   logger: Logger;
   eventService: DomainEventSubscriberService;
-  streamRepository: StreamRepository;
 }
 
-export const createStreamRouter = (
-  ws: WsApplication,
-  { logger, eventService, streamRepository }: StreamRouterProps
-): Router => {
+export const createStreamRouter = (ws: WsApplication, { logger, eventService }: StreamRouterProps): Router => {
   const events = eventService.getItems().pipe(
     map(({ item, done }) => {
       done();
@@ -32,60 +28,88 @@ export const createStreamRouter = (
   const streamRouter = Router();
   ws.applyTo(streamRouter);
 
-  streamRouter.get('/:space/:stream', (req, res, next) => {
+  streamRouter.get('/streams', async (req, res, next) => {
     const user = req.user as User;
-    const { space, stream } = req.params;
-    const criteria: EventCriteria = req.query.criteria ? JSON.parse(req.query.criteria as string) : {};
+    const { tenant } = req.query;
 
-    streamRepository
-      .get({ spaceId: space, id: stream })
-      .then((entity) => {
-        if (!entity) {
-          throw new NotFoundError('stream', `${space}:${stream}`);
-        }
-        return entity;
-      })
-      .then((stream) => stream.connect(events))
-      .then((stream) => {
-        res.set({
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          Connection: 'keep-alive',
-        });
-        res.flushHeaders();
+    const tenantId = user?.tenantId || adspId`urn:ads:platform:tenant-service:v2:/tenants/${tenant as string}`;
+    if (!tenantId) {
+      next(new InvalidOperationError('No tenant specified for request.'));
+      return;
+    }
 
-        const sub = stream.getEvents(user, criteria).subscribe((next) => {
-          res.write(`data: ${JSON.stringify(next)}\n\n`);
-          res.flush();
-        });
-
-        res.on('close', () => sub.unsubscribe());
-        res.on('error', () => sub.unsubscribe());
-      })
-      .catch((err) => next(err));
+    const [entities] = await req.getConfiguration<Record<string, StreamEntity>>(tenantId);
+    res.send(entities);
   });
 
-  streamRouter.ws('/:space/:stream', (ws, req, next) => {
+  streamRouter.get('/streams/:stream', async (req, res, next) => {
     const user = req.user as User;
-    const { space, stream } = req.params;
-    const criteria: EventCriteria = req.query.criteria ? JSON.parse(req.query.criteria as string) : {};
+    const { stream } = req.params;
+    const { criteria: criteriaValue, tenant } = req.query;
+    const criteria: EventCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
 
-    streamRepository
-      .get({ spaceId: space, id: stream })
-      .then((entity) => {
-        if (!entity) {
-          throw new NotFoundError('stream', `${space}:${stream}`);
-        }
-        return entity;
-      })
-      .then((stream) => stream.connect(events))
-      .then((stream) => {
-        const sub = stream.getEvents(user, criteria).subscribe((next) => ws.send(JSON.stringify(next)));
+    const tenantId = user?.tenantId || adspId`urn:ads:platform:tenant-service:v2:/tenants/${tenant as string}`;
+    if (!tenantId) {
+      next(new InvalidOperationError('No tenant specified for request.'));
+      return;
+    }
 
-        ws.on('close', () => sub.unsubscribe());
-        ws.on('error', () => sub.unsubscribe());
-      })
-      .catch((err) => next(err));
+    const [entities] = await req.getConfiguration<Record<string, StreamEntity>>(tenantId);
+    const entity = entities?.[stream];
+    if (!entity) {
+      next(new NotFoundError('stream', stream));
+      return;
+    }
+
+    try {
+      entity.connect(events);
+      res.set({
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      });
+      res.flushHeaders();
+
+      const sub = entity.getEvents(user, criteria).subscribe((next) => {
+        res.write(`data: ${JSON.stringify(next)}\n\n`);
+        res.flush();
+      });
+
+      res.on('close', () => sub.unsubscribe());
+      res.on('error', () => sub.unsubscribe());
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  streamRouter.ws('/streams/:stream', async (ws, req, next) => {
+    const user = req.user as User;
+    const { stream } = req.params;
+    const { criteria: criteriaValue, tenant } = req.query;
+    const criteria: EventCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
+
+    const tenantId = user?.tenantId || adspId`urn:ads:platform:tenant-service:v2:/tenants/${tenant as string}`;
+    if (!tenantId) {
+      next(new InvalidOperationError('No tenant specified for request.'));
+      return;
+    }
+
+    const [entities] = await req.getConfiguration<Record<string, StreamEntity>>(tenantId);
+    const entity = entities?.[stream];
+    if (!entity) {
+      next(new NotFoundError('stream', stream));
+      return;
+    }
+
+    try {
+      entity.connect(events);
+      const sub = entity.getEvents(user, criteria).subscribe((next) => ws.send(JSON.stringify(next)));
+
+      ws.on('close', () => sub.unsubscribe());
+      ws.on('error', () => sub.unsubscribe());
+    } catch (err) {
+      next(err);
+    }
   });
 
   return streamRouter;

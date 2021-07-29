@@ -1,0 +1,96 @@
+components:
+  schemas:
+    StreamEvent:
+      type: object
+      properties:
+        namespace:
+          type: string
+        name:
+          type: string
+        map:
+          type: object
+          additionalProperties:
+            type: string
+        criteria:
+          type: object
+          properties:
+            correlationId:
+              type: string
+            context:
+              type: object
+              additionalProperties:
+                oneOf:
+                  - type: string
+                  - type: boolean
+                  - type: number
+      required: [namespace, name]
+    Stream:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/StreamEvent"
+        subscriberRoles:
+          type: array
+          items:
+            type: string
+        publicSubscribe:
+          type: boolean
+      required: [id, name, events, subscriberRoles, publicSubscribe]
+
+/stream/v1/streams:
+  get:
+    tags:
+      - Stream
+    description: Retrieves available streams.
+    parameters:
+      - in: query
+        name: tenant
+        description: ID of the tenant to retrieve streams for.
+        schema:
+          type: string
+    responses:
+      200:
+        description: Event successfully sent.
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                $ref: "#/components/schemas/Stream"
+      401:
+        description: User not authorized to get streams.
+
+/stream/v1/streams/{stream}:
+  get:
+    tags:
+      - Stream
+    description: Retrieve server side events for stream.
+    parameters:
+      - in: query
+        name: tenant
+        description: ID of the tenant associated with the stream for.
+        schema:
+          type: string
+      - in: path
+        required: true
+        name: stream
+        description: ID of the stream to retrieve.
+        schema:
+          type: string
+    responses:
+      200:
+        description: Event successfully sent.
+        content:
+          text/event-stream:
+            schema:
+              type: object
+      401:
+        description: User not authorized to get stream.

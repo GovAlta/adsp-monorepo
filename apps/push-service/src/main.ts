@@ -13,55 +13,72 @@ import {
   InvalidOperationError,
 } from '@core-services/core-common';
 import { environment } from './environments/environment';
-import { applyPushMiddleware } from './push';
-import { createRepositories } from './mongo';
-import type { User } from '@abgov/adsp-service-sdk';
+import { applyPushMiddleware, Stream, StreamEntity } from './push';
+import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
 
 const logger = createLogger('push-service', environment.LOG_LEVEL || 'info');
 
-const app = express();
-const wsApp = expressWs(app, null, { leaveRouterUntouched: true });
+const initializeApp = async (): Promise<express.Application> => {
+  const app = express();
+  const wsApp = expressWs(app, null, { leaveRouterUntouched: true });
 
-app.use(compression());
-app.use(helmet());
-app.use(express.json({ limit: '1mb' }));
+  app.use(compression());
+  app.use(helmet());
+  app.use(express.json({ limit: '1mb' }));
+  app.use(cors());
 
-// passport.use('jwt', createKeycloakStrategy());
-passport.use(new AnonymousStrategy());
-
-passport.serializeUser(function (user, done) {
-  done(null, user);
-});
-
-passport.deserializeUser(function (user, done) {
-  done(null, user as User);
-});
-
-app.use(passport.initialize());
-app.use('/space', passport.authenticate(['jwt'], { session: false }));
-app.use('/push-admin', passport.authenticate(['jwt'], { session: false }));
-app.use('/stream', passport.authenticate(['jwt', 'anonymous'], { session: false }));
-
-app.use('/stream', cors());
-
-Promise.all([
-  createRepositories({ ...environment, logger }),
-  createAmqpEventService({ ...environment, queue: 'event-push', logger }),
-]).then(([repositories, eventService]) => {
-  app.get('/health', (req, res) =>
-    res.json({
-      db: repositories.isConnected(),
-      msg: eventService.isConnected(),
-    })
+  const serviceId = AdspId.parse(environment.CLIENT_ID);
+  const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
+  const { tenantStrategy, configurationHandler, healthCheck } = await initializePlatform(
+    {
+      serviceId,
+      displayName: 'Push Service',
+      description: 'Service for push mode connections.',
+      roles: [],
+      configurationConverter: (config: Record<string, Stream>): Record<string, StreamEntity> =>
+        config ? Object.entries(config).reduce((c, [k, s]) => ({ ...c, [k]: new StreamEntity(s) }), {}) : null,
+      clientSecret: environment.CLIENT_SECRET,
+      accessServiceUrl,
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+    },
+    { logger }
   );
 
-  applyPushMiddleware(app, wsApp, {
-    ...repositories,
-    logger,
-    eventService,
+  passport.use('jwt', tenantStrategy);
+  passport.use(new AnonymousStrategy());
+  passport.serializeUser(function (user, done) {
+    done(null, user);
+  });
+  passport.deserializeUser(function (user, done) {
+    done(null, user as User);
+  });
+  app.use(passport.initialize());
+
+  app.use('/stream', passport.authenticate(['jwt', 'anonymous'], { session: false }), configurationHandler);
+  const eventService = await createAmqpEventService({ ...environment, queue: 'event-push', logger });
+
+  applyPushMiddleware(app, wsApp, { logger, eventService });
+
+  app.get('/health', async (_req, res) => {
+    const platform = await healthCheck();
+    res.json({
+      ...platform,
+      msg: eventService.isConnected(),
+    });
   });
 
-  app.use((err, req, res, _next) => {
+  app.get('/', async (req, res) => {
+    const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
+    res.json({
+      _links: {
+        self: new URL(req.originalUrl, rootUrl).href,
+        health: new URL('/health', rootUrl).href,
+        api: new URL('/stream/v1', rootUrl).href,
+      },
+    });
+  });
+
+  app.use((err, _req, res, _next) => {
     if (err instanceof UnauthorizedError) {
       res.status(401).send(err.message);
     } else if (err instanceof NotFoundError) {
@@ -74,6 +91,10 @@ Promise.all([
     }
   });
 
+  return app;
+};
+
+initializeApp().then((app) => {
   const port = environment.PORT || 3333;
 
   const server = app.listen(port, () => {
