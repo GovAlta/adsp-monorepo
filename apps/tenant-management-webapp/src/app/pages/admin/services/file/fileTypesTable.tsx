@@ -121,7 +121,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
   const NameCell = (props: FileTypeRowProps): JSX.Element => {
     const [name, setName] = useState(props.name);
     return (
-      <td date-testid="name">
+      <td data-testid="name">
         {props.editable ? (
           <input
             value={name}
@@ -426,7 +426,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
     return (
       <DeleteModalContainer>
         {hasFile === true && (
-          <GoACallout type="important" date-testid="delete-modal">
+          <GoACallout type="important" data-testid="delete-modal">
             <h3>File type current in use</h3>
             <p>{`You are unable to delete the file type (${props.name}), because there are files within the file type`}</p>
             <CancelButton data-testid="cancel-delete-modal" />
