@@ -2,11 +2,31 @@ import { Router } from 'express';
 import { Logger } from 'winston';
 import * as HttpStatusCodes from 'http-status-codes';
 import { v4 as uuidv4 } from 'uuid';
-import { assertAuthenticatedHandler, NotFoundError, InvalidOperationError } from '@core-services/core-common';
+import {
+  assertAuthenticatedHandler,
+  AuthAssert,
+  NotFoundError,
+  InvalidOperationError,
+} from '@core-services/core-common';
 import { FileRepository, FileSpaceRepository } from '../repository';
 import { FileSpaceEntity } from '../model';
 
 import { fileServiceAdminMiddleware } from '../middleware/authentication';
+import { fileTypeSchema } from '../../mongo/schema';
+
+const getCircularReplacer = () => {
+  const seen = new WeakSet();
+  return (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return;
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+};
+
 interface FileTypeRouterProps {
   logger: Logger;
   spaceRepository: FileSpaceRepository;
@@ -62,10 +82,15 @@ export const createFileTypeRouter = ({
   });
 
   fileTypeRouter.get('/fileTypes/:fileTypeId', async (req, res, next) => {
-    const { fileTypeId } = req.params;
+    const { fileTypeId, spaceIdParam } = req.params;
+
+    console.log(fileTypeId + '<fileTypeId');
+    console.log(spaceIdParam + '<spaceIdParam');
 
     try {
-      const spaceId = await spaceRepository.getIdByTenant(req.tenant);
+      console.log(JSON.stringify(req.tenant));
+      console.log(JSON.stringify(req, getCircularReplacer()) + '<req');
+      const spaceId = spaceIdParam || (await spaceRepository.getIdByTenant(req.tenant));
       if (!spaceId) {
         throw new NotFoundError('File Type', fileTypeId);
       }
@@ -105,17 +130,22 @@ export const createFileTypeRouter = ({
     }
   });
 
-  fileTypeRouter.put('/fileTypes/:fileTypeId', assertAuthenticatedHandler, async (req, res, next) => {
+  fileTypeRouter.put('/fileTypes/:fileTypeId', AuthAssert.assertMethod, async (req, res, next) => {
     const user = req.user;
     const { fileTypeId } = req.params;
 
     const { updateRoles, readRoles, anonymousRead, name } = req.body;
+    console.log(fileTypeId + '<fileTypeId2');
 
+    console.log(JSON.stringify(req.tenant));
+    console.log(JSON.stringify(req, getCircularReplacer()) + '<req2');
     try {
       const spaceId = await spaceRepository.getIdByTenant(req.tenant);
       if (!spaceId) {
         throw new NotFoundError('File Space', null);
       }
+
+      console.log(JSON.stringify(spaceId, getCircularReplacer()) + '<spaceId');
 
       const spaceEntity: FileSpaceEntity = await spaceRepository.get(spaceId);
 

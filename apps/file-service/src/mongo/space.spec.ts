@@ -8,6 +8,7 @@ import { adspId, User } from '@abgov/adsp-service-sdk';
 import { FileCriteria } from '../file/types';
 import { environment } from '../environments/environment';
 import { FileTypeEntity } from '../file/model/type';
+import { FileSpaceEntity } from '../file/model/space';
 import { FileType } from '../file/types';
 
 const getCircularReplacer = () => {
@@ -23,7 +24,7 @@ const getCircularReplacer = () => {
   };
 };
 
-describe('Mongo: FileEntity', () => {
+describe('Mongo: SpaceEntity', () => {
   const spaceId = 'space1234';
   const type: FileType = {
     id: 'type-1',
@@ -36,8 +37,8 @@ describe('Mongo: FileEntity', () => {
 
   const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
   const cache = new NodeCache({ stdTTL: 86400, useClones: false });
-  const fileRepo = new MongoFileSpaceRepository(logger, cache);
-  const repo = new MongoFileRepository(fileRepo);
+  const repo = new MongoFileSpaceRepository(logger, cache);
+  //const repo = new MongoFileRepository(fileRepo);
   // const spaceId = await fileRepo.getIdByTenant({
   //   name: 'Bob',
   //   id: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
@@ -59,7 +60,7 @@ describe('Mongo: FileEntity', () => {
     done();
   });
 
-  it('finds a defined file', async () => {
+  it('finds a defined space', async () => {
     const entity = new FileTypeEntity(type);
     // const user: User = {
     //   id: 'user-2',
@@ -71,22 +72,17 @@ describe('Mongo: FileEntity', () => {
     //   token: null,
     // };
 
-    const data = await createMockData<FileEntity>(repo, [
+    const data = await createMockData<FileSpaceEntity>(repo, [
       {
-        id: '1',
-        recordId: '1',
-        filename: 'bob.jpg',
-        size: 44545454,
-        storage: '6b9e2a75',
-        createdBy: { id: '4d662274-9b23-4e2e-b058-50c3a4062609', name: 'QA-Dev DIO' },
-        created: new Date('2021-04-19T19:26:30.667+00:00'),
-        lastAccessed: null,
-        scanned: false,
-        deleted: false,
-        type: entity,
+        id: 'test',
+        name: 'Test',
+        spaceAdminRole: 'test-admin',
+        types: {
+          a: entity,
+        },
       },
     ]);
-    const { results } = await repo.find(99, '', criteria);
+    const { results } = await repo.find(99, '');
     // const qqq = await repo.find(99, '', criteria);
     // console.log(JSON.stringify(qqq) + '<qqq');
     console.log(JSON.stringify(results, getCircularReplacer()) + '<results');
