@@ -20,10 +20,7 @@ export class MongoFileRepository implements FileRepository {
 
   async exists(criteria: FileCriteria): Promise<boolean> {
     const query: queryProps = this.getQuery(criteria);
-    const result = await this.model.findOne({
-      where: query,
-    });
-
+    const result = await this.model.findOne(query);
     return !!result === true;
   }
 
