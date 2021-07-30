@@ -149,6 +149,8 @@ export const createFileTypeRouter = ({
 
       const spaceEntity: FileSpaceEntity = await spaceRepository.get(spaceId);
 
+      console.log(JSON.stringify(spaceEntity, getCircularReplacer()) + '<spaceEntity');
+
       if (!Object.values(spaceEntity.types).find((type) => type.id === fileTypeId)) {
         throw new NotFoundError(`File Type`, fileTypeId);
       }
