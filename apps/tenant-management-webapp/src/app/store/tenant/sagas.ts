@@ -29,8 +29,8 @@ export function* fetchTenant(action: FetchTenantAction) {
   const realm = action.payload;
 
   try {
-    const { response } = yield api.fetchTenantByRealm(realm);
-    yield put(FetchTenantSuccess(response.tenant));
+    const tenant = yield api.fetchTenantByRealm(realm);
+    yield put(FetchTenantSuccess(tenant));
   } catch (e) {
     yield put(ErrorNotification({ message: 'failed to fetch tenant' }));
   }

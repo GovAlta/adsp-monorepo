@@ -22,7 +22,7 @@ export class TenantApi {
   async fetchTenantByRealm(realm: string): Promise<Tenant> {
     const url = `${this.config.host}${this.config.endpoints.tenantNameByRealm}/${realm}`;
     const res = await this.http.get(url);
-    return res.data;
+    return res?.data?.tenant;
   }
 
   async fetchTenantByName(name: string): Promise<Tenant> {

@@ -3,6 +3,7 @@ export interface Role {
   name: string;
 }
 export interface Tenant {
+  id: string;
   name: string;
   realm: string;
   isTenantAdmin: boolean;
@@ -11,6 +12,7 @@ export interface Tenant {
 }
 
 export const TENANT_INIT: Tenant = {
+  id: '',
   name: '',
   realm: '',
   isTenantAdmin: null,

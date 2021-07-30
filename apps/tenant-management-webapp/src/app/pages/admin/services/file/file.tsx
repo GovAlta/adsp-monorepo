@@ -10,10 +10,12 @@ import FileList from './fileList';
 import './file.css';
 import InitSetup from './fileInitSetup';
 import { RootState } from '@store/index';
-import { Main } from '@components/Html';
+import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { FetchTenantConfigService } from '@store/tenantConfig/actions';
 import { FetchFileSpaceService } from '@store/file/actions';
+import SupportLinks from '@components/SupportLinks';
+
 interface tapProps {
   isActive?: boolean;
 }
@@ -29,9 +31,6 @@ const TabsForEnable = (props: tapProps): JSX.Element => {
       <Tab label="File Types">
         <FileTypes />
       </Tab>
-      <Tab label="Documentation">
-        <FileDoc />
-      </Tab>
     </Tabs>
   );
 };
@@ -41,9 +40,6 @@ const TabsForDisable = (props: tapProps) => {
     <Tabs>
       <Tab label="Overview">
         <FileOverview isActive={props.isActive} />
-      </Tab>
-      <Tab label="Documentation">
-        <FileDoc />
       </Tab>
     </Tabs>
   );
@@ -62,6 +58,27 @@ const TabsForInit = () => {
   );
 };
 
+const HelpLink = (): JSX.Element => {
+  const tenantId = useSelector((state: RootState) => state.tenant?.id);
+  const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
+  return (
+    <>
+      <h5>Helpful Links</h5>
+      <a rel="noopener noreferrer" target="_blank" href={`${docBaseUrl}?tenant=${tenantId}&urls.primaryName=File Service`}>
+        Read the API docs
+      </a>
+      <a
+        rel="noopener noreferrer"
+        target="_blank"
+        href="https://gitlab.gov.ab.ca/dio/core/core-services/-/tree/master/apps/file-service"
+      >
+        See the code
+      </a>
+      <SupportLinks />
+    </>
+  );
+};
+
 export default function File(): JSX.Element {
   const dispatch = useDispatch();
   const [isLoaded, setIsLoaded] = useState(false);
@@ -77,21 +94,26 @@ export default function File(): JSX.Element {
   const isEnabled = tenantConfig.fileService?.isEnabled && space !== null;
 
   return (
-    <Main>
-      {isLoaded ? (
-        <>
-          <FileHeader isSetup={setupRequired} isActive={isActive} />
-          {setupRequired ? (
-            <TabsForInit />
-          ) : isEnabled ? (
-            <TabsForEnable isActive={isActive} />
-          ) : (
-            <TabsForDisable isActive={isActive} />
-          )}
-        </>
-      ) : (
-        <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
-      )}
-    </Main>
+    <Page>
+      <Main>
+        {isLoaded ? (
+          <>
+            <FileHeader isSetup={setupRequired} isActive={isActive} />
+            {setupRequired ? (
+              <TabsForInit />
+            ) : isEnabled ? (
+              <TabsForEnable isActive={isActive} />
+            ) : (
+              <TabsForDisable isActive={isActive} />
+            )}
+          </>
+        ) : (
+          <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
+        )}
+      </Main>
+      <Aside>
+        <HelpLink />
+      </Aside>
+    </Page>
   );
 }
