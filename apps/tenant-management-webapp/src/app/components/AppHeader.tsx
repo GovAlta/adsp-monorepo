@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 import { GoAHeader } from '@abgov/react-components';
 import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
@@ -14,8 +14,12 @@ interface HeaderMenuProps {
   hasLoginLink: boolean;
   admin: boolean;
 }
-
-const ActionsMenu = (props: HeaderMenuProps) => {
+interface HeaderProps {
+  serviceName?: string;
+  hasLoginLink?: boolean;
+  admin?: boolean;
+}
+const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
   const authenticated = useSelector((state: RootState) => state.session.authenticated);
   const dispatch = useDispatch();
   const [menuState, setMenuState] = useState<MenuState>({ state: 'closed' });
@@ -66,7 +70,7 @@ const ActionsMenu = (props: HeaderMenuProps) => {
   );
 };
 
-function AppHeader({ serviceName = '', hasLoginLink = true, admin = false }) {
+function AppHeader({ serviceName = '', hasLoginLink = true, admin = false }: HeaderProps): JSX.Element {
   return (
     <HeaderContainer>
       <GoAHeader serviceHome="/" serviceLevel="beta" serviceName={serviceName} />

@@ -6,7 +6,7 @@ import { useParams } from 'react-router-dom';
 import { TenantLogin } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 
-const LoginLanding = () => {
+const LoginLanding = (): JSX.Element => {
   const realm = useParams<{ realm: string }>().realm;
   const keycloakConfig = useSelector((state: RootState) => state.config.keycloakApi);
 
@@ -16,7 +16,7 @@ const LoginLanding = () => {
     if (realm) {
       dispatch(TenantLogin(realm));
     }
-  }, [keycloakConfig]);
+  }, [keycloakConfig, realm, dispatch]);
 
   return <Page></Page>;
 };

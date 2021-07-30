@@ -1,15 +1,16 @@
 import axios from 'axios';
-import { put, select } from 'redux-saga/effects';
+import { put, select, call } from 'redux-saga/effects';
 import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
 import { FetchConfigSuccessAction } from './actions';
+import { SagaIterator } from '@redux-saga/core';
 
-export function* fetchConfig() {
+export function* fetchConfig(): SagaIterator {
   const state: RootState = yield select();
 
   try {
     if (!state.config?.keycloakApi?.realm) {
-      const res = yield axios.get('/config/config.json?v=2');
+      const res = yield call(axios.get, `/config/config.json?v=2`);
       const action: FetchConfigSuccessAction = {
         type: 'config/fetch-config-success',
         payload: res.data,

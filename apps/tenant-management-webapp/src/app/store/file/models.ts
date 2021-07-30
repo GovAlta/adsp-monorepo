@@ -3,7 +3,8 @@ export interface FileTypeItem {
   updateRoles: string[];
   readRoles: string[];
   anonymousRead: boolean;
-  tableData: {
+  hasFile?: boolean;
+  tableData?: {
     id: string;
   };
   id: string;

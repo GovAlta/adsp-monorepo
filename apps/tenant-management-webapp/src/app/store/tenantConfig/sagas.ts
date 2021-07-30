@@ -1,4 +1,4 @@
-import { put, select } from 'redux-saga/effects';
+import { put, select, call } from 'redux-saga/effects';
 import { BasicNotification, ErrorNotification } from '@store/notifications/actions';
 import {
   FetchTenantConfigSuccessService,
@@ -7,13 +7,15 @@ import {
 } from './actions';
 import { TenantConfigApi } from './api';
 import { TENANT_CONFIG_DEFAULT } from './models';
+import { SagaIterator } from '@redux-saga/core';
 
-export function* fetchTenantConfig() {
+export function* fetchTenantConfig(): SagaIterator {
   const state = yield select();
   try {
     const token = state.session?.credentials?.token;
-    const api = yield new TenantConfigApi(state.config.tenantApi, token);
-    const tenantConfig = yield api.fetchTenantConfig();
+    const api = new TenantConfigApi(state.config.tenantApi, token);
+    const tenantConfig = yield call([api, api.fetchTenantConfig]);
+
     yield put(FetchTenantConfigSuccessService(tenantConfig.configurationSettingsList));
   } catch (e) {
     yield put(BasicNotification({ message: e.message }));

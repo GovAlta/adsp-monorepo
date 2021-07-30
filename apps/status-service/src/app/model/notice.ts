@@ -1,12 +1,10 @@
-
-import type { User } from '@abgov/adsp-service-sdk';
 import { NewOrExisting, Update } from '@core-services/core-common';
-import { MissingParamsError, UnauthorizedError, InvalidParamsError } from '../common/errors';
+import { InvalidParamsError } from '../common/errors';
 import { NoticeRepository } from '../repository/notice';
 import { NoticeApplication, NoticeModeType, isValidNoticeModeType } from '../types';
 
 export class NoticeApplicationEntity {
-  id:string;
+  id: string;
   message: string;
   tennantServRef: string;
   startDate: Date;

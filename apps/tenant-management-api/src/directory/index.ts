@@ -29,8 +29,7 @@ export const createDirectoryService = (app: Application): void => {
   });
 };
 
-const passportMiddleware = passport.authenticate(['jwt-tenant', 'jwt'], { session: false });
-
+const passportMiddleware = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
 interface middlewareProps extends Repositories {
   logger: Logger;
 }

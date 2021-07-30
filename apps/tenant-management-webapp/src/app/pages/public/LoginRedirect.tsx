@@ -5,8 +5,10 @@ import { useSelector, useDispatch } from 'react-redux';
 import { KeycloakCheckSSO } from '@store/tenant/actions';
 import { useHistory } from 'react-router-dom';
 import { LOGIN_TYPES } from '@lib/keycloak';
-
-const LoginRedirect = (props) => {
+interface LoginProps {
+  location?: string;
+}
+const LoginRedirect = (props: LoginProps): JSX.Element => {
   const dispatch = useDispatch();
   const history = useHistory();
 
@@ -21,7 +23,7 @@ const LoginRedirect = (props) => {
   const realm = urlParams.get('realm');
   useEffect(() => {
     dispatch(KeycloakCheckSSO(realm));
-  }, []);
+  }, [dispatch, realm]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -82,7 +84,7 @@ const LoginRedirect = (props) => {
         state: { from: props.location },
       });
     }
-  }, [tenantRealm, isTenantAdmin]);
+  }, [tenantRealm, isTenantAdmin, history, isAuthenticated, realm, props.location]);
 
   return <Page></Page>;
 };

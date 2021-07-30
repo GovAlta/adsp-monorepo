@@ -1,6 +1,6 @@
 import React from 'react';
 
-function SupportLinks() {
+function SupportLinks(): JSX.Element {
   return (
     <>
       <h5>Support</h5>
