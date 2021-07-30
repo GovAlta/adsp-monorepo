@@ -121,7 +121,6 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
             }}
             onBlur={(e) => {
               updateFileType.name = e.target.value;
-              setUpdateFileType({ ...updateFileType });
             }}
           />
         ) : (
@@ -474,7 +473,6 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
               <input
                 onBlur={(e) => {
                   newFileType.name = e.target.value;
-                  setNewFileType({ ...{ ...newFileType } });
                 }}
                 onChange={(e) => {
                   setName(e.target.value);

@@ -15,6 +15,7 @@
   --fw-medium: 500;
   --fw-bold: 700;
   --fw-black: 900;
+  overflow-y: scroll;
 
   /* colors */
 
