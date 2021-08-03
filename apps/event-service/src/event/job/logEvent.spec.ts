@@ -1,7 +1,6 @@
 import { adspId, ConfigurationService, TokenProvider } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
-import { config, Logger } from 'winston';
-import { EventDefinitionEntity } from '../model';
+import { Logger } from 'winston';
 import { createLogEventJob } from './logEvent';
 
 jest.mock('axios');

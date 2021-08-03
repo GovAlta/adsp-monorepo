@@ -73,7 +73,7 @@ export const createLogEventJob = ({
       if (definition && definition.interval) {
         logger.debug(`Computing interval metric for event ${namespace}:${name} (correlation ID: ${correlationId})...`, {
           context: 'EventLog',
-          tenantId,
+          tenantId: tenantId.toString(),
         });
 
         const { namespace: intervalNamespace, name: intervalName, metric } = definition.interval;
@@ -85,7 +85,8 @@ export const createLogEventJob = ({
         // Read the start of the interval from the event log.
         token = await tokenProvider.getAccessToken();
         const { data } = await axios.get<Record<string, Record<string, { timestamp: string }[]>>>(
-          logUrl.href + `?top=1&tenantId=${tenantId}&correlationId=${correlationId}&context=${JSON.stringify(context)}`
+          logUrl.href + `?top=1&tenantId=${tenantId}&correlationId=${correlationId}&context=${JSON.stringify(context)}`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
         const value = data?.['event-service']?.['event']?.[0];
@@ -101,7 +102,7 @@ export const createLogEventJob = ({
               `${namespace}:${name} (correlation ID: ${correlationId}): ${intervalDuration} seconds`,
             {
               context: 'EventLog',
-              tenantId,
+              tenantId: tenantId.toString(),
             }
           );
         }
@@ -112,7 +113,7 @@ export const createLogEventJob = ({
       `Error encountered computing duration for event ${namespace}:${name} (correlation ID: ${correlationId}) interval. ${err}`,
       {
         context: 'EventLog',
-        tenantId,
+        tenantId: tenantId.toString(),
       }
     );
   }
@@ -121,12 +122,15 @@ export const createLogEventJob = ({
     const token = await tokenProvider.getAccessToken();
     await axios.post(logUrl.href, valueWrite, { headers: { Authorization: `Bearer ${token}` } });
 
-    logger.info(`Wrote event '${event.namespace}:${event.name}' to log.`, { context: 'EventLog', tenantId });
+    logger.info(`Wrote event '${event.namespace}:${event.name}' to log.`, {
+      context: 'EventLog',
+      tenantId: tenantId.toString(),
+    });
     done();
   } catch (err) {
     logger.error(`Error encountered trying to log event ${namespace}:${name}. ${err}`, {
       context: 'EventLog',
-      tenantId,
+      tenantId: tenantId.toString(),
     });
     done(err);
   }

@@ -13,6 +13,11 @@ interface ValueRouterProps {
   eventService: EventService;
 }
 
+const mapValue = (value: Value) => ({
+  ...value,
+  tenantId: value.tenantId.toString(),
+});
+
 export const assertUserCanWrite: RequestHandler = async (req, res, next) => {
   const user = req.user;
   const { tenantId: tenantIdValue } = req.body;
@@ -61,7 +66,7 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
       );
 
       res.send({
-        [namespace]: results.reduce((v, c) => ({ ...v, [c.name]: c.value }), {}),
+        [namespace]: results.reduce((v, c) => ({ ...v, [c.name]: mapValue(c.value) }), {}),
       });
     } catch (err) {
       next(err);
@@ -107,7 +112,7 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
 
       res.send({
         [namespace]: {
-          [name]: result.results,
+          [name]: result.results.map(mapValue),
         },
         page: result.page,
       });
