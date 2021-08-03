@@ -18,8 +18,6 @@ const getCircularReplacer = () => {
 };
 
 export const assertAuthenticatedHandler: RequestHandler = (req, res, next) => {
-  console.log(JSON.stringify(res, getCircularReplacer()) + '<resxx');
-  console.log(JSON.stringify(req, getCircularReplacer()) + '<reqreq');
   if (!req.isAuthenticated || !req.user) {
     res.sendStatus(401);
   } else {

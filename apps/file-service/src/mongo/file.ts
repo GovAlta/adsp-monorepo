@@ -26,7 +26,6 @@ export class MongoFileRepository implements FileRepository {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query: any = this.getQuery(criteria);
-    //console.log(JSON.stringify(query) + '<<<<<<<<<<<<<<<query');
 
     return new Promise<FileEntity[]>((resolve, reject) => {
       this.model
@@ -113,7 +112,6 @@ export class MongoFileRepository implements FileRepository {
   }
 
   toDoc(entity: FileEntity): any {
-    console.log(JSON.stringify(entity) + 'entity');
     return {
       spaceId: entity.type.spaceId,
       typeId: entity.type.id,

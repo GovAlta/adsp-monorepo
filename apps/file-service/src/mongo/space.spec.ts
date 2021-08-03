@@ -84,9 +84,6 @@ describe('Mongo: SpaceEntity', () => {
     ]);
     const { results } = await repo.find(99, '');
     // const qqq = await repo.find(99, '', criteria);
-    // console.log(JSON.stringify(qqq) + '<qqq');
-    console.log(JSON.stringify(results, getCircularReplacer()) + '<results');
-    console.log(JSON.stringify(data, getCircularReplacer()) + '<data');
     expect(results.length).toEqual(data.length);
   });
 

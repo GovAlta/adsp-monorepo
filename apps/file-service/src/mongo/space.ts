@@ -37,7 +37,6 @@ export class MongoFileSpaceRepository implements FileSpaceRepository {
   }
 
   async getIdByTenant(tenant: Tenant): Promise<string> {
-    console.log(JSON.stringify(tenant) + '<<<<<<<<<<tenant');
     const res = await this.model.findOne({ name: tenant.name });
     return Promise.resolve(res ? res.id : null);
   }

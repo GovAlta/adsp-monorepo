@@ -85,9 +85,6 @@ export class FileTypeEntity implements FileType {
   }
 
   canUpdate(user: User): boolean | string {
-    console.log(JSON.stringify(user.roles) + '<role');
-    console.log(JSON.stringify(this.updateRoles) + '<>this.updateRoles');
-
     return (
       (user && user.roles && user.roles.includes(ServiceUserRoles.Admin)) ||
       user.roles.find((role) => this.updateRoles.includes(role))

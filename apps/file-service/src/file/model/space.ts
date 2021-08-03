@@ -72,7 +72,6 @@ export class FileSpaceEntity implements FileSpace {
   }
 
   updateType(user: User, typeId: string, update: Update<FileType>): Promise<FileSpaceEntity> {
-    console.log(JSON.stringify(Object.values(this.types)) + '<>Object.values(this.types)');
     const type = Object.values(this.types).find((type) => type.id === typeId);
     type.update(user, update);
 

@@ -11,7 +11,7 @@ import {
 import { FileRepository, FileSpaceRepository } from '../repository';
 import { FileSpaceEntity } from '../model';
 
-import { fileServiceAdminMiddleware } from '../middleware/authentication';
+import { AuthenticationWrapper } from '../middleware/authenticationWrapper';
 import { fileTypeSchema } from '../../mongo/schema';
 import { MiddlewareWrapper } from './middlewareWrapper';
 
@@ -43,7 +43,7 @@ export const createFileTypeRouter = ({
 }: FileTypeRouterProps): Router => {
   const fileTypeRouter = Router();
 
-  fileTypeRouter.post('/fileTypes', fileServiceAdminMiddleware, async (req, res, next) => {
+  fileTypeRouter.post('/fileTypes', AuthenticationWrapper.authenticationMethod, async (req, res, next) => {
     const user = req.user;
 
     const { name, anonymousRead, readRoles = [], updateRoles = [] } = req.body;
@@ -85,12 +85,7 @@ export const createFileTypeRouter = ({
   fileTypeRouter.get('/fileTypes/:fileTypeId', MiddlewareWrapper.middlewareMethod, async (req, res, next) => {
     const { fileTypeId, spaceIdParam } = req.params;
 
-    console.log(fileTypeId + '<fileTypeId');
-    console.log(spaceIdParam + '<spaceIdParam');
-
     try {
-      console.log(JSON.stringify(req.tenant));
-      console.log(JSON.stringify(req, getCircularReplacer()) + '<req');
       const spaceId = spaceIdParam || (await spaceRepository.getIdByTenant(req.tenant));
       if (!spaceId) {
         throw new NotFoundError('File Type', fileTypeId);
@@ -112,9 +107,7 @@ export const createFileTypeRouter = ({
     }
   });
 
-  fileTypeRouter.get('/fileTypes', fileServiceAdminMiddleware, async (req, res, next) => {
-    console.log(JSON.stringify(req.tenant));
-    console.log(JSON.stringify(req, getCircularReplacer()) + '<reqqqq');
+  fileTypeRouter.get('/fileTypes', AuthenticationWrapper.authenticationMethod, async (req, res, next) => {
     try {
       const spaceId = await spaceRepository.getIdByTenant(req.tenant);
       if (!spaceId) {
@@ -122,7 +115,6 @@ export const createFileTypeRouter = ({
       }
 
       const space: FileSpaceEntity = await spaceRepository.get(spaceId);
-
       res.json(Object.values(space.types));
     } catch (err) {
       const errMessage = `Error fetching type: ${err.message}`;
@@ -138,21 +130,13 @@ export const createFileTypeRouter = ({
     const { fileTypeId } = req.params;
 
     const { updateRoles, readRoles, anonymousRead, name } = req.body;
-    console.log(fileTypeId + '<fileTypeId2');
-
-    console.log(JSON.stringify(req.tenant));
-    console.log(JSON.stringify(req, getCircularReplacer()) + '<req2');
     try {
       const spaceId = await spaceRepository.getIdByTenant(req.tenant);
       if (!spaceId) {
         throw new NotFoundError('File Space', null);
       }
 
-      console.log(JSON.stringify(spaceId, getCircularReplacer()) + '<spaceId');
-
       const spaceEntity: FileSpaceEntity = await spaceRepository.get(spaceId);
-
-      console.log(JSON.stringify(spaceEntity, getCircularReplacer()) + '<spaceEntity');
 
       if (!Object.values(spaceEntity.types).find((type) => type.id === fileTypeId)) {
         throw new NotFoundError(`File Type`, fileTypeId);
