@@ -112,6 +112,7 @@
     "request": "^2.88.2",
     "reselect": "4.0.0",
     "routing-controllers": "^0.8.1",
+    "run-middleware": "^0.9.10",
     "rxjs": "^6.6.3",
     "shortid": "^2.2.15",
     "sinon": "^11.1.2",

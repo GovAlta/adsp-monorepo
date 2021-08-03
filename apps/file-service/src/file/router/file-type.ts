@@ -13,6 +13,7 @@ import { FileSpaceEntity } from '../model';
 
 import { fileServiceAdminMiddleware } from '../middleware/authentication';
 import { fileTypeSchema } from '../../mongo/schema';
+import { MiddlewareWrapper } from './middlewareWrapper';
 
 const getCircularReplacer = () => {
   const seen = new WeakSet();
@@ -81,7 +82,7 @@ export const createFileTypeRouter = ({
     }
   });
 
-  fileTypeRouter.get('/fileTypes/:fileTypeId', async (req, res, next) => {
+  fileTypeRouter.get('/fileTypes/:fileTypeId', MiddlewareWrapper.middlewareMethod, async (req, res, next) => {
     const { fileTypeId, spaceIdParam } = req.params;
 
     console.log(fileTypeId + '<fileTypeId');
@@ -112,6 +113,8 @@ export const createFileTypeRouter = ({
   });
 
   fileTypeRouter.get('/fileTypes', fileServiceAdminMiddleware, async (req, res, next) => {
+    console.log(JSON.stringify(req.tenant));
+    console.log(JSON.stringify(req, getCircularReplacer()) + '<reqqqq');
     try {
       const spaceId = await spaceRepository.getIdByTenant(req.tenant);
       if (!spaceId) {
