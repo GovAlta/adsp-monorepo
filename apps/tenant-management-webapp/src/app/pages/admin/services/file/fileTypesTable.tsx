@@ -121,7 +121,6 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
             }}
             onBlur={(e) => {
               updateFileType.name = e.target.value;
-              setUpdateFileType({ ...updateFileType });
             }}
           />
         ) : (
@@ -422,7 +421,10 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
         {hasFile === true && (
           <GoACallout type="important" data-testid="delete-modal">
             <h3>File type current in use</h3>
-            <p>{`You are unable to delete the file type (${props.name}), because there are files within the file type`}</p>
+            <p>
+              You are unable to delete the file type <b>{`${props.name}`}</b>, because there are files within the file
+              type.
+            </p>
             <CancelButton data-testid="cancel-delete-modal" />
           </GoACallout>
         )}
@@ -477,7 +479,6 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
               <input
                 onBlur={(e) => {
                   newFileType.name = e.target.value;
-                  setNewFileType({ ...{ ...newFileType } });
                 }}
                 onChange={(e) => {
                   setName(e.target.value);
