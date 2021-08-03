@@ -24,13 +24,13 @@ export class TenantConfigApi {
     return res.data;
   }
 
-  async createTenantConfig(data: string): Promise<TenantConfig> {
+  async createTenantConfig(data: Record<string, unknown>): Promise<TenantConfig> {
     const url = this.config.endpoints.tenantConfig;
     const res = await this.http.post(url, data);
     return res.data;
   }
 
-  async updateTenantConfig(data: string): Promise<TenantConfig> {
+  async updateTenantConfig(data: Record<string, unknown>): Promise<TenantConfig> {
     const url = this.config.endpoints.tenantConfig;
     const res = await this.http.put(url, data);
     return res.data;

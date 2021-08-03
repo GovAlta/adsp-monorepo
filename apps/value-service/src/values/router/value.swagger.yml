@@ -1,4 +1,46 @@
-"/{namespace}/values":
+components:
+  schemas:
+    Value:
+      type: object
+      properties:
+        correlationId:
+          type: string
+        context:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: boolean
+              - type: number
+        timestamp:
+          type: string
+          format: date-time
+        value: {}
+    MetricIntervalValue:
+      type: object
+      properties:
+        interval:
+          type: string
+          format: date-time
+        avg:
+          type: number
+        sum:
+          type: number
+        min:
+          type: number
+        max:
+          type: number
+    Metric:
+      type: object
+      properties:
+        name:
+          type: string
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricIntervalValue"
+
+/value/v1/{namespace}/values:
   get:
     tags:
       - Value
@@ -17,7 +59,13 @@
           application/json:
             schema:
               type: object
-"/{namespace}/values/{name}":
+              additionalProperties:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Value"
+/value/v1/{namespace}/values/{name}:
   get:
     tags:
       - Value
@@ -47,6 +95,23 @@
         required: false
         schema:
           type: string
+      - name: correlationId
+        description: Correlation ID associated with the values.
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: context
+        description: Context associated with the values.
+        in: query
+        required: false
+        schema:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: boolean
+              - type: number
       - name: timestampMin
         description: Inclusive min value of timestamp.
         in: query
@@ -68,6 +133,12 @@
           application/json:
             schema:
               type: object
+              additionalProperties:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Value"
   post:
     tags:
       - Value
@@ -91,19 +162,7 @@
         application/json:
           schema:
             oneOf:
-              - type: object
-                properties:
-                  tenantId:
-                    type: string
-                  correlationId:
-                    type: string
-                  context:
-                    type: object
-                  timestamp:
-                    type: string
-                    format: date-time
-                  value:
-                    type: object
+              - $ref: "#/components/schemas/Value"
               - type: object
     responses:
       "200":
@@ -111,8 +170,8 @@
         content:
           application/json:
             schema:
-              type: object
-"/{namespace}/values/{name}/metrics/{metric}":
+              $ref: "#/components/schemas/Value"
+/value/v1/{namespace}/values/{name}/metrics/{metric}:
   get:
     tags:
       - Value
@@ -161,4 +220,4 @@
         content:
           application/json:
             schema:
-              type: object
+              $ref: "#/components/schemas/Metric"

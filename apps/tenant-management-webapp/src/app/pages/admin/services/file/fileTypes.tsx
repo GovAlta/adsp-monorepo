@@ -9,7 +9,7 @@ import { FileTypeTable } from './fileTypesTable';
 import { Notifications } from '@components/Notifications';
 import { GoAPageLoader } from '@abgov/react-components';
 
-export default function FileTypes() {
+export default function FileTypes(): JSX.Element {
   const dispatch = useDispatch();
   const fileSpace = useSelector((state: RootState) => state.fileService.space);
   const realmRoles = useSelector((state: RootState) => state.tenant.realmRoles);
@@ -20,6 +20,7 @@ export default function FileTypes() {
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(FetchFileTypeService());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

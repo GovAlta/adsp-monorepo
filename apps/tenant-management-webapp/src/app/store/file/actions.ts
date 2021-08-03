@@ -76,7 +76,7 @@ export type ActionTypes =
   | FetchFileTypeHasFileSucceededAction
   | FetchFileDocsAction;
 // | SetupFileAction;
-interface UploadFileAction {
+export interface UploadFileAction {
   type: typeof UPLOAD_FILE;
   payload: { data: Record<string, unknown> };
 }
@@ -105,7 +105,7 @@ interface FetchFilesFailedAction {
   payload: { data: string };
 }
 
-interface DeleteFileAction {
+export interface DeleteFileAction {
   type: typeof DELETE_FILE;
   payload: { data: string };
 }
@@ -119,7 +119,7 @@ interface DeleteFileFailedAction {
   payload: { data: string };
 }
 
-interface DownloadFileAction {
+export interface DownloadFileAction {
   type: typeof DOWNLOAD_FILE;
   payload: { data: string };
 }
@@ -211,17 +211,17 @@ interface FetchFileTypeAction {
   type: typeof FETCH_FILE_TYPE;
 }
 
-interface UpdateFileTypeAction {
+export interface UpdateFileTypeAction {
   type: typeof UPDATE_FILE_TYPE;
   payload: FileTypeItem;
 }
 
-interface DeleteFileTypeAction {
+export interface DeleteFileTypeAction {
   type: typeof DELETE_FILE_TYPE;
   payload: FileTypeItem;
 }
 
-interface CreateFileTypeAction {
+export interface CreateFileTypeAction {
   type: typeof CREATE_FILE_TYPE;
   payload: FileTypeItem;
 }
@@ -237,7 +237,7 @@ interface FetchFileDocsAction {
   type: typeof FETCH_FILE_DOCS;
 }
 
-interface FetchFileTypeHasFileAction {
+export interface FetchFileTypeHasFileAction {
   type: typeof FETCH_FILE_TYPE_HAS_FILE;
   payload: string;
 }

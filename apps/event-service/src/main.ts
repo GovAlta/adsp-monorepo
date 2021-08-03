@@ -42,6 +42,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tenantHandler,
     tokenProvider,
     configurationHandler,
+    configurationService,
     healthCheck,
   } = await initializePlatform(
     {
@@ -63,6 +64,14 @@ const initializeApp = async (): Promise<express.Application> => {
                   name: { type: 'string' },
                   description: { type: 'string' },
                   payloadSchema: { type: 'object' },
+                  interval: {
+                    type: 'object',
+                    properties: {
+                      namespace: { type: 'string' },
+                      name: { type: 'string' },
+                      metric: { type: 'string' },
+                    },
+                  },
                 },
                 required: ['name', 'description', 'payloadSchema'],
                 additionalProperties: false,
@@ -106,9 +115,11 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use('/event', passport.authenticate(['core', 'tenant'], { session: false }), tenantHandler, configurationHandler);
 
   applyEventMiddleware(app, {
+    serviceId,
     logger,
     directory,
     tokenProvider,
+    configurationService,
     eventService,
   });
 
