@@ -21,6 +21,7 @@ function Dialog({ children, open, onClose }: DialogProps & { children: ReactNode
     if (!open && state === 'visible') {
       hide();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   function show() {

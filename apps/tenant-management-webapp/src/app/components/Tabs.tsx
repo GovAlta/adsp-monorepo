@@ -26,17 +26,23 @@ function Tabs(props: TabsProps): JSX.Element {
   return (
     <>
       <SCTabs>
-        {Children.map(props.children, (child: any, index) => {
-          return (
-            <TabItem active={activeTabIndex === index} onSelect={() => selectTab(index)}>
-              {child.props.label}
-            </TabItem>
-          );
-        })}
+        {
+          // eslint-disable-next-line
+          Children.map<JSX.Element, any>(props.children, (child: any, index: number) => {
+            return (
+              <TabItem active={activeTabIndex === index} onSelect={() => selectTab(index)}>
+                {child.props.label}
+              </TabItem>
+            );
+          })
+        }
       </SCTabs>
-      {Children.toArray(props.children).filter((child: any, index) => {
-        return index === activeTabIndex;
-      })}
+      {
+        // eslint-disable-next-line
+        Children.toArray(props.children).filter((_child: any, index: number) => {
+          return index === activeTabIndex;
+        })
+      }
     </>
   );
 }

@@ -4,6 +4,7 @@ import {
   FetchTenantConfigSuccessService,
   CreateTenantConfigSuccessService,
   UpdateTenantConfigSuccessService,
+  UpdateTenantConfigAction,
 } from './actions';
 import { TenantConfigApi } from './api';
 import { TENANT_CONFIG_DEFAULT } from './models';
@@ -22,30 +23,30 @@ export function* fetchTenantConfig(): SagaIterator {
   }
 }
 
-export function* createTenantConfig() {
+export function* createTenantConfig(): SagaIterator {
   const state = yield select();
   try {
     const token = state.session?.credentials?.token;
-    const api = yield new TenantConfigApi(state.config.tenantApi, token);
+    const api = new TenantConfigApi(state.config.tenantApi, token);
     const data = {
       configurationSettingsList: TENANT_CONFIG_DEFAULT,
     };
-    const tenantConfig = yield api.createTenantConfig(data);
+    const tenantConfig = yield call([api, api.createTenantConfig], data);
     yield put(CreateTenantConfigSuccessService(tenantConfig.configurationSettingsList));
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
   }
 }
 
-export function* updateTenantConfig(config) {
+export function* updateTenantConfig(config: UpdateTenantConfigAction): SagaIterator {
   const state = yield select();
   try {
     const token = state.session?.credentials?.token;
-    const api = yield new TenantConfigApi(state.config.tenantApi, token);
+    const api = new TenantConfigApi(state.config.tenantApi, token);
     const data = {
       configurationSettingsList: config.payload.data,
     };
-    const tenantConfig = yield api.updateTenantConfig(data);
+    const tenantConfig = yield call([api, api.updateTenantConfig], data);
     yield put(UpdateTenantConfigSuccessService(tenantConfig.configurationSettingsList));
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));

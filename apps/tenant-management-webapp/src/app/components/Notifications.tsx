@@ -18,7 +18,7 @@ export const NotificationContainer = styled.div`
 export const Notifications = (props: NotificationProps): JSX.Element => {
   const notifications = props.notifications;
   return (
-    <>
+    <div>
       {notifications.length > 0 ? (
         <NotificationContainer>
           {notifications.map((notification, i) => {
@@ -31,6 +31,6 @@ export const Notifications = (props: NotificationProps): JSX.Element => {
           })}
         </NotificationContainer>
       ) : null}
-    </>
+    </div>
   );
 };

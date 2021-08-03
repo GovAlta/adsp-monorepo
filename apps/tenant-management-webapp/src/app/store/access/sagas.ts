@@ -5,6 +5,7 @@ import { FetchAccessSuccessAction } from './actions';
 import { KeycloakApi } from './api';
 import { Role, User } from './models';
 
+// eslint-disable-next-line
 export function* fetchAccess() {
   const currentState: RootState = yield select();
 

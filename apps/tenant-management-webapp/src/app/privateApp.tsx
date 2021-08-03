@@ -47,6 +47,7 @@ const PageLoader = (): JSX.Element => {
   return <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />;
 };
 
+// eslint-disable-next-line
 export function PrivateRoute({ component: Component, ...rest }): JSX.Element {
   const userInfo = useSelector((state: RootState) => state.session?.userInfo);
   const tenantRealm = useSelector((state: RootState) => state.tenant?.realm);

@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
+// eslint-disable-next-line
 function DataTable({ children, ...props }): JSX.Element {
   return (
     <ScrollWrapper>
