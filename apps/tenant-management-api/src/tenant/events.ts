@@ -42,7 +42,7 @@ export const TenantDeletedDefinition: DomainEventDefinition = {
   },
 };
 
-export function tenantCreated(user: User, tenant: Tenant, newTenant: boolean): DomainEvent {
+export function tenantCreated(user: User, tenant: Tenant, isNewTenant: boolean): DomainEvent {
   return {
     name: 'tenant-created',
     timestamp: new Date(),
@@ -50,7 +50,7 @@ export function tenantCreated(user: User, tenant: Tenant, newTenant: boolean): D
     tenantId: tenant.id,
     payload: {
       tenant,
-      newTenant,
+      isNewTenant,
       createdBy: {
         id: user.id,
         name: user.name,
