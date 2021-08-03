@@ -89,6 +89,7 @@ export class FileApi {
     return res.data.exist;
   }
 
+  // eslint-disable-next-line
   swaggerDocToFileDocs(swaggerDocs) {
     const fileTypeDocs = [];
     const fileDocs = [];

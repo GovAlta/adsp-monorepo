@@ -29,7 +29,8 @@ const FileList = (): JSX.Element => {
   });
   const getFileTypesValues = () => {
     const typeValues = [];
-    fileTypes.map((fileType) => {
+    // eslint-disable-next-line
+    fileTypes.map((fileType): void => {
       const type = {};
       type['text'] = fileType.name ? fileType.name : fileType.id;
       type['value'] = fileType.id;

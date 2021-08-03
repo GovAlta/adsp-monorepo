@@ -51,7 +51,7 @@ interface CreateTenantConfigFailedAction {
   payload: { data: string };
 }
 
-interface UpdateTenantConfigAction {
+export interface UpdateTenantConfigAction {
   type: typeof UPDATE_TENANT_CONFIG;
   payload: { data: TenantConfig };
 }

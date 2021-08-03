@@ -64,6 +64,7 @@ import { deleteApplication, fetchServiceStatusApps, saveApplication, setApplicat
 import { SET_APPLICATION_STATUS_ACTION } from './status/actions/setApplicationStatus';
 import { watchEventSagas } from './event/sagas';
 
+// eslint-disable-next-line  @typescript-eslint/explicit-module-boundary-types
 export function* watchSagas() {
   yield takeEvery(FETCH_CONFIG_ACTION, fetchConfig);
   yield takeEvery(FETCH_ACCESS_ACTION, fetchAccess);
