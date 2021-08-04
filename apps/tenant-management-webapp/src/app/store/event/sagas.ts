@@ -69,9 +69,9 @@ export function* updateEventDefinition(action: UpdateEventDefinitionAction): Sag
 
       const configuration = settings.configuration || {};
       configuration[action.definition.namespace] = {
-        ...(settings[action.definition.namespace] || {}),
+        ...(settings.configuration[action.definition.namespace] || {}),
         definitions: {
-          ...(settings[action.definition.namespace]?.definitions || {}),
+          ...(settings.configuration[action.definition.namespace]?.definitions || {}),
           [action.definition.name]: {
             name: action.definition.name,
             description: action.definition.description,
