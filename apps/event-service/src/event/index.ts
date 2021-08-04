@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 import type { Application } from 'express';
-import type { Logger } from 'winston';
 import { createEventRouter } from './router';
 import type { DomainEventService } from './service';
 import { createJobs, JobProps } from './job';
@@ -11,13 +10,12 @@ export type { DomainEventService } from './service';
 export { EventServiceRoles } from './role';
 
 interface EventMiddlewareProps extends Omit<JobProps, 'events'> {
-  logger: Logger;
   eventService: DomainEventService;
 }
 
 export const applyEventMiddleware = (
   app: Application,
-  { eventService, directory, tokenProvider, logger }: EventMiddlewareProps
+  { serviceId, logger, eventService, directory, tokenProvider, configurationService }: EventMiddlewareProps
 ): Application => {
   const eventRouter = createEventRouter({ eventService, logger });
 
@@ -40,9 +38,11 @@ export const applyEventMiddleware = (
   });
 
   createJobs({
+    serviceId,
     logger,
     directory,
     tokenProvider,
+    configurationService,
     events: eventService.getItems(),
   });
 
