@@ -132,6 +132,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
 
   const ActionCell = (props: FileTypeRowProps): JSX.Element => {
     const { rowType } = props;
+    /* eslint-disable */
     const Edit = () => {
       return (
         <a
@@ -148,10 +149,12 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           Edit
         </a>
       );
+    /* eslint-enable */
     };
 
     const CancelNew = (): JSX.Element => {
       return (
+      /* eslint-disable */
         <a
           data-testid="cancel-new"
           onClick={() => {
@@ -161,11 +164,14 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
         >
           Cancel
         </a>
+      /* eslint-enable */
       );
     };
 
     const CancelUpdate = (): JSX.Element => {
       return (
+
+      /* eslint-disable */
         <a
           data-testid="cancel-update"
           onClick={() => {
@@ -175,6 +181,8 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
         >
           Cancel
         </a>
+      /* eslint-enable */
+
       );
     };
     return (
@@ -282,7 +290,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
     if (displayOnly) {
       return (
         <RolesCellContainer>
-          {anonymousRead || (cellType === 'readRoles' && <Chip type="secondary">Anonymous</Chip>)}
+          {anonymousRead && (cellType === 'readRoles' && <Chip type="secondary">Anonymous</Chip>)}
           {(!anonymousRead || cellType === 'updateRoles') &&
             roles.map((role) => {
               return (
@@ -305,7 +313,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           selectionChanged={(e) => {
             const fileType = { ...props };
             if (e.label === 'Anonymous' && cellType === 'readRoles') {
-              fileType.anonymousRead = !anonymousRead;
+              fileType.anonymousRead = !props.anonymousRead;
             } else {
               if (e.selected) {
                 roles.push(e.value);
@@ -325,10 +333,12 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
             }
 
             if (rowType === 'update') {
+              fileType.name = updateFileType.name
               setUpdateFileType(fileType);
             }
 
             if (rowType === 'new') {
+              fileType.name = newFileType.name
               setNewFileType(fileType);
             }
           }}
@@ -336,7 +346,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           {cellType === 'readRoles' && (
             <GoAOption
               value="anonymousRead"
-              label="Anonymous"
+              label={'Anonymous'}
               key={'anonymous'}
               data-testid="anonymous-option"
               selected={anonymousRead}
@@ -388,6 +398,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
       })
     )[0];
 
+/* eslint-disable */
     useEffect(() => {
       dispatch(FetchFileTypeHasFileService(props.id));
     }, []);
@@ -399,6 +410,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
         dispatch(FetchFileTypeHasFileService(props.id));
       }
     }, [fileType?.hasFile]);
+/* eslint-enable */
 
     const CancelButton = () => {
       return (
@@ -461,6 +473,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
     }
   };
 
+/* eslint-disable */
   const NewFileTypeRow = (props: FileTypeRowProps) => {
     const [name, setName] = useState(props.name);
     const { id } = props;
@@ -490,6 +503,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
       </>
     );
   };
+/* eslint-enable */
 
   return (
     <FileTypeTableContainer>
