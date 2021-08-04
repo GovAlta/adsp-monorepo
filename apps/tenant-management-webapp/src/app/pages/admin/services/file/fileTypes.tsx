@@ -20,7 +20,6 @@ export default function FileTypes(): JSX.Element {
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(FetchFileTypeService());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

@@ -23,7 +23,7 @@ const LoginRedirect = (props: LoginProps): JSX.Element => {
   const realm = urlParams.get('realm');
   useEffect(() => {
     dispatch(KeycloakCheckSSO(realm));
-  }, [dispatch, realm]);
+  }, []);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -84,7 +84,7 @@ const LoginRedirect = (props: LoginProps): JSX.Element => {
         state: { from: props.location },
       });
     }
-  }, [tenantRealm, isTenantAdmin, history, isAuthenticated, realm, props.location]);
+  }, [tenantRealm, isTenantAdmin]);
 
   return <Page></Page>;
 };

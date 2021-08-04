@@ -132,7 +132,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
 
   const ActionCell = (props: FileTypeRowProps): JSX.Element => {
     const { rowType } = props;
-    /* eslint-disable */
+
     const Edit = () => {
       return (
         <a
@@ -149,12 +149,10 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           Edit
         </a>
       );
-    /* eslint-enable */
     };
 
     const CancelNew = (): JSX.Element => {
       return (
-      /* eslint-disable */
         <a
           data-testid="cancel-new"
           onClick={() => {
@@ -164,14 +162,11 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
         >
           Cancel
         </a>
-      /* eslint-enable */
       );
     };
 
     const CancelUpdate = (): JSX.Element => {
       return (
-
-      /* eslint-disable */
         <a
           data-testid="cancel-update"
           onClick={() => {
@@ -181,8 +176,6 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
         >
           Cancel
         </a>
-      /* eslint-enable */
-
       );
     };
     return (
@@ -290,7 +283,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
     if (displayOnly) {
       return (
         <RolesCellContainer>
-          {anonymousRead && (cellType === 'readRoles' && <Chip type="secondary">Anonymous</Chip>)}
+          {anonymousRead && cellType === 'readRoles' && <Chip type="secondary">Anonymous</Chip>}
           {(!anonymousRead || cellType === 'updateRoles') &&
             roles.map((role) => {
               return (
@@ -333,12 +326,12 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
             }
 
             if (rowType === 'update') {
-              fileType.name = updateFileType.name
+              fileType.name = updateFileType.name;
               setUpdateFileType(fileType);
             }
 
             if (rowType === 'new') {
-              fileType.name = newFileType.name
+              fileType.name = newFileType.name;
               setNewFileType(fileType);
             }
           }}
@@ -346,7 +339,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           {cellType === 'readRoles' && (
             <GoAOption
               value="anonymousRead"
-              label='Anonymous'
+              label="Anonymous"
               key={'anonymous'}
               data-testid="anonymous-option"
               selected={anonymousRead}
@@ -398,7 +391,6 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
       })
     )[0];
 
-/* eslint-disable */
     useEffect(() => {
       dispatch(FetchFileTypeHasFileService(props.id));
     }, []);
@@ -410,7 +402,6 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
         dispatch(FetchFileTypeHasFileService(props.id));
       }
     }, [fileType?.hasFile]);
-/* eslint-enable */
 
     const CancelButton = () => {
       return (
@@ -430,7 +421,10 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
         {hasFile === true && (
           <GoACallout type="important" data-testid="delete-modal">
             <h3>File type current in use</h3>
-            <p>You are unable to delete the file type <b>{`${props.name}`}</b> because there are files within the file type.</p>
+            <p>
+              You are unable to delete the file type <b>{`${props.name}`}</b> because there are files within the file
+              type.
+            </p>
             <CancelButton data-testid="cancel-delete-modal" />
           </GoACallout>
         )}
@@ -473,7 +467,6 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
     }
   };
 
-/* eslint-disable */
   const NewFileTypeRow = (props: FileTypeRowProps) => {
     const [name, setName] = useState(props.name);
     const { id } = props;
@@ -503,7 +496,6 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
       </>
     );
   };
-/* eslint-enable */
 
   return (
     <FileTypeTableContainer>

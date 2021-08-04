@@ -44,7 +44,7 @@ const CreateRealm = (): JSX.Element => {
     if (userInfo) {
       dispatch(IsTenantAdmin(userInfo.email));
     }
-  }, [userInfo, dispatch]);
+  }, [userInfo]);
 
   const ErrorMessage = (props) => {
     const message = `${props.email} has already created a tenant. Currently only one tenant is allowed per person.`;
@@ -111,7 +111,7 @@ const CreateRealm = (): JSX.Element => {
         {isTenantCreated ? (
           <TenantCreated />
         ) : (
-          <div>
+          <>
             {isTenantAdmin === false ? (
               <>
                 <h2>Create tenant</h2>
@@ -130,7 +130,7 @@ const CreateRealm = (): JSX.Element => {
                 </GoAForm>
               </>
             ) : null}
-          </div>
+          </>
         )}
       </Main>
       <Aside>
