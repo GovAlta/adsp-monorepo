@@ -135,7 +135,6 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
     const Edit = () => {
       return (
         <a
-          href="/#"
           data-testid="edit-file-type"
           onClick={() => {
             if (editableId !== props.id) {
@@ -154,7 +153,6 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
     const CancelNew = (): JSX.Element => {
       return (
         <a
-          href="/#"
           data-testid="cancel-new"
           onClick={() => {
             setStartCreateFileType(false);
@@ -169,7 +167,6 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
     const CancelUpdate = (): JSX.Element => {
       return (
         <a
-          href="/#"
           data-testid="cancel-update"
           onClick={() => {
             setEditableId('');
@@ -393,7 +390,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
 
     useEffect(() => {
       dispatch(FetchFileTypeHasFileService(props.id));
-    });
+    }, []);
 
     useEffect(() => {
       if (fileType?.hasFile !== null) {
@@ -401,7 +398,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
       } else {
         dispatch(FetchFileTypeHasFileService(props.id));
       }
-    }, [fileType?.hasFile, dispatch, props.id]);
+    }, [fileType?.hasFile]);
 
     const CancelButton = () => {
       return (
@@ -421,10 +418,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
         {hasFile === true && (
           <GoACallout type="important" data-testid="delete-modal">
             <h3>File type current in use</h3>
-            <p>
-              You are unable to delete the file type <b>{`${props.name}`}</b>, because there are files within the file
-              type.
-            </p>
+            <p>You are unable to delete the file type <b>{`${props.name}`}</b> because there are files within the file type.</p>
             <CancelButton data-testid="cancel-delete-modal" />
           </GoACallout>
         )}
@@ -471,7 +465,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
     const [name, setName] = useState(props.name);
     const { id } = props;
     return (
-      <div>
+      <>
         {startCreateFileType && (
           <tr className="selected" key={id}>
             <ActionCell {...{ ...props, rowType: 'new' }} />
@@ -493,7 +487,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
             <DeleteCell {...{ ...props, rowType: 'new' }} data-testid="cancel-new-cell" />
           </tr>
         )}
-      </div>
+      </>
     );
   };
 
