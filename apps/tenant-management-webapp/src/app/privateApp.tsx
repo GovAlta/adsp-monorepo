@@ -16,14 +16,12 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
   const urlParams = new URLSearchParams(window.location.search);
   const realm = urlParams.get('realm') || localStorage.getItem('realm');
 
-/* eslint-disable */
-useEffect(() => {
+  useEffect(() => {
     setInterval(async () => {
       dispatch(KeycloakRefreshToken());
     }, 60 * 1000);
     dispatch(KeycloakCheckSSOWithLogout(realm));
   }, []);
-/* eslint-enable */
 
   return (
     <HeaderCtx.Provider value={{ setTitle }}>
