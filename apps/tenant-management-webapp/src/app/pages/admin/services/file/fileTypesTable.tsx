@@ -346,7 +346,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           {cellType === 'readRoles' && (
             <GoAOption
               value="anonymousRead"
-              label={'Anonymous'}
+              label='Anonymous'
               key={'anonymous'}
               data-testid="anonymous-option"
               selected={anonymousRead}
