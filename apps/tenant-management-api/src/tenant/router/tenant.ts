@@ -115,7 +115,8 @@ export const createTenantRouter = ({ tenantRepository, eventService, services }:
     tokenIssuer = tokenIssuer.replace('core', tenantName);
 
     try {
-      if (TenantService.isRealmExisted(tenantName)) {
+      const hasRealm = await TenantService.isRealmExisted(tenantName)
+      if (hasRealm) {
         // To upgrade existing realm to support platform team service. Email is from the payload
         const email = payload?.email;
         if (!email) {
