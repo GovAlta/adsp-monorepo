@@ -118,7 +118,7 @@ pipeline {
                   if (bcDetails.spec.strategy.type == 'Source') {
                     bc.startBuild("--from-dir=dist/apps/${affected}", "--wait", "--follow")
                   } else {
-                    sh "tar czf ${affected}.tar.gz node_modules/ dist/apps/${affected}"
+                    sh "tar czf ${affected}.tar.gz node_modules/ dist/apps/${affected} .openshift/service/"
                     bc.startBuild("--from-archive=${affected}.tar.gz", "--wait", "--follow")
                   }
                 }
