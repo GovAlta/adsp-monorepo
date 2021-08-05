@@ -11,9 +11,3 @@ When('the user selects {string} tab', function (tab) {
 Then('the user views events overview page', function () {
   eventsObj.eventsOverviewTitle().invoke('text').should('contain', 'Event Definitions');
 });
-
-Then('the user views the events documentation', function () {
-  eventsObj.eventsDocumentationEventServiceTitle().then((title) => {
-    expect(title.length).to.be.gt(0); // element exists
-  });
-});
