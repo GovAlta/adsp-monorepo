@@ -1,10 +1,9 @@
 import * as express from 'express';
-import type { Request, Response, NextFunction } from 'express';
 import * as passport from 'passport';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as helmet from 'helmet';
-import { createLogger, UnauthorizedError, NotFoundError, InvalidOperationError } from '@core-services/core-common';
+import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import { environment } from './environments/environment';
 import { applyFileMiddleware, FileDeletedDefinition, FileUploadedDefinition, ServiceUserRoles } from './file';
@@ -100,19 +99,8 @@ async function initializeApp(): Promise<express.Application> {
     });
   });
 
-  app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-    /*eslint-enable */
-    if (err instanceof UnauthorizedError) {
-      res.status(401).send(err.message);
-    } else if (err instanceof NotFoundError) {
-      res.status(404).send(err.message);
-    } else if (err instanceof InvalidOperationError) {
-      res.status(400).send(err.message);
-    } else {
-      logger.warn(`Unexpected error encountered in handler: ${err}`);
-      res.sendStatus(500);
-    }
-  });
+  const errorHandler = createErrorHandler(logger);
+  app.use(errorHandler);
 
   // Define swagger
   const swaggerDocument = fs
