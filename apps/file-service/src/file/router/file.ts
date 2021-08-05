@@ -146,7 +146,7 @@ export const createFileRouter = ({
           id: n.id,
           filename: n.filename,
           size: n.size,
-          typeName: n.type.name,
+          typeName: n.type?.name,
           recordId: n.recordId,
           created: n.created,
           lastAccessed: n.lastAccessed,
