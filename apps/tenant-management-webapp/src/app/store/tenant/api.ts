@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { Tenant } from './models';
+import { Tenant, Role } from './models';
 import { TenantApi as TenantApiConfig } from '@store/config/models';
 
 export class TenantApi {
@@ -22,7 +22,7 @@ export class TenantApi {
   async fetchTenantByRealm(realm: string): Promise<Tenant> {
     const url = `${this.config.host}${this.config.endpoints.tenantNameByRealm}/${realm}`;
     const res = await this.http.get(url);
-    return res.data;
+    return res?.data?.tenant;
   }
 
   async fetchTenantByName(name: string): Promise<Tenant> {
@@ -43,5 +43,11 @@ export class TenantApi {
     const url = `${this.config.host}${this.config.endpoints.tenantByEmail}`;
     const res = await this.http.post(url, { email });
     return res.data;
+  }
+
+  async fetchRealmRoles(): Promise<Role[]> {
+    const url = `${this.config.host}/api/tenant/v1/realm/roles`;
+    const res = await this.http.get(url);
+    return res.data.roles;
   }
 }

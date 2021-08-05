@@ -39,14 +39,22 @@ export default function (state: EventState = defaultState, action: EventActionTy
           definitions: false,
         },
       };
-    case UPDATE_EVENT_DEFINITION_SUCCESS_ACTION:
-      return {
+    case UPDATE_EVENT_DEFINITION_SUCCESS_ACTION: {
+      const key = `${action.definition.namespace}:${action.definition.name}`;
+      const newState = {
         ...state,
         definitions: {
           ...state.definitions,
-          [`${action.definition.namespace}:${action.definition.name}`]: action.definition,
+          [key]: action.definition,
         },
       };
+
+      if (!newState.results.includes(key)) {
+        newState.results.splice(0, 0, key);
+      }
+
+      return newState;
+    }
     case FETCH_EVENT_LOG_ENTRIES_ACTION:
       return {
         ...state,

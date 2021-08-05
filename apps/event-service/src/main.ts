@@ -4,13 +4,7 @@ import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
 import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
-import {
-  AjvValidationService,
-  createLogger,
-  UnauthorizedError,
-  NotFoundError,
-  InvalidOperationError,
-} from '@core-services/core-common';
+import { AjvValidationService, createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { createEventService } from './amqp';
 import { applyEventMiddleware, EventServiceRoles, Namespace, NamespaceEntity } from './event';
@@ -42,6 +36,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tenantHandler,
     tokenProvider,
     configurationHandler,
+    configurationService,
     healthCheck,
   } = await initializePlatform(
     {
@@ -63,6 +58,14 @@ const initializeApp = async (): Promise<express.Application> => {
                   name: { type: 'string' },
                   description: { type: 'string' },
                   payloadSchema: { type: 'object' },
+                  interval: {
+                    type: 'object',
+                    properties: {
+                      namespace: { type: 'string' },
+                      name: { type: 'string' },
+                      metric: { type: 'string' },
+                    },
+                  },
                 },
                 required: ['name', 'description', 'payloadSchema'],
                 additionalProperties: false,
@@ -106,9 +109,11 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use('/event', passport.authenticate(['core', 'tenant'], { session: false }), tenantHandler, configurationHandler);
 
   applyEventMiddleware(app, {
+    serviceId,
     logger,
     directory,
     tokenProvider,
+    configurationService,
     eventService,
   });
 
@@ -132,18 +137,8 @@ const initializeApp = async (): Promise<express.Application> => {
     });
   });
 
-  app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    if (err instanceof UnauthorizedError) {
-      res.status(401).send(err.message);
-    } else if (err instanceof NotFoundError) {
-      res.status(404).send(err.message);
-    } else if (err instanceof InvalidOperationError) {
-      res.status(400).send(err.message);
-    } else {
-      logger.warn(`Unexpected error encountered in handler: ${err}`);
-      res.sendStatus(500);
-    }
-  });
+  const errorHandler = createErrorHandler(logger);
+  app.use(errorHandler);
 
   return app;
 };

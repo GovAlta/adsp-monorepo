@@ -7,7 +7,7 @@ import CreateErrorPage from './CreateErrorPage';
 import CreatingTenant from './CreatingTenant';
 import Tenants from './Tenants';
 
-export function TenantsRouter() {
+export function TenantsRouter(): JSX.Element {
   return (
     <Container hs={1} vs={2}>
       <Switch>

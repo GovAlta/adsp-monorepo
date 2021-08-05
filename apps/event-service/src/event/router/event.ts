@@ -76,7 +76,10 @@ export const createEventRouter = ({ logger, eventService }: EventRouterProps): R
       eventService.send(event);
 
       res.sendStatus(200);
-      logger.info(`Event ${namespace}:${name} sent by user ${user.name} (ID: ${user.id}).`);
+      logger.info(`Event ${namespace}:${name} sent by user ${user.name} (ID: ${user.id}).`, {
+        context: 'event-service-router',
+        tenantId: tenantId.toString(),
+      });
     } catch (err) {
       next(err);
     }

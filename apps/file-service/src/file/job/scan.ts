@@ -9,6 +9,7 @@ interface ScanJobProps {
 }
 
 export const createScanJob = ({ logger, scanService, fileRepository }: ScanJobProps) => {
+  // eslint-disable-next-line
   return () => {
     logger.debug('Starting file scan job...');
 

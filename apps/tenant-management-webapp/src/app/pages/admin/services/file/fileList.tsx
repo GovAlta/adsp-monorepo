@@ -16,7 +16,7 @@ import DownloadIcon from '@icons/download-outline.svg';
 import DeleteIcon from '@icons/trash-outline.svg';
 import './file.css';
 
-const FileList = () => {
+const FileList = (): JSX.Element => {
   const [selectedFile, setSelectFile] = useState<string>();
   const [uploadFileType, setUploadFileType] = useState<string>();
 
@@ -29,7 +29,8 @@ const FileList = () => {
   });
   const getFileTypesValues = () => {
     const typeValues = [];
-    fileTypes.map((fileType) => {
+    // eslint-disable-next-line
+    fileTypes.map((fileType): void => {
       const type = {};
       type['text'] = fileType.name ? fileType.name : fileType.id;
       type['value'] = fileType.id;

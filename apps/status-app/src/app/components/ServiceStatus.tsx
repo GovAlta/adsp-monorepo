@@ -24,7 +24,7 @@ function upcaseFirstLetterInEachWord(sentence: string) {
   return wordArray.join(' ');
 }
 
-export function ServiceStatus({ name, date, assignmentStatus = '', state, description }: ServiceOptions) {
+export function ServiceStatus({ name, date, assignmentStatus = '', state, description }: ServiceOptions): JSX.Element {
   let stateProper = state.charAt(0).toUpperCase() + state.slice(1);
   stateProper = upcaseFirstLetterInEachWord(stateProper.replace('-', ' '));
 

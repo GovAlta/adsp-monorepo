@@ -4,7 +4,13 @@ import { FileRepository, FileCriteria, FileEntity, FileSpaceRepository } from '.
 import { FileTypeEntity } from '../file/model/type';
 import { fileSchema } from './schema';
 import { FileDoc } from './types';
-
+interface queryProps {
+  spaceId: string;
+  typeId: string;
+  filename: { $regex: string; $options: string };
+  scanned: boolean;
+  deleted: boolean;
+}
 export class MongoFileRepository implements FileRepository {
   private model: Model<FileDoc>;
 
@@ -13,19 +19,14 @@ export class MongoFileRepository implements FileRepository {
   }
 
   async exists(criteria: FileCriteria): Promise<boolean> {
-    const query: any = this.getQuery(criteria);
-    const result = await this.model.findOne({
-      where: query,
-    });
-
+    const query: queryProps = this.getQuery(criteria);
+    const result = await this.model.findOne(query);
     return !!result === true;
   }
 
   find(top: number, after: string, criteria: FileCriteria): Promise<Results<FileEntity>> {
     const skip = decodeAfter(after);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const query: any = this.getQuery(criteria);
+    const query: queryProps = this.getQuery(criteria);
 
     return new Promise<FileEntity[]>((resolve, reject) => {
       this.model
@@ -110,7 +111,7 @@ export class MongoFileRepository implements FileRepository {
         })
       : null;
   }
-
+  // eslint-disable-next-line
   toDoc(entity: FileEntity): any {
     return {
       spaceId: entity.type.spaceId,
@@ -127,8 +128,8 @@ export class MongoFileRepository implements FileRepository {
     };
   }
 
-  getQuery(criteria: FileCriteria) {
-    const query: any = {};
+  getQuery(criteria: FileCriteria): queryProps {
+    const query = {} as queryProps;
 
     if (criteria.spaceEquals) {
       query.spaceId = criteria.spaceEquals;
@@ -138,11 +139,11 @@ export class MongoFileRepository implements FileRepository {
       query.typeId = criteria.typeEquals;
     }
 
-    if (criteria.scanned !== undefined) {
+    if (criteria.scanned) {
       query.scanned = criteria.scanned;
     }
 
-    if (criteria.deleted !== undefined) {
+    if (criteria.deleted) {
       query.deleted = criteria.deleted;
     }
 

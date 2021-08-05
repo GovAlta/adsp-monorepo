@@ -15,6 +15,7 @@
   --fw-medium: 500;
   --fw-bold: 700;
   --fw-black: 900;
+  overflow-y: auto;
 
   /* colors */
 
@@ -22,6 +23,10 @@
   --color-primary-dark: #004f84;
   --color-primary-link: #0067b5;
   --color-font-header: #333;
+  --color-table-border: #707070;
+  --color-table-tr-selected: #f1f1f1;
+  --color-table-th-color: #666666;
+
 
   --color-gray-100: hsla(216, 10%, 99%, 1);
   --color-gray-200: hsla(216, 10%, 95%, 1);
@@ -32,6 +37,8 @@
   --color-gray-700: hsla(216, 10%, 40%, 1);
   --color-gray-800: hsla(216, 10%, 29%, 1);
   --color-gray-900: hsla(216, 10%, 19%, 1);
+  --color-gray-015: hsla(0, 0%, 95%, 1);
+
 
   --color-green-100: hsla(88, 50%, 90%, 1);
   --color-green-200: hsla(88, 50%, 80%, 1);

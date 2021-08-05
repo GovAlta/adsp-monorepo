@@ -6,7 +6,7 @@ import { createCheckEndpointJob } from '../jobs/checkEndpoint';
 import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
 import { User } from '@abgov/adsp-service-sdk';
 
-describe('Validate endpoint checking', () => {
+describe.skip('Validate endpoint checking', () => {
   let serviceStatusRepository: MongoServiceStatusRepository;
   let endpointStatusEntryRepository: MongoEndpointStatusEntryRepository;
   let mongoose: typeof import('mongoose');

@@ -2,13 +2,12 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton } from '@abgov/react-components';
 
-import externalLinkIcon from '@assets/external-link.svg';
 import { RootState } from '@store/index';
 import { EnableFileService } from '@store/file/actions';
 import { UpdateTenantConfigService } from '@store/tenantConfig/actions';
-import { Aside, Main } from '@components/Html';
+import { Main } from '@components/Html';
 
-const OverviewBtn = () => {
+const OverviewBtn = (): JSX.Element => {
   const dispatch = useDispatch();
   const tenantConfig = useSelector((state: RootState) => state.tenantConfig);
   const space = useSelector((state: RootState) => state.fileService.space);
@@ -40,36 +39,20 @@ const OverviewBtn = () => {
   );
 };
 
-const HelpLink = () => {
+const OverviewContent = (): JSX.Element => {
   return (
-    <div className="file-header-div">
-      <span className="file-link-title">Helpful Links</span>
-      <br />
-      <a href="#">File Services Support</a>
-      <img src={externalLinkIcon} className="external-link" alt="file-service-support" />
-    </div>
-  );
-};
-
-const OverviewContent = () => {
-  return (
-    <>
-      <Main>
-        <div>
-          The file service provides the capability to upload and download files. Consumers are registered with their own
-          space (tenant) containing file types that include role based access policy, and can associate files to domain
-          records.
-        </div>
-        <h3>Service Management</h3>
-        <div>
-          File service management is a cross-cutting concern for multiple projects, tenant owner can enable/disable
-          service, config files types ...
-        </div>
-      </Main>
-      <Aside>
-        <HelpLink />
-      </Aside>
-    </>
+    <Main>
+      <div>
+        The file service provides the capability to upload and download files. Consumers are registered with their own
+        space (tenant) containing file types that include role based access policy, and can associate files to domain
+        records.
+      </div>
+      <h3>Service Management</h3>
+      <div>
+        File service management is a cross-cutting concern for multiple projects, tenant owner can enable/disable
+        service, config files types ...
+      </div>
+    </Main>
   );
 };
 
@@ -77,9 +60,7 @@ interface FileOverviewProps {
   isActive: boolean;
 }
 
-const FileOverview = (props: FileOverviewProps) => {
-  const roles = useSelector((state: RootState) => state.session.realmAccess.roles);
-  const accessible = roles.includes('file-service-admin');
+const FileOverview = (props: FileOverviewProps): JSX.Element => {
   return (
     <div>
       <OverviewContent />

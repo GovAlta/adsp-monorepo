@@ -8,16 +8,15 @@ export interface StreamEvent {
 }
 
 export interface Stream {
-  spaceId: string;
   id: string;
   name: string;
+  description: string;
   events: StreamEvent[];
   subscriberRoles: string[];
+  publicSubscribe: boolean;
 }
 
 export interface EventCriteria {
   correlationId?: string;
-  context?: {
-    [key: string]: boolean | number | string;
-  };
+  context?: Record<string, boolean | number | string>;
 }

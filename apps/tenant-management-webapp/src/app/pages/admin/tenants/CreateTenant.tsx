@@ -11,7 +11,7 @@ import SupportLinks from '@components/SupportLinks';
 import { KeycloakCheckSSO, TenantLogin } from '@store/tenant/actions';
 import { TenantLogout } from '@store/tenant/actions';
 
-const CreateRealm = () => {
+const CreateRealm = (): JSX.Element => {
   const dispatch = useDispatch();
   const [name, setName] = useState('');
   const [isLoaded, setIsLoaded] = useState(true);

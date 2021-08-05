@@ -36,6 +36,7 @@ export interface ServiceUrls {
   fileApi?: string;
   serviceStatusApiUrl?: string;
   valueServiceApiUrl?: string;
+  docServiceApiUrl?: string;
 }
 
 export interface ConfigState {

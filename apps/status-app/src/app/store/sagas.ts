@@ -1,8 +1,8 @@
-import { takeEvery } from 'redux-saga/effects';
+import { ForkEffect, takeEvery } from 'redux-saga/effects';
 
 import { fetchConfig } from './config/sagas';
 import { FETCH_CONFIG_ACTION } from './config/actions';
 
-export function* watchSagas() {
+export function* watchSagas(): Generator<ForkEffect<never>, void, unknown> {
   yield takeEvery(FETCH_CONFIG_ACTION, fetchConfig);
 }

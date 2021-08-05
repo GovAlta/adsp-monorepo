@@ -1,21 +1,28 @@
-import { put, select } from 'redux-saga/effects';
+import { put, select, call } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
+import { SagaIterator } from '@redux-saga/core';
 import {
   CreateFileSpaceSucceededService,
   CreateFileSpaceFailedService,
   FetchFilesSuccessService,
   UploadFileSuccessService,
   FetchFileTypeSucceededService,
-  DeleteFileTypeSucceededService,
-  CreateFileTypeSucceededService,
   UpdateFileTypeSucceededService,
   DeleteFileSuccessService,
   FetchFileDocsSucceededService,
+  FetchFileTypeHasFileSucceededService,
+  FetchFileTypeService,
+  DeleteFileAction,
+  DeleteFileTypeAction,
+  CreateFileTypeAction,
+  UpdateFileTypeAction,
+  FetchFileTypeHasFileAction,
 } from './actions';
 
 import { FileApi } from './api';
 import FormData from 'form-data';
 
+// eslint-disable-next-line
 export function* uploadFile(file) {
   const state = yield select();
   const token = state.session.credentials.token;
@@ -37,31 +44,32 @@ export function* uploadFile(file) {
   }
 }
 
-export function* fetchFiles() {
+export function* fetchFiles(): SagaIterator {
   const state = yield select();
   try {
     const token = state.session?.credentials?.token;
-    const api = yield new FileApi(state.config, token);
+    const api = new FileApi(state.config, token);
 
-    const files = yield api.fetchFiles();
+    const files = yield call([api, api.fetchFiles]);
     yield put(FetchFilesSuccessService({ data: files.results }));
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
   }
 }
 
-export function* deleteFile(file) {
+export function* deleteFile(file: DeleteFileAction): SagaIterator {
   const state = yield select();
   try {
     const token = state.session?.credentials?.token;
-    const api = yield new FileApi(state.config, token);
-    const files = yield api.deleteFile(file.payload.data);
+    const api = new FileApi(state.config, token);
+    const files = yield call([api, api.deleteFile], file.payload.data);
     yield put(DeleteFileSuccessService(files));
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
   }
 }
 
+// eslint-disable-next-line
 export function* downloadFile(file) {
   const state = yield select();
   try {
@@ -78,90 +86,101 @@ export function* downloadFile(file) {
   }
 }
 
-export function* enableFileService() {
+export function* enableFileService(): SagaIterator {
   const state = yield select();
   try {
     const token = state.session?.credentials?.token;
-    const api = yield new FileApi(state.config, token);
-    const enableFile = yield api.enableFileService();
+    const api = new FileApi(state.config, token);
+    const enableFile = yield call([api, api.enableFileService]);
     yield put(CreateFileSpaceSucceededService({ data: enableFile }));
   } catch (e) {
     yield put(CreateFileSpaceFailedService(e.message));
   }
 }
 
-export function* fetchSpace() {
+export function* fetchSpace(): SagaIterator {
   const state = yield select();
   try {
     const token = state.session?.credentials?.token;
-    const api = yield new FileApi(state.config, token);
-    const enableFile = yield api.fetchSpace();
+    const api = new FileApi(state.config, token);
+    const enableFile = yield call([api, api.fetchSpace]);
     yield put(CreateFileSpaceSucceededService({ data: enableFile }));
   } catch (e) {
     yield put(CreateFileSpaceFailedService(e.message));
   }
 }
 
-export function* fetchFileTypes() {
+export function* fetchFileTypes(): SagaIterator {
   const state = yield select();
   try {
     const token = state.session.credentials?.token;
-    const api = yield new FileApi(state.config, token);
-    const fileTypeInfo = yield api.fetchFileType();
+    const api = new FileApi(state.config, token);
+    const fileTypeInfo = yield call([api, api.fetchFileType]);
     yield put(FetchFileTypeSucceededService({ data: fileTypeInfo }));
   } catch (e) {
     yield put(ErrorNotification({ message: `${e.message} - fetchFileTypes` }));
   }
 }
 
-export function* deleteFileTypes(fileType) {
+export function* deleteFileTypes(action: DeleteFileTypeAction): SagaIterator {
+  const fileType = action.payload;
   const state = yield select();
   try {
     const token = state.session?.credentials?.token;
-    const api = yield new FileApi(state.config, token);
-
-    yield api.deleteFileType(fileType.payload.fileInfo.id);
-
-    yield put(DeleteFileTypeSucceededService(fileType.payload.fileInfo));
+    const api = new FileApi(state.config, token);
+    yield call([api, api.deleteFileType], fileType.id);
+    yield put(FetchFileTypeService());
   } catch (e) {
     yield put(ErrorNotification({ message: `${e.response.data} - deleteFileTypes` }));
   }
 }
 
-export function* createFileType(fileType) {
+export function* createFileType(fileType: CreateFileTypeAction): SagaIterator {
   const state = yield select();
   const token = state.session.credentials.token;
-  const api = yield new FileApi(state.config, token);
+  const api = new FileApi(state.config, token);
 
   try {
-    const fileTypeInfo = yield api.createFileType(fileType.payload.fileInfo);
-    yield put(CreateFileTypeSucceededService({ data: fileTypeInfo }));
+    yield call([api, api.createFileType], fileType.payload);
+    yield put(FetchFileTypeService());
   } catch (e) {
     yield put(ErrorNotification({ message: `${e.message} - createFileType` }));
   }
 }
 
-export function* updateFileType(fileType) {
+export function* updateFileType(action: UpdateFileTypeAction): SagaIterator {
   const state = yield select();
   const token = state.session.credentials.token;
-  const api = yield new FileApi(state.config, token);
+  const api = new FileApi(state.config, token);
 
   try {
-    const fileTypeInfo = yield api.updateFileType(fileType.payload.fileInfo);
-    yield put(UpdateFileTypeSucceededService({ data: fileTypeInfo }));
+    const fileType = yield call([api, api.updateFileType], action.payload);
+    yield put(UpdateFileTypeSucceededService(fileType));
   } catch (e) {
     yield put(ErrorNotification({ message: `${e.message} - updateFileType` }));
   }
 }
 
-export function* fetchFileDocs() {
+export function* fetchFileDocs(): SagaIterator {
   const state = yield select();
   const token = state.session.credentials.token;
-  const api = yield new FileApi(state.config, token);
+  const api = new FileApi(state.config, token);
   try {
-    const fileDocs = yield api.fetchFileServiceDoc();
+    const fileDocs = yield call([api, api.fetchFileServiceDoc]);
     yield put(FetchFileDocsSucceededService(fileDocs));
   } catch (e) {
     yield put(ErrorNotification({ message: `${e.message} - fetchFileDoc` }));
+  }
+}
+
+export function* fetchFileTypeHasFile(action: FetchFileTypeHasFileAction): SagaIterator {
+  try {
+    const state = yield select();
+    const token = state.session.credentials.token;
+    const api = new FileApi(state.config, token);
+    const hasFile = yield call([api, api.fetchFileTypeHasFile], action.payload);
+    yield put(FetchFileTypeHasFileSucceededService(hasFile, action.payload));
+  } catch (e) {
+    yield put(ErrorNotification({ message: `${e.message} - fetchFileType.` }));
   }
 }

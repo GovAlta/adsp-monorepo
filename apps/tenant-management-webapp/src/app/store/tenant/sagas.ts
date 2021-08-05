@@ -1,4 +1,4 @@
-import { put, select } from 'redux-saga/effects';
+import { put, select, call } from 'redux-saga/effects';
 import { RootState, store } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
 import {
@@ -12,6 +12,7 @@ import {
   KeycloakCheckSSOAction,
   TenantLoginAction,
   KeycloakCheckSSOWithLogOutAction,
+  FetchRealmRolesSuccess,
 } from './actions';
 
 import { SessionLoginSuccess } from '@store/session/actions';
@@ -19,29 +20,30 @@ import { TenantApi } from './api';
 import { TENANT_INIT } from './models';
 import { createKeycloakAuth, keycloakAuth, LOGIN_TYPES } from '@lib/keycloak';
 import { convertToSession } from '@lib/session';
+import { SagaIterator } from '@redux-saga/core';
 
-export function* fetchTenant(action: FetchTenantAction) {
+export function* fetchTenant(action: FetchTenantAction): SagaIterator {
   const state: RootState = yield select();
   const token = state.session.credentials.token;
   const api = new TenantApi(state.config.tenantApi, token);
   const realm = action.payload;
 
   try {
-    const response = yield api.fetchTenantByRealm(realm);
-    yield put(FetchTenantSuccess(response.tenant));
+    const tenant = yield call([api, api.fetchTenantByRealm], realm);
+    yield put(FetchTenantSuccess(tenant));
   } catch (e) {
     yield put(ErrorNotification({ message: 'failed to fetch tenant' }));
   }
 }
 
-export function* isTenantAdmin(action: CheckIsTenantAdminAction) {
+export function* isTenantAdmin(action: CheckIsTenantAdminAction): SagaIterator {
   const state: RootState = yield select();
   const token = state?.session?.credentials?.token;
   const api = new TenantApi(state.config.tenantApi, token);
   const email = action.payload;
 
   try {
-    const response = yield api.fetchTenantByEmail(email);
+    const response = yield call([api, api.fetchTenantByEmail], email);
     yield put(UpdateTenantAdminInfo(true, response.name, response.realm));
   } catch (e) {
     yield put(UpdateTenantAdminInfo(false, TENANT_INIT.name, TENANT_INIT.realm));
@@ -50,21 +52,21 @@ export function* isTenantAdmin(action: CheckIsTenantAdminAction) {
   }
 }
 
-export function* createTenant(action: CreateTenantAction) {
+export function* createTenant(action: CreateTenantAction): SagaIterator {
   const state: RootState = yield select();
   const token = state?.session?.credentials?.token;
   const api = new TenantApi(state.config.tenantApi, token);
   const name = action.payload;
 
   try {
-    const result = yield api.createTenant(name);
+    const result = yield call([api, api.createTenant], name);
     yield put(CreateTenantSuccess(result.realm));
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to create new tenant: ${e.message}` }));
   }
 }
 
-export function* tenantAdminLogin() {
+export function* tenantAdminLogin(): SagaIterator {
   try {
     const state: RootState = yield select();
     const keycloakConfig = state.config.keycloakApi;
@@ -75,7 +77,7 @@ export function* tenantAdminLogin() {
   }
 }
 
-export function* tenantCreationInitLogin() {
+export function* tenantCreationInitLogin(): SagaIterator {
   try {
     const state: RootState = yield select();
     const keycloakConfig = state.config.keycloakApi;
@@ -86,7 +88,7 @@ export function* tenantCreationInitLogin() {
   }
 }
 
-export function* keycloakCheckSSO(action: KeycloakCheckSSOAction) {
+export function* keycloakCheckSSO(action: KeycloakCheckSSOAction): SagaIterator {
   try {
     const state: RootState = yield select();
     const realm = action.payload;
@@ -111,7 +113,7 @@ export function* keycloakCheckSSO(action: KeycloakCheckSSOAction) {
   }
 }
 
-export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAction) {
+export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAction): SagaIterator {
   try {
     const state: RootState = yield select();
     const realm = action.payload;
@@ -132,7 +134,7 @@ export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAc
   }
 }
 
-export function* tenantLogin(action: TenantLoginAction) {
+export function* tenantLogin(action: TenantLoginAction): SagaIterator {
   try {
     const state: RootState = yield select();
     const keycloakConfig = state.config.keycloakApi;
@@ -144,7 +146,7 @@ export function* tenantLogin(action: TenantLoginAction) {
   }
 }
 
-export function* keycloakRefreshToken() {
+export function* keycloakRefreshToken(): SagaIterator {
   try {
     if (keycloakAuth) {
       keycloakAuth.refreshToken(
@@ -164,12 +166,24 @@ export function* keycloakRefreshToken() {
   }
 }
 
-export function* tenantLogout() {
+export function* tenantLogout(): SagaIterator {
   try {
     if (keycloakAuth) {
       Promise.resolve(keycloakAuth.logout());
     }
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to tenant out: ${e.message}` }));
+  }
+}
+
+export function* fetchRealmRoles(): SagaIterator {
+  try {
+    const state: RootState = yield select();
+    const token = state?.session?.credentials?.token;
+    const api = new TenantApi(state.config.tenantApi, token);
+    const roles = yield call([api, api.fetchRealmRoles]);
+    yield put(FetchRealmRolesSuccess(roles));
+  } catch (e) {
+    yield put(ErrorNotification({ message: `Failed to fetch realm roles: ${e.message}` }));
   }
 }

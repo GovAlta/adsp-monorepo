@@ -3,17 +3,12 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as helmet from 'helmet';
 import * as cors from 'cors';
-import {
-  UnauthorizedError,
-  NotFoundError,
-  InvalidOperationError,
-  assertAuthenticatedHandler,
-} from '@core-services/core-common';
+import { assertAuthenticatedHandler, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { logger } from './logger';
 import { applyValuesMiddleware, Namespace, NamespaceEntity, ServiceUserRoles, ValueWrittenDefinition } from './values';
 import { createRepositories } from './timescale';
-import { AdspId, initializePlatform, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import { AjvValueValidationService } from './ajv';
 import type { User } from '@abgov/adsp-service-sdk';
 
@@ -120,21 +115,8 @@ const initializeApp = async () => {
 
   applyValuesMiddleware(app, { logger, repository: repositories.valueRepository, eventService });
 
-  app.use((err: Error, _req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (err instanceof UnauthorizedError) {
-      res.send(err.message).status(401);
-    } else if (err instanceof UnauthorizedUserError) {
-      res.send(err.message).status(401);
-    } else if (err instanceof NotFoundError) {
-      res.send(err.message).status(404);
-    } else if (err instanceof InvalidOperationError) {
-      res.send(err.message).status(400);
-    } else {
-      logger.warn(`Unexpected error encountered in handler: ${err}`);
-      res.sendStatus(500);
-      next(err);
-    }
-  });
+  const errorHandler = createErrorHandler(logger);
+  app.use(errorHandler);
 
   app.use('/health', async (_req, res) => {
     const platform = await healthCheck();

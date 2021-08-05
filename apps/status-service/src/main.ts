@@ -3,7 +3,7 @@ import * as passport from 'passport';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as helmet from 'helmet';
-import { createLogger, UnauthorizedError, NotFoundError, InvalidOperationError } from '@core-services/core-common';
+import { createLogger } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { createRepositories } from './mongo';
 import { bindEndpoints } from './app';
@@ -53,7 +53,6 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
   passport.use(new AnonymousStrategy());
 
   const authenticate = passport.authenticate(['jwt-tenant', 'jwt'], { session: false });
-  const authenticateCore = passport.authenticate(['jwt'], { session: false });
 
   passport.serializeUser(function (user, done) {
     done(null, user);

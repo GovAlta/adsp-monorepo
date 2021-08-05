@@ -7,7 +7,7 @@ interface UploadProps {
   rootStoragePath: string;
 }
 
-export const createUpload = ({ rootStoragePath }: UploadProps) => {
+export const createUpload = ({ rootStoragePath }: UploadProps): multer.Multer => {
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       const dest = path.join(rootStoragePath, '/tmp');

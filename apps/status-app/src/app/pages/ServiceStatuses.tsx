@@ -18,7 +18,7 @@ import { StatusApi } from '../api/statusApi';
 import { ServiceStatusApplication } from '../api/models';
 import moment from 'moment';
 
-const ServiceStatusPage = () => {
+const ServiceStatusPage = (): JSX.Element => {
   const env = useSelector((state) => state);
   const config = useSelector((state: { config: typeof environment }) => state.config);
   const [applications, setApplications] = useState<ServiceStatusApplication[]>([]);
@@ -43,6 +43,7 @@ const ServiceStatusPage = () => {
     }, 5000);
 
     return () => clearInterval(intervalId); //This is important
+    // eslint-disable-next-line
   }, [env]);
 
   const PageLoader = () => {
