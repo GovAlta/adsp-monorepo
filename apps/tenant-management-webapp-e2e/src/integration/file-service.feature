@@ -90,19 +90,11 @@ Feature: File service
   @TEST_CS-495 @REQ_CS-408 @regression
   Scenario: Test As a service owner, I can see the API documentation for file service in the tenant admin, so I can understand how to use the API
     Given a service owner user is on file services overview page
-    When the user "disables" file service
-    Then file service status is "Inactive"
-    When user goes to "Documentation" tab
-    Then user views file service api documentation
-    When user goes to "Overview" tab
-    When the user "enables" file service
-    Then file service status is "Active"
-    When user goes to "Documentation" tab
-    Then user views file service api documentation
+    Then the user views the link for "File Service" API docs
+    When the user goes to the web link of the API docs
+    Then the user views "File Service" API documentation
 
   @accessibility @regression
   Scenario: As a service owner, I can manage file services without any critical or serious accessibility issues
     Given a service owner user is on file services overview page
     Then no critical or serious accessibility issues on "file service overview page"
-    When user goes to "Documentation" tab
-    Then no critical or serious accessibility issues on "file service documentation page"

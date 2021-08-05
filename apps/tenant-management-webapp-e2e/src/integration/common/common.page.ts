@@ -15,6 +15,16 @@ class Common {
     const menuItemSelector = `nav > div > [href="${menuItemKey}"] > span`;
     return cy.get(menuItemSelector);
   }
+
+  readTheApiDocsLink() {
+    return cy.xpath(
+      '//*[contains(text(), "Helpful Links")]/following-sibling::a[contains(text(), "Read the API docs")]'
+    );
+  }
+
+  APIDocsPageTitle(text) {
+    return cy.xpath(`//*[@class="title" and contains(text(), "${text}")]`);
+  }
 }
 
 export default Common;
