@@ -16,7 +16,7 @@ export function App(): JSX.Element {
   useEffect(() => {
     // Fetch config
     dispatch(fetchConfig());
-  });
+  }, []);
 
   return (
     <Router>
