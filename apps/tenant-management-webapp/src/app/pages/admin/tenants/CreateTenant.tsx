@@ -38,7 +38,7 @@ const CreateRealm = (): JSX.Element => {
 
   useEffect(() => {
     dispatch(KeycloakCheckSSO('core'));
-  });
+  }, []);
 
   useEffect(() => {
     if (userInfo) {
