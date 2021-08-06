@@ -107,6 +107,7 @@ pipeline {
       }
       steps {
         sh "npx nx affected --configuration=production --target=build ${baseCommand} --parallel"
+        sh "npm prune --production"
         script {
           openshift.withCluster() {
             openshift.withProject() {
@@ -126,6 +127,7 @@ pipeline {
             }
           }
         }
+        sh "npm install"
       }
     }
     stage("Promote to Dev") {
