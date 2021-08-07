@@ -47,7 +47,7 @@ export const createFileTypeRouter = ({
     const user = req.user;
 
     const { name, anonymousRead, readRoles = [], updateRoles = [] } = req.body;
-
+    console.log(JSON.stringify(name) + '<name');
     if (!name) {
       res.sendStatus(HttpStatusCodes.BAD_REQUEST);
     } else {
@@ -83,10 +83,10 @@ export const createFileTypeRouter = ({
   });
 
   fileTypeRouter.get('/fileTypes/:fileTypeId', MiddlewareWrapper.middlewareMethod, async (req, res, next) => {
-    const { fileTypeId, spaceIdParam } = req.params;
+    const { fileTypeId } = req.params;
 
     try {
-      const spaceId = spaceIdParam || (await spaceRepository.getIdByTenant(req.tenant));
+      const spaceId = await spaceRepository.getIdByTenant(req.tenant);
       if (!spaceId) {
         throw new NotFoundError('File Type', fileTypeId);
       }

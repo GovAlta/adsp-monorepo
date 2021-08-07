@@ -49,6 +49,8 @@ export function createMockData<T>(repo: RepoSaver<T>, data: RepoSaveType<T>[]): 
   return Promise.all(
     data.map(async (entity: RepoSaveType<T>) => {
       entity.id = generateId();
+      console.log(JSON.stringify(entity) + '<---entity');
+      //console.log(JSON.stringify(repo) + '<---repo');
       return await repo.save((entity as unknown) as T);
     })
   );

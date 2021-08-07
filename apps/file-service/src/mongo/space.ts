@@ -7,6 +7,19 @@ import { FileSpaceDoc } from './types';
 import { Logger } from 'winston';
 import type { Tenant } from '@abgov/adsp-service-sdk';
 
+const getCircularReplacer = () => {
+  const seen = new WeakSet();
+  return (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return;
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+};
+
 export class MongoFileSpaceRepository implements FileSpaceRepository {
   private model: Model<FileSpaceDoc>;
 
@@ -37,7 +50,9 @@ export class MongoFileSpaceRepository implements FileSpaceRepository {
   }
 
   async getIdByTenant(tenant: Tenant): Promise<string> {
+    console.log(JSON.stringify(tenant) + '<tenant');
     const res = await this.model.findOne({ name: tenant.name });
+    console.log(JSON.stringify(res, getCircularReplacer()) + '<res');
     return Promise.resolve(res ? res.id : null);
   }
 

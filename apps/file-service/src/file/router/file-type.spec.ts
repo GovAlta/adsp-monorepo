@@ -39,8 +39,8 @@ describe('File Type Router', () => {
     id: 'type-1',
     name: 'Profile Picture',
     anonymousRead: false,
-    updateRoles: ['super-user'],
-    readRoles: ['super-user'],
+    updateRoles: ['test-admin'],
+    readRoles: ['test-admin'],
     spaceId: 'space1234',
   };
 

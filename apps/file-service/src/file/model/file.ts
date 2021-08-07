@@ -9,6 +9,20 @@ import { FileRecord, NewFile, UserInfo } from '../types';
 import { FileRepository } from '../repository';
 import { FileTypeEntity } from './type';
 import { v4 as uuidv4 } from 'uuid';
+
+const getCircularReplacer = () => {
+  const seen = new WeakSet();
+  return (_key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return;
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+};
+
 export class FileEntity implements FileRecord {
   id: string;
   recordId: string;
@@ -30,6 +44,7 @@ export class FileEntity implements FileRecord {
     file: string,
     rootStoragePath: string
   ): Promise<FileEntity> {
+    console.log(JSON.stringify(type, getCircularReplacer()) + '<typexxxxx');
     if (!type.canUpdateFile(user)) {
       throw new UnauthorizedError('User not authorized to create file.');
     }
@@ -45,9 +60,21 @@ export class FileEntity implements FileRecord {
 
     return repository.save(entity).then(
       (fileEntity) =>
-        new Promise<FileEntity>((resolve, reject) =>
-          fs.rename(file, fileEntity.getFilePath(rootStoragePath), (err) => (err ? reject(err) : resolve(fileEntity)))
-        )
+        new Promise<FileEntity>((resolve, reject) => {
+          console.log(JSON.stringify(file) + '<file');
+          console.log(JSON.stringify(rootStoragePath) + '<rootStoragePath');
+          console.log(
+            JSON.stringify(fileEntity.getFilePath(rootStoragePath)) + '<fileEntity.getFilePath(rootStoragePath)'
+          );
+          // console.log(fs.readdirSync('data\\file\\') + '<fs readdir');
+          // console.log(fs.readdirSync('data\\file\\tmp') + '<fs readdir file');
+          try {
+            fs.renameSync(file, fileEntity.getFilePath(rootStoragePath));
+            return resolve(fileEntity);
+          } catch (err) {
+            return reject(err);
+          }
+        })
     );
   }
 
