@@ -474,7 +474,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
         {startCreateFileType && (
           <tr className="selected" key={id}>
             <ActionCell {...{ ...props, rowType: 'new' }} />
-            <td data-testi>
+            <td data-testid='new-name'>
               <input
                 onBlur={(e) => {
                   newFileType.name = e.target.value;
