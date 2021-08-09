@@ -97,7 +97,7 @@
     "@abgov/core-css": "^0.7.56",
     "@abgov/nx-adsp": "^1.3.0",
     "@abgov/nx-oc": "^1.3.1",
-    "@abgov/react-components": "3.3.1",
+    "@abgov/react-components": "3.3.2-beta.1",
     "@babel/core": "7.9.6",
     "@babel/preset-env": "7.9.6",
     "@babel/preset-react": "7.9.4",
