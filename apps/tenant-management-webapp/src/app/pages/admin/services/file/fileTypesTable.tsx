@@ -282,7 +282,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
 
     if (displayOnly) {
       return (
-        <RolesCellContainer>
+        <RolesCellContainer data-testid={`${rowType}-${cellType}`}>
           {anonymousRead && cellType === 'readRoles' && <Chip type="secondary">Anonymous</Chip>}
           {(!anonymousRead || cellType === 'updateRoles') &&
             roles.map((role) => {
@@ -302,7 +302,6 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           title=""
           subTitle=""
           display={display}
-          data-testid={`${rowType}-${cellType}`}
           selectionChanged={(e) => {
             const fileType = { ...props };
             if (e.label === 'Anonymous' && cellType === 'readRoles') {
