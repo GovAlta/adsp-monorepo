@@ -2,7 +2,7 @@ import express = require('express');
 import { Mock, It } from 'moq.ts';
 import { FileRepository } from '../repository';
 import { FileSpaceRepository } from '../repository';
-import { createFileRouter } from './file';
+import { createSpaceRouter } from './space';
 import * as request from 'supertest';
 import { FileCriteria } from '../types';
 import { FileSpaceEntity } from '../model';
@@ -16,7 +16,8 @@ import { FileType } from '../types';
 import * as NodeCache from 'node-cache';
 //import { logger } from 'libs/core-common/src/logger';
 import { EventService } from '@abgov/adsp-service-sdk';
-import { createLogger, assertAuthenticatedHandler, AuthAssert } from '@core-services/core-common';
+import { createLogger, AuthAssert } from '@core-services/core-common';
+
 import { connect, disconnect, createMockData } from '@core-services/core-common/mongo';
 import * as sinon from 'sinon';
 import { MiddlewareWrapper } from './middlewareWrapper';
@@ -24,11 +25,6 @@ import { ExpectedExpressionReflector } from 'moq.ts/lib/expected-expressions/exp
 import * as fs from 'fs';
 import { adspId, User } from '@abgov/adsp-service-sdk';
 import path = require('path');
-
-// jest.mock('fs', () => ({
-//   rename: jest.fn((o, n, cb) => cb(null)),
-//   unlink: jest.fn((o, cb) => cb(null)),
-// }));
 
 const storagePath = 'files';
 const separator = path.sep === '/' ? '/' : '\\';
@@ -47,10 +43,9 @@ const getCircularReplacer = () => {
   };
 };
 
-describe('File Router', () => {
+describe('File Space Router', () => {
   const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
   const mockRepo = new Mock<FileRepository>();
-  //const spaceMockRepo = new Mock<FileSpaceRepository>();
   const cache = new NodeCache({ stdTTL: 86400, useClones: false });
   const spaceMockRepo = new MongoFileSpaceRepository(logger, cache);
   const fileMockRepo = new MongoFileRepository(spaceMockRepo);
@@ -111,13 +106,13 @@ describe('File Router', () => {
   afterAll(() => {
     jest.clearAllTimers();
   });
-  describe('GET /files', () => {
+  describe('GET /spaces', () => {
     const app = express();
     let sandbox;
     beforeEach(() => {
       sandbox = sinon.createSandbox();
       //sandbox.restore();
-      sandbox.stub(MiddlewareWrapper, 'middlewareMethod').callsFake(function (req, res, next) {
+      sandbox.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
         req.body = { updateRoles: '2313' };
         req.tenant = { name: 'space1234' };
         req.user = { roles: ['super-user'] };
@@ -125,12 +120,9 @@ describe('File Router', () => {
       });
 
       app.use(
-        createFileRouter({
+        createSpaceRouter({
           logger: logger,
-          rootStoragePath: '',
-          fileRepository: fileMockRepo,
           spaceRepository: spaceMockRepo,
-          eventService: eventServiceMock.object(),
         })
       );
     });
@@ -144,7 +136,7 @@ describe('File Router', () => {
         {
           id: 'space1234',
           name: 'space1234',
-          spaceAdminRole: 'test-admin',
+          spaceAdminRole: 'super-user',
           types: {
             typeName: entity,
           },
@@ -154,7 +146,7 @@ describe('File Router', () => {
       await createMockData<FileSpaceEntity>(spaceMockRepo, fileSpaces);
       await createMockData<FileEntity>(fileMockRepo, files);
 
-      const res = await request(app).get('/files').query({ top: 10, after: '' }); //.expect(200);
+      const res = await request(app).get('/spaces').query({ top: 10, after: '' }); //.expect(200);
       console.log(JSON.stringify(res, getCircularReplacer()));
       expect(res.statusCode).toBe(200);
     });
@@ -164,7 +156,7 @@ describe('File Router', () => {
     });
   });
 
-  describe('POST /files', () => {
+  describe('POST /space', () => {
     const app = express();
     let sandbox;
     beforeEach(async () => {
@@ -172,7 +164,7 @@ describe('File Router', () => {
         {
           id: 'space1234',
           name: 'space1234',
-          spaceAdminRole: 'test-admin',
+          spaceAdminRole: 'super-user',
           types: {
             typeName: entity,
           },
@@ -189,11 +181,10 @@ describe('File Router', () => {
       console.log(JSON.stringify(x, getCircularReplacer()) + '<xx');
       sandbox = sinon.createSandbox();
       sandbox.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
-        req.body = files[0];
+        req.body = fileSpaces[0];
         req.tenant = { name: 'space1234' };
-        req.user = { roles: ['test-admin'] };
-        req.file = files[0];
-        req.body.type = 'typeName';
+        req.user = { roles: ['super-user'] };
+        //req.body.type = 'typeName';
         return next();
       });
       //sandbox2 = sinon.createSandbox();
@@ -218,12 +209,9 @@ describe('File Router', () => {
       // });
 
       app.use(
-        createFileRouter({
+        createSpaceRouter({
           logger: logger,
-          rootStoragePath: '.',
-          fileRepository: mockRepo.object(),
           spaceRepository: spaceMockRepo,
-          eventService: eventServiceMock.object(),
         })
       );
     });
@@ -232,16 +220,18 @@ describe('File Router', () => {
       sandbox.restore();
       //sandbox2.restore();
     });
-    it('returns a 200 OK and creates a file', async () => {
+    it('returns a 200 OK and creates a space', async () => {
       //await createMockData<FileEntity>(fileMockRepo, files[0]);
       // expect(renameMock.mock.calls[0][0]).toEqual('tmp-file');
       // expect(renameMock.mock.calls[0][1]).toEqual(`${typePath}${separator}${'files'}`);
-      const res = await request(app).post('/files').send(files[0]);
+
+      const res = await request(app).post('/spaces').send(files[0]);
+      console.log(JSON.stringify(res, getCircularReplacer()) + '<resxx');
       //expect(renameMock.mock.calls[0][0]).toEqual('tmp-file');
       //expect(renameMock.mock.calls[0][1]).toEqual(`${typePath}${separator}${fileEntity.storage}`);
       expect(res.statusCode).toEqual(200);
 
-      expect(JSON.parse(res.text).filename).toEqual('bob.jpg');
+      expect(JSON.parse(res.text).name).toEqual('space1234');
     });
   });
 

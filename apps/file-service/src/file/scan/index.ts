@@ -19,10 +19,10 @@ export interface ScanService {
 
 export const createScanService = (provider: string, props: ScanProps) => {
   switch (provider) {
-    // case 'clam':
-    //   return createClamScan(props);
-    // case 'meta':
-    //   return createMetaDefenderScan(props);
+    case 'clam':
+      return createClamScan(props);
+    case 'meta':
+      return createMetaDefenderScan(props);
     default:
       return null;
   }

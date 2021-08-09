@@ -72,6 +72,9 @@ export class FileSpaceEntity implements FileSpace {
   }
 
   updateType(user: User, typeId: string, update: Update<FileType>): Promise<FileSpaceEntity> {
+    console.log(JSON.stringify(user) + '<user');
+    console.log(JSON.stringify(typeId) + '<typeId');
+    console.log(JSON.stringify(this.types) + '<this.types');
     const type = Object.values(this.types).find((type) => type.id === typeId);
     type.update(user, update);
 
@@ -79,11 +82,16 @@ export class FileSpaceEntity implements FileSpace {
   }
 
   async addType(user: User, rootStoragePath: string, typeId: string, type: New<FileType>): Promise<FileSpaceEntity> {
+    console.log(JSON.stringify(user) + '<user');
+    console.log(JSON.stringify(typeId) + '<typeId');
+    console.log(JSON.stringify(type) + '<type');
+
     if (!this.canUpdate(user)) {
       throw new UnauthorizedError('User not authorized to create type.');
     }
 
     const existing = this.types[typeId];
+    console.log(JSON.stringify(existing) + '<existing');
     if (existing) {
       throw new InvalidOperationError(`Type with ID '${typeId}' already exists.`);
     }
@@ -100,6 +108,7 @@ export class FileSpaceEntity implements FileSpace {
       type.updateRoles,
       this.id
     );
+
     this.types[fileType.id] = fileType;
 
     const created = await this.repository.save(this);

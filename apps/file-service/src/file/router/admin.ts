@@ -7,6 +7,7 @@ import {
   assertAuthenticatedHandler,
   UnauthorizedError,
   NotFoundError,
+  AuthAssert,
 } from '@core-services/core-common';
 import { FileSpaceRepository, FileRepository } from '../repository';
 
@@ -17,18 +18,46 @@ interface AdminRouterProps {
   fileRepository: FileRepository;
 }
 
-export const adminOnlyMiddleware: RequestHandler = async (req, res, next: () => void) => {
-  const authConfig: AuthenticationConfig = {
-    requireCore: true,
-    allowedRoles: ['file-service-admin'],
+const getCircularReplacer = () => {
+  const seen = new WeakSet();
+  return (_key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return;
+      }
+      seen.add(value);
+    }
+    return value;
   };
-
-  if (authenticateToken(authConfig, req.user)) {
-    next();
-  } else {
-    res.sendStatus(HttpStatusCodes.UNAUTHORIZED);
-  }
 };
+
+export const AdminAssert = {
+  adminOnlyMiddleware: function (req, res, next: () => void) {
+    const authConfig: AuthenticationConfig = {
+      requireCore: true,
+      allowedRoles: ['file-service-admin'],
+    };
+
+    if (authenticateToken(authConfig, req.user)) {
+      next();
+    } else {
+      res.sendStatus(HttpStatusCodes.UNAUTHORIZED);
+    }
+  },
+};
+
+// export const adminOnlyMiddleware: RequestHandler = async (req, res, next: () => void) => {
+//   const authConfig: AuthenticationConfig = {
+//     requireCore: true,
+//     allowedRoles: ['file-service-admin'],
+//   };
+
+//   if (authenticateToken(authConfig, req.user)) {
+//     next();
+//   } else {
+//     res.sendStatus(HttpStatusCodes.UNAUTHORIZED);
+//   }
+// };
 
 export const createAdminRouter = ({
   logger,
@@ -38,12 +67,15 @@ export const createAdminRouter = ({
 }: AdminRouterProps): Router => {
   const adminRouter = Router();
 
-  adminRouter.get('/:space/types', adminOnlyMiddleware, assertAuthenticatedHandler, async (req, res, next) => {
+  adminRouter.get('/:space/types', AdminAssert.adminOnlyMiddleware, AuthAssert.assertMethod, async (req, res, next) => {
     const user = req.user;
     const { space } = req.params;
 
+    console.log(JSON.stringify(user) + '<user');
+
     try {
       const spaceEntity = await spaceRepository.get(space);
+      console.log(JSON.stringify(spaceEntity, getCircularReplacer()));
 
       if (!spaceEntity) {
         throw new NotFoundError('Space', space);
@@ -68,7 +100,7 @@ export const createAdminRouter = ({
     }
   });
 
-  adminRouter.get('/spaces', adminOnlyMiddleware, assertAuthenticatedHandler, async (req, res, next) => {
+  adminRouter.get('/spaces', AdminAssert.adminOnlyMiddleware, AuthAssert.assertMethod, async (req, res, next) => {
     const user = req.user;
     const { top, after } = req.query;
 
@@ -89,63 +121,82 @@ export const createAdminRouter = ({
     }
   });
 
-  adminRouter.put('/:space/types/:type', adminOnlyMiddleware, assertAuthenticatedHandler, async (req, res, next) => {
-    const user = req.user;
-    const { space, type } = req.params;
-    const { name, anonymousRead, readRoles, updateRoles, spaceId } = req.body;
+  adminRouter.put(
+    '/:space/types/:type',
+    AdminAssert.adminOnlyMiddleware,
+    AuthAssert.assertMethod,
+    async (req, res, next) => {
+      const user = req.user;
+      const { space, type } = req.params;
+      const { name, anonymousRead, readRoles, updateRoles, spaceId } = req.body;
 
-    try {
-      const spaceEntity = await spaceRepository.get(space);
+      try {
+        console.log(JSON.stringify(space, getCircularReplacer()) + '<spacespace');
 
-      if (!spaceEntity) {
-        throw new NotFoundError('Space', space);
-      } else if (!spaceEntity.canAccess(user)) {
-        throw new UnauthorizedError('User not authorized to access space.');
-      }
+        const spaceEntity = await spaceRepository.get(space);
 
-      const fileType = spaceEntity.types[type];
+        console.log(JSON.stringify(spaceEntity, getCircularReplacer()) + '<spaceentxx');
 
-      if (!fileType) {
-        await spaceEntity.addType(user, rootStoragePath, type, {
-          name,
-          anonymousRead,
-          readRoles,
-          updateRoles,
-          spaceId,
+        if (!spaceEntity) {
+          throw new NotFoundError('Space', space);
+        } else if (!spaceEntity.canAccess(user)) {
+          throw new UnauthorizedError('User not authorized to access space.');
+        }
+
+        console.log(JSON.stringify(spaceEntity, getCircularReplacer()) + '<spaceEntity');
+        console.log(JSON.stringify(type, getCircularReplacer()) + '<type');
+        console.log(JSON.stringify(spaceEntity.types, getCircularReplacer()) + '<spaceEntity.types');
+
+        let fileType = spaceEntity.types[type];
+
+        console.log(JSON.stringify(fileType, getCircularReplacer()) + '<fileType');
+
+        if (!fileType) {
+          const x = await spaceEntity.addType(user, rootStoragePath, type, {
+            name,
+            anonymousRead,
+            readRoles,
+            updateRoles,
+            spaceId,
+          });
+          console.log(JSON.stringify(x, getCircularReplacer()) + '<fileTypefileTxxype');
+        } else {
+          await spaceEntity.updateType(user, type, {
+            name,
+            anonymousRead,
+            readRoles,
+            updateRoles,
+            spaceId,
+          });
+        }
+
+        fileType = spaceEntity.types[type];
+        console.log(JSON.stringify(fileType, getCircularReplacer()) + '<fileTypefileType');
+
+        logger.info(
+          `File type ${fileType.name} (ID: ${fileType.id}) in ` +
+            `space ${spaceEntity.id} (ID: ${spaceEntity.id}) updated by ` +
+            `user ${user.name} (ID: ${user.id}).`
+        );
+
+        res.json({
+          id: fileType.id,
+          name: fileType.name,
+          anonymousRead: fileType.anonymousRead,
+          readRoles: fileType.readRoles,
+          updateRoles: fileType.updateRoles,
+          spaceId: fileType.spaceId,
         });
-      } else {
-        await spaceEntity.updateType(user, type, {
-          name,
-          anonymousRead,
-          readRoles,
-          updateRoles,
-          spaceId,
-        });
+      } catch (err) {
+        next(err);
       }
-
-      logger.info(
-        `File type ${fileType.name} (ID: ${fileType.id}) in ` +
-          `space ${spaceEntity.id} (ID: ${spaceEntity.id}) updated by ` +
-          `user ${user.name} (ID: ${user.id}).`
-      );
-
-      res.json({
-        id: fileType.id,
-        name: fileType.name,
-        anonymousRead: fileType.anonymousRead,
-        readRoles: fileType.readRoles,
-        updateRoles: fileType.updateRoles,
-        spaceId: fileType.spaceId,
-      });
-    } catch (err) {
-      next(err);
     }
-  });
+  );
 
   adminRouter.get(
     '/:space/types/:type/files',
-    adminOnlyMiddleware,
-    assertAuthenticatedHandler,
+    AdminAssert.adminOnlyMiddleware,
+    AuthAssert.assertMethod,
     async (req, res, next) => {
       const user = req.user;
       const { space, type } = req.params;

@@ -34,6 +34,11 @@ export class FileTypeEntity implements FileType {
     updateRoles: string[],
     spaceId: string
   ): FileTypeEntity {
+    console.log(JSON.stringify(name) + '<name');
+    console.log(JSON.stringify(anonymousRead) + '<anonymousRead');
+    console.log(JSON.stringify(readRoles) + '<readRoles');
+    console.log(JSON.stringify(updateRoles) + '<updateRoles');
+
     const newType: FileType = {
       id,
       name,
