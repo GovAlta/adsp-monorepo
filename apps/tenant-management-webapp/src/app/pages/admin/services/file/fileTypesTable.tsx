@@ -503,7 +503,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
         New file type
       </GoAButton>
       {showDelete && <DeleteModal {...updateFileType} />}
-      <DataTable>
+      <DataTable data-testid='file-type-table'>
         <thead>
           <tr>
             <th id="actions">Actions</th>
