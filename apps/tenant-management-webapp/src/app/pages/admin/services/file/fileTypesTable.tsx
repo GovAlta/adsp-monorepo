@@ -297,7 +297,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
     }
 
     return (
-      <td>
+      <td data-testid={`${rowType}-${cellType}`}>
         <GoADropdown
           title=""
           subTitle=""
@@ -474,7 +474,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
         {startCreateFileType && (
           <tr className="selected" key={id}>
             <ActionCell {...{ ...props, rowType: 'new' }} />
-            <td>
+            <td data-testi>
               <input
                 onBlur={(e) => {
                   newFileType.name = e.target.value;
