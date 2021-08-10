@@ -15,19 +15,6 @@ import { AuthenticationWrapper } from '../middleware/authenticationWrapper';
 import { fileTypeSchema } from '../../mongo/schema';
 import { MiddlewareWrapper } from './middlewareWrapper';
 
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-};
-
 interface FileTypeRouterProps {
   logger: Logger;
   spaceRepository: FileSpaceRepository;
@@ -47,7 +34,6 @@ export const createFileTypeRouter = ({
     const user = req.user;
 
     const { name, anonymousRead, readRoles = [], updateRoles = [] } = req.body;
-    console.log(JSON.stringify(name) + '<name');
     if (!name) {
       res.sendStatus(HttpStatusCodes.BAD_REQUEST);
     } else {

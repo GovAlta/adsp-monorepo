@@ -20,7 +20,6 @@ export class FileApi {
 
   async uploadFile(formData: FormData): Promise<FileService> {
     const url = this.fileConfig.endpoints.fileAdmin;
-    console.log(JSON.stringify(formData) + '<formDAta');
     const res = await this.http.post(url, formData);
     return res.data;
   }

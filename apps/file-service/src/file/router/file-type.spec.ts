@@ -15,19 +15,6 @@ import { MiddlewareWrapper } from './middlewareWrapper';
 import { AuthenticationWrapper } from '../middleware/authenticationWrapper';
 import * as sinon from 'sinon';
 
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (_key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-};
-
 describe('File Type Router', () => {
   const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
   //const mockSpaceRepo = new Mock<FileSpaceRepository>();
@@ -89,7 +76,7 @@ describe('File Type Router', () => {
         const authStub = sinon.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
           req.body = { updateRoles: '2313' };
           req.tenant = { name: 'space1234' };
-          req.user = { roles: ['super-user'] };
+          req.user = { roles: ['test-admin'] };
           return next();
         });
         app.use(
@@ -113,7 +100,7 @@ describe('File Type Router', () => {
         const authStub = sinon.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
           req.body = { updateRoles: '2313' };
           req.tenant = { name: 'space1234' };
-          req.user = { roles: ['super-user'] };
+          req.user = { roles: ['test-admin'] };
           return next();
         });
         app.use(
@@ -167,7 +154,7 @@ describe('File Type Router', () => {
 
       const res = await request(app).get('/fileTypes');
       expect(res.statusCode).toBe(200);
-    });
+    }, 20000);
 
     it('returns a list of tenants', async () => {
       await createMockData<FileSpaceEntity>(mockSpaceRepo, fileSpaces);
@@ -178,7 +165,7 @@ describe('File Type Router', () => {
       expect(res.body[0].name).toEqual('Profile Picture');
 
       //sandbox.restore();
-    });
+    }, 20000);
   });
 
   describe('GET (many) /fileTypes/:fileTypeId', () => {
@@ -212,7 +199,7 @@ describe('File Type Router', () => {
       await createMockData<FileSpaceEntity>(mockSpaceRepo, fileSpaces);
       const res = await request(app).get('/fileTypes/type-1');
       expect(res.statusCode).toBe(200);
-    });
+    }, 20000);
 
     it('returns a 500 for a non-existant get entry', async () => {
       await createMockData<FileSpaceEntity>(mockSpaceRepo, fileSpaces);
@@ -222,6 +209,6 @@ describe('File Type Router', () => {
       expect(res.text).toContain('type-21');
       expect(res.text).toContain('could not be found.');
       //sandbox.restore();
-    });
+    }, 20000);
   });
 });

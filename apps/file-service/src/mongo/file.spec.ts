@@ -4,24 +4,10 @@ import * as NodeCache from 'node-cache';
 import { connect, disconnect, createMockData } from '@core-services/core-common/mongo';
 import { createLogger } from '@core-services/core-common';
 import { FileEntity } from '../file/model';
-import { adspId, User } from '@abgov/adsp-service-sdk';
 import { FileCriteria } from '../file/types';
 import { environment } from '../environments/environment';
 import { FileTypeEntity } from '../file/model/type';
 import { FileType } from '../file/types';
-
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-};
 
 describe('Mongo: FileEntity', () => {
   const spaceId = 'space1234';
@@ -87,15 +73,6 @@ describe('Mongo: FileEntity', () => {
       },
     ]);
     const { results } = await repo.find(99, '', criteria);
-    // const qqq = await repo.find(99, '', criteria);
-    // console.log(JSON.stringify(qqq) + '<qqq');
     expect(results.length).toEqual(data.length);
   });
-
-  // it('finds a defined file ', async () => {
-  //   const data = await createMockData<FileEntity>(repo, [{}, {}, {}]);
-  //   const { results } = await repo.find(2, '', criteria);
-  //   expect(data.length).toEqual(3);
-  //   expect(results.length).toEqual(2);
-  // });
 });

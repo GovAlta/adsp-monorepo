@@ -18,19 +18,6 @@ interface AdminRouterProps {
   fileRepository: FileRepository;
 }
 
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (_key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-};
-
 export const AdminAssert = {
   adminOnlyMiddleware: function (req, res, next: () => void) {
     const authConfig: AuthenticationConfig = {
@@ -46,19 +33,6 @@ export const AdminAssert = {
   },
 };
 
-// export const adminOnlyMiddleware: RequestHandler = async (req, res, next: () => void) => {
-//   const authConfig: AuthenticationConfig = {
-//     requireCore: true,
-//     allowedRoles: ['file-service-admin'],
-//   };
-
-//   if (authenticateToken(authConfig, req.user)) {
-//     next();
-//   } else {
-//     res.sendStatus(HttpStatusCodes.UNAUTHORIZED);
-//   }
-// };
-
 export const createAdminRouter = ({
   logger,
   rootStoragePath,
@@ -71,11 +45,8 @@ export const createAdminRouter = ({
     const user = req.user;
     const { space } = req.params;
 
-    console.log(JSON.stringify(user) + '<user');
-
     try {
       const spaceEntity = await spaceRepository.get(space);
-      console.log(JSON.stringify(spaceEntity, getCircularReplacer()));
 
       if (!spaceEntity) {
         throw new NotFoundError('Space', space);
@@ -131,11 +102,7 @@ export const createAdminRouter = ({
       const { name, anonymousRead, readRoles, updateRoles, spaceId } = req.body;
 
       try {
-        console.log(JSON.stringify(space, getCircularReplacer()) + '<spacespace');
-
         const spaceEntity = await spaceRepository.get(space);
-
-        console.log(JSON.stringify(spaceEntity, getCircularReplacer()) + '<spaceentxx');
 
         if (!spaceEntity) {
           throw new NotFoundError('Space', space);
@@ -143,13 +110,7 @@ export const createAdminRouter = ({
           throw new UnauthorizedError('User not authorized to access space.');
         }
 
-        console.log(JSON.stringify(spaceEntity, getCircularReplacer()) + '<spaceEntity');
-        console.log(JSON.stringify(type, getCircularReplacer()) + '<type');
-        console.log(JSON.stringify(spaceEntity.types, getCircularReplacer()) + '<spaceEntity.types');
-
         let fileType = spaceEntity.types[type];
-
-        console.log(JSON.stringify(fileType, getCircularReplacer()) + '<fileType');
 
         if (!fileType) {
           const x = await spaceEntity.addType(user, rootStoragePath, type, {
@@ -159,7 +120,6 @@ export const createAdminRouter = ({
             updateRoles,
             spaceId,
           });
-          console.log(JSON.stringify(x, getCircularReplacer()) + '<fileTypefileTxxype');
         } else {
           await spaceEntity.updateType(user, type, {
             name,
@@ -171,7 +131,6 @@ export const createAdminRouter = ({
         }
 
         fileType = spaceEntity.types[type];
-        console.log(JSON.stringify(fileType, getCircularReplacer()) + '<fileTypefileType');
 
         logger.info(
           `File type ${fileType.name} (ID: ${fileType.id}) in ` +

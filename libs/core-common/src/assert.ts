@@ -4,19 +4,6 @@ import * as _passport from 'passport';
 import { logger } from './logger';
 import { User } from '@abgov/adsp-service-sdk';
 
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-};
-
 export const assertAuthenticatedHandler: RequestHandler = (req, res, next) => {
   if (!req.isAuthenticated || !req.user) {
     res.sendStatus(401);

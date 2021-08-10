@@ -17,31 +17,11 @@ import * as NodeCache from 'node-cache';
 //import { logger } from 'libs/core-common/src/logger';
 import { EventService } from '@abgov/adsp-service-sdk';
 import { createLogger, AuthAssert } from '@core-services/core-common';
-
 import { connect, disconnect, createMockData } from '@core-services/core-common/mongo';
 import * as sinon from 'sinon';
-import { MiddlewareWrapper } from './middlewareWrapper';
-import { ExpectedExpressionReflector } from 'moq.ts/lib/expected-expressions/expected-expression-reflector';
 import * as fs from 'fs';
 import { adspId, User } from '@abgov/adsp-service-sdk';
 import path = require('path');
-
-const storagePath = 'files';
-const separator = path.sep === '/' ? '/' : '\\';
-const typePath = `${storagePath}${separator}test${separator}file-type-1`;
-
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (_key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-};
 
 describe('File Space Router', () => {
   const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
@@ -147,7 +127,6 @@ describe('File Space Router', () => {
       await createMockData<FileEntity>(fileMockRepo, files);
 
       const res = await request(app).get('/spaces').query({ top: 10, after: '' }); //.expect(200);
-      console.log(JSON.stringify(res, getCircularReplacer()));
       expect(res.statusCode).toBe(200);
     });
 
@@ -178,7 +157,6 @@ describe('File Space Router', () => {
 
       const x = await createMockData<FileSpaceEntity>(spaceMockRepo, fileSpaces);
       mockRepo.setup((m) => m.save(It.IsAny())).callback((i) => Promise.resolve(i.args[0]));
-      console.log(JSON.stringify(x, getCircularReplacer()) + '<xx');
       sandbox = sinon.createSandbox();
       sandbox.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
         req.body = fileSpaces[0];
@@ -221,14 +199,7 @@ describe('File Space Router', () => {
       //sandbox2.restore();
     });
     it('returns a 200 OK and creates a space', async () => {
-      //await createMockData<FileEntity>(fileMockRepo, files[0]);
-      // expect(renameMock.mock.calls[0][0]).toEqual('tmp-file');
-      // expect(renameMock.mock.calls[0][1]).toEqual(`${typePath}${separator}${'files'}`);
-
       const res = await request(app).post('/spaces').send(files[0]);
-      console.log(JSON.stringify(res, getCircularReplacer()) + '<resxx');
-      //expect(renameMock.mock.calls[0][0]).toEqual('tmp-file');
-      //expect(renameMock.mock.calls[0][1]).toEqual(`${typePath}${separator}${fileEntity.storage}`);
       expect(res.statusCode).toEqual(200);
 
       expect(JSON.parse(res.text).name).toEqual('space1234');

@@ -26,19 +26,6 @@ interface FileRouterProps {
   eventService: EventService;
 }
 
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (_key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-};
-
 export const createFileRouter = ({
   logger,
   rootStoragePath,
@@ -50,15 +37,9 @@ export const createFileRouter = ({
   const fileRouter = Router();
 
   fileRouter.post('/files', AuthAssert.assertMethod, upload.single('file'), async (req, res, next) => {
-    console.log(JSON.stringify(req.user) + '<req.user');
     const user = req.user;
     const { type, recordId, filename } = req.body;
     const uploaded = req.file;
-
-    console.log(JSON.stringify(req, getCircularReplacer()) + '<reqxxx');
-
-    console.log(JSON.stringify(filename) + '<filename');
-    console.log(JSON.stringify(uploaded) + '<uploaded');
 
     if (filename && !validFilename(filename)) {
       throw new InvalidOperationError(`Specified filename is not valid.`);
@@ -75,26 +56,12 @@ export const createFileRouter = ({
           throw new NotFoundError('Space', space);
         }
 
-        console.log(JSON.stringify(spaceEntity, getCircularReplacer()) + '<spaceEntity');
-        console.log(JSON.stringify(spaceEntity.types, getCircularReplacer()) + '<spaceEntity.types');
-        console.log(JSON.stringify(type, getCircularReplacer()) + '<type');
-
         const fileType = spaceEntity.types[type];
-
-        console.log(JSON.stringify(fileType, getCircularReplacer()) + '<fileType');
 
         if (!fileType) {
           throw new NotFoundError('Type', type);
         }
 
-        console.log(JSON.stringify(user, getCircularReplacer()) + '<user');
-        console.log(JSON.stringify(fileRepository, getCircularReplacer()) + '<fileRepository');
-        console.log(JSON.stringify(fileType, getCircularReplacer()) + '<fileType');
-        console.log(JSON.stringify(filename, getCircularReplacer()) + '<filename');
-        console.log(JSON.stringify(uploaded.size, getCircularReplacer()) + '<uploaded.size');
-        console.log(JSON.stringify(uploaded, getCircularReplacer()) + '<uploaded');
-        console.log(JSON.stringify(uploaded.path, getCircularReplacer()) + '<uploaded.path');
-        console.log(JSON.stringify(rootStoragePath, getCircularReplacer()) + '<rootStoragePath');
         const fileEntity = await FileEntity.create(
           user,
           fileRepository,
@@ -108,8 +75,6 @@ export const createFileRouter = ({
           rootStoragePath
         );
 
-        console.log(JSON.stringify(fileEntity, getCircularReplacer()) + '<fileEntity');
-
         const file = {
           id: fileEntity.id,
           filename: fileEntity.filename,
@@ -119,8 +84,6 @@ export const createFileRouter = ({
           created: fileEntity.created,
           lastAccessed: fileEntity.lastAccessed,
         };
-
-        console.log(JSON.stringify(file, getCircularReplacer()) + '<file');
 
         res.json(file);
 
@@ -164,18 +127,11 @@ export const createFileRouter = ({
   fileRouter.get('/files', MiddlewareWrapper.middlewareMethod, async (req, res, next) => {
     const { top, after } = req.query;
 
-    console.log(JSON.stringify(req.query) + '<req.query');
-    console.log(JSON.stringify(top) + '<top');
-    console.log(JSON.stringify(after) + '<after');
-    console.log(JSON.stringify(req.tenant) + '<req.tenant');
-
     try {
       const spaceId = await spaceRepository.getIdByTenant(req.tenant);
       if (!spaceId) {
         throw new NotFoundError(`Space Not Found`, spaceId);
       }
-
-      console.log(JSON.stringify(spaceId) + '<spaceId');
 
       const criteria: FileCriteria = {
         spaceEquals: spaceId,
@@ -183,10 +139,7 @@ export const createFileRouter = ({
       };
       const files = await fileRepository.find(parseInt((top as string) || '50', 50), after as string, criteria);
 
-      console.log(JSON.stringify(files) + '<files');
-
       if (!files) {
-        console.log(JSON.stringify(`There is no file in ${spaceId}`));
         throw new NotFoundError(`There is no file in ${spaceId}`, spaceId);
       }
 

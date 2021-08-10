@@ -1,28 +1,12 @@
-import { MongoFileRepository } from './file';
 import { MongoFileSpaceRepository } from './space';
 import * as NodeCache from 'node-cache';
 import { connect, disconnect, createMockData } from '@core-services/core-common/mongo';
 import { createLogger } from '@core-services/core-common';
-import { FileEntity } from '../file/model';
-import { adspId, User } from '@abgov/adsp-service-sdk';
 import { FileCriteria } from '../file/types';
 import { environment } from '../environments/environment';
 import { FileTypeEntity } from '../file/model/type';
 import { FileSpaceEntity } from '../file/model/space';
 import { FileType } from '../file/types';
-
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-};
 
 describe('Mongo: SpaceEntity', () => {
   const spaceId = 'space1234';

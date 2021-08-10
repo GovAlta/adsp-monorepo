@@ -1,48 +1,23 @@
 import express = require('express');
 import { Mock, It } from 'moq.ts';
 import { FileRepository } from '../repository';
-import { FileSpaceRepository } from '../repository';
 import { createAdminRouter } from './admin';
 import * as request from 'supertest';
-import { FileCriteria } from '../types';
 import { FileSpaceEntity } from '../model';
 import { FileEntity } from '../model';
 import { FileTypeEntity } from '../model/type';
 import { environment } from '../../environments/environment';
 import { MongoFileSpaceRepository } from '../../mongo/space';
 import { MongoFileRepository } from '../../mongo/file';
-import { Logger } from 'winston';
 import { FileType } from '../types';
 import * as NodeCache from 'node-cache';
-//import { logger } from 'libs/core-common/src/logger';
 import { EventService } from '@abgov/adsp-service-sdk';
 import { createLogger, AuthAssert } from '@core-services/core-common';
-
 import { connect, disconnect, createMockData } from '@core-services/core-common/mongo';
 import * as sinon from 'sinon';
-import { MiddlewareWrapper } from './middlewareWrapper';
-import { ExpectedExpressionReflector } from 'moq.ts/lib/expected-expressions/expected-expression-reflector';
 import * as fs from 'fs';
 import { adspId, User } from '@abgov/adsp-service-sdk';
-import path = require('path');
 import { AdminAssert } from './admin';
-
-const storagePath = 'files';
-const separator = path.sep === '/' ? '/' : '\\';
-const typePath = `${storagePath}${separator}test${separator}file-type-1`;
-
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (_key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-};
 
 describe('Admin Router', () => {
   const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
@@ -151,11 +126,9 @@ describe('Admin Router', () => {
       ];
 
       const space = await createMockData<FileSpaceEntity>(spaceMockRepo, fileSpaces);
-      console.log(JSON.stringify(space, getCircularReplacer()) + '<getCir');
       await createMockData<FileEntity>(fileMockRepo, files);
 
       const res = await request(app).get(`/${space[0].id}/types`).query({ top: 10, after: '' }); //.expect(200);
-      console.log(JSON.stringify(res, getCircularReplacer()));
       expect(res.statusCode).toBe(200);
       expect(JSON.parse(res.text).typeName.id).toBe('type-1');
     });
@@ -175,15 +148,8 @@ describe('Admin Router', () => {
           },
         },
       ];
-
-      // typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(true);
-      // typeMock.setup((m) => m.getPath(It.Is<string>((storage) => !!storage))).returns(typePath);
-
-      //const x = await FileSpaceEntity.create(user, spaceMockRepo, fileSpaces[0]);
-
-      const space = await createMockData<FileSpaceEntity>(spaceMockRepo, fileSpaces);
+      await createMockData<FileSpaceEntity>(spaceMockRepo, fileSpaces);
       mockRepo.setup((m) => m.save(It.IsAny())).callback((i) => Promise.resolve(i.args[0]));
-      console.log(JSON.stringify(space, getCircularReplacer()) + '<xx');
       sandbox = sinon.createSandbox();
       sandbox.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
         req.body = fileSpaces[0];
@@ -213,19 +179,10 @@ describe('Admin Router', () => {
 
     afterEach(() => {
       sandbox.restore();
-      //sandbox2.restore();
     });
     it('returns a 200 OK and gets spaces', async () => {
-      //await createMockData<FileEntity>(fileMockRepo, files[0]);
-      // expect(renameMock.mock.calls[0][0]).toEqual('tmp-file');
-      // expect(renameMock.mock.calls[0][1]).toEqual(`${typePath}${separator}${'files'}`);
-
       const res = await request(app).get('/spaces');
-      console.log(JSON.stringify(res, getCircularReplacer()) + '<resxx');
-      //expect(renameMock.mock.calls[0][0]).toEqual('tmp-file');
-      //expect(renameMock.mock.calls[0][1]).toEqual(`${typePath}${separator}${fileEntity.storage}`);
       expect(res.statusCode).toEqual(200);
-
       expect(JSON.parse(res.text).results[0].name).toEqual('space1234');
     });
   });
@@ -245,14 +202,8 @@ describe('Admin Router', () => {
         },
       ];
 
-      // typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(true);
-      // typeMock.setup((m) => m.getPath(It.Is<string>((storage) => !!storage))).returns(typePath);
-
-      //const x = await FileSpaceEntity.create(user, spaceMockRepo, fileSpaces[0]);
-
       space = await createMockData<FileSpaceEntity>(spaceMockRepo, fileSpaces);
       mockRepo.setup((m) => m.save(It.IsAny())).callback((i) => Promise.resolve(i.args[0]));
-      console.log(JSON.stringify(space, getCircularReplacer()) + '<xx');
       sandbox = sinon.createSandbox();
       sandbox.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
         req.body = type;
@@ -281,30 +232,9 @@ describe('Admin Router', () => {
 
     afterEach(() => {
       sandbox.restore();
-      //sandbox2.restore();
     });
     it('returns a 200 OK and get type of given space', async () => {
-      //await createMockData<FileEntity>(fileMockRepo, files[0]);
-      // expect(renameMock.mock.calls[0][0]).toEqual('tmp-file');
-      // expect(renameMock.mock.calls[0][1]).toEqual(`${typePath}${separator}${'files'}`);
-
-      const fileSpaces = [
-        {
-          id: 'space1234',
-          name: 'space1234',
-          spaceAdminRole: 'super-user',
-          types: {
-            typeName: entity,
-          },
-        },
-      ];
-
-      console.log(JSON.stringify(space, getCircularReplacer()) + '<getCir');
-
       const res = await request(app).put(`/${space[0].id}/types/type-1`);
-      console.log(JSON.stringify(res, getCircularReplacer()) + '<resxx');
-      //expect(renameMock.mock.calls[0][0]).toEqual('tmp-file');
-      //expect(renameMock.mock.calls[0][1]).toEqual(`${typePath}${separator}${fileEntity.storage}`);
       expect(res.statusCode).toEqual(200);
 
       expect(JSON.parse(res.text).name).toEqual('Profile Picture');
@@ -326,14 +256,8 @@ describe('Admin Router', () => {
         },
       ];
 
-      // typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(true);
-      // typeMock.setup((m) => m.getPath(It.Is<string>((storage) => !!storage))).returns(typePath);
-
-      //const x = await FileSpaceEntity.create(user, spaceMockRepo, fileSpaces[0]);
-
       space = await createMockData<FileSpaceEntity>(spaceMockRepo, fileSpaces);
       mockRepo.setup((m) => m.save(It.IsAny())).callback((i) => Promise.resolve(i.args[0]));
-      console.log(JSON.stringify(space, getCircularReplacer()) + '<xx');
       sandbox = sinon.createSandbox();
       sandbox.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
         req.body = type;
@@ -366,17 +290,8 @@ describe('Admin Router', () => {
       //sandbox2.restore();
     });
     it('returns a 200 OK and get files of type of given space', async () => {
-      //await createMockData<FileEntity>(fileMockRepo, files[0]);
-      // expect(renameMock.mock.calls[0][0]).toEqual('tmp-file');
-      // expect(renameMock.mock.calls[0][1]).toEqual(`${typePath}${separator}${'files'}`);
-
       const res = await request(app).get(`/${space[0].id}/types/type-1/files`);
-      console.log(JSON.stringify(res, getCircularReplacer()) + '<resxx');
-      //expect(renameMock.mock.calls[0][0]).toEqual('tmp-file');
-      //expect(renameMock.mock.calls[0][1]).toEqual(`${typePath}${separator}${fileEntity.storage}`);
       expect(res.statusCode).toEqual(200);
-
-      //expect(JSON.parse(res.text)).toEqual('space1234');
     });
   });
 });

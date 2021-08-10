@@ -25,28 +25,6 @@ import * as fs from 'fs';
 import { adspId, User } from '@abgov/adsp-service-sdk';
 import path = require('path');
 
-// jest.mock('fs', () => ({
-//   rename: jest.fn((o, n, cb) => cb(null)),
-//   unlink: jest.fn((o, cb) => cb(null)),
-// }));
-
-const storagePath = 'files';
-const separator = path.sep === '/' ? '/' : '\\';
-const typePath = `${storagePath}${separator}test${separator}file-type-1`;
-
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (_key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-};
-
 describe('File Router', () => {
   const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
   const mockRepo = new Mock<FileRepository>();
@@ -155,7 +133,6 @@ describe('File Router', () => {
       await createMockData<FileEntity>(fileMockRepo, files);
 
       const res = await request(app).get('/files').query({ top: 10, after: '' }); //.expect(200);
-      console.log(JSON.stringify(res, getCircularReplacer()));
       expect(res.statusCode).toBe(200);
     });
 
@@ -186,7 +163,6 @@ describe('File Router', () => {
 
       const x = await createMockData<FileSpaceEntity>(spaceMockRepo, fileSpaces);
       mockRepo.setup((m) => m.save(It.IsAny())).callback((i) => Promise.resolve(i.args[0]));
-      console.log(JSON.stringify(x, getCircularReplacer()) + '<xx');
       sandbox = sinon.createSandbox();
       sandbox.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
         req.body = files[0];
