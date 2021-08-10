@@ -73,7 +73,6 @@ describe('Admin Router', () => {
     let sandbox;
     beforeEach(() => {
       sandbox = sinon.createSandbox();
-      //sandbox.restore();
       sandbox.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
         req.body = { updateRoles: '2313' };
         req.tenant = { name: 'space1234' };

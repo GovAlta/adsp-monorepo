@@ -84,9 +84,7 @@
             "outputPath": "dist/apps/file-service",
             "main": "apps/file-service/src/main.ts",
             "tsConfig": "apps/file-service/tsconfig.app.json",
-            "assets": [],
-            "maxWorkers": 1,
-            "memoryLimit": 1024
+            "assets": []
           },
           "configurations": {
             "production": {
@@ -134,9 +132,7 @@
           "options": {
             "linter": "eslint",
             "tsConfig": ["libs/core-common/tsconfig.lib.json", "libs/core-common/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!libs/core-common/**/*"],
-            "maxWorkers": 1,
-            "memoryLimit": 1024
+            "exclude": ["**/node_modules/**", "!libs/core-common/**/*"]
           }
         },
         "test": {
@@ -174,9 +170,7 @@
             ],
             "scripts": [],
             "styles": [],
-            "webpackConfig": "apps/tenant-management-webapp/webpack.config.js",
-            "maxWorkers": 1,
-            "memoryLimit": 1024
+            "webpackConfig": "apps/tenant-management-webapp/webpack.config.js"
           },
           "configurations": {
             "production": {
@@ -279,9 +273,7 @@
             "main": "apps/tenant-management-api/src/main.ts",
             "tsConfig": "apps/tenant-management-api/tsconfig.app.json",
             "assets": ["apps/tenant-management-api/src/assets"],
-            "webpackConfig": "apps/tenant-management-api/webpack.config.js",
-            "maxWorkers": 1,
-            "memoryLimit": 1024
+            "webpackConfig": "apps/tenant-management-api/webpack.config.js"
           },
           "configurations": {
             "production": {
@@ -342,9 +334,7 @@
                 "input": ".",
                 "output": "migrations"
               }
-            ],
-            "maxWorkers": 1,
-            "memoryLimit": 1024
+            ]
           },
           "configurations": {
             "production": {
@@ -395,9 +385,7 @@
             "outputPath": "dist/apps/notification-service",
             "main": "apps/notification-service/src/main.ts",
             "tsConfig": "apps/notification-service/tsconfig.app.json",
-            "assets": [],
-            "maxWorkers": 1,
-            "memoryLimit": 1024
+            "assets": []
           },
           "configurations": {
             "production": {
@@ -448,9 +436,7 @@
             "outputPath": "dist/apps/event-service",
             "main": "apps/event-service/src/main.ts",
             "tsConfig": "apps/event-service/tsconfig.app.json",
-            "assets": [],
-            "maxWorkers": 1,
-            "memoryLimit": 1024
+            "assets": []
           },
           "configurations": {
             "production": {
@@ -500,9 +486,7 @@
             "outputPath": "dist/apps/push-service",
             "main": "apps/push-service/src/main.ts",
             "tsConfig": "apps/push-service/tsconfig.app.json",
-            "assets": [],
-            "maxWorkers": 1,
-            "memoryLimit": 1024
+            "assets": []
           },
           "configurations": {
             "production": {
@@ -604,9 +588,7 @@
             "outputPath": "dist/apps/status-service",
             "main": "apps/status-service/src/main.ts",
             "tsConfig": "apps/status-service/tsconfig.app.json",
-            "assets": ["apps/status-service/src/assets"],
-            "maxWorkers": 1,
-            "memoryLimit": 1024
+            "assets": ["apps/status-service/src/assets"]
           },
           "configurations": {
             "production": {
@@ -665,9 +647,7 @@
             "tsConfig": "libs/adsp-service-sdk/tsconfig.lib.json",
             "packageJson": "libs/adsp-service-sdk/package.json",
             "main": "libs/adsp-service-sdk/src/index.ts",
-            "assets": ["libs/adsp-service-sdk/*.md"],
-            "maxWorkers": 1,
-            "memoryLimit": 1024
+            "assets": ["libs/adsp-service-sdk/*.md"]
           }
         }
       }
@@ -701,12 +681,7 @@
           },
           "configurations": {
             "production": {
-              "fileReplacements": [
-                {
-                  "replace": "apps/status-app/src/environments/environment.ts",
-                  "with": "apps/status-app/src/environments/environment.prod.ts"
-                }
-              ],
+              "fileReplacements": [],
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,

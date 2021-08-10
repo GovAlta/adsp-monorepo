@@ -72,7 +72,6 @@ describe('File Space Router', () => {
     let sandbox;
     beforeEach(() => {
       sandbox = sinon.createSandbox();
-      //sandbox.restore();
       sandbox.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
         req.body = { updateRoles: '2313' };
         req.tenant = { name: 'space1234' };
@@ -107,7 +106,7 @@ describe('File Space Router', () => {
       await createMockData<FileSpaceEntity>(spaceMockRepo, fileSpaces);
       await createMockData<FileEntity>(fileMockRepo, files);
 
-      const res = await request(app).get('/spaces').query({ top: 10, after: '' }); //.expect(200);
+      const res = await request(app).get('/spaces').query({ top: 10, after: '' });
       expect(res.statusCode).toBe(200);
     });
 

@@ -17,7 +17,6 @@ import * as sinon from 'sinon';
 
 describe('File Type Router', () => {
   const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
-  //const mockSpaceRepo = new Mock<FileSpaceRepository>();
   const cache = new NodeCache({ stdTTL: 86400, useClones: false });
   const mockSpaceRepo = new MongoFileSpaceRepository(logger, cache);
   const mockFileRepo = new Mock<FileRepository>();
@@ -163,8 +162,6 @@ describe('File Type Router', () => {
       expect(res.body[0].anonymousRead).toEqual(false);
       expect(res.body[0].id).toEqual('type-1');
       expect(res.body[0].name).toEqual('Profile Picture');
-
-      //sandbox.restore();
     }, 20000);
   });
 
@@ -173,7 +170,6 @@ describe('File Type Router', () => {
     let sandbox;
     beforeEach(() => {
       sandbox = sinon.createSandbox();
-      //sandbox.restore();
       sandbox.stub(MiddlewareWrapper, 'middlewareMethod').callsFake(function (req, res, next) {
         req.body = { updateRoles: '2313' };
         req.tenant = { name: 'space1234' };
@@ -208,7 +204,6 @@ describe('File Type Router', () => {
       expect(res.text).toContain('File Type with ID');
       expect(res.text).toContain('type-21');
       expect(res.text).toContain('could not be found.');
-      //sandbox.restore();
     }, 20000);
   });
 });
