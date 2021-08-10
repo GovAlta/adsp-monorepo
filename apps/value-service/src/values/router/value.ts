@@ -13,6 +13,11 @@ interface ValueRouterProps {
   eventService: EventService;
 }
 
+const mapValue = (value: Value) => ({
+  ...value,
+  tenantId: value.tenantId.toString(),
+});
+
 export const assertUserCanWrite: RequestHandler = async (req, res, next) => {
   const user = req.user;
   const { tenantId: tenantIdValue } = req.body;
@@ -61,7 +66,7 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
       );
 
       res.send({
-        [namespace]: results.reduce((v, c) => ({ ...v, [c.name]: c.value }), {}),
+        [namespace]: results.reduce((v, c) => ({ ...v, [c.name]: mapValue(c.value) }), {}),
       });
     } catch (err) {
       next(err);
@@ -77,6 +82,7 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
       timestampMax: timestampMaxValue,
       timestampMin: timestampMinValue,
       context: contextValue,
+      tenantId: tenantValue,
       correlationId,
     } = req.query;
 
@@ -94,6 +100,7 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
         timestampMin: timestampMinValue ? new Date(timestampMinValue as string) : null,
         context: contextValue ? JSON.parse(contextValue as string) : null,
         correlationId: correlationId as string,
+        tenantId: tenantValue ? AdspId.parse(tenantValue as string) : null,
       };
 
       // For non Core users, the tenant criteria is set based on the user's tenant.
@@ -105,7 +112,7 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
 
       res.send({
         [namespace]: {
-          [name]: result.results,
+          [name]: result.results.map(mapValue),
         },
         page: result.page,
       });
@@ -137,13 +144,7 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
 
     try {
       const result = await repository.readMetric(tenantId, namespace, name, metric, criteria);
-      res.send({
-        [namespace]: {
-          [name]: {
-            [metric]: result,
-          },
-        },
-      });
+      res.send(result);
     } catch (err) {
       next(err);
     }
@@ -181,11 +182,7 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
         result = await repository.writeValue(namespace, name, tenantId, valueRecord);
       }
 
-      res.send({
-        [namespace]: {
-          [name]: [result],
-        },
-      });
+      res.send(result);
 
       eventService.send(valueWritten(req.user, namespace, name, result));
 

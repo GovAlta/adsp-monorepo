@@ -42,7 +42,7 @@ function Status(): JSX.Element {
     const intervalId = setInterval(() => dispatch(fetchServiceStatusApps()), 30000);
 
     return () => clearInterval(intervalId);
-  }, [dispatch]);
+  }, []);
 
   return (
     <Page>

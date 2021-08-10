@@ -5,8 +5,8 @@ import { Request, Response, NextFunction } from 'express';
 import * as healthCheck from 'express-healthcheck';
 import * as passport from 'passport';
 import * as swaggerUi from 'swagger-ui-express';
-import { AdspId, adspId, initializePlatform, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { UnauthorizedError, NotFoundError, InvalidOperationError } from '@core-services/core-common';
+import { AdspId, adspId, initializePlatform } from '@abgov/adsp-service-sdk';
+import { createErrorHandler } from '@core-services/core-common';
 import {
   ConfigurationUpdatedDefinition,
   createConfigService,
@@ -120,20 +120,8 @@ async function initializeApp(): Promise<express.Application> {
   createConfigService(app, eventService);
   createDirectoryService(app);
 
-  app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-    if (err instanceof UnauthorizedError) {
-      res.status(401).send(err.message);
-    } else if (err instanceof UnauthorizedUserError) {
-      res.status(401).send(err.message);
-    } else if (err instanceof NotFoundError) {
-      res.status(404).send(err.message);
-    } else if (err instanceof InvalidOperationError) {
-      res.status(400).send(err.message);
-    } else {
-      logger.warn(`Unexpected error encountered in handler: ${err}`);
-      res.sendStatus(500);
-    }
-  });
+  const errorHandler = createErrorHandler(logger);
+  app.use(errorHandler);
 
   // Start to define swagger. Might need it to a module
   const swaggerDocument = fs

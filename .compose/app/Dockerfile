@@ -1,11 +1,7 @@
 ARG SERVICE
 # Stage 0, "build-stage", based on Node.js, to build and compile the frontend
-FROM node:12.18.4-alpine3.12 as build-stage
+FROM adsp-base:latest as build-stage
 ARG SERVICE
-WORKDIR /home/src
-COPY ./package.json ./package-lock.json /home/src/
-RUN npm ci -D
-COPY . /home/src
 RUN npm run build ${SERVICE}
 
 # Stage 1, based on Nginx, to have only the compiled app, ready for production with Nginx

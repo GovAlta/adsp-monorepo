@@ -1,7 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
 
-function DataTable({ children, ...props }) {
+// eslint-disable-next-line
+function DataTable({ children, ...props }): JSX.Element {
   return (
     <ScrollWrapper>
       <Table {...props}>{children}</Table>
@@ -17,18 +18,31 @@ const ScrollWrapper = styled.div`
 `;
 
 const Table = styled.table`
+  border-collapse: collapse;
   width: 100%;
-  td,
-  th {
+
+  td {
     padding: 0.5rem;
   }
+
+  tr {
+    border-bottom: 1px solid var(--color-table-border);
+  }
+
+  tr.selected {
+    background-color: var(--color-table-tr-selected);
+  }
+
+  th {
+    padding: 0.5rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-font-header);
+  }
+
   thead th {
-    font-size: var(--fs-lg);
-    border-bottom: 2px solid #ccc;
+    font-size: var(--fs-base);
+    border-bottom: 2px solid var(--color-table-border);
     text-align: left;
     white-space: nowrap;
-  }
-  tbody tr:nth-child(even) {
-    background-color: #fafafa;
   }
 `;

@@ -67,7 +67,7 @@ const AppRouters = () => {
   );
 };
 
-export const App = () => {
+export const App = (): JSX.Element => {
   return (
     <div style={{ overflowX: 'hidden' }}>
       <ThemeProvider theme={theme}>
@@ -88,7 +88,7 @@ function AppWithAuthContext() {
       console.log('fetch config');
       dispatch(fetchConfig());
     }
-  }, []);
+  }, [dispatch, keycloakConfig]);
 
   return <AuthContext.Provider value={{}}>{keycloakConfig?.realm && <AppRouters />}</AuthContext.Provider>;
 }

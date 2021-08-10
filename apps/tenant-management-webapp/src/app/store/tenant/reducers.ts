@@ -4,7 +4,7 @@ import { TENANT_INIT, Tenant } from './models';
 export default (state = TENANT_INIT, action: ActionType): Tenant => {
   switch (action.type) {
     case 'FETCH_TENANT_SUCCESS':
-      return { ...state, name: action.payload.name };
+      return { ...state, id: action.payload.id, name: action.payload.name };
 
     case 'UPDATE_TENANT_ADMIN_INFO':
       return { ...state, ...action.payload };
@@ -26,6 +26,12 @@ export default (state = TENANT_INIT, action: ActionType): Tenant => {
       return {
         ...state,
         realm: action.payload,
+      };
+
+    case 'FETCH_REALM_ROLES_SUCCESS':
+      return {
+        ...state,
+        realmRoles: action.payload,
       };
 
     default:

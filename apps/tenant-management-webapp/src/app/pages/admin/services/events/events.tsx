@@ -1,4 +1,3 @@
-import { ApiDocumentation } from '@components/ApiDocumentation';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import { Tab, Tabs } from '@components/Tabs';
@@ -9,7 +8,8 @@ import { EventDefinitions } from './definitions';
 import { EventsOverview } from './overview';
 
 export const Events: FunctionComponent = () => {
-  const eventServiceUrl = useSelector((state: RootState) => state.config.serviceUrls?.eventServiceApiUrl);
+  const tenantId = useSelector((state: RootState) => state.tenant?.id);
+  const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
   return (
     <Page>
       <Main>
@@ -21,13 +21,13 @@ export const Events: FunctionComponent = () => {
           <Tab label="Definitions">
             <EventDefinitions />
           </Tab>
-          <Tab label="Documentation">
-            {eventServiceUrl && <ApiDocumentation specUrl={`${eventServiceUrl}/swagger/docs/v1`} />}
-          </Tab>
         </Tabs>
       </Main>
       <Aside>
         <h5>Helpful Links</h5>
+        <a rel="noopener noreferrer" target="_blank" href={`${docBaseUrl}?tenant=${tenantId}&urls.primaryName=Event Service`}>
+          Read the API docs
+        </a>
         <a
           rel="noopener noreferrer"
           target="_blank"

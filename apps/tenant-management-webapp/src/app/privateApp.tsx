@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Route } from 'react-router-dom';
 import Header from '@components/AppHeader';
@@ -7,8 +7,10 @@ import Container from '@components/Container';
 import { RootState } from '@store/index';
 import { KeycloakCheckSSOWithLogout, KeycloakRefreshToken } from '@store/tenant/actions';
 import { GoAPageLoader } from '@abgov/react-components';
-
-export function PrivateApp({ children }) {
+interface privateAppProps {
+  children: ReactNode;
+}
+export function PrivateApp({ children }: privateAppProps): JSX.Element {
   const [title, setTitle] = useState<string>('');
   const dispatch = useDispatch();
   const urlParams = new URLSearchParams(window.location.search);
@@ -41,11 +43,12 @@ export function PrivateApp({ children }) {
   );
 }
 
-const PageLoader = () => {
+const PageLoader = (): JSX.Element => {
   return <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />;
 };
 
-export function PrivateRoute({ component: Component, ...rest }) {
+// eslint-disable-next-line
+export function PrivateRoute({ component: Component, ...rest }): JSX.Element {
   const userInfo = useSelector((state: RootState) => state.session?.userInfo);
   const tenantRealm = useSelector((state: RootState) => state.tenant?.realm);
   const ready = userInfo !== undefined && tenantRealm === '';

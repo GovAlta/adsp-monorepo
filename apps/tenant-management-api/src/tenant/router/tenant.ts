@@ -115,6 +115,21 @@ export const createTenantRouter = ({ tenantRepository, eventService, services }:
     tokenIssuer = tokenIssuer.replace('core', tenantName);
 
     try {
+      const hasRealm = await TenantService.isRealmExisted(tenantName)
+      if (hasRealm) {
+        // To upgrade existing realm to support platform team service. Email is from the payload
+        const email = payload?.email;
+        if (!email) {
+          throw new TenantService.TenantError('email filed is missing', HttpStatusCodes.BAD_REQUEST);
+        }
+        logger.info(`Found key realm with name ${tenantName}`);
+        await TenantService.validateEmailInDB(email);
+        const { ...tenant } = await TenantService.createNewTenantInDB(email, tenantName, tenantName, tokenIssuer);
+        const response = { ...tenant, newTenant: false };
+        eventService.send(tenantCreated(req.user, response, false));
+        res.status(HttpStatusCodes.OK).json(response);
+      }
+
       logger.info('Starting create realm....');
 
       const generatedRealmName = uuidv4();
@@ -125,7 +140,7 @@ export const createTenantRouter = ({ tenantRepository, eventService, services }:
 
       const data = { status: 'ok', message: 'Create Realm Success!', realm: generatedRealmName };
 
-      eventService.send(tenantCreated(req.user, { ...tenant }));
+      eventService.send(tenantCreated(req.user, { ...tenant }, true));
 
       res.status(HttpStatusCodes.OK).json(data);
     } catch (err) {

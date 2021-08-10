@@ -11,7 +11,7 @@ import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import { GoAPageLoader } from '@abgov/react-components';
 
-export default function () {
+export default function (): JSX.Element {
   const dispatch = useDispatch();
 
   const { users, roles, keycloakConfig, session, status } = useSelector((state: RootState) => {

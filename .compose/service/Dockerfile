@@ -1,10 +1,7 @@
-FROM node:12.18.4-alpine3.12
+FROM adsp-base:latest
 ARG SERVICE
-WORKDIR /home/src
-COPY ./package.json ./package-lock.json /home/src/
-RUN npm ci -D
-COPY . /home/src
 RUN npm run build ${SERVICE}
+RUN npm prune --production
 USER 1001:0
 ENV SERVICE ${SERVICE}
 CMD npm run -d service dist/apps/${SERVICE}/main.js

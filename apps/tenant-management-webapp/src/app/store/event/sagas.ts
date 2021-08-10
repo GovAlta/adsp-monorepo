@@ -13,8 +13,9 @@ import {
   updateEventDefinitionSuccess,
   UPDATE_EVENT_DEFINITION_ACTION,
 } from './actions';
+import { SagaIterator } from '@redux-saga/core';
 
-export function* fetchEventDefinitions(action: FetchEventDefinitionsAction) {
+export function* fetchEventDefinitions(action: FetchEventDefinitionsAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.tenantManagementApi);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
 
@@ -56,7 +57,7 @@ export function* fetchEventDefinitions(action: FetchEventDefinitionsAction) {
   }
 }
 
-export function* updateEventDefinition(action: UpdateEventDefinitionAction) {
+export function* updateEventDefinition(action: UpdateEventDefinitionAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.tenantManagementApi);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
 
@@ -68,9 +69,9 @@ export function* updateEventDefinition(action: UpdateEventDefinitionAction) {
 
       const configuration = settings.configuration || {};
       configuration[action.definition.namespace] = {
-        ...(settings[action.definition.namespace] || {}),
+        ...(settings.configuration[action.definition.namespace] || {}),
         definitions: {
-          ...(settings[action.definition.namespace]?.definitions || {}),
+          ...(settings.configuration[action.definition.namespace]?.definitions || {}),
           [action.definition.name]: {
             name: action.definition.name,
             description: action.definition.description,
@@ -101,7 +102,7 @@ export function* updateEventDefinition(action: UpdateEventDefinitionAction) {
   }
 }
 
-export function* fetchEventLogEntries(action: FetchEventLogEntriesAction) {
+export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
 
@@ -122,7 +123,7 @@ export function* fetchEventLogEntries(action: FetchEventLogEntriesAction) {
   }
 }
 
-export function* watchEventSagas() {
+export function* watchEventSagas(): SagaIterator {
   yield takeEvery(FETCH_EVENT_DEFINITIONS_ACTION, fetchEventDefinitions);
   yield takeEvery(FETCH_EVENT_LOG_ENTRIES_ACTION, fetchEventLogEntries);
   yield takeEvery(UPDATE_EVENT_DEFINITION_ACTION, updateEventDefinition);

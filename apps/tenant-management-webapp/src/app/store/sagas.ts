@@ -3,7 +3,15 @@ import { takeEvery } from 'redux-saga/effects';
 // Sagas
 import { fetchAccess } from './access/sagas';
 import { fetchConfig } from './config/sagas';
-import { uploadFile, enableFileService, fetchFiles, deleteFile, downloadFile, fetchSpace } from './file/sagas';
+import {
+  uploadFile,
+  enableFileService,
+  fetchFiles,
+  deleteFile,
+  downloadFile,
+  fetchSpace,
+  fetchFileTypeHasFile,
+} from './file/sagas';
 import { fetchFileTypes, deleteFileTypes, createFileType, updateFileType, fetchFileDocs } from './file/sagas';
 import {
   fetchTenant,
@@ -16,6 +24,7 @@ import {
   keycloakCheckSSOWithLogout,
   keycloakRefreshToken,
   tenantLogout,
+  fetchRealmRoles,
 } from './tenant/sagas';
 import { fetchTenantConfig, createTenantConfig, updateTenantConfig } from './tenantConfig/sagas';
 
@@ -34,6 +43,7 @@ import {
   UPDATE_FILE_TYPE,
   FETCH_FILE_SPACE,
   FETCH_FILE_DOCS,
+  FETCH_FILE_TYPE_HAS_FILE,
 } from './file/actions';
 import {
   FETCH_TENANT,
@@ -46,6 +56,7 @@ import {
   KEYCLOAK_CHECK_SSO_WITH_LOGOUT,
   KEYCLOAK_REFRESH_TOKEN,
   TENANT_LOGOUT,
+  FETCH_REALM_ROLES,
 } from './tenant/actions';
 import { FETCH_TENANT_CONFIG, CREATE_TENANT_CONFIG, UPDATE_TENANT_CONFIG } from './tenantConfig/actions';
 import { DELETE_APPLICATION_ACTION, FETCH_SERVICE_STATUS_APPS_ACTION, SAVE_APPLICATION_ACTION } from './status/actions';
@@ -53,6 +64,7 @@ import { deleteApplication, fetchServiceStatusApps, saveApplication, setApplicat
 import { SET_APPLICATION_STATUS_ACTION } from './status/actions/setApplicationStatus';
 import { watchEventSagas } from './event/sagas';
 
+// eslint-disable-next-line  @typescript-eslint/explicit-module-boundary-types
 export function* watchSagas() {
   yield takeEvery(FETCH_CONFIG_ACTION, fetchConfig);
   yield takeEvery(FETCH_ACCESS_ACTION, fetchAccess);
@@ -62,6 +74,7 @@ export function* watchSagas() {
   yield takeEvery(DOWNLOAD_FILE, downloadFile);
   yield takeEvery(DELETE_FILE, deleteFile);
   yield takeEvery(FETCH_FILE_LIST, fetchFiles);
+  yield takeEvery(FETCH_FILE_TYPE_HAS_FILE, fetchFileTypeHasFile);
 
   yield takeEvery(ENABLE_FILE_SERVICE, enableFileService);
   yield takeEvery(FETCH_FILE_SPACE, fetchSpace);
@@ -86,8 +99,8 @@ export function* watchSagas() {
   //tenant config
 
   yield takeEvery(FETCH_FILE_DOCS, fetchFileDocs);
-
   yield takeEvery(FETCH_TENANT, fetchTenant);
+  yield takeEvery(FETCH_REALM_ROLES, fetchRealmRoles);
   yield takeEvery(TENANT_ADMIN_LOGIN, tenantAdminLogin);
   yield takeEvery(TENANT_CREATION_LOGIN_INIT, tenantCreationInitLogin);
 

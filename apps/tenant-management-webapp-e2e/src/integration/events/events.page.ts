@@ -8,10 +8,6 @@ class eventsPage {
   eventsOverviewTitle() {
     return cy.xpath('//h2[contains(text(), Events)]/following-sibling::div[2]//h3');
   }
-
-  eventsDocumentationEventServiceTitle() {
-    return cy.xpath('//h2[contains(text(), Events)]/following-sibling::div[2]//h1[contains(text(), "Event Service")]');
-  }
 }
 
 export default eventsPage;

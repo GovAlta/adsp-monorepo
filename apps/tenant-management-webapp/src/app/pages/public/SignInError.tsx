@@ -2,12 +2,8 @@ import React from 'react';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import GoALinkButton from '@components/LinkButton';
-import { useDispatch } from 'react-redux';
-import { useHistory } from 'react-router-dom';
 
-export const SignInError = () => {
-  const dispatch = useDispatch();
-  const history = useHistory();
+export const SignInError = (): JSX.Element => {
   return (
     <Page>
       <Main>

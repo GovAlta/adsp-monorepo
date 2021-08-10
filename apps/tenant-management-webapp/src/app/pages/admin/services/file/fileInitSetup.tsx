@@ -3,7 +3,7 @@ import React from 'react';
 import { useDispatch } from 'react-redux';
 import { CreateTenantConfigService } from '@store/tenantConfig/actions';
 
-const InitSetup = () => {
+const InitSetup = (): JSX.Element => {
   const dispatch = useDispatch();
   return (
     <div>

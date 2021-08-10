@@ -5,6 +5,7 @@ import { injectAxe } from '../../support/app.po';
 import { htmlReport } from '../../support/axe-html-reporter-util';
 
 const commonObj = new common();
+let apiDocsLink;
 
 When('the user enters credentials and clicks login button', function () {
   commonObj.usernameEmailField().type(Cypress.env('email'));
@@ -92,4 +93,24 @@ When('the user selects the {string} menu item', function (menuItem) {
 
   commonObj.adminMenuItem(menuItemSelector).click();
   cy.wait(2000); // wait for the page to load tenant data such as tenant user/role stats
+});
+
+Then('the user views the link for {string} API docs', function (serviceName) {
+  commonObj
+    .readTheApiDocsLink()
+    .should('have.attr', 'href')
+    .then((href) => {
+      expect(href).to.contain(serviceName);
+      apiDocsLink = href;
+    });
+});
+
+When('the user goes to the web link of the API docs', function () {
+  cy.visit(apiDocsLink);
+});
+
+Then('the user views {string} API documentation', function (serviceName) {
+  commonObj.APIDocsPageTitle(serviceName).then((title) => {
+    expect(title.length).to.be.gt(0); // element exists
+  });
 });

@@ -483,6 +483,7 @@
         "build": {
           "builder": "@nrwl/node:build",
           "options": {
+            "webpackConfig": "apps/push-service/webpack.config.js",
             "outputPath": "dist/apps/push-service",
             "main": "apps/push-service/src/main.ts",
             "tsConfig": "apps/push-service/tsconfig.app.json",

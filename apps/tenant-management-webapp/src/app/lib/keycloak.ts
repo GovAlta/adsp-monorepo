@@ -13,7 +13,7 @@ export const LOGIN_TYPES = {
   tenant: 'tenant',
 };
 
-export const createKeycloakAuth = (config: KeycloakConfig) => {
+export const createKeycloakAuth = (config: KeycloakConfig): void => {
   keycloakAuth = new KeycloakAuth(config);
 };
 
@@ -36,6 +36,7 @@ class KeycloakAuth {
 
   initKeycloak() {
     // TODO: find the right type for keycloak
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return new (Keycloak as any)(this.config);
   }
 
@@ -177,6 +178,7 @@ class KeycloakAuth {
   }
 }
 
-export function createKeycloakInstance(config: KeycloakConfig) {
+export function createKeycloakInstance(config: KeycloakConfig): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   keycloak = new (Keycloak as any)(config);
 }

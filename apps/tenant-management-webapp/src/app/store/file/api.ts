@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { ConfigState, FileApi as FileApiConfig } from '@store/config/models';
-import { FileService, FileServiceDocs } from './models';
+import { FileService, FileServiceDocs, FileTypeItem } from './models';
 
 export class FileApi {
   private http: AxiosInstance;
@@ -71,35 +71,25 @@ export class FileApi {
     return res.data;
   }
 
-  async createFileType(fileInfo): Promise<FileService> {
-    const readRolesArray = fileInfo.readRoles ? fileInfo.readRoles.split(',') : [];
-    const updateRolesArray = fileInfo.updateRoles ? fileInfo.updateRoles.split(',') : [];
-
-    const data = {
-      name: fileInfo.name,
-      anonymousRead: true,
-      readRoles: readRolesArray,
-      updateRoles: updateRolesArray,
-    };
-
+  async createFileType(fileType: FileTypeItem): Promise<FileService> {
     const url = this.fileConfig.endpoints.fileTypeAdmin;
-    const res = await this.http.post(url, data);
+    const res = await this.http.post(url, fileType);
     return res.data;
   }
 
-  async updateFileType(fileInfo): Promise<FileService> {
-    const data = {
-      name: fileInfo.name,
-      anonymousRead: fileInfo.anonymousRead,
-      readRoles: fileInfo.readRoles,
-      updateRoles: fileInfo.updateRoles,
-    };
-
-    const url = `${this.fileConfig.endpoints.fileTypeAdmin}/${fileInfo.id}`;
-    const res = await this.http.put(url, data);
+  async updateFileType(fileType: FileTypeItem): Promise<FileService> {
+    const url = `${this.fileConfig.endpoints.fileTypeAdmin}/${fileType.id}`;
+    const res = await this.http.put(url, fileType);
     return res.data;
   }
 
+  async fetchFileTypeHasFile(fileTypeId: string): Promise<boolean> {
+    const url = `${this.fileConfig.endpoints.fileAdmin}/fileType/${fileTypeId}`;
+    const res = await this.http.get(url);
+    return res.data.exist;
+  }
+
+  // eslint-disable-next-line
   swaggerDocToFileDocs(swaggerDocs) {
     const fileTypeDocs = [];
     const fileDocs = [];

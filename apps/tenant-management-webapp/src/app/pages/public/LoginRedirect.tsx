@@ -5,8 +5,10 @@ import { useSelector, useDispatch } from 'react-redux';
 import { KeycloakCheckSSO } from '@store/tenant/actions';
 import { useHistory } from 'react-router-dom';
 import { LOGIN_TYPES } from '@lib/keycloak';
-
-const LoginRedirect = (props) => {
+interface LoginProps {
+  location?: string;
+}
+const LoginRedirect = (props: LoginProps): JSX.Element => {
   const dispatch = useDispatch();
   const history = useHistory();
 

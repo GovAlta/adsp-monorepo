@@ -256,6 +256,12 @@ export const validateRealmCreation = async (realm: string): Promise<void> => {
   }
 };
 
+export const isRealmExisted = async (realm: string): Promise<boolean> => {
+  const client = await createkcAdminClient();
+  const result = await client.realms.findOne({ realm });
+  return result !== null;
+};
+
 export const createRealm = async (
   services: ServiceRegistration,
   realm: string,

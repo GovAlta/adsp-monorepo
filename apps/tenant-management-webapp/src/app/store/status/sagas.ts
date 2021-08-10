@@ -1,4 +1,4 @@
-import { put, select } from 'redux-saga/effects';
+import { put, select, call } from 'redux-saga/effects';
 import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
 import { StatusApi } from './api';
@@ -14,8 +14,9 @@ import { Session } from '@store/session/models';
 import { ConfigState } from '@store/config/models';
 import { SetApplicationStatusAction, setApplicationStatusSuccess } from './actions/setApplicationStatus';
 import { EndpointStatusEntry, ServiceStatusApplication } from './models';
+import { SagaIterator } from '@redux-saga/core';
 
-export function* fetchServiceStatusApps() {
+export function* fetchServiceStatusApps(): SagaIterator {
   const currentState: RootState = yield select();
 
   const baseUrl = getServiceStatusUrl(currentState.config);
@@ -23,9 +24,12 @@ export function* fetchServiceStatusApps() {
 
   try {
     const api = new StatusApi(baseUrl, token);
-    const applications: ServiceStatusApplication[] = yield api.getApplications();
+    const applications: ServiceStatusApplication[] = yield call([api, api.getApplications]);
     for (const application of applications) {
-      const entryMap: { [key: string]: EndpointStatusEntry[] } = yield api.getEndpointStatusEntries(application._id);
+      const entryMap: { [key: string]: EndpointStatusEntry[] } = yield call(
+        [api, api.getEndpointStatusEntries],
+        application._id
+      );
       for (const [url, entries] of Object.entries(entryMap)) {
         const endpoint = application.endpoints.find((endpoint) => endpoint.url === url);
         endpoint.statusEntries = entries;
@@ -38,7 +42,7 @@ export function* fetchServiceStatusApps() {
   }
 }
 
-export function* saveApplication(action: SaveApplicationAction) {
+export function* saveApplication(action: SaveApplicationAction): SagaIterator {
   const currentState: RootState = yield select();
 
   const baseUrl = getServiceStatusUrl(currentState.config);
@@ -46,7 +50,7 @@ export function* saveApplication(action: SaveApplicationAction) {
 
   try {
     const api = new StatusApi(baseUrl, token);
-    const data = yield api.saveApplication(action.payload);
+    const data = yield call([api, api.saveApplication], action.payload);
     yield put(saveApplicationSuccess(data));
     yield put(refreshServiceStatusApps());
   } catch (e) {
@@ -54,7 +58,7 @@ export function* saveApplication(action: SaveApplicationAction) {
   }
 }
 
-export function* deleteApplication(action: DeleteApplicationAction) {
+export function* deleteApplication(action: DeleteApplicationAction): SagaIterator {
   const currentState: RootState = yield select();
 
   const baseUrl = getServiceStatusUrl(currentState.config);
@@ -62,7 +66,7 @@ export function* deleteApplication(action: DeleteApplicationAction) {
 
   try {
     const api = new StatusApi(baseUrl, token);
-    yield api.deleteApplication(action.payload.applicationId);
+    yield call([api, api.deleteApplication], action.payload.applicationId);
 
     yield put(deleteApplicationSuccess(action.payload.applicationId));
   } catch (e) {
@@ -70,7 +74,7 @@ export function* deleteApplication(action: DeleteApplicationAction) {
   }
 }
 
-export function* setApplicationStatus(action: SetApplicationStatusAction) {
+export function* setApplicationStatus(action: SetApplicationStatusAction): SagaIterator {
   const currentState: RootState = yield select();
 
   const baseUrl = getServiceStatusUrl(currentState.config);
@@ -78,7 +82,11 @@ export function* setApplicationStatus(action: SetApplicationStatusAction) {
 
   try {
     const api = new StatusApi(baseUrl, token);
-    const data: ServiceStatusApplication = yield api.setStatus(action.payload.applicationId, action.payload.status);
+    const data: ServiceStatusApplication = yield call(
+      [api, api.setStatus],
+      action.payload.applicationId,
+      action.payload.status
+    );
 
     yield put(setApplicationStatusSuccess(data));
   } catch (e) {

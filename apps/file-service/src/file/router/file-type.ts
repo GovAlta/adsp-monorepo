@@ -44,7 +44,8 @@ export const createFileTypeRouter = ({
         }
 
         const spaceEntity: FileSpaceEntity = await spaceRepository.get(spaceId);
-        if (name in spaceEntity.types) {
+
+        if (Object.values(spaceEntity.types).map((x)=> x.name).includes(name)) {
           throw new InvalidOperationError(`Duplicated type name: ${name}`);
         }
 
@@ -63,7 +64,7 @@ export const createFileTypeRouter = ({
         logger.error(errMessage);
         res.statusMessage = errMessage;
         res.status(400);
-        next(res);
+        next(err);
       }
     }
   });

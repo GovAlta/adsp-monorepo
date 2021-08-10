@@ -16,7 +16,7 @@ interface TabsProps {
   children: ReactNode;
 }
 
-function Tabs(props: TabsProps) {
+function Tabs(props: TabsProps): JSX.Element {
   const [activeTabIndex, setActiveTabIndex] = useState(props.activeIndex ?? 0);
 
   function selectTab(index: number) {
@@ -26,17 +26,23 @@ function Tabs(props: TabsProps) {
   return (
     <>
       <SCTabs>
-        {Children.map(props.children, (child: any, index) => {
-          return (
-            <TabItem active={activeTabIndex === index} onSelect={() => selectTab(index)}>
-              {child.props.label}
-            </TabItem>
-          );
-        })}
+        {
+          // eslint-disable-next-line
+          Children.map<JSX.Element, any>(props.children, (child: any, index: number) => {
+            return (
+              <TabItem active={activeTabIndex === index} onSelect={() => selectTab(index)}>
+                {child.props.label}
+              </TabItem>
+            );
+          })
+        }
       </SCTabs>
-      {Children.toArray(props.children).filter((child: any, index) => {
-        return index === activeTabIndex;
-      })}
+      {
+        // eslint-disable-next-line
+        Children.toArray(props.children).filter((_child: any, index: number) => {
+          return index === activeTabIndex;
+        })
+      }
     </>
   );
 }
@@ -45,7 +51,7 @@ interface TabProps {
   label: string;
 }
 
-function Tab(props: TabProps & { children: ReactNode }) {
+function Tab(props: TabProps & { children: ReactNode }): JSX.Element {
   return <TabContent>{props.children}</TabContent>;
 }
 
