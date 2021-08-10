@@ -11,12 +11,10 @@ import { MongoFileSpaceRepository } from '../../mongo/space';
 import { MongoFileRepository } from '../../mongo/file';
 import { FileType } from '../types';
 import * as NodeCache from 'node-cache';
-import { EventService } from '@abgov/adsp-service-sdk';
 import { createLogger, AuthAssert } from '@core-services/core-common';
 import { connect, disconnect, createMockData } from '@core-services/core-common/mongo';
 import * as sinon from 'sinon';
 import * as fs from 'fs';
-import { adspId, User } from '@abgov/adsp-service-sdk';
 import { AdminAssert } from './admin';
 
 describe('Admin Router', () => {
@@ -25,7 +23,6 @@ describe('Admin Router', () => {
   const cache = new NodeCache({ stdTTL: 86400, useClones: false });
   const spaceMockRepo = new MongoFileSpaceRepository(logger, cache);
   const fileMockRepo = new MongoFileRepository(spaceMockRepo);
-  const eventServiceMock = new Mock<EventService>();
   const type: FileType = {
     id: 'type-1',
     name: 'Profile Picture',
@@ -33,17 +30,6 @@ describe('Admin Router', () => {
     updateRoles: ['test-admin'],
     readRoles: ['test-admin'],
     spaceId: 'space1234',
-  };
-  const typeMock = new Mock<FileTypeEntity>();
-
-  const user: User = {
-    id: 'user-2',
-    name: 'testy',
-    email: 'test@testco.org',
-    roles: ['test-admin', 'file-service-admin'],
-    tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
-    isCore: false,
-    token: null,
   };
 
   const entity = new FileTypeEntity(type);
@@ -128,7 +114,7 @@ describe('Admin Router', () => {
       const space = await createMockData<FileSpaceEntity>(spaceMockRepo, fileSpaces);
       await createMockData<FileEntity>(fileMockRepo, files);
 
-      const res = await request(app).get(`/${space[0].id}/types`).query({ top: 10, after: '' }); //.expect(200);
+      const res = await request(app).get(`/${space[0].id}/types`).query({ top: 10, after: '' });
       expect(res.statusCode).toBe(200);
       expect(JSON.parse(res.text).typeName.id).toBe('type-1');
     });
@@ -287,7 +273,6 @@ describe('Admin Router', () => {
 
     afterEach(() => {
       sandbox.restore();
-      //sandbox2.restore();
     });
     it('returns a 200 OK and get files of type of given space', async () => {
       const res = await request(app).get(`/${space[0].id}/types/type-1/files`);

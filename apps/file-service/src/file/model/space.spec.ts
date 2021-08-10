@@ -55,7 +55,7 @@ describe('File Space Entity', () => {
     expect(entity.types['a']).toBeInstanceOf(FileTypeEntity);
   });
 
-  it.skip('can create new', (done) => {
+  it('can create new', (done) => {
     FileSpaceEntity.create(user, repositoryMock.object(), space).then((entity) => {
       expect(entity).toBeTruthy();
       done();

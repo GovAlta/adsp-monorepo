@@ -1,10 +1,9 @@
 import type { Logger } from 'winston';
-import { RequestHandler, Router } from 'express';
+import { Router } from 'express';
 import * as HttpStatusCodes from 'http-status-codes';
 import {
   AuthenticationConfig,
   authenticateToken,
-  assertAuthenticatedHandler,
   UnauthorizedError,
   NotFoundError,
   AuthAssert,
@@ -113,7 +112,7 @@ export const createAdminRouter = ({
         let fileType = spaceEntity.types[type];
 
         if (!fileType) {
-          const x = await spaceEntity.addType(user, rootStoragePath, type, {
+          await spaceEntity.addType(user, rootStoragePath, type, {
             name,
             anonymousRead,
             readRoles,

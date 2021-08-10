@@ -97,19 +97,6 @@ describe('File Entity', () => {
     expect(entity.deleted).toEqual(true);
   });
 
-  const getCircularReplacer = () => {
-    const seen = new WeakSet();
-    return (_key, value) => {
-      if (typeof value === 'object' && value !== null) {
-        if (seen.has(value)) {
-          return;
-        }
-        seen.add(value);
-      }
-      return value;
-    };
-  };
-
   it('can create new', async (done) => {
     typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(true);
 

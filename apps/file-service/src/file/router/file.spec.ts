@@ -1,34 +1,26 @@
 import express = require('express');
 import { Mock, It } from 'moq.ts';
 import { FileRepository } from '../repository';
-import { FileSpaceRepository } from '../repository';
 import { createFileRouter } from './file';
 import * as request from 'supertest';
-import { FileCriteria } from '../types';
 import { FileSpaceEntity } from '../model';
 import { FileEntity } from '../model';
 import { FileTypeEntity } from '../model/type';
 import { environment } from '../../environments/environment';
 import { MongoFileSpaceRepository } from '../../mongo/space';
 import { MongoFileRepository } from '../../mongo/file';
-import { Logger } from 'winston';
 import { FileType } from '../types';
 import * as NodeCache from 'node-cache';
-//import { logger } from 'libs/core-common/src/logger';
 import { EventService } from '@abgov/adsp-service-sdk';
-import { createLogger, assertAuthenticatedHandler, AuthAssert } from '@core-services/core-common';
+import { createLogger, AuthAssert } from '@core-services/core-common';
 import { connect, disconnect, createMockData } from '@core-services/core-common/mongo';
 import * as sinon from 'sinon';
 import { MiddlewareWrapper } from './middlewareWrapper';
-import { ExpectedExpressionReflector } from 'moq.ts/lib/expected-expressions/expected-expression-reflector';
 import * as fs from 'fs';
-import { adspId, User } from '@abgov/adsp-service-sdk';
-import path = require('path');
 
 describe('File Router', () => {
   const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
   const mockRepo = new Mock<FileRepository>();
-  //const spaceMockRepo = new Mock<FileSpaceRepository>();
   const cache = new NodeCache({ stdTTL: 86400, useClones: false });
   const spaceMockRepo = new MongoFileSpaceRepository(logger, cache);
   const fileMockRepo = new MongoFileRepository(spaceMockRepo);
@@ -40,17 +32,6 @@ describe('File Router', () => {
     updateRoles: ['test-admin'],
     readRoles: ['test-admin'],
     spaceId: 'space1234',
-  };
-  const typeMock = new Mock<FileTypeEntity>();
-
-  const user: User = {
-    id: 'user-2',
-    name: 'testy',
-    email: 'test@testco.org',
-    roles: ['test-admin', 'file-service-admin'],
-    tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
-    isCore: false,
-    token: null,
   };
 
   const entity = new FileTypeEntity(type);
@@ -94,7 +75,6 @@ describe('File Router', () => {
     let sandbox;
     beforeEach(() => {
       sandbox = sinon.createSandbox();
-      //sandbox.restore();
       sandbox.stub(MiddlewareWrapper, 'middlewareMethod').callsFake(function (req, res, next) {
         req.body = { updateRoles: '2313' };
         req.tenant = { name: 'space1234' };
@@ -132,7 +112,7 @@ describe('File Router', () => {
       await createMockData<FileSpaceEntity>(spaceMockRepo, fileSpaces);
       await createMockData<FileEntity>(fileMockRepo, files);
 
-      const res = await request(app).get('/files').query({ top: 10, after: '' }); //.expect(200);
+      const res = await request(app).get('/files').query({ top: 10, after: '' });
       expect(res.statusCode).toBe(200);
     });
 
@@ -156,12 +136,7 @@ describe('File Router', () => {
         },
       ];
 
-      // typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(true);
-      // typeMock.setup((m) => m.getPath(It.Is<string>((storage) => !!storage))).returns(typePath);
-
-      //const x = await FileSpaceEntity.create(user, spaceMockRepo, fileSpaces[0]);
-
-      const x = await createMockData<FileSpaceEntity>(spaceMockRepo, fileSpaces);
+      await createMockData<FileSpaceEntity>(spaceMockRepo, fileSpaces);
       mockRepo.setup((m) => m.save(It.IsAny())).callback((i) => Promise.resolve(i.args[0]));
       sandbox = sinon.createSandbox();
       sandbox.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
@@ -172,26 +147,9 @@ describe('File Router', () => {
         req.body.type = 'typeName';
         return next();
       });
-      //sandbox2 = sinon.createSandbox();
-      // sandbox.stub(FileTypeEntity.prototype, 'getPath').callsFake(function () {
-      //   return '.';
-      // });
-      // sandbox.stub(FileEntity.prototype, 'getFilePath').callsFake(function () {
-      //   return '.';
-      // });
-      //sandbox3 = sinon.createSandbox();
       sandbox.stub(fs, 'renameSync').callsFake(function () {
         return true;
       });
-      // filePathSandbox = sinon.createSandbox();
-      // filePathSandbox =  sinon.stub(FileTypeEntity, 'getPath').callsFake(function (req, res, next) {
-      //   req.body = files[0];
-      //   req.tenant = { name: 'space1234' };
-      //   req.user = { roles: ['test-admin'] };
-      //   req.file = files[0];
-      //   req.body.type = 'typeName';
-      //   return next();
-      // });
 
       app.use(
         createFileRouter({
@@ -206,28 +164,12 @@ describe('File Router', () => {
 
     afterEach(() => {
       sandbox.restore();
-      //sandbox2.restore();
     });
     it('returns a 200 OK and creates a file', async () => {
-      //await createMockData<FileEntity>(fileMockRepo, files[0]);
-      // expect(renameMock.mock.calls[0][0]).toEqual('tmp-file');
-      // expect(renameMock.mock.calls[0][1]).toEqual(`${typePath}${separator}${'files'}`);
       const res = await request(app).post('/files').send(files[0]);
-      //expect(renameMock.mock.calls[0][0]).toEqual('tmp-file');
-      //expect(renameMock.mock.calls[0][1]).toEqual(`${typePath}${separator}${fileEntity.storage}`);
+
       expect(res.statusCode).toEqual(200);
-
       expect(JSON.parse(res.text).filename).toEqual('bob.jpg');
-    });
-  });
-
-  describe('GET /:id', () => {
-    it.skip('returns a 200 and json data for valid service', () => {
-      //
-    });
-
-    it.skip('responds with a 404 on an invalid :id', () => {
-      //
     });
   });
 });

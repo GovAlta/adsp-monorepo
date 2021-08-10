@@ -24,11 +24,6 @@ describe('Mongo: FileEntity', () => {
   const cache = new NodeCache({ stdTTL: 86400, useClones: false });
   const fileRepo = new MongoFileSpaceRepository(logger, cache);
   const repo = new MongoFileRepository(fileRepo);
-  // const spaceId = await fileRepo.getIdByTenant({
-  //   name: 'Bob',
-  //   id: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
-  //   realm: '12323123',
-  // });
 
   const criteria: FileCriteria = {
     spaceEquals: spaceId,
@@ -47,15 +42,6 @@ describe('Mongo: FileEntity', () => {
 
   it('finds a defined file', async () => {
     const entity = new FileTypeEntity(type);
-    // const user: User = {
-    //   id: 'user-2',
-    //   name: 'testy',
-    //   email: 'test@testco.org',
-    //   roles: ['test-admin'],
-    //   tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
-    //   isCore: false,
-    //   token: null,
-    // };
 
     const data = await createMockData<FileEntity>(repo, [
       {
