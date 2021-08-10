@@ -1,6 +1,6 @@
 import { Logger } from 'winston';
 import { Router } from 'express';
-import { assertAuthenticatedHandler, UnauthorizedError, NotFoundError } from '@core-services/core-common';
+import { UnauthorizedError, NotFoundError, AuthAssert } from '@core-services/core-common';
 import { FileSpaceRepository } from '../repository';
 import { FileSpaceEntity } from '../model';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,7 +13,7 @@ interface SpaceRouterProps {
 export const createSpaceRouter = ({ logger, spaceRepository }: SpaceRouterProps): Router => {
   const spaceRouter = Router();
 
-  spaceRouter.get('/spaces', assertAuthenticatedHandler, async (req, res, next) => {
+  spaceRouter.get('/spaces', AuthAssert.assertMethod, async (req, res, next) => {
     const user = req.user;
 
     try {
@@ -21,7 +21,6 @@ export const createSpaceRouter = ({ logger, spaceRepository }: SpaceRouterProps)
       if (!spaceId) {
         throw new NotFoundError('Space', `${user.tenantId}`);
       }
-
       const spaceEntity = await spaceRepository.get(spaceId);
 
       if (!spaceEntity.canAccess(user)) {
@@ -38,7 +37,7 @@ export const createSpaceRouter = ({ logger, spaceRepository }: SpaceRouterProps)
     }
   });
 
-  spaceRouter.post('/spaces', assertAuthenticatedHandler, async (req, res, next) => {
+  spaceRouter.post('/spaces', AuthAssert.assertMethod, async (req, res, next) => {
     const user = req.user;
     const { spaceAdminRole } = req.body;
 

@@ -3,6 +3,7 @@ import { RequestHandler } from 'express';
 import * as _passport from 'passport';
 import { logger } from './logger';
 import { User } from '@abgov/adsp-service-sdk';
+
 export const assertAuthenticatedHandler: RequestHandler = (req, res, next) => {
   if (!req.isAuthenticated || !req.user) {
     res.sendStatus(401);

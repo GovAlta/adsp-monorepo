@@ -2,11 +2,19 @@ import { Router } from 'express';
 import { Logger } from 'winston';
 import * as HttpStatusCodes from 'http-status-codes';
 import { v4 as uuidv4 } from 'uuid';
-import { assertAuthenticatedHandler, NotFoundError, InvalidOperationError } from '@core-services/core-common';
+import {
+  assertAuthenticatedHandler,
+  AuthAssert,
+  NotFoundError,
+  InvalidOperationError,
+} from '@core-services/core-common';
 import { FileRepository, FileSpaceRepository } from '../repository';
 import { FileSpaceEntity } from '../model';
 
-import { fileServiceAdminMiddleware } from '../middleware/authentication';
+import { AuthenticationWrapper } from '../middleware/authenticationWrapper';
+import { fileTypeSchema } from '../../mongo/schema';
+import { MiddlewareWrapper } from './middlewareWrapper';
+
 interface FileTypeRouterProps {
   logger: Logger;
   spaceRepository: FileSpaceRepository;
@@ -22,11 +30,10 @@ export const createFileTypeRouter = ({
 }: FileTypeRouterProps): Router => {
   const fileTypeRouter = Router();
 
-  fileTypeRouter.post('/fileTypes', fileServiceAdminMiddleware, async (req, res, next) => {
+  fileTypeRouter.post('/fileTypes', AuthenticationWrapper.authenticationMethod, async (req, res, next) => {
     const user = req.user;
 
     const { name, anonymousRead, readRoles = [], updateRoles = [] } = req.body;
-
     if (!name) {
       res.sendStatus(HttpStatusCodes.BAD_REQUEST);
     } else {
@@ -62,7 +69,7 @@ export const createFileTypeRouter = ({
     }
   });
 
-  fileTypeRouter.get('/fileTypes/:fileTypeId', async (req, res, next) => {
+  fileTypeRouter.get('/fileTypes/:fileTypeId', MiddlewareWrapper.middlewareMethod, async (req, res, next) => {
     const { fileTypeId } = req.params;
 
     try {
@@ -87,7 +94,7 @@ export const createFileTypeRouter = ({
     }
   });
 
-  fileTypeRouter.get('/fileTypes', fileServiceAdminMiddleware, async (req, res, next) => {
+  fileTypeRouter.get('/fileTypes', AuthenticationWrapper.authenticationMethod, async (req, res, next) => {
     try {
       const spaceId = await spaceRepository.getIdByTenant(req.tenant);
       if (!spaceId) {
@@ -95,7 +102,6 @@ export const createFileTypeRouter = ({
       }
 
       const space: FileSpaceEntity = await spaceRepository.get(spaceId);
-
       res.json(Object.values(space.types));
     } catch (err) {
       const errMessage = `Error fetching type: ${err.message}`;
@@ -106,12 +112,11 @@ export const createFileTypeRouter = ({
     }
   });
 
-  fileTypeRouter.put('/fileTypes/:fileTypeId', assertAuthenticatedHandler, async (req, res, next) => {
+  fileTypeRouter.put('/fileTypes/:fileTypeId', AuthAssert.assertMethod, async (req, res, next) => {
     const user = req.user;
     const { fileTypeId } = req.params;
 
     const { updateRoles, readRoles, anonymousRead, name } = req.body;
-
     try {
       const spaceId = await spaceRepository.getIdByTenant(req.tenant);
       if (!spaceId) {
