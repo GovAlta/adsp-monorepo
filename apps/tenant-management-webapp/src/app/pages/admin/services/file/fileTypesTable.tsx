@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import DataTable from '@components/DataTable';
 import Chip from '@components/Chip';
@@ -41,12 +41,11 @@ const FileTypeTableContainer = styled.div`
     padding-top: 0rem !important;
     padding-bottom: 0rem !important;
     border-radius: 0.25rem;
-    margin-top: 0.5rem;
     height: 2.5rem;
   }
 
   i {
-    margin-top: 0.125rem !important;
+    margin-top: 0.5rem !important;
   }
 
   td:nth-child(1) {
@@ -102,7 +101,9 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
   const [startCreateFileType, setStartCreateFileType] = useState(false);
   const [updateFileType, setUpdateFileType] = useState<FileTypeItem>(null);
   const [newFileType, setNewFileType] = useState<FileTypeItem>(null);
+  const [disableCreate, setDisableCreate] = useState(true);
   const [showDelete, setShowDelete] = useState<boolean>(false);
+  const newInputRef = useRef(null);
 
   const { roles, fileTypes } = props;
   if (roles === null || fileTypes === []) {
@@ -119,6 +120,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
             onChange={(e) => {
               setName(e.target.value);
             }}
+            autoFocus
             onBlur={(e) => {
               updateFileType.name = e.target.value;
             }}
@@ -158,6 +160,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           onClick={() => {
             setStartCreateFileType(false);
             setNewFileType(null);
+            setDisableCreate(true)
           }}
         >
           Cancel
@@ -204,6 +207,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
             setNewFileType(null);
           }}
           data-testid="confirm-new"
+          disabled={disableCreate}
         >
           Confirm
         </GoAButton>
@@ -394,6 +398,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
       dispatch(FetchFileTypeHasFileService(props.id));
     }, []);
 
+
     useEffect(() => {
       if (fileType?.hasFile !== null) {
         setHasFile(fileType?.hasFile);
@@ -469,6 +474,12 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
   const NewFileTypeRow = (props: FileTypeRowProps) => {
     const [name, setName] = useState(props.name);
     const { id } = props;
+    useEffect(() => {
+      if (newInputRef.current && newFileType.name.length <= 1) {
+        newInputRef.current.focus();
+      }
+    });
+
     return (
       <>
         {startCreateFileType && (
@@ -478,9 +489,13 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
               <input
                 onBlur={(e) => {
                   newFileType.name = e.target.value;
+
                 }}
+                ref={newInputRef}
                 onChange={(e) => {
                   setName(e.target.value);
+                  newFileType.name = e.target.value;
+                  setDisableCreate(e.target.value.length === 0)
                 }}
                 id="new-file-type-name"
                 data-testid="new-file-type-name"
