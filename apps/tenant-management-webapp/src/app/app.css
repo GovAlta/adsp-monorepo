@@ -22,6 +22,7 @@
   --color-primary: #0070c4;
   --color-primary-dark: #004f84;
   --color-primary-link: #0067b5;
+  --color-visited-link: #756693;
   --color-font-header: #333;
   --color-table-border: #707070;
   --color-table-tr-selected: #f1f1f1;
@@ -115,6 +116,21 @@ a {
   color: var(--color-primary-link);
 }
 
+a:link {
+  color: var(--color-primary); }
+
+a:visited {
+  color: var(--color-visited-link); }
+
+a:hover {
+  color: var(--color-primary-dark); }
+
+a:focus {
+  outline-width: thin;
+  outline-style: solid;
+  outline-color: var(--color-primary-dark);
+  outline-offset: 0px; }
+
 .space-1 {
   padding: 0 0.25rem;
 }
@@ -164,4 +180,5 @@ a.goa-link-button.goa--secondary:hover,
 a.goa-link-button.goa--secondary:focus {
   color: var(--color-primary-dark);
 }
+
 /* == OVERRIDES END */
