@@ -10,7 +10,7 @@ Feature: Events
   Scenario: As a service admin, I can see details of event definitions
     Given a service owner user is on tenant admin page
     When the user selects the "Events" menu item
-    And the user selects "Definitions" tab
+    And the user selects "Definitions" tab for "Events"
   # The event definition table will need to be revamped based on future UI design and the following steps will be done after UI is finalized
   # Then the user views an event definition of "auto-test-service", "auto-test-event" and "autotest event description"
   # When the user clicks show details button for the definition of "auto-test-service", "auto-test-event" and "autotest event description"

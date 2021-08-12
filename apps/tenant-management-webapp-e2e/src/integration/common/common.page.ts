@@ -25,6 +25,12 @@ class Common {
   APIDocsPageTitle(text) {
     return cy.xpath(`//*[@class="title" and contains(text(), "${text}")]`);
   }
+
+  serviceTab(service, text) {
+    return cy.xpath(
+      `//h2[contains(text(),"${service}")]/following-sibling::div[1]//descendant::div[contains(text(), "${text}")]`
+    );
+  }
 }
 
 export default Common;
