@@ -7,6 +7,7 @@ jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('EventService', () => {
+  const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const logger: Logger = ({
     debug: jest.fn(),
     info: jest.fn(),
@@ -58,6 +59,7 @@ describe('EventService', () => {
     axiosMock.get.mockResolvedValue({ data: { results: [{ id: 'test-123', configOptions: {} }] } });
 
     const event = {
+      tenantId,
       name: 'test-event',
       timestamp: new Date(),
       payload: {},
@@ -66,7 +68,11 @@ describe('EventService', () => {
     await service.send(event);
 
     expect(axiosMock.post).toHaveBeenCalledTimes(1);
-    expect(axiosMock.post.mock.calls[0][1]).toStrictEqual({ ...event, namespace: 'test-service', tenantId: null });
+    expect(axiosMock.post.mock.calls[0][1]).toStrictEqual({
+      ...event,
+      namespace: 'test-service',
+      tenantId: tenantId.toString(),
+    });
 
     done();
   });
@@ -82,6 +88,7 @@ describe('EventService', () => {
 
     await expect(
       service.send({
+        tenantId,
         name: 'test-event',
         timestamp: new Date(),
         payload: {},

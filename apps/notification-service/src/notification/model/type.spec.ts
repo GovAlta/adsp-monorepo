@@ -7,6 +7,7 @@ import { NotificationTypeEntity } from './type';
 import { DomainEvent } from '@core-services/core-common';
 
 describe('NotificationTypeEntity', () => {
+  const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const repositoryMock = {
     saveSubscription: jest.fn((entity: SubscriptionEntity) => {
       return Promise.resolve(entity);
@@ -344,6 +345,7 @@ describe('NotificationTypeEntity', () => {
       templateServiceMock.generateMessage.mockReturnValueOnce(message);
 
       const event: DomainEvent = {
+        tenantId,
         namespace: 'test-service',
         name: 'test-started',
         timestamp: new Date(),
@@ -399,6 +401,7 @@ describe('NotificationTypeEntity', () => {
       );
 
       const event: DomainEvent = {
+        tenantId,
         namespace: 'test-service',
         name: 'test-started',
         timestamp: new Date(),
@@ -458,6 +461,7 @@ describe('NotificationTypeEntity', () => {
       templateServiceMock.generateMessage.mockReturnValueOnce(message);
 
       const event: DomainEvent = {
+        tenantId,
         namespace: 'test-service',
         name: 'test-started',
         timestamp: new Date(),
@@ -514,6 +518,7 @@ describe('NotificationTypeEntity', () => {
       );
 
       const event: DomainEvent = {
+        tenantId,
         namespace: 'test-service',
         name: 'test-started',
         timestamp: new Date(),

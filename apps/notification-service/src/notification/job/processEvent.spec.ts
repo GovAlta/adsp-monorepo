@@ -8,6 +8,7 @@ import { Channel, Notification } from '../types';
 import { createProcessEventJob } from './processEvent';
 
 describe('createProcessEventJob', () => {
+  const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const logger = ({
     debug: jest.fn(),
     info: jest.fn(),
@@ -117,6 +118,7 @@ describe('createProcessEventJob', () => {
 
       job(
         {
+          tenantId,
           namespace: 'test',
           name: 'test-run',
           timestamp: new Date(),
@@ -145,6 +147,7 @@ describe('createProcessEventJob', () => {
 
       job(
         {
+          tenantId,
           namespace: 'test',
           name: 'test-run',
           timestamp: new Date(),
