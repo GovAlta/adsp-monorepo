@@ -4,5 +4,6 @@ module.exports = {
   globals: {
     'ts-jest': { tsconfig: '<rootDir>/tsconfig.spec.json' },
   },
+  testEnvironment: 'node',
   coverageDirectory: '../../coverage/apps/file-service',
 };

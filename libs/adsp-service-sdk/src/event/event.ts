@@ -4,7 +4,7 @@ export interface DomainEvent {
   name: string;
   timestamp: Date;
   correlationId?: string;
-  tenantId?: AdspId;
+  tenantId: AdspId;
   context?: {
     [key: string]: boolean | number | string;
   };

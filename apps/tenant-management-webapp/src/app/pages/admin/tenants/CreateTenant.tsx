@@ -29,11 +29,12 @@ const CreateRealm = (): JSX.Element => {
     setIsLoaded((currentIsLoaded) => !currentIsLoaded);
   };
 
-  const { isTenantAdmin, userInfo, isTenantCreated, tenantRealm } = useSelector((state: RootState) => ({
+  const { isTenantAdmin, userInfo, isTenantCreated, tenantRealm, isInBeta } = useSelector((state: RootState) => ({
     isTenantAdmin: state.tenant.isTenantAdmin,
     userInfo: state.session.userInfo,
     isTenantCreated: state.tenant.isTenantCreated,
     tenantRealm: state.tenant.realm,
+    isInBeta: state.session.realmAccess?.roles?.includes('beta-tester'),
   }));
 
   useEffect(() => {
@@ -118,16 +119,27 @@ const CreateRealm = (): JSX.Element => {
                 <p>
                   Current user email: <b>{userInfo.email}</b>
                 </p>
-                <p>As a reminder, you are only able to create one tenant per user account.</p>
-                <GoAForm>
-                  <GoAFormItem>
-                    <label htmlFor="name">Tenant Name</label>
-                    <input id="name" type="text" value={name} onChange={onChangeName} />
-                    <em>Names cannot container special characters (ex. ! % &amp;)</em>
-                  </GoAFormItem>
+                {isInBeta ? (
+                  <>
+                    <p>As a reminder, you are only able to create one tenant per user account.</p>
+                    <GoAForm>
+                      <GoAFormItem>
+                        <label htmlFor="name">Tenant Name</label>
+                        <input id="name" type="text" value={name} onChange={onChangeName} />
+                        <em>Names cannot container special characters (ex. ! % &amp;)</em>
+                      </GoAFormItem>
 
-                  <GoAFormButtons>{isLoaded ? <TenantCreateView /> : <ButtonLoader />}</GoAFormButtons>
-                </GoAForm>
+                      <GoAFormButtons>{isLoaded ? <TenantCreateView /> : <ButtonLoader />}</GoAFormButtons>
+                    </GoAForm>
+                  </>
+                ) : (
+                  <>
+                    <p>
+                      You require the role 'beta-tester' to create a tenant. Please contact{' '}
+                      <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a> for more info
+                    </p>
+                  </>
+                )}
               </>
             ) : null}
           </>

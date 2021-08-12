@@ -1,4 +1,4 @@
-import { rename, unlink } from 'fs';
+import { renameSync, unlink } from 'fs';
 import { Mock, It } from 'moq.ts';
 import { adspId, User } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
@@ -6,12 +6,13 @@ import { FileRepository } from '../repository';
 import { FileRecord } from '../types';
 import { FileEntity } from './file';
 import { FileTypeEntity } from './type';
+import path = require('path');
 
 jest.mock('fs', () => ({
-  rename: jest.fn((o, n, cb) => cb(null)),
+  renameSync: jest.fn(),
   unlink: jest.fn((o, cb) => cb(null)),
 }));
-const renameMock = (rename as unknown) as jest.Mock<typeof rename>;
+const renameSyncMock = (renameSync as unknown) as jest.Mock<typeof renameSync>;
 const unlinkMock = (unlink as unknown) as jest.Mock<typeof unlink>;
 
 describe('File Entity', () => {
@@ -26,12 +27,14 @@ describe('File Entity', () => {
   };
 
   const storagePath = 'files';
-  const typePath = `${storagePath}/test/file-type-1`;
+  const separator = path.sep === '/' ? '/' : '\\';
+  const typePath = `${storagePath}${separator}test${separator}file-type-1`;
+
   let repositoryMock: Mock<FileRepository> = null;
   let typeMock: Mock<FileTypeEntity> = null;
 
   beforeEach(() => {
-    renameMock.mockClear();
+    renameSyncMock.mockClear();
     unlinkMock.mockClear();
 
     repositoryMock = new Mock<FileRepository>();
@@ -122,8 +125,8 @@ describe('File Entity', () => {
     );
 
     expect(fileEntity).toBeTruthy();
-    expect(renameMock.mock.calls[0][0]).toEqual('tmp-file');
-    expect(renameMock.mock.calls[0][1]).toEqual(`${typePath}/${fileEntity.storage}`);
+    expect(renameSyncMock.mock.calls[0][0]).toEqual('tmp-file');
+    expect(renameSyncMock.mock.calls[0][1]).toEqual(`${typePath}${separator}${fileEntity.storage}`);
     done();
   });
 
@@ -178,7 +181,7 @@ describe('File Entity', () => {
 
     it('can get file path', () => {
       const path = entity.getFilePath(storagePath);
-      expect(path).toEqual(`${typePath}/${entity.storage}`);
+      expect(path).toEqual(`${typePath}${separator}${entity.storage}`);
     });
 
     it('can check user access for user with access to type', () => {
@@ -232,7 +235,8 @@ describe('File Entity', () => {
       entity.deleted = true;
       entity.delete(storagePath).then((deleted) => {
         expect(deleted).toBeTruthy();
-        expect(unlinkMock.mock.calls[0][0]).toEqual(`${typePath}/${entity.storage}`);
+
+        expect(unlinkMock.mock.calls[0][0]).toEqual(`${typePath}${separator}${entity.storage}`);
         done();
       });
     });

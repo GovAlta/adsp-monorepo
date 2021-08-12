@@ -128,7 +128,7 @@ export async function initializePlatform(
   };
 }
 
-export { adspId, AdspId } from './utils';
+export { adspId, AdspId, AdspIdFormatError } from './utils';
 export { AssertCoreRole, AssertRole, UnauthorizedUserError } from './access';
 export type { TokenProvider, User } from './access';
 export type { ServiceDirectory } from './directory';

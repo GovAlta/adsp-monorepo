@@ -9,6 +9,7 @@ import { FileRecord, NewFile, UserInfo } from '../types';
 import { FileRepository } from '../repository';
 import { FileTypeEntity } from './type';
 import { v4 as uuidv4 } from 'uuid';
+
 export class FileEntity implements FileRecord {
   id: string;
   recordId: string;
@@ -45,9 +46,14 @@ export class FileEntity implements FileRecord {
 
     return repository.save(entity).then(
       (fileEntity) =>
-        new Promise<FileEntity>((resolve, reject) =>
-          fs.rename(file, fileEntity.getFilePath(rootStoragePath), (err) => (err ? reject(err) : resolve(fileEntity)))
-        )
+        new Promise<FileEntity>((resolve, reject) => {
+          try {
+            fs.renameSync(file, fileEntity.getFilePath(rootStoragePath));
+            return resolve(fileEntity);
+          } catch (err) {
+            return reject(err);
+          }
+        })
     );
   }
 

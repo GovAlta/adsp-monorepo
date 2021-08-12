@@ -71,6 +71,9 @@
     },
     "api-docs-app": {
       "tags": []
+    },
+    "configuration-service": {
+      "tags": []
     }
   }
 }

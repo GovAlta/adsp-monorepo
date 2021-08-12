@@ -5,6 +5,7 @@ import { FileSpace, ServiceUserRoles } from '../types';
 import { FileSpaceRepository } from '../repository';
 import { FileTypeEntity } from './type';
 import { FileSpaceEntity } from './space';
+import path = require('path');
 
 jest.mock('mkdirp', () => jest.fn(() => Promise.resolve()));
 
@@ -16,7 +17,7 @@ describe('File Space Entity', () => {
     roles: [ServiceUserRoles.Admin],
     tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
     isCore: false,
-    token: null
+    token: null,
   };
 
   const space: FileSpace = {
@@ -54,7 +55,7 @@ describe('File Space Entity', () => {
     expect(entity.types['a']).toBeInstanceOf(FileTypeEntity);
   });
 
-  it.skip('can create new', (done) => {
+  it('can create new', (done) => {
     FileSpaceEntity.create(user, repositoryMock.object(), space).then((entity) => {
       expect(entity).toBeTruthy();
       done();
@@ -84,8 +85,9 @@ describe('File Space Entity', () => {
     });
 
     it('can get path', () => {
-      const path = entity.getPath(storagePath);
-      expect(path).toEqual(`${storagePath}/${entity.id}`);
+      const separator = path.sep === '/' ? '/' : '\\';
+      const tempPath = entity.getPath(storagePath);
+      expect(tempPath).toEqual(`${storagePath}${separator}${entity.id}`);
     });
 
     it('can update', (done) => {

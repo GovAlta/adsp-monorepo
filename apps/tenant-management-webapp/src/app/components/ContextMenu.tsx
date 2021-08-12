@@ -11,19 +11,12 @@ export interface ContextMenuItem {
 interface Props {
   onAction: (name: string) => void;
   items: ContextMenuItem[];
-  border?: boolean;
 }
 
-function ContextMenu({ onAction, items, ...props }: Props): JSX.Element {
-  const borderStyles: CSSProperties = {
-    boxShadow: '0 0 8px -2px rgba(0, 0, 0, 0.1)',
-    border: '1px solid #ccc',
-    borderRadius: '0.25rem',
-  };
-
+function ContextMenu({ onAction, items }: Props): JSX.Element {
   return (
     <Root>
-      <Menu style={props.border ? borderStyles : {}} className={props.border ? 'menu-border' : ''}>
+      <Menu>
         {items.map((item) => (
           <div
             data-testid={`context-menu--${item.name}`}
@@ -53,9 +46,10 @@ const Menu = styled.div`
     cursor: pointer;
     border-radius: 0.25rem;
     padding: 0.25rem;
+    border: 1px solid transparent;
 
     &:hover {
-      background: var(--color-gray-200);
+      border: 1px solid var(--color-gray-400);
     }
   }
   > div + div {

@@ -100,6 +100,7 @@ export class FileSpaceEntity implements FileSpace {
       type.updateRoles,
       this.id
     );
+
     this.types[fileType.id] = fileType;
 
     const created = await this.repository.save(this);

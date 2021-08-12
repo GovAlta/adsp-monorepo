@@ -8,6 +8,7 @@ import {
   UnauthorizedError,
   NotFoundError,
   InvalidOperationError,
+  AuthAssert,
 } from '@core-services/core-common';
 import { FileRepository, FileSpaceRepository } from '../repository';
 import { FileEntity } from '../model';
@@ -15,6 +16,7 @@ import { createUpload } from '../upload';
 import { FileCriteria } from '../types/file';
 import { EventService } from '@abgov/adsp-service-sdk';
 import { fileDeleted, fileUploaded } from '../events';
+import { MiddlewareWrapper } from './middlewareWrapper';
 
 interface FileRouterProps {
   logger: Logger;
@@ -34,7 +36,7 @@ export const createFileRouter = ({
   const upload = createUpload({ rootStoragePath });
   const fileRouter = Router();
 
-  fileRouter.post('/files', assertAuthenticatedHandler, upload.single('file'), async (req, res, next) => {
+  fileRouter.post('/files', AuthAssert.assertMethod, upload.single('file'), async (req, res, next) => {
     const user = req.user;
     const { type, recordId, filename } = req.body;
     const uploaded = req.file;
@@ -59,6 +61,7 @@ export const createFileRouter = ({
         if (!fileType) {
           throw new NotFoundError('Type', type);
         }
+
         const fileEntity = await FileEntity.create(
           user,
           fileRepository,
@@ -121,7 +124,7 @@ export const createFileRouter = ({
     }
   });
 
-  fileRouter.get('/files', async (req, res, next) => {
+  fileRouter.get('/files', MiddlewareWrapper.middlewareMethod, async (req, res, next) => {
     const { top, after } = req.query;
 
     try {
