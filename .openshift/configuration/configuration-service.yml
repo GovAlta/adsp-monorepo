@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: configuration-service
+        component: api
+      name: configuration-service
+    data:
+      KEYCLOAK_ROOT_URL: https://access-dev.os99.gov.ab.ca
+      DIRECTORY_URL: https://tenant-management-api-core-services-dev.os99.gov.ab.ca
+      LOG_LEVEL: info
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        app: configuration-service
+        component: api
+      name: configuration-service
+    stringData:
+      CLIENT_ID: urn:ads:platform:configuration-service
+      CLIENT_SECRET:
