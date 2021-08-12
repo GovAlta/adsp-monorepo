@@ -98,3 +98,26 @@ Feature: File service
   Scenario: As a service owner, I can manage file services without any critical or serious accessibility issues
     Given a service owner user is on file services overview page
     Then no critical or serious accessibility issues on "file service overview page"
+
+  @TEST_CS-315 @REQ_CS-196 @FileTypes @regression
+  Scenario: As a GoA service admin, I can add, update and remove file types
+    Given a service owner user is on file services overview page
+    When the user selects "File Types" tab for "File Services"
+    Then the user views file types page
+    When the user adds a file type of "autotest-add", "Anyone (Anonymous)", "auto-test-role1, file-service-admin"
+    Then the user "views" the file type of "autotest-add", "Anyone (Anonymous)", "auto-test-role1, file-service-admin"
+    When the user updates the file type of "autotest-add", "Anyone (Anonymous)", "auto-test-role1, file-service-admin" to be of "autotest-modify", "auto-test-role1", "auto-test-role2"
+    Then the user "views" the file type of "autotest-modify", "auto-test-role1", "auto-test-role2"
+    When the user removes the file type of "autotest-modify", "auto-test-role1", "auto-test-role2"
+    Then the user "should not view" the file type of "autotest-modify", "auto-test-role1", "auto-test-role2"
+
+  # Data required before running the file types and files api tests
+  # Tenant: autotest
+  # File type name: autotest-type6 (roles can be any)
+  @FileTypes @regression
+  Scenario: As a GoA service admin, I cannot add a file type with the same name as names of the existing file types
+    Given a service owner user is on file services overview page
+    When the user selects "File Types" tab for "File Services"
+    Then the user views file types page
+    When the user adds a file type of "autotest-type6", "auto-test-role1", "auto-test-role2"
+    Then the user views an error message for duplicated file name
