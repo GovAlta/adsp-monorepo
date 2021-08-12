@@ -76,6 +76,10 @@ const DeleteModalContainer = styled.div`
   .right {
     text-align: right;
   }
+
+  button + button {
+    margin-left: 1rem;
+  }
 `;
 interface FileTypeRowProps {
   name: string;
@@ -137,8 +141,10 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
 
     const Edit = () => {
       return (
-        <a
+        <GoAButton
           data-testid="edit-file-type"
+          buttonSize="small"
+          buttonType="secondary"
           onClick={() => {
             if (editableId !== props.id) {
               setEditableId(props.id);
@@ -149,13 +155,15 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           }}
         >
           Edit
-        </a>
+        </GoAButton>
       );
     };
 
     const CancelNew = (): JSX.Element => {
       return (
-        <a
+        <GoAButton
+          buttonType='secondary'
+          buttonSize='small'
           data-testid="cancel-new"
           onClick={() => {
             setStartCreateFileType(false);
@@ -164,13 +172,15 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           }}
         >
           Cancel
-        </a>
+        </GoAButton>
       );
     };
 
     const CancelUpdate = (): JSX.Element => {
       return (
-        <a
+        <GoAButton
+          buttonType='secondary'
+          buttonSize='small'
           data-testid="cancel-update"
           onClick={() => {
             setEditableId('');
@@ -178,7 +188,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           }}
         >
           Cancel
-        </a>
+        </GoAButton>
       );
     };
     return (
