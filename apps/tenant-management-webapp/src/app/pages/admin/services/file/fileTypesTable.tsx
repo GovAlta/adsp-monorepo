@@ -475,10 +475,10 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
     const [name, setName] = useState(props.name);
     const { id } = props;
     useEffect(() => {
-      if (newInputRef.current && newFileType.name.length <= 1) {
+      if (newInputRef.current) {
         newInputRef.current.focus();
       }
-    });
+    }, []);
 
     return (
       <>
