@@ -1,4 +1,4 @@
-import { UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AdspIdFormatError, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { ErrorRequestHandler } from 'express';
 import { Logger } from 'winston';
 import { InvalidOperationError } from './invalidOperation';
@@ -13,6 +13,8 @@ export const createErrorHandler = (logger: Logger): ErrorRequestHandler => (err,
   } else if (err instanceof NotFoundError) {
     res.status(404).send(err.message);
   } else if (err instanceof InvalidOperationError) {
+    res.status(400).send(err.message);
+  } else if (err instanceof AdspIdFormatError) {
     res.status(400).send(err.message);
   } else {
     logger.warn(`Unexpected error encountered in handler for request ${req.path}. ${err}`);

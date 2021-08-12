@@ -844,6 +844,53 @@
           }
         }
       }
+    },
+    "configuration-service": {
+      "root": "apps/configuration-service",
+      "sourceRoot": "apps/configuration-service/src",
+      "projectType": "application",
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "webpackConfig": "apps/configuration-service/webpack.config.js",
+            "outputPath": "dist/apps/configuration-service",
+            "main": "apps/configuration-service/src/main.ts",
+            "tsConfig": "apps/configuration-service/tsconfig.app.json",
+            "assets": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "configuration-service:build",
+            "port": 7780
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/configuration-service/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/configuration-service"],
+          "options": {
+            "jestConfig": "apps/configuration-service/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
     }
   }
 }

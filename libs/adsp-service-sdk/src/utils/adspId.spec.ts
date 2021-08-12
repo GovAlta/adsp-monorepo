@@ -42,7 +42,13 @@ describe('adspId', () => {
   it('fails for invalid scheme', () => {
     expect(
       () => adspId`urn:aps:test-sandbox:test-service:v1`
-    ).toThrow(/^Valid ADSP ID must begin with:/);
+    ).toThrow(/^ADSP ID must begin with: urn:ads:/);
+  });
+
+  it('fails for whitespace element', () => {
+    expect(
+      () => adspId`urn:ads:  :test-service:v1`
+    ).toThrow(/^ADSP ID cannot include empty element./);
   });
 
   it('can convert to string', () => {

@@ -11,11 +11,15 @@
     },
     {
       "service": "configuration-service",
-      "host": "http://tenant-management-api:3333"
+      "host": "http://configuration-service:3339"
     },
     {
       "service": "configuration-service:v1",
       "host": "http://tenant-management-api:3333/api/configuration/v1"
+    },
+    {
+      "service": "configuration-service:v2",
+      "host": "http://configuration-service:3339/configuration/v2"
     },
     {
       "service": "file-service",
