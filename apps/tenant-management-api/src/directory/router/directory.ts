@@ -24,41 +24,18 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
     try {
       // FIXME: this endpoint is not testable since the `getDirectories()` function
       // uses a non-injected mongo repo that cannot be stubbed out
-      const results = await getDirectories();
-      res.send(results);
-    } catch (err) {
-      logger?.error(err);
-      res.status(HttpStatusCodes.BAD_REQUEST).json({
-        errors: [err.message],
-      });
-    }
-  });
+      const {name, urn} =  req.query
+      let result = {}
+      if (urn) {
+        result = await discovery(urn as string, { directoryRepository })
+      }
+      else if (name) {
+        result = await directoryRepository.getDirectories(name as string);
+      } else {
+        result = await getDirectories();
+      }
 
-  /**
-   * Get one directory by urn
-   */
-  directoryRouter.get('/urn', validationMiddleware(null), async (req: Request, res: Response, _next) => {
-    if (req.query.urn) {
-      const { urn } = req.query;
-      return res.send(await discovery(urn as string, { directoryRepository }));
-    }
-    logger?.error('There is error on getting directory from urn');
-    return res.status(HttpStatusCodes.BAD_REQUEST).json({ errors: 'There is no context in post' });
-  });
-
-  /***********
-   * Get one directory by name
-   */
-  directoryRouter.get('/directory/:name', validationMiddleware(null), async (req: Request, res: Response, _next) => {
-    const { name } = req.params;
-
-    try {
-      const directory = await directoryRepository.getDirectories(name);
-
-      res.send({
-        name: directory.name,
-        services: directory.services,
-      });
+      res.json(result);
     } catch (err) {
       logger?.error(err);
       res.status(HttpStatusCodes.BAD_REQUEST).json({
