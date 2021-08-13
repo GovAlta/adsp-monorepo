@@ -42,6 +42,7 @@ const CreateRealm = (): JSX.Element => {
   }, []);
 
   useEffect(() => {
+    console.log(JSON.stringify(userInfo) + '<userInfo');
     if (userInfo) {
       dispatch(IsTenantAdmin(userInfo.email));
     }

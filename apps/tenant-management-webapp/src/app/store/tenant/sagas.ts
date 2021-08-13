@@ -3,16 +3,19 @@ import { RootState, store } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
 import {
   CheckIsTenantAdminAction,
+  CheckHasAdminRoleAction,
   CreateTenantAction,
   CreateTenantSuccess,
   FetchTenantAction,
   FetchTenantSuccess,
   UpdateTenantAdminInfo,
+  UpdateHasAdminRole,
   IsTenantAdmin,
   KeycloakCheckSSOAction,
   TenantLoginAction,
   KeycloakCheckSSOWithLogOutAction,
   FetchRealmRolesSuccess,
+  HasAdminRole,
 } from './actions';
 
 import { SessionLoginSuccess } from '@store/session/actions';
@@ -30,9 +33,26 @@ export function* fetchTenant(action: FetchTenantAction): SagaIterator {
 
   try {
     const tenant = yield call([api, api.fetchTenantByRealm], realm);
+    console.log(JSON.stringify(tenant) + '<tenant----xxx-');
     yield put(FetchTenantSuccess(tenant));
   } catch (e) {
     yield put(ErrorNotification({ message: 'failed to fetch tenant' }));
+  }
+}
+
+export function* hasAdminRole(action: CheckHasAdminRoleAction): SagaIterator {
+  const state: RootState = yield select();
+  console.log(JSON.stringify(state) + '<statexxx');
+  const token = state?.session?.credentials?.token;
+  const api = new TenantApi(state.config.tenantApi, token);
+
+  try {
+    const response = yield call([api, api.hasAdminRole]);
+    console.log(JSON.stringify(response) + '<responsexx');
+    yield put(UpdateHasAdminRole(response));
+  } catch (e) {
+    yield put(UpdateHasAdminRole(false));
+    yield put(ErrorNotification({ message: 'failed to check tenant admin' }));
   }
 }
 
@@ -123,7 +143,7 @@ export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAc
     keycloakAuth.checkSSO(
       (keycloak) => {
         const session = convertToSession(keycloak);
-        Promise.all([store.dispatch(SessionLoginSuccess(session))]);
+        Promise.all([store.dispatch(SessionLoginSuccess(session)), store.dispatch(HasAdminRole())]);
       },
       () => {
         window.location.replace('/');
@@ -152,7 +172,7 @@ export function* keycloakRefreshToken(): SagaIterator {
       keycloakAuth.refreshToken(
         (keycloak) => {
           const session = convertToSession(keycloak);
-          Promise.all([store.dispatch(SessionLoginSuccess(session))]);
+          Promise.all([store.dispatch(SessionLoginSuccess(session)), store.dispatch(HasAdminRole())]);
         },
         () => {
           window.location.replace('/');

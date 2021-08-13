@@ -130,6 +130,8 @@ const createAdminUser = async (
     realm: realm,
   });
 
+  console.log(JSON.stringify(roles) + '<roles....');
+
   const roleMapping = {
     realm: realm,
     id: user.id,
@@ -158,6 +160,8 @@ const createAdminUser = async (
       },
     ],
   });
+
+  await kcClient.users.listClientRoleMappings({ id: user.id, clientUniqueId: tenantServiceClientId });
 
   logger.info('Add tenant admin role to user.');
 
@@ -283,6 +287,8 @@ export const createRealm = async (
     const idpConfig = createIdpConfig(brokerClientSecret, brokerClient, FLOW_ALIAS, realm);
 
     const registeredClients = await services.getServiceClients();
+    console.log(JSON.stringify(registeredClients) + '<registeredClients');
+
     const clients = registeredClients.map((registeredClient) =>
       createPlatformServiceConfig(registeredClient.serviceId, ...registeredClient.roles)
     );

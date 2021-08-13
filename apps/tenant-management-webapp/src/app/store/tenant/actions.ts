@@ -7,6 +7,8 @@ const UPDATE_TENANT_ADMIN_INFO = 'UPDATE_TENANT_ADMIN_INFO';
 export const CREATE_TENANT = 'CREATE_TENANT';
 const CREATE_TENANT_SUCCESS = 'CREATE_TENANT_SUCCESS';
 export const CHECK_IS_TENANT_ADMIN = 'CHECK_IS_ADMIN';
+export const CHECK_HAS_ADMIN_ROLE = 'CHECK_HAS_ADMIN_ROLE';
+export const UPDATE_HAS_ADMIN_ROLE = 'UPDATE_HAS_ADMIN_ROLE';
 export const TENANT_ADMIN_LOGIN = 'TENANT_ADMIN_LOGIN';
 export const TENANT_CREATION_LOGIN_INIT = 'TENANT_CREATION_LOGIN_INIT';
 export const TENANT_LOGIN = 'TENANT_LOGIN';
@@ -43,6 +45,10 @@ export interface CheckIsTenantAdminAction {
   payload: string;
 }
 
+export interface CheckHasAdminRoleAction {
+  type: typeof CHECK_HAS_ADMIN_ROLE;
+}
+
 export interface UpdateTenantCreatedAction {
   type: typeof UPDATE_TENANT_CREATED;
 }
@@ -53,6 +59,13 @@ interface UpdateTenantAdminInfoAction {
     isTenantAdmin: boolean;
     name: string;
     realm: string;
+  };
+}
+
+interface UpdateHasAdminRoleAction {
+  type: typeof UPDATE_HAS_ADMIN_ROLE;
+  payload: {
+    hasAdminRole: boolean;
   };
 }
 
@@ -105,9 +118,11 @@ export type ActionType =
   | FetchTenantSuccessAction
   | CreateTenantAction
   | CheckIsTenantAdminAction
+  | CheckHasAdminRoleAction
   | CreateTenantSuccessAction
   | SelectTenantAction
   | UpdateTenantAdminInfoAction
+  | UpdateHasAdminRoleAction
   | TenantAdminLoginAction
   | TenantCreationLoginInitAction
   | TenantLoginAction
@@ -142,6 +157,10 @@ export const UpdateTenantCreated = (): UpdateTenantCreatedAction => ({
   type: 'UPDATE_TENANT_CREATED',
 });
 
+export const HasAdminRole = (): CheckHasAdminRoleAction => ({
+  type: 'CHECK_HAS_ADMIN_ROLE',
+});
+
 export const IsTenantAdmin = (email: string): CheckIsTenantAdminAction => ({
   type: 'CHECK_IS_ADMIN',
   payload: email,
@@ -172,6 +191,13 @@ export const KeycloakCheckSSOWithLogout = (realm: string): KeycloakCheckSSOWithL
 
 export const KeycloakRefreshToken = (): KeycloakRefreshTokenAction => ({
   type: 'KEYCLOAK_REFRESH_TOKEN',
+});
+
+export const UpdateHasAdminRole = (hasAdminRole: boolean): UpdateHasAdminRoleAction => ({
+  type: 'UPDATE_HAS_ADMIN_ROLE',
+  payload: {
+    hasAdminRole: hasAdminRole,
+  },
 });
 
 export const UpdateTenantAdminInfo = (
