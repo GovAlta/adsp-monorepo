@@ -498,8 +498,8 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
             <td data-testid='new-name'>
               <input
                 onBlur={(e) => {
-                  newFileType.name = e.target.value;
-
+                  const name = e.target.value.trim()
+                  newFileType.name = name;
                 }}
                 ref={newInputRef}
                 onChange={(e) => {
