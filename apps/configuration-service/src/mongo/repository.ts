@@ -1,5 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, ValidationService } from '@core-services/core-common';
+import { ValidationService } from '@core-services/core-common';
 import { model, Model } from 'mongoose';
 import { ConfigurationRepository, ConfigurationEntity, ConfigurationRevision } from '../configuration';
 import { revisionSchema } from './schema';

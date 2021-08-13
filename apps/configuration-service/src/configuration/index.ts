@@ -36,7 +36,7 @@ export const applyConfigurationMiddleware = async (
   );
   if (!entity.latest) {
     await entity.update({ isCore: true, roles: [ConfigurationServiceRoles.ConfigurationAdmin] } as User, {
-      [serviceId.toString()]: { configurationSchema: schema },
+      [`${serviceId.namespace}:${serviceId.service}`]: { configurationSchema: schema },
     });
   }
 
