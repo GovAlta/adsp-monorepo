@@ -2,19 +2,20 @@ import { adspId, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
-import { ServiceConfigurationEntity } from '../model';
+import { ConfigurationEntity } from '../model';
 import { ConfigurationServiceRoles } from '../roles';
 import {
   createConfigurationRouter,
-  createServiceConfigurationRevision,
-  getServiceConfiguration,
-  getServiceConfigurationEntity,
-  patchServiceConfigurationRevision,
+  createConfigurationRevision,
+  getConfiguration,
+  getConfigurationEntity,
+  patchConfigurationRevision,
 } from './configuration';
 
 describe('router', () => {
   const configurationServiceId = adspId`urn:ads:platform:configuration-service`;
-  const serviceId = adspId`urn:ads:platform:test-service`;
+  const namespace = 'platform';
+  const name = 'test-service';
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
 
   const loggerMock = {
@@ -47,7 +48,7 @@ describe('router', () => {
     it('can create router', () => {
       const router = createConfigurationRouter({
         isConnected: () => true,
-        serviceId,
+        serviceId: adspId`urn:ads:platform:configuration-service`,
         eventService: eventServiceMock,
         logger: loggerMock as Logger,
         configuration: repositoryMock,
@@ -59,27 +60,39 @@ describe('router', () => {
 
   describe('getServiceConfigurationEntity', () => {
     it('can create handler', () => {
-      const handler = getServiceConfigurationEntity(configurationServiceId, repositoryMock);
+      const handler = getConfigurationEntity(configurationServiceId, repositoryMock);
       expect(handler).toBeTruthy();
     });
 
     it('can get entity', (done) => {
-      const handler = getServiceConfigurationEntity(configurationServiceId, repositoryMock, () => true);
+      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, () => true);
 
       // Configuration definition retrieval.
       repositoryMock.get.mockResolvedValueOnce(
-        new ServiceConfigurationEntity(configurationServiceId, repositoryMock, validationMock)
+        new ConfigurationEntity(
+          configurationServiceId.namespace,
+          configurationServiceId.service,
+          repositoryMock,
+          validationMock
+        )
       );
       repositoryMock.get.mockResolvedValueOnce(
-        new ServiceConfigurationEntity(configurationServiceId, repositoryMock, validationMock, null, tenantId)
+        new ConfigurationEntity(
+          configurationServiceId.namespace,
+          configurationServiceId.service,
+          repositoryMock,
+          validationMock,
+          null,
+          tenantId
+        )
       );
 
-      const entity = new ServiceConfigurationEntity(serviceId, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
       repositoryMock.get.mockResolvedValueOnce(entity);
 
       const req = ({
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
-        params: { namespace: serviceId.namespace, service: serviceId.service },
+        params: { namespace, name },
         query: {},
       } as unknown) as Request;
 
@@ -90,49 +103,73 @@ describe('router', () => {
     });
 
     it('can get tenant entity', (done) => {
-      const handler = getServiceConfigurationEntity(configurationServiceId, repositoryMock, () => false);
+      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, () => false);
 
       // Configuration definition retrieval.
       repositoryMock.get.mockResolvedValueOnce(
-        new ServiceConfigurationEntity(configurationServiceId, repositoryMock, validationMock)
+        new ConfigurationEntity(
+          configurationServiceId.namespace,
+          configurationServiceId.service,
+          repositoryMock,
+          validationMock
+        )
       );
       repositoryMock.get.mockResolvedValueOnce(
-        new ServiceConfigurationEntity(configurationServiceId, repositoryMock, validationMock, null, tenantId)
+        new ConfigurationEntity(
+          configurationServiceId.namespace,
+          configurationServiceId.service,
+          repositoryMock,
+          validationMock,
+          null,
+          tenantId
+        )
       );
 
-      const entity = new ServiceConfigurationEntity(serviceId, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
       repositoryMock.get.mockResolvedValueOnce(entity);
 
       const req = ({
         user: { isCore: true, roles: [ConfigurationServiceRoles.Reader] } as User,
-        params: { namespace: serviceId.namespace, service: serviceId.service },
+        params: { namespace, name },
         query: { tenantId: tenantId.toString() },
       } as unknown) as Request;
 
       handler(req, null, () => {
         expect(req['entity']).toBe(entity);
-        expect(repositoryMock.get.mock.calls[2][1].toString()).toEqual(tenantId.toString());
+        expect(repositoryMock.get.mock.calls[2][2].toString()).toEqual(tenantId.toString());
         done();
       });
     });
 
     it('can return error for unauthorized', (done) => {
-      const handler = getServiceConfigurationEntity(configurationServiceId, repositoryMock, () => false);
+      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, () => false);
 
       // Configuration definition retrieval.
       repositoryMock.get.mockResolvedValueOnce(
-        new ServiceConfigurationEntity(configurationServiceId, repositoryMock, validationMock)
+        new ConfigurationEntity(
+          configurationServiceId.namespace,
+          configurationServiceId.service,
+          repositoryMock,
+          validationMock
+        )
       );
       repositoryMock.get.mockResolvedValueOnce(
-        new ServiceConfigurationEntity(configurationServiceId, repositoryMock, validationMock, null, tenantId)
+        new ConfigurationEntity(
+          configurationServiceId.namespace,
+          configurationServiceId.service,
+          repositoryMock,
+          validationMock,
+          null,
+          tenantId
+        )
       );
 
-      const entity = new ServiceConfigurationEntity(serviceId, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
       repositoryMock.get.mockResolvedValueOnce(entity);
 
       const req = ({
         user: { isCore: false, roles: [], tenantId } as User,
-        params: { namespace: serviceId.namespace, service: serviceId.service },
+        params: { namespace, name },
         query: {},
       } as unknown) as Request;
 
@@ -143,70 +180,128 @@ describe('router', () => {
     });
 
     it('can get entity with core definition', (done) => {
-      const handler = getServiceConfigurationEntity(configurationServiceId, repositoryMock, () => false);
+      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, () => false);
 
       // Configuration definition retrieval.
       const configurationSchema = {};
       repositoryMock.get.mockResolvedValueOnce(
-        new ServiceConfigurationEntity(configurationServiceId, repositoryMock, validationMock, {
-          revision: 1,
-          configuration: {
-            [serviceId.toString()]: { configurationSchema },
-          },
-        })
-      );
-
-      const entity = new ServiceConfigurationEntity(serviceId, repositoryMock, validationMock, null, tenantId);
-      repositoryMock.get.mockResolvedValueOnce(entity);
-
-      const req = ({
-        user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
-        params: { namespace: serviceId.namespace, service: serviceId.service },
-        query: {},
-      } as unknown) as Request;
-
-      handler(req, null, () => {
-        expect(req['entity']).toBe(entity);
-        expect(repositoryMock.get.mock.calls[1][2]).toBe(configurationSchema);
-        done();
-      });
-    });
-
-    it('can get entity with tenant definition', (done) => {
-      const handler = getServiceConfigurationEntity(configurationServiceId, repositoryMock, () => false);
-
-      // Configuration definition retrieval.
-      repositoryMock.get.mockResolvedValueOnce(
-        new ServiceConfigurationEntity(configurationServiceId, repositoryMock, validationMock)
-      );
-      const configurationSchema = {};
-      repositoryMock.get.mockResolvedValueOnce(
-        new ServiceConfigurationEntity(
-          configurationServiceId,
+        new ConfigurationEntity(
+          configurationServiceId.namespace,
+          configurationServiceId.service,
           repositoryMock,
           validationMock,
           {
             revision: 1,
             configuration: {
-              [serviceId.toString()]: { configurationSchema },
+              [`${namespace}:${name}`]: { configurationSchema },
+            },
+          }
+        )
+      );
+
+      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
+      repositoryMock.get.mockResolvedValueOnce(entity);
+
+      const req = ({
+        user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
+        params: { namespace, name },
+        query: {},
+      } as unknown) as Request;
+
+      handler(req, null, () => {
+        expect(req['entity']).toBe(entity);
+        expect(repositoryMock.get.mock.calls[1][3]).toBe(configurationSchema);
+        done();
+      });
+    });
+
+    it('can get entity with tenant definition', (done) => {
+      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, () => false);
+
+      // Configuration definition retrieval.
+      repositoryMock.get.mockResolvedValueOnce(
+        new ConfigurationEntity(
+          configurationServiceId.namespace,
+          configurationServiceId.service,
+          repositoryMock,
+          validationMock
+        )
+      );
+      const configurationSchema = {};
+      repositoryMock.get.mockResolvedValueOnce(
+        new ConfigurationEntity(
+          configurationServiceId.namespace,
+          configurationServiceId.service,
+          repositoryMock,
+          validationMock,
+          {
+            revision: 1,
+            configuration: {
+              [`${namespace}:${name}`]: { configurationSchema },
+              [namespace]: { configurationSchema: {} },
             },
           },
           tenantId
         )
       );
 
-      const entity = new ServiceConfigurationEntity(serviceId, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
       repositoryMock.get.mockResolvedValueOnce(entity);
 
       const req = ({
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
-        params: { namespace: serviceId.namespace, service: serviceId.service },
+        params: { namespace, name },
         query: {},
       } as unknown) as Request;
 
       handler(req, null, () => {
         expect(req['entity']).toBe(entity);
-        expect(repositoryMock.get.mock.calls[2][2]).toBe(configurationSchema);
+        expect(repositoryMock.get.mock.calls[2][3]).toBe(configurationSchema);
+        done();
+      });
+    });
+
+    it('can get entity with tenant namespace definition', (done) => {
+      const handler = getConfigurationEntity(configurationServiceId, repositoryMock, () => false);
+
+      // Configuration definition retrieval.
+      repositoryMock.get.mockResolvedValueOnce(
+        new ConfigurationEntity(
+          configurationServiceId.namespace,
+          configurationServiceId.service,
+          repositoryMock,
+          validationMock
+        )
+      );
+      const configurationSchema = {};
+      repositoryMock.get.mockResolvedValueOnce(
+        new ConfigurationEntity(
+          configurationServiceId.namespace,
+          configurationServiceId.service,
+          repositoryMock,
+          validationMock,
+          {
+            revision: 1,
+            configuration: {
+              [namespace]: { configurationSchema },
+            },
+          },
+          tenantId
+        )
+      );
+
+      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
+      repositoryMock.get.mockResolvedValueOnce(entity);
+
+      const req = ({
+        user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
+        params: { namespace, name },
+        query: {},
+      } as unknown) as Request;
+
+      handler(req, null, () => {
+        expect(req['entity']).toBe(entity);
+        expect(repositoryMock.get.mock.calls[2][3]).toBe(configurationSchema);
         done();
       });
     });
@@ -214,19 +309,19 @@ describe('router', () => {
 
   describe('getServiceConfiguration', () => {
     it('can create handler', () => {
-      const handler = getServiceConfiguration();
+      const handler = getConfiguration();
       expect(handler).toBeTruthy();
     });
 
     it('can get configuration', () => {
-      const handler = getServiceConfiguration();
+      const handler = getConfiguration();
 
-      const entity = new ServiceConfigurationEntity(serviceId, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
 
       const req = ({
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
-        params: { namespace: serviceId.namespace, service: serviceId.service },
+        params: { namespace, name },
         query: {},
       } as unknown) as Request;
 
@@ -235,29 +330,30 @@ describe('router', () => {
       };
 
       handler(req, (res as unknown) as Response, jest.fn());
-      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ latest: null, serviceId: serviceId.toString() }));
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ latest: null, namespace, name }));
     });
   });
 
   describe('patchServiceConfigurationRevision', () => {
     it('can create handler', () => {
-      const handler = patchServiceConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(eventServiceMock);
       expect(handler).toBeTruthy();
     });
 
     it('can update', async () => {
-      const handler = patchServiceConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(eventServiceMock);
 
       const entity = {
         tenantId,
-        serviceId,
+        namespace,
+        name,
         update: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: { old: 'old' } },
       };
       const req = ({
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
-        params: { namespace: serviceId.namespace, service: serviceId.service },
+        params: { namespace, name },
         query: {},
         body: {
           operation: 'UPDATE',
@@ -274,26 +370,25 @@ describe('router', () => {
       const next = jest.fn();
 
       await handler(req, (res as unknown) as Response, next);
-      expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ serviceId: serviceId.toString(), latest: entity.latest })
-      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
       expect(entity.update).toHaveBeenCalledWith(req.user, expect.objectContaining({ ...req.body.update, old: 'old' }));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
     });
 
     it('can handle no existing revision on update', async () => {
-      const handler = patchServiceConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(eventServiceMock);
 
       const entity = {
         tenantId,
-        serviceId,
+        namespace,
+        name,
         update: jest.fn(() => Promise.resolve(entity)),
         latest: null,
       };
       const req = ({
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
-        params: { namespace: serviceId.namespace, service: serviceId.service },
+        params: { namespace, name },
         query: {},
         body: {
           operation: 'UPDATE',
@@ -310,26 +405,25 @@ describe('router', () => {
       const next = jest.fn();
 
       await handler(req, (res as unknown) as Response, next);
-      expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ serviceId: serviceId.toString(), latest: entity.latest })
-      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
       expect(entity.update).toHaveBeenCalledWith(req.user, expect.objectContaining(req.body.update));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
     });
 
     it('can return error for update missing value', async () => {
-      const handler = patchServiceConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(eventServiceMock);
 
       const entity = {
         tenantId,
-        serviceId,
+        namespace,
+        name,
         update: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: { old: 'old' } },
       };
       const req = ({
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
-        params: { namespace: serviceId.namespace, service: serviceId.service },
+        params: { namespace, name },
         query: {},
         body: {
           operation: 'UPDATE',
@@ -348,18 +442,19 @@ describe('router', () => {
     });
 
     it('can replace', async () => {
-      const handler = patchServiceConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(eventServiceMock);
 
       const entity = {
         tenantId,
-        serviceId,
+        namespace,
+        name,
         update: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: { old: 'old' } },
       };
       const req = ({
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
-        params: { namespace: serviceId.namespace, service: serviceId.service },
+        params: { namespace, name },
         query: {},
         body: {
           operation: 'REPLACE',
@@ -376,9 +471,7 @@ describe('router', () => {
       const next = jest.fn();
 
       await handler(req, (res as unknown) as Response, next);
-      expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ serviceId: serviceId.toString(), latest: entity.latest })
-      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
       expect(entity.update).toHaveBeenCalledWith(
         req.user,
         expect.objectContaining<{ value: string }>(req.body.configuration)
@@ -387,18 +480,19 @@ describe('router', () => {
     });
 
     it('can return error for replace without value', async () => {
-      const handler = patchServiceConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(eventServiceMock);
 
       const entity = {
         tenantId,
-        serviceId,
+        namespace,
+        name,
         update: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: { old: 'old' } },
       };
       const req = ({
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
-        params: { namespace: serviceId.namespace, service: serviceId.service },
+        params: { namespace, name },
         query: {},
         body: {
           operation: 'REPLACE',
@@ -417,18 +511,19 @@ describe('router', () => {
     });
 
     it('can delete', async () => {
-      const handler = patchServiceConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(eventServiceMock);
 
       const entity = {
         tenantId,
-        serviceId,
+        namespace,
+        name,
         update: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: { old: 'old' } },
       };
       const req = ({
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
-        params: { namespace: serviceId.namespace, service: serviceId.service },
+        params: { namespace, name },
         query: {},
         body: {
           operation: 'DELETE',
@@ -443,26 +538,25 @@ describe('router', () => {
       const next = jest.fn();
 
       await handler(req, (res as unknown) as Response, next);
-      expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ serviceId: serviceId.toString(), latest: entity.latest })
-      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
       expect(entity.update).toHaveBeenCalledWith(req.user, expect.not.objectContaining(entity.latest.configuration));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
     });
 
     it('can handle no existing revision on delete', async () => {
-      const handler = patchServiceConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(eventServiceMock);
 
       const entity = {
         tenantId,
-        serviceId,
+        namespace,
+        name,
         update: jest.fn(() => Promise.resolve(entity)),
         latest: null,
       };
       const req = ({
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
-        params: { namespace: serviceId.namespace, service: serviceId.service },
+        params: { namespace, name },
         query: {},
         body: {
           operation: 'DELETE',
@@ -477,26 +571,25 @@ describe('router', () => {
       const next = jest.fn();
 
       await handler(req, (res as unknown) as Response, next);
-      expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ serviceId: serviceId.toString(), latest: entity.latest })
-      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
       expect(entity.update).toHaveBeenCalledWith(req.user, expect.objectContaining({}));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
     });
 
     it('can handle missing property on delete', async () => {
-      const handler = patchServiceConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(eventServiceMock);
 
       const entity = {
         tenantId,
-        serviceId,
+        namespace,
+        name,
         update: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: { old: 'old' } },
       };
       const req = ({
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
-        params: { namespace: serviceId.namespace, service: serviceId.service },
+        params: { namespace, name },
         query: {},
         body: {
           operation: 'DELETE',
@@ -511,26 +604,25 @@ describe('router', () => {
       const next = jest.fn();
 
       await handler(req, (res as unknown) as Response, next);
-      expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ serviceId: serviceId.toString(), latest: entity.latest })
-      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
       expect(entity.update).toHaveBeenCalledWith(req.user, expect.objectContaining(entity.latest.configuration));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
     });
 
     it('can return error for delete without property', async () => {
-      const handler = patchServiceConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(eventServiceMock);
 
       const entity = {
         tenantId,
-        serviceId,
+        namespace,
+        name,
         update: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: { old: 'old' } },
       };
       const req = ({
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
-        params: { namespace: serviceId.namespace, service: serviceId.service },
+        params: { namespace, name },
         query: {},
         body: {
           operation: 'DELETE',
@@ -549,18 +641,19 @@ describe('router', () => {
     });
 
     it('can return error for unrecognized operation', async () => {
-      const handler = patchServiceConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(eventServiceMock);
 
       const entity = {
         tenantId,
-        serviceId,
+        namespace,
+        name,
         update: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: { old: 'old' } },
       };
       const req = ({
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
-        params: { namespace: serviceId.namespace, service: serviceId.service },
+        params: { namespace, name },
         query: {},
         body: {
           operation: 'NOP',
@@ -581,23 +674,24 @@ describe('router', () => {
 
   describe('createServiceConfigurationRevision', () => {
     it('can create handler', () => {
-      const handler = createServiceConfigurationRevision(eventServiceMock);
+      const handler = createConfigurationRevision(eventServiceMock);
       expect(handler).toBeTruthy();
     });
 
     it('can create revision', async () => {
-      const handler = createServiceConfigurationRevision(eventServiceMock);
+      const handler = createConfigurationRevision(eventServiceMock);
 
       const entity = {
         tenantId,
-        serviceId,
+        namespace,
+        name,
         createRevision: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: {} },
       };
       const req = ({
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
-        params: { namespace: serviceId.namespace, service: serviceId.service },
+        params: { namespace, name },
         query: {},
         body: {
           revision: true,
@@ -611,26 +705,25 @@ describe('router', () => {
       const next = jest.fn();
 
       await handler(req, (res as unknown) as Response, next);
-      expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ serviceId: serviceId.toString(), latest: entity.latest })
-      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
       expect(entity.createRevision).toHaveBeenCalledTimes(1);
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
     });
 
     it('can create first revision', async () => {
-      const handler = createServiceConfigurationRevision(eventServiceMock);
+      const handler = createConfigurationRevision(eventServiceMock);
 
       const entity = {
         tenantId,
-        serviceId,
+        namespace,
+        name,
         createRevision: jest.fn(() => Promise.resolve(entity)),
         latest: null,
       };
       const req = ({
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
-        params: { namespace: serviceId.namespace, service: serviceId.service },
+        params: { namespace, name },
         query: {},
         body: {
           revision: true,
@@ -644,26 +737,25 @@ describe('router', () => {
       const next = jest.fn();
 
       await handler(req, (res as unknown) as Response, next);
-      expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({ serviceId: serviceId.toString(), latest: entity.latest })
-      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
       expect(entity.createRevision).toHaveBeenCalledTimes(1);
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
     });
 
     it('can return error for unrecognized request', async () => {
-      const handler = createServiceConfigurationRevision(eventServiceMock);
+      const handler = createConfigurationRevision(eventServiceMock);
 
       const entity = {
         tenantId,
-        serviceId,
+        namespace,
+        name,
         createRevision: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: {} },
       };
       const req = ({
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
-        params: { namespace: serviceId.namespace, service: serviceId.service },
+        params: { namespace, name },
         query: {},
         body: {},
       } as unknown) as Request;

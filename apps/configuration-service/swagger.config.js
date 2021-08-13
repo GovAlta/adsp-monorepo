@@ -3,13 +3,12 @@ module.exports = {
   info: {
     title: 'Configuration Service',
     version: '0.0.0',
-    description:
-      'The Configuration Service provides persistence for service configuration with write schema validation.',
+    description: 'The Configuration Service provides persistence for configuration with write schema validation.',
   },
   tags: [
     {
       name: 'Configuration',
-      description: 'API to store and read service configuration.',
+      description: 'API to store and read configuration.',
     },
   ],
   components: {

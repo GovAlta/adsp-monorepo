@@ -28,7 +28,12 @@ export const applyConfigurationMiddleware = async (
       additionalProperties: false,
     },
   };
-  const entity = await configuration.get<ConfigurationDefinitions>(serviceId, null, schema);
+  const entity = await configuration.get<ConfigurationDefinitions>(
+    serviceId.namespace,
+    serviceId.service,
+    null,
+    schema
+  );
   if (!entity.latest) {
     await entity.update({ isCore: true, roles: [ConfigurationServiceRoles.ConfigurationAdmin] } as User, {
       [serviceId.toString()]: { configurationSchema: schema },

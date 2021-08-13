@@ -6,7 +6,10 @@ export const ConfigurationUpdatedDefinition: DomainEventDefinition = {
   payloadSchema: {
     type: 'object',
     properties: {
-      serviceId: {
+      namespace: {
+        type: 'string',
+      },
+      name: {
         type: 'string',
       },
       revision: {
@@ -22,7 +25,10 @@ export const RevisionCreatedDefinition: DomainEventDefinition = {
   payloadSchema: {
     type: 'object',
     properties: {
-      serviceId: {
+      namespace: {
+        type: 'string',
+      },
+      name: {
         type: 'string',
       },
       revision: {
@@ -32,30 +38,37 @@ export const RevisionCreatedDefinition: DomainEventDefinition = {
   },
 };
 
-export const configurationUpdated = (tenantId: AdspId, serviceId: AdspId, revision: number): DomainEvent => ({
+export const configurationUpdated = (
+  tenantId: AdspId,
+  namespace: string,
+  name: string,
+  revision: number
+): DomainEvent => ({
   name: 'configuration-updated',
   timestamp: new Date(),
   tenantId,
   context: {
-    namespace: serviceId.namespace,
-    name: serviceId.service,
+    namespace,
+    name,
   },
   payload: {
-    serviceId: serviceId.toString(),
+    namespace,
+    name,
     revision,
   },
 });
 
-export const revisionCreated = (tenantId: AdspId, serviceId: AdspId, revision: number): DomainEvent => ({
+export const revisionCreated = (tenantId: AdspId, namespace: string, name: string, revision: number): DomainEvent => ({
   name: 'revision-created',
   timestamp: new Date(),
   tenantId,
   context: {
-    namespace: serviceId.namespace,
-    name: serviceId.service,
+    namespace,
+    name,
   },
   payload: {
-    serviceId: serviceId.toString(),
+    namespace,
+    name,
     revision,
   },
 });

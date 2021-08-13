@@ -1,7 +1,7 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { ValidationService } from '@core-services/core-common';
+import { InvalidOperationError, ValidationService } from '@core-services/core-common';
 import { model, Model } from 'mongoose';
-import { ConfigurationRepository, ServiceConfigurationEntity, ConfigurationRevision } from '../configuration';
+import { ConfigurationRepository, ConfigurationEntity, ConfigurationRevision } from '../configuration';
 import { revisionSchema } from './schema';
 import { ConfigurationRevisionDoc } from './types';
 
@@ -13,12 +13,13 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
   }
 
   async get<C>(
-    serviceId: AdspId,
+    namespace: string,
+    name: string,
     tenantId?: AdspId,
     schema?: Record<string, unknown>
-  ): Promise<ServiceConfigurationEntity<C>> {
+  ): Promise<ConfigurationEntity<C>> {
     const tenant = tenantId?.toString();
-    const query = { namespace: serviceId.namespace, service: serviceId.service, tenant };
+    const query = { namespace, name, tenant };
     const latestDoc = await new Promise<ConfigurationRevisionDoc>((resolve, reject) => {
       this.revisionModel
         .find(query, null, { lean: true })
@@ -34,27 +35,20 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         }
       : null;
 
-    return new ServiceConfigurationEntity<C>(
-      serviceId,
-      this,
-      this.validationService,
-      latest,
-      tenantId,
-      schema
-    );
+    return new ConfigurationEntity<C>(namespace, name, this, this.validationService, latest, tenantId, schema);
   }
 
-  getRevisions<C>(_entity: ServiceConfigurationEntity<C>): Promise<ConfigurationRevision<C>[]> {
+  getRevisions<C>(_entity: ConfigurationEntity<C>): Promise<ConfigurationRevision<C>[]> {
     throw new Error('Method not implemented.');
   }
 
   async saveRevision<C>(
-    entity: ServiceConfigurationEntity<C>,
+    entity: ConfigurationEntity<C>,
     revision: ConfigurationRevision<C>
   ): Promise<ConfigurationRevision<C>> {
     const query: Record<string, unknown> = {
-      namespace: entity.serviceId.namespace,
-      service: entity.serviceId.service,
+      namespace: entity.namespace,
+      name: entity.name,
       revision: revision.revision,
     };
 

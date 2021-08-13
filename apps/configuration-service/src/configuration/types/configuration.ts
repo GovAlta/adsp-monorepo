@@ -5,8 +5,9 @@ export interface ConfigurationRevision<C = Record<string, unknown>> {
   revision: number;
 }
 
-export interface ServiceConfiguration<C = Record<string, unknown>> {
-  serviceId: AdspId;
+export interface Configuration<C = Record<string, unknown>> {
+  namespace: string;
+  name: string;
   tenantId?: AdspId;
   latest?: ConfigurationRevision<C>;
   revisions?: Record<number, ConfigurationRevision<C>>;

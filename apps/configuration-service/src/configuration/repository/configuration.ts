@@ -1,17 +1,18 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { ServiceConfigurationEntity } from '../model';
+import { ConfigurationEntity } from '../model';
 import { ConfigurationRevision } from '../types';
 
 export interface ConfigurationRepository {
   get<C>(
-    serviceId: AdspId,
+    namespace: string,
+    name: string,
     tenantId?: AdspId,
     schema?: Record<string, unknown>
-  ): Promise<ServiceConfigurationEntity<C>>;
+  ): Promise<ConfigurationEntity<C>>;
 
-  getRevisions<C>(entity: ServiceConfigurationEntity<C>): Promise<ConfigurationRevision<C>[]>;
+  getRevisions<C>(entity: ConfigurationEntity<C>): Promise<ConfigurationRevision<C>[]>;
   saveRevision<C>(
-    entity: ServiceConfigurationEntity<C>,
+    entity: ConfigurationEntity<C>,
     revision: ConfigurationRevision<C>
   ): Promise<ConfigurationRevision<C>>;
 }
