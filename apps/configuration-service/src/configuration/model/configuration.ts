@@ -38,7 +38,7 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
   public canAccess(user: User): boolean {
     return (
       (user?.roles?.includes(ConfigurationServiceRoles.ConfigurationAdmin) ||
-        user?.roles?.includes(ConfigurationServiceRoles.Service) ||
+        user?.roles?.includes(ConfigurationServiceRoles.ConfiguredService) ||
         user?.roles?.includes(ConfigurationServiceRoles.Reader)) &&
       (user.isCore || !this.tenantId || this.tenantId.toString() === user.tenantId?.toString())
     );
@@ -47,7 +47,7 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
   public canModify(user: User): boolean {
     return (
       (user?.roles?.includes(ConfigurationServiceRoles.ConfigurationAdmin) ||
-        user?.roles?.includes(ConfigurationServiceRoles.Service)) &&
+        user?.roles?.includes(ConfigurationServiceRoles.ConfiguredService)) &&
       (this.tenantId ? this.tenantId.toString() === user.tenantId?.toString() : user.isCore)
     );
   }

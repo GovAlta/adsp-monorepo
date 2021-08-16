@@ -39,7 +39,7 @@ const initializeApp = async (): Promise<express.Application> => {
         },
         {
           role: ConfigurationServiceRoles.ConfigurationAdmin,
-          description: 'Administrator role that grants access and modification of configuration.',
+          description: 'Administrator role that grants access to and modification of configuration.',
           inTenantAdmin: true,
         },
       ],
@@ -47,6 +47,8 @@ const initializeApp = async (): Promise<express.Application> => {
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
       directoryUrl: new URL(environment.DIRECTORY_URL),
+      // Configuration service registers against itself and Keycloak doesn't include aud in that case.
+      ignoreServiceAud: true,
     },
     { logger }
   );

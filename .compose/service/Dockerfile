@@ -1,5 +1,6 @@
 FROM adsp-base:latest
 ARG SERVICE
+COPY . /home/src
 RUN npm run build ${SERVICE}
 RUN npm prune --production
 USER 1001:0

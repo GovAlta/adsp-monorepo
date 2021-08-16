@@ -149,6 +149,7 @@ export const createConfigurationRevision = (eventService: EventService): Request
 };
 
 export function createConfigurationRouter({
+  logger,
   serviceId,
   eventService,
   configuration: configurationRepository,
@@ -163,7 +164,7 @@ export function createConfigurationRouter({
   );
 
   router.get(
-    '/configuration/:namespace/:service/latest',
+    '/configuration/:namespace/:name/latest',
     assertAuthenticatedHandler,
     getConfigurationEntity(serviceId, configurationRepository),
     getConfiguration((configuration) => configuration.latest?.configuration)
