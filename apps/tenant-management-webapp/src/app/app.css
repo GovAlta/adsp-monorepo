@@ -177,4 +177,16 @@ a.goa-link-button.goa--secondary:focus {
   color: var(--color-primary-dark);
 }
 
+button.goa-button:disabled,
+button.goa-button:disabled.goa--secondary,
+button.goa-button:disabled.goa--tertiary,
+input[type='button'].goa-button:disabled,
+input[type='button'].goa-button:disabled.goa--secondary,
+input[type='button'].goa-button:disabled.goa--tertiary,
+input[type='submit'].goa-button:disabled,
+input[type='submit'].goa-button:disabled.goa--secondary,
+input[type='submit'].goa-button:disabled.goa--tertiary {
+  border: 2px solid #f1f1f1 !important;
+}
+
 /* == OVERRIDES END */
