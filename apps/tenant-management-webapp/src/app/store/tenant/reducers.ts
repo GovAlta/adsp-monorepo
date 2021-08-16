@@ -4,8 +4,6 @@ import { TENANT_INIT, Tenant } from './models';
 export default (state = TENANT_INIT, action: ActionType): Tenant => {
   switch (action.type) {
     case 'FETCH_TENANT_SUCCESS':
-      console.log(JSON.stringify(action.payload) + '<tenantPayload');
-
       return { ...state, id: action.payload.id, name: action.payload.name, adminEmail: action.payload.adminEmail };
 
     case 'UPDATE_TENANT_ADMIN_INFO':

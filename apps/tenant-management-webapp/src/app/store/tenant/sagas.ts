@@ -33,7 +33,6 @@ export function* fetchTenant(action: FetchTenantAction): SagaIterator {
 
   try {
     const tenant = yield call([api, api.fetchTenantByRealm], realm);
-    console.log(JSON.stringify(tenant) + '<tenant----xxx-');
     yield put(FetchTenantSuccess(tenant));
   } catch (e) {
     yield put(ErrorNotification({ message: 'failed to fetch tenant' }));
@@ -42,13 +41,11 @@ export function* fetchTenant(action: FetchTenantAction): SagaIterator {
 
 export function* hasAdminRole(action: CheckHasAdminRoleAction): SagaIterator {
   const state: RootState = yield select();
-  console.log(JSON.stringify(state) + '<statexxx');
   const token = state?.session?.credentials?.token;
   const api = new TenantApi(state.config.tenantApi, token);
 
   try {
     const response = yield call([api, api.hasAdminRole]);
-    console.log(JSON.stringify(response) + '<responsexx');
     yield put(UpdateHasAdminRole(response));
   } catch (e) {
     yield put(UpdateHasAdminRole(false));

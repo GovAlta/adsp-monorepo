@@ -47,7 +47,6 @@ export class TenantApi {
 
   async hasAdminRole(): Promise<Tenant> {
     const url = `${this.config.host}/api/tenant/v1/hasadminrole`;
-    console.log(url + '<urlxxx--');
     const res = await this.http.post(url);
     return res.data;
   }

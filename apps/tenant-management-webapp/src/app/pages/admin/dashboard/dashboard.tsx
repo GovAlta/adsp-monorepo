@@ -7,6 +7,7 @@ import { Main, Aside } from '@components/Html';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
+import { GoAPageLoader } from '@abgov/react-components';
 
 const Dashboard = (): JSX.Element => {
   const { session, tenantManagementWebApp, tenantName, state, hasAdminRole, adminEmail } = useSelector(
@@ -21,8 +22,6 @@ const Dashboard = (): JSX.Element => {
       };
     }
   );
-
-  console.log(JSON.stringify(state) + '<state');
 
   const autoLoginUrl = `${tenantManagementWebApp}/${session.realm}/autologin`;
 
@@ -108,7 +107,8 @@ const Dashboard = (): JSX.Element => {
       </Main>
     );
   };
-
+  if (hasAdminRole === null)
+    return <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />;
   return <>{hasAdminRole ? adminDashboard() : calloutMessage()}</>;
 };
 export default Dashboard;

@@ -46,10 +46,7 @@ export const createTenantRouter = ({ tenantRepository, eventService, services }:
   async function getTenantByEmail(req, res) {
     try {
       const { email } = req.payload;
-      console.log(JSON.stringify(email) + '<email');
-      console.log(JSON.stringify(req.user) + '<rolesxxxxxssss');
       const tenant = await tenantRepository.findBy({ adminEmail: email });
-      console.log(JSON.stringify(tenant) + '<tenant');
       res.json(tenant.obj());
     } catch (e) {
       res.status(HttpStatusCodes.NOT_FOUND).json();
@@ -58,10 +55,6 @@ export const createTenantRouter = ({ tenantRepository, eventService, services }:
 
   async function hasAdminRole(req, res) {
     const { roles } = req.user;
-    console.log(JSON.stringify(roles) + '<roles');
-    console.log(
-      JSON.stringify(roles.includes(TenantServiceRoles.TenantAdmin)) + '<roles.includes(TenantServiceRoles.TenantAdmin)'
-    );
     res.json(roles.includes(TenantServiceRoles.TenantAdmin));
   }
 
@@ -70,7 +63,6 @@ export const createTenantRouter = ({ tenantRepository, eventService, services }:
 
     try {
       const tenant = await tenantRepository.findBy({ realm });
-      console.log(JSON.stringify(tenant) + '<tenant-----');
       res.json({
         success: true,
         tenant: tenant.obj(),
