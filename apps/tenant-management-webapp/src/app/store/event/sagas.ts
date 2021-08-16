@@ -3,6 +3,8 @@ import { select, call, put, takeEvery } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { RootState } from '..';
 import {
+  deleteEventDefinitionSuccess,
+  DELETE_EVENT_DEFINITION_ACTION,
   FetchEventDefinitionsAction,
   FetchEventLogEntriesAction,
   FETCH_EVENT_DEFINITIONS_ACTION,
@@ -69,9 +71,9 @@ export function* updateEventDefinition(action: UpdateEventDefinitionAction): Sag
 
       const configuration = settings.configuration || {};
       configuration[action.definition.namespace] = {
-        ...(settings.configuration[action.definition.namespace] || {}),
+        ...(settings.configuration?.[action.definition.namespace] || {}),
         definitions: {
-          ...(settings.configuration[action.definition.namespace]?.definitions || {}),
+          ...(settings.configuration?.[action.definition.namespace]?.definitions || {}),
           [action.definition.name]: {
             name: action.definition.name,
             description: action.definition.description,
@@ -96,6 +98,35 @@ export function* updateEventDefinition(action: UpdateEventDefinitionAction): Sag
           isCore: false,
         })
       );
+    } catch (err) {
+      yield put(ErrorNotification({ message: err.message }));
+    }
+  }
+}
+
+export function* deleteEventDefinition(action: UpdateEventDefinitionAction): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.tenantManagementApi);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  if (baseUrl && token) {
+    try {
+      const { data: settings } = yield call(axios.get, `${baseUrl}/api/configuration/v1/tenantConfig/event-service`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const configuration = settings['configuration'];
+
+      delete configuration[action.definition.namespace]['definitions'][action.definition.name];
+
+      yield call(
+        axios.put,
+        `${baseUrl}/api/configuration/v1/tenantConfig/event-service`,
+        { configuration },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      yield put(deleteEventDefinitionSuccess(action.definition));
     } catch (err) {
       yield put(ErrorNotification({ message: err.message }));
     }
@@ -127,4 +158,5 @@ export function* watchEventSagas(): SagaIterator {
   yield takeEvery(FETCH_EVENT_DEFINITIONS_ACTION, fetchEventDefinitions);
   yield takeEvery(FETCH_EVENT_LOG_ENTRIES_ACTION, fetchEventLogEntries);
   yield takeEvery(UPDATE_EVENT_DEFINITION_ACTION, updateEventDefinition);
+  yield takeEvery(DELETE_EVENT_DEFINITION_ACTION, deleteEventDefinition);
 }

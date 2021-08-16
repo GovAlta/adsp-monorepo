@@ -3,12 +3,16 @@ import styled from 'styled-components';
 
 export type DialogState = 'init' | 'visible' | 'hidden';
 
-export interface DialogProps {
+interface TestId {
+  testId?: string;
+}
+
+export interface DialogProps extends TestId {
   open?: boolean;
   onClose?: () => void;
 }
 
-function Dialog({ children, open, onClose }: DialogProps & { children: ReactNode }): JSX.Element {
+export function Dialog({ children, open, onClose, testId }: DialogProps & { children: ReactNode }): JSX.Element {
   const [state, setState] = useState<DialogState>('init');
 
   const [visible, setVisible] = useState(false);
@@ -51,7 +55,7 @@ function Dialog({ children, open, onClose }: DialogProps & { children: ReactNode
   }
 
   return visible ? (
-    <div style={{ position: 'relative' }}>
+    <div data-testid={testId} style={{ position: 'relative' }}>
       <DialogBackground visible={state === 'visible'} />
       <DialogContentParent onClick={close} visible={state === 'visible'}>
         {children}

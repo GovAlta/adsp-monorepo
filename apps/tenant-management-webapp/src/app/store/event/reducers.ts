@@ -1,4 +1,5 @@
 import {
+  DELETE_EVENT_DEFINITION_SUCCESS_ACTION,
   EventActionTypes,
   FETCH_EVENT_DEFINITIONS_ACTION,
   FETCH_EVENT_DEFINITIONS_SUCCESS_ACTION,
@@ -52,6 +53,14 @@ export default function (state: EventState = defaultState, action: EventActionTy
       if (!newState.results.includes(key)) {
         newState.results.splice(0, 0, key);
       }
+
+      return newState;
+    }
+    case DELETE_EVENT_DEFINITION_SUCCESS_ACTION: {
+      const key = `${action.definition.namespace}:${action.definition.name}`;
+      const newState = { ...state };
+      delete newState.definitions[key];
+      newState.results = newState.results.filter((r) => r !== key);
 
       return newState;
     }
