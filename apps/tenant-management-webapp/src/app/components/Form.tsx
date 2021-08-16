@@ -41,10 +41,38 @@ const GoAFormItem = styled.div`
     border: 1px solid var(--color-gray-600);
     padding: 0.5rem;
   }
+
+  .error-msg {
+    display: none;
+  }
+
+  &.error {
+    label {
+      color: var(--color-red-600);
+    }
+    input,
+    textarea {
+      border-color: var(--color-red-600);
+    }
+    .error-msg {
+      display: block;
+      color: var(--color-red-600);
+    }
+  }
 `;
 
 const GoAFormButtons = styled.div`
   margin-top: 2rem;
+
+  @media (max-width: 639px) {
+    button + button,
+    button + .goa-link-button,
+    .goa-link-button + button,
+    .goa-link-button + .goa-link-button {
+      margin-top: 0.5rem !important;
+    }
+  }
+
   @media (min-width: 640px) {
     display: flex;
     justify-content: flex-end;

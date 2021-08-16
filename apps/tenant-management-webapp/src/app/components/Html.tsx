@@ -30,6 +30,20 @@ const Main = styled.main`
     margin-top: 2rem;
   }
 
+  /* Font sizes */
+  h1 {
+    font-size: var(--fs-2xl);
+    font-weight: var(--fw-bold);
+  }
+  h2 {
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-bold);
+  }
+  h3 {
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-bold);
+  }
+
   /* Set top margin to subsequent headers */
   h1 + h2,
   h1 + h3,
@@ -42,12 +56,9 @@ const Main = styled.main`
 
   // goa-core has padding at the top rather than the bottom
   p {
+    margin-top: 0 !important;
     margin-bottom: 1rem;
     font-size: var(--fs-base);
-  }
-  // override goa-core style
-  p + p {
-    margin-top: 0;
   }
 
   // default padding is way too much
@@ -75,7 +86,7 @@ const Main = styled.main`
 `;
 
 const Aside = styled.aside`
-  padding: 1rem 0;
+  padding: 0.5rem 0;
   @media (min-width: 1024px) {
     flex: 0 0 200px;
     padding-left: 2rem;
@@ -83,11 +94,20 @@ const Aside = styled.aside`
   a {
     display: inline-block;
   }
-  > h1,
-  > h2,
-  > h2,
-  > h4,
-  > h5 {
+
+  h1,
+  h2,
+  h2,
+  h4,
+  h5 {
+    margin-top: 1rem;
+  }
+
+  h1:first-child,
+  h2:first-child,
+  h2:first-child,
+  h4:first-child,
+  h5:first-child {
     margin-top: 0;
   }
 `;

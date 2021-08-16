@@ -2,6 +2,8 @@ import type { EventDefinition, EventLogEntry } from './models';
 
 export const FETCH_EVENT_DEFINITIONS_ACTION = 'event/FETCH_EVENT_DEFINITIONS_ACTION';
 export const FETCH_EVENT_DEFINITIONS_SUCCESS_ACTION = 'event/FETCH_EVENT_DEFINITIONS_SUCCESS_ACTION';
+export const DELETE_EVENT_DEFINITION_ACTION = 'event/DELETE_EVENT_DEFINITION_ACTION';
+export const DELETE_EVENT_DEFINITION_SUCCESS_ACTION = 'event/DELETE_EVENT_DEFINITION_SUCCESS_ACTION';
 
 export const UPDATE_EVENT_DEFINITION_ACTION = 'event/UPDATE_EVENT_DEFINITION_ACTION';
 export const UPDATE_EVENT_DEFINITION_SUCCESS_ACTION = 'event/UPDATE_EVENT_DEFINITION_SUCCESS_ACTION';
@@ -16,6 +18,16 @@ export interface FetchEventDefinitionsAction {
 export interface FetchEventDefinitionsSuccessAction {
   type: typeof FETCH_EVENT_DEFINITIONS_SUCCESS_ACTION;
   results: EventDefinition[];
+}
+
+export interface DeleteEventDefinitionAction {
+  type: typeof DELETE_EVENT_DEFINITION_ACTION;
+  definition: EventDefinition;
+}
+
+export interface DeleteEventDefinitionSuccessAction {
+  type: typeof DELETE_EVENT_DEFINITION_SUCCESS_ACTION;
+  definition: EventDefinition;
 }
 
 export interface UpdateEventDefinitionAction {
@@ -43,6 +55,8 @@ export interface FetchEventLogEntriesSuccessAction {
 export type EventActionTypes =
   | FetchEventDefinitionsAction
   | FetchEventDefinitionsSuccessAction
+  | DeleteEventDefinitionAction
+  | DeleteEventDefinitionSuccessAction
   | UpdateEventDefinitionAction
   | UpdateEventDefinitionSuccessAction
   | FetchEventLogEntriesAction
@@ -55,6 +69,16 @@ export const getEventDefinitions = (): FetchEventDefinitionsAction => ({
 export const getEventDefinitionsSuccess = (results: EventDefinition[]): FetchEventDefinitionsSuccessAction => ({
   type: FETCH_EVENT_DEFINITIONS_SUCCESS_ACTION,
   results,
+});
+
+export const deleteEventDefinition = (definition: EventDefinition): DeleteEventDefinitionAction => ({
+  type: DELETE_EVENT_DEFINITION_ACTION,
+  definition,
+});
+
+export const deleteEventDefinitionSuccess = (definition: EventDefinition): DeleteEventDefinitionSuccessAction => ({
+  type: DELETE_EVENT_DEFINITION_SUCCESS_ACTION,
+  definition,
 });
 
 export const updateEventDefinition = (definition: EventDefinition): UpdateEventDefinitionAction => ({
