@@ -1,0 +1,185 @@
+components:
+  schemas:
+    ConfigurationRevision:
+      type: object
+      properties:
+        revision:
+          type: number
+        configuration:
+          type: object
+
+/configuration/v2/configuration/{namespace}/{name}:
+  get:
+    tags:
+      - Configuration
+    description: Retrieves configuration.
+    parameters:
+      - name: namespace
+        description: Namespace of the configuration.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the configuration.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: core
+        description: Flag indicating if the core instead of tenant configuration should be retrieved.
+        in: query
+        required: false
+        schema: {}
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                namespace:
+                  type: string
+                name:
+                  type: string
+                latest:
+                  $ref: "#/components/schemas/ConfigurationRevision"
+      401:
+        description: User not authorized to retrieve configuration.
+  patch:
+    tags:
+      - Configuration
+    description: |
+      Updates the configuration revision.
+    parameters:
+      - name: namespace
+        description: Namespace of the configuration.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the configuration.
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - type: object
+                properties:
+                  operation:
+                    type: string
+                    enum: [REPLACE]
+                  configuration:
+                    type: object
+              - type: object
+                properties:
+                  operation:
+                    type: string
+                    enum: [UPDATE]
+                  update:
+                    type: object
+              - type: object
+                properties:
+                  operation:
+                    type: string
+                    enum: [DELETE]
+                  property:
+                    type: string
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                namespace:
+                  type: string
+                name:
+                  type: string
+                latest:
+                  $ref: "#/components/schemas/ConfigurationRevision"
+      401:
+        description: User not authorized to update configuration.
+  post:
+    tags:
+      - Configuration
+    description: Creates a new revision of configuration.
+    parameters:
+      - name: namespace
+        description: Namespace of the configuration.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the configuration.
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              revision:
+                type: boolean
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                namespace:
+                  type: string
+                name:
+                  type: string
+                latest:
+                  $ref: "#/components/schemas/ConfigurationRevision"
+      401:
+        description: User not authorized to update configuration.
+
+/configuration/v2/configuration/{namespace}/{name}/latest:
+  get:
+    tags:
+      - Configuration
+    description: Retrieves the latest revision of configuration.
+    parameters:
+      - name: namespace
+        description: Namespace of the configuration.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the configuration.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: core
+        description: Flag indicating if core instead of tenant configuration should be retrieved.
+        in: query
+        required: false
+        schema: {}
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+      401:
+        description: User not authorized to retrieve configuration.

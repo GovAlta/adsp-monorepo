@@ -48,6 +48,7 @@ describe('SubscriptionEntity', () => {
       });
 
       const send = entity.shouldSend({
+        tenantId,
         name: 'test-started',
         timestamp: new Date(),
         correlationId: null,
@@ -69,6 +70,7 @@ describe('SubscriptionEntity', () => {
       });
 
       const send = entity.shouldSend({
+        tenantId,
         name: 'test-started',
         timestamp: new Date(),
         correlationId: 'different',
@@ -90,6 +92,7 @@ describe('SubscriptionEntity', () => {
       });
 
       const send = entity.shouldSend({
+        tenantId,
         name: 'test-started',
         timestamp: new Date(),
         correlationId: 'test',

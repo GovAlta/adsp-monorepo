@@ -1,5 +1,13 @@
 const PREFIX = 'urn:ads:';
 
+export class AdspIdFormatError extends Error {
+  constructor(message: string) {
+    super(message);
+
+    Object.setPrototypeOf(this, AdspIdFormatError.prototype);
+  }
+}
+
 export type ResourceType = 'namespace' | 'service' | 'api' | 'resource';
 
 /**
@@ -9,10 +17,15 @@ export class AdspId {
   static parse(urn: string): AdspId {
     // urn:ads:{namespace}:{service}:{apiVersion}:{resource}
     if (!urn.startsWith(PREFIX)) {
-      throw new Error(`Valid ADSP ID must begin with: ${PREFIX}`);
+      throw new AdspIdFormatError(`ADSP ID must begin with: ${PREFIX}`);
     }
 
     const elements = urn.substring(PREFIX.length).split(':');
+    const emptyElement = elements.find((e) => !e.trim());
+    if (emptyElement) {
+      throw new AdspIdFormatError('ADSP ID cannot include empty element.');
+    }
+
     let type: ResourceType;
     if (elements.length === 1) {
       type = 'namespace';
