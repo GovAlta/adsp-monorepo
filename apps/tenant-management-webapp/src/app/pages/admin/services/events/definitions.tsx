@@ -31,7 +31,7 @@ export const EventDefinitions: FunctionComponent = () => {
     dispatch(getEventDefinitions());
   }, [dispatch]);
 
-  function clearForm() {
+  function reset() {
     setEditDefinition(false);
     setSelectedDefinition(null);
     setErrors({});
@@ -40,7 +40,14 @@ export const EventDefinitions: FunctionComponent = () => {
   return (
     <>
       <Buttons>
-        <GoAButton data-testid="add-definition" buttonSize="small" onClick={() => setEditDefinition(true)}>
+        <GoAButton
+          data-testid="add-definition"
+          buttonSize="small"
+          onClick={() => {
+            setSelectedDefinition(null);
+            setEditDefinition(true);
+          }}
+        >
           Add definition
         </GoAButton>
       </Buttons>
@@ -79,7 +86,7 @@ export const EventDefinitions: FunctionComponent = () => {
 
       {/* Form */}
       <Dialog testId="definition-form" open={editDefinition}>
-        <DialogTitle>{selectedDefinition ? 'Edit Definition' : 'Create Definition'}</DialogTitle>
+        <DialogTitle>{selectedDefinition ? 'Edit Definition' : 'Add Definition'}</DialogTitle>
         <DialogContent>
           <EventDefinitionForm
             initialValue={selectedDefinition}
@@ -89,17 +96,21 @@ export const EventDefinitions: FunctionComponent = () => {
                 setErrors({ ...errors, namespace: 'Must not contain `:` character' });
                 return;
               }
+              if (definition.name.includes(':')) {
+                setErrors({ ...errors, name: 'Must not contain `:` character' });
+                return;
+              }
 
-              if (coreNamespaces.includes(definition.namespace)) {
+              if (coreNamespaces.includes(definition.namespace.toLowerCase())) {
                 setErrors({ ...errors, namespace: 'Cannot add definitions to core namespaces' });
                 return;
               }
 
               dispatch(updateEventDefinition(definition));
-              clearForm();
+              reset();
             }}
             onCancel={() => {
-              clearForm();
+              reset();
             }}
           />
         </DialogContent>

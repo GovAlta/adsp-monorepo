@@ -1,13 +1,10 @@
 import React, { FC, ReactElement, ReactNode, useEffect, useState } from 'react';
 import styled from 'styled-components';
+import { TestProps } from '../lib/test';
 
 export type DialogState = 'init' | 'visible' | 'hidden';
 
-interface TestId {
-  testId?: string;
-}
-
-export interface DialogProps extends TestId {
+export interface DialogProps extends TestProps {
   open?: boolean;
   onClose?: () => void;
 }

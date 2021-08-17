@@ -110,15 +110,11 @@ const EventDefinitionsListComponent: FunctionComponent<EventDefinitionsListCompo
     return acc;
   }, {});
 
-  function toTitle(str: string) {
-    return str.replace(/\W/, ' ');
-  }
-
   return (
     <div className={className}>
       {Object.keys(groupedDefinitions).map((group) => (
         <div key={group}>
-          <div className="group-name">{toTitle(group)}</div>
+          <div className="group-name">{group}</div>
           <DataTable data-testid="events-definitions-table">
             <thead>
               <tr>
@@ -150,6 +146,13 @@ export const EventDefinitionsList = styled(EventDefinitionsListComponent)`
     text-transform: capitalize;
     font-size: var(--fs-lg);
     font-weight: var(--fw-bold);
+  }
+
+  & td:first-child {
+    width: 100px;
+    white-space: nowrap;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
   }
 
   & td:last-child {
