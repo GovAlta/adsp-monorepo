@@ -23,3 +23,10 @@ export interface EventState {
     log: boolean;
   };
 }
+
+export interface EventSearchCriteria {
+  timestampMax: string;
+  timestampMin: string;
+  namespace: string;
+  name: string;
+}

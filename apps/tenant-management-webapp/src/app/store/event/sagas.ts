@@ -134,18 +134,37 @@ export function* deleteEventDefinition(action: UpdateEventDefinitionAction): Sag
 }
 
 export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaIterator {
-  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
+  const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
-
+  let eventUrl = `${baseUrl}/value/v1/event-service/values/event?top=10&after=${action.after || ''}`;
   if (baseUrl && token) {
+    if (action.searchCriteria) {
+      const contextObj = {};
+      if (action.searchCriteria.namespace) {
+        contextObj['namespace'] = action.searchCriteria.namespace;
+      }
+      if (action.searchCriteria.name) {
+        contextObj['name'] = action.searchCriteria.name;
+      }
+
+      if (Object.entries(contextObj).length > 0) {
+        eventUrl = `${eventUrl}&context=${JSON.stringify(contextObj)}`;
+      }
+
+      if (action.searchCriteria.timestampMax) {
+        const maxDate = new Date(action.searchCriteria.timestampMax);
+        eventUrl = `${eventUrl}&timestampMax=${maxDate.toUTCString()}`;
+      }
+      if (action.searchCriteria.timestampMin) {
+        const minDate = new Date(action.searchCriteria.timestampMin);
+        eventUrl = `${eventUrl}&timestampMin=${minDate.toUTCString()}`;
+      }
+    }
+
     try {
-      const { data } = yield call(
-        axios.get,
-        `${baseUrl}/value/v1/event-service/values/event?top=10&after=${action.after || ''}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const { data } = yield call(axios.get, eventUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       yield put(getEventLogEntriesSucceeded(data['event-service']['event'], data.page.after, data.page.next));
     } catch (err) {

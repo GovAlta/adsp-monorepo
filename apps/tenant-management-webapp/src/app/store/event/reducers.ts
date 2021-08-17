@@ -6,6 +6,7 @@ import {
   FETCH_EVENT_LOG_ENTRIES_ACTION,
   FETCH_EVENT_LOG_ENTRIES_SUCCESS_ACTION,
   UPDATE_EVENT_DEFINITION_SUCCESS_ACTION,
+  CLEAR_EVENT_LOG_ENTRIES_SUCCESS_ACTION,
 } from './actions';
 import { EventState } from './models';
 
@@ -75,6 +76,13 @@ export default function (state: EventState = defaultState, action: EventActionTy
         entries: action.after ? [...state.entries, ...action.entries] : [...action.entries],
         nextEntries: action.next,
         isLoading: { ...state.isLoading, log: false },
+      };
+    case CLEAR_EVENT_LOG_ENTRIES_SUCCESS_ACTION:
+      return {
+        ...state,
+        entries: [],
+        nextEntries: null,
+        isLoading: { ...state.isLoading, log: true },
       };
     default:
       return state;
