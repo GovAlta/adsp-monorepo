@@ -1,10 +1,9 @@
 import { GoAButton } from '@abgov/react-components';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
-import { getEventLogEntries } from '@store/event/actions';
 import { EventLogEntry } from '@store/event/models';
 import React, { FunctionComponent, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 interface EventLogEntryComponentProps {
@@ -48,9 +47,6 @@ interface EventLogEntriesComponentProps {
 
 const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps> = ({ className }) => {
   const entries = useSelector((state: RootState) => state.event.entries);
-  const next = useSelector((state: RootState) => state.event.nextEntries);
-  const isLoading = useSelector((state: RootState) => state.event.isLoading.log);
-  const dispatch = useDispatch();
 
   return (
     <div className={className}>
@@ -69,11 +65,6 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
           ))}
         </tbody>
       </DataTable>
-      {next && (
-        <GoAButton disabled={isLoading} onClick={() => dispatch(getEventLogEntries(next))}>
-          Load more...
-        </GoAButton>
-      )}
     </div>
   );
 };
