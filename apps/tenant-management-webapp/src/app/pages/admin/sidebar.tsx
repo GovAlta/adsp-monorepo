@@ -19,13 +19,15 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
+  const tenantAdminRole = 'tenant-admin';
   const dispatch = useDispatch();
 
-  const { tenantName, authenticated, realm } = useSelector((state: RootState) => {
+  const { tenantName, authenticated, realm, hasAdminRole } = useSelector((state: RootState) => {
     return {
       tenantName: state.tenant.name,
       authenticated: state.session.authenticated,
       realm: state.session.realm,
+      hasAdminRole: state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes(tenantAdminRole),
     };
   });
 
@@ -44,28 +46,32 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
             <img src={DashboardIcon} width="16" alt="Dashboard" />
             <span>Dashboard</span>
           </NavLink>
-          <NavLink to="/admin/event-log" activeClassName="current" title="Event log">
-            <img src={ReceiptIcon} width="16" alt="Admin" />
-            <span>Event log</span>
-          </NavLink>
+          {hasAdminRole && (
+            <>
+              <NavLink to="/admin/event-log" activeClassName="current" title="Event log">
+                <img src={ReceiptIcon} width="16" alt="Admin" />
+                <span>Event log</span>
+              </NavLink>
 
-          <Title>Services</Title>
-          <NavLink to="/admin/access" activeClassName="current" title="Access">
-            <img src={BarChartIcon} width="16" alt="Access" />
-            <span>Access</span>
-          </NavLink>
-          <NavLink to="/admin/services/files" activeClassName="current" title="Files">
-            <img src={FileIcon} width="16" alt="Files" />
-            <span>Files</span>
-          </NavLink>
-          <NavLink to="/admin/services/status" activeClassName="current" title="Status">
-            <img src={FitnessIcon} width="16" alt="Status" />
-            <span>Status</span>
-          </NavLink>
-          <NavLink to="/admin/services/events" activeClassName="current" title="Events">
-            <img src={MegaphoneIcon} width="16" alt="Status" />
-            <span>Events</span>
-          </NavLink>
+              <Title>Services</Title>
+              <NavLink to="/admin/access" activeClassName="current" title="Access">
+                <img src={BarChartIcon} width="16" alt="Access" />
+                <span>Access</span>
+              </NavLink>
+              <NavLink to="/admin/services/files" activeClassName="current" title="Files">
+                <img src={FileIcon} width="16" alt="Files" />
+                <span>Files</span>
+              </NavLink>
+              <NavLink to="/admin/services/status" activeClassName="current" title="Status">
+                <img src={FitnessIcon} width="16" alt="Status" />
+                <span>Status</span>
+              </NavLink>
+              <NavLink to="/admin/services/events" activeClassName="current" title="Events">
+                <img src={MegaphoneIcon} width="16" alt="Status" />
+                <span>Events</span>
+              </NavLink>
+            </>
+          )}
         </>
       )}
 
