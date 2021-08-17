@@ -10,7 +10,6 @@ import { EventService } from '@abgov/adsp-service-sdk';
 import { tenantCreated } from '../events';
 import { ServiceRegistration } from '../../configuration-management';
 import { TenantRepository } from '../repository';
-import { TenantServiceRoles } from '../../roles';
 
 class CreateTenantDto {
   @IsDefined()
@@ -51,11 +50,6 @@ export const createTenantRouter = ({ tenantRepository, eventService, services }:
     } catch (e) {
       res.status(HttpStatusCodes.NOT_FOUND).json();
     }
-  }
-
-  async function hasAdminRole(req, res) {
-    const { roles } = req.user;
-    res.json(roles.includes(TenantServiceRoles.TenantAdmin));
   }
 
   async function getTenantByRealm(req, res) {
@@ -121,7 +115,7 @@ export const createTenantRouter = ({ tenantRepository, eventService, services }:
     tokenIssuer = tokenIssuer.replace('core', tenantName);
 
     try {
-      const hasRealm = await TenantService.isRealmExisted(tenantName);
+      const hasRealm = await TenantService.isRealmExisted(tenantName)
       if (hasRealm) {
         // To upgrade existing realm to support platform team service. Email is from the payload
         const email = payload?.email;
@@ -206,7 +200,6 @@ export const createTenantRouter = ({ tenantRepository, eventService, services }:
   tenantRouter.get('/:id', [validationMiddleware(GetTenantDto)], getTenant);
   tenantRouter.get('/realm/:realm', validationMiddleware(TenantByRealmDto), getTenantByRealm);
   tenantRouter.post('/email', [validationMiddleware(TenantByEmailDto)], getTenantByEmail);
-  tenantRouter.post('/hasadminrole', hasAdminRole);
   tenantRouter.delete('/', [requireTenantServiceAdmin, validationMiddleware(DeleteTenantDto)], deleteTenant);
 
   return tenantRouter;

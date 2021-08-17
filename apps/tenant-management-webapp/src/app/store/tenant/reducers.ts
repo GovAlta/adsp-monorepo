@@ -9,9 +9,6 @@ export default (state = TENANT_INIT, action: ActionType): Tenant => {
     case 'UPDATE_TENANT_ADMIN_INFO':
       return { ...state, ...action.payload };
 
-    case 'UPDATE_HAS_ADMIN_ROLE':
-      return { ...state, ...action.payload };
-
     case 'CREATE_TENANT_SUCCESS':
       return {
         ...state,

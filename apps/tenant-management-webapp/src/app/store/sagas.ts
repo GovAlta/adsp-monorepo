@@ -17,7 +17,6 @@ import {
   fetchTenant,
   createTenant,
   isTenantAdmin,
-  hasAdminRole,
   tenantAdminLogin,
   tenantCreationInitLogin,
   keycloakCheckSSO,
@@ -50,7 +49,6 @@ import {
   FETCH_TENANT,
   CREATE_TENANT,
   CHECK_IS_TENANT_ADMIN,
-  CHECK_HAS_ADMIN_ROLE,
   TENANT_ADMIN_LOGIN,
   TENANT_CREATION_LOGIN_INIT,
   KEYCLOAK_CHECK_SSO,
@@ -87,7 +85,6 @@ export function* watchSagas() {
   yield takeEvery(CREATE_TENANT, createTenant);
   // tenant and keycloak
   yield takeEvery(CHECK_IS_TENANT_ADMIN, isTenantAdmin);
-  yield takeEvery(CHECK_HAS_ADMIN_ROLE, hasAdminRole);
 
   //tenant config
   yield takeEvery(FETCH_TENANT_CONFIG, fetchTenantConfig);

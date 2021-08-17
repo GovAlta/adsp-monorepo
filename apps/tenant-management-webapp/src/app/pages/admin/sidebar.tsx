@@ -19,6 +19,7 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
+  const tenantAdminRole = 'tenant-admin';
   const dispatch = useDispatch();
 
   const { tenantName, authenticated, realm, hasAdminRole } = useSelector((state: RootState) => {
@@ -26,7 +27,7 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
       tenantName: state.tenant.name,
       authenticated: state.session.authenticated,
       realm: state.session.realm,
-      hasAdminRole: state.tenant.hasAdminRole,
+      hasAdminRole: state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes(tenantAdminRole),
     };
   });
 
