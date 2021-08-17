@@ -283,7 +283,6 @@ export const createRealm = async (
     const idpConfig = createIdpConfig(brokerClientSecret, brokerClient, FLOW_ALIAS, realm);
 
     const registeredClients = await services.getServiceClients();
-
     const clients = registeredClients.map((registeredClient) =>
       createPlatformServiceConfig(registeredClient.serviceId, ...registeredClient.roles)
     );
