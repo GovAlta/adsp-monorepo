@@ -1,4 +1,4 @@
-import { assertAuthenticatedHandler } from '@core-services/core-common';
+import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import { Router } from 'express';
 import { Logger } from 'winston';
 import { NoticeApplicationEntity } from '../model/notice';
@@ -13,11 +13,63 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
   const router = Router();
 
   // Get notices by query
-  router.get('/', assertAuthenticatedHandler, async (req, res) => {
+  router.get('/', assertAuthenticatedHandler, async (req, res, next) => {
+    const { top, after, mode } = req.query;
+    const user = req.user as Express.User;
+
     logger.info(req.method, req.url);
 
-    const applications = await noticeRepository.find(req.query);
-    res.json(applications);
+    try {
+      const applications = await noticeRepository.find(
+        parseInt((top as string) || '50', 50),
+        after as string,
+        req.query
+      );
+
+      res.json({
+        page: applications.page,
+        results: applications.results
+          .filter((result) => result.canAccess(user))
+          .map((result) => ({
+            id: result.id,
+            message: result.message,
+            tennantServRef: result.tennantServRef,
+            startDate: result.startDate,
+            endDate: result.endDate,
+            mode: result.mode,
+          })),
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get('/:id', assertAuthenticatedHandler, async (req, res, next) => {
+    logger.info(req.method, req.url);
+    const { id } = req.params;
+    const user = req.user as Express.User;
+    const application = await noticeRepository.get(id);
+
+    if (!application) {
+      throw new NotFoundError('NoticeApplicationEntity', id);
+    } else {
+      if (application.canAccessById(user, application)) {
+        res.json(application);
+      } else {
+        throw new UnauthorizedError('User not authorized to get subscribers');
+      }
+    }
+  });
+
+  router.delete('/:id', assertAuthenticatedHandler, async (req, res) => {
+    logger.info(req.method, req.url);
+    const { id } = req.params;
+    const user = req.user as Express.User;
+
+    const application = await noticeRepository.get(id);
+
+    application.delete(user);
+    res.json(application);
   });
 
   // Add notice
@@ -25,8 +77,9 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
     logger.info(`${req.method} - ${req.url}`);
 
     const { message, tennantServRef, startDate, endDate } = req.body;
+    const user = req.user as Express.User;
 
-    const app = await NoticeApplicationEntity.create(noticeRepository, {
+    const app = await NoticeApplicationEntity.create(user, noticeRepository, {
       message,
       tennantServRef,
       startDate,
@@ -42,11 +95,12 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
 
     const { message, tennantServRef, startDate, endDate, mode } = req.body;
     const { id } = req.params;
+    const user = req.user as Express.User;
 
     // TODO: this needs to be moved to a service
     const application = await noticeRepository.get(id);
 
-    const updatedApplication = await application.update({
+    const updatedApplication = await application.update(user, {
       message,
       tennantServRef,
       startDate,
