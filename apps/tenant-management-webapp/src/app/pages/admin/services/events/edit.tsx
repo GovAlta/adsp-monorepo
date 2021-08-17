@@ -51,7 +51,7 @@ export const EventDefinitionForm: FunctionComponent<EventDefinitionFormProps> = 
         />
         <div className="error-msg">{errors?.['namespace']}</div>
       </GoAFormItem>
-      <GoAFormItem>
+      <GoAFormItem className={errors?.['name'] && 'error'}>
         <label>Name</label>
         <input
           type="text"
@@ -61,6 +61,7 @@ export const EventDefinitionForm: FunctionComponent<EventDefinitionFormProps> = 
           data-testid="form-name"
           onChange={(e) => setDefinition({ ...definition, name: e.target.value })}
         />
+        <div className="error-msg">{errors?.['name']}</div>
       </GoAFormItem>
       <GoAFormItem>
         <label>Description</label>
