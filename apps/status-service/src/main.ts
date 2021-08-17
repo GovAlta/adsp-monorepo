@@ -6,7 +6,7 @@ import * as helmet from 'helmet';
 import { createLogger } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { createRepositories } from './mongo';
-import { bindEndpoints } from './app';
+import { bindEndpoints, ServiceUserRoles } from './app';
 import * as cors from 'cors';
 import { scheduleServiceStatusJobs } from './app/jobs';
 import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
@@ -39,6 +39,13 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
       serviceId,
       displayName: 'Status Service',
       description: 'Service for publishing service status information.',
+      roles: [
+        {
+          role: ServiceUserRoles.StatusAdmin,
+          description: 'Administrator role for the status service.',
+          inTenantAdmin: true,
+        },
+      ],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
