@@ -37,11 +37,9 @@ const Main = styled.main`
   }
   h2 {
     font-size: var(--fs-xl);
-    font-weight: var(--fw-bold);
   }
   h3 {
     font-size: var(--fs-lg);
-    font-weight: var(--fw-bold);
   }
 
   /* Set top margin to subsequent headers */
