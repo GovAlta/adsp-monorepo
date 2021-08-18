@@ -85,7 +85,6 @@ function AppWithAuthContext() {
   useEffect(() => {
     // Fetch config
     if (!keycloakConfig) {
-      console.log('fetch config');
       dispatch(fetchConfig());
     }
   }, [dispatch, keycloakConfig]);
