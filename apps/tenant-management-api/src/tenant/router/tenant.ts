@@ -115,16 +115,24 @@ export const createTenantRouter = ({ tenantRepository, eventService, services }:
     tokenIssuer = tokenIssuer.replace('core', tenantName);
 
     try {
-      const hasRealm = await TenantService.isRealmExisted(tenantName)
-      if (hasRealm) {
+      const tenantEmail = payload?.email;
+      if (tenantEmail) {
+        const hasRealm = await TenantService.isRealmExisted(tenantName)
         // To upgrade existing realm to support platform team service. Email is from the payload
-        const email = payload?.email;
-        if (!email) {
-          throw new TenantService.TenantError('email filed is missing', HttpStatusCodes.BAD_REQUEST);
+        if (!hasRealm) {
+          throw new TenantService.TenantError(`${tenantName} does not exit`, HttpStatusCodes.BAD_REQUEST);
         }
-        logger.info(`Found key realm with name ${tenantName}`);
-        await TenantService.validateEmailInDB(email);
-        const { ...tenant } = await TenantService.createNewTenantInDB(email, tenantName, tenantName, tokenIssuer);
+        const tenantRealm = tenantName;
+        logger.info(`Found key realm with name ${tenantRealm}`);
+        // For existed tenant, realm is same as tenant name
+        const hasTenant = await TenantService.hasTenantOfRealm(tenantName)
+
+        if (hasTenant) {
+          throw new TenantService.TenantError(`Tenant ${tenantName} has already been created`, HttpStatusCodes.BAD_REQUEST);
+        }
+
+        await TenantService.validateEmailInDB(tenantEmail);
+        const { ...tenant } = await TenantService.createNewTenantInDB(tenantEmail, tenantName, tenantName, tokenIssuer);
         const response = { ...tenant, newTenant: false };
         eventService.send(tenantCreated(req.user, response, false));
         res.status(HttpStatusCodes.OK).json(response);
