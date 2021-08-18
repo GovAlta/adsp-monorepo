@@ -10,44 +10,37 @@ interface ScanJobProps {
 
 export const createScanJob = ({ logger, scanService, fileRepository }: ScanJobProps) => {
   // eslint-disable-next-line
-  return () => {
+  return async () => {
     logger.debug('Starting file scan job...');
 
-    return fileRepository
-      .find(20, null, { scanned: false, deleted: false })
-      .then((result) =>
-        Promise.all(
-          result.results.map((result) =>
-            scanService
-              .scan(result)
-              .then((scan) => {
-                if (scan.scanned) {
-                  result.updateScanResult(scan.infected).then((updated) => {
-                    if (scan.infected && updated.deleted) {
-                      logger.warn(
-                        `File ${updated.id} (${updated.filename}:${updated.storage}) ` +
-                          `marked for deletion because it scanned as infected.`
-                      );
-                    }
-                  });
-                }
-                return scan;
-              })
-              .catch((err) => {
-                logger.warn(`Error encountered scanning file ` + `${result.filename} (ID: ${result.id}): ${err}`);
+    const scans = [];
+    let after = null;
+    do {
+      const { results, page } = await fileRepository.find(10, after, { scanned: false, deleted: false });
+      after = page.next;
 
-                return { scanned: false, infected: false };
-              })
-          )
-        )
-      )
-      .then((scans) => {
-        const numberScanned = scans.filter((scan) => scan.scanned).length;
-        const numberInfected = scans.filter((scan) => scan.infected).length;
-        logger.info(
-          `Completed file scan job; scanned ${numberScanned} and found ` + `${numberInfected} infected files.`
-        );
-        return numberInfected;
-      });
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        try {
+          const { scanned, infected } = await scanService.scan(results[i]);
+          scans.push({ scanned, infected });
+
+          const updated = await result.updateScanResult(infected);
+          if (infected && updated.deleted) {
+            logger.warn(
+              `File ${updated.id} (${updated.filename}:${updated.storage}) marked for deletion because it scanned as infected.`
+            );
+          }
+        } catch (err) {
+          logger.warn(`Error encountered scanning file ${result.filename} (ID: ${result.id}). ${err}`);
+        }
+      }
+    } while (after);
+
+    const numberScanned = scans.filter((scan) => scan.scanned).length;
+    const numberInfected = scans.filter((scan) => scan.infected).length;
+
+    logger.info(`Completed file scan job; scanned ${numberScanned} and found ` + `${numberInfected} infected files.`);
+    return numberInfected;
   };
 };
