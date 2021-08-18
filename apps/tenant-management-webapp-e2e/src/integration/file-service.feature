@@ -22,8 +22,8 @@ Feature: File service
     When the user sends a delete request of "<Name>" with "<Request URL>"
     Then the testing mapping is removed
     Examples:
-      | Request URL       | Request URL With Urn                          | Name   | Service | Service URL     |
-      | /api/discovery/v1 | /api/discovery/v1/urn?urn=urn:ads:arcgis:maps | arcgis | maps    | maps.alberta.ca |
+      | Request URL       | Request URL With Urn                      | Name   | Service | Service URL     |
+      | /api/discovery/v1 | /api/discovery/v1?urn=urn:ads:arcgis:maps | arcgis | maps    | maps.alberta.ca |
 
   @TEST_CS-317 @REQ_CS-233 @regression @api
   Scenario Outline: As a developer of a GoA digital service, I can reference files using an urn
@@ -33,8 +33,8 @@ Feature: File service
     When the user sends a delete request of "<Name>" with "<Request URL>"
     Then the testing mapping is removed
     Examples:
-      | Request URL       | Request URL With Urn And File Resource Path                          | Name   | Service | Service URL     | File Resource URL                     |
-      | /api/discovery/v1 | /api/discovery/v1/urn?urn=urn:ads:arcgis:maps:/files/v1/files/123456 | arcgis | maps    | maps.alberta.ca | maps.alberta.ca/files/v1/files/123456 |
+      | Request URL       | Request URL With Urn And File Resource Path                      | Name   | Service | Service URL     | File Resource URL                     |
+      | /api/discovery/v1 | /api/discovery/v1?urn=urn:ads:arcgis:maps:/files/v1/files/123456 | arcgis | maps    | maps.alberta.ca | maps.alberta.ca/files/v1/files/123456 |
 
   @TEST_CS-438 @REQ_CS-227 @regression @api
   Scenario Outline: As a developer of a GoA digital service, I can consume the file service API to upload files from my service
