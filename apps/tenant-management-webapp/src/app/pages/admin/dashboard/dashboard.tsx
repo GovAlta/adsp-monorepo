@@ -10,22 +10,28 @@ import styled from 'styled-components';
 
 const Dashboard = (): JSX.Element => {
   const tenantAdminRole = 'tenant-admin';
-  const { session, tenantManagementWebApp, tenantName, adminEmail, hasAdminRole } = useSelector(
+  const { session, tenantManagementWebApp, tenantName, adminEmail, hasAdminRole, keycloakConfig } = useSelector(
     (state: RootState) => {
       return {
         session: state.session,
         tenantManagementWebApp: state.config.serviceUrls.tenantManagementWebApp,
         tenantName: state.tenant.name,
+        keycloakConfig: state.config.keycloakApi,
         adminEmail: state.tenant.adminEmail,
         hasAdminRole: state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes(tenantAdminRole),
       };
     }
   );
+
   const autoLoginUrl = `${tenantManagementWebApp}/${session.realm}/autologin`;
 
   const _afterShow = () => {
     navigator.clipboard.writeText(autoLoginUrl);
   };
+
+  function getKeycloakAdminPortalUsers() {
+    return session?.realm ? `${keycloakConfig.url}/admin/${session.realm}/console/#/realms/${keycloakConfig.url}/users` : keycloakConfig.url;
+  }
 
   const adminDashboard = () => {
     return (
@@ -68,7 +74,8 @@ const Dashboard = (): JSX.Element => {
               </div>
               <div className="copy-url-padding">
                 <h3>Sharing Tenant Access</h3>
-                <p>To give another user limited access to your realm, send them the url below</p>
+                <p>To give another user limited access to your realm, send them the url below and <a href={getKeycloakAdminPortalUsers()} rel="noopener noreferrer" target="_blank">
+                add</a> the 'tenant-admin' role to user's 'Assigned Roles' under 'Role Mappings' &#8594; 'Client Roles' &#8594; 'urn:ads:platform:tenant-service'</p>
                 <div className="copy-url">{autoLoginUrl}</div>
                 <div className="mb-2">
                   <GoAButton data-tip="Copied!" data-for="registerTip">
