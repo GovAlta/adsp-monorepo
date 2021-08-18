@@ -536,11 +536,11 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
             <th id="actions">Actions</th>
             <th id="name">Name</th>
             <th id="read-roles">Who can read</th>
-            <th id="write-roles">Who can write</th>
+            <th id="write-roles">Who can edit</th>
             <th id="cancel" className="right">
               Settings
             </th>
-          </tr>
+          </tr>t
         </thead>
 
         <tbody>
