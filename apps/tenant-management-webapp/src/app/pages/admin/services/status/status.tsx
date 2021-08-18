@@ -339,7 +339,6 @@ const ApplicationList = styled.section`
 
 const AppName = styled.div`
   font-size: var(--fs-lg);
-  font-weight: var(--fw-medium);
   text-transform: capitalize;
 `;
 
