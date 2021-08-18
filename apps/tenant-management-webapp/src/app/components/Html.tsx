@@ -103,18 +103,35 @@ const Aside = styled.aside`
 
   h1,
   h2,
-  h2,
+  h3,
   h4,
   h5 {
     margin-top: 1rem;
+    line-height: normal;
+    font-weight: var(--fw-bold);
   }
 
   h1:first-child,
   h2:first-child,
-  h2:first-child,
+  h3:first-child,
   h4:first-child,
   h5:first-child {
     margin-top: 0;
+  }
+
+  /* Font sizes */
+  h1 {
+    font-size: calc(0.9 * var(--fs-2xl));
+  }
+  h2 {
+    font-size: calc(0.9 * var(--fs-xl));
+  }
+  h3 {
+    font-size: calc(0.9 * var(--fs-lg));
+  }
+
+  p {
+    margin: 0 0 1rem !important;
   }
 `;
 
