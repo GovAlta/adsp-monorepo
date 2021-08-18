@@ -67,6 +67,7 @@ const HelpLink = (): JSX.Element => {
       <a rel="noopener noreferrer" target="_blank" href={`${docBaseUrl}?tenant=${tenantId}&urls.primaryName=File Service`}>
         Read the API docs
       </a>
+      <br />
       <a
         rel="noopener noreferrer"
         target="_blank"

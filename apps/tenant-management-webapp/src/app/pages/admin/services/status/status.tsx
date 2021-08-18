@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Page, Main } from '@components/Html';
+import { Page, Main, Aside } from '@components/Html';
 import { deleteApplication, fetchServiceStatusApps } from '@store/status/actions';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
@@ -29,6 +29,7 @@ import EditIcon from '@assets/icons/create-outline.svg';
 import WrenchIcon from '@assets/icons/build-outline.svg';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
+import SupportLinks from '@components/SupportLinks';
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
@@ -82,12 +83,24 @@ function Status(): JSX.Element {
         <GoALinkButton data-testid="add-application" to={`${location.pathname}/new`} buttonType="primary">
           Add Application
         </GoALinkButton>
-        <ApplicationList>
+        <section>
           {applications.map((app) => (
             <Application key={app._id} {...app} />
           ))}
-        </ApplicationList>
+        </section>
       </Main>
+
+      <Aside>
+        <h5>Helpful Links</h5>
+        <a
+          rel="noopener noreferrer"
+          target="_blank"
+          href="https://gitlab.gov.ab.ca/dio/core/core-services/-/tree/master/apps/status-service"
+        >
+          See the code
+        </a>
+        <SupportLinks />
+      </Aside>
 
       <Switch>
         <Route path="/admin/services/status/new">
@@ -207,10 +220,8 @@ function Application(props: ServiceStatusApplication) {
 
       <AppHeader>
         <AppName>{props.name}</AppName>
-        <>
-          <span className="space-1"></span>
-          <GoAChip type={publicStatusMap[props.status]}>{humanizeText(props.status)}</GoAChip>
-        </>
+        <span className="space-1"></span>
+        <GoAChip type={publicStatusMap[props.status]}>{humanizeText(props.status)}</GoAChip>
       </AppHeader>
       <em>Last updated: {getTimestamp()}</em>
 
@@ -331,10 +342,6 @@ const AppHeader = styled.div`
     font-size: var(--fs-sm);
     margin-left: 0.5rem;
   }
-`;
-
-const ApplicationList = styled.section`
-  margin-top: 2rem;
 `;
 
 const AppName = styled.div`
