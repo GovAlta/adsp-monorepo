@@ -64,6 +64,8 @@ const FileTypeTableContainer = styled.div`
   td:nth-child(5) {
     width: 15%;
   }
+  padding-bottom: 10rem;
+  max-height: 40rem;
 `;
 
 const DeleteModalContainer = styled.div`
@@ -315,6 +317,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
         <GoADropdown
           title=""
           subTitle=""
+          menuHeight={128}
           display={display}
           selectionChanged={(e) => {
             const fileType = { ...props };
