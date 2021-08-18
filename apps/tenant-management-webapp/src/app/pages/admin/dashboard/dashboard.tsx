@@ -71,7 +71,7 @@ const Dashboard = (): JSX.Element => {
           </p>
           <h3>Sharing Tenant Access</h3>
           <p>To give another user limited access to your realm, send them the url below and <a href={getKeycloakAdminPortalUsers()} rel="noopener noreferrer" target="_blank">
-                add</a> the 'tenant-admin' role to the user's <i>Assigned Roles</i> under <i>Role Mappings</i> &#8250; <i>Client Roles</i> &#8250; <i>urn:ads:platform:tenant-service</i></p>
+                add</a> the 'tenant-admin' role to the user's <i>Assigned Roles</i> available under <div className="small-font"><i>Role Mappings</i> &#8250; <i>Client Roles</i> &#8250; <i>urn:ads:platform:tenant-service</i></div></p>
           <div className="copy-url">{autoLoginUrl}</div>
           <GoAButton data-tip="Copied!" data-for="registerTip">
             Click to copy
@@ -118,5 +118,9 @@ const DashboardAside = styled(Aside)`
     margin-bottom: 1rem;
     margin-top: 0.5rem;
     line-height: normal;
+  }
+
+  .small-font {
+    font-size: var(--fs-sm);
   }
 `;
