@@ -7,11 +7,7 @@ import * as passport from 'passport';
 import * as swaggerUi from 'swagger-ui-express';
 import { AdspId, adspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import { createErrorHandler } from '@core-services/core-common';
-import {
-  ConfigurationUpdatedDefinition,
-  createConfigService,
-  createServiceRegistration,
-} from './configuration-management';
+import { ConfigurationUpdatedDefinition, createConfigService } from './configuration-management';
 import { createDirectoryService } from './directory';
 import { connectMongo, disconnect } from './mongo/index';
 import {
@@ -20,6 +16,7 @@ import {
   tenantService,
   TenantCreatedDefinition,
   TenantDeletedDefinition,
+  configurationSchema,
 } from './tenant';
 import { bootstrapDirectory } from './directory';
 import { logger } from './middleware/logger';
@@ -43,10 +40,8 @@ async function initializeApp(): Promise<express.Application> {
   app.use(express.json());
   app.use(cors());
 
-  const serviceRegistration = await createServiceRegistration();
-
   const serviceId = AdspId.parse(environment.CLIENT_ID);
-  const { coreStrategy, tenantStrategy, directory, eventService } = await initializePlatform(
+  const { coreStrategy, tenantStrategy, directory, eventService, configurationHandler } = await initializePlatform(
     {
       serviceId,
       displayName: 'Tenant Service',
@@ -55,6 +50,8 @@ async function initializeApp(): Promise<express.Application> {
       directoryUrl: null,
       accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
       ignoreServiceAud: true,
+      configurationSchema,
+      configurationConverter: (c) => Object.entries(c).map(([k, v]) => ({ serviceId: AdspId.parse(k), ...v })),
       events: [TenantCreatedDefinition, TenantDeletedDefinition, ConfigurationUpdatedDefinition],
       roles: [
         // Note: Tenant Admin role is a special composite role.
@@ -68,7 +65,6 @@ async function initializeApp(): Promise<express.Application> {
     {
       directory: directoryService,
       tenantService,
-      registrar: serviceRegistration,
     }
   );
 
@@ -111,8 +107,8 @@ async function initializeApp(): Promise<express.Application> {
   const authenticateCore = passport.authenticate(['jwt'], { session: false });
 
   const tenantRepository = new TenantMongoRepository();
-  const tenantRouter = createTenantRouter({ tenantRepository, eventService, services: serviceRegistration });
-  app.use('/api/tenant/v1', authenticate, tenantRouter);
+  const tenantRouter = createTenantRouter({ tenantRepository, eventService });
+  app.use('/api/tenant/v1', authenticate, configurationHandler, tenantRouter);
 
   const tenantV2Router = createTenantV2Router();
   app.use('/api/tenant/v2', authenticateCore, tenantV2Router);

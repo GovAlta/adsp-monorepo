@@ -11,7 +11,7 @@ import {
 import { createDirectory, ServiceDirectory } from './directory';
 import { createEventService, EventService } from './event';
 import { createHealthCheck, PlatformHealthCheck } from './healthCheck';
-import { createServiceRegistrar, ServiceRegistrar, ServiceRegistration } from './registration';
+import { createServiceRegistrar, ServiceRegistration } from './registration';
 import { createTenantHandler, createTenantService, TenantService } from './tenant';
 import { createLogger } from './utils';
 
@@ -37,8 +37,6 @@ interface PlatformServices {
   configurationService: ConfigurationService;
   /** EventService: Service for emitting domain events. */
   eventService: EventService;
-  /** ServiceRegistrar: Provides registration of services. */
-  registrar: ServiceRegistrar;
 }
 
 interface Platform extends PlatformServices {
@@ -81,8 +79,11 @@ export async function initializePlatform(
   const tokenProvider = createTokenProvider({ logger, serviceId, clientSecret, accessServiceUrl });
   const directory = service?.directory || createDirectory({ logger, directoryUrl, tokenProvider });
 
-  const registrar = service?.registrar || createServiceRegistrar({ logger, directory, tokenProvider });
-  await registrar.register({ ...registration, serviceId });
+  // Initialization is not dependent on registration, so registration completes asynchronously.
+  const registrar = createServiceRegistrar({ logger, directory, tokenProvider });
+  registrar
+    .register({ ...registration, serviceId })
+    .catch((err) => logger.warn(`Error encountered during service registration. ${err}`));
 
   const coreStrategy = createCoreStrategy({ logger, serviceId, accessServiceUrl, ignoreServiceAud });
 
@@ -93,7 +94,7 @@ export async function initializePlatform(
   const configurationService =
     service?.configurationService ||
     createConfigurationService({ logger, directory, converter: configurationConverter });
-  const configurationHandler = createConfigurationHandler(configurationService, serviceId);
+  const configurationHandler = createConfigurationHandler(tokenProvider, configurationService, serviceId);
 
   const eventService =
     service?.eventService ||
@@ -124,7 +125,6 @@ export async function initializePlatform(
     eventService,
     directory,
     healthCheck,
-    registrar,
   };
 }
 
@@ -135,4 +135,4 @@ export type { ServiceDirectory } from './directory';
 export type { Tenant, TenantService } from './tenant';
 export type { ConfigurationService } from './configuration';
 export type { DomainEvent, DomainEventDefinition, EventService } from './event';
-export type { ServiceRegistrar, ServiceRegistration, ServiceRole } from './registration';
+export type { ServiceRegistration, ServiceRole } from './registration';

@@ -5,13 +5,7 @@ import { Logger } from 'winston';
 import { ServiceRegistrar, ServiceRegistration, ServiceRole } from './index';
 import { TokenProvider } from '../access';
 import { ServiceDirectory } from '../directory';
-import { adspId } from '../utils';
-import { DomainEventDefinition } from '../event';
-
-interface EventServiceOptions {
-  id: string;
-  configOptions: Record<string, { name: string; definitions: Record<string, DomainEventDefinition> }>;
-}
+import { AdspId, adspId } from '../utils';
 
 export class ServiceRegistrarImpl implements ServiceRegistrar {
   private readonly LOG_CONTEXT = { context: 'ServiceRegistration' };
@@ -23,6 +17,51 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
   ) {}
 
   async register(registration: ServiceRegistration): Promise<void> {
+    await this.updateRegistration(registration);
+
+    if (registration.configurationSchema) {
+      const namespace = registration.serviceId.namespace;
+      const name = registration.serviceId.service;
+      const update = {
+        [`${namespace}:${name}`]: {
+          configurationSchema: registration.configurationSchema,
+        },
+      };
+      await this.updateConfiguration(adspId`urn:ads:platform:configuration-service`, update);
+    }
+
+    if (registration.roles) {
+      const update = {
+        [registration.serviceId.toString()]: {
+          roles: registration.roles.map((r) => ((r as ServiceRole).role ? r : { role: r, description: '' })) || [],
+        },
+      };
+      await this.updateConfiguration(adspId`urn:ads:platform:tenant-service`, update);
+    }
+
+    if (registration.events) {
+      const namespace = registration.serviceId.service;
+      const update = {
+        [namespace]: {
+          name: namespace,
+          definitions: registration.events.reduce(
+            (defs, def) => ({
+              ...defs,
+              [def.name]: {
+                name: def.name,
+                description: def.description,
+                payloadSchema: def.payloadSchema,
+              },
+            }),
+            {}
+          ),
+        },
+      };
+      await this.updateConfiguration(adspId`urn:ads:platform:event-service`, update);
+    }
+  }
+
+  private async updateRegistration(registration: ServiceRegistration): Promise<void> {
     const configurationServiceId = adspId`urn:ads:platform:configuration-service:v1`;
     const serviceUrl = await this.directory.getServiceUrl(configurationServiceId);
 
@@ -41,40 +80,10 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
       this.logger.error(`Error encountered registering service. ${err}`);
       throw err;
     }
-
-    if (registration.events) {
-      await this.#registerEvents(registration.serviceId.service, registration.events);
-    }
   }
 
-  #registerEvents = async (namespace: string, events: DomainEventDefinition[]): Promise<void> => {
-    const configurationServiceId = adspId`urn:ads:platform:configuration-service:v1`;
-    const serviceUrl = await this.directory.getServiceUrl(configurationServiceId);
-
-    try {
-      await retry(async (next, count) => {
-        try {
-          await this.#tryRegisterEvents(serviceUrl, count, namespace, events);
-        } catch (err) {
-          this.logger.debug(`Try ${count} failed with error. ${err}`, this.LOG_CONTEXT);
-          next(err);
-        }
-      });
-
-      this.logger.info(
-        `Registered event definitions for namespace ${namespace}: ${events.map((e) => e.name).join(', ')}`,
-        this.LOG_CONTEXT
-      );
-    } catch (err) {
-      this.logger.error(`Error encountered registering events. ${err}`);
-      throw err;
-    }
-  };
-
   #tryRegister = async (serviceUrl: URL, count: number, registration: ServiceRegistration): Promise<void> => {
-    const { serviceId, displayName, description, roles, configurationSchema } = registration;
-    const serviceRoles: ServiceRole[] =
-      roles?.map((r) => (typeof r === 'string' ? { role: r, description: '' } : r)) || [];
+    const { serviceId, displayName, description } = registration;
 
     this.logger.debug(`Try ${count}: registering service ${serviceId}...`, this.LOG_CONTEXT);
 
@@ -87,71 +96,56 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
         version: 'v1',
         displayName,
         description,
-        roles: serviceRoles,
-        configSchema: configurationSchema,
       },
       { headers: { Authorization: `Bearer ${token}` } }
     );
   };
 
-  #tryRegisterEvents = async (
-    serviceUrl: URL,
-    count: number,
-    namespace: string,
-    events: DomainEventDefinition[]
-  ): Promise<void> => {
-    this.logger.debug(`Try ${count}: registering event definitions for namespace ${namespace}...`, this.LOG_CONTEXT);
+  private async updateConfiguration<C extends Record<string, unknown>>(serviceId: AdspId, update: C): Promise<void> {
+    const configurationServiceId = adspId`urn:ads:platform:configuration-service:v2`;
+    const serviceUrl = await this.directory.getServiceUrl(configurationServiceId);
 
-    const namespaceConfig = {
-      name: namespace,
-      definitions: events.reduce(
-        (defs, def) => ({
-          ...defs,
-          [def.name]: {
-            name: def.name,
-            description: def.description,
-            payloadSchema: def.payloadSchema,
-          },
-        }),
-        {}
-      ),
-    };
-    const getOptionsUrl = new URL('v1/serviceOptions?service=event-service&top=1', serviceUrl);
+    try {
+      await retry(async (next, count) => {
+        try {
+          await this.#tryUpdateConfiguration(serviceUrl, count, serviceId, update);
+        } catch (err) {
+          this.logger.debug(`Try ${count} failed with error. ${err}`, this.LOG_CONTEXT);
+          if (axios.isAxiosError(err)) {
+            this.logger.debug(err.response?.data);
+          }
+          next(err);
+        }
+      });
 
-    let token = await this.tokenProvider.getAccessToken();
-    const { data } = await axios.get<{ results: EventServiceOptions[] }>(getOptionsUrl.href, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    token = await this.tokenProvider.getAccessToken();
-    const eventServiceOption = data.results[0];
-    if (!eventServiceOption) {
-      this.logger.debug(`Creating event service service options...`, this.LOG_CONTEXT);
-
-      const createUrl = new URL('v1/serviceOptions', serviceUrl);
-      await axios.post(
-        createUrl.href,
-        { service: 'event-service', version: 'v1', configOptions: { [namespace]: namespaceConfig } },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      this.logger.debug(`Created event service service options.`, this.LOG_CONTEXT);
-    } else {
-      this.logger.debug(`Updating event service service options...`, this.LOG_CONTEXT);
-
-      const updateUrl = new URL(`v1/serviceOptions/${eventServiceOption.id}`, serviceUrl);
-      await axios.put(
-        updateUrl.href,
-        {
-          ...eventServiceOption,
-          service: 'event-service',
-          version: 'v1',
-          configOptions: { ...eventServiceOption.configOptions, [namespace]: namespaceConfig },
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      this.logger.debug(`Updated event service service options.`, this.LOG_CONTEXT);
+      this.logger.info(`Updated registration configuration of ${serviceId}.`, this.LOG_CONTEXT);
+    } catch (err) {
+      this.logger.error(`Error encountered registering configuration. ${err}`);
+      throw err;
     }
+  }
+
+  #tryUpdateConfiguration = async (
+    configurationServiceUrl: URL,
+    count: number,
+    serviceId: AdspId,
+    update: Record<string, unknown>
+  ): Promise<void> => {
+    this.logger.debug(`Try ${count}: updating configuration for service ${serviceId}...`, this.LOG_CONTEXT);
+
+    const configurationUrl = new URL(
+      `v2/configuration/${serviceId.namespace}/${serviceId.service}`,
+      configurationServiceUrl
+    );
+
+    const token = await this.tokenProvider.getAccessToken();
+    await axios.patch(
+      configurationUrl.href,
+      {
+        operation: 'UPDATE',
+        update,
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
   };
 }

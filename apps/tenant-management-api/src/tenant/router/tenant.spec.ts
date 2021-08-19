@@ -11,7 +11,6 @@ describe('Service Option Router', () => {
     createTenantRouter({
       tenantRepository: mockRepo.object(),
       eventService: null,
-      services: null,
     })
   );
 

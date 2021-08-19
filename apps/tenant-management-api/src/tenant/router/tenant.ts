@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Request, Response, Router } from 'express';
 import { IsDefined } from 'class-validator';
 import validationMiddleware from '../../middleware/requestValidator';
 import * as HttpStatusCodes from 'http-status-codes';
@@ -8,8 +8,8 @@ import { logger } from '../../middleware/logger';
 import { v4 as uuidv4 } from 'uuid';
 import { EventService } from '@abgov/adsp-service-sdk';
 import { tenantCreated } from '../events';
-import { ServiceRegistration } from '../../configuration-management';
 import { TenantRepository } from '../repository';
+import { ServiceClient } from '../types';
 
 class CreateTenantDto {
   @IsDefined()
@@ -35,11 +35,10 @@ class TenantByRealmDto {
 
 interface TenantRouterProps {
   eventService: EventService;
-  services: ServiceRegistration;
   tenantRepository: TenantRepository;
 }
 
-export const createTenantRouter = ({ tenantRepository, eventService, services }: TenantRouterProps): Router => {
+export const createTenantRouter = ({ tenantRepository, eventService }: TenantRouterProps): Router => {
   const tenantRouter = Router();
 
   async function getTenantByEmail(req, res) {
@@ -106,8 +105,8 @@ export const createTenantRouter = ({ tenantRepository, eventService, services }:
     }
   }
 
-  async function createTenant(req, res) {
-    const payload = req.payload;
+  async function createTenant(req: Request, res: Response) {
+    const payload = req['payload'];
     const tenantName = payload.name;
     const email = req.user.email;
 
@@ -142,8 +141,9 @@ export const createTenantRouter = ({ tenantRepository, eventService, services }:
 
       const generatedRealmName = uuidv4();
 
+      const [_, clients] = await req.getConfiguration<ServiceClient[], ServiceClient[]>();
       await TenantService.validateEmailInDB(email);
-      await TenantService.createRealm(services, generatedRealmName, email, tenantName);
+      await TenantService.createRealm(clients || [], generatedRealmName, email, tenantName);
       const { ...tenant } = await TenantService.createNewTenantInDB(email, generatedRealmName, tenantName, tokenIssuer);
 
       const data = { status: 'ok', message: 'Create Realm Success!', realm: generatedRealmName };

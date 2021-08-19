@@ -12,8 +12,8 @@ import type RealmRepresentation from 'keycloak-admin/lib/defs/realmRepresentatio
 import type RoleRepresentation from 'keycloak-admin/lib/defs/roleRepresentation';
 import { tenantRepository } from '../../repository';
 import { TenantEntity } from '../../models';
-import { ServiceClient, ServiceRegistration } from '../../../configuration-management';
 import { TenantServiceRoles } from '../../../roles';
+import { ServiceClient } from '../../types';
 
 export const tenantManagementRealm = 'core';
 
@@ -263,7 +263,7 @@ export const isRealmExisted = async (realm: string): Promise<boolean> => {
 };
 
 export const createRealm = async (
-  services: ServiceRegistration,
+  serviceClients: ServiceClient[],
   realm: string,
   email: string,
   tenantName: string
@@ -282,8 +282,7 @@ export const createRealm = async (
     const publicClientConfig = createWebappClientConfig(tenantPublicClientId);
     const idpConfig = createIdpConfig(brokerClientSecret, brokerClient, FLOW_ALIAS, realm);
 
-    const registeredClients = await services.getServiceClients();
-    const clients = registeredClients.map((registeredClient) =>
+    const clients = serviceClients.map((registeredClient) =>
       createPlatformServiceConfig(registeredClient.serviceId, ...registeredClient.roles)
     );
 
@@ -322,7 +321,7 @@ export const createRealm = async (
     });
     logger.debug(`Found tenant service client admin role: ${tenantAdminRole?.id}`);
 
-    await createTenantAdminComposite(registeredClients, realm, tenantAdminRole);
+    await createTenantAdminComposite(serviceClients, realm, tenantAdminRole);
     logger.info(`Created tenant admin composite role.`);
 
     await createAuthenticationFlow(realm);
