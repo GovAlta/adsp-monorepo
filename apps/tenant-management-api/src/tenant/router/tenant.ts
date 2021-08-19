@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { IsDefined } from 'class-validator';
 import validationMiddleware from '../../middleware/requestValidator';
 import * as HttpStatusCodes from 'http-status-codes';
-import { requireTenantServiceAdmin, requireTenantAdmin } from '../../middleware/authentication';
+import { requireTenantServiceAdmin, requireTenantAdmin, requireBetaTesterOrAdmin } from '../../middleware/authentication';
 import * as TenantService from '../services/tenant';
 import { logger } from '../../middleware/logger';
 import { v4 as uuidv4 } from 'uuid';
@@ -204,7 +204,7 @@ export const createTenantRouter = ({ tenantRepository, eventService, services }:
 
   // Tenant admin only APIs
   // Used by the admin web app.
-  tenantRouter.post('/', [validationMiddleware(CreateTenantDto)], createTenant);
+  tenantRouter.post('/', [requireBetaTesterOrAdmin, validationMiddleware(CreateTenantDto)], createTenant);
   tenantRouter.get('/:id', [validationMiddleware(GetTenantDto)], getTenant);
   tenantRouter.get('/realm/:realm', validationMiddleware(TenantByRealmDto), getTenantByRealm);
   tenantRouter.post('/email', [validationMiddleware(TenantByEmailDto)], getTenantByEmail);
