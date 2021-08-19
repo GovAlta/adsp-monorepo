@@ -540,7 +540,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
             <th id="cancel" className="right">
               Settings
             </th>
-          </tr>t
+          </tr>
         </thead>
 
         <tbody>
