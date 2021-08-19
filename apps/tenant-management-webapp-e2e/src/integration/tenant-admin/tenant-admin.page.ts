@@ -36,7 +36,7 @@ class TenantAdminPage {
   }
 
   releaseContactInfo() {
-    return cy.xpath('//div[@class="beta-padding"]');
+    return cy.xpath('//aside/p[1]');
   }
 
   tenantAutoLoginUrl() {
