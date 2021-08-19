@@ -1,11 +1,11 @@
 import { AdspId, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { assertAuthenticatedHandler, InvalidOperationError } from '@core-services/core-common';
+import { assertAuthenticatedHandler, InvalidOperationError, NotFoundError, Results } from '@core-services/core-common';
 import { Request, RequestHandler, Router } from 'express';
 import { Logger } from 'winston';
 import { configurationUpdated, revisionCreated } from '../events';
 import { ConfigurationEntity } from '../model';
 import { ConfigurationRepository, Repositories } from '../repository';
-import { ConfigurationDefinition, ConfigurationDefinitions } from '../types';
+import { ConfigurationDefinition, ConfigurationDefinitions, ConfigurationRevision } from '../types';
 import { OPERATION_DELETE, OPERATION_REPLACE, OPERATION_UPDATE, PatchRequests } from './types';
 
 export interface ConfigurationRouterProps extends Repositories {
@@ -148,6 +148,25 @@ export const createConfigurationRevision = (eventService: EventService): Request
   }
 };
 
+export const getRevisions = (
+  getCriteria = (_req: Request) => ({}),
+  mapResults = (_req: Request, results: Results<ConfigurationRevision>): unknown => results
+): RequestHandler => async (req, res, next) => {
+  const { top: topValue, after: afterValue } = req.query;
+
+  try {
+    const top = topValue ? parseInt(topValue as string) : 10;
+    const after = afterValue as string;
+    const criteria = getCriteria(req);
+
+    const entity: ConfigurationEntity = req[ENTITY_KEY];
+    const results = await entity.getRevisions(top, after, criteria);
+    res.send(mapResults(req, results));
+  } catch (err) {
+    next(err);
+  }
+};
+
 export function createConfigurationRouter({
   logger: _logger,
   serviceId,
@@ -182,6 +201,28 @@ export function createConfigurationRouter({
     assertAuthenticatedHandler,
     getConfigurationEntity(serviceId, configurationRepository),
     createConfigurationRevision(eventService)
+  );
+
+  router.get(
+    '/configuration/:namespace/:name/revisions',
+    assertAuthenticatedHandler,
+    getConfigurationEntity(serviceId, configurationRepository),
+    getRevisions()
+  );
+
+  router.get(
+    '/configuration/:namespace/:name/revisions/:revision',
+    assertAuthenticatedHandler,
+    getConfigurationEntity(serviceId, configurationRepository),
+    getRevisions(
+      (req) => ({ revision: req.params.revision }),
+      (req, { results }) => {
+        if (results.length < 1) {
+          throw new NotFoundError('revision', req.params.revision);
+        }
+        return results[0]?.configuration;
+      }
+    )
   );
 
   return router;

@@ -1,6 +1,6 @@
 export interface ConfigurationRevisionDoc<C = unknown> {
   namespace: string;
-  service: string;
+  name: string;
   tenant?: string;
   revision: number;
   configuration: C;

@@ -1,8 +1,8 @@
 import { AdspId, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, ValidationService } from '@core-services/core-common';
+import { InvalidOperationError, Results, ValidationService } from '@core-services/core-common';
 import { ConfigurationRepository } from '../repository';
 import { ConfigurationServiceRoles } from '../roles';
-import { ConfigurationRevision, Configuration } from '../types';
+import { ConfigurationRevision, Configuration, RevisionCriteria } from '../types';
 
 /**
  * Represents an aggregate context for configuration revisions.
@@ -13,8 +13,6 @@ import { ConfigurationRevision, Configuration } from '../types';
  * @template C
  */
 export class ConfigurationEntity<C = Record<string, unknown>> implements Configuration<C> {
-  public revisions?: ConfigurationRevision<C>[] = [];
-
   constructor(
     public namespace: string,
     public name: string,
@@ -86,6 +84,14 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
 
     this.latest = await this.repository.saveRevision(this, newRevision);
     return this;
+  }
+
+  public async getRevisions(
+    top = 10,
+    after: string = null,
+    criteria: RevisionCriteria = null
+  ): Promise<Results<ConfigurationRevision<C>>> {
+    return this.repository.getRevisions(this, top, after, criteria);
   }
 
   private getSchemaKey(): string {

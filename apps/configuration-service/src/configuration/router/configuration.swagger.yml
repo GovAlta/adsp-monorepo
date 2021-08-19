@@ -183,3 +183,93 @@ components:
               type: object
       401:
         description: User not authorized to retrieve configuration.
+
+/configuration/v2/configuration/{namespace}/{name}/revisions:
+  get:
+    tags:
+      - Configuration
+    description: Retrieves the revisions of configuration.
+    parameters:
+      - name: namespace
+        description: Namespace of the configuration.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the configuration.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: top
+        description: Number of revisions to return in a page.
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: after
+        description: Cursor for retrieving additional pages.
+        in: query
+        required: false
+        schema:
+          type: string
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/ConfigurationRevision"
+                page:
+                  type: object
+                  properties:
+                    after:
+                      type: string
+                    next:
+                      type: string
+                    size:
+                      type: number
+      401:
+        description: User not authorized to retrieve configuration.
+
+/configuration/v2/configuration/{namespace}/{name}/revisions/{revision}:
+  get:
+    tags:
+      - Configuration
+    description: Retrieves a specific revision of configuration.
+    parameters:
+      - name: namespace
+        description: Namespace of the configuration.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the configuration.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: revision
+        description: Revision number to retrieve.
+        in: path
+        required: true
+        schema:
+          type: number
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+      401:
+        description: User not authorized to retrieve configuration.
+      404:
+        description: Revision cannot be found.

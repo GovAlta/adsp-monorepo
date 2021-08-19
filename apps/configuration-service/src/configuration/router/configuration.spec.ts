@@ -10,6 +10,7 @@ import {
   getConfiguration,
   getConfigurationEntity,
   patchConfigurationRevision,
+  getRevisions,
 } from './configuration';
 
 describe('router', () => {
@@ -768,6 +769,46 @@ describe('router', () => {
 
       await handler(req, (res as unknown) as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+  });
+
+  describe('getRevisions', () => {
+    it('can create handler', () => {
+      const handler = getRevisions();
+      expect(handler).toBeTruthy();
+    });
+
+    it('can get revisions', async () => {
+      const handler = getRevisions();
+
+      const entity = {
+        tenantId,
+        namespace,
+        name,
+        getRevisions: jest.fn(),
+        latest: { revision: 1, configuration: {} },
+      };
+      const req = ({
+        entity,
+        user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
+        params: { namespace, name },
+        query: { top: '12', after: '123' },
+        body: {
+          revision: true,
+        },
+      } as unknown) as Request;
+
+      const res = {
+        send: jest.fn(),
+      };
+
+      const next = jest.fn();
+
+      const result = {};
+      entity.getRevisions.mockResolvedValueOnce(result);
+      await handler(req, (res as unknown) as Response, next);
+      expect(res.send).toHaveBeenCalledWith(result);
+      expect(entity.getRevisions).toHaveBeenCalledWith(12, '123', {});
     });
   });
 });
