@@ -124,6 +124,7 @@
     "@nrwl/workspace": "12.3.3",
     "@reduxjs/toolkit": "1.5.1",
     "@shelf/jest-mongodb": "^1.2.3",
+    "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "11.2.5",
     "@testing-library/react-hooks": "^3.7.0",
     "@types/amqplib": "^0.5.13",

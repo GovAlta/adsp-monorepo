@@ -79,6 +79,7 @@ li > ol {
 
 a {
   color: var(--color-primary-link);
+  cursor: pointer;
 }
 
 a:link {
@@ -113,37 +114,15 @@ a:focus {
   padding: 0 2rem;
 }
 
-a {
-  cursor: pointer;
-}
-
 /* == OVERRIDES */
 /* TODO: move these styled into the ui-components */
-.goa-header {
-  padding-left: 1rem;
-  padding-right: 1rem;
-}
 a.goa-link-button,
 .goa-button {
   margin-top: 0 !important;
 }
-a.goa-link-button,
-button.goa-button {
-  display: block;
-  width: 100%;
-  text-align: center;
-  margin-top: 0 !important;
-}
-@media (min-width: 640px) {
-  a.goa-link-button,
-  button.goa-button {
-    display: inline-block !important;
-    width: fit-content !important;
-  }
-  a.goa-link-button:last-to-type,
-  button.goa-button:last-of-type {
-    margin-right: 0;
-  }
+.goa-header {
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 a.goa-link-button.goa--secondary,
 a.goa-link-button.goa--secondary:link,
