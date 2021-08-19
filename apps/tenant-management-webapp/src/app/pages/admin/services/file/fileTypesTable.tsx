@@ -109,6 +109,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
   const [newFileType, setNewFileType] = useState<FileTypeItem>(null);
   const [disableCreate, setDisableCreate] = useState(true);
   const [showDelete, setShowDelete] = useState<boolean>(false);
+  const [isEdit, setIsEdit] = useState<boolean>(false);
   const newInputRef = useRef(null);
 
   const { roles, fileTypes } = props;
@@ -146,12 +147,14 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
         <GoAButton
           data-testid="edit-file-type"
           buttonSize="small"
+          disabled={newFileType}
           buttonType="secondary"
           onClick={() => {
             if (editableId !== props.id) {
               setEditableId(props.id);
               // When we select a new line, we will lose unsaved information
               setShowDelete(false);
+              setIsEdit(true);
               setUpdateFileType({ ...props });
             }
           }}
@@ -170,7 +173,8 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           onClick={() => {
             setStartCreateFileType(false);
             setNewFileType(null);
-            setDisableCreate(true)
+            setDisableCreate(true);
+            setIsEdit(false);
           }}
         >
           Cancel
@@ -187,6 +191,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           onClick={() => {
             setEditableId('');
             setUpdateFileType(null);
+            setIsEdit(false);
           }}
         >
           Cancel
@@ -232,6 +237,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           buttonSize="small"
           buttonType="secondary"
           data-testid="confirm-update"
+          disabled={newFileType}
           onClick={() => {
             dispatch(UpdateFileTypeService({ ...updateFileType, id }));
 
@@ -251,6 +257,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           buttonSize="small"
           buttonType="secondary"
           data-testid="delete-file-type"
+          disabled={newFileType}
           onClick={() => {
             setUpdateFileType(props);
             setShowDelete(true);
@@ -526,8 +533,8 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
 
   return (
     <FileTypeTableContainer>
-      <GoAButton onClick={newEntryFn} data-testid="new-file-type-button-top">
-        New file type
+      <GoAButton onClick={newEntryFn} data-testid="new-file-type-button-top" disabled={newFileType || isEdit}>
+        New File Type
       </GoAButton>
       {showDelete && <DeleteModal {...updateFileType} />}
       <DataTable data-testid='file-type-table'>
@@ -535,8 +542,8 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           <tr>
             <th id="actions">Actions</th>
             <th id="name">Name</th>
-            <th id="read-roles">Who can read</th>
-            <th id="write-roles">Who can edit</th>
+            <th id="read-roles">Who Can Read</th>
+            <th id="write-roles">Who Can Edit</th>
             <th id="cancel" className="right">
               Settings
             </th>
