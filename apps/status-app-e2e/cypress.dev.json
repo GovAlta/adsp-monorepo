@@ -4,6 +4,7 @@
     "TAGS": "@regression and not @ignore"
   },
   "baseUrl": "https://status-app-core-services-dev.os99.gov.ab.ca/",
+  "tenantWebAppUrl": "https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca/",
   "fileServerFolder": ".",
   "fixturesFolder": "./src/fixtures",
   "integrationFolder": "./src/integration",
