@@ -12,7 +12,6 @@
   --fw-thin: 100;
   --fw-light: 300;
   --fw-regular: 400;
-  --fw-medium: 500;
   --fw-bold: 600;
   --fw-black: 900;
 
@@ -109,19 +108,23 @@ a {
 }
 
 a:link {
-  color: var(--color-primary); }
+  color: var(--color-primary);
+}
 
 a:visited {
-  color: var(--color-visited-link); }
+  color: var(--color-visited-link);
+}
 
 a:hover {
-  color: var(--color-primary-dark); }
+  color: var(--color-primary-dark);
+}
 
 a:focus {
   outline-width: thin;
   outline-style: solid;
   outline-color: var(--color-primary-dark);
-  outline-offset: 0px; }
+  outline-offset: 0px;
+}
 
 .space-1 {
   padding: 0 0.25rem;
@@ -144,6 +147,7 @@ a {
 /* TODO: move these styled into the ui-components */
 .goa-header {
   padding-left: 1rem;
+  padding-right: 1rem;
 }
 a.goa-link-button,
 .goa-button {

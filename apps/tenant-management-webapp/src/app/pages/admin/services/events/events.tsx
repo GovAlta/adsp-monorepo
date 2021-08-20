@@ -28,6 +28,7 @@ export const Events: FunctionComponent = () => {
         <a rel="noopener noreferrer" target="_blank" href={`${docBaseUrl}?tenant=${tenantId}&urls.primaryName=Event Service`}>
           Read the API docs
         </a>
+        <br/>
         <a
           rel="noopener noreferrer"
           target="_blank"

@@ -69,7 +69,7 @@ const AppRouters = () => {
 
 export const App = (): JSX.Element => {
   return (
-    <div style={{ overflowX: 'hidden' }}>
+    <div style={{ overflowX: 'hidden', minHeight: '100vh' }}>
       <ThemeProvider theme={theme}>
         <Provider store={store}>
           <AppWithAuthContext />
@@ -85,7 +85,6 @@ function AppWithAuthContext() {
   useEffect(() => {
     // Fetch config
     if (!keycloakConfig) {
-      console.log('fetch config');
       dispatch(fetchConfig());
     }
   }, [dispatch, keycloakConfig]);
