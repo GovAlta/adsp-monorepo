@@ -8,12 +8,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { v4 as uuid4 } from 'uuid';
 import { RootState } from '@store/index';
 import { Role } from '@store/tenant/models';
+import Dialog, { DialogActions, DialogContent, DialogTitle } from '@components/Dialog';
 
 import {
   DeleteFileTypeService,
   CreateFileTypeService,
   UpdateFileTypeService,
-  FetchFileTypeHasFileService,
+  FetchFileTypeHasFileService
 } from '@store/file/actions';
 
 const FileTypeTableContainer = styled.div`
@@ -68,19 +69,9 @@ const FileTypeTableContainer = styled.div`
   max-height: 40rem;
 `;
 
-const DeleteModalContainer = styled.div`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 42rem;
-  transform: translate(-50%, -30%);
-  z-index: 9;
-  .right {
-    text-align: right;
-  }
-
-  button + button {
-    margin-left: 1rem;
+const RolesCellContainer = styled.td`
+  div + div {
+    margin-left: 0.25rem;
   }
 `;
 interface FileTypeRowProps {
@@ -167,8 +158,8 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
     const CancelNew = (): JSX.Element => {
       return (
         <GoAButton
-          buttonType='secondary'
-          buttonSize='small'
+          buttonType="secondary"
+          buttonSize="small"
           data-testid="cancel-new"
           onClick={() => {
             setStartCreateFileType(false);
@@ -185,8 +176,8 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
     const CancelUpdate = (): JSX.Element => {
       return (
         <GoAButton
-          buttonType='secondary'
-          buttonSize='small'
+          buttonType="secondary"
+          buttonSize="small"
           data-testid="cancel-update"
           onClick={() => {
             setEditableId('');
@@ -257,7 +248,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           buttonSize="small"
           buttonType="secondary"
           data-testid="delete-file-type"
-          disabled={newFileType}
+          disabled={newFileType || isEdit}
           onClick={() => {
             setUpdateFileType(props);
             setShowDelete(true);
@@ -296,12 +287,6 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
     }
 
     const displayOnly = !props.editable && rowType !== 'new';
-
-    const RolesCellContainer = styled.td`
-      div + div {
-        margin-left: 0.25rem;
-      }
-    `;
 
     if (displayOnly) {
       return (
@@ -398,9 +383,9 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
       <tr className={editable ? 'selected' : ''}>
         <ActionCell {...{ ...props, rowType: 'update' }} />
         <NameCell editable={editable} {...props} />
-        <RolesCell {...{ ...props, cellType: 'readRoles', rowType: 'update' }} />
-        <RolesCell {...{ ...props, cellType: 'updateRoles', rowType: 'update' }} />
-        <DeleteCell {...{ ...props, rowType: 'update' }} />
+        <RolesCell key={`${props.id}-roles-read`} {...{ ...props, cellType: 'readRoles', rowType: 'update' }} />
+        <RolesCell key={`${props.id}-roles-edit`} {...{ ...props, cellType: 'updateRoles', rowType: 'update' }} />
+        <DeleteCell key={`${props.id}-delete`} {...{ ...props, rowType: 'update' }} />
       </tr>
     );
   };
@@ -418,7 +403,6 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
       dispatch(FetchFileTypeHasFileService(props.id));
     }, []);
 
-
     useEffect(() => {
       if (fileType?.hasFile !== null) {
         setHasFile(fileType?.hasFile);
@@ -435,33 +419,38 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
             setShowDelete(false);
           }}
         >
-          Cancel
+          Okay
         </GoAButton>
       );
     };
 
     return (
-      <DeleteModalContainer>
+      <Dialog open={true} key={props.id} data-testid="delete-modal">
         {hasFile === true && (
-          <GoACallout type="important" data-testid="delete-modal">
-            <h3>File type current in use</h3>
-            <p>
+          <>
+            <DialogTitle>File type current in use</DialogTitle>
+            <DialogContent>
               You are unable to delete the file type <b>{`${props.name}`}</b> because there are files within the file
               type.
-            </p>
-            <CancelButton data-testid="cancel-delete-modal" />
-          </GoACallout>
+            </DialogContent>
+            <DialogActions>
+              <CancelButton data-testid="cancel-delete-modal" />
+            </DialogActions>
+          </>
         )}
 
         {hasFile === false && (
-          <GoACallout type="important" title="Deleting File Type">
-            <p>
-              Deleting the file type <b>{`${props.name}`}</b> cannot be undone.
-            </p>
-            <p>
-              <b>Are you sure you want to continue?</b>
-            </p>
-            <div className="right">
+          <>
+            <DialogTitle>Deleting file type </DialogTitle>
+            <DialogContent>
+              <p>
+                Deleting the file type <b>{`${props.name}`}</b> cannot be undone.
+              </p>
+              <p>
+                <b>Are you sure you want to continue?</b>
+              </p>
+            </DialogContent>
+            <DialogActions>
               <CancelButton data-testid="cancel-delete-modal-button" />
               <GoAButton
                 data-testid="delete-modal-delete-button"
@@ -471,10 +460,10 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
               >
                 Delete
               </GoAButton>
-            </div>
-          </GoACallout>
+            </DialogActions>
+          </>
         )}
-      </DeleteModalContainer>
+      </Dialog>
     );
   };
 
@@ -486,7 +475,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
         readRoles: [],
         updateRoles: [],
         name: '',
-        id: uuid4(),
+        id: uuid4()
       });
     }
   };
@@ -505,17 +494,17 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
         {startCreateFileType && (
           <tr className="selected" key={id}>
             <ActionCell {...{ ...props, rowType: 'new' }} />
-            <td data-testid='new-name'>
+            <td data-testid="new-name">
               <input
                 onBlur={(e) => {
-                  const name = e.target.value.trim()
+                  const name = e.target.value.trim();
                   newFileType.name = name;
                 }}
                 ref={newInputRef}
                 onChange={(e) => {
                   setName(e.target.value);
                   newFileType.name = e.target.value;
-                  setDisableCreate(e.target.value.length === 0)
+                  setDisableCreate(e.target.value.length === 0);
                 }}
                 id="new-file-type-name"
                 data-testid="new-file-type-name"
@@ -537,7 +526,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
         New File Type
       </GoAButton>
       {showDelete && <DeleteModal {...updateFileType} />}
-      <DataTable data-testid='file-type-table'>
+      <DataTable data-testid="file-type-table">
         <thead>
           <tr>
             <th id="actions">Actions</th>
