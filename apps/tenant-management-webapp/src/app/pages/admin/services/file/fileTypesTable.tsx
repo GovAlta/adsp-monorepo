@@ -419,6 +419,19 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
             setShowDelete(false);
           }}
         >
+          Cancel
+        </GoAButton>
+      );
+    };
+
+    const OkButton = () => {
+      return (
+        <GoAButton
+          buttonType="secondary"
+          onClick={() => {
+            setShowDelete(false);
+          }}
+        >
           Okay
         </GoAButton>
       );
@@ -434,7 +447,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
               type.
             </DialogContent>
             <DialogActions>
-              <CancelButton data-testid="cancel-delete-modal" />
+              <OkButton data-testid="cancel-delete-modal" />
             </DialogActions>
           </>
         )}
