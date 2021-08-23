@@ -68,11 +68,11 @@ const Dashboard = (): JSX.Element => {
             </Grid>
           </Main>
           <DashboardAside>
-            <h3>Sharing Tenant Access</h3>
+            <h3>Sharing tenant access</h3>
             <p>To give another user limited access to your realm:</p>
 
             <p>1. Add the 'tenant-admin' role to the user's Assigned roles from <a href={getKeycloakAdminPortalUsers()} rel="noopener noreferrer" target="_blank">here</a></p>
-            <div className="small-font">(Role Mapping &#8250; Client Roles &#8250; urn:ads:platform:tenant-service &#8250; Add selected)</div>
+            <div className="small-font mt-2">(Role Mapping &#8250; Client Roles &#8250; urn:ads:platform:tenant-service &#8250; Add selected)</div>
 
             <p>2. Share the following URL to complete the process.</p>
 
@@ -147,5 +147,9 @@ const DashboardAside = styled(Aside)`
   .small-font {
     font-size: var(--fs-sm);
     line-height: normal;
+  }
+
+  .mt-2 {
+    margin-top: 2em;
   }
 `;
