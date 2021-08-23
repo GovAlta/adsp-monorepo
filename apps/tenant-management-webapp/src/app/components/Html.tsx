@@ -95,10 +95,16 @@ const Main = styled.main`
 
 const Aside = styled.aside`
   padding: 0.5rem 0;
-  @media (min-width: 1024px) {
-    flex: 0 0 200px;
+  @media (min-width: 1280px) {
+    flex: 0 0 380px;
     padding-left: 2rem;
   }
+
+  @media (min-width: 1024px) and (max-width: 1279px) {
+    flex: 0 0 269px;
+    padding-left: 2rem;
+  }
+
   a {
     display: inline-block;
   }
