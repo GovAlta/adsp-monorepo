@@ -1,15 +1,15 @@
-import { Router } from 'express';
+import { Request, Response, Router } from 'express';
 import { IsDefined } from 'class-validator';
 import validationMiddleware from '../../middleware/requestValidator';
 import * as HttpStatusCodes from 'http-status-codes';
-import { requireTenantServiceAdmin, requireTenantAdmin } from '../../middleware/authentication';
+import { requireTenantServiceAdmin, requireTenantAdmin, requireBetaTesterOrAdmin } from '../../middleware/authentication';
 import * as TenantService from '../services/tenant';
 import { logger } from '../../middleware/logger';
 import { v4 as uuidv4 } from 'uuid';
 import { EventService } from '@abgov/adsp-service-sdk';
 import { tenantCreated } from '../events';
-import { ServiceRegistration } from '../../configuration-management';
 import { TenantRepository } from '../repository';
+import { ServiceClient } from '../types';
 
 class CreateTenantDto {
   @IsDefined()
@@ -35,11 +35,10 @@ class TenantByRealmDto {
 
 interface TenantRouterProps {
   eventService: EventService;
-  services: ServiceRegistration;
   tenantRepository: TenantRepository;
 }
 
-export const createTenantRouter = ({ tenantRepository, eventService, services }: TenantRouterProps): Router => {
+export const createTenantRouter = ({ tenantRepository, eventService }: TenantRouterProps): Router => {
   const tenantRouter = Router();
 
   async function getTenantByEmail(req, res) {
@@ -106,8 +105,8 @@ export const createTenantRouter = ({ tenantRepository, eventService, services }:
     }
   }
 
-  async function createTenant(req, res) {
-    const payload = req.payload;
+  async function createTenant(req: Request, res: Response) {
+    const payload = req['payload'];
     const tenantName = payload.name;
     const email = req.user.email;
 
@@ -115,16 +114,24 @@ export const createTenantRouter = ({ tenantRepository, eventService, services }:
     tokenIssuer = tokenIssuer.replace('core', tenantName);
 
     try {
-      const hasRealm = await TenantService.isRealmExisted(tenantName)
-      if (hasRealm) {
+      const tenantEmail = payload?.email;
+      if (tenantEmail) {
+        const hasRealm = await TenantService.isRealmExisted(tenantName)
         // To upgrade existing realm to support platform team service. Email is from the payload
-        const email = payload?.email;
-        if (!email) {
-          throw new TenantService.TenantError('email filed is missing', HttpStatusCodes.BAD_REQUEST);
+        if (!hasRealm) {
+          throw new TenantService.TenantError(`${tenantName} does not exit`, HttpStatusCodes.BAD_REQUEST);
         }
-        logger.info(`Found key realm with name ${tenantName}`);
-        await TenantService.validateEmailInDB(email);
-        const { ...tenant } = await TenantService.createNewTenantInDB(email, tenantName, tenantName, tokenIssuer);
+        const tenantRealm = tenantName;
+        logger.info(`Found key realm with name ${tenantRealm}`);
+        // For existed tenant, realm is same as tenant name
+        const hasTenant = await TenantService.hasTenantOfRealm(tenantName)
+
+        if (hasTenant) {
+          throw new TenantService.TenantError(`Tenant ${tenantName} has already been created`, HttpStatusCodes.BAD_REQUEST);
+        }
+
+        await TenantService.validateEmailInDB(tenantEmail);
+        const { ...tenant } = await TenantService.createNewTenantInDB(tenantEmail, tenantName, tenantName, tokenIssuer);
         const response = { ...tenant, newTenant: false };
         eventService.send(tenantCreated(req.user, response, false));
         res.status(HttpStatusCodes.OK).json(response);
@@ -134,8 +141,9 @@ export const createTenantRouter = ({ tenantRepository, eventService, services }:
 
       const generatedRealmName = uuidv4();
 
+      const [_, clients] = await req.getConfiguration<ServiceClient[], ServiceClient[]>();
       await TenantService.validateEmailInDB(email);
-      await TenantService.createRealm(services, generatedRealmName, email, tenantName);
+      await TenantService.createRealm(clients || [], generatedRealmName, email, tenantName);
       const { ...tenant } = await TenantService.createNewTenantInDB(email, generatedRealmName, tenantName, tokenIssuer);
 
       const data = { status: 'ok', message: 'Create Realm Success!', realm: generatedRealmName };
@@ -196,7 +204,7 @@ export const createTenantRouter = ({ tenantRepository, eventService, services }:
 
   // Tenant admin only APIs
   // Used by the admin web app.
-  tenantRouter.post('/', [validationMiddleware(CreateTenantDto)], createTenant);
+  tenantRouter.post('/', [requireBetaTesterOrAdmin, validationMiddleware(CreateTenantDto)], createTenant);
   tenantRouter.get('/:id', [validationMiddleware(GetTenantDto)], getTenant);
   tenantRouter.get('/realm/:realm', validationMiddleware(TenantByRealmDto), getTenantByRealm);
   tenantRouter.post('/email', [validationMiddleware(TenantByEmailDto)], getTenantByEmail);

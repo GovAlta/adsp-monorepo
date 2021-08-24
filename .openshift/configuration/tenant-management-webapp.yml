@@ -46,6 +46,9 @@ items:
             "uiComponentUrl": "https://ui-components-ui-components-dev.os99.gov.ab.ca" ,
             "fileApi": "https://file-service-core-services-dev.os99.gov.ab.ca" ,
             "serviceStatusApiUrl": "https://status-service-core-services-dev.os99.gov.ab.ca",
-            "valueServiceApiUrl": "https://value-service-core-services-dev.os99.gov.ab.ca"
+            "valueServiceApiUrl": "https://value-service-core-services-dev.os99.gov.ab.ca",
+            "serviceStatusAppUrl": "https://status-app-core-services-dev.os99.gov.ab.ca",
+            "docServiceApiUrl": "https://api-docs-app-core-services-dev.os99.gov.ab.ca",
+            "configurationServiceApiUrl": "https://configuration-service-core-services-dev.os99.gov.ab.ca"
           }
         }

@@ -9,28 +9,30 @@ describe('createTenantHandler', () => {
     getConfiguration: jest.fn(),
   };
 
+  const tokenProviderMock = {
+    getAccessToken: jest.fn(),
+  };
+
   beforeEach(() => {
     serviceMock.getConfiguration.mockReset();
   });
 
   it('can create handler', () => {
-    const handler = createConfigurationHandler(serviceMock, adspId`urn:ads:platform:test`);
+    const handler = createConfigurationHandler(tokenProviderMock, serviceMock, adspId`urn:ads:platform:test`);
     expect(handler).toBeTruthy();
   });
 
   it('can add configuration getter', async (done) => {
-    const handler = createConfigurationHandler(serviceMock, adspId`urn:ads:platform:test`);
+    const handler = createConfigurationHandler(tokenProviderMock, serviceMock, adspId`urn:ads:platform:test`);
 
     const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
     const config = 'this is config';
-    serviceMock.getConfiguration.mockReturnValue(config);
+    serviceMock.getConfiguration.mockResolvedValueOnce(config);
 
     const req: Request = { user: { tenantId, token: { bearer: 'test' } } } as Request;
-    const next = () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const next = async () => {
       expect((req as Request).getConfiguration).toBeTruthy();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((req as Request).getConfiguration()).toBe(config);
+      expect(await (req as Request).getConfiguration()).toBe(config);
 
       done();
     };

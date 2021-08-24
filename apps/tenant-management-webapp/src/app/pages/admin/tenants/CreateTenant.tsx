@@ -107,20 +107,20 @@ const CreateRealm = (): JSX.Element => {
 
   return (
     <Page ready={ready}>
-      <Main>
-        {isTenantAdmin === true && !isTenantCreated && <ErrorMessage email={userInfo.email} />}
-        {isTenantCreated ? (
-          <TenantCreated />
-        ) : (
-          <>
-            {isTenantAdmin === false ? (
+      {isInBeta ? (
+        <>
+          <Main>
+            {isTenantAdmin === true && !isTenantCreated && <ErrorMessage email={userInfo.email} />}
+            {isTenantCreated ? (
+              <TenantCreated />
+            ) : (
               <>
-                <h2>Create tenant</h2>
-                <p>
-                  Current user email: <b>{userInfo.email}</b>
-                </p>
-                {isInBeta ? (
+                {isTenantAdmin === false ? (
                   <>
+                    <h2>Create tenant</h2>
+                    <p>
+                      Current user email: <b>{userInfo.email}</b>
+                    </p>
                     <p>As a reminder, you are only able to create one tenant per user account.</p>
                     <GoAForm>
                       <GoAFormItem>
@@ -132,22 +132,27 @@ const CreateRealm = (): JSX.Element => {
                       <GoAFormButtons>{isLoaded ? <TenantCreateView /> : <ButtonLoader />}</GoAFormButtons>
                     </GoAForm>
                   </>
-                ) : (
-                  <>
-                    <p>
-                      You require the role 'beta-tester' to create a tenant. Please contact{' '}
-                      <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a> for more info
-                    </p>
-                  </>
-                )}
+                ) : null}
               </>
-            ) : null}
-          </>
-        )}
-      </Main>
-      <Aside>
-        <SupportLinks />
-      </Aside>
+            )}
+          </Main>
+          <Aside>
+            <SupportLinks />
+          </Aside>
+        </>
+      ) : (
+        <Main>
+          <h1 className="thin-font">Tenant creation failed</h1>
+          <p><b>{userInfo?.email}</b> does not have the "beta tester" role. You require the "beta-tester" role to create
+          a tenant.</p>
+          <div className="padding-bottom-2">
+            Please contact <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a> for more information.
+          </div>
+          <GoALinkButton buttonType="primary" onClick={() => dispatch(TenantLogout())} to="">
+            Back to sign in page
+          </GoALinkButton>
+        </Main>
+      )}
     </Page>
   );
 };

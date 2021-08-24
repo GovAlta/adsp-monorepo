@@ -1,16 +1,22 @@
 import { Main } from '@components/Html';
 import { RootState } from '@store/index';
-import { getEventLogEntries } from '@store/event/actions';
-import React, { FunctionComponent, useEffect } from 'react';
+import { getEventLogEntries, clearEventLogEntries } from '@store/event/actions';
+import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { EventLogEntries } from './eventLogEntries';
-import { GoACallout } from '@abgov/react-components';
+import { EventSearchForm } from './eventSearchForm';
+import { GoAButton, GoACallout } from '@abgov/react-components';
+import { EventSearchCriteria } from '@store/event/models';
 
 export const EventLog: FunctionComponent = () => {
   const readerRole = 'value-reader';
   const hasReaderRole = useSelector((state: RootState) =>
     state.session?.resourceAccess?.['urn:ads:platform:value-service']?.roles?.includes(readerRole)
   );
+  const [searched, setSearched] = useState(false);
+  const [searchCriteria, setSearchCriteria] = useState(null);
+  const next = useSelector((state: RootState) => state.event.nextEntries);
+  const isLoading = useSelector((state: RootState) => state.event.isLoading.log);
 
   const dispatch = useDispatch();
 
@@ -20,6 +26,21 @@ export const EventLog: FunctionComponent = () => {
     }
   }, [dispatch, hasReaderRole]);
 
+  const onSearch = (criteria: EventSearchCriteria) => {
+    if (hasReaderRole) {
+      dispatch(clearEventLogEntries());
+      dispatch(getEventLogEntries('', criteria));
+      setSearched(true);
+      setSearchCriteria(criteria);
+    }
+  };
+  const onSearchCancel = () => {
+    setSearched(false);
+    dispatch(getEventLogEntries());
+  };
+  const onNext = () => {
+    searched ? dispatch(getEventLogEntries(next, searchCriteria)) : dispatch(getEventLogEntries(next));
+  };
   return (
     <Main>
       <h2>Event log</h2>
@@ -29,7 +50,15 @@ export const EventLog: FunctionComponent = () => {
       </p>
       <section>
         {hasReaderRole ? (
-          <EventLogEntries />
+          <>
+            <EventSearchForm onSearch={(criteria) => onSearch(criteria)} onCancel={onSearchCancel} />
+            <EventLogEntries />
+            {next && (
+              <GoAButton disabled={isLoading} onClick={onNext}>
+                Load more...
+              </GoAButton>
+            )}
+          </>
         ) : (
           <GoACallout
             title="Value reader role required"

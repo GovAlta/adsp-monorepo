@@ -1,14 +1,15 @@
-import React, { ReactElement, ReactNode, useEffect, useState } from 'react';
+import React, { FC, ReactElement, ReactNode, useEffect, useState } from 'react';
 import styled from 'styled-components';
+import { TestProps } from '../lib/test';
 
 export type DialogState = 'init' | 'visible' | 'hidden';
 
-export interface DialogProps {
+export interface DialogProps extends TestProps {
   open?: boolean;
   onClose?: () => void;
 }
 
-function Dialog({ children, open, onClose }: DialogProps & { children: ReactNode }): JSX.Element {
+export function Dialog({ children, open, onClose, testId }: DialogProps & { children: ReactNode }): JSX.Element {
   const [state, setState] = useState<DialogState>('init');
 
   const [visible, setVisible] = useState(false);
@@ -51,7 +52,7 @@ function Dialog({ children, open, onClose }: DialogProps & { children: ReactNode
   }
 
   return visible ? (
-    <div style={{ position: 'relative' }}>
+    <div data-testid={testId} style={{ position: 'relative' }}>
       <DialogBackground visible={state === 'visible'} />
       <DialogContentParent onClick={close} visible={state === 'visible'}>
         {children}
@@ -67,25 +68,71 @@ export default Dialog;
 // *************************
 
 export const DialogActions = styled.div`
+  position: sticky;
+  bottom: 0;
+
   text-align: right;
   margin-top: 1rem;
   button {
     margin: 0;
   }
 
-  button + button {
-    margin-left: 1rem;
+  @media (max-width: 639px) {
+    button + button {
+      margin-top: 1rem;
+    }
+  }
+
+  @media (min-width: 640px) {
+    button + button {
+      margin-left: 1rem;
+    }
   }
 `;
 
-export const DialogContent = styled.div`
-  min-width: 50vw;
+interface DialogContentTemplateProps {
+  className?: string;
+}
+
+const DialogContentTemplate: FC<DialogContentTemplateProps> = ({ className, children }) => {
+  return (
+    <div className={className}>
+      <div>{children}</div>
+    </div>
+  );
+};
+
+export const DialogContent = styled(DialogContentTemplate)`
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding: 0 0.5rem;
+  max-height: 80vh;
+
+  > div {
+    height: 100%;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #888;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
 `;
 
 export const DialogTitle = styled.div`
   font-size: var(--fs-xl);
   font-weight: var(--fw-bold);
-  margin-bottom: 1rem;
+  margin: 0 0.5rem 1rem;
 `;
 
 // *************
@@ -113,13 +160,19 @@ function DialogContentParent({
 }
 
 const DialogContentPosition = styled.div`
-  max-width: 60vw;
   background: #fff;
   border-radius: 8px;
-  padding: 1rem;
-  max-height: 90vh;
-  overflow-y: auto;
+  padding: 1rem 0.5rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  overflow-y: hidden;
+
+  width: 90vw;
+  @media (min-width: 768px) {
+    width: 70vw;
+  }
+  @media (min-width: 1024px) {
+    width: 50vw;
+  }
 `;
 
 const DialogContentLayer = styled.div`

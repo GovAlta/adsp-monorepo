@@ -5,7 +5,7 @@ export const revisionSchema = new Schema({
     type: String,
     required: true,
   },
-  service: {
+  name: {
     type: String,
     required: true,
   },
@@ -19,4 +19,4 @@ export const revisionSchema = new Schema({
     required: true,
   },
 });
-revisionSchema.index({ namespace: 1, service: 1, tenant: 1, revision: 1 }, { unique: true });
+revisionSchema.index({ namespace: 1, name: 1, tenant: 1, revision: 1 }, { unique: true });

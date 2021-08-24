@@ -4,8 +4,12 @@ const statusNoticeObj = new ServiceStatusPage();
 import { injectAxe } from '../../support/app.po';
 import { htmlReport } from '../../support/axe-html-reporter-util';
 
-Given('a user is on the public service status page', function () {
-  cy.visit('/');
+Given('a user is on the public service status page for {string}', function (tenant) {
+  if (tenant == 'Platform') {
+    cy.visit('/');
+  } else {
+    cy.visit('/' + tenant);
+  }
   cy.wait(2000); // Wait all the redirects to settle down
 });
 
@@ -19,6 +23,24 @@ Then('the user views the correct header and release version', function () {
   });
   statusNoticeObj.goaMicrositeHeader().then((header) => {
     expect(header.length).to.be.gt(0); // element exists
+  });
+});
+
+Then('the user views service statuses for {string}', function (serviceList) {
+  const services = serviceList.split(',');
+  services.forEach((serviceName) => {
+    // Check each service has its status
+    statusNoticeObj
+      .applicationStatus(serviceName.trim())
+      .invoke('text')
+      .then((text) => {
+        Cypress.log({
+          name: 'Service status for "' + serviceName + '": ',
+          message: text,
+        });
+        expect(text).to.not.be.null;
+        expect(text.length).to.be.greaterThan(0);
+      });
   });
 });
 

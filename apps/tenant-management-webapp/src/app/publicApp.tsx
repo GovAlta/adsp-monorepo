@@ -10,6 +10,7 @@ export function PublicApp({ children }: publicAppProps): JSX.Element {
   return (
     <PublicCss>
       <GoAHeader serviceHome="/" serviceLevel="beta" serviceName="" />
+      <hr />
       <Container hs={4} vs={2}>
         {children}
       </Container>
@@ -22,5 +23,9 @@ export default PublicApp;
 const PublicCss = styled.div`
   h1 {
     font-weight: var(--fw-bold);
+  }
+
+  hr {
+    margin: 0;
   }
 `;

@@ -2519,11 +2519,40 @@
             "attributes": {}
           }
         ],
+        "urn:ads:platform:configuration-service": [
+          {
+            "id": "1541b2ef-1474-479d-b580-db45a6da74e1",
+            "name": "service",
+            "description": "Service role for verify codes",
+            "composite": false,
+            "clientRole": true,
+            "containerId": "af79008a-945a-42df-8260-602515cadaa2",
+            "attributes": {}
+          },
+          {
+            "id": "9d153f17-5a53-4c2a-ac0c-b1dfda86e88b",
+            "name": "configuration-admin",
+            "description": "Administrator role for configuration.",
+            "composite": false,
+            "clientRole": true,
+            "containerId": "af79008a-945a-42df-8260-602515cadaa2",
+            "attributes": {}
+          }
+        ],
         "urn:ads:platform:verify-service": [
           {
             "id": "d5fba822-c756-4977-b75e-7904da78cbd6",
             "name": "code-generator",
             "description": "Generator role for verify codes",
+            "composite": false,
+            "clientRole": true,
+            "containerId": "c237197c-5ee8-4eee-b5e0-91b3fe7065c4",
+            "attributes": {}
+          },
+          {
+            "id": "d3fba822-c756-4977-b75e-7904da78cbd6",
+            "name": "code-verifier",
+            "description": "Verifier role for verify codes",
             "composite": false,
             "clientRole": true,
             "containerId": "c237197c-5ee8-4eee-b5e0-91b3fe7065c4",
@@ -2628,8 +2657,43 @@
           "urn:ads:platform:tenant-service": [
             "platform-service"
           ],
+          "urn:ads:platform:configuration-service": [
+            "configured-service"
+          ],
           "urn:ads:platform:value-service": [
             "value-writer"
+          ]
+        },
+        "notBefore": 0,
+        "groups": []
+      },
+      {
+        "id": "e82cc98f-0146-4c0c-81cf-bc7289609c46",
+        "createdTimestamp": 1607448208769,
+        "username": "service-account-urn:ads:platform:configuration-service",
+        "enabled": true,
+        "totp": false,
+        "emailVerified": false,
+        "serviceAccountClientId": "urn:ads:platform:configuration-service",
+        "disableableCredentialTypes": [],
+        "requiredActions": [],
+        "realmRoles": [
+          "offline_access",
+          "uma_authorization"
+        ],
+        "clientRoles": {
+          "account": [
+            "manage-account",
+            "view-profile"
+          ],
+          "urn:ads:platform:tenant-service": [
+            "platform-service"
+          ],
+          "urn:ads:platform:configuration-service": [
+            "configured-service"
+          ],
+          "urn:ads:platform:event-service": [
+            "event-sender"
           ]
         },
         "notBefore": 0,
@@ -2683,6 +2747,9 @@
           "urn:ads:platform:tenant-service": [
             "platform-service"
           ],
+          "urn:ads:platform:configuration-service": [
+            "configured-service"
+          ],
           "urn:ads:platform:event-service": [
             "event-sender"
           ]
@@ -2711,6 +2778,9 @@
           ],
           "urn:ads:platform:tenant-service": [
             "platform-service"
+          ],
+          "urn:ads:platform:configuration-service": [
+            "configured-service"
           ],
           "urn:ads:platform:event-service": [
             "event-sender"
@@ -2741,6 +2811,9 @@
           "urn:ads:platform:tenant-service": [
             "platform-service"
           ],
+          "urn:ads:platform:configuration-service": [
+            "configured-service"
+          ],
           "urn:ads:platform:event-service": [
             "event-sender"
           ]
@@ -2769,6 +2842,9 @@
           ],
           "urn:ads:platform:tenant-service": [
             "platform-service"
+          ],
+          "urn:ads:platform:configuration-service": [
+            "configured-service"
           ],
           "urn:ads:platform:event-service": [
             "event-sender"
@@ -3148,6 +3224,105 @@
           },
           {
             "id": "603f08f6-ae12-4e5d-8fa5-9b1b9ec31d4e",
+            "name": "Client Host",
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-usersessionmodel-note-mapper",
+            "consentRequired": false,
+            "config": {
+              "user.session.note": "clientHost",
+              "userinfo.token.claim": "true",
+              "id.token.claim": "true",
+              "access.token.claim": "true",
+              "claim.name": "clientHost",
+              "jsonType.label": "String"
+            }
+          }
+        ],
+        "defaultClientScopes": [
+          "web-origins",
+          "role_list",
+          "roles",
+          "profile",
+          "email"
+        ],
+        "optionalClientScopes": [
+          "address",
+          "phone",
+          "offline_access",
+          "microprofile-jwt"
+        ]
+      },
+      {
+        "id": "af79008a-945a-42df-8260-602515cadaa2",
+        "clientId": "urn:ads:platform:configuration-service",
+        "surrogateAuthRequired": false,
+        "enabled": true,
+        "alwaysDisplayInConsole": false,
+        "clientAuthenticatorType": "client-secret",
+        "secret": "a52191ee-dd3b-4b0a-92d8-074800eb1d57",
+        "redirectUris": [],
+        "webOrigins": [],
+        "notBefore": 0,
+        "bearerOnly": false,
+        "consentRequired": false,
+        "standardFlowEnabled": false,
+        "implicitFlowEnabled": false,
+        "directAccessGrantsEnabled": false,
+        "serviceAccountsEnabled": true,
+        "publicClient": false,
+        "frontchannelLogout": false,
+        "protocol": "openid-connect",
+        "attributes": {
+          "saml.assertion.signature": "false",
+          "saml.force.post.binding": "false",
+          "saml.multivalued.roles": "false",
+          "saml.encrypt": "false",
+          "saml.server.signature": "false",
+          "saml.server.signature.keyinfo.ext": "false",
+          "exclude.session.state.from.auth.response": "false",
+          "saml_force_name_id_format": "false",
+          "saml.client.signature": "false",
+          "tls.client.certificate.bound.access.tokens": "false",
+          "saml.authnstatement": "false",
+          "display.on.consent.screen": "false",
+          "saml.onetimeuse.condition": "false"
+        },
+        "authenticationFlowBindingOverrides": {},
+        "fullScopeAllowed": true,
+        "nodeReRegistrationTimeout": -1,
+        "protocolMappers": [
+          {
+            "id": "15bcaf92-00d1-45b3-9d13-33492b7ec4b7",
+            "name": "Client ID",
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-usersessionmodel-note-mapper",
+            "consentRequired": false,
+            "config": {
+              "user.session.note": "clientId",
+              "userinfo.token.claim": "true",
+              "id.token.claim": "true",
+              "access.token.claim": "true",
+              "claim.name": "clientId",
+              "jsonType.label": "String"
+            }
+          },
+          {
+            "id": "a0867e94-cc22-463c-88bb-b1d0f5251f69",
+            "name": "Client IP Address",
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-usersessionmodel-note-mapper",
+            "consentRequired": false,
+            "config": {
+              "user.session.note": "clientAddress",
+              "userinfo.token.claim": "true",
+              "id.token.claim": "true",
+              "access.token.claim": "true",
+              "claim.name": "clientAddress",
+              "jsonType.label": "String"
+            }
+          },
+          {
+            "id": "83dbb198-8385-4cdc-b5e3-807005908916",
             "name": "Client Host",
             "protocol": "openid-connect",
             "protocolMapper": "oidc-usersessionmodel-note-mapper",

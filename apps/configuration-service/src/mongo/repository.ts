@@ -1,7 +1,12 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { ValidationService } from '@core-services/core-common';
+import { decodeAfter, encodeNext, Results, ValidationService } from '@core-services/core-common';
 import { model, Model } from 'mongoose';
-import { ConfigurationRepository, ServiceConfigurationEntity, ConfigurationRevision } from '../configuration';
+import {
+  ConfigurationRepository,
+  ConfigurationEntity,
+  ConfigurationRevision,
+  RevisionCriteria,
+} from '../configuration';
 import { revisionSchema } from './schema';
 import { ConfigurationRevisionDoc } from './types';
 
@@ -13,12 +18,13 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
   }
 
   async get<C>(
-    serviceId: AdspId,
+    namespace: string,
+    name: string,
     tenantId?: AdspId,
     schema?: Record<string, unknown>
-  ): Promise<ServiceConfigurationEntity<C>> {
+  ): Promise<ConfigurationEntity<C>> {
     const tenant = tenantId?.toString();
-    const query = { namespace: serviceId.namespace, service: serviceId.service, tenant };
+    const query = { namespace, name, tenant };
     const latestDoc = await new Promise<ConfigurationRevisionDoc>((resolve, reject) => {
       this.revisionModel
         .find(query, null, { lean: true })
@@ -34,27 +40,52 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         }
       : null;
 
-    return new ServiceConfigurationEntity<C>(
-      serviceId,
-      this,
-      this.validationService,
-      latest,
-      tenantId,
-      schema
-    );
+    return new ConfigurationEntity<C>(namespace, name, this, this.validationService, latest, tenantId, schema);
   }
 
-  getRevisions<C>(_entity: ServiceConfigurationEntity<C>): Promise<ConfigurationRevision<C>[]> {
-    throw new Error('Method not implemented.');
+  async getRevisions<C>(
+    entity: ConfigurationEntity<C>,
+    top: number,
+    after: string,
+    criteria: RevisionCriteria
+  ): Promise<Results<ConfigurationRevision<C>>> {
+    const query: Record<string, unknown> = {
+      namespace: entity.namespace,
+      name: entity.name,
+      tenant: entity.tenantId?.toString(),
+    };
+
+    if (criteria?.revision !== undefined) {
+      query.revision = criteria.revision;
+    }
+    const skip = decodeAfter(after);
+
+    const docs = await new Promise<ConfigurationRevisionDoc[]>((resolve, reject) => {
+      this.revisionModel
+        .find(query, null, { lean: true })
+        .sort({ revision: -1 })
+        .skip(skip)
+        .limit(top)
+        .exec((err, results: ConfigurationRevisionDoc[]) => (err ? reject(err) : resolve(results)));
+    });
+
+    return {
+      results: docs.map((doc) => ({ revision: doc.revision, configuration: doc.configuration as C })),
+      page: {
+        after,
+        next: encodeNext(docs.length, top, skip),
+        size: docs.length,
+      },
+    };
   }
 
   async saveRevision<C>(
-    entity: ServiceConfigurationEntity<C>,
+    entity: ConfigurationEntity<C>,
     revision: ConfigurationRevision<C>
   ): Promise<ConfigurationRevision<C>> {
     const query: Record<string, unknown> = {
-      namespace: entity.serviceId.namespace,
-      service: entity.serviceId.service,
+      namespace: entity.namespace,
+      name: entity.name,
       revision: revision.revision,
     };
 

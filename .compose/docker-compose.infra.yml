@@ -1,12 +1,12 @@
 version: '3.2'
 services:
-  # This is a base image to reduce services; it is not an actual service.
-  base:
-    scale: 0
-    image: adsp-base
-    build:
-      context: ../
-      dockerfile: .compose/Dockerfile
+  # This is a base image to reduce build time; it is not an actual service.
+  # base:
+  #   scale: 0
+  #   image: adsp-base
+  #   build:
+  #     context: ../
+  #     dockerfile: .compose/Dockerfile
 
   keycloak:
     build:

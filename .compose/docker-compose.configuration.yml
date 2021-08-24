@@ -1,0 +1,30 @@
+version: '3.2'
+services:
+  configuration-service-mongo:
+    image: mongo:3.6
+    expose:
+      - 27017
+  configuration-service:
+    build:
+      context: ../
+      dockerfile: .compose/service/Dockerfile
+      args:
+        - SERVICE=configuration-service
+    depends_on:
+      - tenant-management-api
+      - configuration-service-mongo
+    ports:
+      - 3339:3339
+    expose:
+      - 3339
+    volumes:
+      - ../data/file:/data/file
+    environment:
+      - DIRECTORY_URL=http://tenant-management-api:3333
+      - KEYCLOAK_ROOT_URL=http://keycloak:8080
+      - CLIENT_ID=urn:ads:platform:configuration-service
+      - CLIENT_SECRET=a52191ee-dd3b-4b0a-92d8-074800eb1d57
+      - MONGO_URI=mongodb://configuration-service-mongo:27017
+      - MONGO_DB=configuration
+      - PORT=3339
+      - LOG_LEVEL=debug

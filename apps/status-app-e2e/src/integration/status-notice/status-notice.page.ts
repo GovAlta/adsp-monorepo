@@ -10,6 +10,12 @@ class ServiceStatusPage {
   statusPageTitle() {
     return cy.get('h1');
   }
+
+  applicationStatus(appTitle) {
+    return cy.xpath(
+      `//b[contains(text(),"${appTitle}")]/parent::div/following-sibling::div/div[@class="status-button"]/div`
+    );
+  }
 }
 
 export default ServiceStatusPage;

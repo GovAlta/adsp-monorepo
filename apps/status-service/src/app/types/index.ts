@@ -86,3 +86,4 @@ export interface NoticeApplication {
 }
 export * from './serviceStatus';
 export * from './endpointStatusEntry';
+export * from './roles';

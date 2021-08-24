@@ -1,0 +1,109 @@
+400: &400
+  description: Bad request
+401: &401
+  description: Unauthorized
+500: &500
+  description: Internal server error
+
+'/api/notices/v1/notice':
+  get:
+    tags: [NoticeApplicationEntity]
+    description: Retrieves all notices
+    responses:
+      200:
+        description: Notices successfully retrieved.
+  post:
+    tags: [NoticeApplicationEntity]
+    description: Creates a notice.
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                required: true
+              tennantServRef:
+                type: string
+                required: true
+              startDate:
+                type: date
+                required: true
+              endDate:
+                type: date
+                required: true
+              mode:
+                type: string
+                required: true
+    responses:
+      200:
+        description: Notice successfully created.
+      400: *400
+      401: *401
+      500: *500
+
+  put:
+    tags: [NoticeApplicationEntity]
+    description: Update a notice.
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                required: true
+                type: string
+              message:
+                type: string
+                required: true
+              tennantServRef:
+                type: string
+                required: true
+              startDate:
+                type: date
+                required: true
+              endDate:
+                type: date
+                required: true
+              mode:
+                type: string
+                required: true
+    responses:
+      200:
+        description: Notice successfully updated.
+      401: *401
+
+'/api/notices/v1/notice/{id}':
+  get:
+    tags: [NoticeApplicationEntity]
+    description: Retrieves a single notice.
+    parameters:
+      - name: id
+        description: Notice id.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Notice successfully retrieved.
+      404:
+        description: Notice not found.
+  delete:
+    tags: [NoticeApplicationEntity]
+    description: Deletes notice..
+    parameters:
+    - name: id
+      description: Id of the notice.
+      in: path
+      required: true
+      schema:
+        $ref: '#.../model/NoticeApplicationEntity'
+    responses:
+      200:
+        description: Notice successfully deleted.
+      401: *401
+      404:
+        description: Notice not found.

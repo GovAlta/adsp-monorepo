@@ -1,35 +1,42 @@
 import { AdspId, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, ValidationService } from '@core-services/core-common';
+import { InvalidOperationError, Results, ValidationService } from '@core-services/core-common';
 import { ConfigurationRepository } from '../repository';
 import { ConfigurationServiceRoles } from '../roles';
-import { ConfigurationRevision, ServiceConfiguration } from '../types';
+import { ConfigurationRevision, Configuration, RevisionCriteria } from '../types';
 
 /**
  * Represents an aggregate context for configuration revisions.
  *
  * @export
  * @class ServiceConfigurationEntity
- * @implements {ServiceConfiguration<C>}
+ * @implements {Configuration<C>}
  * @template C
  */
-export class ServiceConfigurationEntity<C = Record<string, unknown>> implements ServiceConfiguration<C> {
-  public revisions?: ConfigurationRevision<C>[] = [];
-
+export class ConfigurationEntity<C = Record<string, unknown>> implements Configuration<C> {
   constructor(
-    public serviceId: AdspId,
+    public namespace: string,
+    public name: string,
     public repository: ConfigurationRepository,
     public validationService: ValidationService,
     public latest?: ConfigurationRevision<C>,
     public tenantId?: AdspId,
     schema?: Record<string, unknown>
   ) {
+    if (!namespace || !name) {
+      throw new InvalidOperationError('Configuration must have a namespace and name.');
+    }
+
+    if (namespace.includes(':') || name.includes(':')) {
+      throw new InvalidOperationError(`Configuration and namespace and name cannot contain ':'.`);
+    }
+
     validationService.setSchema(this.getSchemaKey(), schema || {});
   }
 
   public canAccess(user: User): boolean {
     return (
       (user?.roles?.includes(ConfigurationServiceRoles.ConfigurationAdmin) ||
-        user?.roles?.includes(ConfigurationServiceRoles.Service) ||
+        user?.roles?.includes(ConfigurationServiceRoles.ConfiguredService) ||
         user?.roles?.includes(ConfigurationServiceRoles.Reader)) &&
       (user.isCore || !this.tenantId || this.tenantId.toString() === user.tenantId?.toString())
     );
@@ -38,22 +45,22 @@ export class ServiceConfigurationEntity<C = Record<string, unknown>> implements 
   public canModify(user: User): boolean {
     return (
       (user?.roles?.includes(ConfigurationServiceRoles.ConfigurationAdmin) ||
-        user?.roles?.includes(ConfigurationServiceRoles.Service)) &&
+        user?.roles?.includes(ConfigurationServiceRoles.ConfiguredService)) &&
       (this.tenantId ? this.tenantId.toString() === user.tenantId?.toString() : user.isCore)
     );
   }
 
-  public async update(user: User, configuration: C): Promise<ServiceConfigurationEntity<C>> {
+  public async update(user: User, configuration: C): Promise<ConfigurationEntity<C>> {
     if (!this.canModify(user)) {
       throw new UnauthorizedUserError('modify configuration', user);
     }
 
     if (!configuration) {
-      throw new InvalidOperationError('Configuration must have a value.')
+      throw new InvalidOperationError('Configuration must have a value.');
     }
 
     if (!this.validationService.validate(this.getSchemaKey(), configuration)) {
-      throw new InvalidOperationError(`Provided configuration is not valid for service '${this.serviceId}'.`);
+      throw new InvalidOperationError(`Provided configuration is not valid for '${this.namespace}:${this.name}'.`);
     }
 
     const revision: ConfigurationRevision<C> = {
@@ -65,7 +72,7 @@ export class ServiceConfigurationEntity<C = Record<string, unknown>> implements 
     return this;
   }
 
-  public async createRevision(user: User): Promise<ServiceConfigurationEntity<C>> {
+  public async createRevision(user: User): Promise<ConfigurationEntity<C>> {
     if (!this.canModify(user)) {
       throw new UnauthorizedUserError('modify configuration', user);
     }
@@ -79,7 +86,15 @@ export class ServiceConfigurationEntity<C = Record<string, unknown>> implements 
     return this;
   }
 
+  public async getRevisions(
+    top = 10,
+    after: string = null,
+    criteria: RevisionCriteria = null
+  ): Promise<Results<ConfigurationRevision<C>>> {
+    return this.repository.getRevisions(this, top, after, criteria);
+  }
+
   private getSchemaKey(): string {
-    return this.serviceId.toString();
+    return `${this.namespace}:${this.name}`;
   }
 }

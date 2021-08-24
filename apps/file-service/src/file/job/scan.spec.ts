@@ -50,8 +50,8 @@ describe('Scan Job', () => {
     repositoryMock
       .setup((instance) =>
         instance.find(
-          20,
-          null,
+          10,
+          It.IsAny(),
           It.Is<FileCriteria>((c) => !c.deleted && !c.scanned)
         )
       )
@@ -89,8 +89,8 @@ describe('Scan Job', () => {
     repositoryMock
       .setup((instance) =>
         instance.find(
-          20,
-          null,
+          10,
+          It.IsAny(),
           It.Is<FileCriteria>((c) => !c.deleted && !c.scanned)
         )
       )
@@ -128,8 +128,8 @@ describe('Scan Job', () => {
     repositoryMock
       .setup((instance) =>
         instance.find(
-          20,
-          null,
+          10,
+          It.IsAny(),
           It.Is<FileCriteria>((c) => !c.deleted && !c.scanned)
         )
       )

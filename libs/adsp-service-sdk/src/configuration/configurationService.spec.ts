@@ -31,7 +31,7 @@ describe('ConfigurationService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('can getConfiguration from cache', async (done) => {
+  it('can getConfiguration from cache', async () => {
     const service = new ConfigurationServiceImpl(logger, directoryMock);
 
     const config = { value: 'this is config' };
@@ -43,19 +43,18 @@ describe('ConfigurationService', () => {
     );
 
     expect(result.value).toBe(config.value);
-    done();
   });
 
-  it('can retrieve from API on cache miss', async (done) => {
+  it('can retrieve from API on cache miss', async () => {
     const service = new ConfigurationServiceImpl(logger, directoryMock);
 
     cacheMock.mockReturnValueOnce(null);
     cacheMock.mockReturnValueOnce(null);
 
     const config = { value: 'this is config' };
-    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { configuration: config } }));
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: config }));
     const configOptions = 'this is options';
-    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { results: [{ configOptions }] } }));
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: configOptions }));
 
     const [result, options] = await service.getConfiguration<{ value: string }, string>(
       adspId`urn:ads:platform:test`,
@@ -65,10 +64,9 @@ describe('ConfigurationService', () => {
 
     expect(result.value).toBe(config.value);
     expect(options).toBe(configOptions);
-    done();
   });
 
-  it('can use converter', async (done) => {
+  it('can use converter', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const converter = (c: unknown) => ((c as any)?.value ? { value: 'converted' } : 'converted');
     const service = new ConfigurationServiceImpl(logger, directoryMock, converter);
@@ -77,9 +75,9 @@ describe('ConfigurationService', () => {
     cacheMock.mockReturnValueOnce(null);
 
     const config = { value: 'this is config' };
-    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { configuration: config } }));
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: config }));
     const configOptions = 'this is options';
-    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { results: [{ configOptions }] } }));
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: configOptions }));
 
     const [result, options] = await service.getConfiguration<{ value: string }, string>(
       adspId`urn:ads:platform:test`,
@@ -89,19 +87,18 @@ describe('ConfigurationService', () => {
 
     expect(result.value).toBe('converted');
     expect(options).toBe('converted');
-    done();
   });
 
-  it('can use default if null converter provided', async (done) => {
+  it('can use default if null converter provided', async () => {
     const service = new ConfigurationServiceImpl(logger, directoryMock, null);
 
     cacheMock.mockReturnValueOnce(null);
     cacheMock.mockReturnValueOnce(null);
 
     const config = { value: 'this is config' };
-    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { configuration: config } }));
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: config }));
     const configOptions = 'this is options';
-    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: { results: [{ configOptions }] } }));
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: configOptions }));
 
     const [result, options] = await service.getConfiguration<{ value: string }, string>(
       adspId`urn:ads:platform:test`,
@@ -111,6 +108,5 @@ describe('ConfigurationService', () => {
 
     expect(result.value).toBe(config.value);
     expect(options).toBe(configOptions);
-    done();
   });
 });

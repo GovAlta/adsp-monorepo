@@ -73,8 +73,9 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
 function AppHeader({ serviceName = '', hasLoginLink = true, admin = false }: HeaderProps): JSX.Element {
   return (
     <HeaderContainer>
-      <GoAHeader serviceHome="/" serviceLevel="beta" serviceName={serviceName} />
-      <ActionsMenu hasLoginLink={hasLoginLink} admin={admin} />
+      <GoAHeader serviceHome="/" serviceLevel="beta" serviceName={serviceName}>
+        <ActionsMenu hasLoginLink={hasLoginLink} admin={admin} />
+      </GoAHeader>
     </HeaderContainer>
   );
 }
@@ -138,20 +139,10 @@ const HeaderContainer = styled.div`
 `;
 
 const Actions = styled.div`
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  height: 66px;
   display: flex;
-  align-items: center;
-
-  > .mobile {
-    margin-right: 1rem;
-  }
 
   > .desktop {
     display: none;
-    margin-right: 1rem;
   }
 
   @media (min-width: 768px) {

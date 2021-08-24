@@ -1,11 +1,11 @@
-import { AdspId, adspId, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { assertAuthenticatedHandler, InvalidOperationError } from '@core-services/core-common';
+import { AdspId, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { assertAuthenticatedHandler, InvalidOperationError, NotFoundError, Results } from '@core-services/core-common';
 import { Request, RequestHandler, Router } from 'express';
 import { Logger } from 'winston';
 import { configurationUpdated, revisionCreated } from '../events';
-import { ServiceConfigurationEntity } from '../model';
+import { ConfigurationEntity } from '../model';
 import { ConfigurationRepository, Repositories } from '../repository';
-import { ConfigurationDefinition, ConfigurationDefinitions } from '../types';
+import { ConfigurationDefinition, ConfigurationDefinitions, ConfigurationRevision } from '../types';
 import { OPERATION_DELETE, OPERATION_REPLACE, OPERATION_UPDATE, PatchRequests } from './types';
 
 export interface ConfigurationRouterProps extends Repositories {
@@ -19,38 +19,45 @@ const ENTITY_KEY = 'entity';
 const getDefinition = async (
   configurationServiceId: AdspId,
   repository: ConfigurationRepository,
-  serviceId: AdspId,
+  namespace: string,
+  name: string,
   tenantId?: AdspId
 ): Promise<ConfigurationDefinition> => {
-  const key = serviceId.toString();
-  const core = await repository.get<ConfigurationDefinitions>(configurationServiceId);
+  const key = `${namespace}:${name}`;
+  const core = await repository.get<ConfigurationDefinitions>(
+    configurationServiceId.namespace,
+    configurationServiceId.service
+  );
   if (core?.latest?.configuration[key]) {
     return core.latest.configuration[key];
   } else if (tenantId) {
-    const tenant = await repository.get<ConfigurationDefinitions>(configurationServiceId, tenantId);
-    return tenant?.latest?.configuration[key];
+    const tenant = await repository.get<ConfigurationDefinitions>(
+      configurationServiceId.namespace,
+      configurationServiceId.service,
+      tenantId
+    );
+    return tenant?.latest?.configuration[key] || tenant?.latest?.configuration[namespace];
   } else {
     return null;
   }
 };
 
-export const getServiceConfigurationEntity = (
+export const getConfigurationEntity = (
   configurationServiceId: AdspId,
   repository: ConfigurationRepository,
   requestCore = (_req: Request): boolean => false
 ): RequestHandler => async (req, _res, next) => {
   const user = req.user;
-  const { namespace, service } = req.params;
+  const { namespace, name } = req.params;
   const { tenantId: tenantIdValue } = req.query;
   const getCore = requestCore(req);
 
   try {
     const tenantId = user?.isCore && tenantIdValue ? AdspId.parse(tenantIdValue as string) : user.tenantId;
 
-    const serviceId = adspId`urn:ads:${namespace}:${service}`;
-    const definition = await getDefinition(configurationServiceId, repository, serviceId, tenantId);
+    const definition = await getDefinition(configurationServiceId, repository, namespace, name, tenantId);
 
-    const entity = await repository.get(serviceId, getCore ? null : tenantId, definition?.configurationSchema);
+    const entity = await repository.get(namespace, name, getCore ? null : tenantId, definition?.configurationSchema);
     if (!entity.canAccess(user)) {
       throw new UnauthorizedUserError('access configuration', user);
     }
@@ -62,26 +69,23 @@ export const getServiceConfigurationEntity = (
   }
 };
 
-const mapConfiguration = (configuration: ServiceConfigurationEntity): unknown => ({
-  serviceId: configuration.serviceId.toString(),
+const mapConfiguration = (configuration: ConfigurationEntity): unknown => ({
+  namespace: configuration.namespace,
+  name: configuration.name,
   latest: configuration.latest,
 });
 
-export const getServiceConfiguration = (mapResult = mapConfiguration): RequestHandler => async (req, res) => {
-  const configuration: ServiceConfigurationEntity = req[ENTITY_KEY];
+export const getConfiguration = (mapResult = mapConfiguration): RequestHandler => async (req, res) => {
+  const configuration: ConfigurationEntity = req[ENTITY_KEY];
   res.send(mapResult(configuration));
 };
 
-export const patchServiceConfigurationRevision = (eventService: EventService): RequestHandler => async (
-  req,
-  res,
-  next
-) => {
+export const patchConfigurationRevision = (eventService: EventService): RequestHandler => async (req, res, next) => {
   const user = req.user;
   const request: PatchRequests = req.body;
 
   try {
-    const entity: ServiceConfigurationEntity = req[ENTITY_KEY];
+    const entity: ConfigurationEntity = req[ENTITY_KEY];
 
     let update: Record<string, unknown> = null;
     switch (request.operation) {
@@ -114,18 +118,16 @@ export const patchServiceConfigurationRevision = (eventService: EventService): R
 
     res.send(mapConfiguration(updated));
     if (updated.tenantId) {
-      eventService.send(configurationUpdated(updated.tenantId, updated.serviceId, updated.latest?.revision));
+      eventService.send(
+        configurationUpdated(updated.tenantId, updated.namespace, updated.name, updated.latest?.revision)
+      );
     }
   } catch (err) {
     next(err);
   }
 };
 
-export const createServiceConfigurationRevision = (eventService: EventService): RequestHandler => async (
-  req,
-  res,
-  next
-) => {
+export const createConfigurationRevision = (eventService: EventService): RequestHandler => async (req, res, next) => {
   const user = req.user;
   const { revision = false } = req.body;
   if (!revision) {
@@ -134,19 +136,39 @@ export const createServiceConfigurationRevision = (eventService: EventService): 
   }
 
   try {
-    const configuration: ServiceConfigurationEntity = req[ENTITY_KEY];
+    const configuration: ConfigurationEntity = req[ENTITY_KEY];
     const updated = await configuration.createRevision(user);
 
     res.send(mapConfiguration(updated));
     if (updated.tenantId) {
-      eventService.send(revisionCreated(updated.tenantId, updated.serviceId, updated.latest?.revision));
+      eventService.send(revisionCreated(updated.tenantId, updated.namespace, updated.name, updated.latest?.revision));
     }
   } catch (err) {
     next(err);
   }
 };
 
+export const getRevisions = (
+  getCriteria = (_req: Request) => ({}),
+  mapResults = (_req: Request, results: Results<ConfigurationRevision>): unknown => results
+): RequestHandler => async (req, res, next) => {
+  const { top: topValue, after: afterValue } = req.query;
+
+  try {
+    const top = topValue ? parseInt(topValue as string) : 10;
+    const after = afterValue as string;
+    const criteria = getCriteria(req);
+
+    const entity: ConfigurationEntity = req[ENTITY_KEY];
+    const results = await entity.getRevisions(top, after, criteria);
+    res.send(mapResults(req, results));
+  } catch (err) {
+    next(err);
+  }
+};
+
 export function createConfigurationRouter({
+  logger: _logger,
   serviceId,
   eventService,
   configuration: configurationRepository,
@@ -154,31 +176,53 @@ export function createConfigurationRouter({
   const router = Router();
 
   router.get(
-    '/configuration/:namespace/:service',
+    '/configuration/:namespace/:name',
     assertAuthenticatedHandler,
-    getServiceConfigurationEntity(serviceId, configurationRepository, (req) => req.query.core !== undefined),
-    getServiceConfiguration()
+    getConfigurationEntity(serviceId, configurationRepository, (req) => req.query.core !== undefined),
+    getConfiguration()
   );
 
   router.get(
-    '/configuration/:namespace/:service/latest',
+    '/configuration/:namespace/:name/latest',
     assertAuthenticatedHandler,
-    getServiceConfigurationEntity(serviceId, configurationRepository),
-    getServiceConfiguration((configuration) => configuration.latest?.configuration)
+    getConfigurationEntity(serviceId, configurationRepository, (req) => req.query.core !== undefined),
+    getConfiguration((configuration) => configuration.latest?.configuration || {})
   );
 
   router.patch(
-    '/configuration/:namespace/:service',
+    '/configuration/:namespace/:name',
     assertAuthenticatedHandler,
-    getServiceConfigurationEntity(serviceId, configurationRepository),
-    patchServiceConfigurationRevision(eventService)
+    getConfigurationEntity(serviceId, configurationRepository),
+    patchConfigurationRevision(eventService)
   );
 
   router.post(
-    '/configuration/:namespace/:service',
+    '/configuration/:namespace/:name',
     assertAuthenticatedHandler,
-    getServiceConfigurationEntity(serviceId, configurationRepository),
-    createServiceConfigurationRevision(eventService)
+    getConfigurationEntity(serviceId, configurationRepository),
+    createConfigurationRevision(eventService)
+  );
+
+  router.get(
+    '/configuration/:namespace/:name/revisions',
+    assertAuthenticatedHandler,
+    getConfigurationEntity(serviceId, configurationRepository),
+    getRevisions()
+  );
+
+  router.get(
+    '/configuration/:namespace/:name/revisions/:revision',
+    assertAuthenticatedHandler,
+    getConfigurationEntity(serviceId, configurationRepository),
+    getRevisions(
+      (req) => ({ revision: req.params.revision }),
+      (req, { results }) => {
+        if (results.length < 1) {
+          throw new NotFoundError('revision', req.params.revision);
+        }
+        return results[0]?.configuration;
+      }
+    )
   );
 
   return router;

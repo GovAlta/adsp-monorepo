@@ -1,4 +1,4 @@
-import { Doc } from '@core-services/core-common';
+import { Doc, Results, decodeAfter, encodeNext } from '@core-services/core-common';
 import { Model, model, Document } from 'mongoose';
 import { NoticeApplication } from '../app/types/index';
 import { NoticeApplicationEntity } from '../app/model/notice';
@@ -16,9 +16,37 @@ export default class MongoNoticeRepository implements NoticeRepository {
     return Promise.resolve(this.fromDoc(doc));
   }
 
-  async find(filter: Partial<NoticeApplication>): Promise<NoticeApplicationEntity[]> {
-    const docs = await this.model.find(filter);
-    return docs.map((doc) => this.fromDoc(doc));
+  async find(
+    top: number,
+    after: string,
+    filter: Partial<NoticeApplication>
+  ): Promise<Results<NoticeApplicationEntity>> {
+    const skip = decodeAfter(after);
+    let modeFilter = {};
+
+    if (filter.mode != null) {
+      modeFilter = { mode: filter.mode };
+    }
+
+    return new Promise<Results<NoticeApplicationEntity>>((resolve, reject) => {
+      this.model
+        .find(modeFilter, null, { lean: true })
+        .sort({ createdAt: 1, mode: 1 })
+        .skip(skip)
+        .limit(top)
+        .exec((err, docs) =>
+          err
+            ? reject(err)
+            : resolve({
+                results: docs.map((doc) => this.fromDoc(doc)),
+                page: {
+                  after,
+                  next: encodeNext(docs.length, top, skip),
+                  size: docs.length,
+                },
+              })
+        );
+    });
   }
 
   async save(entity: NoticeApplicationEntity): Promise<NoticeApplicationEntity> {

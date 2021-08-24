@@ -58,7 +58,6 @@ export default TenantManagement;
 
 const AdminLayout = styled.div`
   display: flex;
-  min-height: 100vh;
 `;
 
 const SidebarWrapper = styled.nav`

@@ -34,6 +34,7 @@
     "accessManagementApi": "http://keycloak:8080/auth",
     "uiComponentUrl": "https://ui-components-ui-components-dev.os99.gov.ab.ca",
     "fileApi": "http://localhost:3337",
-    "valueServiceApiUrl": "http://value-service:3336"
+    "valueServiceApiUrl": "http://value-service:3336",
+    "configurationServiceApiUrl": "http://configuration-service:3339"
   }
 }

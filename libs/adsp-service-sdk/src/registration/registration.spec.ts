@@ -24,10 +24,10 @@ describe('ServiceRegistrar', () => {
   beforeEach(() => {
     axiosMock.get.mockReset();
     axiosMock.post.mockReset();
-    axiosMock.put.mockReset();
+    axiosMock.patch.mockReset();
   });
 
-  it('can register service', async (done) => {
+  it('can register service', async () => {
     const registrar = new ServiceRegistrarImpl(logger, directoryMock, tokenProviderMock);
 
     axiosMock.post.mockResolvedValue({ data: {} });
@@ -40,22 +40,17 @@ describe('ServiceRegistrar', () => {
 
     expect(axiosMock.post).toHaveBeenCalledTimes(1);
     expect(axiosMock.post.mock.calls[0][0]).toContain('test-service');
-
-    done();
   });
 
-  it('can register events', async (done) => {
+  it('can register events', async () => {
     const registrar = new ServiceRegistrarImpl(logger, directoryMock, tokenProviderMock);
 
-    axiosMock.post.mockResolvedValue({ data: {} });
-    axiosMock.get.mockResolvedValue({ data: { results: [{ id: 'test-123', configOptions: {} }] } });
+    axiosMock.patch.mockResolvedValue({ data: {} });
 
     await registrar.register({
       serviceId: adspId`urn:ads:platform:test-service`,
       displayName: 'Test Service',
       description: 'This is a test service.',
-      configurationSchema: {},
-      roles: ['test-admin'],
       events: [
         {
           name: 'test-event',
@@ -67,19 +62,15 @@ describe('ServiceRegistrar', () => {
       ],
     });
 
-    expect(axiosMock.get).toHaveBeenCalledTimes(1);
-    expect(axiosMock.put).toHaveBeenCalledTimes(1);
-    expect(axiosMock.put.mock.calls[0][0]).toContain('test-123');
-    expect(axiosMock.put.mock.calls[0][1].configOptions).toHaveProperty('test-service');
-
-    done();
+    expect(axiosMock.patch).toHaveBeenCalledTimes(1);
+    expect(axiosMock.patch.mock.calls[0][0]).toContain('event-service');
+    expect(axiosMock.patch.mock.calls[0][1].update).toHaveProperty('test-service');
   });
 
-  it('can register events with new event service options', async (done) => {
+  it('can register events with new event service options', async () => {
     const registrar = new ServiceRegistrarImpl(logger, directoryMock, tokenProviderMock);
 
-    axiosMock.post.mockResolvedValue({ data: {} });
-    axiosMock.get.mockResolvedValue({ data: { results: [] } });
+    axiosMock.patch.mockResolvedValue({ data: {} });
 
     await registrar.register({
       serviceId: adspId`urn:ads:platform:test-service`,
@@ -97,10 +88,7 @@ describe('ServiceRegistrar', () => {
       ],
     });
 
-    expect(axiosMock.get).toHaveBeenCalledTimes(1);
-    expect(axiosMock.post).toHaveBeenCalledTimes(2);
-    expect(axiosMock.post.mock.calls[1][1].configOptions).toHaveProperty('test-service');
-
-    done();
+    expect(axiosMock.patch).toHaveBeenCalledTimes(2);
+    expect(axiosMock.patch.mock.calls[1][1].update).toHaveProperty('test-service');
   });
 });
