@@ -7,15 +7,16 @@ def vaultSecretEnvMapping = [
         [envVar: 'cyDevCoreAPIUserPassword', vaultKey: 'core-api-user-password'],
         [envVar: 'cyDevClientSecret', vaultKey: 'client-secret'],
         [envVar: 'cyDevPassword', vaultKey: 'password'],
-        [envVar: 'cyDevPassword2', vaultKey: 'password2']]
-
+        [envVar: 'cyDevPassword2', vaultKey: 'password2'],
+        [envVar: 'cyDevPassword3', vaultKey: 'password3']]
     ],
     [path: 'secret/core-services-jenkins/test', engineVersion: 2, secretValues: [
         [envVar: 'cyTestCoreAPIClientSecret', vaultKey: 'core-api-client-secret'],
         [envVar: 'cyTestCoreAPIUserPassword', vaultKey: 'core-api-user-password'],
         [envVar: 'cyTestClientSecret', vaultKey: 'client-secret'],
         [envVar: 'cyTestPassword', vaultKey: 'password'],
-        [envVar: 'cyTestPassword2', vaultKey: 'password2']]
+        [envVar: 'cyTestPassword2', vaultKey: 'password2'],
+        [envVar: 'cyTestPassword3', vaultKey: 'password3']]
     ]
 ]
 
@@ -198,6 +199,7 @@ pipeline {
                   text = text.replaceAll(/"client-secret": \"\",/, "\"client-secret\": \"$cyDevClientSecret\",")
                   text = text.replaceAll(/"password": \"\",/, "\"password\": \"$cyDevPassword\",")
                   text = text.replaceAll(/"password2": \"\",/, "\"password2\": \"$cyDevPassword2\",")
+                  text = text.replaceAll(/"password3": \"\",/, "\"password3\": \"$cyDevPassword3\",")
                 }
                 writeFile file: "apps/tenant-management-webapp-e2e/cypress.dev.json", text: text
             }
@@ -307,6 +309,7 @@ pipeline {
                   text = text.replaceAll(/"client-secret": \"\",/, "\"client-secret\": \"$cyTestClientSecret\",")
                   text = text.replaceAll(/"password": \"\",/, "\"password\": \"$cyTestPassword\",")
                   text = text.replaceAll(/"password2": \"\",/, "\"password2\": \"$cyTestPassword2\",")
+                  text = text.replaceAll(/"password3": \"\",/, "\"password2\": \"$cyTestPassword3\",")
                 }
                 writeFile file: "apps/tenant-management-webapp-e2e/cypress.test.json", text: text
             }

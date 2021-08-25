@@ -55,6 +55,18 @@ class WelcomePage {
   tenantSignInTitle() {
     return cy.get('h1:contains("Sign In")');
   }
+
+  backToSignInPageLinkButton() {
+    return cy.get('a:contains("Back to sign in page")');
+  }
+
+  tenantCreationFailedH1Title() {
+    return cy.xpath('//h1[contains(text(), "Tenant creation failed")]');
+  }
+
+  tenantCreationFailedErrorMessage() {
+    return cy.xpath('//h1[contains(text(), "Tenant creation failed")]/following-sibling::p');
+  }
 }
 
 export default WelcomePage;

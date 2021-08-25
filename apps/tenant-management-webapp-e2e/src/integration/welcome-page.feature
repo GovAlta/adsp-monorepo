@@ -45,3 +45,13 @@ Feature: Tenant management welcome page
     Scenario: As a tenant management user, I can see the welcome page without any critical and serious accessibility issues
         When the user goes to the tenant management welcome page
         Then no critical or serious accessibility issues on "tenant management welcome page"
+
+    @TEST_CS-733 @regression
+    Scenario: As a non-beta-tester user, I cannot create a new tenant in ADSP
+        Given the user is on the tenant management welcome page
+        When the user selects get started button
+        And the user clicks continue with Government Alberta account button
+        And the user enters "env{email3}" and "env{password3}", and clicks login button
+        Then the user views a message of cannot create a tenant without beta-tester role
+        When the user clicks back to sign in page button
+        Then the user views the tenant management welcome page title

@@ -16,6 +16,8 @@
     "autotest-admin-token": "",
     "email2": "auto.test2@gov.ab.ca",
     "password2": "",
+    "email3": "auto.test3@gov.ab.ca",
+    "password3": "",
     "eventServiceApiUrl": "",
     "notificationServiceUrl": "",
     "keycloakUrl": "",
