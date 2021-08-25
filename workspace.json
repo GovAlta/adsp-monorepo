@@ -586,6 +586,7 @@
         "build": {
           "builder": "@nrwl/node:build",
           "options": {
+            "webpackConfig": "apps/status-service/webpack.config.js",
             "outputPath": "dist/apps/status-service",
             "main": "apps/status-service/src/main.ts",
             "tsConfig": "apps/status-service/tsconfig.app.json",
