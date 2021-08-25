@@ -309,7 +309,7 @@ pipeline {
                   text = text.replaceAll(/"client-secret": \"\",/, "\"client-secret\": \"$cyTestClientSecret\",")
                   text = text.replaceAll(/"password": \"\",/, "\"password\": \"$cyTestPassword\",")
                   text = text.replaceAll(/"password2": \"\",/, "\"password2\": \"$cyTestPassword2\",")
-                  text = text.replaceAll(/"password3": \"\",/, "\"password2\": \"$cyTestPassword3\",")
+                  text = text.replaceAll(/"password3": \"\",/, "\"password3\": \"$cyTestPassword3\",")
                 }
                 writeFile file: "apps/tenant-management-webapp-e2e/cypress.test.json", text: text
             }
