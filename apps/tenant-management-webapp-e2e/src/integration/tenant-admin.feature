@@ -65,8 +65,7 @@ Feature: Tenant admin
   Scenario: As a GoA admin user, I should be able to see useful information on the landing page
     Given a service owner user is on tenant admin page
     Then the user views the tenant name of "autotest"
-    # Need developer to add data-testid to the release info section
-    # And the user views the release info and DIO contact info
+    And the user views the release info and DIO contact info
     And the user views the autologin link with a copy button
     # Getting content from clipboard doesn't work on build agent. Commented out this validation.
     # When the user clicks click to copy button

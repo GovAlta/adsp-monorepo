@@ -356,8 +356,12 @@ Then('the user views the tenant name of {string}', function (tenantName) {
 });
 
 Then('the user views the release info and DIO contact info', function () {
-  tenantAdminObj.releaseContactInfo().should('contain.text', 'This service is in BETA release');
-  tenantAdminObj.releaseContactInfo().should('contain.text', 'DIO@gov.ab.ca');
+  tenantAdminObj
+    .releaseContactInfo()
+    .invoke('text')
+    .then((text) => {
+      expect(text).to.match(/This service is in .+ release.+ DIO@gov.ab.ca/g);
+    });
 });
 
 Then('the user views the autologin link with a copy button', function () {
