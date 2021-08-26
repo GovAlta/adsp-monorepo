@@ -5,7 +5,7 @@
 500: &500
   description: Internal server error
 
-'/api/notices/v1/notice':
+'/notices/v1/notice':
   get:
     tags: [NoticeApplicationEntity]
     description: Retrieves all notices
@@ -75,7 +75,7 @@
         description: Notice successfully updated.
       401: *401
 
-'/api/notices/v1/notice/{id}':
+'/notices/v1/notice/{id}':
   get:
     tags: [NoticeApplicationEntity]
     description: Retrieves a single notice.
@@ -95,12 +95,12 @@
     tags: [NoticeApplicationEntity]
     description: Deletes notice..
     parameters:
-    - name: id
-      description: Id of the notice.
-      in: path
-      required: true
-      schema:
-        $ref: '#.../model/NoticeApplicationEntity'
+      - name: id
+        description: Id of the notice.
+        in: path
+        required: true
+        schema:
+          $ref: '#.../model/NoticeApplicationEntity'
     responses:
       200:
         description: Notice successfully deleted.
