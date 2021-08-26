@@ -36,7 +36,7 @@ class TenantAdminPage {
   }
 
   releaseContactInfo() {
-    return cy.xpath('//aside/p[1]');
+    return cy.xpath('//*[@data-testid="beta-release"]');
   }
 
   tenantAutoLoginUrl() {
