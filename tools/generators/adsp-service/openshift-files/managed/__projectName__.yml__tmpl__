@@ -1,0 +1,213 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: <%= projectName %>
+  annotations:
+    tags: core-services, <%= projectName %>
+    template.openshift.io/provider-display-name: platform team
+    description: <%= displayName %>
+labels:
+  application: <%= projectName %>
+parameters:
+  - name: INFRA_NAMESPACE
+    description: Name of the infrastructure project.
+    displayName: Infra Namespace
+    value: core-services-infra
+    required: true
+  - name: NAMESPACE
+    description: Namespace of the environment.
+    displayName: Namespace
+    value: core-services-dev
+    required: true
+  - name: NAME_SUFFIX
+    description: Suffix applied to the names of the objects created.
+    displayName: Name Suffix
+    value: ""
+  - name: BUILD_TAG
+    description: Name of the ImageStreamTag to build.
+    displayName: Build Tag
+    value: latest
+  - name: DEPLOY_TAG
+    description: Name of the ImageStreamTag to deploy.
+    displayName: Deploy Tag
+    value: latest
+  - name: ROUTE_HOST
+    description: Host for the route.
+    displayName: Route Host
+    value: ""
+objects:
+  # Service Objects
+
+  # ImageStream is here for reference.
+  # There is a single ImageStream created in the infra project.
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      labels:
+        app: <%= projectName %>
+        component: api
+        apply-infra: "true"
+      name: <%= projectName %>
+      namespace: ${INFRA_NAMESPACE}
+    spec: {}
+
+  # BuildConfig is created for the primary pipeline as well as branch deployment.
+  # NOTE: Each instance should publish a unique Tag to the common ImageStream in infra.
+  - apiVersion: v1
+    kind: BuildConfig
+    metadata:
+      labels:
+        app: <%= projectName %>${NAME_SUFFIX}
+        component: api
+        apply-infra: "true"
+        apply-branch: "true"
+      name: <%= projectName %>${NAME_SUFFIX}
+    spec:
+      output:
+        to:
+          kind: ImageStreamTag
+          name: <%= projectName %>:${BUILD_TAG}
+          namespace: ${INFRA_NAMESPACE}
+      postCommit: {}
+      resources:
+        limits:
+          cpu: 200m
+          memory: 200Mi
+        requests:
+          cpu: 20m
+          memory: 50Mi
+      source:
+        binary: {}
+        type: Binary
+      strategy:
+        dockerStrategy:
+          buildArgs:
+            - name: SERVICE
+              value: <%= projectName %>
+          dockerfilePath: .openshift/service/Dockerfile
+        type: Docker
+
+  # DeploymentConfig (and Service and Route) is created in each environment of the
+  # primary pipline as well as branch deployment.
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      labels:
+        app: <%= projectName %>${NAME_SUFFIX}
+        component: api
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: <%= projectName %>${NAME_SUFFIX}
+    spec:
+      replicas: 1
+      revisionHistoryLimit: 3
+      selector:
+        app: <%= projectName %>${NAME_SUFFIX}
+        component: api
+      strategy:
+        activeDeadlineSeconds: 21600
+        recreateParams:
+          timeoutSeconds: 600
+        resources: {}
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            app: <%= projectName %>${NAME_SUFFIX}
+            component: api
+        spec:
+          containers:
+            - envFrom:
+                - configMapRef:
+                    name: <%= projectName %>
+                - secretRef:
+                    name: <%= projectName %>
+              env:
+                - name: PORT
+                  value: "3333"
+                - name: REDIS_HOST
+                  value: <%= projectName %>-redis
+                - name: REDIS_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-password
+                      name: <%= projectName %>-redis${NAME_SUFFIX}
+              imagePullPolicy: IfNotPresent
+              name: <%= projectName %>
+              ports:
+                - containerPort: 3333
+                  name: http
+                  protocol: TCP
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 200Mi
+                requests:
+                  cpu: 20m
+                  memory: 50Mi
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+      test: false
+      triggers:
+        - imageChangeParams:
+            containerNames:
+              - <%= projectName %>
+            from:
+              kind: ImageStreamTag
+              name: <%= projectName %>:${DEPLOY_TAG}
+              namespace: ${INFRA_NAMESPACE}
+          type: ImageChange
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: <%= projectName %>${NAME_SUFFIX}
+        component: api
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: <%= projectName %>${NAME_SUFFIX}
+    spec:
+      ports:
+        - name: http
+          port: 3333
+          protocol: TCP
+          targetPort: 3333
+      selector:
+        app: <%= projectName %>${NAME_SUFFIX}
+        component: api
+      sessionAffinity: None
+      type: ClusterIP
+  - apiVersion: v1
+    kind: Route
+    metadata:
+      labels:
+        app: <%= projectName %>${NAME_SUFFIX}
+        component: api
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: <%= projectName %>${NAME_SUFFIX}
+    spec:
+      host: ${ROUTE_HOST}
+      port:
+        targetPort: http
+      tls:
+        termination: edge
+      to:
+        kind: Service
+        name: <%= projectName %>${NAME_SUFFIX}
+        weight: 100
+      wildcardPolicy: None

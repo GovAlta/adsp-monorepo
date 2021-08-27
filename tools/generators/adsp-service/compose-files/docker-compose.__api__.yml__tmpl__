@@ -1,0 +1,19 @@
+version: '3.2'
+services:
+  <%= projectName %>:
+    build:
+      context: ../
+      dockerfile: .compose/service/Dockerfile
+      args:
+        - SERVICE=<%= projectName %>
+    ports:
+      - <%= port %>:<%= port %>
+    expose:
+      - <%= port %>
+    environment:
+      - KEYCLOAK_ROOT_URL=http://keycloak:8080
+      - DIRECTORY_URL=http://tenant-management-api:3333
+      - CLIENT_ID=urn:ads:platform:<%= projectName %>
+      - CLIENT_SECRET=
+      - PORT=<%= port %>
+      - LOG_LEVEL=debug

@@ -535,7 +535,7 @@
           "options": {
             "outputPath": "dist/tools/scripts/encodeSecrets",
             "main": "tools/scripts/encodeSecrets/index.ts",
-            "tsConfig": "tools/tsconfig.tools.json",
+            "tsConfig": "tools/tsconfig.scripts.json",
             "assets": [],
             "buildLibsFromSource": true
           },
@@ -546,7 +546,7 @@
           "options": {
             "outputPath": "dist/tools/scripts/loadDirectoryData",
             "main": "tools/scripts/loadDirectoryData/index.ts",
-            "tsConfig": "tools/tsconfig.tools.json",
+            "tsConfig": "tools/tsconfig.scripts.json",
             "assets": [],
             "buildLibsFromSource": true
           },

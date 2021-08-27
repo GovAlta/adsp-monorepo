@@ -1,0 +1,29 @@
+{
+  "cli": "nx",
+  "id": "adsp-service",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Service name (e.g. value-service)",
+      "$default": {
+        "$source": "argv",
+        "index": 0
+      },
+      "x-prompt": "What is the name of the service? (e.g. value-service)"
+    },
+    "displayName": {
+      "type": "string",
+      "description": "Service display name (e.g. Value Service)",
+      "x-prompt": "What is the display name of the service? (e.g. Value Service)"
+    },
+    "port": {
+      "type": "string",
+      "description": "Local port number for the service.",
+      "x-prompt": "What port should it run on locally? (e.g. 3333)"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}
