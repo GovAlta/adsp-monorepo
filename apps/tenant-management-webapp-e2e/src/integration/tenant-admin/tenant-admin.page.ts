@@ -62,6 +62,14 @@ class TenantAdminPage {
   servicePageTitle(text) {
     return cy.xpath(`//h2[contains(text(), "${text}")]`);
   }
+
+  roleInstructionParagragh() {
+    return cy.xpath('(//h3[contains(text(), "Sharing tenant access")]/following-sibling::p)[2]'); // 2nd sibling paragrah of the title
+  }
+
+  hereLinkForManageUsers() {
+    return cy.xpath('(//h3[contains(text(), "Sharing tenant access")]/following-sibling::p)[2]/a');
+  }
 }
 
 export default TenantAdminPage;

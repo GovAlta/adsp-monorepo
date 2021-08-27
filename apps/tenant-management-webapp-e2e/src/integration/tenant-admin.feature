@@ -61,11 +61,12 @@ Feature: Tenant admin
     When the user selects the "Access" menu item
     Then no critical or serious accessibility issues on "tenant admin access page"
 
-  @TEST_CS-588 @dashboard @regression
+  @TEST_CS-588 @TEST_CS-745 @dashboard @regression
   Scenario: As a GoA admin user, I should be able to see useful information on the landing page
     Given a service owner user is on tenant admin page
     Then the user views the tenant name of "autotest"
     And the user views the release info and DIO contact info
+    And the user views an instruction of role requirement indicating user needs tenant-admin
     And the user views the autologin link with a copy button
     # Getting content from clipboard doesn't work on build agent. Commented out this validation.
     # When the user clicks click to copy button
