@@ -411,3 +411,27 @@ When('the user clicks {string} link', function (link) {
 Then('the user is directed to {string} page', function (page) {
   tenantAdminObj.servicePageTitle(page);
 });
+
+Then('the user views an instruction of role requirement indicating user needs tenant-admin', function () {
+  // Verify the instruction mentions the tenant-admin role
+  tenantAdminObj
+    .roleInstructionParagragh()
+    .invoke('text')
+    .then((text) => {
+      expect(text).to.contain('tenant-admin');
+    });
+  // Verify the here link is correct
+  tenantAdminObj
+    .hereLinkForManageUsers()
+    .invoke('attr', 'href')
+    .then((href) => {
+      expect(href).to.contain(
+        Cypress.env('accessManagementApi') +
+          '/admin/' +
+          Cypress.env('realm') +
+          '/console/#/realms/' +
+          Cypress.env('realm') +
+          '/users'
+      );
+    });
+});
