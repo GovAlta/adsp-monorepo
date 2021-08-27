@@ -119,7 +119,7 @@ export const patchConfigurationRevision = (eventService: EventService): RequestH
     res.send(mapConfiguration(updated));
     if (updated.tenantId) {
       eventService.send(
-        configurationUpdated(updated.tenantId, updated.namespace, updated.name, updated.latest?.revision)
+        configurationUpdated(user, updated.tenantId, updated.namespace, updated.name, updated.latest?.revision)
       );
     }
   } catch (err) {
@@ -141,7 +141,9 @@ export const createConfigurationRevision = (eventService: EventService): Request
 
     res.send(mapConfiguration(updated));
     if (updated.tenantId) {
-      eventService.send(revisionCreated(updated.tenantId, updated.namespace, updated.name, updated.latest?.revision));
+      eventService.send(
+        revisionCreated(user, updated.tenantId, updated.namespace, updated.name, updated.latest?.revision)
+      );
     }
   } catch (err) {
     next(err);
