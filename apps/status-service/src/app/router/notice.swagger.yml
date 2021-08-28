@@ -43,7 +43,7 @@
       401: *401
       500: *500
 
-  put:
+  patch:
     tags: [NoticeApplicationEntity]
     description: Update a notice.
     requestBody:

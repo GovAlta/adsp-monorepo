@@ -59,7 +59,7 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
 
   passport.use(new AnonymousStrategy());
 
-  const authenticate = passport.authenticate(['jwt-tenant', 'jwt'], { session: false });
+  const authenticate = passport.authenticate(['jwt-tenant', 'jwt', 'anonymous'], { session: false });
 
   passport.serializeUser(function (user, done) {
     done(null, user);

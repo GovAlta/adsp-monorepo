@@ -83,6 +83,7 @@ export interface NoticeApplication {
   startDate: Date;
   endDate: Date;
   mode: NoticeModeType;
+  created: Date;
 }
 export * from './serviceStatus';
 export * from './endpointStatusEntry';
