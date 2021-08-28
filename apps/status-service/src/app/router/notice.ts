@@ -1,6 +1,5 @@
 import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import { Router } from 'express';
-import { nextTick } from 'node:process';
 import { Logger } from 'winston';
 import { NoticeApplicationEntity } from '../model/notice';
 import { NoticeRepository } from '../repository/notice';
