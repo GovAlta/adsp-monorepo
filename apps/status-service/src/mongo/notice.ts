@@ -82,6 +82,7 @@ export default class MongoNoticeRepository implements NoticeRepository {
       startDate: application.startDate,
       endDate: application.endDate,
       mode: application.mode,
+      created: application.created
     };
   }
 
@@ -96,6 +97,7 @@ export default class MongoNoticeRepository implements NoticeRepository {
       startDate: doc.startDate,
       endDate: doc.endDate,
       mode: doc.mode,
+      created: doc.created
     });
   }
 }
