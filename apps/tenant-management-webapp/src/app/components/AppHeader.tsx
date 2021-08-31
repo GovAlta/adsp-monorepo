@@ -32,7 +32,7 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
     <Actions>
       <section className="mobile">
         <SidebarController onClick={toggleMenu}>
-          <img src={MenuIcon} width="24" alt="Menu" />
+          <img src={MenuIcon} width="24" alt="Menu" style={{ position: 'fixed', right: 0 }} />
           <SidebarWrapper state={menuState.state}>
             <div className="close">
               <img src={CloseIcon} width="24" alt="Close" />
