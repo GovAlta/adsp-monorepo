@@ -7,7 +7,6 @@ import { NotificationTypeEntity } from './type';
 import { DomainEvent } from '@core-services/core-common';
 
 describe('NotificationTypeEntity', () => {
-  const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const repositoryMock = {
     saveSubscription: jest.fn((entity: SubscriptionEntity) => {
       return Promise.resolve(entity);

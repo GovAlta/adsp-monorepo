@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import DataTable from '@components/DataTable';
 import Chip from '@components/Chip';
-import { GoAButton, GoADropdown, GoAOption, GoACallout } from '@abgov/react-components';
+import { GoAButton, GoADropdown, GoAOption } from '@abgov/react-components';
 import { FileTypeItem } from '@store/file/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { v4 as uuid4 } from 'uuid';
@@ -14,7 +14,7 @@ import {
   DeleteFileTypeService,
   CreateFileTypeService,
   UpdateFileTypeService,
-  FetchFileTypeHasFileService
+  FetchFileTypeHasFileService,
 } from '@store/file/actions';
 
 const FileTypeTableContainer = styled.div`
@@ -488,7 +488,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
         readRoles: [],
         updateRoles: [],
         name: '',
-        id: uuid4()
+        id: uuid4(),
       });
     }
   };
