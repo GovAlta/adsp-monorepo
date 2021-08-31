@@ -84,5 +84,12 @@ Feature: Tenant admin
     And the user clicks "Events" link
     Then the user is directed to "Events" page
 
+  @TEST_CS-743 @regression
+  Scenario: As a non-tenant admin, I cannot access the tenant admin application and am directed to the tenant creator for access, so that I know how to get access
+    Given the user goes to tenant management login link
+    When the user enters "env{email2}" and "env{password2}", and clicks login button
+    Then the user views a message stating the user needs administrator role for the tenant to access the app and that they can contact the tenant creator of "env{realmOwner}"
+    Then the user should not have regular admin view
+
 
 
