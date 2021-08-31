@@ -435,3 +435,29 @@ Then('the user views an instruction of role requirement indicating user needs te
       );
     });
 });
+
+Then(
+  'the user views a message stating the user needs administrator role for the tenant to access the app and that they can contact the tenant creator of {string}',
+  function (ownerEmail) {
+    tenantAdminObj.dashboardCalloutContenth3Title().should('contain.text', 'requires tenant-admin role');
+    // Get owner email
+    let email = '';
+    const envOwnerEmail = ownerEmail.match(/(?<={).+(?=})/g);
+    if (envOwnerEmail == '') {
+      email = ownerEmail;
+    } else {
+      email = Cypress.env(String(envOwnerEmail));
+    }
+    tenantAdminObj.dashboardCalloutContentEmail().should('contain.text', email);
+    tenantAdminObj
+      .dashboardCalloutContentEmail()
+      .should('have.attr', 'href')
+      .then((href) => {
+        expect(href).to.contain(email);
+      });
+  }
+);
+
+Then('the user should not have regular admin view', function () {
+  tenantAdminObj.dashboardServicesMenuCategory().should('not.exist');
+});
