@@ -1,8 +1,8 @@
 import { assertAuthenticatedHandler } from './assert';
-import { RequestHandler } from 'express';
+import { RequestHandler, Request, Response, NextFunction } from 'express';
 
 export const AuthAssert = {
-  assertMethod: function (req, res, next): RequestHandler {
+  assertMethod: function (req: Request, res: Response, next: NextFunction): RequestHandler {
     return assertAuthenticatedHandler(req, res, next);
   },
 };
