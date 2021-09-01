@@ -14,6 +14,7 @@ import { createLogger, AuthAssert } from '@core-services/core-common';
 import { MiddlewareWrapper } from './middlewareWrapper';
 import { AuthenticationWrapper } from '../middleware/authenticationWrapper';
 import * as sinon from 'sinon';
+import { AdspId } from '@abgov/adsp-service-sdk';
 
 describe('File Type Router', () => {
   const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
@@ -29,6 +30,20 @@ describe('File Type Router', () => {
     readRoles: ['test-admin'],
     spaceId: 'space1234',
   };
+
+  const BaseTenant = {
+    id: AdspId.parse('urn:ads:mock-tenant-id'),
+    realm: 'mock-realm'
+  }
+
+  const BaseUser = {
+    roles: ['base-roles'],
+    id: 'mock-user-id',
+    email: 'mock-user-user@gov.ab.ca',
+    isCore: false,
+    name: 'mock-user',
+    token: null
+  }
 
   const entity = new FileTypeEntity(type);
 
@@ -74,9 +89,9 @@ describe('File Type Router', () => {
         const app = express();
         const authStub = sinon.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
           req.body = { updateRoles: '2313' };
-          req.tenant = { name: 'space1234' };
-          req.user = { roles: ['test-admin'] };
-          return next();
+          req.tenant = { ...BaseTenant, name: 'space1234' };
+          req.user = { ...BaseUser, roles: ['test-admin'] };
+          return next()
         });
         app.use(
           createFileTypeRouter({
@@ -98,8 +113,8 @@ describe('File Type Router', () => {
         const app = express();
         const authStub = sinon.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
           req.body = { updateRoles: '2313' };
-          req.tenant = { name: 'space1234' };
-          req.user = { roles: ['test-admin'] };
+          req.tenant = { ...BaseTenant, name: 'space1234' };
+          req.user = { ...BaseUser, roles: ['test-admin'] };
           return next();
         });
         app.use(
@@ -129,8 +144,8 @@ describe('File Type Router', () => {
     beforeEach(async () => {
       sandbox = sinon.stub(AuthenticationWrapper, 'authenticationMethod').callsFake(function (req, res, next) {
         req.body = { updateRoles: '2313' };
-        req.tenant = { name: 'space1234' };
-        req.user = { roles: ['super-user'] };
+        req.tenant = { ...BaseTenant, name: 'space1234' };
+        req.user = { ...BaseUser, roles: ['super-user'] }
         return next();
       });
 
