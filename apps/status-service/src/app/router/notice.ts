@@ -20,7 +20,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
 
   // Get notices by query
   router.get('/', async (req, res, next) => {
-    const { top, after } = req.query;
+    const { top, after, mode } = req.query;
     const user = req.user as Express.User;
 
     logger.info(req.method, req.url);
