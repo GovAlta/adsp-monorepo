@@ -12,6 +12,7 @@ export class NoticeApplicationEntity {
   endDate: Date;
   mode: NoticeModeType;
   created: Date;
+  tenantId: string
 
   constructor(private repository: NoticeRepository, application: NewOrExisting<NoticeApplication>) {
     this.id = application?.id;
@@ -21,6 +22,7 @@ export class NoticeApplicationEntity {
     this.endDate = application.endDate;
     this.mode = application.mode;
     this.created = application.created;
+    this.tenantId = application.tenantId
   }
 
   static create(

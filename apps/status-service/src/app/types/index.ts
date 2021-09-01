@@ -84,6 +84,7 @@ export interface NoticeApplication {
   endDate: Date;
   mode: NoticeModeType;
   created: Date;
+  tenantId: string;
 }
 export * from './serviceStatus';
 export * from './endpointStatusEntry';

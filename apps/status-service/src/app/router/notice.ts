@@ -3,11 +3,16 @@ import { Router } from 'express';
 import { Logger } from 'winston';
 import { NoticeApplicationEntity } from '../model/notice';
 import { NoticeRepository } from '../repository/notice';
-import { ServiceUserRoles } from '../types';
+import { ServiceUserRoles, NoticeModeType } from '../types';
 
 export interface NoticeRouterProps {
   logger: Logger;
   noticeRepository: NoticeRepository;
+}
+
+interface NoticeFilter {
+  mode?: NoticeModeType,
+  tenantId?: string
 }
 
 export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterProps): Router {
@@ -19,16 +24,21 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
     const user = req.user as Express.User;
 
     logger.info(req.method, req.url);
+    const anonymous = !user || !user.roles.includes(ServiceUserRoles.StatusAdmin)
+    const filter: NoticeFilter = {}
 
-    if (!user || !user.roles.includes(ServiceUserRoles.StatusAdmin)) {
-      req.query.mode = 'active';
+    if (anonymous) {
+      filter.mode = 'active'
+    } else {
+      filter.mode = mode? mode.toString() as NoticeModeType: null
+      filter.tenantId = user.tenantId.toString()
     }
 
     try {
       const applications = await noticeRepository.find(
         parseInt((top as string) || '50', 50),
         after as string,
-        req.query
+        filter
       );
 
       res.json({
@@ -43,6 +53,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
             endDate: result.endDate,
             mode: result.mode,
             created: result.created,
+            tenantId: result.tenantId
           })),
       });
     } catch (err) {
@@ -58,7 +69,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
     try {
       const { id } = req.params;
       const user = req.user as Express.User;
-      const application = await noticeRepository.get(id);
+      const application = await noticeRepository.get(id, user.tenantId.toString());
 
       if (!application) {
         throw new NotFoundError('Service Notice', id);
@@ -71,7 +82,6 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
       }
     } catch (err) {
       const errMessage = `Error getting notice: ${err.message}`;
-
       logger.error(errMessage);
       next(err);
     }
@@ -84,7 +94,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
       const { id } = req.params;
       const user = req.user as Express.User;
 
-      const application = await noticeRepository.get(id);
+      const application = await noticeRepository.get(id, user.tenantId.toString());
 
       if (!application) {
         throw new NotFoundError('Service Notice', id);
@@ -106,7 +116,6 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
 
     const { message, tennantServRef, startDate, endDate } = req.body;
     const user = req.user as Express.User;
-
     const app = await NoticeApplicationEntity.create(user, noticeRepository, {
       message,
       tennantServRef,
@@ -114,6 +123,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
       endDate,
       mode: 'draft',
       created: new Date(),
+      tenantId: user.tenantId.toString()
     });
     res.status(201).json(app);
   });
@@ -128,7 +138,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
 
     try {
       // TODO: this needs to be moved to a service
-      const application = await noticeRepository.get(id);
+      const application = await noticeRepository.get(id, user.tenantId.toString());
 
       if (!application) {
         throw new NotFoundError('Service Notice', id);
