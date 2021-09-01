@@ -5,5 +5,6 @@ export enum TenantServiceRoles {
   TenantServiceAdmin = 'tenant-service-admin',
   PlatformService = 'platform-service',
   DirectoryAdmin = 'directory-admin',
-  BetaTester = 'beta-tester'
+  BetaTester = 'beta-tester',
+  StatusAdmin = 'status-admin',
 }

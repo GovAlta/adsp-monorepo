@@ -3,7 +3,6 @@ import { InvalidParamsError } from '../common/errors';
 import { NoticeRepository } from '../repository/notice';
 import { NoticeApplication, NoticeModeType, isValidNoticeModeType, ServiceUserRoles } from '../types';
 import type { User } from '@abgov/adsp-service-sdk';
-import { application } from 'express';
 
 export class NoticeApplicationEntity {
   id: string;
@@ -12,6 +11,8 @@ export class NoticeApplicationEntity {
   startDate: Date;
   endDate: Date;
   mode: NoticeModeType;
+  created: Date;
+  tenantId: string
 
   constructor(private repository: NoticeRepository, application: NewOrExisting<NoticeApplication>) {
     this.id = application?.id;
@@ -20,6 +21,8 @@ export class NoticeApplicationEntity {
     this.startDate = application.startDate;
     this.endDate = application.endDate;
     this.mode = application.mode;
+    this.created = application.created;
+    this.tenantId = application.tenantId
   }
 
   static create(
@@ -57,7 +60,7 @@ export class NoticeApplicationEntity {
       this.startDate = update.startDate ?? this.startDate;
       this.endDate = update.endDate ?? this.endDate;
 
-      if (update.mode != 'active') {
+      if (this.mode === 'draft' && update.mode === 'archived') {
         throw new InvalidParamsError('Draft notice can only be changed to active.');
       }
 

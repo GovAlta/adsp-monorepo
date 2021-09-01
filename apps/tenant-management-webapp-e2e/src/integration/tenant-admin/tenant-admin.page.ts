@@ -36,7 +36,7 @@ class TenantAdminPage {
   }
 
   releaseContactInfo() {
-    return cy.xpath('//aside/p[1]');
+    return cy.xpath('//*[@data-testid="beta-release"]');
   }
 
   tenantAutoLoginUrl() {
@@ -61,6 +61,22 @@ class TenantAdminPage {
 
   servicePageTitle(text) {
     return cy.xpath(`//h2[contains(text(), "${text}")]`);
+  }
+
+  roleInstructionParagragh() {
+    return cy.xpath('(//h3[contains(text(), "Sharing tenant access")]/following-sibling::p)[2]'); // 2nd sibling paragrah of the title
+  }
+
+  hereLinkForManageUsers() {
+    return cy.xpath('(//h3[contains(text(), "Sharing tenant access")]/following-sibling::p)[2]/a');
+  }
+
+  dashboardCalloutContenth3Title() {
+    return cy.xpath('//*[@data-testid="callout-content"]/h3');
+  }
+
+  dashboardCalloutContentEmail() {
+    return cy.xpath('//*[@data-testid="callout-content"]/p/a');
   }
 }
 

@@ -11,8 +11,11 @@ export default class MongoNoticeRepository implements NoticeRepository {
     this.model = model('Notice', noticeApplicationSchema);
   }
 
-  async get(id: string): Promise<NoticeApplicationEntity> {
-    const doc = await this.model.findById(id);
+  async get(id: string, tenantId: string): Promise<NoticeApplicationEntity> {
+    const doc = await this.model.findOne({_id: id});
+    if (tenantId && doc && doc.tenantId !== tenantId) {
+      return Promise.resolve(null)
+    }
     return Promise.resolve(this.fromDoc(doc));
   }
 
@@ -22,15 +25,19 @@ export default class MongoNoticeRepository implements NoticeRepository {
     filter: Partial<NoticeApplication>
   ): Promise<Results<NoticeApplicationEntity>> {
     const skip = decodeAfter(after);
-    let modeFilter = {};
+    let criteria = {};
 
     if (filter.mode != null) {
-      modeFilter = { mode: filter.mode };
+      criteria = { mode: filter.mode };
+    }
+
+    if (filter.tenantId) {
+      criteria = { ...criteria, tenantId: filter.tenantId}
     }
 
     return new Promise<Results<NoticeApplicationEntity>>((resolve, reject) => {
       this.model
-        .find(modeFilter, null, { lean: true })
+        .find(criteria, null, { lean: true })
         .sort({ createdAt: 1, mode: 1 })
         .skip(skip)
         .limit(top)
@@ -60,7 +67,6 @@ export default class MongoNoticeRepository implements NoticeRepository {
 
       return this.fromDoc(doc);
     }
-
     const doc = await this.model.create(this.toDoc(entity));
     return this.fromDoc(doc);
   }
@@ -82,6 +88,8 @@ export default class MongoNoticeRepository implements NoticeRepository {
       startDate: application.startDate,
       endDate: application.endDate,
       mode: application.mode,
+      created: application.created,
+      tenantId: application.tenantId
     };
   }
 
@@ -96,6 +104,8 @@ export default class MongoNoticeRepository implements NoticeRepository {
       startDate: doc.startDate,
       endDate: doc.endDate,
       mode: doc.mode,
+      created: doc.created,
+      tenantId: doc.tenantId
     });
   }
 }

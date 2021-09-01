@@ -61,11 +61,12 @@ Feature: Tenant admin
     When the user selects the "Access" menu item
     Then no critical or serious accessibility issues on "tenant admin access page"
 
-  @TEST_CS-588 @dashboard @regression
+  @TEST_CS-588 @TEST_CS-745 @dashboard @regression
   Scenario: As a GoA admin user, I should be able to see useful information on the landing page
     Given a service owner user is on tenant admin page
     Then the user views the tenant name of "autotest"
     And the user views the release info and DIO contact info
+    And the user views an instruction of role requirement indicating user needs tenant-admin
     And the user views the autologin link with a copy button
     # Getting content from clipboard doesn't work on build agent. Commented out this validation.
     # When the user clicks click to copy button
@@ -82,6 +83,13 @@ Feature: Tenant admin
     When the user selects the "Dashboard" menu item
     And the user clicks "Events" link
     Then the user is directed to "Events" page
+
+  @TEST_CS-743 @regression
+  Scenario: As a non-tenant admin, I cannot access the tenant admin application and am directed to the tenant creator for access, so that I know how to get access
+    Given the user goes to tenant management login link
+    When the user enters "env{email2}" and "env{password2}", and clicks login button
+    Then the user views a message stating the user needs administrator role for the tenant to access the app and that they can contact the tenant creator of "env{realmOwner}"
+    Then the user should not have regular admin view
 
 
 

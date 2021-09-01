@@ -1,4 +1,4 @@
-import { AdspId, DomainEvent, DomainEventDefinition } from '@abgov/adsp-service-sdk';
+import { AdspId, DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
 
 export const ConfigurationUpdatedDefinition: DomainEventDefinition = {
   name: 'configuration-updated',
@@ -14,6 +14,13 @@ export const ConfigurationUpdatedDefinition: DomainEventDefinition = {
       },
       revision: {
         type: 'number',
+      },
+      updatedBy: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+        },
       },
     },
   },
@@ -34,11 +41,19 @@ export const RevisionCreatedDefinition: DomainEventDefinition = {
       revision: {
         type: 'number',
       },
+      createdBy: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+        },
+      },
     },
   },
 };
 
 export const configurationUpdated = (
+  updatedBy: User,
   tenantId: AdspId,
   namespace: string,
   name: string,
@@ -55,10 +70,20 @@ export const configurationUpdated = (
     namespace,
     name,
     revision,
+    updatedBy: {
+      name: updatedBy.name,
+      id: updatedBy.id,
+    },
   },
 });
 
-export const revisionCreated = (tenantId: AdspId, namespace: string, name: string, revision: number): DomainEvent => ({
+export const revisionCreated = (
+  createdBy: User,
+  tenantId: AdspId,
+  namespace: string,
+  name: string,
+  revision: number
+): DomainEvent => ({
   name: 'revision-created',
   timestamp: new Date(),
   tenantId,
@@ -70,5 +95,9 @@ export const revisionCreated = (tenantId: AdspId, namespace: string, name: strin
     namespace,
     name,
     revision,
+    createdBy: {
+      name: createdBy.name,
+      id: createdBy.id,
+    },
   },
 });

@@ -1,5 +1,5 @@
 import type { Logger } from 'winston';
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import * as HttpStatusCodes from 'http-status-codes';
 import {
   AuthenticationConfig,
@@ -18,7 +18,7 @@ interface AdminRouterProps {
 }
 
 export const AdminAssert = {
-  adminOnlyMiddleware: function (req, res, next: () => void) {
+  adminOnlyMiddleware: function (req: Request, res: Response, next: () => void): void {
     const authConfig: AuthenticationConfig = {
       requireCore: true,
       allowedRoles: ['file-service-admin'],

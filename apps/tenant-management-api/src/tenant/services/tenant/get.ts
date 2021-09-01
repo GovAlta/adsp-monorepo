@@ -15,12 +15,10 @@ export const getTenant = async (id: AdspId): Promise<TenantEntity> => {
 };
 
 export const hasTenantOfRealm = async (realm: string): Promise<boolean> => {
-
   try {
-    const entity = await tenantRepository.findBy({ realm });
-    return Promise.resolve(true)
-  } catch(e) {
-    return Promise.resolve(false)
+    return Promise.resolve(true);
+  } catch (e) {
+    return Promise.resolve(false);
   }
 };
 
@@ -42,8 +40,6 @@ export const getRealmRoles = async (realm: string): Promise<RoleRepresentation[]
     return Promise.reject(e);
   }
 };
-
-
 
 export function testGet(): boolean {
   return true;

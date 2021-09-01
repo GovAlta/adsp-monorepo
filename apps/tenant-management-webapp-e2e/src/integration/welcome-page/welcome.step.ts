@@ -134,3 +134,19 @@ Then('the user views the tenant login page', function () {
     });
   });
 });
+
+Then('the user views a message of cannot create a tenant without beta-tester role', function () {
+  // Tenant creation failed title
+  welcomPageObj.tenantCreationFailedH1Title().then((h1Title) => {
+    expect(h1Title.length).to.be.greaterThan(0); // Element exists
+  });
+  // Error message for the beta-tester role
+  welcomPageObj
+    .tenantCreationFailedErrorMessage()
+    .invoke('text')
+    .should('contain', 'You require the "beta-tester" role to create a tenant');
+});
+
+When('the user clicks back to sign in page button', function () {
+  welcomPageObj.backToSignInPageLinkButton().click();
+});

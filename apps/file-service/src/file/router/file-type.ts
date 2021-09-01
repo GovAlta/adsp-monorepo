@@ -12,7 +12,6 @@ import { FileRepository, FileSpaceRepository } from '../repository';
 import { FileSpaceEntity } from '../model';
 
 import { AuthenticationWrapper } from '../middleware/authenticationWrapper';
-import { fileTypeSchema } from '../../mongo/schema';
 import { MiddlewareWrapper } from './middlewareWrapper';
 
 interface FileTypeRouterProps {
@@ -45,7 +44,11 @@ export const createFileTypeRouter = ({
 
         const spaceEntity: FileSpaceEntity = await spaceRepository.get(spaceId);
 
-        if (Object.values(spaceEntity.types).map((x)=> x.name).includes(name)) {
+        if (
+          Object.values(spaceEntity.types)
+            .map((x) => x.name)
+            .includes(name)
+        ) {
           throw new InvalidOperationError(`Duplicated type name: ${name}`);
         }
 

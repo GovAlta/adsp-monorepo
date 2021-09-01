@@ -91,7 +91,7 @@ const Dashboard = (): JSX.Element => {
           </DashboardAside>
         </Page>
         <div>
-          <div style={{flex: 1}}>
+          <div style={{ flex: 1 }} data-testid="beta-release">
             This service is in <b>BETA</b> release. If you have any questions, please email{' '}
             <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca{' '}</a>
             <a data-tip="Copied!" data-delay-hide='1500' data-for="registerTipEmail">

@@ -356,8 +356,12 @@ Then('the user views the tenant name of {string}', function (tenantName) {
 });
 
 Then('the user views the release info and DIO contact info', function () {
-  tenantAdminObj.releaseContactInfo().should('contain.text', 'This service is in BETA release');
-  tenantAdminObj.releaseContactInfo().should('contain.text', 'DIO@gov.ab.ca');
+  tenantAdminObj
+    .releaseContactInfo()
+    .invoke('text')
+    .then((text) => {
+      expect(text).to.match(/This service is in .+ release.+ DIO@gov.ab.ca/g);
+    });
 });
 
 Then('the user views the autologin link with a copy button', function () {
@@ -406,4 +410,54 @@ When('the user clicks {string} link', function (link) {
 
 Then('the user is directed to {string} page', function (page) {
   tenantAdminObj.servicePageTitle(page);
+});
+
+Then('the user views an instruction of role requirement indicating user needs tenant-admin', function () {
+  // Verify the instruction mentions the tenant-admin role
+  tenantAdminObj
+    .roleInstructionParagragh()
+    .invoke('text')
+    .then((text) => {
+      expect(text).to.contain('tenant-admin');
+    });
+  // Verify the here link is correct
+  tenantAdminObj
+    .hereLinkForManageUsers()
+    .invoke('attr', 'href')
+    .then((href) => {
+      expect(href).to.contain(
+        Cypress.env('accessManagementApi') +
+          '/admin/' +
+          Cypress.env('realm') +
+          '/console/#/realms/' +
+          Cypress.env('realm') +
+          '/users'
+      );
+    });
+});
+
+Then(
+  'the user views a message stating the user needs administrator role for the tenant to access the app and that they can contact the tenant creator of {string}',
+  function (ownerEmail) {
+    tenantAdminObj.dashboardCalloutContenth3Title().should('contain.text', 'requires tenant-admin role');
+    // Get owner email
+    let email = '';
+    const envOwnerEmail = ownerEmail.match(/(?<={).+(?=})/g);
+    if (envOwnerEmail == '') {
+      email = ownerEmail;
+    } else {
+      email = Cypress.env(String(envOwnerEmail));
+    }
+    tenantAdminObj.dashboardCalloutContentEmail().should('contain.text', email);
+    tenantAdminObj
+      .dashboardCalloutContentEmail()
+      .should('have.attr', 'href')
+      .then((href) => {
+        expect(href).to.contain(email);
+      });
+  }
+);
+
+Then('the user should not have regular admin view', function () {
+  tenantAdminObj.dashboardServicesMenuCategory().should('not.exist');
 });
