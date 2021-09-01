@@ -19,7 +19,7 @@ export const environment = envalid.cleanEnv(
     AV_PROVIDER: envalid.str({ default: 'clam' }),
     PORT: envalid.num({ default: 3337 }),
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:file-service' }),
-    CLIENT_SECRET: envalid.str(),
+    CLIENT_SECRET: envalid.str({ default: '' }),
     DIRECTORY_URL: envalid.str({ default: 'https://tenant-management-api-core-services-dev.os99.gov.ab.ca' }),
   },
   {
