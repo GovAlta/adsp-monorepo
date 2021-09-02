@@ -118,8 +118,16 @@ pipeline {
                 if ( bc.exists() ) {
                   def bcDetails = bc.object()
                   if (bcDetails.spec.strategy.type == 'Source') {
+                    sh "echo Build ${affected}"
+                    sh "ls dist/apps/${affected}/* -la"
                     bc.startBuild("--from-dir=dist/apps/${affected}", "--wait", "--follow")
                   } else {
+                    sh "echo 'Compress Folders into Archive'"
+                    sh "ls node_modules/*"
+                    sh "ls dist/apps/${affected}/*"
+                    sh "ls .openshift/service/*"
+                    sh "ls package.json"
+                    sh "ls package-lock.json"
                     sh "tar czf ${affected}.tar.gz node_modules/ dist/apps/${affected} .openshift/service/ package.json package-lock.json"
                     bc.startBuild("--from-archive=${affected}.tar.gz", "--wait", "--follow")
                   }
