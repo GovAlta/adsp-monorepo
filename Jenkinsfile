@@ -118,7 +118,7 @@ pipeline {
                 if ( bc.exists() ) {
                   def bcDetails = bc.object()
                   if (bcDetails.spec.strategy.type == 'Source') {
-                    bc.startBuild("--from-dir=dist/apps/${affected}", "--wait", "--follow")
+                    bc.startBuild("--from-dir=dist/apps/${affected}", "--wait", "--follow", "--all")
                   } else {
                     sh "tar czf ${affected}.tar.gz node_modules/ dist/apps/${affected} .openshift/service/ package.json package-lock.json"
                     bc.startBuild("--from-archive=${affected}.tar.gz", "--wait", "--follow")
