@@ -8,6 +8,7 @@ import Tenant from './tenant/reducers';
 import ServiceStatus from './status/reducers';
 import TenantConfig from './tenantConfig/reducers';
 import Event from './event/reducers';
+import Notice from './notice/reducers';
 
 export const rootReducer = combineReducers({
   fileService: File,
@@ -19,4 +20,5 @@ export const rootReducer = combineReducers({
   tenantConfig: TenantConfig,
   serviceStatus: ServiceStatus,
   event: Event,
+  notice: Notice,
 });

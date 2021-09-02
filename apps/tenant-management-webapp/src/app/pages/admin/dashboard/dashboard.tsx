@@ -11,27 +11,30 @@ import CopyIcon from '@icons/copy-outline.svg';
 
 const Dashboard = (): JSX.Element => {
   const tenantAdminRole = 'tenant-admin';
-  const { session, tenantManagementWebApp, tenantName, adminEmail, hasAdminRole, keycloakConfig } = useSelector((state: RootState) => {
-    return {
-      session: state.session,
-      tenantManagementWebApp: state.config.serviceUrls.tenantManagementWebApp,
-      tenantName: state.tenant.name,
-      adminEmail: state.tenant.adminEmail,
-      keycloakConfig: state.config.keycloakApi,
-      hasAdminRole: state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes(
-        tenantAdminRole
-      ),
-    };
-  });
+  const { session, tenantManagementWebApp, tenantName, adminEmail, hasAdminRole, keycloakConfig } = useSelector(
+    (state: RootState) => {
+      return {
+        session: state.session,
+        tenantManagementWebApp: state.config.serviceUrls.tenantManagementWebApp,
+        tenantName: state.tenant.name,
+        adminEmail: state.tenant.adminEmail,
+        keycloakConfig: state.config.keycloakApi,
+        hasAdminRole: state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes(
+          tenantAdminRole
+        ),
+      };
+    }
+  );
   const autoLoginUrl = `${tenantManagementWebApp}/${session.realm}/autologin`;
 
   const _afterShow = (copyText) => {
-    console.log(JSON.stringify(copyText) + "<copyText")
     navigator.clipboard.writeText(copyText);
   };
 
   function getKeycloakAdminPortalUsers() {
-    return session?.realm ? `${keycloakConfig.url}/admin/${session.realm}/console/#/realms/${session.realm}/users` : keycloakConfig.url;
+    return session?.realm
+      ? `${keycloakConfig.url}/admin/${session.realm}/console/#/realms/${session.realm}/users`
+      : keycloakConfig.url;
   }
 
   const adminDashboard = () => {
@@ -71,8 +74,15 @@ const Dashboard = (): JSX.Element => {
             <h3>Sharing tenant access</h3>
             <p>To give another user limited access to your realm:</p>
 
-            <p>1. Add the 'tenant-admin' role to the user's Assigned roles from <a href={getKeycloakAdminPortalUsers()} rel="noopener noreferrer" target="_blank">here</a></p>
-            <div className="small-font mt-2">(Role Mapping &#8250; Client Roles &#8250; urn:ads:platform:tenant-service &#8250; Add selected)</div>
+            <p>
+              1. Add the 'tenant-admin' role to the user's Assigned roles from{' '}
+              <a href={getKeycloakAdminPortalUsers()} rel="noopener noreferrer" target="_blank">
+                here
+              </a>
+            </p>
+            <div className="small-font mt-2">
+              (Role Mapping &#8250; Client Roles &#8250; urn:ads:platform:tenant-service &#8250; Add selected)
+            </div>
 
             <p>2. Share the following URL to complete the process.</p>
 
@@ -93,8 +103,8 @@ const Dashboard = (): JSX.Element => {
         <div>
           <div style={{ flex: 1 }} data-testid="beta-release">
             This service is in <b>BETA</b> release. If you have any questions, please email{' '}
-            <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca{' '}</a>
-            <a data-tip="Copied!" data-delay-hide='1500' data-for="registerTipEmail">
+            <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca </a>
+            <a data-tip="Copied!" data-delay-hide="1500" data-for="registerTipEmail">
               <img src={CopyIcon} width="13" alt="Admin" />
             </a>
             <ReactTooltip
@@ -103,7 +113,7 @@ const Dashboard = (): JSX.Element => {
               event="click"
               eventOff="click"
               effect="solid"
-              afterShow={() => _afterShow("DIO@gov.ab.ca")}
+              afterShow={() => _afterShow('DIO@gov.ab.ca')}
             />
           </div>
         </div>

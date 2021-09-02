@@ -59,7 +59,6 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
     } catch (err) {
       const errMessage = `Error getting notices: ${err.message}`;
       logger.error(errMessage);
-
       next(err);
     }
   });

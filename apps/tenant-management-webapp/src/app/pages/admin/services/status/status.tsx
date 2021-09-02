@@ -15,11 +15,15 @@ import ContextMenu, { ContextMenuItem } from '@components/ContextMenu';
 import GoALinkButton from '@components/LinkButton';
 import Dialog, { DialogActions, DialogContent, DialogTitle } from '@components/Dialog';
 import ApplicationForm from './form';
+import NoticeForm from './noticeForm';
 import { GoAButton } from '@abgov/react-components';
 import { GoAForm, GoAFormItem } from '@components/Form';
 import { setApplicationStatus } from '@store/status/actions/setApplicationStatus';
 import GoAChip, { ChipType } from '@components/Chip';
 import { Tab, Tabs } from '@components/Tabs';
+import { getNotices } from '@store/notice/actions';
+import { NoticeList } from './noticeList';
+import SupportLinks from '@components/SupportLinks';
 
 // icons
 import TrashIcon from '@assets/icons/trash-outline.svg';
@@ -29,13 +33,14 @@ import EditIcon from '@assets/icons/create-outline.svg';
 import WrenchIcon from '@assets/icons/build-outline.svg';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
-import SupportLinks from '@components/SupportLinks';
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
-  const applications = useSelector((state: RootState) => {
-    return state.serviceStatus.applications;
-  });
+
+  const { applications } = useSelector((state: RootState) => ({
+    applications: state.serviceStatus.applications,
+  }));
+
   const location = useLocation();
 
   useEffect(() => {
@@ -43,6 +48,10 @@ function Status(): JSX.Element {
     const intervalId = setInterval(() => dispatch(fetchServiceStatusApps()), 30000);
 
     return () => clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    dispatch(getNotices());
   }, []);
 
   return (
@@ -61,6 +70,24 @@ function Status(): JSX.Element {
               Each Application should represent a service that is useful to the end user by itself, such as child care
               subsidy and child care certification
             </p>
+            <GoALinkButton data-testid="add-application" to={`${location.pathname}/new`} buttonType="primary">
+              Add Application
+            </GoALinkButton>
+            <ApplicationList>
+              {applications.map((app) => (
+                <Application key={app._id} {...app} />
+              ))}
+            </ApplicationList>
+          </Tab>
+          <Tab label="Notices">
+            <p>
+              This service allows for posting of application notices. This allows you to communicate with your customers
+              about upcoming maintenance windows or other events
+            </p>
+            <GoALinkButton data-testid="add-notice" to={`${location.pathname}/notice/new`} buttonType="primary">
+              Add a Draft Notice
+            </GoALinkButton>
+            <NoticeList />
           </Tab>
           <Tab label="Guidelines">
             Guidelines for choosing a health check endpoint:
@@ -80,14 +107,6 @@ function Status(): JSX.Element {
             </ol>
           </Tab>
         </Tabs>
-        <GoALinkButton data-testid="add-application" to={`${location.pathname}/new`} buttonType="primary">
-          Add Application
-        </GoALinkButton>
-        <section>
-          {applications.map((app) => (
-            <Application key={app._id} {...app} />
-          ))}
-        </section>
       </Main>
 
       <Aside>
@@ -108,6 +127,22 @@ function Status(): JSX.Element {
             <DialogTitle>New Application</DialogTitle>
             <DialogContent>
               <ApplicationForm />
+            </DialogContent>
+          </Dialog>
+        </Route>
+        <Route path="/admin/services/status/notice/new">
+          <Dialog open={true}>
+            <DialogTitle>Add a Draft Notice</DialogTitle>
+            <DialogContent>
+              <NoticeForm />
+            </DialogContent>
+          </Dialog>
+        </Route>
+        <Route path="/admin/services/status/notice/:noticeId">
+          <Dialog open={true}>
+            <DialogTitle>Edit Draft Notice</DialogTitle>
+            <DialogContent>
+              <NoticeForm />
             </DialogContent>
           </Dialog>
         </Route>
@@ -220,8 +255,10 @@ function Application(props: ServiceStatusApplication) {
 
       <AppHeader>
         <AppName>{props.name}</AppName>
-        <span className="space-1"></span>
-        <GoAChip type={publicStatusMap[props.status]}>{humanizeText(props.status)}</GoAChip>
+        <>
+          <span className="space-1"></span>
+          <GoAChip type={publicStatusMap[props.status]}>{humanizeText(props.status)}</GoAChip>
+        </>
       </AppHeader>
       <em>Last updated: {getTimestamp()}</em>
 
@@ -344,8 +381,13 @@ const AppHeader = styled.div`
   }
 `;
 
+const ApplicationList = styled.section`
+  margin-top: 2rem;
+`;
+
 const AppName = styled.div`
   font-size: var(--fs-lg);
+  font-weight: var(--fw-medium);
   text-transform: capitalize;
 `;
 

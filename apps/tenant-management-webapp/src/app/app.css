@@ -60,6 +60,8 @@
   --color-primary: #0070c4;
   --color-primary-dark: #004f84;
   --color-primary-link: #0067b5;
+  --color-white: #f1f1f1;
+  --color-active-orange: #FEBA35;
 
   /* notices */
   --color-notice-primary: var(--color-primary);
@@ -190,7 +192,7 @@ input[type='button'].goa-button:disabled.goa--tertiary,
 input[type='submit'].goa-button:disabled,
 input[type='submit'].goa-button:disabled.goa--secondary,
 input[type='submit'].goa-button:disabled.goa--tertiary {
-  border: 2px solid #f1f1f1 !important;
+  border: 2px solid var(--color-white) !important;
 }
 
 /* == OVERRIDES END */

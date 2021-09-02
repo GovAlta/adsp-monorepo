@@ -2,7 +2,11 @@ import { Request, Response, Router } from 'express';
 import { IsDefined } from 'class-validator';
 import validationMiddleware from '../../middleware/requestValidator';
 import * as HttpStatusCodes from 'http-status-codes';
-import { requireTenantServiceAdmin, requireTenantAdmin, requireBetaTesterOrAdmin } from '../../middleware/authentication';
+import {
+  requireTenantServiceAdmin,
+  requireTenantAdmin,
+  requireBetaTesterOrAdmin,
+} from '../../middleware/authentication';
 import * as TenantService from '../services/tenant';
 import { logger } from '../../middleware/logger';
 import { v4 as uuidv4 } from 'uuid';
@@ -116,7 +120,7 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
     try {
       const tenantEmail = payload?.email;
       if (tenantEmail) {
-        const hasRealm = await TenantService.isRealmExisted(tenantName)
+        const hasRealm = await TenantService.isRealmExisted(tenantName);
         // To upgrade existing realm to support platform team service. Email is from the payload
         if (!hasRealm) {
           throw new TenantService.TenantError(`${tenantName} does not exit`, HttpStatusCodes.BAD_REQUEST);
@@ -124,10 +128,13 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
         const tenantRealm = tenantName;
         logger.info(`Found key realm with name ${tenantRealm}`);
         // For existed tenant, realm is same as tenant name
-        const hasTenant = await TenantService.hasTenantOfRealm(tenantName)
+        const hasTenant = await TenantService.hasTenantOfRealm(tenantName);
 
         if (hasTenant) {
-          throw new TenantService.TenantError(`Tenant ${tenantName} has already been created`, HttpStatusCodes.BAD_REQUEST);
+          throw new TenantService.TenantError(
+            `Tenant ${tenantName} has already been created`,
+            HttpStatusCodes.BAD_REQUEST
+          );
         }
 
         await TenantService.validateEmailInDB(tenantEmail);
