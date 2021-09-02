@@ -8,7 +8,26 @@
 '/notices/v1/':
   get:
     tags: [NoticeApplicationEntity]
-    description: Retrieves all notices
+    description: Retrieves all notices when authenticate and only active without authentication.
+    parameters:
+      - name: top
+        description: Number of results to read.
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: after
+        description: Cursor for next set of results.
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: mode
+        description: Mode type.
+        in: query
+        required: true
+        schema:
+          type: string
     responses:
       200:
         description: Notices successfully retrieved.
@@ -43,18 +62,38 @@
       401: *401
       500: *500
 
+'/notices/v1/{id}':
+  get:
+    tags: [NoticeApplicationEntity]
+    description: Retrieves a single notice.
+    parameters:
+      - name: id
+        description: Notice id.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Notice successfully retrieved.
+      404:
+        description: Notice not found.
   patch:
     tags: [NoticeApplicationEntity]
     description: Update a notice.
+    parameters:
+      - name: id
+        description: Notice id.
+        in: path
+        required: true
+        schema:
+          type: string
     requestBody:
       content:
         application/json:
           schema:
             type: object
             properties:
-              id:
-                required: true
-                type: string
               message:
                 type: string
                 required: true
@@ -74,23 +113,6 @@
       200:
         description: Notice successfully updated.
       401: *401
-
-'/notices/v1/{id}':
-  get:
-    tags: [NoticeApplicationEntity]
-    description: Retrieves a single notice.
-    parameters:
-      - name: id
-        description: Notice id.
-        in: path
-        required: true
-        schema:
-          type: string
-    responses:
-      200:
-        description: Notice successfully retrieved.
-      404:
-        description: Notice not found.
   delete:
     tags: [NoticeApplicationEntity]
     description: Deletes notice..
