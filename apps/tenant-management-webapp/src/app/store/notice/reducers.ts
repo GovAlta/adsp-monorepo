@@ -1,4 +1,3 @@
-import { application } from 'express';
 import { ActionTypes } from './actions';
 import { Notices } from './models';
 

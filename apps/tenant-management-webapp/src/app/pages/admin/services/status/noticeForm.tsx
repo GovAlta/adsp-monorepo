@@ -28,7 +28,7 @@ function NoticeForm(): JSX.Element {
   const [startTime, setStartTime] = useState('10:00');
   const [endTime, setEndTime] = useState('14:00');
   const [message, setMessage] = useState('');
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState({ });
 
   const { applications, notices } = useSelector((state: RootState) => ({
     applications: state.serviceStatus.applications,
@@ -45,8 +45,7 @@ function NoticeForm(): JSX.Element {
       setEndDate(currentEndDate);
 
       setStartTime(
-        `${currentStartDate.getHours()}:${
-          currentStartDate.getMinutes() < 10 ? '0' : ''
+        `${currentStartDate.getHours()}:${currentStartDate.getMinutes() < 10 ? '0' : ''
         }${currentStartDate.getMinutes()}`
       );
       setEndTime(
@@ -131,10 +130,15 @@ function NoticeForm(): JSX.Element {
 
   return (
     <NoticeFormStyle>
-      <GoAForm>
+      <GoAForm data-testid='notice-form'>
         <GoAFormItem className={errors?.['message'] && 'error'}>
           <label>Description</label>
-          <textarea name="message" value={message} onChange={setValue} maxLength={140} />
+          <textarea
+            data-testid='notice-form-description'
+            name="message"
+            value={message}
+            onChange={setValue}
+            maxLength={140} />
           <div className="error-msg">{errors?.['message']}</div>
         </GoAFormItem>
 
@@ -163,13 +167,21 @@ function NoticeForm(): JSX.Element {
             <div className="flex1 mr-1">
               <DatePickerStyle>
                 <label>Start Date</label>
-                <DatePicker name="startDate" onChange={setStartDate} value={startDate} />
+                <DatePicker
+                  data-testid='notice-form-start-date-picker'
+                  name="startDate"
+                  onChange={setStartDate}
+                  value={startDate} />
               </DatePickerStyle>
             </div>
             <div className="flex1 ml-1">
               <DatePickerStyle>
                 <label>End Date</label>
-                <DatePicker name="endDate" onChange={setEndDate} value={endDate} />
+                <DatePicker
+                  name="endDate"
+                  data-testid='notice-form-end-date-picker'
+                  onChange={setEndDate}
+                  value={endDate} />
               </DatePickerStyle>
             </div>
           </div>
@@ -178,13 +190,21 @@ function NoticeForm(): JSX.Element {
             <div className="flex1 mr-1">
               <DatePickerStyle>
                 <label>Start Time</label>
-                <TimePicker name="startTime" onChange={setStartTime} value={startTime} />
+                <TimePicker
+                  name="startTime"
+                  onChange={setStartTime}
+                  data-testid='notice-form-start-time-picker'
+                  value={startTime} />
               </DatePickerStyle>
             </div>
             <div className="flex1 ml-1">
               <DatePickerStyle>
                 <label>End Time</label>
-                <TimePicker name="endTime" onChange={setEndTime} value={endTime} />
+                <TimePicker
+                  name="endTime"
+                  onChange={setEndTime}
+                  data-testid='notice-form-end-time-picker'
+                  value={endTime} />
               </DatePickerStyle>
             </div>
           </div>
@@ -193,10 +213,17 @@ function NoticeForm(): JSX.Element {
         </ErrorWrapper>
 
         <GoAFormButtons>
-          <GoAButton buttonType="tertiary" onClick={cancel}>
+          <GoAButton
+            buttonType="tertiary"
+            data-testid='notice-form-cancel'
+            onClick={cancel}>
             Cancel
           </GoAButton>
-          <GoAButton buttonType="primary" type="submit" onClick={submit}>
+          <GoAButton
+            buttonType="primary"
+            type="submit"
+            data-testid='notice-form-submit'
+            onClick={submit}>
             Save as draft
           </GoAButton>
         </GoAFormButtons>

@@ -52,13 +52,21 @@ export const DraftDropdownMenu = (props: DropdownMenuProps): JSX.Element => {
 
   return (
     <DropdownMenuContainer>
-      <div className="item" onClick={() => changeMode('active')}>
+      <div
+        className="item"
+        onClick={() => changeMode('active')}
+        data-testid='notice-card-menu-publish'>
         Publish
       </div>
-      <div className="item" onClick={() => redirect(`${location.pathname}/notice/${props.id}`)}>
+      <div className="item"
+        onClick={() => {
+          props.closeActionFn()
+          redirect(`${location.pathname}/notice/${props.id}`)
+        }}
+        data-testid='notice-card-menu-edit'>
         Edit
       </div>
-      <div className="item" onClick={() => delNotice()}>
+      <div className="item" onClick={() => delNotice()} data-testid='notice-card-menu-delete'>
         Delete
       </div>
     </DropdownMenuContainer>
@@ -77,10 +85,14 @@ export const PublishedDropdownMenu = (props: DropdownMenuProps): JSX.Element => 
 
   return (
     <DropdownMenuContainer>
-      <div className="item" onClick={() => changeMode('draft')}>
+      <div className="item"
+        onClick={() => changeMode('draft')}
+        data-testid='notice-card-menu-unpublish'>
         Unpublish
       </div>
-      <div className="item" onClick={() => changeMode('archived')}>
+      <div className="item"
+        onClick={() => changeMode('archived')}
+        data-testid='notice-card-menu-archive'>
         Archive
       </div>
     </DropdownMenuContainer>
