@@ -15,6 +15,15 @@ const NoticeCardContainer = styled.div`
   padding: 1rem;
   position: relative;
   height: 100%;
+  span.time-title {
+    font-weight: var(--fw-bold);
+    font-size: var(--fs-sm);
+    display: inline-box;
+    width: 4.5rem;
+  }
+  span.time {
+    font-size: var(--fs-sm);
+  }
 `;
 const HeaderContainer = styled.div`
   padding-bottom: 0.5rem;
@@ -90,9 +99,10 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+      year: 'numeric'
     };
-    const timeParts = new Date().toLocaleString('en-US', options).split(',');
-    const localTime = `${timeParts[0]}, ${timeParts[1]} @ ${timeParts[2].toLowerCase()}`;
+    const timeParts = new Date(date).toLocaleString('en-US', options).split(',');
+    const localTime = `${timeParts[0]}, ${timeParts[1]}, ${timeParts[2]} at ${timeParts[3].toLowerCase()}`;
 
     return localTime;
   };
@@ -138,8 +148,14 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
             closeActionFn={closeDropdownFn} />
         )}
       </CardContent>
-      <div>Start Date: {FormatNoticeDate(notice.startDate)}</div>
-      <div>End Date: {FormatNoticeDate(notice.endDate)}</div>
+      <div>
+        <span className='time-title'>Start Date: </span>
+        <span className='time'>{FormatNoticeDate(notice.startDate)}</span>
+      </div>
+      <div>
+        <span className='time-title'>End Date: </span>
+        <span className='time'>{FormatNoticeDate(notice.endDate)}</span>
+      </div>
     </NoticeCardContainer>
   );
 };
