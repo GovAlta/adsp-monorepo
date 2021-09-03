@@ -85,14 +85,14 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
   const FormatNoticeDate = (date: Date): string => {
     const options = {
       timeZone: 'Canada/Mountain',
-      weekday: 'long',
-      month: 'long',
+      weekday: 'short',
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     };
     const timeParts = new Date().toLocaleString('en-US', options).split(',');
-    const localTime = `${timeParts[0]}, ${timeParts[1]} at ${timeParts[2].toLowerCase()}`;
+    const localTime = `${timeParts[0]}, ${timeParts[1]} @ ${timeParts[2].toLowerCase()}`;
 
     return localTime;
   };
@@ -103,11 +103,17 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
 
   return (
     <NoticeCardContainer key={`notice-card-container-${notice.id}`}>
-      <CardHeader mode={notice.mode} key={`notice-card-header-${notice.id}`} data-testid="notice-card-header" />
-      <CardContent key={`notice-content-${notice.id}`} data-testid="notice-card-content">
-        <MessageContainer key={`notice-card-message-${notice.id}`} data-testid={`notice-card-message-${notice.id}`}>
+      <CardHeader
+        mode={notice.mode}
+        key={`notice-card-header-${notice.id}`}
+        data-testid="notice-card-header" />
+      <CardContent
+        key={`notice-content-${notice.id}`}
+        data-testid="notice-card-content">
+        <MessageContainer key={`notice-card-message-${notice.id}`} data-testid={`notice-card-message`}>
           {notice.message}
         </MessageContainer>
+        <br />
         {notice.tennantServRef &&
           JSON.parse(notice.tennantServRef).map((application) => {
             const currentApplication = applications.find((app) => application.id === app._id);
