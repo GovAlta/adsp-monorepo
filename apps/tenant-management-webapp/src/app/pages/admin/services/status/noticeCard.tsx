@@ -77,7 +77,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
           {props.mode === 'archived' && (
             <GoABadge key={`${notice.id}-badge-archived`} content={'Archived'} type="midtone" />
           )}
-          <img
+          {props.mode !== 'archived' && <img
             className="goa-icon"
             src={SettingIcon}
             width="30"
@@ -85,7 +85,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
             onClick={() => {
               setOpenMenu(!openMenu);
             }}
-          />
+          />}
         </IconContext>
       </HeaderContainer>
     );
