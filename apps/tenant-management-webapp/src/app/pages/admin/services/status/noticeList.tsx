@@ -42,42 +42,61 @@ const Radio = (props: RadioProps): JSX.Element => {
 
 const NoticeListFilterContainer = styled.div`
   float: right;
+  margin-top: 0.5rem;
   margin-bottom: 1.5rem;
+  .filter-header {
+    padding-right: 1rem;
+    display: inline-block;
+  }
+  .filter-radio {
+    padding-right: 0.5rem;
+    display: inline-block;
+  }
 `;
 
 export const NoticeListFilter = (props: NoticeListFilterProps): JSX.Element => {
   const { option, onSelect } = props;
   return (
     <NoticeListFilterContainer>
-      <img src={FilterIcon} width="14" alt="notice-filter" /> Filter by status
-      <Radio
-        data-testid="notice-filter-radio-all"
-        value={'all'}
-        label={'All'}
-        checked={option === 'all'}
-        onSelect={onSelect}
-      />
-      <Radio
-        data-testid="notice-filter-radio-draft"
-        value={'draft'}
-        label={'Draft'}
-        checked={option === 'draft'}
-        onSelect={onSelect}
-      />
-      <Radio
-        data-testid="notice-filter-radio-published"
-        value={'active'}
-        label={'Published'}
-        checked={option === 'active'}
-        onSelect={onSelect}
-      />
-      <Radio
-        data-testid="notice-filter-radio-archived"
-        value={'archived'}
-        label={'Archived'}
-        checked={option === 'archived'}
-        onSelect={onSelect}
-      />
+      <div className='filter-header'>
+        <img src={FilterIcon} width="14" alt="notice-filter" /> Filter by status
+      </div>
+      <div className='filter-radio'>
+        <Radio
+          data-testid="notice-filter-radio-all"
+          value={'all'}
+          label={'All'}
+          checked={option === 'all'}
+          onSelect={onSelect}
+        />
+      </div>
+      <div className='filter-radio'>
+        <Radio
+          data-testid="notice-filter-radio-draft"
+          value={'draft'}
+          label={'Draft'}
+          checked={option === 'draft'}
+          onSelect={onSelect}
+        />
+      </div>
+      <div className='filter-radio'>
+        <Radio
+          data-testid="notice-filter-radio-published"
+          value={'active'}
+          label={'Published'}
+          checked={option === 'active'}
+          onSelect={onSelect}
+        />
+      </div>
+      <div className='filter-radio'>
+        <Radio
+          data-testid="notice-filter-radio-archived"
+          value={'archived'}
+          label={'Archived'}
+          checked={option === 'archived'}
+          onSelect={onSelect}
+        />
+      </div>
     </NoticeListFilterContainer>
   );
 };
