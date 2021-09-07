@@ -20,6 +20,7 @@ interface RadioProps {
   label: string;
   value: string;
   checked: boolean;
+  testId?: string;
   onSelect?: filterOptionOnSelect;
 }
 
@@ -31,6 +32,7 @@ const Radio = (props: RadioProps): JSX.Element => {
         type="radio"
         value={value}
         checked={checked}
+        data-testid={props.testId}
         onChange={(e) => {
           onSelect(e.target.value);
         }}
@@ -61,18 +63,18 @@ export const NoticeListFilter = (props: NoticeListFilterProps): JSX.Element => {
       <div className='filter-header'>
         <img src={FilterIcon} width="14" alt="notice-filter" /> Filter by status
       </div>
-      <div className='filter-radio'>
+      <div className='filter-radio' >
         <Radio
-          data-testid="notice-filter-radio-all"
           value={'all'}
           label={'All'}
+          testId={'notice-filter-radio-draft'}
           checked={option === 'all'}
           onSelect={onSelect}
         />
       </div>
       <div className='filter-radio'>
         <Radio
-          data-testid="notice-filter-radio-draft"
+          testId="notice-filter-radio-draft"
           value={'draft'}
           label={'Draft'}
           checked={option === 'draft'}
@@ -81,7 +83,7 @@ export const NoticeListFilter = (props: NoticeListFilterProps): JSX.Element => {
       </div>
       <div className='filter-radio'>
         <Radio
-          data-testid="notice-filter-radio-published"
+          testId="notice-filter-radio-published"
           value={'active'}
           label={'Published'}
           checked={option === 'active'}
@@ -90,7 +92,7 @@ export const NoticeListFilter = (props: NoticeListFilterProps): JSX.Element => {
       </div>
       <div className='filter-radio'>
         <Radio
-          data-testid="notice-filter-radio-archived"
+          testId="notice-filter-radio-archived"
           value={'archived'}
           label={'Archived'}
           checked={option === 'archived'}
