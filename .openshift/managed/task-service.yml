@@ -35,6 +35,16 @@ parameters:
     description: Host for the route.
     displayName: Route Host
     value: ''
+  - name: DATABASE_NAME
+    displayName: "Database Name"
+    description: "Name of the database accessed."
+    value: postgres
+    required: true
+  - name: DATABASE_USER
+    displayName: "Database Connection User"
+    description: User for accessing the database.
+    value: postgres
+    required: true
   - name: DATABASE_PASSWORD
     description: Password for the PostgreSQL connection user.
     displayName: PostgreSQL Connection Password

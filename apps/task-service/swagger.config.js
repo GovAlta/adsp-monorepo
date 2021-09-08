@@ -3,10 +3,9 @@ module.exports = {
   info: {
     title: 'Task Service',
     version: '0.0.0',
-    description: ''
+    description: 'The Task Service provides a model for tasks, queues, and work assignment.',
   },
-  tags: [
-  ],
+  tags: [],
   components: {
     securitySchemes: {
       accessToken: {
