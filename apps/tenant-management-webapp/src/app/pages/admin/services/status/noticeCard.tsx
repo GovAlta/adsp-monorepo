@@ -70,18 +70,32 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
     return (
       <HeaderContainer>
         <IconContext>
-          {props.mode === 'draft' && <GoABadge key={`${notice.id}-badge-draft`} content={'Draft'} type="information" />}
+          {props.mode === 'draft' && <GoABadge
+            key={`${notice.id}-badge-draft`}
+            data-testid='notice-card-mode'
+            content={'Draft'}
+            type="information"
+          />}
           {props.mode === 'active' && (
-            <GoABadge key={`${notice.id}-badge-published`} content={'Published'} type="success" />
+            <GoABadge
+              key={`${notice.id}-badge-published`}
+              content={'Published'}
+              data-testid='notice-card-mode'
+              type="success"
+            />
           )}
           {props.mode === 'archived' && (
-            <GoABadge key={`${notice.id}-badge-archived`} content={'Archived'} type="midtone" />
+            <GoABadge key={`${notice.id}-badge-archived`}
+              content={'Archived'}
+              data-testid='notice-card-mode'
+              type="midtone" />
           )}
           {props.mode !== 'archived' && <img
             className="goa-icon"
             src={SettingIcon}
             width="30"
             alt="notice-card-setting"
+            data-testid='notice-card-gear-button'
             onClick={() => {
               setOpenMenu(!openMenu);
             }}
@@ -129,7 +143,9 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
             const currentApplication = applications.find((app) => application.id === app._id);
 
             return (
-              <ServiceHref key={`notice-service-Href-${notice.id}-${application.id}`}>
+              <ServiceHref
+                data-testid='notice-card-service-href'
+                key={`notice-service-Href-${notice.id}-${application.id}`}>
                 {currentApplication?.name}
               </ServiceHref>
             );
@@ -148,11 +164,11 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
             closeActionFn={closeDropdownFn} />
         )}
       </CardContent>
-      <div>
+      <div data-testid='notice-card-start-date'>
         <span className='time-title'>Start Date: </span>
         <span className='time'>{FormatNoticeDate(notice.startDate)}</span>
       </div>
-      <div>
+      <div data-testid='notice-card-end-date'>
         <span className='time-title'>End Date: </span>
         <span className='time'>{FormatNoticeDate(notice.endDate)}</span>
       </div>
