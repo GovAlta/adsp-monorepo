@@ -144,7 +144,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
 
             return (
               <ServiceHref
-                data-testid='notice-card-service-href'
+                data-testid='notice-card-application'
                 key={`notice-service-Href-${notice.id}-${application.id}`}>
                 {currentApplication?.name}
               </ServiceHref>
