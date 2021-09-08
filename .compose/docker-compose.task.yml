@@ -1,0 +1,37 @@
+version: '3.2'
+services:
+  task-service-postgres:
+    image: postgres:9.6
+    expose:
+      - 5432
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=tasks-db
+      - POSTGRES_PASSWORD=task-service
+    volumes:
+      - ../data/value:/bitnami/postgresql
+  task-service:
+    build:
+      context: ../
+      dockerfile: .compose/service/Dockerfile
+      args:
+        - SERVICE=task-service
+    depends_on:
+      - task-service-postgres
+    ports:
+      - 3341:3341
+    expose:
+      - 3341
+    environment:
+      - KEYCLOAK_ROOT_URL=http://keycloak:8080
+      - DIRECTORY_URL=http://tenant-management-api:3333
+      - CLIENT_ID=urn:ads:platform:task-service
+      - CLIENT_SECRET=c094298b-32df-4866-aab4-78eada8eece0
+      - DB_HOST=task-service-postgres
+      - DB_PORT=5432
+      - DB_NAME=tasks-db
+      - DB_USER=postgres
+      - DB_PASSWORD=task-service
+      - PORT=3341
+      - LOG_LEVEL=debug
