@@ -138,7 +138,7 @@ function NoticeForm(): JSX.Element {
             name="message"
             value={message}
             onChange={setValue}
-            maxLength={140} />
+            maxLength={280} />
           <div className="error-msg">{errors?.['message']}</div>
         </GoAFormItem>
 
