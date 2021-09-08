@@ -74,6 +74,9 @@
     },
     "configuration-service": {
       "tags": []
+    },
+    "task-service": {
+      "tags": []
     }
   }
 }

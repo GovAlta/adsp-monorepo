@@ -892,6 +892,58 @@
           }
         }
       }
+    },
+    "task-service": {
+      "root": "apps/task-service",
+      "sourceRoot": "apps/task-service/src",
+      "projectType": "application",
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/task-service",
+            "main": "apps/task-service/src/main.ts",
+            "tsConfig": "apps/task-service/tsconfig.app.json",
+            "assets": [
+              {
+                "glob": "apps/task-service/migrations",
+                "input": ".",
+                "output": "migrations"
+              }],
+            "webpackConfig": "apps/task-service/webpack.config.js"
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "task-service:build",
+            "port": 7781
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/task-service/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/task-service"],
+          "options": {
+            "jestConfig": "apps/task-service/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
     }
   }
 }

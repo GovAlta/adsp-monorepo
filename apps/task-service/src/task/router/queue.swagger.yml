@@ -1,0 +1,289 @@
+components:
+  schemas:
+    Queue:
+      type: object
+      properties:
+        namespace:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        context:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: number
+              - type: boolean
+        assignerRoles:
+          type: array
+          items:
+            type: string
+        workerRoles:
+          type: array
+          items:
+            type: string
+    AssignTask:
+      type: object
+      properties:
+        operation:
+          type: string
+      required: [operation]
+    SetTaskPriority:
+      type: object
+      properties:
+        operation:
+          type: string
+        priority:
+          type: number
+      required: [operation, priority]
+    StartTask:
+      type: object
+      properties:
+        operation:
+          type: string
+      required: [operation]
+    CompleteTask:
+      type: object
+      properties:
+        operation:
+          type: string
+      required: [operation]
+    CancelTask:
+      type: object
+      properties:
+        operation:
+          type: string
+      required: [operation]
+
+/task/v1/queues:
+  get:
+    tags:
+      - Queue
+    description: Retrieves queues.
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Queue"
+
+/task/v1/queues/{namespace}/{name}:
+  get:
+    tags:
+      - Queue
+    description: Retrieves a specified queue.
+    parameters:
+      - name: namespace
+        description: Namespace of the queue.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the queue.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Queue"
+      404:
+        description: Queue not found.
+
+/task/v1/queues/{namespace}/{name}/tasks:
+  get:
+    tags:
+      - Queue
+    description: Retrieves queued tasks.
+    parameters:
+      - name: namespace
+        description: Namespace of the queue.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the queue.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: top
+        description: Number of tasks to return.
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: after
+        description: Cursor for the page to retrieve.
+        in: query
+        required: false
+        schema:
+          type: string
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Task"
+                page:
+                  type: object
+                  properties:
+                    after:
+                      type: string
+                    next:
+                      type: string
+                    size:
+                      type: number
+      404:
+        description: Queue not found.
+  post:
+    tags:
+      - Queue
+    description: Creates and enqueues a task.
+    parameters:
+      - name: namespace
+        description: Namespace of the queue.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the queue.
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              context:
+                type: object
+                additionalProperties:
+                  oneOf:
+                    - type: string
+                    - type: number
+                    - type: boolean
+              priority:
+                type: string
+                enum: [Normal, High, Urgent]
+            required: [name]
+
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Task"
+
+/task/v1/queues/{namespace}/{name}/tasks/{id}:
+  get:
+    tags:
+      - Queue
+    description: Retrieves queued task.
+    parameters:
+      - name: namespace
+        description: Namespace of the queue.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the queue.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: id
+        description: ID of the queue task.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Task"
+      404:
+        description: Queue not found.
+  post:
+    tags:
+      - Queue
+    description: Executes a task operation.
+    parameters:
+      - name: namespace
+        description: Namespace of the queue.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the queue.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: id
+        description: ID of the task.
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: "#/components/schemas/AssignTask"
+              - $ref: "#/components/schemas/SetTaskPriority"
+              - $ref: "#/components/schemas/StartTask"
+              - $ref: "#/components/schemas/CompleteTask"
+              - $ref: "#/components/schemas/CancelTask"
+            discriminator:
+              propertyName: operation
+              mapping:
+                assign: "#/components/schemas/AssignTask"
+                set-priority: "#/components/schemas/SetTaskPriority"
+                start: "#/components/schemas/StartTask"
+                complete: "#/components/schemas/CompleteTask"
+                cancel: "#/components/schemas/CancelTask"
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Task"
+      404:
+        description: Task not found.
