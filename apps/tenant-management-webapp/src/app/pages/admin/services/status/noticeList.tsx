@@ -5,6 +5,7 @@ import { NoticeCard } from './noticeCard';
 import FilterIcon from '@assets/icons/filter-filled.svg';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
+import { GoARadio } from '@abgov/react-components';
 
 type filterOptionOnSelect = (option: string) => void;
 
@@ -13,47 +14,31 @@ interface NoticeListFilterProps {
   option: string;
 }
 
-const NoticeListContainer = styled.div``;
-
-/* TODO: replace with GoA Radio when it is ready*/
-interface RadioProps {
-  label: string;
-  value: string;
-  checked: boolean;
-  testId?: string;
-  onSelect?: filterOptionOnSelect;
-}
-
-const Radio = (props: RadioProps): JSX.Element => {
-  const { label, value, checked, onSelect } = props;
-  return (
-    <>
-      <input
-        type="radio"
-        value={value}
-        checked={checked}
-        data-testid={props.testId}
-        onChange={(e) => {
-          onSelect(e.target.value);
-        }}
-      />{' '}
-      {label}
-    </>
-  );
-};
+const NoticeListContainer = styled.div`
+  margin-bottom: 1rem;
+`;
 
 const NoticeListFilterContainer = styled.div`
   float: right;
   margin-top: 0.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
   .filter-header {
     padding-right: 1rem;
-    display: inline-block;
+    font-size: var(--fs-base);
+    text-align: center;
+    display:flex;
+    margin: auto;
   }
   .filter-radio {
-    padding-right: 0.5rem;
-    display: inline-block;
+    display: inline-flex;
+    .goa-radio-label {
+      padding-bottom: 0rem!important;
+      padding-top: 0rem!important;
+    }
   }
+  display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
 `;
 
 export const NoticeListFilter = (props: NoticeListFilterProps): JSX.Element => {
@@ -61,43 +46,41 @@ export const NoticeListFilter = (props: NoticeListFilterProps): JSX.Element => {
   return (
     <NoticeListFilterContainer>
       <div className='filter-header'>
-        <img src={FilterIcon} width="14" alt="notice-filter" /> Filter by status
+        <img src={FilterIcon} width="20" alt="notice-filter" /><span>Filter by status</span>
       </div>
       <div className='filter-radio' >
-        <Radio
+        <GoARadio
           value={'all'}
-          label={'All'}
           testId={'notice-filter-radio-draft'}
           checked={option === 'all'}
-          onSelect={onSelect}
-        />
+          onChange={(option) => { onSelect(option) }}
+        >All</GoARadio>
       </div>
       <div className='filter-radio'>
-        <Radio
+        <GoARadio
           testId="notice-filter-radio-draft"
           value={'draft'}
-          label={'Draft'}
           checked={option === 'draft'}
-          onSelect={onSelect}
-        />
+          onChange={(option) => { onSelect(option) }}
+        >Draft</GoARadio>
       </div>
       <div className='filter-radio'>
-        <Radio
+        <GoARadio
           testId="notice-filter-radio-published"
           value={'active'}
-          label={'Published'}
+          name={'Published'}
           checked={option === 'active'}
-          onSelect={onSelect}
-        />
+          onChange={(option) => { onSelect(option) }}
+        >Published</GoARadio>
       </div>
       <div className='filter-radio'>
-        <Radio
+        <GoARadio
           testId="notice-filter-radio-archived"
           value={'archived'}
-          label={'Archived'}
+          name={'Archived'}
           checked={option === 'archived'}
-          onSelect={onSelect}
-        />
+          onChange={(option) => { onSelect(option) }}
+        >Archived</GoARadio>
       </div>
     </NoticeListFilterContainer>
   );
@@ -117,7 +100,7 @@ export const NoticeList = (): JSX.Element => {
     <NoticeListContainer data-testid="notice-list">
       <Grid>
         <GridItem md={12} hSpacing={0.5}>
-          {notices && (
+          {notices && notices.length !== 0 && (
             <NoticeListFilter
               data-testid="notice-list-filter"
               option={filerOption}
@@ -138,7 +121,7 @@ export const NoticeList = (): JSX.Element => {
               }
             })
             .map((notice) => (
-              <GridItem md={12} key={notice.id}>
+              <GridItem md={12} key={notice.id} vSpacing={0.75}>
                 <NoticeCard key={notice.id} notice={notice} data-testid="notice-card" />
               </GridItem>
             ))}

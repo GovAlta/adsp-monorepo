@@ -72,7 +72,8 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
             key={`${notice.id}-badge-draft`}
             data-testid='notice-card-mode'
             content={'Draft'}
-            type="information"
+            type='information'
+            testId='notice-card-mode'
           />}
           {props.mode === 'active' && (
             <GoABadge
@@ -80,12 +81,14 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
               content={'Published'}
               data-testid='notice-card-mode'
               type="success"
+              testId='notice-card-mode'
             />
           )}
           {props.mode === 'archived' && (
             <GoABadge key={`${notice.id}-badge-archived`}
               content={'Archived'}
               data-testid='notice-card-mode'
+              testId='notice-card-mode'
               type="midtone" />
           )}
           {props.mode !== 'archived' && <img
@@ -115,7 +118,6 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
     };
     const timeParts = new Date(date).toLocaleString('en-US', options).split(',');
     const localTime = `${timeParts[0]}, ${timeParts[1]}, ${timeParts[2]} at ${timeParts[3].toLowerCase()}`;
-
     return localTime;
   };
 
