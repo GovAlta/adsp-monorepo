@@ -14,7 +14,9 @@ import { environment } from './environments/environment';
 import {
   applyNotificationMiddleware,
   Channel,
+  configurationSchema,
   Notification,
+  NotificationConfiguration,
   NotificationSentDefinition,
   NotificationsGeneratedDefinition,
   NotificationType,
@@ -23,7 +25,6 @@ import {
 import { createRepositories } from './mongo';
 import { createABNotifySmsProvider, createEmailProvider } from './provider';
 import { templateService } from './handlebars';
-import { NotificationConfiguration } from './notification/configuration';
 
 const logger = createLogger('notification-service', environment.LOG_LEVEL || 'info');
 
@@ -52,6 +53,7 @@ async function initializeApp() {
       accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
       clientSecret: environment.CLIENT_SECRET,
       directoryUrl: new URL(environment.DIRECTORY_URL),
+      configurationSchema,
       configurationConverter: (config: Record<string, NotificationType>, tenantId?: AdspId) =>
         new NotificationConfiguration(config, tenantId),
       events: [NotificationsGeneratedDefinition, NotificationSentDefinition],

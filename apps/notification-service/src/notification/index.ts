@@ -14,6 +14,7 @@ export * from './repository';
 export * from './model';
 export * from './template';
 export * from './events';
+export * from './configuration';
 
 interface NotificationMiddlewareProps extends Repositories {
   serviceId: AdspId;
