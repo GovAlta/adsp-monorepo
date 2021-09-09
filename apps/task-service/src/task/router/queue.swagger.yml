@@ -294,3 +294,77 @@ components:
               $ref: "#/components/schemas/Task"
       404:
         description: Task not found.
+
+/task/v1/queues/{namespace}/{name}/assigners:
+  get:
+    tags:
+      - Queue
+    description: Retrieves users with the assigner roles for the queue. Requesting user must have view permissions for realm and users.
+    parameters:
+      - name: namespace
+        description: Namespace of the queue.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the queue.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  email:
+                    type: string
+      404:
+        description: Queue not found.
+
+/task/v1/queues/{namespace}/{name}/workers:
+  get:
+    tags:
+      - Queue
+    description: Retrieves users with the workers roles for the queue. Requesting user must have view permissions for realm and users.
+    parameters:
+      - name: namespace
+        description: Namespace of the queue.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the queue.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  email:
+                    type: string
+      404:
+        description: Queue not found.

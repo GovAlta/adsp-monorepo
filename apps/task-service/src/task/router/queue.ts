@@ -2,6 +2,7 @@ import { DomainEvent, EventService, UnauthorizedUserError } from '@abgov/adsp-se
 import { InvalidOperationError, New, NotFoundError } from '@core-services/core-common';
 import axios from 'axios';
 import { RequestHandler, Router } from 'express';
+import * as HttpStatusCodes from 'http-status-codes';
 import { Logger } from 'winston';
 import { taskAssigned, taskCancelled, taskCompleted, taskCreated, taskPrioritySet, taskStarted } from '../events';
 import { QueueEntity } from '../model/queue';
@@ -165,7 +166,11 @@ export const taskOperation = (eventService: EventService): RequestHandler => asy
   }
 };
 
-export const getRoleUsers = (KEYCLOAK_ROOT_URL: string, rolesKey: string): RequestHandler => async (req, res, next) => {
+export const getRoleUsers = (logger: Logger, KEYCLOAK_ROOT_URL: string, rolesKey: string): RequestHandler => async (
+  req,
+  res,
+  next
+) => {
   try {
     const user = req.user;
     const realm = req.tenant?.realm;
@@ -182,24 +187,36 @@ export const getRoleUsers = (KEYCLOAK_ROOT_URL: string, rolesKey: string): Reque
     for (let i = 0; i < roles.length; i++) {
       const role = roles[i];
       let first = 0;
-      do {
-        const { data: roleUsers = [] } = await axios.get<UserInformation[]>(
-          `${KEYCLOAK_ROOT_URL}/auth/admin/realms/${realm}/roles/${role}/users?first=${first}&max=${max}`,
-          {
-            headers: { Authorization: `Bearer ${user.token.bearer}` },
+      try {
+        do {
+          const { data: roleUsers = [] } = await axios.get<UserInformation[]>(
+            `${KEYCLOAK_ROOT_URL}/auth/admin/realms/${realm}/roles/${role}/users?first=${first}&max=${max}`,
+            {
+              headers: { Authorization: `Bearer ${user.token.bearer}` },
+            }
+          );
+
+          roleUsers.forEach((roleUser) => {
+            users[roleUser.id] = roleUser;
+          });
+
+          if (roleUsers.length === max) {
+            first += 101;
+          } else {
+            first = 0;
           }
-        );
-
-        roleUsers.forEach((roleUser) => {
-          user[roleUser.id] = roleUser;
-        });
-
-        if (roleUsers.length === max) {
-          first += 101;
+        } while (first > 0);
+      } catch (err) {
+        if (axios.isAxiosError(err)) {
+          if (err.response?.status === HttpStatusCodes.NOT_FOUND) {
+            logger.warn(`Role '${role}' not found.`);
+          } else if (err.response?.status === HttpStatusCodes.FORBIDDEN) {
+            throw new UnauthorizedUserError('get role users', user);
+          }
         } else {
-          first = 0;
+          throw err;
         }
-      } while (first > 0);
+      }
     }
 
     res.send(
@@ -216,7 +233,7 @@ export const getRoleUsers = (KEYCLOAK_ROOT_URL: string, rolesKey: string): Reque
 
 export function createQueueRouter({
   KEYCLOAK_ROOT_URL,
-  logger: _logger,
+  logger,
   taskRepository: repository,
   eventService,
 }: QueueRouterProps): Router {
@@ -234,8 +251,8 @@ export function createQueueRouter({
   );
   router.post('/queues/:namespace/:name/tasks/:id', getTask(repository), verifyQueuedTask, taskOperation(eventService));
 
-  router.get('/queues/:namespace/:name/assigners', getQueue, getRoleUsers(KEYCLOAK_ROOT_URL, 'assignerRoles'));
-  router.get('/queues/:namespace/:name/workers', getQueue, getRoleUsers(KEYCLOAK_ROOT_URL, 'workerRoles'));
+  router.get('/queues/:namespace/:name/assigners', getQueue, getRoleUsers(logger, KEYCLOAK_ROOT_URL, 'assignerRoles'));
+  router.get('/queues/:namespace/:name/workers', getQueue, getRoleUsers(logger, KEYCLOAK_ROOT_URL, 'workerRoles'));
 
   return router;
 }
