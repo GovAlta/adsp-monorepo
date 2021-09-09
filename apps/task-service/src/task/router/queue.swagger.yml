@@ -36,6 +36,8 @@ components:
               type: string
             name:
               type: string
+            email:
+              type: string
       required: [operation, assignTo]
     SetTaskPriority:
       type: object

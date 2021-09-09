@@ -1,5 +1,5 @@
 import { DomainEvent, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, New, NotFoundError } from '@core-services/core-common';
+import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import axios from 'axios';
 import { RequestHandler, Router } from 'express';
 import * as HttpStatusCodes from 'http-status-codes';
@@ -8,7 +8,7 @@ import { taskAssigned, taskCancelled, taskCompleted, taskCreated, taskPrioritySe
 import { QueueEntity } from '../model/queue';
 import { TaskEntity } from '../model/task';
 import { TaskRepository } from '../repository';
-import { Queue, Task, TaskPriority, TaskServiceConfiguration } from '../types';
+import { Queue, TaskPriority, TaskServiceConfiguration } from '../types';
 import { getTask, mapTask, TASK_KEY } from './task';
 import {
   TaskOperations,
@@ -108,10 +108,14 @@ export const createTask = (repository: TaskRepository, eventService: EventServic
   try {
     const user = req.user;
     const tenantId = req.user.tenantId;
-    const task: New<Task> = req.body;
+    const { priority, ...task } = req.body;
 
     const queue: QueueEntity = req[QUEUE_KEY];
-    const entity = await TaskEntity.create(user, repository, queue, { tenantId, ...task });
+    const entity = await TaskEntity.create(user, repository, queue, {
+      tenantId,
+      priority: priority ? TaskPriority[priority] : null,
+      ...task,
+    });
     res.send(mapTask(entity));
 
     eventService.send(taskCreated(user, entity));

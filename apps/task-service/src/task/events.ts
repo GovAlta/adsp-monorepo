@@ -26,6 +26,9 @@ const userSchema = {
     name: {
       type: 'string',
     },
+    email: {
+      type: 'string',
+    },
   },
 };
 
@@ -92,7 +95,7 @@ export const TaskAssignedDefinition: DomainEventDefinition = {
             type: 'string',
             format: 'date-time',
           },
-          assignedTo: { ...userSchema, email: { type: 'string' } },
+          assignedTo: userSchema,
           assignedBy: userSchema,
         },
       },
@@ -103,7 +106,7 @@ export const TaskAssignedDefinition: DomainEventDefinition = {
             type: 'string',
             format: 'date-time',
           },
-          assignedTo: { ...userSchema, email: { type: 'string' } },
+          assignedTo: userSchema,
           assignedBy: userSchema,
         },
       },

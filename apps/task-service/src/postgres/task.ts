@@ -39,7 +39,7 @@ export class PostgresTaskRepository implements TaskRepository {
                 },
                 assignedTo: {
                   id: record.assignedToId,
-                  name: record.assignedByName,
+                  name: record.assignedToName,
                   email: record.assignedToEmail,
                 },
                 assignedOn: record.assignedOn,
