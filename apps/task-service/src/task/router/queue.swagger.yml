@@ -29,7 +29,14 @@ components:
       properties:
         operation:
           type: string
-      required: [operation]
+        assignTo:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+      required: [operation, assignTo]
     SetTaskPriority:
       type: object
       properties:

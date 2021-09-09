@@ -22,7 +22,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
   return (
     <GoAForm>
       <GoAFormItem>
-        <label>Maximum TimeStamp</label>
+        <label>Maximum Timestamp</label>
         <input
           type="datetime-local"
           name="TimeStampMin"
@@ -32,7 +32,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
         />
       </GoAFormItem>
       <GoAFormItem>
-        <label>Minimum TimeStamp</label>
+        <label>Minimum Timestamp</label>
         <input
           type="datetime-local"
           name="TimeStampMax"
@@ -43,7 +43,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
       </GoAFormItem>
 
       <GoAFormItem>
-        <label>NameSpace</label>
+        <label>Namespace</label>
         <input
           type="input"
           name="namespace"

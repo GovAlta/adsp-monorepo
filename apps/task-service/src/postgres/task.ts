@@ -37,7 +37,11 @@ export class PostgresTaskRepository implements TaskRepository {
                   id: record.assignedById,
                   name: record.assignedByName,
                 },
-                assignedTo: record.assignedTo,
+                assignedTo: {
+                  id: record.assignedToId,
+                  name: record.assignedByName,
+                  email: record.assignedToEmail,
+                },
                 assignedOn: record.assignedOn,
               }
             : null,
@@ -123,7 +127,9 @@ export class PostgresTaskRepository implements TaskRepository {
           assignedById: entity.assignment?.assignedBy?.id,
           assignedByName: entity.assignment?.assignedBy?.name,
           assignedOn: entity.assignment?.assignedOn,
-          assignedTo: entity.assignment?.assignedTo,
+          assignedToId: entity.assignment?.assignedTo?.id,
+          assignedToName: entity.assignment?.assignedTo?.name,
+          assignedToEmail: entity.assignment?.assignedTo?.email,
         })
         .onConflict('id')
         .merge()

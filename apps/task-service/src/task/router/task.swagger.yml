@@ -71,7 +71,14 @@ components:
       type: object
       properties:
         assignedTo:
-          type: string
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            email:
+              type: string
         assignedBy:
           type: object
           properties:

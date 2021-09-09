@@ -198,12 +198,13 @@ describe('TaskEntity', () => {
         name: 'test',
       });
 
-      const result = await entity.assign(user, 'test-2');
+      const result = await entity.assign(user, { id: 'test-2', name: 'test-2', email: 'test-2@test.co' });
       expect(result.assignment).toBeTruthy();
       expect(result.assignment.assignedBy.id).toBe('test');
       expect(result.assignment.assignedBy.name).toBe('test-user');
       expect(result.assignment.assignedOn).toBeTruthy();
-      expect(result.assignment.assignedTo).toBe('test-2');
+      expect(result.assignment.assignedTo.id).toBe('test-2');
+      expect(result.assignment.assignedTo.name).toBe('test-2');
     });
 
     it('can unassign', async () => {
@@ -213,7 +214,7 @@ describe('TaskEntity', () => {
         name: 'test',
       });
 
-      entity = await entity.assign(user, 'test');
+      entity = await entity.assign(user, { id: 'test', name: 'test', email: 'test@test.co' });
       expect(entity.assignment).toBeTruthy();
 
       const result = await entity.assign(user, null);
@@ -227,12 +228,13 @@ describe('TaskEntity', () => {
         name: 'test',
       });
 
-      entity = await entity.assign(user, 'test');
+      entity = await entity.assign(user, { id: 'test', name: 'test', email: 'test@test.co' });
       expect(entity.assignment).toBeTruthy();
       expect(entity.assignment.assignedBy.id).toBe('test');
       expect(entity.assignment.assignedBy.name).toBe('test-user');
       expect(entity.assignment.assignedOn).toBeTruthy();
-      expect(entity.assignment.assignedTo).toBe('test');
+      expect(entity.assignment.assignedTo.id).toBe('test');
+      expect(entity.assignment.assignedTo.name).toBe('test');
 
       const result = await entity.assign(user, null);
       expect(result.assignment).toBeNull();
@@ -245,7 +247,9 @@ describe('TaskEntity', () => {
         name: 'test',
       });
 
-      expect(() => entity.assign(user, 'test-2')).toThrow(/User test \(ID: test\) not permitted to assign task./);
+      expect(() => entity.assign(user, { id: 'test-2', name: 'test-2', email: 'test-2@test.co' })).toThrow(
+        /User test \(ID: test\) not permitted to assign task./
+      );
     });
 
     it('can throw for unauthorized', async () => {
@@ -255,7 +259,9 @@ describe('TaskEntity', () => {
         name: 'test',
       });
 
-      expect(() => entity.assign(user, 'test')).toThrow(/User test \(ID: test\) not permitted to assign task./);
+      expect(() => entity.assign(user, { id: 'test', name: 'test', email: 'test@test.co' })).toThrow(
+        /User test \(ID: test\) not permitted to assign task./
+      );
     });
   });
 
@@ -289,7 +295,7 @@ describe('TaskEntity', () => {
         name: 'test',
       });
 
-      entity.assign({ ...user, roles: [TaskServiceRoles.Admin] }, 'test');
+      entity.assign({ ...user, roles: [TaskServiceRoles.Admin] }, { id: 'test', name: 'test', email: 'test@test.co' });
       const result = entity.canProgressTask(user);
       expect(result).toBeTruthy();
     });
@@ -301,7 +307,10 @@ describe('TaskEntity', () => {
         name: 'test',
       });
 
-      entity.assign({ ...user, roles: [TaskServiceRoles.Admin] }, 'test-2');
+      entity.assign(
+        { ...user, roles: [TaskServiceRoles.Admin] },
+        { id: 'test-2', name: 'test-2', email: 'test-2@test.co' }
+      );
       const result = entity.canProgressTask(user);
       expect(result).toBeFalsy();
     });
@@ -327,7 +336,7 @@ describe('TaskEntity', () => {
         name: 'test',
       });
 
-      entity.assign({ ...user, roles: [TaskServiceRoles.Admin] }, 'test');
+      entity.assign({ ...user, roles: [TaskServiceRoles.Admin] }, { id: 'test', name: 'test', email: 'test@test.co' });
       const result = await entity.start(user);
       expect(result.status).toBe(TaskStatus.InProgress);
       expect(result.startedOn).toBeTruthy();
@@ -340,7 +349,10 @@ describe('TaskEntity', () => {
         name: 'test',
       });
 
-      entity.assign({ ...user, roles: [TaskServiceRoles.Admin] }, 'test-2');
+      entity.assign(
+        { ...user, roles: [TaskServiceRoles.Admin] },
+        { id: 'test-2', name: 'test-2', email: 'test-2@test.co' }
+      );
       expect(() => entity.start(user)).toThrow(/User test \(ID: test\) not permitted to start task./);
     });
 
@@ -377,7 +389,7 @@ describe('TaskEntity', () => {
         name: 'test',
       });
 
-      entity.assign({ ...user, roles: [TaskServiceRoles.Admin] }, 'test');
+      entity.assign({ ...user, roles: [TaskServiceRoles.Admin] }, { id: 'test', name: 'test', email: 'test@test.co' });
 
       await entity.start(user);
       const result = await entity.complete(user);
@@ -428,7 +440,7 @@ describe('TaskEntity', () => {
         name: 'test',
       });
 
-      entity.assign(user, 'test-2');
+      entity.assign(user, { id: 'test-2', name: 'test-2', email: 'test-2@test.co' });
 
       const result = await entity.cancel(user);
       expect(result.status).toBe(TaskStatus.Cancelled);
@@ -442,7 +454,7 @@ describe('TaskEntity', () => {
         name: 'test',
       });
 
-      entity.assign({ ...user, roles: [TaskServiceRoles.Admin] }, 'test');
+      entity.assign({ ...user, roles: [TaskServiceRoles.Admin] }, { id: 'test', name: 'test', email: 'test@test.co' });
 
       const result = await entity.cancel(user);
       expect(result.status).toBe(TaskStatus.Cancelled);

@@ -16,7 +16,11 @@ export enum TaskStatus {
 
 export interface TaskAssignment {
   assignedOn: Date;
-  assignedTo: string;
+  assignedTo: {
+    id: string;
+    name: string;
+    email: string;
+  };
   assignedBy: {
     id: string;
     name: string;

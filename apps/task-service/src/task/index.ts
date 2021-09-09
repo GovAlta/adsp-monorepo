@@ -11,6 +11,7 @@ export * from './model';
 export * from './repository';
 
 interface TaskMiddlewareProps {
+  KEYCLOAK_ROOT_URL: string;
   logger: Logger;
   taskRepository: TaskRepository;
   eventService: EventService;

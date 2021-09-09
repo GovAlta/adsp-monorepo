@@ -38,7 +38,14 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { coreStrategy, configurationHandler, eventService, tenantStrategy, healthCheck } = await initializePlatform(
+  const {
+    coreStrategy,
+    configurationHandler,
+    eventService,
+    tenantHandler,
+    tenantStrategy,
+    healthCheck,
+  } = await initializePlatform(
     {
       serviceId,
       displayName: 'Task Service',
@@ -90,10 +97,15 @@ const initializeApp = async (): Promise<express.Application> => {
   });
 
   app.use(passport.initialize());
-  app.use('/task', passport.authenticate(['core', 'tenant'], { session: false }), configurationHandler);
+  app.use('/task', passport.authenticate(['core', 'tenant'], { session: false }), tenantHandler, configurationHandler);
 
   const repositories = await createRepositories({ logger, ...environment });
-  applyTaskMiddleware(app, { logger, taskRepository: repositories.taskRepository, eventService });
+  applyTaskMiddleware(app, {
+    KEYCLOAK_ROOT_URL: environment.KEYCLOAK_ROOT_URL,
+    logger,
+    taskRepository: repositories.taskRepository,
+    eventService,
+  });
 
   let swagger = null;
   app.use('/swagger/docs/v1', (_req, res) => {

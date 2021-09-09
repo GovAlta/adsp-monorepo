@@ -8,6 +8,8 @@ export interface TaskRecord extends Omit<Task, 'tenantId' | 'definition' | 'queu
   definitionName: string;
   assignedById: string;
   assignedByName: string;
-  assignedTo: string;
+  assignedToId: string;
+  assignedToName: string;
+  assignedToEmail: string;
   assignedOn: Date;
 }

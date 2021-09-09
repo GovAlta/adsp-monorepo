@@ -1,3 +1,11 @@
+export interface UserInformation {
+  id: string;
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
 export const OPERATION_START = 'start';
 export const OPERATION_COMPLETE = 'complete';
 export const OPERATION_CANCEL = 'cancel';
@@ -23,10 +31,15 @@ export interface SetTaskPriorityOperation {
 
 export interface AssignOperation {
   operation: typeof OPERATION_ASSIGN;
-  assignTo: string;
+  assignTo: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
-export type TaskOperations = StartTaskOperation
+export type TaskOperations =
+  | StartTaskOperation
   | CompleteTaskOperation
   | CancelTaskOperation
   | SetTaskPriorityOperation

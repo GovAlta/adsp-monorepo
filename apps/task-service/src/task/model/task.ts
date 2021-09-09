@@ -106,8 +106,10 @@ export class TaskEntity implements Task {
     return this.repository.save(this);
   }
 
-  assign(user: User, assignTo: string): Promise<TaskEntity> {
-    if (!(this.queue.canAssignTask(user) || (this.queue.canWorkOnTask(user) && (!assignTo || assignTo === user?.id)))) {
+  assign(user: User, assignTo: { id: string; name: string; email: string }): Promise<TaskEntity> {
+    if (
+      !(this.queue.canAssignTask(user) || (this.queue.canWorkOnTask(user) && (!assignTo || assignTo.id === user?.id)))
+    ) {
       throw new UnauthorizedUserError('assign task', user);
     }
 
@@ -127,7 +129,7 @@ export class TaskEntity implements Task {
 
   canProgressTask(user: User): boolean {
     // Only the assigned worker can progress the task.
-    return this.queue.canWorkOnTask(user) && (!this.assignment || user.id === this.assignment.assignedTo);
+    return this.queue.canWorkOnTask(user) && (!this.assignment || user.id === this.assignment.assignedTo.id);
   }
 
   start(user: User): Promise<TaskEntity> {
