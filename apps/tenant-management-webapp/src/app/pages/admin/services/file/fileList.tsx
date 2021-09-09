@@ -7,7 +7,7 @@ import {
   DeleteFileService,
   DownloadFileService,
 } from '@store/file/actions';
-import { GoAButton, GoARadioGroup } from '@abgov/react-components';
+import { GoAButton, GoARadioGroup, GoARadio } from '@abgov/react-components';
 import { GoAForm } from '@components/Form';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
@@ -31,7 +31,7 @@ const FileList = (): JSX.Element => {
     const typeValues = [];
     // eslint-disable-next-line
     fileTypes.map((fileType): void => {
-      const type = {};
+      const type = { };
       type['text'] = fileType.name ? fileType.name : fileType.id;
       type['value'] = fileType.id;
       typeValues.push(type);
@@ -67,12 +67,21 @@ const FileList = (): JSX.Element => {
 
         <input type="file" onChange={onChange} />
         <GoARadioGroup
+          orientation="horizontal"
           name="fileSecurityOptions"
-          items={getFileTypesValues()}
           onChange={(e) => {
             setUploadFileType(e);
           }}
-        />
+        >
+          {getFileTypesValues().map((item) => {
+            return (
+              <GoARadio
+                key={item.value}
+                value={item.value}
+                checked={item.value === uploadFileType}>{item.value}</GoARadio>)
+          })}
+
+        </GoARadioGroup>
         <GoAButton type="submit" disabled={!selectedFile} onClick={onFormSubmit}>
           Upload
         </GoAButton>

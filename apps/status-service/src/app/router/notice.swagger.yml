@@ -8,7 +8,9 @@
 '/notices/v1/':
   get:
     tags: [NoticeApplicationEntity]
-    description: Retrieves all notices when authenticate and only active without authentication.
+    description: Retrieves all published (mode=active) notices for public user;
+      Retrieves all of notices of a tenant for tenant admin;
+      Retrieves published notices of a tenant for non tenant admin.
     parameters:
       - name: top
         description: Number of results to read.
@@ -25,7 +27,7 @@
       - name: mode
         description: Mode type.
         in: query
-        required: true
+        required: false
         schema:
           type: string
     responses:
