@@ -136,26 +136,26 @@ export const taskOperation = (eventService: EventService): RequestHandler => asy
     switch (request.operation) {
       case OPERATION_START:
         result = await task.start(user);
-        event = taskStarted(user, task);
+        event = taskStarted(user, result);
         break;
       case OPERATION_COMPLETE:
         result = await task.complete(user);
-        event = taskCompleted(user, task);
+        event = taskCompleted(user, result);
         break;
       case OPERATION_CANCEL:
         result = await task.cancel(user);
-        event = taskCancelled(user, task);
+        event = taskCancelled(user, result);
         break;
       case OPERATION_SET_PRIORITY: {
         const from = task.priority;
         result = await task.setPriority(user, TaskPriority[request.priority]);
-        event = taskPrioritySet(user, task, from);
+        event = taskPrioritySet(user, result, from);
         break;
       }
       case OPERATION_ASSIGN: {
         const from = task.assignment;
         result = await task.assign(user, request.assignTo);
-        event = taskAssigned(user, task, from);
+        event = taskAssigned(user, result, from);
         break;
       }
       default:

@@ -113,6 +113,10 @@ export class TaskEntity implements Task {
       throw new UnauthorizedUserError('assign task', user);
     }
 
+    if (this.endedOn && assignTo) {
+      throw new InvalidOperationError('Cannot assign Completed or Cancelled task.');
+    }
+
     this.assignment = assignTo
       ? {
           assignedOn: new Date(),

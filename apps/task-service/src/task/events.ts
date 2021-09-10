@@ -12,7 +12,7 @@ const taskSchema = {
       type: 'string',
     },
     description: {
-      type: 'string',
+      type: ['string', 'null'],
     },
   },
 };
@@ -26,8 +26,15 @@ const userSchema = {
     name: {
       type: 'string',
     },
+  },
+};
+
+const assignedUserSchema = {
+  ...userSchema,
+  properties: {
+    ...userSchema.properties,
     email: {
-      type: 'string',
+      type: ['string', 'null'],
     },
   },
 };
@@ -71,9 +78,11 @@ export const TaskPrioritySetDefinition: DomainEventDefinition = {
       task: taskSchema,
       from: {
         type: 'string',
+        enum: ['Normal', 'High', 'Urgent'],
       },
       to: {
         type: 'string',
+        enum: ['Normal', 'High', 'Urgent'],
       },
       updatedBy: userSchema,
     },
@@ -89,24 +98,24 @@ export const TaskAssignedDefinition: DomainEventDefinition = {
     properties: {
       task: taskSchema,
       from: {
-        type: 'object',
+        type: ['object', 'null'],
         properties: {
           assignedOn: {
             type: 'string',
             format: 'date-time',
           },
-          assignedTo: userSchema,
+          assignedTo: assignedUserSchema,
           assignedBy: userSchema,
         },
       },
       to: {
-        type: 'object',
+        type: ['object', 'null'],
         properties: {
           assignedOn: {
             type: 'string',
             format: 'date-time',
           },
-          assignedTo: userSchema,
+          assignedTo: assignedUserSchema,
           assignedBy: userSchema,
         },
       },
@@ -171,6 +180,7 @@ function mapContext(task: Task): Record<string, string | number | boolean> {
     definitionNamespace: task.definition?.namespace,
     definitionName: task.definition?.name,
     recordId: task.recordId,
+    assignedTo: task.assignment?.assignedTo.id,
   };
 }
 
@@ -268,7 +278,7 @@ export const taskCompleted = (user: User, task: Task): DomainEvent => ({
 
 export const taskCancelled = (user: User, task: Task): DomainEvent => ({
   tenantId: task.tenantId,
-  name: TASK_COMPLETED,
+  name: TASK_CANCELLED,
   timestamp: task.endedOn,
   correlationId: task.id,
   context: mapContext(task),

@@ -263,6 +263,32 @@ describe('TaskEntity', () => {
         /User test \(ID: test\) not permitted to assign task./
       );
     });
+
+    it('can unassign ended task', async () => {
+      const user = { id: 'test', name: 'test-user', tenantId, roles: ['test-assigner'] } as User;
+      let entity = await TaskEntity.create({ ...user, roles: [TaskServiceRoles.Admin] }, repositoryMock, queue, {
+        tenantId,
+        name: 'test',
+      });
+
+      entity = await entity.assign(user, { id: 'test-2', name: 'test-2', email: 'test-2@test.co' });
+      entity = await entity.cancel(user);
+      const result = await entity.assign(user, null);
+      expect(result.assignment).toBeNull();
+    });
+
+    it('can throw for ended task', async () => {
+      const user = { id: 'test', name: 'test-user', tenantId, roles: ['test-assigner'] } as User;
+      let entity = await TaskEntity.create({ ...user, roles: [TaskServiceRoles.Admin] }, repositoryMock, queue, {
+        tenantId,
+        name: 'test',
+      });
+
+      entity = await entity.cancel(user);
+      expect(() => entity.assign(user, { id: 'test', name: 'test', email: 'test@test.co' })).toThrow(
+        /Cannot assign Completed or Cancelled task./
+      );
+    });
   });
 
   describe('canProgressTask', () => {
