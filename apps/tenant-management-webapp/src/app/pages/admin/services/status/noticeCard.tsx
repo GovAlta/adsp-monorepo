@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Notice } from '@store/notice/models';
 import styled from 'styled-components';
 import { GoABadge } from '@abgov/react-components';
@@ -50,6 +50,8 @@ interface CardHeaderProps {
 
 interface NoticeCardProps {
   notice: Notice;
+  isMenuOpen: boolean;
+  clickMenuFn: (id: string, isMenuAction?: boolean) => void;
 }
 
 export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
@@ -57,13 +59,13 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
   const { applications } = useSelector((state: RootState) => ({
     applications: state.serviceStatus.applications,
   }));
+  const { isMenuOpen, clickMenuFn } = props;
 
   useEffect(() => {
     dispatch(fetchServiceStatusApps());
   }, []);
 
   const { notice } = props;
-  const [openMenu, setOpenMenu] = useState(false);
   const CardHeader = (props: CardHeaderProps): JSX.Element => {
     return (
       <HeaderContainer>
@@ -98,7 +100,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
             alt="notice-card-setting"
             data-testid='notice-card-gear-button'
             onClick={() => {
-              setOpenMenu(!openMenu);
+              clickMenuFn(notice.id, false)
             }}
           />}
         </IconContext>
@@ -121,57 +123,52 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
     return localTime;
   };
 
-  const closeDropdownFn = (): void => {
-    setOpenMenu(false)
-  }
-
   return (
     <NoticeCardContainer key={`notice-card-container-${notice.id}`}>
+      {isMenuOpen && <div className='dropdown-overlay' onClick={() => { clickMenuFn(notice.id, true) }} />}
       <CardHeader
         mode={notice.mode}
         key={`notice-card-header-${notice.id}`}
         data-testid="notice-card-header" />
-      <div onClick={(): void => { closeDropdownFn() }}>
-        <CardContent
-          key={`notice-content-${notice.id}`}
-          data-testid="notice-card-content">
-          <MessageContainer key={`notice-card-message-${notice.id}`} data-testid={`notice-card-message`}>
-            {notice.message}
-          </MessageContainer>
-          {notice.tennantServRef &&
-            JSON.parse(notice.tennantServRef).map((application) => {
-              const currentApplication = applications.find((app) => application.id === app._id);
+      <CardContent
+        key={`notice-content-${notice.id}`}
+        data-testid="notice-card-content">
+        <MessageContainer key={`notice-card-message-${notice.id}`} data-testid={`notice-card-message`}>
+          {notice.message}
+        </MessageContainer>
+        {notice.tennantServRef &&
+          JSON.parse(notice.tennantServRef).map((application) => {
+            const currentApplication = applications.find((app) => application.id === app._id);
 
-              return (
-                <ServiceHref
-                  data-testid='notice-card-application'
-                  key={`notice-service-Href-${notice.id}-${application.id}`}>
-                  {currentApplication?.name}
-                </ServiceHref>
-              );
-            })}
-          {openMenu && notice.mode === 'draft' && (
-            <DraftDropdownMenu
-              notice={notice}
-              id={`${notice.id}`}
-              data-testid="notice-card-draft-menu"
-              closeActionFn={closeDropdownFn} />
-          )}
-          {openMenu && notice.mode === 'active' && (
-            <PublishedDropdownMenu
-              notice={notice} id={`${notice.id}`}
-              data-testid="notice-card-published-menu"
-              closeActionFn={closeDropdownFn} />
-          )}
-        </CardContent>
-        <div data-testid='notice-card-start-date'>
-          <span className='time-title'>Start Date: </span>
-          <span className='time'>{FormatNoticeDate(notice.startDate)}</span>
-        </div>
-        <div data-testid='notice-card-end-date'>
-          <span className='time-title'>End Date: </span>
-          <span className='time'>{FormatNoticeDate(notice.endDate)}</span>
-        </div>
+            return (
+              <ServiceHref
+                data-testid='notice-card-application'
+                key={`notice-service-Href-${notice.id}-${application.id}`}>
+                {currentApplication?.name}
+              </ServiceHref>
+            );
+          })}
+        {isMenuOpen && notice.mode === 'draft' && (
+          <DraftDropdownMenu
+            notice={notice}
+            id={`${notice.id}`}
+            data-testid="notice-card-draft-menu"
+            closeActionFn={() => { clickMenuFn(notice.id, true) }} />
+        )}
+        {isMenuOpen && notice.mode === 'active' && (
+          <PublishedDropdownMenu
+            notice={notice} id={`${notice.id}`}
+            data-testid="notice-card-published-menu"
+            closeActionFn={() => { clickMenuFn(notice.id, true) }} />
+        )}
+      </CardContent>
+      <div data-testid='notice-card-start-date'>
+        <span className='time-title'>Start Date: </span>
+        <span className='time'>{FormatNoticeDate(notice.startDate)}</span>
+      </div>
+      <div data-testid='notice-card-end-date'>
+        <span className='time-title'>End Date: </span>
+        <span className='time'>{FormatNoticeDate(notice.endDate)}</span>
       </div>
     </NoticeCardContainer>
   );

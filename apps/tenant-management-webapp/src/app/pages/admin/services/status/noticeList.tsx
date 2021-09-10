@@ -91,13 +91,28 @@ export const NoticeList = (): JSX.Element => {
   const { notices } = useSelector((state: RootState) => ({
     notices: state.notice?.notices,
   }));
+  const [openMenuId, setOpenMenuId] = useState<string>(null);
 
   const filterOnSelectFn = (option: string) => {
     setFilterOption(option);
   };
 
+  const clickCardMenuFn = (id: string, isMenuAction): void => {
+    if (isMenuAction) {
+      setOpenMenuId(null);
+    } else {
+      if (openMenuId && openMenuId === id) {
+        setOpenMenuId(null);
+      } else {
+        setOpenMenuId(id);
+      }
+    }
+  }
+
   return (
     <NoticeListContainer data-testid="notice-list">
+      {openMenuId !== null &&
+        <div className='dropdown-overlay' onClick={() => { setOpenMenuId(null) }} />}
       <Grid>
         <GridItem md={12} hSpacing={0.5}>
           {notices && notices.length !== 0 && (
@@ -122,7 +137,11 @@ export const NoticeList = (): JSX.Element => {
             })
             .map((notice) => (
               <GridItem md={12} key={notice.id} vSpacing={0.75}>
-                <NoticeCard key={notice.id} notice={notice} data-testid="notice-card" />
+                <NoticeCard
+                  key={notice.id} notice={notice} data-testid="notice-card"
+                  clickMenuFn={clickCardMenuFn}
+                  isMenuOpen={openMenuId === notice.id}
+                />
               </GridItem>
             ))}
       </Grid>

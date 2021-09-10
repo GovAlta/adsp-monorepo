@@ -31,7 +31,7 @@ const FileList = (): JSX.Element => {
     const typeValues = [];
     // eslint-disable-next-line
     fileTypes.map((fileType): void => {
-      const type = { };
+      const type = {};
       type['text'] = fileType.name ? fileType.name : fileType.id;
       type['value'] = fileType.id;
       typeValues.push(type);
@@ -67,7 +67,7 @@ const FileList = (): JSX.Element => {
 
         <input type="file" onChange={onChange} />
         <GoARadioGroup
-          orientation="horizontal"
+          orientation="vertical"
           name="fileSecurityOptions"
           onChange={(e) => {
             setUploadFileType(e);
@@ -78,7 +78,7 @@ const FileList = (): JSX.Element => {
               <GoARadio
                 key={item.value}
                 value={item.value}
-                checked={item.value === uploadFileType}>{item.value}</GoARadio>)
+                checked={item.value === uploadFileType}>{item.text}</GoARadio>)
           })}
 
         </GoARadioGroup>

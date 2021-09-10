@@ -39,7 +39,7 @@ export default class MongoNoticeRepository implements NoticeRepository {
     return new Promise<Results<NoticeApplicationEntity>>((resolve, reject) => {
       this.model
         .find(criteria, null, { lean: true })
-        .sort({ createdAt: 1, mode: 1 })
+        .sort({ createdAt: -1 })
         .skip(after)
         .limit(top)
         .exec((err, docs) =>
