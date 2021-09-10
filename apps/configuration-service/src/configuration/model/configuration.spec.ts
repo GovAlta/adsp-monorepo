@@ -224,7 +224,6 @@ describe('ConfigurationEntity', () => {
     it('can update first revision', async () => {
       const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock);
 
-      validationMock.validate.mockReturnValueOnce(true);
       repositoryMock.saveRevision.mockImplementationOnce((_entity, rev) => rev);
 
       const updated = await entity.update(
@@ -243,7 +242,6 @@ describe('ConfigurationEntity', () => {
         configuration: {} as unknown,
       });
 
-      validationMock.validate.mockReturnValueOnce(true);
       repositoryMock.saveRevision.mockImplementationOnce((_entity, rev) => rev);
 
       const updated = await entity.update(
@@ -284,7 +282,9 @@ describe('ConfigurationEntity', () => {
         configuration: {} as unknown,
       });
 
-      validationMock.validate.mockReturnValueOnce(false);
+      validationMock.validate.mockImplementationOnce(() => {
+        throw new Error(`Provided configuration is not valid for 'platform:test-service'`);
+      });
 
       await expect(
         entity.update({ isCore: true, roles: [ConfigurationServiceRoles.ConfiguredService] } as User, {})
@@ -346,7 +346,12 @@ describe('ConfigurationEntity', () => {
 
       const result = await entity.getRevisions(20, '123', { revision: 12 });
       expect(result).toBe(revisions);
-      expect(repositoryMock.getRevisions).toHaveBeenCalledWith(entity, 20, '123', expect.objectContaining({ revision: 12 }));
+      expect(repositoryMock.getRevisions).toHaveBeenCalledWith(
+        entity,
+        20,
+        '123',
+        expect.objectContaining({ revision: 12 })
+      );
     });
 
     it('can get revisions with default args', async () => {

@@ -43,8 +43,6 @@ describe('EventDescriptionEntity', () => {
       }
     );
 
-    validationMock.validate.mockReturnValueOnce(true);
-
     entity.validate({
       namespace: 'test',
       name: 'test',

@@ -1,5 +1,6 @@
 import * as Ajv from 'ajv';
 import { Logger } from 'winston';
+import { InvalidValueError } from '..';
 import { ValidationService } from './service';
 
 export class AjvValidationService implements ValidationService {
@@ -20,7 +21,11 @@ export class AjvValidationService implements ValidationService {
     }
   }
 
-  validate(schemaKey: string, value: unknown): boolean {
-    return this.ajv.validate(schemaKey, value) as boolean;
+  validate(context: string, schemaKey: string, value: unknown): void {
+    const result = this.ajv.validate(schemaKey, value);
+    if (!result) {
+      const errors = this.ajv.errorsText(this.ajv.errors);
+      throw new InvalidValueError(context, errors);
+    }
   }
 }

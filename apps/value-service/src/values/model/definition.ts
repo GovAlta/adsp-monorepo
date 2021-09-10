@@ -26,9 +26,11 @@ export class ValueDefinitionEntity implements ValueDefinition {
   }
 
   public writeValue(tenantId: AdspId, value: Omit<Value, 'tenantId'>): Promise<Value> {
-    if (!this.namespace.validationService.validate(this.getSchemaKey(), value.value)) {
-      throw new InvalidOperationError('Value does not match schema.');
-    }
+    this.namespace.validationService.validate(
+      `value '${this.namespace}:${this.name}'`,
+      this.getSchemaKey(),
+      value.value
+    );
 
     const valueRecord: Value = {
       context: value.context,
