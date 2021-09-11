@@ -48,7 +48,6 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
       res.json({
         page: applications.page,
         results: applications.results
-          .sort((a, b) => (b.created > a.created ? 1 : -1))
           .map((result) => ({
             id: result.id,
             message: result.message,
