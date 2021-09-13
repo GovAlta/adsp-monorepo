@@ -1,4 +1,5 @@
-export class UnauthorizedError extends Error {
+import { GoAError } from "@abgov/adsp-service-sdk";
+export class UnauthorizedError extends GoAError {
   constructor(message?: string) {
     super(message);
 

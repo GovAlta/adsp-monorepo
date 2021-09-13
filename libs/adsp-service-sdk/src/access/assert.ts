@@ -1,6 +1,7 @@
 import { User } from './user';
+import { GoAError } from '../utils';
 
-export class UnauthorizedUserError extends Error {
+export class UnauthorizedUserError extends GoAError {
   constructor(operation: string, user: User) {
     super(`User ${user?.name} (ID: ${user?.id}) not permitted to ${operation}.`);
 
@@ -13,11 +14,11 @@ type AssertRole = (
   roles: string | string[]
   // eslint-disable-next-line @typescript-eslint/ban-types
 ) => <T extends Function>(
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  target: object,
-  propertyKey: string,
-  descriptor: TypedPropertyDescriptor<T>
-) => TypedPropertyDescriptor<T>;
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    target: object,
+    propertyKey: string,
+    descriptor: TypedPropertyDescriptor<T>
+  ) => TypedPropertyDescriptor<T>;
 
 function assertHasRoles(operation: string, user: User, roles: string | string[]): void {
   if (!(roles instanceof Array)) {

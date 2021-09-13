@@ -1,9 +1,9 @@
+import { GoAError } from './errors';
 const PREFIX = 'urn:ads:';
 
-export class AdspIdFormatError extends Error {
+export class AdspIdFormatError extends GoAError {
   constructor(message: string) {
     super(message);
-
     Object.setPrototypeOf(this, AdspIdFormatError.prototype);
   }
 }
@@ -48,7 +48,7 @@ export class AdspId {
     public service: string,
     public api: string,
     public resource: string
-  ) {}
+  ) { }
 
   #formatSegment = (segment: string): string => {
     return segment ? `:${segment}` : '';
