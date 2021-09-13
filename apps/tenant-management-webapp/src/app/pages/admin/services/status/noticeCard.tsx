@@ -132,6 +132,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
         data-testid="notice-card-header" />
       <CardContent
         key={`notice-content-${notice.id}`}
+        onClick={() => { clickMenuFn(notice.id, true) }}
         data-testid="notice-card-content">
         <MessageContainer key={`notice-card-message-${notice.id}`} data-testid={`notice-card-message`}>
           {notice.message}
