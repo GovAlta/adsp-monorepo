@@ -1,7 +1,7 @@
 import type { AdspId } from '@abgov/adsp-service-sdk';
 import type { DomainEvent } from '@core-services/core-common';
-import { NotificationType } from './types';
-import { NotificationTypeEntity } from './model';
+import { NotificationType } from '../types';
+import { NotificationTypeEntity } from '../model';
 
 export class NotificationConfiguration {
   private types: Record<string, NotificationTypeEntity>;

@@ -1,0 +1,192 @@
+components:
+  schemas:
+    TaskDefinition:
+      type: object
+      properties:
+        namespace:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        definition:
+          type: object
+          properties:
+            namespace:
+              type: string
+            name:
+              type: string
+          required: [namespace, name]
+        queue:
+          type: object
+          properties:
+            namespace:
+              type: string
+            name:
+              type: string
+          required: [namespace, name]
+        recordId:
+          type: string
+        context:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: number
+              - type: boolean
+        priority:
+          type: string
+          enum:
+            - Normal
+            - High
+            - Urgent
+        status:
+          type: string
+          enum:
+            - Pending
+            - In Progress
+            - Completed
+            - Cancelled
+        assignment:
+          $ref: "#/components/schemas/TaskAssignment"
+        createdOn:
+          type: string
+          format: date-time
+        startedOn:
+          type: string
+          format: date-time
+        endedOn:
+          type: string
+          format: date-time
+    TaskAssignment:
+      type: object
+      properties:
+        assignedTo:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            email:
+              type: string
+        assignedBy:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+        assignedOn:
+          type: string
+          format: date-time
+
+/task/v1/tasks:
+  get:
+    tags:
+      - Task
+    description: Retrieves tasks.
+    parameters:
+      - name: top
+        description: Number of definitions to return in a page.
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: after
+        description: Cursor for retrieving additional pages.
+        in: query
+        required: false
+        schema:
+          type: string
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Task"
+                page:
+                  type: object
+                  properties:
+                    after:
+                      type: string
+                    next:
+                      type: string
+                    size:
+                      type: number
+
+/task/v1/tasks/{id}:
+  get:
+    tags:
+      - Task
+    description: Retrieves a specified task.
+    parameters:
+      - name: id
+        description: ID of the task.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Task"
+      404:
+        description: Task not found.
+  patch:
+    tags:
+      - Task
+    description: Updates a specified task
+    parameters:
+      - name: id
+        description: ID of the task.
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              context:
+                type: object
+                additionalProperties:
+                  oneOf:
+                    - type: string
+                    - type: number
+                    - type: boolean
+
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Task"
+      404:
+        description: Task not found.

@@ -7,6 +7,30 @@ components:
           type: number
         configuration:
           type: object
+    UpdateOperation:
+      type: object
+      properties:
+        operation:
+          type: string
+        update:
+          type: object
+      required: [operation, update]
+    ReplaceOperation:
+      type: object
+      properties:
+        operation:
+          type: string
+        configuration:
+          type: object
+      required: [operation, configuration]
+    DeleteOperation:
+      type: object
+      properties:
+        operation:
+          type: string
+        property:
+          type: string
+      required: [operation, property]
 
 /configuration/v2/configuration/{namespace}/{name}:
   get:
@@ -71,27 +95,15 @@ components:
         application/json:
           schema:
             oneOf:
-              - type: object
-                properties:
-                  operation:
-                    type: string
-                    enum: [REPLACE]
-                  configuration:
-                    type: object
-              - type: object
-                properties:
-                  operation:
-                    type: string
-                    enum: [UPDATE]
-                  update:
-                    type: object
-              - type: object
-                properties:
-                  operation:
-                    type: string
-                    enum: [DELETE]
-                  property:
-                    type: string
+              - $ref: "#/components/schemas/ReplaceOperation"
+              - $ref: "#/components/schemas/UpdateOperation"
+              - $ref: "#/components/schemas/DeleteOperation"
+            discriminator:
+              propertyName: operation
+              mapping:
+                REPLACE: "#/components/schemas/ReplaceOperation"
+                UPDATE: "#/components/schemas/UpdateOperation"
+                DELETE: "#/components/schemas/DeleteOperation"
     responses:
       200:
         description: Request completed successfully.

@@ -19,20 +19,16 @@ describe('ValidationService', () => {
     const schema = { ype: 'object', properties: { valueA: { type: 'number' }, valueB: { type: 'string' } } };
     service.setSchema('test', schema);
 
-    const result = service.validate('test', { valueA: 123, valueB: 'value' });
-
-    expect(result).toBeTruthy();
+    service.validate('test', 'test', { valueA: 123, valueB: 'value' });
   });
 
-  it('can return false for invalid', () => {
+  it('can throw for invalid', () => {
     const service = new AjvValidationService(logger);
 
     const schema = { type: 'object', properties: { valueA: { type: 'number' } }, additionalProperties: false };
     service.setSchema('test', schema);
 
-    const result = service.validate('test', { valueA: 123, valueB: 'value' });
-
-    expect(result).toBeFalsy();
+    expect(() => service.validate('test', 'test', { valueA: 123, valueB: 'value' })).toThrow(/Value not valid for/);
   });
 
   // Async schema changes the behavior of Ajv to return a promise instead (which is truthy),

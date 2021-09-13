@@ -1,8 +1,9 @@
 export interface Results<T> {
   results: T[];
   page: {
-    after: string;
+    after: string | number;
     size: number;
     next?: string;
+    total?: number;
   };
 }

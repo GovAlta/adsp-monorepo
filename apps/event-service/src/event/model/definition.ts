@@ -29,9 +29,11 @@ export class EventDefinitionEntity implements EventDefinition {
       payload,
     } = event;
 
-    if (!payload || !this.namespace.validationService.validate(this.getSchemaKey(), payload)) {
+    if (!payload) {
       throw new InvalidOperationError('Event payload does not match schema.');
     }
+
+    this.namespace.validationService.validate(`event '${this.namespace}:${this.name}'`, this.getSchemaKey(), payload);
   }
 
   getSchemaKey(): string {

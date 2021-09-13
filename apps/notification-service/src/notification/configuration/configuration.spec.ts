@@ -1,7 +1,7 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 import { DomainEvent } from '@core-services/core-common';
 import { NotificationConfiguration } from './configuration';
-import { Channel } from './types';
+import { Channel } from '../types';
 
 describe('NotificationConfiguration', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;

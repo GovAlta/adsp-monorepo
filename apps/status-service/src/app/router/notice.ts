@@ -20,31 +20,34 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
 
   // Get notices by query
   router.get('/', async (req, res, next) => {
-    const { top, after } = req.query;
+    const { top, after, mode } = req.query;
     const user = req.user as Express.User;
 
     logger.info(req.method, req.url);
-    const anonymous = !user || !user.roles.includes(ServiceUserRoles.StatusAdmin)
+    const anonymous = !user
+    const isAdmin = user && user.roles.includes(ServiceUserRoles.StatusAdmin)
     const filter: NoticeFilter = {}
 
-    if (anonymous) {
-      filter.mode = 'active'
-    } else {
-      filter.mode = mode? mode.toString() as NoticeModeType: null
+    filter.mode = 'active'
+
+    if (!anonymous) {
       filter.tenantId = user.tenantId.toString()
+    }
+
+    if (isAdmin) {
+      filter.mode = mode ? mode.toString() as NoticeModeType: null
     }
 
     try {
       const applications = await noticeRepository.find(
-        parseInt((top as string) || '50', 50),
-        after as string,
+        parseInt(top?.toString()) || 50,
+        parseInt(after?.toString()) || 0,
         filter
       );
 
       res.json({
         page: applications.page,
         results: applications.results
-          .sort((a, b) => (b.created > a.created ? 1 : -1))
           .map((result) => ({
             id: result.id,
             message: result.message,
@@ -59,7 +62,6 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
     } catch (err) {
       const errMessage = `Error getting notices: ${err.message}`;
       logger.error(errMessage);
-
       next(err);
     }
   });

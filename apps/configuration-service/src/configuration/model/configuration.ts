@@ -59,9 +59,11 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
       throw new InvalidOperationError('Configuration must have a value.');
     }
 
-    if (!this.validationService.validate(this.getSchemaKey(), configuration)) {
-      throw new InvalidOperationError(`Provided configuration is not valid for '${this.namespace}:${this.name}'.`);
-    }
+    this.validationService.validate(
+      `configuration '${this.namespace}:${this.name}'`,
+      this.getSchemaKey(),
+      configuration
+    );
 
     const revision: ConfigurationRevision<C> = {
       revision: this.latest?.revision || 0,

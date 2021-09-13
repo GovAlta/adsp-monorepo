@@ -21,10 +21,9 @@ export default class MongoNoticeRepository implements NoticeRepository {
 
   async find(
     top: number,
-    after: string,
+    after: number,
     filter: Partial<NoticeApplication>
   ): Promise<Results<NoticeApplicationEntity>> {
-    const skip = decodeAfter(after);
     let criteria = {};
 
     if (filter.mode != null) {
@@ -35,11 +34,13 @@ export default class MongoNoticeRepository implements NoticeRepository {
       criteria = { ...criteria, tenantId: filter.tenantId}
     }
 
+    const total = await this.model.find(criteria, null, {lean: true}).count();
+    const next = (after + top) < total ? `after=${after + top}&top=${top}` : null
     return new Promise<Results<NoticeApplicationEntity>>((resolve, reject) => {
       this.model
         .find(criteria, null, { lean: true })
-        .sort({ createdAt: 1, mode: 1 })
-        .skip(skip)
+        .sort({ createdAt: -1 })
+        .skip(after)
         .limit(top)
         .exec((err, docs) =>
           err
@@ -48,8 +49,9 @@ export default class MongoNoticeRepository implements NoticeRepository {
                 results: docs.map((doc) => this.fromDoc(doc)),
                 page: {
                   after,
-                  next: encodeNext(docs.length, top, skip),
+                  next,
                   size: docs.length,
+                  total
                 },
               })
         );
