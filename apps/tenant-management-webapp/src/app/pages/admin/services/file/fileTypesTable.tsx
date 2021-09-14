@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import DataTable from '@components/DataTable';
 import Chip from '@components/Chip';
-import { GoAButton, GoADropdown, } from '@abgov/react-components';
+import { GoAOption, GoAButton, GoADropdown, } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental'
 import { FileTypeItem } from '@store/file/models';
 import { useDispatch, useSelector } from 'react-redux';
@@ -439,46 +439,41 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
       );
     };
 
-    return (
-      <GoAModal isOpen={true} key={props.id} testId='file-delete-modal'>
-        {hasFile === true && (
-          <>
-            <GoAModalTitle>File type current in use</GoAModalTitle>
-            <GoAModalContent testId='file-delete-modal-content'>
-              You are unable to delete the file type <b>{`${props.name}`}</b> because there are files within the file
-              type.
-            </GoAModalContent>
-            <GoAModalActions>
-              <OkButton />
-            </GoAModalActions>
-          </>
-        )}
+    return (<>
+      {hasFile === true &&
+        <GoAModal isOpen={true} key={props.id} testId='file-delete-modal'>
+          <GoAModalTitle>File type current in use</GoAModalTitle>
+          <GoAModalContent testId='file-delete-modal-content'>
+            You are unable to delete the file type <b>{`${props.name}`}</b> because there are files within the file
+            type.
+          </GoAModalContent>
+          <GoAModalActions>
+            <OkButton />
+          </GoAModalActions>
+        </GoAModal>}
 
-        {hasFile === false && (
-          <>
-            <GoAModalTitle>Deleting file type </GoAModalTitle>
-            <GoAModalContent testId='file-delete-modal-content'>
-              <p>
-                Deleting the file type <b>{`${props.name}`}</b> cannot be undone.
-              </p>
-              <p>
-                <b>Are you sure you want to continue?</b>
-              </p>
-            </GoAModalContent>
-            <GoAModalActions>
-              <CancelButton />
-              <GoAButton
-                data-testid="delete-modal-delete-button"
-                onClick={() => {
-                  dispatch(DeleteFileTypeService(props));
-                }}
-              >
-                Delete
-              </GoAButton>
-            </GoAModalActions>
-          </>
-        )}
-      </GoAModal>
+      {hasFile === false && <GoAModal isOpen={true} key={props.id} testId='file-delete-modal'>
+        <GoAModalTitle>Deleting file type </GoAModalTitle>
+        <GoAModalContent testId='file-delete-modal-content'>
+          <p>
+            Deleting the file type <b>{`${props.name}`}</b> cannot be undone.
+          </p>
+          <p>
+            <b>Are you sure you want to continue?</b>
+          </p>
+        </GoAModalContent>
+        <GoAModalActions>
+          <CancelButton />
+          <GoAButton
+            data-testid="delete-modal-delete-button"
+            onClick={() => {
+              dispatch(DeleteFileTypeService(props));
+            }}
+          >
+            Delete
+          </GoAButton>
+        </GoAModalActions>
+      </GoAModal>}</>
     );
   };
 
