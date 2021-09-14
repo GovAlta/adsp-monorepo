@@ -9,6 +9,9 @@ import {
   SaveNoticeAction,
   DeleteNoticeAction,
 } from './actions';
+import {
+  UpdateIndicator
+} from '@store/session/actions';
 import { Session } from '@store/session/models';
 import { ConfigState } from '@store/config/models';
 import { NoticesResult, Notice } from './models';
@@ -21,17 +24,19 @@ export function* saveNotice(action: SaveNoticeAction): SagaIterator {
   const token = getToken(currentState.session);
 
   try {
+    yield put(UpdateIndicator({ show: true }));
     const api = new NoticeApi(baseUrl, token);
     const data = yield call([api, api.saveNotice], action.payload);
     yield put(saveNoticeSuccess(data));
+    yield put(UpdateIndicator({ show: false }));
   } catch (e) {
+    yield put(UpdateIndicator({ show: false }));
     yield put(ErrorNotification({ message: e.message }));
   }
 }
 
 export function* getNotices(): SagaIterator {
   const currentState: RootState = yield select();
-
   const baseUrl = getServiceStatusUrl(currentState.config);
   const token = getToken(currentState.session);
 
@@ -51,10 +56,13 @@ export function* deleteNotice(action: DeleteNoticeAction): SagaIterator {
   const token = getToken(currentState.session);
 
   try {
+    yield put(UpdateIndicator({ show: true }));
     const api = new NoticeApi(baseUrl, token);
     const notice: Notice = yield call([api, api.deleteNotice], action.payload);
     yield put(deleteNoticeSuccess(notice));
+    yield put(UpdateIndicator({ show: false }));
   } catch (e) {
+    yield put(UpdateIndicator({ show: false }));
     yield put(ErrorNotification({ message: e.message }));
   }
 }
