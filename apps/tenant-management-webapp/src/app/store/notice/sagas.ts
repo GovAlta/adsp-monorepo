@@ -30,6 +30,7 @@ export function* saveNotice(action: SaveNoticeAction): SagaIterator {
     yield put(saveNoticeSuccess(data));
     yield put(UpdateIndicator({ show: false }));
   } catch (e) {
+    yield put(UpdateIndicator({ show: false }));
     yield put(ErrorNotification({ message: e.message }));
   }
 }
@@ -61,6 +62,7 @@ export function* deleteNotice(action: DeleteNoticeAction): SagaIterator {
     yield put(deleteNoticeSuccess(notice));
     yield put(UpdateIndicator({ show: false }));
   } catch (e) {
+    yield put(UpdateIndicator({ show: false }));
     yield put(ErrorNotification({ message: e.message }));
   }
 }
