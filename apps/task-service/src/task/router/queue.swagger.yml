@@ -24,47 +24,6 @@ components:
           type: array
           items:
             type: string
-    AssignTask:
-      type: object
-      properties:
-        operation:
-          type: string
-        assignTo:
-          type: object
-          properties:
-            id:
-              type: string
-            name:
-              type: string
-            email:
-              type: string
-      required: [operation, assignTo]
-    SetTaskPriority:
-      type: object
-      properties:
-        operation:
-          type: string
-        priority:
-          type: number
-      required: [operation, priority]
-    StartTask:
-      type: object
-      properties:
-        operation:
-          type: string
-      required: [operation]
-    CompleteTask:
-      type: object
-      properties:
-        operation:
-          type: string
-      required: [operation]
-    CancelTask:
-      type: object
-      properties:
-        operation:
-          type: string
-      required: [operation]
 
 /task/v1/queues:
   get:
@@ -245,6 +204,56 @@ components:
               $ref: "#/components/schemas/Task"
       404:
         description: Queue not found.
+  patch:
+    tags:
+      - Queue
+    description: Updates a specified task
+    parameters:
+      - name: namespace
+        description: Namespace of the queue.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the queue.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: id
+        description: ID of the task.
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              context:
+                type: object
+                additionalProperties:
+                  oneOf:
+                    - type: string
+                    - type: number
+                    - type: boolean
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Task"
+      404:
+        description: Task not found.
   post:
     tags:
       - Queue
