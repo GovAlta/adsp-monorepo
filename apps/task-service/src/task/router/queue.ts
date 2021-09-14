@@ -1,24 +1,17 @@
-import { DomainEvent, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { NotFoundError } from '@core-services/core-common';
 import axios from 'axios';
 import { RequestHandler, Router } from 'express';
 import * as HttpStatusCodes from 'http-status-codes';
 import { Logger } from 'winston';
-import { taskAssigned, taskCancelled, taskCompleted, taskCreated, taskPrioritySet, taskStarted } from '../events';
+import { updateTask } from '.';
+import { taskCreated } from '../events';
 import { QueueEntity } from '../model/queue';
 import { TaskEntity } from '../model/task';
 import { TaskRepository } from '../repository';
 import { Queue, TaskPriority, TaskServiceConfiguration } from '../types';
-import { getTask, mapTask, TASK_KEY } from './task';
-import {
-  TaskOperations,
-  OPERATION_START,
-  OPERATION_COMPLETE,
-  OPERATION_CANCEL,
-  OPERATION_SET_PRIORITY,
-  OPERATION_ASSIGN,
-  UserInformation,
-} from './types';
+import { getTask, mapTask, taskOperation, TASK_KEY } from './task';
+import { UserInformation } from './types';
 
 interface QueueRouterProps {
   logger: Logger;
@@ -29,7 +22,7 @@ interface QueueRouterProps {
 
 const QUEUE_KEY = 'queue';
 
-function mapQueue(entity: QueueEntity): Omit<Queue, 'tenantId'> {
+export function mapQueue(entity: QueueEntity): Omit<Queue, 'tenantId'> {
   return {
     namespace: entity.namespace,
     name: entity.name,
@@ -39,7 +32,7 @@ function mapQueue(entity: QueueEntity): Omit<Queue, 'tenantId'> {
   };
 }
 
-const verifyQueuedTask: RequestHandler = (req, res, next) => {
+export const verifyQueuedTask: RequestHandler = (req, _res, next) => {
   try {
     const { id, namespace, name } = req.params;
     const task: TaskEntity = req[TASK_KEY];
@@ -124,57 +117,11 @@ export const createTask = (repository: TaskRepository, eventService: EventServic
   }
 };
 
-export const taskOperation = (eventService: EventService): RequestHandler => async (req, res, next) => {
-  try {
-    const user = req.user;
-    const request: TaskOperations = req.body;
-    const task: TaskEntity = req[TASK_KEY];
-
-    let result: TaskEntity = null;
-    let event: DomainEvent = null;
-
-    switch (request.operation) {
-      case OPERATION_START:
-        result = await task.start(user);
-        event = taskStarted(user, result);
-        break;
-      case OPERATION_COMPLETE:
-        result = await task.complete(user);
-        event = taskCompleted(user, result);
-        break;
-      case OPERATION_CANCEL:
-        result = await task.cancel(user);
-        event = taskCancelled(user, result);
-        break;
-      case OPERATION_SET_PRIORITY: {
-        const from = task.priority;
-        result = await task.setPriority(user, TaskPriority[request.priority]);
-        event = taskPrioritySet(user, result, from);
-        break;
-      }
-      case OPERATION_ASSIGN: {
-        const from = task.assignment;
-        result = await task.assign(user, request.assignTo);
-        event = taskAssigned(user, result, from);
-        break;
-      }
-      default:
-        throw new InvalidOperationError(`Requested task operation not recognized.`);
-    }
-
-    res.send(mapTask(result));
-
-    eventService.send(event);
-  } catch (err) {
-    next(err);
-  }
-};
-
-export const getRoleUsers = (logger: Logger, KEYCLOAK_ROOT_URL: string, rolesKey: string): RequestHandler => async (
-  req,
-  res,
-  next
-) => {
+export const getRoleUsers = (
+  logger: Logger,
+  KEYCLOAK_ROOT_URL: string,
+  rolesKey: 'assignerRoles' | 'workerRoles'
+): RequestHandler => async (req, res, next) => {
   try {
     const user = req.user;
     const realm = req.tenant?.realm;
@@ -205,7 +152,7 @@ export const getRoleUsers = (logger: Logger, KEYCLOAK_ROOT_URL: string, rolesKey
           });
 
           if (roleUsers.length === max) {
-            first += 101;
+            first += max + 1;
           } else {
             first = 0;
           }
@@ -253,6 +200,7 @@ export function createQueueRouter({
   router.get('/queues/:namespace/:name/tasks/:id', getTask(repository), verifyQueuedTask, (req, res) =>
     res.send(mapTask(req[TASK_KEY]))
   );
+  router.patch('/queues/:namespace/:name/tasks/:id', getTask(repository), verifyQueuedTask, updateTask(eventService));
   router.post('/queues/:namespace/:name/tasks/:id', getTask(repository), verifyQueuedTask, taskOperation(eventService));
 
   router.get('/queues/:namespace/:name/assigners', getQueue, getRoleUsers(logger, KEYCLOAK_ROOT_URL, 'assignerRoles'));

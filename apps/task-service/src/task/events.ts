@@ -169,6 +169,9 @@ export const TaskCancelledDefinition: DomainEventDefinition = {
     properties: {
       task: taskSchema,
       cancelledBy: userSchema,
+      reason: {
+        type: ['string', 'null'],
+      },
     },
   },
 };
@@ -276,7 +279,7 @@ export const taskCompleted = (user: User, task: Task): DomainEvent => ({
   },
 });
 
-export const taskCancelled = (user: User, task: Task): DomainEvent => ({
+export const taskCancelled = (user: User, task: Task, reason?: string): DomainEvent => ({
   tenantId: task.tenantId,
   name: TASK_CANCELLED,
   timestamp: task.endedOn,
@@ -285,5 +288,6 @@ export const taskCancelled = (user: User, task: Task): DomainEvent => ({
   payload: {
     task: mapTask(task),
     cancelledBy: mapUser(user),
+    reason,
   },
 });
