@@ -18,6 +18,14 @@ export default function (state: Session = SESSION_INIT, action: ActionType): Ses
         },
       };
 
+    case 'session/indicator':
+      return {
+        ...state,
+        indicator: {
+          ...action.payload
+        }
+      };
+
     case 'session/logout':
       return SESSION_INIT;
 

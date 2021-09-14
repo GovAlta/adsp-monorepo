@@ -443,8 +443,10 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           <>
             <DialogTitle>File type current in use</DialogTitle>
             <DialogContent>
-              You are unable to delete the file type <b>{`${props.name}`}</b> because there are files within the file
-              type.
+              <div data-testid='callout-content'>
+                You are unable to delete the file type <b>{`${props.name}`}</b> because there are files within the file
+                type.
+              </div>
             </DialogContent>
             <DialogActions>
               <OkButton data-testid="cancel-delete-modal" />
@@ -456,12 +458,14 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           <>
             <DialogTitle>Deleting file type </DialogTitle>
             <DialogContent>
-              <p>
-                Deleting the file type <b>{`${props.name}`}</b> cannot be undone.
-              </p>
-              <p>
-                <b>Are you sure you want to continue?</b>
-              </p>
+              <div data-testid='callout-content'>
+                <p>
+                  Deleting the file type <b>{`${props.name}`}</b> cannot be undone.
+                </p>
+                <p>
+                  <b>Are you sure you want to continue?</b>
+                </p>
+              </div>
             </DialogContent>
             <DialogActions>
               <CancelButton data-testid="cancel-delete-modal-button" />
