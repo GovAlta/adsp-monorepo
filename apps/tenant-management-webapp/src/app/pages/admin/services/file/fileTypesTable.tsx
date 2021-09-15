@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import DataTable from '@components/DataTable';
-import Chip from '@components/Chip';
 import { GoAOption, GoAButton, GoADropdown, } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental'
+import { GoABadge } from '@abgov/react-components/experimental';
 import { FileTypeItem } from '@store/file/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { v4 as uuid4 } from 'uuid';
@@ -291,13 +291,13 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
     if (displayOnly) {
       return (
         <RolesCellContainer data-testid={`${rowType}-${cellType}`}>
-          {anonymousRead && cellType === 'readRoles' && <Chip type="secondary">Anonymous</Chip>}
+          {anonymousRead && cellType === 'readRoles' &&
+            <GoABadge type="information" content="Anonymous" />
+          }
           {(!anonymousRead || cellType === 'updateRoles') &&
             roles.map((role) => {
               return (
-                <Chip type="secondary" key={`${role}-${props.id}`} data-testid="new-roles">
-                  {role}
-                </Chip>
+                <GoABadge type="information" key={`${role}-${props.id}`} data-testid="new-roles" content={role} />
               );
             })}
         </RolesCellContainer>

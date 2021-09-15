@@ -1,11 +1,12 @@
 import { RootState } from '@store/index';
 import { saveApplication } from '@store/status/actions';
-import { EndpointStatusType, ServiceStatusApplication, ServiceStatusEndpoint } from '@store/status/models';
+import { ServiceStatusApplication } from '@store/status/models';
 import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useParams } from 'react-router-dom';
-import { GoAButton } from '@abgov/react-components';
-import { GoAForm, GoAFormItem, GoAFormButtons } from '@components/Form';
+import { GoAButton} from '@abgov/react-components';
+import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem } from '@components/Form';
 
 function ApplicationForm(): JSX.Element {
   const dispatch = useDispatch();
@@ -18,8 +19,7 @@ function ApplicationForm(): JSX.Element {
     tenantId: '',
     enabled: false,
     description: '',
-    status: 'disabled',
-    endpoints: [],
+    endpoint: { url: '', status: 'offline' },
   });
 
   useEffect(() => {
@@ -34,24 +34,8 @@ function ApplicationForm(): JSX.Element {
     setApplication({ ...application, [name]: customValue || value });
   }
 
-  function submit(e: FormEvent) {
-    const form = new FormData(e.target as HTMLFormElement);
-    const urls = form.get('endpoints') as string;
-
-    const getStatus = (url: string): EndpointStatusType =>
-      application.endpoints.find((endpoint) => endpoint.url === url)?.status;
-
-    const params = {
-      ...application,
-      endpoints: urls
-        .split('\r\n')
-        .map((url) => ({ url: url.trim(), status: getStatus(url) } as ServiceStatusEndpoint))
-        .filter((endpoint) => endpoint.url.length > 0),
-    };
-
-    dispatch(saveApplication(params));
-    e.preventDefault();
-
+  function save() {
+    dispatch(saveApplication(application));
     history.push('/admin/services/status');
   }
 
@@ -60,41 +44,40 @@ function ApplicationForm(): JSX.Element {
   }
 
   return (
-    <GoAForm onSubmit={submit}>
-      <GoAFormItem>
-        <label>Application Name</label>
-        <input type="text" name="name" value={application?.name} onChange={setValue} />
-      </GoAFormItem>
+    <GoAModal isOpen={true}>
+      <GoAModalTitle>New Application</GoAModalTitle>
+      <GoAModalContent>
+        <GoAForm>
+          <GoAFormItem>
+            <label>Application Name</label>
+            <input type="text" name="name" value={application?.name} onChange={setValue} />
+          </GoAFormItem>
 
-      <GoAFormItem>
-        <label>Description</label>
-        <textarea name="description" value={application?.description} onChange={setValue} />
-      </GoAFormItem>
+          <GoAFormItem>
+            <label>Description</label>
+            <textarea name="description" value={application?.description} onChange={setValue} />
+          </GoAFormItem>
 
-      <GoAFormItem>
-        <label>Endpoint Urls</label>
-        <textarea
-          name="endpoints"
-          rows={2}
-          value={application?.endpoints?.map((endpoint) => endpoint.url).join('\r\n')}
-          onChange={(e) =>
-            setValue(
-              e,
-              e.target.value.split('\r\n').map((url) => ({ url, status: 'unknown' }))
-            )
-          }
-        />
-      </GoAFormItem>
-
-      <GoAFormButtons>
+          <GoAFormItem>
+            <label>Endpoint Url</label>
+            <input
+              type="text"
+              name="endpoint"
+              value={application?.endpoint?.url}
+              onChange={(e) => setValue(e, { url: e.target.value })}
+            />
+          </GoAFormItem>
+        </GoAForm>
+      </GoAModalContent>
+      <GoAModalActions>
         <GoAButton buttonType="tertiary" onClick={cancel}>
           Cancel
         </GoAButton>
-        <GoAButton buttonType="primary" type="submit">
+        <GoAButton buttonType="primary" onClick={save}>
           Save
         </GoAButton>
-      </GoAFormButtons>
-    </GoAForm>
+      </GoAModalActions>
+    </GoAModal>
   );
 }
 

@@ -6,6 +6,7 @@ import { EndpointStatusEntry, ServiceStatusEndpoint } from '../types';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
 
+const ENTRY_SAMPLE_SIZE = 5;
 const MIN_PASS_COUNT = 3;
 const MIN_FAIL_COUNT = 3;
 
@@ -15,9 +16,7 @@ export interface CreateCheckEndpointProps {
   logger?: Logger;
   application: ServiceStatusApplicationEntity;
   serviceStatusRepository: ServiceStatusRepository;
-
   endpointStatusEntryRepository: EndpointStatusEntryRepository;
-
   getter: Getter;
 }
 
@@ -30,28 +29,19 @@ export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
     application = await serviceStatusRepository.get(application._id);
     props.application = application;
 
+    // application no longer exists
     if (!application) {
       return;
     }
 
     // exit in the case where the application has not yet been removed from the job queue
-    if (application.status === 'disabled') {
+    if (!application.enabled) {
       return;
     }
 
     // run all endpoint tests
-    const endpointStatusList = await Promise.all<EndpointStatusEntry>(
-      application.endpoints.map(async (endpoint) => {
-        return doRequest(getter, endpoint);
-      })
-    );
-
-    // save the results
-    await Promise.all(
-      endpointStatusList.map(async (statusEntry: EndpointStatusEntry) => {
-        return await doSave(props, statusEntry);
-      })
-    );
+    const statusEntry = await doRequest(getter, application.endpoint);
+    return await doSave(props, statusEntry);
   };
 }
 
@@ -84,55 +74,46 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
   let allEndpointsUp = true;
   let isStatusChanged = false;
 
-  const initApplicationStatus = application.status;
-
   // create endpoint status entry before determining if the state is changed
   await EndpointStatusEntryEntity.create(endpointStatusEntryRepository, statusEntry);
 
-  // determine application's state
-  await Promise.all(
-    application.endpoints.map(async (endpoint) => {
-      if (endpoint.url === statusEntry.url) {
-        // verify that in the last [ENTRY_SAMPLE_SIZE] minutes, at least [MIN_OK_COUNT] are ok
-        const history = await endpointStatusEntryRepository.findRecentByUrl(endpoint.url);
+  // verify that in the last [ENTRY_SAMPLE_SIZE] minutes, at least [MIN_OK_COUNT] are ok
+  const history = await (await endpointStatusEntryRepository.findRecentByUrl(application.endpoint.url));
+  const recentHistory = history.slice(history.length - ENTRY_SAMPLE_SIZE);
 
-        let pass = false,
-          fail = false;
-        let failCount = 0,
-          passCount = 0;
-        for (const h of history) {
-          passCount += h.ok ? 1 : 0;
-          failCount += h.ok ? 0 : 1;
+  let pass = false,
+    fail = false;
+  let failCount = 0,
+    passCount = 0;
 
-          if (passCount >= MIN_PASS_COUNT) {
-            pass = true;
-            break;
-          }
-          if (failCount >= MIN_FAIL_COUNT) {
-            fail = true;
-            break;
-          }
-        }
+  for (const h of recentHistory) {
+    passCount += h.ok ? 1 : 0;
+    failCount += h.ok ? 0 : 1;
 
-        // if it doesn't pass or fail, it retains the initial value
-        if (pass) {
-          endpoint.status = 'online';
-          allEndpointsUp = allEndpointsUp && true;
-          isStatusChanged = true;
-        } else if (fail) {
-          endpoint.status = 'offline';
-          allEndpointsUp = allEndpointsUp && false;
-          isStatusChanged = true;
-        }
-      }
-    })
-  );
+    if (passCount >= MIN_PASS_COUNT) {
+      pass = true;
+      break;
+    }
+    if (failCount >= MIN_FAIL_COUNT) {
+      fail = true;
+      break;
+    }
+  }
+
+  // if it doesn't pass or fail, it retains the initial value
+  if (pass) {
+    application.endpoint.status = 'online';
+    allEndpointsUp = true;
+    isStatusChanged = true;
+  } else if (fail) {
+    application.endpoint.status = 'offline';
+    allEndpointsUp = false;
+    isStatusChanged = true;
+  }
 
   // set the application status based on the endpoints
   if (isStatusChanged) {
-    application.status =
-      application.manualOverride === 'on' ? initApplicationStatus : allEndpointsUp ? 'operational' : 'reported-issues';
-    application.statusTimestamp = Date.now();
+    application.internalStatus = allEndpointsUp ? 'healthy' : 'unhealthy';
 
     await serviceStatusRepository
       .save(application)
