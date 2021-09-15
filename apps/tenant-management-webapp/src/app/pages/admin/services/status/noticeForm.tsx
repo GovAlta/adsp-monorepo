@@ -28,7 +28,7 @@ function NoticeForm(): JSX.Element {
   const [startTime, setStartTime] = useState('10:00');
   const [endTime, setEndTime] = useState('14:00');
   const [message, setMessage] = useState('');
-  const [errors, setErrors] = useState({ });
+  const [errors, setErrors] = useState({});
 
   const { applications, notices } = useSelector((state: RootState) => ({
     applications: state.serviceStatus.applications,
@@ -45,7 +45,8 @@ function NoticeForm(): JSX.Element {
       setEndDate(currentEndDate);
 
       setStartTime(
-        `${currentStartDate.getHours()}:${currentStartDate.getMinutes() < 10 ? '0' : ''
+        `${currentStartDate.getHours()}:${
+          currentStartDate.getMinutes() < 10 ? '0' : ''
         }${currentStartDate.getMinutes()}`
       );
       setEndTime(
@@ -130,15 +131,16 @@ function NoticeForm(): JSX.Element {
 
   return (
     <NoticeFormStyle>
-      <GoAForm data-testid='notice-form'>
+      <GoAForm data-testid="notice-form">
         <GoAFormItem className={errors?.['message'] && 'error'}>
           <label>Description</label>
           <textarea
-            data-testid='notice-form-description'
+            data-testid="notice-form-description"
             name="message"
             value={message}
             onChange={setValue}
-            maxLength={280} />
+            maxLength={280}
+          />
           <div className="error-msg">{errors?.['message']}</div>
         </GoAFormItem>
 
@@ -168,10 +170,11 @@ function NoticeForm(): JSX.Element {
               <DatePickerStyle>
                 <label>Start Date</label>
                 <DatePicker
-                  data-testid='notice-form-start-date-picker'
+                  data-testid="notice-form-start-date-picker"
                   name="startDate"
                   onChange={setStartDate}
-                  value={startDate} />
+                  value={startDate}
+                />
               </DatePickerStyle>
             </div>
             <div className="flex1 ml-1">
@@ -179,9 +182,10 @@ function NoticeForm(): JSX.Element {
                 <label>End Date</label>
                 <DatePicker
                   name="endDate"
-                  data-testid='notice-form-end-date-picker'
+                  data-testid="notice-form-end-date-picker"
                   onChange={setEndDate}
-                  value={endDate} />
+                  value={endDate}
+                />
               </DatePickerStyle>
             </div>
           </div>
@@ -193,8 +197,9 @@ function NoticeForm(): JSX.Element {
                 <TimePicker
                   name="startTime"
                   onChange={setStartTime}
-                  data-testid='notice-form-start-time-picker'
-                  value={startTime} />
+                  data-testid="notice-form-start-time-picker"
+                  value={startTime}
+                />
               </DatePickerStyle>
             </div>
             <div className="flex1 ml-1">
@@ -203,8 +208,9 @@ function NoticeForm(): JSX.Element {
                 <TimePicker
                   name="endTime"
                   onChange={setEndTime}
-                  data-testid='notice-form-end-time-picker'
-                  value={endTime} />
+                  data-testid="notice-form-end-time-picker"
+                  value={endTime}
+                />
               </DatePickerStyle>
             </div>
           </div>
@@ -213,17 +219,10 @@ function NoticeForm(): JSX.Element {
         </ErrorWrapper>
 
         <GoAFormButtons>
-          <GoAButton
-            buttonType="tertiary"
-            data-testid='notice-form-cancel'
-            onClick={cancel}>
+          <GoAButton buttonType="tertiary" data-testid="notice-form-cancel" onClick={cancel}>
             Cancel
           </GoAButton>
-          <GoAButton
-            buttonType="primary"
-            type="submit"
-            data-testid='notice-form-submit'
-            onClick={submit}>
+          <GoAButton buttonType="primary" type="submit" data-testid="notice-form-submit" onClick={submit}>
             Save as draft
           </GoAButton>
         </GoAFormButtons>
@@ -263,21 +262,21 @@ export const ErrorWrapper = styled.div`
 
   &.error {
     label {
-      color: var(--color-red-600);
+      color: var(--color-red);
     }
     input,
     textarea {
-      border-color: var(--color-red-600);
+      border-color: var(--color-red);
     }
     .error-msg {
       display: block;
-      color: var(--color-red-600);
+      color: var(--color-red);
     }
 
     .searchWrapper,
     .react-date-picker__wrapper,
     .react-time-picker__wrapper {
-      border-color: var(--color-red-600);
+      border-color: var(--color-red);
     }
   }
 `;

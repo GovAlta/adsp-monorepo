@@ -1,13 +1,12 @@
 import type { User } from '@abgov/adsp-service-sdk';
-import { assertAuthenticatedHandler } from '@core-services/core-common';
+import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import axios, { AxiosRequestConfig } from 'axios';
 import { Router } from 'express';
 import { Logger } from 'winston';
-import { RecordNotFoundError, UnauthorizedError } from '../common/errors';
 import { ServiceStatusApplicationEntity } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
-import { EndpointStatusEntry, PublicServiceStatusType } from '../types';
+import { PublicServiceStatusType } from '../types';
 import { environment } from '../../environments/environment';
 
 export interface ServiceStatusRouterProps {
@@ -71,7 +70,7 @@ export function createServiceStatusRouter({
     logger.info(`${req.method} - ${req.url}`);
 
     const user = req.user;
-    const { name, description, endpoints, metadata } = req.body;
+    const { name, description, endpoint } = req.body;
     const tenantId = user.tenantId?.toString() ?? '';
 
     if (!tenantId) {
@@ -86,37 +85,36 @@ export function createServiceStatusRouter({
       return req;
     });
 
-    let response = null;
-
     try {
-      response = await http.get(url);
+      const response = await http.get(url);
+
+      const tenantName = response.data.tenant.name;
+      const tenantRealm = response.data.tenant.realm;
+
+      const app = await ServiceStatusApplicationEntity.create({ ...(req.user as User) }, serviceStatusRepository, {
+        name,
+        description,
+        tenantId,
+        tenantName,
+        tenantRealm,
+        endpoint,
+        metadata: '',
+        statusTimestamp: 0,
+        enabled: false,
+        internalStatus: 'stopped',
+      });
+      res.status(201).json(app);
+
     } catch (e) {
-      console.log('error:' + e);
+      res.status(400).send(e.message);
     }
-
-    const tenantName = response.data.tenant.name;
-    const tenantRealm = response.data.tenant.realm;
-
-    const app = await ServiceStatusApplicationEntity.create({ ...(req.user as User) }, serviceStatusRepository, {
-      name,
-      description,
-      tenantId,
-      tenantName,
-      tenantRealm,
-      endpoints,
-      metadata,
-      statusTimestamp: 0,
-      status: 'disabled',
-      manualOverride: 'off',
-    });
-    res.status(201).json(app);
   });
 
   router.put('/applications/:id', assertAuthenticatedHandler, async (req, res) => {
     logger.info(`${req.method} - ${req.url}`);
 
     const user = req.user as Express.User;
-    const { name, description, endpoints } = req.body;
+    const { name, description, endpoint } = req.body;
     const { id } = req.params;
     const tenantId = user.tenantId?.toString() ?? '';
 
@@ -133,7 +131,7 @@ export function createServiceStatusRouter({
     const updatedApplication = await application.update({ ...user } as User, {
       name,
       description,
-      endpoints,
+      endpoint,
     });
     res.status(200).json(updatedApplication);
   });
@@ -170,6 +168,22 @@ export function createServiceStatusRouter({
     res.status(200).json(updatedApplication);
   });
 
+  router.patch('/applications/:id/toggle', assertAuthenticatedHandler, async (req, res) => {
+    logger.info(`${req.method} - ${req.url}`);
+
+    const user = req.user as Express.User;
+    const { id } = req.params;
+    const application = await serviceStatusRepository.get(id);
+
+    if (user.tenantId?.toString() !== application.tenantId) {
+      throw new UnauthorizedError('invalid tenant id');
+    }
+
+    const updatedApplication = application.enabled ? await application.disable(user) : await application.enable(user);
+    res.status(200).json(updatedApplication);
+  });
+
+  // TODO: create test
   router.get('/applications/:applicationId/endpoint-status-entries', async (req, res) => {
     logger.info(req.method, req.url);
 
@@ -182,28 +196,16 @@ export function createServiceStatusRouter({
     const application = await serviceStatusRepository.get(applicationId);
 
     if (!application) {
-      throw new RecordNotFoundError();
+      throw new NotFoundError('Status application', applicationId.toString());
     }
 
     if (tenantId?.toString() !== application.tenantId) {
       throw new UnauthorizedError('invalid tenant id');
     }
 
-    const data = await Promise.all(
-      application.endpoints.map(async (endpoint) => {
-        const entries = await endpointStatusEntryRepository.findRecentByUrl(endpoint.url);
-        return {
-          url: endpoint.url,
-          entries,
-        };
-      })
-    );
+    const entries = await endpointStatusEntryRepository.findRecentByUrl(application.endpoint.url);
 
-    // map to a key:value (url: EndpointStatusEntry[]) dataset
-    const entryMap: { [key: string]: EndpointStatusEntry[] } = {};
-    data.forEach((item) => (entryMap[item.url] = item.entries));
-
-    res.send(entryMap);
+    res.send(entries);
   });
 
   return router;

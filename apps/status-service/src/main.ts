@@ -3,7 +3,7 @@ import * as passport from 'passport';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as helmet from 'helmet';
-import { createLogger } from '@core-services/core-common';
+import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { createRepositories } from './mongo';
 import { bindEndpoints, ServiceUserRoles } from './app';
@@ -11,7 +11,6 @@ import * as cors from 'cors';
 import { scheduleServiceStatusJobs } from './app/jobs';
 import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import * as util from 'util';
-import { GoAError } from './app/common/errors';
 import type { User } from '@abgov/adsp-service-sdk';
 
 const logger = createLogger('status-service', environment?.LOG_LEVEL || 'info');
@@ -22,16 +21,12 @@ app.use(compression());
 app.use(helmet());
 app.use(express.json({ limit: '1mb' }));
 
+
 logger.debug(`Environment variables: ${util.inspect(environment)}`);
 
 (async () => {
   const createRepoJob = createRepositories({ ...environment, logger });
   const [repositories] = [await createRepoJob];
-
-  // const mongoRepoProps ={...environment, logger};
-  // mongoRepoProps.MONGO_DB = 'notice';
-  // const createNoticeRepoJob = createNoticeRepositories(mongoRepoProps);
-
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
   const { coreStrategy, tenantStrategy } = await initializePlatform(
@@ -88,15 +83,8 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
     });
   });
 
-  // error handler
-  app.use((err, _req, res, _next) => {
-    if (err instanceof GoAError) {
-      res.status(err.statusCode).send(err.message);
-    } else {
-      res.sendStatus(500);
-    }
-  });
-
+  const errorHandler = createErrorHandler(logger);
+  app.use(errorHandler)
   // start service
   const port = environment.PORT || 3338;
   const server = app.listen(port, () => {

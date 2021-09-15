@@ -5,10 +5,7 @@ import { RootState } from '@store/index';
 import type { EventDefinition } from '@store/event/models';
 import styled from 'styled-components';
 
-import EyeOpen from '@assets/icons/eye-outline.svg';
-import EyeClosed from '@assets/icons/eye-off-outline.svg';
-import Edit from '@assets/icons/create-outline.svg';
-import Trash from '@assets/icons/trash-outline.svg';
+import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 
 interface EventDefinitionProps {
   definition: EventDefinition;
@@ -31,27 +28,15 @@ const EventDefinitionComponent: FunctionComponent<EventDefinitionProps> = ({ def
           {definition.description}
         </td>
         <td headers="payload" data-testid="payload">
-          <ActionMenu>
-            <ActionItem onClick={() => setShowDetails(!showDetails)} data-testid="toggle-details-visibility">
-              {showDetails ? (
-                <img src={EyeClosed} width="20" alt="Hide details" />
-              ) : (
-                <img src={EyeOpen} width="20" alt="Show details" />
-              )}
-            </ActionItem>
-
+          <GoAContextMenu>
+            <GoAContextMenuIcon type={showDetails ? 'eyeOff' : 'eye'} onClick={() => setShowDetails(!showDetails)} testId="toggle-details-visibility" />
+            {!definition.isCore &&
+              <GoAContextMenuIcon type="create" onClick={() => onEdit(definition)} testId="edit-details" />
+            }
             {!definition.isCore && (
-              <ActionItem onClick={() => onEdit(definition)} data-testid="edit-details">
-                <img src={Edit} width="20" alt="Edit" />
-              </ActionItem>
+              <GoAContextMenuIcon type="trash" onClick={() => onDelete(definition)} testId="delete-details" />
             )}
-
-            {!definition.isCore && (
-              <ActionItem onClick={() => onDelete(definition)} data-testid="delete-details">
-                <img src={Trash} width="20" alt="Delete" />
-              </ActionItem>
-            )}
-          </ActionMenu>
+          </GoAContextMenu>
         </td>
       </tr>
       {showDetails && (
@@ -64,32 +49,6 @@ const EventDefinitionComponent: FunctionComponent<EventDefinitionProps> = ({ def
     </>
   );
 };
-
-// This is a simplified form of the components/ContextMenu. A simple styled component is less complex and easier to use.
-// TODO: replace the usage of components/ContextMenu with this.
-const ActionItem = styled.div``;
-
-const ActionMenu = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 0.25rem 0.5rem;
-  background-color: #fff;
-
-  > div {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    border-radius: 0.25rem;
-    padding: 0.25rem;
-
-    &:hover {
-      background: var(--color-gray-200);
-    }
-  }
-  > div + div {
-    margin-left: 0rem;
-  }
-`;
 
 interface EventDefinitionsListComponentProps {
   className?: string;

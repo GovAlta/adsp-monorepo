@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Page, Main, Aside } from '@components/Html';
-import { deleteApplication, fetchServiceStatusApps } from '@store/status/actions';
+import { deleteApplication, fetchServiceStatusApps, toggleApplicationStatus } from '@store/status/actions';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -8,31 +8,22 @@ import {
   PublicServiceStatusTypes,
   ServiceStatusApplication,
   ServiceStatusEndpoint,
+  EndpointStatusEntry,
 } from '@store/status/models';
 import { Route, Switch, useHistory, useLocation } from 'react-router-dom';
-import styled from 'styled-components';
-import ContextMenu, { ContextMenuItem } from '@components/ContextMenu';
+import styled, { CSSProperties } from 'styled-components';
+import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import GoALinkButton from '@components/LinkButton';
-import Dialog, { DialogActions, DialogContent, DialogTitle } from '@components/Dialog';
-import ApplicationForm from './form';
+import { GoABadge, GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
+import ApplicationFormModal from './form';
 import NoticeForm from './noticeForm';
 import { GoAButton } from '@abgov/react-components';
 import { GoAForm, GoAFormItem } from '@components/Form';
 import { setApplicationStatus } from '@store/status/actions/setApplicationStatus';
-import GoAChip, { ChipType } from '@components/Chip';
 import { Tab, Tabs } from '@components/Tabs';
 import { getNotices } from '@store/notice/actions';
 import { NoticeList } from './noticeList';
 import SupportLinks from '@components/SupportLinks';
-
-// icons
-import TrashIcon from '@assets/icons/trash-outline.svg';
-import PlayIcon from '@assets/icons/play-circle-outline.svg';
-import PauseIcon from '@assets/icons/pause-circle-outline.svg';
-import EditIcon from '@assets/icons/create-outline.svg';
-import WrenchIcon from '@assets/icons/build-outline.svg';
-import CheckmarkCircle from '@components/icons/CheckmarkCircle';
-import CloseCircle from '@components/icons/CloseCircle';
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
@@ -123,96 +114,42 @@ function Status(): JSX.Element {
 
       <Switch>
         <Route path="/admin/services/status/new">
-          <Dialog open={true}>
-            <DialogTitle>New Application</DialogTitle>
-            <DialogContent>
-              <ApplicationForm />
-            </DialogContent>
-          </Dialog>
+          <ApplicationFormModal isOpen={ true} />
         </Route>
         <Route path="/admin/services/status/notice/new">
-          <Dialog open={true}>
-            <DialogTitle>Add a Draft Notice</DialogTitle>
-            <DialogContent>
+          <GoAModal isOpen={true}>
+            <GoAModalTitle>Add a Draft Notice</GoAModalTitle>
+            <GoAModalContent>
               <NoticeForm />
-            </DialogContent>
-          </Dialog>
+            </GoAModalContent>
+          </GoAModal>
         </Route>
         <Route path="/admin/services/status/notice/:noticeId">
-          <Dialog open={true}>
-            <DialogTitle>Edit Draft Notice</DialogTitle>
-            <DialogContent>
+          <GoAModal isOpen={true}>
+            <GoAModalTitle>Edit Draft Notice</GoAModalTitle>
+            <GoAModalContent>
               <NoticeForm />
-            </DialogContent>
-          </Dialog>
+            </GoAModalContent>
+          </GoAModal>
         </Route>
         <Route path="/admin/services/status/:applicationId/edit">
-          <Dialog open={true}>
-            <DialogTitle>Edit Application</DialogTitle>
-            <DialogContent>
-              <ApplicationForm />
-            </DialogContent>
-          </Dialog>
+          <ApplicationFormModal isOpen={ true} />
         </Route>
       </Switch>
     </Page>
   );
 }
 
-function Application(props: ServiceStatusApplication) {
+function Application(app: ServiceStatusApplication) {
   const location = useLocation();
   const history = useHistory();
   const dispatch = useDispatch();
 
-  const [status, setStatus] = useState<ServiceStatusType>(props.status);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false);
   const [showStatusForm, setShowStatusForm] = useState<boolean>(false);
 
-  const contextItems: ContextMenuItem[] = [
-    { name: 'manual', icon: WrenchIcon, title: 'Manually Set Status' },
-    { name: 'edit', icon: EditIcon, title: 'Edit' },
-    {
-      name: 'toggle',
-      icon: status === 'disabled' ? PlayIcon : PauseIcon,
-      title: status === 'disabled' ? 'Start Monitoring' : 'Stop Monitoring',
-    },
-    { name: 'delete', icon: TrashIcon, title: 'Remove' },
-  ];
-
-  function handleContextAction(action: string) {
-    switch (action) {
-      case 'manual':
-        setShowStatusForm(true);
-        break;
-      case 'edit':
-        history.push(`${location.pathname}/${props._id}/edit`);
-        break;
-      case 'toggle': {
-        const toggledStatus = status === 'disabled' ? 'pending' : 'disabled';
-        setStatus(toggledStatus);
-        dispatch(
-          setApplicationStatus({
-            tenantId: props.tenantId,
-            applicationId: props._id,
-            status: toggledStatus,
-          })
-        );
-        break;
-      }
-      case 'delete': {
-        setShowDeleteConfirmation(true);
-        break;
-      }
-    }
-  }
-
-  function getTimestamp() {
-    const d = new Date(props.statusTimestamp);
-    return `${d.toLocaleDateString()} ${d.toLocaleTimeString()}`;
-  }
-
   function doDelete() {
-    dispatch(deleteApplication({ tenantId: props.tenantId, applicationId: props._id }));
+    dispatch(deleteApplication({ tenantId: app.tenantId, applicationId: app._id }));
     setShowDeleteConfirmation(false);
   }
 
@@ -221,7 +158,7 @@ function Application(props: ServiceStatusApplication) {
   }
 
   function doManualStatusChange(status: ServiceStatusType) {
-    dispatch(setApplicationStatus({ tenantId: props.tenantId, applicationId: props._id, status }));
+    dispatch(setApplicationStatus({ tenantId: app.tenantId, applicationId: app._id, status }));
     setShowStatusForm(false);
   }
 
@@ -230,67 +167,80 @@ function Application(props: ServiceStatusApplication) {
   }
 
   function humanizeText(value: string): string {
-    if (!value) return 'n/a';
-    return value.replace(/[\W]/, ' ');
+    value = value.replace(/[\W]/, ' ');
+    return value.substr(0, 1).toUpperCase() + value.substr(1);
   }
 
-  const publicStatusMap: { [key: string]: ChipType } = {
+  const publicStatusMap: { [key: string]: string } = {
     operational: 'success',
     maintenance: 'warning',
-    'reported-issues': 'danger',
-    outage: 'danger',
-    pending: 'secondary',
-    disabled: 'secondary',
+    'reported-issues': 'emergency',
+    outage: 'emergency',
+    pending: 'light',
+    disabled: 'light',
   };
 
   return (
     <App data-testid="application">
-      {/* Toolbar */}
-
-      <div className="context-menu">
-        <ContextMenu items={contextItems} onAction={(action) => handleContextAction(action)} />
-      </div>
-
       {/* Main component content */}
-
       <AppHeader>
-        <AppName>{props.name}</AppName>
-        <>
-          <span className="space-1"></span>
-          <GoAChip type={publicStatusMap[props.status]}>{humanizeText(props.status)}</GoAChip>
-        </>
+        <div>
+          <AppStatus>
+            {app.status && <GoABadge type={publicStatusMap[app.status]} content={humanizeText(app.status)} />}
+            <GoAButton buttonType="tertiary" buttonSize="small" onClick={() => setShowStatusForm(true)}>
+              Change status
+            </GoAButton>
+          </AppStatus>
+        </div>
+
+        <GoAContextMenu>
+          <GoAContextMenuIcon type="create" onClick={() => history.push(`${location.pathname}/${app._id}/edit`)} />
+          <GoAContextMenuIcon type="trash" onClick={() => setShowDeleteConfirmation(true)} />
+        </GoAContextMenu>
       </AppHeader>
-      <em>Last updated: {getTimestamp()}</em>
 
       {/* Endpoint List for watched service */}
-      {props.status !== 'disabled' && (
-        <AppEndpoints>
-          {props.endpoints.map((endpoint) => (
-            <AppEndpoint data-testid="endpoint" key={endpoint.url} endpoint={endpoint}></AppEndpoint>
-          ))}
-        </AppEndpoints>
-      )}
+      <AppName>{app.name}</AppName>
+      <AppHealth>
+        <HealthBar data-testid="endpoint" displayCount={30} app={app}></HealthBar>
+        <GoAButton
+          buttonType="tertiary"
+          buttonSize="small"
+          style={{flex: '0 0 160px'}}
+          onClick={() => {
+            dispatch(
+              toggleApplicationStatus({
+                tenantId: app.tenantId,
+                applicationId: app._id,
+                enabled: !app.enabled,
+              })
+            );
+          }}
+        >
+          {app.enabled ? 'Stop health check' : 'Start health check'}
+        </GoAButton>
+      </AppHealth>
 
-      {/* Dialogs */}
+      {/* GoAModals */}
 
       {/* Delete confirmation dialog */}
-      <Dialog open={showDeleteConfirmation} onClose={cancelDelete}>
-        <DialogTitle>Confirmation</DialogTitle>
-        <DialogContent>Delete the {props.name} service status checks?</DialogContent>
-        <DialogActions>
+      <GoAModal isOpen={showDeleteConfirmation}>
+        <GoAModalTitle>Confirmation</GoAModalTitle>
+        <GoAModalContent>Delete the {app.name} service status checks?</GoAModalContent>
+        <GoAModalActions>
           <GoAButton buttonType="tertiary" onClick={cancelDelete}>
             Cancel
           </GoAButton>
           <GoAButton buttonType="primary" onClick={doDelete}>
             Yes
           </GoAButton>
-        </DialogActions>
-      </Dialog>
+        </GoAModalActions>
+      </GoAModal>
 
       {/* Manual status change dialog */}
-      <Dialog open={showStatusForm} onClose={cancelManualStatusChange}>
-        <DialogTitle>Manual Status Change</DialogTitle>
-        <DialogContent>
+      <GoAModal isOpen={showStatusForm}>
+        <GoAModalTitle>Manual Status Change</GoAModalTitle>
+        <GoAModalContent>
           <GoAForm>
             <GoAFormItem>
               {PublicServiceStatusTypes.map((statusType) => (
@@ -304,14 +254,14 @@ function Application(props: ServiceStatusApplication) {
               ))}
             </GoAFormItem>
           </GoAForm>
-        </DialogContent>
-        <DialogActions>
+        </GoAModalContent>
+        <GoAModalActions>
           <GoAButton buttonType="tertiary" onClick={cancelManualStatusChange}>
             Cancel
           </GoAButton>
-          <GoAButton buttonType="primary">Save</GoAButton>
-        </DialogActions>
-      </Dialog>
+          <GoAButton buttonType="primary" onClick={cancelManualStatusChange}>Save</GoAButton>
+        </GoAModalActions>
+      </GoAModal>
     </App>
   );
 }
@@ -323,29 +273,101 @@ export default Status;
 // ==================
 
 interface AppEndpointProps {
-  endpoint: ServiceStatusEndpoint;
+  app: ServiceStatusApplication;
+  displayCount: number;
 }
 
-function AppEndpoint({ endpoint }: AppEndpointProps) {
+function HealthBar({ app, displayCount }: AppEndpointProps) {
+  const css: CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    flex: '1 1 auto',
+  };
+
+  function getTimestamp(timestamp: number): string {
+    const d = new Date(timestamp);
+    const hours = d.getHours();
+    const minutes = d.getMinutes() < 10 ? '0' + d.getMinutes() : d.getMinutes();
+    return `${hours > 12 ? hours - 12 : hours}:${minutes} ${hours < 12 ? 'AM' : 'PM'}`;
+  }
+
+  function getStatusEntries(endpoint: ServiceStatusEndpoint): EndpointStatusEntry[] {
+    const timePeriodEntries = endpoint.statusEntries?.filter((entry) => entry.timestamp > Date.now() - 1000 * 60 * 30) || [];
+
+    if (timePeriodEntries.length >= displayCount) {
+      return timePeriodEntries;
+    }
+
+    const makeEntry = (timestamp: number): EndpointStatusEntry => ({ ok: false, timestamp, status: 'n/a', url: endpoint.url, responseTime: -1 });
+    const minute = 60 * 1000;
+
+    // must define time boundaries to allow for the insertion of filler entries and prevent gaps in time from not showing up
+    const entries = [makeEntry(Date.now() - 30 * minute), ...timePeriodEntries, makeEntry(Date.now() + minute)];
+    const filledEntries = [];
+
+    for (let i = 1; i < entries.length; i++) {
+      const prevEntry = entries[i - 1];
+      const entry = entries[i];
+      const diff = (entry.timestamp - prevEntry.timestamp) / minute;
+      filledEntries.push(prevEntry);
+      if (diff > 1) {
+        for (let j = 1; j < diff -1; j++) {
+          filledEntries.push(makeEntry(prevEntry.timestamp + j * minute));
+        }
+      }
+    }
+
+    // remove the boundary entries that were inserted previously
+    return filledEntries.slice(1);
+  }
+
+  const statusEntries = getStatusEntries(app.endpoint);
+
   return (
-    <div data-testid="endpoint-url">
-      <b>{endpoint.url}</b>
-      {endpoint.statusEntries?.map((entry) => (
-        <EndpointStatusEntry key={entry.timestamp}>
-          {entry.ok ? <CheckmarkCircle size="small" /> : <CloseCircle size="small" />}
-          <div>
-            {entry.status}: {entry.timestamp && new Date(entry.timestamp).toLocaleTimeString()}
-          </div>
-        </EndpointStatusEntry>
-      ))}
+    <div style={css}>
+      <StatusBarDetails>
+        <span></span>
+        <small style={{ textTransform: 'capitalize' }}>{statusEntries[statusEntries.length - 1].status !== 'n/a' ? app.internalStatus : 'N/A'}</small>
+      </StatusBarDetails>
+
+      <EndpointStatusEntries data-testid="endpoint-url">
+        {statusEntries.map((entry) => (
+          <EndpointStatusTick
+            key={entry.timestamp}
+            style={{
+              backgroundColor:
+                entry.ok
+                  ? 'var(--color-green)'
+                    : entry.status === 'n/a'
+                    ? 'var(--color-gray-300)'
+                    : 'var(--color-red)',
+            }}
+            title={entry.status + ': ' + new Date(entry.timestamp).toLocaleString()}
+          />
+        ))}
+      </EndpointStatusEntries>
+      <StatusBarDetails>
+        <small>{getTimestamp(statusEntries[0]?.timestamp)}</small>
+        <small>Now</small>
+      </StatusBarDetails>
     </div>
   );
 }
 
-const EndpointStatusEntry = styled.div`
+const StatusBarDetails = styled.div`
   display: flex;
-  align-items: center;
-  gap: 0.25rem;
+  justify-content: space-between;
+`;
+
+const EndpointStatusEntries = styled.div`
+  display: flex;
+  flex-direction: row;
+  gap: 1px;
+`;
+
+const EndpointStatusTick = styled.div`
+  flex: 1 1 auto;
+  height: 20px;
 `;
 
 // =================
@@ -353,9 +375,9 @@ const EndpointStatusEntry = styled.div`
 // =================
 
 const App = styled.div`
-  padding: 1rem 0;
+  padding: 2rem 0;
   position: relative;
-  border-bottom: 1px solid var(--color-gray-200);
+  border-bottom: 1px solid var(--color-gray-400);
 
   &:last-child {
     border-bottom: none;
@@ -374,11 +396,25 @@ const App = styled.div`
 
 const AppHeader = styled.div`
   display: flex;
-  align-items: center;
+  align-items: start;
+  justify-content: space-between;
   a {
     font-size: var(--fs-sm);
     margin-left: 0.5rem;
   }
+`;
+
+const AppHealth = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+`;
+
+const AppStatus = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 `;
 
 const ApplicationList = styled.section`
@@ -387,14 +423,7 @@ const ApplicationList = styled.section`
 
 const AppName = styled.div`
   font-size: var(--fs-lg);
-  font-weight: var(--fw-medium);
+  font-weight: var(--fw-bold);
   text-transform: capitalize;
-`;
-
-const AppEndpoints = styled.div`
-  font-size: var(--fs-sm);
-
-  b {
-    color: var(--color-gray-800);
-  }
+  margin-top: 1rem;
 `;

@@ -22,6 +22,7 @@ export interface CompleteTaskOperation {
 
 export interface CancelTaskOperation {
   operation: typeof OPERATION_CANCEL;
+  reason?: string;
 }
 
 export interface SetTaskPriorityOperation {

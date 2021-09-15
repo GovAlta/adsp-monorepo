@@ -6,6 +6,7 @@ import FilterIcon from '@assets/icons/filter-filled.svg';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { GoARadio } from '@abgov/react-components';
+import { ActionIndicator } from '@components/Indicator'
 
 type filterOptionOnSelect = (option: string) => void;
 
@@ -45,6 +46,7 @@ export const NoticeListFilter = (props: NoticeListFilterProps): JSX.Element => {
   const { option, onSelect } = props;
   return (
     <NoticeListFilterContainer>
+      <ActionIndicator />
       <div className='filter-header'>
         <img src={FilterIcon} width="20" alt="notice-filter" /><span>Filter by status</span>
       </div>

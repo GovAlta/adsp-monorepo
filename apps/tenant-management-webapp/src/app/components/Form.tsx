@@ -48,15 +48,15 @@ const GoAFormItem = styled.div`
 
   &.error {
     label {
-      color: var(--color-red-600);
+      color: var(--color-red);
     }
     input,
     textarea {
-      border-color: var(--color-red-600);
+      border-color: var(--color-red);
     }
     .error-msg {
       display: block;
-      color: var(--color-red-600);
+      color: var(--color-red);
     }
   }
 `;

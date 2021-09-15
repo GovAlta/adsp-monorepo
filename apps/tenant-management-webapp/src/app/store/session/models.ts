@@ -13,6 +13,7 @@ export interface Session {
   };
   resourceAccess?: Record<string, { roles: string[] }>;
   credentials?: Credentials;
+  indicator?: Indicator;
 }
 
 export interface Credentials {
@@ -20,6 +21,11 @@ export interface Credentials {
   tokenExp: number;
   refreshToken?: string;
   refreshTokenExp?: number;
+}
+
+export interface Indicator {
+  show: boolean;
+  message?: string
 }
 
 export const SESSION_INIT: Session = {};

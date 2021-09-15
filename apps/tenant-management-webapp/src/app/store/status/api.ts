@@ -37,4 +37,9 @@ export class StatusApi {
     const res = await this.http.patch(`/applications/${applicationId}/status`, { status });
     return res.data;
   }
+
+  async toggleApplication(applicationId: string, enabled: boolean): Promise<ServiceStatusApplication> {
+    const res = await this.http.patch(`/applications/${applicationId}/toggle`, { enabled });
+    return res.data;
+  }
 }

@@ -1,8 +1,11 @@
 import { User } from './user';
+import { GoAError, GoAErrorExtra } from '../utils';
+import * as HttpStatusCodes from 'http-status-codes';
 
-export class UnauthorizedUserError extends Error {
-  constructor(operation: string, user: User) {
-    super(`User ${user?.name} (ID: ${user?.id}) not permitted to ${operation}.`);
+export class UnauthorizedUserError extends GoAError {
+  constructor(operation: string, user: User, extra?: GoAErrorExtra) {
+    super(`User ${user?.name} (ID: ${user?.id}) not permitted to ${operation}.`,
+      { statusCode: HttpStatusCodes.FORBIDDEN, ...extra });
 
     Object.setPrototypeOf(this, UnauthorizedUserError.prototype);
   }
@@ -13,11 +16,11 @@ type AssertRole = (
   roles: string | string[]
   // eslint-disable-next-line @typescript-eslint/ban-types
 ) => <T extends Function>(
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  target: object,
-  propertyKey: string,
-  descriptor: TypedPropertyDescriptor<T>
-) => TypedPropertyDescriptor<T>;
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    target: object,
+    propertyKey: string,
+    descriptor: TypedPropertyDescriptor<T>
+  ) => TypedPropertyDescriptor<T>;
 
 function assertHasRoles(operation: string, user: User, roles: string | string[]): void {
   if (!(roles instanceof Array)) {

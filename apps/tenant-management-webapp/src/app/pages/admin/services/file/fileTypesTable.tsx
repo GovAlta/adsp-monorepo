@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import DataTable from '@components/DataTable';
-import Chip from '@components/Chip';
-import { GoAButton, GoADropdown, GoAOption } from '@abgov/react-components';
+import { GoAOption, GoAButton, GoADropdown, } from '@abgov/react-components';
+import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental'
+import { GoABadge } from '@abgov/react-components/experimental';
 import { FileTypeItem } from '@store/file/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { v4 as uuid4 } from 'uuid';
 import { RootState } from '@store/index';
 import { Role } from '@store/tenant/models';
-import Dialog, { DialogActions, DialogContent, DialogTitle } from '@components/Dialog';
 
 import {
   DeleteFileTypeService,
@@ -291,13 +291,13 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
     if (displayOnly) {
       return (
         <RolesCellContainer data-testid={`${rowType}-${cellType}`}>
-          {anonymousRead && cellType === 'readRoles' && <Chip type="secondary">Anonymous</Chip>}
+          {anonymousRead && cellType === 'readRoles' &&
+            <GoABadge type="information" content="Anonymous" />
+          }
           {(!anonymousRead || cellType === 'updateRoles') &&
             roles.map((role) => {
               return (
-                <Chip type="secondary" key={`${role}-${props.id}`} data-testid="new-roles">
-                  {role}
-                </Chip>
+                <GoABadge type="information" key={`${role}-${props.id}`} data-testid="new-roles" content={role} />
               );
             })}
         </RolesCellContainer>
@@ -414,6 +414,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
     const CancelButton = () => {
       return (
         <GoAButton
+          data-testid="cancel-delete-modal-button"
           buttonType="secondary"
           onClick={() => {
             setShowDelete(false);
@@ -428,6 +429,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
       return (
         <GoAButton
           buttonType="secondary"
+          data-testid="delete-modal-okay-button"
           onClick={() => {
             setShowDelete(false);
           }}
@@ -437,46 +439,41 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
       );
     };
 
-    return (
-      <Dialog open={true} key={props.id} data-testid="delete-modal">
-        {hasFile === true && (
-          <>
-            <DialogTitle>File type current in use</DialogTitle>
-            <DialogContent>
-              You are unable to delete the file type <b>{`${props.name}`}</b> because there are files within the file
-              type.
-            </DialogContent>
-            <DialogActions>
-              <OkButton data-testid="cancel-delete-modal" />
-            </DialogActions>
-          </>
-        )}
+    return (<>
+      {hasFile === true &&
+        <GoAModal isOpen={true} key={props.id} testId='file-delete-modal'>
+          <GoAModalTitle>File type current in use</GoAModalTitle>
+          <GoAModalContent testId='file-delete-modal-content'>
+            You are unable to delete the file type <b>{`${props.name}`}</b> because there are files within the file
+            type.
+          </GoAModalContent>
+          <GoAModalActions>
+            <OkButton />
+          </GoAModalActions>
+        </GoAModal>}
 
-        {hasFile === false && (
-          <>
-            <DialogTitle>Deleting file type </DialogTitle>
-            <DialogContent>
-              <p>
-                Deleting the file type <b>{`${props.name}`}</b> cannot be undone.
-              </p>
-              <p>
-                <b>Are you sure you want to continue?</b>
-              </p>
-            </DialogContent>
-            <DialogActions>
-              <CancelButton data-testid="cancel-delete-modal-button" />
-              <GoAButton
-                data-testid="delete-modal-delete-button"
-                onClick={() => {
-                  dispatch(DeleteFileTypeService(props));
-                }}
-              >
-                Delete
-              </GoAButton>
-            </DialogActions>
-          </>
-        )}
-      </Dialog>
+      {hasFile === false && <GoAModal isOpen={true} key={props.id} testId='file-delete-modal'>
+        <GoAModalTitle>Deleting file type </GoAModalTitle>
+        <GoAModalContent testId='file-delete-modal-content'>
+          <p>
+            Deleting the file type <b>{`${props.name}`}</b> cannot be undone.
+          </p>
+          <p>
+            <b>Are you sure you want to continue?</b>
+          </p>
+        </GoAModalContent>
+        <GoAModalActions>
+          <CancelButton />
+          <GoAButton
+            data-testid="delete-modal-delete-button"
+            onClick={() => {
+              dispatch(DeleteFileTypeService(props));
+            }}
+          >
+            Delete
+          </GoAButton>
+        </GoAModalActions>
+      </GoAModal>}</>
     );
   };
 

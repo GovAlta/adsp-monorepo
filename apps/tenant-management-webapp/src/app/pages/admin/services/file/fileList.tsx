@@ -69,18 +69,16 @@ const FileList = (): JSX.Element => {
         <GoARadioGroup
           orientation="vertical"
           name="fileSecurityOptions"
+          value={uploadFileType}
           onChange={(e) => {
             setUploadFileType(e);
           }}
         >
-          {getFileTypesValues().map((item) => {
-            return (
-              <GoARadio
-                key={item.value}
-                value={item.value}
-                checked={item.value === uploadFileType}>{item.text}</GoARadio>)
-          })}
-
+          {getFileTypesValues().map((item) => (
+            <GoARadio key={item.value} value={item.value} checked={false}>
+              {item.text}
+            </GoARadio>
+          ))}
         </GoARadioGroup>
         <GoAButton type="submit" disabled={!selectedFile} onClick={onFormSubmit}>
           Upload

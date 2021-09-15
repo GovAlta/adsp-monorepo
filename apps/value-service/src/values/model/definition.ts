@@ -1,7 +1,7 @@
 import { IsNotEmpty } from 'class-validator';
 import { AdspId, AssertRole } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, Results } from '@core-services/core-common';
+import { Results } from '@core-services/core-common';
 import { ServiceUserRoles } from '../types';
 import type { Value, ValueCriteria, ValueDefinition } from '../types';
 import { NamespaceEntity } from './namespace';
@@ -27,7 +27,7 @@ export class ValueDefinitionEntity implements ValueDefinition {
 
   public writeValue(tenantId: AdspId, value: Omit<Value, 'tenantId'>): Promise<Value> {
     this.namespace.validationService.validate(
-      `value '${this.namespace}:${this.name}'`,
+      `value '${this.namespace.name}:${this.name}'`,
       this.getSchemaKey(),
       value.value
     );

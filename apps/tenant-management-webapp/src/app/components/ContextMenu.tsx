@@ -1,65 +1,45 @@
-import React, { Component } from 'react';
+import { GoAButton } from '@abgov/react-components';
+import { GoAIconButton } from '@abgov/react-components/experimental';
+import { TestProps } from '@abgov/react-components/experimental/common';
+import { IconType } from '@abgov/react-components/experimental/icons';
+import React, { FC } from 'react';
 import styled from 'styled-components';
 
-export interface ContextMenuItem {
-  icon: string | JSX.Element;
-  text?: string;
-  name: string;
-  title?: string;
+
+interface ContextMenuIconProps extends TestProps {
+    type: IconType;
+    onClick: () => void;
 }
 
-interface Props {
-  onAction: (name: string) => void;
-  items: ContextMenuItem[];
+interface ContextMenuTextProps extends TestProps {
+    type: IconType;
+    onClick: () => void;
 }
 
-function ContextMenu({ onAction, items }: Props): JSX.Element {
+export const GoAContextMenuIcon: FC<ContextMenuIconProps> = (props) => {
   return (
-    <Root>
-      <Menu>
-        {items.map((item) => (
-          <div
-            data-testid={`context-menu--${item.name}`}
-            key={item.name}
-            onClick={() => onAction(item.name)}
-            title={item.title}
-          >
-            {typeof item.icon === 'string' ? <img src={item.icon} alt={item.name} /> : <Component {...item.icon} />}
-          </div>
-        ))}
-      </Menu>
-    </Root>
-  );
+    <GoAIconButton type={props.type} onClick={props.onClick} testId={ props.testId } size='small' variant='goa' />
+  )
 }
 
-export default ContextMenu;
+export const GoAContextMenuText: FC<ContextMenuTextProps> = (props) => {
+  return (
+    <GoAButton buttonType="tertiary" onClick={props.onClick} testId={ props.testId } buttonSize={'small'} />
+  )
+}
 
-const Menu = styled.div`
+export const GoAContextMenu = styled.div`
   display: flex;
   align-items: center;
-  padding: 0.25rem 0.5rem;
   background-color: #fff;
+  gap: 0.25rem;
 
-  > div {
-    display: flex;
-    align-items: center;
+  > .goa-icon-button {
     cursor: pointer;
     border-radius: 0.25rem;
     padding: 0.25rem;
-    border: 1px solid transparent;
-
-    &:hover {
-      border: 1px solid var(--color-gray-400);
-    }
   }
-  > div + div {
-    margin-left: 0.5rem;
-  }
-`;
-
-const Root = styled.div`
-  img {
-    width: 1.25rem;
-    height: auto;
+  > .goa-icon-button + .goa-icon-button {
+    margin-left: 0rem;
   }
 `;

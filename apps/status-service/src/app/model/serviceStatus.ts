@@ -1,27 +1,27 @@
 import type { User } from '@abgov/adsp-service-sdk';
-import { NewOrExisting, Update } from '@core-services/core-common';
-import { MissingParamsError, UnauthorizedError } from '../common/errors';
+import { NewOrExisting, Update, InvalidValueError, UnauthorizedError } from '@core-services/core-common';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import {
-  ManualOverrideState,
+  InternalServiceStatusType,
   PublicServiceStatusType,
   ServiceStatusApplication,
   ServiceStatusEndpoint,
-  ServiceStatusType,
 } from '../types';
 
 export class ServiceStatusApplicationEntity implements ServiceStatusApplication {
   _id: string;
   description: string;
-  endpoints: ServiceStatusEndpoint[];
-  status: ServiceStatusType;
+  endpoint: ServiceStatusEndpoint;
+  status: PublicServiceStatusType;
+  internalStatus: InternalServiceStatusType;
   metadata: unknown;
   name: string;
   statusTimestamp: number;
   tenantName: string;
   tenantRealm: string;
   tenantId: string;
-  manualOverride: ManualOverrideState;
+  enabled: boolean;
+
   static create(
     user: User,
     repository: ServiceStatusRepository,
@@ -36,7 +36,7 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
 
   constructor(private repository: ServiceStatusRepository, application: NewOrExisting<ServiceStatusApplication>) {
     this._id = application._id;
-    this.endpoints = application.endpoints;
+    this.endpoint = application.endpoint;
     this.metadata = application.metadata;
     this.name = application.name;
     this.description = application.description;
@@ -45,44 +45,23 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     this.tenantName = application.tenantName;
     this.tenantRealm = application.tenantRealm;
     this.status = application.status;
-    this.manualOverride = application.manualOverride;
+    this.internalStatus = application.internalStatus;
+    this.enabled = application.enabled;
   }
 
   update(user: User, update: Update<ServiceStatusApplication>): Promise<ServiceStatusApplicationEntity> {
     if (!this.canUpdate(user)) {
       throw new UnauthorizedError('User not authorized to update service status.');
     }
-    this.endpoints = update.endpoints ?? this.endpoints;
+    this.endpoint = update.endpoint ?? this.endpoint;
     this.metadata = update.metadata ?? this.metadata;
     this.name = update.name ?? this.name;
     this.description = update.description ?? this.description;
     this.statusTimestamp = update.statusTimestamp ?? this.statusTimestamp;
     this.status = update.status ?? this.status;
-    this.manualOverride = update.manualOverride ?? this.manualOverride;
+    this.internalStatus = update.internalStatus ?? this.internalStatus;
+    this.enabled = update.enabled ?? this.enabled;
 
-    return this.repository.save(this);
-  }
-
-  addEndpoint(user: User, url: string): Promise<ServiceStatusApplicationEntity> {
-    if (!this.canUpdate(user)) {
-      throw new UnauthorizedError('User not authorized to add applications.');
-    }
-    if (!url) {
-      throw new MissingParamsError('Url is required');
-    }
-    this.endpoints.push({ url, status: 'pending' });
-    return this.repository.save(this);
-  }
-
-  removeEndpoint(user: User, app: ServiceStatusApplication, url: string): Promise<ServiceStatusApplicationEntity> {
-    if (!this.canUpdate(user)) {
-      throw new UnauthorizedError('User not authorized to add applications.');
-    }
-    if (!url) {
-      throw new MissingParamsError('Url is required');
-    }
-    const index = this.endpoints.findIndex((endpoint) => endpoint.url !== url);
-    this.endpoints.splice(index, 1);
     return this.repository.save(this);
   }
 
@@ -114,19 +93,6 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
 
     this.status = status;
     this.statusTimestamp = Date.now();
-    this.manualOverride = 'on';
-    // ensure the endpoints are in sync with the service state
-    switch (status) {
-      case 'maintenance':
-      case 'disabled':
-        this.endpoints.forEach((endpoint) => (endpoint.status = 'disabled'));
-        break;
-      case 'pending':
-        this.manualOverride = 'off';
-        this.endpoints.forEach((endpoint) => (endpoint.status = 'pending'));
-        break;
-    }
-
     return await this.repository.save(this);
   }
 

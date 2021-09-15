@@ -27,6 +27,14 @@ import {
   fetchRealmRoles,
 } from './tenant/sagas';
 import { fetchTenantConfig, createTenantConfig, updateTenantConfig } from './tenantConfig/sagas';
+import {
+  deleteApplication,
+  fetchServiceStatusApps,
+  saveApplication,
+  setApplicationStatus,
+  toggleApplicationStatus,
+} from './status/sagas';
+import { watchEventSagas } from './event/sagas';
 
 // Actions
 import { FETCH_ACCESS_ACTION } from './access/actions';
@@ -61,10 +69,9 @@ import {
 import { FETCH_TENANT_CONFIG, CREATE_TENANT_CONFIG, UPDATE_TENANT_CONFIG } from './tenantConfig/actions';
 import { DELETE_APPLICATION_ACTION, FETCH_SERVICE_STATUS_APPS_ACTION, SAVE_APPLICATION_ACTION } from './status/actions';
 import { SAVE_NOTICE_ACTION, GET_NOTICES_ACTION, DELETE_NOTICE_ACTION } from './notice/actions';
-import { deleteApplication, fetchServiceStatusApps, saveApplication, setApplicationStatus } from './status/sagas';
 import { saveNotice, getNotices, deleteNotice } from './notice/sagas';
 import { SET_APPLICATION_STATUS_ACTION } from './status/actions/setApplicationStatus';
-import { watchEventSagas } from './event/sagas';
+import { TOGGLE_APPLICATION_STATUS_ACTION } from './status/actions/toggleApplication';
 
 // eslint-disable-next-line  @typescript-eslint/explicit-module-boundary-types
 export function* watchSagas() {
@@ -111,6 +118,7 @@ export function* watchSagas() {
   yield takeEvery(SAVE_APPLICATION_ACTION, saveApplication);
   yield takeEvery(DELETE_APPLICATION_ACTION, deleteApplication);
   yield takeEvery(SET_APPLICATION_STATUS_ACTION, setApplicationStatus);
+  yield takeEvery(TOGGLE_APPLICATION_STATUS_ACTION, toggleApplicationStatus);
 
   // notices
   yield takeEvery(SAVE_NOTICE_ACTION, saveNotice);

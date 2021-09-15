@@ -1,7 +1,6 @@
-////
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { GoAButton, GoANotification, GoAElementLoader } from '@abgov/react-components';
+import { GoAButton, GoANotification, GoAElementLoader  } from '@abgov/react-components';
 import { CreateTenant, IsTenantAdmin } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 import GoALinkButton from '@components/LinkButton';
@@ -66,7 +65,7 @@ const CreateRealm = (): JSX.Element => {
     return (
       <GoAButton buttonType="primary" buttonSize="normal" disabled>
         Creating Tenant...
-        <GoAElementLoader visible={true} size={15} baseColour="#c8eef9" spinnerColour="#0070c4" />
+        <GoAElementLoader visible={true} size='default' baseColour="#c8eef9" spinnerColour="#0070c4" />
       </GoAButton>
     );
   };
@@ -143,8 +142,10 @@ const CreateRealm = (): JSX.Element => {
       ) : (
         <Main>
           <h1 className="thin-font">Tenant creation failed</h1>
-          <p><b>{userInfo?.email}</b> does not have the "beta tester" role. You require the "beta-tester" role to create
-          a tenant.</p>
+          <p>
+            <b>{userInfo?.email}</b> does not have the "beta tester" role. You require the "beta-tester" role to create
+            a tenant.
+          </p>
           <div className="padding-bottom-2">
             Please contact <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a> for more information.
           </div>

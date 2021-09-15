@@ -14,19 +14,14 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
         ...state,
         applications: action.payload.sort(compareIds),
       };
-    case 'status/SAVE_APPLICATION_SUCCESS': {
-      const applications = [...state.applications.filter((app) => app._id !== action.payload._id), action.payload];
-      return {
-        ...state,
-        applications: applications.sort(compareIds),
-      };
-    }
     case 'status/DELETE_APPLICATION_SUCCESS':
       return {
         ...state,
         applications: [...state.applications.filter((app) => app._id !== action.payload)].sort(compareIds),
       };
+    case 'status/SAVE_APPLICATION_SUCCESS':
     case 'status/SET_APPLICATION_STATUS_SUCCESS':
+    case 'status/TOGGLE_APPLICATION_STATUS_SUCCESS':
       return {
         ...state,
         applications: [...state.applications.filter((app) => app._id !== action.payload._id), action.payload].sort(

@@ -1,5 +1,4 @@
-import { UnauthorizedError, NewOrExisting, Update } from '@core-services/core-common';
-import { InvalidParamsError } from '../common/errors';
+import { UnauthorizedError, NewOrExisting, Update, InvalidValueError } from '@core-services/core-common';
 import { NoticeRepository } from '../repository/notice';
 import { NoticeApplication, NoticeModeType, isValidNoticeModeType, ServiceUserRoles } from '../types';
 import type { User } from '@abgov/adsp-service-sdk';
@@ -45,12 +44,12 @@ export class NoticeApplicationEntity {
     }
 
     if (update.mode && !isValidNoticeModeType(update.mode)) {
-      throw new InvalidParamsError('Input notice mode is not allowed.');
+      throw new InvalidValueError('Update notice', 'Input notice mode is not allowed.');
     }
 
     if (this.mode != 'draft') {
       if (this.mode == 'archived') {
-        throw new InvalidParamsError('Archived notice cannot be updated.');
+        throw new InvalidValueError('Update notice', 'Archived notice cannot be updated.');
       }
 
       this.mode = update.mode ?? this.mode;
@@ -61,7 +60,7 @@ export class NoticeApplicationEntity {
       this.endDate = update.endDate ?? this.endDate;
 
       if (this.mode === 'draft' && update.mode === 'archived') {
-        throw new InvalidParamsError('Draft notice can only be changed to active.');
+        throw new InvalidValueError('Update notice', 'Draft notice can only be changed to active.');
       }
 
       this.mode = update.mode ?? this.mode;
