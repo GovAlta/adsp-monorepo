@@ -31,7 +31,6 @@ export const GoAContextMenuText: FC<ContextMenuTextProps> = (props) => {
 export const GoAContextMenu = styled.div`
   display: flex;
   align-items: center;
-  padding: 0.25rem 0.5rem;
   background-color: #fff;
   gap: 0.25rem;
 

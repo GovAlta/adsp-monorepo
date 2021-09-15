@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { GoAButton, GoANotification } from '@abgov/react-components';
-import { GoAElementLoader } from '@abgov/react-components/experimental';
+import { GoAButton, GoANotification, GoAElementLoader  } from '@abgov/react-components';
 import { CreateTenant, IsTenantAdmin } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 import GoALinkButton from '@components/LinkButton';

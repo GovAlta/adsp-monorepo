@@ -14,7 +14,7 @@ const sizeMap: { [key: string]: string } = {
 };
 
 function CloseCircle({ size }: Props): ReactElement {
-  return <Close style={{ color: `var(--color-red-700)` }} width={sizeMap[size]} />;
+  return <Close style={{ color: `var(--color-red)` }} width={sizeMap[size]} />;
 }
 
 export default CloseCircle;
