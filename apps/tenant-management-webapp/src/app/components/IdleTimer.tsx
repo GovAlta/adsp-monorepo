@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import styled from 'styled-components';
 import { GoAButton } from '@abgov/react-components';
-import Dialog from './Dialog';
+import { GoAModal, GoAModalTitle, GoAModalActions } from '@abgov/react-components/experimental';
 
 interface IdleTimerProps {
   // Unit min
@@ -10,26 +9,12 @@ interface IdleTimerProps {
   continueFn?;
 }
 
-// TODO: Update the style of modal based on future design. Do NOT user the modal style for other component.
-const Center = styled.div`
-  width: 500px;
-  top: 50%;
-  left: 50%;
-  position: fixed;
-  margin-top: -250px;
-  margin-left: -250px;
-  padding-left: 50px;
-  padding-right: 50px;
-  padding-top: 20px;
-  padding-bottom: 40px;
-`;
-
-interface DialogProps {
+interface ModalProps {
   timeoutFn;
   continueFn;
 }
 
-const IdleTimerDialog = (props: DialogProps) => {
+const IdleTimerModal = (props: ModalProps) => {
   const maxWaitTime = 10;
   const [count, setCount] = useState(maxWaitTime);
 
@@ -44,20 +29,14 @@ const IdleTimerDialog = (props: DialogProps) => {
   }, [count]);
 
   return (
-    <Center>
-      <Dialog open={true}>
-        <h3>User Session Will Timeout in {count}s</h3>
-        <br />
-        <GoAButton
-          buttonType={'primary'}
-          onClick={() => {
-            props.continueFn();
-          }}
-        >
+    <GoAModal isOpen={true}>
+      <GoAModalTitle>User Session Will Timeout in {count}s</GoAModalTitle>
+      <GoAModalActions>
+        <GoAButton buttonType="primary" onClick={props.continueFn}>
           Stay On Page
         </GoAButton>
-      </Dialog>
-    </Center>
+      </GoAModalActions>
+    </GoAModal>
   );
 };
 
@@ -85,7 +64,7 @@ const IdleTimer = (props: IdleTimerProps) => {
     }, checkInterval);
   }, []);
 
-  return show && <IdleTimerDialog timeoutFn={props.timeoutFn} continueFn={props.continueFn} />;
+  return show && <IdleTimerModal timeoutFn={props.timeoutFn} continueFn={props.continueFn} />;
 };
 
 export { IdleTimer };

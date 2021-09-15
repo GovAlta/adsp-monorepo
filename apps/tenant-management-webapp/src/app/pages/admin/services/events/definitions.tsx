@@ -2,12 +2,20 @@ import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton } from '@abgov/react-components';
 import { EventDefinitionsList } from './definitionsList';
-import { EventDefinitionForm } from './edit';
-import Dialog, { DialogActions, DialogContent, DialogTitle } from '@components/Dialog';
+import { EventDefinitionModalForm } from './edit';
+import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { deleteEventDefinition, getEventDefinitions, updateEventDefinition } from '@store/event/actions';
 import { EventDefinition } from '@store/event/models';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
+
+const emptyEventDefinition: EventDefinition = {
+  isCore: false,
+  namespace: '',
+  name: '',
+  description: '',
+  payloadSchema: {}
+}
 
 export const EventDefinitions: FunctionComponent = () => {
   const [editDefinition, setEditDefinition] = useState(false);
@@ -33,7 +41,7 @@ export const EventDefinitions: FunctionComponent = () => {
 
   function reset() {
     setEditDefinition(false);
-    setSelectedDefinition(null);
+    setSelectedDefinition(emptyEventDefinition);
     setErrors({});
   }
 
@@ -48,26 +56,26 @@ export const EventDefinitions: FunctionComponent = () => {
             setEditDefinition(true);
           }}
         >
-          Add definition
+          Add Definition
         </GoAButton>
       </Buttons>
 
       <EventDefinitionsList
         onEdit={(def: EventDefinition) => {
-          setEditDefinition(true);
           setSelectedDefinition(def);
+          setEditDefinition(true);
         }}
         onDelete={(def: EventDefinition) => {
-          setShowDeleteConfirmation(true);
           setSelectedDefinition(def);
+          setShowDeleteConfirmation(true);
         }}
       />
 
       {/* Delete confirmation */}
-      <Dialog testId="delete-confirmation" open={showDeleteConfirmation}>
-        <DialogTitle>Delete Definition</DialogTitle>
-        <DialogContent>Delete {selectedDefinition?.name}?</DialogContent>
-        <DialogActions>
+      <GoAModal testId="delete-confirmation" isOpen={showDeleteConfirmation}>
+        <GoAModalTitle>Delete Definition</GoAModalTitle>
+        <GoAModalContent>Delete {selectedDefinition?.name}?</GoAModalContent>
+        <GoAModalActions>
           <GoAButton buttonType="tertiary" data-testid="delete-cancel" onClick={() => setShowDeleteConfirmation(false)}>
             Cancel
           </GoAButton>
@@ -81,40 +89,36 @@ export const EventDefinitions: FunctionComponent = () => {
           >
             Confirm
           </GoAButton>
-        </DialogActions>
-      </Dialog>
+        </GoAModalActions>
+      </GoAModal>
 
       {/* Form */}
-      <Dialog testId="definition-form" open={editDefinition}>
-        <DialogTitle>{selectedDefinition ? 'Edit Definition' : 'Add Definition'}</DialogTitle>
-        <DialogContent>
-          <EventDefinitionForm
-            initialValue={selectedDefinition}
-            errors={errors}
-            onSave={(definition) => {
-              if (definition.namespace.includes(':')) {
-                setErrors({ ...errors, namespace: 'Must not contain `:` character' });
-                return;
-              }
-              if (definition.name.includes(':')) {
-                setErrors({ ...errors, name: 'Must not contain `:` character' });
-                return;
-              }
+      <EventDefinitionModalForm
+        open={editDefinition}
+        initialValue={selectedDefinition}
+        errors={errors}
+        onSave={(definition) => {
+          if (definition.namespace.includes(':')) {
+            setErrors({ ...errors, namespace: 'Must not contain `:` character' });
+            return;
+          }
+          if (definition.name.includes(':')) {
+            setErrors({ ...errors, name: 'Must not contain `:` character' });
+            return;
+          }
 
-              if (coreNamespaces.includes(definition.namespace.toLowerCase())) {
-                setErrors({ ...errors, namespace: 'Cannot add definitions to core namespaces' });
-                return;
-              }
+          if (coreNamespaces.includes(definition.namespace.toLowerCase())) {
+            setErrors({ ...errors, namespace: 'Cannot add definitions to core namespaces' });
+            return;
+          }
 
-              dispatch(updateEventDefinition(definition));
-              reset();
-            }}
-            onCancel={() => {
-              reset();
-            }}
-          />
-        </DialogContent>
-      </Dialog>
+          dispatch(updateEventDefinition(definition));
+          reset();
+        }}
+        onCancel={() => {
+          reset();
+        }}
+      />
     </>
   );
 };

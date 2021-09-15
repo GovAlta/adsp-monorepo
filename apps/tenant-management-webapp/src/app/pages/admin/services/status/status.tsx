@@ -14,7 +14,8 @@ import { Route, Switch, useHistory, useLocation } from 'react-router-dom';
 import styled, { CSSProperties } from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import GoALinkButton from '@components/LinkButton';
-import ApplicationForm from './form';
+import { GoABadge, GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
+import ApplicationFormModal from './form';
 import NoticeForm from './noticeForm';
 import { GoAButton } from '@abgov/react-components';
 import { GoAForm, GoAFormItem } from '@components/Form';
@@ -23,15 +24,6 @@ import { Tab, Tabs } from '@components/Tabs';
 import { getNotices } from '@store/notice/actions';
 import { NoticeList } from './noticeList';
 import SupportLinks from '@components/SupportLinks';
-
-// icons
-import {
-  GoABadge,
-  GoAModal,
-  GoAModalActions,
-  GoAModalContent,
-  GoAModalTitle,
-} from '@abgov/react-components/experimental';
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
@@ -122,7 +114,7 @@ function Status(): JSX.Element {
 
       <Switch>
         <Route path="/admin/services/status/new">
-          <ApplicationForm />
+          <ApplicationFormModal isOpen={ true} />
         </Route>
         <Route path="/admin/services/status/notice/new">
           <GoAModal isOpen={true}>
@@ -141,7 +133,7 @@ function Status(): JSX.Element {
           </GoAModal>
         </Route>
         <Route path="/admin/services/status/:applicationId/edit">
-          <ApplicationForm />
+          <ApplicationFormModal isOpen={ true} />
         </Route>
       </Switch>
     </Page>
@@ -229,7 +221,7 @@ function Application(app: ServiceStatusApplication) {
         </GoAButton>
       </AppHealth>
 
-      {/* Dialogs */}
+      {/* GoAModals */}
 
       {/* Delete confirmation dialog */}
       <GoAModal isOpen={showDeleteConfirmation}>

@@ -1,14 +1,18 @@
 import { RootState } from '@store/index';
 import { saveApplication } from '@store/status/actions';
 import { ServiceStatusApplication } from '@store/status/models';
-import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+import React, { useState, useEffect, ChangeEvent, FC } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useParams } from 'react-router-dom';
-import { GoAButton} from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@components/Form';
 
-function ApplicationForm(): JSX.Element {
+interface Props {
+  isOpen: boolean;
+}
+
+export const ApplicationFormModal: FC<Props> = ({ isOpen }: Props) => {
   const dispatch = useDispatch();
   const serviceStatus = useSelector((state: RootState) => state.serviceStatus);
   const history = useHistory();
@@ -79,6 +83,6 @@ function ApplicationForm(): JSX.Element {
       </GoAModalActions>
     </GoAModal>
   );
-}
+};
 
-export default ApplicationForm;
+export default ApplicationFormModal;
