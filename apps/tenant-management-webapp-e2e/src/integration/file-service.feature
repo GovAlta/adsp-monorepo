@@ -121,3 +121,9 @@ Feature: File service
     Then the user views file types page
     When the user adds a file type of "autotest-type6", "auto-test-role1", "auto-test-role2"
     Then the user views an error message for duplicated file name
+
+  @FileTypes @accessibility @regression
+  Scenario: As a service owner, I can manage file types without any critical or serious accessibility issues
+    Given a service owner user is on file services overview page
+    When the user selects "File Types" tab for "File Services"
+    Then no critical or serious accessibility issues on "file types page"

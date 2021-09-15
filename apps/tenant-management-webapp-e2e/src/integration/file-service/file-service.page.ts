@@ -112,7 +112,7 @@ class FileServicePage {
   }
 
   fileTypeDeleteModalFileTypeName() {
-    return cy.xpath('//*[@data-testid="callout-content"]/p[contains(text(),"Deleting")]/b');
+    return cy.xpath('//*[@data-testid="file-delete-modal-content"]/p[contains(text(),"Deleting")]/b');
   }
 
   fileTypesErrorMessage() {
