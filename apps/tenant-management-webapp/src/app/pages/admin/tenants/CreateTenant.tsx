@@ -66,7 +66,7 @@ const CreateRealm = (): JSX.Element => {
     return (
       <GoAButton buttonType="primary" buttonSize="normal" disabled>
         Creating Tenant...
-        <GoAElementLoader visible={true} size={15} baseColour="#c8eef9" spinnerColour="#0070c4" />
+        <GoAElementLoader visible={true} size='default' baseColour="#c8eef9" spinnerColour="#0070c4" />
       </GoAButton>
     );
   };

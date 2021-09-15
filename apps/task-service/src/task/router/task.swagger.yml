@@ -89,6 +89,49 @@ components:
         assignedOn:
           type: string
           format: date-time
+    AssignTask:
+      type: object
+      properties:
+        operation:
+          type: string
+        assignTo:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            email:
+              type: string
+      required: [operation, assignTo]
+    SetTaskPriority:
+      type: object
+      properties:
+        operation:
+          type: string
+        priority:
+          type: number
+      required: [operation, priority]
+    StartTask:
+      type: object
+      properties:
+        operation:
+          type: string
+      required: [operation]
+    CompleteTask:
+      type: object
+      properties:
+        operation:
+          type: string
+      required: [operation]
+    CancelTask:
+      type: object
+      properties:
+        operation:
+          type: string
+        reason:
+          type: string
+      required: [operation]
 
 /task/v1/tasks:
   get:
@@ -180,7 +223,45 @@ components:
                     - type: string
                     - type: number
                     - type: boolean
-
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Task"
+      404:
+        description: Task not found.
+  post:
+    tags:
+      - Task
+    description: Executes a task operation.
+    parameters:
+      - name: id
+        description: ID of the task.
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: "#/components/schemas/AssignTask"
+              - $ref: "#/components/schemas/SetTaskPriority"
+              - $ref: "#/components/schemas/StartTask"
+              - $ref: "#/components/schemas/CompleteTask"
+              - $ref: "#/components/schemas/CancelTask"
+            discriminator:
+              propertyName: operation
+              mapping:
+                assign: "#/components/schemas/AssignTask"
+                set-priority: "#/components/schemas/SetTaskPriority"
+                start: "#/components/schemas/StartTask"
+                complete: "#/components/schemas/CompleteTask"
+                cancel: "#/components/schemas/CancelTask"
     responses:
       200:
         description: Request completed successfully.

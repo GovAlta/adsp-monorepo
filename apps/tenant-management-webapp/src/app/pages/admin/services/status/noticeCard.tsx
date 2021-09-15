@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Notice } from '@store/notice/models';
 import styled from 'styled-components';
-import { GoABadge } from '@abgov/react-components';
+import { GoABadge } from '@abgov/react-components/experimental';
 import SettingIcon from '@assets/icons/setting-filled.svg';
 import { DraftDropdownMenu, PublishedDropdownMenu } from './noticeCardMenu';
 import { fetchServiceStatusApps } from '@store/status/actions';
