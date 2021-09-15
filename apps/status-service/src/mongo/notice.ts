@@ -1,4 +1,4 @@
-import { Doc, Results, decodeAfter, encodeNext } from '@core-services/core-common';
+import { Doc, Results } from '@core-services/core-common';
 import { Model, model, Document } from 'mongoose';
 import { NoticeApplication } from '../app/types/index';
 import { NoticeApplicationEntity } from '../app/model/notice';
@@ -12,7 +12,7 @@ export default class MongoNoticeRepository implements NoticeRepository {
   }
 
   async get(id: string, tenantId: string): Promise<NoticeApplicationEntity> {
-    const doc = await this.model.findOne({_id: id});
+    const doc = await this.model.findOne({ _id: id });
     if (tenantId && doc && doc.tenantId !== tenantId) {
       return Promise.resolve(null)
     }
@@ -31,10 +31,10 @@ export default class MongoNoticeRepository implements NoticeRepository {
     }
 
     if (filter.tenantId) {
-      criteria = { ...criteria, tenantId: filter.tenantId}
+      criteria = { ...criteria, tenantId: filter.tenantId }
     }
 
-    const total = await this.model.find(criteria, null, {lean: true}).count();
+    const total = await this.model.find(criteria, null, { lean: true }).count();
     const next = (after + top) < total ? `after=${after + top}&top=${top}` : null
     return new Promise<Results<NoticeApplicationEntity>>((resolve, reject) => {
       this.model
@@ -46,14 +46,14 @@ export default class MongoNoticeRepository implements NoticeRepository {
           err
             ? reject(err)
             : resolve({
-                results: docs.map((doc) => this.fromDoc(doc)),
-                page: {
-                  after,
-                  next,
-                  size: docs.length,
-                  total
-                },
-              })
+              results: docs.map((doc) => this.fromDoc(doc)),
+              page: {
+                after,
+                next,
+                size: docs.length,
+                total
+              },
+            })
         );
     });
   }

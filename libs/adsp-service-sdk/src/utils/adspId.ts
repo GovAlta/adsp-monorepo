@@ -1,9 +1,10 @@
+import { GoAError, GoAErrorExtra } from './errors';
+import * as HttpStatusCodes from 'http-status-codes';
 const PREFIX = 'urn:ads:';
 
-export class AdspIdFormatError extends Error {
-  constructor(message: string) {
-    super(message);
-
+export class AdspIdFormatError extends GoAError {
+  constructor(message: string, extra?: GoAErrorExtra) {
+    super(message, { statusCode: HttpStatusCodes.BAD_REQUEST, ...extra });
     Object.setPrototypeOf(this, AdspIdFormatError.prototype);
   }
 }
@@ -48,7 +49,7 @@ export class AdspId {
     public service: string,
     public api: string,
     public resource: string
-  ) {}
+  ) { }
 
   #formatSegment = (segment: string): string => {
     return segment ? `:${segment}` : '';

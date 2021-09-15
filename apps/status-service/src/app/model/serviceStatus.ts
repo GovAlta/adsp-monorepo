@@ -1,6 +1,5 @@
 import type { User } from '@abgov/adsp-service-sdk';
-import { NewOrExisting, Update } from '@core-services/core-common';
-import { MissingParamsError, UnauthorizedError } from '../common/errors';
+import { NewOrExisting, Update, InvalidValueError, UnauthorizedError } from '@core-services/core-common';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import {
   ManualOverrideState,
@@ -68,7 +67,7 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
       throw new UnauthorizedError('User not authorized to add applications.');
     }
     if (!url) {
-      throw new MissingParamsError('Url is required');
+      throw new InvalidValueError('add endpoint', 'Url is required');
     }
     this.endpoints.push({ url, status: 'pending' });
     return this.repository.save(this);
@@ -79,7 +78,7 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
       throw new UnauthorizedError('User not authorized to add applications.');
     }
     if (!url) {
-      throw new MissingParamsError('Url is required');
+      throw new InvalidValueError('remove endpoint', 'Url is required');
     }
     const index = this.endpoints.findIndex((endpoint) => endpoint.url !== url);
     this.endpoints.splice(index, 1);
