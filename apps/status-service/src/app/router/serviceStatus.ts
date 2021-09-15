@@ -1,9 +1,8 @@
 import type { User } from '@abgov/adsp-service-sdk';
-import { assertAuthenticatedHandler } from '@core-services/core-common';
+import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import axios, { AxiosRequestConfig } from 'axios';
 import { Router } from 'express';
 import { Logger } from 'winston';
-import { RecordNotFoundError, UnauthorizedError } from '../common/errors';
 import { ServiceStatusApplicationEntity } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
@@ -182,7 +181,7 @@ export function createServiceStatusRouter({
     const application = await serviceStatusRepository.get(applicationId);
 
     if (!application) {
-      throw new RecordNotFoundError();
+      throw new NotFoundError('Status application', applicationId.toString());
     }
 
     if (tenantId?.toString() !== application.tenantId) {

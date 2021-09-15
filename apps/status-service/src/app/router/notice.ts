@@ -27,7 +27,6 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
     const anonymous = !user
     const isAdmin = user && user.roles.includes(ServiceUserRoles.StatusAdmin)
     const filter: NoticeFilter = {}
-
     filter.mode = 'active'
 
     if (!anonymous) {
@@ -35,7 +34,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
     }
 
     if (isAdmin) {
-      filter.mode = mode ? mode.toString() as NoticeModeType: null
+      filter.mode = mode ? mode.toString() as NoticeModeType : null
     }
 
     try {
@@ -106,28 +105,35 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
       res.json(application);
     } catch (err) {
       const errMessage = `Error deleting notice: ${err.message}`;
-
       logger.error(errMessage);
       next(err);
     }
   });
 
   // Add notice
-  router.post('/', assertAuthenticatedHandler, async (req, res) => {
+  router.post('/', assertAuthenticatedHandler, async (req, res, next) => {
+
+
     logger.info(`${req.method} - ${req.url}`);
 
-    const { message, tennantServRef, startDate, endDate } = req.body;
-    const user = req.user as Express.User;
-    const app = await NoticeApplicationEntity.create(user, noticeRepository, {
-      message,
-      tennantServRef,
-      startDate,
-      endDate,
-      mode: 'draft',
-      created: new Date(),
-      tenantId: user.tenantId.toString()
-    });
-    res.status(201).json(app);
+    try {
+      const { message, tennantServRef, startDate, endDate } = req.body;
+      const user = req.user as Express.User;
+      const app = await NoticeApplicationEntity.create(user, noticeRepository, {
+        message,
+        tennantServRef,
+        startDate,
+        endDate,
+        mode: 'draft',
+        created: new Date(),
+        tenantId: user.tenantId.toString()
+      });
+      res.status(201).json(app);
+    } catch (err) {
+      const errMessage = `Error creating notice: ${err.message}`;
+      logger.error(errMessage);
+      next(err);
+    }
   });
 
   // Update notice fields or mode
@@ -141,11 +147,9 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
     try {
       // TODO: this needs to be moved to a service
       const application = await noticeRepository.get(id, user.tenantId.toString());
-
       if (!application) {
         throw new NotFoundError('Service Notice', id);
       }
-
       const updatedApplication = await application.update(user, {
         message,
         tennantServRef,
@@ -157,7 +161,6 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
     } catch (err) {
       const errMessage = `Error updating notice: ${err.message}`;
       logger.error(errMessage);
-
       next(err);
     }
   });
