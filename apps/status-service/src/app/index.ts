@@ -19,7 +19,7 @@ export const bindEndpoints = (app: Application, props: HealthMiddlewareProps): v
   // bind all service endpoints
   app.use('/status/v1', props.authenticate, createServiceStatusRouter(props));
   app.use('/public_status/v1', createPublicServiceStatusRouter(props));
-  app.use('/notices/v1', props.authenticate, createNoticeRouter(props));
+  app.use('/notice/v1', props.authenticate, createNoticeRouter(props));
 
   // api docs
   let swagger = null;

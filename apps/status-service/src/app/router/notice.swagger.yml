@@ -5,7 +5,7 @@
 500: &500
   description: Internal server error
 
-'/notices/v1/':
+'/notice/v1/notices':
   get:
     tags: [NoticeApplicationEntity]
     description: Retrieves all published (mode=active) notices for public user;
@@ -64,7 +64,7 @@
       401: *401
       500: *500
 
-'/notices/v1/{id}':
+'/notice/v1/notices{id}':
   get:
     tags: [NoticeApplicationEntity]
     description: Retrieves a single notice.

@@ -5,7 +5,7 @@ import { Notice, Notices } from './models';
 export class NoticeApi {
   private http: AxiosInstance;
   constructor(baseUrl: string, token: string) {
-    this.http = axios.create({ baseURL: `${baseUrl}/notices/v1` });
+    this.http = axios.create({ baseURL: `${baseUrl}/notice/v1/notices` });
     addAuthTokenInterceptor(this.http, token);
   }
 
