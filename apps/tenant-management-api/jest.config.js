@@ -1,6 +1,6 @@
 module.exports = {
   name: 'tenant-management-api',
-  preset: '../../jest.config.js',
+  preset: '../../jest.preset.js',
   globals: {
     'ts-jest': { tsconfig: '<rootDir>/tsconfig.spec.json' },
   },

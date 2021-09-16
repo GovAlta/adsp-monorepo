@@ -97,7 +97,7 @@ describe('File Entity', () => {
     expect(entity.deleted).toEqual(true);
   });
 
-  it('can create new', async (done) => {
+  it('can create new', async () => {
     typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(true);
 
     typeMock.setup((m) => m.getPath(It.Is<string>((storage) => !!storage))).returns(typePath);
@@ -127,10 +127,9 @@ describe('File Entity', () => {
     expect(fileEntity).toBeTruthy();
     expect(renameSyncMock.mock.calls[0][0]).toEqual('tmp-file');
     expect(renameSyncMock.mock.calls[0][1]).toEqual(`${typePath}${separator}${fileEntity.storage}`);
-    done();
   });
 
-  it('can prevent unauthorized user create new', async (done) => {
+  it('can prevent unauthorized user create new', async () => {
     typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(false);
 
     const file = {
@@ -148,7 +147,6 @@ describe('File Entity', () => {
       await FileEntity.create(user, repositoryMock.object(), typeMock.object(), file, 'tmp-file', storagePath);
     } catch (err) {
       expect(err).toBeInstanceOf(UnauthorizedError);
-      done();
     }
   });
 

@@ -31,7 +31,7 @@ describe('IssuerCache', () => {
     expect(cache).toBeTruthy();
   });
 
-  it('can get tenant from cache', async (done) => {
+  it('can get tenant from cache', async () => {
     const tenant = {
       id: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       name: 'test',
@@ -44,10 +44,9 @@ describe('IssuerCache', () => {
     const result = await cache.getTenantByIssuer('issuer');
 
     expect(result).toBe(tenant);
-    done();
   });
 
-  it('can get tenants from service on cache miss', async (done) => {
+  it('can get tenants from service on cache miss', async () => {
     const tenant = {
       id: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       name: 'test',
@@ -63,10 +62,9 @@ describe('IssuerCache', () => {
 
     expect(result).toBe(tenant);
     expect(serviceMock.getTenants).toHaveBeenCalledTimes(1);
-    done();
   });
 
-  it('can return null on update error', async (done) => {
+  it('can return null on update error', async () => {
     const tenant = {
       id: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       name: 'test',
@@ -82,6 +80,5 @@ describe('IssuerCache', () => {
 
     expect(result).toBeFalsy();
     expect(serviceMock.getTenants).toHaveBeenCalledTimes(1);
-    done();
   });
 });

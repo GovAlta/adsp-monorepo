@@ -8,15 +8,13 @@ describe('Service status mongo repository', () => {
   let repo: MongoServiceStatusRepository;
   let mongoose: typeof import('mongoose');
 
-  beforeEach(async (done) => {
+  beforeEach(async () => {
     mongoose = await createMockMongoServer();
     repo = new MongoServiceStatusRepository();
-    done();
   });
 
-  afterEach(async (done) => {
+  afterEach(async () => {
     await disconnectMockMongo();
-    done();
   });
 
   function insertMockData(

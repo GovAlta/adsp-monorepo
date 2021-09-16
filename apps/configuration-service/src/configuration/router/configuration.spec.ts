@@ -540,7 +540,7 @@ describe('router', () => {
 
       await handler(req, (res as unknown) as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
-      expect(entity.update).toHaveBeenCalledWith(req.user, expect.not.objectContaining(entity.latest.configuration));
+      expect(entity.update).toHaveBeenCalledWith(req.user, expect.not.objectContaining({ old: 'old' }));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
     });
 

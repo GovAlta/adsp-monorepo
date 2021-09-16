@@ -50,14 +50,12 @@ describe('File Space Router', () => {
     },
   ];
 
-  beforeEach(async (done) => {
+  beforeEach(async () => {
     await connect();
-    done();
   });
 
-  afterEach(async (done) => {
+  afterEach(async () => {
     await disconnect();
-    done();
   });
 
   beforeEach(() => {

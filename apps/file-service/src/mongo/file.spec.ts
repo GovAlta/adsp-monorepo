@@ -30,14 +30,12 @@ describe('Mongo: FileEntity', () => {
     deleted: false,
   };
 
-  beforeEach(async (done) => {
+  beforeEach(async () => {
     await connect();
-    done();
   });
 
-  afterEach(async (done) => {
+  afterEach(async () => {
     await disconnect();
-    done();
   });
 
   it('finds a defined file', async () => {
