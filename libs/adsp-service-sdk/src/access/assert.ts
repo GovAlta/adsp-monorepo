@@ -1,9 +1,11 @@
 import { User } from './user';
-import { GoAError } from '../utils';
+import { GoAError, GoAErrorExtra } from '../utils';
+import * as HttpStatusCodes from 'http-status-codes';
 
 export class UnauthorizedUserError extends GoAError {
-  constructor(operation: string, user: User) {
-    super(`User ${user?.name} (ID: ${user?.id}) not permitted to ${operation}.`);
+  constructor(operation: string, user: User, extra?: GoAErrorExtra) {
+    super(`User ${user?.name} (ID: ${user?.id}) not permitted to ${operation}.`,
+      { statusCode: HttpStatusCodes.FORBIDDEN, ...extra });
 
     Object.setPrototypeOf(this, UnauthorizedUserError.prototype);
   }

@@ -4,6 +4,7 @@ import {
   NotFoundError,
   InvalidOperationError,
 } from '.';
+import * as HttpStatusCodes from 'http-status-codes';
 
 describe('errors', () => {
   // tests for all pre-defined error types
@@ -13,9 +14,9 @@ describe('errors', () => {
   const notFoundError = new NotFoundError('mock-err-message-not-found', 'id');
 
   it('can be created', () => {
-    expect(invalidValueError.extra).toBeTruthy;
-    expect(unauthorizedError.extra).toBeTruthy;
-    expect(invalidOperationError.extra).toBeTruthy;
-    expect(notFoundError.extra).toBeTruthy;
+    expect(invalidValueError.extra.statusCode).toEqual(HttpStatusCodes.BAD_REQUEST);
+    expect(unauthorizedError.extra.statusCode).toEqual(HttpStatusCodes.UNAUTHORIZED);
+    expect(invalidOperationError.extra.statusCode).toEqual(HttpStatusCodes.BAD_REQUEST);
+    expect(notFoundError.extra.statusCode).toEqual(HttpStatusCodes.NOT_FOUND);
   });
 });

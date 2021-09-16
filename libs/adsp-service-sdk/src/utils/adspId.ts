@@ -1,9 +1,10 @@
-import { GoAError } from './errors';
+import { GoAError, GoAErrorExtra } from './errors';
+import * as HttpStatusCodes from 'http-status-codes';
 const PREFIX = 'urn:ads:';
 
 export class AdspIdFormatError extends GoAError {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, extra?: GoAErrorExtra) {
+    super(message, { statusCode: HttpStatusCodes.BAD_REQUEST, ...extra });
     Object.setPrototypeOf(this, AdspIdFormatError.prototype);
   }
 }
