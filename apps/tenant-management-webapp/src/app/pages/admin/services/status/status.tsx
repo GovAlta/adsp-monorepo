@@ -369,6 +369,14 @@ const EndpointStatusEntries = styled.div`
 const EndpointStatusTick = styled.div`
   flex: 1 1 auto;
   height: 20px;
+  &:first-child {
+    border-top-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem;
+  }
+  &:last-child {
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+  }
 `;
 
 // =================
