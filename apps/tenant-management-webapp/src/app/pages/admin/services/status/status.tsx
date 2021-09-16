@@ -15,6 +15,7 @@ import styled, { CSSProperties } from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import GoALinkButton from '@components/LinkButton';
 import { GoABadge, GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
+import type { GoABadgeType } from '@abgov/react-components/experimental';
 import ApplicationFormModal from './form';
 import NoticeForm from './noticeForm';
 import { GoAButton } from '@abgov/react-components';
@@ -171,7 +172,7 @@ function Application(app: ServiceStatusApplication) {
     return value.substr(0, 1).toUpperCase() + value.substr(1);
   }
 
-  const publicStatusMap: { [key: string]: string } = {
+  const publicStatusMap: { [key: string]: GoABadgeType} = {
     operational: 'success',
     maintenance: 'warning',
     'reported-issues': 'emergency',
