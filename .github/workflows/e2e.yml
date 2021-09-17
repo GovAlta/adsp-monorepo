@@ -19,7 +19,7 @@ jobs:
       name: ${{ github.event.inputs.ENVIRONMENT }}
     env:
       APP: ${{ github.event.inputs.APP }}
-      ENV: ${{ github.event.inputs.ENVIRONMENT.lowercase }}
+      ENV: ${{ github.event.inputs.ENVIRONMENT }}
       TAGS: ${{ github.event.inputs.TAGS }}
     steps:
       - uses: actions/checkout@v2
@@ -27,9 +27,9 @@ jobs:
         with:
           node-version: "12"
       - run: |
-          sed -i '' -r -e "s/\"TAGS\":.+\"$/\"TAGS\": \"TAGS\"/" ./apps/$APP-e2e/cypress.$ENV.json
+          sed -i '' -r -e "s/\"TAGS\":.+\"$/\"TAGS\": \"TAGS\"/" ./apps/$APP-e2e/cypress.${ENV,,}.json
       - name: E2E Test
         uses: cypress-io/github-action@v2
         with:
           install-command: npm ci
-          command: npx nx e2e $APP-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config="apps/$APP-e2e/cypress.$ENV.json"
+          command: npx nx e2e $APP-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config="apps/$APP-e2e/cypress.${ENV,,}.json"
