@@ -17,7 +17,7 @@ describe('AmqpWorkQueueService<string>', () => {
     expect(service).toBeTruthy();
   });
 
-  it('can connect', async (done) => {
+  it('can connect', async () => {
     const channel = {
       assertExchange: jest.fn(),
       assertQueue: jest.fn(),
@@ -34,10 +34,9 @@ describe('AmqpWorkQueueService<string>', () => {
 
     expect(connected).toBeTruthy();
     expect(service.isConnected()).toBeTruthy();
-    done();
   });
 
-  it('can handle error on connect', async (done) => {
+  it('can handle error on connect', async () => {
     const channel = {
       assertExchange: jest.fn(),
       assertQueue: jest.fn(),
@@ -56,11 +55,10 @@ describe('AmqpWorkQueueService<string>', () => {
 
     expect(connected).toBeFalsy();
     expect(service.isConnected()).toBeFalsy();
-    done();
   });
 
   describe('Subscriber', () => {
-    it('can receive item', async (done) => {
+    it('can receive item', (done) => {
       const workItem = {
         value: 'test',
       };
@@ -86,17 +84,17 @@ describe('AmqpWorkQueueService<string>', () => {
         logger,
         (connection as unknown) as Connection
       );
-      await service.connect();
-
-      service.getItems().subscribe(({ item, done: workDone }) => {
-        expect(item).toEqual(workItem);
-        workDone();
-        expect(subChannel.ack).toHaveBeenCalledTimes(1);
-        done();
+      service.connect().then(() => {
+        service.getItems().subscribe(({ item, done: workDone }) => {
+          expect(item).toEqual(workItem);
+          workDone();
+          expect(subChannel.ack).toHaveBeenCalledTimes(1);
+          done();
+        });
       });
     });
 
-    it('can nack and requeue failed item', async (done) => {
+    it('can nack and requeue failed item', (done) => {
       const workItem = {
         value: 'test',
       };
@@ -123,18 +121,18 @@ describe('AmqpWorkQueueService<string>', () => {
         logger,
         (connection as unknown) as Connection
       );
-      await service.connect();
-
-      service.getItems().subscribe(({ item, done: workDone }) => {
-        expect(item).toEqual(workItem);
-        workDone(new Error('Something went terribly wrong.'));
-        expect(subChannel.nack).toHaveBeenCalledTimes(1);
-        expect(subChannel.nack).toBeCalledWith(msg, false, true);
-        done();
+      service.connect().then(() => {
+        service.getItems().subscribe(({ item, done: workDone }) => {
+          expect(item).toEqual(workItem);
+          workDone(new Error('Something went terribly wrong.'));
+          expect(subChannel.nack).toHaveBeenCalledTimes(1);
+          expect(subChannel.nack).toBeCalledWith(msg, false, true);
+          done();
+        });
       });
     });
 
-    it('can nack and dead letter redelivered failed item', async (done) => {
+    it('can nack and dead letter redelivered failed item', (done) => {
       const workItem = {
         value: 'test',
       };
@@ -161,14 +159,14 @@ describe('AmqpWorkQueueService<string>', () => {
         logger,
         (connection as unknown) as Connection
       );
-      await service.connect();
-
-      service.getItems().subscribe(({ item, done: workDone }) => {
-        expect(item).toEqual(workItem);
-        workDone(new Error('Something went terribly wrong.'));
-        expect(subChannel.nack).toHaveBeenCalledTimes(1);
-        expect(subChannel.nack).toBeCalledWith(msg, false, false);
-        done();
+      service.connect().then(() => {
+        service.getItems().subscribe(({ item, done: workDone }) => {
+          expect(item).toEqual(workItem);
+          workDone(new Error('Something went terribly wrong.'));
+          expect(subChannel.nack).toHaveBeenCalledTimes(1);
+          expect(subChannel.nack).toBeCalledWith(msg, false, false);
+          done();
+        });
       });
     });
 

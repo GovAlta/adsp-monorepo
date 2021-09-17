@@ -33,8 +33,8 @@ describe('File Type Router', () => {
 
   const BaseTenant = {
     id: AdspId.parse('urn:ads:mock-tenant-id'),
-    realm: 'mock-realm'
-  }
+    realm: 'mock-realm',
+  };
 
   const BaseUser = {
     roles: ['base-roles'],
@@ -42,8 +42,8 @@ describe('File Type Router', () => {
     email: 'mock-user-user@gov.ab.ca',
     isCore: false,
     name: 'mock-user',
-    token: null
-  }
+    token: null,
+  };
 
   const entity = new FileTypeEntity(type);
 
@@ -60,14 +60,12 @@ describe('File Type Router', () => {
 
   mockFileRepo.setup((m) => m.save(It.IsAny())).callback((i) => Promise.resolve(i.args[0]));
 
-  beforeEach(async (done) => {
+  beforeEach(async () => {
     await connect();
-    done();
   });
 
-  afterEach(async (done) => {
+  afterEach(async () => {
     await disconnect();
-    done();
   });
 
   describe('PUT /fileTypes/:fileTypeId', () => {
@@ -91,7 +89,7 @@ describe('File Type Router', () => {
           req.body = { updateRoles: '2313' };
           req.tenant = { ...BaseTenant, name: 'space1234' };
           req.user = { ...BaseUser, roles: ['test-admin'] };
-          return next()
+          return next();
         });
         app.use(
           createFileTypeRouter({
@@ -145,7 +143,7 @@ describe('File Type Router', () => {
       sandbox = sinon.stub(AuthenticationWrapper, 'authenticationMethod').callsFake(function (req, res, next) {
         req.body = { updateRoles: '2313' };
         req.tenant = { ...BaseTenant, name: 'space1234' };
-        req.user = { ...BaseUser, roles: ['super-user'] }
+        req.user = { ...BaseUser, roles: ['super-user'] };
         return next();
       });
 

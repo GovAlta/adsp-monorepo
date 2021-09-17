@@ -5,14 +5,12 @@ import { TenantConfigEntity } from '../configuration';
 describe('Mongo: TenantConfig', () => {
   const repo = new MongoTenantConfigurationRepository();
 
-  beforeEach(async (done) => {
+  beforeEach(async () => {
     await connect();
-    done();
   });
 
-  afterEach(async (done) => {
+  afterEach(async () => {
     await disconnect();
-    done();
   });
 
   it('should create an option', async () => {

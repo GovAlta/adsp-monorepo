@@ -20,19 +20,17 @@ describe.skip('Validate endpoint checking', () => {
     token: null,
   };
 
-  beforeEach(async (done) => {
+  beforeEach(async () => {
     mongoose = await createMockMongoServer();
     serviceStatusRepository = new MongoServiceStatusRepository();
     endpointStatusEntryRepository = new MongoEndpointStatusEntryRepository({
       everyMilliseconds: 1,
       limit: 1000,
     });
-    done();
   });
 
-  afterEach(async (done) => {
+  afterEach(async () => {
     await disconnectMockMongo();
-    done();
   });
 
   function generateId(): string {

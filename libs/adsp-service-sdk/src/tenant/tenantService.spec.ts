@@ -42,7 +42,7 @@ describe('TenantService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('can getTenant from cache', async (done) => {
+  it('can getTenant from cache', async () => {
     axiosMock.get.mockImplementationOnce(() => Promise.resolve({ data: [] }));
 
     const service = new TenantServiceImpl(logger, directoryMock, tokenProviderMock);
@@ -53,11 +53,9 @@ describe('TenantService', () => {
 
     const tenant = await service.getTenant(id);
     expect(tenant).toBe(result);
-
-    done();
   });
 
-  it('can retrieve from API on cache miss', async (done) => {
+  it('can retrieve from API on cache miss', async () => {
     const id = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
     const result = { id, name: 'test' };
     axiosMock.get.mockImplementation((url) => {
@@ -70,7 +68,5 @@ describe('TenantService', () => {
     cacheMock.mockReturnValueOnce(null);
     const tenant = await service.getTenant(id);
     expect(`${tenant.id}`).toBe(`${result.id}`);
-
-    done();
   });
 });

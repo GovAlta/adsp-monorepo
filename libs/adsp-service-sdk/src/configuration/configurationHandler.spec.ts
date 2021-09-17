@@ -22,7 +22,7 @@ describe('createTenantHandler', () => {
     expect(handler).toBeTruthy();
   });
 
-  it('can add configuration getter', async (done) => {
+  it('can add configuration getter', (done) => {
     const handler = createConfigurationHandler(tokenProviderMock, serviceMock, adspId`urn:ads:platform:test`);
 
     const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;

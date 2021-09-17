@@ -21,14 +21,12 @@ describe('Mongo: SpaceEntity', () => {
   const cache = new NodeCache({ stdTTL: 86400, useClones: false });
   const repo = new MongoFileSpaceRepository(logger, cache);
 
-  beforeEach(async (done) => {
+  beforeEach(async () => {
     await connect();
-    done();
   });
 
-  afterEach(async (done) => {
+  afterEach(async () => {
     await disconnect();
-    done();
   });
 
   it('finds a defined space', async () => {
