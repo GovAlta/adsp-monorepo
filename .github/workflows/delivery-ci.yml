@@ -11,7 +11,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
-
+    outputs:
+      affected_apps: ${{ steps.set_outputs.outputs.affected_apps }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -106,7 +107,7 @@ jobs:
 
   deployTest:
     runs-on: ubuntu-20.04
-    needs: deployDev
+    needs: [build, deployDev]
     env:
       AFFECTED_APPS: ${{ needs.build.outputs.affected_apps }}
     environment:
@@ -136,7 +137,7 @@ jobs:
 
   deployStaging:
     runs-on: ubuntu-20.04
-    needs: deployTest
+    needs: [build, deployTest]
     env:
       AFFECTED_APPS: ${{ needs.build.outputs.affected_apps }}
     environment:
