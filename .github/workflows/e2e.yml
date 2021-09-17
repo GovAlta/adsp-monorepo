@@ -45,3 +45,11 @@ jobs:
         with:
           install-command: npm ci
           command: npx nx e2e ${{ github.event.inputs.APP }}-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config="apps/${{ github.event.inputs.APP }}-e2e/cypress.${{ github.event.inputs.ENVIRONMENT }}.json"
+      - run: |
+          node apps/$APP-e2e/src/support/multiple-cucumber-html-reporter.js
+          tar czf $APP-cypress-html-report.tar.gz dist/cypress/
+      - name: Upload Cypress Results
+        uses: actions/upload-artifact@v2
+        with:
+          name: cypress-html-report
+          path: ${{ github.event.inputs.APP }}-cypress-html-report.tar.gz
