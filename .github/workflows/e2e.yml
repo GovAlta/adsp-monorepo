@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: "12"
       - run: |
-          sed -i '' -r -e "s/\"TAGS\":.+\"$/\"TAGS\": \"$TAGS\"/" apps/$APP-e2e/cypress.$ENV.json
+          sed -i -r -e "s/\"TAGS\":.+\"$/\"TAGS\": \"$TAGS\"/" apps/$APP-e2e/cypress.$ENV.json
       - name: E2E Test
         uses: cypress-io/github-action@v2
         with:
