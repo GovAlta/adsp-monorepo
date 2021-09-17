@@ -78,6 +78,7 @@ jobs:
   deployDev:
     runs-on: ubuntu-20.04
     needs: build
+    if: needs.build.outputs.affected_apps
     env:
       AFFECTED_APPS: ${{ needs.build.outputs.affected_apps }}
     environment:

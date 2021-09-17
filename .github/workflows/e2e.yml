@@ -32,4 +32,4 @@ jobs:
         uses: cypress-io/github-action@v2
         with:
           install-command: npm ci
-          command: npx nx e2e $APP-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config="apps/$APP-e2e/cypress.$ENV.json"
+          command: npx nx e2e ${{ github.event.inputs.APP }}-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config="apps/$APP-e2e/cypress.$ENV.json"
