@@ -20,7 +20,6 @@ jobs:
     env:
       APP: ${{ github.event.inputs.APP }}
       ENV: ${{ github.event.inputs.ENVIRONMENT }}
-      TAGS: ${{ github.event.inputs.TAGS }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -32,7 +31,7 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
       - run: |
           sed -i -r \
-            -e "s/\"TAGS\":.+\"\"/\"TAGS\": \"$TAGS\"/" \
+            -e "s/\"TAGS\":.+\"\"/\"TAGS\": \"${{ github.event.inputs.TAGS }}\"/" \
             -e "s/\"core-api-client-secret\":.+\"\"/\"core-api-client-secret\": \"${{ secrets.CY_CORE_API_CLIENT_SECRET }}\"/" \
             -e "s/\"core-api-user-password\":.+\"\"/\"core-api-user-password\": \"${{ secrets.CY_CORE_API_USER_PASSWORD }}\"/" \
             -e "s/\"client-secret\":.+\"\"/\"client-secret\": \"${{ secrets.CY_CLIENT_SECRET }}\"/" \
@@ -45,11 +44,13 @@ jobs:
         with:
           install-command: npm ci
           command: npx nx e2e ${{ github.event.inputs.APP }}-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config="apps/${{ github.event.inputs.APP }}-e2e/cypress.${{ github.event.inputs.ENVIRONMENT }}.json"
-      - run: |
+      - if: ${{ failure() }}
+        run: |
           node apps/$APP-e2e/src/support/multiple-cucumber-html-reporter.js
           tar czf $APP-cypress-html-report.tar.gz dist/cypress/
-      - name: Upload Cypress Results
+      - if: ${{ failure() }}
+        name: Upload Cypress Results
         uses: actions/upload-artifact@v2
         with:
-          name: cypress-html-report
+          name: ${{ github.event.inputs.APP }}-cypress-html-report
           path: ${{ github.event.inputs.APP }}-cypress-html-report.tar.gz
