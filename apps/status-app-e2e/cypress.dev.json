@@ -1,7 +1,7 @@
 {
   "env": {
     "env-name": "DEV",
-    "TAGS": "@regression and not @ignore"
+    "TAGS": ""
   },
   "baseUrl": "https://status-app-core-services-dev.os99.gov.ab.ca/",
   "tenantWebAppUrl": "https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca/",
