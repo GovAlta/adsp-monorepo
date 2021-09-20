@@ -11,12 +11,11 @@ Feature: Events
     Given a service owner user is on tenant admin page
     When the user selects the "Events" menu item
     And the user selects "Definitions" tab for "Events"
-  # The event definition table will need to be revamped based on future UI design and the following steps will be done after UI is finalized
-  # Then the user views an event definition of "auto-test-service", "auto-test-event" and "autotest event description"
-  # When the user clicks show details button for the definition of "auto-test-service", "auto-test-event" and "autotest event description"
-  # Then the user views the definition details of "auto-test-service", "auto-test-event" and "autotest event description"
-  # When the user clicks hide details button for the definition of "auto-test-service", "auto-test-event" and "autotest event description"
-  # Then the definition details of "auto-test-service", "auto-test-event" and "autotest event description" is hidden
+    Then the user views an event definition of "tenant-created" under "tenant-service"
+    When the user clicks "show" details button for the definition of "tenant-created" under "tenant-service"
+    Then the user "views" the definition details of "tenant-created" under "tenant-service"
+    When the user clicks "hide" details button for the definition of "tenant-created" under "tenant-service"
+    Then the user "should not view" the definition details of "tenant-created" under "tenant-service"
 
   @regression
   Scenario: As a service admin, I can see event service API docs
