@@ -33,7 +33,7 @@ class WelcomePage {
   }
 
   newTenantCreationMessage() {
-    return cy.get('p:contains("successfully created")');
+    return cy.get('p:contains("successfully created")', { timeout: 30000 });
   }
 
   tenantLoginButton() {
