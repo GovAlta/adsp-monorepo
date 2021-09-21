@@ -72,10 +72,11 @@ export const createAdminRouter = ({
 
   adminRouter.get('/spaces', AdminAssert.adminOnlyMiddleware, AuthAssert.assertMethod, async (req, res, next) => {
     const user = req.user;
-    const { top, after } = req.query;
+    const { top: topValue, after } = req.query;
+    const top = topValue ? parseInt(topValue as string) : 50;
 
     try {
-      const spaces = await spaceRepository.find(parseInt((top as string) || '50', 50), after as string);
+      const spaces = await spaceRepository.find(top, after as string);
       res.send({
         page: spaces.page,
         results: spaces.results

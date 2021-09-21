@@ -1,6 +1,4 @@
 import { connect as _connect, connection, Types } from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
-const mongod = new MongoMemoryServer();
 
 /**
  * Disconnects from the mock mongo instance
@@ -12,7 +10,6 @@ const mongod = new MongoMemoryServer();
 
 export const disconnect = async (): Promise<void> => {
   await connection.close();
-  await mongod.stop();
 };
 
 /**
@@ -23,18 +20,15 @@ export const disconnect = async (): Promise<void> => {
  *  });
  */
 export const connect = async (): Promise<typeof import('mongoose')> => {
-  const mockMongoUri = await mongod.getUri();
-  const options = {};
-
   try {
-    return await _connect(mockMongoUri, options);
+    return await _connect(process.env.MONGO_URL);
   } catch (err) {
     console.error(`MockMongoDB has error, ${err.message} will exit ...`);
   }
 };
 
 export function generateId(): string {
-  return Types.ObjectId().toHexString();
+  return new Types.ObjectId().toHexString();
 }
 
 interface RepoSaver<T> {
@@ -49,7 +43,7 @@ export function createMockData<T>(repo: RepoSaver<T>, data: RepoSaveType<T>[]): 
   return Promise.all(
     data.map(async (entity: RepoSaveType<T>) => {
       entity.id = generateId();
-      return await repo.save((entity as unknown) as T);
+      return await repo.save(entity as unknown as T);
     })
   );
 }

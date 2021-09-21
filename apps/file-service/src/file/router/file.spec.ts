@@ -17,6 +17,7 @@ import { connect, disconnect, createMockData } from '@core-services/core-common/
 import * as sinon from 'sinon';
 import { MiddlewareWrapper } from './middlewareWrapper';
 import * as fs from 'fs';
+import { model } from 'mongoose';
 
 describe('File Router', () => {
   const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
@@ -55,14 +56,17 @@ describe('File Router', () => {
 
   beforeEach(async () => {
     await connect();
-  });
-
-  afterEach(async () => {
-    await disconnect();
+    await model('file').deleteMany({});
+    await model('filespace').deleteMany({});
+    cache.flushAll();
   });
 
   beforeEach(() => {
     jest.setTimeout(18000);
+  });
+
+  afterEach(async () => {
+    await disconnect();
   });
 
   afterAll(() => {

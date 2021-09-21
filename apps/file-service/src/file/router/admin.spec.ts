@@ -16,6 +16,7 @@ import { connect, disconnect, createMockData } from '@core-services/core-common/
 import * as sinon from 'sinon';
 import * as fs from 'fs';
 import { AdminAssert } from './admin';
+import { model } from 'mongoose';
 
 describe('Admin Router', () => {
   const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
@@ -53,6 +54,9 @@ describe('Admin Router', () => {
 
   beforeEach(async () => {
     await connect();
+    await model('file').deleteMany({});
+    await model('filespace').deleteMany({});
+    cache.flushAll();
   });
 
   afterEach(async () => {

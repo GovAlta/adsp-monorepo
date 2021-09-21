@@ -15,6 +15,7 @@ import { createLogger, AuthAssert } from '@core-services/core-common';
 import { connect, disconnect, createMockData } from '@core-services/core-common/mongo';
 import * as sinon from 'sinon';
 import * as fs from 'fs';
+import { model } from 'mongoose';
 
 describe('File Space Router', () => {
   const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
@@ -52,6 +53,8 @@ describe('File Space Router', () => {
 
   beforeEach(async () => {
     await connect();
+    await model('filespace').deleteMany({});
+    cache.flushAll();
   });
 
   afterEach(async () => {

@@ -6,6 +6,7 @@ import { environment } from '../environments/environment';
 import { FileTypeEntity } from '../file/model/type';
 import { FileSpaceEntity } from '../file/model/space';
 import { FileType } from '../file/types';
+import { model } from 'mongoose';
 
 describe('Mongo: SpaceEntity', () => {
   const type: FileType = {
@@ -23,6 +24,7 @@ describe('Mongo: SpaceEntity', () => {
 
   beforeEach(async () => {
     await connect();
+    await model('filespace').deleteMany({});
   });
 
   afterEach(async () => {
