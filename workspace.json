@@ -315,7 +315,8 @@
           "builder": "@nrwl/jest:jest",
           "options": {
             "jestConfig": "apps/file-service/jest.config.js",
-            "passWithNoTests": true
+            "passWithNoTests": true,
+            "runInBand": true
           },
           "outputs": ["coverage/apps/file-service"]
         }
@@ -564,7 +565,8 @@
           "builder": "@nrwl/jest:jest",
           "options": {
             "jestConfig": "apps/status-service/jest.config.js",
-            "passWithNoTests": true
+            "passWithNoTests": true,
+            "runInBand": true
           }
         }
       }
@@ -670,7 +672,8 @@
           "builder": "@nrwl/jest:jest",
           "options": {
             "jestConfig": "apps/tenant-management-api/jest.config.js",
-            "passWithNoTests": true
+            "passWithNoTests": true,
+            "runInBand": true
           },
           "outputs": ["coverage/apps/tenant-management-api"]
         }
