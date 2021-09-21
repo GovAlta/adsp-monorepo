@@ -21,8 +21,8 @@ import { model } from 'mongoose';
 describe('Admin Router', () => {
   const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
   const mockRepo = new Mock<FileRepository>();
-  const cache = new NodeCache({ stdTTL: 86400, useClones: false });
-  const spaceMockRepo = new MongoFileSpaceRepository(logger, cache);
+  const cache = { get: jest.fn(), set: jest.fn(), del: jest.fn() };
+  const spaceMockRepo = new MongoFileSpaceRepository(logger, cache as unknown as NodeCache);
   const fileMockRepo = new MongoFileRepository(spaceMockRepo);
   const type: FileType = {
     id: 'type-1',
@@ -52,24 +52,19 @@ describe('Admin Router', () => {
     },
   ];
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     await connect();
-    await model('file').deleteMany({});
-    await model('filespace').deleteMany({});
-    cache.flushAll();
   });
 
   afterEach(async () => {
+    await model('file').deleteMany({});
+    await model('filespace').deleteMany({});
+  });
+
+  afterAll(async () => {
     await disconnect();
   });
 
-  beforeEach(() => {
-    jest.setTimeout(18000);
-  });
-
-  afterAll(() => {
-    jest.clearAllTimers();
-  });
   describe('GET /:space/types', () => {
     const app = express();
     let sandbox;

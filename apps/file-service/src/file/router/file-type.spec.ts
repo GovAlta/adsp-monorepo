@@ -15,11 +15,12 @@ import { MiddlewareWrapper } from './middlewareWrapper';
 import { AuthenticationWrapper } from '../middleware/authenticationWrapper';
 import * as sinon from 'sinon';
 import { AdspId } from '@abgov/adsp-service-sdk';
+import { model } from 'mongoose';
 
 describe('File Type Router', () => {
   const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
-  const cache = new NodeCache({ stdTTL: 86400, useClones: false });
-  const mockSpaceRepo = new MongoFileSpaceRepository(logger, cache);
+  const cache = { get: jest.fn(), set: jest.fn(), del: jest.fn() };
+  const mockSpaceRepo = new MongoFileSpaceRepository(logger, cache as unknown as NodeCache);
   const mockFileRepo = new Mock<FileRepository>();
 
   const type: FileType = {
@@ -60,11 +61,15 @@ describe('File Type Router', () => {
 
   mockFileRepo.setup((m) => m.save(It.IsAny())).callback((i) => Promise.resolve(i.args[0]));
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     await connect();
   });
 
   afterEach(async () => {
+    await model('filespace').deleteMany({});
+  });
+
+  afterAll(async () => {
     await disconnect();
   });
 
@@ -78,6 +83,16 @@ describe('File Type Router', () => {
         rootStoragePath: '/',
       })
     );
+
+    let sandbox;
+    beforeEach(() => {
+      sandbox = sinon.createSandbox();
+    });
+
+    afterEach(() => {
+      sandbox.restore();
+    });
+
     it('should require authorization', async () => {
       await request(app).put('/fileTypes/type-1').expect(401);
     });
@@ -85,7 +100,7 @@ describe('File Type Router', () => {
     describe('Authenticated', () => {
       it('returns a POST 200 OK', async () => {
         const app = express();
-        const authStub = sinon.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
+        const authStub = sandbox.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
           req.body = { updateRoles: '2313' };
           req.tenant = { ...BaseTenant, name: 'space1234' };
           req.user = { ...BaseUser, roles: ['test-admin'] };
@@ -109,7 +124,7 @@ describe('File Type Router', () => {
 
       it('returns a 500 for a non-existant entry', async () => {
         const app = express();
-        const authStub = sinon.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
+        const authStub = sandbox.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
           req.body = { updateRoles: '2313' };
           req.tenant = { ...BaseTenant, name: 'space1234' };
           req.user = { ...BaseUser, roles: ['test-admin'] };

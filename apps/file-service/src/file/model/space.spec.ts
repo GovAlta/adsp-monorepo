@@ -186,10 +186,6 @@ describe('File Space Entity', () => {
     });
 
     describe('auth types', () => {
-      beforeEach(() => {
-        jest.setTimeout(18000);
-      });
-
       it('can prevent unauthorized add type', async () => {
         function addType(entity) {
           return entity.addType(

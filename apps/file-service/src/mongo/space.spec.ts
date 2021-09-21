@@ -19,15 +19,15 @@ describe('Mongo: SpaceEntity', () => {
   };
 
   const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
-  const cache = new NodeCache({ stdTTL: 86400, useClones: false });
-  const repo = new MongoFileSpaceRepository(logger, cache);
+  const cache = { get: jest.fn(), set: jest.fn(), del: jest.fn() };
+  const repo = new MongoFileSpaceRepository(logger, cache as unknown as NodeCache);
 
   beforeEach(async () => {
     await connect();
-    await model('filespace').deleteMany({});
   });
 
   afterEach(async () => {
+    await model('filespace').deleteMany({});
     await disconnect();
   });
 
