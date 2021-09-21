@@ -64,7 +64,6 @@ export default class MongoNoticeRepository implements NoticeRepository {
         upsert: true,
         new: true,
         lean: true,
-        useFindAndModify: false,
       });
 
       return this.fromDoc(doc);

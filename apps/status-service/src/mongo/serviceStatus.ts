@@ -70,7 +70,6 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
         upsert: true,
         new: true,
         lean: true,
-        useFindAndModify: false,
       });
 
       return this.fromDoc(doc);

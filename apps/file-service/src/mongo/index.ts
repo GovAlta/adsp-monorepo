@@ -27,9 +27,6 @@ export const createRepositories = ({
       {
         user: MONGO_USER,
         pass: MONGO_PASSWORD,
-        useNewUrlParser: true,
-        useFindAndModify: false,
-        useUnifiedTopology: true,
       },
       (err) => {
         if (err) {
