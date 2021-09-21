@@ -81,6 +81,11 @@ export class TenantMongoRepository implements TenantRepository {
     return Promise.resolve(this.fromDoc(tenant));
   }
 
+  async findByName(name: string): Promise<Tenant> {
+    const tenant = await this.tenantModel.findOne({ name: { $regex: '^' + name + '\\b', $options: 'i' } });
+    return tenant;
+  }
+
   private fromDoc(doc: Doc<Tenant>) {
     if (doc === null) {
       throw new NotFoundError('Tenant', null);

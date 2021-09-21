@@ -9,6 +9,8 @@ import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import { KeycloakCheckSSO, TenantLogin } from '@store/tenant/actions';
 import { TenantLogout } from '@store/tenant/actions';
+import styled from 'styled-components';
+
 
 const CreateRealm = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -28,17 +30,23 @@ const CreateRealm = (): JSX.Element => {
     setIsLoaded((currentIsLoaded) => !currentIsLoaded);
   };
 
-  const { isTenantAdmin, userInfo, isTenantCreated, tenantRealm, isInBeta } = useSelector((state: RootState) => ({
+  const { isTenantAdmin, userInfo, isTenantCreated, tenantRealm, isInBeta, notifications } = useSelector((state: RootState) => ({
     isTenantAdmin: state.tenant.isTenantAdmin,
     userInfo: state.session.userInfo,
     isTenantCreated: state.tenant.isTenantCreated,
     tenantRealm: state.tenant.realm,
     isInBeta: state.session.realmAccess?.roles?.includes('beta-tester'),
+    notifications: state.notifications.notifications
   }));
 
   useEffect(() => {
     dispatch(KeycloakCheckSSO('core'));
   }, []);
+
+  useEffect(() => {
+    setIsLoaded(true);
+  }, [notifications]);
+
 
   useEffect(() => {
     if (userInfo) {
@@ -120,15 +128,16 @@ const CreateRealm = (): JSX.Element => {
                     <p>
                       Current user email: <b>{userInfo.email}</b>
                     </p>
-                    <p>As a reminder, you are only able to create one tenant per user account.</p>
+                    <p>As a reminder, you are only able to create <b>one tenant</b> per user account.</p>
                     <GoAForm>
-                      <GoAFormItem>
-                        <label htmlFor="name">Tenant Name</label>
+                      <GoAFormItem className={notifications[notifications.length-1]?.message ? 'error' : ''}>
+                        <label htmlFor="name">Tenant name</label>
                         <input id="name" type="text" value={name} onChange={onChangeName} />
-                        <em>Names cannot container special characters (ex. ! % &amp;)</em>
+                        <div style={{lineHeight: '16px'}}><em style={{color: '#ec040b'}}>{notifications[notifications.length-1]?.message}</em></div>
+                        <div style={{lineHeight: '10px'}}><em>{notifications[notifications.length-1]?.message.includes('Names cannot contain') ? '' : 'Names cannot contain special characters (ex. ! % &amp'}</em></div>
                       </GoAFormItem>
 
-                      <GoAFormButtons>{isLoaded ? <TenantCreateView /> : <ButtonLoader />}</GoAFormButtons>
+                      <CreateTenantFormButtons>{isLoaded ? <TenantCreateView /> : <ButtonLoader />}</CreateTenantFormButtons>
                     </GoAForm>
                   </>
                 ) : null}
@@ -159,3 +168,37 @@ const CreateRealm = (): JSX.Element => {
 };
 
 export default CreateRealm;
+
+const CreateTenantFormButtons = styled.div`
+  margin-top: 2rem;
+
+  @media (max-width: 639px) {
+    button + button,
+    button + .goa-link-button,
+    .goa-link-button + button,
+    .goa-link-button + .goa-link-button {
+      margin-top: 0.5rem !important;
+    }
+  }
+
+  @media (min-width: 640px) {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+
+    button {
+      min-width: 6rem;
+    }
+
+    button + button,
+    button + .goa-link-button,
+    .goa-link-button + button,
+    .goa-link-button + .goa-link-button {
+      margin-left: 0.5rem;
+    }
+  }
+
+  button {
+    margin: 0;
+  }
+`;
