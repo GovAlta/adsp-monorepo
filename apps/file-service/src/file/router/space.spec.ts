@@ -56,6 +56,7 @@ describe('File Space Router', () => {
   });
 
   afterEach(async () => {
+    await model('file').deleteMany({});
     await model('filespace').deleteMany({});
   });
 
