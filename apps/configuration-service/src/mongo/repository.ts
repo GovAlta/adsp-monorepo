@@ -14,7 +14,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
   private revisionModel: Model<ConfigurationRevisionDoc>;
 
   constructor(private validationService: ValidationService) {
-    this.revisionModel = model('revision', revisionSchema);
+    this.revisionModel = model<ConfigurationRevisionDoc>('revision', revisionSchema);
   }
 
   async get<C>(

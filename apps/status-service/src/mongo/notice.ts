@@ -8,7 +8,7 @@ import { noticeApplicationSchema } from './schema';
 export default class MongoNoticeRepository implements NoticeRepository {
   model: Model<NoticeApplication & Document>;
   constructor() {
-    this.model = model('Notice', noticeApplicationSchema);
+    this.model = model<NoticeApplication & Document>('Notice', noticeApplicationSchema);
   }
 
   async get(id: string, tenantId: string): Promise<NoticeApplicationEntity> {

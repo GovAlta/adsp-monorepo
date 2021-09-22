@@ -66,23 +66,24 @@ components:
                   items:
                     $ref: "#/components/schemas/Value"
 /value/v1/{namespace}/values/{name}:
+  parameters:
+    - name: namespace
+      description: Namespace of the value.
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: name
+      description: Name of the value.
+      in: path
+      required: true
+      schema:
+        type: string
   get:
     tags:
       - Value
     description: Reads a namespace value.
     parameters:
-      - name: namespace
-        description: Namespace to read value from.
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: name
-        description: Name of the value to read.
-        in: path
-        required: true
-        schema:
-          type: string
       - name: top
         description: Number of results to read.
         in: query
@@ -127,7 +128,7 @@ components:
           type: string
           format: date-time
     responses:
-      "200":
+      200:
         description: Value successfully read.
         content:
           application/json:
@@ -143,19 +144,6 @@ components:
     tags:
       - Value
     description: Writes namespace value.
-    parameters:
-      - name: namespace
-        description: Namespace to read value from.
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: name
-        description: Name of the value to read.
-        in: path
-        required: true
-        schema:
-          type: string
     requestBody:
       required: true
       content:
@@ -165,7 +153,7 @@ components:
               - $ref: "#/components/schemas/Value"
               - type: object
     responses:
-      "200":
+      200:
         description: Value successfully written.
         content:
           application/json:
@@ -199,23 +187,25 @@ components:
         description: Criteria for the read.
         in: query
         required: false
-        schema:
-          type: object
-          properties:
-            interval:
-              type: string
-              enum:
-                - hourly
-                - daily
-                - weekly
-            intervalMax:
-              type: string
-              format: date-time
-            intervalMin:
-              type: string
-              format: date-time
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                interval:
+                  type: string
+                  enum:
+                    - hourly
+                    - daily
+                    - weekly
+                intervalMax:
+                  type: string
+                  format: date-time
+                intervalMin:
+                  type: string
+                  format: date-time
     responses:
-      "200":
+      200:
         description: Metric successfully read.
         content:
           application/json:
