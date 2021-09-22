@@ -31,7 +31,7 @@ describe('ServiceDirectory', () => {
     expect(directory).toBeTruthy();
   });
 
-  it('can retrieve service URL from cache', async (done) => {
+  it('can retrieve service URL from cache', async () => {
     const cached = 'https://test-service';
     const serviceId = adspId`urn:ads:test-sandbox:test-service`;
     const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'), tokenProvider);
@@ -39,11 +39,9 @@ describe('ServiceDirectory', () => {
     cacheMock.mockReturnValue(cached);
     const result = await directory.getServiceUrl(serviceId);
     expect(result).toBe(cached);
-
-    done();
   });
 
-  it('can retrieve API URL from cache', async (done) => {
+  it('can retrieve API URL from cache', async () => {
     const cached = 'https://test-service';
     const apiId = adspId`urn:ads:test-sandbox:test-service:v1`;
     const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'), tokenProvider);
@@ -51,11 +49,9 @@ describe('ServiceDirectory', () => {
     cacheMock.mockReturnValue(cached);
     const result = await directory.getServiceUrl(apiId);
     expect(result).toBe(cached);
-
-    done();
   });
 
-  it('can retrieve API URL from directory', async (done) => {
+  it('can retrieve API URL from directory', async () => {
     const apiId = adspId`urn:ads:test-sandbox:test-service:v1`;
     const apiUrl = 'https://test-service';
 
@@ -68,11 +64,9 @@ describe('ServiceDirectory', () => {
 
     expect(result).toBe(apiUrl);
     expect(axiosMock.get).toHaveBeenCalled();
-
-    done();
   });
 
-  it('can throw for missing entry', async (done) => {
+  it('can throw for missing entry', async () => {
     const apiId = adspId`urn:ads:test-sandbox:test-service:v1`;
 
     const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'), tokenProvider);
@@ -83,7 +77,5 @@ describe('ServiceDirectory', () => {
 
     await expect(directory.getServiceUrl(apiId)).rejects.toThrowError(/^Failed to find directory entry for /);
     expect(axiosMock.get).toHaveBeenCalled();
-
-    done();
   });
 });

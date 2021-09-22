@@ -113,3 +113,4 @@ Then('the user views Delete Definition dialog for the definition of {string}', f
 Then('the user clicks Confirm button', function () {
   eventsObj.deleteDefinitionConfirmButton().click();
 });
+

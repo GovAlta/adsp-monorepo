@@ -5,14 +5,12 @@ import { TenantMongoRepository } from './tenant';
 describe('Mongo: Tenant', () => {
   const repo = new TenantMongoRepository();
 
-  beforeEach(async (done) => {
+  beforeEach(async () => {
     await connect();
-    done();
   });
 
-  afterEach(async (done) => {
+  afterEach(async () => {
     await disconnect();
-    done();
   });
 
   it('should create a tenant', async () => {

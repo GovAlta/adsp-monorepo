@@ -10,7 +10,7 @@
     "nx.json": "*"
   },
   "affected": {
-    "defaultBase": "master"
+    "defaultBase": "main"
   },
   "npmScope": "core-services",
   "tasksRunnerOptions": {
@@ -22,41 +22,28 @@
     }
   },
   "projects": {
-    "file-service": {
+    "adsp-service-sdk": {
+      "tags": []
+    },
+    "api-docs-app": {
+      "tags": []
+    },
+    "configuration-service": {
       "tags": []
     },
     "core-common": {
       "tags": []
     },
-    "tenant-management-webapp": {
+    "event-service": {
       "tags": []
     },
-    "tenant-management-webapp-e2e": {
-      "tags": [],
-      "implicitDependencies": ["tenant-management-webapp"]
-    },
-    "tenant-management-api": {
-      "tags": []
-    },
-    "value-service": {
+    "file-service": {
       "tags": []
     },
     "notification-service": {
       "tags": []
     },
-    "event-service": {
-      "tags": []
-    },
     "push-service": {
-      "tags": []
-    },
-    "tools-scripts": {
-      "tags": []
-    },
-    "status-service": {
-      "tags": []
-    },
-    "adsp-service-sdk": {
       "tags": []
     },
     "status-app": {
@@ -66,17 +53,38 @@
       "tags": [],
       "implicitDependencies": ["status-app"]
     },
-    "verify-service": {
-      "tags": []
-    },
-    "api-docs-app": {
-      "tags": []
-    },
-    "configuration-service": {
+    "status-service": {
       "tags": []
     },
     "task-service": {
       "tags": []
+    },
+    "tenant-management-api": {
+      "tags": []
+    },
+    "tenant-management-webapp": {
+      "tags": []
+    },
+    "tenant-management-webapp-e2e": {
+      "tags": [],
+      "implicitDependencies": ["tenant-management-webapp"]
+    },
+    "tools-scripts": {
+      "tags": []
+    },
+    "value-service": {
+      "tags": []
+    },
+    "verify-service": {
+      "tags": []
     }
+  },
+  "targetDependencies": {
+    "build": [
+      {
+        "target": "build",
+        "projects": "dependencies"
+      }
+    ]
   }
 }

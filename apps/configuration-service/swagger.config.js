@@ -2,7 +2,7 @@ module.exports = {
   openapi: '3.0.0',
   info: {
     title: 'Configuration Service',
-    version: '0.0.0',
+    version: '2.0.0',
     description: 'The Configuration Service provides persistence for configuration with write schema validation.',
   },
   tags: [

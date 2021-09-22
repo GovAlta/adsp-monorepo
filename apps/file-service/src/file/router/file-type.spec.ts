@@ -15,11 +15,12 @@ import { MiddlewareWrapper } from './middlewareWrapper';
 import { AuthenticationWrapper } from '../middleware/authenticationWrapper';
 import * as sinon from 'sinon';
 import { AdspId } from '@abgov/adsp-service-sdk';
+import { model } from 'mongoose';
 
 describe('File Type Router', () => {
   const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
-  const cache = new NodeCache({ stdTTL: 86400, useClones: false });
-  const mockSpaceRepo = new MongoFileSpaceRepository(logger, cache);
+  const cache = { get: jest.fn(), set: jest.fn(), del: jest.fn() };
+  const mockSpaceRepo = new MongoFileSpaceRepository(logger, cache as unknown as NodeCache);
   const mockFileRepo = new Mock<FileRepository>();
 
   const type: FileType = {
@@ -33,8 +34,8 @@ describe('File Type Router', () => {
 
   const BaseTenant = {
     id: AdspId.parse('urn:ads:mock-tenant-id'),
-    realm: 'mock-realm'
-  }
+    realm: 'mock-realm',
+  };
 
   const BaseUser = {
     roles: ['base-roles'],
@@ -42,8 +43,8 @@ describe('File Type Router', () => {
     email: 'mock-user-user@gov.ab.ca',
     isCore: false,
     name: 'mock-user',
-    token: null
-  }
+    token: null,
+  };
 
   const entity = new FileTypeEntity(type);
 
@@ -60,14 +61,16 @@ describe('File Type Router', () => {
 
   mockFileRepo.setup((m) => m.save(It.IsAny())).callback((i) => Promise.resolve(i.args[0]));
 
-  beforeEach(async (done) => {
+  beforeAll(async () => {
     await connect();
-    done();
   });
 
-  afterEach(async (done) => {
+  afterEach(async () => {
+    await model('filespace').deleteMany({});
+  });
+
+  afterAll(async () => {
     await disconnect();
-    done();
   });
 
   describe('PUT /fileTypes/:fileTypeId', () => {
@@ -80,6 +83,16 @@ describe('File Type Router', () => {
         rootStoragePath: '/',
       })
     );
+
+    let sandbox;
+    beforeEach(() => {
+      sandbox = sinon.createSandbox();
+    });
+
+    afterEach(() => {
+      sandbox.restore();
+    });
+
     it('should require authorization', async () => {
       await request(app).put('/fileTypes/type-1').expect(401);
     });
@@ -87,11 +100,11 @@ describe('File Type Router', () => {
     describe('Authenticated', () => {
       it('returns a POST 200 OK', async () => {
         const app = express();
-        const authStub = sinon.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
+        const authStub = sandbox.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
           req.body = { updateRoles: '2313' };
           req.tenant = { ...BaseTenant, name: 'space1234' };
           req.user = { ...BaseUser, roles: ['test-admin'] };
-          return next()
+          return next();
         });
         app.use(
           createFileTypeRouter({
@@ -111,7 +124,7 @@ describe('File Type Router', () => {
 
       it('returns a 500 for a non-existant entry', async () => {
         const app = express();
-        const authStub = sinon.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
+        const authStub = sandbox.stub(AuthAssert, 'assertMethod').callsFake(function (req, res, next) {
           req.body = { updateRoles: '2313' };
           req.tenant = { ...BaseTenant, name: 'space1234' };
           req.user = { ...BaseUser, roles: ['test-admin'] };
@@ -145,7 +158,7 @@ describe('File Type Router', () => {
       sandbox = sinon.stub(AuthenticationWrapper, 'authenticationMethod').callsFake(function (req, res, next) {
         req.body = { updateRoles: '2313' };
         req.tenant = { ...BaseTenant, name: 'space1234' };
-        req.user = { ...BaseUser, roles: ['super-user'] }
+        req.user = { ...BaseUser, roles: ['super-user'] };
         return next();
       });
 

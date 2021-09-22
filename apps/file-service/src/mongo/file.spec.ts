@@ -8,6 +8,7 @@ import { FileCriteria } from '../file/types';
 import { environment } from '../environments/environment';
 import { FileTypeEntity } from '../file/model/type';
 import { FileType } from '../file/types';
+import { model } from 'mongoose';
 
 describe('Mongo: FileEntity', () => {
   const spaceId = 'space1234';
@@ -21,8 +22,8 @@ describe('Mongo: FileEntity', () => {
   };
 
   const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
-  const cache = new NodeCache({ stdTTL: 86400, useClones: false });
-  const fileRepo = new MongoFileSpaceRepository(logger, cache);
+  const cache = { get: jest.fn(), set: jest.fn(), del: jest.fn() };
+  const fileRepo = new MongoFileSpaceRepository(logger, cache as unknown as NodeCache);
   const repo = new MongoFileRepository(fileRepo);
 
   const criteria: FileCriteria = {
@@ -30,14 +31,14 @@ describe('Mongo: FileEntity', () => {
     deleted: false,
   };
 
-  beforeEach(async (done) => {
+  beforeEach(async () => {
     await connect();
-    done();
   });
 
-  afterEach(async (done) => {
+  afterEach(async () => {
+    await model('filespace').deleteMany({});
+    await model('file').deleteMany({});
     await disconnect();
-    done();
   });
 
   it('finds a defined file', async () => {

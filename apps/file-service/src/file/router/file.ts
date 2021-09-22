@@ -125,7 +125,8 @@ export const createFileRouter = ({
   });
 
   fileRouter.get('/files', MiddlewareWrapper.middlewareMethod, async (req, res, next) => {
-    const { top, after } = req.query;
+    const { top: topValue, after } = req.query;
+    const top = topValue ? parseInt(topValue as string) : 50;
 
     try {
       const spaceId = await spaceRepository.getIdByTenant(req.tenant);
@@ -137,7 +138,7 @@ export const createFileRouter = ({
         spaceEquals: spaceId,
         deleted: false,
       };
-      const files = await fileRepository.find(parseInt((top as string) || '50', 50), after as string, criteria);
+      const files = await fileRepository.find(top, after as string, criteria);
 
       if (!files) {
         throw new NotFoundError(`There is no file in ${spaceId}`, spaceId);

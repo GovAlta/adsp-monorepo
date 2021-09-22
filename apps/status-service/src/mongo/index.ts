@@ -18,11 +18,7 @@ export const createRepositories = async ({ logger, ...props }: MongoRepositoryPr
   logger.info(`Connected to MongoDB at: ${mongoConnectionString}`);
 
   await connect(mongoConnectionString, {
-    user: props.MONGO_USER,
-    pass: props.MONGO_PASSWORD,
-    useNewUrlParser: true,
-    useFindAndModify: false,
-    useUnifiedTopology: true,
+    auth: { username: props.MONGO_USER, password: props.MONGO_PASSWORD },
   });
 
   const serviceStatusRepository = new MongoServiceStatusRepository();
@@ -44,9 +40,6 @@ export const createRepositories = async ({ logger, ...props }: MongoRepositoryPr
 //   await connect(mongoConnectionString, {
 //     user: props.MONGO_USER,
 //     pass: props.MONGO_PASSWORD,
-//     useNewUrlParser: true,
-//     useFindAndModify: false,
-//     useUnifiedTopology: true,
 //   });
 
 //   const noticeRepository = new MongoNoticeRepository();

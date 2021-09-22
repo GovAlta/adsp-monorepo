@@ -26,28 +26,25 @@ describe('healthCheck', () => {
   });
 
   describe('checkServiceHealth', () => {
-    it('can check health', async (done) => {
+    it('can check health', async () => {
       axiosMock.get.mockResolvedValueOnce({ status: 200 });
       const result = await checkServiceHealth(logger, new URL('http://test-co.org/health'));
 
       expect(result).toBeTruthy();
-      done();
     });
 
-    it('can return unhealthy for non-200', async (done) => {
+    it('can return unhealthy for non-200', async () => {
       axiosMock.get.mockResolvedValueOnce({ status: 400 });
       const result = await checkServiceHealth(logger, new URL('http://test-co.org/health'));
 
       expect(result).toBeFalsy();
-      done();
     });
 
-    it('can return unhealthy for error', async (done) => {
+    it('can return unhealthy for error', async () => {
       axiosMock.get.mockRejectedValueOnce(new Error('Something went terribly wrong.'));
       const result = await checkServiceHealth(logger, new URL('http://test-co.org/health'));
 
       expect(result).toBeFalsy();
-      done();
     });
   });
 
@@ -68,7 +65,7 @@ describe('healthCheck', () => {
       expect(healthCheck).toBeTruthy();
     });
 
-    it('can check health from cache', async (done) => {
+    it('can check health from cache', async () => {
       const healthCheck = createHealthCheck(
         logger,
         new URL('http://totally-real-access'),
@@ -89,11 +86,9 @@ describe('healthCheck', () => {
       const results = await healthCheck();
 
       expect(results).toEqual(cached);
-
-      done();
     });
 
-    it('can check health', async (done) => {
+    it('can check health', async () => {
       const healthCheck = createHealthCheck(
         logger,
         new URL('http://totally-real-access'),
@@ -110,11 +105,9 @@ describe('healthCheck', () => {
       expect(tenant).toBeTruthy();
       expect(configuration).toBeTruthy();
       expect(event).toBeTruthy();
-
-      done();
     });
 
-    it('can exclude checks', async (done) => {
+    it('can exclude checks', async () => {
       const healthCheck = createHealthCheck(
         logger,
         new URL('http://totally-real-access'),
@@ -131,11 +124,9 @@ describe('healthCheck', () => {
       expect(results.configuration).toBeTruthy();
       expect(Object.keys(results).includes('event')).toBeFalsy();
       expect(Object.keys(results).includes('directory')).toBeFalsy();
-
-      done();
     });
 
-    it('can ignore extraneous exclude', async (done) => {
+    it('can ignore extraneous exclude', async () => {
       const healthCheck = createHealthCheck(
         logger,
         new URL('http://totally-real-access'),
@@ -152,8 +143,6 @@ describe('healthCheck', () => {
       expect(tenant).toBeTruthy();
       expect(configuration).toBeTruthy();
       expect(event).toBeTruthy();
-
-      done();
     });
   });
 });

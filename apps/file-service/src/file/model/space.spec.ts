@@ -170,7 +170,7 @@ describe('File Space Entity', () => {
       expect(canUpdate).toBeFalsy();
     });
 
-    it('can add type', async (done) => {
+    it('can add type', async () => {
       await entity.addType(user, storagePath, 'test', {
         name: 'test',
         anonymousRead: false,
@@ -183,14 +183,9 @@ describe('File Space Entity', () => {
       expect(type).toBeTruthy();
       // TODO: need to double check the expect
       // expect(mkdirpMock.mock.calls[0][0]).toEqual(`${storagePath}/${entity.id}/test`);
-      done();
     });
 
     describe('auth types', () => {
-      beforeEach(() => {
-        jest.setTimeout(18000);
-      });
-
       it('can prevent unauthorized add type', async () => {
         function addType(entity) {
           return entity.addType(
