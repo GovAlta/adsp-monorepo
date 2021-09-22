@@ -1,0 +1,55 @@
+name: e2e
+
+on:
+  workflow_dispatch:
+    inputs:
+      APP:
+        description: APP to run against.
+        required: true
+      ENVIRONMENT:
+        description: Environment to run against.
+        required: true
+      TAGS:
+        description: Tags of suite of tests to run.
+        required: true
+jobs:
+  e2e:
+    runs-on: ubuntu-20.04
+    environment:
+      name: ${{ github.event.inputs.ENVIRONMENT }}
+    env:
+      APP: ${{ github.event.inputs.APP }}
+      ENV: ${{ github.event.inputs.ENVIRONMENT }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "12"
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      - run: |
+          sed -i -r \
+            -e "s/\"TAGS\":.+\"\"/\"TAGS\": \"${{ github.event.inputs.TAGS }}\"/" \
+            -e "s/\"core-api-client-secret\":.+\"\"/\"core-api-client-secret\": \"${{ secrets.CY_CORE_API_CLIENT_SECRET }}\"/" \
+            -e "s/\"core-api-user-password\":.+\"\"/\"core-api-user-password\": \"${{ secrets.CY_CORE_API_USER_PASSWORD }}\"/" \
+            -e "s/\"client-secret\":.+\"\"/\"client-secret\": \"${{ secrets.CY_CLIENT_SECRET }}\"/" \
+            -e "s/\"password\":.+\"\"/\"password\": \"${{ secrets.CY_PASSWORD }}\"/" \
+            -e "s/\"password2\":.+\"\"/\"password2\": \"${{ secrets.CY_PASSWORD2 }}\"/" \
+            -e "s/\"password3\":.+\"\"/\"password3\": \"${{ secrets.CY_PASSWORD3 }}\"/" \
+            apps/$APP-e2e/cypress.$ENV.json
+      - name: E2E Test
+        uses: cypress-io/github-action@v2
+        with:
+          install-command: npm ci
+          command: npx nx e2e ${{ github.event.inputs.APP }}-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config="apps/${{ github.event.inputs.APP }}-e2e/cypress.${{ github.event.inputs.ENVIRONMENT }}.json"
+      - if: ${{ always() }}
+        run: |
+          node apps/$APP-e2e/src/support/multiple-cucumber-html-reporter.js
+      - if: ${{ always() }}
+        name: Upload Cypress Results
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ github.event.inputs.APP }}-cypress-html-report
+          path: dist/cypress/

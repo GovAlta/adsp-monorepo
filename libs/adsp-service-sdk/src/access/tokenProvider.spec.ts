@@ -21,7 +21,7 @@ describe('TokenProvider', () => {
     expect(provider).toBeTruthy();
   });
 
-  it('can get access token', async (done) => {
+  it('can get access token', async () => {
     const provider = new TokenProviderImpl(logger, adspId`urn:ads:platform:test`, '', new URL('http://totally-access'));
 
     const token = 'this is some token';
@@ -30,11 +30,9 @@ describe('TokenProvider', () => {
     const result = await provider.getAccessToken();
 
     expect(result).toBe(token);
-
-    done();
   });
 
-  it('can return active token', async (done) => {
+  it('can return active token', async () => {
     const provider = new TokenProviderImpl(logger, adspId`urn:ads:platform:test`, '', new URL('http://totally-access'));
 
     const token = 'this is some token';
@@ -45,11 +43,9 @@ describe('TokenProvider', () => {
 
     expect(result).toBe(token);
     expect(axiosMock.post).toHaveBeenCalledTimes(1);
-
-    done();
   });
 
-  it('can retrieve new when token expired', async (done) => {
+  it('can retrieve new when token expired', async () => {
     const provider = new TokenProviderImpl(logger, adspId`urn:ads:platform:test`, '', new URL('http://totally-access'));
 
     const token = 'this is some token';
@@ -63,17 +59,13 @@ describe('TokenProvider', () => {
 
     expect(result).toBe(token);
     expect(axiosMock.post).toHaveBeenCalledTimes(2);
-
-    done();
   });
 
-  it('can handle throw request error', async (done) => {
+  it('can handle throw request error', async () => {
     const provider = new TokenProviderImpl(logger, adspId`urn:ads:platform:test`, '', new URL('http://totally-access'));
 
     axiosMock.post.mockRejectedValueOnce(new Error('Something went terribly wrong.'));
 
     await expect(provider.getAccessToken()).rejects.toThrow(/Something went terribly wrong./);
-
-    done();
   });
 });

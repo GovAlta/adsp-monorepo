@@ -109,7 +109,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
   };
 
   const FormatNoticeDate = (date: Date): string => {
-    const options = {
+    const options: Intl.DateTimeFormatOptions = {
       timeZone: 'Canada/Mountain',
       weekday: 'short',
       month: 'short',

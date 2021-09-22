@@ -70,6 +70,206 @@
     }
   },
   "projects": {
+    "adsp-service-sdk": {
+      "root": "libs/adsp-service-sdk",
+      "sourceRoot": "libs/adsp-service-sdk/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/adsp-service-sdk/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/adsp-service-sdk"],
+          "options": {
+            "jestConfig": "libs/adsp-service-sdk/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "build": {
+          "builder": "@nrwl/node:package",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/libs/adsp-service-sdk",
+            "tsConfig": "libs/adsp-service-sdk/tsconfig.lib.json",
+            "packageJson": "libs/adsp-service-sdk/package.json",
+            "main": "libs/adsp-service-sdk/src/index.ts",
+            "assets": ["libs/adsp-service-sdk/*.md"]
+          }
+        }
+      }
+    },
+    "api-docs-app": {
+      "root": "apps/api-docs-app",
+      "sourceRoot": "apps/api-docs-app/src",
+      "projectType": "application",
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/api-docs-app",
+            "main": "apps/api-docs-app/src/main.ts",
+            "tsConfig": "apps/api-docs-app/tsconfig.app.json",
+            "assets": ["apps/api-docs-app/src/assets"]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "api-docs-app:build",
+            "port": 7779
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/api-docs-app/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/api-docs-app"],
+          "options": {
+            "jestConfig": "apps/api-docs-app/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "configuration-service": {
+      "root": "apps/configuration-service",
+      "sourceRoot": "apps/configuration-service/src",
+      "projectType": "application",
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "webpackConfig": "apps/configuration-service/webpack.config.js",
+            "outputPath": "dist/apps/configuration-service",
+            "main": "apps/configuration-service/src/main.ts",
+            "tsConfig": "apps/configuration-service/tsconfig.app.json",
+            "assets": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "configuration-service:build",
+            "port": 7780
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/configuration-service/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/configuration-service"],
+          "options": {
+            "jestConfig": "apps/configuration-service/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "core-common": {
+      "root": "libs/core-common",
+      "sourceRoot": "libs/core-common/src",
+      "projectType": "library",
+      "schematics": {},
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:lint",
+          "options": {
+            "linter": "eslint",
+            "tsConfig": ["libs/core-common/tsconfig.lib.json", "libs/core-common/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!libs/core-common/**/*"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "libs/core-common/jest.config.js",
+            "passWithNoTests": true
+          },
+          "outputs": ["coverage/libs/core-common"]
+        }
+      }
+    },
+    "event-service": {
+      "root": "apps/event-service",
+      "sourceRoot": "apps/event-service/src",
+      "projectType": "application",
+      "prefix": "event-service",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "webpackConfig": "apps/event-service/webpack.config.js",
+            "outputPath": "dist/apps/event-service",
+            "main": "apps/event-service/src/main.ts",
+            "tsConfig": "apps/event-service/tsconfig.app.json",
+            "assets": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          },
+          "outputs": ["{options.outputPath}"]
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "event-service:build",
+            "port": 7773
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:lint",
+          "options": {
+            "linter": "eslint",
+            "tsConfig": ["apps/event-service/tsconfig.app.json", "apps/event-service/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!apps/event-service/**/*"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/event-service/jest.config.js",
+            "passWithNoTests": true
+          },
+          "outputs": ["coverage/apps/event-service"]
+        }
+      }
+    },
     "file-service": {
       "root": "apps/file-service",
       "sourceRoot": "apps/file-service/src",
@@ -121,27 +321,358 @@
         }
       }
     },
-    "core-common": {
-      "root": "libs/core-common",
-      "sourceRoot": "libs/core-common/src",
-      "projectType": "library",
+    "notification-service": {
+      "root": "apps/notification-service",
+      "sourceRoot": "apps/notification-service/src",
+      "projectType": "application",
+      "prefix": "notification-service",
       "schematics": {},
       "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "webpackConfig": "apps/notification-service/webpack.config.js",
+            "outputPath": "dist/apps/notification-service",
+            "main": "apps/notification-service/src/main.ts",
+            "tsConfig": "apps/notification-service/tsconfig.app.json",
+            "assets": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          },
+          "outputs": ["{options.outputPath}"]
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "notification-service:build",
+            "port": 7772
+          }
+        },
         "lint": {
           "builder": "@nrwl/linter:lint",
           "options": {
             "linter": "eslint",
-            "tsConfig": ["libs/core-common/tsconfig.lib.json", "libs/core-common/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!libs/core-common/**/*"]
+            "tsConfig": ["apps/notification-service/tsconfig.app.json", "apps/notification-service/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!apps/notification-service/**/*"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
-            "jestConfig": "libs/core-common/jest.config.js",
+            "jestConfig": "apps/notification-service/jest.config.js",
             "passWithNoTests": true
           },
-          "outputs": ["coverage/libs/core-common"]
+          "outputs": ["coverage/apps/notification-service"]
+        }
+      }
+    },
+    "push-service": {
+      "root": "apps/push-service",
+      "sourceRoot": "apps/push-service/src",
+      "projectType": "application",
+      "prefix": "push-service",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "webpackConfig": "apps/push-service/webpack.config.js",
+            "outputPath": "dist/apps/push-service",
+            "main": "apps/push-service/src/main.ts",
+            "tsConfig": "apps/push-service/tsconfig.app.json",
+            "assets": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          },
+          "outputs": ["{options.outputPath}"]
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "push-service:build",
+            "port": 7774
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:lint",
+          "options": {
+            "linter": "eslint",
+            "tsConfig": ["apps/push-service/tsconfig.app.json", "apps/push-service/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!apps/push-service/**/*"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/push-service/jest.config.js",
+            "passWithNoTests": true
+          },
+          "outputs": ["coverage/apps/push-service"]
+        }
+      }
+    },
+    "status-app": {
+      "root": "apps/status-app",
+      "sourceRoot": "apps/status-app/src",
+      "projectType": "application",
+      "architect": {
+        "build": {
+          "builder": "@nrwl/web:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/status-app",
+            "index": "apps/status-app/src/index.html",
+            "main": "apps/status-app/src/main.tsx",
+            "polyfills": "apps/status-app/src/polyfills.ts",
+            "tsConfig": "apps/status-app/tsconfig.app.json",
+            "assets": [
+              "apps/status-app/src/favicon.ico",
+              "apps/status-app/src/assets",
+              {
+                "glob": "nginx.conf",
+                "input": "./",
+                "output": "./"
+              }
+            ],
+            "styles": ["apps/status-app/src/styles.css"],
+            "scripts": [],
+            "webpackConfig": "apps/status-app/webpack.conf.js"
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "extractCss": true,
+              "namedChunks": false,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/web:dev-server",
+          "options": {
+            "buildTarget": "status-app:build"
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "status-app:build:production"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/status-app/**/*.{ts,tsx,js,jsx}"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/status-app"],
+          "options": {
+            "jestConfig": "apps/status-app/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "status-app-e2e": {
+      "root": "apps/status-app-e2e",
+      "sourceRoot": "apps/status-app-e2e/src",
+      "projectType": "application",
+      "architect": {
+        "e2e": {
+          "builder": "@nrwl/cypress:cypress",
+          "options": {
+            "cypressConfig": "apps/status-app-e2e/cypress.json",
+            "tsConfig": "apps/status-app-e2e/tsconfig.e2e.json",
+            "devServerTarget": "status-app:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "status-app:serve:production"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/status-app-e2e/**/*.{js,ts}"]
+          }
+        }
+      }
+    },
+    "status-service": {
+      "root": "apps/status-service",
+      "sourceRoot": "apps/status-service/src",
+      "projectType": "application",
+      "prefix": "status-service",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "webpackConfig": "apps/status-service/webpack.config.js",
+            "outputPath": "dist/apps/status-service",
+            "main": "apps/status-service/src/main.ts",
+            "tsConfig": "apps/status-service/tsconfig.app.json",
+            "assets": ["apps/status-service/src/assets"]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "status-service:build"
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/status-service/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/status-service/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "task-service": {
+      "root": "apps/task-service",
+      "sourceRoot": "apps/task-service/src",
+      "projectType": "application",
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/task-service",
+            "main": "apps/task-service/src/main.ts",
+            "tsConfig": "apps/task-service/tsconfig.app.json",
+            "assets": [
+              {
+                "glob": "apps/task-service/migrations",
+                "input": ".",
+                "output": "migrations"
+              }
+            ],
+            "webpackConfig": "apps/task-service/webpack.config.js"
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "task-service:build",
+            "port": 7781
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/task-service/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/task-service"],
+          "options": {
+            "jestConfig": "apps/task-service/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "tenant-management-api": {
+      "root": "apps/tenant-management-api",
+      "sourceRoot": "apps/tenant-management-api/src",
+      "projectType": "application",
+      "prefix": "tenant-management-api",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "outputPath": "dist/apps/tenant-management-api",
+            "main": "apps/tenant-management-api/src/main.ts",
+            "tsConfig": "apps/tenant-management-api/tsconfig.app.json",
+            "assets": ["apps/tenant-management-api/src/assets"],
+            "webpackConfig": "apps/tenant-management-api/webpack.config.js"
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          },
+          "outputs": ["{options.outputPath}"]
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "tenant-management-api:build",
+            "port": 7000
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:lint",
+          "options": {
+            "linter": "eslint",
+            "tsConfig": [
+              "apps/tenant-management-api/tsconfig.app.json",
+              "apps/tenant-management-api/tsconfig.spec.json"
+            ],
+            "exclude": ["**/node_modules/**", "!apps/tenant-management-api/**/*"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/tenant-management-api/jest.config.js",
+            "passWithNoTests": true
+          },
+          "outputs": ["coverage/apps/tenant-management-api"]
         }
       }
     },
@@ -259,57 +790,55 @@
         }
       }
     },
-    "tenant-management-api": {
-      "root": "apps/tenant-management-api",
-      "sourceRoot": "apps/tenant-management-api/src",
-      "projectType": "application",
-      "prefix": "tenant-management-api",
+    "tools-scripts": {
+      "root": "tools/scripts",
+      "sourceRoot": "tools/scripts",
+      "projectType": "library",
       "schematics": {},
       "architect": {
-        "build": {
+        "build-encodeSecrets": {
           "builder": "@nrwl/node:build",
           "options": {
-            "outputPath": "dist/apps/tenant-management-api",
-            "main": "apps/tenant-management-api/src/main.ts",
-            "tsConfig": "apps/tenant-management-api/tsconfig.app.json",
-            "assets": ["apps/tenant-management-api/src/assets"],
-            "webpackConfig": "apps/tenant-management-api/webpack.config.js"
-          },
-          "configurations": {
-            "production": {
-              "optimization": true,
-              "extractLicenses": true,
-              "inspect": false,
-              "fileReplacements": []
-            }
+            "outputPath": "dist/tools/scripts/encodeSecrets",
+            "main": "tools/scripts/encodeSecrets/index.ts",
+            "tsConfig": "tools/tsconfig.scripts.json",
+            "assets": [],
+            "buildLibsFromSource": true
           },
           "outputs": ["{options.outputPath}"]
         },
-        "serve": {
-          "builder": "@nrwl/node:execute",
+        "build-loadDirectoryData": {
+          "builder": "@nrwl/node:build",
           "options": {
-            "buildTarget": "tenant-management-api:build",
-            "port": 7000
-          }
+            "outputPath": "dist/tools/scripts/loadDirectoryData",
+            "main": "tools/scripts/loadDirectoryData/index.ts",
+            "tsConfig": "tools/tsconfig.scripts.json",
+            "assets": [],
+            "buildLibsFromSource": true
+          },
+          "outputs": ["{options.outputPath}"]
         },
-        "lint": {
-          "builder": "@nrwl/linter:lint",
+        "execute": {
+          "builder": "@nrwl/workspace:run-commands",
           "options": {
-            "linter": "eslint",
-            "tsConfig": [
-              "apps/tenant-management-api/tsconfig.app.json",
-              "apps/tenant-management-api/tsconfig.spec.json"
+            "commands": [
+              {
+                "command": "nx run tools-scripts:build-{args.script}"
+              },
+              {
+                "command": "node dist/tools/scripts/{args.script}/main.js"
+              }
             ],
-            "exclude": ["**/node_modules/**", "!apps/tenant-management-api/**/*"]
+            "parallel": false
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
-            "jestConfig": "apps/tenant-management-api/jest.config.js",
+            "jestConfig": "tools/scripts/jest.config.js",
             "passWithNoTests": true
           },
-          "outputs": ["coverage/apps/tenant-management-api"]
+          "outputs": ["coverage/tools/scripts"]
         }
       }
     },
@@ -371,389 +900,6 @@
         }
       }
     },
-    "notification-service": {
-      "root": "apps/notification-service",
-      "sourceRoot": "apps/notification-service/src",
-      "projectType": "application",
-      "prefix": "notification-service",
-      "schematics": {},
-      "architect": {
-        "build": {
-          "builder": "@nrwl/node:build",
-          "options": {
-            "webpackConfig": "apps/notification-service/webpack.config.js",
-            "outputPath": "dist/apps/notification-service",
-            "main": "apps/notification-service/src/main.ts",
-            "tsConfig": "apps/notification-service/tsconfig.app.json",
-            "assets": []
-          },
-          "configurations": {
-            "production": {
-              "optimization": true,
-              "extractLicenses": true,
-              "inspect": false,
-              "fileReplacements": []
-            }
-          },
-          "outputs": ["{options.outputPath}"]
-        },
-        "serve": {
-          "builder": "@nrwl/node:execute",
-          "options": {
-            "buildTarget": "notification-service:build",
-            "port": 7772
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:lint",
-          "options": {
-            "linter": "eslint",
-            "tsConfig": ["apps/notification-service/tsconfig.app.json", "apps/notification-service/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!apps/notification-service/**/*"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "apps/notification-service/jest.config.js",
-            "passWithNoTests": true
-          },
-          "outputs": ["coverage/apps/notification-service"]
-        }
-      }
-    },
-    "event-service": {
-      "root": "apps/event-service",
-      "sourceRoot": "apps/event-service/src",
-      "projectType": "application",
-      "prefix": "event-service",
-      "schematics": {},
-      "architect": {
-        "build": {
-          "builder": "@nrwl/node:build",
-          "options": {
-            "webpackConfig": "apps/event-service/webpack.config.js",
-            "outputPath": "dist/apps/event-service",
-            "main": "apps/event-service/src/main.ts",
-            "tsConfig": "apps/event-service/tsconfig.app.json",
-            "assets": []
-          },
-          "configurations": {
-            "production": {
-              "optimization": true,
-              "extractLicenses": true,
-              "inspect": false,
-              "fileReplacements": []
-            }
-          },
-          "outputs": ["{options.outputPath}"]
-        },
-        "serve": {
-          "builder": "@nrwl/node:execute",
-          "options": {
-            "buildTarget": "event-service:build",
-            "port": 7773
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:lint",
-          "options": {
-            "linter": "eslint",
-            "tsConfig": ["apps/event-service/tsconfig.app.json", "apps/event-service/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!apps/event-service/**/*"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "apps/event-service/jest.config.js",
-            "passWithNoTests": true
-          },
-          "outputs": ["coverage/apps/event-service"]
-        }
-      }
-    },
-    "push-service": {
-      "root": "apps/push-service",
-      "sourceRoot": "apps/push-service/src",
-      "projectType": "application",
-      "prefix": "push-service",
-      "schematics": {},
-      "architect": {
-        "build": {
-          "builder": "@nrwl/node:build",
-          "options": {
-            "webpackConfig": "apps/push-service/webpack.config.js",
-            "outputPath": "dist/apps/push-service",
-            "main": "apps/push-service/src/main.ts",
-            "tsConfig": "apps/push-service/tsconfig.app.json",
-            "assets": []
-          },
-          "configurations": {
-            "production": {
-              "optimization": true,
-              "extractLicenses": true,
-              "inspect": false,
-              "fileReplacements": []
-            }
-          },
-          "outputs": ["{options.outputPath}"]
-        },
-        "serve": {
-          "builder": "@nrwl/node:execute",
-          "options": {
-            "buildTarget": "push-service:build",
-            "port": 7774
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:lint",
-          "options": {
-            "linter": "eslint",
-            "tsConfig": ["apps/push-service/tsconfig.app.json", "apps/push-service/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!apps/push-service/**/*"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "apps/push-service/jest.config.js",
-            "passWithNoTests": true
-          },
-          "outputs": ["coverage/apps/push-service"]
-        }
-      }
-    },
-    "tools-scripts": {
-      "root": "tools/scripts",
-      "sourceRoot": "tools/scripts",
-      "projectType": "library",
-      "schematics": {},
-      "architect": {
-        "build-encodeSecrets": {
-          "builder": "@nrwl/node:build",
-          "options": {
-            "outputPath": "dist/tools/scripts/encodeSecrets",
-            "main": "tools/scripts/encodeSecrets/index.ts",
-            "tsConfig": "tools/tsconfig.scripts.json",
-            "assets": [],
-            "buildLibsFromSource": true
-          },
-          "outputs": ["{options.outputPath}"]
-        },
-        "build-loadDirectoryData": {
-          "builder": "@nrwl/node:build",
-          "options": {
-            "outputPath": "dist/tools/scripts/loadDirectoryData",
-            "main": "tools/scripts/loadDirectoryData/index.ts",
-            "tsConfig": "tools/tsconfig.scripts.json",
-            "assets": [],
-            "buildLibsFromSource": true
-          },
-          "outputs": ["{options.outputPath}"]
-        },
-        "execute": {
-          "builder": "@nrwl/workspace:run-commands",
-          "options": {
-            "commands": [
-              {
-                "command": "nx run tools-scripts:build-{args.script}"
-              },
-              {
-                "command": "node dist/tools/scripts/{args.script}/main.js"
-              }
-            ],
-            "parallel": false
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "tools/scripts/jest.config.js",
-            "passWithNoTests": true
-          },
-          "outputs": ["coverage/tools/scripts"]
-        }
-      }
-    },
-    "status-service": {
-      "root": "apps/status-service",
-      "sourceRoot": "apps/status-service/src",
-      "projectType": "application",
-      "prefix": "status-service",
-      "schematics": {},
-      "architect": {
-        "build": {
-          "builder": "@nrwl/node:build",
-          "options": {
-            "webpackConfig": "apps/status-service/webpack.config.js",
-            "outputPath": "dist/apps/status-service",
-            "main": "apps/status-service/src/main.ts",
-            "tsConfig": "apps/status-service/tsconfig.app.json",
-            "assets": ["apps/status-service/src/assets"]
-          },
-          "configurations": {
-            "production": {
-              "optimization": true,
-              "extractLicenses": true,
-              "inspect": false,
-              "fileReplacements": []
-            }
-          }
-        },
-        "serve": {
-          "builder": "@nrwl/node:execute",
-          "options": {
-            "buildTarget": "status-service:build"
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["apps/status-service/**/*.ts"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "apps/status-service/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      }
-    },
-    "adsp-service-sdk": {
-      "root": "libs/adsp-service-sdk",
-      "sourceRoot": "libs/adsp-service-sdk/src",
-      "projectType": "library",
-      "architect": {
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["libs/adsp-service-sdk/**/*.ts"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/adsp-service-sdk"],
-          "options": {
-            "jestConfig": "libs/adsp-service-sdk/jest.config.js",
-            "passWithNoTests": true
-          }
-        },
-        "build": {
-          "builder": "@nrwl/node:package",
-          "outputs": ["{options.outputPath}"],
-          "options": {
-            "outputPath": "dist/libs/adsp-service-sdk",
-            "tsConfig": "libs/adsp-service-sdk/tsconfig.lib.json",
-            "packageJson": "libs/adsp-service-sdk/package.json",
-            "main": "libs/adsp-service-sdk/src/index.ts",
-            "assets": ["libs/adsp-service-sdk/*.md"]
-          }
-        }
-      }
-    },
-    "status-app": {
-      "root": "apps/status-app",
-      "sourceRoot": "apps/status-app/src",
-      "projectType": "application",
-      "architect": {
-        "build": {
-          "builder": "@nrwl/web:build",
-          "outputs": ["{options.outputPath}"],
-          "options": {
-            "outputPath": "dist/apps/status-app",
-            "index": "apps/status-app/src/index.html",
-            "main": "apps/status-app/src/main.tsx",
-            "polyfills": "apps/status-app/src/polyfills.ts",
-            "tsConfig": "apps/status-app/tsconfig.app.json",
-            "assets": [
-              "apps/status-app/src/favicon.ico",
-              "apps/status-app/src/assets",
-              {
-                "glob": "nginx.conf",
-                "input": "./",
-                "output": "./"
-              }
-            ],
-            "styles": ["apps/status-app/src/styles.css"],
-            "scripts": [],
-            "webpackConfig": "apps/status-app/webpack.conf.js"
-          },
-          "configurations": {
-            "production": {
-              "fileReplacements": [],
-              "optimization": true,
-              "outputHashing": "all",
-              "sourceMap": false,
-              "extractCss": true,
-              "namedChunks": false,
-              "extractLicenses": true,
-              "vendorChunk": false,
-              "budgets": [
-                {
-                  "type": "initial",
-                  "maximumWarning": "2mb",
-                  "maximumError": "5mb"
-                }
-              ]
-            }
-          }
-        },
-        "serve": {
-          "builder": "@nrwl/web:dev-server",
-          "options": {
-            "buildTarget": "status-app:build"
-          },
-          "configurations": {
-            "production": {
-              "buildTarget": "status-app:build:production"
-            }
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["apps/status-app/**/*.{ts,tsx,js,jsx}"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/status-app"],
-          "options": {
-            "jestConfig": "apps/status-app/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      }
-    },
-    "status-app-e2e": {
-      "root": "apps/status-app-e2e",
-      "sourceRoot": "apps/status-app-e2e/src",
-      "projectType": "application",
-      "architect": {
-        "e2e": {
-          "builder": "@nrwl/cypress:cypress",
-          "options": {
-            "cypressConfig": "apps/status-app-e2e/cypress.json",
-            "tsConfig": "apps/status-app-e2e/tsconfig.e2e.json",
-            "devServerTarget": "status-app:serve"
-          },
-          "configurations": {
-            "production": {
-              "devServerTarget": "status-app:serve:production"
-            }
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["apps/status-app-e2e/**/*.{js,ts}"]
-          }
-        }
-      }
-    },
     "verify-service": {
       "root": "apps/verify-service",
       "sourceRoot": "apps/verify-service/src",
@@ -795,151 +941,6 @@
           "outputs": ["coverage/apps/verify-service"],
           "options": {
             "jestConfig": "apps/verify-service/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      }
-    },
-    "api-docs-app": {
-      "root": "apps/api-docs-app",
-      "sourceRoot": "apps/api-docs-app/src",
-      "projectType": "application",
-      "architect": {
-        "build": {
-          "builder": "@nrwl/node:build",
-          "outputs": ["{options.outputPath}"],
-          "options": {
-            "outputPath": "dist/apps/api-docs-app",
-            "main": "apps/api-docs-app/src/main.ts",
-            "tsConfig": "apps/api-docs-app/tsconfig.app.json",
-            "assets": ["apps/api-docs-app/src/assets"]
-          },
-          "configurations": {
-            "production": {
-              "optimization": true,
-              "extractLicenses": true,
-              "inspect": false,
-              "fileReplacements": []
-            }
-          }
-        },
-        "serve": {
-          "builder": "@nrwl/node:execute",
-          "options": {
-            "buildTarget": "api-docs-app:build",
-            "port": 7779
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["apps/api-docs-app/**/*.ts"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/api-docs-app"],
-          "options": {
-            "jestConfig": "apps/api-docs-app/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      }
-    },
-    "configuration-service": {
-      "root": "apps/configuration-service",
-      "sourceRoot": "apps/configuration-service/src",
-      "projectType": "application",
-      "architect": {
-        "build": {
-          "builder": "@nrwl/node:build",
-          "outputs": ["{options.outputPath}"],
-          "options": {
-            "webpackConfig": "apps/configuration-service/webpack.config.js",
-            "outputPath": "dist/apps/configuration-service",
-            "main": "apps/configuration-service/src/main.ts",
-            "tsConfig": "apps/configuration-service/tsconfig.app.json",
-            "assets": []
-          },
-          "configurations": {
-            "production": {
-              "optimization": true,
-              "extractLicenses": true,
-              "inspect": false,
-              "fileReplacements": []
-            }
-          }
-        },
-        "serve": {
-          "builder": "@nrwl/node:execute",
-          "options": {
-            "buildTarget": "configuration-service:build",
-            "port": 7780
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["apps/configuration-service/**/*.ts"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/configuration-service"],
-          "options": {
-            "jestConfig": "apps/configuration-service/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      }
-    },
-    "task-service": {
-      "root": "apps/task-service",
-      "sourceRoot": "apps/task-service/src",
-      "projectType": "application",
-      "architect": {
-        "build": {
-          "builder": "@nrwl/node:build",
-          "outputs": ["{options.outputPath}"],
-          "options": {
-            "outputPath": "dist/apps/task-service",
-            "main": "apps/task-service/src/main.ts",
-            "tsConfig": "apps/task-service/tsconfig.app.json",
-            "assets": [
-              {
-                "glob": "apps/task-service/migrations",
-                "input": ".",
-                "output": "migrations"
-              }],
-            "webpackConfig": "apps/task-service/webpack.config.js"
-          },
-          "configurations": {
-            "production": {
-              "optimization": true,
-              "extractLicenses": true,
-              "inspect": false,
-              "fileReplacements": []
-            }
-          }
-        },
-        "serve": {
-          "builder": "@nrwl/node:execute",
-          "options": {
-            "buildTarget": "task-service:build",
-            "port": 7781
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["apps/task-service/**/*.ts"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/task-service"],
-          "options": {
-            "jestConfig": "apps/task-service/jest.config.js",
             "passWithNoTests": true
           }
         }

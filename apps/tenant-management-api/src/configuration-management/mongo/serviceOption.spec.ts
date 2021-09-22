@@ -5,14 +5,12 @@ import { ServiceOptionEntity } from '../configuration';
 describe('Mongo: ServiceOption', () => {
   const repo = new MongoServiceOptionRepository();
 
-  beforeEach(async (done) => {
+  beforeEach(async () => {
     await connect();
-    done();
   });
 
-  afterEach(async (done) => {
+  afterEach(async () => {
     await disconnect();
-    done();
   });
 
   it('should create an option', async () => {

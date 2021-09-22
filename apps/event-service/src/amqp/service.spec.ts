@@ -18,7 +18,7 @@ describe('AmqpDomainEventService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('can send event', async (done) => {
+  it('can send event', async () => {
     const channel = {
       assertExchange: jest.fn(),
       assertQueue: jest.fn(),
@@ -47,11 +47,9 @@ describe('AmqpDomainEventService', () => {
     await service.connect();
     await service.send(event);
     expect(channel.publish).toHaveBeenCalledTimes(1);
-
-    done();
   });
 
-  it('can raise error on send if not connected', async (done) => {
+  it('can raise error on send if not connected', async () => {
     const connection = {
       on: jest.fn(),
     };
@@ -70,11 +68,9 @@ describe('AmqpDomainEventService', () => {
 
     const service = new AmqpDomainEventService(logger, (connection as unknown) as Connection);
     await expect(service.send(event)).rejects.toThrow(/Service must be connected before events can be sent./);
-
-    done();
   });
 
-  it('can recreate channel on send error', async (done) => {
+  it('can recreate channel on send error', async () => {
     const channel = {
       assertExchange: jest.fn(),
       assertQueue: jest.fn(),
@@ -108,7 +104,5 @@ describe('AmqpDomainEventService', () => {
     await service.send(event);
 
     expect(connection.createChannel).toHaveBeenCalledTimes(3);
-
-    done();
   });
 });

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import { getDefaultMiddleware } from '@reduxjs/toolkit';
-import { render, waitFor } from '@testing-library/react';
+import { render, waitFor, cleanup } from '@testing-library/react';
 import configureStore from 'redux-mock-store';
 import ServiceStatuses from './status';
 import axios from 'axios';
@@ -44,6 +44,7 @@ describe('Service statuses', () => {
 
   afterEach(() => {
     axiosMock.get.mockReset();
+    cleanup();
   });
 
   it('displays a message saying no services are available if there are none', async () => {
@@ -128,6 +129,12 @@ describe('Service statuses (2 of them)', () => {
       },
       session: SessionInit
     });
+    axiosMock.get.mockResolvedValueOnce({ data: data });
+  });
+
+  afterEach(() => {
+    axiosMock.get.mockReset();
+    cleanup();
   });
 
   it('has service status names', async () => {

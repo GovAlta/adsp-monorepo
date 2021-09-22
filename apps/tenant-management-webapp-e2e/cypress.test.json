@@ -1,7 +1,7 @@
 {
   "env": {
     "env-name": "TEST",
-    "TAGS": "@regression and not @ignore",
+    "TAGS": "",
     "keycloakTokenUrlSuffix": "/protocol/openid-connect/token",
     "core-api-client-id": "tenant-api",
     "core-api-client-secret": "",
