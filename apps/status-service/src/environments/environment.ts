@@ -15,7 +15,7 @@ export const environment = envalid.cleanEnv(
     MONGO_PASSWORD: envalid.str({ default: '' }),
     PORT: envalid.num({ default: 3338 }),
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:status-service' }),
-    CLIENT_SECRET: envalid.str({default: ''}),
+    CLIENT_SECRET: envalid.str({ default: '' }),
     AMQP_HOST: envalid.str({ default: 'localhost' }),
     AMQP_USER: envalid.str({ default: 'guest' }),
     AMQP_PASSWORD: envalid.str({ default: 'guest' }),
