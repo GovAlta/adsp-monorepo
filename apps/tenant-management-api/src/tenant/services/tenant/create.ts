@@ -237,7 +237,28 @@ export const validateEmailInDB = async (email: string): Promise<void> => {
 export const validateName = async (name: string): Promise<void> => {
   logger.info(`Validate - is the tenant name valid and unique?`);
 
-  const invalidChars = ['!', '%', '?', '^', '#'];
+  const invalidChars = [
+    '!',
+    '*',
+    "'",
+    '(',
+    ')',
+    ';',
+    ':',
+    '@',
+    '&',
+    '=',
+    '+',
+    '$',
+    ',',
+    '/',
+    '?',
+    '%',
+    '?',
+    '#',
+    '[',
+    ']',
+  ];
 
   invalidChars.forEach((char) => {
     if (name.indexOf(char) !== -1) {
