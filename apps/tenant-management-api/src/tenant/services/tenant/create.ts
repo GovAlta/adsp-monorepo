@@ -262,13 +262,13 @@ export const validateName = async (name: string): Promise<void> => {
 
   invalidChars.forEach((char) => {
     if (name.indexOf(char) !== -1) {
-      const errorMessage = `Names cannot contain special characters (e.g. ! & %)`;
+      const errorMessage = `Names cannot contain special characters (e.g. ! & %).`;
       throw new TenantError(errorMessage, HttpStatusCodes.BAD_REQUEST);
     }
   });
 
   if (name.length === 0) {
-    const errorMessage = `Enter a tenant name`;
+    const errorMessage = `Enter a tenant name.`;
     throw new TenantError(errorMessage, HttpStatusCodes.BAD_REQUEST);
   }
 

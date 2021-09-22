@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { GoAButton, GoANotification, GoAElementLoader  } from '@abgov/react-components';
+import { GoAButton, GoANotification, GoAElementLoader } from '@abgov/react-components';
 import { CreateTenant, IsTenantAdmin } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 import GoALinkButton from '@components/LinkButton';
-import { GoAForm, GoAFormButtons, GoAFormItem } from '@components/Form';
+import { GoAForm, GoAFormActions, GoAFormItem } from '@abgov/react-components';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import { KeycloakCheckSSO, TenantLogin } from '@store/tenant/actions';
 import { TenantLogout } from '@store/tenant/actions';
 import styled from 'styled-components';
-
 
 const CreateRealm = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -30,14 +29,16 @@ const CreateRealm = (): JSX.Element => {
     setIsLoaded((currentIsLoaded) => !currentIsLoaded);
   };
 
-  const { isTenantAdmin, userInfo, isTenantCreated, tenantRealm, isInBeta, notifications } = useSelector((state: RootState) => ({
-    isTenantAdmin: state.tenant.isTenantAdmin,
-    userInfo: state.session.userInfo,
-    isTenantCreated: state.tenant.isTenantCreated,
-    tenantRealm: state.tenant.realm,
-    isInBeta: state.session.realmAccess?.roles?.includes('beta-tester'),
-    notifications: state.notifications.notifications
-  }));
+  const { isTenantAdmin, userInfo, isTenantCreated, tenantRealm, isInBeta, notifications } = useSelector(
+    (state: RootState) => ({
+      isTenantAdmin: state.tenant.isTenantAdmin,
+      userInfo: state.session.userInfo,
+      isTenantCreated: state.tenant.isTenantCreated,
+      tenantRealm: state.tenant.realm,
+      isInBeta: state.session.realmAccess?.roles?.includes('beta-tester'),
+      notifications: state.notifications.notifications,
+    })
+  );
 
   useEffect(() => {
     dispatch(KeycloakCheckSSO('core'));
@@ -46,7 +47,6 @@ const CreateRealm = (): JSX.Element => {
   useEffect(() => {
     setIsLoaded(true);
   }, [notifications]);
-
 
   useEffect(() => {
     if (userInfo) {
@@ -73,7 +73,7 @@ const CreateRealm = (): JSX.Element => {
     return (
       <GoAButton buttonType="primary" buttonSize="normal" disabled>
         Creating Tenant...
-        <GoAElementLoader visible={true} size='default' baseColour="#c8eef9" spinnerColour="#0070c4" />
+        <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
       </GoAButton>
     );
   };
@@ -105,7 +105,7 @@ const CreateRealm = (): JSX.Element => {
         >
           Back
         </GoALinkButton>
-        <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
+        <GoAButton onClick={onCreateRealm}>Create tenant</GoAButton>
       </>
     );
   };
@@ -128,16 +128,28 @@ const CreateRealm = (): JSX.Element => {
                     <p>
                       Current user email: <b>{userInfo.email}</b>
                     </p>
-                    <p>As a reminder, you are only able to create <b>one tenant</b> per user account.</p>
+                    <p>
+                      As a reminder, you are only able to create <b>one tenant</b> per user account.
+                    </p>
                     <GoAForm>
-                      <GoAFormItem className={notifications[notifications.length-1]?.message ? 'error' : ''}>
+                      <GoAFormItem className={notifications[notifications.length - 1]?.message ? 'error' : ''}>
                         <label htmlFor="name">Tenant name</label>
                         <input id="name" type="text" value={name} onChange={onChangeName} />
-                        <div style={{lineHeight: '16px'}}><em style={{color: '#ec040b'}}>{notifications[notifications.length-1]?.message}</em></div>
-                        <div style={{lineHeight: '10px'}}><em>{notifications[notifications.length-1]?.message.includes('Names cannot contain') ? '' : 'Names cannot contain special characters (ex. ! % &amp'}</em></div>
+                        <div style={{ lineHeight: '16px' }}>
+                          <em style={{ color: '#ec040b' }}>{notifications[notifications.length - 1]?.message}</em>
+                        </div>
+                        <div style={{ lineHeight: '10px' }}>
+                          <em>
+                            {notifications[notifications.length - 1]?.message.includes('Names cannot contain')
+                              ? ''
+                              : 'Names cannot contain special characters (ex. ! % &).'}
+                          </em>
+                        </div>
                       </GoAFormItem>
 
-                      <CreateTenantFormButtons>{isLoaded ? <TenantCreateView /> : <ButtonLoader />}</CreateTenantFormButtons>
+                      <GoAFormActions alignment="left">
+                        {isLoaded ? <TenantCreateView /> : <ButtonLoader />}
+                      </GoAFormActions>
                     </GoAForm>
                   </>
                 ) : null}
