@@ -18,8 +18,7 @@ export const createRepositories = async ({ logger, ...props }: MongoRepositoryPr
   logger.info(`Connected to MongoDB at: ${mongoConnectionString}`);
 
   await connect(mongoConnectionString, {
-    user: props.MONGO_USER,
-    pass: props.MONGO_PASSWORD,
+    auth: { username: props.MONGO_USER, password: props.MONGO_PASSWORD },
   });
 
   const serviceStatusRepository = new MongoServiceStatusRepository();
