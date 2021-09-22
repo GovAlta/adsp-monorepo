@@ -20,7 +20,7 @@ describe('Mongo: TenantConfig', () => {
   });
 
   it('finds a defined record count ', async () => {
-    const data = await createMockData<TenantConfigEntity>(repo, [{}, {}, {}]);
+    const data = await createMockData<TenantConfigEntity>(repo, [{ tenantName: '1' }, { tenantName: '2' }, { tenantName: '3' }]);
     const { results } = await repo.find(2, '');
     expect(data.length).toEqual(3);
     expect(results.length).toEqual(2);

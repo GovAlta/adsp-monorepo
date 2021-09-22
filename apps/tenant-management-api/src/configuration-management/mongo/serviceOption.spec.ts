@@ -1,12 +1,14 @@
 import { MongoServiceOptionRepository } from './serviceOption';
 import { connect, disconnect, createMockData } from '@core-services/core-common/mongo';
 import { ServiceOptionEntity } from '../configuration';
+import { model } from 'mongoose';
 
 describe('Mongo: ServiceOption', () => {
   const repo = new MongoServiceOptionRepository();
 
   beforeEach(async () => {
     await connect();
+    model('serviceOption').deleteMany({});
   });
 
   afterEach(async () => {
@@ -20,7 +22,7 @@ describe('Mongo: ServiceOption', () => {
   });
 
   it('finds a defined record count ', async () => {
-    const data = await createMockData<ServiceOptionEntity>(repo, [{}, {}, {}]);
+    const data = await createMockData<ServiceOptionEntity>(repo, [{ service: '1' }, { service: '2' }, { service: '3' }]);
     const { results } = await repo.find(2, '');
     expect(data.length).toEqual(3);
     expect(results.length).toEqual(2);

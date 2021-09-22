@@ -1,6 +1,6 @@
 // This import adds type definitions for req.User
 import '@abgov/adsp-service-sdk';
-import { createMockMongoServer, disconnectMockMongo } from './mock';
+import { connect, connection, model } from 'mongoose';
 import { MongoServiceStatusRepository } from './serviceStatus';
 import { ServiceStatusApplicationEntity } from '../app';
 
@@ -9,12 +9,13 @@ describe('Service status mongo repository', () => {
   let mongoose: typeof import('mongoose');
 
   beforeEach(async () => {
-    mongoose = await createMockMongoServer();
+    mongoose = await connect(process.env.MONGO_URL);
     repo = new MongoServiceStatusRepository();
+    await model('ServiceStatus').deleteMany({});
   });
 
   afterEach(async () => {
-    await disconnectMockMongo();
+    await connection.close();
   });
 
   function insertMockData(
@@ -109,6 +110,7 @@ describe('Service status mongo repository', () => {
         tenantId: '99',
         tenantName: 'Child Services',
         tenantRealm: '123123-123123-123123-123123',
+        endpoint: null,
       },
       {
         name: 'app 2',
@@ -116,6 +118,7 @@ describe('Service status mongo repository', () => {
         tenantId: '99',
         tenantName: 'Child Services',
         tenantRealm: '123123-123123-123123-123123',
+        endpoint: null,
       },
     ]);
     await repo.enable(applications[0]);

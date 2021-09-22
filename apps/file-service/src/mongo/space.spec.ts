@@ -6,6 +6,7 @@ import { environment } from '../environments/environment';
 import { FileTypeEntity } from '../file/model/type';
 import { FileSpaceEntity } from '../file/model/space';
 import { FileType } from '../file/types';
+import { model } from 'mongoose';
 
 describe('Mongo: SpaceEntity', () => {
   const type: FileType = {
@@ -18,14 +19,15 @@ describe('Mongo: SpaceEntity', () => {
   };
 
   const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
-  const cache = new NodeCache({ stdTTL: 86400, useClones: false });
-  const repo = new MongoFileSpaceRepository(logger, cache);
+  const cache = { get: jest.fn(), set: jest.fn(), del: jest.fn() };
+  const repo = new MongoFileSpaceRepository(logger, cache as unknown as NodeCache);
 
   beforeEach(async () => {
     await connect();
   });
 
   afterEach(async () => {
+    await model('filespace').deleteMany({});
     await disconnect();
   });
 
