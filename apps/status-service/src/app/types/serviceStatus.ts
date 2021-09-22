@@ -16,7 +16,7 @@ export interface ServiceStatusApplication {
   name: string;
   statusTimestamp: number;
   tenantId: string;
-  tenantName: string;
+  tenantName: { $regex: string; $options: 'i' };
   tenantRealm: string;
   enabled: boolean;
 }

@@ -24,7 +24,7 @@ export function App(): JSX.Element {
         <Route exact path="/">
           <ServiceStatusPage />
         </Route>
-        <Route exact path="/:realm">
+        <Route exact path="/:name">
           <ServiceStatusPage />
         </Route>
       </Switch>
