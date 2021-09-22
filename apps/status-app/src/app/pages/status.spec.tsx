@@ -3,9 +3,11 @@ import { Provider } from 'react-redux';
 import { getDefaultMiddleware } from '@reduxjs/toolkit';
 import { render, waitFor, cleanup } from '@testing-library/react';
 import configureStore from 'redux-mock-store';
-import ServiceStatuses from './ServiceStatuses';
+import ServiceStatuses from './status';
 import axios from 'axios';
 import moment from 'moment';
+import { ApplicationInit } from '@store/status/models'
+import { SessionInit } from '@store/session/models'
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
@@ -34,6 +36,7 @@ describe('Service statuses', () => {
         platformTenantRealm: '0014430f-abb9-4b57-915c-de9f3c889696',
         envLoaded: true,
       },
+      application: ApplicationInit
     });
 
     axiosMock.get.mockResolvedValueOnce({ data: {} });
@@ -71,6 +74,7 @@ describe('Service statuses (2 of them)', () => {
           url: 'http://localhost:3338/health',
         },
       ],
+      notices: [],
       metadata: null,
       name: 'Status Service',
       description: 'This service allows for easy monitoring of application downtime.',
@@ -90,6 +94,7 @@ describe('Service statuses (2 of them)', () => {
           url: 'http://localhost:3333/health',
         },
       ],
+      notices: [],
       metadata: null,
       name: 'Tenant Service',
       description: 'Allows the provisioning of distinct services in their own namespace.',
@@ -119,6 +124,10 @@ describe('Service statuses (2 of them)', () => {
         platformTenantRealm: '0014430f-abb9-4b57-915c-de9f3c889696',
         envLoaded: true,
       },
+      application: {
+        applications: data
+      },
+      session: SessionInit
     });
     axiosMock.get.mockResolvedValueOnce({ data: data });
   });

@@ -9,7 +9,7 @@ import { useDispatch } from 'react-redux';
 
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 
-import ServiceStatusPage from './pages/ServiceStatuses';
+import ServiceStatusPage from './pages/status';
 
 export function App(): JSX.Element {
   const dispatch = useDispatch();
