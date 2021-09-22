@@ -28,6 +28,9 @@
     "api-docs-app": {
       "tags": []
     },
+    "calendar-service": {
+      "tags": []
+    },
     "configuration-service": {
       "tags": []
     },
