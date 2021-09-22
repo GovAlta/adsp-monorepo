@@ -26,7 +26,11 @@ export const createRepositories = ({
     connect(
       mongoConnectionString,
       {
-        auth: { username: MONGO_USER, password: MONGO_PASSWORD },
+        user: MONGO_USER,
+        pass: MONGO_PASSWORD,
+        useNewUrlParser: true,
+        useFindAndModify: false,
+        useUnifiedTopology: true,
       },
       (err) => {
         if (err) {

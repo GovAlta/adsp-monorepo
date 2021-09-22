@@ -14,7 +14,11 @@ export const connectMongo = async (): Promise<void> => {
     logger.info(`Mongodb URI is  ${mongoURI}`);
 
     const options: ConnectOptions = {
-      auth: { username: mongoUser, password: mongoPassword },
+      user: mongoUser,
+      pass: mongoPassword,
+      useNewUrlParser: true,
+      useFindAndModify: false,
+      useUnifiedTopology: true,
     };
 
     await connect(mongoURI, options);

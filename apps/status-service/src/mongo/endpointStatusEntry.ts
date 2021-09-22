@@ -13,7 +13,7 @@ export const defaultStatusEntryOptions: EndpointStatusEntryRepositoryOptions = {
 export default class MongoEndpointStatusEntryRepository implements EndpointStatusEntryRepository {
   model: Model<EndpointStatusEntry & Document>;
   constructor(private opts: EndpointStatusEntryRepositoryOptions = defaultStatusEntryOptions) {
-    this.model = model('EndpointStatusEntry', endpointStatusEntrySchema);
+    this.model = model<EndpointStatusEntry & Document>('EndpointStatusEntry', endpointStatusEntrySchema);
   }
   async get(_id: string): Promise<EndpointStatusEntryEntity> {
     throw new Error('not implemented');

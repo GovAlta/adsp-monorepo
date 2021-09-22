@@ -71,7 +71,7 @@
     "knex": "^0.21.5",
     "lodash": "^4.17.20",
     "mkdirp": "^1.0.4",
-    "mongoose": "^6.0.5",
+    "mongoose": "^5.13.9",
     "multer": "^1.4.2",
     "multiselect-react-dropdown": "^2.0.5",
     "node-cache": "^5.1.2",
