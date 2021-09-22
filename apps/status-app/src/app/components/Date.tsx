@@ -14,7 +14,7 @@ export const LocalTime = (props: LocalTimeProps): JSX.Element => {
     hour: '2-digit',
     minute: '2-digit',
     year: 'numeric'
-  };
+  } as Intl.DateTimeFormatOptions;
 
   const timeParts = new Date(props.date).toLocaleString('en-US', options).split(',');
   const localTime = `${timeParts[0]}, ${timeParts[1]}, ${timeParts[2]} at ${timeParts[3].toLowerCase()}`;
