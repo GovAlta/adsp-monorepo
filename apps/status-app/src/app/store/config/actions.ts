@@ -17,3 +17,8 @@ export type ActionTypes = FetchConfigAction | FetchConfigSuccessAction;
 export const fetchConfig = (): FetchConfigAction => ({
   type: 'config/fetch-config',
 });
+
+export const fetchConfigSuccess = (config: ConfigState): FetchConfigSuccessAction => ({
+  type: 'config/fetch-config-success',
+  payload: config
+});
