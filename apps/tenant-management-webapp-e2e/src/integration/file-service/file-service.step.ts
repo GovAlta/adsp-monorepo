@@ -7,7 +7,7 @@ import common from '../common/common.page';
 
 const fileServiceObj = new fileServicePage();
 const commonObj = new common();
-let responseObj: Cypress.Response;
+let responseObj: Cypress.Response<any>;
 let axiosResponse: AxiosResponse;
 let axiosError;
 let fileId;
@@ -143,7 +143,7 @@ When(
         fileId = axiosResponse.data.id;
       } catch (err) {
         axiosError = err;
-        cy.log(err);
+        cy.log(String(err));
       }
     });
   }
