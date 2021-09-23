@@ -1,12 +1,12 @@
-import { environment } from '../../environments/environment';
-
 export interface ServiceUrls {
   serviceStatusApiUrl?: string;
 }
 
 export interface ConfigState {
   serviceUrls?: ServiceUrls;
-  production: boolean;
+  production?: boolean;
+  envLoaded: boolean;
+  platformTenantRealm?: string
 }
 
-export const CONFIG_INIT: ConfigState = environment;
+export const CONFIG_INIT: ConfigState = { envLoaded: false };
