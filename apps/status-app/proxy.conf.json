@@ -1,0 +1,7 @@
+{
+  "/config/*": {
+    "target": "https://status-app-core-services-dev.os99.gov.ab.ca",
+    "secure": true,
+    "changeOrigin": true
+  }
+}

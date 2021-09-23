@@ -11,7 +11,7 @@ export class MongoFileSpaceRepository implements FileSpaceRepository {
   private model: Model<FileSpaceDoc>;
 
   constructor(private logger: Logger, private cache: NodeCache) {
-    this.model = model('filespace', fileSpaceSchema);
+    this.model = model<FileSpaceDoc>('filespace', fileSpaceSchema);
   }
 
   find(top: number, after: string): Promise<Results<FileSpaceEntity>> {

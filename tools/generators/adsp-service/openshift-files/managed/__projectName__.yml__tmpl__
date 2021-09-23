@@ -128,13 +128,6 @@ objects:
               env:
                 - name: PORT
                   value: "3333"
-                - name: REDIS_HOST
-                  value: <%= projectName %>-redis
-                - name: REDIS_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      key: database-password
-                      name: <%= projectName %>-redis${NAME_SUFFIX}
               imagePullPolicy: IfNotPresent
               name: <%= projectName %>
               ports:

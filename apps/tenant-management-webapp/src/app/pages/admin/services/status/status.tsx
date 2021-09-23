@@ -14,7 +14,9 @@ import { Route, Switch, useHistory, useLocation } from 'react-router-dom';
 import styled, { CSSProperties } from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import GoALinkButton from '@components/LinkButton';
-import ApplicationForm from './form';
+import { GoABadge, GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
+import type { GoABadgeType } from '@abgov/react-components/experimental';
+import ApplicationFormModal from './form';
 import NoticeForm from './noticeForm';
 import { GoAButton } from '@abgov/react-components';
 import { GoAForm, GoAFormItem } from '@components/Form';
@@ -23,15 +25,6 @@ import { Tab, Tabs } from '@components/Tabs';
 import { getNotices } from '@store/notice/actions';
 import { NoticeList } from './noticeList';
 import SupportLinks from '@components/SupportLinks';
-
-// icons
-import {
-  GoABadge,
-  GoAModal,
-  GoAModalActions,
-  GoAModalContent,
-  GoAModalTitle,
-} from '@abgov/react-components/experimental';
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
@@ -122,7 +115,7 @@ function Status(): JSX.Element {
 
       <Switch>
         <Route path="/admin/services/status/new">
-          <ApplicationForm />
+          <ApplicationFormModal isOpen={ true} />
         </Route>
         <Route path="/admin/services/status/notice/new">
           <GoAModal isOpen={true}>
@@ -141,7 +134,7 @@ function Status(): JSX.Element {
           </GoAModal>
         </Route>
         <Route path="/admin/services/status/:applicationId/edit">
-          <ApplicationForm />
+          <ApplicationFormModal isOpen={ true} />
         </Route>
       </Switch>
     </Page>
@@ -179,7 +172,7 @@ function Application(app: ServiceStatusApplication) {
     return value.substr(0, 1).toUpperCase() + value.substr(1);
   }
 
-  const publicStatusMap: { [key: string]: string } = {
+  const publicStatusMap: { [key: string]: GoABadgeType} = {
     operational: 'success',
     maintenance: 'warning',
     'reported-issues': 'emergency',
@@ -229,7 +222,7 @@ function Application(app: ServiceStatusApplication) {
         </GoAButton>
       </AppHealth>
 
-      {/* Dialogs */}
+      {/* GoAModals */}
 
       {/* Delete confirmation dialog */}
       <GoAModal isOpen={showDeleteConfirmation}>
@@ -376,6 +369,14 @@ const EndpointStatusEntries = styled.div`
 const EndpointStatusTick = styled.div`
   flex: 1 1 auto;
   height: 20px;
+  &:first-child {
+    border-top-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem;
+  }
+  &:last-child {
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+  }
 `;
 
 // =================

@@ -7,7 +7,7 @@ import { serviceStatusApplicationSchema } from './schema';
 export default class MongoServiceStatusRepository implements ServiceStatusRepository {
   model: Model<ServiceStatusApplication & Document>;
   constructor() {
-    this.model = model('ServiceStatus', serviceStatusApplicationSchema);
+    this.model = model<ServiceStatusApplication & Document>('ServiceStatus', serviceStatusApplicationSchema);
   }
   async findEnabledApplications(): Promise<ServiceStatusApplicationEntity[]> {
     const docs = await this.model.find({ enabled: true });
@@ -70,7 +70,6 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
         upsert: true,
         new: true,
         lean: true,
-        useFindAndModify: false,
       });
 
       return this.fromDoc(doc);

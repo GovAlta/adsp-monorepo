@@ -1,10 +1,10 @@
 import { ServiceStatusApplicationEntity, PublicServiceStatusType } from '..';
-import { createMockMongoServer, disconnectMockMongo } from '../../mongo/mock';
 import MongoServiceStatusRepository from '../../mongo/serviceStatus';
 import MongoEndpointStatusEntryRepository from '../../mongo/endpointStatusEntry';
 import { createCheckEndpointJob } from '../jobs/checkEndpoint';
 import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
 import { User } from '@abgov/adsp-service-sdk';
+import { connect, connection, model } from 'mongoose';
 
 describe.skip('Validate endpoint checking', () => {
   let serviceStatusRepository: MongoServiceStatusRepository;
@@ -20,19 +20,18 @@ describe.skip('Validate endpoint checking', () => {
     token: null,
   };
 
-  beforeEach(async (done) => {
-    mongoose = await createMockMongoServer();
+  beforeEach(async () => {
+    mongoose = await connect(process.env.MONGO_URL);
+    await model('ServiceStatus').deleteMany({});
     serviceStatusRepository = new MongoServiceStatusRepository();
     endpointStatusEntryRepository = new MongoEndpointStatusEntryRepository({
       everyMilliseconds: 1,
       limit: 1000,
     });
-    done();
   });
 
-  afterEach(async (done) => {
-    await disconnectMockMongo();
-    done();
+  afterEach(async () => {
+    await connection.close();
   });
 
   function generateId(): string {

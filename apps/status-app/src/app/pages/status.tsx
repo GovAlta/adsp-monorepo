@@ -1,62 +1,46 @@
 import React, { useEffect } from 'react';
-import { useState } from 'react';
 import { GoAHeader } from '@abgov/react-components';
 
 import '@abgov/core-css/goa-core.css';
 import '@abgov/core-css/goa-components.css';
 import '@abgov/core-css/src/lib/stories/page-template/page-template.story.scss';
-import { Grid, GridItem } from '@components/Grid';
-import ServiceStatus from '../components/ServiceStatus';
+import { Grid, GridItem } from '@components/Grid'
+import ServiceStatus from './statusCard';
 import { useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { GoAPageLoader } from '@abgov/react-components';
-import { environment } from '../environments/environment';
-
 import styled from 'styled-components';
+import { useDispatch } from 'react-redux';
+import { fetchApplications } from '@store/status/actions'
+import { RootState } from '@store/index';
+import { PageLoader } from '@components/PageLoader';
 
-import { StatusApi } from '../api/statusApi';
-import { ServiceStatusApplication } from '../api/models';
 import moment from 'moment';
 
+
 const ServiceStatusPage = (): JSX.Element => {
-  const env = useSelector((state) => state);
-  const config = useSelector((state: { config: typeof environment }) => state.config);
-  const [applications, setApplications] = useState<ServiceStatusApplication[]>([]);
-  const [loaded, setLoaded] = useState<boolean>(false);
+  const { config } = useSelector((state: RootState) => ({
+    config: state.config,
+  }));
   const location = useLocation();
-  const ready = config.envLoaded && loaded;
   const realm = location.pathname.slice(1) || config.platformTenantRealm;
+  const dispatch = useDispatch();
+
+  const { applications } = useSelector((state: RootState) => ({
+    applications: state.application?.applications,
+  }));
 
   useEffect(() => {
-    const api = new StatusApi(config.serviceUrls.serviceStatusApiUrl, realm);
-    async function fetchData() {
-      const publicApp = await api.getPublicApplications();
-      setApplications(publicApp);
-      setLoaded(true);
-    }
-    fetchData();
-
-    const intervalId = setInterval(async () => {
-      const publicApp = await api.getPublicApplications();
-      setApplications(publicApp);
-      setLoaded(true);
-    }, 5000);
-
-    return () => clearInterval(intervalId); //This is important
-    // eslint-disable-next-line
-  }, [env]);
-
-  const PageLoader = () => {
-    return <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />;
-  };
+    dispatch(fetchApplications(realm))
+  }, [realm]);
 
   const services = () => {
     return (
       <div className="small-container">
-        <h2>All {applications[0].tenantName || 'platform'} services</h2>
+        <PageLoader />
+        <h2 data-testid='service-name'>All {applications[0].name || 'platform'} services</h2>
         <p>
           These are the services currently being offered by{' '}
-          {location.pathname.slice(1) ? applications[0].tenantName : 'the Alberta Digital Service Platform'}. All
+          {location.pathname.slice(1) ? applications[0].name : 'the Alberta Digital Service Platform'}. All
           statuses are in real time and reflect current states of the individual services. Please{' '}
           <a href="mailto: DIO@gov.ab.ca">contact support</a> for additional information or any other inquiries
           regarding service statuses.
@@ -67,10 +51,12 @@ const ServiceStatusPage = (): JSX.Element => {
             return (
               <GridItem key={index} md={12} vSpacing={1} hSpacing={0.5}>
                 <ServiceStatus
+                  data-testid={`service-${app.name}`}
                   name={app.name}
                   state={app.status}
                   date={app.statusTimestamp ? moment(app.statusTimestamp).calendar() : 'Never Ran Yet'}
                   description={app.description}
+                  notices={app.notices}
                 />
               </GridItem>
             );
@@ -90,7 +76,7 @@ const ServiceStatusPage = (): JSX.Element => {
   };
 
   const SectionView = () => {
-    return <div>{applications[0] ? services() : noServices()}</div>;
+    return <div>{applications && applications.length > 0 ? services() : noServices()}</div>;
   };
 
   return (
@@ -104,15 +90,9 @@ const ServiceStatusPage = (): JSX.Element => {
       </div>
       <main>
         <section>
-          {!ready ? (
-            <Padding>
-              <PageLoader />
-            </Padding>
-          ) : (
-            <SectionView />
-          )}{' '}
+          <SectionView />
         </section>
-        <section>{}</section>
+        <section>{ }</section>
       </main>
       <Footer>
         <a href="https://www.alberta.ca">Go to Alberta.ca</a>
@@ -131,10 +111,6 @@ const Footer = styled.div`
   padding-top: 20px;
   text-align: center;
   background-color: #f1f1f1;
-`;
-
-const Padding = styled.div`
-  padding-top: 30px;
 `;
 
 const FooterLinks = styled.div`

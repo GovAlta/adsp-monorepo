@@ -39,7 +39,7 @@ describe('EventService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('can send event', async (done) => {
+  it('can send event', async () => {
     const service = new EventServiceImpl(
       logger,
       directoryMock,
@@ -73,11 +73,9 @@ describe('EventService', () => {
       namespace: 'test-service',
       tenantId: tenantId.toString(),
     });
-
-    done();
   });
 
-  it('fails for send of unknown event', async (done) => {
+  it('fails for send of unknown event', async () => {
     const service = new EventServiceImpl(
       logger,
       directoryMock,
@@ -94,7 +92,5 @@ describe('EventService', () => {
         payload: {},
       })
     ).rejects.toThrow(/Event test-service:test-event is not recognized; only registered events can be sent./);
-
-    done();
   });
 });

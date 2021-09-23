@@ -5,14 +5,12 @@ import { MongoDirectoryRepository } from './directory';
 describe('Mongo: Directory', () => {
   const repo = new MongoDirectoryRepository();
 
-  beforeEach(async (done) => {
+  beforeEach(async () => {
     await connect();
-    done();
   });
 
-  afterEach(async (done) => {
+  afterEach(async () => {
     await disconnect();
-    done();
   });
 
   it('should create an option', async () => {

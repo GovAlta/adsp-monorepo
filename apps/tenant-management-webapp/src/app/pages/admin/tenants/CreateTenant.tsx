@@ -4,7 +4,7 @@ import { GoAButton, GoANotification, GoAElementLoader } from '@abgov/react-compo
 import { CreateTenant, IsTenantAdmin } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 import GoALinkButton from '@components/LinkButton';
-import { GoAForm, GoAFormActions, GoAFormItem } from '@abgov/react-components';
+import { GoAForm, GoAFormActions, GoAFormItem } from '@abgov/react-components/experimental';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import { KeycloakCheckSSO, TenantLogin } from '@store/tenant/actions';

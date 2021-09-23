@@ -1,5 +1,6 @@
 import { connect } from 'mongoose';
 import { createLogger, format, transports } from 'winston';
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import { bootstrapDirectory } from '../../../apps/tenant-management-api/src/directory';
 
 const file = process.argv[2] || './directory.platform.json';

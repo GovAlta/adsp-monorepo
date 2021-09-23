@@ -19,7 +19,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
   const router = Router();
 
   // Get notices by query
-  router.get('/', async (req, res, next) => {
+  router.get('/notices', async (req, res, next) => {
     const { top, after, mode } = req.query;
     const user = req.user as Express.User;
 
@@ -65,7 +65,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
     }
   });
 
-  router.get('/:id', assertAuthenticatedHandler, async (req, res, next) => {
+  router.get('/notices/:id', assertAuthenticatedHandler, async (req, res, next) => {
     logger.info(req.method, req.url);
     try {
       const { id } = req.params;
@@ -88,7 +88,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
     }
   });
 
-  router.delete('/:id', assertAuthenticatedHandler, async (req, res, next) => {
+  router.delete('/notices/:id', assertAuthenticatedHandler, async (req, res, next) => {
     logger.info(req.method, req.url);
 
     try {
@@ -111,7 +111,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
   });
 
   // Add notice
-  router.post('/', assertAuthenticatedHandler, async (req, res, next) => {
+  router.post('/notices', assertAuthenticatedHandler, async (req, res, next) => {
 
 
     logger.info(`${req.method} - ${req.url}`);
@@ -137,7 +137,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
   });
 
   // Update notice fields or mode
-  router.patch('/:id', assertAuthenticatedHandler, async (req, res, next) => {
+  router.patch('/notices/:id', assertAuthenticatedHandler, async (req, res, next) => {
     logger.info(`${req.method} - ${req.url}`);
 
     const { message, tennantServRef, startDate, endDate, mode } = req.body;

@@ -1,13 +1,15 @@
 import React from 'react';
 
 import styled from 'styled-components';
-
+import { GoACallout } from '@abgov/react-components';
+import { Notice } from '@store/status/models'
+import { LocalTime } from '@components/Date'
 interface ServiceOptions {
   name: string;
   date: string;
-  assignmentStatus?: string;
   state: string;
   description: string;
+  notices: Notice[];
 }
 
 interface DescriptiveStrings {
@@ -18,13 +20,14 @@ function upcaseFirstLetterInEachWord(sentence: string) {
   const wordArray = sentence.split(' ');
 
   for (let i = 0; i < wordArray.length; i++) {
-    wordArray[i] = wordArray[i].charAt(0).toUpperCase() + wordArray[i].slice(1);
+    wordArray[i] = wordArray[i]?.charAt(0).toUpperCase() + wordArray[i].slice(1);
   }
 
   return wordArray.join(' ');
 }
 
-export function ServiceStatus({ name, date, assignmentStatus = '', state, description }: ServiceOptions): JSX.Element {
+export function ServiceStatus(props: ServiceOptions): JSX.Element {
+  const { name, date, state, description, notices } = props
   let stateProper = state.charAt(0).toUpperCase() + state.slice(1);
   stateProper = upcaseFirstLetterInEachWord(stateProper.replace('-', ' '));
 
@@ -81,26 +84,47 @@ export function ServiceStatus({ name, date, assignmentStatus = '', state, descri
             </div>
           </div>
           <div className="date-assignment-status">
-            <i>{date}</i>
+            <i data-testid='service-created-date'>{date}</i>
           </div>
-          <div className="flex">{description}</div>
+          <div>
+            {description}
+          </div>
+          {notices.map((notice) => {
+            return (
+              <div data-testid='service-notice'>
+                <GoACallout
+                  title='Notice'
+                  type='important'
+                  key={`{notice-${notice.id}}`}
+                >
+                  <div data-testid='service-notice-message'>
+                    {notice.message}
+                  </div><br />
+                  <div data-testid='service-notice-date-range'>
+                    From <LocalTime date={notice.startDate} /> to <LocalTime date={notice.endDate} />
+                  </div>
+                </GoACallout>
+              </div>
+            )
+          })}
+
         </div>
       </div>
-    </ServiceStatusCss>
+    </ServiceStatusCss >
   );
 }
 
 export default ServiceStatus;
 
 const ServiceStatusCss = styled.div`
-  h4 {
-    margin-top: '4px';
-  }
 
   .grey-border {
     border: 1px solid #dcdcdc;
     border-radius: 3px;
-    padding: 10px;
+    padding-top: 1.5rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    padding-bottom: 2rem;
   }
 
   .status-button {

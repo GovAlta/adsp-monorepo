@@ -1,4 +1,4 @@
-import { connect, ConnectionOptions, connection } from 'mongoose';
+import { connect, ConnectOptions, connection } from 'mongoose';
 import { logger } from '../middleware/logger';
 import { environment } from '../environments/environment';
 
@@ -13,7 +13,7 @@ export const connectMongo = async (): Promise<void> => {
 
     logger.info(`Mongodb URI is  ${mongoURI}`);
 
-    const options: ConnectionOptions = {
+    const options: ConnectOptions = {
       user: mongoUser,
       pass: mongoPassword,
       useNewUrlParser: true,

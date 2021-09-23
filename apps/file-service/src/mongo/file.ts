@@ -15,7 +15,7 @@ export class MongoFileRepository implements FileRepository {
   private model: Model<FileDoc>;
 
   constructor(private spaceRepository: FileSpaceRepository) {
-    this.model = model('file', fileSchema);
+    this.model = model<FileDoc>('file', fileSchema);
   }
 
   async exists(criteria: FileCriteria): Promise<boolean> {

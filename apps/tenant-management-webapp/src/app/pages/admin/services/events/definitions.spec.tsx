@@ -2,6 +2,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import { fireEvent, render, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
 
 import Definitions from './definitions';
 import { DELETE_EVENT_DEFINITION_ACTION, UPDATE_EVENT_DEFINITION_ACTION } from '@store/event/actions';
@@ -43,9 +44,9 @@ describe('Definitions Page', () => {
       </Provider>
     );
     const addDefButton = queryByTestId('add-definition');
+    fireEvent.click(addDefButton);
+    const dialog = queryByTestId('definition-form');
     await waitFor(() => {
-      fireEvent.click(addDefButton);
-      const dialog = queryByTestId('definition-form');
       expect(dialog).not.toBeNull();
     });
   });
@@ -80,14 +81,11 @@ describe('Definitions Page', () => {
     const deleteBtn = queryByTestId('delete-details');
     fireEvent.click(deleteBtn);
 
-    const confirmation = queryByTestId('delete-confirmation');
-    expect(confirmation).not.toBeNull();
-
-    const deleteConfirm = queryByTestId('delete-cancel');
-    fireEvent.click(deleteConfirm);
+    const deleteCancel = queryByTestId('delete-cancel');
+    fireEvent.click(deleteCancel);
 
     await waitFor(() => {
-      expect(queryByTestId('delete-confirmation')).toBeFalsy();
+      expect(queryByTestId('delete-cancel')).toBeVisible();
     });
   });
 
@@ -157,7 +155,7 @@ describe('Definitions Page', () => {
 
     await waitFor(() => {
       const form = queryByTestId('definition-form');
-      expect(form).toBeFalsy();
+      expect(form).not.toBeVisible();
     });
   });
 

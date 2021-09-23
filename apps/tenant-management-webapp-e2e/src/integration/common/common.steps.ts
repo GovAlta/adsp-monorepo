@@ -114,3 +114,8 @@ Then('the user views {string} API documentation', function (serviceName) {
     expect(title.length).to.be.gt(0); // element exists
   });
 });
+
+When('the user selects {string} tab for {string}', function (tab, service) {
+  commonObj.serviceTab(service, tab).click();
+  cy.wait(2000);
+});
