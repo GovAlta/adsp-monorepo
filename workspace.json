@@ -474,7 +474,8 @@
         "serve": {
           "builder": "@nrwl/web:dev-server",
           "options": {
-            "buildTarget": "status-app:build"
+            "buildTarget": "status-app:build",
+            "proxyConfig": "apps/status-app/proxy.conf.json"
           },
           "configurations": {
             "production": {
