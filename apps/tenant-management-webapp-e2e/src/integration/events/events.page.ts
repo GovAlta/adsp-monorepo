@@ -5,43 +5,43 @@ class eventsPage {
 
   event(namespace, eventName) {
     return cy.xpath(
-      `//div[@class="group-name"][contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name"][contains(text(), "${eventName}")]`
+      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]`
     );
   }
 
   eventWithDesc(namespace, eventName, eventDesc) {
     return cy.xpath(
-      `//div[@class="group-name"][contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name"][contains(text(), "${eventName}")]/following-sibling::td[contains(text(), "${eventDesc}")]`
+      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td[contains(text(), "${eventDesc}")]`
     );
   }
 
   eventNames(namespace) {
     return cy.xpath(
-      `//div[@class="group-name"][contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name"]`
+      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name"]`
     );
   }
 
   eventDescs(namespace) {
     return cy.xpath(
-      `//div[@class="group-name"][contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="description"]`
+      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="description"]`
     );
   }
 
   showDetailsIcon(namespace, eventName) {
     return cy.xpath(
-      `//div[@class="group-name"][contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name"][contains(text(), "${eventName}")]/following-sibling::td//*[@data-testid="toggle-details-visibility"]/*[@data-testid="icon-eye"]`
+      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td//*[@data-testid="toggle-details-visibility"]/*[@data-testid="icon-eye"]`
     );
   }
 
   hideDetailsIcon(namespace, eventName) {
     return cy.xpath(
-      `//div[@class="group-name"][contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name"][contains(text(), "${eventName}")]/following-sibling::td//*[@data-testid="toggle-details-visibility"]/*[@data-testid="icon-eyeOff"]`
+      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td//*[@data-testid="toggle-details-visibility"]/*[@data-testid="icon-eyeOff"]`
     );
   }
 
   eventDetails(namespace, eventName) {
     return cy.xpath(
-      `//div[@class="group-name"][contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name"][contains(text(), "${eventName}")]/parent::tr/following-sibling::tr//*[@data-testid="details"]`
+      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/parent::tr/following-sibling::tr//*[@data-testid="details"]`
     );
   }
 
