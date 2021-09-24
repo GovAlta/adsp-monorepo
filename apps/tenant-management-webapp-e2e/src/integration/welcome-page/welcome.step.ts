@@ -6,7 +6,7 @@ import common from '../common/common.page';
 
 const commonObj = new common();
 const welcomPageObj = new WelcomPage();
-let responseObj: Cypress.Response;
+let responseObj: Cypress.Response<any>;
 let tenantId;
 
 When('the user goes to the tenant management welcome page', function () {

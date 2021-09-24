@@ -2,7 +2,7 @@ import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import tenantAdminPage from './tenant-admin.page';
 
 const tenantAdminObj = new tenantAdminPage();
-let responseObj: Cypress.Response;
+let responseObj: Cypress.Response<any>;
 
 Given('the user goes to tenant management login link', function () {
   const urlToTenantLogin = Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/autologin?kc_idp_hint=';
