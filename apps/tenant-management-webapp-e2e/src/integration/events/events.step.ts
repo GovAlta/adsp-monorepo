@@ -1,7 +1,10 @@
-import { When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import events from './events.page';
+import commonlib from '../common/common-library';
+import common from '../common/common.page';
 
 const eventsObj = new events();
+const commonObj = new common();
 
 Then('the user views events overview page', function () {
   eventsObj.eventsOverviewh3Title().invoke('text').should('contain', 'Event Definitions');
@@ -114,3 +117,51 @@ Then('the user clicks Confirm button', function () {
   eventsObj.deleteDefinitionConfirmButton().click();
 });
 
+Given('a service owner user is on event definitions page', function () {
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
+  commonObj.adminMenuItem('/admin/services/events').click();
+  eventsObj.eventsOverviewh3Title().invoke('text').should('contain', 'Event Definitions');
+  commonObj.serviceTab('Events', 'Definitions').click();
+  cy.wait(2000);
+});
+
+Then('the user views the {string} for {string}', function (errorMsg, errorField) {
+  switch (errorField) {
+    case 'Namespace':
+      eventsObj.definitionModalNamespaceFieldErrorMsg().invoke('text').should('eq', errorMsg);
+      break;
+    case 'Name':
+      eventsObj.definitionModalNameFieldErrorMsg().invoke('text').should('eq', errorMsg);
+      break;
+    default:
+      expect(errorField).to.be.oneOf(['Namespace', 'Name']);
+  }
+});
+
+When('the user clicks Cancel button on Definition modal', function () {
+  eventsObj.definitionModalCancelButton().click();
+  cy.wait(1000);
+});
+
+Then('the user exits the add definition dialog', function () {
+  eventsObj.definitionModal().invoke('attr', 'data-state').should('not.eq', 'visible');
+});
+
+Then('the user only views show button for event definitions of {string}', function (servicesString) {
+  const services = servicesString.split(',');
+  for (let i = 0; i < services.length; i++) {
+    cy.log(services[i].trim());
+    // Verify each event definition of
+    eventsObj.eventNames(services[i].trim()).each((element) => {
+      cy.log(String(element.text()));
+      eventsObj.editDefinitionButtonWithNamespaceAndName(services[i].trim(), element.text()).should('not.exist');
+      eventsObj.deleteDefinitionButtonWithNamespaceAndName(services[i].trim(), element.text()).should('not.exist');
+      eventsObj.showDetailsIcon(services[i].trim(), element.text()).should('exist');
+    });
+  }
+});
