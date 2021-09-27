@@ -8,18 +8,18 @@ import { Grid, GridItem } from '@components/Grid';
 import ServiceStatus from './statusCard';
 import { useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { environment } from '../environments/environment';
-
 import styled from 'styled-components';
 import { useDispatch } from 'react-redux';
 import { fetchApplications } from '@store/status/actions';
 import { RootState } from '@store/index';
-import { PageLoader } from '@components/PageLoder';
+import { PageLoader } from '@components/PageLoader';
 
 import moment from 'moment';
 
 const ServiceStatusPage = (): JSX.Element => {
-  const config = useSelector((state: { config: typeof environment }) => state.config);
+  const { config } = useSelector((state: RootState) => ({
+    config: state.config,
+  }));
   const location = useLocation();
   const name = location.pathname.slice(1) || config.platformTenantRealm;
   const dispatch = useDispatch();

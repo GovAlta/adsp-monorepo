@@ -16,6 +16,9 @@ export const connectMongo = async (): Promise<void> => {
     const options: ConnectOptions = {
       user: mongoUser,
       pass: mongoPassword,
+      useNewUrlParser: true,
+      useFindAndModify: false,
+      useUnifiedTopology: true,
     };
 
     await connect(mongoURI, options);

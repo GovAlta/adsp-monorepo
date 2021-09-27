@@ -33,23 +33,24 @@ components:
       required: [operation, property]
 
 /configuration/v2/configuration/{namespace}/{name}:
+  parameters:
+    - name: namespace
+      description: Namespace of the configuration.
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: name
+      description: Name of the configuration.
+      in: path
+      required: true
+      schema:
+        type: string
   get:
     tags:
       - Configuration
     description: Retrieves configuration.
     parameters:
-      - name: namespace
-        description: Namespace of the configuration.
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: name
-        description: Name of the configuration.
-        in: path
-        required: true
-        schema:
-          type: string
       - name: core
         description: Flag indicating if the core instead of tenant configuration should be retrieved.
         in: query
@@ -76,19 +77,6 @@ components:
       - Configuration
     description: |
       Updates the configuration revision.
-    parameters:
-      - name: namespace
-        description: Namespace of the configuration.
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: name
-        description: Name of the configuration.
-        in: path
-        required: true
-        schema:
-          type: string
     requestBody:
       required: true
       content:
@@ -124,19 +112,6 @@ components:
     tags:
       - Configuration
     description: Creates a new revision of configuration.
-    parameters:
-      - name: namespace
-        description: Namespace of the configuration.
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: name
-        description: Name of the configuration.
-        in: path
-        required: true
-        schema:
-          type: string
     requestBody:
       required: true
       content:

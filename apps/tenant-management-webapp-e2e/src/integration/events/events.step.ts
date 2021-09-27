@@ -1,7 +1,10 @@
-import { When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import events from './events.page';
+import commonlib from '../common/common-library';
+import common from '../common/common.page';
 
 const eventsObj = new events();
+const commonObj = new common();
 
 Then('the user views events overview page', function () {
   eventsObj.eventsOverviewh3Title().invoke('text').should('contain', 'Event Definitions');
@@ -10,6 +13,22 @@ Then('the user views events overview page', function () {
 Then('the user views an event definition of {string} under {string}', function (eventName, eventNamespace) {
   eventsObj.event(eventNamespace, eventName).should('exist');
 });
+
+Then(
+  'the user {string} an event definition of {string} and {string} under {string}',
+  function (viewOrNot, eventName, eventDesc, eventNamespace) {
+    switch (viewOrNot) {
+      case 'views':
+        eventsObj.eventWithDesc(eventNamespace, eventName, eventDesc).should('exist');
+        break;
+      case 'should not view':
+        eventsObj.eventWithDesc(eventNamespace, eventName, eventDesc).should('not.exist');
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
+  }
+);
 
 When(
   'the user clicks {string} details button for the definition of {string} under {string}',
@@ -42,3 +61,107 @@ Then(
     }
   }
 );
+
+When('the user clicks Add Definition button', function () {
+  eventsObj.addDefinitionButton().click();
+});
+
+Then('the user views Add Definition dialog', function () {
+  eventsObj.definitionModalTitle().invoke('text').should('eq', 'Add Definition');
+});
+
+Then('the user views Edit Definition dialog', function () {
+  eventsObj.definitionModalTitle().invoke('text').should('eq', 'Edit Definition');
+});
+
+When(
+  'the user enters {string} in Namespace, {string} in Name, {string} in Description',
+  function (namespace, name, desc) {
+    eventsObj.definitionModalNamespaceField().type(namespace);
+    eventsObj.definitionModalNameField().type(name);
+    eventsObj.definitionModalDescriptionField().type(desc);
+  }
+);
+
+When('the user clicks Save button on Definition modal', function () {
+  eventsObj.definitionModalSaveButton().click();
+  cy.wait(1000);
+});
+
+When(
+  'the user clicks {string} button for the definition of {string} and {string} under {string}',
+  function (button, eventName, eventDesc, eventNamespace) {
+    switch (button) {
+      case 'Edit':
+        eventsObj.editDefinitionButton(eventNamespace, eventName, eventDesc).click();
+        break;
+      case 'Delete':
+        eventsObj.deleteDefinitionButton(eventNamespace, eventName, eventDesc).click();
+        break;
+      default:
+        expect(button).to.be.oneOf(['Edit', 'Delete']);
+    }
+  }
+);
+
+When('the user enters {string} in Description', function (desc) {
+  eventsObj.definitionModalDescriptionField().clear().type(desc);
+});
+
+Then('the user views Delete Definition dialog for the definition of {string}', function (name) {
+  eventsObj.deleteDefinitionModalTitle().invoke('text').should('eq', 'Delete Definition');
+  eventsObj.deleteDefinitionModalContent().invoke('text').should('contain', name);
+});
+
+Then('the user clicks Confirm button', function () {
+  eventsObj.deleteDefinitionConfirmButton().click();
+});
+
+Given('a service owner user is on event definitions page', function () {
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
+  commonObj.adminMenuItem('/admin/services/events').click();
+  eventsObj.eventsOverviewh3Title().invoke('text').should('contain', 'Event Definitions');
+  commonObj.serviceTab('Events', 'Definitions').click();
+  cy.wait(2000);
+});
+
+Then('the user views the {string} for {string}', function (errorMsg, errorField) {
+  switch (errorField) {
+    case 'Namespace':
+      eventsObj.definitionModalNamespaceFieldErrorMsg().invoke('text').should('eq', errorMsg);
+      break;
+    case 'Name':
+      eventsObj.definitionModalNameFieldErrorMsg().invoke('text').should('eq', errorMsg);
+      break;
+    default:
+      expect(errorField).to.be.oneOf(['Namespace', 'Name']);
+  }
+});
+
+When('the user clicks Cancel button on Definition modal', function () {
+  eventsObj.definitionModalCancelButton().click();
+  cy.wait(1000);
+});
+
+Then('the user exits the add definition dialog', function () {
+  eventsObj.definitionModal().invoke('attr', 'data-state').should('not.eq', 'visible');
+});
+
+Then('the user only views show button for event definitions of {string}', function (servicesString) {
+  const services = servicesString.split(',');
+  for (let i = 0; i < services.length; i++) {
+    cy.log(services[i].trim());
+    // Verify each event definition of
+    eventsObj.eventNames(services[i].trim()).each((element) => {
+      cy.log(String(element.text()));
+      eventsObj.editDefinitionButtonWithNamespaceAndName(services[i].trim(), element.text()).should('not.exist');
+      eventsObj.deleteDefinitionButtonWithNamespaceAndName(services[i].trim(), element.text()).should('not.exist');
+      eventsObj.showDetailsIcon(services[i].trim(), element.text()).should('exist');
+    });
+  }
+});

@@ -1,32 +1,27 @@
 import { GoAButton } from '@abgov/react-components';
 import { GoAIconButton } from '@abgov/react-components/experimental';
 import { TestProps } from '@abgov/react-components/experimental/common';
-import { IconType } from '@abgov/react-components/experimental/icons';
+import { GoAIconType } from '@abgov/react-components/experimental/icons';
 import React, { FC } from 'react';
 import styled from 'styled-components';
 
-
 interface ContextMenuIconProps extends TestProps {
-    type: IconType;
-    onClick: () => void;
+  type: GoAIconType;
+  onClick: () => void;
 }
 
 interface ContextMenuTextProps extends TestProps {
-    type: IconType;
-    onClick: () => void;
+  type: GoAIconType;
+  onClick: () => void;
 }
 
 export const GoAContextMenuIcon: FC<ContextMenuIconProps> = (props) => {
-  return (
-    <GoAIconButton type={props.type} onClick={props.onClick} testId={ props.testId } size='small' variant='goa' />
-  )
-}
+  return <GoAIconButton type={props.type} onClick={props.onClick} testId={props.testId} size="small" variant="goa" />;
+};
 
 export const GoAContextMenuText: FC<ContextMenuTextProps> = (props) => {
-  return (
-    <GoAButton buttonType="tertiary" onClick={props.onClick} testId={ props.testId } buttonSize={'small'} />
-  )
-}
+  return <GoAButton buttonType="tertiary" onClick={props.onClick} testId={props.testId} buttonSize={'small'} />;
+};
 
 export const GoAContextMenu = styled.div`
   display: flex;

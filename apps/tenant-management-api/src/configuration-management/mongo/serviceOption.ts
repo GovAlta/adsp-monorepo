@@ -7,7 +7,7 @@ export class MongoServiceOptionRepository implements ServiceConfigurationReposit
   private serviceModel: Model<Doc<ServiceOption> & Document>;
 
   constructor() {
-    this.serviceModel = model('serviceOption', serviceOptionSchema);
+    this.serviceModel = model<Doc<ServiceOption> & Document>('serviceOption', serviceOptionSchema);
   }
 
   find(top: number, after: string): Promise<Results<ServiceOptionEntity>> {

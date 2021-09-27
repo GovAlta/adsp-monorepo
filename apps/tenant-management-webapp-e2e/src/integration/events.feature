@@ -24,3 +24,57 @@ Feature: Events
     Then the user views the link for "Event Service" API docs
     When the user goes to the web link of the API docs
     Then the user views "Event Service" API documentation
+
+  # Test on Monaco editor for payload schema isn't included and will need to be tested in future
+  @TEST_CS-735 @REQ_CS-250 @regression
+  Scenario: As a service admin, I can see add, edit and delete an event definition
+    Given a service owner user is on tenant admin page
+    When the user selects the "Events" menu item
+    And the user selects "Definitions" tab for "Events"
+    And the user clicks Add Definition button
+    Then the user views Add Definition dialog
+    When the user enters "Autotest-Service" in Namespace, "autotest-eventname" in Name, "autotest event desc" in Description
+    And the user clicks Save button on Definition modal
+    Then the user "views" an event definition of "autotest-eventname" and "autotest event desc" under "Autotest-Service"
+    When the user clicks "Edit" button for the definition of "autotest-eventname" and "autotest event desc" under "Autotest-Service"
+    Then the user views Edit Definition dialog
+    When the user enters "autotest event desc2" in Description
+    And the user clicks Save button on Definition modal
+    Then the user "views" an event definition of "autotest-eventname" and "autotest event desc2" under "Autotest-Service"
+    When the user clicks "Delete" button for the definition of "autotest-eventname" and "autotest event desc2" under "Autotest-Service"
+    Then the user views Delete Definition dialog for the definition of "autotest-eventname"
+    And the user clicks Confirm button
+    Then the user "should not view" an event definition of "autotest-eventname" and "autotest event desc2" under "Autotest-Service"
+
+  ## The accessibility test is commented out until the serious accessibility issue is fixed
+  # @accessibility @regression
+  # Scenario: As a service admin, I can use event definitions page without any critical or serious accessibility issues
+  #   Given a service owner user is on tenant admin page
+  #   When the user selects the "Events" menu item
+  #   And the user selects "Definitions" tab for "Events"
+  #   Then no critical or serious accessibility issues on "event definitions page"
+
+  @TEST_CS-739 @REQ_CS-250 @regression
+  Scenario Outline: As a service owner, I cannot add event definitions with names or namespaces contains ":"
+    Given a service owner user is on event definitions page
+    When the user clicks Add Definition button
+    And the user enters "<Namespace>" in Namespace, "<Name>" in Name, "<Description>" in Description
+    And the user clicks Save button on Definition modal
+    Then the user views the "<Error Message>" for "<Error Field>"
+    When the user clicks Cancel button on Definition modal
+    Then the user exits the add definition dialog
+    Examples:
+      | Namespace           | Name           | Description    | Error Message                  | Error Field |
+      | autotest-name:space | autotest-name  | auto-test-desc | Must not contain `:` character | Namespace   |
+      | autotest-namespace  | autotest-na:me | auto-test-desc | Must not contain `:` character | Name        |
+
+  @TEST_CS-740 @REQ_CS-250 @regression
+  Scenario: As a service owner, I cannot add/modify/delete event definitions within platform service namespaces
+    Given a service owner user is on event definitions page
+    Then the user only views show button for event definitions of "tenant-service, configuration-service, notification-service, value-service, file-service"
+    When the user clicks Add Definition button
+    And the user enters "tenant-service" in Namespace, "test" in Name, "test" in Description
+    And the user clicks Save button on Definition modal
+    Then the user views the "Cannot add definitions to core namespaces" for "Namespace"
+    When the user clicks Cancel button on Definition modal
+    Then the user exits the add definition dialog
