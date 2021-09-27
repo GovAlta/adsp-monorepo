@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { GoAButton, GoANotification, GoAElementLoader  } from '@abgov/react-components';
+import { GoAButton, GoANotification, GoAElementLoader } from '@abgov/react-components';
 import { CreateTenant, IsTenantAdmin } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 import GoALinkButton from '@components/LinkButton';
-import { GoAForm, GoAFormButtons, GoAFormItem } from '@components/Form';
+import { GoAForm, GoAFormActions, GoAFormItem } from '@abgov/react-components/experimental';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import { KeycloakCheckSSO, TenantLogin } from '@store/tenant/actions';
 import { TenantLogout } from '@store/tenant/actions';
+import styled from 'styled-components';
 
 const CreateRealm = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -28,17 +29,24 @@ const CreateRealm = (): JSX.Element => {
     setIsLoaded((currentIsLoaded) => !currentIsLoaded);
   };
 
-  const { isTenantAdmin, userInfo, isTenantCreated, tenantRealm, isInBeta } = useSelector((state: RootState) => ({
-    isTenantAdmin: state.tenant.isTenantAdmin,
-    userInfo: state.session.userInfo,
-    isTenantCreated: state.tenant.isTenantCreated,
-    tenantRealm: state.tenant.realm,
-    isInBeta: state.session.realmAccess?.roles?.includes('beta-tester'),
-  }));
+  const { isTenantAdmin, userInfo, isTenantCreated, tenantRealm, isInBeta, notifications } = useSelector(
+    (state: RootState) => ({
+      isTenantAdmin: state.tenant.isTenantAdmin,
+      userInfo: state.session.userInfo,
+      isTenantCreated: state.tenant.isTenantCreated,
+      tenantRealm: state.tenant.realm,
+      isInBeta: state.session.realmAccess?.roles?.includes('beta-tester'),
+      notifications: state.notifications.notifications,
+    })
+  );
 
   useEffect(() => {
     dispatch(KeycloakCheckSSO('core'));
   }, []);
+
+  useEffect(() => {
+    setIsLoaded(true);
+  }, [notifications]);
 
   useEffect(() => {
     if (userInfo) {
@@ -65,7 +73,7 @@ const CreateRealm = (): JSX.Element => {
     return (
       <GoAButton buttonType="primary" buttonSize="normal" disabled>
         Creating Tenant...
-        <GoAElementLoader visible={true} size='default' baseColour="#c8eef9" spinnerColour="#0070c4" />
+        <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
       </GoAButton>
     );
   };
@@ -97,7 +105,7 @@ const CreateRealm = (): JSX.Element => {
         >
           Back
         </GoALinkButton>
-        <GoAButton onClick={onCreateRealm}>Create Tenant</GoAButton>
+        <GoAButton onClick={onCreateRealm}>Create tenant</GoAButton>
       </>
     );
   };
@@ -105,57 +113,86 @@ const CreateRealm = (): JSX.Element => {
   const ready = userInfo !== undefined && isTenantAdmin !== undefined;
 
   return (
-    <Page ready={ready}>
-      {isInBeta ? (
-        <>
-          <Main>
-            {isTenantAdmin === true && !isTenantCreated && <ErrorMessage email={userInfo.email} />}
-            {isTenantCreated ? (
-              <TenantCreated />
-            ) : (
-              <>
-                {isTenantAdmin === false ? (
-                  <>
-                    <h2>Create tenant</h2>
-                    <p>
-                      Current user email: <b>{userInfo.email}</b>
-                    </p>
-                    <p>As a reminder, you are only able to create one tenant per user account.</p>
-                    <GoAForm>
-                      <GoAFormItem>
-                        <label htmlFor="name">Tenant Name</label>
-                        <input id="name" type="text" value={name} onChange={onChangeName} />
-                        <em>Names cannot container special characters (ex. ! % &amp;)</em>
-                      </GoAFormItem>
+    <CreateTenantStyle>
+      <Page ready={ready}>
+        {isInBeta ? (
+          <>
+            <Main>
+              {isTenantAdmin === true && !isTenantCreated && <ErrorMessage email={userInfo.email} />}
+              {isTenantCreated ? (
+                <TenantCreated />
+              ) : (
+                <>
+                  {isTenantAdmin === false ? (
+                    <>
+                      <h2>Create tenant</h2>
+                      <p>
+                        Current user email: <b>{userInfo.email}</b>
+                      </p>
+                      <p>
+                        As a reminder, you are only able to create <b>one tenant</b> per user account.
+                      </p>
+                      <GoAForm>
+                        <GoAFormItem error={notifications[notifications.length - 1]?.message}>
+                          <label htmlFor="name">Tenant name</label>
+                          <input id="name" type="text" value={name} onChange={onChangeName} />
+                        </GoAFormItem>
+                        <div style={{ lineHeight: '10px' }}>
+                          <div className="helper-text">
+                            {notifications[notifications.length - 1]?.message.includes('Names cannot contain')
+                              ? ''
+                              : 'Names cannot contain special characters (ex. ! % &).'}
+                          </div>
+                        </div>
 
-                      <GoAFormButtons>{isLoaded ? <TenantCreateView /> : <ButtonLoader />}</GoAFormButtons>
-                    </GoAForm>
-                  </>
-                ) : null}
-              </>
-            )}
+                        <GoAFormActions alignment="left">
+                          {isLoaded ? <TenantCreateView /> : <ButtonLoader />}
+                        </GoAFormActions>
+                      </GoAForm>
+                    </>
+                  ) : null}
+                </>
+              )}
+            </Main>
+            <Aside>
+              <SupportLinks />
+            </Aside>
+          </>
+        ) : (
+          <Main>
+            <h1 className="thin-font">Tenant creation failed</h1>
+            <p>
+              <b>{userInfo?.email}</b> does not have the "beta tester" role. You require the "beta-tester" role to
+              create a tenant.
+            </p>
+            <div className="padding-bottom-2">
+              Please contact <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a> for more information.
+            </div>
+            <GoALinkButton buttonType="primary" onClick={() => dispatch(TenantLogout())} to="">
+              Back to sign in page
+            </GoALinkButton>
           </Main>
-          <Aside>
-            <SupportLinks />
-          </Aside>
-        </>
-      ) : (
-        <Main>
-          <h1 className="thin-font">Tenant creation failed</h1>
-          <p>
-            <b>{userInfo?.email}</b> does not have the "beta tester" role. You require the "beta-tester" role to create
-            a tenant.
-          </p>
-          <div className="padding-bottom-2">
-            Please contact <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a> for more information.
-          </div>
-          <GoALinkButton buttonType="primary" onClick={() => dispatch(TenantLogout())} to="">
-            Back to sign in page
-          </GoALinkButton>
-        </Main>
-      )}
-    </Page>
+        )}
+      </Page>
+    </CreateTenantStyle>
   );
 };
 
 export default CreateRealm;
+
+const CreateTenantStyle = styled.div`
+  .error-msg {
+    color: #ec040b !important;
+    line-height: 20px;
+    font-size: 13px;
+  }
+
+  .goa-form-item {
+    margin-bottom: 0;
+  }
+
+  .helper-text {
+    margin-top: 0.2rem;
+    font-size: 13px;
+  }
+`;

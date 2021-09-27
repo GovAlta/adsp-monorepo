@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import DataTable from '@components/DataTable';
-import { GoAOption, GoAButton, GoADropdown, } from '@abgov/react-components';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental'
+import { GoADropdownOption, GoAButton, GoADropdown } from '@abgov/react-components';
+import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoABadge } from '@abgov/react-components/experimental';
 import { FileTypeItem } from '@store/file/models';
 import { useDispatch, useSelector } from 'react-redux';
@@ -42,7 +42,7 @@ const FileTypeTableContainer = styled.div`
     padding-top: 0rem !important;
     padding-bottom: 0rem !important;
     border-radius: 0.25rem;
-    height: 2.5rem;
+    height: 2.43rem;
   }
 
   i {
@@ -269,10 +269,21 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
   };
 
   const RolesCell = (props: FileTypeRowProps): JSX.Element => {
-    const { readRoles, updateRoles, cellType, rowType, anonymousRead } = props;
+    const { readRoles, updateRoles, cellType, rowType } = props;
+    let { anonymousRead } = props;
     const realmRoles = props.roles;
     const roles = cellType === 'readRoles' ? readRoles : updateRoles;
     let display = '';
+
+    const fileType = { ...props };
+
+    if (readRoles.includes('anonymousRead') && cellType === 'readRoles') {
+      anonymousRead = true;
+      fileType.anonymousRead = true;
+    } else {
+      anonymousRead = false;
+      fileType.anonymousRead = false;
+    }
 
     if (anonymousRead && cellType === 'readRoles') {
       display = 'Anonymous';
@@ -291,46 +302,58 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
     if (displayOnly) {
       return (
         <RolesCellContainer data-testid={`${rowType}-${cellType}`}>
-          {anonymousRead && cellType === 'readRoles' &&
-            <GoABadge type="information" content="Anonymous" />
-          }
+          {anonymousRead && cellType === 'readRoles' && <GoABadge type="information" content="Anonymous" />}
           {(!anonymousRead || cellType === 'updateRoles') &&
             roles.map((role) => {
-              return (
-                <GoABadge type="information" key={`${role}-${props.id}`} data-testid="new-roles" content={role} />
-              );
+              return <GoABadge type="information" key={`${role}-${props.id}`} data-testid="new-roles" content={role} />;
             })}
         </RolesCellContainer>
       );
     }
 
+    let dropDownOptions = [];
+    if (cellType === 'readRoles') {
+      dropDownOptions = [
+        {
+          value: 'anonymousRead',
+          label: anonymousRead ? 'Deselect Anonymous' : 'Anyone (Anonymous)',
+          key: 'anonymous',
+          dataTestId: 'anonymous-option',
+        },
+      ];
+    }
+
+    if (!anonymousRead || cellType === 'updateRoles') {
+      const defaultDropDowns = realmRoles.map((realmRole) => {
+        return {
+          value: realmRole.name,
+          label: realmRole.name,
+          key: realmRole.id,
+          dataTestId: `${rowType}-update-roles-options`,
+        };
+      });
+      dropDownOptions = dropDownOptions.concat(defaultDropDowns);
+    }
+
     return (
       <td data-testid={`${rowType}-${cellType}`}>
         <GoADropdown
-          title=""
-          subTitle=""
-          menuHeight={128}
-          display={display}
-          selectionChanged={(e) => {
-            const fileType = { ...props };
-            if (e.label === 'Anonymous' && cellType === 'readRoles') {
-              fileType.anonymousRead = !props.anonymousRead;
+          name="fileTypes"
+          selectedValues={roles}
+          multiSelect={true}
+          onChange={(name, values) => {
+            if (values.includes('anonymousRead') && cellType === 'readRoles') {
+              fileType.anonymousRead = true;
             } else {
-              if (e.selected) {
-                roles.push(e.value);
-              } else {
-                const index = roles.indexOf(e.value);
-                if (index > -1) {
-                  roles.splice(index, 1);
-                }
-              }
+              fileType.anonymousRead = false;
             }
+
             if (cellType === 'updateRoles') {
-              fileType.updateRoles = roles;
+              fileType.updateRoles = values;
             }
 
             if (cellType === 'readRoles') {
-              fileType.readRoles = roles;
+              fileType.readRoles = values;
             }
 
             if (rowType === 'update') {
@@ -344,33 +367,9 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
             }
           }}
         >
-          {cellType === 'readRoles' && (
-            <GoAOption
-              value="anonymousRead"
-              label="Anonymous"
-              key={'anonymous'}
-              data-testid="anonymous-option"
-              selected={anonymousRead}
-            >
-              {anonymousRead ? 'Deselect Anonymous' : 'Anyone (Anonymous)'}
-            </GoAOption>
-          )}
-
-          {!anonymousRead || cellType === 'updateRoles' ? (
-            realmRoles.map((realmRole) => {
-              return (
-                <GoAOption
-                  value={realmRole.name}
-                  label={realmRole.name}
-                  key={realmRole.id}
-                  data-testid={`${rowType}-update-roles-options`}
-                  selected={roles.includes(realmRole.name)}
-                />
-              );
-            })
-          ) : (
-            <div></div>
-          )}
+          {dropDownOptions.map((item) => (
+            <GoADropdownOption label={item.label} value={item.value} key={item.key} data-testid={item.dataTestId} />
+          ))}
         </GoADropdown>
       </td>
     );
@@ -439,41 +438,46 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
       );
     };
 
-    return (<>
-      {hasFile === true &&
-        <GoAModal isOpen={true} key={props.id} testId='file-delete-modal'>
-          <GoAModalTitle>File type current in use</GoAModalTitle>
-          <GoAModalContent testId='file-delete-modal-content'>
-            You are unable to delete the file type <b>{`${props.name}`}</b> because there are files within the file
-            type.
-          </GoAModalContent>
-          <GoAModalActions>
-            <OkButton />
-          </GoAModalActions>
-        </GoAModal>}
+    return (
+      <>
+        {hasFile === true && (
+          <GoAModal isOpen={true} key={props.id} testId="file-delete-modal">
+            <GoAModalTitle>File type current in use</GoAModalTitle>
+            <GoAModalContent testId="file-delete-modal-content">
+              You are unable to delete the file type <b>{`${props.name}`}</b> because there are files within the file
+              type.
+            </GoAModalContent>
+            <GoAModalActions>
+              <OkButton />
+            </GoAModalActions>
+          </GoAModal>
+        )}
 
-      {hasFile === false && <GoAModal isOpen={true} key={props.id} testId='file-delete-modal'>
-        <GoAModalTitle>Deleting file type </GoAModalTitle>
-        <GoAModalContent testId='file-delete-modal-content'>
-          <p>
-            Deleting the file type <b>{`${props.name}`}</b> cannot be undone.
-          </p>
-          <p>
-            <b>Are you sure you want to continue?</b>
-          </p>
-        </GoAModalContent>
-        <GoAModalActions>
-          <CancelButton />
-          <GoAButton
-            data-testid="delete-modal-delete-button"
-            onClick={() => {
-              dispatch(DeleteFileTypeService(props));
-            }}
-          >
-            Delete
-          </GoAButton>
-        </GoAModalActions>
-      </GoAModal>}</>
+        {hasFile === false && (
+          <GoAModal isOpen={true} key={props.id} testId="file-delete-modal">
+            <GoAModalTitle>Deleting file type </GoAModalTitle>
+            <GoAModalContent testId="file-delete-modal-content">
+              <p>
+                Deleting the file type <b>{`${props.name}`}</b> cannot be undone.
+              </p>
+              <p>
+                <b>Are you sure you want to continue?</b>
+              </p>
+            </GoAModalContent>
+            <GoAModalActions>
+              <CancelButton />
+              <GoAButton
+                data-testid="delete-modal-delete-button"
+                onClick={() => {
+                  dispatch(DeleteFileTypeService(props));
+                }}
+              >
+                Delete
+              </GoAButton>
+            </GoAModalActions>
+          </GoAModal>
+        )}
+      </>
     );
   };
 

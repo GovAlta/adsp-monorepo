@@ -47,8 +47,6 @@ export function* isTenantAdmin(action: CheckIsTenantAdminAction): SagaIterator {
     yield put(UpdateTenantAdminInfo(true, response.name, response.realm));
   } catch (e) {
     yield put(UpdateTenantAdminInfo(false, TENANT_INIT.name, TENANT_INIT.realm));
-
-    yield put(ErrorNotification({ message: 'failed to check tenant admin' }));
   }
 }
 
@@ -61,8 +59,8 @@ export function* createTenant(action: CreateTenantAction): SagaIterator {
   try {
     const result = yield call([api, api.createTenant], name);
     yield put(CreateTenantSuccess(result.realm));
-  } catch (e) {
-    yield put(ErrorNotification({ message: `Failed to create new tenant: ${e.message}` }));
+  } catch (err) {
+    yield put(ErrorNotification({ message: `${err.message}` }));
   }
 }
 

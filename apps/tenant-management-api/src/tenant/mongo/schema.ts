@@ -5,6 +5,7 @@ export const tenantSchema: Schema = new Schema(
     name: {
       type: String,
       required: true,
+      unique: true,
     },
     version: {
       type: String,

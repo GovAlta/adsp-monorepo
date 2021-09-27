@@ -234,6 +234,52 @@ export const validateEmailInDB = async (email: string): Promise<void> => {
   }
 };
 
+export const validateName = async (name: string): Promise<void> => {
+  logger.info(`Validate - is the tenant name valid and unique?`);
+
+  const invalidChars = [
+    '!',
+    '*',
+    "'",
+    '(',
+    ')',
+    ';',
+    ':',
+    '@',
+    '&',
+    '=',
+    '+',
+    '$',
+    ',',
+    '/',
+    '?',
+    '%',
+    '?',
+    '#',
+    '[',
+    ']',
+  ];
+
+  invalidChars.forEach((char) => {
+    if (name.indexOf(char) !== -1) {
+      const errorMessage = `Names cannot contain special characters (e.g. ! & %).`;
+      throw new TenantError(errorMessage, HttpStatusCodes.BAD_REQUEST);
+    }
+  });
+
+  if (name.length === 0) {
+    const errorMessage = `Enter a tenant name.`;
+    throw new TenantError(errorMessage, HttpStatusCodes.BAD_REQUEST);
+  }
+
+  const doesTenantWithNameExist = await tenantRepository.findByName(name);
+
+  if (doesTenantWithNameExist) {
+    const errorMessage = `This tenant name has already been used. Please enter a different tenant name.`;
+    throw new TenantError(errorMessage, HttpStatusCodes.BAD_REQUEST);
+  }
+};
+
 export const validateRealmCreation = async (realm: string): Promise<void> => {
   // Re-init the keycloak client after realm creation
   logger.info(`Start to validate the tenant creation: ${realm}`);
