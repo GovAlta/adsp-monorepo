@@ -50,7 +50,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
           .map((result) => ({
             id: result.id,
             message: result.message,
-            tennantServRef: result.tennantServRef,
+            tennantServRef: JSON.parse(result.tennantServRef),
             startDate: result.startDate,
             endDate: result.endDate,
             mode: result.mode,
@@ -117,7 +117,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
     logger.info(`${req.method} - ${req.url}`);
 
     try {
-      const { message, tennantServRef, startDate, endDate } = req.body;
+      const { message, tennantServRef, startDate, endDate, isForAll } = req.body;
       const user = req.user as Express.User;
       const app = await NoticeApplicationEntity.create(user, noticeRepository, {
         message,
@@ -126,6 +126,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
         endDate,
         mode: 'draft',
         created: new Date(),
+        isForAll: isForAll || false,
         tenantId: user.tenantId.toString()
       });
       res.status(201).json(app);

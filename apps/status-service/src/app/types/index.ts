@@ -13,6 +13,7 @@ export function isValidNoticeModeType(mode: NoticeModeType): boolean {
 export interface NoticeApplication {
   id: string;
   message: string;
+  isForAll: boolean;
   tennantServRef: string;
   startDate: Date;
   endDate: Date;

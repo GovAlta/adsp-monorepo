@@ -90,7 +90,8 @@ export default class MongoNoticeRepository implements NoticeRepository {
       endDate: application.endDate,
       mode: application.mode,
       created: application.created,
-      tenantId: application.tenantId
+      tenantId: application.tenantId,
+      isForAll: application.isForAll
     };
   }
 
@@ -106,7 +107,8 @@ export default class MongoNoticeRepository implements NoticeRepository {
       endDate: doc.endDate,
       mode: doc.mode,
       created: doc.created,
-      tenantId: doc.tenantId
+      tenantId: doc.tenantId,
+      isForAll: doc.isForAll
     });
   }
 }
