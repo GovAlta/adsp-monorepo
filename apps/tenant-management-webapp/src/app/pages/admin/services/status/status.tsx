@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Page, Main, Aside } from '@components/Html';
 import { deleteApplication, fetchServiceStatusApps, toggleApplicationStatus } from '@store/status/actions';
 import { RootState } from '@store/index';
+import ReactTooltip from 'react-tooltip';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   ServiceStatusType,
@@ -14,7 +15,13 @@ import { Route, Switch, useHistory, useLocation } from 'react-router-dom';
 import styled, { CSSProperties } from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import GoALinkButton from '@components/LinkButton';
-import { GoABadge, GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
+import {
+  GoABadge,
+  GoAModal,
+  GoAModalActions,
+  GoAModalContent,
+  GoAModalTitle,
+} from '@abgov/react-components/experimental';
 import type { GoABadgeType } from '@abgov/react-components/experimental';
 import ApplicationFormModal from './form';
 import NoticeForm from './noticeForm';
@@ -29,8 +36,10 @@ import SupportLinks from '@components/SupportLinks';
 function Status(): JSX.Element {
   const dispatch = useDispatch();
 
-  const { applications } = useSelector((state: RootState) => ({
+  const { applications, serviceStatusAppUrl, tenantName } = useSelector((state: RootState) => ({
     applications: state.serviceStatus.applications,
+    serviceStatusAppUrl: state.config.serviceUrls.serviceStatusAppUrl,
+    tenantName: state.tenant.name,
   }));
 
   const location = useLocation();
@@ -41,6 +50,12 @@ function Status(): JSX.Element {
 
     return () => clearInterval(intervalId);
   }, []);
+
+  const publicStatusUrl = `${serviceStatusAppUrl}/${tenantName.replace(/\s/g, '-').toLowerCase()}`;
+
+  const _afterShow = (copyText) => {
+    navigator.clipboard.writeText(copyText);
+  };
 
   useEffect(() => {
     dispatch(getNotices());
@@ -101,7 +116,7 @@ function Status(): JSX.Element {
         </Tabs>
       </Main>
 
-      <Aside>
+      <StatusAside>
         <h5>Helpful Links</h5>
         <a
           rel="noopener noreferrer"
@@ -111,11 +126,28 @@ function Status(): JSX.Element {
           See the code
         </a>
         <SupportLinks />
-      </Aside>
+
+        <h3>Public Status Page</h3>
+
+        <p>Url of the current tenant's public status page:</p>
+
+        <div className="copy-url">{publicStatusUrl}</div>
+        <GoAButton data-tip="Copied!" data-for="registerTipUrl">
+          Click to copy
+        </GoAButton>
+        <ReactTooltip
+          id="registerTipUrl"
+          place="top"
+          event="click"
+          eventOff="blur"
+          effect="solid"
+          afterShow={() => _afterShow(publicStatusUrl)}
+        />
+      </StatusAside>
 
       <Switch>
         <Route path="/admin/services/status/new">
-          <ApplicationFormModal isOpen={ true} />
+          <ApplicationFormModal isOpen={true} />
         </Route>
         <Route path="/admin/services/status/notice/new">
           <GoAModal isOpen={true}>
@@ -134,7 +166,7 @@ function Status(): JSX.Element {
           </GoAModal>
         </Route>
         <Route path="/admin/services/status/:applicationId/edit">
-          <ApplicationFormModal isOpen={ true} />
+          <ApplicationFormModal isOpen={true} />
         </Route>
       </Switch>
     </Page>
@@ -172,7 +204,7 @@ function Application(app: ServiceStatusApplication) {
     return value.substr(0, 1).toUpperCase() + value.substr(1);
   }
 
-  const publicStatusMap: { [key: string]: GoABadgeType} = {
+  const publicStatusMap: { [key: string]: GoABadgeType } = {
     operational: 'success',
     maintenance: 'warning',
     'reported-issues': 'emergency',
@@ -207,7 +239,7 @@ function Application(app: ServiceStatusApplication) {
         <GoAButton
           buttonType="tertiary"
           buttonSize="small"
-          style={{flex: '0 0 160px'}}
+          style={{ flex: '0 0 160px' }}
           onClick={() => {
             dispatch(
               toggleApplicationStatus({
@@ -260,7 +292,9 @@ function Application(app: ServiceStatusApplication) {
           <GoAButton buttonType="tertiary" onClick={cancelManualStatusChange}>
             Cancel
           </GoAButton>
-          <GoAButton buttonType="primary" onClick={cancelManualStatusChange}>Save</GoAButton>
+          <GoAButton buttonType="primary" onClick={cancelManualStatusChange}>
+            Save
+          </GoAButton>
         </GoAModalActions>
       </GoAModal>
     </App>
@@ -293,13 +327,20 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
   }
 
   function getStatusEntries(endpoint: ServiceStatusEndpoint): EndpointStatusEntry[] {
-    const timePeriodEntries = endpoint.statusEntries?.filter((entry) => entry.timestamp > Date.now() - 1000 * 60 * 30) || [];
+    const timePeriodEntries =
+      endpoint.statusEntries?.filter((entry) => entry.timestamp > Date.now() - 1000 * 60 * 30) || [];
 
     if (timePeriodEntries.length >= displayCount) {
       return timePeriodEntries;
     }
 
-    const makeEntry = (timestamp: number): EndpointStatusEntry => ({ ok: false, timestamp, status: 'n/a', url: endpoint.url, responseTime: -1 });
+    const makeEntry = (timestamp: number): EndpointStatusEntry => ({
+      ok: false,
+      timestamp,
+      status: 'n/a',
+      url: endpoint.url,
+      responseTime: -1,
+    });
     const minute = 60 * 1000;
 
     // must define time boundaries to allow for the insertion of filler entries and prevent gaps in time from not showing up
@@ -312,7 +353,7 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
       const diff = (entry.timestamp - prevEntry.timestamp) / minute;
       filledEntries.push(prevEntry);
       if (diff > 1) {
-        for (let j = 1; j < diff -1; j++) {
+        for (let j = 1; j < diff - 1; j++) {
           filledEntries.push(makeEntry(prevEntry.timestamp + j * minute));
         }
       }
@@ -328,7 +369,9 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
     <div style={css}>
       <StatusBarDetails>
         <span></span>
-        <small style={{ textTransform: 'capitalize' }}>{statusEntries[statusEntries.length - 1].status !== 'n/a' ? app.internalStatus : 'N/A'}</small>
+        <small style={{ textTransform: 'capitalize' }}>
+          {statusEntries[statusEntries.length - 1].status !== 'n/a' ? app.internalStatus : 'N/A'}
+        </small>
       </StatusBarDetails>
 
       <EndpointStatusEntries data-testid="endpoint-url">
@@ -336,12 +379,11 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
           <EndpointStatusTick
             key={entry.timestamp}
             style={{
-              backgroundColor:
-                entry.ok
-                  ? 'var(--color-green)'
-                    : entry.status === 'n/a'
-                    ? 'var(--color-gray-300)'
-                    : 'var(--color-red)',
+              backgroundColor: entry.ok
+                ? 'var(--color-green)'
+                : entry.status === 'n/a'
+                ? 'var(--color-gray-300)'
+                : 'var(--color-red)',
             }}
             title={entry.status + ': ' + new Date(entry.timestamp).toLocaleString()}
           />
@@ -435,4 +477,28 @@ const AppName = styled.div`
   font-weight: var(--fw-bold);
   text-transform: capitalize;
   margin-top: 1rem;
+`;
+
+const StatusAside = styled(Aside)`
+  padding-top: 1.6em;
+
+  .copy-url {
+    font-size: var(--fs-sm);
+    background-color: var(--color-gray-100);
+    border: 1px solid var(--color-gray-300);
+    border-radius: 1px;
+    padding: 0.25rem;
+    margin-bottom: 1rem;
+    margin-top: 0.5rem;
+    line-height: normal;
+  }
+
+  .small-font {
+    font-size: var(--fs-sm);
+    line-height: normal;
+  }
+
+  .mt-2 {
+    margin-top: 2em;
+  }
 `;

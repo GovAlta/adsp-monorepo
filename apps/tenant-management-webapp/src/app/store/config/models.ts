@@ -35,6 +35,7 @@ export interface ServiceUrls {
   uiComponentUrl: string;
   fileApi?: string;
   serviceStatusApiUrl?: string;
+  serviceStatusAppUrl?: string;
   valueServiceApiUrl?: string;
   docServiceApiUrl?: string;
   configurationServiceApiUrl?: string;
