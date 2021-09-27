@@ -27,7 +27,7 @@ const Main = styled.main`
   h3,
   h4 {
     margin-bottom: 1rem;
-    margin-top: 2rem;
+    margin-top: 2rem; // TODO: I don't think this value is needed, or should be here
   }
 
   /* Font sizes */
