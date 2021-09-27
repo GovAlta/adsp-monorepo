@@ -1,38 +1,111 @@
 components:
   schemas:
-    CalendarDate:
+    Calendar:
       type: object
       properties:
-        date:
+        name:
           type: string
-          format: date-time
-        isWeekend:
+        displayName:
+          type: string
+        description:
+          type: string
+        readRoles:
+          type: array
+          items:
+            type: string
+        updateRoles:
+          type: array
+          items:
+            type: string
+    CalendarEvent:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        description:
+          type: string
+        isPublic:
           type: boolean
-        isHoliday:
+        isAllDay:
           type: boolean
-        isBusinessDay:
-          type: boolean
+        attendees:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attendee"
+    Attendee:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        email:
+          type: string
+          format: email
 
-/calendar/v1/dates:
+/calendar/v1/calendars:
   get:
-    tags:
-      - Dates
-    description: Retrieves date values.
+    description: Retrieves calendars.
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Calendar"
+
+/calendar/v1/calendars/{name}:
+  get:
+    description: Retrieves a specific calendar.
     parameters:
+      - name: name
+        description: Name of the calendar.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Calendar"
+
+/calendar/v1/calendars/{name}/export:
+  get:
+    description: Retrieves export of calendar and events.
+    parameters:
+      - name: name
+        description: Name of the calendar.
+        in: path
+        required: true
+        schema:
+          type: string
       - name: top
-        description: Number of dates to return in a page.
+        description: Number of revisions to return in a page.
         in: query
         required: false
         schema:
           type: number
       - name: after
-        description: Cursor for page of results to retrieve.
+        description: Cursor for retrieving additional pages.
         in: query
         required: false
         schema:
-          type: number
+          type: string
+      - name: includeAttendees
+        description: Flag indicating if attendees should be included in events.
+        in: query
+        required: false
+        schema:
+          type: boolean
       - name: criteria
-        description: Criteria for dates to retrieve.
+        description: Criteria for events to retrieve.
         in: query
         required: false
         content:
@@ -40,15 +113,45 @@ components:
             schema:
               type: object
               properties:
-                max:
-                  type: integer
-                min:
-                  type: integer
-                isWeekend:
+                isPublic:
                   type: boolean
-                isHoliday:
-                  type: boolean
-                isBusinessDay:
+    responses:
+      200:
+        description: Request completed successfully.
+
+/calendar/v1/calendars/{name}/events:
+  parameters:
+    - name: name
+      description: Name of the calendar.
+      in: path
+      required: true
+      schema:
+        type: string
+  get:
+    description: Retrieves calendar events.
+    parameters:
+      - name: top
+        description: Number of revisions to return in a page.
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: after
+        description: Cursor for retrieving additional pages.
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: criteria
+        description: Criteria for events to retrieve.
+        in: query
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isPublic:
                   type: boolean
     responses:
       200:
@@ -61,7 +164,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/CalendarDate"
+                    $ref: "#/components/schemas/CalendarEvent"
                 page:
                   type: object
                   properties:
@@ -71,25 +174,170 @@ components:
                       type: string
                     size:
                       type: number
-
-/calendar/v1/dates/{id}:
-  parameters:
-    - name: id
-      description: ID (yyyydd) of the date to retrieve.
-      in: path
+  post:
+    description: Creates a new calendar event.
+    requestBody:
       required: true
-      schema:
-        type: integer
-  get:
-    tags:
-      - Dates
-    description: Retrieves information about a calendar date.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              start:
+                type: string
+                format: date-time
+              end:
+                type: string
+                format: date-time
+              isPublic:
+                type: boolean
+            required: [name, start]
     responses:
-      404:
-        description: Calendar date not found.
       200:
         description: Request completed successfully.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CalendarDate"
+              $ref: "#/components/schemas/CalendarEvent"
+
+/calendar/v1/calendars/{name}/events/{id}:
+  parameters:
+    - name: name
+      description: Name of the calendar.
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: id
+      description: ID of the event.
+      in: path
+      required: true
+      schema:
+        type: string
+  get:
+    parameters:
+      - name: includeAttendees
+        description: Flag indicating if attendees should be included in events.
+        in: query
+        required: false
+        schema:
+          type: boolean
+    description: Retrieves a calendar event.
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalendarEvent"
+  patch:
+    description: Updates a calendar event.
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalendarEvent"
+  delete:
+    description: Deletes a calendar event.
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean
+
+/calendar/v1/calendars/{name}/events/{id}/attendees:
+  parameters:
+    - name: name
+      description: Name of the calendar.
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: id
+      description: ID of the event.
+      in: path
+      required: true
+      schema:
+        type: string
+  get:
+    description: Retrieves attendees of a calendar event.
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Attendee"
+
+/calendar/v1/calendars/{name}/events/{id}/attendees/{attendeeId}:
+  parameters:
+    - name: name
+      description: Name of the calendar.
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: id
+      description: ID of the event.
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: attendeeId
+      description: ID of the attendee.
+      in: path
+      required: true
+      schema:
+        type: string
+  get:
+    description: Retrieves an attendee of an event.
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Attendee"
+  patch:
+    description: Updates an attendee of an event.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Attendee"
+  delete:
+    description: Deletes a calendar event attendee.
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean

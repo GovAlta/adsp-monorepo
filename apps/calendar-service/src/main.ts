@@ -10,7 +10,8 @@ import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { createRepositories } from './postgres';
-import { applyCalendarMiddleware } from './calendar';
+import { applyCalendarMiddleware, CalendarServiceConfiguration, CalendarServiceRoles, configurationSchema } from './calendar';
+import { CalendarEntity } from './calendar/model';
 
 const logger = createLogger('calendar-service', environment.LOG_LEVEL);
 
@@ -22,16 +23,33 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(express.json({ limit: '1mb' }));
   app.use(cors());
 
+  const repositories = await createRepositories({
+    logger,
+    ...environment,
+  });
+
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { coreStrategy, tenantStrategy, healthCheck } = await initializePlatform(
+  const { coreStrategy, tenantStrategy, configurationHandler, healthCheck } = await initializePlatform(
     {
       serviceId,
       displayName: 'Calendar Service',
       description: 'Service that provides calendar date information, events, and scheduling.',
-      roles: [],
+      roles: [{
+        role: CalendarServiceRoles.Admin,
+        description: 'Administrator account for calendars.'
+      }],
       events: [],
       clientSecret: environment.CLIENT_SECRET,
+      configurationSchema,
+      configurationConverter: (config: CalendarServiceConfiguration, tenandId) =>
+        Object.entries(config).reduce(
+          (entities, [key, value]) => ({
+            ...entities,
+            [key]: new CalendarEntity(repositories.calendarRepository, tenandId, value),
+          }),
+          {}
+        ),
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
     },
@@ -51,14 +69,9 @@ const initializeApp = async (): Promise<express.Application> => {
   });
 
   app.use(passport.initialize());
-  app.use('/calendar', passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }));
+  app.use('/calendar', passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }), configurationHandler);
 
-  // TODO: Add your API router here.
-  const repositories = await createRepositories({
-    logger,
-    ...environment,
-  });
-  applyCalendarMiddleware(app, { ...repositories });
+  applyCalendarMiddleware(app, { serviceId, logger, ...repositories });
 
   let swagger = null;
   app.use('/swagger/docs/v1', (_req, res) => {
@@ -78,7 +91,10 @@ const initializeApp = async (): Promise<express.Application> => {
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();
-    res.json(platform);
+    res.json({
+      ...platform,
+      db: await repositories.isConnected(),
+    });
   });
 
   app.get('/', async (req, res) => {

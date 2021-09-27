@@ -11,6 +11,7 @@ export const environment = envalid.cleanEnv(
     DIRECTORY_URL: envalid.str({ default: 'http://localhost:3333' }),
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:calendar-service' }),
     CLIENT_SECRET: envalid.str(),
+    TIME_ZONE: envalid.str({ default: 'America/Edmonton'}),
     DB_HOST: envalid.str({ default: 'localhost' }),
     DB_PORT: envalid.num({ default: 5432 }),
     DB_NAME: envalid.str({ default: 'postgres' }),

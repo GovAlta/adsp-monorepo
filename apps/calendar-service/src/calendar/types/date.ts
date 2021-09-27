@@ -12,7 +12,6 @@ export interface CalendarDate {
   id: number;
   date: Date;
   dayOfWeek: DayOfWeek;
-  dayOfWeekNumber: number;
   isWeekend: boolean;
   isHoliday: boolean;
   isBusinessDay: boolean;

@@ -1,6 +1,6 @@
 version: '3.2'
 services:
-  task-service-postgres:
+  calendar-service-postgres:
     image: postgres:9.6
     expose:
       - 5432
@@ -8,30 +8,28 @@ services:
       - 5432:5432
     environment:
       - POSTGRES_DB=postgres
-      - POSTGRES_PASSWORD=task-service
+      - POSTGRES_PASSWORD=calendar-service
     volumes:
-      - ../data/task:/var/lib/postgresql/data
-  task-service:
+      - ../data/calendar:/var/lib/postgresql/data
+  calendar-service:
     build:
       context: ../
       dockerfile: .compose/service/Dockerfile
       args:
-        - SERVICE=task-service
-    depends_on:
-      - task-service-postgres
+        - SERVICE=calendar-service
     ports:
-      - 3341:3341
+      - 3342:3342
     expose:
-      - 3341
+      - 3342
     environment:
       - KEYCLOAK_ROOT_URL=http://keycloak:8080
       - DIRECTORY_URL=http://tenant-management-api:3333
-      - CLIENT_ID=urn:ads:platform:task-service
-      - CLIENT_SECRET=c094298b-32df-4866-aab4-78eada8eece0
-      - DB_HOST=task-service-postgres
+      - CLIENT_ID=urn:ads:platform:calendar-service
+      - CLIENT_SECRET=59b11e0e-d1b6-4a50-a1a0-ea7034534643
+      - DB_HOST=calendar-service-postgres
       - DB_PORT=5432
       - DB_NAME=postgres
       - DB_USER=postgres
-      - DB_PASSWORD=task-service
-      - PORT=3341
+      - DB_PASSWORD=calendar-service
+      - PORT=3342
       - LOG_LEVEL=debug
