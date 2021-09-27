@@ -18,5 +18,5 @@ export const LocalTime = (props: LocalTimeProps): JSX.Element => {
 
   const timeParts = new Date(props.date).toLocaleString('en-US', options).split(',');
   const localTime = `${timeParts[0]}, ${timeParts[1]}, ${timeParts[2]} at ${timeParts[3].toLowerCase()}`;
-  return (<b>{localTime}</b>);
-};
+  return (<span>{localTime}</span>);
+}
