@@ -12,7 +12,7 @@ export class NoticeApplicationEntity {
   mode: NoticeModeType;
   created: Date;
   tenantId: string;
-  isForAll: boolean;
+  isCrossTenants: boolean;
 
   constructor(private repository: NoticeRepository, application: NewOrExisting<NoticeApplication>) {
     this.id = application?.id;
@@ -23,7 +23,7 @@ export class NoticeApplicationEntity {
     this.mode = application.mode;
     this.created = application.created;
     this.tenantId = application.tenantId;
-    this.isForAll = application.isForAll;
+    this.isCrossTenants = application.isCrossTenants;
   }
 
   static create(
