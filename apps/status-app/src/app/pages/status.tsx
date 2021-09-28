@@ -80,19 +80,22 @@ const ServiceStatusPage = (): JSX.Element => {
   };
 
   return (
-    <ServiceStatusesCss>
-      <GoAHeader serviceLevel="beta" serviceName="Alberta Digital Service Platform" serviceHome="/" />
+    <div>
+      <GoAHeader serviceLevel="beta" serviceName="Alberta Digital Service Platform -Status & Outages " serviceHome="/" />
+      {/* TODO: re-visit this part when design and card or breadcrumb is ready.
       <div className="goa-banner">
         <div className="small-font">Alberta Digital Service Platform &rarr; Status & Outages</div>
         <hr />
         <h1>Status & Outages</h1>
         <div className="descriptor">Real time monitoring of our applications and services</div>
-      </div>
+      </div> */}
       <main>
-        <section>
-          <SectionView />
-        </section>
-        <section>{ }</section>
+        <ServiceStatusesCss>
+          <section>
+            <SectionView />
+          </section>
+          <section>{ }</section>
+        </ServiceStatusesCss>
       </main>
       <Footer>
         <a href="https://www.alberta.ca">Go to Alberta.ca</a>
@@ -103,7 +106,7 @@ const ServiceStatusPage = (): JSX.Element => {
         </FooterLinks>
         <FooterCopyright>&#169; 2020 Government of Alberta</FooterCopyright>
       </Footer>
-    </ServiceStatusesCss>
+    </div>
   );
 };
 
