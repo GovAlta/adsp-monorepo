@@ -8,7 +8,7 @@ class ServiceStatusPage {
   }
 
   statusPageTitle() {
-    return cy.get('h1');
+    return cy.get('.name');
   }
 
   applicationStatus(appTitle) {
