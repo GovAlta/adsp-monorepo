@@ -198,5 +198,13 @@ const CreateTenantStyle = styled.div`
 
   .goa-form-item.error input {
     border-color: #ec040b;
+    border-width: 2px;
+  }
+
+  .goa-form-item input {
+    border-radius: 5px;
+    border-color: #333;
+    border-style: solid;
+    border-width: 1px;
   }
 `;
