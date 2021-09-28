@@ -10,8 +10,13 @@ import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { createRepositories } from './postgres';
-import { applyCalendarMiddleware, CalendarServiceConfiguration, CalendarServiceRoles, configurationSchema } from './calendar';
-import { CalendarEntity } from './calendar/model';
+import {
+  applyCalendarMiddleware,
+  CalendarServiceConfiguration,
+  CalendarServiceRoles,
+  configurationSchema,
+  CalendarEntity,
+} from './calendar';
 
 const logger = createLogger('calendar-service', environment.LOG_LEVEL);
 
@@ -30,31 +35,34 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { coreStrategy, tenantStrategy, configurationHandler, healthCheck } = await initializePlatform(
-    {
-      serviceId,
-      displayName: 'Calendar Service',
-      description: 'Service that provides calendar date information, events, and scheduling.',
-      roles: [{
-        role: CalendarServiceRoles.Admin,
-        description: 'Administrator account for calendars.'
-      }],
-      events: [],
-      clientSecret: environment.CLIENT_SECRET,
-      configurationSchema,
-      configurationConverter: (config: CalendarServiceConfiguration, tenandId) =>
-        Object.entries(config).reduce(
-          (entities, [key, value]) => ({
-            ...entities,
-            [key]: new CalendarEntity(repositories.calendarRepository, tenandId, value),
-          }),
-          {}
-        ),
-      accessServiceUrl,
-      directoryUrl: new URL(environment.DIRECTORY_URL),
-    },
-    { logger }
-  );
+  const { coreStrategy, tenantStrategy, configurationHandler, eventService, directory, healthCheck } =
+    await initializePlatform(
+      {
+        serviceId,
+        displayName: 'Calendar Service',
+        description: 'Service that provides calendar date information, events, and scheduling.',
+        roles: [
+          {
+            role: CalendarServiceRoles.Admin,
+            description: 'Administrator account for calendars.',
+          },
+        ],
+        events: [],
+        clientSecret: environment.CLIENT_SECRET,
+        configurationSchema,
+        configurationConverter: (config: CalendarServiceConfiguration, tenandId) =>
+          Object.entries(config).reduce(
+            (entities, [key, value]) => ({
+              ...entities,
+              [key]: new CalendarEntity(repositories.calendarRepository, tenandId, value),
+            }),
+            {}
+          ),
+        accessServiceUrl,
+        directoryUrl: new URL(environment.DIRECTORY_URL),
+      },
+      { logger }
+    );
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
@@ -69,9 +77,13 @@ const initializeApp = async (): Promise<express.Application> => {
   });
 
   app.use(passport.initialize());
-  app.use('/calendar', passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }), configurationHandler);
+  app.use(
+    '/calendar',
+    passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }),
+    configurationHandler
+  );
 
-  applyCalendarMiddleware(app, { serviceId, logger, ...repositories });
+  applyCalendarMiddleware(app, { serviceId, logger, eventService, directory, ...repositories });
 
   let swagger = null;
   app.use('/swagger/docs/v1', (_req, res) => {

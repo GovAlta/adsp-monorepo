@@ -1,10 +1,16 @@
 import { decodeAfter, encodeNext, Results } from '@core-services/core-common';
 import * as knex from 'knex';
-import { Attendee, CalendarDate, CalendarDateCriteria, CalendarEventCriteria, CalendarRepository } from '../calendar';
-import { CalendarEntity } from '../calendar/model';
-import { CalendarEventEntity } from '../calendar/model/event';
+import {
+  Attendee,
+  CalendarDate,
+  CalendarDateCriteria,
+  CalendarEventCriteria,
+  CalendarRepository,
+  CalendarEntity,
+  CalendarEventEntity,
+} from '../calendar';
 import { AttendeeRecord, DateRecord, EventRecord } from './types';
-import { fromDateAndTimeIds, toDateId, toTimeId } from './utils';
+import { fromDateAndTimeIds, toDateId, toTimeId } from '../utils';
 
 export class PostgresCalendarRepository implements CalendarRepository {
   constructor(private knex: knex) {}

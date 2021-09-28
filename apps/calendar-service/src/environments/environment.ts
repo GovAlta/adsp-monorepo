@@ -10,7 +10,7 @@ export const environment = envalid.cleanEnv(
     KEYCLOAK_ROOT_URL: envalid.str({ default: 'http://localhost:8080' }),
     DIRECTORY_URL: envalid.str({ default: 'http://localhost:3333' }),
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:calendar-service' }),
-    CLIENT_SECRET: envalid.str(),
+    CLIENT_SECRET: envalid.str({ default: '' }),
     TIME_ZONE: envalid.str({ default: 'America/Edmonton'}),
     DB_HOST: envalid.str({ default: 'localhost' }),
     DB_PORT: envalid.num({ default: 5432 }),

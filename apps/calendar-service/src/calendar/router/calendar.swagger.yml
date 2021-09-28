@@ -47,6 +47,8 @@ components:
 
 /calendar/v1/calendars:
   get:
+    tags:
+      - Calendar
     description: Retrieves calendars.
     responses:
       200:
@@ -60,8 +62,16 @@ components:
 
 /calendar/v1/calendars/{name}:
   get:
+    tags:
+      - Calendar
     description: Retrieves a specific calendar.
     parameters:
+      - name: tenant
+        description: ID of the tenant.
+        in: query
+        required: false
+        schema:
+          type: string
       - name: name
         description: Name of the calendar.
         in: path
@@ -78,8 +88,16 @@ components:
 
 /calendar/v1/calendars/{name}/export:
   get:
+    tags:
+      - Calendar
     description: Retrieves export of calendar and events.
     parameters:
+      - name: tenant
+        description: ID of the tenant.
+        in: query
+        required: false
+        schema:
+          type: string
       - name: name
         description: Name of the calendar.
         in: path
@@ -87,7 +105,7 @@ components:
         schema:
           type: string
       - name: top
-        description: Number of revisions to return in a page.
+        description: Number of events to return in a page.
         in: query
         required: false
         schema:
@@ -115,6 +133,12 @@ components:
               properties:
                 isPublic:
                   type: boolean
+                startsAfter:
+                  type: string
+                  format: date-time
+                endsBefore:
+                  type: string
+                  format: date-time
     responses:
       200:
         description: Request completed successfully.
@@ -128,10 +152,18 @@ components:
       schema:
         type: string
   get:
+    tags:
+      - Calendar
     description: Retrieves calendar events.
     parameters:
+      - name: tenant
+        description: ID of the tenant.
+        in: query
+        required: false
+        schema:
+          type: string
       - name: top
-        description: Number of revisions to return in a page.
+        description: Number of events to return in a page.
         in: query
         required: false
         schema:
@@ -153,6 +185,12 @@ components:
               properties:
                 isPublic:
                   type: boolean
+                startsAfter:
+                  type: string
+                  format: date-time
+                endsBefore:
+                  type: string
+                  format: date-time
     responses:
       200:
         description: Request completed successfully.
@@ -175,6 +213,8 @@ components:
                     size:
                       type: number
   post:
+    tags:
+      - Calendar
     description: Creates a new calendar event.
     requestBody:
       required: true
@@ -219,7 +259,15 @@ components:
       schema:
         type: string
   get:
+    tags:
+      - Calendar
     parameters:
+      - name: tenant
+        description: ID of the tenant.
+        in: query
+        required: false
+        schema:
+          type: string
       - name: includeAttendees
         description: Flag indicating if attendees should be included in events.
         in: query
@@ -235,7 +283,30 @@ components:
             schema:
               $ref: "#/components/schemas/CalendarEvent"
   patch:
+    tags:
+      - Calendar
     description: Updates a calendar event.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              start:
+                type: string
+                format: date-time
+              end:
+                type: string
+                format: date-time
+              isPublic:
+                type: boolean
+              isAllDay:
+                type: boolean
     responses:
       200:
         description: Request completed successfully.
@@ -244,6 +315,8 @@ components:
             schema:
               $ref: "#/components/schemas/CalendarEvent"
   delete:
+    tags:
+      - Calendar
     description: Deletes a calendar event.
     responses:
       200:
@@ -271,7 +344,32 @@ components:
       schema:
         type: string
   get:
+    tags:
+      - Calendar
     description: Retrieves attendees of a calendar event.
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Attendee"
+  post:
+    tags:
+      - Calendar
+    description: Creates an attendees of a calendar event.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              email:
+                type: string
+                format: email
     responses:
       200:
         description: Request completed successfully.
@@ -301,6 +399,8 @@ components:
       schema:
         type: string
   get:
+    tags:
+      - Calendar
     description: Retrieves an attendee of an event.
     responses:
       200:
@@ -309,8 +409,10 @@ components:
           application/json:
             schema:
               $ref: "#/components/schemas/Attendee"
-  patch:
-    description: Updates an attendee of an event.
+  put:
+    tags:
+      - Calendar
+    description: Sets an attendee of an event.
     requestBody:
       required: true
       content:
@@ -320,7 +422,7 @@ components:
             properties:
               name:
                 type: string
-              description:
+              email:
                 type: string
     responses:
       200:
@@ -330,6 +432,8 @@ components:
             schema:
               $ref: "#/components/schemas/Attendee"
   delete:
+    tags:
+      - Calendar
     description: Deletes a calendar event attendee.
     responses:
       200:

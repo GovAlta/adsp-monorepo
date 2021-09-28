@@ -30,6 +30,10 @@ export class CalendarEventEntity implements CalendarEvent {
     const record = event as CalendarEvent;
     if (record.id) {
       this.id = record.id;
+    } else {
+      if (this.end && this.end.valueOf() < this.start.valueOf()) {
+        throw new InvalidOperationError('End of event must be after start of event.');
+      }
     }
   }
 
@@ -77,7 +81,12 @@ export class CalendarEventEntity implements CalendarEvent {
     return this.repository.delete(this);
   }
 
-  async loadAttendees(): Promise<Attendee[]> {
+  async loadAttendees(user: User): Promise<Attendee[]> {
+    // User must have private access to events to get the attendees.
+    if (!this.calendar.canAccessPrivateEvent(user)) {
+      throw new UnauthorizedUserError('Access event attendees', user);
+    }
+
     this.attendees = await this.repository.getEventAttendees(this);
     return this.attendees;
   }

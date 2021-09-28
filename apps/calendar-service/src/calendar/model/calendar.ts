@@ -20,11 +20,12 @@ export class CalendarEntity implements Calendar {
     this.updateRoles = calendar.updateRoles || [];
   }
 
-  canAccessEvent(user: User): boolean {
+  canAccessPrivateEvent(user: User): boolean {
     return (
-      user?.roles?.includes(CalendarServiceRoles.Admin) ||
-      !!this.updateRoles.find((r) => user?.roles?.includes(r)) ||
-      !!this.readRoles.find((r) => user?.roles?.includes(r))
+      user?.tenantId?.toString() === this.tenantId.toString() &&
+      (user?.roles?.includes(CalendarServiceRoles.Admin) ||
+        !!this.updateRoles.find((r) => user?.roles?.includes(r)) ||
+        !!this.readRoles.find((r) => user?.roles?.includes(r)))
     );
   }
 
@@ -34,7 +35,7 @@ export class CalendarEntity implements Calendar {
     after?: string,
     criteria?: CalendarEventCriteria
   ): Promise<Results<CalendarEventEntity>> {
-    if (!this.canAccessEvent(user)) {
+    if (!this.canAccessPrivateEvent(user)) {
       criteria = {
         ...(criteria || {}),
         isPublic: true,
@@ -46,7 +47,7 @@ export class CalendarEntity implements Calendar {
 
   async getEvent(user: User, id: number): Promise<CalendarEventEntity> {
     const event = await this.repository.getCalendarEvent(this, id);
-    if (event && !event.isPublic && !this.canAccessEvent(user)) {
+    if (event && !event.isPublic && !this.canAccessPrivateEvent(user)) {
       throw new UnauthorizedUserError('access event', user);
     }
 
@@ -55,7 +56,8 @@ export class CalendarEntity implements Calendar {
 
   canUpdateEvent(user: User): boolean {
     return (
-      user?.roles?.includes(CalendarServiceRoles.Admin) || !!this.updateRoles.find((r) => user?.roles?.includes(r))
+      user?.tenantId?.toString() === this.tenantId.toString() &&
+      (user?.roles?.includes(CalendarServiceRoles.Admin) || !!this.updateRoles.find((r) => user?.roles?.includes(r)))
     );
   }
 

@@ -1,6 +1,5 @@
 import { Results } from '@core-services/core-common';
-import { CalendarEntity } from '../model';
-import { CalendarEventEntity } from '../model/event';
+import { CalendarEntity, CalendarEventEntity } from '../model';
 import { Attendee, CalendarDate, CalendarDateCriteria, CalendarEventCriteria } from '../types';
 
 export interface CalendarRepository {
