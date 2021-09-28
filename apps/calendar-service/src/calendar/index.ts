@@ -6,6 +6,7 @@ import { createCalendarRouter, createDateRouter } from './router';
 
 export * from './types';
 export * from './roles';
+export * from './events';
 export * from './model';
 export * from './repository';
 export * from './configuration';
