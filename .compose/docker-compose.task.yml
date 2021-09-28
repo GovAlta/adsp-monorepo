@@ -7,10 +7,10 @@ services:
     ports:
       - 5432:5432
     environment:
-      - POSTGRES_DB=tasks-db
+      - POSTGRES_DB=postgres
       - POSTGRES_PASSWORD=task-service
     volumes:
-      - ../data/value:/bitnami/postgresql
+      - ../data/task:/var/lib/postgresql/data
   task-service:
     build:
       context: ../
@@ -30,7 +30,7 @@ services:
       - CLIENT_SECRET=c094298b-32df-4866-aab4-78eada8eece0
       - DB_HOST=task-service-postgres
       - DB_PORT=5432
-      - DB_NAME=tasks-db
+      - DB_NAME=postgres
       - DB_USER=postgres
       - DB_PASSWORD=task-service
       - PORT=3341

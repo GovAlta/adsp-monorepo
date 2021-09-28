@@ -2519,10 +2519,21 @@
             "attributes": {}
           }
         ],
+        "urn:ads:platform:calendar-service": [
+          {
+            "id": "9a551aef-0f65-4c55-9624-47cbfae24e9e",
+            "name": "calendar-admin",
+            "description": "Administrator role for calendars",
+            "composite": false,
+            "clientRole": true,
+            "containerId": "f4c01588-d082-4905-8bf7-f15424385cd6",
+            "attributes": {}
+          }
+        ],
         "urn:ads:platform:configuration-service": [
           {
             "id": "1541b2ef-1474-479d-b580-db45a6da74e1",
-            "name": "service",
+            "name": "configured-service",
             "description": "Service role for verify codes",
             "composite": false,
             "clientRole": true,
@@ -2691,6 +2702,38 @@
           ],
           "urn:ads:platform:value-service": [
             "value-writer"
+          ]
+        },
+        "notBefore": 0,
+        "groups": []
+      },
+      {
+        "id": "7c28ef4c-7e35-44b2-b323-4fd793b234f5",
+        "createdTimestamp": 1607448208769,
+        "username": "service-account-urn:ads:platform:calendar-service",
+        "enabled": true,
+        "totp": false,
+        "emailVerified": false,
+        "serviceAccountClientId": "urn:ads:platform:calendar-service",
+        "disableableCredentialTypes": [],
+        "requiredActions": [],
+        "realmRoles": [
+          "offline_access",
+          "uma_authorization"
+        ],
+        "clientRoles": {
+          "account": [
+            "manage-account",
+            "view-profile"
+          ],
+          "urn:ads:platform:tenant-service": [
+            "platform-service"
+          ],
+          "urn:ads:platform:configuration-service": [
+            "configured-service"
+          ],
+          "urn:ads:platform:event-service": [
+            "event-sender"
           ]
         },
         "notBefore": 0,
@@ -3285,6 +3328,105 @@
           },
           {
             "id": "603f08f6-ae12-4e5d-8fa5-9b1b9ec31d4e",
+            "name": "Client Host",
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-usersessionmodel-note-mapper",
+            "consentRequired": false,
+            "config": {
+              "user.session.note": "clientHost",
+              "userinfo.token.claim": "true",
+              "id.token.claim": "true",
+              "access.token.claim": "true",
+              "claim.name": "clientHost",
+              "jsonType.label": "String"
+            }
+          }
+        ],
+        "defaultClientScopes": [
+          "web-origins",
+          "role_list",
+          "roles",
+          "profile",
+          "email"
+        ],
+        "optionalClientScopes": [
+          "address",
+          "phone",
+          "offline_access",
+          "microprofile-jwt"
+        ]
+      },
+      {
+        "id": "f4c01588-d082-4905-8bf7-f15424385cd6",
+        "clientId": "urn:ads:platform:calendar-service",
+        "surrogateAuthRequired": false,
+        "enabled": true,
+        "alwaysDisplayInConsole": false,
+        "clientAuthenticatorType": "client-secret",
+        "secret": "59b11e0e-d1b6-4a50-a1a0-ea7034534643",
+        "redirectUris": [],
+        "webOrigins": [],
+        "notBefore": 0,
+        "bearerOnly": false,
+        "consentRequired": false,
+        "standardFlowEnabled": false,
+        "implicitFlowEnabled": false,
+        "directAccessGrantsEnabled": false,
+        "serviceAccountsEnabled": true,
+        "publicClient": false,
+        "frontchannelLogout": false,
+        "protocol": "openid-connect",
+        "attributes": {
+          "saml.assertion.signature": "false",
+          "saml.force.post.binding": "false",
+          "saml.multivalued.roles": "false",
+          "saml.encrypt": "false",
+          "saml.server.signature": "false",
+          "saml.server.signature.keyinfo.ext": "false",
+          "exclude.session.state.from.auth.response": "false",
+          "saml_force_name_id_format": "false",
+          "saml.client.signature": "false",
+          "tls.client.certificate.bound.access.tokens": "false",
+          "saml.authnstatement": "false",
+          "display.on.consent.screen": "false",
+          "saml.onetimeuse.condition": "false"
+        },
+        "authenticationFlowBindingOverrides": {},
+        "fullScopeAllowed": true,
+        "nodeReRegistrationTimeout": -1,
+        "protocolMappers": [
+          {
+            "id": "cccb8e67-320e-4e51-9448-654b27b7e72b",
+            "name": "Client ID",
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-usersessionmodel-note-mapper",
+            "consentRequired": false,
+            "config": {
+              "user.session.note": "clientId",
+              "userinfo.token.claim": "true",
+              "id.token.claim": "true",
+              "access.token.claim": "true",
+              "claim.name": "clientId",
+              "jsonType.label": "String"
+            }
+          },
+          {
+            "id": "a836126c-3ccb-464c-bb3c-1e6be351a775",
+            "name": "Client IP Address",
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-usersessionmodel-note-mapper",
+            "consentRequired": false,
+            "config": {
+              "user.session.note": "clientAddress",
+              "userinfo.token.claim": "true",
+              "id.token.claim": "true",
+              "access.token.claim": "true",
+              "claim.name": "clientAddress",
+              "jsonType.label": "String"
+            }
+          },
+          {
+            "id": "4642ca51-c4ae-4545-983f-ce1d850f385f",
             "name": "Client Host",
             "protocol": "openid-connect",
             "protocolMapper": "oidc-usersessionmodel-note-mapper",

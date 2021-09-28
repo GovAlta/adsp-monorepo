@@ -113,6 +113,10 @@ export const noticeApplicationSchema = new Schema(
       type: String,
       required: true,
     },
+    isCrossTenants: {
+      type: Boolean,
+      default: false
+    },
     endpoints: [noticeEndpointSchema],
   },
   { timestamps: true }

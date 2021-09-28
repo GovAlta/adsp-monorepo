@@ -62,6 +62,7 @@ export interface Notice {
   startDate: string;
   endDate: string;
   mode?: ModeType;
+  isCrossTenants?: boolean;
 }
 
 export interface Notices {

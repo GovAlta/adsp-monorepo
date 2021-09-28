@@ -146,6 +146,8 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
 
       logger.info('Starting create realm....');
 
+      await TenantService.validateName(tenantName);
+
       const generatedRealmName = uuidv4();
 
       const [_, clients] = await req.getConfiguration<ServiceClient[], ServiceClient[]>();
@@ -161,9 +163,9 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
     } catch (err) {
       if (err instanceof TenantService.TenantError) {
         res.status(err.errorCode).json({ error: err.message });
+      } else {
+        res.status(err.response.status).json({ error: err.message });
       }
-
-      res.status(err.response.status).json({ error: err.message });
     }
   }
 

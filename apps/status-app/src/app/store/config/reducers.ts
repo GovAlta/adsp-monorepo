@@ -7,7 +7,7 @@ export default function (state: ConfigState = CONFIG_INIT, action: ActionTypes):
       return {
         ...state,
         ...action.payload,
-        ...{ envLoaded: true },
+        envLoaded: true,
       };
 
     default:

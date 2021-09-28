@@ -1,12 +1,20 @@
+import React, { useState, useEffect, FC } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useHistory, useParams } from 'react-router-dom';
 import { RootState } from '@store/index';
 import { saveApplication } from '@store/status/actions';
 import { ServiceStatusApplication } from '@store/status/models';
-import React, { useState, useEffect, ChangeEvent, FC } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useParams } from 'react-router-dom';
 import { GoAButton } from '@abgov/react-components';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAForm, GoAFormItem } from '@components/Form';
+import {
+  GoAForm,
+  GoAFormItem,
+  GoAInput,
+  GoATextArea,
+  GoAModal,
+  GoAModalActions,
+  GoAModalContent,
+  GoAModalTitle,
+} from '@abgov/react-components/experimental';
 
 interface Props {
   isOpen: boolean;
@@ -33,12 +41,29 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen }: Props) => {
     }
   }, [applicationId, serviceStatus]);
 
-  function setValue(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, customValue?: unknown) {
-    const { name, value } = e.target;
-    setApplication({ ...application, [name]: customValue || value });
+  function setValue(name: string, value: string) {
+    switch (name) {
+      case 'name':
+      case 'description':
+        setApplication({ ...application, [name]: value });
+        break;
+      case 'endpoint':
+        setApplication({ ...application, [name]: { url: value, status: 'offline' } });
+        break;
+    }
+  }
+
+  function isFormValid(): boolean {
+    if (!application.name) return false;
+    if (!application.endpoint.url) return false;
+    return true;
   }
 
   function save() {
+    if (!isFormValid()) {
+      return;
+    }
+
     dispatch(saveApplication(application));
     history.push('/admin/services/status');
   }
@@ -54,22 +79,17 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen }: Props) => {
         <GoAForm>
           <GoAFormItem>
             <label>Application Name</label>
-            <input type="text" name="name" value={application?.name} onChange={setValue} />
+            <GoAInput type="text" name="name" value={application?.name} onChange={setValue} />
           </GoAFormItem>
 
           <GoAFormItem>
             <label>Description</label>
-            <textarea name="description" value={application?.description} onChange={setValue} />
+            <GoATextArea name="description" value={application?.description} onChange={setValue} />
           </GoAFormItem>
 
           <GoAFormItem>
             <label>Endpoint Url</label>
-            <input
-              type="text"
-              name="endpoint"
-              value={application?.endpoint?.url}
-              onChange={(e) => setValue(e, { url: e.target.value })}
-            />
+            <GoAInput type="text" name="endpoint" value={application?.endpoint?.url} onChange={setValue} />
           </GoAFormItem>
         </GoAForm>
       </GoAModalContent>
@@ -77,7 +97,7 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen }: Props) => {
         <GoAButton buttonType="tertiary" onClick={cancel}>
           Cancel
         </GoAButton>
-        <GoAButton buttonType="primary" onClick={save}>
+        <GoAButton disabled={!isFormValid()} buttonType="primary" onClick={save}>
           Save
         </GoAButton>
       </GoAModalActions>

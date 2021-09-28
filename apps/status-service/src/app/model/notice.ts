@@ -11,7 +11,8 @@ export class NoticeApplicationEntity {
   endDate: Date;
   mode: NoticeModeType;
   created: Date;
-  tenantId: string
+  tenantId: string;
+  isCrossTenants: boolean;
 
   constructor(private repository: NoticeRepository, application: NewOrExisting<NoticeApplication>) {
     this.id = application?.id;
@@ -21,7 +22,8 @@ export class NoticeApplicationEntity {
     this.endDate = application.endDate;
     this.mode = application.mode;
     this.created = application.created;
-    this.tenantId = application.tenantId
+    this.tenantId = application.tenantId;
+    this.isCrossTenants = application.isCrossTenants;
   }
 
   static create(
