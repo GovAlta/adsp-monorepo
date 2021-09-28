@@ -48,14 +48,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
         page: applications.page,
         results: applications.results
           .map((result) => ({
-            id: result.id,
-            message: result.message,
-            tennantServRef: result.tennantServRef,
-            startDate: result.startDate,
-            endDate: result.endDate,
-            mode: result.mode,
-            created: result.created,
-            tenantId: result.tenantId
+            ...result
           })),
       });
     } catch (err) {
@@ -113,11 +106,10 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
   // Add notice
   router.post('/notices', assertAuthenticatedHandler, async (req, res, next) => {
 
-
     logger.info(`${req.method} - ${req.url}`);
 
     try {
-      const { message, tennantServRef, startDate, endDate } = req.body;
+      const { message, tennantServRef, startDate, endDate, isCrossTenants } = req.body;
       const user = req.user as Express.User;
       const app = await NoticeApplicationEntity.create(user, noticeRepository, {
         message,
@@ -126,6 +118,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
         endDate,
         mode: 'draft',
         created: new Date(),
+        isCrossTenants: isCrossTenants || false,
         tenantId: user.tenantId.toString()
       });
       res.status(201).json(app);

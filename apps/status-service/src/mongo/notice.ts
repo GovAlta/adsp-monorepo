@@ -26,11 +26,11 @@ export default class MongoNoticeRepository implements NoticeRepository {
   ): Promise<Results<NoticeApplicationEntity>> {
     let criteria = {};
 
-    if (filter.mode != null) {
+    if (filter?.mode != null) {
       criteria = { mode: filter.mode };
     }
 
-    if (filter.tenantId) {
+    if (filter?.tenantId) {
       criteria = { ...criteria, tenantId: filter.tenantId }
     }
 
@@ -90,7 +90,8 @@ export default class MongoNoticeRepository implements NoticeRepository {
       endDate: application.endDate,
       mode: application.mode,
       created: application.created,
-      tenantId: application.tenantId
+      tenantId: application.tenantId,
+      isCrossTenants: application.isCrossTenants
     };
   }
 
@@ -101,12 +102,13 @@ export default class MongoNoticeRepository implements NoticeRepository {
     return new NoticeApplicationEntity(this, {
       id: doc._id,
       message: doc.message,
-      tennantServRef: doc.tennantServRef,
+      tennantServRef: JSON.parse(doc.tennantServRef),
       startDate: doc.startDate,
       endDate: doc.endDate,
       mode: doc.mode,
       created: doc.created,
-      tenantId: doc.tenantId
+      tenantId: doc.tenantId,
+      isCrossTenants: doc.isCrossTenants
     });
   }
 }

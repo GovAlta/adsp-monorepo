@@ -8,13 +8,19 @@ export interface Notices {
   notices: Notice[];
 }
 
+export interface tennantServRef {
+  name: string;
+  id: string;
+}
+
 export interface Notice {
   id?: string;
   message: string;
-  tennantServRef: string;
+  tennantServRef: tennantServRef[];
   startDate: Date;
   endDate: Date;
   mode?: ModeType;
+  isCrossTenants?: boolean;
 }
 
 export interface NoticesResult {

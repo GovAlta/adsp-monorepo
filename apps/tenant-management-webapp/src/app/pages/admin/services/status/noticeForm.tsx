@@ -56,7 +56,7 @@ function NoticeForm(): JSX.Element {
 
       let parsedApplications = [];
       try {
-        parsedApplications = JSON.parse(notice.tennantServRef);
+        parsedApplications = notice.tennantServRef;
       } catch (e) {
         console.log(e);
       } finally {
@@ -106,7 +106,7 @@ function NoticeForm(): JSX.Element {
         saveNotice({
           id: noticeId,
           message,
-          tennantServRef: JSON.stringify(selectedApplications),
+          tennantServRef: selectedApplications,
           startDate: dateTime(startDate, startTime),
           endDate: dateTime(endDate, endTime),
         })
