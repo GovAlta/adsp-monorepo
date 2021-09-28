@@ -16,6 +16,9 @@ import {
   CalendarServiceRoles,
   configurationSchema,
   CalendarEntity,
+  CalendarEventCreatedDefinition,
+  CalendarEventDeletedDefinition,
+  CalendarEventUpdatedDefinition,
 } from './calendar';
 
 const logger = createLogger('calendar-service', environment.LOG_LEVEL);
@@ -47,7 +50,7 @@ const initializeApp = async (): Promise<express.Application> => {
             description: 'Administrator account for calendars.',
           },
         ],
-        events: [],
+        events: [CalendarEventCreatedDefinition, CalendarEventUpdatedDefinition, CalendarEventDeletedDefinition],
         clientSecret: environment.CLIENT_SECRET,
         configurationSchema,
         configurationConverter: (config: CalendarServiceConfiguration, tenandId) =>
