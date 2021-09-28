@@ -34,15 +34,15 @@ describe('App', () => {
     expect(baseElement).toBeTruthy();
   });
 
-  it('should have a greeting as the title', async () => {
-    const { getByText } = render(
-      <BrowserRouter>
-        <Provider store={store}>
-          <App />
-        </Provider>
-      </BrowserRouter>
-    );
+  // it('should have a greeting as the title', async () => {
+  //   const { getByText } = render(
+  //     <BrowserRouter>
+  //       <Provider store={store}>
+  //         <App />
+  //       </Provider>
+  //     </BrowserRouter>
+  //   );
 
-    await waitFor(() => expect(getByText('Real time monitoring of our applications and services')).toBeTruthy());
-  });
+  //   await waitFor(() => expect(getByText('Real time monitoring of our applications and services')).toBeTruthy());
+  // });
 });
