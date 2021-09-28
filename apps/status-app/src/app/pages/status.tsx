@@ -4,24 +4,25 @@ import { GoAHeader } from '@abgov/react-components';
 import '@abgov/core-css/goa-core.css';
 import '@abgov/core-css/goa-components.css';
 import '@abgov/core-css/src/lib/stories/page-template/page-template.story.scss';
-import { Grid, GridItem } from '@components/Grid';
+import { Grid, GridItem } from '@components/Grid'
 import ServiceStatus from './statusCard';
 import { useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { useDispatch } from 'react-redux';
-import { fetchApplications } from '@store/status/actions';
+import { fetchApplications } from '@store/status/actions'
 import { RootState } from '@store/index';
 import { PageLoader } from '@components/PageLoader';
 
 import moment from 'moment';
+
 
 const ServiceStatusPage = (): JSX.Element => {
   const { config } = useSelector((state: RootState) => ({
     config: state.config,
   }));
   const location = useLocation();
-  const name = location.pathname.slice(1) || config.platformTenantRealm;
+  const realm = location.pathname.slice(1) || config.platformTenantRealm;
   const dispatch = useDispatch();
 
   const { applications } = useSelector((state: RootState) => ({
@@ -29,18 +30,18 @@ const ServiceStatusPage = (): JSX.Element => {
   }));
 
   useEffect(() => {
-    dispatch(fetchApplications(name));
-  }, [name]);
+    dispatch(fetchApplications(realm))
+  }, [realm]);
 
   const services = () => {
     return (
       <div className="small-container">
         <PageLoader />
-        <h2 data-testid="service-name">All {applications[0].name || 'platform'} services</h2>
+        <h2 data-testid='service-name'>All {applications[0].name || 'platform'} services</h2>
         <p>
           These are the services currently being offered by{' '}
-          {location.pathname.slice(1) ? applications[0].name : 'the Alberta Digital Service Platform'}. All statuses are
-          in real time and reflect current states of the individual services. Please{' '}
+          {location.pathname.slice(1) ? applications[0].name : 'the Alberta Digital Service Platform'}. All
+          statuses are in real time and reflect current states of the individual services. Please{' '}
           <a href="mailto: DIO@gov.ab.ca">contact support</a> for additional information or any other inquiries
           regarding service statuses.
         </p>
@@ -79,19 +80,22 @@ const ServiceStatusPage = (): JSX.Element => {
   };
 
   return (
-    <ServiceStatusesCss>
-      <GoAHeader serviceLevel="beta" serviceName="Alberta Digital Service Platform" serviceHome="/" />
+    <div>
+      <GoAHeader serviceLevel="beta" serviceName="Alberta Digital Service Platform -Status & Outages " serviceHome="/" />
+      {/* TODO: re-visit this part when design and card or breadcrumb is ready.
       <div className="goa-banner">
         <div className="small-font">Alberta Digital Service Platform &rarr; Status & Outages</div>
         <hr />
         <h1>Status & Outages</h1>
         <div className="descriptor">Real time monitoring of our applications and services</div>
-      </div>
+      </div> */}
       <main>
-        <section>
-          <SectionView />
-        </section>
-        <section>{}</section>
+        <ServiceStatusesCss>
+          <section>
+            <SectionView />
+          </section>
+          <section>{ }</section>
+        </ServiceStatusesCss>
       </main>
       <Footer>
         <a href="https://www.alberta.ca">Go to Alberta.ca</a>
@@ -102,7 +106,7 @@ const ServiceStatusPage = (): JSX.Element => {
         </FooterLinks>
         <FooterCopyright>&#169; 2020 Government of Alberta</FooterCopyright>
       </Footer>
-    </ServiceStatusesCss>
+    </div>
   );
 };
 

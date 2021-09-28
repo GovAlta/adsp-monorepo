@@ -18,6 +18,36 @@ export function createPublicServiceStatusRouter({ logger, serviceStatusRepositor
     const { name } = req.params;
     const searchName = name || environment.PLATFORM_TENANT_REALM;
 
+    const invalidChars = [
+      '!',
+      '*',
+      "'",
+      '(',
+      ')',
+      ';',
+      ':',
+      '@',
+      '&',
+      '=',
+      '+',
+      '$',
+      ',',
+      '/',
+      '?',
+      '%',
+      '?',
+      '#',
+      '[',
+      ']',
+      '-',
+    ];
+
+    invalidChars.forEach((char) => {
+      if (name.indexOf(char) !== -1) {
+        res.json([]);
+      }
+    });
+
     let applications: ServiceStatusApplicationEntity[] = [];
 
     applications = await serviceStatusRepository.find({

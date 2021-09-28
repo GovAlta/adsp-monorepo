@@ -258,6 +258,7 @@ export const validateName = async (name: string): Promise<void> => {
     '#',
     '[',
     ']',
+    '-',
   ];
 
   invalidChars.forEach((char) => {

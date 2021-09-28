@@ -25,7 +25,7 @@ import {
 import type { GoABadgeType } from '@abgov/react-components/experimental';
 import ApplicationFormModal from './form';
 import NoticeForm from './noticeForm';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton, GoARadio, GoARadioGroup } from '@abgov/react-components';
 import { GoAForm, GoAFormItem } from '@components/Form';
 import { setApplicationStatus } from '@store/status/actions/setApplicationStatus';
 import { Tab, Tabs } from '@components/Tabs';
@@ -116,7 +116,7 @@ function Status(): JSX.Element {
         </Tabs>
       </Main>
 
-      <StatusAside>
+      <Aside>
         <h5>Helpful Links</h5>
         <a
           rel="noopener noreferrer"
@@ -143,7 +143,7 @@ function Status(): JSX.Element {
           effect="solid"
           afterShow={() => _afterShow(publicStatusUrl)}
         />
-      </StatusAside>
+      </Aside>
 
       <Switch>
         <Route path="/admin/services/status/new">
@@ -180,6 +180,7 @@ function Application(app: ServiceStatusApplication) {
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false);
   const [showStatusForm, setShowStatusForm] = useState<boolean>(false);
+  const [status, setStatus] = useState<ServiceStatusType>(app.status);
 
   function doDelete() {
     dispatch(deleteApplication({ tenantId: app.tenantId, applicationId: app._id }));
@@ -190,7 +191,7 @@ function Application(app: ServiceStatusApplication) {
     setShowDeleteConfirmation(false);
   }
 
-  function doManualStatusChange(status: ServiceStatusType) {
+  function doManualStatusChange() {
     dispatch(setApplicationStatus({ tenantId: app.tenantId, applicationId: app._id, status }));
     setShowStatusForm(false);
   }
@@ -202,6 +203,10 @@ function Application(app: ServiceStatusApplication) {
   function humanizeText(value: string): string {
     value = value.replace(/[\W]/, ' ');
     return value.substr(0, 1).toUpperCase() + value.substr(1);
+  }
+
+  function formatStatus(statusType: string): string {
+    return statusType.slice(0, 1).toUpperCase() + statusType.slice(1).replace(/\W/, ' ');
   }
 
   const publicStatusMap: { [key: string]: GoABadgeType } = {
@@ -276,15 +281,17 @@ function Application(app: ServiceStatusApplication) {
         <GoAModalContent>
           <GoAForm>
             <GoAFormItem>
-              {PublicServiceStatusTypes.map((statusType) => (
-                <GoAButton
-                  key={statusType}
-                  onClick={() => doManualStatusChange(statusType as ServiceStatusType)}
-                  buttonType="primary"
-                >
-                  <span style={{ textTransform: 'capitalize' }}>{statusType}</span>
-                </GoAButton>
-              ))}
+              <br />
+              <GoARadioGroup
+                name="status"
+                value={status}
+                onChange={(value) => setStatus(value as ServiceStatusType)}
+                orientation="vertical"
+              >
+                {PublicServiceStatusTypes.map((statusType) => (
+                  <GoARadio value={statusType}>{formatStatus(statusType)}</GoARadio>
+                ))}
+              </GoARadioGroup>
             </GoAFormItem>
           </GoAForm>
         </GoAModalContent>
@@ -292,7 +299,8 @@ function Application(app: ServiceStatusApplication) {
           <GoAButton buttonType="tertiary" onClick={cancelManualStatusChange}>
             Cancel
           </GoAButton>
-          <GoAButton buttonType="primary" onClick={cancelManualStatusChange}>
+
+          <GoAButton buttonType="primary" onClick={doManualStatusChange}>
             Save
           </GoAButton>
         </GoAModalActions>
@@ -326,6 +334,11 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
     return `${hours > 12 ? hours - 12 : hours}:${minutes} ${hours < 12 ? 'AM' : 'PM'}`;
   }
 
+  /**
+   * Generate a list of health checks for the given endpoint and fills in the blank time slots with emtpy entries.
+   * @param endpoint The service endpoint
+   * @returns
+   */
   function getStatusEntries(endpoint: ServiceStatusEndpoint): EndpointStatusEntry[] {
     const timePeriodEntries =
       endpoint.statusEntries?.filter((entry) => entry.timestamp > Date.now() - 1000 * 60 * 30) || [];
@@ -370,7 +383,7 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
       <StatusBarDetails>
         <span></span>
         <small style={{ textTransform: 'capitalize' }}>
-          {statusEntries[statusEntries.length - 1].status !== 'n/a' ? app.internalStatus : 'N/A'}
+          {statusEntries[statusEntries.length - 1].status !== 'n/a' ? app.internalStatus : 'Stopped'}
         </small>
       </StatusBarDetails>
 
@@ -477,28 +490,4 @@ const AppName = styled.div`
   font-weight: var(--fw-bold);
   text-transform: capitalize;
   margin-top: 1rem;
-`;
-
-const StatusAside = styled(Aside)`
-  padding-top: 1.6em;
-
-  .copy-url {
-    font-size: var(--fs-sm);
-    background-color: var(--color-gray-100);
-    border: 1px solid var(--color-gray-300);
-    border-radius: 1px;
-    padding: 0.25rem;
-    margin-bottom: 1rem;
-    margin-top: 0.5rem;
-    line-height: normal;
-  }
-
-  .small-font {
-    font-size: var(--fs-sm);
-    line-height: normal;
-  }
-
-  .mt-2 {
-    margin-top: 2em;
-  }
 `;
