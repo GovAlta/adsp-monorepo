@@ -27,7 +27,6 @@ const Main = styled.main`
   h3,
   h4 {
     margin-bottom: 1rem;
-    margin-top: 2rem;
   }
 
   /* Font sizes */

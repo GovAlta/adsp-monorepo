@@ -29,10 +29,14 @@ const EventDefinitionComponent: FunctionComponent<EventDefinitionProps> = ({ def
         </td>
         <td headers="payload" data-testid="payload">
           <GoAContextMenu>
-            <GoAContextMenuIcon type={showDetails ? 'eyeOff' : 'eye'} onClick={() => setShowDetails(!showDetails)} testId="toggle-details-visibility" />
-            {!definition.isCore &&
+            <GoAContextMenuIcon
+              type={showDetails ? 'eyeOff' : 'eye'}
+              onClick={() => setShowDetails(!showDetails)}
+              testId="toggle-details-visibility"
+            />
+            {!definition.isCore && (
               <GoAContextMenuIcon type="create" onClick={() => onEdit(definition)} testId="edit-details" />
-            }
+            )}
             {!definition.isCore && (
               <GoAContextMenuIcon type="trash" onClick={() => onDelete(definition)} testId="delete-details" />
             )}

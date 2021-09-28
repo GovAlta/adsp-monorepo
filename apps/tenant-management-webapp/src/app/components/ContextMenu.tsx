@@ -1,17 +1,17 @@
-import { GoAButton } from '@abgov/react-components';
-import { GoAIconButton } from '@abgov/react-components/experimental';
-import { TestProps } from '@abgov/react-components/experimental/common';
-import { GoAIconType } from '@abgov/react-components/experimental/icons';
 import React, { FC } from 'react';
+import { GoAButton } from '@abgov/react-components';
+import { GoAIconButton, GoAIconType } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
 
-interface ContextMenuIconProps extends TestProps {
+interface ContextMenuIconProps {
   type: GoAIconType;
+  testId?: string;
   onClick: () => void;
 }
 
-interface ContextMenuTextProps extends TestProps {
+interface ContextMenuTextProps {
   type: GoAIconType;
+  testId?: string;
   onClick: () => void;
 }
 

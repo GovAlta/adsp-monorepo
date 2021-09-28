@@ -14,11 +14,17 @@ import { Route, Switch, useHistory, useLocation } from 'react-router-dom';
 import styled, { CSSProperties } from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import GoALinkButton from '@components/LinkButton';
-import { GoABadge, GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
+import {
+  GoABadge,
+  GoAModal,
+  GoAModalActions,
+  GoAModalContent,
+  GoAModalTitle,
+} from '@abgov/react-components/experimental';
 import type { GoABadgeType } from '@abgov/react-components/experimental';
 import ApplicationFormModal from './form';
 import NoticeForm from './noticeForm';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton, GoARadio, GoARadioGroup } from '@abgov/react-components';
 import { GoAForm, GoAFormItem } from '@components/Form';
 import { setApplicationStatus } from '@store/status/actions/setApplicationStatus';
 import { Tab, Tabs } from '@components/Tabs';
@@ -115,7 +121,7 @@ function Status(): JSX.Element {
 
       <Switch>
         <Route path="/admin/services/status/new">
-          <ApplicationFormModal isOpen={ true} />
+          <ApplicationFormModal isOpen={true} />
         </Route>
         <Route path="/admin/services/status/notice/new">
           <GoAModal isOpen={true}>
@@ -134,7 +140,7 @@ function Status(): JSX.Element {
           </GoAModal>
         </Route>
         <Route path="/admin/services/status/:applicationId/edit">
-          <ApplicationFormModal isOpen={ true} />
+          <ApplicationFormModal isOpen={true} />
         </Route>
       </Switch>
     </Page>
@@ -148,6 +154,7 @@ function Application(app: ServiceStatusApplication) {
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false);
   const [showStatusForm, setShowStatusForm] = useState<boolean>(false);
+  const [status, setStatus] = useState<ServiceStatusType>(app.status);
 
   function doDelete() {
     dispatch(deleteApplication({ tenantId: app.tenantId, applicationId: app._id }));
@@ -158,7 +165,7 @@ function Application(app: ServiceStatusApplication) {
     setShowDeleteConfirmation(false);
   }
 
-  function doManualStatusChange(status: ServiceStatusType) {
+  function doManualStatusChange() {
     dispatch(setApplicationStatus({ tenantId: app.tenantId, applicationId: app._id, status }));
     setShowStatusForm(false);
   }
@@ -172,7 +179,11 @@ function Application(app: ServiceStatusApplication) {
     return value.substr(0, 1).toUpperCase() + value.substr(1);
   }
 
-  const publicStatusMap: { [key: string]: GoABadgeType} = {
+  function formatStatus(statusType: string): string {
+    return statusType.slice(0, 1).toUpperCase() + statusType.slice(1).replace(/\W/, ' ');
+  }
+
+  const publicStatusMap: { [key: string]: GoABadgeType } = {
     operational: 'success',
     maintenance: 'warning',
     'reported-issues': 'emergency',
@@ -207,7 +218,7 @@ function Application(app: ServiceStatusApplication) {
         <GoAButton
           buttonType="tertiary"
           buttonSize="small"
-          style={{flex: '0 0 160px'}}
+          style={{ flex: '0 0 160px' }}
           onClick={() => {
             dispatch(
               toggleApplicationStatus({
@@ -244,15 +255,17 @@ function Application(app: ServiceStatusApplication) {
         <GoAModalContent>
           <GoAForm>
             <GoAFormItem>
-              {PublicServiceStatusTypes.map((statusType) => (
-                <GoAButton
-                  key={statusType}
-                  onClick={() => doManualStatusChange(statusType as ServiceStatusType)}
-                  buttonType="primary"
-                >
-                  <span style={{ textTransform: 'capitalize' }}>{statusType}</span>
-                </GoAButton>
-              ))}
+              <br />
+              <GoARadioGroup
+                name="status"
+                value={status}
+                onChange={(value) => setStatus(value as ServiceStatusType)}
+                orientation="vertical"
+              >
+                {PublicServiceStatusTypes.map((statusType) => (
+                  <GoARadio value={statusType}>{formatStatus(statusType)}</GoARadio>
+                ))}
+              </GoARadioGroup>
             </GoAFormItem>
           </GoAForm>
         </GoAModalContent>
@@ -260,7 +273,10 @@ function Application(app: ServiceStatusApplication) {
           <GoAButton buttonType="tertiary" onClick={cancelManualStatusChange}>
             Cancel
           </GoAButton>
-          <GoAButton buttonType="primary" onClick={cancelManualStatusChange}>Save</GoAButton>
+
+          <GoAButton buttonType="primary" onClick={doManualStatusChange}>
+            Save
+          </GoAButton>
         </GoAModalActions>
       </GoAModal>
     </App>
@@ -292,14 +308,26 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
     return `${hours > 12 ? hours - 12 : hours}:${minutes} ${hours < 12 ? 'AM' : 'PM'}`;
   }
 
+  /**
+   * Generate a list of health checks for the given endpoint and fills in the blank time slots with emtpy entries.
+   * @param endpoint The service endpoint
+   * @returns
+   */
   function getStatusEntries(endpoint: ServiceStatusEndpoint): EndpointStatusEntry[] {
-    const timePeriodEntries = endpoint.statusEntries?.filter((entry) => entry.timestamp > Date.now() - 1000 * 60 * 30) || [];
+    const timePeriodEntries =
+      endpoint.statusEntries?.filter((entry) => entry.timestamp > Date.now() - 1000 * 60 * 30) || [];
 
     if (timePeriodEntries.length >= displayCount) {
       return timePeriodEntries;
     }
 
-    const makeEntry = (timestamp: number): EndpointStatusEntry => ({ ok: false, timestamp, status: 'n/a', url: endpoint.url, responseTime: -1 });
+    const makeEntry = (timestamp: number): EndpointStatusEntry => ({
+      ok: false,
+      timestamp,
+      status: 'n/a',
+      url: endpoint.url,
+      responseTime: -1,
+    });
     const minute = 60 * 1000;
 
     // must define time boundaries to allow for the insertion of filler entries and prevent gaps in time from not showing up
@@ -312,7 +340,7 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
       const diff = (entry.timestamp - prevEntry.timestamp) / minute;
       filledEntries.push(prevEntry);
       if (diff > 1) {
-        for (let j = 1; j < diff -1; j++) {
+        for (let j = 1; j < diff - 1; j++) {
           filledEntries.push(makeEntry(prevEntry.timestamp + j * minute));
         }
       }
@@ -328,7 +356,9 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
     <div style={css}>
       <StatusBarDetails>
         <span></span>
-        <small style={{ textTransform: 'capitalize' }}>{statusEntries[statusEntries.length - 1].status !== 'n/a' ? app.internalStatus : 'N/A'}</small>
+        <small style={{ textTransform: 'capitalize' }}>
+          {statusEntries[statusEntries.length - 1].status !== 'n/a' ? app.internalStatus : 'Stopped'}
+        </small>
       </StatusBarDetails>
 
       <EndpointStatusEntries data-testid="endpoint-url">
@@ -336,12 +366,11 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
           <EndpointStatusTick
             key={entry.timestamp}
             style={{
-              backgroundColor:
-                entry.ok
-                  ? 'var(--color-green)'
-                    : entry.status === 'n/a'
-                    ? 'var(--color-gray-300)'
-                    : 'var(--color-red)',
+              backgroundColor: entry.ok
+                ? 'var(--color-green)'
+                : entry.status === 'n/a'
+                ? 'var(--color-gray-300)'
+                : 'var(--color-red)',
             }}
             title={entry.status + ': ' + new Date(entry.timestamp).toLocaleString()}
           />
