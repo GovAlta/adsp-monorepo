@@ -195,4 +195,8 @@ const CreateTenantStyle = styled.div`
     margin-top: 0.2rem;
     font-size: 13px;
   }
+
+  .goa-form-item.error input {
+    border-color: #ec040b;
+  }
 `;
