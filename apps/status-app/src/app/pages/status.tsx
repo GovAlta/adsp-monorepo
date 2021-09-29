@@ -38,6 +38,7 @@ const ServiceStatusPage = (): JSX.Element => {
       <div className="small-container">
         <PageLoader />
         <h2 data-testid='service-name'>All {applications[0].name || 'platform'} services</h2>
+        <br />
         <p>
           These are the services currently being offered by{' '}
           {location.pathname.slice(1) ? applications[0].name : 'the Alberta Digital Service Platform'}. All
