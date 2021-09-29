@@ -11,8 +11,8 @@ export interface NoticeRouterProps {
 }
 
 interface NoticeFilter {
-  mode?: NoticeModeType,
-  tenantId?: string
+  mode?: NoticeModeType;
+  tenantId?: string;
 }
 
 export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterProps): Router {
@@ -24,20 +24,19 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
     const user = req.user as Express.User;
 
     logger.info(req.method, req.url);
-    const anonymous = !user
-    const isAdmin = user && user.roles.includes(ServiceUserRoles.StatusAdmin)
-    const filter: NoticeFilter = {}
-    filter.mode = 'active'
-
-    if (!anonymous) {
-      filter.tenantId = user.tenantId.toString()
-    }
-
-    if (isAdmin) {
-      filter.mode = mode ? mode.toString() as NoticeModeType : null
-    }
+    const anonymous = !user;
+    const isAdmin = user && user.roles.includes(ServiceUserRoles.StatusAdmin);
+    const filter: NoticeFilter = {};
+    filter.mode = 'active';
 
     try {
+      if (!anonymous) {
+        filter.tenantId = user.tenantId.toString();
+      }
+
+      if (isAdmin) {
+        filter.mode = mode ? (mode.toString() as NoticeModeType) : null;
+      }
       const applications = await noticeRepository.find(
         parseInt(top?.toString()) || 50,
         parseInt(after?.toString()) || 0,
@@ -46,10 +45,9 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
 
       res.json({
         page: applications.page,
-        results: applications.results
-          .map((result) => ({
-            ...result
-          })),
+        results: applications.results.map((result) => ({
+          ...result,
+        })),
       });
     } catch (err) {
       const errMessage = `Error getting notices: ${err.message}`;
@@ -105,7 +103,6 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
 
   // Add notice
   router.post('/notices', assertAuthenticatedHandler, async (req, res, next) => {
-
     logger.info(`${req.method} - ${req.url}`);
 
     try {
@@ -119,7 +116,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
         mode: 'draft',
         created: new Date(),
         isCrossTenants: isCrossTenants || false,
-        tenantId: user.tenantId.toString()
+        tenantId: user.tenantId.toString(),
       });
       res.status(201).json(app);
     } catch (err) {
