@@ -51,7 +51,7 @@ export class SubscriberEntity implements Subscriber {
     );
   }
 
-  async update(user: User, update: Update<Subscriber>): Promise<SubscriberEntity> {
+  update(user: User, update: Update<Subscriber>): Promise<SubscriberEntity> {
     if (!this.canUpdate(user)) {
       throw new UnauthorizedError('User not authorized to update subscriber.');
     }
@@ -65,5 +65,13 @@ export class SubscriberEntity implements Subscriber {
     }
 
     return this.repository.saveSubscriber(this);
+  }
+
+  delete(user: User): Promise<boolean> {
+    if (!this.canUpdate(user)) {
+      throw new UnauthorizedError('User not authorized to delete subscriber.');
+    }
+
+    return this.repository.deleteSubscriber(this);
   }
 }

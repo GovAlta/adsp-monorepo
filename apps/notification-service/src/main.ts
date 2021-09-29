@@ -1,4 +1,5 @@
 import * as express from 'express';
+import * as fs from 'fs';
 import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
@@ -111,7 +112,23 @@ async function initializeApp() {
     },
   });
 
-  app.get('/health', async (req, res) => {
+  let swagger = null;
+  app.use('/swagger/docs/v1', (_req, res) => {
+    if (swagger) {
+      res.json(swagger);
+    } else {
+      fs.readFile(`${__dirname}/swagger.json`, 'utf8', (err, data) => {
+        if (err) {
+          res.sendStatus(404);
+        } else {
+          swagger = JSON.parse(data);
+          res.json(swagger);
+        }
+      });
+    }
+  });
+
+  app.get('/health', async (_req, res) => {
     const platform = await healthCheck();
     res.json({
       ...platform,
