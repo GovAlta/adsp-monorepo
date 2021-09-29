@@ -1,5 +1,6 @@
 import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import { Router } from 'express';
+import { UrlWithStringQuery } from 'url';
 import { Logger } from 'winston';
 import { NoticeApplicationEntity } from '../model/notice';
 import { NoticeRepository } from '../repository/notice';
@@ -13,6 +14,22 @@ export interface NoticeRouterProps {
 interface NoticeFilter {
   mode?: NoticeModeType,
   tenantId?: string
+}
+
+interface applicationRef {
+  name?: string;
+  id?: UrlWithStringQuery
+}
+
+const parseTenantServRef = (tennantServRef?: string| applicationRef[] | null): string => {
+  if (!tennantServRef) {
+    return JSON.stringify([])
+  } else {
+    if (typeof tennantServRef !== 'string') {
+      return JSON.stringify(tennantServRef)
+    }
+  }
+  return tennantServRef
 }
 
 export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterProps): Router {
@@ -109,7 +126,9 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
     logger.info(`${req.method} - ${req.url}`);
 
     try {
-      const { message, tennantServRef, startDate, endDate, isCrossTenants } = req.body;
+      const { message, startDate, endDate, isCrossTenants } = req.body;
+      const tennantServRef = parseTenantServRef(req.body.tennantServRef)
+
       const user = req.user as Express.User;
       const app = await NoticeApplicationEntity.create(user, noticeRepository, {
         message,
@@ -133,9 +152,10 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
   router.patch('/notices/:id', assertAuthenticatedHandler, async (req, res, next) => {
     logger.info(`${req.method} - ${req.url}`);
 
-    const { message, tennantServRef, startDate, endDate, mode } = req.body;
+    const { message, startDate, endDate, mode } = req.body;
     const { id } = req.params;
     const user = req.user as Express.User;
+    const tennantServRef = parseTenantServRef(req.body.tennantServRef)
 
     try {
       // TODO: this needs to be moved to a service
