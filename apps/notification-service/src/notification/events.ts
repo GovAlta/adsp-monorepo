@@ -51,12 +51,19 @@ export const NotificationSentDefinition: DomainEventDefinition = {
       },
       channel: { type: 'string' },
       to: { type: 'string' },
+      message: {
+        type: 'object',
+        properties: {
+          subject: { type: ['string', 'null'] },
+          body: { type: ['string', 'null'] },
+        },
+      },
       subscriber: {
         type: 'object',
         properties: {
           id: { type: 'string' },
-          userId: { type: 'string' },
-          addressAs: { type: 'string' },
+          userId: { type: ['string', 'null'] },
+          addressAs: { type: ['string', 'null'] },
         },
       },
     },
