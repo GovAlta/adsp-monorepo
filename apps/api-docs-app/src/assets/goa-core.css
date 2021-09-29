@@ -427,6 +427,7 @@ input[type='submit'].goa-button {
 /* goa-link-button ***********************************************************/
 a.goa-link-button {
   display: inline-block;
+  text-align: center;
   text-decoration: none; }
   a.goa-link-button {
     box-sizing: border-box;

@@ -9,7 +9,6 @@ import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import { KeycloakCheckSSO, TenantLogin } from '@store/tenant/actions';
 import { TenantLogout } from '@store/tenant/actions';
-import styled from 'styled-components';
 
 const CreateRealm = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -113,86 +112,62 @@ const CreateRealm = (): JSX.Element => {
   const ready = userInfo !== undefined && isTenantAdmin !== undefined;
 
   return (
-    <CreateTenantStyle>
-      <Page ready={ready}>
-        {isInBeta ? (
-          <>
-            <Main>
-              {isTenantAdmin === true && !isTenantCreated && <ErrorMessage email={userInfo.email} />}
-              {isTenantCreated ? (
-                <TenantCreated />
-              ) : (
-                <>
-                  {isTenantAdmin === false ? (
-                    <>
-                      <h2>Create tenant</h2>
-                      <p>
-                        Current user email: <b>{userInfo.email}</b>
-                      </p>
-                      <p>
-                        As a reminder, you are only able to create <b>one tenant</b> per user account.
-                      </p>
-                      <GoAForm>
-                        <GoAFormItem error={notifications[notifications.length - 1]?.message}>
-                          <label htmlFor="name">Tenant name</label>
-                          <input id="name" type="text" value={name} onChange={onChangeName} />
-                        </GoAFormItem>
-                        <div style={{ lineHeight: '10px' }}>
-                          <div className="helper-text">
-                            {notifications[notifications.length - 1]?.message.includes('Names cannot contain')
-                              ? ''
-                              : 'Names cannot contain special characters (ex. ! % &).'}
-                          </div>
-                        </div>
-
-                        <GoAFormActions alignment="left">
-                          {isLoaded ? <TenantCreateView /> : <ButtonLoader />}
-                        </GoAFormActions>
-                      </GoAForm>
-                    </>
-                  ) : null}
-                </>
-              )}
-            </Main>
-            <Aside>
-              <SupportLinks />
-            </Aside>
-          </>
-        ) : (
+    <Page ready={ready}>
+      {isInBeta ? (
+        <>
           <Main>
-            <h1 className="thin-font">Tenant creation failed</h1>
-            <p>
-              <b>{userInfo?.email}</b> does not have the "beta tester" role. You require the "beta-tester" role to
-              create a tenant.
-            </p>
-            <div className="padding-bottom-2">
-              Please contact <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a> for more information.
-            </div>
-            <GoALinkButton buttonType="primary" onClick={() => dispatch(TenantLogout())} to="">
-              Back to sign in page
-            </GoALinkButton>
+            {isTenantAdmin === true && !isTenantCreated && <ErrorMessage email={userInfo.email} />}
+            {isTenantCreated ? (
+              <TenantCreated />
+            ) : (
+              <>
+                {isTenantAdmin === false ? (
+                  <>
+                    <h2>Create tenant</h2>
+                    <p>
+                      Current user email: <b>{userInfo.email}</b>
+                    </p>
+                    <p>
+                      As a reminder, you are only able to create <b>one tenant</b> per user account.
+                    </p>
+                    <GoAForm>
+                      <GoAFormItem
+                        error={notifications[notifications.length - 1]?.message}
+                        helpText="Names cannot contain special characters (ex. ! % &)."
+                      >
+                        <label htmlFor="name">Tenant name</label>
+                        <input id="name" type="text" value={name} onChange={onChangeName} />
+                      </GoAFormItem>
+                      <GoAFormActions alignment="left">
+                        {isLoaded ? <TenantCreateView /> : <ButtonLoader />}
+                      </GoAFormActions>
+                    </GoAForm>
+                  </>
+                ) : null}
+              </>
+            )}
           </Main>
-        )}
-      </Page>
-    </CreateTenantStyle>
+          <Aside>
+            <SupportLinks />
+          </Aside>
+        </>
+      ) : (
+        <Main>
+          <h1 className="thin-font">Tenant creation failed</h1>
+          <p>
+            <b>{userInfo?.email}</b> does not have the "beta tester" role. You require the "beta-tester" role to create
+            a tenant.
+          </p>
+          <div className="padding-bottom-2">
+            Please contact <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a> for more information.
+          </div>
+          <GoALinkButton buttonType="primary" onClick={() => dispatch(TenantLogout())} to="">
+            Back to sign in page
+          </GoALinkButton>
+        </Main>
+      )}
+    </Page>
   );
 };
 
 export default CreateRealm;
-
-const CreateTenantStyle = styled.div`
-  .error-msg {
-    color: #ec040b !important;
-    line-height: 20px;
-    font-size: 13px;
-  }
-
-  .goa-form-item {
-    margin-bottom: 0;
-  }
-
-  .helper-text {
-    margin-top: 0.2rem;
-    font-size: 13px;
-  }
-`;
