@@ -16,12 +16,13 @@ export const noticeReducer = (state: Notices = NoticeInit, action: ActionTypes):
 
 export const applicationReducer = (state: ServiceStatus = ApplicationInit, action: ActionTypes): ServiceStatus => {
   switch (action.type) {
-    case 'status/applications/fetch/success':
-      console.log(action.payload)
+    case 'status/applications/fetch/success': {
+      const applications = action.payload.filter((app) => { return app.status !== null })
       return {
         ...state,
-        applications: action.payload,
+        applications: applications,
       };
+    }
 
     default:
       return state;
