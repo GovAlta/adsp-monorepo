@@ -78,7 +78,7 @@ export function createTypeSubscription(repository: SubscriptionRepository): Requ
                 },
               ],
             }
-          : { tenantId: user.tenantId, ...req.body };
+          : { ...req.body, tenantId: user.tenantId };
       let subscriberEntity: SubscriberEntity = null;
       if (subscriber.userId) {
         // Try to find an existing subscriber associated with the user ID.
@@ -106,8 +106,7 @@ export function addTypeSubscription(repository: SubscriptionRepository): Request
 
       const subscriberEntity = await repository.getSubscriber(req.user.tenantId, subscriber, false);
       if (!subscriberEntity) {
-        next(new NotFoundError('Subscriber', subscriber));
-        return;
+        throw new NotFoundError('Subscriber', subscriber);
       }
 
       const subscription = await type.subscribe(repository, user, subscriberEntity);
