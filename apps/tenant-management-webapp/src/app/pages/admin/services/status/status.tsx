@@ -259,7 +259,7 @@ function Application(app: ServiceStatusApplication) {
               <GoARadioGroup
                 name="status"
                 value={status}
-                onChange={(value) => setStatus(value as ServiceStatusType)}
+                onChange={(_name, value) => setStatus(value as ServiceStatusType)}
                 orientation="vertical"
               >
                 {PublicServiceStatusTypes.map((statusType) => (
