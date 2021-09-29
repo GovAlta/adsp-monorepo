@@ -58,14 +58,6 @@ const Main = styled.main`
     font-size: var(--fs-base);
   }
 
-  .thin-font {
-    font-weight: 200;
-  }
-
-  .padding-bottom-2 {
-    padding-bottom: 2em;
-  }
-
   // default padding is way too much
   ul {
     padding-left: 1rem;

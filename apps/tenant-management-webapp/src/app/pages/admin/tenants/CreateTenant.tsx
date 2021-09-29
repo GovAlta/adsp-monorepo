@@ -153,12 +153,12 @@ const CreateRealm = (): JSX.Element => {
         </>
       ) : (
         <Main>
-          <h1 className="thin-font">Tenant creation failed</h1>
+          <h1>Tenant creation failed</h1>
           <p>
             <b>{userInfo?.email}</b> does not have the "beta tester" role. You require the "beta-tester" role to create
             a tenant.
           </p>
-          <div className="padding-bottom-2">
+          <div>
             Please contact <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a> for more information.
           </div>
           <GoALinkButton buttonType="primary" onClick={() => dispatch(TenantLogout())} to="">
