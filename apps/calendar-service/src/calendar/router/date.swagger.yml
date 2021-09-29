@@ -30,7 +30,7 @@ components:
         in: query
         required: false
         schema:
-          type: number
+          type: string
       - name: criteria
         description: Criteria for dates to retrieve.
         in: query

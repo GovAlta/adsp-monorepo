@@ -154,7 +154,7 @@ export const calendarEventUpdated = (
   entity: CalendarEventEntity
 ): DomainEvent => ({
   tenantId: entity.calendar.tenantId,
-  name: CalendarEventCreatedDefinition.name,
+  name: CalendarEventUpdatedDefinition.name,
   timestamp: new Date(),
   context: {
     calendar: entity.calendar.name,
@@ -175,7 +175,7 @@ export const calendarEventUpdated = (
       isPublic: entity.isPublic,
       isAllDay: entity.isAllDay,
     },
-    createdBy: {
+    updatedBy: {
       id: user.id,
       name: user.name,
     },
@@ -184,7 +184,7 @@ export const calendarEventUpdated = (
 
 export const calendarEventDeleted = (user: User, entity: CalendarEventEntity): DomainEvent => ({
   tenantId: entity.calendar.tenantId,
-  name: CalendarEventCreatedDefinition.name,
+  name: CalendarEventDeletedDefinition.name,
   timestamp: new Date(),
   context: {
     calendar: entity.calendar.name,
@@ -204,7 +204,7 @@ export const calendarEventDeleted = (user: User, entity: CalendarEventEntity): D
       isPublic: entity.isPublic,
       isAllDay: entity.isAllDay,
     },
-    createdBy: {
+    deletedBy: {
       id: user.id,
       name: user.name,
     },
