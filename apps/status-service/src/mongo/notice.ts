@@ -34,6 +34,10 @@ export default class MongoNoticeRepository implements NoticeRepository {
       criteria = { ...criteria, tenantId: filter.tenantId }
     }
 
+    if (filter?.isCrossTenants) {
+      criteria = { isCrossTenants: true, mode: 'active' };
+    }
+
     const total = await this.model.find(criteria, null, { lean: true }).count();
     const next = (after + top) < total ? `after=${after + top}&top=${top}` : null
     return new Promise<Results<NoticeApplicationEntity>>((resolve, reject) => {
@@ -102,7 +106,7 @@ export default class MongoNoticeRepository implements NoticeRepository {
     return new NoticeApplicationEntity(this, {
       id: doc._id,
       message: doc.message,
-      tennantServRef: JSON.parse(doc.tennantServRef),
+      tennantServRef: doc.tennantServRef,
       startDate: doc.startDate,
       endDate: doc.endDate,
       mode: doc.mode,
