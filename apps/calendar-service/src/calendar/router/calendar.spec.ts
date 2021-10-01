@@ -297,7 +297,7 @@ describe('calendar router', () => {
 
       const handler = exportCalendar(serviceId, directoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(repositoryMock.getCalendarEvents).toHaveBeenCalledWith(entity, 10, undefined, null);
+      expect(repositoryMock.getCalendarEvents).toHaveBeenCalledWith(calendarEntity, 10, undefined, null);
       expect(repositoryMock.getEventAttendees).toHaveBeenCalledWith(entity);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ name: calendar.displayName }));
     });
