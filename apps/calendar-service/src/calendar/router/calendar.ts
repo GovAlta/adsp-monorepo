@@ -102,7 +102,7 @@ export const exportCalendar =
         criteria.startsAfter = DateTime.fromISO(criteria.startsAfter);
       }
       if (criteria?.endsBefore) {
-        criteria.startsAfter = DateTime.fromISO(criteria.endsBefore);
+        criteria.endsBefore = DateTime.fromISO(criteria.endsBefore);
       }
 
       const { results } = await calendar.getEvents(user, top, after as string, criteria);
@@ -154,7 +154,7 @@ export const getCalendarEvents: RequestHandler = async (req, res, next) => {
       criteria.startsAfter = DateTime.fromISO(criteria.startsAfter);
     }
     if (criteria?.endsBefore) {
-      criteria.startsAfter = DateTime.fromISO(criteria.endsBefore);
+      criteria.endsBefore = DateTime.fromISO(criteria.endsBefore);
     }
 
     const result = await calendar.getEvents(user, top, after as string, criteria);
