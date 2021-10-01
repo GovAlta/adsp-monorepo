@@ -14,6 +14,7 @@ export interface NoticeRouterProps {
 interface NoticeFilter {
   mode?: NoticeModeType;
   tenantId?: string;
+  isCrossTenants?: boolean;
 }
 
 interface applicationRef {
@@ -21,7 +22,7 @@ interface applicationRef {
   id?: UrlWithStringQuery
 }
 
-const parseTenantServRef = (tennantServRef?: string| applicationRef[] | null): string => {
+const parseTenantServRef = (tennantServRef?: string | applicationRef[] | null): string => {
   if (!tennantServRef) {
     return JSON.stringify([])
   } else {
@@ -37,7 +38,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
 
   // Get notices by query
   router.get('/notices', async (req, res, next) => {
-    const { top, after, mode } = req.query;
+    const { top, after, mode, all } = req.query;
     const user = req.user as Express.User;
 
     logger.info(req.method, req.url);
@@ -54,6 +55,11 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
       if (isAdmin) {
         filter.mode = mode ? (mode.toString() as NoticeModeType) : null;
       }
+
+      if (all) {
+        filter.isCrossTenants = true;
+      }
+
       const applications = await noticeRepository.find(
         parseInt(top?.toString()) || 50,
         parseInt(after?.toString()) || 0,
@@ -63,7 +69,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
       res.json({
         page: applications.page,
         results: applications.results.map((result) => ({
-          ...result,
+          ...result, tennantServRef: JSON.parse(result.tennantServRef),
         })),
       });
     } catch (err) {
@@ -85,7 +91,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
       }
 
       if (application.canAccessById(user, application)) {
-        res.json(application);
+        res.json({ ...application, tennantServRef: JSON.parse(application.tennantServRef) });
       } else {
         throw new UnauthorizedError('User not authorized to get subscribers');
       }
@@ -127,7 +133,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
       const tennantServRef = parseTenantServRef(req.body.tennantServRef)
 
       const user = req.user as Express.User;
-      const app = await NoticeApplicationEntity.create(user, noticeRepository, {
+      const notice = await NoticeApplicationEntity.create(user, noticeRepository, {
         message,
         tennantServRef,
         startDate,
@@ -137,7 +143,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
         isCrossTenants: isCrossTenants || false,
         tenantId: user.tenantId.toString(),
       });
-      res.status(201).json(app);
+      res.status(201).json({ ...notice, tennantServRef: JSON.parse(notice.tennantServRef) });
     } catch (err) {
       const errMessage = `Error creating notice: ${err.message}`;
       logger.error(errMessage);
@@ -149,7 +155,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
   router.patch('/notices/:id', assertAuthenticatedHandler, async (req, res, next) => {
     logger.info(`${req.method} - ${req.url}`);
 
-    const { message, startDate, endDate, mode } = req.body;
+    const { message, startDate, endDate, mode, isCrossTenants } = req.body;
     const { id } = req.params;
     const user = req.user as Express.User;
     const tennantServRef = parseTenantServRef(req.body.tennantServRef)
@@ -160,14 +166,21 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
       if (!application) {
         throw new NotFoundError('Service Notice', id);
       }
+
       const updatedApplication = await application.update(user, {
         message,
         tennantServRef,
         startDate,
         endDate,
         mode,
+        isCrossTenants,
       });
-      res.status(200).json(updatedApplication);
+
+      res.status(200).json(
+        {
+          ...updatedApplication,
+          tennantServRef: JSON.parse(updatedApplication.tennantServRef)
+        });
     } catch (err) {
       const errMessage = `Error updating notice: ${err.message}`;
       logger.error(errMessage);
