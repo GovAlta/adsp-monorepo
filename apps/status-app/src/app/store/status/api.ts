@@ -6,12 +6,12 @@ export class ApplicationApi {
   private baseUrl: string;
 
   constructor(baseUrl: string) {
-    this.baseUrl = baseUrl
+    this.baseUrl = baseUrl;
     this.http = axios.create({ baseURL: baseUrl });
   }
 
-  async getApplications(realm: string): Promise<ServiceStatusApplication[]> {
-    const res = await this.http.get(`/public_status/v1/applications/${realm}`);
+  async getApplications(name: string): Promise<ServiceStatusApplication[]> {
+    const res = await this.http.get(`/public_status/v1/applications/${name}`);
     return res.data;
   }
 
