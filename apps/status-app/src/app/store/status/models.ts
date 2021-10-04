@@ -12,6 +12,7 @@ export interface ServiceStatus {
 export interface ServiceStatusApplication {
   _id?: string;
   tenantId: string;
+  tenantName: string;
   name: string;
   description: string;
   metadata?: unknown;
@@ -62,63 +63,66 @@ export interface Notice {
   startDate: string;
   endDate: string;
   mode?: ModeType;
+  isCrossTenants?: boolean;
 }
 
 export interface Notices {
-  notices: Notice[]
+  notices: Notice[];
 }
 
 export const NoticeInit: Notices = {
-  notices: []
-}
+  notices: [],
+};
 
 export const ApplicationInit: ServiceStatus = {
-  applications: []
-}
+  applications: [],
+};
 
 // Helper functions
 export const parseNotices = (notices: Notice[]): Notice[] => {
   for (const notice of notices) {
     if (typeof notice.tennantServRef === 'string') {
-      notice.tennantServRef = JSON.parse(notice.tennantServRef)
+      notice.tennantServRef = JSON.parse(notice.tennantServRef);
     }
   }
   return notices;
-}
+};
 
 export const bindApplicationsWithNotices = (
   applicationsRaw: ServiceStatusApplication[],
-  notices: Notice[]): ServiceStatusApplication[] => {
+  notices: Notice[]
+): ServiceStatusApplication[] => {
   // Q: Is undefined status allowed?
-  const applications = applicationsRaw.filter((application) => { return application.status !== undefined })
+  const applications = applicationsRaw.filter((application) => {
+    return application.status !== undefined;
+  });
   for (const application of applications) {
     const noticesOfApplication = notices.filter((notice) => {
-      return notice.tennantServRef.find(
-        (applicationRef) => applicationRef.id === application._id)
-    })
+      return notice.tennantServRef.find((applicationRef) => applicationRef.id === application._id);
+    });
 
-    application.notices = sortNotices(noticesOfApplication)
+    application.notices = sortNotices(noticesOfApplication);
   }
 
   return sortApplications(applications);
-}
+};
 
 const compareDate = (prev: string, next: string): number => {
   return new Date(prev).getTime() < new Date(next).getTime() ? -1 : 1;
-}
+};
 
 export const sortNotices = (notices: Notice[]): Notice[] => {
   if (!notices || notices.length <= 1) {
-    return notices
+    return notices;
   }
 
   return notices.sort((prev, next) => {
     return compareDate(prev.startDate, next.startDate);
   });
-}
+};
 
 export const sortApplications = (applications: ServiceStatusApplication[]): ServiceStatusApplication[] => {
   return applications.sort((pre, next) => {
-    return pre.name < next.name ? -1 : 1
-  })
-}
+    return pre.name < next.name ? -1 : 1;
+  });
+};

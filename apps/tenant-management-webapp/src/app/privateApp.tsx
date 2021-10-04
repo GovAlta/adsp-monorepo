@@ -19,7 +19,7 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
   useEffect(() => {
     setInterval(async () => {
       dispatch(KeycloakRefreshToken());
-    }, 60 * 1000);
+    }, 120 * 1000);
     dispatch(KeycloakCheckSSOWithLogout(realm));
   }, []);
 

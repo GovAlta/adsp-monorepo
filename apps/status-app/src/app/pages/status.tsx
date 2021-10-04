@@ -4,18 +4,17 @@ import { GoAHeader } from '@abgov/react-components';
 import '@abgov/core-css/goa-core.css';
 import '@abgov/core-css/goa-components.css';
 import '@abgov/core-css/src/lib/stories/page-template/page-template.story.scss';
-import { Grid, GridItem } from '@components/Grid'
+import { Grid, GridItem } from '@components/Grid';
 import ServiceStatus from './statusCard';
 import { useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { useDispatch } from 'react-redux';
-import { fetchApplications } from '@store/status/actions'
+import { fetchApplications } from '@store/status/actions';
 import { RootState } from '@store/index';
 import { PageLoader } from '@components/PageLoader';
 
 import moment from 'moment';
-
 
 const ServiceStatusPage = (): JSX.Element => {
   const { config } = useSelector((state: RootState) => ({
@@ -30,18 +29,19 @@ const ServiceStatusPage = (): JSX.Element => {
   }));
 
   useEffect(() => {
-    dispatch(fetchApplications(realm))
+    dispatch(fetchApplications(realm));
   }, [realm]);
 
   const services = () => {
     return (
       <div className="small-container">
         <PageLoader />
-        <h2 data-testid='service-name'>All {applications[0].name || 'platform'} services</h2>
+        <h2 data-testid="service-name">All {applications[0].tenantName || 'platform'} services</h2>
+        <br />
         <p>
           These are the services currently being offered by{' '}
-          {location.pathname.slice(1) ? applications[0].name : 'the Alberta Digital Service Platform'}. All
-          statuses are in real time and reflect current states of the individual services. Please{' '}
+          {location.pathname.slice(1) ? applications[0].name : 'the Alberta Digital Service Platform'}. All statuses are
+          in real time and reflect current states of the individual services. Please{' '}
           <a href="mailto: DIO@gov.ab.ca">contact support</a> for additional information or any other inquiries
           regarding service statuses.
         </p>
@@ -81,7 +81,11 @@ const ServiceStatusPage = (): JSX.Element => {
 
   return (
     <div>
-      <GoAHeader serviceLevel="beta" serviceName="Alberta Digital Service Platform -Status & Outages " serviceHome="/" />
+      <GoAHeader
+        serviceLevel="beta"
+        serviceName="Alberta Digital Service Platform -Status & Outages "
+        serviceHome="/"
+      />
       {/* TODO: re-visit this part when design and card or breadcrumb is ready.
       <div className="goa-banner">
         <div className="small-font">Alberta Digital Service Platform &rarr; Status & Outages</div>
@@ -94,7 +98,7 @@ const ServiceStatusPage = (): JSX.Element => {
           <section>
             <SectionView />
           </section>
-          <section>{ }</section>
+          <section>{}</section>
         </ServiceStatusesCss>
       </main>
       <Footer>

@@ -27,7 +27,6 @@ const Main = styled.main`
   h3,
   h4 {
     margin-bottom: 1rem;
-    margin-top: 2rem;
   }
 
   /* Font sizes */
@@ -57,14 +56,6 @@ const Main = styled.main`
     margin-top: 0 !important;
     margin-bottom: 1rem;
     font-size: var(--fs-base);
-  }
-
-  .thin-font {
-    font-weight: 200;
-  }
-
-  .padding-bottom-2 {
-    padding-bottom: 2em;
   }
 
   // default padding is way too much

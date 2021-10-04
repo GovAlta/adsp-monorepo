@@ -26,12 +26,16 @@ export default class MongoNoticeRepository implements NoticeRepository {
   ): Promise<Results<NoticeApplicationEntity>> {
     let criteria = {};
 
-    if (filter.mode != null) {
+    if (filter?.mode != null) {
       criteria = { mode: filter.mode };
     }
 
-    if (filter.tenantId) {
+    if (filter?.tenantId) {
       criteria = { ...criteria, tenantId: filter.tenantId }
+    }
+
+    if (filter?.isCrossTenants) {
+      criteria = { isCrossTenants: true, mode: 'active' };
     }
 
     const total = await this.model.find(criteria, null, { lean: true }).count();
@@ -90,7 +94,8 @@ export default class MongoNoticeRepository implements NoticeRepository {
       endDate: application.endDate,
       mode: application.mode,
       created: application.created,
-      tenantId: application.tenantId
+      tenantId: application.tenantId,
+      isCrossTenants: application.isCrossTenants
     };
   }
 
@@ -106,7 +111,8 @@ export default class MongoNoticeRepository implements NoticeRepository {
       endDate: doc.endDate,
       mode: doc.mode,
       created: doc.created,
-      tenantId: doc.tenantId
+      tenantId: doc.tenantId,
+      isCrossTenants: doc.isCrossTenants
     });
   }
 }

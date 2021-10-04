@@ -17,7 +17,7 @@ export const configurationSchema = {
       description: { type: 'string' },
       subscriberRoles: {
         type: 'array',
-        items: 'string',
+        items: { type: 'string' },
       },
       events: {
         type: 'array',

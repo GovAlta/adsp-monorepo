@@ -70,8 +70,8 @@ const FileList = (): JSX.Element => {
           orientation="vertical"
           name="fileSecurityOptions"
           value={uploadFileType}
-          onChange={(e) => {
-            setUploadFileType(e);
+          onChange={(_name, value) => {
+            setUploadFileType(value);
           }}
         >
           {getFileTypesValues().map((item) => (

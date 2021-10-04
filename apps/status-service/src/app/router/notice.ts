@@ -1,5 +1,6 @@
 import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import { Router } from 'express';
+import { UrlWithStringQuery } from 'url';
 import { Logger } from 'winston';
 import { NoticeApplicationEntity } from '../model/notice';
 import { NoticeRepository } from '../repository/notice';
@@ -11,8 +12,25 @@ export interface NoticeRouterProps {
 }
 
 interface NoticeFilter {
-  mode?: NoticeModeType,
-  tenantId?: string
+  mode?: NoticeModeType;
+  tenantId?: string;
+  isCrossTenants?: boolean;
+}
+
+interface applicationRef {
+  name?: string;
+  id?: UrlWithStringQuery
+}
+
+const parseTenantServRef = (tennantServRef?: string | applicationRef[] | null): string => {
+  if (!tennantServRef) {
+    return JSON.stringify([])
+  } else {
+    if (typeof tennantServRef !== 'string') {
+      return JSON.stringify(tennantServRef)
+    }
+  }
+  return tennantServRef
 }
 
 export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterProps): Router {
@@ -20,24 +38,28 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
 
   // Get notices by query
   router.get('/notices', async (req, res, next) => {
-    const { top, after, mode } = req.query;
+    const { top, after, mode, all } = req.query;
     const user = req.user as Express.User;
 
     logger.info(req.method, req.url);
-    const anonymous = !user
-    const isAdmin = user && user.roles.includes(ServiceUserRoles.StatusAdmin)
-    const filter: NoticeFilter = {}
-    filter.mode = 'active'
-
-    if (!anonymous) {
-      filter.tenantId = user.tenantId.toString()
-    }
-
-    if (isAdmin) {
-      filter.mode = mode ? mode.toString() as NoticeModeType : null
-    }
+    const anonymous = !user;
+    const isAdmin = user && user.roles.includes(ServiceUserRoles.StatusAdmin);
+    const filter: NoticeFilter = {};
+    filter.mode = 'active';
 
     try {
+      if (!anonymous) {
+        filter.tenantId = user.tenantId.toString();
+      }
+
+      if (isAdmin) {
+        filter.mode = mode ? (mode.toString() as NoticeModeType) : null;
+      }
+
+      if (all) {
+        filter.isCrossTenants = true;
+      }
+
       const applications = await noticeRepository.find(
         parseInt(top?.toString()) || 50,
         parseInt(after?.toString()) || 0,
@@ -46,17 +68,9 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
 
       res.json({
         page: applications.page,
-        results: applications.results
-          .map((result) => ({
-            id: result.id,
-            message: result.message,
-            tennantServRef: result.tennantServRef,
-            startDate: result.startDate,
-            endDate: result.endDate,
-            mode: result.mode,
-            created: result.created,
-            tenantId: result.tenantId
-          })),
+        results: applications.results.map((result) => ({
+          ...result, tennantServRef: JSON.parse(result.tennantServRef),
+        })),
       });
     } catch (err) {
       const errMessage = `Error getting notices: ${err.message}`;
@@ -77,7 +91,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
       }
 
       if (application.canAccessById(user, application)) {
-        res.json(application);
+        res.json({ ...application, tennantServRef: JSON.parse(application.tennantServRef) });
       } else {
         throw new UnauthorizedError('User not authorized to get subscribers');
       }
@@ -112,23 +126,24 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
 
   // Add notice
   router.post('/notices', assertAuthenticatedHandler, async (req, res, next) => {
-
-
     logger.info(`${req.method} - ${req.url}`);
 
     try {
-      const { message, tennantServRef, startDate, endDate } = req.body;
+      const { message, startDate, endDate, isCrossTenants } = req.body;
+      const tennantServRef = parseTenantServRef(req.body.tennantServRef)
+
       const user = req.user as Express.User;
-      const app = await NoticeApplicationEntity.create(user, noticeRepository, {
+      const notice = await NoticeApplicationEntity.create(user, noticeRepository, {
         message,
         tennantServRef,
         startDate,
         endDate,
         mode: 'draft',
         created: new Date(),
-        tenantId: user.tenantId.toString()
+        isCrossTenants: isCrossTenants || false,
+        tenantId: user.tenantId.toString(),
       });
-      res.status(201).json(app);
+      res.status(201).json({ ...notice, tennantServRef: JSON.parse(notice.tennantServRef) });
     } catch (err) {
       const errMessage = `Error creating notice: ${err.message}`;
       logger.error(errMessage);
@@ -140,9 +155,10 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
   router.patch('/notices/:id', assertAuthenticatedHandler, async (req, res, next) => {
     logger.info(`${req.method} - ${req.url}`);
 
-    const { message, tennantServRef, startDate, endDate, mode } = req.body;
+    const { message, startDate, endDate, mode, isCrossTenants } = req.body;
     const { id } = req.params;
     const user = req.user as Express.User;
+    const tennantServRef = parseTenantServRef(req.body.tennantServRef)
 
     try {
       // TODO: this needs to be moved to a service
@@ -150,14 +166,21 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
       if (!application) {
         throw new NotFoundError('Service Notice', id);
       }
+
       const updatedApplication = await application.update(user, {
         message,
         tennantServRef,
         startDate,
         endDate,
         mode,
+        isCrossTenants,
       });
-      res.status(200).json(updatedApplication);
+
+      res.status(200).json(
+        {
+          ...updatedApplication,
+          tennantServRef: JSON.parse(updatedApplication.tennantServRef)
+        });
     } catch (err) {
       const errMessage = `Error updating notice: ${err.message}`;
       logger.error(errMessage);

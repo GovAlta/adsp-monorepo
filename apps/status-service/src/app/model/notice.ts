@@ -11,7 +11,8 @@ export class NoticeApplicationEntity {
   endDate: Date;
   mode: NoticeModeType;
   created: Date;
-  tenantId: string
+  tenantId: string;
+  isCrossTenants: boolean;
 
   constructor(private repository: NoticeRepository, application: NewOrExisting<NoticeApplication>) {
     this.id = application?.id;
@@ -21,7 +22,8 @@ export class NoticeApplicationEntity {
     this.endDate = application.endDate;
     this.mode = application.mode;
     this.created = application.created;
-    this.tenantId = application.tenantId
+    this.tenantId = application.tenantId;
+    this.isCrossTenants = application.isCrossTenants;
   }
 
   static create(
@@ -47,23 +49,23 @@ export class NoticeApplicationEntity {
       throw new InvalidValueError('Update notice', 'Input notice mode is not allowed.');
     }
 
-    if (this.mode != 'draft') {
-      if (this.mode == 'archived') {
-        throw new InvalidValueError('Update notice', 'Archived notice cannot be updated.');
-      }
+    if (this.mode === 'draft' && update.mode === 'archived') {
+      throw new InvalidValueError('Update notice', 'Draft notice can only be changed to active.');
+    }
 
+    if (this.mode == 'archived') {
+      throw new InvalidValueError('Update notice', 'Archived notice cannot be updated.');
+    }
+
+    if (this.mode != 'draft') {
       this.mode = update.mode ?? this.mode;
     } else {
       this.message = update.message ?? this.message;
       this.tennantServRef = update.tennantServRef ?? this.tennantServRef;
       this.startDate = update.startDate ?? this.startDate;
       this.endDate = update.endDate ?? this.endDate;
-
-      if (this.mode === 'draft' && update.mode === 'archived') {
-        throw new InvalidValueError('Update notice', 'Draft notice can only be changed to active.');
-      }
-
       this.mode = update.mode ?? this.mode;
+      this.isCrossTenants = update.isCrossTenants ?? this.isCrossTenants
     }
 
     return this.repository.save(this);

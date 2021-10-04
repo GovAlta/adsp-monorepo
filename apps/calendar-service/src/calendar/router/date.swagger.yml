@@ -1,0 +1,95 @@
+components:
+  schemas:
+    CalendarDate:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        isWeekend:
+          type: boolean
+        isHoliday:
+          type: boolean
+        isBusinessDay:
+          type: boolean
+
+/calendar/v1/dates:
+  get:
+    tags:
+      - Dates
+    description: Retrieves date values.
+    parameters:
+      - name: top
+        description: Number of dates to return in a page.
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: after
+        description: Cursor for page of results to retrieve.
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: criteria
+        description: Criteria for dates to retrieve.
+        in: query
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                max:
+                  type: integer
+                min:
+                  type: integer
+                isWeekend:
+                  type: boolean
+                isHoliday:
+                  type: boolean
+                isBusinessDay:
+                  type: boolean
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/CalendarDate"
+                page:
+                  type: object
+                  properties:
+                    after:
+                      type: string
+                    next:
+                      type: string
+                    size:
+                      type: number
+
+/calendar/v1/dates/{id}:
+  parameters:
+    - name: id
+      description: ID (yyyydd) of the date to retrieve.
+      in: path
+      required: true
+      schema:
+        type: integer
+  get:
+    tags:
+      - Dates
+    description: Retrieves information about a calendar date.
+    responses:
+      404:
+        description: Calendar date not found.
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalendarDate"

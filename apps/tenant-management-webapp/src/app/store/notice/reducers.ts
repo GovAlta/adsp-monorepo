@@ -26,14 +26,25 @@ export default function noticeReducer(state: Notices = initialState, action: Act
       };
     }
 
-    case 'notice/GET_NOTICES_SUCCESS':
+    case 'notice/GET_NOTICES_SUCCESS': {
+      // TODO: remove the parsing of the Ref when API return of Ref is an object
+      const notices = action.payload.map((n) => {
+        if (typeof n.tennantServRef === 'string') {
+          n.tennantServRef = JSON.parse(n.tennantServRef)
+
+        }
+        return n
+      });
+
       return {
         ...state,
-        notices: action.payload,
+        notices: notices,
       };
+    }
 
     case 'notice/DELETE_NOTICE_SUCCESS': {
-      const notices = state.notices.filter((n) => n.id !== action.payload.id);
+      const notices = state.notices
+        .filter((n) => n.id !== action.payload.id);
       return {
         notices,
       };

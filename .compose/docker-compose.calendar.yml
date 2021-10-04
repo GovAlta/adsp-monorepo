@@ -1,0 +1,35 @@
+version: '3.2'
+services:
+  calendar-service-postgres:
+    image: postgres:9.6
+    expose:
+      - 5432
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD=calendar-service
+    volumes:
+      - ../data/calendar:/var/lib/postgresql/data
+  calendar-service:
+    build:
+      context: ../
+      dockerfile: .compose/service/Dockerfile
+      args:
+        - SERVICE=calendar-service
+    ports:
+      - 3342:3342
+    expose:
+      - 3342
+    environment:
+      - KEYCLOAK_ROOT_URL=http://keycloak:8080
+      - DIRECTORY_URL=http://tenant-management-api:3333
+      - CLIENT_ID=urn:ads:platform:calendar-service
+      - CLIENT_SECRET=59b11e0e-d1b6-4a50-a1a0-ea7034534643
+      - DB_HOST=calendar-service-postgres
+      - DB_PORT=5432
+      - DB_NAME=postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=calendar-service
+      - PORT=3342
+      - LOG_LEVEL=debug

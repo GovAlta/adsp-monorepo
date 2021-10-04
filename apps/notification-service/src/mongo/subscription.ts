@@ -138,7 +138,7 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
           if (err) {
             reject(err);
           } else {
-            resolve(this.fromSubscriptionDoc(doc));
+            resolve(this.fromSubscriptionDoc(doc, subscription.subscriber));
           }
         }
       )
@@ -180,7 +180,7 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
       : null;
   }
 
-  private fromSubscriptionDoc(doc: SubscriptionDoc) {
+  private fromSubscriptionDoc(doc: SubscriptionDoc, subscriber?: SubscriberEntity) {
     return doc
       ? new SubscriptionEntity(
           this,
@@ -192,7 +192,7 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
             criteria: doc.criteria,
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          doc.subscriberId?.['tenantId']
+          subscriber || doc.subscriberId?.['tenantId']
             ? new SubscriberEntity(this, this.fromDoc((doc.subscriberId as unknown) as SubscriberDoc))
             : null
         )

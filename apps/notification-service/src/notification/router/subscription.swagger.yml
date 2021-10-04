@@ -110,17 +110,17 @@ components:
             schema:
               $ref: "#/components/schemas/NotificationType"
 /subscription/v1/types/{type}/subscriptions:
+  parameters:
+    - name: type
+      description: ID of the notification type.
+      in: path
+      required: true
+      schema:
+        type: string
   get:
     tags:
       - Subscription
     description: Retrieves subscriptions for a notification type.
-    parameters:
-      - name: type
-        description: Notification type to get subscriptions for.
-        in: path
-        required: true
-        schema:
-          type: string
     responses:
       200:
         description: Subscriptions successfully retrieved.
@@ -147,12 +147,34 @@ components:
       - Subscription
     description: Creates a subscription for a notification type.
     parameters:
-      - name: type
-        description: Notification type to get subscriptions for.
-        in: path
+      - name: userSub
+        description: Flag indicating subscription is for the current user.
+        in: query
         required: true
         schema:
-          type: string
+          type: boolean
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              userId:
+                type: string
+              addressAs:
+                type: string
+              channels:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    channel:
+                      type: string
+                      enum: [email, sms]
+                    address:
+                      type: string
+
     responses:
       200:
         description: Subscriptions successfully retrieved.
@@ -162,23 +184,23 @@ components:
               $ref: "#/components/schemas/Subscription"
 
 /subscription/v1/types/{type}/subscriptions/{subscriber}:
+  parameters:
+    - name: type
+      description: ID of the notification type.
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: subscriber
+      description: ID of the subscriber.
+      in: path
+      required: true
+      schema:
+        type: string
   get:
     tags:
       - Subscription
     description: Gets a subscription for a notification type and subscriber.
-    parameters:
-      - name: type
-        description: Notification type to get subscription for.
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: subscriber
-        description: Subscriber to get subscription for.
-        in: path
-        required: true
-        schema:
-          type: string
     responses:
       200:
         description: Subscriptions successfully retrieved.
@@ -190,19 +212,6 @@ components:
     tags:
       - Subscription
     description: Removes a subscription from a notification type.
-    parameters:
-      - name: type
-        description: Notification type to of the subscription.
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: subscriber
-        description: Subscriber to remove the subscription for.
-        in: path
-        required: true
-        schema:
-          type: string
     responses:
       200:
         description: Subscriptions successfully removed.
@@ -242,20 +251,50 @@ components:
                       type: string
 
 /subscription/v1/subscribers/{subscriber}:
+  parameters:
+    - name: subscriber
+      description: ID of the subscriber.
+      in: path
+      required: true
+      schema:
+        type: string
   get:
     tags:
       - Subscription
     description: Retrieves a subscriber of a notification space.
-    parameters:
-      - name: subscriber
-        description: Subscriber to get.
-        in: path
-        required: true
-        schema:
-          type: string
     responses:
       200:
         description: Subscriber successfully retrieved.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Subscriber"
+  patch:
+    tags:
+      - Subscription
+    description: Updates a subscriber of a notification space.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              addressAs:
+                type: string
+              channels:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    channel:
+                      type: string
+                      enum: [email, sms]
+                    address:
+                      type: string
+    responses:
+      200:
+        description: Subscriber successfully updated.
         content:
           application/json:
             schema:
@@ -264,13 +303,6 @@ components:
     tags:
       - Subscription
     description: Deletes a subscriber of a notification space.
-    parameters:
-      - name: subscriber
-        description: Subscriber to get.
-        in: path
-        required: true
-        schema:
-          type: string
     responses:
       200:
         description: Subscriber successfully deleted.

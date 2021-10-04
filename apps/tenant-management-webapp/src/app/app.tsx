@@ -1,3 +1,5 @@
+import './app.css';
+
 import React, { useEffect } from 'react';
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 import { Provider, useDispatch, useSelector } from 'react-redux';
@@ -21,7 +23,6 @@ import { ThemeProvider } from 'styled-components';
 import { theme } from 'theme';
 import PublicApp from './publicApp';
 
-import './app.css';
 
 const AppRouters = () => {
   return (

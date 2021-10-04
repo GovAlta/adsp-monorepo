@@ -5,9 +5,20 @@ import { ServiceUserRoles, Subscriber } from '../types';
 import { SubscriberEntity } from './subscriber';
 
 describe('SubscriberEntity', () => {
-  const repositoryMock: unknown = {
+  const repositoryMock = {
+    getSubscriber: jest.fn(),
+    getSubscriptions: jest.fn(),
+    getSubscription: jest.fn(),
+    findSubscribers: jest.fn(),
+    deleteSubscriber: jest.fn(),
+    saveSubscription: jest.fn(),
+    deleteSubscriptions: jest.fn(),
     saveSubscriber: jest.fn((entity: SubscriberEntity) => Promise.resolve(entity)),
   };
+
+  beforeEach(() => {
+    repositoryMock.deleteSubscriber.mockReset();
+  });
 
   it('can be created', () => {
     const entity = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
@@ -168,7 +179,7 @@ describe('SubscriberEntity', () => {
       expect(updated.addressAs).toBe('Mr. Tester');
     });
 
-    it('can throw for unauthorized', async () => {
+    it('can throw for unauthorized', () => {
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
       const entity = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
         tenantId,
@@ -178,11 +189,41 @@ describe('SubscriberEntity', () => {
         channels: [],
       });
 
-      await expect(
+      expect(() =>
         entity.update({ tenantId, roles: [] } as User, {
           addressAs: 'Mr. Tester',
         })
-      ).rejects.toThrow(/User not authorized to update subscriber./);
+      ).toThrow(/User not authorized to update subscriber./);
+    });
+  });
+
+  describe('delete', () => {
+    it('can delete', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const entity = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+        tenantId,
+        id: 'test',
+        userId: 'test-user',
+        addressAs: 'Testy McTester',
+        channels: [],
+      });
+
+      repositoryMock.deleteSubscriber.mockResolvedValueOnce(true);
+      const deleted = await entity.delete({ tenantId, roles: [ServiceUserRoles.SubscriptionAdmin] } as User);
+      expect(deleted).toBe(true);
+    });
+
+    it('can throw for unauthorized', () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const entity = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+        tenantId,
+        id: 'test',
+        userId: 'test-user',
+        addressAs: 'Testy McTester',
+        channels: [],
+      });
+
+      expect(() => entity.delete({ tenantId, roles: [] } as User)).toThrow(/User not authorized to delete subscriber./);
     });
   });
 });

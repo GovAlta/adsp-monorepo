@@ -138,7 +138,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
           {notice.message}
         </MessageContainer>
         {notice.tennantServRef &&
-          JSON.parse(notice.tennantServRef).map((application) => {
+          notice.tennantServRef.map((application) => {
             const currentApplication = applications.find((app) => application.id === app._id);
 
             return (
