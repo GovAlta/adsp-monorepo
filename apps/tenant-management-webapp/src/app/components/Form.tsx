@@ -63,6 +63,7 @@ const GoAFormItem = styled.div`
 
 const GoAFormButtons = styled.div`
   margin-top: 2rem;
+  margin-bottom: 1rem;
 
   @media (max-width: 639px) {
     button + button,
