@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import React from 'react';
 import './file.css';
 import { FetchFileTypeService } from '@store/file/actions';
+import { ClearNotifications } from '@store/notifications/actions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 import { FileTypeTable } from './fileTypesTable';
@@ -20,6 +21,7 @@ export default function FileTypes(): JSX.Element {
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(FetchFileTypeService());
+    dispatch(ClearNotifications());
   }, []);
 
   useEffect(() => {

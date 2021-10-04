@@ -17,6 +17,10 @@ export default function (state: NotificationState = NOTIFICATION_INIT, action: A
           },
         ],
       };
+    case 'notifications/clear':
+      return {
+        notifications: [],
+      };
     default:
       return state;
   }

@@ -3,9 +3,15 @@ import { Notification } from './models';
 export const ERROR_NOTIFICATION = 'notifications/error';
 export const SUCCESS_NOTIFICATION = 'notifications/success';
 
+export const CLEAR_NOTIFICATION = 'notifications/clear';
+
 export const BASIC_NOTIFICATION = 'notifications/basic';
 
-export type ActionTypes = ErrorNotificationAction | SuccessNotificationAction | BasicNotificationAction;
+export type ActionTypes =
+  | ErrorNotificationAction
+  | SuccessNotificationAction
+  | BasicNotificationAction
+  | ClearNotificationAction;
 
 interface ErrorNotificationAction {
   type: typeof ERROR_NOTIFICATION;
@@ -22,6 +28,10 @@ interface BasicNotificationAction {
   payload: Notification;
 }
 
+interface ClearNotificationAction {
+  type: typeof CLEAR_NOTIFICATION;
+}
+
 export const ErrorNotification = (payload: Notification): ErrorNotificationAction => ({
   type: 'notifications/error',
   payload,
@@ -35,4 +45,8 @@ export const SuccessNotification = (payload: Notification): SuccessNotificationA
 export const BasicNotification = (payload: Notification): BasicNotificationAction => ({
   type: 'notifications/basic',
   payload,
+});
+
+export const ClearNotifications = (): ClearNotificationAction => ({
+  type: 'notifications/clear',
 });

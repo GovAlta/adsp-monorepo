@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { v4 as uuid4 } from 'uuid';
 import { RootState } from '@store/index';
 import { Role } from '@store/tenant/models';
+import { ClearNotifications } from '@store/notifications/actions';
 
 import {
   DeleteFileTypeService,
@@ -210,6 +211,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           buttonType="secondary"
           key={`${props.id}-confirm-button`}
           onClick={() => {
+            dispatch(ClearNotifications());
             dispatch(CreateFileTypeService({ ...newFileType, id }));
 
             setNewFileType(null);
@@ -230,6 +232,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           data-testid="confirm-update"
           disabled={newFileType}
           onClick={() => {
+            dispatch(ClearNotifications());
             dispatch(UpdateFileTypeService({ ...updateFileType, id }));
 
             setUpdateFileType(null);
@@ -469,6 +472,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
               <GoAButton
                 data-testid="delete-modal-delete-button"
                 onClick={() => {
+                  dispatch(ClearNotifications());
                   dispatch(DeleteFileTypeService(props));
                 }}
               >
