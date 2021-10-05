@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useState } from 'react';
 import type { EventSearchCriteria } from '@store/event/models';
-import { GoAForm, GoAFormItem, GoAFormButtons } from '@components/Form';
 import { GoAButton } from '@abgov/react-components';
+import { GoAForm, GoAFormItem, GoAFormActions } from '@abgov/react-components/experimental';
 
 const initCriteria: EventSearchCriteria = {
   namespace: '',
@@ -60,7 +60,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
           onChange={(e) => setSearchCriteria({ ...searchCriteria, name: e.target.value })}
         />
       </GoAFormItem>
-      <GoAFormButtons>
+      <GoAFormActions>
         <GoAButton
           buttonType="tertiary"
           type="reset"
@@ -82,7 +82,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
         >
           Search
         </GoAButton>
-      </GoAFormButtons>
+      </GoAFormActions>
     </GoAForm>
   );
 };
