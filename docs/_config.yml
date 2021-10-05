@@ -23,7 +23,7 @@ url: "https://ideal-train-081da1d8.pages.github.io" # the base hostname & protoc
 # github_username:  jekyll
 
 # Build settings
-markdown: GFM
+markdown: kramdown
 remote_theme: pmarsceill/just-the-docs
 plugins:
   - jekyll-remote-theme
