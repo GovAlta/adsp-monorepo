@@ -9,6 +9,12 @@ export const noticeReducer = (state: Notices = NoticeInit, action: ActionTypes):
         notices: action.payload,
       };
 
+    case 'status/notices/cross-tenants/fetch/success':
+      return {
+        ...state,
+        crossTenantsNotices: action.payload
+      };
+
     default:
       return state;
   }

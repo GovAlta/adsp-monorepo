@@ -19,4 +19,9 @@ export class ApplicationApi {
     const res = await this.http.get(`/notice/v1/notices`);
     return res.data?.results;
   }
+
+  async getCrossTenantsNotices(): Promise<ServiceStatusApplication[]> {
+    const res = await this.http.get(`/notice/v1/notices`, { params: { all: true } })
+    return res.data?.results;
+  }
 }

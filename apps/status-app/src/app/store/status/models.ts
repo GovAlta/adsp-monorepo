@@ -68,10 +68,12 @@ export interface Notice {
 
 export interface Notices {
   notices: Notice[];
+  crossTenantsNotices: Notice[];
 }
 
 export const NoticeInit: Notices = {
   notices: [],
+  crossTenantsNotices: []
 };
 
 export const ApplicationInit: ServiceStatus = {
