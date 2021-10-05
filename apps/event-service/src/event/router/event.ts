@@ -2,7 +2,7 @@ import { assertAuthenticatedHandler, InvalidOperationError } from '@core-service
 import { RequestHandler, Router } from 'express';
 import { Logger } from 'winston';
 import { NamespaceEntity } from '../model';
-import { AdspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { DomainEventService } from '../service';
 import { EventServiceRoles } from '../role';
 
@@ -33,42 +33,41 @@ export const assertUserCanSend: RequestHandler = async (req, res, next) => {
   next();
 };
 
-export const createEventRouter = ({ logger, eventService }: EventRouterProps): Router => {
-  const eventRouter = Router();
-
-  eventRouter.post('/events', assertAuthenticatedHandler, assertUserCanSend, async (req, res, next) => {
-    const user = req.user;
-    const { namespace, name, timestamp: timeValue } = req.body;
-    const tenantId: AdspId = req['tenantId'];
-
-    logger.debug(`Processing sent event: ${namespace}:${name}...`);
-
-    if (!namespace || !name) {
-      next(new InvalidOperationError('Event must include namespace and name of the event.'));
-      return;
-    }
-
-    if (!timeValue) {
-      next(new InvalidOperationError('Event must include a timestamp representing the time when the event occurred.'));
-      return;
-    }
-    const timestamp = new Date(timeValue);
-
-    const [configuration, options] = await req.getConfiguration<
-      Record<string, NamespaceEntity>,
-      Record<string, NamespaceEntity>
-    >(tenantId);
-
-    const namespaces: Record<string, NamespaceEntity> = {
-      ...(configuration || {}),
-      ...(options || {}),
-    };
-
-    // If the namespace or definition doesn't exist, then we treat it as an ad hoc event and skip validation.
-    const entity: NamespaceEntity = namespaces[namespace];
-    const definition = entity?.definitions[name];
-
+export const sendEvent =
+  (logger: Logger, eventService: EventService): RequestHandler =>
+  async (req, res, next) => {
     try {
+      const user = req.user;
+      const { namespace, name, timestamp: timeValue } = req.body;
+      const tenantId: AdspId = req['tenantId'];
+
+      logger.debug(`Processing sent event: ${namespace}:${name}...`);
+
+      if (!namespace || !name) {
+        throw new InvalidOperationError('Event must include namespace and name of the event.');
+      }
+
+      if (!timeValue) {
+        throw new InvalidOperationError(
+          'Event must include a timestamp representing the time when the event occurred.'
+        );
+      }
+      const timestamp = new Date(timeValue);
+
+      const [configuration, options] = await req.getConfiguration<
+        Record<string, NamespaceEntity>,
+        Record<string, NamespaceEntity>
+      >(tenantId);
+
+      const namespaces: Record<string, NamespaceEntity> = {
+        ...(configuration || {}),
+        ...(options || {}),
+      };
+
+      // If the namespace or definition doesn't exist, then we treat it as an ad hoc event and skip validation.
+      const entity: NamespaceEntity = namespaces[namespace];
+      const definition = entity?.definitions[name];
+
       const event = { ...req.body, timestamp, tenantId };
       if (definition) {
         definition.validate(event);
@@ -83,7 +82,12 @@ export const createEventRouter = ({ logger, eventService }: EventRouterProps): R
     } catch (err) {
       next(err);
     }
-  });
+  };
+
+export const createEventRouter = ({ logger, eventService }: EventRouterProps): Router => {
+  const eventRouter = Router();
+
+  eventRouter.post('/events', assertAuthenticatedHandler, assertUserCanSend, sendEvent(logger, eventService));
 
   return eventRouter;
 };
