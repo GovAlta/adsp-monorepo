@@ -4,7 +4,7 @@ import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useParams } from 'react-router-dom';
 import { GoAButton, GoACheckbox } from '@abgov/react-components';
-import { GoAForm, GoAFormItem, GoAFormButtons } from '@components/Form';
+import { GoAForm, GoAFormItem, GoAFormActions } from '@abgov/react-components/experimental';
 import TimePicker from 'react-time-picker';
 import DatePicker from 'react-date-picker';
 import styled from 'styled-components';
@@ -46,7 +46,8 @@ function NoticeForm(): JSX.Element {
       setEndDate(currentEndDate);
 
       setStartTime(
-        `${currentStartDate.getHours()}:${currentStartDate.getMinutes() < 10 ? '0' : ''
+        `${currentStartDate.getHours()}:${
+          currentStartDate.getMinutes() < 10 ? '0' : ''
         }${currentStartDate.getMinutes()}`
       );
       setEndTime(
@@ -57,7 +58,6 @@ function NoticeForm(): JSX.Element {
       let parsedApplications = [];
       try {
         parsedApplications = notice.tennantServRef;
-
       } catch (e) {
         console.log(e);
       } finally {
@@ -149,7 +149,7 @@ function NoticeForm(): JSX.Element {
 
         <div>
           <ErrorWrapper className={errors?.['applications'] && 'error'}>
-            <label className='notice-title'>Application</label>
+            <label className="notice-title">Application</label>
             <div>
               <GoACheckbox checked={isAllApplications}
                 labelPosition='after'
@@ -172,11 +172,11 @@ function NoticeForm(): JSX.Element {
                   avoidHighlightFirstOption
                   customCloseIcon={<img src={CloseIcon} alt="Close" width="16" />}
                 />
-              </MultiDropdownStyle>}
+              </MultiDropdownStyle>
+            }
             <div className="error-msg">{errors?.['applications']}</div>
           </ErrorWrapper>
         </div>
-
 
         <ErrorWrapper className={errors?.['date'] && 'error'}>
           <div className="row-flex">
@@ -231,14 +231,14 @@ function NoticeForm(): JSX.Element {
 
           <div className="error-msg">{errors?.['date']}</div>
         </ErrorWrapper>
-        <GoAFormButtons>
+        <GoAFormActions>
           <GoAButton buttonType="tertiary" data-testid="notice-form-cancel" onClick={cancel}>
             Cancel
           </GoAButton>
           <GoAButton buttonType="primary" type="submit" data-testid="notice-form-submit" onClick={submit}>
             Save as draft
           </GoAButton>
-        </GoAFormButtons>
+        </GoAFormActions>
       </GoAForm>
     </NoticeFormStyle>
   );

@@ -15,18 +15,19 @@ import { Route, Switch, useHistory, useLocation } from 'react-router-dom';
 import styled, { CSSProperties } from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import GoALinkButton from '@components/LinkButton';
+import { GoAButton, GoARadio, GoARadioGroup } from '@abgov/react-components';
 import {
   GoABadge,
   GoAModal,
   GoAModalActions,
   GoAModalContent,
   GoAModalTitle,
+  GoAForm,
+  GoAFormItem,
 } from '@abgov/react-components/experimental';
 import type { GoABadgeType } from '@abgov/react-components/experimental';
 import ApplicationFormModal from './form';
 import NoticeForm from './noticeForm';
-import { GoAButton, GoARadio, GoARadioGroup } from '@abgov/react-components';
-import { GoAForm, GoAFormItem } from '@components/Form';
 import { setApplicationStatus } from '@store/status/actions/setApplicationStatus';
 import { Tab, Tabs } from '@components/Tabs';
 import { getNotices } from '@store/notice/actions';
@@ -281,7 +282,6 @@ function Application(app: ServiceStatusApplication) {
         <GoAModalContent>
           <GoAForm>
             <GoAFormItem>
-              <br />
               <GoARadioGroup
                 name="status"
                 value={status}

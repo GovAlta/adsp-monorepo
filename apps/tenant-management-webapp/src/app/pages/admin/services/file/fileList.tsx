@@ -8,7 +8,7 @@ import {
   DownloadFileService,
 } from '@store/file/actions';
 import { GoAButton, GoARadioGroup, GoARadio } from '@abgov/react-components';
-import { GoAForm } from '@components/Form';
+import { GoAForm } from '@abgov/react-components/experimental';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
 import { Main } from '@components/Html';
