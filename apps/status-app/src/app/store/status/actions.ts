@@ -9,7 +9,6 @@ export type ActionTypes =
   | FetchNoticesSuccessAction
   | FetchApplicationsAction
   | FetchApplicationsSuccessAction
-
 export interface FetchNoticesSuccessAction {
   type: typeof FETCH_NOTICES_SUCCESS_ACTION;
   payload: Notice[]
@@ -28,7 +27,6 @@ export interface FetchApplicationsSuccessAction {
 export interface FetchNoticesAction {
   type: typeof FETCH_NOTICES_ACTION;
   payload?: string
-
 }
 
 export const fetchNotices = (realm: string): FetchNoticesAction => ({
@@ -49,4 +47,4 @@ export const fetchApplications = (realm: string): FetchApplicationsAction => ({
 export const fetchApplicationsSuccess = (payload: ServiceStatusApplication[]): FetchApplicationsSuccessAction => ({
   type: 'status/applications/fetch/success',
   payload
-})
+});

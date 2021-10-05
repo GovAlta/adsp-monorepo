@@ -29,7 +29,7 @@ function NoticeForm(): JSX.Element {
   const [endTime, setEndTime] = useState('14:00');
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState({});
-  const [isCrossTenants, setIsCrossTenants] = useState(false);
+  const [isAllApplications, setIsAllApplications] = useState(false);
 
   const { applications, notices } = useSelector((state: RootState) => ({
     applications: state.serviceStatus.applications,
@@ -62,7 +62,7 @@ function NoticeForm(): JSX.Element {
         console.log(e);
       } finally {
         setSelectedApplications(parsedApplications);
-        setIsCrossTenants(notice.isCrossTenants);
+        setIsAllApplications(notice.isAllApplications);
       }
     }
   }, []);
@@ -88,7 +88,7 @@ function NoticeForm(): JSX.Element {
   }
 
   function formErrors() {
-    const applicationSelectedConst = isCrossTenants ? null : applicationSelectedErrors();
+    const applicationSelectedConst = isAllApplications ? null : applicationSelectedErrors();
     const validDateRangeConst = validDateRangeErrors();
     const messageExistsConst = messageExistsErrors();
 
@@ -111,7 +111,7 @@ function NoticeForm(): JSX.Element {
           tennantServRef: selectedApplications,
           startDate: dateTime(startDate, startTime),
           endDate: dateTime(endDate, endTime),
-          isCrossTenants: isCrossTenants
+          isAllApplications: isAllApplications
         })
       );
 
@@ -151,13 +151,14 @@ function NoticeForm(): JSX.Element {
           <ErrorWrapper className={errors?.['applications'] && 'error'}>
             <label className='notice-title'>Application</label>
             <div>
-              <GoACheckbox checked={isCrossTenants}
+              <GoACheckbox checked={isAllApplications}
                 labelPosition='after'
-                selectionChange={() => { setIsCrossTenants(!isCrossTenants) }}>
-                <span>For All Applications (Cross-Tenants)</span>
+                data-testid='notice-form-all-applications-checkbox'
+                selectionChange={() => { setIsAllApplications(!isAllApplications) }}>
+                <span>All applications</span>
               </GoACheckbox>
             </div>
-            {isCrossTenants === false &&
+            {isAllApplications === false &&
               <MultiDropdownStyle>
                 <Multiselect
                   options={applications}

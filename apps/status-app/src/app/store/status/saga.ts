@@ -4,7 +4,6 @@ import { ApplicationApi } from './api';
 import { fetchApplicationsSuccess, FetchApplicationsAction, fetchNoticesSuccess } from './actions';
 import { parseNotices, bindApplicationsWithNotices } from './models';
 import { addErrorMessage, updateIsReady } from '@store/session/actions';
-
 import { SagaIterator } from '@redux-saga/core';
 
 export function* fetchApplications(action: FetchApplicationsAction): SagaIterator {
@@ -17,7 +16,7 @@ export function* fetchApplications(action: FetchApplicationsAction): SagaIterato
     yield put(updateIsReady(false));
     const unKebabName = name.replace(/-/g, ' ');
     const applications = yield call([api, api.getApplications], unKebabName);
-    const noticesRaw = yield call([api, api.getNotices]);
+    const noticesRaw = yield call([api, api.getNotices], unKebabName);
     const notices = parseNotices(noticesRaw);
     yield put(fetchNoticesSuccess(notices));
     // Bind notices to application while keep one copy notices independently.

@@ -20,7 +20,7 @@ export interface Notice {
   startDate: Date;
   endDate: Date;
   mode?: ModeType;
-  isCrossTenants?: boolean;
+  isAllApplications?: boolean;
 }
 
 export interface NoticesResult {
