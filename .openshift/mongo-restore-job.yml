@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: mongo-backup-restore-job
+  annotations:
+    template.openshift.io/provider-display-name: platform team
+    description: Job for MongoDB backup restore
+parameters:
+  - name: SERVICE_NAME
+    description: Name of the service associated with the mongoDb to backup.
+    displayName: Service Name
+    required: true
+  - name: BACKUP_TIMESTAMP
+    description: Timestamp of the backup to restore (yyyy-MM-dd-hh:mm:ss)
+    displayName: Backup Timestamp
+    required: true
+objects:
+  - apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: ${SERVICE_NAME}-mongodb-restore
+      labels:
+        app: ${SERVICE_NAME}
+        component: database
+    spec:
+      parallelism: 1
+      completions: 1
+      backoffLimit: 1
+      template:
+        spec:
+          containers:
+            - command:
+                - bash
+                - -c
+                - mongorestore -u admin -p $MONGODB_ADMIN_PASSWORD --host $MONGODB_SERVICE_HOST --port 27017 --authenticationDatabase admin --gzip --db $MONGODB_DATABASE /var/lib/mongodb-backup/$BACKUP_DUMP_DIR/$MONGODB_DATABASE
+              env:
+                - name: BACKUP_DUMP_DIR
+                  value: dump-${BACKUP_TIMESTAMP}
+                - name: MONGODB_DATABASE
+                  valueFrom:
+                    secretKeyRef:
+                      name: ${SERVICE_NAME}-mongodb
+                      key: database-name
+                - name: MONGODB_ADMIN_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: ${SERVICE_NAME}-mongodb
+                      key: database-admin-password
+                - name: MONGODB_SERVICE_HOST
+                  value: ${SERVICE_NAME}-mongodb
+              image: docker-registry.default.svc:5000/openshift/mongodb:3.6
+              imagePullPolicy: IfNotPresent
+              name: mongodb-backup
+              resources: {}
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              volumeMounts:
+                - mountPath: /var/lib/mongodb-backup
+                  name: mongodb-backup
+          dnsPolicy: ClusterFirst
+          restartPolicy: Never
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+          volumes:
+            - name: mongodb-backup
+              persistentVolumeClaim:
+                claimName: ${SERVICE_NAME}-backups
