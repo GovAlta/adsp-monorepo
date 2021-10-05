@@ -1,60 +1,108 @@
-import { Connection } from 'amqplib';
+import { AmqpConnectionManager } from 'amqp-connection-manager';
 import { Logger } from 'winston';
 import { AmqpWorkQueueService } from './work';
 
 describe('AmqpWorkQueueService<string>', () => {
-  const logger: Logger = ({
+  const logger: Logger = {
     debug: jest.fn(),
     info: jest.fn(),
     error: jest.fn(),
-  } as unknown) as Logger;
+  } as unknown as Logger;
 
   it('can be created', () => {
-    const connection = {
-      on: jest.fn(),
-    };
-    const service = new AmqpWorkQueueService<string>('test', logger, (connection as unknown) as Connection);
+    const connection = {};
+    const service = new AmqpWorkQueueService<string>('test', logger, connection as unknown as AmqpConnectionManager);
     expect(service).toBeTruthy();
   });
 
-  it('can connect', async () => {
+  it('can connect', (done) => {
     const channel = {
-      assertExchange: jest.fn(),
+      assertExchange: jest.fn(() => Promise.resolve()),
       assertQueue: jest.fn(),
-      bindQueue: jest.fn(),
+      bindQueue: jest.fn(() => Promise.resolve()),
     };
 
     const connection = {
       on: jest.fn(),
-      createChannel: jest.fn(() => channel),
+      createChannel: jest.fn(async ({ setup }) => {
+        await setup(channel);
+
+        expect(channel.assertQueue.mock.calls[1][0]).toBe('test');
+        expect(channel.assertQueue.mock.calls[1][1]).toMatchObject({
+          arguments: expect.objectContaining({
+            'x-queue-type': 'quorum',
+            'x-dead-letter-exchange': 'test-dead-letter',
+          }),
+        });
+
+        done();
+        return channel;
+      }),
     };
 
-    const service = new AmqpWorkQueueService<{ value: string }>('test', logger, (connection as unknown) as Connection);
-    const connected = await service.connect();
+    channel.assertQueue.mockImplementation(() => Promise.resolve());
+    const service = new AmqpWorkQueueService<{ value: string }>(
+      'test',
+      logger,
+      connection as unknown as AmqpConnectionManager
+    );
 
-    expect(connected).toBeTruthy();
-    expect(service.isConnected()).toBeTruthy();
+    service.connect().then((connected) => {
+      expect(connected).toBeTruthy();
+      expect(service.isConnected()).toBeTruthy();
+    });
   });
 
   it('can handle error on connect', async () => {
-    const channel = {
-      assertExchange: jest.fn(),
-      assertQueue: jest.fn(),
-      bindQueue: jest.fn(),
-    };
-
     const connection = {
       on: jest.fn(),
-      createChannel: jest.fn(() => channel),
+      createChannel: jest.fn(() => {
+        throw new Error('Something went terribly wrong.');
+      }),
     };
 
-    channel.assertQueue.mockRejectedValueOnce(new Error('Something went terribly wrong.'));
-
-    const service = new AmqpWorkQueueService<{ value: string }>('test', logger, (connection as unknown) as Connection);
+    const service = new AmqpWorkQueueService<{ value: string }>(
+      'test',
+      logger,
+      connection as unknown as AmqpConnectionManager
+    );
     const connected = await service.connect();
 
     expect(connected).toBeFalsy();
     expect(service.isConnected()).toBeFalsy();
+  });
+
+  it('can enqueue', async () => {
+    const channel = {
+      assertExchange: jest.fn(() => Promise.resolve()),
+      assertQueue: jest.fn(),
+      bindQueue: jest.fn(() => Promise.resolve()),
+      sendToQueue: jest.fn(),
+    };
+
+    const connection = {
+      on: jest.fn(),
+      createChannel: jest.fn(({ setup }) => {
+        setup(channel);
+        return channel;
+      }),
+    };
+
+    channel.sendToQueue.mockResolvedValueOnce(true);
+    const service = new AmqpWorkQueueService<{ value: string }>(
+      'test',
+      logger,
+      connection as unknown as AmqpConnectionManager
+    );
+    await service.connect();
+    await service.enqueue({ value: 'test' });
+    expect(channel.sendToQueue).toHaveBeenCalledWith(
+      'test',
+      expect.any(Buffer),
+      expect.objectContaining({
+        contentType: 'application/json',
+      })
+    );
   });
 
   describe('Subscriber', () => {
@@ -64,9 +112,9 @@ describe('AmqpWorkQueueService<string>', () => {
       };
 
       const subChannel = {
-        assertExchange: jest.fn(),
-        assertQueue: jest.fn(),
-        bindQueue: jest.fn(),
+        assertExchange: jest.fn(() => Promise.resolve()),
+        assertQueue: jest.fn(() => Promise.resolve()),
+        bindQueue: jest.fn(() => Promise.resolve()),
         publish: jest.fn(),
         consume: jest.fn((_queue, cb) => {
           cb({ properties: { headers: {} }, content: JSON.stringify(workItem) });
@@ -76,13 +124,16 @@ describe('AmqpWorkQueueService<string>', () => {
 
       const connection = {
         on: jest.fn(),
-        createChannel: jest.fn(() => subChannel),
+        createChannel: jest.fn(({ setup }) => {
+          setup(subChannel);
+          return subChannel;
+        }),
       };
 
       const service = new AmqpWorkQueueService<{ value: string }>(
         'test',
         logger,
-        (connection as unknown) as Connection
+        connection as unknown as AmqpConnectionManager
       );
       service.connect().then(() => {
         service.getItems().subscribe(({ item, done: workDone }) => {
@@ -101,9 +152,9 @@ describe('AmqpWorkQueueService<string>', () => {
 
       const msg = { properties: { headers: {} }, content: JSON.stringify(workItem) };
       const subChannel = {
-        assertExchange: jest.fn(),
-        assertQueue: jest.fn(),
-        bindQueue: jest.fn(),
+        assertExchange: jest.fn(() => Promise.resolve()),
+        assertQueue: jest.fn(() => Promise.resolve()),
+        bindQueue: jest.fn(() => Promise.resolve()),
         publish: jest.fn(),
         consume: jest.fn((_queue, cb) => {
           cb(msg);
@@ -113,13 +164,16 @@ describe('AmqpWorkQueueService<string>', () => {
 
       const connection = {
         on: jest.fn(),
-        createChannel: jest.fn(() => subChannel),
+        createChannel: jest.fn(({ setup }) => {
+          setup(subChannel);
+          return subChannel;
+        }),
       };
 
       const service = new AmqpWorkQueueService<{ value: string }>(
         'test',
         logger,
-        (connection as unknown) as Connection
+        connection as unknown as AmqpConnectionManager
       );
       service.connect().then(() => {
         service.getItems().subscribe(({ item, done: workDone }) => {
@@ -132,6 +186,39 @@ describe('AmqpWorkQueueService<string>', () => {
       });
     });
 
+    it('can nack and requeue item for message error', (done) => {
+      const msg = { properties: { headers: {} }, content: "//" };
+      const subChannel = {
+        assertExchange: jest.fn(() => Promise.resolve()),
+        assertQueue: jest.fn(() => Promise.resolve()),
+        bindQueue: jest.fn(() => Promise.resolve()),
+        publish: jest.fn(),
+        consume: jest.fn((_queue, cb) => {
+          cb(msg);
+        }),
+        nack: jest.fn(() => {
+          done()
+        }),
+      };
+
+      const connection = {
+        on: jest.fn(),
+        createChannel: jest.fn(({ setup }) => {
+          setup(subChannel);
+          return subChannel;
+        }),
+      };
+
+      const service = new AmqpWorkQueueService<{ value: string }>(
+        'test',
+        logger,
+        connection as unknown as AmqpConnectionManager
+      );
+      service.connect().then(() => {
+        service.getItems().subscribe(({ done: workDone }) => workDone());
+      });
+    });
+
     it('can nack and dead letter redelivered failed item', (done) => {
       const workItem = {
         value: 'test',
@@ -139,10 +226,10 @@ describe('AmqpWorkQueueService<string>', () => {
 
       const msg = { properties: { headers: {} }, fields: { redelivered: true }, content: JSON.stringify(workItem) };
       const subChannel = {
-        assertExchange: jest.fn(),
-        assertQueue: jest.fn(),
-        bindQueue: jest.fn(),
-        publish: jest.fn(),
+        assertExchange: jest.fn(() => Promise.resolve()),
+        assertQueue: jest.fn(() => Promise.resolve()),
+        bindQueue: jest.fn(() => Promise.resolve()),
+        publish: jest.fn(() => Promise.resolve(true)),
         consume: jest.fn((_queue, cb) => {
           cb(msg);
         }),
@@ -151,13 +238,16 @@ describe('AmqpWorkQueueService<string>', () => {
 
       const connection = {
         on: jest.fn(),
-        createChannel: jest.fn(() => subChannel),
+        createChannel: jest.fn(({ setup }) => {
+          setup(subChannel);
+          return subChannel;
+        }),
       };
 
       const service = new AmqpWorkQueueService<{ value: string }>(
         'test',
         logger,
-        (connection as unknown) as Connection
+        connection as unknown as AmqpConnectionManager
       );
       service.connect().then(() => {
         service.getItems().subscribe(({ item, done: workDone }) => {
@@ -172,21 +262,24 @@ describe('AmqpWorkQueueService<string>', () => {
 
     it('raise error on send if not connected', () => {
       const channel = {
-        assertExchange: jest.fn(),
-        assertQueue: jest.fn(),
-        bindQueue: jest.fn(),
+        assertExchange: jest.fn(() => Promise.resolve()),
+        assertQueue: jest.fn(() => Promise.resolve()),
+        bindQueue: jest.fn(() => Promise.resolve()),
         publish: jest.fn(),
       };
 
       const connection = {
         on: jest.fn(),
-        createChannel: jest.fn(() => channel),
+        createChannel: jest.fn(({ setup }) => {
+          setup(channel);
+          return channel;
+        }),
       };
 
       const service = new AmqpWorkQueueService<{ value: string }>(
         'test',
         logger,
-        (connection as unknown) as Connection
+        connection as unknown as AmqpConnectionManager
       );
       expect(() => service.getItems()).toThrow(/Service must be connected before items can be subscribed./);
     });
