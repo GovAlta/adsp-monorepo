@@ -26,6 +26,8 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen }: Props) => {
   const history = useHistory();
   const { applicationId } = useParams<{ applicationId: string }>();
 
+  const [isModalOpen, setIsModalOpen] = useState(true);
+
   const [application, setApplication] = useState<ServiceStatusApplication>({
     name: '',
     tenantId: '',
@@ -64,16 +66,22 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen }: Props) => {
       return;
     }
 
+    setIsModalOpen(false);
     dispatch(saveApplication(application));
-    history.push('/admin/services/status');
+    setTimeout(() => {
+      history.push('/admin/services/status');
+    }, 0);
   }
 
   function cancel() {
-    history.push('/admin/services/status');
+    setIsModalOpen(false);
+    setTimeout(() => {
+      history.push('/admin/services/status');
+    }, 0);
   }
 
   return (
-    <GoAModal isOpen={true}>
+    <GoAModal isOpen={isModalOpen}>
       <GoAModalTitle>New Application</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>
