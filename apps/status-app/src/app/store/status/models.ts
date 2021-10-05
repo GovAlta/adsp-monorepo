@@ -63,17 +63,17 @@ export interface Notice {
   startDate: string;
   endDate: string;
   mode?: ModeType;
-  isCrossTenants?: boolean;
+  isAllApplications?: boolean;
 }
 
 export interface Notices {
   notices: Notice[];
-  crossTenantsNotices: Notice[];
+  allApplicationsNotices: Notice[];
 }
 
 export const NoticeInit: Notices = {
   notices: [],
-  crossTenantsNotices: []
+  allApplicationsNotices: []
 };
 
 export const ApplicationInit: ServiceStatus = {

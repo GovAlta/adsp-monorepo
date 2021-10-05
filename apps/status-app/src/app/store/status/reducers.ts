@@ -3,17 +3,16 @@ import { NoticeInit, Notices, ServiceStatus, ApplicationInit } from './models';
 
 export const noticeReducer = (state: Notices = NoticeInit, action: ActionTypes): Notices => {
   switch (action.type) {
-    case 'status/notices/fetch/success':
+    case 'status/notices/fetch/success': {
+      const notices = action.payload;
+      const allApplicationsNotices = notices
+        .filter((notice) => { return notice.isAllApplications === true });
       return {
         ...state,
-        notices: action.payload,
+        notices: notices,
+        allApplicationsNotices
       };
-
-    case 'status/notices/cross-tenants/fetch/success':
-      return {
-        ...state,
-        crossTenantsNotices: action.payload
-      };
+    }
 
     default:
       return state;

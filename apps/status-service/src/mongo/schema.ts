@@ -113,7 +113,7 @@ export const noticeApplicationSchema = new Schema(
       type: String,
       required: true,
     },
-    isCrossTenants: {
+    isAllApplications: {
       type: Boolean,
       default: false
     },

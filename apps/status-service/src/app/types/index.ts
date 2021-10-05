@@ -13,7 +13,7 @@ export function isValidNoticeModeType(mode: NoticeModeType): boolean {
 export interface NoticeApplication {
   id: string;
   message: string;
-  isCrossTenants: boolean;
+  isAllApplications: boolean;
   tennantServRef: string;
   startDate: Date;
   endDate: Date;

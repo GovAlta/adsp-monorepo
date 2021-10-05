@@ -145,7 +145,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
               <ServiceHref
                 data-testid='notice-card-application'
                 key={`notice-service-Href-${notice.id}-${application.id}`}>
-                {currentApplication?.name}
+                {notice.isAllApplications ? "All applications" : currentApplication?.name}
               </ServiceHref>
             );
           })}

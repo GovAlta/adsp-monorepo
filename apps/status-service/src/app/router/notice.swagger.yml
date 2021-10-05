@@ -30,6 +30,11 @@
         required: false
         schema:
           type: string
+      - name: tenantid
+        description: All notices with the given tenant id
+        required: false
+        schema:
+          type: string
     responses:
       200:
         description: Notices successfully retrieved.

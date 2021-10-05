@@ -10,7 +10,7 @@ import { useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { useDispatch } from 'react-redux';
-import { fetchApplications, fetchCrossTenantsNotices } from '@store/status/actions';
+import { fetchApplications } from '@store/status/actions';
 import { RootState } from '@store/index';
 import { PageLoader } from '@components/PageLoader';
 
@@ -30,7 +30,6 @@ const ServiceStatusPage = (): JSX.Element => {
 
   useEffect(() => {
     dispatch(fetchApplications(realm));
-    dispatch(fetchCrossTenantsNotices());
   }, [realm]);
 
   const services = () => {

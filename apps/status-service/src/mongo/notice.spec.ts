@@ -40,13 +40,13 @@ describe('Service status mongo repository', () => {
         tennantServRef: "[{\"id\":\"6148f920213a6f00121531b4\",\"name\":\"mock-application\"}]",
         startDate: new Date("2021-09-27T16:00:00.000Z"),
         endDate: new Date("2021-09-27T20:00:00.000Z"),
-        isCrossTenants: true
+        isAllApplications: true
       }
     ]);
 
     const results = await repo.find(10, 0, {})
     expect(results.results[0].message).toEqual('Test');
-    expect(results.results[0].isCrossTenants).toEqual(true);
+    expect(results.results[0].isAllApplications).toEqual(true);
     const isDelete = await repo.delete(results.results[0]);
     expect(isDelete).toEqual(true);
   });
