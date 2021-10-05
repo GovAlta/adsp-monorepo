@@ -3,7 +3,7 @@ import { saveNotice } from '@store/notice/actions';
 import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useParams } from 'react-router-dom';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton, GoACheckbox } from '@abgov/react-components';
 import { GoAForm, GoAFormItem, GoAFormButtons } from '@components/Form';
 import TimePicker from 'react-time-picker';
 import DatePicker from 'react-date-picker';
@@ -29,6 +29,7 @@ function NoticeForm(): JSX.Element {
   const [endTime, setEndTime] = useState('14:00');
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState({});
+  const [isAllApplications, setIsAllApplications] = useState(false);
 
   const { applications, notices } = useSelector((state: RootState) => ({
     applications: state.serviceStatus.applications,
@@ -45,8 +46,7 @@ function NoticeForm(): JSX.Element {
       setEndDate(currentEndDate);
 
       setStartTime(
-        `${currentStartDate.getHours()}:${
-          currentStartDate.getMinutes() < 10 ? '0' : ''
+        `${currentStartDate.getHours()}:${currentStartDate.getMinutes() < 10 ? '0' : ''
         }${currentStartDate.getMinutes()}`
       );
       setEndTime(
@@ -57,10 +57,12 @@ function NoticeForm(): JSX.Element {
       let parsedApplications = [];
       try {
         parsedApplications = notice.tennantServRef;
+
       } catch (e) {
         console.log(e);
       } finally {
         setSelectedApplications(parsedApplications);
+        setIsAllApplications(notice.isAllApplications);
       }
     }
   }, []);
@@ -86,7 +88,7 @@ function NoticeForm(): JSX.Element {
   }
 
   function formErrors() {
-    const applicationSelectedConst = applicationSelectedErrors();
+    const applicationSelectedConst = isAllApplications ? null : applicationSelectedErrors();
     const validDateRangeConst = validDateRangeErrors();
     const messageExistsConst = messageExistsErrors();
 
@@ -109,6 +111,7 @@ function NoticeForm(): JSX.Element {
           tennantServRef: selectedApplications,
           startDate: dateTime(startDate, startTime),
           endDate: dateTime(endDate, endTime),
+          isAllApplications: isAllApplications
         })
       );
 
@@ -146,24 +149,35 @@ function NoticeForm(): JSX.Element {
 
         <div>
           <ErrorWrapper className={errors?.['applications'] && 'error'}>
-            <label>Application</label>
-            <MultiDropdownStyle>
-              <Multiselect
-                options={applications}
-                onSelect={onSelect}
-                onRemove={onSelect}
-                displayValue="name"
-                selectedValues={selectedApplications}
-                placeholder=""
-                showCheckbox
-                singleSelect
-                avoidHighlightFirstOption
-                customCloseIcon={<img src={CloseIcon} alt="Close" width="16" />}
-              />
-            </MultiDropdownStyle>
+            <label className='notice-title'>Application</label>
+            <div>
+              <GoACheckbox checked={isAllApplications}
+                labelPosition='after'
+                data-testid='notice-form-all-applications-checkbox'
+                selectionChange={() => { setIsAllApplications(!isAllApplications) }}>
+                <span>All applications</span>
+              </GoACheckbox>
+            </div>
+            {isAllApplications === false &&
+              <MultiDropdownStyle>
+                <Multiselect
+                  options={applications}
+                  onSelect={onSelect}
+                  onRemove={onSelect}
+                  displayValue="name"
+                  selectedValues={selectedApplications}
+                  placeholder=""
+                  showCheckbox
+                  singleSelect
+                  avoidHighlightFirstOption
+                  customCloseIcon={<img src={CloseIcon} alt="Close" width="16" />}
+                />
+              </MultiDropdownStyle>}
             <div className="error-msg">{errors?.['applications']}</div>
           </ErrorWrapper>
         </div>
+
+
         <ErrorWrapper className={errors?.['date'] && 'error'}>
           <div className="row-flex">
             <div className="flex1 mr-1">
@@ -217,7 +231,6 @@ function NoticeForm(): JSX.Element {
 
           <div className="error-msg">{errors?.['date']}</div>
         </ErrorWrapper>
-
         <GoAFormButtons>
           <GoAButton buttonType="tertiary" data-testid="notice-form-cancel" onClick={cancel}>
             Cancel
@@ -248,14 +261,14 @@ export const NoticeFormStyle = styled.div`
   .ml-1 {
     margin-left: 1em;
   }
-`;
 
-export const ErrorWrapper = styled.div`
-  label {
+  label.notice-title {
     font-weight: var(--fw-bold);
     color: var(--color-gray-900);
   }
+`;
 
+export const ErrorWrapper = styled.div`
   .error-msg {
     display: none;
   }

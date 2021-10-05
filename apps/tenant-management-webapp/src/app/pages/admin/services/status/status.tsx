@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Page, Main, Aside } from '@components/Html';
 import { deleteApplication, fetchServiceStatusApps, toggleApplicationStatus } from '@store/status/actions';
 import { RootState } from '@store/index';
+import ReactTooltip from 'react-tooltip';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   ServiceStatusType,
@@ -35,8 +36,10 @@ import SupportLinks from '@components/SupportLinks';
 function Status(): JSX.Element {
   const dispatch = useDispatch();
 
-  const { applications } = useSelector((state: RootState) => ({
+  const { applications, serviceStatusAppUrl, tenantName } = useSelector((state: RootState) => ({
     applications: state.serviceStatus.applications,
+    serviceStatusAppUrl: state.config.serviceUrls.serviceStatusAppUrl,
+    tenantName: state.tenant.name,
   }));
 
   const location = useLocation();
@@ -47,6 +50,12 @@ function Status(): JSX.Element {
 
     return () => clearInterval(intervalId);
   }, []);
+
+  const publicStatusUrl = `${serviceStatusAppUrl}/${tenantName.replace(/\s/g, '-').toLowerCase()}`;
+
+  const _afterShow = (copyText) => {
+    navigator.clipboard.writeText(copyText);
+  };
 
   useEffect(() => {
     dispatch(getNotices());
@@ -117,6 +126,23 @@ function Status(): JSX.Element {
           See the code
         </a>
         <SupportLinks />
+
+        <h3>Public Status Page</h3>
+
+        <p>Url of the current tenant's public status page:</p>
+
+        <div className="copy-url">{publicStatusUrl}</div>
+        <GoAButton data-tip="Copied!" data-for="registerTipUrl">
+          Click to copy
+        </GoAButton>
+        <ReactTooltip
+          id="registerTipUrl"
+          place="top"
+          event="click"
+          eventOff="blur"
+          effect="solid"
+          afterShow={() => _afterShow(publicStatusUrl)}
+        />
       </Aside>
 
       <Switch>

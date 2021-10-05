@@ -2,8 +2,8 @@ import React from 'react';
 
 import styled from 'styled-components';
 import { GoACallout } from '@abgov/react-components';
-import { Notice } from '@store/status/models'
-import { LocalTime } from '@components/Date'
+import { Notice } from '@store/status/models';
+import { LocalTime } from '@components/Date';
 interface ServiceOptions {
   name: string;
   date: string;
@@ -27,8 +27,8 @@ function upcaseFirstLetterInEachWord(sentence: string) {
 }
 
 export function ServiceStatus(props: ServiceOptions): JSX.Element {
-  const { name, date, state, description, notices } = props
-  let stateProper = state.charAt(0).toUpperCase() + state.slice(1);
+  const { name, date, state, description, notices } = props;
+  let stateProper = state?.charAt(0).toUpperCase() + state?.slice(1) || '';
   stateProper = upcaseFirstLetterInEachWord(stateProper.replace('-', ' '));
 
   const backgroundColors: DescriptiveStrings = {
@@ -84,40 +84,31 @@ export function ServiceStatus(props: ServiceOptions): JSX.Element {
             </div>
           </div>
           <div className="date-assignment-status">
-            <i data-testid='service-created-date'>{date}</i>
+            <i data-testid="service-created-date">{date}</i>
           </div>
-          <div>
-            {description}
-          </div>
+          <div>{description}</div>
           {notices.map((notice) => {
             return (
-              <div data-testid='service-notice'>
-                <GoACallout
-                  title='Notice'
-                  type='important'
-                  key={`{notice-${notice.id}}`}
-                >
-                  <div data-testid='service-notice-message'>
-                    {notice.message}
-                  </div><br />
-                  <div data-testid='service-notice-date-range'>
+              <div data-testid="service-notice">
+                <GoACallout title="Notice" type="important" key={`{notice-${notice.id}}`}>
+                  <div data-testid="service-notice-message">{notice.message}</div>
+                  <br />
+                  <div data-testid="service-notice-date-range">
                     From <LocalTime date={notice.startDate} /> to <LocalTime date={notice.endDate} />
                   </div>
                 </GoACallout>
               </div>
-            )
+            );
           })}
-
         </div>
       </div>
-    </ServiceStatusCss >
+    </ServiceStatusCss>
   );
 }
 
 export default ServiceStatus;
 
 const ServiceStatusCss = styled.div`
-
   .grey-border {
     border: 1px solid #dcdcdc;
     border-radius: 3px;

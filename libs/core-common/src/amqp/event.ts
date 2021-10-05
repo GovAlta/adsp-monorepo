@@ -1,13 +1,15 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { Connection, Channel, ConsumeMessage } from 'amqplib';
+import { AmqpConnectionManager } from 'amqp-connection-manager';
+import { ConfirmChannel, ConsumeMessage } from 'amqplib';
 import type { Logger } from 'winston';
 import type { DomainEvent, DomainEventSubscriberService } from '../event';
 import { AmqpWorkQueueService } from './work';
 
 export class AmqpEventSubscriberService
   extends AmqpWorkQueueService<DomainEvent>
-  implements DomainEventSubscriberService {
-  constructor(queue: string, logger: Logger, connection: Connection) {
+  implements DomainEventSubscriberService
+{
+  constructor(queue: string, logger: Logger, connection: AmqpConnectionManager) {
     super(queue, logger, connection);
   }
 
@@ -23,7 +25,7 @@ export class AmqpEventSubscriberService
     } as DomainEvent;
   }
 
-  protected async assertQueueConfiguration(channel: Channel): Promise<void> {
+  protected async assertQueueConfiguration(channel: ConfirmChannel): Promise<void> {
     await super.assertQueueConfiguration(channel);
     await channel.assertExchange('domain-events', 'topic');
     await channel.bindQueue(this.queue, 'domain-events', '#');

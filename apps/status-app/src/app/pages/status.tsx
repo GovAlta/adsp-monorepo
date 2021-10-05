@@ -98,7 +98,7 @@ const ServiceStatusPage = (): JSX.Element => {
           <section>
             <SectionView />
           </section>
-          <section>{}</section>
+          <section>{ }</section>
         </ServiceStatusesCss>
       </main>
       <Footer>

@@ -1,24 +1,30 @@
-import { Connection, Channel, ConsumeMessage } from 'amqplib';
+import { ConfirmChannel, ConsumeMessage } from 'amqplib';
 import { Logger } from 'winston';
 import { Observable, Subscriber } from 'rxjs';
 import { WorkItem, WorkQueueService } from '../work';
 import { InvalidOperationError } from '../errors';
+import { AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-manager';
 
 export class AmqpWorkQueueService<T> implements WorkQueueService<T> {
   connected = false;
-  channel: Channel = null;
+  channel: ChannelWrapper = null;
 
-  constructor(protected queue: string, protected logger: Logger, protected connection: Connection) {
-    connection.on('close', () => {
-      this.connected = false;
-    });
-  }
+  constructor(protected queue: string, protected logger: Logger, protected connection: AmqpConnectionManager) {}
 
   isConnected(): boolean {
     return this.connected;
   }
 
-  protected async assertQueueConfiguration(channel: Channel): Promise<void> {
+  private setup = async (channel: ConfirmChannel): Promise<void> => {
+    try {
+      return await this.assertQueueConfiguration(channel);
+    } catch (err) {
+      this.logger.error(`Error encountered in configuring queue. ${err}`);
+      throw err;
+    }
+  };
+
+  protected async assertQueueConfiguration(channel: ConfirmChannel): Promise<void> {
     await channel.assertExchange(`${this.queue}-dead-letter`, 'topic');
     await channel.assertQueue(`undelivered-${this.queue}`, {
       arguments: {
@@ -34,10 +40,12 @@ export class AmqpWorkQueueService<T> implements WorkQueueService<T> {
     });
   }
 
-  async connect(): Promise<boolean> {
+  connect = async (): Promise<boolean> => {
     try {
-      const channel = await this.connection.createChannel();
-      await this.assertQueueConfiguration(channel);
+      this.channel = this.connection.createChannel({
+        json: false,
+        setup: this.setup,
+      });
 
       this.connected = true;
     } catch (err) {
@@ -45,21 +53,19 @@ export class AmqpWorkQueueService<T> implements WorkQueueService<T> {
     }
 
     return this.connected;
-  }
+  };
 
   async enqueue(item: T): Promise<void> {
-    if (!this.channel) {
-      this.channel = await this.connection.createChannel();
-    }
-
     try {
-      this.channel.sendToQueue(this.queue, Buffer.from(JSON.stringify(item)), {
+      const sent = await this.channel.sendToQueue(this.queue, Buffer.from(JSON.stringify(item)), {
         contentType: 'application/json',
       });
+
+      if (!sent) {
+        this.logger.error(`Failed to enqueue work item due to broker rejection or connection close.`);
+      }
     } catch (err) {
       this.logger.error(`Error encountered on sending work item: ${err}`);
-      this.channel.close();
-      this.channel = null;
     }
   }
 
@@ -67,13 +73,10 @@ export class AmqpWorkQueueService<T> implements WorkQueueService<T> {
     const payload = JSON.parse(msg.content.toString());
     const headers = msg.properties.headers;
 
-    return ({ ...headers, ...payload } as unknown) as T;
+    return { ...headers, ...payload } as unknown as T;
   }
 
   private onSubscribed = async (sub: Subscriber<WorkItem<T>>): Promise<void> => {
-    if (!this.channel) {
-      this.channel = await this.connection.createChannel();
-    }
     const channel = this.channel;
     channel.consume(this.queue, (msg) => {
       // If the message is redelivered, then don't requeue on failure, and let it go to dead letter.
@@ -96,7 +99,7 @@ export class AmqpWorkQueueService<T> implements WorkQueueService<T> {
         });
       } catch (err) {
         this.logger.error(
-          `Processing of item with routing key ${msg.fields.routingKey} failed and will NOT be retried. ${err}`
+          `Processing of item with routing key ${msg?.fields?.routingKey} failed and will NOT be retried. ${err}`
         );
         channel.nack(msg, false, false);
       }

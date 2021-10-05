@@ -22,7 +22,12 @@ describe('ServiceStatus Page', () => {
 
   it('renders the main page', async () => {
     const store = mockStore({
-      tenant: {},
+      tenant: { name: 'Child Services' },
+      config: {
+        serviceUrls: {
+          serviceStatusAppUrl: 'http://www.somefakesite.com',
+        },
+      },
       serviceStatus: {
         applications: [
           {
@@ -90,7 +95,12 @@ describe('ServiceStatus Page', () => {
 
   it('toggles an application status', async () => {
     const store = mockStore({
-      tenant: {},
+      tenant: { name: 'Child Services' },
+      config: {
+        serviceUrls: {
+          serviceStatusAppUrl: 'http://www.somefakesite.com',
+        },
+      },
       serviceStatus: {
         applications: [
           {

@@ -14,7 +14,6 @@ export interface NoticeRouterProps {
 interface NoticeFilter {
   mode?: NoticeModeType;
   tenantId?: string;
-  isCrossTenants?: boolean;
 }
 
 interface applicationRef {
@@ -38,7 +37,8 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
 
   // Get notices by query
   router.get('/notices', async (req, res, next) => {
-    const { top, after, mode, all } = req.query;
+    const { top, after, mode } = req.query;
+    const tenantIdFromQuery = req.query.tenantId
     const user = req.user as Express.User;
 
     logger.info(req.method, req.url);
@@ -56,8 +56,9 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
         filter.mode = mode ? (mode.toString() as NoticeModeType) : null;
       }
 
-      if (all) {
-        filter.isCrossTenants = true;
+      if (tenantIdFromQuery) {
+        filter.tenantId = tenantIdFromQuery.toString();
+        filter.mode = 'active'
       }
 
       const applications = await noticeRepository.find(
@@ -129,7 +130,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
     logger.info(`${req.method} - ${req.url}`);
 
     try {
-      const { message, startDate, endDate, isCrossTenants } = req.body;
+      const { message, startDate, endDate, isAllApplications } = req.body;
       const tennantServRef = parseTenantServRef(req.body.tennantServRef)
 
       const user = req.user as Express.User;
@@ -140,7 +141,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
         endDate,
         mode: 'draft',
         created: new Date(),
-        isCrossTenants: isCrossTenants || false,
+        isAllApplications: isAllApplications || false,
         tenantId: user.tenantId.toString(),
       });
       res.status(201).json({ ...notice, tennantServRef: JSON.parse(notice.tennantServRef) });
@@ -155,7 +156,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
   router.patch('/notices/:id', assertAuthenticatedHandler, async (req, res, next) => {
     logger.info(`${req.method} - ${req.url}`);
 
-    const { message, startDate, endDate, mode, isCrossTenants } = req.body;
+    const { message, startDate, endDate, mode, isAllApplications } = req.body;
     const { id } = req.params;
     const user = req.user as Express.User;
     const tennantServRef = parseTenantServRef(req.body.tennantServRef)
@@ -173,7 +174,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
         startDate,
         endDate,
         mode,
-        isCrossTenants,
+        isAllApplications,
       });
 
       res.status(200).json(
