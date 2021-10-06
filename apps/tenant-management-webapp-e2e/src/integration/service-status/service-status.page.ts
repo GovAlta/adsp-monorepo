@@ -19,7 +19,7 @@ class StatusServicePage {
 
   noticeModalTitle() {
     return cy.xpath(
-      '//div[@class="modal-root" and @data-state="visible"]/div[@class="modal"]/div[@class="modal-content"]/div[@class="modal-title"]'
+      '//div[@class="modal-root" and @data-state="visible"]/div[@class="modal"]/div[@class="modal-container"]/div[@class="modal-title"]'
     );
   }
 
@@ -69,6 +69,10 @@ class StatusServicePage {
 
   noticeCardGearButton(index) {
     return cy.xpath(`//*[@data-testid="notice-list"]/div/div[${index}]//*[@data-testid="notice-card-gear-button"]`);
+  }
+
+  noticeCardGearButtons() {
+    return cy.get('[data-testid="notice-card-gear-button"]');
   }
 
   noticeCardEditMenu(index) {
