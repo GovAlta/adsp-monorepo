@@ -11,7 +11,6 @@ import { GoAButton, GoARadioGroup, GoARadio } from '@abgov/react-components';
 import { GoAForm } from '@abgov/react-components/experimental';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
-import { Main } from '@components/Html';
 import DownloadIcon from '@icons/download-outline.svg';
 import DeleteIcon from '@icons/trash-outline.svg';
 import './file.css';
@@ -61,7 +60,7 @@ const FileList = (): JSX.Element => {
   }, [dispatch]);
 
   return (
-    <Main>
+    <>
       <GoAForm>
         <h3>Please upload a File</h3>
 
@@ -111,7 +110,7 @@ const FileList = (): JSX.Element => {
           })}
         </tbody>
       </DataTable>
-    </Main>
+    </>
   );
 };
 
