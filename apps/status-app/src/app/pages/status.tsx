@@ -32,9 +32,9 @@ const ServiceStatusPage = (): JSX.Element => {
     dispatch(fetchApplications(realm));
   }, [realm]);
 
-  const services = () => {
-    const sampleTime = new Date(applications[0].statusTimestamp);
+  const timeZone = new Date().toString().split('(')[1].split(')')[0];
 
+  const services = () => {
     return (
       <div className="small-container">
         <PageLoader />
@@ -47,15 +47,10 @@ const ServiceStatusPage = (): JSX.Element => {
           <a href="mailto: DIO@gov.ab.ca">contact support</a> for additional information or any other inquiries
           regarding service statuses.
         </p>
-        <br />
-
         <div style={{ textAlign: 'right' }}>
-          <i>
-            Times are in your local timezone: {sampleTime.toString().split('(')[1].split(')')[0]} (GMT
-            {sampleTime.getTimezoneOffset() < 0 ? '+' : ''}
-            {sampleTime.getTimezoneOffset() / -60})
-          </i>
+          <i>All times are in {timeZone}</i>
         </div>
+        <br />
         <Grid>
           {applications.map((app, index) => {
             return (
