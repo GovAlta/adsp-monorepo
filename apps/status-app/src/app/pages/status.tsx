@@ -47,7 +47,7 @@ const ServiceStatusPage = (): JSX.Element => {
           <a href="mailto: DIO@gov.ab.ca">contact support</a> for additional information or any other inquiries
           regarding service statuses.
         </p>
-        <div style={{ textAlign: 'right' }}>
+        <div className="timezone">
           <i>All times are in {timeZone}</i>
         </div>
         <br />
@@ -156,6 +156,12 @@ const ServiceStatusesCss = styled.div`
 
   .flex {
     flex: 1;
+  }
+
+  .timezone {
+    text-align: right;
+    color: #70757a;
+    font-size: 13px;
   }
 `;
 
