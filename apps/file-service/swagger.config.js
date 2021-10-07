@@ -31,38 +31,12 @@ module.exports = {
   ],
   components: {
     securitySchemes: {
-      tenant: {
-        type: 'oauth2',
-        description: 'Authentication flow for tenant login through GoA SSO in tenant realm.',
-        flows: {
-          authorizationCode: {
-            authorizationUrl: `<KEYCLOAK_ROOT>/auth/realms/${tenant}/protocol/openid-connect/auth`,
-            tokenUrl: `<KEYCLOAK_ROOT>/auth/realms/${tenant}/protocol/openid-connect/token`,
-            scopes: {
-              email: '',
-            },
-          },
-        },
-      },
-      platformFileServiceAdmin: {
-        type: 'oauth2',
-        description: 'Authentication flow for platform admin',
-        flows: {
-          password: {
-            tokenUrl: `<KEYCLOAK_ROOT>/auth/realms/core/protocol/openid-connect/token`,
-            clientId: 'tenant-api',
-            scopes: {
-              email: '',
-            },
-          },
-        },
+      accessToken: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
       },
     },
   },
-  security: [
-    {
-      tenant: ['email'],
-      platformFileServiceAdmin: ['email'],
-    },
-  ],
+  security: [{ accessToken: [] }],
 };

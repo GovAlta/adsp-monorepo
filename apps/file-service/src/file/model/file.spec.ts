@@ -1,51 +1,41 @@
-import { renameSync, unlink } from 'fs';
-import { Mock, It } from 'moq.ts';
 import { adspId, User } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
+import { Mock, It, Times } from 'moq.ts';
+import { Readable } from 'stream';
 import { FileRepository } from '../repository';
 import { FileRecord } from '../types';
 import { FileEntity } from './file';
 import { FileTypeEntity } from './type';
-import path = require('path');
-
-jest.mock('fs', () => ({
-  renameSync: jest.fn(),
-  unlink: jest.fn((o, cb) => cb(null)),
-}));
-const renameSyncMock = (renameSync as unknown) as jest.Mock<typeof renameSync>;
-const unlinkMock = (unlink as unknown) as jest.Mock<typeof unlink>;
+import { FileStorageProvider } from '../storage';
 
 describe('File Entity', () => {
+  const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const user: User = {
     id: 'user-2',
     name: 'testy',
     email: 'test@testco.org',
     roles: ['test-admin'],
-    tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
+    tenantId,
     isCore: false,
     token: null,
   };
 
-  const storagePath = 'files';
-  const separator = path.sep === '/' ? '/' : '\\';
-  const typePath = `${storagePath}${separator}test${separator}file-type-1`;
-
+  let storageProviderMock: Mock<FileStorageProvider> = null;
   let repositoryMock: Mock<FileRepository> = null;
   let typeMock: Mock<FileTypeEntity> = null;
+  let contentMock: Mock<Readable>;
 
   beforeEach(() => {
-    renameSyncMock.mockClear();
-    unlinkMock.mockClear();
-
+    storageProviderMock = new Mock<FileStorageProvider>();
     repositoryMock = new Mock<FileRepository>();
     typeMock = new Mock<FileTypeEntity>();
+    contentMock = new Mock<Readable>();
   });
 
   it('can be initialized for new record', () => {
     const file = {
       filename: 'test.txt',
       recordId: 'my-record-1',
-      size: 100,
       created: new Date(),
       createdBy: {
         id: 'user-1',
@@ -53,14 +43,12 @@ describe('File Entity', () => {
       },
     };
 
-    const entity = new FileEntity(repositoryMock.object(), typeMock.object(), file);
+    const entity = new FileEntity(storageProviderMock.object(), repositoryMock.object(), typeMock.object(), file);
 
     expect(entity).toBeTruthy();
     expect(entity.id).toBeTruthy();
-    expect(entity.storage).toBeTruthy();
     expect(entity.filename).toEqual(file.filename);
     expect(entity.recordId).toEqual(file.recordId);
-    expect(entity.size).toEqual(file.size);
     expect(entity.created).toEqual(file.created);
     expect(entity.createdBy).toEqual(file.createdBy);
     expect(entity.scanned).toBeFalsy();
@@ -69,8 +57,8 @@ describe('File Entity', () => {
 
   it('can be initialized for existing record', () => {
     const file: FileRecord = {
+      tenantId,
       id: 'file-1',
-      storage: 'file-store-1',
       filename: 'test.txt',
       recordId: 'my-record-1',
       size: 100,
@@ -83,11 +71,10 @@ describe('File Entity', () => {
       deleted: true,
     };
 
-    const entity = new FileEntity(repositoryMock.object(), typeMock.object(), file);
+    const entity = new FileEntity(storageProviderMock.object(), repositoryMock.object(), typeMock.object(), file);
 
     expect(entity).toBeTruthy();
     expect(entity.id).toEqual(file.id);
-    expect(entity.storage).toEqual(file.storage);
     expect(entity.filename).toEqual(file.filename);
     expect(entity.recordId).toEqual(file.recordId);
     expect(entity.size).toEqual(file.size);
@@ -99,9 +86,7 @@ describe('File Entity', () => {
 
   it('can create new', async () => {
     typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(true);
-
-    typeMock.setup((m) => m.getPath(It.Is<string>((storage) => !!storage))).returns(typePath);
-
+    storageProviderMock.setup((m) => m.saveFile(It.IsAny(), contentMock.object())).returns(Promise.resolve(true));
     repositoryMock.setup((m) => m.save(It.IsAny())).callback((i) => Promise.resolve(i.args[0]));
 
     const file = {
@@ -116,17 +101,45 @@ describe('File Entity', () => {
     };
 
     const fileEntity = await FileEntity.create(
-      user,
+      storageProviderMock.object(),
       repositoryMock.object(),
+      user,
       typeMock.object(),
       file,
-      'tmp-file',
-      storagePath
+      contentMock.object()
     );
 
     expect(fileEntity).toBeTruthy();
-    expect(renameSyncMock.mock.calls[0][0]).toEqual('tmp-file');
-    expect(renameSyncMock.mock.calls[0][1]).toEqual(`${typePath}${separator}${fileEntity.storage}`);
+  });
+
+  it('can create new and delete on storage failure', async () => {
+    typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(true);
+    storageProviderMock.setup((m) => m.saveFile(It.IsAny(), contentMock.object())).returns(Promise.resolve(false));
+    storageProviderMock.setup((m) => m.deleteFile(It.IsAny())).returns(Promise.resolve(true));
+    repositoryMock.setup((m) => m.save(It.IsAny())).callback((i) => Promise.resolve(i.args[0]));
+    repositoryMock.setup((m) => m.delete(It.IsAny())).returns(Promise.resolve(true));
+
+    const file = {
+      filename: 'test.txt',
+      recordId: 'my-record-1',
+      size: 100,
+      created: new Date(),
+      createdBy: {
+        id: 'user-1',
+        name: 'testy',
+      },
+    };
+
+    await expect(
+      FileEntity.create(
+        storageProviderMock.object(),
+        repositoryMock.object(),
+        user,
+        typeMock.object(),
+        file,
+        contentMock.object()
+      )
+    ).rejects.toThrowError(Error);
   });
 
   it('can prevent unauthorized user create new', async () => {
@@ -144,7 +157,14 @@ describe('File Entity', () => {
     };
 
     try {
-      await FileEntity.create(user, repositoryMock.object(), typeMock.object(), file, 'tmp-file', storagePath);
+      await FileEntity.create(
+        storageProviderMock.object(),
+        repositoryMock.object(),
+        user,
+        typeMock.object(),
+        file,
+        contentMock.object()
+      );
     } catch (err) {
       expect(err).toBeInstanceOf(UnauthorizedError);
     }
@@ -154,8 +174,8 @@ describe('File Entity', () => {
     let entity: FileEntity = null;
     beforeEach(() => {
       const file: FileRecord = {
+        tenantId,
         id: 'file-1',
-        storage: 'file-store-1',
         filename: 'test.txt',
         recordId: 'my-record-1',
         size: 100,
@@ -168,18 +188,11 @@ describe('File Entity', () => {
         deleted: false,
       };
 
-      entity = new FileEntity(repositoryMock.object(), typeMock.object(), file);
+      entity = new FileEntity(storageProviderMock.object(), repositoryMock.object(), typeMock.object(), file);
 
       typeMock.setup((m) => m.canUpdateFile(user)).returns(true);
-
-      typeMock.setup((m) => m.getPath(storagePath)).returns(typePath);
-
+      storageProviderMock.setup((m) => m.saveFile(entity, contentMock.object())).returns(Promise.resolve(true));
       repositoryMock.setup((m) => m.save(entity)).returns(Promise.resolve(entity));
-    });
-
-    it('can get file path', () => {
-      const path = entity.getFilePath(storagePath);
-      expect(path).toEqual(`${typePath}${separator}${entity.storage}`);
     });
 
     it('can check user access for user with access to type', () => {
@@ -196,25 +209,34 @@ describe('File Entity', () => {
       expect(canAccess).toBeFalsy();
     });
 
-    it('can record access', (done) => {
-      const accessed = new Date();
-      entity.accessed(accessed).then((result) => {
-        expect(result.lastAccessed).toEqual(accessed);
+    it('can read file', (done) => {
+      const start = new Date();
+      typeMock.setup((m) => m.canAccessFile(user)).returns(true);
+      storageProviderMock.setup((m) => m.readFile(entity)).returns(Promise.resolve(contentMock.object()));
+      repositoryMock.setup((m) => m.save(entity)).returns(Promise.resolve(entity));
+
+      entity.readFile(user).then((result) => {
+        expect(result).toBe(contentMock.object());
+        expect(entity.lastAccessed >= start).toBeTruthy();
         done();
       });
     });
 
-    it('can record access with current date and time', (done) => {
-      const accessed = new Date();
-      entity.accessed().then((result) => {
-        expect(result.lastAccessed >= accessed).toBeTruthy();
-        done();
-      });
+    it('can throw on read by unauthorized', async () => {
+      typeMock.setup((m) => m.canAccessFile(user)).returns(true);
+      expect(entity.readFile(null)).rejects.toThrowError(UnauthorizedError);
     });
 
     it('can mark for delete', (done) => {
       entity.markForDeletion(user).then((result) => {
         expect(result.deleted).toEqual(true);
+        done();
+      });
+    });
+
+    it('can set size', (done) => {
+      entity.setSize(101).then((entity) => {
+        expect(entity.size).toBe(101);
         done();
       });
     });
@@ -228,22 +250,28 @@ describe('File Entity', () => {
     });
 
     it('can delete', (done) => {
+      storageProviderMock.setup((m) => m.deleteFile(entity)).returns(Promise.resolve(true));
       repositoryMock.setup((m) => m.delete(entity)).returns(Promise.resolve(true));
 
       entity.deleted = true;
-      entity.delete(storagePath).then((deleted) => {
+      entity.delete().then((deleted) => {
         expect(deleted).toBeTruthy();
 
-        expect(unlinkMock.mock.calls[0][0]).toEqual(`${typePath}${separator}${entity.storage}`);
         done();
       });
     });
 
-    it('can prevent delete of file not marked for deletion', () => {
+    it('can prevent delete of file not marked for deletion', async () => {
       entity.deleted = false;
-      expect(() => {
-        entity.delete(storagePath);
-      }).toThrowError(InvalidOperationError);
+      await expect(entity.delete()).rejects.toThrowError(InvalidOperationError);
+    });
+
+    it('can throw on delete for storage failure', async () => {
+      storageProviderMock.setup((m) => m.deleteFile(entity)).returns(Promise.resolve(false));
+      repositoryMock.setup((m) => m.delete(entity)).returns(Promise.resolve(true));
+
+      entity.deleted = true;
+      await expect(entity.delete()).rejects.toThrowError(Error);
     });
 
     it('can update scan result', (done) => {

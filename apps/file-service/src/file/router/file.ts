@@ -1,229 +1,182 @@
-import * as path from 'path';
-import * as appRoot from 'app-root-path';
-import { Router } from 'express';
-import * as validFilename from 'valid-filename';
-import { Logger } from 'winston';
+import { EventService } from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
   UnauthorizedError,
   NotFoundError,
   InvalidOperationError,
-  AuthAssert,
 } from '@core-services/core-common';
-import { FileRepository, FileSpaceRepository } from '../repository';
-import { FileEntity } from '../model';
-import { createUpload } from '../upload';
+import { RequestHandler, Router } from 'express';
+import { Logger } from 'winston';
+import { FileRepository } from '../repository';
+import { FileEntity, FileTypeEntity } from '../model';
+import { createUpload } from './upload';
 import { FileCriteria } from '../types/file';
-import { EventService } from '@abgov/adsp-service-sdk';
 import { fileDeleted, fileUploaded } from '../events';
-import { MiddlewareWrapper } from './middlewareWrapper';
+import { ServiceConfiguration } from '../configuration';
+import { FileStorageProvider } from '../storage';
 
 interface FileRouterProps {
   logger: Logger;
-  rootStoragePath: string;
-  spaceRepository: FileSpaceRepository;
+  storageProvider: FileStorageProvider;
   fileRepository: FileRepository;
   eventService: EventService;
 }
 
-export const createFileRouter = ({
-  logger,
-  rootStoragePath,
-  spaceRepository,
-  fileRepository,
-  eventService,
-}: FileRouterProps): Router => {
-  const upload = createUpload({ rootStoragePath });
-  const fileRouter = Router();
+function mapFileType(entity: FileTypeEntity) {
+  return {
+    id: entity.id,
+    name: entity.name,
+    anonymousRead: entity.anonymousRead,
+    updateRoles: entity.updateRoles,
+    readRoles: entity.readRoles,
+  };
+}
 
-  fileRouter.post('/files', AuthAssert.assertMethod, upload.single('file'), async (req, res, next) => {
-    const user = req.user;
-    const { type, recordId, filename } = req.body;
-    const uploaded = req.file;
+function mapFile(entity: FileEntity) {
+  return {
+    id: entity.id,
+    filename: entity.filename,
+    size: entity.size,
+    typeName: entity.type?.name,
+    recordId: entity.recordId,
+    created: entity.created,
+    lastAccessed: entity.lastAccessed,
+    scanned: entity.scanned,
+    deleted: entity.deleted,
+  };
+}
 
-    if (filename && !validFilename(filename)) {
-      throw new InvalidOperationError(`Specified filename is not valid.`);
-    }
+export const getTypes: RequestHandler = async (req, res, next) => {
+  try {
+    const [configuration] = await req.getConfiguration<ServiceConfiguration>();
 
-    try {
-      if (!uploaded || !type) {
-        res.sendStatus(400);
-      } else {
-        const space = await spaceRepository.getIdByTenant(req.tenant);
-        const spaceEntity = await spaceRepository.get(space);
+    res.send(Object.values(configuration).map(mapFileType));
+  } catch (err) {
+    next(res);
+  }
+};
 
-        if (!spaceEntity) {
-          throw new NotFoundError('Space', space);
-        }
-
-        const fileType = spaceEntity.types[type];
-
-        if (!fileType) {
-          throw new NotFoundError('Type', type);
-        }
-
-        const fileEntity = await FileEntity.create(
-          user,
-          fileRepository,
-          fileType,
-          {
-            filename: filename || uploaded.originalname,
-            size: uploaded.size,
-            recordId,
-          },
-          uploaded.path,
-          rootStoragePath
-        );
-
-        const file = {
-          id: fileEntity.id,
-          filename: fileEntity.filename,
-          size: fileEntity.size,
-          typeName: fileEntity.type.name,
-          recordId: fileEntity.recordId,
-          created: fileEntity.created,
-          lastAccessed: fileEntity.lastAccessed,
-        };
-
-        res.json(file);
-
-        // This is an example.
-        eventService.send(
-          fileUploaded(user, {
-            id: fileEntity.id,
-            filename: fileEntity.filename,
-            size: fileEntity.size,
-            recordId: fileEntity.recordId,
-            created: fileEntity.created,
-            lastAccessed: fileEntity.lastAccessed,
-            createdBy: fileEntity.createdBy,
-          })
-        );
-
-        logger.info(
-          `File '${fileEntity.filename}' (ID: ${fileEntity.id}) uploaded by ` + `user '${user.name}' (ID: ${user.id}).`
-        );
-      }
-    } catch (err) {
-      next(err);
-    }
-  });
-
-  fileRouter.get('/files/fileType/:fileTypeId', async (req, res, next) => {
+export function getType(logger: Logger): RequestHandler {
+  return async (req, res, next) => {
     try {
       const { fileTypeId } = req.params;
-      const filesOfType = await fileRepository.exists({
-        typeEquals: fileTypeId,
-      });
+      const [configuration] = await req.getConfiguration<ServiceConfiguration>();
 
-      res.json({
-        exist: filesOfType,
-      });
+      const entity = configuration?.[fileTypeId];
+      if (!entity) {
+        throw new NotFoundError('File Type', fileTypeId);
+      }
+
+      res.send(mapFileType(entity));
     } catch (err) {
       next(err);
     }
-  });
+  };
+}
 
-  fileRouter.get('/files', MiddlewareWrapper.middlewareMethod, async (req, res, next) => {
-    const { top: topValue, after } = req.query;
-    const top = topValue ? parseInt(topValue as string) : 50;
-
+export function getFiles(repository: FileRepository): RequestHandler {
+  return async (req, res, next) => {
     try {
-      const spaceId = await spaceRepository.getIdByTenant(req.tenant);
-      if (!spaceId) {
-        throw new NotFoundError(`Space Not Found`, spaceId);
-      }
+      const user = req.user;
+      const tenantId = user.tenantId;
+      const { top: topValue, after } = req.query;
+      const top = topValue ? parseInt(topValue as string) : 50;
 
       const criteria: FileCriteria = {
-        spaceEquals: spaceId,
+        tenantEquals: tenantId.toString(),
         deleted: false,
       };
-      const files = await fileRepository.find(top, after as string, criteria);
-
-      if (!files) {
-        throw new NotFoundError(`There is no file in ${spaceId}`, spaceId);
-      }
+      const files = await repository.find(top, after as string, criteria);
 
       res.send({
         page: files.page,
-        results: files.results.map((n) => ({
-          id: n.id,
-          filename: n.filename,
-          size: n.size,
-          typeName: n.type?.name,
-          recordId: n.recordId,
-          created: n.created,
-          lastAccessed: n.lastAccessed,
-        })),
+        results: files.results.map(mapFile),
       });
     } catch (err) {
       next(err);
     }
-  });
+  };
+}
 
-  fileRouter.get('/files/:fileId', async (req, res, next) => {
-    const user = req.user;
-    const { fileId } = req.params;
+export function uploadFile(logger: Logger, eventService: EventService): RequestHandler {
+  return async (req, res, next) => {
     try {
-      const fileEntity = await fileRepository.get(fileId);
+      const user = req.user;
+      const fileEntity = req.fileEntity;
+      if (!fileEntity) {
+        throw new InvalidOperationError('No file uploaded.');
+      }
 
+      res.send(mapFile(fileEntity));
+
+      // This is an example.
+      eventService.send(
+        fileUploaded(user, {
+          id: fileEntity.id,
+          filename: fileEntity.filename,
+          size: fileEntity.size,
+          recordId: fileEntity.recordId,
+          created: fileEntity.created,
+          lastAccessed: fileEntity.lastAccessed,
+          createdBy: fileEntity.createdBy,
+        })
+      );
+
+      logger.info(
+        `File '${fileEntity.filename}' (ID: ${fileEntity.id}) uploaded by ` + `user '${user.name}' (ID: ${user.id}).`
+      );
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function getFile(repository: FileRepository): RequestHandler {
+  return async (req, _res, next) => {
+    try {
+      const user = req.user;
+      const { fileId } = req.params;
+
+      const fileEntity = await repository.get(fileId);
       if (!fileEntity) {
         throw new NotFoundError('File', fileId);
       } else if (!fileEntity.canAccess(user)) {
         throw new UnauthorizedError('User not authorized to access file.');
       }
 
-      res.json({
-        id: fileEntity.id,
-        filename: fileEntity.filename,
-        size: fileEntity.size,
-        typeName: fileEntity.type.name,
-        recordId: fileEntity.recordId,
-        created: fileEntity.created,
-        lastAccessed: fileEntity.lastAccessed,
-        scanned: fileEntity.scanned,
-        deleted: fileEntity.deleted,
-      });
+      req.fileEntity = fileEntity;
+      next();
     } catch (err) {
       next(err);
     }
-  });
+  };
+}
 
-  fileRouter.get('/files/:fileId/download', async (req, res, next) => {
+export const downloadFile: RequestHandler = async (req, res, next) => {
+  try {
     const user = req.user;
-    const { fileId } = req.params;
-    try {
-      const fileEntity = await fileRepository.get(fileId);
-      if (!fileEntity || fileEntity.deleted) {
-        throw new NotFoundError('File', fileId);
-      } else if (!fileEntity.canAccess(user)) {
-        throw new UnauthorizedError('User not authorized to access file.');
-      } else if (!fileEntity.scanned) {
-        throw new InvalidOperationError('File scan pending.');
-      } else {
-        const filePath = path.resolve(`${appRoot}`, await fileEntity.getFilePath(rootStoragePath));
-        res.sendFile(filePath, {
-          headers: {
-            'Content-Disposition': `attachment; filename="${fileEntity.filename}"`,
-            'Cache-Control': 'public',
-          },
-        });
-        fileEntity.accessed();
-      }
-    } catch (err) {
-      next(err);
+    const { unsafe } = req.query;
+    const fileEntity = req.fileEntity;
+    if (unsafe !== 'true' && !fileEntity.scanned) {
+      throw new InvalidOperationError('File scan pending.');
     }
-  });
 
-  fileRouter.delete('/files/:fileId', assertAuthenticatedHandler, async (req, res, next) => {
-    const user = req.user;
-    const { fileId } = req.params;
+    const stream = await fileEntity.readFile(user);
+    res.writeHead(200, null, {
+      'Content-Disposition': `attachment; filename="${fileEntity.filename}"`,
+      'Cache-Control': fileEntity.type.anonymousRead ? 'public' : 'no-store',
+    });
+    stream.pipe(res);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export function deleteFile(logger: Logger, eventService: EventService): RequestHandler {
+  return async (req, res, next) => {
     try {
-      const fileEntity = await fileRepository.get(fileId);
-
-      if (!fileEntity) {
-        throw new NotFoundError('File', fileId);
-      }
+      const user = req.user;
+      const fileEntity = req.fileEntity;
       await fileEntity.markForDeletion(user);
 
       logger.info(
@@ -231,7 +184,7 @@ export const createFileRouter = ({
           `user '${user.name}' (ID: ${user.id}).`
       );
 
-      res.json({ deleted: fileEntity.deleted });
+      res.send({ deleted: fileEntity.deleted });
 
       eventService.send(
         fileDeleted(user, {
@@ -247,7 +200,32 @@ export const createFileRouter = ({
     } catch (err) {
       next(err);
     }
-  });
+  };
+}
+
+export const createFileRouter = ({
+  logger,
+  storageProvider,
+  fileRepository,
+  eventService,
+}: FileRouterProps): Router => {
+  const upload = createUpload({ storageProvider, fileRepository });
+  const fileRouter = Router();
+
+  fileRouter.get('/types', assertAuthenticatedHandler, getTypes);
+  fileRouter.get('/types/:fileTypeId', assertAuthenticatedHandler, getType(logger));
+
+  fileRouter.get('/files', assertAuthenticatedHandler, getFiles(fileRepository));
+  fileRouter.post('/files', assertAuthenticatedHandler, upload.single('file'), uploadFile(logger, eventService));
+
+  fileRouter.delete(
+    '/files/:fileId',
+    assertAuthenticatedHandler,
+    getFile(fileRepository),
+    deleteFile(logger, eventService)
+  );
+  fileRouter.get('/files/:fileId', getFile(fileRepository), (req, res) => res.send(mapFile(req.fileEntity)));
+  fileRouter.get('/files/:fileId/download', getFile(fileRepository), downloadFile);
 
   return fileRouter;
 };

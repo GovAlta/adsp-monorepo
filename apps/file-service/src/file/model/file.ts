@@ -1,22 +1,18 @@
-import { ENOENT } from 'constants';
-import * as path from 'path';
-import * as fs from 'fs';
-import * as uniqueFilename from 'unique-filename';
-import { IsNotEmpty } from 'class-validator';
-import { User } from '@abgov/adsp-service-sdk';
+import { AdspId, User } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
-import { FileRecord, NewFile, UserInfo } from '../types';
+import { Readable } from 'stream';
+import { File, FileRecord, NewFile, ServiceUserRoles, UserInfo } from '../types';
 import { FileRepository } from '../repository';
 import { FileTypeEntity } from './type';
 import { v4 as uuidv4 } from 'uuid';
+import { FileStorageProvider } from '../storage';
 
-export class FileEntity implements FileRecord {
+export class FileEntity implements File {
+  tenantId: AdspId;
   id: string;
   recordId: string;
-  @IsNotEmpty()
   filename: string;
   size: number;
-  storage: string;
   createdBy: UserInfo;
   created: Date;
   lastAccessed?: Date;
@@ -24,18 +20,18 @@ export class FileEntity implements FileRecord {
   deleted = false;
 
   static async create(
-    user: User,
+    storageProvider: FileStorageProvider,
     repository: FileRepository,
+    user: User,
     type: FileTypeEntity,
     values: NewFile,
-    file: string,
-    rootStoragePath: string
+    content: Readable
   ): Promise<FileEntity> {
     if (!type.canUpdateFile(user)) {
       throw new UnauthorizedError('User not authorized to create file.');
     }
 
-    const entity = new FileEntity(repository, type, {
+    let entity = new FileEntity(storageProvider, repository, type, {
       ...values,
       created: new Date(),
       createdBy: {
@@ -44,20 +40,19 @@ export class FileEntity implements FileRecord {
       },
     });
 
-    return repository.save(entity).then(
-      (fileEntity) =>
-        new Promise<FileEntity>((resolve, reject) => {
-          try {
-            fs.renameSync(file, fileEntity.getFilePath(rootStoragePath));
-            return resolve(fileEntity);
-          } catch (err) {
-            return reject(err);
-          }
-        })
-    );
+    entity = await repository.save(entity);
+    const saved = await storageProvider.saveFile(entity, content);
+    if (!saved) {
+      // Deleted the record if the storage failed to save the file so we don't end up with orphans.
+      await entity.delete(true);
+      throw new Error(`Storage provide failed to save uploaded file: ${entity.filename}`);
+    }
+
+    return entity;
   }
 
   constructor(
+    private storageProvider: FileStorageProvider,
     private repository: FileRepository,
     public type: FileTypeEntity,
     values: (NewFile & { createdBy: UserInfo; created: Date }) | FileRecord
@@ -66,26 +61,32 @@ export class FileEntity implements FileRecord {
     this.filename = values.filename;
     this.createdBy = values.createdBy;
     this.created = values.created;
-    this.size = values.size;
     const record = values as FileRecord;
+
     if (record.id) {
+      this.tenantId = record.tenantId;
       this.id = record.id;
-      this.storage = record.storage;
       this.lastAccessed = record.lastAccessed;
       this.scanned = record.scanned;
       this.deleted = record.deleted;
+      this.size = record.size;
     } else {
+      this.tenantId = type.tenantId;
       this.id = uuidv4();
-      this.storage = uniqueFilename('');
     }
   }
 
   markForDeletion(user: User): Promise<FileEntity> {
-    if (!this.type.canUpdateFile(user)) {
+    if (!this.type?.canUpdateFile(user)) {
       throw new UnauthorizedError('User not authorized to delete file.');
     }
 
     this.deleted = true;
+    return this.repository.save(this);
+  }
+
+  setSize(size: number): Promise<FileEntity> {
+    this.size = size;
     return this.repository.save(this);
   }
 
@@ -98,30 +99,33 @@ export class FileEntity implements FileRecord {
     return this.repository.save(this);
   }
 
-  delete(rootStoragePath: string): Promise<boolean> {
-    if (!this.deleted) {
+  async delete(immediate?: boolean): Promise<boolean> {
+    if (!immediate && !this.deleted) {
       throw new InvalidOperationError('File not marked for deletion.');
     }
 
-    const filePath = this.getFilePath(rootStoragePath);
-    return new Promise<void>((resolve, reject) =>
-      // Delete the file first to avoid an orphaned file.
-      // If the error is file not found, then proceed with deletion of the record.
-      fs.unlink(filePath, (err) => (err && err.errno !== ENOENT ? reject(err) : resolve()))
-    ).then(() => this.repository.delete(this));
+    // Delete the storage first; easier to deal with a record and no file versus other way around.
+    const deleted = await this.storageProvider.deleteFile(this);
+    if (!deleted) {
+      throw new Error(`Storage failed to delete file ${this.filename} (ID: ${this.id}).`);
+    }
+
+    return await this.repository.delete(this);
   }
 
-  getFilePath(storageRoot: string): string {
-    const typePath = this.type.getPath(storageRoot);
-    return path.join(typePath, this.storage);
-  }
+  async readFile(user: User): Promise<Readable> {
+    if (!this.canAccess(user)) {
+      throw new UnauthorizedError('User not authorized to access file.');
+    }
 
-  accessed(date?: Date): Promise<FileEntity> {
-    this.lastAccessed = date || new Date();
-    return this.repository.save(this);
+    const stream = await this.storageProvider.readFile(this);
+    this.lastAccessed = new Date();
+    await this.repository.save(this);
+
+    return stream;
   }
 
   canAccess(user: User): boolean {
-    return this.type.canAccessFile(user);
+    return user?.roles?.includes(ServiceUserRoles.Admin) || this.type?.canAccessFile(user);
   }
 }
