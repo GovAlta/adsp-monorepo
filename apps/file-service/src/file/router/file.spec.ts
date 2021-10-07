@@ -218,7 +218,7 @@ describe('file router', () => {
         user: {
           tenantId,
           id: 'test',
-          roles: [ServiceUserRoles.Admin],
+          roles: ['test-reader'],
         },
         getConfiguration: jest.fn(),
         params: { fileId: 'test' },
@@ -241,7 +241,7 @@ describe('file router', () => {
         user: {
           tenantId,
           id: 'test',
-          roles: [ServiceUserRoles.Admin],
+          roles: ['test-reader'],
         },
         getConfiguration: jest.fn(),
         params: { fileId: 'test' },
@@ -258,7 +258,7 @@ describe('file router', () => {
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
     });
 
-    it('can call next with not found.', async () => {
+    it('can call next with unauthorized.', async () => {
       const req = {
         user: {
           tenantId,
@@ -287,7 +287,7 @@ describe('file router', () => {
         user: {
           tenantId,
           id: 'test',
-          roles: [ServiceUserRoles.Admin],
+          roles: ['test-reader'],
         },
         getConfiguration: jest.fn(),
         query: {},
@@ -312,7 +312,7 @@ describe('file router', () => {
         user: {
           tenantId,
           id: 'test',
-          roles: [ServiceUserRoles.Admin],
+          roles: ['test-reader'],
         },
         getConfiguration: jest.fn(),
         query: {},
@@ -346,7 +346,7 @@ describe('file router', () => {
         user: {
           tenantId,
           id: 'test',
-          roles: [ServiceUserRoles.Admin],
+          roles: ['test-reader'],
         },
         getConfiguration: jest.fn(),
         query: { unsafe: 'true' },

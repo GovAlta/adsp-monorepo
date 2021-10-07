@@ -10,7 +10,6 @@ import { Logger } from 'winston';
 import { FileRepository } from '../repository';
 import { FileEntity, FileTypeEntity } from '../model';
 import { createUpload } from './upload';
-import { FileCriteria } from '../types/file';
 import { fileDeleted, fileUploaded } from '../events';
 import { ServiceConfiguration } from '../configuration';
 import { FileStorageProvider } from '../storage';
@@ -56,7 +55,7 @@ export const getTypes: RequestHandler = async (req, res, next) => {
   }
 };
 
-export function getType(logger: Logger): RequestHandler {
+export function getType(_logger: Logger): RequestHandler {
   return async (req, res, next) => {
     try {
       const { fileTypeId } = req.params;
