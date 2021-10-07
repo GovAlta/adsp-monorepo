@@ -1,5 +1,5 @@
 import { adspId } from '@abgov/adsp-service-sdk';
-import * as knex from 'knex';
+import { Knex } from 'knex';
 import { QueueEntity, TaskEntity, TaskPriority, TaskStatus } from '../task';
 import { PostgresTaskRepository } from './task';
 import type { TaskRecord } from './types';
@@ -16,7 +16,7 @@ describe('PostgresTaskRepository', () => {
     workerRoles: ['test-worker'],
     assignerRoles: ['test-assigner'],
   });
-  const repository = new PostgresTaskRepository((knexMock as unknown) as knex);
+  const repository = new PostgresTaskRepository((knexMock as unknown) as Knex);
   const queues = { 'test-service:test': queue };
   const task: TaskRecord = {
     tenant: tenantId.toString(),
@@ -47,7 +47,7 @@ describe('PostgresTaskRepository', () => {
   });
 
   it('can be created', () => {
-    const result = new PostgresTaskRepository((knexMock as unknown) as knex);
+    const result = new PostgresTaskRepository((knexMock as unknown) as Knex);
     expect(result).toBeTruthy();
   });
 
@@ -277,7 +277,7 @@ describe('PostgresTaskRepository', () => {
         },
       ]);
 
-      const repo = new PostgresTaskRepository((knex as unknown) as knex);
+      const repo = new PostgresTaskRepository((knex as unknown) as Knex);
       const result = await repo.save(
         new TaskEntity(repository, queue, { tenantId, name: 'test-2', description: 'test-2' })
       );
@@ -325,7 +325,7 @@ describe('PostgresTaskRepository', () => {
         },
       ]);
 
-      const repo = new PostgresTaskRepository((knex as unknown) as knex);
+      const repo = new PostgresTaskRepository((knex as unknown) as Knex);
       const result = await repo.save(
         new TaskEntity(repository, queue, {
           tenantId,
