@@ -33,6 +33,8 @@ const ServiceStatusPage = (): JSX.Element => {
   }, [realm]);
 
   const services = () => {
+    const sampleTime = new Date(applications[0].statusTimestamp);
+
     return (
       <div className="small-container">
         <PageLoader />
@@ -46,6 +48,14 @@ const ServiceStatusPage = (): JSX.Element => {
           regarding service statuses.
         </p>
         <br />
+
+        <div style={{ textAlign: 'right' }}>
+          <i>
+            Times are in your local timezone: {sampleTime.toString().split('(')[1].split(')')[0]} (GMT
+            {sampleTime.getTimezoneOffset() < 0 ? '+' : ''}
+            {sampleTime.getTimezoneOffset() / -60})
+          </i>
+        </div>
         <Grid>
           {applications.map((app, index) => {
             return (
@@ -98,7 +108,7 @@ const ServiceStatusPage = (): JSX.Element => {
           <section>
             <SectionView />
           </section>
-          <section>{ }</section>
+          <section>{}</section>
         </ServiceStatusesCss>
       </main>
       <Footer>
