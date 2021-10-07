@@ -1,6 +1,6 @@
 import { adspId, User } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
-import { Mock, It, Times } from 'moq.ts';
+import { Mock, It } from 'moq.ts';
 import { Readable } from 'stream';
 import { FileRepository } from '../repository';
 import { FileRecord } from '../types';

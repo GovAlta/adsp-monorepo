@@ -1,6 +1,5 @@
 import { AdspId, ConfigurationService, TokenProvider } from '@abgov/adsp-service-sdk';
 import { connect, connection, ConnectionStates } from 'mongoose';
-import * as NodeCache from 'node-cache';
 import { Logger } from 'winston';
 import { FileStorageProvider, Repositories } from '../file';
 import { MongoFileRepository } from './file';

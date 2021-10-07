@@ -2,7 +2,7 @@ import { adspId } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request } from 'express';
 import { FileEntity, FileTypeEntity } from '../model';
-import { FileType, ServiceUserRoles } from '../types';
+import { FileType } from '../types';
 import { FileStorageEngine } from './upload';
 
 describe('upload', () => {

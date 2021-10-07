@@ -1,7 +1,6 @@
 import { put, select, call, takeEvery } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { SagaIterator } from '@redux-saga/core';
-import dashify from 'dashify';
 import FormData from 'form-data';
 import {
   FetchFilesSuccessService,
