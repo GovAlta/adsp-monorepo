@@ -9,7 +9,7 @@ on:
         required: true
 
 jobs:
-  regression:
+  testRegression:
     runs-on: ubuntu-20.04
     environment:
       name: Test-e2e
