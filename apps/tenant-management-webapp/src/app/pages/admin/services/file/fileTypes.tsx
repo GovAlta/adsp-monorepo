@@ -10,7 +10,6 @@ import { GoAPageLoader } from '@abgov/react-components';
 
 export default function FileTypes(): JSX.Element {
   const dispatch = useDispatch();
-  const fileSpace = useSelector((state: RootState) => state.fileService.space);
   const realmRoles = useSelector((state: RootState) => state.tenant.realmRoles);
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
   const [showLoadingIndicator, setShowLoadingIndicator] = useState<boolean>(false);
@@ -27,20 +26,12 @@ export default function FileTypes(): JSX.Element {
     }, 500);
   }, [fileTypes]);
 
-  const NoSpace = () => {
-    return <div>There is no space</div>;
-  };
-
   return (
     <div>
       {showLoadingIndicator && <GoAPageLoader visible={true} message="Loading..." type="infinite" />}
       <div>
-        {fileSpace ? (
-          !showLoadingIndicator && (
-            <FileTypeTable roles={realmRoles} fileTypes={fileTypes} data-testid="file-type-table" />
-          )
-        ) : (
-          <NoSpace />
+        {!showLoadingIndicator && (
+          <FileTypeTable roles={realmRoles} fileTypes={fileTypes} data-testid="file-type-table" />
         )}
       </div>
     </div>

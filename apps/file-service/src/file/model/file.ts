@@ -126,6 +126,6 @@ export class FileEntity implements File {
   }
 
   canAccess(user: User): boolean {
-    return user?.roles?.includes(ServiceUserRoles.Admin) || this.type?.canAccessFile(user);
+    return (user?.isCore && user?.roles?.includes(ServiceUserRoles.Admin)) || this.type?.canAccessFile(user);
   }
 }

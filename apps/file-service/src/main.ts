@@ -21,6 +21,7 @@ import * as fs from 'fs';
 import type { User } from '@abgov/adsp-service-sdk';
 import { FileSystemStorageProvider } from './storage/file-system';
 import { createScanService } from './scan';
+import { AzureBlobStorageProvider } from './storage';
 
 const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
 
@@ -91,7 +92,11 @@ async function initializeApp(): Promise<express.Application> {
     configurationHandler
   );
 
-  const storageProvider = new FileSystemStorageProvider(logger, environment.FILE_PATH);
+  const storageProvider =
+    environment.STORAGE_PROVIDER === 'blob'
+      ? new AzureBlobStorageProvider(logger, environment)
+      : new FileSystemStorageProvider(logger, environment.FILE_PATH);
+
   const repositories = await createRepositories({
     ...environment,
     serviceId,

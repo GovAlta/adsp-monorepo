@@ -40,9 +40,9 @@ function mapFile(entity: FileEntity) {
     typeName: entity.type?.name,
     recordId: entity.recordId,
     created: entity.created,
+    createdBy: entity.createdBy,
     lastAccessed: entity.lastAccessed,
     scanned: entity.scanned,
-    deleted: entity.deleted,
   };
 }
 
@@ -79,10 +79,12 @@ export function getFiles(repository: FileRepository): RequestHandler {
     try {
       const user = req.user;
       const tenantId = user.tenantId;
-      const { top: topValue, after } = req.query;
+      const { top: topValue, after, criteria: criteriaValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 50;
+      let criteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
 
-      const criteria: FileCriteria = {
+      criteria = {
+        ...criteria,
         tenantEquals: tenantId.toString(),
         deleted: false,
       };

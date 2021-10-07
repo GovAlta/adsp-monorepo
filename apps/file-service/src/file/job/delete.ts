@@ -9,7 +9,7 @@ interface DeleteJobProps {
 export const createDeleteJob =
   ({ logger, fileRepository }: DeleteJobProps) =>
   async (): Promise<number> => {
-    logger.info('Starting file delete job...');
+    logger.debug('Starting file delete job...');
 
     let numberDeleted = 0;
     let after = null;

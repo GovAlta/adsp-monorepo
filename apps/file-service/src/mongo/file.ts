@@ -37,13 +37,16 @@ export class MongoFileRepository implements FileRepository {
         .find(query, null, { lean: true })
         .skip(skip)
         .limit(top)
+        .sort({ created: -1 })
         .exec((err, docs) =>
           err
             ? reject(err)
             : resolve(
                 Promise.all(
                   docs.map(async (doc) => {
-                    const type = await this.typeRepository.getType(AdspId.parse(doc.spaceId), doc.typeId);
+                    const type = doc.spaceId
+                      ? await this.typeRepository.getType(AdspId.parse(doc.spaceId), doc.typeId)
+                      : null;
                     return this.fromDoc(type, doc as FileDoc);
                   })
                 )
@@ -100,7 +103,7 @@ export class MongoFileRepository implements FileRepository {
   fromDoc(type: FileTypeEntity, values: FileDoc): FileEntity {
     return values
       ? new FileEntity(this.storageProvider, this, type, {
-          tenantId: AdspId.parse(values.spaceId),
+          tenantId: values.spaceId ? AdspId.parse(values.spaceId) : null,
           id: values._id,
           recordId: values.recordId,
           filename: values.filename,
@@ -144,11 +147,11 @@ export class MongoFileRepository implements FileRepository {
       query.recordId = criteria.recordIdEquals;
     }
 
-    if (criteria.scanned) {
+    if (criteria.scanned !== undefined) {
       query.scanned = criteria.scanned;
     }
 
-    if (criteria.deleted) {
+    if (criteria.deleted !== undefined) {
       query.deleted = criteria.deleted;
     }
 

@@ -1,5 +1,4 @@
 import { AdspId, ConfigurationService, TokenProvider } from '@abgov/adsp-service-sdk';
-import { config } from 'dotenv';
 import { FileTypeEntity, FileTypeRepository, ServiceConfiguration } from '../file';
 
 export class ConfigurationFileTypeRepository implements FileTypeRepository {

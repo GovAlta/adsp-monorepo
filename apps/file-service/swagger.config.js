@@ -13,20 +13,12 @@ module.exports = {
   },
   tags: [
     {
-      name: 'File Space',
-      description: 'API to manage spaces (tenants) in the file service.',
-    },
-    {
-      name: 'File Administration',
-      description: 'API to administer a particular space including management of file types.',
+      name: 'File Type',
+      description: 'API to retrieve file types. Types are configured via the configuration service.',
     },
     {
       name: 'File',
       description: 'API to upload and download files.',
-    },
-    {
-      name: 'File Type',
-      description: 'API to manage the file type.',
     },
   ],
   components: {

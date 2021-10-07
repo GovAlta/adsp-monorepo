@@ -2,27 +2,19 @@ import React from 'react';
 import './file.css';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-interface FileHeaderProps {
-  isActive: boolean;
-  isSetup: boolean;
-}
 
-const FileHeader = (props: FileHeaderProps): JSX.Element => {
+const FileHeader = (): JSX.Element => {
   const roles = useSelector((state: RootState) => state.session?.realmAccess?.roles);
   const accessible = roles && roles.includes('file-service-admin');
 
   let headerState = '';
   let headerStateClass = '';
 
-  if (!props.isSetup || !accessible) {
-    if (props.isActive) {
-      headerState = 'Active';
-      headerStateClass = 'file-header-tag-active';
-    } else {
-      headerState = 'Inactive';
-      headerStateClass = 'file-header-tag-inactive';
-    }
+  if (!accessible) {
+    headerState = 'Active';
+    headerStateClass = 'file-header-tag-active';
   }
+
   return (
     <>
       <h2 className="file-header">File Services</h2>

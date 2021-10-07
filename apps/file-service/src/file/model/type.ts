@@ -49,11 +49,18 @@ export class FileTypeEntity implements FileType {
   }
 
   canAccessFile(user: User): boolean {
-    return this.anonymousRead || (user && user.roles && !!user.roles.find((role) => this.readRoles.includes(role)));
+    return (
+      this.anonymousRead ||
+      (user?.tenantId?.toString() === this.tenantId.toString() &&
+        !!user?.roles?.find((role) => this.readRoles.includes(role)))
+    );
   }
 
   canUpdateFile(user: User): boolean {
-    return user && user.roles && !!user.roles.find((role) => this.updateRoles.includes(role));
+    return (
+      user?.tenantId?.toString() === this.tenantId.toString() &&
+      !!user?.roles?.find((role) => this.updateRoles.includes(role))
+    );
   }
 
   canAccess(user: User): boolean {
