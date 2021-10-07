@@ -48,7 +48,7 @@
     "amqplib": "^0.8.0",
     "app-root-path": "^3.0.0",
     "async-es": "^3.2.0",
-    "axios": "^0.22.0",
+    "axios": "^0.21.4",
     "clamscan": "^2.0.1",
     "class-transformer": "^0.3.1",
     "class-validator": "0.13.1",
@@ -218,4 +218,3 @@
     "yaml": "^1.10.0"
   }
 }
-
