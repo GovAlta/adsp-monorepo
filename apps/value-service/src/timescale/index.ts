@@ -1,4 +1,4 @@
-import * as initKnex from 'knex';
+import { knex as initKnex } from 'knex';
 import { Logger } from 'winston';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const retry = require('promise-retry');

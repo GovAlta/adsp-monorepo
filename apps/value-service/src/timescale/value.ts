@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import { Knex } from 'knex';
 import { decodeAfter, encodeNext, InvalidOperationError, Results } from '@core-services/core-common';
 import { Value, ValueCriteria, ValuesRepository, MetricValue, Metric, MetricCriteria } from '../values';
 import { AdspId } from '@abgov/adsp-service-sdk';

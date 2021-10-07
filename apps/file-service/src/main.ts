@@ -6,11 +6,22 @@ import * as helmet from 'helmet';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import { environment } from './environments/environment';
-import { applyFileMiddleware, FileDeletedDefinition, FileUploadedDefinition, ServiceUserRoles } from './file';
+import {
+  applyFileMiddleware,
+  configurationSchema,
+  FileDeletedDefinition,
+  FileType,
+  FileTypeEntity,
+  FileUploadedDefinition,
+  ServiceUserRoles,
+} from './file';
 import { createRepositories } from './mongo';
 import * as cors from 'cors';
 import * as fs from 'fs';
 import type { User } from '@abgov/adsp-service-sdk';
+import { FileSystemStorageProvider } from './storage/file-system';
+import { createScanService } from './scan';
+import { AzureBlobStorageProvider } from './storage';
 
 const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
 
@@ -24,7 +35,16 @@ async function initializeApp(): Promise<express.Application> {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { coreStrategy, tenantStrategy, tenantHandler, healthCheck, eventService } = await initializePlatform(
+  const {
+    coreStrategy,
+    tenantStrategy,
+    tenantHandler,
+    tokenProvider,
+    configurationHandler,
+    configurationService,
+    healthCheck,
+    eventService,
+  } = await initializePlatform(
     {
       serviceId,
       displayName: 'File Service',
@@ -36,21 +56,12 @@ async function initializeApp(): Promise<express.Application> {
           inTenantAdmin: true,
         },
       ],
-      configurationSchema: {
-        type: 'object',
-        additionalProperties: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            name: { type: 'string' },
-            anonymousRead: { type: 'boolean' },
-            readRoles: { type: 'array', items: { type: 'string' } },
-            updateRoles: { type: 'array', items: { type: 'string' } },
-          },
-          required: ['id', 'name', 'anonymousRead', 'readRoles', 'updateRoles'],
-          additionalProperties: false,
-        },
-      },
+      configurationSchema,
+      configurationConverter: (configuration: Record<string, FileType>, tenantId: AdspId) =>
+        Object.entries(configuration).reduce(
+          (types, [id, type]) => ({ ...types, [id]: new FileTypeEntity({ ...type, tenantId }) }),
+          {}
+        ),
       events: [FileUploadedDefinition, FileDeletedDefinition],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
@@ -74,21 +85,54 @@ async function initializeApp(): Promise<express.Application> {
 
   app.use(passport.initialize());
 
-  app.use('/space', passport.authenticate(['jwt'], { session: false }), tenantHandler);
-  app.use('/file-admin', passport.authenticate(['jwt-core'], { session: false }), tenantHandler);
-  app.use('/file', passport.authenticate(['jwt', 'anonymous'], { session: false }), tenantHandler);
-  app.use('/file-type', passport.authenticate(['jwt'], { session: false }), tenantHandler);
+  app.use(
+    '/file',
+    passport.authenticate(['jwt-core', 'jwt', 'anonymous'], { session: false }),
+    tenantHandler,
+    configurationHandler
+  );
 
-  const repositories = await createRepositories({ ...environment, logger });
+  const storageProvider =
+    environment.STORAGE_PROVIDER === 'blob'
+      ? new AzureBlobStorageProvider(logger, environment)
+      : new FileSystemStorageProvider(logger, environment.FILE_PATH);
+
+  const repositories = await createRepositories({
+    ...environment,
+    serviceId,
+    logger,
+    tokenProvider,
+    configurationService,
+    storageProvider,
+  });
+
+  const scanService = createScanService(environment.AV_PROVIDER, {
+    host: environment.AV_HOST,
+    port: environment.AV_PORT,
+  });
 
   applyFileMiddleware(app, {
     logger,
-    rootStoragePath: environment.FILE_PATH,
-    avProvider: environment.AV_PROVIDER,
-    avHost: environment.AV_HOST,
-    avPort: environment.AV_PORT,
+    storageProvider,
+    scanService,
     eventService,
     ...repositories,
+  });
+
+  let swagger = null;
+  app.use('/swagger/docs/v1', (_req, res) => {
+    if (swagger) {
+      res.json(swagger);
+    } else {
+      fs.readFile(`${__dirname}/swagger.json`, 'utf8', (err, data) => {
+        if (err) {
+          res.sendStatus(404);
+        } else {
+          swagger = JSON.parse(data);
+          res.json(swagger);
+        }
+      });
+    }
   });
 
   app.get('/health', async (_req, res) => {
@@ -99,29 +143,20 @@ async function initializeApp(): Promise<express.Application> {
     });
   });
 
+  app.get('/', async (req, res) => {
+    const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
+    res.json({
+      _links: {
+        self: new URL(req.originalUrl, rootUrl).href,
+        health: new URL('/health', rootUrl).href,
+        api: new URL('/file/v1', rootUrl).href,
+        doc: new URL('/swagger/docs/v1', rootUrl).href,
+      },
+    });
+  });
+
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
-
-  // Define swagger
-  const swaggerDocument = fs
-    .readFileSync(__dirname + '/swagger.json', 'utf8')
-    .replace(/<KEYCLOAK_ROOT>/g, environment.KEYCLOAK_ROOT_URL);
-
-  app.get('/swagger/json/v1', (req, res) => {
-    const { tenant } = req.query;
-    const swaggerObj = JSON.parse(swaggerDocument);
-    const tenantAuthentication = swaggerObj?.components?.securitySchemes?.tenant?.flows.authorizationCode;
-    if (tenant && tenantAuthentication) {
-      tenantAuthentication.tokenUrl = tenantAuthentication.tokenUrl.replace('realms/autotest', `realms/${tenant}`);
-      tenantAuthentication.authorizationUrl = tenantAuthentication.authorizationUrl.replace(
-        'realms/autotest',
-        `realms/${tenant}`
-      );
-      swaggerObj.components.securitySchemes.tenant.flows.authorizationCode = tenantAuthentication;
-    }
-
-    res.json(swaggerObj);
-  });
 
   return app;
 }
