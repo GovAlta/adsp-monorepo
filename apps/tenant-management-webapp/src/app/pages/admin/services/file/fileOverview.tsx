@@ -5,7 +5,6 @@ import { GoAButton } from '@abgov/react-components';
 import { RootState } from '@store/index';
 import { EnableFileService } from '@store/file/actions';
 import { UpdateTenantConfigService } from '@store/tenantConfig/actions';
-import { Main } from '@components/Html';
 
 const OverviewBtn = (): JSX.Element => {
   const dispatch = useDispatch();
