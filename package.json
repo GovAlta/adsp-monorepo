@@ -48,7 +48,7 @@
     "amqplib": "^0.8.0",
     "app-root-path": "^3.0.0",
     "async-es": "^3.2.0",
-    "axios": "0.21.1",
+    "axios": "^0.22.0",
     "clamscan": "^2.0.1",
     "class-transformer": "^0.3.1",
     "class-validator": "0.13.1",
@@ -71,7 +71,7 @@
     "jwt-decode": "^3.1.2",
     "keycloak-admin": "^1.14.3",
     "keycloak-js": "12.0.4",
-    "knex": "^0.21.5",
+    "knex": "^0.95.11",
     "lodash": "^4.17.20",
     "luxon": "^2.0.2",
     "mkdirp": "^1.0.4",
@@ -125,7 +125,7 @@
     "@nrwl/tao": "12.9.0",
     "@nrwl/web": "12.9.0",
     "@nrwl/workspace": "12.9.0",
-    "@reduxjs/toolkit": "1.5.1",
+    "@reduxjs/toolkit": "^1.6.2",
     "@shelf/jest-mongodb": "^2.1.0",
     "@testing-library/jest-dom": "5.14.1",
     "@testing-library/react": "12.1.0",
@@ -165,7 +165,6 @@
     "@types/uuid": "^8.3.1",
     "@typescript-eslint/eslint-plugin": "4.19.0",
     "@typescript-eslint/parser": "4.19.0",
-    "artillery": "^1.6.1",
     "axe-core": "^4.2.2",
     "axe-html-reporter": "^2.2.2",
     "babel-jest": "25.1.0",
@@ -219,3 +218,4 @@
     "yaml": "^1.10.0"
   }
 }
+
