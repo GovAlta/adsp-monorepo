@@ -27,7 +27,7 @@ const EventDefinitionComponent: FunctionComponent<EventDefinitionProps> = ({ def
         <td headers="description" data-testid="description">
           {definition.description}
         </td>
-        <td headers="payload" data-testid="payload">
+        <td headers="actions" data-testid="actions">
           <GoAContextMenu>
             <GoAContextMenuIcon
               type={showDetails ? 'eyeOff' : 'eye'}
@@ -79,11 +79,11 @@ const EventDefinitionsListComponent: FunctionComponent<EventDefinitionsListCompo
         <div key={group}>
           <div className="group-name">{group}</div>
           <DataTable data-testid="events-definitions-table">
-            <thead>
+            <thead data-testid="events-definitions-table-header">
               <tr>
-                <th id="name">Name</th>
+                <th id="name" data-testid="events-definitions-table-header-name">Name</th>
                 <th id="description">Description</th>
-                <th></th>
+                <th id="actions"></th>
               </tr>
             </thead>
             <tbody>
