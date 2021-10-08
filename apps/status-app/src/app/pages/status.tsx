@@ -32,6 +32,8 @@ const ServiceStatusPage = (): JSX.Element => {
     dispatch(fetchApplications(realm));
   }, [realm]);
 
+  const timeZone = new Date().toString().split('(')[1].split(')')[0];
+
   const services = () => {
     return (
       <div className="small-container">
@@ -45,6 +47,9 @@ const ServiceStatusPage = (): JSX.Element => {
           <a href="mailto: DIO@gov.ab.ca">contact support</a> for additional information or any other inquiries
           regarding service statuses.
         </p>
+        <div className="timezone">
+          <i>All times are in {timeZone}</i>
+        </div>
         <br />
         <Grid>
           {applications.map((app, index) => {
@@ -98,7 +103,7 @@ const ServiceStatusPage = (): JSX.Element => {
           <section>
             <SectionView />
           </section>
-          <section>{ }</section>
+          <section>{}</section>
         </ServiceStatusesCss>
       </main>
       <Footer>
@@ -151,6 +156,12 @@ const ServiceStatusesCss = styled.div`
 
   .flex {
     flex: 1;
+  }
+
+  .timezone {
+    text-align: right;
+    color: #70757a;
+    font-size: 13px;
   }
 `;
 
