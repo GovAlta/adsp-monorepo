@@ -75,9 +75,11 @@ export const sendEvent =
       eventService.send(event);
 
       res.sendStatus(200);
+
       logger.info(`Event ${namespace}:${name} sent by user ${user.name} (ID: ${user.id}).`, {
-        context: 'event-service-router',
+        context: 'event-router',
         tenantId: tenantId.toString(),
+        user: `${user.name} (ID: ${user.id})`,
       });
     } catch (err) {
       next(err);

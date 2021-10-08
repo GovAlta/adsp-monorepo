@@ -151,6 +151,7 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
   });
 
   valueRouter.post('/:namespace/values/:name', assertUserCanWrite, async (req, res, next) => {
+    const user = req.user;
     const namespace = req.params.namespace;
     const name = req.params.name;
 
@@ -186,7 +187,11 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
 
       eventService.send(valueWritten(req.user, namespace, name, result));
 
-      logger.info(`Value ${namespace}:${name} written by user ${req.user.name} (ID: ${req.user.id}).`);
+      logger.info(`Value ${namespace}:${name} written by user ${user.name} (ID: ${user.id}).`, {
+        context: 'value-router',
+        tenantId: tenantId?.toString(),
+        user: `${user.name} (ID: ${user.id})`,
+      });
     } catch (err) {
       next(err);
     }

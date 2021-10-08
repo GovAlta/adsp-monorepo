@@ -13,6 +13,7 @@ import { createUpload } from './upload';
 import { fileDeleted, fileUploaded } from '../events';
 import { ServiceConfiguration } from '../configuration';
 import { FileStorageProvider } from '../storage';
+import { use } from 'passport';
 
 interface FileRouterProps {
   logger: Logger;
@@ -132,7 +133,12 @@ export function uploadFile(logger: Logger, eventService: EventService): RequestH
       );
 
       logger.info(
-        `File '${fileEntity.filename}' (ID: ${fileEntity.id}) uploaded by ` + `user '${user.name}' (ID: ${user.id}).`
+        `File '${fileEntity.filename}' (ID: ${fileEntity.id}) uploaded by user '${user.name}' (ID: ${user.id}).`,
+        {
+          context: 'file-router',
+          tenant: user?.tenantId?.toString(),
+          user: `${user.name} (ID: ${user.id})`,
+        }
       );
     } catch (err) {
       next(err);
@@ -190,7 +196,12 @@ export function deleteFile(logger: Logger, eventService: EventService): RequestH
 
       logger.info(
         `File '${fileEntity.filename}' (ID: ${fileEntity.id}) marked for deletion by ` +
-          `user '${user.name}' (ID: ${user.id}).`
+          `user '${user.name}' (ID: ${user.id}).`,
+        {
+          context: 'file-router',
+          tenant: user?.tenantId?.toString(),
+          user: `${user.name} (ID: ${user.id})`,
+        }
       );
 
       res.send({ deleted: fileEntity.deleted });
