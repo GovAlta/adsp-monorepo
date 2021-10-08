@@ -1,8 +1,11 @@
-import { Repository, Results } from '@core-services/core-common';
+import { Results } from '@core-services/core-common';
 import { FileEntity } from '../model';
-import { FileRecord, FileCriteria } from '../types';
+import { FileCriteria } from '../types';
 
-export interface FileRepository extends Repository<FileEntity, FileRecord> {
+export interface FileRepository {
   find(top: number, after: string, criteria: FileCriteria): Promise<Results<FileEntity>>;
-  exists(criteria: FileCriteria): Promise<boolean>;
+  get(id: string): Promise<FileEntity>;
+
+  save(entity: FileEntity): Promise<FileEntity>;
+  delete(entity: FileEntity): Promise<boolean>;
 }

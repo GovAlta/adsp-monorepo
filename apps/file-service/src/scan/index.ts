@@ -1,20 +1,10 @@
-import { FileEntity } from '../model';
+import { ScanService } from '../file';
 import { createClamScan } from './clam';
 import { createMetaDefenderScan } from './meta';
 
-interface ScanResult {
-  scanned: boolean;
-  infected: boolean;
-}
-
 export interface ScanProps {
-  rootStoragePath: string;
   host: string;
   port: number;
-}
-
-export interface ScanService {
-  scan(file: FileEntity): Promise<ScanResult>;
 }
 
 export const createScanService = (provider: string, props: ScanProps): ScanService => {

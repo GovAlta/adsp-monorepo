@@ -1,81 +1,114 @@
-FileUpdate401: &FileUpdate401
-  description: |
-    Unauthorized. The allowed user groups are listed as follows:
-      | Group Name    | Keycloak Realm| Client  | Role|
-      | ------------- |:-------------:| -------:|-------:|
-      | GoA  | Tenant Realms | tenant-platform-webapp | File type update roles |
+components:
+  schemas:
+    FileType:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        anonymousRead:
+          type: boolean
+        readRoles:
+          type: array
+          items:
+            type: string
+        updateRoles:
+          type: array
+          items:
+            type: string
+    File:
+      type: object
+      properties:
+        id:
+          type: string
+        filename:
+          type: string
+        size:
+          type: number
+        typeName:
+          type: string
+        recordId:
+          type: string
+        created:
+          type: string
+          format: date-time
+        createdBy:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+        scanned:
+          type: boolean
+        lastAccessed:
+          type: string
+          format: date-time
 
-Tenant401: &Tenant401
-  description: |
-    Unauthorized. The allowed user groups are listed as follows:
-      | Group Name    | Keycloak Realm| Client  |
-      | ------------- |:-------------:| -------:|
-      | GoA  | Tenant Realms | any |
-
-
-"/file/v1/files/{fileId}":
-  delete:
-    tags:
-    - File
-    description: Marks a file for deletion.
-    parameters:
-    - name: fileId
-      description: ID of the file to delete.
-      in: path
-      required: true
-      schema:
-        type: string
-    responses:
-      '200':
-        description: Delete result
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                deleted:
-                  type: boolean
-      '404':
-        description: file not found
-      '401': *FileUpdate401
+/file/v1/types:
   get:
     tags:
-    - File
-    description: Retrieves a file's metadata.
-    parameters:
-    - name: fileId
-      description: ID of the file to retrieve.
-      in: path
-      required: true
-      schema:
-        type: string
+      - File Type
+    description: Retrieves file types.
     responses:
-      '200':
-        description: File metadata
+      200:
+        description: Request successful.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                id:
-                  type: string
-                filename:
-                  type: string
-                size:
-                  type: number
-                scanned:
-                  type: boolean
-                deleted:
-                  type: boolean
-      '404':
-        description: file not found
-      '401': *Tenant401
+              type: array
+              items:
+                $ref: "#/components/schemas/FileType"
+      401:
+        description: User not authorized.
 
-"/file/v1/files":
+/file/v1/types/{typeId}:
+  get:
+    tags:
+      - File Type
+    description: Retrieves a file type.
+    parameters:
+      - name: typeId
+        description: ID of the file type.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Request successful.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FileType"
+      401:
+        description: User not authorized.
+
+/file/v1/files:
   post:
     tags:
       - File
     description: Upload a file.
+    parameters:
+      - name: type
+        description: ID of the type.
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: filename
+        description: Name of the file.
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: recordId
+        description: ID of the associated record.
+        in: query
+        required: false
+        schema:
+          type: string
     requestBody:
       content:
         multipart/form-data:
@@ -95,98 +128,133 @@ Tenant401: &Tenant401
                 type: string
                 format: binary
                 description: Contents of the file.
+            required: [file]
     responses:
-      '200':
+      200:
         description: File successfully uploaded.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/File"
+      400:
+        description: Invalid parameters.
+      401:
+        description: User not authorized.
+      404:
+        description: Type not found.
+  get:
+    tags:
+      - File
+    description: Retrieves files.
+    parameters:
+      - name: criteria
+        description: Criteria for files to retrieve.
+        in: query
+        required: false
         content:
           application/json:
             schema:
               type: object
               properties:
-                id:
+                typeEquals:
                   type: string
-                filename:
+                recordIdEquals:
                   type: string
-                size:
-                  type: number
-      '400':
-        description: Invalid parameters.
-      '404':
-        description: Space or type not found.
-      '401': *FileUpdate401
+                filenameContains:
+                  type: string
+    responses:
+      200:
+        description: Request successful.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/File"
+                page:
+                  type: object
+                  properties:
+                    after:
+                      type: string
+                    next:
+                      type: string
+                    size:
+                      type: number
+      401:
+        description: User not authorized.
 
+/file/v1/files/{fileId}:
+  parameters:
+    - name: fileId
+      description: ID of the file.
+      in: path
+      required: true
+      schema:
+        type: string
+  delete:
+    tags:
+      - File
+    description: Marks a file for deletion.
+    responses:
+      200:
+        description: Delete result
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean
+      404:
+        description: File not found
+      401:
+        description: User not authorized
   get:
     tags:
       - File
-    description: Retrieves file list metadata.
+    description: Retrieves a file's metadata.
     responses:
-      '200':
+      200:
         description: File metadata
         content:
           application/json:
             schema:
-              type: array
-              items:
-                type: object
-                properties:
-                  id:
-                    type: string
-                  filename:
-                    type: string
-                  size:
-                    type: number
-                  fileURN:
-                    type: string
-      '404':
-        description: file not found
-      '401': *Tenant401
+              $ref: "#/components/schemas/File"
+      404:
+        description: File not found
+      401:
+        description: User not authorized
 
-"/file/v1/files/{fileId}/download":
+/file/v1/files/{fileId}/download:
   get:
     tags:
       - File
     description: Downloads a file.
     parameters:
-    - name: fileId
-      description: ID of the file to download.
-      in: path
-      required: true
-      schema:
-        type: string
+      - name: fileId
+        description: ID of the file to download.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: unsafe
+        description: Flag indicating whether to download file not yet virus scanned.
+        in: query
+        required: false
+        schema:
+          type: boolean
     responses:
-      '200':
-        description: File binary content
+      200:
+        description: Request successful.
         content:
           application/octet-stream:
             schema:
               type: string
               format: binary
-      '404':
-        description: file not found
-      '401': *FileUpdate401
-
-"/files/fileType/:fileTypeId":
-  get:
-    tags:
-      - File
-    description: Get whether have the files of given file type.
-    parameters:
-    - name: fileTypeId
-      description: ID of file type.
-      in: path
-      required: true
-      schema:
-        type: string
-    responses:
-      '200':
-        description: Successfully get whether have the files of given file type.
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                exist:
-                  type: boolean
-      '404':
-        description: file not found
-      '401': *FileUpdate401
+      404:
+        description: File not found
+      401:
+        description: User not authorized

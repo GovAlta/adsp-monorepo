@@ -1,4 +1,4 @@
-import * as initKnex from 'knex';
+import { knex as initKnex } from 'knex';
 import { Logger } from 'winston';
 import { CalendarRepository } from '../calendar/repository';
 import { PostgresCalendarRepository } from './calendar';

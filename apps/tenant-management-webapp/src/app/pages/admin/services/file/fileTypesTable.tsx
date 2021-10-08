@@ -6,7 +6,6 @@ import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgo
 import { GoABadge } from '@abgov/react-components/experimental';
 import { FileTypeItem } from '@store/file/models';
 import { useDispatch, useSelector } from 'react-redux';
-import { v4 as uuid4 } from 'uuid';
 import { RootState } from '@store/index';
 import { Role } from '@store/tenant/models';
 
@@ -489,7 +488,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
         readRoles: [],
         updateRoles: [],
         name: '',
-        id: uuid4(),
+        id: null,
       });
     }
   };

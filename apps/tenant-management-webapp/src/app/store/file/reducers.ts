@@ -3,18 +3,10 @@ import {
   FETCH_FILE_LIST_SUCCESSES,
   UPLOAD_FILE_SUCCESSES,
   DELETE_FILE_SUCCESSES,
-  TERMINATE_FILE_SERVICE,
-  //DISABLE_FILE_SERVICE,
-  ENABLE_FILE_SERVICE,
-  FETCH_FILE_SPACE_SUCCEEDED,
-  //SETUP_FILE_SERVICE,
-  CREATE_FILE_SPACE_SUCCEEDED,
-  CREATE_FILE_SPACE_FAILED,
   FETCH_FILE_TYPE_SUCCEEDED,
   DELETE_FILE_TYPE_SUCCEEDED,
   UPDATE_FILE_TYPE_SUCCEEDED,
   CREATE_FILE_TYPE_SUCCEEDED,
-  FETCH_FILE_DOCS_SUCCEEDED,
   FETCH_FILE_TYPE_HAS_FILE_SUCCEEDED,
 } from './actions';
 import { FILE_INIT, FileService } from './models';
@@ -47,15 +39,6 @@ function deleteFile(fileList, file) {
 }
 export default function (state = FILE_INIT, action: ActionTypes): FileService {
   switch (action.type) {
-    case ENABLE_FILE_SERVICE:
-      return {
-        ...state,
-      };
-
-    case TERMINATE_FILE_SERVICE:
-      return {
-        ...state,
-      };
     case UPLOAD_FILE_SUCCESSES: // add file to fileList
       return {
         ...state,
@@ -71,52 +54,26 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
         ...state,
         fileList: action.payload.results.data,
       };
-
-    case CREATE_FILE_SPACE_SUCCEEDED:
-    case FETCH_FILE_SPACE_SUCCEEDED: {
-      return {
-        ...state,
-        space: action.payload.fileInfo.data,
-      };
-    }
-
-    case CREATE_FILE_SPACE_FAILED: {
-      return {
-        ...state,
-        space: null,
-      };
-    }
-
     case FETCH_FILE_TYPE_SUCCEEDED:
       return {
         ...state,
         fileTypes: action.payload.fileInfo.data,
       };
-
     case DELETE_FILE_TYPE_SUCCEEDED:
       return {
         ...state,
         fileTypes: removeSpecifiedFileType(state.fileTypes, action.payload),
       };
-
     case UPDATE_FILE_TYPE_SUCCEEDED:
       return {
         ...state,
         fileTypes: updateSpecifiedFileType(state.fileTypes, action.payload),
       };
-
     case CREATE_FILE_TYPE_SUCCEEDED:
       return {
         ...state,
         fileTypes: [...(state.fileTypes || []), action.payload],
       };
-
-    case FETCH_FILE_DOCS_SUCCEEDED:
-      return {
-        ...state,
-        docs: action.payload.fileDocs,
-      };
-
     case FETCH_FILE_TYPE_HAS_FILE_SUCCEEDED: {
       const newState = { ...state };
       const { hasFile, fileTypeId } = action.payload;

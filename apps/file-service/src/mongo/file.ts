@@ -1,48 +1,54 @@
-import { Model, model } from 'mongoose';
+import { AdspId } from '@abgov/adsp-service-sdk';
 import { Results, decodeAfter, encodeNext } from '@core-services/core-common';
-import { FileRepository, FileCriteria, FileEntity, FileSpaceRepository } from '../file';
-import { FileTypeEntity } from '../file/model/type';
+import { Model, model } from 'mongoose';
+import {
+  FileRepository,
+  FileCriteria,
+  FileEntity,
+  FileTypeEntity,
+  FileStorageProvider,
+  FileTypeRepository,
+} from '../file';
 import { fileSchema } from './schema';
 import { FileDoc } from './types';
-interface queryProps {
+
+interface QueryProps {
   spaceId: string;
   typeId: string;
   filename: { $regex: string; $options: string };
   scanned: boolean;
   deleted: boolean;
+  recordId: string;
 }
+
 export class MongoFileRepository implements FileRepository {
   private model: Model<FileDoc>;
 
-  constructor(private spaceRepository: FileSpaceRepository) {
+  constructor(private storageProvider: FileStorageProvider, private typeRepository: FileTypeRepository) {
     this.model = model<FileDoc>('file', fileSchema);
-  }
-
-  async exists(criteria: FileCriteria): Promise<boolean> {
-    const query: queryProps = this.getQuery(criteria);
-    const result = await this.model.findOne(query);
-    return !!result === true;
   }
 
   find(top: number, after: string, criteria: FileCriteria): Promise<Results<FileEntity>> {
     const skip = decodeAfter(after);
-    const query: queryProps = this.getQuery(criteria);
+    const query: QueryProps = this.getQuery(criteria);
 
     return new Promise<FileEntity[]>((resolve, reject) => {
       this.model
         .find(query, null, { lean: true })
         .skip(skip)
         .limit(top)
+        .sort({ created: -1 })
         .exec((err, docs) =>
           err
             ? reject(err)
             : resolve(
                 Promise.all(
-                  docs.map((doc) =>
-                    this.spaceRepository
-                      .getType(doc.spaceId, doc.typeId)
-                      .then((type) => this.fromDoc(type, doc as FileDoc))
-                  )
+                  docs.map(async (doc) => {
+                    const type = doc.spaceId
+                      ? await this.typeRepository.getType(AdspId.parse(doc.spaceId), doc.typeId)
+                      : null;
+                    return this.fromDoc(type, doc as FileDoc);
+                  })
                 )
               )
         );
@@ -58,15 +64,14 @@ export class MongoFileRepository implements FileRepository {
 
   get(id: string): Promise<FileEntity> {
     return new Promise<FileEntity>((resolve, reject) =>
-      this.model.findOne({ _id: id }, null, { lean: true }, (err, doc) => {
+      this.model.findOne({ _id: id }, null, { lean: true }, async (err, doc) => {
         if (err) {
           reject(err);
         } else if (!doc) {
           resolve(null);
         } else {
-          this.spaceRepository
-            .getType(doc.spaceId, doc.typeId)
-            .then((fileType) => resolve(this.fromDoc(fileType, doc)));
+          const type = await this.typeRepository.getType(AdspId.parse(doc.spaceId), doc.typeId);
+          resolve(this.fromDoc(type, doc));
         }
       })
     );
@@ -97,12 +102,12 @@ export class MongoFileRepository implements FileRepository {
 
   fromDoc(type: FileTypeEntity, values: FileDoc): FileEntity {
     return values
-      ? new FileEntity(this, type, {
+      ? new FileEntity(this.storageProvider, this, type, {
+          tenantId: values.spaceId ? AdspId.parse(values.spaceId) : null,
           id: values._id,
           recordId: values.recordId,
           filename: values.filename,
           size: values.size,
-          storage: values.storage,
           createdBy: values.createdBy,
           created: values.created,
           lastAccessed: values.lastAccessed,
@@ -114,12 +119,11 @@ export class MongoFileRepository implements FileRepository {
   // eslint-disable-next-line
   toDoc(entity: FileEntity): any {
     return {
-      spaceId: entity.type.spaceId,
+      spaceId: entity.tenantId.toString(),
       typeId: entity.type.id,
       recordId: entity.recordId,
       filename: entity.filename,
       size: entity.size,
-      storage: entity.storage,
       createdBy: entity.createdBy,
       created: entity.created,
       lastAccessed: entity.lastAccessed,
@@ -128,22 +132,26 @@ export class MongoFileRepository implements FileRepository {
     };
   }
 
-  getQuery(criteria: FileCriteria): queryProps {
-    const query = {} as queryProps;
+  getQuery(criteria: FileCriteria): QueryProps {
+    const query = {} as QueryProps;
 
-    if (criteria.spaceEquals) {
-      query.spaceId = criteria.spaceEquals;
+    if (criteria.tenantEquals) {
+      query.spaceId = criteria.tenantEquals;
     }
 
     if (criteria.typeEquals) {
       query.typeId = criteria.typeEquals;
     }
 
-    if (criteria.scanned) {
+    if (criteria.recordIdEquals) {
+      query.recordId = criteria.recordIdEquals;
+    }
+
+    if (criteria.scanned !== undefined) {
       query.scanned = criteria.scanned;
     }
 
-    if (criteria.deleted) {
+    if (criteria.deleted !== undefined) {
       query.deleted = criteria.deleted;
     }
 

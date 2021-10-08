@@ -2,47 +2,6 @@
   display: inline-block;
 }
 
-.file-header-tag-active {
-  font-size: 14px;
-  border-radius: 4px;
-  background: #00853f 0% 0% no-repeat padding-box;
-  padding-left: 6px;
-  padding-right: 6px;
-  padding-bottom: 4px;
-  padding-top: 3px;
-  margin-left: 29px;
-  position: relative;
-  top: -10px;
-  color: white;
-}
-
-.file-header-tag-inactive {
-  font-size: 14px;
-  border-radius: 4px;
-  background: #feba35 0% 0% no-repeat padding-box;
-  padding-left: 6px;
-  padding-right: 6px;
-  padding-bottom: 4px;
-  padding-top: 3px;
-  margin-left: 29px;
-  position: relative;
-  top: -10px;
-}
-
-.file-header-tag-disabled {
-  font-size: 14px;
-  color: white;
-  border-radius: 4px;
-  background: red 0% 0% no-repeat padding-box;
-  padding-left: 6px;
-  padding-right: 6px;
-  padding-bottom: 4px;
-  padding-top: 3px;
-  margin-left: 29px;
-  position: relative;
-  top: -10px;
-}
-
 .file-tab {
   border: 0px;
 }

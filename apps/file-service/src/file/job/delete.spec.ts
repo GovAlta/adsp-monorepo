@@ -22,7 +22,6 @@ describe('Delete Job', () => {
   it('can be created', () => {
     const deleteJob = createDeleteJob({
       logger,
-      rootStoragePath: './files',
       fileRepository: repositoryMock.object(),
     });
 
@@ -32,12 +31,11 @@ describe('Delete Job', () => {
   it('can be executed', (done) => {
     const deleteJob = createDeleteJob({
       logger,
-      rootStoragePath: './files',
       fileRepository: repositoryMock.object(),
     });
 
     const fileEntityMock = new Mock<FileEntity>();
-    fileEntityMock.setup((instance) => instance.delete('./files')).returns(Promise.resolve(true));
+    fileEntityMock.setup((instance) => instance.delete()).returns(Promise.resolve(true));
 
     repositoryMock
       .setup((instance) =>
@@ -67,12 +65,11 @@ describe('Delete Job', () => {
   it('can exclude not deleted from count', (done) => {
     const deleteJob = createDeleteJob({
       logger,
-      rootStoragePath: './files',
       fileRepository: repositoryMock.object(),
     });
 
     const fileEntityMock = new Mock<FileEntity>();
-    fileEntityMock.setup((instance) => instance.delete('./files')).returns(Promise.resolve(false));
+    fileEntityMock.setup((instance) => instance.delete()).returns(Promise.resolve(false));
 
     repositoryMock
       .setup((instance) =>
@@ -102,17 +99,12 @@ describe('Delete Job', () => {
   it('can exclude not failed from count', (done) => {
     const deleteJob = createDeleteJob({
       logger,
-      rootStoragePath: './files',
       fileRepository: repositoryMock.object(),
     });
 
     const fileEntityMock = new Mock<FileEntity>();
     fileEntityMock
-      .setup(async (instance) => await instance.getFilePath('./files'))
-      .returns(Promise.resolve('./files/test-file'));
-
-    fileEntityMock
-      .setup((instance) => instance.delete('./files'))
+      .setup((instance) => instance.delete())
       .returns(Promise.reject(new InvalidOperationError('failed')));
 
     repositoryMock

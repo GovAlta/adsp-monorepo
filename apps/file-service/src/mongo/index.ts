@@ -1,16 +1,20 @@
+import { AdspId, ConfigurationService, TokenProvider } from '@abgov/adsp-service-sdk';
 import { connect, connection, ConnectionStates } from 'mongoose';
-import * as NodeCache from 'node-cache';
 import { Logger } from 'winston';
-import { Repositories } from '../file';
-import { MongoFileSpaceRepository } from './space';
+import { FileStorageProvider, Repositories } from '../file';
 import { MongoFileRepository } from './file';
+import { ConfigurationFileTypeRepository } from './type';
 
 interface MongoRepositoryProps {
   MONGO_URI: string;
   MONGO_DB: string;
   MONGO_USER: string;
   MONGO_PASSWORD: string;
+  serviceId: AdspId;
   logger: Logger;
+  tokenProvider: TokenProvider;
+  configurationService: ConfigurationService;
+  storageProvider: FileStorageProvider;
 }
 
 export const createRepositories = ({
@@ -18,7 +22,11 @@ export const createRepositories = ({
   MONGO_DB,
   MONGO_USER,
   MONGO_PASSWORD,
+  serviceId,
   logger,
+  tokenProvider,
+  configurationService,
+  storageProvider,
 }: MongoRepositoryProps): Promise<Repositories> =>
   new Promise<Repositories>((resolve, reject) => {
     const mongoConnectionString = `${MONGO_URI}/${MONGO_DB}`;
@@ -35,11 +43,9 @@ export const createRepositories = ({
         if (err) {
           reject(err);
         } else {
-          const cache = new NodeCache({ stdTTL: 86400, useClones: false });
-          const spaceRepository = new MongoFileSpaceRepository(logger, cache);
-          const fileRepository = new MongoFileRepository(spaceRepository);
+          const typeRepository = new ConfigurationFileTypeRepository(serviceId, tokenProvider, configurationService);
+          const fileRepository = new MongoFileRepository(storageProvider, typeRepository);
           resolve({
-            spaceRepository,
             fileRepository,
             // NOTE: Typescript seems to have issues with exported enums where enum is null at runtime.
             // Possible that express js module doesn't actually export anything for ConnectionStates and
