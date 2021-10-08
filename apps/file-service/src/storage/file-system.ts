@@ -56,15 +56,17 @@ export class FileSystemStorageProvider implements FileStorageProvider {
 
   async readFile(entity: FileEntity): Promise<ReadStream> {
     const path = this.getFilePath(entity);
-    try {
-      return createReadStream(path);
-    } catch (err) {
-      this.logger.error(`Error on reading file ${entity.filename} (ID: ${entity.id}) to file system at ${path}.`, {
-        tenant: entity.tenantId?.toString(),
-        context: 'FileSystemStorageProvider',
-      });
-      throw err;
-    }
+    const stream = createReadStream(path);
+    stream.on('error', (err) => {
+      this.logger.error(
+        `Error on reading file ${entity.filename} (ID: ${entity.id}) to file system at ${path}. ${err}`,
+        {
+          tenant: entity.tenantId?.toString(),
+          context: 'FileSystemStorageProvider',
+        }
+      );
+    });
+    return stream;
   }
 
   private getPath(name: string): string {
