@@ -13,56 +13,22 @@ module.exports = {
   },
   tags: [
     {
-      name: 'File Space',
-      description: 'API to manage spaces (tenants) in the file service.',
-    },
-    {
-      name: 'File Administration',
-      description: 'API to administer a particular space including management of file types.',
+      name: 'File Type',
+      description: 'API to retrieve file types. Types are configured via the configuration service.',
     },
     {
       name: 'File',
       description: 'API to upload and download files.',
     },
-    {
-      name: 'File Type',
-      description: 'API to manage the file type.',
-    },
   ],
   components: {
     securitySchemes: {
-      tenant: {
-        type: 'oauth2',
-        description: 'Authentication flow for tenant login through GoA SSO in tenant realm.',
-        flows: {
-          authorizationCode: {
-            authorizationUrl: `<KEYCLOAK_ROOT>/auth/realms/${tenant}/protocol/openid-connect/auth`,
-            tokenUrl: `<KEYCLOAK_ROOT>/auth/realms/${tenant}/protocol/openid-connect/token`,
-            scopes: {
-              email: '',
-            },
-          },
-        },
-      },
-      platformFileServiceAdmin: {
-        type: 'oauth2',
-        description: 'Authentication flow for platform admin',
-        flows: {
-          password: {
-            tokenUrl: `<KEYCLOAK_ROOT>/auth/realms/core/protocol/openid-connect/token`,
-            clientId: 'tenant-api',
-            scopes: {
-              email: '',
-            },
-          },
-        },
+      accessToken: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
       },
     },
   },
-  security: [
-    {
-      tenant: ['email'],
-      platformFileServiceAdmin: ['email'],
-    },
-  ],
+  security: [{ accessToken: [] }],
 };

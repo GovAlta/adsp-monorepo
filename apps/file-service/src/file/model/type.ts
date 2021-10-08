@@ -1,7 +1,4 @@
-import * as path from 'path';
-import { IsNotEmpty, IsDefined } from 'class-validator';
-import type { User } from '@abgov/adsp-service-sdk';
-import { UnauthorizedError, Update } from '@core-services/core-common';
+import type { AdspId, User } from '@abgov/adsp-service-sdk';
 import { FileType, ServiceUserRoles } from '../types';
 import { Logger } from 'winston';
 
@@ -15,84 +12,55 @@ import { Logger } from 'winston';
  * @implements {FileType}
  */
 export class FileTypeEntity implements FileType {
+  tenantId: AdspId;
   id: string;
   logger?: Logger;
-  @IsNotEmpty()
   name: string;
   anonymousRead = false;
-  @IsDefined()
   readRoles: string[] = [];
-  @IsDefined()
   updateRoles: string[] = [];
-  spaceId?: string;
 
   static create(
+    tenantId: AdspId,
     id: string,
     name: string,
     anonymousRead: boolean,
     readRoles: string[],
-    updateRoles: string[],
-    spaceId: string
+    updateRoles: string[]
   ): FileTypeEntity {
     const newType: FileType = {
+      tenantId,
       id,
       name,
       anonymousRead,
       readRoles,
       updateRoles,
-      spaceId,
     };
     return new FileTypeEntity(newType);
   }
 
   constructor(type: FileType) {
+    this.tenantId = type.tenantId;
     this.id = type.id;
     this.name = type.name;
     this.anonymousRead = type.anonymousRead;
     this.readRoles = type.readRoles || [];
     this.updateRoles = type.updateRoles || [];
-    this.spaceId = type.spaceId;
   }
 
   canAccessFile(user: User): boolean {
-    return this.anonymousRead || (user && user.roles && !!user.roles.find((role) => this.readRoles.includes(role)));
-  }
-
-  canUpdateFile(user: User): boolean {
-    return user && user.roles && !!user.roles.find((role) => this.updateRoles.includes(role));
-  }
-
-  update(user: User, update: Update<FileType>): void {
-    if (!this.canUpdate(user)) {
-      throw new UnauthorizedError('User not authorized to update type.');
-    }
-
-    if (update.name) {
-      this.name = update.name;
-    }
-
-    if (update.anonymousRead !== undefined) {
-      this.anonymousRead = update.anonymousRead;
-    }
-
-    if (update.readRoles) {
-      this.readRoles = update.readRoles;
-    }
-
-    if (update.updateRoles) {
-      this.updateRoles = update.updateRoles;
-    }
-  }
-
-  canUpdate(user: User): boolean | string {
     return (
-      (user && user.roles && user.roles.includes(ServiceUserRoles.Admin)) ||
-      user.roles.find((role) => this.updateRoles.includes(role))
+      this.anonymousRead ||
+      (user?.tenantId?.toString() === this.tenantId.toString() &&
+        !!user?.roles?.find((role) => this.readRoles.includes(role) || this.updateRoles.includes(role)))
     );
   }
 
-  getPath(storageRoot: string): string {
-    return path.join(storageRoot, this.spaceId, this.id);
+  canUpdateFile(user: User): boolean {
+    return (
+      user?.tenantId?.toString() === this.tenantId.toString() &&
+      !!user?.roles?.find((role) => this.updateRoles.includes(role))
+    );
   }
 
   canAccess(user: User): boolean {

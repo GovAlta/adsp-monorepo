@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { ConfigState, FileApi as FileApiConfig } from '@store/config/models';
-import { FileService, FileServiceDocs, FileTypeItem } from './models';
+import { FileService } from './models';
 
 export class FileApi {
   private http: AxiosInstance;
@@ -47,106 +47,9 @@ export class FileApi {
     return res.data;
   }
 
-  async enableFileService(): Promise<FileService> {
-    const url = this.fileConfig.endpoints.spaceAdmin;
-    const res = await this.http.post(url);
-    return res.data;
-  }
-
-  async fetchFileType(): Promise<FileService> {
-    const url = this.fileConfig.endpoints.fileTypeAdmin;
-    const res = await this.http.get(url);
-    return res.data;
-  }
-
-  async fetchSpace(): Promise<FileService> {
-    const url = this.fileConfig.endpoints.spaceAdmin;
-    const res = await this.http.get(url);
-    return res.data;
-  }
-
-  async deleteFileType(id: string): Promise<FileService> {
-    const url = `${this.fileConfig.endpoints.fileTypeAdmin}/${id}`;
-    const res = await this.http.delete(url);
-    return res.data;
-  }
-
-  async createFileType(fileType: FileTypeItem): Promise<FileService> {
-    const url = this.fileConfig.endpoints.fileTypeAdmin;
-    const res = await this.http.post(url, fileType);
-    return res.data;
-  }
-
-  async updateFileType(fileType: FileTypeItem): Promise<FileService> {
-    const url = `${this.fileConfig.endpoints.fileTypeAdmin}/${fileType.id}`;
-    const res = await this.http.put(url, fileType);
-    return res.data;
-  }
-
   async fetchFileTypeHasFile(fileTypeId: string): Promise<boolean> {
-    const url = `${this.fileConfig.endpoints.fileAdmin}/fileType/${fileTypeId}`;
-    const res = await this.http.get(url);
-    return res.data.exist;
-  }
-
-  // eslint-disable-next-line
-  swaggerDocToFileDocs(swaggerDocs) {
-    const fileTypeDocs = [];
-    const fileDocs = [];
-    const fileTypeTag = 'File Type';
-    const fileTag = 'File';
-    let fileDescription = '';
-    let fileTypeDescription = '';
-    // Extract the fileType and file Docs from swagger
-    for (const [path, content] of Object.entries(swaggerDocs.paths)) {
-      // Not all object within the swagger paths are paths. Only the ones include '/' are paths
-      if (path.includes('/')) {
-        for (const [method, detail] of Object.entries(content)) {
-          if (detail.tags.includes(fileTypeTag)) {
-            fileTypeDocs.push({
-              method: method,
-              path: path,
-              ...detail,
-            });
-          }
-
-          if (detail.tags.includes(fileTag)) {
-            fileDocs.push({
-              method: method,
-              path: path,
-              ...detail,
-            });
-          }
-        }
-      }
-    }
-
-    for (const tag of swaggerDocs.tags) {
-      if (tag.name === fileTag) {
-        fileDescription = tag.description;
-      }
-
-      if (tag.name === fileTypeTag) {
-        fileTypeDescription = tag.description;
-      }
-    }
-
-    return {
-      fileTypeDoc: {
-        apiDocs: fileTypeDocs,
-        description: fileTypeDescription,
-      },
-      fileDoc: {
-        apiDocs: fileDocs,
-        description: fileDescription,
-      },
-    };
-  }
-
-  async fetchFileServiceDoc(): Promise<FileServiceDocs> {
-    const url = `/swagger/json/v1`;
-    const res = await this.http.get(url);
-    const docs = this.swaggerDocToFileDocs(res.data);
-    return docs;
+    const url = `${this.fileConfig.endpoints.fileAdmin}?top=1&criteria={"typeEquals":"${fileTypeId}"}`;
+    const { data } = await this.http.get(url);
+    return !!data.page?.size;
   }
 }

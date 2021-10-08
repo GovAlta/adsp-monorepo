@@ -1,42 +1,36 @@
+import { adspId } from '@abgov/adsp-service-sdk';
+import { createMockData } from '@core-services/core-common/mongo';
+import { connect, disconnect, model } from 'mongoose';
 import { MongoFileRepository } from './file';
-import { MongoFileSpaceRepository } from './space';
-import * as NodeCache from 'node-cache';
-import { connect, disconnect, createMockData } from '@core-services/core-common/mongo';
-import { createLogger } from '@core-services/core-common';
-import { FileEntity } from '../file/model';
-import { FileCriteria } from '../file/types';
-import { environment } from '../environments/environment';
-import { FileTypeEntity } from '../file/model/type';
-import { FileType } from '../file/types';
-import { model } from 'mongoose';
+import { FileType, FileCriteria, FileTypeEntity, FileEntity, FileStorageProvider, FileTypeRepository } from '../file';
+import { It, Mock } from 'moq.ts';
 
 describe('Mongo: FileEntity', () => {
-  const spaceId = 'space1234';
+  const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const type: FileType = {
+    tenantId,
     id: 'type-1',
     name: 'Profile Picture',
     anonymousRead: false,
     updateRoles: ['test-admin'],
     readRoles: ['test-admin'],
-    spaceId: 'space1234',
   };
 
-  const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
-  const cache = { get: jest.fn(), set: jest.fn(), del: jest.fn() };
-  const fileRepo = new MongoFileSpaceRepository(logger, cache as unknown as NodeCache);
-  const repo = new MongoFileRepository(fileRepo);
+  const storageProviderMock = new Mock<FileStorageProvider>();
+  const typeRepository = new Mock<FileTypeRepository>();
+  typeRepository.setup((m) => m.getType(tenantId, It.IsAny())).returns(Promise.resolve(new FileTypeEntity(type)));
+  const repo = new MongoFileRepository(storageProviderMock.object(), typeRepository.object());
 
   const criteria: FileCriteria = {
-    spaceEquals: spaceId,
+    tenantEquals: tenantId.toString(),
     deleted: false,
   };
 
   beforeEach(async () => {
-    await connect();
+    await connect(process.env.MONGO_URL);
   });
 
   afterEach(async () => {
-    await model('filespace').deleteMany({});
     await model('file').deleteMany({});
     await disconnect();
   });
@@ -46,11 +40,11 @@ describe('Mongo: FileEntity', () => {
 
     const data = await createMockData<FileEntity>(repo, [
       {
+        tenantId,
         id: '1',
         recordId: '1',
         filename: 'bob.jpg',
         size: 44545454,
-        storage: '6b9e2a75',
         createdBy: { id: '4d662274-9b23-4e2e-b058-50c3a4062609', name: 'QA-Dev DIO' },
         created: new Date('2021-04-19T19:26:30.667+00:00'),
         lastAccessed: null,

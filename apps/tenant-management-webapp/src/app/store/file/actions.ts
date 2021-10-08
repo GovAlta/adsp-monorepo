@@ -1,39 +1,33 @@
-import { FileItem, FileService, FileTypeItem, FileServiceDocs } from './models';
-
-export const TERMINATE_FILE_SERVICE = 'tenant/file-service/delete'; // delete file service
-export const DISABLE_FILE_SERVICE = 'tenant/file-service/activation/';
-export const ENABLE_FILE_SERVICE = 'tenant/file-service/activation/activate';
-export const SETUP_FILE_SERVICE = 'tenant/file-service/setup'; // The SETUP_FILE_SERVICE is only for testing
+import { FileItem, FileTypeItem } from './models';
 
 export const UPLOAD_FILE = 'tenant/file-service/upload';
 export const UPLOAD_FILE_SUCCESSES = 'tenant/file-service/upload/success';
 export const UPLOAD_FILE_FAILED = 'tenant/file-service/upload/fail';
+
 export const FETCH_FILE_LIST = 'tenant/file-service/file/fetch';
 export const FETCH_FILE_LIST_SUCCESSES = 'tenant/file-service/file/fetch/success';
 export const FETCH_FILE_LIST_FAILED = 'tenant/file-service/file/fetch/fail';
+
 export const DELETE_FILE = 'tenant/file-service/file/delete';
 export const DELETE_FILE_SUCCESSES = 'tenant/file-service/file/delete/success';
 export const DELETE_FILE_FAILED = 'tenant/file-service/file/delete/fail';
+
 export const DOWNLOAD_FILE = 'tenant/file-service/file/download';
 export const DOWNLOAD_FILE_SUCCESSES = 'tenant/file-service/file/download/success';
 export const DOWNLOAD_FILE_FAILED = 'tenant/file-service/file/download/fail';
 
-export const CREATE_FILE_SPACE_SUCCEEDED = 'file-service/fileSpace/create/success';
-export const CREATE_FILE_SPACE_FAILED = 'file-service/fileSpace/create/failure';
-export const FETCH_FILE_SPACE = 'file-service/fileSpace';
-export const FETCH_FILE_SPACE_SUCCEEDED = 'file-service/fileSpace/success';
-export const FETCH_FILE_SPACE_FAILED = 'file-service/fileSpace/fail';
-
 export const FETCH_FILE_TYPE = 'tenant/file-service/fileType/fetch';
 export const FETCH_FILE_TYPE_SUCCEEDED = 'file-service/space/fileType/succeeded';
+
 export const DELETE_FILE_TYPE = 'tenant/file-service/fileType/delete';
 export const DELETE_FILE_TYPE_SUCCEEDED = 'file-service/fileType/delete/success';
+
 export const CREATE_FILE_TYPE = 'tenant/file-service/fileType/create';
 export const CREATE_FILE_TYPE_SUCCEEDED = 'file-service/fileType/create/success';
+
 export const UPDATE_FILE_TYPE = 'tenant/file-service/fileType/update';
 export const UPDATE_FILE_TYPE_SUCCEEDED = 'file-service/fileType/update/success';
-export const FETCH_FILE_DOCS = 'file-service/docs';
-export const FETCH_FILE_DOCS_SUCCEEDED = 'file-service/docs/fetch/success';
+
 export const FETCH_FILE_TYPE_HAS_FILE = 'file-service/docs/fetch/file/filetype';
 export const FETCH_FILE_TYPE_HAS_FILE_SUCCEEDED = 'file-service/docs/fetch/file/filetype/succeeded';
 
@@ -54,27 +48,17 @@ export type ActionTypes =
   | DownloadFileAction
   | DownloadFileSuccessAction
   | DownloadFileFailedAction
-  | DisableFileServiceAction
-  | EnableFileServiceAction
-  | TerminateFileServiceAction
-  | SetupFileAction
-  | CreateFileSpaceSucceededAction
-  | CreateFileSpaceFailedAction
-  | FetchFileSpaceAction
-  | FetchFileSpaceSucceededAction
-  | FetchFileSpaceFailedAction
   | FetchFileTypeSucceededAction
   | DeleteFileTypeSucceededAction
   | UpdateFileTypeSucceededAction
   | CreateFileTypeSucceededAction
-  | FetchFileDocsSucceededAction
   | FetchFileTypeAction
   | UpdateFileTypeAction
   | DeleteFileTypeAction
   | CreateFileTypeAction
   | FetchFileTypeHasFileAction
-  | FetchFileTypeHasFileSucceededAction
-  | FetchFileDocsAction;
+  | FetchFileTypeHasFileSucceededAction;
+
 // | SetupFileAction;
 export interface UploadFileAction {
   type: typeof UPLOAD_FILE;
@@ -132,58 +116,6 @@ interface DownloadFileFailedAction {
   payload: { data: string };
 }
 
-interface TerminateFileServiceAction {
-  type: typeof TERMINATE_FILE_SERVICE;
-  payload: {
-    fileService: FileService;
-  };
-}
-
-interface DisableFileServiceAction {
-  type: typeof DISABLE_FILE_SERVICE;
-  payload: {
-    fileService: FileService;
-  };
-}
-interface FetchFileSpaceAction {
-  type: typeof FETCH_FILE_SPACE;
-}
-interface FetchFileSpaceSucceededAction {
-  type: typeof FETCH_FILE_SPACE_SUCCEEDED;
-  payload: {
-    fileInfo: { data: string };
-  };
-}
-
-interface FetchFileSpaceFailedAction {
-  type: typeof FETCH_FILE_SPACE_FAILED;
-  payload: {
-    fileInfo: { data: FileTypeItem };
-  };
-}
-
-interface EnableFileServiceAction {
-  type: typeof ENABLE_FILE_SERVICE;
-}
-
-interface SetupFileAction {
-  type: typeof SETUP_FILE_SERVICE;
-}
-
-interface CreateFileSpaceSucceededAction {
-  type: typeof CREATE_FILE_SPACE_SUCCEEDED;
-  payload: {
-    fileInfo: { data: string };
-  };
-}
-
-interface CreateFileSpaceFailedAction {
-  type: typeof CREATE_FILE_SPACE_FAILED;
-  payload: {
-    fileInfo: { data: string };
-  };
-}
-
 interface FetchFileTypeSucceededAction {
   type: typeof FETCH_FILE_TYPE_SUCCEEDED;
   payload: {
@@ -226,17 +158,6 @@ export interface CreateFileTypeAction {
   payload: FileTypeItem;
 }
 
-interface FetchFileDocsSucceededAction {
-  type: typeof FETCH_FILE_DOCS_SUCCEEDED;
-  payload: {
-    fileDocs: FileServiceDocs;
-  };
-}
-
-interface FetchFileDocsAction {
-  type: typeof FETCH_FILE_DOCS;
-}
-
 export interface FetchFileTypeHasFileAction {
   type: typeof FETCH_FILE_TYPE_HAS_FILE;
   payload: string;
@@ -253,24 +174,6 @@ interface FetchFileTypeHasFileSucceededAction {
 // ==============
 // Action Methods
 // ==============
-
-export const DisableFileService = (fileService: FileService): DisableFileServiceAction => ({
-  type: DISABLE_FILE_SERVICE,
-  payload: {
-    fileService,
-  },
-});
-
-export const EnableFileService = (): EnableFileServiceAction => ({
-  type: ENABLE_FILE_SERVICE,
-});
-
-export const TerminateFileService = (fileService: FileService): TerminateFileServiceAction => ({
-  type: TERMINATE_FILE_SERVICE,
-  payload: {
-    fileService,
-  },
-});
 
 export const UploadFileService = (data: Record<string, unknown>): UploadFileAction => ({
   type: UPLOAD_FILE,
@@ -345,39 +248,6 @@ export const DownloadFileFailedService = (data: string): DownloadFileFailedActio
   },
 });
 
-export const SetupFileService = (): SetupFileAction => ({
-  type: SETUP_FILE_SERVICE,
-});
-
-export const CreateFileSpaceSucceededService = (fileInfo: { data: string }): CreateFileSpaceSucceededAction => ({
-  type: CREATE_FILE_SPACE_SUCCEEDED,
-  payload: {
-    fileInfo,
-  },
-});
-export const CreateFileSpaceFailedService = (fileInfo: { data: string }): CreateFileSpaceFailedAction => ({
-  type: CREATE_FILE_SPACE_FAILED,
-  payload: {
-    fileInfo,
-  },
-});
-export const FetchFileSpaceService = (): FetchFileSpaceAction => ({
-  type: FETCH_FILE_SPACE,
-});
-
-export const FetchFileSpaceSucceededService = (fileInfo: { data: string }): FetchFileSpaceSucceededAction => ({
-  type: FETCH_FILE_SPACE_SUCCEEDED,
-  payload: {
-    fileInfo,
-  },
-});
-export const FetchFileSpaceFailedService = (fileInfo: { data: FileTypeItem }): FetchFileSpaceFailedAction => ({
-  type: FETCH_FILE_SPACE_FAILED,
-  payload: {
-    fileInfo,
-  },
-});
-
 export const FetchFileTypeSucceededService = (fileInfo: { data: FileTypeItem[] }): FetchFileTypeSucceededAction => ({
   type: FETCH_FILE_TYPE_SUCCEEDED,
   payload: {
@@ -423,15 +293,6 @@ export const DeleteFileTypeService = (fileType: FileTypeItem): DeleteFileTypeAct
 export const CreateFileTypeService = (fileType: FileTypeItem): CreateFileTypeAction => ({
   type: CREATE_FILE_TYPE,
   payload: fileType,
-});
-
-export const FetchFileDocsService = (): FetchFileDocsAction => ({
-  type: FETCH_FILE_DOCS,
-});
-
-export const FetchFileDocsSucceededService = (fileDocs: FileServiceDocs): FetchFileDocsSucceededAction => ({
-  type: FETCH_FILE_DOCS_SUCCEEDED,
-  payload: { fileDocs: fileDocs },
 });
 
 export const FetchFileTypeHasFileService = (fileTypeId: string): FetchFileTypeHasFileAction => ({

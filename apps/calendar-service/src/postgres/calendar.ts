@@ -1,5 +1,5 @@
 import { decodeAfter, encodeNext, Results } from '@core-services/core-common';
-import * as knex from 'knex';
+import { Knex } from 'knex';
 import {
   Attendee,
   CalendarDate,
@@ -13,7 +13,7 @@ import { AttendeeRecord, DateRecord, EventRecord } from './types';
 import { fromDateAndTimeIds, toDateId, toTimeId } from '../utils';
 
 export class PostgresCalendarRepository implements CalendarRepository {
-  constructor(private knex: knex) {}
+  constructor(private knex: Knex) {}
 
   private mapDateRecord(record: DateRecord): CalendarDate {
     return record
