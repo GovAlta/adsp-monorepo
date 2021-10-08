@@ -13,7 +13,7 @@ interface ClamScan {
 }
 
 export const createClamScan = ({ host, port }: ScanProps): ScanService => {
-  const user = { id: 'clam-scan-service', roles: [ServiceUserRoles.Admin] } as User;
+  const user = { id: 'clam-scan-service', isCore: true, roles: [ServiceUserRoles.Admin] } as User;
 
   const scanPromise: Promise<ClamScan> = new NodeClam().init({
     clamdscan: {

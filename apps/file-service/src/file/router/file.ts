@@ -1,4 +1,4 @@
-import { EventService } from '@abgov/adsp-service-sdk';
+import { EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
   UnauthorizedError,
@@ -47,9 +47,14 @@ function mapFile(entity: FileEntity) {
 
 export const getTypes: RequestHandler = async (req, res, next) => {
   try {
+    const user = req.user;
     const [configuration] = await req.getConfiguration<ServiceConfiguration>();
 
-    res.send(Object.values(configuration).map(mapFileType));
+    res.send(
+      Object.values(configuration)
+        .filter((t) => t.canAccess(user))
+        .map(mapFileType)
+    );
   } catch (err) {
     next(res);
   }
@@ -58,12 +63,15 @@ export const getTypes: RequestHandler = async (req, res, next) => {
 export function getType(_logger: Logger): RequestHandler {
   return async (req, res, next) => {
     try {
+      const user = req.user;
       const { fileTypeId } = req.params;
       const [configuration] = await req.getConfiguration<ServiceConfiguration>();
 
       const entity = configuration?.[fileTypeId];
       if (!entity) {
         throw new NotFoundError('File Type', fileTypeId);
+      } else if (!entity.canAccess(user)) {
+        throw new UnauthorizedUserError('Access file type', user);
       }
 
       res.send(mapFileType(entity));
@@ -91,7 +99,7 @@ export function getFiles(repository: FileRepository): RequestHandler {
 
       res.send({
         page: files.page,
-        results: files.results.map(mapFile),
+        results: files.results.filter((r) => r.canAccess(user)).map(mapFile),
       });
     } catch (err) {
       next(err);

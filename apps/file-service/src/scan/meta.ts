@@ -5,7 +5,7 @@ import { ScanService, ServiceUserRoles, FileEntity } from '../file';
 import { ScanProps } from './index';
 
 export const createMetaDefenderScan = ({ host, port }: ScanProps): ScanService => {
-  const user = { id: 'meta-scan-service', roles: [ServiceUserRoles.Admin] } as User;
+  const user = { id: 'meta-scan-service', isCore: true, roles: [ServiceUserRoles.Admin] } as User;
   // Hash lookup checks the result.
   const apiUrl = `${host}:${port}`;
   const hashUrl = `${apiUrl}/metascan_rest/hash`;

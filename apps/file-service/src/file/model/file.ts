@@ -76,8 +76,16 @@ export class FileEntity implements File {
     }
   }
 
+  canAccess(user: User): boolean {
+    return (user?.isCore && user?.roles?.includes(ServiceUserRoles.Admin)) || this.type.canAccessFile(user);
+  }
+
+  canUpdate(user: User): boolean {
+    return (user?.isCore && user?.roles?.includes(ServiceUserRoles.Admin)) || this.type.canUpdateFile(user);
+  }
+
   markForDeletion(user: User): Promise<FileEntity> {
-    if (!this.type?.canUpdateFile(user)) {
+    if (!this.canUpdate(user)) {
       throw new UnauthorizedError('User not authorized to delete file.');
     }
 
@@ -123,9 +131,5 @@ export class FileEntity implements File {
     await this.repository.save(this);
 
     return stream;
-  }
-
-  canAccess(user: User): boolean {
-    return (user?.isCore && user?.roles?.includes(ServiceUserRoles.Admin)) || this.type?.canAccessFile(user);
   }
 }

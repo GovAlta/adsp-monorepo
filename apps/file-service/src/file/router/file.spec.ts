@@ -77,6 +77,7 @@ describe('file router', () => {
   describe('getTypes', () => {
     it('can get types', async () => {
       const req = {
+        user: { tenantId, id: 'test', roles: [ServiceUserRoles.Admin] },
         getConfiguration: jest.fn(),
       };
       const res = {
@@ -84,7 +85,7 @@ describe('file router', () => {
       };
       const next = jest.fn();
 
-      const configuration = { test: fileType };
+      const configuration = { test: new FileTypeEntity(fileType) };
       req.getConfiguration.mockResolvedValueOnce([configuration]);
       await getTypes(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(
@@ -101,6 +102,7 @@ describe('file router', () => {
 
     it('can get type', async () => {
       const req = {
+        user: { tenantId, id: 'test', roles: [ServiceUserRoles.Admin] },
         getConfiguration: jest.fn(),
         params: { fileTypeId: 'test' },
       };
@@ -109,7 +111,7 @@ describe('file router', () => {
       };
       const next = jest.fn();
 
-      const configuration = { test: fileType };
+      const configuration = { test: new FileTypeEntity(fileType) };
       req.getConfiguration.mockResolvedValueOnce([configuration]);
 
       const handler = getType(loggerMock);
