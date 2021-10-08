@@ -52,16 +52,14 @@ export class FileTypeEntity implements FileType {
     return (
       this.anonymousRead ||
       (user?.tenantId?.toString() === this.tenantId.toString() &&
-        !!user?.roles?.find(
-          (role) => role === ServiceUserRoles.Admin || this.readRoles.includes(role) || this.updateRoles.includes(role)
-        ))
+        !!user?.roles?.find((role) => this.readRoles.includes(role) || this.updateRoles.includes(role)))
     );
   }
 
   canUpdateFile(user: User): boolean {
     return (
       user?.tenantId?.toString() === this.tenantId.toString() &&
-      !!user?.roles?.find((role) => role === ServiceUserRoles.Admin || this.updateRoles.includes(role))
+      !!user?.roles?.find((role) => this.updateRoles.includes(role))
     );
   }
 

@@ -77,7 +77,7 @@ describe('file router', () => {
   describe('getTypes', () => {
     it('can get types', async () => {
       const req = {
-        user: { tenantId, id: 'test', roles: [ServiceUserRoles.Admin] },
+        user: { tenantId, id: 'test', roles: ['test-reader'] },
         getConfiguration: jest.fn(),
       };
       const res = {
@@ -102,7 +102,7 @@ describe('file router', () => {
 
     it('can get type', async () => {
       const req = {
-        user: { tenantId, id: 'test', roles: [ServiceUserRoles.Admin] },
+        user: { tenantId, id: 'test', roles: ['test-reader'] },
         getConfiguration: jest.fn(),
         params: { fileTypeId: 'test' },
       };
