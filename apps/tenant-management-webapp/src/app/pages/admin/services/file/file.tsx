@@ -3,7 +3,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { GoAPageLoader } from '@abgov/react-components';
 
 import FileOverview from './fileOverview';
-import FileHeader from './fileHeader';
 import FileTypes from './fileTypes';
 import FileList from './fileList';
 import './file.css';
@@ -50,7 +49,7 @@ export default function File(): JSX.Element {
       <Main>
         {isLoaded ? (
           <>
-            <FileHeader />
+            <h2 className="file-header">File Services</h2>
             <Tabs>
               <Tab label="Overview">
                 <FileOverview />

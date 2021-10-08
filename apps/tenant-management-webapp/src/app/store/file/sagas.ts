@@ -225,7 +225,7 @@ export function* fetchFileTypeHasFile(action: FetchFileTypeHasFileAction): SagaI
   }
 }
 
-export function* watchFileSagas(): SagaIterator {
+export function* watchFileSagas(): Generator {
   //file service
   yield takeEvery(UPLOAD_FILE, uploadFile);
   yield takeEvery(DOWNLOAD_FILE, downloadFile);
