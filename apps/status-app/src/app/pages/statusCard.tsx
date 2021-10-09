@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { GoACallout } from '@abgov/react-components';
 import { Notice } from '@store/status/models';
 import { LocalTime } from '@components/Date';
+import '@abgov/core-css/src/lib/styles/v2/colors.scss';
 interface ServiceOptions {
   name: string;
   date: string;
@@ -32,23 +33,23 @@ export function ServiceStatus(props: ServiceOptions): JSX.Element {
   stateProper = upcaseFirstLetterInEachWord(stateProper.replace('-', ' '));
 
   const backgroundColors: DescriptiveStrings = {
-    Outage: '#ec0417',
-    'Issues Reported': '#ec0417',
-    'Reported Issues': '#ec0417',
-    Maintenance: '#feba35',
-    Pending: '#feba35',
-    Disabled: '#feba35',
-    Operational: '#00853f',
+    Outage: 'var(--color-red)',
+    'Issues Reported': 'var(--color-red)',
+    'Reported Issues': 'var(--color-red)',
+    Maintenance: 'var(--color-orange)',
+    Pending: 'var(--color-orange)',
+    Disabled: 'var(--color-orange)',
+    Operational: 'var(--color-green)',
   };
 
   const textColor: DescriptiveStrings = {
-    Outage: 'white',
-    'Issues Reported': 'white',
-    'Reported Issues': 'white',
-    Maintenance: 'black',
-    Pending: 'black',
-    Disabled: 'black',
-    Operational: 'white',
+    Outage: 'var(--color-white)',
+    'Issues Reported': 'var(--color-white)',
+    'Reported Issues': 'var(--color-white)',
+    Maintenance: 'var(--color-black)',
+    Pending: 'var(--color-black)',
+    Disabled: 'var(--color-black)',
+    Operational: 'var(--color-black)',
   };
 
   const icons: DescriptiveStrings = {
@@ -110,7 +111,7 @@ export default ServiceStatus;
 
 const ServiceStatusCss = styled.div`
   .grey-border {
-    border: 1px solid #dcdcdc;
+    border: 1px solid #eee2e2;
     border-radius: 3px;
     padding-top: 1.5rem;
     padding-left: 1.5rem;

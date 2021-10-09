@@ -9,6 +9,7 @@ import MenuIcon from '@icons/menu-outline.svg';
 import CloseIcon from '@icons/close-outline.svg';
 import { ReactComponent as UserIcon } from '@icons/person-circle-outline.svg';
 import { TenantAdminLogin, TenantLogout } from '@store/tenant/actions';
+import '@abgov/core-css/src/lib/styles/v2/colors.scss';
 
 interface HeaderMenuProps {
   hasLoginLink: boolean;
@@ -102,7 +103,7 @@ const SidebarWrapper = styled.div<MenuState>`
   transition: right 200ms;
   min-height: 100vh;
   z-index: 1;
-  background-color: #fff;
+  background-color: var(--color-white);
   box-shadow: -10px 0 8px ${(menu: MenuState) => (menu.state === 'open' ? '999px' : '-8px')} rgba(0, 0, 0, 0.1);
   width: 14rem;
   padding-top: 3rem;
