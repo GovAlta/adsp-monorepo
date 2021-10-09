@@ -111,7 +111,7 @@ export default ServiceStatus;
 
 const ServiceStatusCss = styled.div`
   .grey-border {
-    border: 1px solid #eee2e2;
+    border: 1px solid var(--color-gray-l1);
     border-radius: 3px;
     padding-top: 1.5rem;
     padding-left: 1.5rem;

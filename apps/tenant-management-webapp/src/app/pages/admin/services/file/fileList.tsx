@@ -88,7 +88,6 @@ const FileList = (): JSX.Element => {
             <th>File Name</th>
             <th>Size</th>
             <th>type</th>
-            <th>FileURN</th>
             <th>Action</th>
           </tr>
         </thead>
@@ -99,7 +98,6 @@ const FileList = (): JSX.Element => {
                 <td>{file.filename}</td>
                 <td>{file.size}</td>
                 <td>{file.typeName}</td>
-                <td>{file.fileURN}</td>
                 <td>
                   <img src={DownloadIcon} width="26" alt="download file" onClick={(e) => onDownloadFile(file)} />
                   <img src={DeleteIcon} width="26" alt="delete file" onClick={(e) => onDeleteFile(file)} />
