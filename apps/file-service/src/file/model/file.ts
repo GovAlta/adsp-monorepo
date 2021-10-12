@@ -77,11 +77,11 @@ export class FileEntity implements File {
   }
 
   canAccess(user: User): boolean {
-    return (user?.isCore && user?.roles?.includes(ServiceUserRoles.Admin)) || this.type.canAccessFile(user);
+    return this.type.canAccessFile(user);
   }
 
   canUpdate(user: User): boolean {
-    return (user?.isCore && user?.roles?.includes(ServiceUserRoles.Admin)) || this.type.canUpdateFile(user);
+    return this.type.canUpdateFile(user);
   }
 
   markForDeletion(user: User): Promise<FileEntity> {
