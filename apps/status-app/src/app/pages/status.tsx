@@ -103,14 +103,7 @@ const ServiceStatusPage = (): JSX.Element => {
                 <div data-testid="all-application-notice-message">{notice.message}</div>
                 <br />
                 <div data-testid="service-notice-date-range">
-                  From{' '}
-                  <b>
-                    <LocalTime date={notice.startDate} />{' '}
-                  </b>
-                  to{' '}
-                  <b>
-                    <LocalTime date={notice.endDate} />
-                  </b>
+                  From <LocalTime date={notice.startDate} /> to <LocalTime date={notice.endDate} />
                 </div>
               </GoACallout>
             </div>
