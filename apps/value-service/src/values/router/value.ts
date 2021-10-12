@@ -1,4 +1,4 @@
-import { AdspId, EventService, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { Logger } from 'winston';
@@ -22,21 +22,15 @@ export const assertUserCanWrite: RequestHandler = async (req, res, next) => {
   const user = req.user;
   const { tenantId: tenantIdValue } = req.body;
 
-  if (!user?.roles?.includes(ServiceUserRoles.Writer)) {
+  // Use the specified tenantId or the user's tenantId.
+  const tenantId = tenantIdValue ? AdspId.parse(tenantIdValue as string) : user.tenantId;
+
+  if (!isAllowedUser(user, tenantId, ServiceUserRoles.Writer, true)) {
     next(new UnauthorizedUserError('write value', user));
     return;
   }
 
-  // If tenant is explicity specified, then the user must be a core user.
-  if (tenantIdValue && !user.isCore) {
-    next(new UnauthorizedUserError('write tenant tenant.', user));
-    return;
-  }
-
-  // Use the specified tenantId or the user's tenantId.
-  const tenantId = tenantIdValue ? AdspId.parse(tenantIdValue as string) : user.tenantId;
   req['tenantId'] = tenantId;
-
   next();
 };
 
