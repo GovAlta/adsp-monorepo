@@ -31,8 +31,10 @@ const initializeApp = async (): Promise<express.Application> => {
       description: 'Service for push mode connections.',
       roles: [],
       configurationSchema,
-      configurationConverter: (config: Record<string, Stream>): Record<string, StreamEntity> =>
-        config ? Object.entries(config).reduce((c, [k, s]) => ({ ...c, [k]: new StreamEntity(s) }), {}) : null,
+      configurationConverter: (config: Record<string, Stream>, tenantId): Record<string, StreamEntity> =>
+        config
+          ? Object.entries(config).reduce((c, [k, s]) => ({ ...c, [k]: new StreamEntity(tenantId, s) }), {})
+          : null,
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),

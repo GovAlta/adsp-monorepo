@@ -16,6 +16,7 @@ describe('NamespaceEntity', () => {
     serviceMock.send.mockReset();
     validationMock.validate.mockReset();
   });
+
   it('can be created', () => {
     const entity = new NamespaceEntity(validationMock, {
       tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,

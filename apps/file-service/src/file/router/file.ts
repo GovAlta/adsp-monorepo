@@ -13,7 +13,6 @@ import { createUpload } from './upload';
 import { fileDeleted, fileUploaded } from '../events';
 import { ServiceConfiguration } from '../configuration';
 import { FileStorageProvider } from '../storage';
-import { use } from 'passport';
 
 interface FileRouterProps {
   logger: Logger;

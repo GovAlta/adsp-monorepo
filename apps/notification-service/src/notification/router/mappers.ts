@@ -18,6 +18,7 @@ export const mapType = (type: NotificationTypeEntity): NotificationType => ({
   id: type.id,
   name: type.name,
   description: type.description,
+  publicSubscribe: type.publicSubscribe,
   subscriberRoles: type.subscriberRoles,
   events: type.events,
 });
