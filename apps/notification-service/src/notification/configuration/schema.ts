@@ -15,6 +15,7 @@ export const configurationSchema = {
       id: { type: 'string' },
       name: { type: 'string' },
       description: { type: 'string' },
+      publicSubscribe: { type: 'boolean' },
       subscriberRoles: {
         type: 'array',
         items: { type: 'string' },
