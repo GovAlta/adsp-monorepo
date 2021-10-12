@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { GoAHeader } from '@abgov/react-components';
+import { GoAHeader, GoACallout } from '@abgov/react-components';
 
 import '@abgov/core-css/goa-core.css';
 import '@abgov/core-css/goa-components.css';
@@ -13,7 +13,7 @@ import { useDispatch } from 'react-redux';
 import { fetchApplications } from '@store/status/actions';
 import { RootState } from '@store/index';
 import { PageLoader } from '@components/PageLoader';
-
+import { LocalTime } from '@components/Date';
 import moment from 'moment';
 
 const ServiceStatusPage = (): JSX.Element => {
@@ -26,6 +26,10 @@ const ServiceStatusPage = (): JSX.Element => {
 
   const { applications } = useSelector((state: RootState) => ({
     applications: state.application?.applications,
+  }));
+
+  const { allApplicationsNotices } = useSelector((state: RootState) => ({
+    allApplicationsNotices: state.notice?.allApplicationsNotices,
   }));
 
   useEffect(() => {
@@ -50,6 +54,8 @@ const ServiceStatusPage = (): JSX.Element => {
         <div className="timezone">
           <i>All times are in {timeZone}</i>
         </div>
+        <br />
+        {allApplicationsNotices.length > 0 && <AllApplicationsNotices />}
         <br />
         <Grid>
           {applications.map((app, index) => {
@@ -82,6 +88,36 @@ const ServiceStatusPage = (): JSX.Element => {
 
   const SectionView = () => {
     return <div>{applications && applications.length > 0 ? services() : noServices()}</div>;
+  };
+
+  const AllApplicationsNotices = () => {
+    return (
+      <AllApplications>
+        <label>
+          <b>All services notice</b>
+        </label>
+        {allApplicationsNotices.map((notice) => {
+          return (
+            <div data-testid="all-application-notice">
+              <GoACallout title="Notice" type="important" key={`{notice-${notice.id}}`}>
+                <div data-testid="all-application-notice-message">{notice.message}</div>
+                <br />
+                <div data-testid="service-notice-date-range">
+                  From{' '}
+                  <b>
+                    <LocalTime date={notice.startDate} />{' '}
+                  </b>
+                  to{' '}
+                  <b>
+                    <LocalTime date={notice.endDate} />
+                  </b>
+                </div>
+              </GoACallout>
+            </div>
+          );
+        })}
+      </AllApplications>
+    );
   };
 
   return (
@@ -163,6 +199,10 @@ const ServiceStatusesCss = styled.div`
     color: #70757a;
     font-size: 13px;
   }
+`;
+
+const AllApplications = styled.div`
+  margin-right: 0.5rem;
 `;
 
 export default ServiceStatusPage;
