@@ -100,7 +100,7 @@ export const bindApplicationsWithNotices = (
   });
   for (const application of applications) {
     const noticesOfApplication = notices.filter((notice) => {
-      return notice.tennantServRef.find((applicationRef) => applicationRef.id === application._id);
+      return notice.isAllApplications !== true && notice.tennantServRef.find((applicationRef) => applicationRef.id === application._id);
     });
 
     application.notices = sortNotices(noticesOfApplication);
