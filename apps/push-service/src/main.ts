@@ -9,6 +9,7 @@ import { createLogger, createAmqpEventService, createErrorHandler } from '@core-
 import { environment } from './environments/environment';
 import { applyPushMiddleware, Stream, StreamEntity } from './push';
 import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
+import { configurationSchema } from './push/configuration';
 
 const logger = createLogger('push-service', environment.LOG_LEVEL || 'info');
 
@@ -29,6 +30,7 @@ const initializeApp = async (): Promise<express.Application> => {
       displayName: 'Push Service',
       description: 'Service for push mode connections.',
       roles: [],
+      configurationSchema,
       configurationConverter: (config: Record<string, Stream>): Record<string, StreamEntity> =>
         config ? Object.entries(config).reduce((c, [k, s]) => ({ ...c, [k]: new StreamEntity(s) }), {}) : null,
       clientSecret: environment.CLIENT_SECRET,
