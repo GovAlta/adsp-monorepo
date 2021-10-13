@@ -10,6 +10,7 @@ import DatePicker from 'react-date-picker';
 import styled from 'styled-components';
 import Multiselect from 'multiselect-react-dropdown';
 import CloseIcon from '@icons/close-outline.svg';
+import '@abgov/core-css/src/lib/styles/v2/colors.scss';
 
 const dateTime = (date, time) => {
   const newDate = new Date(date);
@@ -325,7 +326,7 @@ export const MultiDropdownStyle = styled.div`
 
   .chip {
     background: var(--color-white);
-    color: black;
+    color: var(--color-black);
   }
 
   .searchWrapper {
@@ -336,7 +337,7 @@ export const MultiDropdownStyle = styled.div`
 
   .chip {
     font-size: 17px;
-    background: white;
+    background: var(--color-white);
     padding: 7px 10px 4px 5px;
   }
 
