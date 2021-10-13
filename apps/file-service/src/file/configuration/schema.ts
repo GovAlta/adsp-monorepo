@@ -3,7 +3,7 @@ export const configurationSchema = {
   additionalProperties: {
     type: 'object',
     properties: {
-      id: { type: 'string' },
+      id: { type: 'string', pattern: '^[a-zA-Z0-9-_ ]{1,50}$' },
       name: { type: 'string' },
       anonymousRead: { type: 'boolean' },
       readRoles: { type: 'array', items: { type: 'string' } },

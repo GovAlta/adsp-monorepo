@@ -26,3 +26,26 @@ A value represents a particular time series stream. Each write results in a new 
 
 ### Metrics
 Metrics are numeric values that can be included in value writes. The are automatically included in time interval aggregations and can be used for basic KPIs.
+
+## Code examples
+### Write a value
+TODO: add example
+
+### Read a value
+```typescript
+  const namespace = 'support';
+  const name = 'application-stats';
+  const response = await fetch(
+    `https://value-service.alpha.alberta.ca/value/v1/${namespace}/values/${name}`,
+    {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      }
+    }
+  );
+  const {
+    results,
+    page,
+  } = await response.json();
+```

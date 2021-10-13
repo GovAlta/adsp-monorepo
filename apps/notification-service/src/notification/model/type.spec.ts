@@ -31,6 +31,7 @@ describe('NotificationTypeEntity', () => {
         id: 'test-type',
         name: 'test type',
         description: null,
+        publicSubscribe: false,
         subscriberRoles: [],
         events: [],
       },
@@ -48,6 +49,7 @@ describe('NotificationTypeEntity', () => {
           id: 'test-type',
           name: 'test type',
           description: null,
+          publicSubscribe: false,
           subscriberRoles: [],
           events: [],
         },
@@ -64,6 +66,7 @@ describe('NotificationTypeEntity', () => {
           id: 'test-type',
           name: 'test type',
           description: null,
+          publicSubscribe: false,
           subscriberRoles: [],
           events: [],
         },
@@ -89,6 +92,7 @@ describe('NotificationTypeEntity', () => {
           id: 'test-type',
           name: 'test type',
           description: null,
+          publicSubscribe: false,
           subscriberRoles: ['staff'],
           events: [],
         },
@@ -107,6 +111,7 @@ describe('NotificationTypeEntity', () => {
           id: 'test-type',
           name: 'test type',
           description: null,
+          publicSubscribe: false,
           subscriberRoles: ['staff'],
           events: [],
         },
@@ -118,13 +123,33 @@ describe('NotificationTypeEntity', () => {
       ).toBe(true);
     });
 
-    it('can return true for type without required roles', () => {
+    it('can return false for type without subscriber roles.', () => {
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
       const entity = new NotificationTypeEntity(
         {
           id: 'test-type',
           name: 'test type',
           description: null,
+          publicSubscribe: false,
+          subscriberRoles: [],
+          events: [],
+        },
+        tenantId
+      );
+
+      expect(entity.canSubscribe({ id: 'test', tenantId, roles: [] } as User, { userId: 'test' } as Subscriber)).toBe(
+        false
+      );
+    });
+
+    it('can return true for type with public subscribe', () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const entity = new NotificationTypeEntity(
+        {
+          id: 'test-type',
+          name: 'test type',
+          description: null,
+          publicSubscribe: true,
           subscriberRoles: [],
           events: [],
         },
@@ -143,6 +168,7 @@ describe('NotificationTypeEntity', () => {
           id: 'test-type',
           name: 'test type',
           description: null,
+          publicSubscribe: false,
           subscriberRoles: ['staff'],
           events: [],
         },
@@ -161,6 +187,7 @@ describe('NotificationTypeEntity', () => {
           id: 'test-type',
           name: 'test type',
           description: null,
+          publicSubscribe: false,
           subscriberRoles: [],
           events: [],
         },
@@ -184,20 +211,21 @@ describe('NotificationTypeEntity', () => {
           id: 'test-type',
           name: 'test type',
           description: null,
+          publicSubscribe: true,
           subscriberRoles: [],
           events: [],
         },
         tenantId
       );
 
-      const subscriber = new SubscriberEntity((repositoryMock as unknown) as SubscriptionRepository, {
+      const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
         tenantId,
         addressAs: 'Tester',
         channels: [],
         userId: 'test',
       });
       const subscription = await entity.subscribe(
-        (repositoryMock as unknown) as SubscriptionRepository,
+        repositoryMock as unknown as SubscriptionRepository,
         { id: 'test', tenantId, roles: [] } as User,
         subscriber
       );
@@ -214,20 +242,21 @@ describe('NotificationTypeEntity', () => {
           id: 'test-type',
           name: 'test type',
           description: null,
+          publicSubscribe: false,
           subscriberRoles: [],
           events: [],
         },
         tenantId
       );
 
-      const subscriber = new SubscriberEntity((repositoryMock as unknown) as SubscriptionRepository, {
+      const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
         tenantId,
         addressAs: 'Tester',
         channels: [],
       });
       await expect(
         entity.subscribe(
-          (repositoryMock as unknown) as SubscriptionRepository,
+          repositoryMock as unknown as SubscriptionRepository,
           { id: 'test', tenantId, roles: [] } as User,
           subscriber
         )
@@ -243,13 +272,14 @@ describe('NotificationTypeEntity', () => {
           id: 'test-type',
           name: 'test type',
           description: null,
+          publicSubscribe: true,
           subscriberRoles: [],
           events: [],
         },
         tenantId
       );
 
-      const subscriber = new SubscriberEntity((repositoryMock as unknown) as SubscriptionRepository, {
+      const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
         tenantId,
         addressAs: 'Tester',
         channels: [],
@@ -257,9 +287,9 @@ describe('NotificationTypeEntity', () => {
       });
 
       const user = { id: 'test', tenantId, roles: [] } as User;
-      await entity.subscribe((repositoryMock as unknown) as SubscriptionRepository, user, subscriber);
+      await entity.subscribe(repositoryMock as unknown as SubscriptionRepository, user, subscriber);
 
-      const result = await entity.unsubscribe((repositoryMock as unknown) as SubscriptionRepository, user, subscriber);
+      const result = await entity.unsubscribe(repositoryMock as unknown as SubscriptionRepository, user, subscriber);
       expect(result).toBe(true);
       expect(repositoryMock.deleteSubscriptions).toHaveBeenCalledTimes(1);
     });
@@ -271,13 +301,14 @@ describe('NotificationTypeEntity', () => {
           id: 'test-type',
           name: 'test type',
           description: null,
+          publicSubscribe: true,
           subscriberRoles: [],
           events: [],
         },
         tenantId
       );
 
-      const subscriber = new SubscriberEntity((repositoryMock as unknown) as SubscriptionRepository, {
+      const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
         tenantId,
         addressAs: 'Tester',
         channels: [],
@@ -285,11 +316,11 @@ describe('NotificationTypeEntity', () => {
       });
 
       const user = { id: 'test', tenantId, roles: [] } as User;
-      await entity.subscribe((repositoryMock as unknown) as SubscriptionRepository, user, subscriber);
+      await entity.subscribe(repositoryMock as unknown as SubscriptionRepository, user, subscriber);
 
       user.id = 'test2';
       await expect(
-        entity.unsubscribe((repositoryMock as unknown) as SubscriptionRepository, user, subscriber)
+        entity.unsubscribe(repositoryMock as unknown as SubscriptionRepository, user, subscriber)
       ).rejects.toThrowError(/User not authorized to unsubscribe./);
     });
   });
@@ -302,6 +333,7 @@ describe('NotificationTypeEntity', () => {
           id: 'test-type',
           name: 'test type',
           description: null,
+          publicSubscribe: false,
           subscriberRoles: [],
           events: [
             {
@@ -320,7 +352,7 @@ describe('NotificationTypeEntity', () => {
         tenantId
       );
 
-      const subscriber = new SubscriberEntity((repositoryMock as unknown) as SubscriptionRepository, {
+      const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
         tenantId,
         addressAs: 'Tester',
         channels: [
@@ -332,7 +364,7 @@ describe('NotificationTypeEntity', () => {
       });
 
       const subscription = new SubscriptionEntity(
-        (repositoryMock as unknown) as SubscriptionRepository,
+        repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: {} },
         subscriber
       );
@@ -364,6 +396,7 @@ describe('NotificationTypeEntity', () => {
           id: 'test-type',
           name: 'test type',
           description: null,
+          publicSubscribe: false,
           subscriberRoles: [],
           events: [
             {
@@ -382,7 +415,7 @@ describe('NotificationTypeEntity', () => {
         tenantId
       );
 
-      const subscriber = new SubscriberEntity((repositoryMock as unknown) as SubscriptionRepository, {
+      const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
         tenantId,
         addressAs: 'Tester',
         channels: [
@@ -394,7 +427,7 @@ describe('NotificationTypeEntity', () => {
       });
 
       const subscription = new SubscriptionEntity(
-        (repositoryMock as unknown) as SubscriptionRepository,
+        repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: {} },
         subscriber
       );
@@ -418,6 +451,7 @@ describe('NotificationTypeEntity', () => {
           id: 'test-type',
           name: 'test type',
           description: null,
+          publicSubscribe: false,
           subscriberRoles: [],
           events: [
             {
@@ -436,7 +470,7 @@ describe('NotificationTypeEntity', () => {
         tenantId
       );
 
-      const subscriber = new SubscriberEntity((repositoryMock as unknown) as SubscriptionRepository, {
+      const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
         tenantId,
         addressAs: 'Tester',
         channels: [
@@ -448,7 +482,7 @@ describe('NotificationTypeEntity', () => {
       });
 
       const subscription = new SubscriptionEntity(
-        (repositoryMock as unknown) as SubscriptionRepository,
+        repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: { correlationId: '123' } },
         subscriber
       );
@@ -481,6 +515,7 @@ describe('NotificationTypeEntity', () => {
           id: 'test-type',
           name: 'test type',
           description: null,
+          publicSubscribe: false,
           subscriberRoles: [],
           events: [
             {
@@ -499,7 +534,7 @@ describe('NotificationTypeEntity', () => {
         tenantId
       );
 
-      const subscriber = new SubscriberEntity((repositoryMock as unknown) as SubscriptionRepository, {
+      const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
         tenantId,
         addressAs: 'Tester',
         channels: [
@@ -511,7 +546,7 @@ describe('NotificationTypeEntity', () => {
       });
 
       const subscription = new SubscriptionEntity(
-        (repositoryMock as unknown) as SubscriptionRepository,
+        repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: { correlationId: '123' } },
         subscriber
       );

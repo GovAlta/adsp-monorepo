@@ -11,15 +11,21 @@ export interface CalendarEvent {
   isAllDay: boolean;
 }
 
+export interface Attendee {
+  id: number;
+  name: string;
+  email: string;
+}
+
+export interface AttendeeCriteria {
+  nameEquals?: string;
+  emailEquals?: string;
+}
+
 export interface CalendarEventCriteria {
   tenant?: AdspId;
   isPublic?: boolean;
   startsAfter?: DateTime;
   endsBefore?: DateTime;
-}
-
-export interface Attendee {
-  id: number;
-  name: string;
-  email: string;
+  attendeeCriteria?: AttendeeCriteria;
 }

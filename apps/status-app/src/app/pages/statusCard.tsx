@@ -2,7 +2,7 @@ import React from 'react';
 
 import styled from 'styled-components';
 import { GoACallout } from '@abgov/react-components';
-import { Notice } from '@store/status/models';
+import { Notice, sortNotices } from '@store/status/models';
 import { LocalTime } from '@components/Date';
 interface ServiceOptions {
   name: string;
@@ -60,7 +60,7 @@ export function ServiceStatus(props: ServiceOptions): JSX.Element {
     Disabled: 'warning',
     Operational: '',
   };
-
+  const sortedNotice = sortNotices(notices);
   return (
     <ServiceStatusCss>
       <div className="grey-border">
@@ -87,7 +87,7 @@ export function ServiceStatus(props: ServiceOptions): JSX.Element {
             <i data-testid="service-created-date">{date}</i>
           </div>
           <div>{description}</div>
-          {notices.map((notice) => {
+          {sortedNotice.map((notice) => {
             return (
               <div data-testid="service-notice">
                 <GoACallout title="Notice" type="important" key={`{notice-${notice.id}}`}>

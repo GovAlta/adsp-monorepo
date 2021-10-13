@@ -28,3 +28,75 @@ Task represents a unit of work in a *queue*. Each task has basic name and descri
 
 ### Assignment
 *Tasks* are assigned to people for completion. Each task can be assigned to one person at a time (sole responsibility). Workers can self-assign tasks and assigners can assign tasks to others.
+
+## Code examples
+### Create and queue a task
+```typescript
+  const namespace = 'support';
+  const name = 'intake-processing';
+  const task = {
+    name: 'process-application-123',
+    description: 'Process Application 123',
+    priority: 'Normal',
+    recordId: 'f669be59-bd38-4ca4-8749-19248060fc63',
+  }
+
+  await fetch(
+    `https://task-service.alpha.alberta.ca/task/v1/queues/${namespace}/${name}/tasks`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(task),
+    }
+  );
+```
+
+### Get queued tasks
+Tasks are returned in order with highest priority tasks first and, within each priority, oldest tasks first.
+```typescript
+  const namespace = 'support';
+  const name = 'intake-processing';
+  const top = 20;
+  await fetch(
+    `https://task-service.alpha.alberta.ca/task/v1/queues/${namespace}/${name}/tasks?top=${top}`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      }
+    }
+  );
+```
+
+### Assign a task
+Tasks can be assigned by users with one of the assigner roles for the queue or self-assigned by users with one of the worker roles.
+
+```typescript
+  const taskServiceUrl = 'https://task-service.alpha.alberta.ca';
+  const taskId = 'b7aba911-7bd9-485e-b0e9-416506f025d9';
+  const namespace = 'support';
+  const name = 'intake-processing';
+  const request = {
+    operation: 'assign',
+    assignTo: {
+      id: 'ed2243ed-948a-4f84-a785-c9cf2d5f355e',
+      email: 'a.n.other@gov.ab.ca',
+      name: 'A. N. Other',
+    }
+  }
+
+  await fetch(
+    `${taskServiceUrl}/task/v1/queues/${namespace}/${name}/tasks/${taskId}`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(request),
+    }
+  );
+```

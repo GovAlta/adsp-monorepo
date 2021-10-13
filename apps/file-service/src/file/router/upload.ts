@@ -85,7 +85,7 @@ export const createUpload = ({ fileRepository, storageProvider }: UploadProps): 
 
   const limits = {
     fields: 10,
-    fileSize: 26214400,
+    fileSize: 52428800,
     files: 1,
   };
 

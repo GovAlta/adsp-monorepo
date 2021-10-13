@@ -1,4 +1,4 @@
-import { AdspId, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { New, Results } from '@core-services/core-common';
 import { CalendarRepository } from '../repository';
 import { CalendarServiceRoles } from '../roles';
@@ -21,12 +21,7 @@ export class CalendarEntity implements Calendar {
   }
 
   canAccessPrivateEvent(user: User): boolean {
-    return (
-      user?.tenantId?.toString() === this.tenantId.toString() &&
-      (user?.roles?.includes(CalendarServiceRoles.Admin) ||
-        !!this.updateRoles.find((r) => user?.roles?.includes(r)) ||
-        !!this.readRoles.find((r) => user?.roles?.includes(r)))
-    );
+    return isAllowedUser(user, this.tenantId, [CalendarServiceRoles.Admin, ...this.readRoles, ...this.updateRoles]);
   }
 
   getEvents(
@@ -55,10 +50,7 @@ export class CalendarEntity implements Calendar {
   }
 
   canUpdateEvent(user: User): boolean {
-    return (
-      user?.tenantId?.toString() === this.tenantId.toString() &&
-      (user?.roles?.includes(CalendarServiceRoles.Admin) || !!this.updateRoles.find((r) => user?.roles?.includes(r)))
-    );
+    return isAllowedUser(user, this.tenantId, [CalendarServiceRoles.Admin, ...this.updateRoles]);
   }
 
   createEvent(user: User, event: New<CalendarEvent>): Promise<CalendarEventEntity> {

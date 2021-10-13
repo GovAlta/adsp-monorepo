@@ -12,13 +12,14 @@ export const createVerifyRouter = ({ service }: RouterProps): Router => {
   router.post('/codes/:key', assertAuthenticatedHandler, async (req, res, next) => {
     const user = req.user;
     const { key } = req.params;
+    const { expireIn } = req.query;
     const { code } = req.body;
     try {
       if (code) {
         const verified = await service.verify(user, key, code);
         res.send({ verified });
       } else {
-        const result = await service.generate(user, `${key}`);
+        const result = await service.generate(user, `${key}`, expireIn ? parseInt(expireIn as string) : null);
         res.send(result);
       }
     } catch (err) {

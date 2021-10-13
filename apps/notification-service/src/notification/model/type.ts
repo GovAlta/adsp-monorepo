@@ -1,4 +1,4 @@
-import type { AdspId, User } from '@abgov/adsp-service-sdk';
+import { AdspId, isAllowedUser, User } from '@abgov/adsp-service-sdk';
 import type { DomainEvent } from '@core-services/core-common';
 import { UnauthorizedError } from '@core-services/core-common';
 import { SubscriptionRepository } from '../repository';
@@ -19,6 +19,7 @@ export class NotificationTypeEntity implements NotificationType {
   id: string;
   name: string;
   description: string;
+  publicSubscribe = false;
   subscriberRoles: string[] = [];
   events: NotificationTypeEvent[] = [];
 
@@ -28,12 +29,12 @@ export class NotificationTypeEntity implements NotificationType {
   }
 
   canSubscribe(user: User, subscriber: Subscriber): boolean {
+    // User is an subscription admin, or user has subscriber role and is creating subscription for self.
     return (
-      !!user &&
-      (!this.tenantId || `${this.tenantId}` === `${user.tenantId}`) &&
-      (user.roles.includes(ServiceUserRoles.SubscriptionAdmin) ||
-        (user.id === subscriber.userId &&
-          (this.subscriberRoles.length === 0 || !!this.subscriberRoles.find((r) => user.roles.includes(r)))))
+      isAllowedUser(user, this.tenantId, [ServiceUserRoles.SubscriptionAdmin]) ||
+      (!!user &&
+        user?.id === subscriber.userId &&
+        (this.publicSubscribe || isAllowedUser(user, this.tenantId, [...this.subscriberRoles])))
     );
   }
 

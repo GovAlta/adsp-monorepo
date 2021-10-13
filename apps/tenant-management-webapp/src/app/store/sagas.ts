@@ -1,4 +1,4 @@
-import { takeEvery } from 'redux-saga/effects';
+import { all, takeEvery } from 'redux-saga/effects';
 
 // Sagas
 import { fetchAccess } from './access/sagas';
@@ -87,9 +87,10 @@ export function* watchSagas() {
   yield takeEvery(GET_NOTICES_ACTION, getNotices);
   yield takeEvery(DELETE_NOTICE_ACTION, deleteNotice);
 
-  // file service
-  yield watchFileSagas();
-
-  // event
-  yield watchEventSagas();
+  yield all([
+    // file service
+    watchFileSagas(),
+    // event
+    watchEventSagas(),
+  ]);
 }
