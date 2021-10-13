@@ -11,6 +11,7 @@ import DashboardIcon from '@icons/home-outline.svg';
 import LogoutIcon from '@icons/log-out-outline.svg';
 import FitnessIcon from '@icons/fitness-outline.svg';
 import MegaphoneIcon from '@icons/megaphone-outline.svg';
+import NotificationsIcon from '@icons/notifications-outline.svg';
 import { RootState } from '@store/index';
 import { TenantAdminLogin, TenantLogout, FetchTenant } from '@store/tenant/actions';
 
@@ -69,6 +70,10 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
               <NavLink to="/admin/services/events" activeClassName="current" title="Events">
                 <img src={MegaphoneIcon} width="16" alt="Status" />
                 <span>Events</span>
+              </NavLink>
+              <NavLink to="/admin/services/notifications" activeClassName="current" title="Notifications">
+                <img src={NotificationsIcon} width="16" alt="Notifications" />
+                <span>Notifications</span>
               </NavLink>
             </>
           )}

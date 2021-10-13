@@ -11,6 +11,7 @@ import Container from '@components/Container';
 import Status from './services/status';
 import { EventLog } from './event-log';
 import { Events } from './services/events';
+import { Notifications } from './services/notifications';
 
 const TenantManagement = (): JSX.Element => {
   const { setTitle } = useContext(HeaderCtx);
@@ -43,6 +44,9 @@ const TenantManagement = (): JSX.Element => {
           </Route>
           <Route path="/admin/services/events">
             <Events />
+          </Route>
+          <Route path="/admin/services/notifications">
+            <Notifications />
           </Route>
 
           <Route path="*">
