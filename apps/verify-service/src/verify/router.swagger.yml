@@ -10,6 +10,12 @@
         required: true
         schema:
           type: string
+      - name: expireIn
+        description: Valid duration for the code in minutes.
+        in: query
+        required: false
+        schema:
+          type: number
     requestBody:
       required: false
       content:
