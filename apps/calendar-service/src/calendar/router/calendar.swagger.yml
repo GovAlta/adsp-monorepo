@@ -44,6 +44,24 @@ components:
         email:
           type: string
           format: email
+    CalendarEventCriteria:
+      type: object
+      properties:
+        isPublic:
+          type: boolean
+        startsAfter:
+          type: string
+          format: date-time
+        endsBefore:
+          type: string
+          format: date-time
+        attendeeCriteria:
+          type: object
+          properties:
+            nameEquals:
+              type: string
+            emailEquals:
+              type: string
 
 /calendar/v1/calendars:
   get:
@@ -128,17 +146,7 @@ components:
         required: false
         content:
           application/json:
-            schema:
-              type: object
-              properties:
-                isPublic:
-                  type: boolean
-                startsAfter:
-                  type: string
-                  format: date-time
-                endsBefore:
-                  type: string
-                  format: date-time
+            $ref: "#/components/schemas/CalendarEventCriteria"
     responses:
       200:
         description: Request completed successfully.
@@ -180,17 +188,7 @@ components:
         required: false
         content:
           application/json:
-            schema:
-              type: object
-              properties:
-                isPublic:
-                  type: boolean
-                startsAfter:
-                  type: string
-                  format: date-time
-                endsBefore:
-                  type: string
-                  format: date-time
+            $ref: "#/components/schemas/CalendarEventCriteria"
     responses:
       200:
         description: Request completed successfully.
