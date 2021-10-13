@@ -44,18 +44,18 @@ Feature: File service
     Examples:
       | Request Endpoint | Type Name      | File Name         | Record Id              | Status Code |
       | /file/v1/files/  | autotest-type3 | autotest-new.txt  | autotest-recordid-new  | 200         |
-      | /file/v1/files/  | autotest-type4 | autotest-new2.txt | autotest-recordid-new2 | 401         |
+      | /file/v1/files/  | autotest-type4 | autotest-new2.txt | autotest-recordid-new2 | 200         |
 
-  # TODO: File configuration needs to be applied in environments; switching to configuration service.
   # Data required before running the file types and files api tests
+  # TODO: file-service-admin now has read/write permissions across all types; this is a simplification so that the tenant admin can try test files without permission restrictiono.
   # Tenant: autotest
   # File type #1: autotest-type3; auto-test-role1 (read roles and update roles); Anonymous read - false
   # File type #2: autotest-type4; auto-test-role2 (read roles and update roles); Anonymous read - false
-  # File type #3: autotest-type4; file-service-admin (update roles); Anonymous read - true
+  # File type #3: autotest-type5; file-service-admin (update roles); Anonymous read - true
   # File #1: filename - autotest-file3.pdf; file type - autotest-type3; record id - autotest-recordid-3
   # File #2: filename - autotest-file4.pdf; file type - autotest-type4; record id - autotest-recordid-4
   # File #3: filename - autotest-file5.pdf; file type - autotest-type5; record id - autotest-recordid-5
-  @TEST_CS-439 @REQ_CS-227 @regression @api @ignore
+  @TEST_CS-439 @REQ_CS-227 @regression @api
   Scenario Outline: As a developer of a GoA digital service, I can consume the file service API to download files from my service
     When a developer of a GoA digital service sends a file download request with "<Request endpoint>", "<Request Type>", "<Type>", "<File Name>", "<Record Id>" and "<Anonymous>"
     Then "<Status Code>" is returned for the file upload request
@@ -63,11 +63,10 @@ Feature: File service
     Examples:
       | Request endpoint                 | Request Type | Type           | File Name          | Record Id           | Status Code | Anonymous      |
       | /file/v1/files/<fileid>/download | GET          | autotest-type3 | autotest-file3.pdf | autotest-recordid-3 | 200         | AnonymousFalse |
-      | /file/v1/files/<fileid>/download | GET          | autotest-type4 | autotest-file4.pdf | autotest-recordid-4 | 401         | AnonymousFalse |
+      | /file/v1/files/<fileid>/download | GET          | autotest-type4 | autotest-file4.pdf | autotest-recordid-4 | 200         | AnonymousFalse |
       | /file/v1/files/<fileid>/download | GET          | autotest-type5 | autotest-file5.pdf | autotest-recordid-5 | 200         | AnonymousTrue  |
 
-  # TODO: File configuration needs to be applied in environments; switching to configuration service.
-  @TEST_CS-440 @REQ_CS-227 @regression @api @ignore
+  @TEST_CS-440 @REQ_CS-227 @regression @api
   Scenario Outline: As a developer of a GoA digital service, I can consume the file service API to get file metadata from my service
     When a developer of a GoA digital service sends a file metadata request with "<Request endpoint>", "<Request Type>", "<Type>", "<File Name>" and "<Record Id>"
     Then "<Status Code>" is returned for the file upload request as well as "<File Name>", file size and created time with a succesful request
@@ -75,7 +74,7 @@ Feature: File service
     Examples:
       | Request endpoint        | Request Type | Type           | File Name          | Record Id           | Status Code |
       | /file/v1/files/<fileid> | GET          | autotest-type3 | autotest-file3.pdf | autotest-recordid-3 | 200         |
-      | /file/v1/files/<fileid> | GET          | autotest-type4 | autotest-file4.pdf | autotest-recordid-4 | 401         |
+      | /file/v1/files/<fileid> | GET          | autotest-type4 | autotest-file4.pdf | autotest-recordid-4 | 200         |
 
   # TODO: Test is no longer relevant with removal of file service enable/disable
   @TEST_CS-305 @REQ_CS-195 @regression @ignore
@@ -117,7 +116,7 @@ Feature: File service
   # Tenant: autotest
   # File type name: autotest-type6 (roles can be any)
 
-  # TODO: This is most likely broken after removal of the file service specific 'feedback zone'.
+  # TODO: This is broken after removal of the file service specific 'feedback zone'; re-enable after feedback zone implementation.
   @FileTypes @regression @ignore
   Scenario: As a GoA service admin, I cannot add a file type with the same name as names of the existing file types
     Given a service owner user is on file services overview page

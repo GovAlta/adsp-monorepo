@@ -93,8 +93,8 @@ When(
   'a developer of a GoA digital service sends a file upload request with {string}, {string}, {string} and {string}',
   function (reqEndPoint, fileTypeName, fileName, recordId) {
     // Get space id and type id
-    let spaceId, typeId;
-    const allTypesRequestURL = Cypress.env('fileApi') + '/file-type/v1/fileTypes';
+    let typeId;
+    const allTypesRequestURL = Cypress.env('fileApi') + '/file/v1/types';
     const fileUploadRequestURL = Cypress.env('fileApi') + reqEndPoint;
     cy.request({
       method: 'GET',
@@ -104,10 +104,10 @@ When(
       },
     }).then(async function (response) {
       responseObj = response;
-      // Get space id and type id from the array of all types for the current user
+      // TODO: Type id is just the name now, so this is no longer necessary but perhaps more robust?
+      // Get type id from the array of all types for the current user
       for (let arrayIndex = 0; arrayIndex < response.body.length; arrayIndex++) {
         if (response.body[arrayIndex].name == fileTypeName) {
-          spaceId = response.body[arrayIndex].spaceId;
           typeId = response.body[arrayIndex].id;
         }
       }
@@ -116,14 +116,9 @@ When(
         name: 'File Type Id for "' + fileTypeName + '" : ',
         message: typeId,
       });
-      Cypress.log({
-        name: 'Space Id for "' + fileTypeName + '" : ',
-        message: spaceId,
-      });
 
       // File upload with the space id and type id
       const formData = new fd();
-      formData.append('space', spaceId);
       formData.append('type', typeId);
       formData.append('filename', fileName);
       formData.append('recordId', recordId);
