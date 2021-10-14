@@ -1,11 +1,12 @@
+import { AdspId } from '@abgov/adsp-service-sdk';
+
 export interface FileType {
+  tenantId: AdspId;
   id: string;
-  _id?: string;
   name: string;
   anonymousRead: boolean;
   readRoles: string[];
   updateRoles: string[];
-  spaceId?: string;
 }
 
 export interface FileTypeCriteria {

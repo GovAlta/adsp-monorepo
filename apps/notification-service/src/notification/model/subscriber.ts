@@ -1,4 +1,4 @@
-import type { AdspId, User } from '@abgov/adsp-service-sdk';
+import { AdspId, isAllowedUser, User } from '@abgov/adsp-service-sdk';
 import { New, UnauthorizedError, Update } from '@core-services/core-common';
 import { SubscriptionRepository } from '../repository';
 import { Subscriber, Channel, ServiceUserRoles } from '../types';
@@ -11,10 +11,10 @@ export class SubscriberEntity implements Subscriber {
   addressAs: string;
 
   static canCreate(user: User, subscriber: New<Subscriber>): boolean {
+    // User is an subscription admin, or user is creating a subscriber for self.
     return (
-      !!user &&
-      (user.isCore || (user.tenantId && `${user.tenantId}` === `${subscriber.tenantId}`)) &&
-      (user.roles.includes(ServiceUserRoles.SubscriptionAdmin) || subscriber.userId === user.id)
+      isAllowedUser(user, subscriber.tenantId, [ServiceUserRoles.SubscriptionAdmin], true) ||
+      (!!user && user.tenantId?.toString() === subscriber.tenantId.toString() && user?.id === subscriber.userId)
     );
   }
 
@@ -44,14 +44,13 @@ export class SubscriberEntity implements Subscriber {
   }
 
   canUpdate(user: User): boolean {
+    // User is an subscription admin, or is the subscribed user.
     return (
-      user &&
-      (user.isCore || (user.tenantId && `${user.tenantId}` === `${this.tenantId}`)) &&
-      (user.roles.includes(ServiceUserRoles.SubscriptionAdmin) || (this.userId && user.id === this.userId))
+      isAllowedUser(user, this.tenantId, [ServiceUserRoles.SubscriptionAdmin], true) || (!!user && user?.id === this.userId)
     );
   }
 
-  async update(user: User, update: Update<Subscriber>): Promise<SubscriberEntity> {
+  update(user: User, update: Update<Subscriber>): Promise<SubscriberEntity> {
     if (!this.canUpdate(user)) {
       throw new UnauthorizedError('User not authorized to update subscriber.');
     }
@@ -65,5 +64,13 @@ export class SubscriberEntity implements Subscriber {
     }
 
     return this.repository.saveSubscriber(this);
+  }
+
+  delete(user: User): Promise<boolean> {
+    if (!this.canUpdate(user)) {
+      throw new UnauthorizedError('User not authorized to delete subscriber.');
+    }
+
+    return this.repository.deleteSubscriber(this);
   }
 }

@@ -1,4 +1,4 @@
-import { connect } from 'amqplib';
+import { connect } from 'amqp-connection-manager';
 import { Logger } from 'winston';
 import type { WorkQueueService } from '../work';
 import { AmqpEventSubscriberService } from './event';
@@ -12,50 +12,46 @@ interface AmqpServiceProps {
   logger: Logger;
 }
 
-export const createAmqpEventService = ({
+export const createAmqpEventService = async ({
   queue,
   AMQP_HOST,
   AMQP_USER,
   AMQP_PASSWORD,
   logger,
 }: AmqpServiceProps): Promise<AmqpEventSubscriberService> => {
-  return connect({
+  const connection = connect({
     heartbeat: 160,
     hostname: AMQP_HOST,
     username: AMQP_USER,
     password: AMQP_PASSWORD,
-  })
-    .then((connection) => {
-      const service = new AmqpEventSubscriberService(queue, logger, connection);
-      return service.connect().then(() => service);
-    })
-    .then((service) => {
-      logger.info(`Connected to RabbitMQ as event service at: ${AMQP_HOST}`);
-      return service;
-    });
+  });
+
+  const service = new AmqpEventSubscriberService(queue, logger, connection);
+  await service.connect();
+
+  logger.info(`Connected to RabbitMQ as event service at: ${AMQP_HOST}`);
+  return service;
 };
 
-export const createAmqpQueueService = <T>({
+export const createAmqpQueueService = async <T>({
   queue,
   AMQP_HOST,
   AMQP_USER,
   AMQP_PASSWORD,
   logger,
 }: AmqpServiceProps): Promise<WorkQueueService<T>> => {
-  return connect({
+  const connection = connect({
     heartbeat: 160,
     hostname: AMQP_HOST,
     username: AMQP_USER,
     password: AMQP_PASSWORD,
-  })
-    .then((connection) => {
-      const service = new AmqpWorkQueueService<T>(queue, logger, connection);
-      return service.connect().then(() => service);
-    })
-    .then((service) => {
-      logger.info(`Connected to RabbitMQ as work qeue at: ${AMQP_HOST}`);
-      return service;
-    });
+  });
+
+  const service = new AmqpWorkQueueService<T>(queue, logger, connection);
+  await service.connect();
+
+  logger.info(`Connected to RabbitMQ as work queue at: ${AMQP_HOST}`);
+  return service;
 };
 
 export { AmqpEventSubscriberService } from './event';

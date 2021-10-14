@@ -1,4 +1,4 @@
-import { AdspId, EventService, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { Logger } from 'winston';
@@ -22,21 +22,15 @@ export const assertUserCanWrite: RequestHandler = async (req, res, next) => {
   const user = req.user;
   const { tenantId: tenantIdValue } = req.body;
 
-  if (!user?.roles?.includes(ServiceUserRoles.Writer)) {
+  // Use the specified tenantId or the user's tenantId.
+  const tenantId = tenantIdValue ? AdspId.parse(tenantIdValue as string) : user.tenantId;
+
+  if (!isAllowedUser(user, tenantId, ServiceUserRoles.Writer, true)) {
     next(new UnauthorizedUserError('write value', user));
     return;
   }
 
-  // If tenant is explicity specified, then the user must be a core user.
-  if (tenantIdValue && !user.isCore) {
-    next(new UnauthorizedUserError('write tenant tenant.', user));
-    return;
-  }
-
-  // Use the specified tenantId or the user's tenantId.
-  const tenantId = tenantIdValue ? AdspId.parse(tenantIdValue as string) : user.tenantId;
   req['tenantId'] = tenantId;
-
   next();
 };
 
@@ -151,6 +145,7 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
   });
 
   valueRouter.post('/:namespace/values/:name', assertUserCanWrite, async (req, res, next) => {
+    const user = req.user;
     const namespace = req.params.namespace;
     const name = req.params.name;
 
@@ -186,7 +181,11 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
 
       eventService.send(valueWritten(req.user, namespace, name, result));
 
-      logger.info(`Value ${namespace}:${name} written by user ${req.user.name} (ID: ${req.user.id}).`);
+      logger.info(`Value ${namespace}:${name} written by user ${user.name} (ID: ${user.id}).`, {
+        context: 'value-router',
+        tenantId: tenantId?.toString(),
+        user: `${user.name} (ID: ${user.id})`,
+      });
     } catch (err) {
       next(err);
     }

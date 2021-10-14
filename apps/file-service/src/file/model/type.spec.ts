@@ -1,18 +1,16 @@
-import { Mock } from 'moq.ts';
 import { adspId, User } from '@abgov/adsp-service-sdk';
-import { UnauthorizedError } from '@core-services/core-common';
-import { FileSpaceEntity } from './space';
 import { FileTypeEntity } from './type';
 import { FileType } from '../types';
 
 describe('File Type Entity', () => {
+  const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const type: FileType = {
+    tenantId,
     id: 'type-1',
     name: 'Type 1',
     anonymousRead: false,
     updateRoles: ['test-admin'],
     readRoles: ['test-admin'],
-    spaceId: 'space1234',
   };
 
   const user: User = {
@@ -22,15 +20,8 @@ describe('File Type Entity', () => {
     roles: ['test-admin'],
     tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
     isCore: false,
-    token: null
+    token: null,
   };
-
-  let spaceMock: Mock<FileSpaceEntity>;
-
-  beforeEach(() => {
-    spaceMock = new Mock<FileSpaceEntity>();
-    spaceMock.setup((m) => m.canUpdate(user)).returns(true);
-  });
 
   it('can be initialized', () => {
     const entity = new FileTypeEntity(type);
@@ -45,12 +36,12 @@ describe('File Type Entity', () => {
 
   it('can create new', () => {
     const entity = FileTypeEntity.create(
+      tenantId,
       type.id,
       type.name,
       type.anonymousRead,
       type.readRoles,
-      type.updateRoles,
-      type.spaceId
+      type.updateRoles
     );
 
     expect(entity).toBeTruthy();
@@ -98,38 +89,6 @@ describe('File Type Entity', () => {
         roles: [],
       });
       expect(canUpdate).toBeFalsy();
-    });
-
-    it('can update', () => {
-      const update = {
-        name: 'new-name',
-        anonymousRead: true,
-        readRoles: ['updated-role'],
-        updateRoles: ['updated-role'],
-      };
-
-      entity.update(user, update);
-      expect(entity.name).toEqual(update.name);
-      expect(entity.anonymousRead).toEqual(update.anonymousRead);
-      expect(entity.readRoles).toEqual(update.readRoles);
-      expect(entity.updateRoles).toEqual(update.updateRoles);
-    });
-
-    it('can prevent unauthorized user update', async () => {
-      function update(entity) {
-        return entity.update(
-          {
-            ...user,
-            roles: [],
-          },
-          { anonymousRead: true }
-        );
-      }
-      try {
-        await update(entity);
-      } catch (e) {
-        expect(e).toEqual(new UnauthorizedError('User not authorized to update type.'));
-      }
     });
   });
 });

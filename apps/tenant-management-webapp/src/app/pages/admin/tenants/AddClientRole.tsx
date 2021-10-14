@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { GoAButton } from '@abgov/react-components';
 import GoALinkButton from '@components/LinkButton';
-import { GoAForm, GoAFormButtons, GoAFormItem } from '@components/Form';
+import { GoAForm, GoAFormItem, GoAFormActions } from '@abgov/react-components/experimental';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 
@@ -34,12 +34,12 @@ const AddClientRole = (): JSX.Element => {
             <label htmlFor="email">Email</label>
             <input id="email" value={email} onChange={onChangeEmail} />
           </GoAFormItem>
-          <GoAFormButtons>
+          <GoAFormActions>
             <GoALinkButton to="/admin/tenants" buttonType="secondary">
               Back
             </GoALinkButton>
             <GoAButton>Activate Tenant</GoAButton>
-          </GoAFormButtons>
+          </GoAFormActions>
         </GoAForm>
         Need to <a href={'/get-started'}>create a tenant?</a>
       </Main>

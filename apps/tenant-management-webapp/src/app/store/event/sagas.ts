@@ -184,7 +184,7 @@ export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaI
   }
 }
 
-export function* watchEventSagas(): SagaIterator {
+export function* watchEventSagas(): Generator {
   yield takeEvery(FETCH_EVENT_DEFINITIONS_ACTION, fetchEventDefinitions);
   yield takeEvery(FETCH_EVENT_LOG_ENTRIES_ACTION, fetchEventLogEntries);
   yield takeEvery(UPDATE_EVENT_DEFINITION_ACTION, updateEventDefinition);

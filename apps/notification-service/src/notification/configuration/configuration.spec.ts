@@ -15,6 +15,7 @@ describe('NotificationConfiguration', () => {
       id: 'test',
       name: 'Test Type',
       description: '',
+      publicSubscribe: true,
       subscriberRoles: [],
       events: [
         {
@@ -48,6 +49,7 @@ describe('NotificationConfiguration', () => {
       id: 'test',
       name: 'Test Type',
       description: '',
+      publicSubscribe: true,
       subscriberRoles: [],
       events: [
         {
@@ -77,6 +79,7 @@ describe('NotificationConfiguration', () => {
       id: 'test',
       name: 'Test Type',
       description: '',
+      publicSubscribe: true,
       subscriberRoles: [],
       events: [
         {

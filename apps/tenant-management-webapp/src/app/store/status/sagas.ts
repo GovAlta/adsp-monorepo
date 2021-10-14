@@ -43,7 +43,6 @@ export function* saveApplication(action: SaveApplicationAction): SagaIterator {
 
   const baseUrl = getServiceStatusUrl(currentState.config);
   const token = getToken(currentState.session);
-
   try {
     const api = new StatusApi(baseUrl, token);
     const data = yield call([api, api.saveApplication], action.payload);

@@ -12,6 +12,7 @@ export interface NotificationType {
   id: string;
   name: string;
   description: string;
+  publicSubscribe: boolean;
   subscriberRoles: string[];
   events: NotificationTypeEvent[];
 }

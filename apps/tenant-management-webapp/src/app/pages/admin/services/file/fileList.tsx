@@ -8,13 +8,11 @@ import {
   DownloadFileService,
 } from '@store/file/actions';
 import { GoAButton, GoARadioGroup, GoARadio } from '@abgov/react-components';
-import { GoAForm } from '@components/Form';
+import { GoAForm } from '@abgov/react-components/experimental';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
-import { Main } from '@components/Html';
 import DownloadIcon from '@icons/download-outline.svg';
 import DeleteIcon from '@icons/trash-outline.svg';
-import './file.css';
 
 const FileList = (): JSX.Element => {
   const [selectedFile, setSelectFile] = useState<string>();
@@ -61,7 +59,7 @@ const FileList = (): JSX.Element => {
   }, [dispatch]);
 
   return (
-    <Main>
+    <>
       <GoAForm>
         <h3>Please upload a File</h3>
 
@@ -70,8 +68,8 @@ const FileList = (): JSX.Element => {
           orientation="vertical"
           name="fileSecurityOptions"
           value={uploadFileType}
-          onChange={(e) => {
-            setUploadFileType(e);
+          onChange={(_name, value) => {
+            setUploadFileType(value);
           }}
         >
           {getFileTypesValues().map((item) => (
@@ -90,7 +88,6 @@ const FileList = (): JSX.Element => {
             <th>File Name</th>
             <th>Size</th>
             <th>type</th>
-            <th>FileURN</th>
             <th>Action</th>
           </tr>
         </thead>
@@ -101,7 +98,6 @@ const FileList = (): JSX.Element => {
                 <td>{file.filename}</td>
                 <td>{file.size}</td>
                 <td>{file.typeName}</td>
-                <td>{file.fileURN}</td>
                 <td>
                   <img src={DownloadIcon} width="26" alt="download file" onClick={(e) => onDownloadFile(file)} />
                   <img src={DeleteIcon} width="26" alt="delete file" onClick={(e) => onDeleteFile(file)} />
@@ -111,7 +107,7 @@ const FileList = (): JSX.Element => {
           })}
         </tbody>
       </DataTable>
-    </Main>
+    </>
   );
 };
 

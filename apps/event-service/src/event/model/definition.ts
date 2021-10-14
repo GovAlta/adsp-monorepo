@@ -1,5 +1,4 @@
 import type { DomainEvent } from '@core-services/core-common';
-import { InvalidOperationError } from '@core-services/core-common';
 import type { EventDefinition, Interval } from '../types';
 import { NamespaceEntity } from './namespace';
 
@@ -28,10 +27,6 @@ export class EventDefinitionEntity implements EventDefinition {
       context: _context,
       payload,
     } = event;
-
-    if (!payload) {
-      throw new InvalidOperationError('Event payload does not match schema.');
-    }
 
     this.namespace.validationService.validate(`event '${this.namespace.name}:${this.name}'`, this.getSchemaKey(), payload);
   }

@@ -1,5 +1,5 @@
 import type { User } from '@abgov/adsp-service-sdk';
-import { NewOrExisting, Update, InvalidValueError, UnauthorizedError } from '@core-services/core-common';
+import { NewOrExisting, Update, UnauthorizedError } from '@core-services/core-common';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import {
   InternalServiceStatusType,

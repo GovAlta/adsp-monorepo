@@ -1,6 +1,6 @@
 import { Doc } from '@core-services/core-common';
 import { Model, model, Document } from 'mongoose';
-import { ServiceStatusApplication, ServiceStatusApplicationEntity } from '../app';
+import { ServiceStatusApplication, ServiceStatusApplicationFilter, ServiceStatusApplicationEntity } from '../app';
 import { ServiceStatusRepository } from '../app/repository/serviceStatus';
 import { serviceStatusApplicationSchema } from './schema';
 
@@ -43,7 +43,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
     return docs.map((doc) => this.fromDoc(doc));
   }
 
-  async find(filter: Partial<ServiceStatusApplication>): Promise<ServiceStatusApplicationEntity[]> {
+  async find(filter: Partial<ServiceStatusApplicationFilter>): Promise<ServiceStatusApplicationEntity[]> {
     const docs = await this.model.find(filter);
     return docs.map((doc) => this.fromDoc(doc));
   }

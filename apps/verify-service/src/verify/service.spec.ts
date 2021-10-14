@@ -36,8 +36,10 @@ describe('createVerifyService', () => {
             roles: [VerifyUserRoles.Generator],
             tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
           } as User,
-          key
+          key,
+          15
         );
+
         expect(repositoryMock.set).toHaveBeenCalledTimes(1);
         expect(result.key).toBe(key);
         expect(result.code).toBeTruthy();

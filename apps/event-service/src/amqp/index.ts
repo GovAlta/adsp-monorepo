@@ -1,4 +1,4 @@
-import { connect } from 'amqplib';
+import { connect } from 'amqp-connection-manager';
 import { Logger } from 'winston';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const retry = require('promise-retry');

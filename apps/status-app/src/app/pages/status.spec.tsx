@@ -6,8 +6,8 @@ import configureStore from 'redux-mock-store';
 import ServiceStatuses from './status';
 import axios from 'axios';
 import moment from 'moment';
-import { ApplicationInit } from '@store/status/models'
-import { SessionInit } from '@store/session/models'
+import { ApplicationInit, NoticeInit } from '@store/status/models';
+import { SessionInit } from '@store/session/models';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
@@ -36,7 +36,7 @@ describe('Service statuses', () => {
         platformTenantRealm: '0014430f-abb9-4b57-915c-de9f3c889696',
         envLoaded: true,
       },
-      application: ApplicationInit
+      application: ApplicationInit,
     });
 
     axiosMock.get.mockResolvedValueOnce({ data: {} });
@@ -125,9 +125,10 @@ describe('Service statuses (2 of them)', () => {
         envLoaded: true,
       },
       application: {
-        applications: data
+        applications: data,
       },
-      session: SessionInit
+      session: SessionInit,
+      notice: NoticeInit,
     });
     axiosMock.get.mockResolvedValueOnce({ data: data });
   });
@@ -143,7 +144,6 @@ describe('Service statuses (2 of them)', () => {
         <ServiceStatuses />
       </Provider>
     );
-
     await waitFor(() => expect(getByText('Status Service')).toBeTruthy());
     await waitFor(() => expect(getByText('Tenant Service')).toBeTruthy());
   });

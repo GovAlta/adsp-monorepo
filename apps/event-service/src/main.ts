@@ -7,7 +7,7 @@ import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import { AjvValidationService, createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { createEventService } from './amqp';
-import { applyEventMiddleware, EventServiceRoles, Namespace, NamespaceEntity } from './event';
+import { applyEventMiddleware, configurationSchema, EventServiceRoles, Namespace, NamespaceEntity } from './event';
 import type { User } from '@abgov/adsp-service-sdk';
 
 const logger = createLogger('event-service', environment.LOG_LEVEL);
@@ -44,38 +44,7 @@ const initializeApp = async (): Promise<express.Application> => {
       displayName: 'Event Service',
       description: 'Service for sending of domain events.',
       roles: [EventServiceRoles.sender],
-      configurationSchema: {
-        type: 'object',
-        additionalProperties: {
-          type: 'object',
-          properties: {
-            name: { type: 'string' },
-            definitions: {
-              type: 'object',
-              additionalProperties: {
-                type: 'object',
-                properties: {
-                  name: { type: 'string' },
-                  description: { type: 'string' },
-                  payloadSchema: { type: 'object' },
-                  interval: {
-                    type: 'object',
-                    properties: {
-                      namespace: { type: 'string' },
-                      name: { type: 'string' },
-                      metric: { type: 'string' },
-                    },
-                  },
-                },
-                required: ['name', 'description', 'payloadSchema'],
-                additionalProperties: false,
-              },
-            },
-          },
-          required: ['name', 'definitions'],
-          additionalProperties: false,
-        },
-      },
+      configurationSchema,
       configurationConverter: (config: Record<string, Namespace>, tenantId) => {
         return config
           ? Object.getOwnPropertyNames(config).reduce(

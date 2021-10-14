@@ -1,4 +1,4 @@
-import { AdspId, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, Results, ValidationService } from '@core-services/core-common';
 import { ConfigurationRepository } from '../repository';
 import { ConfigurationServiceRoles } from '../roles';
@@ -34,19 +34,24 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
   }
 
   public canAccess(user: User): boolean {
-    return (
-      (user?.roles?.includes(ConfigurationServiceRoles.ConfigurationAdmin) ||
-        user?.roles?.includes(ConfigurationServiceRoles.ConfiguredService) ||
-        user?.roles?.includes(ConfigurationServiceRoles.Reader)) &&
-      (user.isCore || !this.tenantId || this.tenantId.toString() === user.tenantId?.toString())
+    return isAllowedUser(
+      user,
+      this.tenantId,
+      [
+        ConfigurationServiceRoles.ConfiguredService,
+        ConfigurationServiceRoles.ConfigurationAdmin,
+        ConfigurationServiceRoles.Reader,
+      ],
+      true
     );
   }
 
   public canModify(user: User): boolean {
-    return (
-      (user?.roles?.includes(ConfigurationServiceRoles.ConfigurationAdmin) ||
-        user?.roles?.includes(ConfigurationServiceRoles.ConfiguredService)) &&
-      (this.tenantId ? this.tenantId.toString() === user.tenantId?.toString() : user.isCore)
+    return isAllowedUser(
+      user,
+      this.tenantId,
+      [ConfigurationServiceRoles.ConfiguredService, ConfigurationServiceRoles.ConfigurationAdmin],
+      true
     );
   }
 

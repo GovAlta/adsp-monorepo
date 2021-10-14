@@ -91,7 +91,7 @@ export default class MongoNoticeRepository implements NoticeRepository {
       mode: application.mode,
       created: application.created,
       tenantId: application.tenantId,
-      isCrossTenants: application.isCrossTenants
+      isAllApplications: application.isAllApplications
     };
   }
 
@@ -102,13 +102,13 @@ export default class MongoNoticeRepository implements NoticeRepository {
     return new NoticeApplicationEntity(this, {
       id: doc._id,
       message: doc.message,
-      tennantServRef: JSON.parse(doc.tennantServRef),
+      tennantServRef: doc.tennantServRef,
       startDate: doc.startDate,
       endDate: doc.endDate,
       mode: doc.mode,
       created: doc.created,
       tenantId: doc.tenantId,
-      isCrossTenants: doc.isCrossTenants
+      isAllApplications: doc.isAllApplications
     });
   }
 }

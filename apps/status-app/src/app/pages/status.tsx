@@ -1,21 +1,20 @@
 import React, { useEffect } from 'react';
-import { GoAHeader } from '@abgov/react-components';
+import { GoAHeader, GoACallout } from '@abgov/react-components';
 
 import '@abgov/core-css/goa-core.css';
 import '@abgov/core-css/goa-components.css';
 import '@abgov/core-css/src/lib/stories/page-template/page-template.story.scss';
-import { Grid, GridItem } from '@components/Grid'
+import { Grid, GridItem } from '@components/Grid';
 import ServiceStatus from './statusCard';
 import { useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { useDispatch } from 'react-redux';
-import { fetchApplications } from '@store/status/actions'
+import { fetchApplications } from '@store/status/actions';
 import { RootState } from '@store/index';
 import { PageLoader } from '@components/PageLoader';
-
+import { LocalTime } from '@components/Date';
 import moment from 'moment';
-
 
 const ServiceStatusPage = (): JSX.Element => {
   const { config } = useSelector((state: RootState) => ({
@@ -29,22 +28,34 @@ const ServiceStatusPage = (): JSX.Element => {
     applications: state.application?.applications,
   }));
 
+  const { allApplicationsNotices } = useSelector((state: RootState) => ({
+    allApplicationsNotices: state.notice?.allApplicationsNotices,
+  }));
+
   useEffect(() => {
-    dispatch(fetchApplications(realm))
+    dispatch(fetchApplications(realm));
   }, [realm]);
+
+  const timeZone = new Date().toString().split('(')[1].split(')')[0];
 
   const services = () => {
     return (
       <div className="small-container">
         <PageLoader />
-        <h2 data-testid='service-name'>All {applications[0].name || 'platform'} services</h2>
+        <h2 data-testid="service-name">All {applications[0].tenantName || 'platform'} services</h2>
+        <br />
         <p>
           These are the services currently being offered by{' '}
-          {location.pathname.slice(1) ? applications[0].name : 'the Alberta Digital Service Platform'}. All
-          statuses are in real time and reflect current states of the individual services. Please{' '}
+          {location.pathname.slice(1) ? applications[0].name : 'the Alberta Digital Service Platform'}. All statuses are
+          in real time and reflect current states of the individual services. Please{' '}
           <a href="mailto: DIO@gov.ab.ca">contact support</a> for additional information or any other inquiries
           regarding service statuses.
         </p>
+        <div className="timezone">
+          <i>All times are in {timeZone}</i>
+        </div>
+        <br />
+        {allApplicationsNotices.length > 0 && <AllApplicationsNotices />}
         <br />
         <Grid>
           {applications.map((app, index) => {
@@ -79,9 +90,36 @@ const ServiceStatusPage = (): JSX.Element => {
     return <div>{applications && applications.length > 0 ? services() : noServices()}</div>;
   };
 
+  const AllApplicationsNotices = () => {
+    return (
+      <AllApplications>
+        <label>
+          <b>All services notice</b>
+        </label>
+        {allApplicationsNotices.map((notice) => {
+          return (
+            <div data-testid="all-application-notice">
+              <GoACallout title="Notice" type="important" key={`{notice-${notice.id}}`}>
+                <div data-testid="all-application-notice-message">{notice.message}</div>
+                <br />
+                <div data-testid="service-notice-date-range">
+                  From <LocalTime date={notice.startDate} /> to <LocalTime date={notice.endDate} />
+                </div>
+              </GoACallout>
+            </div>
+          );
+        })}
+      </AllApplications>
+    );
+  };
+
   return (
     <div>
-      <GoAHeader serviceLevel="beta" serviceName="Alberta Digital Service Platform -Status & Outages " serviceHome="/" />
+      <GoAHeader
+        serviceLevel="beta"
+        serviceName="Alberta Digital Service Platform -Status & Outages "
+        serviceHome="/"
+      />
       {/* TODO: re-visit this part when design and card or breadcrumb is ready.
       <div className="goa-banner">
         <div className="small-font">Alberta Digital Service Platform &rarr; Status & Outages</div>
@@ -94,7 +132,7 @@ const ServiceStatusPage = (): JSX.Element => {
           <section>
             <SectionView />
           </section>
-          <section>{ }</section>
+          <section>{}</section>
         </ServiceStatusesCss>
       </main>
       <Footer>
@@ -148,6 +186,16 @@ const ServiceStatusesCss = styled.div`
   .flex {
     flex: 1;
   }
+
+  .timezone {
+    text-align: right;
+    color: #70757a;
+    font-size: 13px;
+  }
+`;
+
+const AllApplications = styled.div`
+  margin-right: 0.5rem;
 `;
 
 export default ServiceStatusPage;

@@ -140,7 +140,9 @@ export const NoticeList = (): JSX.Element => {
             .map((notice) => (
               <GridItem md={12} key={notice.id} vSpacing={0.75}>
                 <NoticeCard
-                  key={notice.id} notice={notice} data-testid="notice-card"
+                  key={notice.id}
+                  notice={notice}
+                  data-testid="notice-card"
                   clickMenuFn={clickCardMenuFn}
                   isMenuOpen={openMenuId === notice.id}
                 />

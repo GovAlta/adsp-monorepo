@@ -1,11 +1,11 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { decodeAfter, encodeNext, Results } from '@core-services/core-common';
-import * as knex from 'knex';
+import { Knex } from 'knex';
 import { TaskRepository, TaskCriteria, TaskEntity, QueueEntity } from '../task';
 import { TaskRecord } from './types';
 
 export class PostgresTaskRepository implements TaskRepository {
-  constructor(private knex: knex) {}
+  constructor(private knex: Knex) {}
 
   private mapRecord(record: TaskRecord, queues: Record<string, QueueEntity>): TaskEntity {
     return record

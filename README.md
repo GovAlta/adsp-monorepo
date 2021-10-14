@@ -1,10 +1,19 @@
-This project was generated using [Nx](https://nx.dev).
+# Alberta Digital Service Platform (ADSP)
+This project is a monorepo using [Nx](https://nx.dev).
 
-[File Service](./apps/file-service/README.md)
-[Tenant Management Frontend WebApp](./apps/tenant-management-webapp/README.md)
-[Tenant Management Backend API](./apps/tenant-management-api/README.md)
+[![Pipeline](https://github.com/GovAlta/adsp-monorepo/actions/workflows/delivery-ci.yml/badge.svg)](https://github.com/GovAlta/adsp-monorepo/actions/workflows/delivery-ci.yml)
 
-# Using managed environments
+## Development using ADSP
+See the [ADSP Development Guide](https://glowing-parakeet-0563ab2e.pages.github.io)
+
+## Generating a new platform service
+This project includes a workspace generator for creating new platform services.
+
+```
+npx nx workspace-generator adsp-service
+```
+
+## Using managed environments
 
 Managed environments are openshift resources created and updated by the core services CI/CD pipeline ([Jenkinsfile](Jenkinsfile))
 and branch build ([Jenkinsfile.dev](Jenkinsfile.dev)). Managed resources are based on templates under `.openshift/managed`
@@ -19,12 +28,12 @@ oc project core-services-dev
 oc process -f .openshift/managed/tenant-management-api.yml -p DEPLOY_TAG=dev | oc apply -l apply-dev=true
 ```
 
-## Adding new manage app/service
+### Adding new manage app/service
 
 New app/service resources can be add by creating an associated template yaml file under `.openshift/managed`.
 The template represents a superset of resources across different projects and must follow the following conventions.
 
-### Conventions
+#### Conventions
 
 1. Name the file after the nx app (e.g. `tenant-management-api.yml`).
 2. File must contain valid openshift template that can be processed using `oc process -f template.yml`
@@ -51,12 +60,12 @@ The template represents a superset of resources across different projects and mu
 7. All container environment variables should be bound to a _ConfigMap_ or _Secret_ so that most environment variation is
    externalized from the template.
 
-## Updating existing managed app/service
+### Updating existing managed app/service
 
 Updates to managed environment resources is done by updating the associated template. Any direct changes to the resource in
 openshift may be overwritten by pipeline execution.
 
-## Trying changes on a branch
+### Trying changes on a branch
 
 Changes to managed app/service templates should be tried on a branch before being merged. The branch build supports deploying
 based on the templates for this purpose.
@@ -73,7 +82,7 @@ The general workflow is as follows:
 6. Verify branch specific deployment (resources with branch name as suffix).
 7. Merge branch.
 
-## Error Handling
+### Error Handling
 
 common-core lib includes a set of predefined errors based on GoAError. The error handler in the lib can process the GoAError. To include the error handler:
 
@@ -86,7 +95,7 @@ app.use(errorHandler)
 
 Please use the **next** in the express to handle the error: [Express error handling](https://expressjs.com/en/guide/error-handling.html).
 
-# To run in Docker Compose
+## To run in Docker Compose
 
 ```
 docker-compose \

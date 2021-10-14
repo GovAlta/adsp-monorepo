@@ -16,7 +16,7 @@ jobs:
   e2e:
     runs-on: ubuntu-20.04
     environment:
-      name: ${{ github.event.inputs.ENVIRONMENT }}
+      name: ${{ github.event.inputs.ENVIRONMENT }}-e2e
     env:
       APP: ${{ github.event.inputs.APP }}
       ENV: ${{ github.event.inputs.ENVIRONMENT }}

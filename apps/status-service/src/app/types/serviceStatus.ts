@@ -21,6 +21,25 @@ export interface ServiceStatusApplication {
   enabled: boolean;
 }
 
+export interface ServiceStatusApplicationFilter {
+  _id?: string;
+  description: string;
+  endpoint: ServiceStatusEndpoint;
+  status?: PublicServiceStatusType;
+  internalStatus?: InternalServiceStatusType;
+  metadata: unknown;
+  name: string;
+  statusTimestamp: number;
+  tenantId: string;
+  tenantName: { $regex: string; $options: 'i' };
+  tenantRealm: string;
+  enabled: boolean;
+}
+
+export interface TenantCriteria {
+  tenantName: { $regex: string; $options: 'i' };
+}
+
 export type ServiceStatusApplicationModel = ServiceStatusApplication & Document;
 
 export interface ServiceStatusEndpoint {

@@ -1,8 +1,7 @@
-import * as fs from 'fs';
 import { Application } from 'express';
 import { Logger } from 'winston';
 import { AdspId, ConfigurationService, EventService, TokenProvider } from '@abgov/adsp-service-sdk';
-import { DomainEventSubscriberService, WorkQueueService } from '@core-services/core-common';
+import { assertAuthenticatedHandler, DomainEventSubscriberService, WorkQueueService } from '@core-services/core-common';
 import { Repositories } from './repository';
 import { createJobs } from './job';
 import { TemplateService } from './template';
@@ -62,23 +61,7 @@ export const applyNotificationMiddleware = (
   };
   const subscriptionRouter = createSubscriptionRouter(routerProps);
 
-  app.use('/subscription/v1', subscriptionRouter);
-
-  let swagger = null;
-  app.use('/swagger/docs/v1', (req, res) => {
-    if (swagger) {
-      res.json(swagger);
-    } else {
-      fs.readFile(`${__dirname}/swagger.json`, 'utf8', (err, data) => {
-        if (err) {
-          res.sendStatus(404);
-        } else {
-          swagger = JSON.parse(data);
-          res.json(swagger);
-        }
-      });
-    }
-  });
+  app.use('/subscription/v1', assertAuthenticatedHandler, subscriptionRouter);
 
   return app;
 };

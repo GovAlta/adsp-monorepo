@@ -1,5 +1,5 @@
 import { decodeAfter, encodeNext, Results } from '@core-services/core-common';
-import * as knex from 'knex';
+import { Knex } from 'knex';
 import {
   Attendee,
   CalendarDate,
@@ -13,7 +13,7 @@ import { AttendeeRecord, DateRecord, EventRecord } from './types';
 import { fromDateAndTimeIds, toDateId, toTimeId } from '../utils';
 
 export class PostgresCalendarRepository implements CalendarRepository {
-  constructor(private knex: knex) {}
+  constructor(private knex: Knex) {}
 
   private mapDateRecord(record: DateRecord): CalendarDate {
     return record
@@ -105,12 +105,9 @@ export class PostgresCalendarRepository implements CalendarRepository {
   ): Promise<Results<CalendarEventEntity>> {
     const skip = decodeAfter(after);
 
-    let query = this.knex<EventRecord>('calendar_events');
-    query = query.offset(skip).limit(top);
-    query.where({
-      tenant: calendar.tenantId.toString(),
-      calendar: calendar.name,
-    });
+    let query = this.knex<EventRecord>('calendar_events AS e');
+    query = query.select('e.*').distinctOn('e.id').offset(skip).limit(top);
+    query = query.where('e.tenant', '=', calendar.tenantId.toString()).andWhere('e.calendar', '=', calendar.name);
 
     if (criteria) {
       const queryCriteria: Record<string, unknown> = {};
@@ -119,14 +116,14 @@ export class PostgresCalendarRepository implements CalendarRepository {
         queryCriteria.is_public = criteria.isPublic;
       }
 
-      query.where(queryCriteria);
+      query = query.andWhere(queryCriteria);
 
       if (criteria.startsAfter) {
         // Where date is greater or date is equal and time is greater or equal.
         const afterDate = toDateId(criteria.startsAfter);
         const afterTime = toTimeId(criteria.startsAfter);
-        query = query.where('start_date', '>', afterDate).orWhere((query) => {
-          query.where('start_date', '=', afterDate).andWhere('start_time', '>=', afterTime);
+        query = query.andWhere('e.start_date', '>', afterDate).orWhere((query) => {
+          query.where('e.start_date', '=', afterDate).andWhere('e.start_time', '>=', afterTime);
         });
       }
 
@@ -134,13 +131,32 @@ export class PostgresCalendarRepository implements CalendarRepository {
         // Where date is less or date is equal and time is lesser or equal.
         const beforeDate = toDateId(criteria.endsBefore);
         const beforeTime = toTimeId(criteria.endsBefore);
-        query = query.where('end_date', '<', beforeDate).orWhere((query) => {
-          query.where('end_date', '=', beforeDate).andWhere('end_date', '<=', beforeTime);
+        query = query.andWhere('e.end_date', '<', beforeDate).orWhere((query) => {
+          query.where('e.end_date', '=', beforeDate).andWhere('e.end_date', '<=', beforeTime);
         });
+      }
+
+      if (criteria.attendeeCriteria) {
+        query.join('attendees AS a', 'e.id', '=', 'a.event_id');
+        if (criteria.attendeeCriteria.emailEquals !== undefined) {
+          if (criteria.attendeeCriteria.emailEquals === null) {
+            query.whereNull('a.email');
+          } else {
+            query.where('a.email', '=', criteria.attendeeCriteria.emailEquals);
+          }
+        }
+
+        if (criteria.attendeeCriteria.nameEquals !== undefined) {
+          if (criteria.attendeeCriteria.nameEquals === null) {
+            query.whereNull('a.name');
+          } else {
+            query.where('a.name', '=', criteria.attendeeCriteria.nameEquals);
+          }
+        }
       }
     }
 
-    const rows = await query.orderBy('id', 'asc');
+    const rows = await query.orderBy('e.id', 'asc');
 
     return {
       results: rows.map((r) => this.mapEventRecord(calendar, r)),

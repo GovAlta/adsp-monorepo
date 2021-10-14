@@ -58,14 +58,6 @@ const Main = styled.main`
     font-size: var(--fs-base);
   }
 
-  .thin-font {
-    font-weight: 200;
-  }
-
-  .padding-bottom-2 {
-    padding-bottom: 2em;
-  }
-
   // default padding is way too much
   ul {
     padding-left: 1rem;
@@ -92,6 +84,16 @@ const Main = styled.main`
 
 const Aside = styled.aside`
   padding: 0.5rem 0;
+  .copy-url {
+    font-size: var(--fs-sm);
+    background-color: var(--color-gray-100);
+    border: 1px solid var(--color-gray-300);
+    border-radius: 1px;
+    padding: 0.25rem;
+    margin-bottom: 1rem;
+    margin-top: 0.5rem;
+    line-height: normal;
+  }
   @media (min-width: 1280px) {
     flex: 0 0 380px;
     padding-left: 2rem;

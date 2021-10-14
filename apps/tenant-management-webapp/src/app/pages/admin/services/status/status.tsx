@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Page, Main, Aside } from '@components/Html';
 import { deleteApplication, fetchServiceStatusApps, toggleApplicationStatus } from '@store/status/actions';
 import { RootState } from '@store/index';
+import ReactTooltip from 'react-tooltip';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   ServiceStatusType,
@@ -14,18 +15,19 @@ import { Route, Switch, useHistory, useLocation } from 'react-router-dom';
 import styled, { CSSProperties } from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import GoALinkButton from '@components/LinkButton';
+import { GoAButton, GoARadio, GoARadioGroup } from '@abgov/react-components';
 import {
   GoABadge,
   GoAModal,
   GoAModalActions,
   GoAModalContent,
   GoAModalTitle,
+  GoAForm,
+  GoAFormItem,
 } from '@abgov/react-components/experimental';
 import type { GoABadgeType } from '@abgov/react-components/experimental';
 import ApplicationFormModal from './form';
-import NoticeForm from './noticeForm';
-import { GoAButton, GoARadio, GoARadioGroup } from '@abgov/react-components';
-import { GoAForm, GoAFormItem } from '@components/Form';
+import NoticeModal from './noticeModal';
 import { setApplicationStatus } from '@store/status/actions/setApplicationStatus';
 import { Tab, Tabs } from '@components/Tabs';
 import { getNotices } from '@store/notice/actions';
@@ -35,8 +37,10 @@ import SupportLinks from '@components/SupportLinks';
 function Status(): JSX.Element {
   const dispatch = useDispatch();
 
-  const { applications } = useSelector((state: RootState) => ({
+  const { applications, serviceStatusAppUrl, tenantName } = useSelector((state: RootState) => ({
     applications: state.serviceStatus.applications,
+    serviceStatusAppUrl: state.config.serviceUrls.serviceStatusAppUrl,
+    tenantName: state.tenant.name,
   }));
 
   const location = useLocation();
@@ -47,6 +51,12 @@ function Status(): JSX.Element {
 
     return () => clearInterval(intervalId);
   }, []);
+
+  const publicStatusUrl = `${serviceStatusAppUrl}/${tenantName.replace(/\s/g, '-').toLowerCase()}`;
+
+  const _afterShow = (copyText) => {
+    navigator.clipboard.writeText(copyText);
+  };
 
   useEffect(() => {
     dispatch(getNotices());
@@ -117,6 +127,23 @@ function Status(): JSX.Element {
           See the code
         </a>
         <SupportLinks />
+
+        <h3>Public Status Page</h3>
+
+        <p>Url of the current tenant's public status page:</p>
+
+        <div className="copy-url">{publicStatusUrl}</div>
+        <GoAButton data-tip="Copied!" data-for="registerTipUrl">
+          Click to copy
+        </GoAButton>
+        <ReactTooltip
+          id="registerTipUrl"
+          place="top"
+          event="click"
+          eventOff="blur"
+          effect="solid"
+          afterShow={() => _afterShow(publicStatusUrl)}
+        />
       </Aside>
 
       <Switch>
@@ -124,20 +151,10 @@ function Status(): JSX.Element {
           <ApplicationFormModal isOpen={true} />
         </Route>
         <Route path="/admin/services/status/notice/new">
-          <GoAModal isOpen={true}>
-            <GoAModalTitle>Add a Draft Notice</GoAModalTitle>
-            <GoAModalContent>
-              <NoticeForm />
-            </GoAModalContent>
-          </GoAModal>
+          <NoticeModal isOpen={true} title='Add a Draft Notice' />
         </Route>
         <Route path="/admin/services/status/notice/:noticeId">
-          <GoAModal isOpen={true}>
-            <GoAModalTitle>Edit Draft Notice</GoAModalTitle>
-            <GoAModalContent>
-              <NoticeForm />
-            </GoAModalContent>
-          </GoAModal>
+          <NoticeModal isOpen={true} title='Edit Draft Notice' />
         </Route>
         <Route path="/admin/services/status/:applicationId/edit">
           <ApplicationFormModal isOpen={true} />
@@ -255,11 +272,10 @@ function Application(app: ServiceStatusApplication) {
         <GoAModalContent>
           <GoAForm>
             <GoAFormItem>
-              <br />
               <GoARadioGroup
                 name="status"
                 value={status}
-                onChange={(value) => setStatus(value as ServiceStatusType)}
+                onChange={(_name, value) => setStatus(value as ServiceStatusType)}
                 orientation="vertical"
               >
                 {PublicServiceStatusTypes.map((statusType) => (
@@ -369,8 +385,8 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
               backgroundColor: entry.ok
                 ? 'var(--color-green)'
                 : entry.status === 'n/a'
-                ? 'var(--color-gray-300)'
-                : 'var(--color-red)',
+                  ? 'var(--color-gray-300)'
+                  : 'var(--color-red)',
             }}
             title={entry.status + ': ' + new Date(entry.timestamp).toLocaleString()}
           />

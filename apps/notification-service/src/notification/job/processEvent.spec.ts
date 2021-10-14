@@ -72,6 +72,7 @@ describe('createProcessEventJob', () => {
         id: 'test',
         name: 'Test Type',
         description: '',
+        publicSubscribe: true,
         subscriberRoles: [],
         events: [
           {
@@ -155,6 +156,35 @@ describe('createProcessEventJob', () => {
         },
         (err) => {
           expect(err).toBe(error);
+          done();
+        }
+      );
+    });
+
+    it('can skip notification-service event', (done) => {
+      const job = createProcessEventJob({
+        logger,
+        serviceId: adspId`urn:ads:platform:notification-service`,
+        tokenProvider: tokenProviderMock,
+        configurationService: configurationServiceMock,
+        eventService: eventServiceMock,
+        templateService: templateServiceMock,
+        subscriptionRepository: (repositoryMock as unknown) as SubscriptionRepository,
+        queueService: (queueServiceMock as unknown) as WorkQueueService<Notification>,
+      });
+
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+
+      job(
+        {
+          tenantId,
+          namespace: 'notification-service',
+          name: 'test-run',
+          timestamp: new Date(),
+          payload: {},
+        },
+        (err) => {
+          expect(err).toBeFalsy();
           done();
         }
       );

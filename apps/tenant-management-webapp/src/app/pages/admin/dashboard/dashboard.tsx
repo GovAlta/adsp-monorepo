@@ -68,6 +68,12 @@ const Dashboard = (): JSX.Element => {
                   description="The event service provides tenant applications with the ability to send domain events. Applications are able to leverage additional capabilities as side effects through these events."
                 />
               </GridItem>
+              <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                <GoACard
+                  title={<Link to="/admin/services/notifications">Notifications</Link>}
+                  description="The notifications service provides tenant applications with the ability to configure notifications."
+                />
+              </GridItem>
             </Grid>
           </Main>
           <DashboardAside>

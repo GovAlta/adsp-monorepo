@@ -7,7 +7,6 @@ import { createScanJob } from './scan';
 
 interface FileJobProps {
   logger: Logger;
-  rootStoragePath: string;
   fileRepository: FileRepository;
   scanService: ScanService;
 }

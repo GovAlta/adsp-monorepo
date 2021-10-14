@@ -110,7 +110,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs: [build, deployDev]
     environment:
-      name: Dev
+      name: Dev-e2e
     strategy:
       matrix:
         app: [tenant-management-webapp, status-app]
@@ -182,7 +182,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs: [build, deployTest]
     environment:
-      name: Test
+      name: Test-e2e
     strategy:
       matrix:
         app: [tenant-management-webapp, status-app]
@@ -219,33 +219,3 @@ jobs:
         with:
           name: ${{ matrix.app }}-test-cypress-reports
           path: dist/cypress/apps/${{ matrix.app }}-e2e/
-
-  deployStaging:
-    runs-on: ubuntu-20.04
-    needs: [build, testSmokeTest]
-    env:
-      AFFECTED_APPS: ${{ needs.build.outputs.affected_apps }}
-    environment:
-      name: Staging
-    steps:
-      - name: Oc login
-        uses: redhat-actions/oc-login@v1
-        with:
-          openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
-          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
-          namespace: core-services-infra
-          insecure_skip_tls_verify: true
-      - name: Tag UAT
-        run: |
-          for app in $AFFECTED_APPS
-          do
-            oc tag $app:test $app:uat
-          done
-      - name: Deploy UAT
-        run: |
-          for app in $AFFECTED_APPS
-          do
-            oc project core-services-uat
-            oc rollout latest dc/$app
-            oc rollout status dc/$app
-          done

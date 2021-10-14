@@ -2,8 +2,9 @@ import React from 'react';
 
 import styled from 'styled-components';
 import { GoACallout } from '@abgov/react-components';
-import { Notice } from '@store/status/models'
-import { LocalTime } from '@components/Date'
+import { Notice, sortNotices } from '@store/status/models';
+import { LocalTime } from '@components/Date';
+import '@abgov/core-css/src/lib/styles/v2/colors.scss';
 interface ServiceOptions {
   name: string;
   date: string;
@@ -27,28 +28,28 @@ function upcaseFirstLetterInEachWord(sentence: string) {
 }
 
 export function ServiceStatus(props: ServiceOptions): JSX.Element {
-  const { name, date, state, description, notices } = props
-  let stateProper = state.charAt(0).toUpperCase() + state.slice(1);
+  const { name, date, state, description, notices } = props;
+  let stateProper = state?.charAt(0).toUpperCase() + state?.slice(1) || '';
   stateProper = upcaseFirstLetterInEachWord(stateProper.replace('-', ' '));
 
   const backgroundColors: DescriptiveStrings = {
-    Outage: '#ec0417',
-    'Issues Reported': '#ec0417',
-    'Reported Issues': '#ec0417',
-    Maintenance: '#feba35',
-    Pending: '#feba35',
-    Disabled: '#feba35',
-    Operational: '#00853f',
+    Outage: 'var(--color-red)',
+    'Issues Reported': 'var(--color-red)',
+    'Reported Issues': 'var(--color-red)',
+    Maintenance: 'var(--color-orange)',
+    Pending: 'var(--color-orange)',
+    Disabled: 'var(--color-orange)',
+    Operational: 'var(--color-green)',
   };
 
   const textColor: DescriptiveStrings = {
-    Outage: 'white',
-    'Issues Reported': 'white',
-    'Reported Issues': 'white',
-    Maintenance: 'black',
-    Pending: 'black',
-    Disabled: 'black',
-    Operational: 'white',
+    Outage: 'var(--color-white)',
+    'Issues Reported': 'var(--color-white)',
+    'Reported Issues': 'var(--color-white)',
+    Maintenance: 'var(--color-black)',
+    Pending: 'var(--color-black)',
+    Disabled: 'var(--color-black)',
+    Operational: 'var(--color-black)',
   };
 
   const icons: DescriptiveStrings = {
@@ -60,7 +61,7 @@ export function ServiceStatus(props: ServiceOptions): JSX.Element {
     Disabled: 'warning',
     Operational: '',
   };
-
+  const sortedNotice = sortNotices(notices);
   return (
     <ServiceStatusCss>
       <div className="grey-border">
@@ -84,42 +85,33 @@ export function ServiceStatus(props: ServiceOptions): JSX.Element {
             </div>
           </div>
           <div className="date-assignment-status">
-            <i data-testid='service-created-date'>{date}</i>
+            <i data-testid="service-created-date">{date}</i>
           </div>
-          <div>
-            {description}
-          </div>
-          {notices.map((notice) => {
+          <div>{description}</div>
+          {sortedNotice.map((notice) => {
             return (
-              <div data-testid='service-notice'>
-                <GoACallout
-                  title='Notice'
-                  type='important'
-                  key={`{notice-${notice.id}}`}
-                >
-                  <div data-testid='service-notice-message'>
-                    {notice.message}
-                  </div><br />
-                  <div data-testid='service-notice-date-range'>
+              <div data-testid="service-notice">
+                <GoACallout title="Notice" type="important" key={`{notice-${notice.id}}`}>
+                  <div data-testid="service-notice-message">{notice.message}</div>
+                  <br />
+                  <div data-testid="service-notice-date-range">
                     From <LocalTime date={notice.startDate} /> to <LocalTime date={notice.endDate} />
                   </div>
                 </GoACallout>
               </div>
-            )
+            );
           })}
-
         </div>
       </div>
-    </ServiceStatusCss >
+    </ServiceStatusCss>
   );
 }
 
 export default ServiceStatus;
 
 const ServiceStatusCss = styled.div`
-
   .grey-border {
-    border: 1px solid #dcdcdc;
+    border: 1px solid var(--color-gray-l1);
     border-radius: 3px;
     padding-top: 1.5rem;
     padding-left: 1.5rem;
