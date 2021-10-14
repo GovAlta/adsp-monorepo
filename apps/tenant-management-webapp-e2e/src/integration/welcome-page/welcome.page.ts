@@ -25,7 +25,7 @@ class WelcomePage {
   }
 
   createTenantButton() {
-    return cy.get('button:contains("Create Tenant")');
+    return cy.get('button:contains("Create tenant")');
   }
 
   createTenantLinkButton() {
