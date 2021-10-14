@@ -87,18 +87,26 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       namespace: entity.namespace,
       name: entity.name,
       revision: revision.revision,
-      tenant: entity.tenantId?.toString(),
+      tenant: entity.tenantId?.toString() || { $exists: false },
     };
+
+    const update: Record<string, unknown> = {
+      namespace: entity.namespace,
+      name: entity.name,
+      revision: revision.revision,
+    };
+
+    // Only include tenant if there is a tenantId on the entity.
+    if (entity.tenantId) {
+      update.tenant = entity.tenantId.toString();
+    }
 
     const doc = await new Promise<ConfigurationRevisionDoc<C>>((resolve, reject) => {
       this.revisionModel
         .findOneAndUpdate(
+          query,
           {
-            ...query,
-            tenant: query.tenant || { $exists: false },
-          },
-          {
-            ...query,
+            ...update,
             configuration: revision.configuration,
           },
           { upsert: true, new: true, lean: true }
