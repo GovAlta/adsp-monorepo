@@ -87,13 +87,16 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       namespace: entity.namespace,
       name: entity.name,
       revision: revision.revision,
-      tenant: entity.tenantId?.toString() || { $exists: false },
+      tenant: entity.tenantId?.toString(),
     };
 
     const doc = await new Promise<ConfigurationRevisionDoc<C>>((resolve, reject) => {
       this.revisionModel
         .findOneAndUpdate(
-          query,
+          {
+            ...query,
+            tenant: query.tenant || { $exists: false },
+          },
           {
             ...query,
             configuration: revision.configuration,
