@@ -32,7 +32,7 @@ Feature: Tenant management welcome page
         And the user clicks continue with Government Alberta account button
         And the user enters "env{email2}" and "env{password2}", and clicks login button
         Then the user views create tenant page
-        When the user enters "autotest-signup" as tenant name and clicks create tenant button
+        When the user enters "autotest signup" as tenant name and clicks create tenant button
         Then the user views the tenant is successfully created message
         And the new tenant login button is presented
         When the user clicks the tenant login button

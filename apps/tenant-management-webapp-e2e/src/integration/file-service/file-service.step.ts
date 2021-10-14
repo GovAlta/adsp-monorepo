@@ -92,7 +92,7 @@ Then('the user can get the URL with {string}', function (fileResourceURL) {
 When(
   'a developer of a GoA digital service sends a file upload request with {string}, {string}, {string} and {string}',
   function (reqEndPoint, fileTypeName, fileName, recordId) {
-    // Get space id and type id
+    // Get type id
     let typeId;
     const allTypesRequestURL = Cypress.env('fileApi') + '/file/v1/types';
     const fileUploadRequestURL = Cypress.env('fileApi') + reqEndPoint;
