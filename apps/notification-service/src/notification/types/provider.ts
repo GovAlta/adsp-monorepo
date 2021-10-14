@@ -1,5 +1,4 @@
-import { Notification } from '../types';
-import { Channel } from './channel';
+import { Channel, Notification } from '../types';
 
 export interface NotificationProvider {
   send(notification: Notification): Promise<void>;

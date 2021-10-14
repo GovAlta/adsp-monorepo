@@ -1,5 +1,4 @@
-import { AdspId } from '@abgov/adsp-service-sdk';
-import { Channel } from './channel';
+import { AdspId, Channel } from '@abgov/adsp-service-sdk';
 
 export interface SubscriberChannel {
   channel: Channel;

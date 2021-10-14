@@ -1,4 +1,4 @@
-import { Channel } from './channel';
+import { Channel } from './type';
 import { Message } from './message';
 
 export interface Notification {

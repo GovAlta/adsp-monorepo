@@ -15,9 +15,9 @@ interface SubscriptionRouterProps {
 
 export const getNotificationTypes: RequestHandler = async (req, res, next) => {
   try {
-    const [configuration] = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
+    const [configuration, options] = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
 
-    const types = configuration?.getNotificationTypes() || [];
+    const types = [...(configuration?.getNotificationTypes() || []), ...(options?.getNotificationTypes() || [])];
     res.send(types.map(mapType));
   } catch (err) {
     next(err);
@@ -29,8 +29,8 @@ export const getNotificationType: RequestHandler = async (req, _res, next) => {
   try {
     const { type } = req.params;
 
-    const [configuration] = await req.getConfiguration<NotificationConfiguration>();
-    const typeEntity = configuration?.getNotificationType(type);
+    const [configuration, options] = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
+    const typeEntity = configuration?.getNotificationType(type) || options?.getNotificationType(type);
     if (!typeEntity) {
       throw new NotFoundError('Notification Type', type);
     }
