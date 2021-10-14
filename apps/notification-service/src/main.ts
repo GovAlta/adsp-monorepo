@@ -25,7 +25,7 @@ import {
 } from './notification';
 import { createRepositories } from './mongo';
 import { createABNotifySmsProvider, createEmailProvider } from './provider';
-import { templateService } from './handlebars';
+import { createTemplateService } from './handlebars';
 
 const logger = createLogger('notification-service', environment.LOG_LEVEL || 'info');
 
@@ -96,6 +96,7 @@ async function initializeApp() {
     logger,
   });
 
+  const templateService = createTemplateService();
   applyNotificationMiddleware(app, {
     ...repositories,
     serviceId,
