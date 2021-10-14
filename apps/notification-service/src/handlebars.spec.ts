@@ -1,4 +1,5 @@
 import { DomainEvent } from '@core-services/core-common';
+import { DateTime } from 'luxon';
 import { createTemplateService } from './handlebars';
 import { Subscriber } from './notification';
 
@@ -25,31 +26,33 @@ describe('HandlebarsTemplateService', () => {
     });
 
     it('can generate message with formatDate', () => {
+      const timestamp = new Date('2020-03-12T13:00:00Z');
       const message = templateService.generateMessage(
         {
           subject: '{{ subscriber.addressAs }} {{ event.payload.value }}',
           body: '{{ formatDate event.timestamp }}',
         },
-        { timestamp: new Date('2020-03-12T13:00:00Z'), payload: { value: 123 } } as unknown as DomainEvent,
+        { timestamp, payload: { value: 123 } } as unknown as DomainEvent,
         { addressAs: 'tester' } as Subscriber
       );
 
       expect(message.subject).toBe('tester 123');
-      expect(message.body).toBe('Mar 12, 2020, 7:00 AM');
+      expect(message.body).toBe(DateTime.fromJSDate(timestamp).toFormat('ff'));
     });
 
     it('can generate message with formatDate with format parameter', () => {
+      const timestamp = new Date('2020-03-12T13:00:00Z');
       const message = templateService.generateMessage(
         {
           subject: '{{ subscriber.addressAs }} {{ event.payload.value }}',
           body: '{{ formatDate event.timestamp format="fff" }}',
         },
-        { timestamp: new Date('2020-03-12T13:00:00Z'), payload: { value: 123 } } as unknown as DomainEvent,
+        { timestamp, payload: { value: 123 } } as unknown as DomainEvent,
         { addressAs: 'tester' } as Subscriber
       );
 
       expect(message.subject).toBe('tester 123');
-      expect(message.body).toBe('March 12, 2020, 7:00 AM MDT');
+      expect(message.body).toBe(DateTime.fromJSDate(timestamp).toFormat('fff'));
     });
   });
 });
