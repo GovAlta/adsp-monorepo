@@ -4,7 +4,7 @@ import { GoAButton, GoANotification, GoAElementLoader } from '@abgov/react-compo
 import { CreateTenant, IsTenantAdmin } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 import GoALinkButton from '@components/LinkButton';
-import { GoAForm, GoAFormActions, GoAFormItem } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormActions, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import { KeycloakCheckSSO, TenantLogin } from '@store/tenant/actions';
@@ -20,8 +20,8 @@ const CreateRealm = (): JSX.Element => {
     handleIsLoadedToggle();
   };
 
-  const onChangeName = (event) => {
-    setName(event.target.value);
+  const onChangeName = (name: string, value: string) => {
+    setName(value);
   };
 
   const handleIsLoadedToggle = () => {
@@ -131,12 +131,9 @@ const CreateRealm = (): JSX.Element => {
                       As a reminder, you are only able to create <b>one tenant</b> per user account.
                     </p>
                     <GoAForm>
-                      <GoAFormItem
-                        error={notifications[notifications.length - 1]?.message}
-                        helpText="Names cannot contain special characters (ex. ! % &)."
-                      >
+                      <GoAFormItem error={notifications[notifications.length - 1]?.message}>
                         <label htmlFor="name">Tenant name</label>
-                        <input id="name" type="text" value={name} onChange={onChangeName} />
+                        <GoAInput id="name" type="text" value={name} onChange={onChangeName} />
                       </GoAFormItem>
                       <GoAFormActions alignment="left">
                         {isLoaded ? <TenantCreateView /> : <ButtonLoader />}
