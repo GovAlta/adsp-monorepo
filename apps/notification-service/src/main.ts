@@ -1,16 +1,18 @@
-import * as express from 'express';
-import * as fs from 'fs';
-import * as passport from 'passport';
-import * as compression from 'compression';
-import * as cors from 'cors';
-import * as helmet from 'helmet';
 import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
 import {
   createLogger,
   createAmqpEventService,
   createAmqpQueueService,
   createErrorHandler,
+  assertAuthenticatedHandler,
 } from '@core-services/core-common';
+import { InstallProvider } from '@slack/oauth';
+import * as express from 'express';
+import * as fs from 'fs';
+import * as passport from 'passport';
+import * as compression from 'compression';
+import * as cors from 'cors';
+import * as helmet from 'helmet';
 import { environment } from './environments/environment';
 import {
   applyNotificationMiddleware,
@@ -18,13 +20,14 @@ import {
   configurationSchema,
   Notification,
   NotificationConfiguration,
+  NotificationSendFailedDefinition,
   NotificationSentDefinition,
   NotificationsGeneratedDefinition,
   NotificationType,
   ServiceUserRoles,
 } from './notification';
 import { createRepositories } from './mongo';
-import { createABNotifySmsProvider, createEmailProvider } from './provider';
+import { createABNotifySmsProvider, createEmailProvider, createSlackProvider } from './provider';
 import { createTemplateService } from './handlebars';
 
 const logger = createLogger('notification-service', environment.LOG_LEVEL || 'info');
@@ -57,7 +60,7 @@ async function initializeApp() {
       configurationSchema,
       configurationConverter: (config: Record<string, NotificationType>, tenantId?: AdspId) =>
         new NotificationConfiguration(config, tenantId),
-      events: [NotificationsGeneratedDefinition, NotificationSentDefinition],
+      events: [NotificationsGeneratedDefinition, NotificationSentDefinition, NotificationSendFailedDefinition],
       roles: [
         {
           role: ServiceUserRoles.SubscriptionAdmin,
@@ -82,7 +85,7 @@ async function initializeApp() {
   app.use(passport.initialize());
   app.use('/subscription', passport.authenticate(['jwt'], { session: false }), tenantHandler, configurationHandler);
 
-  const repositories = await createRepositories({ ...environment, logger });
+  const { installationStore, ...repositories } = await createRepositories({ ...environment, logger });
 
   const eventSubscriber = await createAmqpEventService({
     ...environment,
@@ -94,6 +97,13 @@ async function initializeApp() {
     ...environment,
     queue: 'notification-send',
     logger,
+  });
+
+  const slackInstaller = new InstallProvider({
+    clientId: environment.SLACK_CLIENT_ID,
+    clientSecret: environment.SLACK_CLIENT_SECRET,
+    stateSecret: environment.SLACK_STATE_SECRET,
+    installationStore,
   });
 
   const templateService = createTemplateService();
@@ -110,7 +120,29 @@ async function initializeApp() {
     providers: {
       [Channel.email]: createEmailProvider(environment),
       [Channel.sms]: createABNotifySmsProvider(environment),
+      [Channel.slack]: createSlackProvider(slackInstaller),
     },
+  });
+
+  app.get(
+    '/slack/install',
+    passport.authenticate(['jwt'], { session: false }),
+    assertAuthenticatedHandler,
+    async (req, res) => {
+      const { from } = req.query;
+      const slackInstall = await slackInstaller.generateInstallUrl({
+        scopes: ['channels:join', 'chat:write'],
+        metadata: from as string,
+      });
+
+      res.send(slackInstall);
+    }
+  );
+
+  app.get('/slack/oauth_redirect', async (req, res) => {
+    await slackInstaller.handleCallback(req, res, {
+      success: (_installation, options) => res.redirect(options.metadata),
+    });
   });
 
   let swagger = null;
@@ -146,6 +178,7 @@ async function initializeApp() {
         health: new URL('/health', rootUrl).href,
         api: new URL('/subscription/v1', rootUrl).href,
         doc: new URL('/swagger/docs/v1', rootUrl).href,
+        slack: new URL('/slack/install', rootUrl).href,
       },
     });
   });
