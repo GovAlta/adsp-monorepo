@@ -124,15 +124,25 @@ async function initializeApp() {
     },
   });
 
+  // This should be done with 'trust proxy', but that depends on the proxies using the x-forward headers.
+  const ROOT_URL = 'rootUrl';
+  function getRootUrl(req: express.Request, _res: express.Response, next: express.NextFunction) {
+    const host = req.get('host');
+    req[ROOT_URL] = new URL(`${host === 'localhost' ? 'http' : 'https'}://${host}`);
+    next();
+  }
+
   app.get(
     '/slack/install',
     passport.authenticate(['jwt'], { session: false }),
     assertAuthenticatedHandler,
+    getRootUrl,
     async (req, res) => {
       const { from } = req.query;
       const slackInstall = await slackInstaller.generateInstallUrl({
         scopes: ['channels:join', 'chat:write'],
         metadata: from as string,
+        redirectUri: new URL('/slack/oauth_redirect', req[ROOT_URL]).href,
       });
 
       res.send(slackInstall);
@@ -170,8 +180,8 @@ async function initializeApp() {
     });
   });
 
-  app.get('/', async (req, res) => {
-    const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
+  app.get('/', getRootUrl, async (req, res) => {
+    const rootUrl = req[ROOT_URL];
     res.json({
       _links: {
         self: new URL(req.originalUrl, rootUrl).href,
