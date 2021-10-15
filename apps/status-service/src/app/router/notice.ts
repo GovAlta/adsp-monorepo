@@ -13,7 +13,8 @@ export interface NoticeRouterProps {
 
 interface NoticeFilter {
   mode?: NoticeModeType;
-  tenantId?: string;
+  tenantName?: string;
+  tenantId?: string
 }
 
 interface applicationRef {
@@ -38,7 +39,7 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
   // Get notices by query
   router.get('/notices', async (req, res, next) => {
     const { top, after, mode } = req.query;
-    const tenantIdFromQuery = req.query.tenantId
+    const tenantName = req.query.name
     const user = req.user as Express.User;
 
     logger.info(req.method, req.url);
@@ -56,8 +57,8 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
         filter.mode = mode ? (mode.toString() as NoticeModeType) : null;
       }
 
-      if (tenantIdFromQuery) {
-        filter.tenantId = tenantIdFromQuery.toString();
+      if (tenantName) {
+        filter.tenantName = tenantName.toString();
         filter.mode = 'active'
       }
 
@@ -131,14 +132,14 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
 
     try {
       const { message, startDate, endDate, isAllApplications } = req.body;
-      const tennantServRef = parseTenantServRef(req.body.tennantServRef)
-
+      const tennantServRef = parseTenantServRef(req.body.tennantServRef);
       const user = req.user as Express.User;
       const notice = await NoticeApplicationEntity.create(user, noticeRepository, {
         message,
         tennantServRef,
         startDate,
         endDate,
+        tenantName: req.tenant.name,
         mode: 'draft',
         created: new Date(),
         isAllApplications: isAllApplications || false,
