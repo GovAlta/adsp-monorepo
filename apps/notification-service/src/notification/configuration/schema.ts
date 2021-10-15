@@ -33,13 +33,14 @@ export const configurationSchema = {
                 email: templateSchema,
                 sms: templateSchema,
                 mail: templateSchema,
+                slack: templateSchema,
               },
             },
             channels: {
               type: 'array',
               items: {
                 type: 'string',
-                enum: ['email', 'sms', 'mail'],
+                enum: ['email', 'sms', 'mail', 'slack'],
               },
             },
           },
