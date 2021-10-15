@@ -70,6 +70,41 @@ export const NotificationSentDefinition: DomainEventDefinition = {
   },
 };
 
+export const NotificationSendFailedDefinition: DomainEventDefinition = {
+  name: 'notification-send-failed',
+  description: 'Signalled when there is an error in sending of a notification.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      type: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+        },
+      },
+      event: {
+        type: 'object',
+        properties: {
+          namespace: { type: 'string' },
+          name: { type: 'string' },
+        },
+      },
+      channel: { type: 'string' },
+      to: { type: 'string' },
+      subscriber: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          userId: { type: ['string', 'null'] },
+          addressAs: { type: ['string', 'null'] },
+        },
+      },
+      error: { type: 'string' },
+    },
+  },
+};
+
 export const notificationsGenerated = (
   { correlationId = null, tenantId, context = {}, namespace, name }: ProcessedEvent,
   type: NotificationType,
@@ -106,5 +141,23 @@ export const notificationSent = ({
   tenantId: AdspId.parse(tenantId),
   payload: {
     ...notification,
+  },
+});
+
+export const notificationSendFailed = ({
+  correlationId = null,
+  tenantId,
+  context = {},
+  message: _message,
+  ...notification
+}: Notification, error: string): DomainEvent => ({
+  name: 'notification-send-failed',
+  timestamp: new Date(),
+  correlationId,
+  context,
+  tenantId: AdspId.parse(tenantId),
+  payload: {
+    ...notification,
+    error
   },
 });
