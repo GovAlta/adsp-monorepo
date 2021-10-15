@@ -27,7 +27,8 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
       tenantName: state.tenant.name,
       authenticated: state.session.authenticated,
       realm: state.session.realm,
-      hasAdminRole: state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes(tenantAdminRole),
+      hasAdminRole:
+        state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes(tenantAdminRole),
     };
   });
 
@@ -69,6 +70,10 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
               <NavLink to="/admin/services/events" activeClassName="current" title="Events">
                 <img src={MegaphoneIcon} width="16" alt="Status" />
                 <span>Events</span>
+              </NavLink>
+              <NavLink to="/admin/services/notifications" activeClassName="current" title="Notifications">
+                <img src={ReceiptIcon} width="16" alt="Status" />
+                <span>Notifications</span>
               </NavLink>
             </>
           )}

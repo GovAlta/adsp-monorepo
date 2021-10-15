@@ -2,6 +2,7 @@ import { combineReducers } from 'redux';
 import Access from './access/reducers';
 import Config from './config/reducers';
 import File from './file/reducers';
+import Notification from './notification/reducers';
 import Session from './session/reducers';
 import Notifications from './notifications/reducers';
 import Tenant from './tenant/reducers';
@@ -16,6 +17,7 @@ export const rootReducer = combineReducers({
   config: Config,
   access: Access,
   tenant: Tenant,
+  notification: Notification,
   notifications: Notifications,
   tenantConfig: TenantConfig,
   serviceStatus: ServiceStatus,

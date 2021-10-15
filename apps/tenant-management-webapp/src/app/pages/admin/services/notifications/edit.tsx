@@ -1,30 +1,24 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import Editor from '@monaco-editor/react';
-import type { NotificationDefinition } from '@store/event/models';
+import type { NotificationItem, NotificationTypeItem } from '@store/notification/models';
 import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 
 interface NotificationDefinitionFormProps {
-  initialValue?: NotificationDefinition;
+  initialValue?: NotificationItem;
   onCancel?: () => void;
-  onSave?: (definition: NotificationDefinition) => void;
+  onSave?: (definition: NotificationItem) => void;
   open: boolean;
 
   errors?: Record<string, string>;
 }
 
-const emptyValue = {
-  namespace: '',
+const emptyNotificationDefinition: NotificationTypeItem = {
   name: '',
   description: '',
-  isCore: false,
-  payloadSchema: {
-    type: 'object',
-    properties: {},
-    required: [],
-    additionalProperties: true,
-  },
+  events: [],
+  subscriberRoles: [],
+  id: null,
 };
 
 export const NotificationDefinitionModalForm: FunctionComponent<NotificationDefinitionFormProps> = ({
@@ -35,36 +29,23 @@ export const NotificationDefinitionModalForm: FunctionComponent<NotificationDefi
   open,
 }) => {
   const isEdit = !!initialValue;
-  const [definition, setDefinition] = useState<NotificationDefinition>(emptyValue);
+  const [definition, setDefinition] = useState(emptyNotificationDefinition);
 
   useEffect(() => {
     isEdit && setDefinition(initialValue);
   }, [initialValue]);
 
   return (
-    <GoAModal testId="definition-form" isOpen={open}>
-      <GoAModalTitle>{isEdit ? 'Edit Definition' : 'Add Definition'}</GoAModalTitle>
+    <GoAModal testId="notification-types-form" isOpen={open}>
+      <GoAModalTitle>{isEdit ? 'Edit Definition' : 'Add a notification type'}</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>
-          <GoAFormItem className={errors?.['namespace'] && 'error'}>
-            <label>Namespace</label>
-            <input
-              type="text"
-              name="namespace"
-              value={definition.namespace}
-              disabled={isEdit}
-              data-testid="form-namespace"
-              onChange={(e) => setDefinition({ ...definition, namespace: e.target.value })}
-            />
-            <div className="error-msg">{errors?.['namespace']}</div>
-          </GoAFormItem>
           <GoAFormItem className={errors?.['name'] && 'error'}>
             <label>Name</label>
             <input
               type="text"
               name="name"
               value={definition.name}
-              disabled={isEdit}
               data-testid="form-name"
               onChange={(e) => setDefinition({ ...definition, name: e.target.value })}
             />
@@ -79,17 +60,6 @@ export const NotificationDefinitionModalForm: FunctionComponent<NotificationDefi
               onChange={(e) => setDefinition({ ...definition, description: e.target.value })}
             />
           </GoAFormItem>
-          <GoAFormItem>
-            <label>Payload schema</label>
-            <Editor
-              data-testid="form-schema"
-              height={200}
-              value={JSON.stringify(definition.payloadSchema, null, 2)}
-              onChange={(value) => setDefinition({ ...definition, payloadSchema: JSON.parse(value) })}
-              language="json"
-              options={{ automaticLayout: true, scrollBeyondLastLine: false, tabSize: 2, minimap: { enabled: false } }}
-            />
-          </GoAFormItem>
         </GoAForm>
       </GoAModalContent>
       <GoAModalActions>
@@ -97,7 +67,7 @@ export const NotificationDefinitionModalForm: FunctionComponent<NotificationDefi
           Cancel
         </GoAButton>
         <GoAButton
-          disabled={!definition.namespace || !definition.name}
+          disabled={!definition.description || !definition.name}
           buttonType="primary"
           data-testid="form-save"
           type="submit"

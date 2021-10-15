@@ -4,7 +4,7 @@ import { Tab, Tabs } from '@components/Tabs';
 import { RootState } from '@store/index';
 import React, { FunctionComponent } from 'react';
 import { useSelector } from 'react-redux';
-import { NotificationDefinitions } from './definitions';
+import { NotificationTypes } from './notificationTypes';
 import { NotificationsOverview } from './overview';
 
 export const Notifications: FunctionComponent = () => {
@@ -18,8 +18,8 @@ export const Notifications: FunctionComponent = () => {
           <Tab label="Overview">
             <NotificationsOverview />
           </Tab>
-          <Tab label="Definitions">
-            <NotificationDefinitions />
+          <Tab label="Notification Types">
+            <NotificationTypes />
           </Tab>
         </Tabs>
       </Main>
