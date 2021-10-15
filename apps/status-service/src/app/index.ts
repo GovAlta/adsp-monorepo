@@ -13,13 +13,14 @@ export * from './types';
 interface HealthMiddlewareProps extends Repositories {
   logger: Logger;
   authenticate: RequestHandler;
+  tenantHandler: RequestHandler
 }
 
 export const bindEndpoints = (app: Application, props: HealthMiddlewareProps): void => {
   // bind all service endpoints
-  app.use('/status/v1', props.authenticate, createServiceStatusRouter(props));
+  app.use('/status/v1', [props.authenticate, props.tenantHandler], createServiceStatusRouter(props));
   app.use('/public_status/v1', createPublicServiceStatusRouter(props));
-  app.use('/notice/v1', props.authenticate, createNoticeRouter(props));
+  app.use('/notice/v1', [props.authenticate, props.tenantHandler], createNoticeRouter(props));
 
   // api docs
   let swagger = null;

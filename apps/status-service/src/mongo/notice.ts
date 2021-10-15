@@ -30,8 +30,8 @@ export default class MongoNoticeRepository implements NoticeRepository {
       criteria = { mode: filter.mode };
     }
 
-    if (filter?.tenantId) {
-      criteria = { ...criteria, tenantId: filter.tenantId }
+    if (filter?.tenantName) {
+      criteria = { ...criteria, tenantName: filter.tenantName }
     }
 
     const total = await this.model.find(criteria, null, { lean: true }).count();
@@ -91,7 +91,8 @@ export default class MongoNoticeRepository implements NoticeRepository {
       mode: application.mode,
       created: application.created,
       tenantId: application.tenantId,
-      isAllApplications: application.isAllApplications
+      isAllApplications: application.isAllApplications,
+      tenantName: application.tenantName
     };
   }
 
@@ -108,7 +109,8 @@ export default class MongoNoticeRepository implements NoticeRepository {
       mode: doc.mode,
       created: doc.created,
       tenantId: doc.tenantId,
-      isAllApplications: doc.isAllApplications
+      isAllApplications: doc.isAllApplications,
+      tenantName: doc.tenantName,
     });
   }
 }
