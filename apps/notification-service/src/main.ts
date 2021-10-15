@@ -120,7 +120,7 @@ async function initializeApp() {
     providers: {
       [Channel.email]: createEmailProvider(environment),
       [Channel.sms]: createABNotifySmsProvider(environment),
-      [Channel.slack]: createSlackProvider(slackInstaller),
+      [Channel.slack]: createSlackProvider(logger, slackInstaller),
     },
   });
 

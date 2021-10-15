@@ -1,11 +1,12 @@
 import { InstallProvider } from '@slack/oauth';
 import { WebClient } from '@slack/web-api';
+import { Logger } from 'winston';
 import { Notification, NotificationProvider } from '../notification';
 
 class SlackNotificationProvider implements NotificationProvider {
-  constructor(private installProvider: InstallProvider) {}
+  constructor(private logger: Logger, private installProvider: InstallProvider) {}
 
-  async send({ to, message }: Notification): Promise<void> {
+  async send({ tenantId, to, message }: Notification): Promise<void> {
     const [teamId, channelId] = to?.split('/') || [];
     const { botToken } = await this.installProvider.authorize({
       isEnterpriseInstall: false,
@@ -17,7 +18,10 @@ class SlackNotificationProvider implements NotificationProvider {
 
     const joinResponse = await client.conversations.join({ channel: channelId });
     if (!joinResponse.ok) {
-      throw new Error(joinResponse.error);
+      this.logger.warn(`Join channel ${channelId} failed; may be able to send if bot invited into private channel`, {
+        context: 'SlackNotificationProvider',
+        tenant: tenantId?.toString(),
+      });
     }
 
     const messageResponse = await client.chat.postMessage({
@@ -40,5 +44,5 @@ class SlackNotificationProvider implements NotificationProvider {
   }
 }
 
-export const createSlackProvider = (installProvider: InstallProvider): NotificationProvider =>
-  new SlackNotificationProvider(installProvider);
+export const createSlackProvider = (logger: Logger, installProvider: InstallProvider): NotificationProvider =>
+  new SlackNotificationProvider(logger, installProvider);
