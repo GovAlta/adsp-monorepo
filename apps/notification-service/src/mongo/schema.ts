@@ -61,3 +61,14 @@ export const subscriptionSchema = new Schema(
 );
 
 subscriptionSchema.index({ tenantId: 1, typeId: 1, subscriberId: 1 }, { unique: true });
+
+export const slackSchema = new Schema(
+  {
+    id: { type: String, required: true, unique: true, index: true },
+    workspace: { type: String, required: true, index: true },
+    installation: { type: Schema.Types.Mixed, required: true },
+  },
+  {
+    _id: false,
+  }
+);
