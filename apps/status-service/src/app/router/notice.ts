@@ -56,10 +56,8 @@ export function createNoticeRouter({ logger, tenantService, noticeRepository }: 
       } else {
         if (tenantName) {
           // tenant is an array, but it shall only contain 1 or 0 element
-
           const tenant = (await tenantService.getTenants())
             .filter((tenant) => { return tenant.name === tenantName });
-          console.log(tenant)
           if (tenant) {
             filter.tenantId = tenant[0].id.toString()
           }
