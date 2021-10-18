@@ -22,7 +22,7 @@ File access is controlled by configuration of `readRoles` and `updateRoles` on e
 
 ## Concepts
 ### File type
-File type represents a category of files with specific access roles. For example, a 'Supporting Documents' file type may allow `intake-application` role to upload files and `assessor` role to download the files.
+File type represents a category of files with specific access roles. For example, a 'Supporting Documents' file type may allow `intake-application` role to upload files and `assessor` role to download the files. File types are configured in the [configuration service](configuration-service.md) under the `platform:file-service` namespace and name.
 
 ### File
 A file represents an uploaded file and consists of a minimal metadata record and the actual file that was uploaded. File service provides minimal metadata and does not support extensible metadata; keep additional values in a domain record and reference it using `recordId`.
