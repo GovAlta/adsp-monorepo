@@ -29,7 +29,7 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
   const [repositories] = [await createRepoJob];
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { coreStrategy, tenantStrategy, tenantHandler } = await initializePlatform(
+  const { coreStrategy, tenantStrategy, tenantService } = await initializePlatform(
     {
       serviceId,
       displayName: 'Status Service',
@@ -74,7 +74,7 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
   });
 
   // service endpoints
-  bindEndpoints(app, { logger, authenticate, tenantHandler, ...repositories });
+  bindEndpoints(app, { logger, tenantService, authenticate , ...repositories });
 
   // non-service endpoints
   app.get('/health', (_req, res) => {

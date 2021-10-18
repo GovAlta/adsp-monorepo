@@ -30,8 +30,8 @@ export default class MongoNoticeRepository implements NoticeRepository {
       criteria = { mode: filter.mode };
     }
 
-    if (filter?.tenantName) {
-      criteria = { ...criteria, tenantName: filter.tenantName }
+    if (filter?.tenantId) {
+      criteria = { ...criteria, tenantId: filter.tenantId }
     }
 
     const total = await this.model.find(criteria, null, { lean: true }).count();
