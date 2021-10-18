@@ -6,7 +6,7 @@ import { Notification, NotificationProvider } from '../notification';
 class SlackNotificationProvider implements NotificationProvider {
   constructor(private logger: Logger, private installProvider: InstallProvider) {}
 
-  async send({ tenantId, to, message }: Notification): Promise<void> {
+  async send({ to, message }: Notification): Promise<void> {
     const [teamId, channelId] = to?.split('/') || [];
     const { botToken } = await this.installProvider.authorize({
       isEnterpriseInstall: false,
@@ -15,15 +15,6 @@ class SlackNotificationProvider implements NotificationProvider {
     });
 
     const client = new WebClient(botToken);
-
-    const joinResponse = await client.conversations.join({ channel: channelId });
-    if (!joinResponse.ok) {
-      this.logger.warn(`Join channel ${channelId} failed; may be able to send if bot invited into private channel`, {
-        context: 'SlackNotificationProvider',
-        tenant: tenantId?.toString(),
-      });
-    }
-
     const messageResponse = await client.chat.postMessage({
       channel: channelId,
       text: `${message.subject}\n\n${message.body}`,
@@ -39,6 +30,7 @@ class SlackNotificationProvider implements NotificationProvider {
     });
 
     if (!messageResponse.ok) {
+      this.logger.warn(`Slack client returned not ok response: ${messageResponse.error}`);
       throw new Error(messageResponse.error);
     }
   }

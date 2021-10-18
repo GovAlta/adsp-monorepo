@@ -92,6 +92,13 @@ export const NotificationSendFailedDefinition: DomainEventDefinition = {
       },
       channel: { type: 'string' },
       to: { type: 'string' },
+      message: {
+        type: 'object',
+        properties: {
+          subject: { type: ['string', 'null'] },
+          body: { type: ['string', 'null'] },
+        },
+      },
       subscriber: {
         type: 'object',
         properties: {
@@ -104,6 +111,17 @@ export const NotificationSendFailedDefinition: DomainEventDefinition = {
     },
   },
 };
+
+function mapNotification(notification: Omit<Notification, 'tenantId' | 'correlationId' | 'context'>) {
+  return {
+    type: notification.type,
+    event: notification.event,
+    channel: notification.channel,
+    to: notification.to,
+    message: notification.message,
+    subscriber: notification.subscriber,
+  };
+}
 
 export const notificationsGenerated = (
   { correlationId = null, tenantId, context = {}, namespace, name }: ProcessedEvent,
@@ -139,25 +157,20 @@ export const notificationSent = ({
   correlationId,
   context,
   tenantId: AdspId.parse(tenantId),
-  payload: {
-    ...notification,
-  },
+  payload: mapNotification(notification),
 });
 
-export const notificationSendFailed = ({
-  correlationId = null,
-  tenantId,
-  context = {},
-  message: _message,
-  ...notification
-}: Notification, error: string): DomainEvent => ({
+export const notificationSendFailed = (
+  { correlationId = null, tenantId, context = {}, ...notification }: Notification,
+  error: string
+): DomainEvent => ({
   name: 'notification-send-failed',
   timestamp: new Date(),
   correlationId,
   context,
   tenantId: AdspId.parse(tenantId),
   payload: {
-    ...notification,
-    error
+    ...mapNotification(notification),
+    error,
   },
 });

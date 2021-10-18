@@ -1,4 +1,4 @@
-import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import {
   createLogger,
   createAmqpEventService,
@@ -118,9 +118,9 @@ async function initializeApp() {
     eventSubscriber,
     queueService,
     providers: {
-      [Channel.email]: createEmailProvider(environment),
-      [Channel.sms]: createABNotifySmsProvider(environment),
-      [Channel.slack]: createSlackProvider(logger, slackInstaller),
+      [Channel.email]: environment.SMTP_HOST ? createEmailProvider(environment) : null,
+      [Channel.sms]: environment.NOTIFY_API_KEY ? createABNotifySmsProvider(environment) : null,
+      [Channel.slack]: environment.SLACK_CLIENT_ID ? createSlackProvider(logger, slackInstaller) : null,
     },
   });
 
@@ -137,15 +137,24 @@ async function initializeApp() {
     passport.authenticate(['jwt'], { session: false }),
     assertAuthenticatedHandler,
     getRootUrl,
-    async (req, res) => {
-      const { from } = req.query;
-      const slackInstall = await slackInstaller.generateInstallUrl({
-        scopes: ['channels:join', 'chat:write'],
-        metadata: from as string,
-        redirectUri: new URL('/slack/oauth_redirect', req[ROOT_URL]).href,
-      });
+    async (req, res, next) => {
+      try {
+        const user = req.user;
+        if (!user.roles?.includes(ServiceUserRoles.SubscriptionAdmin)) {
+          throw new UnauthorizedUserError('install Slack app', user);
+        }
 
-      res.send(slackInstall);
+        const { from } = req.query;
+        const slackInstall = await slackInstaller.generateInstallUrl({
+          scopes: ['chat:write'],
+          metadata: from as string,
+          redirectUri: new URL('/slack/oauth_redirect', req[ROOT_URL]).href,
+        });
+
+        res.send(slackInstall);
+      } catch (err) {
+        next(err);
+      }
     }
   );
 
