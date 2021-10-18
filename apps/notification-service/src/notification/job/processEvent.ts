@@ -18,6 +18,7 @@ interface ProcessEventJobProps {
   queueService: WorkQueueService<Notification>;
 }
 
+const LOG_CONTEXT = { context: 'ProcessEventJob' };
 export const createProcessEventJob =
   ({
     logger,
@@ -37,7 +38,10 @@ export const createProcessEventJob =
     // Sending notifications for notification related events could result in infinite loops.
     if (namespace === serviceId.service) {
       done();
-      logger.debug(`Skip processing ${namespace}:${name} for notifications since it's a ${serviceId} event`);
+      logger.debug(`Skip processing ${namespace}:${name} for notifications since it's a ${serviceId} event`, {
+        ...LOG_CONTEXT,
+        tenant: tenantId?.toString(),
+      });
       return;
     }
 
@@ -74,19 +78,32 @@ export const createProcessEventJob =
 
         count += notifications.length;
         logger.debug(
-          `Generated ${notifications.length} notifications of type ${type.name} (ID: ${type.id}) for ${namespace}:${name} for tenant ${tenantId}.`
+          `Generated ${notifications.length} notifications of type ${type.name} (ID: ${type.id}) for ${namespace}:${name} for tenant ${tenantId}.`,
+          {
+            ...LOG_CONTEXT,
+            tenant: tenantId?.toString(),
+          }
         );
       }
 
       if (count > 0) {
-        logger.info(`Generated ${count} notifications for event ${namespace}:${name} for tenant ${tenantId}.`);
+        logger.info(`Generated ${count} notifications for event ${namespace}:${name} for tenant ${tenantId}.`, {
+          ...LOG_CONTEXT,
+          tenant: tenantId?.toString(),
+        });
       } else {
-        logger.debug(`Processed event ${namespace}:${name} for tenant ${tenantId} with no notifications generated.`);
+        logger.debug(`Processed event ${namespace}:${name} for tenant ${tenantId} with no notifications generated.`, {
+          ...LOG_CONTEXT,
+          tenant: tenantId?.toString(),
+        });
       }
 
       done();
     } catch (err) {
-      logger.warn(`Error encountered on processing event ${namespace}:${name}. ${err}`);
+      logger.warn(`Error encountered on processing event ${namespace}:${name}. ${err}`, {
+        ...LOG_CONTEXT,
+        tenant: tenantId?.toString(),
+      });
       done(err);
     }
   };

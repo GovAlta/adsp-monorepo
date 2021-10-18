@@ -1,9 +1,10 @@
 import { InstallProvider } from '@slack/oauth';
 import { WebClient } from '@slack/web-api';
+import { Logger } from 'winston';
 import { Notification, NotificationProvider } from '../notification';
 
 class SlackNotificationProvider implements NotificationProvider {
-  constructor(private installProvider: InstallProvider) {}
+  constructor(private logger: Logger, private installProvider: InstallProvider) {}
 
   async send({ to, message }: Notification): Promise<void> {
     const [teamId, channelId] = to?.split('/') || [];
@@ -14,12 +15,6 @@ class SlackNotificationProvider implements NotificationProvider {
     });
 
     const client = new WebClient(botToken);
-
-    const joinResponse = await client.conversations.join({ channel: channelId });
-    if (!joinResponse.ok) {
-      throw new Error(joinResponse.error);
-    }
-
     const messageResponse = await client.chat.postMessage({
       channel: channelId,
       text: `${message.subject}\n\n${message.body}`,
@@ -35,10 +30,11 @@ class SlackNotificationProvider implements NotificationProvider {
     });
 
     if (!messageResponse.ok) {
+      this.logger.warn(`Slack client returned not ok response: ${messageResponse.error}`);
       throw new Error(messageResponse.error);
     }
   }
 }
 
-export const createSlackProvider = (installProvider: InstallProvider): NotificationProvider =>
-  new SlackNotificationProvider(installProvider);
+export const createSlackProvider = (logger: Logger, installProvider: InstallProvider): NotificationProvider =>
+  new SlackNotificationProvider(logger, installProvider);

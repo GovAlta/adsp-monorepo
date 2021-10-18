@@ -1,4 +1,4 @@
-import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import {
   createLogger,
   createAmqpEventService,
@@ -118,24 +118,43 @@ async function initializeApp() {
     eventSubscriber,
     queueService,
     providers: {
-      [Channel.email]: createEmailProvider(environment),
-      [Channel.sms]: createABNotifySmsProvider(environment),
-      [Channel.slack]: createSlackProvider(slackInstaller),
+      [Channel.email]: environment.SMTP_HOST ? createEmailProvider(environment) : null,
+      [Channel.sms]: environment.NOTIFY_API_KEY ? createABNotifySmsProvider(environment) : null,
+      [Channel.slack]: environment.SLACK_CLIENT_ID ? createSlackProvider(logger, slackInstaller) : null,
     },
   });
+
+  // This should be done with 'trust proxy', but that depends on the proxies using the x-forward headers.
+  const ROOT_URL = 'rootUrl';
+  function getRootUrl(req: express.Request, _res: express.Response, next: express.NextFunction) {
+    const host = req.get('host');
+    req[ROOT_URL] = new URL(`${host === 'localhost' ? 'http' : 'https'}://${host}`);
+    next();
+  }
 
   app.get(
     '/slack/install',
     passport.authenticate(['jwt'], { session: false }),
     assertAuthenticatedHandler,
-    async (req, res) => {
-      const { from } = req.query;
-      const slackInstall = await slackInstaller.generateInstallUrl({
-        scopes: ['channels:join', 'chat:write'],
-        metadata: from as string,
-      });
+    getRootUrl,
+    async (req, res, next) => {
+      try {
+        const user = req.user;
+        if (!user.roles?.includes(ServiceUserRoles.SubscriptionAdmin)) {
+          throw new UnauthorizedUserError('install Slack app', user);
+        }
 
-      res.send(slackInstall);
+        const { from } = req.query;
+        const slackInstall = await slackInstaller.generateInstallUrl({
+          scopes: ['chat:write'],
+          metadata: from as string,
+          redirectUri: new URL('/slack/oauth_redirect', req[ROOT_URL]).href,
+        });
+
+        res.send(slackInstall);
+      } catch (err) {
+        next(err);
+      }
     }
   );
 
@@ -170,8 +189,8 @@ async function initializeApp() {
     });
   });
 
-  app.get('/', async (req, res) => {
-    const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
+  app.get('/', getRootUrl, async (req, res) => {
+    const rootUrl = req[ROOT_URL];
     res.json({
       _links: {
         self: new URL(req.originalUrl, rootUrl).href,

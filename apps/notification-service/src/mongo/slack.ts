@@ -1,6 +1,7 @@
 import { InvalidOperationError } from '@core-services/core-common';
-import { Installation, InstallationQuery, InstallationStore, Logger } from '@slack/oauth';
+import { Installation, InstallationQuery, InstallationStore } from '@slack/oauth';
 import { Document, model, Model } from 'mongoose';
+import { Logger } from 'winston';
 import { slackSchema } from './schema';
 
 interface InstallationDoc {
@@ -12,11 +13,11 @@ interface InstallationDoc {
 export class MongoSlackInstallationStore implements InstallationStore {
   private slackModel: Model<Document & InstallationDoc>;
 
-  constructor() {
+  constructor(private logger: Logger) {
     this.slackModel = model<Document & InstallationDoc>('slack', slackSchema);
   }
 
-  async storeInstallation(installation: Installation, logger?: Logger): Promise<void> {
+  async storeInstallation(installation: Installation): Promise<void> {
     if (installation.isEnterpriseInstall) {
       throw new InvalidOperationError('Enterprise installation not supported.');
     }
@@ -32,18 +33,21 @@ export class MongoSlackInstallationStore implements InstallationStore {
         )
         .exec((err) => {
           if (err) {
+            this.logger.error(
+              `Error encountered on saving of Slack installation for ${installation.team.name} (ID: ${installation.team.id}). ${err}`
+            );
             reject(err);
           } else {
+            this.logger.info(
+              `Completed Slack installation for ${installation.team.name} (ID: ${installation.team.id})`
+            );
             resolve();
           }
         });
     });
   }
 
-  async fetchInstallation(
-    query: InstallationQuery<boolean>,
-    logger?: Logger
-  ): Promise<Installation> {
+  async fetchInstallation(query: InstallationQuery<boolean>): Promise<Installation> {
     const docQuery: Record<string, unknown> = {};
 
     if (query.teamId) {
@@ -61,10 +65,17 @@ export class MongoSlackInstallationStore implements InstallationStore {
     });
   }
 
-  async deleteInstallation(query: InstallationQuery<boolean>, logger?: Logger): Promise<void> {
+  async deleteInstallation(query: InstallationQuery<boolean>): Promise<void> {
     if (query.teamId) {
       await new Promise<void>((resolve, reject) => {
-        this.slackModel.deleteOne({ id: query.teamId }).exec((err) => (err ? reject(err) : resolve()));
+        this.slackModel.deleteOne({ id: query.teamId }).exec((err) => {
+          if (err) {
+            reject(err);
+          } else {
+            this.logger.info(`Removed Slack installation for (ID: ${query.teamId})`);
+            resolve();
+          }
+        });
       });
     }
   }

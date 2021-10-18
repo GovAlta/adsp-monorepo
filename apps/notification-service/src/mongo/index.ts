@@ -37,7 +37,7 @@ export const createRepositories = ({
         } else {
           resolve({
             subscriptionRepository: new MongoSubscriptionRepository(),
-            installationStore: new MongoSlackInstallationStore(),
+            installationStore: new MongoSlackInstallationStore(logger),
             // NOTE: Typescript seems to have issues with exported enums where enum is null at runtime.
             // Possible that express js module doesn't actually export anything for ConnectionStates and
             // type definition is wrong (or intended to be substituted at transpile time... but doesn't happen)

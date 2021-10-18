@@ -10,11 +10,13 @@ interface SendNotificationJobProps {
   providers: Providers;
 }
 
+const LOG_CONTEXT = { context: 'SendNotificationJob' };
 export const createSendNotificationJob =
   ({ logger, eventService, providers }: SendNotificationJobProps) =>
   async (notification: Notification, retryOnError: boolean, done: (err?: unknown) => void): Promise<void> => {
     logger.debug(
-      `Processing notification of type '${notification.type.id}' to ${notification.to} via ${notification.channel} provider.`
+      `Processing notification of type '${notification.type.id}' to ${notification.to} via ${notification.channel} provider.`,
+      { ...LOG_CONTEXT, tenant: notification.tenantId?.toString() }
     );
     const provider = providers[notification.channel];
     if (!provider) {
@@ -25,11 +27,15 @@ export const createSendNotificationJob =
         await provider.send(notification);
         eventService.send(notificationSent(notification));
         logger.debug(
-          `Sent notification of type '${notification.type.id}' to ${notification.to} via ${notification.channel} provider.`
+          `Sent notification of type '${notification.type.id}' to ${notification.to} via ${notification.channel} provider.`,
+          { ...LOG_CONTEXT, tenant: notification.tenantId?.toString() }
         );
         done();
       } catch (err) {
-        logger.warn(`Error encountered in ${notification.channel} provider. ${err}`);
+        logger.warn(`Error encountered in ${notification.channel} provider. ${err}`, {
+          ...LOG_CONTEXT,
+          tenant: notification.tenantId?.toString(),
+        });
         done(err);
         if (!retryOnError) {
           eventService.send(notificationSendFailed(notification, err.message));

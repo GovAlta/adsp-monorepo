@@ -30,7 +30,12 @@ export class SubscriptionEntity implements Subscription {
   }
 
   shouldSend(event: DomainEvent): boolean {
-    return event && (!this.criteria.correlationId || this.criteria.correlationId === event.correlationId);
+    // truthy event AND correlationId match AND context match
+    return (
+      !!event &&
+      (!this.criteria.correlationId || this.criteria.correlationId === event.correlationId) &&
+      !Object.entries(this.criteria.context || {}).find(([key, value]) => value !== event.context[key])
+    );
   }
 
   getSubscriberChannel(notificationType: NotificationTypeEvent): SubscriberChannel {
