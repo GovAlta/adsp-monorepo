@@ -1,7 +1,7 @@
 import { AdspId, User } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
 import { Readable } from 'stream';
-import { File, FileRecord, NewFile, ServiceUserRoles, UserInfo } from '../types';
+import { File, FileRecord, NewFile, UserInfo } from '../types';
 import { FileRepository } from '../repository';
 import { FileTypeEntity } from './type';
 import { v4 as uuidv4 } from 'uuid';
@@ -77,11 +77,11 @@ export class FileEntity implements File {
   }
 
   canAccess(user: User): boolean {
-    return (user?.isCore && user?.roles?.includes(ServiceUserRoles.Admin)) || this.type.canAccessFile(user);
+    return this.type.canAccessFile(user);
   }
 
   canUpdate(user: User): boolean {
-    return (user?.isCore && user?.roles?.includes(ServiceUserRoles.Admin)) || this.type.canUpdateFile(user);
+    return this.type.canUpdateFile(user);
   }
 
   markForDeletion(user: User): Promise<FileEntity> {

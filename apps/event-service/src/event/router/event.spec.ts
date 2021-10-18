@@ -1,4 +1,4 @@
-import { adspId, EventService } from '@abgov/adsp-service-sdk';
+import { adspId } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';

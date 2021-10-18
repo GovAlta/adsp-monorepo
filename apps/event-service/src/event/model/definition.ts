@@ -1,5 +1,4 @@
 import type { DomainEvent } from '@core-services/core-common';
-import { InvalidOperationError } from '@core-services/core-common';
 import type { EventDefinition, Interval } from '../types';
 import { NamespaceEntity } from './namespace';
 

@@ -1,4 +1,4 @@
-import type { AdspId, User } from '@abgov/adsp-service-sdk';
+import { AdspId, isAllowedUser, User } from '@abgov/adsp-service-sdk';
 import { FileType, ServiceUserRoles } from '../types';
 import { Logger } from 'winston';
 
@@ -51,16 +51,12 @@ export class FileTypeEntity implements FileType {
   canAccessFile(user: User): boolean {
     return (
       this.anonymousRead ||
-      (user?.tenantId?.toString() === this.tenantId.toString() &&
-        !!user?.roles?.find((role) => this.readRoles.includes(role) || this.updateRoles.includes(role)))
+      isAllowedUser(user, this.tenantId, [ServiceUserRoles.Admin, ...this.readRoles, ...this.updateRoles])
     );
   }
 
   canUpdateFile(user: User): boolean {
-    return (
-      user?.tenantId?.toString() === this.tenantId.toString() &&
-      !!user?.roles?.find((role) => this.updateRoles.includes(role))
-    );
+    return isAllowedUser(user, this.tenantId, [ServiceUserRoles.Admin, ...this.updateRoles]);
   }
 
   canAccess(user: User): boolean {

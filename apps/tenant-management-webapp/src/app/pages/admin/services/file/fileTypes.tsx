@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import React from 'react';
-import './file.css';
 import { FetchFileTypeService } from '@store/file/actions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { RootState } from '@store/index';

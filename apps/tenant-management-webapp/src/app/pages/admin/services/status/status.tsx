@@ -27,7 +27,7 @@ import {
 } from '@abgov/react-components/experimental';
 import type { GoABadgeType } from '@abgov/react-components/experimental';
 import ApplicationFormModal from './form';
-import NoticeForm from './noticeForm';
+import NoticeModal from './noticeModal';
 import { setApplicationStatus } from '@store/status/actions/setApplicationStatus';
 import { Tab, Tabs } from '@components/Tabs';
 import { getNotices } from '@store/notice/actions';
@@ -151,20 +151,10 @@ function Status(): JSX.Element {
           <ApplicationFormModal isOpen={true} />
         </Route>
         <Route path="/admin/services/status/notice/new">
-          <GoAModal isOpen={true}>
-            <GoAModalTitle>Add a Draft Notice</GoAModalTitle>
-            <GoAModalContent>
-              <NoticeForm />
-            </GoAModalContent>
-          </GoAModal>
+          <NoticeModal isOpen={true} title='Add a Draft Notice' />
         </Route>
         <Route path="/admin/services/status/notice/:noticeId">
-          <GoAModal isOpen={true}>
-            <GoAModalTitle>Edit Draft Notice</GoAModalTitle>
-            <GoAModalContent>
-              <NoticeForm />
-            </GoAModalContent>
-          </GoAModal>
+          <NoticeModal isOpen={true} title='Edit Draft Notice' />
         </Route>
         <Route path="/admin/services/status/:applicationId/edit">
           <ApplicationFormModal isOpen={true} />
@@ -395,8 +385,8 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
               backgroundColor: entry.ok
                 ? 'var(--color-green)'
                 : entry.status === 'n/a'
-                ? 'var(--color-gray-300)'
-                : 'var(--color-red)',
+                  ? 'var(--color-gray-300)'
+                  : 'var(--color-red)',
             }}
             title={entry.status + ': ' + new Date(entry.timestamp).toLocaleString()}
           />

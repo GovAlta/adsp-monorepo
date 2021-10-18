@@ -5,7 +5,6 @@ import { GoAPageLoader } from '@abgov/react-components';
 import FileOverview from './fileOverview';
 import FileTypes from './fileTypes';
 import FileList from './fileList';
-import './file.css';
 import { RootState } from '@store/index';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
@@ -49,7 +48,7 @@ export default function File(): JSX.Element {
       <Main>
         {isLoaded ? (
           <>
-            <h2 className="file-header">File Services</h2>
+            <h2>File Services</h2>
             <Tabs>
               <Tab label="Overview">
                 <FileOverview />

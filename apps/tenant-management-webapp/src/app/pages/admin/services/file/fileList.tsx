@@ -13,7 +13,6 @@ import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
 import DownloadIcon from '@icons/download-outline.svg';
 import DeleteIcon from '@icons/trash-outline.svg';
-import './file.css';
 
 const FileList = (): JSX.Element => {
   const [selectedFile, setSelectFile] = useState<string>();

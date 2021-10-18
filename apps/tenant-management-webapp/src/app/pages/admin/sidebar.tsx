@@ -11,6 +11,7 @@ import DashboardIcon from '@icons/home-outline.svg';
 import LogoutIcon from '@icons/log-out-outline.svg';
 import FitnessIcon from '@icons/fitness-outline.svg';
 import MegaphoneIcon from '@icons/megaphone-outline.svg';
+import NotificationsIcon from '@icons/notifications-outline.svg';
 import { RootState } from '@store/index';
 import { TenantAdminLogin, TenantLogout, FetchTenant } from '@store/tenant/actions';
 
@@ -27,8 +28,7 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
       tenantName: state.tenant.name,
       authenticated: state.session.authenticated,
       realm: state.session.realm,
-      hasAdminRole:
-        state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes(tenantAdminRole),
+      hasAdminRole: state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes(tenantAdminRole),
     };
   });
 
@@ -72,7 +72,7 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
                 <span>Events</span>
               </NavLink>
               <NavLink to="/admin/services/notifications" activeClassName="current" title="Notifications">
-                <img src={ReceiptIcon} width="16" alt="Status" />
+                <img src={NotificationsIcon} width="16" alt="Notifications" />
                 <span>Notifications</span>
               </NavLink>
             </>

@@ -23,7 +23,7 @@ export class EventServiceImpl implements EventService {
     events: DomainEventDefinition[]
   ) {
     this.namespace = serviceId.service;
-    this.definitions = events?.map(e => e.name) || [];
+    this.definitions = events?.map((e) => e.name) || [];
   }
 
   async send(event: DomainEvent): Promise<void> {
@@ -37,16 +37,26 @@ export class EventServiceImpl implements EventService {
     try {
       const token = await this.tokenProvider.getAccessToken();
 
-      this.logger.debug(`Sending event ${this.namespace}:${event.name} to: ${sendUrl}...`);
+      this.logger.debug(`Sending event ${this.namespace}:${event.name} to: ${sendUrl}...`, {
+        ...this.LOG_CONTEXT,
+        tenant: event.tenantId?.toString(),
+      });
+
       await axios.post(
         sendUrl.href,
         { ...event, namespace: this.namespace, tenantId: event.tenantId ? `${event.tenantId}` : null },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      this.logger.info(`Sent domain event ${this.namespace}:${event.name}.`, this.LOG_CONTEXT);
+      this.logger.info(`Sent domain event ${this.namespace}:${event.name}.`, {
+        ...this.LOG_CONTEXT,
+        tenant: event.tenantId?.toString(),
+      });
     } catch (err) {
-      this.logger.error(`Error encountered on sending of event ${this.namespace}:${event.name}. ${err}`);
+      this.logger.error(`Error encountered on sending of event ${this.namespace}:${event.name}. ${err}`, {
+        ...this.LOG_CONTEXT,
+        tenant: event?.tenantId?.toString(),
+      });
     }
   }
 }

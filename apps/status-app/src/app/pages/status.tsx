@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { GoAHeader } from '@abgov/react-components';
+import { GoAHeader, GoACallout } from '@abgov/react-components';
 
 import '@abgov/core-css/goa-core.css';
 import '@abgov/core-css/goa-components.css';
@@ -13,8 +13,12 @@ import { useDispatch } from 'react-redux';
 import { fetchApplications } from '@store/status/actions';
 import { RootState } from '@store/index';
 import { PageLoader } from '@components/PageLoader';
-
+import { LocalTime } from '@components/Date';
 import moment from 'moment';
+
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
 
 const ServiceStatusPage = (): JSX.Element => {
   const { config } = useSelector((state: RootState) => ({
@@ -28,6 +32,14 @@ const ServiceStatusPage = (): JSX.Element => {
     applications: state.application?.applications,
   }));
 
+  const { tenantName } = useSelector((state: RootState) => ({
+    tenantName: state.session?.tenant?.name,
+  }));
+
+  const { allApplicationsNotices } = useSelector((state: RootState) => ({
+    allApplicationsNotices: state.notice?.allApplicationsNotices,
+  }));
+
   useEffect(() => {
     dispatch(fetchApplications(realm));
   }, [realm]);
@@ -38,11 +50,11 @@ const ServiceStatusPage = (): JSX.Element => {
     return (
       <div className="small-container">
         <PageLoader />
-        <h2 data-testid="service-name">All {applications[0].tenantName || 'platform'} services</h2>
+        <h2 data-testid="service-name">All {capitalizeFirstLetter(tenantName)} services</h2>
         <br />
         <p>
           These are the services currently being offered by{' '}
-          {location.pathname.slice(1) ? applications[0].name : 'the Alberta Digital Service Platform'}. All statuses are
+          {location.pathname.slice(1) ? capitalizeFirstLetter(tenantName) : 'the Alberta Digital Service Platform'}. All statuses are
           in real time and reflect current states of the individual services. Please{' '}
           <a href="mailto: DIO@gov.ab.ca">contact support</a> for additional information or any other inquiries
           regarding service statuses.
@@ -50,6 +62,8 @@ const ServiceStatusPage = (): JSX.Element => {
         <div className="timezone">
           <i>All times are in {timeZone}</i>
         </div>
+        <br />
+        {allApplicationsNotices.length > 0 && <AllApplicationsNotices />}
         <br />
         <Grid>
           {applications.map((app, index) => {
@@ -81,7 +95,30 @@ const ServiceStatusPage = (): JSX.Element => {
   };
 
   const SectionView = () => {
-    return <div>{applications && applications.length > 0 ? services() : noServices()}</div>;
+    return <div>{applications && (applications?.length > 0 || allApplicationsNotices?.length > 0) ? services() : noServices()}</div>;
+  };
+
+  const AllApplicationsNotices = () => {
+    return (
+      <AllApplications>
+        <label>
+          <b>All services notice</b>
+        </label>
+        {allApplicationsNotices.map((notice) => {
+          return (
+            <div data-testid="all-application-notice">
+              <GoACallout title="Notice" type="important" key={`{notice-${notice.id}}`}>
+                <div data-testid="all-application-notice-message">{notice.message}</div>
+                <br />
+                <div data-testid="service-notice-date-range">
+                  From <LocalTime date={notice.startDate} /> to <LocalTime date={notice.endDate} />
+                </div>
+              </GoACallout>
+            </div>
+          );
+        })}
+      </AllApplications>
+    );
   };
 
   return (
@@ -103,7 +140,7 @@ const ServiceStatusPage = (): JSX.Element => {
           <section>
             <SectionView />
           </section>
-          <section>{}</section>
+          <section>{ }</section>
         </ServiceStatusesCss>
       </main>
       <Footer>
@@ -163,6 +200,10 @@ const ServiceStatusesCss = styled.div`
     color: #70757a;
     font-size: 13px;
   }
+`;
+
+const AllApplications = styled.div`
+  margin-right: 0.5rem;
 `;
 
 export default ServiceStatusPage;

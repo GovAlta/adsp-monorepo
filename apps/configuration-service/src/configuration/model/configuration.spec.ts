@@ -183,10 +183,10 @@ describe('ConfigurationEntity', () => {
       expect(result).toBeTruthy();
     });
 
-    it('can return false for core user modifying tenant context', () => {
+    it('can return true for core user modifying tenant context', () => {
       const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
       const result = entity.canModify({ isCore: true, roles: [ConfigurationServiceRoles.ConfiguredService] } as User);
-      expect(result).toBeFalsy();
+      expect(result).toBeTruthy();
     });
 
     it('can return true for tenant service user modifying tenant context', () => {

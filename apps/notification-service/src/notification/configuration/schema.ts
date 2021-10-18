@@ -12,9 +12,10 @@ export const configurationSchema = {
   additionalProperties: {
     type: 'object',
     properties: {
-      id: { type: 'string' },
+      id: { type: 'string', pattern: '^[a-zA-Z0-9-_ ]{1,50}$' },
       name: { type: 'string' },
-      description: { type: 'string' },
+      description: { type: ['string', 'null'] },
+      publicSubscribe: { type: 'boolean' },
       subscriberRoles: {
         type: 'array',
         items: { type: 'string' },
@@ -24,21 +25,22 @@ export const configurationSchema = {
         items: {
           type: 'object',
           properties: {
-            namespace: { type: 'string' },
-            name: { type: 'string' },
+            namespace: { type: 'string', pattern: '^[a-zA-Z0-9-_ ]{1,50}$' },
+            name: { type: 'string', pattern: '^[a-zA-Z0-9-_ ]{1,50}$' },
             templates: {
               type: 'object',
               properties: {
                 email: templateSchema,
                 sms: templateSchema,
                 mail: templateSchema,
+                slack: templateSchema,
               },
             },
             channels: {
               type: 'array',
               items: {
                 type: 'string',
-                enum: ['email', 'sms', 'mail'],
+                enum: ['email', 'sms', 'mail', 'slack'],
               },
             },
           },
@@ -46,6 +48,6 @@ export const configurationSchema = {
         },
       },
     },
-    required: ['id', 'name', 'subscriberRoles', 'events'],
+    required: ['id', 'name', 'publicSubscribe', 'subscriberRoles', 'events'],
   },
 };

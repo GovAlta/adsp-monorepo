@@ -337,12 +337,12 @@ describe('router', () => {
 
   describe('patchServiceConfigurationRevision', () => {
     it('can create handler', () => {
-      const handler = patchConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(loggerMock as Logger, eventServiceMock);
       expect(handler).toBeTruthy();
     });
 
     it('can update', async () => {
-      const handler = patchConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(loggerMock as Logger, eventServiceMock);
 
       const entity = {
         tenantId,
@@ -377,7 +377,7 @@ describe('router', () => {
     });
 
     it('can handle no existing revision on update', async () => {
-      const handler = patchConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(loggerMock as Logger, eventServiceMock);
 
       const entity = {
         tenantId,
@@ -412,7 +412,7 @@ describe('router', () => {
     });
 
     it('can return error for update missing value', async () => {
-      const handler = patchConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(loggerMock as Logger, eventServiceMock);
 
       const entity = {
         tenantId,
@@ -443,7 +443,7 @@ describe('router', () => {
     });
 
     it('can replace', async () => {
-      const handler = patchConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(loggerMock as Logger, eventServiceMock);
 
       const entity = {
         tenantId,
@@ -481,7 +481,7 @@ describe('router', () => {
     });
 
     it('can return error for replace without value', async () => {
-      const handler = patchConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(loggerMock as Logger, eventServiceMock);
 
       const entity = {
         tenantId,
@@ -512,7 +512,7 @@ describe('router', () => {
     });
 
     it('can delete', async () => {
-      const handler = patchConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(loggerMock as Logger, eventServiceMock);
 
       const entity = {
         tenantId,
@@ -545,7 +545,7 @@ describe('router', () => {
     });
 
     it('can handle no existing revision on delete', async () => {
-      const handler = patchConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(loggerMock as Logger, eventServiceMock);
 
       const entity = {
         tenantId,
@@ -578,7 +578,7 @@ describe('router', () => {
     });
 
     it('can handle missing property on delete', async () => {
-      const handler = patchConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(loggerMock as Logger, eventServiceMock);
 
       const entity = {
         tenantId,
@@ -611,7 +611,7 @@ describe('router', () => {
     });
 
     it('can return error for delete without property', async () => {
-      const handler = patchConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(loggerMock as Logger, eventServiceMock);
 
       const entity = {
         tenantId,
@@ -642,7 +642,7 @@ describe('router', () => {
     });
 
     it('can return error for unrecognized operation', async () => {
-      const handler = patchConfigurationRevision(eventServiceMock);
+      const handler = patchConfigurationRevision(loggerMock as Logger, eventServiceMock);
 
       const entity = {
         tenantId,
@@ -675,12 +675,12 @@ describe('router', () => {
 
   describe('createServiceConfigurationRevision', () => {
     it('can create handler', () => {
-      const handler = createConfigurationRevision(eventServiceMock);
+      const handler = createConfigurationRevision(loggerMock as Logger, eventServiceMock);
       expect(handler).toBeTruthy();
     });
 
     it('can create revision', async () => {
-      const handler = createConfigurationRevision(eventServiceMock);
+      const handler = createConfigurationRevision(loggerMock as Logger, eventServiceMock);
 
       const entity = {
         tenantId,
@@ -712,7 +712,7 @@ describe('router', () => {
     });
 
     it('can create first revision', async () => {
-      const handler = createConfigurationRevision(eventServiceMock);
+      const handler = createConfigurationRevision(loggerMock as Logger, eventServiceMock);
 
       const entity = {
         tenantId,
@@ -744,7 +744,7 @@ describe('router', () => {
     });
 
     it('can return error for unrecognized request', async () => {
-      const handler = createConfigurationRevision(eventServiceMock);
+      const handler = createConfigurationRevision(loggerMock as Logger, eventServiceMock);
 
       const entity = {
         tenantId,

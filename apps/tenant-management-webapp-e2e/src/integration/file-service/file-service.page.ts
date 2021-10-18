@@ -78,7 +78,7 @@ class FileServicePage {
   }
 
   fileTypeReadRolesDropdownItems(rowNumber) {
-    return cy.xpath(`(//*[@data-testid="update-readRoles"])[${rowNumber}]//div[@role="listitem"]`);
+    return cy.xpath(`(//*[@data-testid="update-readRoles"])[${rowNumber}]//li`);
   }
 
   fileTypeReadRolesDropdownItem(rowNumber, text) {

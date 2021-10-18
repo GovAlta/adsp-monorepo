@@ -1,18 +1,18 @@
-import { Channel } from './channel';
-import { Template } from './template';
+import {
+  Channel,
+  NotificationType as BaseNotificationType,
+  NotificationTypeEvent as BaseNotificationTypeEvent,
+} from '@abgov/adsp-service-sdk';
 
-export interface NotificationTypeEvent {
-  namespace: string;
-  name: string;
-  templates: Partial<Record<Channel, Template>>;
+export type { Template } from '@abgov/adsp-service-sdk';
+export { Channel } from '@abgov/adsp-service-sdk';
+
+export interface NotificationTypeEvent extends BaseNotificationTypeEvent {
   channels: Channel[];
 }
 
-export interface NotificationType {
+export interface NotificationType extends BaseNotificationType {
   id: string;
-  name: string;
-  description: string;
-  subscriberRoles: string[];
   events: NotificationTypeEvent[];
 }
 

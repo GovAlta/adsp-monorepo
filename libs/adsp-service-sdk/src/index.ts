@@ -129,11 +129,13 @@ export async function initializePlatform(
 }
 
 export { adspId, AdspId, AdspIdFormatError, GoAError } from './utils';
-export { AssertCoreRole, AssertRole, UnauthorizedUserError } from './access';
+export { AssertCoreRole, AssertRole, isAllowedUser, UnauthorizedUserError } from './access';
 export type { TokenProvider, User } from './access';
 export type { GoAErrorExtra } from './utils';
 export type { ServiceDirectory } from './directory';
 export type { Tenant, TenantService } from './tenant';
 export type { ConfigurationService } from './configuration';
 export type { DomainEvent, DomainEventDefinition, EventService } from './event';
+export { Channel } from './notification';
+export type { Template, NotificationType, NotificationTypeEvent } from './notification';
 export type { ServiceRegistration, ServiceRole } from './registration';

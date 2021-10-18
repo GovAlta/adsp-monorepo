@@ -1,7 +1,7 @@
 import * as _ from 'lodash';
 import { Observable } from 'rxjs';
 import { map, filter } from 'rxjs/operators';
-import type { User } from '@abgov/adsp-service-sdk';
+import { AdspId, isAllowedUser, User } from '@abgov/adsp-service-sdk';
 import { DomainEvent, InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import { EventCriteria, Stream, StreamEvent } from '../types';
 
@@ -15,7 +15,7 @@ export class StreamEntity implements Stream {
 
   stream: Observable<unknown & Pick<DomainEvent, 'correlationId' | 'context'>>;
 
-  constructor(stream: Stream) {
+  constructor(private tenantId: AdspId, stream: Stream) {
     this.id = stream.id;
     this.name = stream.name;
     this.description = stream.description;
@@ -30,7 +30,11 @@ export class StreamEntity implements Stream {
         map((event) => [
           event,
           this.events.find(
-            (se) => event.namespace === se.namespace && event.name === se.name && this.isMatch(event, se.criteria)
+            (se) =>
+              event.tenantId.toString() === this.tenantId.toString() &&
+              event.namespace === se.namespace &&
+              event.name === se.name &&
+              this.isMatch(event, se.criteria)
           ),
         ]),
         filter(([_, streamEvent]) => !!streamEvent),
@@ -58,7 +62,7 @@ export class StreamEntity implements Stream {
   }
 
   canSubscribe(user: User): boolean {
-    return this.publicSubscribe || !!user?.roles?.find((r) => this.subscriberRoles.includes(r));
+    return this.publicSubscribe || isAllowedUser(user, this.tenantId, this.subscriberRoles);
   }
 
   getEvents(user: User, criteria?: EventCriteria): Observable<Pick<DomainEvent, 'correlationId' | 'context'>> {

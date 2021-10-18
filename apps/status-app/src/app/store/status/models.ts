@@ -100,7 +100,7 @@ export const bindApplicationsWithNotices = (
   });
   for (const application of applications) {
     const noticesOfApplication = notices.filter((notice) => {
-      return notice.tennantServRef.find((applicationRef) => applicationRef.id === application._id);
+      return notice.isAllApplications !== true && notice.tennantServRef.find((applicationRef) => applicationRef.id === application._id);
     });
 
     application.notices = sortNotices(noticesOfApplication);
@@ -128,3 +128,7 @@ export const sortApplications = (applications: ServiceStatusApplication[]): Serv
     return pre.name < next.name ? -1 : 1;
   });
 };
+
+export const toTenantName = (nameInUrl: string): string => {
+  return nameInUrl.replace(/-/g, ' ');
+}

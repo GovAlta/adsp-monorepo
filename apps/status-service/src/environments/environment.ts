@@ -10,7 +10,7 @@ export const environment = envalid.cleanEnv(
     KEYCLOAK_ROOT_URL: envalid.str({ default: 'https://access-dev.os99.gov.ab.ca' }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     MONGO_URI: envalid.str({ default: 'mongodb://localhost:27017' }),
-    MONGO_DB: envalid.str({ default: 'file' }),
+    MONGO_DB: envalid.str({ default: 'status' }),
     MONGO_USER: envalid.str({ default: '' }),
     MONGO_PASSWORD: envalid.str({ default: '' }),
     PORT: envalid.num({ default: 3338 }),

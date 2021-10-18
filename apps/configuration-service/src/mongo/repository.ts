@@ -23,7 +23,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     tenantId?: AdspId,
     schema?: Record<string, unknown>
   ): Promise<ConfigurationEntity<C>> {
-    const tenant = tenantId?.toString();
+    const tenant = tenantId?.toString() || { $exists: false };
     const query = { namespace, name, tenant };
     const latestDoc = await new Promise<ConfigurationRevisionDoc>((resolve, reject) => {
       this.revisionModel
@@ -52,7 +52,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     const query: Record<string, unknown> = {
       namespace: entity.namespace,
       name: entity.name,
-      tenant: entity.tenantId?.toString(),
+      tenant: entity.tenantId?.toString() || { $exists: false },
     };
 
     if (criteria?.revision !== undefined) {
@@ -87,10 +87,18 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       namespace: entity.namespace,
       name: entity.name,
       revision: revision.revision,
+      tenant: entity.tenantId?.toString() || { $exists: false },
     };
 
+    const update: Record<string, unknown> = {
+      namespace: entity.namespace,
+      name: entity.name,
+      revision: revision.revision,
+    };
+
+    // Only include tenant if there is a tenantId on the entity.
     if (entity.tenantId) {
-      query.tenant = entity.tenantId.toString();
+      update.tenant = entity.tenantId.toString();
     }
 
     const doc = await new Promise<ConfigurationRevisionDoc<C>>((resolve, reject) => {
@@ -98,7 +106,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         .findOneAndUpdate(
           query,
           {
-            ...query,
+            ...update,
             configuration: revision.configuration,
           },
           { upsert: true, new: true, lean: true }

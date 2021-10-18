@@ -1,4 +1,4 @@
-import { AdspId, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { Results } from '@core-services/core-common';
 import { TaskRepository } from '../repository';
 import { TaskServiceRoles } from '../roles';
@@ -23,23 +23,20 @@ export class QueueEntity implements Queue {
   }
 
   canAssignTask(user: User): boolean {
-    return (
-      user?.roles?.includes(TaskServiceRoles.Admin) ||
-      !!this.assignerRoles.find((assignerRole) => user?.roles?.includes(assignerRole))
-    );
+    return isAllowedUser(user, this.tenantId, [TaskServiceRoles.Admin, ...this.assignerRoles]);
   }
 
   canAccessTask(user: User): boolean {
-    return !!(
-      user?.roles?.includes(TaskServiceRoles.Admin) ||
-      user?.roles?.includes(TaskServiceRoles.TaskReader) ||
-      this.workerRoles.find((workerRole) => user?.roles?.includes(workerRole)) ||
-      this.assignerRoles.find((assignerRole) => user?.roles?.includes(assignerRole))
+    return isAllowedUser(
+      user,
+      this.tenantId,
+      [TaskServiceRoles.Admin, TaskServiceRoles.TaskReader, ...this.workerRoles, ...this.assignerRoles],
+      true
     );
   }
 
   canWorkOnTask(user: User): boolean {
-    return !!this.workerRoles.find((workerRole) => user?.roles?.includes(workerRole));
+    return isAllowedUser(user, this.tenantId, this.workerRoles);
   }
 
   async getTasks(user: User, repository: TaskRepository, top = 10, after: string): Promise<Results<TaskEntity>> {

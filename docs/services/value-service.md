@@ -19,10 +19,34 @@ client `urn:ads:platform:value-service`
 
 ## Concepts
 ### Value definition
-Value definition is an optional metadata description for a particular *value* (identified by a specific namespace and name). The definition provides write-time validation via json schema.
+Value definition is an optional metadata description for a particular *value* (identified by a specific namespace and name). The definition provides write-time validation via json schema. Value definitions are configured in the [configuration service](configuration-service.md) under the `platform:value-service` namespace and name.
 
 ### Value
 A value represents a particular time series stream. Each write results in a new record with a timestamp. It differs from a typical transactional record in that the record has no unique identity; instead it represents another entry in the set of entries for the value. Consumers can write scalars or json objects to values.
 
 ### Metrics
 Metrics are numeric values that can be included in value writes. The are automatically included in time interval aggregations and can be used for basic KPIs.
+
+## Code examples
+### Write a value
+TODO: add example
+
+### Read a value
+```typescript
+  const namespace = 'support';
+  const name = 'application-stats';
+  const response = await fetch(
+    `https://value-service.alpha.alberta.ca/value/v1/${namespace}/values/${name}`,
+    {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  const {
+    results,
+    page,
+  } = await response.json();
+```

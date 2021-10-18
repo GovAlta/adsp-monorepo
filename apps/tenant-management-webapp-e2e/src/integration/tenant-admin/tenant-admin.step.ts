@@ -383,15 +383,16 @@ Then('the autologin link is copied to the clipboard', function () {
 });
 
 Then(
-  'the user views introductions and links for {string}, {string}, {string} and {string}',
-  function (access, fileService, status, events) {
+  'the user views introductions and links for {string}, {string}, {string}, {string} and {string}',
+  function (access, fileService, status, events, notifications) {
     const cardTextArray = [
       'Access allows',
       'The file service provides',
       'The status service allows',
       'The event service provides',
+      '',
     ];
-    const cardTitleArray = [access, fileService, status, events];
+    const cardTitleArray = [access, fileService, status, events, notifications];
     tenantAdminObj.goaCardTexts().should('have.length', cardTextArray.length);
     tenantAdminObj.goaCardTitles().should('have.length', cardTitleArray.length);
     tenantAdminObj.goaCardTexts().each((element, index) => {

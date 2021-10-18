@@ -4,8 +4,8 @@ import { Tab, Tabs } from '@components/Tabs';
 import { RootState } from '@store/index';
 import React, { FunctionComponent } from 'react';
 import { useSelector } from 'react-redux';
-import { NotificationTypes } from './notificationTypes';
 import { NotificationsOverview } from './overview';
+import { NotificationTypes } from './notificationTypes';
 
 export const Notifications: FunctionComponent = () => {
   const tenantId = useSelector((state: RootState) => state.tenant?.id);

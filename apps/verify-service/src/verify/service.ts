@@ -5,7 +5,7 @@ import { CodeRepository } from './repository';
 import { VerifyUserRoles } from './roles';
 
 export interface VerifyService {
-  generate(user: User, key: string): Promise<{ key: string; code: string; expiresAt: Date }>;
+  generate(user: User, key: string, expireIn?: number): Promise<{ key: string; code: string; expiresAt: Date }>;
   verify(user: User, key: string, code: string): Promise<boolean>;
 }
 
@@ -15,7 +15,7 @@ class VerifyServiceImpl implements VerifyService {
   constructor(private readonly logger: Logger, private readonly repository: CodeRepository) {}
 
   @AssertRole('generate code', VerifyUserRoles.Generator)
-  async generate(user: User, key: string) {
+  async generate(user: User, key: string, expireIn = 10) {
     this.logger.debug(`Generating new verify code at key '${key}' for user ${user.name} (ID: ${user.id})...`, {
       ...this.LOG_CONTEXT,
       tenant: `${user.tenantId}`,
@@ -23,7 +23,7 @@ class VerifyServiceImpl implements VerifyService {
 
     const cacheKey = this.getCacheKey(user, key);
     const code = await random.async({ length: 6, type: 'distinguishable' });
-    const expiresAt = new Date(Date.now() + 600000);
+    const expiresAt = new Date(Date.now() + 60000 * Math.floor(expireIn));
     await this.repository.set({ key: cacheKey, code }, expiresAt);
 
     this.logger.info(`Generated new verify code at key '${key}' for user ${user.name} (ID: ${user.id}).`, {
@@ -50,7 +50,11 @@ class VerifyServiceImpl implements VerifyService {
         if (await this.repository.failed(cacheKey, 10)) {
           this.logger.warn(
             `Cleared code at key ${key} because verification has failed too many times. ` +
-              `Last failure by user ${user.name} (ID: ${user.id}).`
+              `Last failure by user ${user.name} (ID: ${user.id}).`,
+            {
+              ...this.LOG_CONTEXT,
+              tenant: `${user.tenantId}`,
+            }
           );
         }
       }

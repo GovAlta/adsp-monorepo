@@ -71,7 +71,7 @@ Feature: Tenant admin
     # Getting content from clipboard doesn't work on build agent. Commented out this validation.
     # When the user clicks click to copy button
     # Then the autologin link is copied to the clipboard
-    And the user views introductions and links for "Access", "File Service", "Status" and "Events"
+    And the user views introductions and links for "Access", "File Service", "Status", "Events" and "Notifications"
     When the user clicks "Access" link
     Then the user is directed to "Access" page
     When the user selects the "Dashboard" menu item
