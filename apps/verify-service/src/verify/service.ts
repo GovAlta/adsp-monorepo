@@ -50,7 +50,11 @@ class VerifyServiceImpl implements VerifyService {
         if (await this.repository.failed(cacheKey, 10)) {
           this.logger.warn(
             `Cleared code at key ${key} because verification has failed too many times. ` +
-              `Last failure by user ${user.name} (ID: ${user.id}).`
+              `Last failure by user ${user.name} (ID: ${user.id}).`,
+            {
+              ...this.LOG_CONTEXT,
+              tenant: `${user.tenantId}`,
+            }
           );
         }
       }
