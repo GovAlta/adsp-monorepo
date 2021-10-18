@@ -140,12 +140,13 @@ export function createNoticeRouter({ logger, tenantService, noticeRepository }: 
       const { message, startDate, endDate, isAllApplications } = req.body;
       const tennantServRef = parseTenantServRef(req.body.tennantServRef);
       const user = req.user as Express.User;
+      const tenant = await tenantService.getTenant(user.tenantId);
       const notice = await NoticeApplicationEntity.create(user, noticeRepository, {
         message,
         tennantServRef,
         startDate,
         endDate,
-        tenantName: req.tenant.name,
+        tenantName: tenant.name,
         mode: 'draft',
         created: new Date(),
         isAllApplications: isAllApplications || false,

@@ -1,13 +1,18 @@
 import type { User } from '@abgov/adsp-service-sdk';
 import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
+import axios, { AxiosRequestConfig } from 'axios';
 import { Router } from 'express';
 import { Logger } from 'winston';
 import { ServiceStatusApplicationEntity } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { PublicServiceStatusType } from '../types';
+import { environment } from '../../environments/environment';
+import { TenantService } from '@abgov/adsp-service-sdk';
+
 export interface ServiceStatusRouterProps {
   logger: Logger;
+  tenantService: TenantService;
   serviceStatusRepository: ServiceStatusRepository;
   endpointStatusEntryRepository: EndpointStatusEntryRepository;
 }
@@ -15,6 +20,7 @@ export interface ServiceStatusRouterProps {
 export function createServiceStatusRouter({
   logger,
   serviceStatusRepository,
+  tenantService,
   endpointStatusEntryRepository,
 }: ServiceStatusRouterProps): Router {
   const router = Router();
@@ -68,20 +74,26 @@ export function createServiceStatusRouter({
 
     const user = req.user;
     const { name, description, endpoint } = req.body;
+    const tenant = await tenantService.getTenant(user.tenantId)
+
 
     try {
+      const tenantName = tenant.name;
+      const tenantRealm = tenant.realm;
+
       const app = await ServiceStatusApplicationEntity.create({ ...(req.user as User) }, serviceStatusRepository, {
         name,
         description,
-        tenantId: user.tenantId.toString(),
-        tenantName: req.tenant.name,
-        tenantRealm: req.tenant.realm,
+        tenantId: tenant.id.toString(),
+        tenantName,
+        tenantRealm,
         endpoint,
         metadata: '',
         statusTimestamp: 0,
         enabled: false,
         internalStatus: 'stopped',
       });
+
       res.status(201).json(app);
 
     } catch (e) {
