@@ -54,8 +54,16 @@ export const NotificationTypes: FunctionComponent = () => {
   return (
     <NotficationStyles>
       <div>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
-        magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commod
+        <p>
+          Notification types represent a bundled set of notifications that can be subscribed to and provides the access
+          roles for that set. For example, a ‘Application Progress’ type could include notifications for submission of
+          the application, processing started, and application processed.
+        </p>
+        <p>
+          A subscriber has a subscription to the set and cannot subscribe to the individual notifications in the set.
+          Notification types are configured in the configuration service under the platform:notification-service
+          namespace and name.
+        </p>
       </div>
       <Buttons>
         <GoAButton
@@ -119,9 +127,7 @@ export const NotificationTypes: FunctionComponent = () => {
                         + Select an Event
                       </GoAButton>
                     </EventButtonWrapper>
-                    <div>
-                      Lorem ipsum dolor sit amet consectetur adipisicing elit. Maxime mollitia, molestiae quas vel sint
-                    </div>
+                    <div>Domain events represent key changes at a domain model level.</div>
                   </NotificationBorder>
                 </GridItem>
               </Grid>
