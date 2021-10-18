@@ -5,10 +5,12 @@ import { Logger } from 'winston';
 import { NoticeApplicationEntity } from '../model/notice';
 import { NoticeRepository } from '../repository/notice';
 import { ServiceUserRoles, NoticeModeType } from '../types';
+import { TenantService } from '@abgov/adsp-service-sdk';
 
 export interface NoticeRouterProps {
   logger: Logger;
   noticeRepository: NoticeRepository;
+  tenantService: TenantService;
 }
 
 interface NoticeFilter {
@@ -33,7 +35,7 @@ const parseTenantServRef = (tennantServRef?: string | applicationRef[] | null): 
   return tennantServRef
 }
 
-export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterProps): Router {
+export function createNoticeRouter({ logger, tenantService, noticeRepository }: NoticeRouterProps): Router {
   const router = Router();
 
   // Get notices by query
@@ -51,15 +53,19 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
     try {
       if (!anonymous) {
         filter.tenantId = user.tenantId.toString();
+      } else {
+        if (tenantName) {
+          // tenant is an array, but it shall only contain 1 or 0 element
+          const tenant = (await tenantService.getTenants())
+            .filter((tenant) => { return tenant.name === tenantName });
+          if (tenant) {
+            filter.tenantId = tenant[0].id.toString()
+          }
+        }
       }
 
       if (isAdmin) {
         filter.mode = mode ? (mode.toString() as NoticeModeType) : null;
-      }
-
-      if (tenantName) {
-        filter.tenantName = tenantName.toString();
-        filter.mode = 'active'
       }
 
       const applications = await noticeRepository.find(

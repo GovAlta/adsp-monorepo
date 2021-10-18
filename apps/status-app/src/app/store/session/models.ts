@@ -1,6 +1,10 @@
+export interface Tenant {
+  name? : string;
+}
 export interface Session {
   isLoadingReady?: boolean;
-  notifications: Notification[]
+  notifications: Notification[];
+  tenant: Tenant
 }
 
 export interface Notification {
@@ -13,5 +17,8 @@ export interface Notification {
 
 export const SessionInit = {
   isLoadingReady: true,
-  notifications: []
+  notifications: [],
+  tenant: {
+    name: 'platform' // tenant name comes from URL. The main page points to the platform notices
+  }
 }
