@@ -1,4 +1,4 @@
-import React, { Children, ReactNode, useState } from 'react';
+import React, { Children, ReactNode, useState, useEffect } from 'react';
 import styled from 'styled-components';
 
 /**
@@ -22,6 +22,10 @@ function Tabs(props: TabsProps): JSX.Element {
   function selectTab(index: number) {
     setActiveTabIndex(index);
   }
+
+  useEffect(() => {
+    if (props.activeIndex !== null) setActiveTabIndex(props.activeIndex ?? 0);
+  }, [props]);
 
   return (
     <>
