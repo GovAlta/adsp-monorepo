@@ -160,7 +160,22 @@ async function initializeApp() {
 
   app.get('/slack/oauth_redirect', async (req, res) => {
     await slackInstaller.handleCallback(req, res, {
-      success: (_installation, options) => res.redirect(options.metadata),
+      success: (_installation, options) => {
+        let redirectUrl: URL;
+        if (options.metadata) {
+          try {
+            redirectUrl = new URL(options.metadata);
+          } catch (err) {
+            // not a url?
+          }
+        }
+
+        if (redirectUrl) {
+          res.redirect(redirectUrl.href);
+        } else {
+          res.sendStatus(200);
+        }
+      },
     });
   });
 

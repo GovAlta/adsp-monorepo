@@ -193,19 +193,25 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           subscriber || doc.subscriberId?.['tenantId']
-            ? new SubscriberEntity(this, this.fromDoc((doc.subscriberId as unknown) as SubscriberDoc))
+            ? new SubscriberEntity(this, this.fromDoc(doc.subscriberId as unknown as SubscriberDoc))
             : null
         )
       : null;
   }
 
   private toDoc(entity: SubscriberEntity): SubscriberDoc {
-    return {
+    const doc: SubscriberDoc = {
       tenantId: entity.tenantId.toString(),
       addressAs: entity.addressAs,
-      userId: entity.userId,
       channels: entity.channels,
     };
+
+    // Only include userId property if there is a value; this is for the parse unique index.
+    if (entity.userId) {
+      doc.userId = entity.userId;
+    }
+
+    return doc;
   }
 
   private toSubscriptionDoc(entity: SubscriptionEntity): SubscriptionDoc {
