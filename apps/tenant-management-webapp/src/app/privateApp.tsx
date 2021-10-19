@@ -6,7 +6,8 @@ import { HeaderCtx } from '@lib/headerContext';
 import Container from '@components/Container';
 import { RootState } from '@store/index';
 import { KeycloakCheckSSOWithLogout, KeycloakRefreshToken } from '@store/tenant/actions';
-import { GoAPageLoader, GoANotification } from '@abgov/react-components';
+import { GoAPageLoader } from '@abgov/react-components';
+import { NotificationBanner } from './notificationBanner';
 
 interface privateAppProps {
   children: ReactNode;
@@ -16,8 +17,6 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
   const dispatch = useDispatch();
   const urlParams = new URLSearchParams(window.location.search);
   const realm = urlParams.get('realm') || localStorage.getItem('realm');
-
-  const notifications = useSelector((state: RootState) => state.notifications.notifications);
 
   useEffect(() => {
     setInterval(async () => {
@@ -41,13 +40,7 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
           location.reload();
         }}
       /> */}
-      <div style={{ marginBottom: '10px' }}>
-        {notifications.length > 0 && (
-          <GoANotification key={new Date().getTime()} type="emergency" isDismissable={true}>
-            {notifications[notifications.length - 1].message}
-          </GoANotification>
-        )}
-      </div>
+      <NotificationBanner />
       <Container>{children}</Container>
     </HeaderCtx.Provider>
   );
