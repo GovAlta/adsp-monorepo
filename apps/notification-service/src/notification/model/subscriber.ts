@@ -27,7 +27,7 @@ export class SubscriberEntity implements Subscriber {
       throw new UnauthorizedError('User not authorized to create subscriber.');
     }
 
-    const entity = new SubscriberEntity(repository, { ...subscriber, tenantId: user.tenantId || subscriber.tenantId });
+    const entity = new SubscriberEntity(repository, subscriber);
     return repository.saveSubscriber(entity);
   }
 

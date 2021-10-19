@@ -192,9 +192,10 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
             criteria: doc.criteria,
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          subscriber || doc.subscriberId?.['tenantId']
-            ? new SubscriberEntity(this, this.fromDoc(doc.subscriberId as unknown as SubscriberDoc))
-            : null
+          subscriber ||
+            (doc.subscriberId?.['tenantId']
+              ? new SubscriberEntity(this, this.fromDoc(doc.subscriberId as unknown as SubscriberDoc))
+              : null)
         )
       : null;
   }

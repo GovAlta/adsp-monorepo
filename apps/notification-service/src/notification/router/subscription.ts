@@ -86,7 +86,7 @@ export function createTypeSubscription(repository: SubscriptionRepository): Requ
       }
 
       if (!subscriberEntity) {
-        subscriberEntity = await SubscriberEntity.create(user, repository, { ...subscriber });
+        subscriberEntity = await SubscriberEntity.create(user, repository, subscriber);
       }
 
       const subscription = await type.subscribe(repository, user, subscriberEntity);
