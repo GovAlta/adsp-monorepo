@@ -177,7 +177,7 @@ function Status(): JSX.Element {
           <NoticeModal isOpen={true} title="Add a Draft Notice" />
         </Route>
         <Route path="/admin/services/status/notice/:noticeId">
-          <NoticeModal isOpen={true} title="Edit Draft Notice" />
+          <NoticeModal isOpen={true} title='Edit Draft Notice' />
         </Route>
         <Route path="/admin/services/status/:applicationId/edit">
           <ApplicationFormModal isOpen={true} />

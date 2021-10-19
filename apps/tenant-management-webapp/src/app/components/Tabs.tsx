@@ -25,7 +25,7 @@ function Tabs(props: TabsProps): JSX.Element {
 
   useEffect(() => {
     if (props.activeIndex !== null) setActiveTabIndex(props.activeIndex ?? 0);
-  }, [props]);
+  }, [props.activeIndex]);
 
   return (
     <>
