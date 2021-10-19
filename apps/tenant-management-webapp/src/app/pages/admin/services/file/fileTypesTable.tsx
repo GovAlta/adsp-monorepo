@@ -209,10 +209,12 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           buttonType="secondary"
           key={`${props.id}-confirm-button`}
           onClick={() => {
-            if (newFileType.anonymousRead === true) {
+            if (newFileType.anonymousRead === true || newFileType.readRoles.includes('anonymousRead')) {
+              newFileType.anonymousRead = true;
               newFileType.readRoles = newFileType
-                .readRoles.filter((role) => { return role !== 'anonymousRead' })
+                .readRoles.filter((role) => { return role !== 'anonymousRead' });
             }
+
 
             dispatch(CreateFileTypeService({ ...newFileType, id }));
 
@@ -234,9 +236,10 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           data-testid="confirm-update"
           disabled={newFileType}
           onClick={() => {
-            if (updateFileType.anonymousRead === true) {
+            if (updateFileType.anonymousRead === true || updateFileType.readRoles.includes('anonymousRead')) {
               updateFileType.readRoles = updateFileType
                 .readRoles.filter((role) => { return role !== 'anonymousRead' })
+              updateFileType.anonymousRead = true
             }
 
             dispatch(UpdateFileTypeService({ ...updateFileType, id }));
@@ -346,7 +349,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
 
     const selectedRows = roles;
 
-    if (props.anonymousRead === true && !selectedRows.includes('anonymousRead')) {
+    if (props.anonymousRead === true && !selectedRows.includes('anonymousRead') && cellType === 'readRoles') {
       selectedRows.push('anonymousRead')
     }
 
