@@ -209,6 +209,11 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           buttonType="secondary"
           key={`${props.id}-confirm-button`}
           onClick={() => {
+            if (newFileType.anonymousRead === true) {
+              newFileType.readRoles = newFileType
+                .readRoles.filter((role) => {return role !== 'anonymousRead'})
+            }
+
             dispatch(CreateFileTypeService({ ...newFileType, id }));
 
             setNewFileType(null);
@@ -229,6 +234,11 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           data-testid="confirm-update"
           disabled={newFileType}
           onClick={() => {
+            if (updateFileType.anonymousRead === true) {
+              updateFileType.readRoles = updateFileType
+                .readRoles.filter((role) => {return role !== 'anonymousRead'})
+            }
+
             dispatch(UpdateFileTypeService({ ...updateFileType, id }));
 
             setUpdateFileType(null);
