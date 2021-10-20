@@ -69,6 +69,10 @@ async function initializeApp() {
           description: 'Administrator role for managing subscriptions',
           inTenantAdmin: true,
         },
+        {
+          role: ServiceUserRoles.CodeSender,
+          description: 'Role for sending and checking verify codes to subscribers',
+        },
       ],
     },
     { logger }

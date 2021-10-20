@@ -7,8 +7,13 @@ import { NotificationTypeEntity, SubscriberEntity } from '../model';
 import { mapSubscriber, mapSubscription, mapType } from './mappers';
 import { NotificationConfiguration } from '../configuration';
 import { Channel, ServiceUserRoles, Subscriber } from '../types';
-import { SubscriberOperationRequests, SUBSCRIBER_SEND_VERIFY_CHANNEL, SUBSCRIBER_VERIFY_CHANNEL } from './types';
-import { VerifyService } from '../../verify';
+import {
+  SubscriberOperationRequests,
+  SUBSCRIBER_CHECK_CODE,
+  SUBSCRIBER_SEND_VERIFY_CODE,
+  SUBSCRIBER_VERIFY_CHANNEL,
+} from './types';
+import { VerifyService } from '../verify';
 
 interface SubscriptionRouterProps {
   logger: Logger;
@@ -238,24 +243,46 @@ export function subscriberOperations(verifyService: VerifyService): RequestHandl
       const request: SubscriberOperationRequests = req.body;
       const subscriber: SubscriberEntity = req[SUBSCRIBER_KEY];
 
-      let updated: SubscriberEntity = null;
+      let result = null;
       switch (request.operation) {
-        case SUBSCRIBER_SEND_VERIFY_CHANNEL:
-          updated = await subscriber.startVerifyCode(verifyService, user, request.channel, request.address);
+        case SUBSCRIBER_SEND_VERIFY_CODE:
+          await subscriber.sendVerifyCode(verifyService, user, request.channel, request.address);
+          result = { sent: true };
           break;
-        case SUBSCRIBER_VERIFY_CHANNEL:
-          updated = await subscriber.verifyChannel(verifyService, user, request.channel, request.address, request.code);
+        case SUBSCRIBER_CHECK_CODE: {
+          const verified = await subscriber.checkVerifyCode(
+            verifyService,
+            user,
+            request.channel,
+            request.address,
+            request.code
+          );
+          result = { verified };
           break;
+        }
+        case SUBSCRIBER_VERIFY_CHANNEL: {
+          const verified = await subscriber.checkVerifyCode(
+            verifyService,
+            user,
+            request.channel,
+            request.address,
+            request.code,
+            true
+          );
+          result = { verified };
+          break;
+        }
         default:
           throw new InvalidOperationError('Requested subscriber operation not recognized.');
       }
 
-      res.send(mapSubscriber(updated));
+      res.send(result);
     } catch (err) {
       next(err);
     }
   };
 }
+
 export const deleteSubscriber: RequestHandler = async (req, res, next) => {
   try {
     const user = req.user;
