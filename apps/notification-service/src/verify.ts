@@ -12,7 +12,7 @@ export interface VerifyService {
 }
 
 class VerifyServiceImpl implements VerifyService {
-  private templates: Record<Channel, Template>;
+  private templates: Partial<Record<Channel, Template>> = {};
 
   constructor(
     private providers: Providers,
