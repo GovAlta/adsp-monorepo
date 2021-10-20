@@ -46,7 +46,7 @@ class VerifyServiceImpl implements VerifyService {
     const verifyServiceUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:verify-service`);
 
     const key = uuidv4();
-    const verifyRequestUrl = new URL(`/verify/v1/code/${key}`, verifyServiceUrl);
+    const verifyRequestUrl = new URL(`/verify/v1/codes/${key}`, verifyServiceUrl);
 
     const token = await this.tokenProvider.getAccessToken();
     const { data } = await axios.post<{ code: string; expiresAt: string }>(
@@ -77,7 +77,7 @@ class VerifyServiceImpl implements VerifyService {
       throw new InvalidOperationError('No verify key for subscriber channel.');
     }
 
-    const verifyRequestUrl = new URL(`/verify/v1/code/${key}`, verifyServiceUrl);
+    const verifyRequestUrl = new URL(`/verify/v1/codes/${key}`, verifyServiceUrl);
 
     const token = await this.tokenProvider.getAccessToken();
     const { data } = await axios.post<{ verified: boolean }>(
