@@ -211,7 +211,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           onClick={() => {
             if (newFileType.anonymousRead === true) {
               newFileType.readRoles = newFileType
-                .readRoles.filter((role) => {return role !== 'anonymousRead'})
+                .readRoles.filter((role) => { return role !== 'anonymousRead' })
             }
 
             dispatch(CreateFileTypeService({ ...newFileType, id }));
@@ -236,7 +236,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           onClick={() => {
             if (updateFileType.anonymousRead === true) {
               updateFileType.readRoles = updateFileType
-                .readRoles.filter((role) => {return role !== 'anonymousRead'})
+                .readRoles.filter((role) => { return role !== 'anonymousRead' })
             }
 
             dispatch(UpdateFileTypeService({ ...updateFileType, id }));
@@ -286,7 +286,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
 
     const fileType = { ...props };
 
-    if (readRoles.includes('anonymousRead') && cellType === 'readRoles') {
+    if ((readRoles.includes('anonymousRead') || props.anonymousRead === true) && cellType === 'readRoles') {
       anonymousRead = true;
       fileType.anonymousRead = true;
     } else {
@@ -344,11 +344,17 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
       dropDownOptions = dropDownOptions.concat(defaultDropDowns);
     }
 
+    const selectedRows = roles;
+
+    if (props.anonymousRead === true && !selectedRows.includes('anonymousRead')) {
+      selectedRows.push('anonymousRead')
+    }
+
     return (
       <td data-testid={`${rowType}-${cellType}`}>
         <GoADropdown
           name="fileTypes"
-          selectedValues={roles}
+          selectedValues={selectedRows}
           multiSelect={true}
           onChange={(name, values) => {
             if (values.includes('anonymousRead') && cellType === 'readRoles') {
