@@ -44,6 +44,23 @@ describe('HandlebarsTemplateService', () => {
       expect(message.body).toBe(DateTime.fromJSDate(timestamp).toFormat('ff'));
     });
 
+    it('can generate message with formatDate for string value', () => {
+      const timestamp = '2020-03-12T13:00:00Z';
+      const message = templateService.generateMessage(
+        {
+          subject: '{{ subscriber.addressAs }} {{ event.payload.value }}',
+          body: '{{ formatDate event.timestamp }}',
+        },
+        {
+          event: { timestamp, payload: { value: 123 } } as unknown as DomainEvent,
+          subscriber: { addressAs: 'tester' } as Subscriber,
+        }
+      );
+
+      expect(message.subject).toBe('tester 123');
+      expect(message.body).toBe(DateTime.fromISO(timestamp).toFormat('ff'));
+    });
+
     it('can generate message with formatDate with format parameter', () => {
       const timestamp = new Date('2020-03-12T13:00:00Z');
       const message = templateService.generateMessage(

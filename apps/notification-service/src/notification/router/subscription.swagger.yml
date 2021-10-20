@@ -80,13 +80,27 @@ components:
       properties:
         operation:
           type: string
-          enum: [send-verify]
+          enum: [send-code]
         channel:
           type: string
           enum: [email, sms, slack]
         address:
           type: string
       required: [operation, channel, address]
+    CheckCodeOperation:
+      type: object
+      properties:
+        operation:
+          type: string
+          enum: [check-code]
+        channel:
+          type: string
+          enum: [email, sms, slack]
+        address:
+          type: string
+        code:
+          type: string
+      required: [operation, channel, address, code]
     VerifyChannelOperation:
       type: object
       properties:
@@ -390,10 +404,12 @@ components:
             oneOf:
               - $ref: "#/components/schemas/SendVerifyCodeOperation"
               - $ref: "#/components/schemas/VerifyChannelOperation"
+              - $ref: "#/components/schemas/CheckCodeOperation"
             discriminator:
               propertyName: operation
               mapping:
-                send-verify: "#/components/schemas/SendVerifyCodeOperation"
+                send-code: "#/components/schemas/SendVerifyCodeOperation"
+                check-code: "#/components/schemas/CheckCodeOperation"
                 verify-channel: "#/components/schemas/VerifyChannelOperation"
     responses:
       200:
@@ -401,7 +417,15 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Subscriber"
+              oneOf:
+                - type: object
+                  properties:
+                    verified:
+                      type: boolean
+                - type: object
+                  properties:
+                    sent:
+                      type: boolean
   delete:
     tags:
       - Subscription
