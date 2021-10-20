@@ -1,7 +1,6 @@
-import { DomainEvent } from '@core-services/core-common';
 import * as handlebars from 'handlebars';
 import { DateTime } from 'luxon';
-import { Subscriber, Template, TemplateService } from './notification';
+import { Template, TemplateService } from './notification';
 
 handlebars.registerHelper('formatDate', function (value: unknown, { hash = {} }: { hash: Record<string, string> }) {
   try {
@@ -17,10 +16,10 @@ handlebars.registerHelper('formatDate', function (value: unknown, { hash = {} }:
 });
 
 class HandlebarsTemplateService implements TemplateService {
-  generateMessage(template: Template, event: DomainEvent, subscriber: Subscriber) {
+  generateMessage(template: Template, data: unknown) {
     return {
-      subject: handlebars.compile(template.subject)({ event, subscriber }),
-      body: handlebars.compile(template.body)({ event, subscriber }),
+      subject: handlebars.compile(template.subject)(data),
+      body: handlebars.compile(template.body)(data),
     };
   }
 }

@@ -175,7 +175,13 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
           userId: doc.userId,
           id: `${doc._id}`,
           addressAs: doc.addressAs,
-          channels: doc.channels,
+          channels:
+            doc.channels?.map((c) => ({
+              channel: c.channel,
+              address: c.address,
+              verified: !!c.verified,
+              verifyKey: c.verifyKey,
+            })) || [],
         })
       : null;
   }

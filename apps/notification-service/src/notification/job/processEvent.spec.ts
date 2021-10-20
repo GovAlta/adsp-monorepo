@@ -103,6 +103,7 @@ describe('createProcessEventJob', () => {
           {
             channel: Channel.email,
             address: 'test@testco.org',
+            verified: false,
           },
         ],
       });

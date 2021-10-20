@@ -17,8 +17,10 @@ describe('HandlebarsTemplateService', () => {
           subject: '{{ subscriber.addressAs }} {{ event.payload.value }}',
           body: '{{ event.payload.value }} {{ subscriber.addressAs }}',
         },
-        { payload: { value: 123 } } as unknown as DomainEvent,
-        { addressAs: 'tester' } as Subscriber
+        {
+          event: { payload: { value: 123 } } as unknown as DomainEvent,
+          subscriber: { addressAs: 'tester' } as Subscriber,
+        }
       );
 
       expect(message.subject).toBe('tester 123');
@@ -32,8 +34,10 @@ describe('HandlebarsTemplateService', () => {
           subject: '{{ subscriber.addressAs }} {{ event.payload.value }}',
           body: '{{ formatDate event.timestamp }}',
         },
-        { timestamp, payload: { value: 123 } } as unknown as DomainEvent,
-        { addressAs: 'tester' } as Subscriber
+        {
+          event: { timestamp, payload: { value: 123 } } as unknown as DomainEvent,
+          subscriber: { addressAs: 'tester' } as Subscriber,
+        }
       );
 
       expect(message.subject).toBe('tester 123');
@@ -47,8 +51,10 @@ describe('HandlebarsTemplateService', () => {
           subject: '{{ subscriber.addressAs }} {{ event.payload.value }}',
           body: '{{ formatDate event.timestamp format="fff" }}',
         },
-        { timestamp, payload: { value: 123 } } as unknown as DomainEvent,
-        { addressAs: 'tester' } as Subscriber
+        {
+          event: { timestamp, payload: { value: 123 } } as unknown as DomainEvent,
+          subscriber: { addressAs: 'tester' } as Subscriber,
+        }
       );
 
       expect(message.subject).toBe('tester 123');

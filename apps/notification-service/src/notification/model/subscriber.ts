@@ -1,10 +1,11 @@
-import { AdspId, isAllowedUser, User } from '@abgov/adsp-service-sdk';
-import { New, UnauthorizedError, Update } from '@core-services/core-common';
+import { AdspId, Channel, isAllowedUser, User } from '@abgov/adsp-service-sdk';
+import { InvalidOperationError, New, UnauthorizedError, Update } from '@core-services/core-common';
+import { VerifyService } from '../../verify';
 import { SubscriptionRepository } from '../repository';
-import { Subscriber, Channel, ServiceUserRoles } from '../types';
+import { Subscriber, ServiceUserRoles, SubscriberChannel } from '../types';
 
 export class SubscriberEntity implements Subscriber {
-  channels: { channel: Channel; address: string }[] = [];
+  channels: SubscriberChannel[] = [];
   userId?: string;
   tenantId: AdspId;
   id: string;
@@ -46,7 +47,8 @@ export class SubscriberEntity implements Subscriber {
   canUpdate(user: User): boolean {
     // User is an subscription admin, or is the subscribed user.
     return (
-      isAllowedUser(user, this.tenantId, [ServiceUserRoles.SubscriptionAdmin], true) || (!!user && user?.id === this.userId)
+      isAllowedUser(user, this.tenantId, [ServiceUserRoles.SubscriptionAdmin], true) ||
+      (!!user && user?.id === this.userId)
     );
   }
 
@@ -72,5 +74,52 @@ export class SubscriberEntity implements Subscriber {
     }
 
     return this.repository.deleteSubscriber(this);
+  }
+
+  async startVerifyCode(
+    verifyService: VerifyService,
+    user: User,
+    channel: Channel,
+    address: string
+  ): Promise<SubscriberEntity> {
+    if (!this.canUpdate(user)) {
+      throw new UnauthorizedError('User not authorized to update subscriber.');
+    }
+
+    const verifyChannel = this.channels.find((sub) => sub.channel === channel && sub.address === address);
+    if (!verifyChannel) {
+      throw new InvalidOperationError('Specified subscriber channel not recognized.');
+    }
+
+    verifyChannel.verifyKey = await verifyService.sendCode(
+      verifyChannel,
+      'Enter this code to verify your contact address.'
+    );
+    return await this.repository.saveSubscriber(this);
+  }
+
+  async verifyChannel(
+    verifyService: VerifyService,
+    user: User,
+    channel: Channel,
+    address: string,
+    code: string
+  ): Promise<SubscriberEntity> {
+    if (!this.canUpdate(user)) {
+      throw new UnauthorizedError('User not authorized to update subscriber.');
+    }
+
+    const verifyChannel = this.channels.find((sub) => sub.channel === channel && sub.address === address);
+    if (!verifyChannel) {
+      throw new InvalidOperationError('Specified subscriber channel not recognized.');
+    }
+
+    verifyChannel.verified = await verifyService.verifyCode(verifyChannel, code);
+    if (verifyChannel.verified) {
+      // Clear the key if the channel was verified; otherwise retain so user can retry.
+      verifyChannel.verifyKey = null;
+    }
+
+    return await this.repository.saveSubscriber(this);
   }
 }
