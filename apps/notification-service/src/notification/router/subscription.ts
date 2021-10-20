@@ -1,12 +1,14 @@
 import { RequestHandler, Router } from 'express';
 import { Logger } from 'winston';
 import type { User } from '@abgov/adsp-service-sdk';
-import { NotFoundError, UnauthorizedError } from '@core-services/core-common';
+import { InvalidOperationError, NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import { SubscriptionRepository } from '../repository';
 import { NotificationTypeEntity, SubscriberEntity } from '../model';
 import { mapSubscriber, mapSubscription, mapType } from './mappers';
 import { NotificationConfiguration } from '../configuration';
 import { Channel, ServiceUserRoles, Subscriber } from '../types';
+import { SubscriberOperationRequests, SUBSCRIBER_SEND_VERIFY_CHANNEL, SUBSCRIBER_VERIFY_CHANNEL } from './types';
+import { VerifyService } from '../../verify';
 
 interface SubscriptionRouterProps {
   logger: Logger;
@@ -168,6 +170,33 @@ export function getSubscribers(repository: SubscriptionRepository): RequestHandl
   };
 }
 
+export function createSubscriber(repository: SubscriptionRepository): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user as User;
+      const subscriber: Subscriber =
+        req.query.userSub === 'true'
+          ? {
+              tenantId: user.tenantId,
+              userId: user.id,
+              addressAs: user.name,
+              channels: [
+                {
+                  channel: Channel.email,
+                  address: user.email,
+                },
+              ],
+            }
+          : { ...req.body, tenantId: user.tenantId };
+
+      const subscriberEntity = await SubscriberEntity.create(user, repository, subscriber);
+      res.send(mapSubscriber(subscriberEntity));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 const SUBSCRIBER_KEY = 'subscriber';
 export function getSubscriber(repository: SubscriptionRepository): RequestHandler {
   return async (req, _res, next) => {
@@ -188,18 +217,6 @@ export function getSubscriber(repository: SubscriptionRepository): RequestHandle
   };
 }
 
-export const deleteSubscriber: RequestHandler = async (req, res, next) => {
-  try {
-    const user = req.user;
-    const subscriber: SubscriberEntity = req[SUBSCRIBER_KEY];
-
-    const deleted = await subscriber.delete(user);
-    res.send({ deleted });
-  } catch (err) {
-    next(err);
-  }
-};
-
 export const updateSubscriber: RequestHandler = async (req, res, next) => {
   try {
     const user = req.user;
@@ -208,6 +225,43 @@ export const updateSubscriber: RequestHandler = async (req, res, next) => {
 
     const updated = await subscriber.update(user, update);
     res.send(mapSubscriber(updated));
+  } catch (err) {
+    next(err);
+  }
+};
+
+export function subscriberOperations(verifyService: VerifyService): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const request: SubscriberOperationRequests = req.body;
+      const subscriber: SubscriberEntity = req[SUBSCRIBER_KEY];
+
+      let updated: SubscriberEntity = null;
+      switch (request.operation) {
+        case SUBSCRIBER_SEND_VERIFY_CHANNEL:
+          updated = await subscriber.startVerifyCode(verifyService, user, request.channel, request.address);
+          break;
+        case SUBSCRIBER_VERIFY_CHANNEL:
+          updated = await subscriber.verifyChannel(verifyService, user, request.channel, request.address, request.code);
+          break;
+        default:
+          throw new InvalidOperationError('Requested subscriber operation not recognized.');
+      }
+
+      res.send(mapSubscriber(updated));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+export const deleteSubscriber: RequestHandler = async (req, res, next) => {
+  try {
+    const user = req.user;
+    const subscriber: SubscriberEntity = req[SUBSCRIBER_KEY];
+
+    const deleted = await subscriber.delete(user);
+    res.send({ deleted });
   } catch (err) {
     next(err);
   }
@@ -249,11 +303,13 @@ export const createSubscriptionRouter = ({ subscriptionRepository }: Subscriptio
   );
 
   subscriptionRouter.get('/subscribers', getSubscribers(subscriptionRepository));
+  subscriptionRouter.post('/subscribers', createSubscriber(subscriptionRepository));
 
   subscriptionRouter.get('/subscribers/:subscriber', getSubscriber(subscriptionRepository), (req, res) =>
     res.send(mapSubscriber(req[SUBSCRIBER_KEY]))
   );
   subscriptionRouter.patch('/subscribers/:subscriber', getSubscriber(subscriptionRepository), updateSubscriber);
+  subscriptionRouter.post('/subscribers/:subscriber', getSubscriber(subscriptionRepository), subscriberOperations);
   subscriptionRouter.delete('/subscribers/:subscriber', getSubscriber(subscriptionRepository), deleteSubscriber);
 
   return subscriptionRouter;

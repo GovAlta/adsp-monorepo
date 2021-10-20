@@ -23,6 +23,8 @@ export const subscriberSchema = new Schema({
           type: String,
           required: true,
         },
+        verifyKey: { type: String },
+        verified: { type: Boolean },
       },
     ],
     required: true,

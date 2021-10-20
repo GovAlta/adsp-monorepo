@@ -4,9 +4,7 @@ module.exports = {
     title: 'Notification Service',
     version: '0.0.0',
     description:
-      'The notification service provides the capability to define notification types and manage subscriptions. ' +
-      'Consumers are registered with their own space (tenant) containing notification types that include ' +
-      'role based access policy, trigger events, template and channel configuration, and associated subscriptions/subscribers.',
+      'The notification service provides the capability to define notification types and manage subscriptions.',
   },
   tags: [
     {

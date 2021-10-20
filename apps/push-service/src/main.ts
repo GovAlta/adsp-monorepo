@@ -37,6 +37,7 @@ const initializeApp = async (): Promise<express.Application> => {
           : null,
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
+      accessTokenInQuery: true,
       directoryUrl: new URL(environment.DIRECTORY_URL),
     },
     { logger }
