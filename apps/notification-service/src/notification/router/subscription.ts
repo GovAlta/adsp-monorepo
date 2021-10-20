@@ -13,6 +13,7 @@ import { VerifyService } from '../../verify';
 interface SubscriptionRouterProps {
   logger: Logger;
   subscriptionRepository: SubscriptionRepository;
+  verifyService: VerifyService;
 }
 
 export const getNotificationTypes: RequestHandler = async (req, res, next) => {
@@ -267,7 +268,10 @@ export const deleteSubscriber: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const createSubscriptionRouter = ({ subscriptionRepository }: SubscriptionRouterProps): Router => {
+export const createSubscriptionRouter = ({
+  subscriptionRepository,
+  verifyService,
+}: SubscriptionRouterProps): Router => {
   const subscriptionRouter = Router();
 
   subscriptionRouter.get('/types', getNotificationTypes);
@@ -309,7 +313,11 @@ export const createSubscriptionRouter = ({ subscriptionRepository }: Subscriptio
     res.send(mapSubscriber(req[SUBSCRIBER_KEY]))
   );
   subscriptionRouter.patch('/subscribers/:subscriber', getSubscriber(subscriptionRepository), updateSubscriber);
-  subscriptionRouter.post('/subscribers/:subscriber', getSubscriber(subscriptionRepository), subscriberOperations);
+  subscriptionRouter.post(
+    '/subscribers/:subscriber',
+    getSubscriber(subscriptionRepository),
+    subscriberOperations(verifyService)
+  );
   subscriptionRouter.delete('/subscribers/:subscriber', getSubscriber(subscriptionRepository), deleteSubscriber);
 
   return subscriptionRouter;
