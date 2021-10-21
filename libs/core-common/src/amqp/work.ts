@@ -33,7 +33,6 @@ export class AmqpWorkQueueService<T> implements WorkQueueService<T> {
     });
     await channel.bindQueue(`undelivered-${this.queue}`, `${this.queue}-dead-letter`, '#');
     await channel.assertQueue(this.queue, {
-      autoDelete: true,
       arguments: {
         'x-queue-type': 'quorum',
         'x-dead-letter-exchange': `${this.queue}-dead-letter`,
