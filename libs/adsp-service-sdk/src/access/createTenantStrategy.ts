@@ -8,6 +8,7 @@ import { TenantKeyProvider } from './keyProvider';
 
 interface AccessStrategyOptions extends BaseAccessStrategyOptions {
   tenantService: TenantService;
+  accessTokenInQuery?: boolean;
 }
 
 export const createTenantStrategy = ({
@@ -15,6 +16,7 @@ export const createTenantStrategy = ({
   tenantService,
   accessServiceUrl,
   ignoreServiceAud,
+  accessTokenInQuery,
   logger,
 }: AccessStrategyOptions): Strategy => {
   assertAdspId(serviceId, null, 'service');
@@ -41,9 +43,14 @@ export const createTenantStrategy = ({
     done(null, user, null);
   };
 
+  const extractors = [ExtractJwt.fromAuthHeaderAsBearerToken()];
+  if (accessTokenInQuery) {
+    extractors.push(ExtractJwt.fromUrlQueryParameter('token'));
+  }
+
   const strategy = new JwtStrategy(
     {
-      jwtFromRequest: ExtractJwt.fromExtractors([ExtractJwt.fromAuthHeaderAsBearerToken()]),
+      jwtFromRequest: ExtractJwt.fromExtractors(extractors),
       secretOrKeyProvider: keyProvider.keyRequestHandler,
       passReqToCallback: true,
       audience: !ignoreServiceAud ? serviceAud : null,

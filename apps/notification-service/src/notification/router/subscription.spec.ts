@@ -48,6 +48,11 @@ describe('subscription router', () => {
     subscriberRoles: ['test-subscriber'],
   };
 
+  const verifyServiceMock = {
+    sendCode: jest.fn(),
+    verifyCode: jest.fn(),
+  };
+
   beforeEach(() => {
     repositoryMock.findSubscribers.mockReset();
     repositoryMock.getSubscriber.mockReset();
@@ -60,7 +65,11 @@ describe('subscription router', () => {
 
   describe('createSubscriptionRouter', () => {
     it('can create router', () => {
-      const router = createSubscriptionRouter({ logger: loggerMock, subscriptionRepository: repositoryMock });
+      const router = createSubscriptionRouter({
+        logger: loggerMock,
+        subscriptionRepository: repositoryMock,
+        verifyService: verifyServiceMock,
+      });
       expect(router).toBeTruthy();
     });
   });

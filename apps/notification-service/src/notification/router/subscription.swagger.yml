@@ -40,7 +40,7 @@ components:
                 type: array
                 items:
                   type: string
-                  enum: [email, sms]
+                  enum: [email, sms, slack]
     Subscriber:
       type: object
       properties:
@@ -57,7 +57,7 @@ components:
             properties:
               channel:
                 type: string
-                enum: [email, sms]
+                enum: [email, sms, slack]
               address:
                 type: string
     Subscription:
@@ -75,6 +75,32 @@ components:
             context:
               type: object
               additionalProperties: true
+    SendVerifyCodeOperation:
+      type: object
+      properties:
+        operation:
+          type: string
+          enum: [send-verify]
+        channel:
+          type: string
+          enum: [email, sms, slack]
+        address:
+          type: string
+      required: [operation, channel, address]
+    VerifyChannelOperation:
+      type: object
+      properties:
+        operation:
+          type: string
+          enum: [verify-channel]
+        channel:
+          type: string
+          enum: [email, sms, slack]
+        address:
+          type: string
+        code:
+          type: string
+      required: [operation, channel, address, code]
 
 /subscription/v1/types:
   get:
@@ -154,7 +180,7 @@ components:
         schema:
           type: boolean
     requestBody:
-      required: true
+      required: false
       content:
         application/json:
           schema:
@@ -171,7 +197,7 @@ components:
                   properties:
                     channel:
                       type: string
-                      enum: [email, sms]
+                      enum: [email, sms, slack]
                     address:
                       type: string
 
@@ -227,10 +253,63 @@ components:
   get:
     tags:
       - Subscription
-    description: Retrieves subscriptions for a notification type.
+    description: Retrieves subscribers.
     responses:
       200:
         description: Subscribers successfully retrieved.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Subscriber"
+                page:
+                  type: object
+                  properties:
+                    after:
+                      type: string
+                    size:
+                      type: number
+                    next:
+                      type: string
+  post:
+    tags:
+      - Subscription
+    description: Create a subscriber.
+    parameters:
+      - name: userSub
+        description: Flag indicating if subscriber is the current.
+        in: query
+        required: true
+        schema:
+          type: boolean
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              userId:
+                type: string
+              addressAs:
+                type: string
+              channels:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    channel:
+                      type: string
+                      enum: [email, sms, slack]
+                    address:
+                      type: string
+    responses:
+      200:
+        description: Subscribers successfully created.
         content:
           application/json:
             schema:
@@ -261,7 +340,7 @@ components:
   get:
     tags:
       - Subscription
-    description: Retrieves a subscriber of a notification space.
+    description: Retrieves a subscriber.
     responses:
       200:
         description: Subscriber successfully retrieved.
@@ -272,7 +351,7 @@ components:
   patch:
     tags:
       - Subscription
-    description: Updates a subscriber of a notification space.
+    description: Updates a subscriber.
     requestBody:
       required: true
       content:
@@ -289,9 +368,33 @@ components:
                   properties:
                     channel:
                       type: string
-                      enum: [email, sms]
+                      enum: [email, sms, slack]
                     address:
                       type: string
+    responses:
+      200:
+        description: Subscriber successfully updated.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Subscriber"
+  post:
+    tags:
+      - Subscription
+    description: Executes a subscriber operation.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: "#/components/schemas/SendVerifyCodeOperation"
+              - $ref: "#/components/schemas/VerifyChannelOperation"
+            discriminator:
+              propertyName: operation
+              mapping:
+                send-verify: "#/components/schemas/SendVerifyCodeOperation"
+                verify-channel: "#/components/schemas/VerifyChannelOperation"
     responses:
       200:
         description: Subscriber successfully updated.
@@ -302,7 +405,7 @@ components:
   delete:
     tags:
       - Subscription
-    description: Deletes a subscriber of a notification space.
+    description: Deletes a subscriber.
     responses:
       200:
         description: Subscriber successfully deleted.

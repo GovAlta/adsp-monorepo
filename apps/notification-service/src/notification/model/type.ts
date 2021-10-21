@@ -108,7 +108,10 @@ export class NotificationTypeEntity implements NotificationType {
         context: event.context,
         to: address,
         channel,
-        message: templateService.generateMessage(eventNotification.templates[channel], event, subscription.subscriber),
+        message: templateService.generateMessage(eventNotification.templates[channel], {
+          event,
+          subscriber: subscription.subscriber,
+        }),
         subscriber: {
           id: subscription.subscriber.id,
           userId: subscription.subscriber.userId,

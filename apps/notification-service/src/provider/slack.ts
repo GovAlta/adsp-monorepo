@@ -1,12 +1,12 @@
 import { InstallProvider } from '@slack/oauth';
 import { WebClient } from '@slack/web-api';
 import { Logger } from 'winston';
-import { Notification, NotificationProvider } from '../notification';
+import { NotificationContent, NotificationProvider } from '../notification';
 
 class SlackNotificationProvider implements NotificationProvider {
   constructor(private logger: Logger, private installProvider: InstallProvider) {}
 
-  async send({ to, message }: Notification): Promise<void> {
+  async send({ to, message }: NotificationContent): Promise<void> {
     const [teamId, channelId] = to?.split('/') || [];
     const { botToken } = await this.installProvider.authorize({
       isEnterpriseInstall: false,
