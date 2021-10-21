@@ -1,13 +1,11 @@
 import type { User } from '@abgov/adsp-service-sdk';
 import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
-import axios, { AxiosRequestConfig } from 'axios';
 import { Router } from 'express';
 import { Logger } from 'winston';
 import { ServiceStatusApplicationEntity } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { PublicServiceStatusType } from '../types';
-import { environment } from '../../environments/environment';
 import { TenantService } from '@abgov/adsp-service-sdk';
 
 export interface ServiceStatusRouterProps {

@@ -1,6 +1,7 @@
 import { connect } from 'amqp-connection-manager';
 import { Logger } from 'winston';
 import type { WorkQueueService } from '../work';
+import { AmqpConfigurationUpdateSubscriberService, ConfigurationUpdate } from './configuration';
 import { AmqpEventSubscriberService } from './event';
 import { AmqpWorkQueueService } from './work';
 
@@ -54,4 +55,25 @@ export const createAmqpQueueService = async <T>({
   return service;
 };
 
+export const createAmqpConfigUpdateService = async ({
+  AMQP_HOST,
+  AMQP_USER,
+  AMQP_PASSWORD,
+  logger,
+}: Omit<AmqpServiceProps, 'queue'>): Promise<WorkQueueService<ConfigurationUpdate>> => {
+  const connection = connect({
+    heartbeat: 160,
+    hostname: AMQP_HOST,
+    username: AMQP_USER,
+    password: AMQP_PASSWORD,
+  });
+
+  const service = new AmqpConfigurationUpdateSubscriberService(logger, connection);
+  await service.connect();
+
+  logger.info(`Connected to RabbitMQ as configuration update service at: ${AMQP_HOST}`);
+  return service;
+};
+
 export { AmqpEventSubscriberService } from './event';
+export type { ConfigurationUpdate } from './configuration';

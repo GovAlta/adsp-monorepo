@@ -5,6 +5,7 @@ import {
   createAmqpQueueService,
   createErrorHandler,
   assertAuthenticatedHandler,
+  createAmqpConfigUpdateService,
 } from '@core-services/core-common';
 import { InstallProvider } from '@slack/oauth';
 import * as express from 'express';
@@ -48,6 +49,7 @@ async function initializeApp() {
     tokenProvider,
     configurationHandler,
     configurationService,
+    clearCached,
     directory,
     eventService,
     healthCheck,
@@ -103,6 +105,16 @@ async function initializeApp() {
     ...environment,
     queue: 'notification-send',
     logger,
+  });
+
+  const configurationSync = await createAmqpConfigUpdateService({
+    ...environment,
+    logger,
+  });
+
+  configurationSync.getItems().subscribe(({ item, done }) => {
+    clearCached(item.tenantId, item.serviceId);
+    done();
   });
 
   const slackInstaller = new InstallProvider({
