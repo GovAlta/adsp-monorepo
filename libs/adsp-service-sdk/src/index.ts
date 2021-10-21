@@ -13,7 +13,7 @@ import { createEventService, EventService } from './event';
 import { createHealthCheck, PlatformHealthCheck } from './healthCheck';
 import { createServiceRegistrar, ServiceRegistration } from './registration';
 import { createTenantHandler, createTenantService, TenantService } from './tenant';
-import { createLogger } from './utils';
+import { AdspId, createLogger } from './utils';
 
 interface AdspOptions extends ServiceRegistration {
   /** Client Secret: Client secret of the service. */
@@ -54,6 +54,8 @@ interface Platform extends PlatformServices {
   configurationHandler: RequestHandler;
   /** HealthCheck: Function to retrieve platform health. */
   healthCheck: PlatformHealthCheck;
+  /** Clear Cached Configuration: Function to clear the cached configuration. */
+  clearCached: (tenantId: AdspId, serviceId: AdspId) => void;
 }
 
 interface LogOptions {
@@ -93,9 +95,19 @@ export async function initializePlatform(
   const tenantHandler = createTenantHandler(tenantService);
   const tenantStrategy = createTenantStrategy({ logger, serviceId, accessServiceUrl, tenantService, ignoreServiceAud });
 
-  const configurationService =
-    service?.configurationService ||
-    createConfigurationService({ logger, directory, converter: configurationConverter });
+  let configurationService = service?.configurationService;
+  let clearCached = function (_tenantId: AdspId, _serviceId: AdspId) {
+    // no-op implementation for when configuration is externally provided.
+  };
+  if (!configurationService) {
+    const configServiceImpl = createConfigurationService({ logger, directory, converter: configurationConverter });
+    configurationService = configServiceImpl;
+
+    clearCached = function (tenantId: AdspId, serviceId: AdspId) {
+      configServiceImpl.clearCached(tenantId, serviceId);
+    };
+  }
+
   const configurationHandler = createConfigurationHandler(tokenProvider, configurationService, serviceId);
 
   const eventService =
@@ -127,6 +139,7 @@ export async function initializePlatform(
     eventService,
     directory,
     healthCheck,
+    clearCached,
   };
 }
 
