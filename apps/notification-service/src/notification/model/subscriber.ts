@@ -58,11 +58,11 @@ export class SubscriberEntity implements Subscriber {
     }
 
     if (update.channels) {
-      // TODO: This means that channel update always makes channels no longer verified.
-      this.channels = update.channels.map((c) => ({
-        channel: c.channel,
-        address: c.address,
-        verified: false,
+      // Retain verified status for matching channel/address values.
+      this.channels = update.channels.map(({ channel, address }) => ({
+        channel,
+        address,
+        verified: this.channels.find((c) => c.channel === channel && c.address === address)?.verified || false,
       }));
     }
 

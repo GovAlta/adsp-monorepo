@@ -193,6 +193,49 @@ describe('SubscriberEntity', () => {
       expect(updated.addressAs).toBe('Mr. Tester');
     });
 
+    it('can update channels and retain verify status', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const entity = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+        tenantId,
+        id: 'test',
+        userId: 'test-user',
+        addressAs: 'Testy McTester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'testy@test.co',
+            verified: true,
+          },
+        ],
+      });
+
+      const updated = await entity.update({ tenantId, roles: [ServiceUserRoles.SubscriptionAdmin] } as User, {
+        addressAs: 'Mr. Tester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'testy-2@test.co',
+            verified: false,
+          },
+          {
+            channel: Channel.email,
+            address: 'testy@test.co',
+            verified: false,
+          },
+        ],
+      });
+      expect(updated.channels[0]).toMatchObject({
+        channel: Channel.email,
+        address: 'testy-2@test.co',
+        verified: false,
+      });
+      expect(updated.channels[1]).toMatchObject({
+        channel: Channel.email,
+        address: 'testy@test.co',
+        verified: true,
+      });
+    });
+
     it('can throw for unauthorized', () => {
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
       const entity = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
