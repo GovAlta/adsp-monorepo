@@ -359,6 +359,7 @@ describe('NotificationTypeEntity', () => {
           {
             channel: Channel.email,
             address: 'test@testco.org',
+            verified: false,
           },
         ],
       });
@@ -422,6 +423,7 @@ describe('NotificationTypeEntity', () => {
           {
             channel: Channel.sms,
             address: '780-123-3214',
+            verified: false,
           },
         ],
       });
@@ -477,6 +479,7 @@ describe('NotificationTypeEntity', () => {
           {
             channel: Channel.email,
             address: 'test@testco.org',
+            verified: false,
           },
         ],
       });
@@ -541,6 +544,7 @@ describe('NotificationTypeEntity', () => {
           {
             channel: Channel.email,
             address: 'test@testco.org',
+            verified: false,
           },
         ],
       });

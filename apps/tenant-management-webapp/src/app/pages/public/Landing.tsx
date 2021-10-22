@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
-import { GoAHeroBanner, GoACard } from '@abgov/react-components';
+import { GoAHeroBanner } from '@abgov/react-components';
+import { GoACard } from '@abgov/react-components/experimental';
 import caseStudy from '@assets/CaseStudy.png';
 import bannerBackground from '@assets/BannerBackground.jpg';
 import userGroup from '@icons/user-group.svg';
@@ -84,10 +85,11 @@ const LandingPage = (): JSX.Element => {
 
             <Grid>
               <GridItem md={4} vSpacing={1} hSpacing={0.5}>
-                <GoACard
-                  title="UI Component Libraries"
-                  description="Common UI components that implement common Government of Alberta styles that can be used across various projects."
-                >
+                <GoACard title="UI Component Libraries">
+                  <div>
+                    Common UI components that implement common Government of Alberta styles that can be used across
+                    various projects.
+                  </div>
                   <a href={`${serviceUrls?.uiComponentUrl}/react`}>React</a>&nbsp;|&nbsp;
                   <a href={`${serviceUrls?.uiComponentUrl}/vue`}>Vue</a>&nbsp;|&nbsp;
                   <a href={`${serviceUrls?.uiComponentUrl}/angular`}>Angular</a>
@@ -95,18 +97,14 @@ const LandingPage = (): JSX.Element => {
               </GridItem>
 
               <GridItem md={4} vSpacing={1} hSpacing={0.5}>
-                <GoACard
-                  title="Keycloak Access Management"
-                  description="Many GoA Services require secure transmission, storage, and records management of files."
-                >
+                <GoACard title="Keycloak Access Management">
+                  <div>Many GoA Services require secure transmission, storage, and records management of files.</div>
                   <a href={serviceUrls?.accessManagementApi}>Learn More</a>
                 </GoACard>
               </GridItem>
               <GridItem md={4} vSpacing={1} hSpacing={0.5}>
-                <GoACard
-                  title="File Service"
-                  description="Many GoA Services require secure transmission, storage, and records management of files."
-                >
+                <GoACard title="File Service">
+                  <div>Many GoA Services require secure transmission, storage, and records management of files.</div>
                   <Link to="/file-service">Learn More</Link>
                 </GoACard>
               </GridItem>

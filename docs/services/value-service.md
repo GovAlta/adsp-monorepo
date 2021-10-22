@@ -19,7 +19,7 @@ client `urn:ads:platform:value-service`
 
 ## Concepts
 ### Value definition
-Value definition is an optional metadata description for a particular *value* (identified by a specific namespace and name). The definition provides write-time validation via json schema.
+Value definition is an optional metadata description for a particular *value* (identified by a specific namespace and name). The definition provides write-time validation via json schema. Value definitions are configured in the [configuration service](configuration-service.md) under the `platform:value-service` namespace and name.
 
 ### Value
 A value represents a particular time series stream. Each write results in a new record with a timestamp. It differs from a typical transactional record in that the record has no unique identity; instead it represents another entry in the set of entries for the value. Consumers can write scalars or json objects to values.
@@ -41,9 +41,10 @@ TODO: add example
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
-      }
+      },
     }
   );
+
   const {
     results,
     page,

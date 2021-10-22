@@ -78,8 +78,10 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
   await EndpointStatusEntryEntity.create(endpointStatusEntryRepository, statusEntry);
 
   // verify that in the last [ENTRY_SAMPLE_SIZE] minutes, at least [MIN_OK_COUNT] are ok
-  const history = await (await endpointStatusEntryRepository.findRecentByUrl(application.endpoint.url));
-  const recentHistory = history.slice(history.length - ENTRY_SAMPLE_SIZE);
+  const recentHistory = await await endpointStatusEntryRepository.findRecentByUrl(
+    application.endpoint.url,
+    ENTRY_SAMPLE_SIZE
+  );
 
   let pass = false,
     fail = false;

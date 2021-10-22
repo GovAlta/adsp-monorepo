@@ -49,7 +49,7 @@ export default function File(): JSX.Element {
         {isLoaded ? (
           <>
             <h2>File Services</h2>
-            <Tabs>
+            <Tabs activeIndex={0}>
               <Tab label="Overview">
                 <FileOverview />
               </Tab>

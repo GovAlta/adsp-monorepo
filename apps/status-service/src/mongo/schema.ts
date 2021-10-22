@@ -118,6 +118,9 @@ export const noticeApplicationSchema = new Schema(
       default: false
     },
     endpoints: [noticeEndpointSchema],
+    tenantName: {
+      type: String
+    }
   },
   { timestamps: true }
 );

@@ -14,7 +14,7 @@ export const getTenant = async (id: AdspId): Promise<TenantEntity> => {
   }
 };
 
-export const hasTenantOfRealm = async (realm: string): Promise<boolean> => {
+export const hasTenantOfRealm = async (_realm: string): Promise<boolean> => {
   try {
     return Promise.resolve(true);
   } catch (e) {

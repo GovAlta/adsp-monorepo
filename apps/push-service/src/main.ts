@@ -5,7 +5,12 @@ import * as passport from 'passport';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as helmet from 'helmet';
-import { createLogger, createAmqpEventService, createErrorHandler } from '@core-services/core-common';
+import {
+  createLogger,
+  createAmqpEventService,
+  createAmqpConfigUpdateService,
+  createErrorHandler,
+} from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { applyPushMiddleware, Stream, StreamEntity } from './push';
 import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
@@ -24,7 +29,7 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { tenantStrategy, configurationHandler, healthCheck } = await initializePlatform(
+  const { tenantStrategy, configurationHandler, clearCached, healthCheck } = await initializePlatform(
     {
       serviceId,
       displayName: 'Push Service',
@@ -37,10 +42,21 @@ const initializeApp = async (): Promise<express.Application> => {
           : null,
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
+      accessTokenInQuery: true,
       directoryUrl: new URL(environment.DIRECTORY_URL),
     },
     { logger }
   );
+
+  const configurationSync = await createAmqpConfigUpdateService({
+    ...environment,
+    logger,
+  });
+
+  configurationSync.getItems().subscribe(({ item, done }) => {
+    clearCached(item.tenantId, item.serviceId);
+    done();
+  });
 
   passport.use('jwt', tenantStrategy);
   passport.use(new AnonymousStrategy());

@@ -4,6 +4,4 @@ export * from './subscription';
 export * from './subscriber';
 export * from './notification';
 export * from './provider';
-export * from './template';
 export * from './message';
-export * from './channel';

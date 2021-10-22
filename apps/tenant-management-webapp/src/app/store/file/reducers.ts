@@ -31,11 +31,10 @@ function uploadFile(fileList, file) {
   return newFileList;
 }
 
-function deleteFile(fileList, file) {
-  const index = fileList.findIndex(({ id }) => id === file.id);
-  const newFileList = fileList.map((x) => Object.assign({}, x));
-  newFileList.splice(index, 1);
-  return newFileList;
+function deleteFile(fileList, id) {
+  return fileList.filter((file) => {
+    return file.id !== id
+  });
 }
 export default function (state = FILE_INIT, action: ActionTypes): FileService {
   switch (action.type) {

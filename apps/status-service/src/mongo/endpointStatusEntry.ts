@@ -19,10 +19,13 @@ export default class MongoEndpointStatusEntryRepository implements EndpointStatu
     throw new Error('not implemented');
   }
 
-  async findRecentByUrl(url: string): Promise<EndpointStatusEntryEntity[]> {
-    const after = Date.now() - this.opts.limit * this.opts.everyMilliseconds;
-    const docs = await this.model.find({ url: url, timestamp: { $gt: after } }).sort({ timestamp: 1 });
-    // ensure duplicate status entries are not returned
+  async findRecentByUrl(url: string, top = this.opts.limit): Promise<EndpointStatusEntryEntity[]> {
+    const docs = await this.model
+      .find({ url: url })
+      .sort({ timestamp: -1 })
+      .limit(top);
+
+      // ensure duplicate status entries are not returned
     const entries = docs.map((doc) => this.fromDoc(doc));
     const urlMap: { [key: number]: EndpointStatusEntryEntity } = {};
     for (const entry of entries) {

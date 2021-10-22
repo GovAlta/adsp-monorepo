@@ -14,7 +14,7 @@ export const Events: FunctionComponent = () => {
     <Page>
       <Main>
         <h2>Events</h2>
-        <Tabs>
+        <Tabs activeIndex={0}>
           <Tab label="Overview">
             <EventsOverview />
           </Tab>
@@ -25,10 +25,14 @@ export const Events: FunctionComponent = () => {
       </Main>
       <Aside>
         <h5>Helpful Links</h5>
-        <a rel="noopener noreferrer" target="_blank" href={`${docBaseUrl}?tenant=${tenantId}&urls.primaryName=Event Service`}>
+        <a
+          rel="noopener noreferrer"
+          target="_blank"
+          href={`${docBaseUrl}?tenant=${tenantId}&urls.primaryName=Event Service`}
+        >
           Read the API docs
         </a>
-        <br/>
+        <br />
         <a
           rel="noopener noreferrer"
           target="_blank"

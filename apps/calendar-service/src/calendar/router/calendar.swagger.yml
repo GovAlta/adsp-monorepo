@@ -146,7 +146,8 @@ components:
         required: false
         content:
           application/json:
-            $ref: "#/components/schemas/CalendarEventCriteria"
+            schema:
+              $ref: "#/components/schemas/CalendarEventCriteria"
     responses:
       200:
         description: Request completed successfully.
@@ -188,7 +189,8 @@ components:
         required: false
         content:
           application/json:
-            $ref: "#/components/schemas/CalendarEventCriteria"
+            schema:
+              $ref: "#/components/schemas/CalendarEventCriteria"
     responses:
       200:
         description: Request completed successfully.

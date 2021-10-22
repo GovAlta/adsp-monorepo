@@ -20,3 +20,34 @@ This captures some key concepts and their specific relevance to ADSP. For the co
 Clients represents applications that request authentication for users or applications that verify access via bearer tokens. In ADSP, tenant realms are created with a `urn:ads:platform:tenant-admin-app` client that is used by the tenant administration application to authenticate users, as well as platform service bearer-only clients that include *client roles*.
 
 ### Clients roles
+Client roles are roles associated with a specific client. For example, Keycloak realm administration console roles are client roles of a `realm-management` client. If an access token is requested for an account with a client role, the *Audience Resolve* protocol mapper included in the *roles* scope will include the client in the `aud` field of the returned access token.
+
+## Code examples
+### Authenticate user
+TODO: Add example here
+
+See [Angular Example](https://github.com/abgov/dio-keycloak-angular-sample)
+
+See [React Example](https://github.com/abgov/nx-tools-example/tree/actions-pipeline/apps/react-dotnet-example-app)
+
+### Request a service account access token
+Platform capabilities are often access via their API under a service account. Retrieve an access token for your client using the `client_credentials` grant.
+
+```typescript
+  const response = await fetch(
+    `https://access.alpha.alberta.ca/auth/realms/${realm}/protocol/openid-connect/token`,
+    {
+      method: 'POST',
+      body: new URLSearchParams({
+          'grant_type': 'client_credentials',
+          'client_id': clientId,
+          'client_secret': clientSecret,
+      }),
+    }
+  );
+
+  const {
+    access_token,
+    expires_in,
+  } = await response.json();
+```

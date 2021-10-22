@@ -1,4 +1,5 @@
 import { Logger } from 'winston';
+import { NotificationType } from '..';
 import { TokenProvider } from '../access';
 import { ServiceDirectory } from '../directory';
 import { DomainEventDefinition } from '../event';
@@ -24,6 +25,8 @@ export interface ServiceRegistration {
   configurationSchema?: Record<string, unknown>;
   /** Events: Domain events of the platform service. */
   events?: DomainEventDefinition[];
+  /** Notifications: Subscribable notification types of the platform service. */
+  notifications?: NotificationType[];
 }
 
 interface ServiceRegistrarOptions {

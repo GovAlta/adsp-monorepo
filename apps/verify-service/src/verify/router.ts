@@ -19,7 +19,7 @@ export const createVerifyRouter = ({ service }: RouterProps): Router => {
         const verified = await service.verify(user, key, code);
         res.send({ verified });
       } else {
-        const result = await service.generate(user, `${key}`, expireIn ? parseInt(expireIn as string) : null);
+        const result = await service.generate(user, `${key}`, expireIn ? parseInt(expireIn as string) : 10);
         res.send(result);
       }
     } catch (err) {
