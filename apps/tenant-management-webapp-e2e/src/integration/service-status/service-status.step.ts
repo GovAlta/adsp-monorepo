@@ -44,7 +44,7 @@ Given('a service owner user is on status notices page', function () {
       cy.wait(4000);
     });
   commonObj.serviceTab('Status', 'Notices').click();
-  cy.wait(10000);
+  cy.wait(2000);
 });
 
 When('the user clicks add a Draft Notice button', function () {
@@ -57,7 +57,7 @@ Then('the user views Add a Draft Notice dialog', function () {
 
 //Date time picker UI isn't finalized and the step uses the default dates and times without entering any data/time data
 When(
-  'the user enters {string}, {string}, {string}, {string}, {string},  {string}',
+  'the user enters {string}, {string}, {string}, {string}, {string}, {string}',
   function (desc, app, startDate, startTime, endDate, endTime) {
     statusObj.noticeModalDescField().clear().type(desc);
     statusObj.noticeModalApplicationDropdown().click();
@@ -73,19 +73,38 @@ When('the user clicks Save as Draft button', function () {
 
 // Date time picker UI isn't finalized and dates are today only for now
 Then(
-  'the user {string} the {string} notice of {string}, {string}, {string}, {string}, {string},  {string}',
+  'the user {string} the {string} notice of {string}, {string}, {string}, {string}, {string}, {string}',
   function (viewOrNot, mode, desc, app, startDate, startTime, endDate, endTime) {
-    const currentTime = new Date();
-    const todayDate = currentTime.toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-    expect(startDate).to.equal('Today');
-    expect(endDate).to.equal('Today');
-    const startDateTime = todayDate + ' at ' + startTime;
-    const endDateTime = todayDate + ' at ' + endTime;
+    let startDateTime;
+    let endDateTime;
+    if (startDate == 'Today' && endDate == 'Today') {
+      const currentTime = new Date();
+      const todayDate = currentTime.toLocaleDateString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+      expect(startDate).to.equal('Today');
+      expect(endDate).to.equal('Today');
+      startDateTime = todayDate + ' at ' + startTime;
+      endDateTime = todayDate + ' at ' + endTime;
+    } else {
+      const startLongDate = new Date(startDate).toLocaleDateString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+      const endLongDate = new Date(endDate).toLocaleDateString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+      startDateTime = startLongDate + ' at ' + startTime;
+      endDateTime = endLongDate + ' at ' + endTime;
+    }
     searchNoticeCards(mode, desc, app, startDateTime, endDateTime).then((index) => {
       if (viewOrNot == 'views') {
         expect(index).to.be.greaterThan(0);
@@ -99,20 +118,40 @@ Then(
 );
 
 When(
-  'the user clicks {string} menu for the {string} notice of {string}, {string}, {string}, {string}, {string},  {string}',
+  'the user clicks {string} menu for the {string} notice of {string}, {string}, {string}, {string}, {string}, {string}',
   function (menu, mode, desc, app, startDate, startTime, endDate, endTime) {
-    const currentTime = new Date();
-    const todayDate = currentTime.toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-    expect(startDate).to.equal('Today');
-    expect(endDate).to.equal('Today');
-    const startDateTime = todayDate + ' at ' + startTime;
-    const endDateTime = todayDate + ' at ' + endTime;
+    let startDateTime;
+    let endDateTime;
+    if (startDate == 'Today' && endDate == 'Today') {
+      const currentTime = new Date();
+      const todayDate = currentTime.toLocaleDateString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+      expect(startDate).to.equal('Today');
+      expect(endDate).to.equal('Today');
+      startDateTime = todayDate + ' at ' + startTime;
+      endDateTime = todayDate + ' at ' + endTime;
+    } else {
+      const startLongDate = new Date(startDate).toLocaleDateString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+      const endLongDate = new Date(endDate).toLocaleDateString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+      startDateTime = startLongDate + ' at ' + startTime;
+      endDateTime = endLongDate + ' at ' + endTime;
+    }
     searchNoticeCards(mode, desc, app, startDateTime, endDateTime).then((index) => {
+      expect(index).to.not.equal(0);
       statusObj.noticeCardGearButton(index).click();
       switch (menu) {
         case 'edit':
@@ -141,6 +180,78 @@ When(
 Then('the user views Edit Draft Notice dialog', function () {
   statusObj.noticeModalTitle().invoke('text').should('eq', 'Edit Draft Notice');
 });
+
+When('the user selects {string} filter by status radio button', function (filterType) {
+  expect(filterType).to.be.oneOf(['Draft', 'Published', 'Archived', 'All']);
+  if (filterType == 'Published') {
+    filterType = 'active';
+  }
+  statusObj.filterByStatusRadio(filterType.toLowerCase()).click();
+});
+
+Then('the user views {string} notices', function (filterType) {
+  // Verify either the grid is empty or all cards have the filtered status
+  expect(filterType).to.be.oneOf(['Draft', 'Published', 'Archived', 'All']);
+  statusObj.noticeList().then((elements) => {
+    if (elements.length > 1) {
+      for (let i = 0; i < elements.length; i++) {
+        if (i != 0) {
+          // Check mode
+          statusObj
+            .noticeCardMode(i + 1)
+            .invoke('text')
+            .then((modeText) => {
+              if (filterType != 'All') {
+                expect(modeText).to.equal(filterType);
+              } else {
+                expect(modeText).to.be.oneOf(['Draft', 'Published', 'Archived']);
+              }
+            });
+        }
+      }
+    }
+  });
+});
+
+Then(
+  'the user {string} the gear icon for the {string} notice of {string}, {string}, {string}, {string}, {string}, {string}',
+  function (viewOrNot, mode, desc, app, startDate, startTime, endDate, endTime) {
+    let startDateTime;
+    let endDateTime;
+    if (startDate == 'Today' && endDate == 'Today') {
+      const currentTime = new Date();
+      const todayDate = currentTime.toLocaleDateString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+      expect(startDate).to.equal('Today');
+      expect(endDate).to.equal('Today');
+      startDateTime = todayDate + ' at ' + startTime;
+      endDateTime = todayDate + ' at ' + endTime;
+    } else {
+      const startLongDate = new Date(startDate).toLocaleDateString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+      const endLongDate = new Date(endDate).toLocaleDateString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+      startDateTime = startLongDate + ' at ' + startTime;
+      endDateTime = endLongDate + ' at ' + endTime;
+    }
+    searchNoticeCards(mode, desc, app, startDateTime, endDateTime).then((index) => {
+      expect(index).to.not.equal(0);
+      statusObj.noticeCardGearButton(index).should('not.exist');
+    });
+  }
+);
 
 //Notice card with mode, description, application, start datetime and end startime
 //Input: mode, description, application, start datetime and end startime
