@@ -11,6 +11,7 @@ import { ServiceStatus } from './models';
 
 const initialState: ServiceStatus = {
   applications: [],
+  endpointHealth: {},
 };
 
 const compareIds = (a: { _id?: string }, b: { _id?: string }): number => (a._id <= b._id ? 1 : -1);
@@ -25,12 +26,10 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
     case FETCH_SERVICE_STATUS_APP_HEALTH_SUCCESS_ACTION:
       return {
         ...state,
-        applications: state.applications.map((app) => {
-          if (app._id === action.payload.applicationId && app.endpoint) {
-            app.endpoint.statusEntries = action.payload.entries;
-          }
-          return app;
-        }, []),
+        endpointHealth: {
+          ...state.endpointHealth,
+          [action.payload.applicationId]: { url: action.payload.url, entries: action.payload.entries || [] },
+        },
       };
     case DELETE_APPLICATION_SUCCESS_ACTION:
       return {

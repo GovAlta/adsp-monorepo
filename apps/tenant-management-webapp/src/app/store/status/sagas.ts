@@ -29,7 +29,7 @@ export function* fetchServiceStatusAppHealthEffect(
   const entryMap: EndpointStatusEntry[] = yield call([api, api.getEndpointStatusEntries], application._id);
   application.endpoint.statusEntries = entryMap;
 
-  yield put(fetchServiceStatusAppHealthSuccess(application._id, entryMap));
+  yield put(fetchServiceStatusAppHealthSuccess(application._id, application.endpoint.url, entryMap));
 }
 
 export function* fetchServiceStatusApps(): SagaIterator {
@@ -43,7 +43,7 @@ export function* fetchServiceStatusApps(): SagaIterator {
     const applications: ServiceStatusApplication[] = yield call([api, api.getApplications]);
 
     for (const application of applications) {
-      if (application.endpoint) {
+      if (application.endpoint?.url) {
         yield fork(fetchServiceStatusAppHealthEffect, api, application);
       }
     }

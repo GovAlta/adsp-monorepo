@@ -26,6 +26,7 @@ export interface FetchServiceStatusAppHealthSuccessAction {
   type: typeof FETCH_SERVICE_STATUS_APP_HEALTH_SUCCESS_ACTION;
   payload: {
     applicationId: string;
+    url: string;
     entries: EndpointStatusEntry[];
   };
 }
@@ -48,11 +49,13 @@ export const fetchServiceStatusAppHealth = (applicationId: string): FetchService
 
 export const fetchServiceStatusAppHealthSuccess = (
   applicationId: string,
+  url: string,
   entries: EndpointStatusEntry[]
 ): FetchServiceStatusAppHealthSuccessAction => ({
   type: FETCH_SERVICE_STATUS_APP_HEALTH_SUCCESS_ACTION,
   payload: {
     applicationId,
+    url,
     entries,
   },
 });

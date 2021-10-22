@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useReducer, useState } from 'react';
 import { Page, Main, Aside } from '@components/Html';
 import { deleteApplication, fetchServiceStatusApps, toggleApplicationStatus } from '@store/status/actions';
 import { RootState } from '@store/index';
@@ -191,6 +191,14 @@ function Application(app: ServiceStatusApplication) {
   const location = useLocation();
   const history = useHistory();
   const dispatch = useDispatch();
+
+  const entries = useSelector((state: RootState) =>
+    state.serviceStatus.endpointHealth[app._id] && state.serviceStatus.endpointHealth[app._id].url === app.endpoint?.url
+      ? state.serviceStatus.endpointHealth[app._id].entries
+      : []
+  );
+
+  app.endpoint.statusEntries = entries;
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false);
   const [showStatusForm, setShowStatusForm] = useState<boolean>(false);
@@ -418,7 +426,7 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
         ))}
       </EndpointStatusEntries>
       <StatusBarDetails>
-        <small>{ statusEntries && getTimestamp(statusEntries[0]?.timestamp)}</small>
+        <small>{statusEntries && getTimestamp(statusEntries[0]?.timestamp)}</small>
         <small>Now</small>
       </StatusBarDetails>
     </div>

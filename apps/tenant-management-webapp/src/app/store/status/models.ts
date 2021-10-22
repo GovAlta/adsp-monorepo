@@ -6,6 +6,7 @@ export type EndpointStatusType = 'offline' | 'online' | 'pending';
 
 export interface ServiceStatus {
   applications: ServiceStatusApplication[];
+  endpointHealth: Record<string, { url: string; entries: EndpointStatusEntry[] }>;
 }
 
 export interface ServiceStatusApplication {
