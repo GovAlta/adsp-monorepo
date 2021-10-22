@@ -26,7 +26,7 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
       return {
         ...state,
         applications: state.applications.map((app) => {
-          if (app._id === action.payload.applicationId) {
+          if (app._id === action.payload.applicationId && app.endpoint) {
             app.endpoint.statusEntries = action.payload.entries;
           }
           return app;

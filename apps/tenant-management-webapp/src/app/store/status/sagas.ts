@@ -43,7 +43,9 @@ export function* fetchServiceStatusApps(): SagaIterator {
     const applications: ServiceStatusApplication[] = yield call([api, api.getApplications]);
 
     for (const application of applications) {
-      yield fork(fetchServiceStatusAppHealthEffect, api, application);
+      if (application.endpoint) {
+        yield fork(fetchServiceStatusAppHealthEffect, api, application);
+      }
     }
 
     yield put(fetchServiceStatusAppsSuccess(applications));
