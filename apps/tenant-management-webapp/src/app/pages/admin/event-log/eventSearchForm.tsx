@@ -7,9 +7,9 @@ import {
   GoAForm,
   GoAFormItem,
   GoAFormActions,
-  GoAInput,
   GoAFlexRow,
   GoAIcon,
+  GoAInputDateTime,
 } from '@abgov/react-components/experimental';
 import { getEventDefinitions } from '@store/event/actions';
 import styled from 'styled-components';
@@ -62,15 +62,20 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
   };
 
   const setValue = (name: string, value: string) => {
-    switch (name) {
-      case 'TimeStampMin':
-        setSearchCriteria({ ...searchCriteria, timestampMin: value });
-        break;
-      case 'TimeStampMax':
-        setSearchCriteria({ ...searchCriteria, timestampMax: value });
-        break;
-    }
+    setSearchCriteria({ ...searchCriteria, [name]: value });
   };
+
+  const selectSuggestion = (selectedValue: string) => {
+    setSearchBox(selectedValue);
+    const nameAndSpace = selectedValue.split(':');
+    setSearchCriteria({ ...searchCriteria, namespace: nameAndSpace[0], name: nameAndSpace[1] });
+  };
+
+  function handleItemOnClick(e, suggestion: string) {
+    e.preventDefault();
+    selectSuggestion(suggestion);
+    setFilteredSuggestions([suggestion]);
+  }
 
   const onKeyDown = (e) => {
     setError(false);
@@ -78,9 +83,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
     if (e.keyCode === 13) {
       setActiveSuggestionIndex(0);
       setOpen(false);
-      setSearchBox(filteredSuggestions[activeSuggestionIndex]);
-      const nameAndSpace = filteredSuggestions[activeSuggestionIndex].split(':');
-      setSearchCriteria({ ...searchCriteria, namespace: nameAndSpace[0], name: nameAndSpace[1] });
+      selectSuggestion(filteredSuggestions[activeSuggestionIndex]);
     } else if (e.keyCode === 38) {
       if (activeSuggestionIndex === 0) {
         return;
@@ -135,14 +138,15 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
             setOpen(!open);
             if (!open && searchBox.length === 0) {
               setFilteredSuggestions(autoCompleteList);
-            } else {
+            }
+            if (open && searchBox.length > 0) {
               setSearchBox('');
             }
           }}
         >
-          <GoAFormItem helpText={!open && !error && message}>
+          <GoAFormItem helpText={!open && !error && message} error={error && message}>
             <label>Search event namespace and name</label>
-            <div className={error ? 'search search-error' : open ? 'search search-open' : 'search'}>
+            <div className={open ? 'search search-open' : 'search'}>
               <input
                 type="text"
                 name="searchBox"
@@ -160,50 +164,27 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                     className = 'suggestion-active';
                   }
                   return (
-                    <li
-                      className={className}
-                      key={suggestion}
-                      onClick={(e) => {
-                        setSearchBox(suggestion);
-                        setFilteredSuggestions([suggestion]);
-                        const nameAndSpace = suggestion.split(':');
-                        setSearchCriteria({ ...searchCriteria, namespace: nameAndSpace[0], name: nameAndSpace[1] });
-                      }}
-                    >
+                    <li className={className} key={index} onClick={(e) => handleItemOnClick(e, suggestion)}>
                       {renderHighlight(suggestion)}
                     </li>
                   );
                 })}
               </ul>
             )}
-            {error && <div className="error-msg">{message}</div>}
           </GoAFormItem>
         </SearchBox>
         <GoAFormItem>
           <label>Minimum Timestamp</label>
-          <GoAInput
-            type="datetime-local"
-            name="TimeStampMin"
-            max={today}
-            value={searchCriteria.timestampMin}
-            onChange={setValue}
-          />
+          <GoAInputDateTime name="timestampMin" max={today} value={searchCriteria.timestampMin} onChange={setValue} />
         </GoAFormItem>
         <GoAFormItem>
           <label>Maximum Timestamp</label>
-          <GoAInput
-            type="datetime-local"
-            name="TimeStampMax"
-            max={today}
-            value={searchCriteria.timestampMax}
-            onChange={setValue}
-          />
+          <GoAInputDateTime name="timestampMax" max={today} value={searchCriteria.timestampMax} onChange={setValue} />
         </GoAFormItem>
       </GoAFlexRow>
       <GoAFormActions alignment="right">
         <GoAButton
-          buttonType="tertiary"
-          type="reset"
+          title="Reset"
           onClick={(e) => {
             e.preventDefault();
             setOpen(false);
@@ -216,8 +197,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
           Reset
         </GoAButton>
         <GoAButton
-          buttonType="primary"
-          type="submit"
+          title="Search"
           onClick={(e) => {
             e.preventDefault();
             setOpen(false);
@@ -241,10 +221,10 @@ const SearchBox = styled.div`
     padding: 0.5rem;
   }
   .search-open {
-    border: 3px solid var(--color-orange);
+    border: 2px solid var(--color-orange);
   }
-  .search-error {
-    border: 3px solid var(--color-red);
+  .goa-state--error .search {
+    border: 2px solid var(--color-red);
   }
   input {
     border-width: 0;
@@ -252,16 +232,12 @@ const SearchBox = styled.div`
   input:focus {
     outline: none;
   }
-  .error-msg {
-    display: block;
-    color: var(--color-red);
-  }
   .suggestions {
     border: 1px solid var(--color-gray-700);
     border-top-width: 0;
     list-style: none;
     margin-top: 0;
-    max-height: 243px;
+    max-height: 15.5rem;
     overflow-y: auto;
     padding-left: 0;
     width: 100%;
@@ -274,6 +250,6 @@ const SearchBox = styled.div`
     background-color: var(--color-primary);
     color: var(--color-white);
     cursor: pointer;
-    font-weight: 700;
+    font-weight: var(--fw-bold);
   }
 `;

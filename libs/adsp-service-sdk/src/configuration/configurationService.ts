@@ -32,10 +32,10 @@ export class ConfigurationServiceImpl implements ConfigurationService {
   #retrieveConfiguration = async <C>(serviceId: AdspId, token: string, tenantId?: AdspId): Promise<C> => {
     const service = serviceId.service;
 
-    this.logger.debug(
-      `Retrieving tenant '${tenantId?.toString() || 'core'}' configuration for ${service}...'`,
-      this.LOG_CONTEXT
-    );
+    this.logger.debug(`Retrieving tenant '${tenantId?.toString() || 'core'}' configuration for ${service}...'`, {
+      ...this.LOG_CONTEXT,
+      tenant: tenantId?.toString(),
+    });
 
     const configurationServiceUrl = await this.directory.getServiceUrl(
       adspId`urn:ads:platform:configuration-service:v2`
@@ -45,7 +45,11 @@ export class ConfigurationServiceImpl implements ConfigurationService {
       `v2/configuration/${serviceId.namespace}/${service}/latest${tenantId ? `?tenantId=${tenantId}` : ''}`,
       configurationServiceUrl
     );
-    this.logger.debug(`Retrieving configuration from ${configUrl}...'`, this.LOG_CONTEXT);
+
+    this.logger.debug(`Retrieving configuration from ${configUrl}...'`, {
+      ...this.LOG_CONTEXT,
+      tenant: tenantId?.toString(),
+    });
 
     try {
       const { data } = await axios.get<C>(configUrl.href, {
@@ -55,17 +59,23 @@ export class ConfigurationServiceImpl implements ConfigurationService {
       const config = (data ? this.#converter(data, tenantId) : null) as C;
       if (config) {
         this.#configuration.set(`${tenantId ? tenantId.toString() + '-' : ''}${serviceId}`, config);
-        this.logger.info(
-          `Retrieved and cached '${tenantId?.toString() || 'core'}' configuration for ${service}.`,
-          this.LOG_CONTEXT
-        );
+        this.logger.info(`Retrieved and cached '${tenantId?.toString() || 'core'}' configuration for ${service}.`, {
+          ...this.LOG_CONTEXT,
+          tenant: tenantId?.toString(),
+        });
       } else {
-        this.logger.info(`Retrieved configuration for ${service} and received no value.`, this.LOG_CONTEXT);
+        this.logger.info(`Retrieved configuration for ${service} and received no value.`, {
+          ...this.LOG_CONTEXT,
+          tenant: tenantId?.toString(),
+        });
       }
 
       return config;
     } catch (err) {
-      this.logger.warn(`Error encountered in request for configuration of ${service}. ${err}`);
+      this.logger.warn(`Error encountered in request for configuration of ${service}. ${err}`, {
+        ...this.LOG_CONTEXT,
+        tenant: tenantId?.toString(),
+      });
       return null as C;
     }
   };
@@ -90,4 +100,13 @@ export class ConfigurationServiceImpl implements ConfigurationService {
 
     return [configuration, options] as Configuration<C, O>;
   };
+
+  clearCached(tenantId: AdspId, serviceId: AdspId): void {
+    if (this.#configuration.del(`${tenantId}-${serviceId}`) > 0) {
+      this.logger.info(`Cleared cached configuration for ${serviceId} of tenant ${tenantId}.`, {
+        ...this.LOG_CONTEXT,
+        tenant: tenantId?.toString(),
+      });
+    }
+  }
 }

@@ -27,6 +27,6 @@ export const createConfigurationService = ({
   directory,
   logger,
   converter,
-}: ConfigurationServiceOptions): ConfigurationService => {
+}: ConfigurationServiceOptions): ConfigurationServiceImpl => {
   return new ConfigurationServiceImpl(logger, directory, converter);
 };

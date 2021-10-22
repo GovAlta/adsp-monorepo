@@ -5,15 +5,18 @@ import { Logger } from 'winston';
 import { NoticeApplicationEntity } from '../model/notice';
 import { NoticeRepository } from '../repository/notice';
 import { ServiceUserRoles, NoticeModeType } from '../types';
+import { TenantService } from '@abgov/adsp-service-sdk';
 
 export interface NoticeRouterProps {
   logger: Logger;
   noticeRepository: NoticeRepository;
+  tenantService: TenantService;
 }
 
 interface NoticeFilter {
   mode?: NoticeModeType;
-  tenantId?: string;
+  tenantName?: string;
+  tenantId?: string
 }
 
 interface applicationRef {
@@ -32,13 +35,13 @@ const parseTenantServRef = (tennantServRef?: string | applicationRef[] | null): 
   return tennantServRef
 }
 
-export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterProps): Router {
+export function createNoticeRouter({ logger, tenantService, noticeRepository }: NoticeRouterProps): Router {
   const router = Router();
 
   // Get notices by query
   router.get('/notices', async (req, res, next) => {
     const { top, after, mode } = req.query;
-    const tenantIdFromQuery = req.query.tenantId
+    const tenantName = req.query.name
     const user = req.user as Express.User;
 
     logger.info(req.method, req.url);
@@ -50,15 +53,19 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
     try {
       if (!anonymous) {
         filter.tenantId = user.tenantId.toString();
+      } else {
+        if (tenantName) {
+          // tenant is an array, but it shall only contain 1 or 0 element
+          const tenant = (await tenantService.getTenants())
+            .filter((tenant) => { return tenant.name === tenantName });
+          if (tenant) {
+            filter.tenantId = tenant[0].id.toString()
+          }
+        }
       }
 
       if (isAdmin) {
         filter.mode = mode ? (mode.toString() as NoticeModeType) : null;
-      }
-
-      if (tenantIdFromQuery) {
-        filter.tenantId = tenantIdFromQuery.toString();
-        filter.mode = 'active'
       }
 
       const applications = await noticeRepository.find(
@@ -131,14 +138,15 @@ export function createNoticeRouter({ logger, noticeRepository }: NoticeRouterPro
 
     try {
       const { message, startDate, endDate, isAllApplications } = req.body;
-      const tennantServRef = parseTenantServRef(req.body.tennantServRef)
-
+      const tennantServRef = parseTenantServRef(req.body.tennantServRef);
       const user = req.user as Express.User;
+      const tenant = await tenantService.getTenant(user.tenantId);
       const notice = await NoticeApplicationEntity.create(user, noticeRepository, {
         message,
         tennantServRef,
         startDate,
         endDate,
+        tenantName: tenant.name,
         mode: 'draft',
         created: new Date(),
         isAllApplications: isAllApplications || false,

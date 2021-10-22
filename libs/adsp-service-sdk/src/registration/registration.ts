@@ -60,6 +60,21 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
       };
       await this.updateConfiguration(adspId`urn:ads:platform:event-service`, update);
     }
+
+    if (registration.notifications) {
+      const update = registration.notifications.reduce(
+        (types, type) => ({
+          ...types,
+          [type.name]: {
+            ...type,
+            id: type.name,
+            events: type.events.map((e) => ({ ...e, channels: Object.keys(e.templates) })),
+          },
+        }),
+        {}
+      );
+      await this.updateConfiguration(adspId`urn:ads:platform:notification-service`, update);
+    }
   }
 
   private async updateRegistration(registration: ServiceRegistration): Promise<void> {

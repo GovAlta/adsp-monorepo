@@ -1,4 +1,4 @@
-import { put, select, call } from 'redux-saga/effects';
+import { put, select, call, fork } from 'redux-saga/effects';
 import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
 import { StatusApi } from './api';
@@ -10,12 +10,27 @@ import {
   DeleteApplicationAction,
   deleteApplicationSuccess,
   ToggleApplicationStatusAction,
+  fetchServiceStatusAppHealthSuccess,
+  fetchServiceStatusAppHealth,
 } from './actions';
 import { Session } from '@store/session/models';
 import { ConfigState } from '@store/config/models';
 import { SetApplicationStatusAction, setApplicationStatusSuccess } from './actions/setApplicationStatus';
 import { EndpointStatusEntry, ServiceStatusApplication } from './models';
 import { SagaIterator } from '@redux-saga/core';
+
+export function* fetchServiceStatusAppHealthEffect(
+  api: StatusApi,
+  application: ServiceStatusApplication
+): SagaIterator {
+  // This is so application state knows there is an incremental load.
+  yield put(fetchServiceStatusAppHealth(application._id));
+
+  const entryMap: EndpointStatusEntry[] = yield call([api, api.getEndpointStatusEntries], application._id);
+  application.endpoint.statusEntries = entryMap;
+
+  yield put(fetchServiceStatusAppHealthSuccess(application._id, entryMap));
+}
 
 export function* fetchServiceStatusApps(): SagaIterator {
   const currentState: RootState = yield select();
@@ -28,8 +43,7 @@ export function* fetchServiceStatusApps(): SagaIterator {
     const applications: ServiceStatusApplication[] = yield call([api, api.getApplications]);
 
     for (const application of applications) {
-      const entryMap: EndpointStatusEntry[] = yield call([api, api.getEndpointStatusEntries], application._id);
-      application.endpoint.statusEntries = entryMap;
+      yield fork(fetchServiceStatusAppHealthEffect, api, application);
     }
 
     yield put(fetchServiceStatusAppsSuccess(applications));

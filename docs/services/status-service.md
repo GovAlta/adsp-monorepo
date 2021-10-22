@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Status service
-nav_order: 6
+nav_order: 12
 parent: Services
 ---
 

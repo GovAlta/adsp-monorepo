@@ -24,10 +24,34 @@ User access is primary controlled via configuration on each calendar with `updat
 Calendar service provides informational endpoints for Dates that includes information like which days are business days and which are holidays.
 
 ### Calendar
-Calender is a container for *events*. Each calender has basic name and description information which is publicly accessible.
+Calender is a container for *events*. Each calender has basic name and description information which is publicly accessible. Calendars are configured in the [configuration service](configuration-service.md) under the `platform:calendar-service` namespace and name.
 
 ### Calendar event
 Calender events represent a scheduled activity. Each event has some basic name and description information as well as start and end time. Events can be made public so that anonymous users can read their fields; their attendees remain accessible only to authorized users.
 
 ### Attendee
 Attendees represent people attending a particular *event*. Blanks attendees (no name or email) can be created to represent available appointment slots.
+
+## Code examples
+### Getting business days
+Calendar service API provides information endpoints for dates, including which dates are business days.
+```typescript
+  const top = 100;
+  const criteria = {
+    min: 20200101,
+    max: 20220101,
+    isBusinessDay: true,
+  }
+
+  const response = await fetch(
+    `https://calendar-service.alpha.alberta.ca/calendar/v1/dates?top=${top}&criteria=${JSON.stringify(criteria)}`
+  );
+
+  const {
+    results,
+    page,
+  } = await response.json();
+```
+
+### Creating a calendar event
+TODO: Add example here

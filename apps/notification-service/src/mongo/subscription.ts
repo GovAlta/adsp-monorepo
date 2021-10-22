@@ -175,7 +175,13 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
           userId: doc.userId,
           id: `${doc._id}`,
           addressAs: doc.addressAs,
-          channels: doc.channels,
+          channels:
+            doc.channels?.map((c) => ({
+              channel: c.channel,
+              address: c.address,
+              verified: !!c.verified,
+              verifyKey: c.verifyKey,
+            })) || [],
         })
       : null;
   }
@@ -192,20 +198,27 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
             criteria: doc.criteria,
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          subscriber || doc.subscriberId?.['tenantId']
-            ? new SubscriberEntity(this, this.fromDoc((doc.subscriberId as unknown) as SubscriberDoc))
-            : null
+          subscriber ||
+            (doc.subscriberId?.['tenantId']
+              ? new SubscriberEntity(this, this.fromDoc(doc.subscriberId as unknown as SubscriberDoc))
+              : null)
         )
       : null;
   }
 
   private toDoc(entity: SubscriberEntity): SubscriberDoc {
-    return {
+    const doc: SubscriberDoc = {
       tenantId: entity.tenantId.toString(),
       addressAs: entity.addressAs,
-      userId: entity.userId,
       channels: entity.channels,
     };
+
+    // Only include userId property if there is a value; this is for the parse unique index.
+    if (entity.userId) {
+      doc.userId = entity.userId;
+    }
+
+    return doc;
   }
 
   private toSubscriptionDoc(entity: SubscriptionEntity): SubscriptionDoc {

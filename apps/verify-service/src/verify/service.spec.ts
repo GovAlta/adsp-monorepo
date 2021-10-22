@@ -4,15 +4,15 @@ import { VerifyUserRoles } from './roles';
 import { createVerifyService } from './service';
 
 describe('createVerifyService', () => {
-  const loggerMock = ({
+  const loggerMock = {
     debug: jest.fn(),
     info: jest.fn(),
-  } as unknown) as Logger;
+  } as unknown as Logger;
 
   const repositoryMock = {
     get: jest.fn(),
     set: jest.fn(),
-    failed: jest.fn()
+    failed: jest.fn(),
   };
   beforeEach(() => {
     repositoryMock.get.mockReset();
@@ -46,20 +46,23 @@ describe('createVerifyService', () => {
         expect(result.expiresAt > new Date()).toBeTruthy();
       });
 
-      it('can throw for non-tenant user', async () => {
+      it('can generate for core user', async () => {
         const key = 'test';
         repositoryMock.set.mockResolvedValueOnce({ key });
 
         const service = createVerifyService({ logger: loggerMock, repository: repositoryMock });
-        expect(() => {
-          service.generate(
-            {
-              roles: [VerifyUserRoles.Generator],
-              isCore: true,
-            } as User,
-            key
-          );
-        }).toThrow();
+        const result = await service.generate(
+          {
+            roles: [VerifyUserRoles.Generator],
+            isCore: true,
+          } as User,
+          key
+        );
+
+        expect(repositoryMock.set).toHaveBeenCalledTimes(1);
+        expect(result.key).toBe(key);
+        expect(result.code).toBeTruthy();
+        expect(result.expiresAt > new Date()).toBeTruthy();
       });
 
       it('can throw for unauthorized user', () => {
@@ -132,21 +135,23 @@ describe('createVerifyService', () => {
         expect(result).toBe(false);
       });
 
-      it('can throw for non-tenant user', async () => {
+      it('can verify for non-tenant user', async () => {
         const key = 'test';
-        repositoryMock.set.mockResolvedValueOnce({ key });
+        const code = '123';
+        repositoryMock.get.mockResolvedValueOnce({ key, code });
 
         const service = createVerifyService({ logger: loggerMock, repository: repositoryMock });
-        expect(() => {
-          service.verify(
-            {
-              roles: [VerifyUserRoles.Verifier],
-              isCore: true,
-            } as User,
-            key,
-            "123456"
-          );
-        }).toThrow();
+        const result = await service.verify(
+          {
+            roles: [VerifyUserRoles.Verifier],
+            isCore: true,
+          } as User,
+          key,
+          code
+        );
+
+        expect(repositoryMock.get).toHaveBeenCalledTimes(1);
+        expect(result).toBe(true);
       });
 
       it('can throw for unauthorized user', async () => {
@@ -159,7 +164,7 @@ describe('createVerifyService', () => {
               tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
             } as User,
             key,
-            "123456"
+            '123456'
           )
         ).toThrow();
       });

@@ -7,6 +7,8 @@ import Container from '@components/Container';
 import { RootState } from '@store/index';
 import { KeycloakCheckSSOWithLogout, KeycloakRefreshToken } from '@store/tenant/actions';
 import { GoAPageLoader } from '@abgov/react-components';
+import { NotificationBanner } from './notificationBanner';
+
 interface privateAppProps {
   children: ReactNode;
 }
@@ -38,6 +40,7 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
           location.reload();
         }}
       /> */}
+      <NotificationBanner />
       <Container>{children}</Container>
     </HeaderCtx.Provider>
   );

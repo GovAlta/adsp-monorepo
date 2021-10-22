@@ -128,3 +128,7 @@ export const sortApplications = (applications: ServiceStatusApplication[]): Serv
     return pre.name < next.name ? -1 : 1;
   });
 };
+
+export const toTenantName = (nameInUrl: string): string => {
+  return nameInUrl.replace(/-/g, ' ');
+}

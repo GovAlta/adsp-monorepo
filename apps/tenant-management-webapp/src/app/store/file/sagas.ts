@@ -73,8 +73,8 @@ export function* deleteFile(file: DeleteFileAction): SagaIterator {
   try {
     const token = state.session?.credentials?.token;
     const api = new FileApi(state.config, token);
-    const files = yield call([api, api.deleteFile], file.payload.data);
-    yield put(DeleteFileSuccessService(files));
+    yield call([api, api.deleteFile], file.payload.data);
+    yield put(DeleteFileSuccessService(file.payload.data));
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
   }

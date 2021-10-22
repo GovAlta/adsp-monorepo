@@ -30,7 +30,7 @@ const EventDefinitionComponent: FunctionComponent<EventDefinitionProps> = ({ def
         <td headers="actions" data-testid="actions">
           <GoAContextMenu>
             <GoAContextMenuIcon
-              type={showDetails ? 'eyeOff' : 'eye'}
+              type={showDetails ? 'eye-off' : 'eye'}
               onClick={() => setShowDetails(!showDetails)}
               testId="toggle-details-visibility"
             />

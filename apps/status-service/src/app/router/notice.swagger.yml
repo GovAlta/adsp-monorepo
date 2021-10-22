@@ -35,6 +35,11 @@
         required: false
         schema:
           type: string
+      - name: name
+        description: Fetch public (active) notices by tenant name
+        required: false
+        schema:
+          type: string
     responses:
       200:
         description: Notices successfully retrieved.

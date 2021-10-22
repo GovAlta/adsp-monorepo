@@ -1,12 +1,7 @@
-import { Notification } from '../types';
-import { Channel } from './channel';
+import { Channel, NotificationContent } from '../types';
 
 export interface NotificationProvider {
-  send(notification: Notification): Promise<void>;
+  send(notification: NotificationContent): Promise<void>;
 }
 
-export interface Providers {
-  [Channel.email]?: NotificationProvider;
-  [Channel.mail]?: NotificationProvider;
-  [Channel.sms]?: NotificationProvider;
-}
+export type Providers = Partial<Record<Channel, NotificationProvider>>;

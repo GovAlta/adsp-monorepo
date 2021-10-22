@@ -13,6 +13,7 @@ export class NoticeApplicationEntity {
   created: Date;
   tenantId: string;
   isAllApplications: boolean;
+  tenantName: string;
 
   constructor(private repository: NoticeRepository, application: NewOrExisting<NoticeApplication>) {
     this.id = application?.id;
@@ -24,6 +25,7 @@ export class NoticeApplicationEntity {
     this.created = application.created;
     this.tenantId = application.tenantId;
     this.isAllApplications = application.isAllApplications;
+    this.tenantName = application.tenantName
   }
 
   static create(

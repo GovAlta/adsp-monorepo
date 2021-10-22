@@ -16,7 +16,7 @@ export class ApplicationApi {
   }
 
   async getNotices(name: string): Promise<ServiceStatusApplication[]> {
-    const res = await this.http.get(`/notice/v1/notices`, { params: { tenantid: name } });
+    const res = await this.http.get(`/notice/v1/notices`, { params: { name: name } });
     return res.data?.results;
   }
 }
