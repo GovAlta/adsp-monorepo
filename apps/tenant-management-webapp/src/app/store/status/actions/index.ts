@@ -15,6 +15,8 @@ export * from './toggleApplication';
 export type ActionTypes =
   | toggle.ToggleApplicationStatusSuccessAction
   | fetch.FetchServiceStatusAppsSuccessAction
+  | fetch.FetchServiceStatusAppHealthAction
+  | fetch.FetchServiceStatusAppHealthSuccessAction
   | save.SaveApplicationSuccessAction
   | get.GetApplicationSuccessAction
   | destroy.DeleteApplicationSuccessAction
