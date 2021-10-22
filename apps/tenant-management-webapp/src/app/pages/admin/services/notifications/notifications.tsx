@@ -14,7 +14,7 @@ export const Notifications: FunctionComponent = () => {
     <Page>
       <Main>
         <h2>Notifications</h2>
-        <Tabs>
+        <Tabs activeIndex={0}>
           <Tab label="Overview">
             <NotificationsOverview />
           </Tab>
