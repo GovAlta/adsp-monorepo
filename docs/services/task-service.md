@@ -21,7 +21,7 @@ User access is primary controlled via configuration on each queue with `workerRo
 
 ## Concepts
 ### Queue
-Queue represents a particular work unit with roles for works and assigners and a ordered stream of *tasks*. Tasks default to first in-first out order and tasks with a higher priority are promoted to the front.
+Queue represents a particular work unit with roles for works and assigners and a ordered stream of *tasks*. Tasks default to first in-first out order and tasks with a higher priority are promoted to the front. Queues are configured in the [configuration service](configuration-service.md) under the `platform:task-service` namespace and name.
 
 ### Task
 Task represents a unit of work in a *queue*. Each task has basic name and description as well as a priority. Tasks have a basic lifecycle of: Pending -> In Progress -> Stopped (optional) -> Completed or Cancelled.
@@ -47,7 +47,7 @@ Task represents a unit of work in a *queue*. Each task has basic name and descri
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(task),
     }
@@ -60,13 +60,14 @@ Tasks are returned in order with highest priority tasks first and, within each p
   const namespace = 'support';
   const name = 'intake-processing';
   const top = 20;
+
   await fetch(
     `https://task-service.alpha.alberta.ca/task/v1/queues/${namespace}/${name}/tasks?top=${top}`,
     {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${accessToken}`,
-      }
+      },
     }
   );
 ```
@@ -85,7 +86,7 @@ Tasks can be assigned by users with one of the assigner roles for the queue or s
       id: 'ed2243ed-948a-4f84-a785-c9cf2d5f355e',
       email: 'a.n.other@gov.ab.ca',
       name: 'A. N. Other',
-    }
+    },
   }
 
   await fetch(
@@ -94,7 +95,7 @@ Tasks can be assigned by users with one of the assigner roles for the queue or s
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(request),
     }

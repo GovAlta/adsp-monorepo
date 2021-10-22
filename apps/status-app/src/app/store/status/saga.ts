@@ -3,8 +3,9 @@ import { RootState } from '@store/index';
 import { ApplicationApi } from './api';
 import { fetchApplicationsSuccess, FetchApplicationsAction, fetchNoticesSuccess } from './actions';
 import { parseNotices, bindApplicationsWithNotices } from './models';
-import { addErrorMessage, updateIsReady } from '@store/session/actions';
+import { addErrorMessage, updateIsReady, updateTenantName } from '@store/session/actions';
 import { SagaIterator } from '@redux-saga/core';
+import { toTenantName } from './models'
 
 export function* fetchApplications(action: FetchApplicationsAction): SagaIterator {
   const rootState: RootState = yield select();
@@ -14,7 +15,14 @@ export function* fetchApplications(action: FetchApplicationsAction): SagaIterato
   try {
     const api = new ApplicationApi(baseUrl);
     yield put(updateIsReady(false));
-    const unKebabName = name.replace(/-/g, ' ');
+    const unKebabName = toTenantName(name);
+
+    if (unKebabName) {
+      yield put(updateTenantName(unKebabName));
+    } else {
+      yield put(updateTenantName('platform'));
+    }
+
     const applications = yield call([api, api.getApplications], unKebabName);
     const noticesRaw = yield call([api, api.getNotices], unKebabName);
     const notices = parseNotices(noticesRaw);

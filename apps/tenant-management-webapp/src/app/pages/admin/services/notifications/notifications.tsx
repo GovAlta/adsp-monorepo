@@ -5,7 +5,7 @@ import { RootState } from '@store/index';
 import React, { FunctionComponent } from 'react';
 import { useSelector } from 'react-redux';
 import { NotificationsOverview } from './overview';
-import {NotificationsTypes} from "@pages/admin/services/notifications/types";
+import { NotificationTypes } from './notificationTypes';
 
 export const Notifications: FunctionComponent = () => {
   const tenantId = useSelector((state: RootState) => state.tenant?.id);
@@ -19,10 +19,29 @@ export const Notifications: FunctionComponent = () => {
             <NotificationsOverview />
           </Tab>
           <Tab label="Notification Types">
-            <NotificationsTypes />
+            <NotificationTypes />
           </Tab>
         </Tabs>
       </Main>
+      <Aside>
+        <h5>Helpful Links</h5>
+        <a
+          rel="noopener noreferrer"
+          target="_blank"
+          href={`${docBaseUrl}?tenant=${tenantId}&urls.primaryName=Notification Service`}
+        >
+          Read the API docs
+        </a>
+        <br />
+        <a
+          rel="noopener noreferrer"
+          target="_blank"
+          href="https://gitlab.gov.ab.ca/dio/core/core-services/-/tree/master/apps/event-service"
+        >
+          See the code
+        </a>
+        <SupportLinks />
+      </Aside>
     </Page>
   );
 };

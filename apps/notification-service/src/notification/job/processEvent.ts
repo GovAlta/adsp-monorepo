@@ -18,70 +18,92 @@ interface ProcessEventJobProps {
   queueService: WorkQueueService<Notification>;
 }
 
-export const createProcessEventJob = ({
-  logger,
-  serviceId,
-  tokenProvider,
-  configurationService,
-  eventService,
-  templateService,
-  subscriptionRepository,
-  queueService,
-}: ProcessEventJobProps) => async (event: DomainEvent, done: (err?: unknown) => void): Promise<void> => {
-  const { tenantId, namespace, name } = event;
-  logger.debug(`Processing event ${namespace}:${name} for tenant ${tenantId}...`);
+const LOG_CONTEXT = { context: 'ProcessEventJob' };
+export const createProcessEventJob =
+  ({
+    logger,
+    serviceId,
+    tokenProvider,
+    configurationService,
+    eventService,
+    templateService,
+    subscriptionRepository,
+    queueService,
+  }: ProcessEventJobProps) =>
+  async (event: DomainEvent, done: (err?: unknown) => void): Promise<void> => {
+    const { tenantId, namespace, name } = event;
+    logger.debug(`Processing event ${namespace}:${name} for tenant ${tenantId}...`);
 
-  // Skip processing of any event from the notification-service namespace.
-  // Sending notifications for notification related events could result in infinite loops.
-  if (namespace === serviceId.service) {
-    done();
-    logger.debug(`Skip processing ${namespace}:${name} for notifications since it's a ${serviceId} event`);
-    return;
-  }
+    // Skip processing of any event from the notification-service namespace.
+    // Sending notifications for notification related events could result in infinite loops.
+    if (namespace === serviceId.service) {
+      done();
+      logger.debug(`Skip processing ${namespace}:${name} for notifications since it's a ${serviceId} event`, {
+        ...LOG_CONTEXT,
+        tenant: tenantId?.toString(),
+      });
+      return;
+    }
 
-  try {
-    const token = await tokenProvider.getAccessToken();
-    const [configuration] = await configurationService.getConfiguration<NotificationConfiguration>(
-      serviceId,
-      token,
-      tenantId
-    );
+    try {
+      const token = await tokenProvider.getAccessToken();
+      const [configuration, options] = await configurationService.getConfiguration<
+        NotificationConfiguration,
+        NotificationConfiguration
+      >(serviceId, token, tenantId);
 
-    const types = configuration?.getEventNotificationTypes(event) || [];
-    let count = 0;
-    for (let i = 0; i < types.length; i++) {
-      const type = types[i];
+      const types = [
+        ...(configuration?.getEventNotificationTypes(event) || []),
+        ...(options?.getEventNotificationTypes(event) || []),
+      ];
 
-      // Page through all subscriptions and generate notifications.
-      const notifications = [];
-      let after: string = null;
-      do {
-        const { results, page } = await subscriptionRepository.getSubscriptions(type, 1000, after);
-        const pageNotifications = type.generateNotifications(templateService, event, results);
-        notifications.push(...pageNotifications);
-        after = page.next;
-      } while (after);
+      let count = 0;
+      for (let i = 0; i < types.length; i++) {
+        const type = types[i];
 
-      notifications.forEach((notification) => queueService.enqueue(notification));
-      if (notifications.length > 0) {
-        eventService.send(notificationsGenerated(event, type, notifications.length));
+        // Page through all subscriptions and generate notifications.
+        const notifications = [];
+        let after: string = null;
+        do {
+          const { results, page } = await subscriptionRepository.getSubscriptions(type, 1000, after);
+          const pageNotifications = type.generateNotifications(templateService, event, results);
+          notifications.push(...pageNotifications);
+          after = page.next;
+        } while (after);
+
+        notifications.forEach((notification) => queueService.enqueue(notification));
+        if (notifications.length > 0) {
+          eventService.send(notificationsGenerated(event, type, notifications.length));
+        }
+
+        count += notifications.length;
+        logger.debug(
+          `Generated ${notifications.length} notifications of type ${type.name} (ID: ${type.id}) for ${namespace}:${name} for tenant ${tenantId}.`,
+          {
+            ...LOG_CONTEXT,
+            tenant: tenantId?.toString(),
+          }
+        );
       }
 
-      count += notifications.length;
-      logger.debug(
-        `Generated ${notifications.length} notifications of type ${type.name} (ID: ${type.id}) for ${namespace}:${name} for tenant ${tenantId}.`
-      );
-    }
+      if (count > 0) {
+        logger.info(`Generated ${count} notifications for event ${namespace}:${name} for tenant ${tenantId}.`, {
+          ...LOG_CONTEXT,
+          tenant: tenantId?.toString(),
+        });
+      } else {
+        logger.debug(`Processed event ${namespace}:${name} for tenant ${tenantId} with no notifications generated.`, {
+          ...LOG_CONTEXT,
+          tenant: tenantId?.toString(),
+        });
+      }
 
-    if (count > 0) {
-      logger.info(`Generated ${count} notifications for event ${namespace}:${name} for tenant ${tenantId}.`);
-    } else {
-      logger.debug(`Processed event ${namespace}:${name} for tenant ${tenantId} with no notifications generated.`);
+      done();
+    } catch (err) {
+      logger.warn(`Error encountered on processing event ${namespace}:${name}. ${err}`, {
+        ...LOG_CONTEXT,
+        tenant: tenantId?.toString(),
+      });
+      done(err);
     }
-
-    done();
-  } catch (err) {
-    logger.warn(`Error encountered on processing event ${namespace}:${name}. ${err}`);
-    done(err);
-  }
-};
+  };

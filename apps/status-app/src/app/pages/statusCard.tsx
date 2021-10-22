@@ -49,7 +49,7 @@ export function ServiceStatus(props: ServiceOptions): JSX.Element {
     Maintenance: 'var(--color-black)',
     Pending: 'var(--color-black)',
     Disabled: 'var(--color-black)',
-    Operational: 'var(--color-black)',
+    Operational: 'var(--color-white)',
   };
 
   const icons: DescriptiveStrings = {

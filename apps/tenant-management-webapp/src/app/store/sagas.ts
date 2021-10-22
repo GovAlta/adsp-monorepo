@@ -26,6 +26,7 @@ import {
 } from './status/sagas';
 import { watchEventSagas } from './event/sagas';
 import { watchFileSagas } from './file/sagas';
+import { watchNotificationSagas } from './notification/sagas';
 
 // Actions
 import { FETCH_ACCESS_ACTION } from './access/actions';
@@ -92,5 +93,7 @@ export function* watchSagas() {
     watchFileSagas(),
     // event
     watchEventSagas(),
+    // notification
+    watchNotificationSagas(),
   ]);
 }

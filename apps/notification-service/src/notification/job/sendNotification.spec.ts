@@ -3,12 +3,12 @@ import { Channel } from '../types';
 import { createSendNotificationJob } from './sendNotification';
 
 describe('createSendNotificationJob', () => {
-  const logger = ({
+  const logger = {
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
-  } as unknown) as Logger;
+  } as unknown as Logger;
 
   const eventService = {
     send: jest.fn(),
@@ -38,6 +38,7 @@ describe('createSendNotificationJob', () => {
           channel: Channel.email,
           subscriber: { id: 'test', userId: 'test', addressAs: 'Testy McTester' },
         },
+        true,
         (err) => {
           expect(err).toBeFalsy();
           expect(providerMock.send).toHaveBeenCalledTimes(1);
@@ -60,6 +61,7 @@ describe('createSendNotificationJob', () => {
             channel: Channel.sms,
             subscriber: { id: 'test', userId: 'test', addressAs: 'Testy McTester' },
           },
+          true,
           null
         )
       ).rejects.toThrow(/No provider found for channel: sms/);
@@ -80,6 +82,7 @@ describe('createSendNotificationJob', () => {
           channel: Channel.email,
           subscriber: { id: 'test', userId: 'test', addressAs: 'Testy McTester' },
         },
+        true,
         (err) => {
           expect(err).toBe(error);
           expect(providerMock.send).toHaveBeenCalledTimes(1);

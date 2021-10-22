@@ -36,6 +36,7 @@ import SupportLinks from '@components/SupportLinks';
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
+  const history = useHistory();
 
   const { applications, serviceStatusAppUrl, tenantName } = useSelector((state: RootState) => ({
     applications: state.serviceStatus.applications,
@@ -44,6 +45,8 @@ function Status(): JSX.Element {
   }));
 
   const location = useLocation();
+
+  const [activeIndex, setActiveIndex] = useState<number>(0);
 
   useEffect(() => {
     dispatch(fetchServiceStatusApps());
@@ -59,16 +62,36 @@ function Status(): JSX.Element {
   };
 
   useEffect(() => {
+    if (activeIndex != null) {
+      setActiveIndex(null);
+    }
+  }, [activeIndex]);
+
+  useEffect(() => {
     dispatch(getNotices());
   }, []);
+
+  const addApplication = () => {
+    setActiveIndex(1);
+    history.push(`${location.pathname}/new`);
+  };
 
   return (
     <Page>
       <Main>
         <h2>Service Status</h2>
-        <Tabs>
+        <Tabs activeIndex={activeIndex}>
           <Tab label="Overview">
             This service allows for easy monitoring of application downtime.
+            <p>
+              Each Application should represent a service that is useful to the end user by itself, such as child care
+              subsidy and child care certification
+            </p>
+            <GoAButton data-testid="add-application" onClick={() => addApplication()} buttonType="primary">
+              Add Application
+            </GoAButton>
+          </Tab>
+          <Tab label="Applications">
             <p>
               You can use multiple endpoint URLs for a single application, including internal services you depend on, in
               order to assess which components within an application may be down or malfunctioning (ie. web server,
@@ -151,7 +174,7 @@ function Status(): JSX.Element {
           <ApplicationFormModal isOpen={true} />
         </Route>
         <Route path="/admin/services/status/notice/new">
-          <NoticeModal isOpen={true} title='Add a Draft Notice' />
+          <NoticeModal isOpen={true} title="Add a Draft Notice" />
         </Route>
         <Route path="/admin/services/status/notice/:noticeId">
           <NoticeModal isOpen={true} title='Edit Draft Notice' />
@@ -385,8 +408,8 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
               backgroundColor: entry.ok
                 ? 'var(--color-green)'
                 : entry.status === 'n/a'
-                  ? 'var(--color-gray-300)'
-                  : 'var(--color-red)',
+                ? 'var(--color-gray-300)'
+                : 'var(--color-red)',
             }}
             title={entry.status + ': ' + new Date(entry.timestamp).toLocaleString()}
           />

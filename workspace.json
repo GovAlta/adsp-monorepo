@@ -390,7 +390,7 @@
             "outputPath": "dist/apps/notification-service",
             "main": "apps/notification-service/src/main.ts",
             "tsConfig": "apps/notification-service/tsconfig.app.json",
-            "assets": []
+            "assets": ["apps/notification-service/src/assets"]
           },
           "configurations": {
             "production": {

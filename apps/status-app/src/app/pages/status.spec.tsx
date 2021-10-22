@@ -37,6 +37,8 @@ describe('Service statuses', () => {
         envLoaded: true,
       },
       application: ApplicationInit,
+      session: SessionInit,
+      notices: NoticeInit
     });
 
     axiosMock.get.mockResolvedValueOnce({ data: {} });

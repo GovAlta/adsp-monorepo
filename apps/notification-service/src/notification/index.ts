@@ -7,6 +7,7 @@ import { createJobs } from './job';
 import { TemplateService } from './template';
 import { Notification, Providers } from './types';
 import { createSubscriptionRouter } from './router';
+import { VerifyService } from './verify';
 
 export * from './types';
 export * from './repository';
@@ -14,6 +15,7 @@ export * from './model';
 export * from './template';
 export * from './events';
 export * from './configuration';
+export * from './verify';
 
 interface NotificationMiddlewareProps extends Repositories {
   serviceId: AdspId;
@@ -24,6 +26,7 @@ interface NotificationMiddlewareProps extends Repositories {
   templateService: TemplateService;
   eventSubscriber: DomainEventSubscriberService;
   queueService: WorkQueueService<Notification>;
+  verifyService: VerifyService;
   providers: Providers;
 }
 
@@ -39,6 +42,7 @@ export const applyNotificationMiddleware = (
     templateService,
     eventSubscriber,
     queueService,
+    verifyService,
     providers,
   }: NotificationMiddlewareProps
 ): Application => {
@@ -58,6 +62,7 @@ export const applyNotificationMiddleware = (
   const routerProps = {
     logger,
     subscriptionRepository,
+    verifyService,
   };
   const subscriptionRouter = createSubscriptionRouter(routerProps);
 

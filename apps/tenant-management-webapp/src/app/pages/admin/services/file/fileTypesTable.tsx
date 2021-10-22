@@ -209,6 +209,13 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           buttonType="secondary"
           key={`${props.id}-confirm-button`}
           onClick={() => {
+            if (newFileType.anonymousRead === true || newFileType.readRoles.includes('anonymousRead')) {
+              newFileType.anonymousRead = true;
+              newFileType.readRoles = newFileType
+                .readRoles.filter((role) => { return role !== 'anonymousRead' });
+            }
+
+
             dispatch(CreateFileTypeService({ ...newFileType, id }));
 
             setNewFileType(null);
@@ -229,6 +236,12 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           data-testid="confirm-update"
           disabled={newFileType}
           onClick={() => {
+            if (updateFileType.anonymousRead === true || updateFileType.readRoles.includes('anonymousRead')) {
+              updateFileType.readRoles = updateFileType
+                .readRoles.filter((role) => { return role !== 'anonymousRead' })
+              updateFileType.anonymousRead = true
+            }
+
             dispatch(UpdateFileTypeService({ ...updateFileType, id }));
 
             setUpdateFileType(null);
@@ -276,7 +289,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
 
     const fileType = { ...props };
 
-    if (readRoles.includes('anonymousRead') && cellType === 'readRoles') {
+    if ((readRoles.includes('anonymousRead') || props.anonymousRead === true) && cellType === 'readRoles') {
       anonymousRead = true;
       fileType.anonymousRead = true;
     } else {
@@ -334,11 +347,17 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
       dropDownOptions = dropDownOptions.concat(defaultDropDowns);
     }
 
+    const selectedRows = roles;
+
+    if (props.anonymousRead === true && !selectedRows.includes('anonymousRead') && cellType === 'readRoles') {
+      selectedRows.push('anonymousRead')
+    }
+
     return (
       <td data-testid={`${rowType}-${cellType}`}>
         <GoADropdown
           name="fileTypes"
-          selectedValues={roles}
+          selectedValues={selectedRows}
           multiSelect={true}
           onChange={(name, values) => {
             if (values.includes('anonymousRead') && cellType === 'readRoles') {

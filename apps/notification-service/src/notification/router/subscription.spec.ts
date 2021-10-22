@@ -1,5 +1,5 @@
-import { adspId } from '@abgov/adsp-service-sdk';
-import { NotFoundError, UnauthorizedError } from '@core-services/core-common';
+import { adspId, Channel } from '@abgov/adsp-service-sdk';
+import { InvalidOperationError, NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
 import { NotificationTypeEntity, SubscriberEntity, SubscriptionEntity } from '../model';
@@ -15,9 +15,10 @@ import {
   getSubscriber,
   getSubscribers,
   getTypeSubscription,
+  subscriberOperations,
 } from './subscription';
 import { NotificationType, ServiceUserRoles } from '../types';
-import { deleteSubscriber, updateSubscriber } from '.';
+import { createSubscriber, deleteSubscriber, updateSubscriber } from '.';
 
 describe('subscription router', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -48,6 +49,11 @@ describe('subscription router', () => {
     subscriberRoles: ['test-subscriber'],
   };
 
+  const verifyServiceMock = {
+    sendCode: jest.fn(),
+    verifyCode: jest.fn(),
+  };
+
   beforeEach(() => {
     repositoryMock.findSubscribers.mockReset();
     repositoryMock.getSubscriber.mockReset();
@@ -56,11 +62,17 @@ describe('subscription router', () => {
     repositoryMock.saveSubscription.mockReset();
     repositoryMock.deleteSubscriptions.mockReset();
     repositoryMock.deleteSubscriber.mockReset();
+    verifyServiceMock.sendCode.mockReset();
+    verifyServiceMock.verifyCode.mockReset();
   });
 
   describe('createSubscriptionRouter', () => {
     it('can create router', () => {
-      const router = createSubscriptionRouter({ logger: loggerMock, subscriptionRepository: repositoryMock });
+      const router = createSubscriptionRouter({
+        logger: loggerMock,
+        subscriptionRepository: repositoryMock,
+        verifyService: verifyServiceMock,
+      });
       expect(router).toBeTruthy();
     });
   });
@@ -499,6 +511,74 @@ describe('subscription router', () => {
     });
   });
 
+  describe('createSubscriber', () => {
+    it('can create handler', () => {
+      const handler = createSubscriber(repositoryMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can create subscriber', async () => {
+      const req = {
+        user: {
+          tenantId,
+          roles: [ServiceUserRoles.SubscriptionAdmin],
+        },
+        query: {},
+        body: { addressAs: 'tester' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const subscriber = new SubscriberEntity(repositoryMock, {
+        id: 'subscriber',
+        tenantId,
+        addressAs: 'tester',
+        channels: [],
+      });
+      repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
+
+      const handler = createSubscriber(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(expect.objectContaining({ addressAs: 'tester' }));
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ addressAs: 'tester' }));
+    });
+
+    it('can create user subscriber', async () => {
+      const req = {
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [ServiceUserRoles.SubscriptionAdmin],
+        },
+        query: { userSub: 'true' },
+        body: {},
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const subscriber = new SubscriberEntity(repositoryMock, {
+        id: 'subscriber',
+        tenantId,
+        addressAs: 'tester',
+        channels: [],
+      });
+      repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
+
+      const handler = createSubscriber(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(
+        expect.objectContaining({
+          addressAs: 'Tester',
+          userId: 'tester',
+          channels: expect.arrayContaining([expect.objectContaining({ channel: 'email', address: 'tester@test.co' })]),
+        })
+      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ addressAs: 'tester' }));
+    });
+  });
+
   describe('getSubscriber', () => {
     it('can create handler', () => {
       const handler = getSubscriber(repositoryMock);
@@ -671,6 +751,183 @@ describe('subscription router', () => {
       await updateSubscriber(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
       expect(res.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('subscriberOperations', () => {
+    it('can create handler', () => {
+      const handler = subscriberOperations(verifyServiceMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can send code', async () => {
+      const subscriber = new SubscriberEntity(repositoryMock, {
+        id: 'subscriber',
+        tenantId,
+        addressAs: 'tester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'tester@test.co',
+            verified: false,
+          },
+        ],
+      });
+
+      const req = {
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [ServiceUserRoles.CodeSender],
+        },
+        body: {
+          operation: 'send-code',
+          channel: Channel.email,
+          address: 'tester@test.co',
+        },
+        subscriber,
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
+      verifyServiceMock.sendCode.mockResolvedValueOnce('key');
+
+      const handler = subscriberOperations(verifyServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(verifyServiceMock.sendCode).toHaveBeenCalledWith(
+        subscriber.channels[0],
+        'Enter this code to verify your contact address.'
+      );
+      expect(subscriber.channels[0].verifyKey).toBe('key');
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ sent: true }));
+    });
+
+    it('can check code', async () => {
+      const subscriber = new SubscriberEntity(repositoryMock, {
+        id: 'subscriber',
+        tenantId,
+        addressAs: 'tester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'tester@test.co',
+            verified: false,
+            verifyKey: 'key',
+          },
+        ],
+      });
+
+      const req = {
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [ServiceUserRoles.CodeSender],
+        },
+        body: {
+          operation: 'check-code',
+          channel: Channel.email,
+          address: 'tester@test.co',
+          code: '123',
+        },
+        subscriber,
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      verifyServiceMock.verifyCode.mockResolvedValueOnce(true);
+
+      const handler = subscriberOperations(verifyServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(verifyServiceMock.verifyCode).toHaveBeenCalledWith(subscriber.channels[0], '123');
+      expect(subscriber.channels[0].verified).toBe(false);
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ verified: true }));
+    });
+
+    it('can verify channel', async () => {
+      const subscriber = new SubscriberEntity(repositoryMock, {
+        id: 'subscriber',
+        tenantId,
+        addressAs: 'tester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'tester@test.co',
+            verified: false,
+            verifyKey: 'key',
+          },
+        ],
+      });
+
+      const req = {
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [ServiceUserRoles.SubscriptionAdmin],
+        },
+        body: {
+          operation: 'verify-channel',
+          channel: Channel.email,
+          address: 'tester@test.co',
+          code: '123',
+        },
+        subscriber,
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      verifyServiceMock.verifyCode.mockResolvedValueOnce(true);
+      repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
+
+      const handler = subscriberOperations(verifyServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(verifyServiceMock.verifyCode).toHaveBeenCalledWith(subscriber.channels[0], '123');
+      expect(subscriber.channels[0].verified).toBe(true);
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ verified: true }));
+    });
+
+    it('can call next with invalid operation for unrecognized operation', async () => {
+      const subscriber = new SubscriberEntity(repositoryMock, {
+        id: 'subscriber',
+        tenantId,
+        addressAs: 'tester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'tester@test.co',
+            verified: false,
+          },
+        ],
+      });
+
+      const req = {
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [ServiceUserRoles.CodeSender],
+        },
+        body: {
+          operation: 'no-op',
+          channel: Channel.email,
+          address: 'tester@test.co',
+        },
+        subscriber,
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = subscriberOperations(verifyServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
   });
 });

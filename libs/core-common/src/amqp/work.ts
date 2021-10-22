@@ -84,6 +84,7 @@ export class AmqpWorkQueueService<T> implements WorkQueueService<T> {
       try {
         sub.next({
           item: this.convertMessage(msg),
+          retryOnError: requeueOnFail,
           done: (err) => {
             if (err) {
               channel.nack(msg, false, requeueOnFail);

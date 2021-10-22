@@ -20,6 +20,7 @@ export interface NoticeApplication {
   mode: NoticeModeType;
   created: Date;
   tenantId: string;
+  tenantName: string;
 }
 export * from './serviceStatus';
 export * from './endpointStatusEntry';

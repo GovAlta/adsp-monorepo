@@ -18,7 +18,7 @@ client `urn:ads:platform:configuration-service`
 
 ## Concepts
 ### Configuration definition
-Configuration definition is an optional metadata description for a particular *configuration* (identified by a specific namespace and name). The definition provides write-time validation via json schema.
+Configuration definition is an optional metadata description for a particular *configuration* (identified by a specific namespace and name). The definition provides write-time validation via json schema. Configuration definitions are configured in the [configuration service](configuration-service.md) under the `platform:configuration-service` namespace and name.
 
 ### Configuration
 Configuration stores values represented by a json object at a particular namespace and name. Configuration includes *revisions* that represent current and past value snapshots.
