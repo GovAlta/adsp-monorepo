@@ -177,7 +177,7 @@ function Status(): JSX.Element {
           <NoticeModal isOpen={true} title="Add a Draft Notice" />
         </Route>
         <Route path="/admin/services/status/notice/:noticeId">
-          <NoticeModal isOpen={true} title='Edit Draft Notice' />
+          <NoticeModal isOpen={true} title="Edit Draft Notice" />
         </Route>
         <Route path="/admin/services/status/:applicationId/edit">
           <ApplicationFormModal isOpen={true} />
@@ -354,7 +354,7 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
    */
   function getStatusEntries(endpoint: ServiceStatusEndpoint): EndpointStatusEntry[] {
     const timePeriodEntries =
-      endpoint?.statusEntries?.filter((entry) => entry.timestamp > Date.now() - 1000 * 60 * 30) || [];
+      endpoint.statusEntries?.filter((entry) => entry.timestamp > Date.now() - 1000 * 60 * 30) || [];
 
     if (timePeriodEntries.length >= displayCount) {
       return timePeriodEntries;
@@ -389,7 +389,7 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
     return filledEntries.slice(1);
   }
 
-  const statusEntries = getStatusEntries(app.endpoint);
+  const statusEntries = app.endpoint ? getStatusEntries(app.endpoint) : [];
 
   return (
     <div style={css}>
