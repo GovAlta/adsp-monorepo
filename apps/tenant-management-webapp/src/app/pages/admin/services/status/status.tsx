@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Page, Main, Aside } from '@components/Html';
 import { deleteApplication, fetchServiceStatusApps, toggleApplicationStatus } from '@store/status/actions';
 import { RootState } from '@store/index';
@@ -198,7 +198,9 @@ function Application(app: ServiceStatusApplication) {
       : []
   );
 
-  app.endpoint.statusEntries = entries;
+  if (app.endpoint) {
+    app.endpoint.statusEntries = entries;
+  }
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false);
   const [showStatusForm, setShowStatusForm] = useState<boolean>(false);
