@@ -72,8 +72,7 @@ export function createServiceStatusRouter({
 
     const user = req.user;
     const { name, description, endpoint } = req.body;
-    const tenant = await tenantService.getTenant(user.tenantId)
-
+    const tenant = await tenantService.getTenant(user.tenantId);
 
     try {
       const tenantName = tenant.name;
@@ -93,7 +92,6 @@ export function createServiceStatusRouter({
       });
 
       res.status(201).json(app);
-
     } catch (e) {
       res.status(400).send(e.message);
     }
@@ -178,6 +176,9 @@ export function createServiceStatusRouter({
 
     const { tenantId } = req.user;
     const { applicationId } = req.params;
+    const { top: topValue } = req.query;
+    const top = topValue ? parseInt(topValue as string) : 200;
+
     if (!tenantId) {
       throw new UnauthorizedError('missing tenant id');
     }
@@ -192,7 +193,7 @@ export function createServiceStatusRouter({
       throw new UnauthorizedError('invalid tenant id');
     }
 
-    const entries = await endpointStatusEntryRepository.findRecentByUrl(application.endpoint.url);
+    const entries = await endpointStatusEntryRepository.findRecentByUrl(application.endpoint.url, top);
 
     res.send(entries);
   });

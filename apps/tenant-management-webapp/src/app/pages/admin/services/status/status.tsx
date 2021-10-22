@@ -354,7 +354,9 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
    */
   function getStatusEntries(endpoint: ServiceStatusEndpoint): EndpointStatusEntry[] {
     const timePeriodEntries =
-      endpoint.statusEntries?.filter((entry) => entry.timestamp > Date.now() - 1000 * 60 * 30) || [];
+      endpoint.statusEntries
+        ?.filter((entry) => entry.timestamp > Date.now() - 1000 * 60 * 30)
+        .sort((a, b) => a.timestamp - b.timestamp) || [];
 
     if (timePeriodEntries.length >= displayCount) {
       return timePeriodEntries;
@@ -389,19 +391,19 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
     return filledEntries.slice(1);
   }
 
-  const statusEntries = app.endpoint ? getStatusEntries(app.endpoint) : [];
+  const statusEntries = app.endpoint ? getStatusEntries(app.endpoint) : null;
 
   return (
     <div style={css}>
       <StatusBarDetails>
         <span></span>
         <small style={{ textTransform: 'capitalize' }}>
-          {statusEntries[statusEntries.length - 1].status !== 'n/a' ? app.internalStatus : 'Stopped'}
+          {statusEntries?.[statusEntries?.length - 1].status !== 'n/a' ? app.internalStatus : 'Stopped'}
         </small>
       </StatusBarDetails>
 
       <EndpointStatusEntries data-testid="endpoint-url">
-        {statusEntries.map((entry) => (
+        {statusEntries?.map((entry) => (
           <EndpointStatusTick
             key={entry.timestamp}
             style={{
@@ -416,7 +418,7 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
         ))}
       </EndpointStatusEntries>
       <StatusBarDetails>
-        <small>{getTimestamp(statusEntries[0]?.timestamp)}</small>
+        <small>{ statusEntries && getTimestamp(statusEntries[0]?.timestamp)}</small>
         <small>Now</small>
       </StatusBarDetails>
     </div>
