@@ -36,6 +36,7 @@ import SupportLinks from '@components/SupportLinks';
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
+  const history = useHistory();
 
   const { applications, serviceStatusAppUrl, tenantName } = useSelector((state: RootState) => ({
     applications: state.serviceStatus.applications,
@@ -44,6 +45,8 @@ function Status(): JSX.Element {
   }));
 
   const location = useLocation();
+
+  const [activeIndex, setActiveIndex] = useState<number>(0);
 
   useEffect(() => {
     dispatch(fetchServiceStatusApps());
@@ -59,16 +62,36 @@ function Status(): JSX.Element {
   };
 
   useEffect(() => {
+    if (activeIndex != null) {
+      setActiveIndex(null);
+    }
+  }, [activeIndex]);
+
+  useEffect(() => {
     dispatch(getNotices());
   }, []);
+
+  const addApplication = () => {
+    setActiveIndex(1);
+    history.push(`${location.pathname}/new`);
+  };
 
   return (
     <Page>
       <Main>
         <h2>Service Status</h2>
-        <Tabs>
+        <Tabs activeIndex={activeIndex}>
           <Tab label="Overview">
             This service allows for easy monitoring of application downtime.
+            <p>
+              Each Application should represent a service that is useful to the end user by itself, such as child care
+              subsidy and child care certification
+            </p>
+            <GoAButton data-testid="add-application" onClick={() => addApplication()} buttonType="primary">
+              Add Application
+            </GoAButton>
+          </Tab>
+          <Tab label="Applications">
             <p>
               You can use multiple endpoint URLs for a single application, including internal services you depend on, in
               order to assess which components within an application may be down or malfunctioning (ie. web server,
@@ -151,10 +174,10 @@ function Status(): JSX.Element {
           <ApplicationFormModal isOpen={true} />
         </Route>
         <Route path="/admin/services/status/notice/new">
-          <NoticeModal isOpen={true} title='Add a Draft Notice' />
+          <NoticeModal isOpen={true} title="Add a Draft Notice" />
         </Route>
         <Route path="/admin/services/status/notice/:noticeId">
-          <NoticeModal isOpen={true} title='Edit Draft Notice' />
+          <NoticeModal isOpen={true} title="Edit Draft Notice" />
         </Route>
         <Route path="/admin/services/status/:applicationId/edit">
           <ApplicationFormModal isOpen={true} />
@@ -168,6 +191,16 @@ function Application(app: ServiceStatusApplication) {
   const location = useLocation();
   const history = useHistory();
   const dispatch = useDispatch();
+
+  const entries = useSelector((state: RootState) =>
+    state.serviceStatus.endpointHealth[app._id] && state.serviceStatus.endpointHealth[app._id].url === app.endpoint?.url
+      ? state.serviceStatus.endpointHealth[app._id].entries
+      : []
+  );
+
+  if (app.endpoint) {
+    app.endpoint.statusEntries = entries;
+  }
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false);
   const [showStatusForm, setShowStatusForm] = useState<boolean>(false);
@@ -331,7 +364,9 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
    */
   function getStatusEntries(endpoint: ServiceStatusEndpoint): EndpointStatusEntry[] {
     const timePeriodEntries =
-      endpoint.statusEntries?.filter((entry) => entry.timestamp > Date.now() - 1000 * 60 * 30) || [];
+      endpoint.statusEntries
+        ?.filter((entry) => entry.timestamp > Date.now() - 1000 * 60 * 30)
+        .sort((a, b) => a.timestamp - b.timestamp) || [];
 
     if (timePeriodEntries.length >= displayCount) {
       return timePeriodEntries;
@@ -366,34 +401,34 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
     return filledEntries.slice(1);
   }
 
-  const statusEntries = getStatusEntries(app.endpoint);
+  const statusEntries = app.endpoint ? getStatusEntries(app.endpoint) : null;
 
   return (
     <div style={css}>
       <StatusBarDetails>
         <span></span>
         <small style={{ textTransform: 'capitalize' }}>
-          {statusEntries[statusEntries.length - 1].status !== 'n/a' ? app.internalStatus : 'Stopped'}
+          {statusEntries?.[statusEntries?.length - 1].status !== 'n/a' ? app.internalStatus : 'Stopped'}
         </small>
       </StatusBarDetails>
 
       <EndpointStatusEntries data-testid="endpoint-url">
-        {statusEntries.map((entry) => (
+        {statusEntries?.map((entry) => (
           <EndpointStatusTick
             key={entry.timestamp}
             style={{
               backgroundColor: entry.ok
                 ? 'var(--color-green)'
                 : entry.status === 'n/a'
-                  ? 'var(--color-gray-300)'
-                  : 'var(--color-red)',
+                ? 'var(--color-gray-300)'
+                : 'var(--color-red)',
             }}
             title={entry.status + ': ' + new Date(entry.timestamp).toLocaleString()}
           />
         ))}
       </EndpointStatusEntries>
       <StatusBarDetails>
-        <small>{getTimestamp(statusEntries[0]?.timestamp)}</small>
+        <small>{statusEntries && getTimestamp(statusEntries[0]?.timestamp)}</small>
         <small>Now</small>
       </StatusBarDetails>
     </div>

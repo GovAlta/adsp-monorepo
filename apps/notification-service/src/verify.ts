@@ -2,23 +2,16 @@ import { adspId, Channel, ServiceDirectory, Template, TokenProvider } from '@abg
 import { InvalidOperationError } from '@core-services/core-common';
 import axios from 'axios';
 import { readFile } from 'fs';
-import { DateTime } from 'luxon';
 import { v4 as uuidv4 } from 'uuid';
-import { Providers, SubscriberChannel, TemplateService } from './notification';
+import { Providers, SubscriberChannel, TemplateService, VerifyService } from './notification';
 
-export interface VerifyService {
-  sendCode(channel: SubscriberChannel, reason: string): Promise<string>;
-  verifyCode(channel: SubscriberChannel, code: string): Promise<boolean>;
-}
-
-class VerifyServiceImpl implements VerifyService {
-  private templates: Partial<Record<Channel, Template>> = {};
-
+export class VerifyServiceImpl implements VerifyService {
   constructor(
     private providers: Providers,
     private templateService: TemplateService,
     private directory: ServiceDirectory,
-    private tokenProvider: TokenProvider
+    private tokenProvider: TokenProvider,
+    private templates: Partial<Record<Channel, Template>> = {}
   ) {
     Object.keys(providers).forEach((channel: Channel) => {
       readFile(`${__dirname}/assets/verify-${channel}-template.hbs`, { encoding: 'utf-8' }, (err, value) => {
@@ -58,7 +51,7 @@ class VerifyServiceImpl implements VerifyService {
     const message = this.templateService.generateMessage(template, {
       reason,
       code: data.code,
-      expiresAt: DateTime.fromISO(data.expiresAt),
+      expiresAt: new Date(data.expiresAt),
     });
 
     await provider.send({

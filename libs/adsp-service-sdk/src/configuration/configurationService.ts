@@ -100,4 +100,13 @@ export class ConfigurationServiceImpl implements ConfigurationService {
 
     return [configuration, options] as Configuration<C, O>;
   };
+
+  clearCached(tenantId: AdspId, serviceId: AdspId): void {
+    if (this.#configuration.del(`${tenantId}-${serviceId}`) > 0) {
+      this.logger.info(`Cleared cached configuration for ${serviceId} of tenant ${tenantId}.`, {
+        ...this.LOG_CONTEXT,
+        tenant: tenantId?.toString(),
+      });
+    }
+  }
 }

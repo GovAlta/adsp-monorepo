@@ -1,10 +1,18 @@
 import { Channel } from '@abgov/adsp-service-sdk';
 
-export const SUBSCRIBER_SEND_VERIFY_CHANNEL = 'send-verify';
-export interface SendVerifyChannelRequest {
-  operation: typeof SUBSCRIBER_SEND_VERIFY_CHANNEL;
+export const SUBSCRIBER_SEND_VERIFY_CODE = 'send-code';
+export interface SendVerifyCodeRequest {
+  operation: typeof SUBSCRIBER_SEND_VERIFY_CODE;
   channel: Channel;
   address: string;
+}
+
+export const SUBSCRIBER_CHECK_CODE = 'check-code';
+export interface CheckVerifyCodeRequest {
+  operation: typeof SUBSCRIBER_CHECK_CODE;
+  channel: Channel;
+  address: string;
+  code: string;
 }
 
 export const SUBSCRIBER_VERIFY_CHANNEL = 'verify-channel';
@@ -15,4 +23,4 @@ export interface VerifyChannelRequest {
   code: string;
 }
 
-export type SubscriberOperationRequests = SendVerifyChannelRequest | VerifyChannelRequest;
+export type SubscriberOperationRequests = SendVerifyCodeRequest | CheckVerifyCodeRequest | VerifyChannelRequest;
