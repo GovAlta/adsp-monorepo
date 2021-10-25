@@ -43,7 +43,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
 
   return (
     <GoAModal testId="definition-form" isOpen={open}>
-      <GoAModalTitle>{isEdit ? 'Edit Definition' : 'Add Definition'}</GoAModalTitle>
+      <GoAModalTitle>{isEdit ? 'Edit Event' : 'Add Event'}</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>
           <GoAFormItem className={errors?.['namespace'] && 'error'}>
@@ -101,7 +101,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
           buttonType="primary"
           data-testid="form-save"
           type="submit"
-          onClick={(e) => onSave(definition) }
+          onClick={(e) => onSave(definition)}
         >
           Save
         </GoAButton>

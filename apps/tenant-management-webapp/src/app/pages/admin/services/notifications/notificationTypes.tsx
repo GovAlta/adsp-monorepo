@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton, GoACard, GoAPageLoader } from '@abgov/react-components';
 import { Grid, GridItem } from '@components/Grid';
 import { NotificationDefinitionModalForm } from './edit';
+import { EventModalForm } from './editEvent';
 import {
   GoAModal,
   GoAModalActions,
@@ -31,7 +32,10 @@ const emptyNotificationDefinition: NotificationTypeItem = {
 export const NotificationTypes: FunctionComponent = () => {
   const [editDefinition, setEditDefinition] = useState(false);
   const [selectedDefinition, setSelectedDefinition] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [editEvent, setEditEvent] = useState(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [showEventDeleteConfirmation, setShowEventDeleteConfirmation] = useState(false);
 
   const notification = useSelector((state: RootState) => state.notification);
 
@@ -43,13 +47,18 @@ export const NotificationTypes: FunctionComponent = () => {
 
   function reset() {
     setEditDefinition(false);
+    setEditEvent(false);
     setSelectedDefinition(emptyNotificationDefinition);
     setErrors({});
   }
 
-  function manageEvents() {
+  function manageEvents(notificationType) {
     //Manage Events
+    setSelectedDefinition(notificationType);
+    setEditEvent(notificationType);
   }
+
+  console.log(selectedDefinition + '<selectedDEfxxx');
 
   return (
     <NotficationStyles>
@@ -115,13 +124,44 @@ export const NotificationTypes: FunctionComponent = () => {
               description={notificationType.description}
             >
               <Grid>
+                {notificationType.events.map((event) => (
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <EventBorder>
+                      {event.name}
+                      <a
+                        className="flex1"
+                        onClick={() => {
+                          setSelectedEvent(event);
+                          setSelectedDefinition(notificationType);
+                          setShowEventDeleteConfirmation(true);
+                        }}
+                        data-testid="delete-event"
+                      >
+                        <NotificationBorder className="smallPadding">
+                          <GoAIcon type="trash" />
+                        </NotificationBorder>
+                      </a>
+                      <a
+                        className="flex1"
+                        data-testid="edit-event"
+                        onClick={() => {
+                          setSelectedEvent(event);
+                          manageEvents(notificationType);
+                        }}
+                      >
+                        Edit
+                      </a>
+                    </EventBorder>
+                  </GridItem>
+                ))}
                 <GridItem md={6} vSpacing={1} hSpacing={0.5}>
                   <NotificationBorder className="padding">
                     <EventButtonWrapper>
                       <GoAButton
                         buttonType="secondary"
                         onClick={() => {
-                          manageEvents();
+                          setSelectedEvent(null);
+                          manageEvents(notificationType);
                         }}
                       >
                         + Select an Event
@@ -157,6 +197,40 @@ export const NotificationTypes: FunctionComponent = () => {
           </GoAButton>
         </GoAModalActions>
       </GoAModal>
+      {/* Event delete confirmation */}
+      <GoAModal testId="event-delete-confirmation" isOpen={showEventDeleteConfirmation}>
+        <GoAModalTitle>Delete Definition</GoAModalTitle>
+        <GoAModalContent>Delete {selectedEvent?.name}?</GoAModalContent>
+        <GoAModalActions>
+          <GoAButton
+            buttonType="tertiary"
+            data-testid="delete-cancel"
+            onClick={() => setShowEventDeleteConfirmation(false)}
+          >
+            Cancel
+          </GoAButton>
+          <GoAButton
+            buttonType="primary"
+            data-testid="delete-confirm"
+            onClick={() => {
+              setShowEventDeleteConfirmation(false);
+              console.log(
+                JSON.stringify(`${selectedEvent.namespace}:${selectedEvent.name}`) +
+                  '<-- selectedEvent.namespace selectedEvent.name '
+              );
+              console.log(JSON.stringify(selectedDefinition.events) + '<-- selectedDefinition');
+              const updatedEvents = selectedDefinition.events.filter(
+                (event) => `${event.namespace}:${event.name}` !== `${selectedEvent.namespace}:${selectedEvent.name}`
+              );
+              selectedDefinition.events = updatedEvents;
+              console.log(JSON.stringify(selectedDefinition.events) + '<-- selectedDefinition.events ');
+              dispatch(UpdateNotificationTypeService(selectedDefinition));
+            }}
+          >
+            Confirm
+          </GoAButton>
+        </GoAModalActions>
+      </GoAModal>
       {/* Form */}
       <NotificationDefinitionModalForm
         open={editDefinition}
@@ -165,6 +239,22 @@ export const NotificationTypes: FunctionComponent = () => {
         onSave={(definition) => {
           definition.subscriberRoles = [];
           definition.events = [];
+          dispatch(UpdateNotificationTypeService(definition));
+          reset();
+        }}
+        onCancel={() => {
+          reset();
+        }}
+      />
+      {console.log(JSON.stringify(selectedDefinition) + '<selectedDEf')}
+      <EventModalForm
+        open={editEvent}
+        initialValue={editEvent}
+        selectedEvent={selectedEvent}
+        errors={errors}
+        onSave={(definition) => {
+          console.log(JSON.stringify(definition) + '<defxx');
+          definition.subscriberRoles = [];
           dispatch(UpdateNotificationTypeService(definition));
           reset();
         }}
@@ -185,6 +275,12 @@ const Buttons = styled.div`
 
 const NotificationBorder = styled.div`
   border: 1px solid #56a0d8;
+  margin: 3px;
+  border-radius: 3px;
+`;
+
+const EventBorder = styled.div`
+  border: 1px solid #e6e6e6;
   margin: 3px;
   border-radius: 3px;
 `;

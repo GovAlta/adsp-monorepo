@@ -13,7 +13,7 @@ interface NotificationDefinitionFormProps {
   errors?: Record<string, string>;
 }
 
-const emptyNotificationDefinition: NotificationTypeItem = {
+const emptyNotificationDefinition: NotificationItem = {
   name: '',
   description: '',
   events: [],

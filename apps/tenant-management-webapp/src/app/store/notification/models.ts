@@ -1,7 +1,7 @@
 export interface NotificationTypeItem {
   name: string;
   description?: string;
-  events: [];
+  events: Array<EventItem>;
   subscriberRoles: [];
   id: string;
 }
@@ -11,7 +11,14 @@ export interface NotificationItem {
   name: string;
   description?: string;
   subscriberRoles: [];
-  events: [];
+  events: Array<EventItem>;
+}
+
+export interface EventItem {
+  name: string;
+  namespace?: string;
+  templates?: unknown;
+  channels?: [];
 }
 
 export interface RequestBodyProperties {
