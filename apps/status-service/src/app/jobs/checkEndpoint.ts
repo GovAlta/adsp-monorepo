@@ -72,12 +72,14 @@ async function doRequest(getter: Getter, endpoint: ServiceStatusEndpoint): Promi
 const doesPassValidation = (history: EndpointStatusEntry[], EntrySampleSize: number): boolean => {
   let pass = false
   let passCount = 0;
+  const recentHistory =
+    history.sort((prev, next) => {return next.timestamp - prev.timestamp}).slice(0, EntrySampleSize);
 
-  if (history.length < EntrySampleSize) {
+  if (recentHistory.length < EntrySampleSize) {
     return false;
   }
 
-  for (const h of history) {
+  for (const h of recentHistory) {
     passCount += h.ok ? 1 : 0;
 
     if (passCount >= MIN_PASS_COUNT) {
