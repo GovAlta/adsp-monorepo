@@ -7,18 +7,14 @@ const ApplicationDefinition = {
     id: { type: 'string' },
     name: { type: 'string' },
     description: { type: 'string' },
-    metadata: {
-      type: 'object'
-    }
+    metadata: { type: 'object'}
   }
 }
 
-const EventDefinition = {
-  type: 'object',
-  properties: {
-    namespace: { type: 'string' },
-    name: { type: 'string' },
-  }
+interface ApplicationEvent {
+  id: string,
+  name: string,
+  description: string,
 }
 
 export const HealthCheckStartedDefinition: DomainEventDefinition = {
@@ -27,9 +23,8 @@ export const HealthCheckStartedDefinition: DomainEventDefinition = {
   payloadSchema: {
     type: 'object',
     properties: {
-      event: EventDefinition
+      application: ApplicationDefinition,
     },
-    application: ApplicationDefinition
   },
 }
 
@@ -39,9 +34,8 @@ export const HealthCheckStoppedDefinition: DomainEventDefinition = {
   payloadSchema: {
     type: 'object',
     properties: {
-      event: EventDefinition
+      application: ApplicationDefinition,
     },
-    application: ApplicationDefinition
   },
 }
 
@@ -51,9 +45,8 @@ export const HealthCheckHealthyDefinition: DomainEventDefinition = {
   payloadSchema: {
     type: 'object',
     properties: {
-      event: EventDefinition
+      application: ApplicationDefinition,
     },
-    application: ApplicationDefinition
   },
 }
 
@@ -63,10 +56,18 @@ export const HealthCheckUnhealthyDefinition: DomainEventDefinition = {
   payloadSchema: {
     type: 'object',
     properties: {
-      event: EventDefinition
+      application: ApplicationDefinition,
+      error: { type: 'string' }
     },
-    application: ApplicationDefinition
   },
+}
+
+const mapApplication = (Application: ServiceStatusApplication): ApplicationEvent => {
+  return {
+    id: Application._id,
+    name: Application.name,
+    description: Application.description
+  }
 }
 
 export const applicationStatusToStarted = (application: ServiceStatusApplication): DomainEvent => ({
@@ -74,21 +75,27 @@ export const applicationStatusToStarted = (application: ServiceStatusApplication
   timestamp: new Date(),
   tenantId: AdspId.parse(application.tenantId),
   payload: {
-    id: application._id,
-    name: application.name,
-    description: application.description
+    application: mapApplication(application)
   },
 });
 
-export const applicationStatusToUnhealthy = (application: ServiceStatusApplication): DomainEvent => ({
+export const applicationStatusToStopped = (application: ServiceStatusApplication): DomainEvent => ({
+  name: 'health-check-stopped',
+  timestamp: new Date(),
+  tenantId: AdspId.parse(application.tenantId),
+  payload: {
+    application: mapApplication(application)
+  },
+});
+
+export const applicationStatusToUnhealthy = (application: ServiceStatusApplication, error: string): DomainEvent => ({
   name: 'health-check-unhealthy',
   timestamp: new Date(),
   tenantId: AdspId.parse(application.tenantId),
   payload: {
-    id: application._id,
-    name: application.name,
-    description: application.description
-  },
+    application: mapApplication(application),
+    error
+  }
 });
 
 export const applicationStatusToHealthy = (application: ServiceStatusApplication): DomainEvent => ({
@@ -96,8 +103,6 @@ export const applicationStatusToHealthy = (application: ServiceStatusApplication
   timestamp: new Date(),
   tenantId: AdspId.parse(application.tenantId),
   payload: {
-    id: application._id,
-    name: application.name,
-    description: application.description
-  },
+    application: mapApplication(application)
+  }
 });

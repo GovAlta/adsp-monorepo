@@ -69,9 +69,13 @@ async function doRequest(getter: Getter, endpoint: ServiceStatusEndpoint): Promi
   }
 }
 
-const doesPassValidation = (history: EndpointStatusEntry[]): boolean => {
+const doesPassValidation = (history: EndpointStatusEntry[], EntrySampleSize: number): boolean => {
   let pass = false
   let passCount = 0;
+
+  if (history.length < EntrySampleSize) {
+    return false;
+  }
 
   for (const h of history) {
     passCount += h.ok ? 1 : 0;
@@ -94,8 +98,8 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
   await EndpointStatusEntryEntity.create(endpointStatusEntryRepository, statusEntry);
 
   // verify that in the last [ENTRY_SAMPLE_SIZE] minutes, at least [MIN_OK_COUNT] are ok
-  const recentHistory = await (await endpointStatusEntryRepository.findRecentByUrl(application.endpoint.url, ENTRY_SAMPLE_SIZE));
-  const pass = doesPassValidation(recentHistory);
+  const recentHistory = (await endpointStatusEntryRepository.findRecentByUrl(application.endpoint.url, ENTRY_SAMPLE_SIZE));
+  const pass = doesPassValidation(recentHistory, ENTRY_SAMPLE_SIZE);
 
   // if it doesn't pass or fail, it retains the initial value
   if (pass) {
@@ -118,7 +122,8 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
       eventService.send(applicationStatusToHealthy(application));
     } else {
       logger.info(`Application: ${application.name} with id ${application._id} status changed to unhealthy`)
-      eventService.send(applicationStatusToUnhealthy(application));
+      eventService.send(applicationStatusToUnhealthy(
+        application, `The application ${application.name} with id ${application._id} becomes unhealthy.`));
     }
 
     //TODO: add healthy and unhealthy events
