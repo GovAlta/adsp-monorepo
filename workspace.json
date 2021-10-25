@@ -443,7 +443,7 @@
             ],
             "styles": ["apps/status-app/src/styles.css"],
             "scripts": [],
-            "webpackConfig": "apps/status-app/webpack.conf.js"
+            "webpackConfig": "@nrwl/react/plugins/webpack"
           },
           "configurations": {
             "production": {
@@ -705,7 +705,7 @@
             ],
             "scripts": [],
             "styles": [],
-            "webpackConfig": "apps/tenant-management-webapp/webpack.config.js"
+            "webpackConfig": "@nrwl/react/plugins/webpack"
           },
           "configurations": {
             "production": {
