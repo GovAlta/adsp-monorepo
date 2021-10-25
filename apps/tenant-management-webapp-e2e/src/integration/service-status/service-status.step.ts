@@ -44,7 +44,7 @@ Given('a service owner user is on status notices page', function () {
       cy.wait(4000);
     });
   commonObj.serviceTab('Status', 'Notices').click();
-  cy.wait(4000);
+  cy.wait(8000);
 });
 
 When('the user clicks add a Draft Notice button', function () {
@@ -68,7 +68,7 @@ When(
 
 When('the user clicks Save as Draft button', function () {
   statusObj.noticeModalSaveButton().click();
-  cy.wait(1000);
+  cy.wait(3000);
 });
 
 // Date time picker UI isn't finalized and dates are today only for now
@@ -152,27 +152,31 @@ When(
     }
     searchNoticeCards(mode, desc, app, startDateTime, endDateTime).then((index) => {
       expect(index).to.not.equal(0);
-      statusObj.noticeCardGearButton(index).click();
-      switch (menu) {
-        case 'edit':
-          statusObj.noticeCardEditMenu(index).click();
-          break;
-        case 'delete':
-          statusObj.noticeCardDeleteMenu(index).click();
-          break;
-        case 'publish':
-          statusObj.noticeCardPublishMenu(index).click();
-          break;
-        case 'unpublish':
-          statusObj.noticeCardUnpublishMenu(index).click();
-          break;
-        case 'archive':
-          statusObj.noticeCardArchiveMenu(index).click();
-          break;
-        default:
-          expect(menu).to.be.oneOf(['edit', 'delete', 'publish', 'unpublish', 'archive']);
-      }
-      cy.wait(1000);
+      statusObj
+        .noticeCardGearButton(index)
+        .click()
+        .then(() => {
+          switch (menu) {
+            case 'edit':
+              statusObj.noticeCardEditMenu(index).click();
+              break;
+            case 'delete':
+              statusObj.noticeCardDeleteMenu(index).click();
+              break;
+            case 'publish':
+              statusObj.noticeCardPublishMenu(index).click();
+              break;
+            case 'unpublish':
+              statusObj.noticeCardUnpublishMenu(index).click();
+              break;
+            case 'archive':
+              statusObj.noticeCardArchiveMenu(index).click();
+              break;
+            default:
+              expect(menu).to.be.oneOf(['edit', 'delete', 'publish', 'unpublish', 'archive']);
+          }
+          cy.wait(1000);
+        });
     });
   }
 );
