@@ -5,7 +5,7 @@ import { Repositories } from './repository';
 import { createServiceStatusRouter } from './router/serviceStatus';
 import { createPublicServiceStatusRouter } from './router/publicServiceStatus';
 import { createNoticeRouter } from './router/notice';
-import { TenantService } from '@abgov/adsp-service-sdk';
+import { TenantService, EventService } from '@abgov/adsp-service-sdk';
 export * from './model';
 export * from './repository';
 export * from './types';
@@ -14,7 +14,8 @@ export * from './types';
 interface HealthMiddlewareProps extends Repositories {
   logger: Logger;
   authenticate: RequestHandler;
-  tenantService: TenantService
+  eventService: EventService;
+  tenantService: TenantService;
 }
 
 export const bindEndpoints = (app: Application, props: HealthMiddlewareProps): void => {

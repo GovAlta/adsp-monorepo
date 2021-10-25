@@ -12,6 +12,12 @@ import { scheduleServiceStatusJobs } from './app/jobs';
 import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import * as util from 'util';
 import type { User } from '@abgov/adsp-service-sdk';
+import {
+  HealthCheckStartedDefinition,
+  HealthCheckStoppedDefinition,
+  HealthCheckUnhealthyDefinition,
+  HealthCheckHealthyDefinition
+} from './app/events'
 
 const logger = createLogger('status-service', environment?.LOG_LEVEL || 'info');
 const app = express();
@@ -29,7 +35,7 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
   const [repositories] = [await createRepoJob];
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { coreStrategy, tenantStrategy, tenantService } = await initializePlatform(
+  const { coreStrategy, tenantStrategy, tenantService, eventService } = await initializePlatform(
     {
       serviceId,
       displayName: 'Status Service',
@@ -41,6 +47,10 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
           inTenantAdmin: true,
         },
       ],
+      events: [
+        HealthCheckStartedDefinition, HealthCheckStoppedDefinition,
+        HealthCheckUnhealthyDefinition, HealthCheckHealthyDefinition
+      ],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
@@ -51,7 +61,6 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
 
   passport.use('jwt', coreStrategy);
   passport.use('jwt-tenant', tenantStrategy);
-
   passport.use(new AnonymousStrategy());
 
   const authenticate = passport.authenticate(['jwt-tenant', 'jwt', 'anonymous'], { session: false });
@@ -69,12 +78,13 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
   // start the endpoint checking jobs
   scheduleServiceStatusJobs({
     logger,
+    eventService,
     serviceStatusRepository: repositories.serviceStatusRepository,
     endpointStatusEntryRepository: repositories.endpointStatusEntryRepository,
   });
 
   // service endpoints
-  bindEndpoints(app, { logger, tenantService, authenticate , ...repositories });
+  bindEndpoints(app, { logger, tenantService, authenticate, eventService, ...repositories });
 
   // non-service endpoints
   app.get('/health', (_req, res) => {

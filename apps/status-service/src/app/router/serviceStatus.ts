@@ -6,15 +6,15 @@ import { ServiceStatusApplicationEntity } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { PublicServiceStatusType } from '../types';
-import { TenantService } from '@abgov/adsp-service-sdk';
+import { TenantService, EventService } from '@abgov/adsp-service-sdk';
 
 export interface ServiceStatusRouterProps {
   logger: Logger;
   tenantService: TenantService;
+  eventService: EventService;
   serviceStatusRepository: ServiceStatusRepository;
   endpointStatusEntryRepository: EndpointStatusEntryRepository;
 }
-
 export function createServiceStatusRouter({
   logger,
   serviceStatusRepository,
@@ -77,7 +77,6 @@ export function createServiceStatusRouter({
     try {
       const tenantName = tenant.name;
       const tenantRealm = tenant.realm;
-
       const app = await ServiceStatusApplicationEntity.create({ ...(req.user as User) }, serviceStatusRepository, {
         name,
         description,
