@@ -4,7 +4,6 @@ import { SagaIterator } from '@redux-saga/core';
 import { v4 as uuidv4 } from 'uuid';
 import {
   FetchNotificationTypeSucceededService,
-  UpdateNotificationTypeSucceededService,
   FetchNotificationTypeService,
   DeleteNotificationTypeAction,
   UpdateNotificationTypeAction,
@@ -97,7 +96,6 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
       );
 
       yield put(FetchNotificationTypeService());
-      yield put(UpdateNotificationTypeSucceededService(payload));
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - updateNotificationType` }));
     }

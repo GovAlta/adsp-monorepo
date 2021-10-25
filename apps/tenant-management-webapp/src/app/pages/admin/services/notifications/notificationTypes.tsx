@@ -126,31 +126,41 @@ export const NotificationTypes: FunctionComponent = () => {
               <Grid>
                 {notificationType.events.map((event) => (
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <EventBorder>
-                      {event.name}
-                      <a
-                        className="flex1"
-                        onClick={() => {
-                          setSelectedEvent(event);
-                          setSelectedDefinition(notificationType);
-                          setShowEventDeleteConfirmation(true);
-                        }}
-                        data-testid="delete-event"
-                      >
-                        <NotificationBorder className="smallPadding">
-                          <GoAIcon type="trash" />
-                        </NotificationBorder>
-                      </a>
-                      <a
-                        className="flex1"
-                        data-testid="edit-event"
-                        onClick={() => {
-                          setSelectedEvent(event);
-                          manageEvents(notificationType);
-                        }}
-                      >
-                        Edit
-                      </a>
+                    <EventBorder style={{ minHeight: '163px' }}>
+                      <div className="rowFlex">
+                        <div className="flex1">{event.name}</div>
+                        <div className="rowFlex">
+                          <a
+                            className="flex1"
+                            style={{ display: 'flex', maxHeight: '34px' }}
+                            onClick={() => {
+                              setSelectedEvent(event);
+                              setSelectedDefinition(notificationType);
+                              setShowEventDeleteConfirmation(true);
+                            }}
+                            data-testid="delete-event"
+                          >
+                            <NotificationBorder className="smallPadding">
+                              <GoAIcon type="trash" />
+                            </NotificationBorder>
+                          </a>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', height: '100px' }}>
+                        <div className="flex1" style={{ display: 'flex', alignItems: 'flex-end' }}>
+                          <div style={{ textAlign: 'end', width: '100%' }}>
+                            <a
+                              data-testid="edit-event"
+                              onClick={() => {
+                                setSelectedEvent(event);
+                                manageEvents(notificationType);
+                              }}
+                            >
+                              Edit
+                            </a>
+                          </div>
+                        </div>
+                      </div>
                     </EventBorder>
                   </GridItem>
                 ))}
@@ -237,8 +247,8 @@ export const NotificationTypes: FunctionComponent = () => {
         initialValue={selectedDefinition}
         errors={errors}
         onSave={(definition) => {
-          definition.subscriberRoles = [];
-          definition.events = [];
+          definition.subscriberRoles = definition.subscriberRoles || [];
+          definition.events = definition.events || [];
           dispatch(UpdateNotificationTypeService(definition));
           reset();
         }}
@@ -283,11 +293,12 @@ const EventBorder = styled.div`
   border: 1px solid #e6e6e6;
   margin: 3px;
   border-radius: 3px;
+  padding: 20px;
 `;
 
 const EventButtonWrapper = styled.div`
   text-align: center;
-  margin: 30px 0;
+  margin: 19px 0;
 `;
 
 const NotficationStyles = styled.div`

@@ -12,10 +12,8 @@ export const FETCH_NOTIFICATION_TYPE = 'tenant/notification-service/notification
 export const FETCH_NOTIFICATION_TYPE_SUCCEEDED = 'notification-service/space/notificationType/succeeded';
 
 export const DELETE_NOTIFICATION_TYPE = 'tenant/notification-service/notificationType/delete';
-export const DELETE_NOTIFICATION_TYPE_SUCCEEDED = 'notification-service/notificationType/delete/success';
 
 export const UPDATE_NOTIFICATION_TYPE = 'tenant/notification-service/notificationType/update';
-export const UPDATE_NOTIFICATION_TYPE_SUCCEEDED = 'notification-service/notificationType/update/success';
 
 export const FETCH_NOTIFICATION_TYPE_HAS_NOTIFICATION = 'notification-service/docs/fetch/notification/notificationtype';
 export const FETCH_NOTIFICATION_TYPE_HAS_NOTIFICATION_SUCCEEDED =
@@ -33,8 +31,6 @@ export type ActionTypes =
   | DeleteNotificationSuccessAction
   | DeleteNotificationFailedAction
   | FetchNotificationTypeSucceededAction
-  | DeleteNotificationTypeSucceededAction
-  | UpdateNotificationTypeSucceededAction
   | FetchNotificationTypeAction
   | UpdateNotificationTypeAction
   | DeleteNotificationTypeAction;
@@ -74,17 +70,6 @@ interface FetchNotificationTypeSucceededAction {
   payload: {
     notificationInfo: { data: NotificationTypeItem[] };
   };
-}
-interface DeleteNotificationTypeSucceededAction {
-  type: typeof DELETE_NOTIFICATION_TYPE_SUCCEEDED;
-  payload: {
-    notificationInfo: { data: string };
-  };
-}
-
-interface UpdateNotificationTypeSucceededAction {
-  type: typeof UPDATE_NOTIFICATION_TYPE_SUCCEEDED;
-  payload: NotificationTypeItem;
 }
 
 interface FetchNotificationTypeAction {
@@ -153,24 +138,6 @@ export const FetchNotificationTypeSucceededService = (notificationInfo: {
   payload: {
     notificationInfo,
   },
-});
-
-export const DeleteNotificationTypeSucceededService = (notificationInfo: {
-  data: string;
-}): DeleteNotificationTypeSucceededAction => {
-  return {
-    type: DELETE_NOTIFICATION_TYPE_SUCCEEDED,
-    payload: {
-      notificationInfo,
-    },
-  };
-};
-
-export const UpdateNotificationTypeSucceededService = (
-  notificationType: NotificationTypeItem
-): UpdateNotificationTypeSucceededAction => ({
-  type: UPDATE_NOTIFICATION_TYPE_SUCCEEDED,
-  payload: notificationType,
 });
 
 export const FetchNotificationTypeService = (): FetchNotificationTypeAction => ({

@@ -97,7 +97,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
           name: eventDefinitions[eventKey].name,
           value: `${eventDefinitions[eventKey].namespace}:${eventDefinitions[eventKey].name}`,
           nameSpace: eventDefinitions[eventKey].namespace,
-          label: `${eventDefinitions[eventKey].name}:${eventDefinitions[eventKey].namespace}`,
+          label: `${eventDefinitions[eventKey].namespace}:${eventDefinitions[eventKey].name}`,
           key: index,
           dataTestId: `${eventDefinitions[eventKey].name}-update-roles-options`,
         };
@@ -151,11 +151,14 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
               channels: [],
             };
             console.log(JSON.stringify(eventObject) + '<eventObject');
+            console.log(JSON.stringify(definition?.events) + '<definition?.events');
 
             if (selectedEvent) {
               const definitionEventIndex = definition?.events?.findIndex(
-                (def) => `${def.namespace}:${def.name}` !== selectedValues[0]
+                (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`
               );
+
+              console.log(JSON.stringify(definitionEventIndex) + '<definitionEventIndex');
 
               definition.events[definitionEventIndex] = eventObject;
             } else {

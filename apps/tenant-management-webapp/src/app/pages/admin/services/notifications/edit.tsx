@@ -37,7 +37,7 @@ export const NotificationDefinitionModalForm: FunctionComponent<NotificationDefi
 
   return (
     <GoAModal testId="notification-types-form" isOpen={open}>
-      <GoAModalTitle>{isEdit ? 'Edit Definition' : 'Add a notification type'}</GoAModalTitle>
+      <GoAModalTitle>{isEdit ? 'Edit notification type' : 'Add a notification type'}</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>
           <GoAFormItem className={errors?.['name'] && 'error'}>
