@@ -8,6 +8,8 @@ import { FileType, ServiceUserRoles } from '../types';
 import { createFileRouter, deleteFile, getFile, getType, getTypes } from './file';
 
 describe('file router', () => {
+  const serviceId = adspId`urn:ads:platform:file-service`;
+  const apiId = adspId`${serviceId}:v1`;
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const loggerMock = {
     debug: jest.fn(),
@@ -66,6 +68,7 @@ describe('file router', () => {
 
   it('can create router', () => {
     const router = createFileRouter({
+      serviceId,
       logger: loggerMock,
       storageProvider: storageProviderMock,
       fileRepository: fileRepositoryMock,
@@ -141,7 +144,7 @@ describe('file router', () => {
 
   describe('getFiles', () => {
     it('can create handler', () => {
-      const handler = getFiles(fileRepositoryMock);
+      const handler = getFiles(apiId, fileRepositoryMock);
       expect(handler).toBeTruthy();
     });
 
@@ -163,7 +166,7 @@ describe('file router', () => {
       const page = {};
       fileRepositoryMock.find.mockResolvedValueOnce({ results: [], page });
 
-      const handler = getFiles(fileRepositoryMock);
+      const handler = getFiles(apiId, fileRepositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
     });
@@ -171,7 +174,7 @@ describe('file router', () => {
 
   describe('uploadFile', () => {
     it('can create handler', () => {
-      const handler = uploadFile(loggerMock, eventServiceMock);
+      const handler = uploadFile(apiId, loggerMock, eventServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -187,7 +190,7 @@ describe('file router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = uploadFile(loggerMock, eventServiceMock);
+      const handler = uploadFile(apiId, loggerMock, eventServiceMock);
       handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: file.id, filename: file.filename }));
     });
@@ -203,7 +206,7 @@ describe('file router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = uploadFile(loggerMock, eventServiceMock);
+      const handler = uploadFile(apiId, loggerMock, eventServiceMock);
       handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
