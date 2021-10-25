@@ -7,7 +7,7 @@ const ApplicationDefinition = {
     id: { type: 'string' },
     name: { type: 'string' },
     description: { type: 'string' },
-    metadata: { type: 'object'}
+    metadata: { type: 'object' }
   }
 }
 
@@ -15,6 +15,7 @@ interface ApplicationEvent {
   id: string,
   name: string,
   description: string,
+  metadata: Record<string, any>,
 }
 
 export const HealthCheckStartedDefinition: DomainEventDefinition = {
@@ -62,11 +63,18 @@ export const HealthCheckUnhealthyDefinition: DomainEventDefinition = {
   },
 }
 
-const mapApplication = (Application: ServiceStatusApplication): ApplicationEvent => {
+const mapApplication = (application: ServiceStatusApplication): ApplicationEvent => {
+  let metadata = {}
+  //TODO: need to update this part when we determine the type of the meta data
+  if (application.metadata && typeof application.metadata === 'string') {
+    metadata = JSON.parse(application.metadata)
+  }
+
   return {
-    id: Application._id,
-    name: Application.name,
-    description: Application.description
+    id: application._id,
+    name: application.name,
+    description: application.description,
+    metadata: metadata
   }
 }
 
