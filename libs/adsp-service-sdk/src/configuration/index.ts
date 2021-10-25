@@ -2,7 +2,7 @@ import type { Logger } from 'winston';
 import type { ServiceDirectory } from '../directory';
 import { AdspId } from '../utils';
 import type { Configuration, ConfigurationConverter } from './configuration';
-import { ConfigurationService, ConfigurationServiceImpl } from './configurationService';
+import { ConfigurationServiceImpl } from './configurationService';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
