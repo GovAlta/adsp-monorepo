@@ -10,7 +10,7 @@ describe('adspId', () => {
   });
 
   it('can parse service', () => {
-    const result = adspId`urn:ads:test-sandbox:test-service`
+    const result = adspId`urn:ads:test-sandbox:test-service`;
 
     expect(result).toBeTruthy();
     expect(result.type).toBe('service');
@@ -19,7 +19,7 @@ describe('adspId', () => {
   });
 
   it('can parse api', () => {
-    const result = adspId`urn:ads:test-sandbox:test-service:v1`
+    const result = adspId`urn:ads:test-sandbox:test-service:v1`;
 
     expect(result).toBeTruthy();
     expect(result.type).toBe('api');
@@ -29,7 +29,19 @@ describe('adspId', () => {
   });
 
   it('can parse resource', () => {
-    const result = adspId`urn:ads:test-sandbox:test-service:v1:/resource`
+    const result = adspId`urn:ads:test-sandbox:test-service:v1:/resource`;
+
+    expect(result).toBeTruthy();
+    expect(result.type).toBe('resource');
+    expect(result.namespace).toBe('test-sandbox');
+    expect(result.service).toBe('test-service');
+    expect(result.api).toBe('v1');
+    expect(result.resource).toBe('/resource');
+  });
+
+  it('can append adspId', () => {
+    const api = adspId`urn:ads:test-sandbox:test-service:v1`;
+    const result = adspId`${api}:/resource`;
 
     expect(result).toBeTruthy();
     expect(result.type).toBe('resource');
@@ -40,15 +52,11 @@ describe('adspId', () => {
   });
 
   it('fails for invalid scheme', () => {
-    expect(
-      () => adspId`urn:aps:test-sandbox:test-service:v1`
-    ).toThrow(/^ADSP ID must begin with: urn:ads:/);
+    expect(() => adspId`urn:aps:test-sandbox:test-service:v1`).toThrow(/^ADSP ID must begin with: urn:ads:/);
   });
 
   it('fails for whitespace element', () => {
-    expect(
-      () => adspId`urn:ads:  :test-service:v1`
-    ).toThrow(/^ADSP ID cannot include empty element./);
+    expect(() => adspId`urn:ads:  :test-service:v1`).toThrow(/^ADSP ID cannot include empty element./);
   });
 
   it('can convert to string', () => {

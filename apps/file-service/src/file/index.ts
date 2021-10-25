@@ -1,6 +1,6 @@
 import { Application } from 'express';
 import { Logger } from 'winston';
-import { EventService } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService } from '@abgov/adsp-service-sdk';
 import { Repositories } from './repository';
 import { createFileRouter } from './router';
 import { scheduleFileJobs } from './job';
@@ -16,6 +16,7 @@ export * from './scan';
 export * from './storage';
 
 interface FileMiddlewareProps extends Repositories {
+  serviceId: AdspId;
   logger: Logger;
   eventService: EventService;
   storageProvider: FileStorageProvider;
