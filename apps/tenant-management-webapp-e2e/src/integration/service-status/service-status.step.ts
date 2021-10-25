@@ -44,7 +44,7 @@ Given('a service owner user is on status notices page', function () {
       cy.wait(4000);
     });
   commonObj.serviceTab('Status', 'Notices').click();
-  cy.wait(8000);
+  cy.wait(10000);
 });
 
 When('the user clicks add a Draft Notice button', function () {
