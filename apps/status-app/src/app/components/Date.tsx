@@ -7,7 +7,6 @@ interface LocalTimeProps {
 
 export const LocalTime = (props: LocalTimeProps): JSX.Element => {
   const options = {
-    timeZone: 'Canada/Mountain',
     weekday: 'short',
     month: 'short',
     day: 'numeric',
