@@ -2,7 +2,7 @@ import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton, GoACard, GoAPageLoader } from '@abgov/react-components';
 import { Grid, GridItem } from '@components/Grid';
-import { NotificationDefinitionModalForm } from './edit';
+import { NotificationTypeModalForm } from './edit';
 import { EventModalForm } from './editEvent';
 import {
   GoAModal,
@@ -21,7 +21,7 @@ import { NotificationTypeItem } from '@store/notification/models';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 
-const emptyNotificationDefinition: NotificationTypeItem = {
+const emptyNotificationType: NotificationTypeItem = {
   name: '',
   description: '',
   events: [],
@@ -30,8 +30,8 @@ const emptyNotificationDefinition: NotificationTypeItem = {
 };
 
 export const NotificationTypes: FunctionComponent = () => {
-  const [editDefinition, setEditDefinition] = useState(false);
-  const [selectedDefinition, setSelectedDefinition] = useState(null);
+  const [editType, setEditType] = useState(false);
+  const [selectedType, setSelectedType] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [editEvent, setEditEvent] = useState(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -46,19 +46,19 @@ export const NotificationTypes: FunctionComponent = () => {
   }, [dispatch]);
 
   function reset() {
-    setEditDefinition(false);
+    setEditType(false);
     setEditEvent(false);
-    setSelectedDefinition(emptyNotificationDefinition);
+    setSelectedType(emptyNotificationType);
     setErrors({});
   }
 
   function manageEvents(notificationType) {
     //Manage Events
-    setSelectedDefinition(notificationType);
+    setSelectedType(notificationType);
     setEditEvent(notificationType);
   }
 
-  console.log(selectedDefinition + '<selectedDEfxxx');
+  console.log(selectedType + '<selectedDEfxxx');
 
   return (
     <NotficationStyles>
@@ -79,8 +79,8 @@ export const NotificationTypes: FunctionComponent = () => {
           data-testid="add-notification"
           buttonSize="small"
           onClick={() => {
-            setSelectedDefinition(null);
-            setEditDefinition(true);
+            setSelectedType(null);
+            setEditType(true);
           }}
         >
           Add a notification type
@@ -89,6 +89,7 @@ export const NotificationTypes: FunctionComponent = () => {
       {notification.notificationTypes &&
         Object.values(notification.notificationTypes).map((notificationType) => (
           <div className="topBottomMargin" key={notificationType.name}>
+            {console.log(JSON.stringify(notificationType) + '<notificationTypexxx')}
             <GoACard
               title={
                 <div className="rowFlex">
@@ -98,8 +99,8 @@ export const NotificationTypes: FunctionComponent = () => {
                       className="flex1"
                       data-testid="edit-details"
                       onClick={() => {
-                        setSelectedDefinition(notificationType);
-                        setEditDefinition(true);
+                        setSelectedType(notificationType);
+                        setEditType(true);
                       }}
                     >
                       <NotificationBorder className="smallPadding" delete-details>
@@ -109,7 +110,7 @@ export const NotificationTypes: FunctionComponent = () => {
                     <a
                       className="flex1"
                       onClick={() => {
-                        setSelectedDefinition(notificationType);
+                        setSelectedType(notificationType);
                         setShowDeleteConfirmation(true);
                       }}
                       data-testid="delete-details"
@@ -135,7 +136,7 @@ export const NotificationTypes: FunctionComponent = () => {
                             style={{ display: 'flex', maxHeight: '34px' }}
                             onClick={() => {
                               setSelectedEvent(event);
-                              setSelectedDefinition(notificationType);
+                              setSelectedType(notificationType);
                               setShowEventDeleteConfirmation(true);
                             }}
                             data-testid="delete-event"
@@ -169,6 +170,7 @@ export const NotificationTypes: FunctionComponent = () => {
                     <EventButtonWrapper>
                       <GoAButton
                         buttonType="secondary"
+                        data-testid="add-event"
                         onClick={() => {
                           setSelectedEvent(null);
                           manageEvents(notificationType);
@@ -189,8 +191,8 @@ export const NotificationTypes: FunctionComponent = () => {
       )}
       {/* Delete confirmation */}
       <GoAModal testId="delete-confirmation" isOpen={showDeleteConfirmation}>
-        <GoAModalTitle>Delete Definition</GoAModalTitle>
-        <GoAModalContent>Delete {selectedDefinition?.name}?</GoAModalContent>
+        <GoAModalTitle>Delete Type</GoAModalTitle>
+        <GoAModalContent>Delete {selectedType?.name}?</GoAModalContent>
         <GoAModalActions>
           <GoAButton buttonType="tertiary" data-testid="delete-cancel" onClick={() => setShowDeleteConfirmation(false)}>
             Cancel
@@ -200,7 +202,7 @@ export const NotificationTypes: FunctionComponent = () => {
             data-testid="delete-confirm"
             onClick={() => {
               setShowDeleteConfirmation(false);
-              dispatch(DeleteNotificationTypeService(selectedDefinition));
+              dispatch(DeleteNotificationTypeService(selectedType));
             }}
           >
             Confirm
@@ -209,32 +211,32 @@ export const NotificationTypes: FunctionComponent = () => {
       </GoAModal>
       {/* Event delete confirmation */}
       <GoAModal testId="event-delete-confirmation" isOpen={showEventDeleteConfirmation}>
-        <GoAModalTitle>Delete Definition</GoAModalTitle>
+        <GoAModalTitle>Delete Type</GoAModalTitle>
         <GoAModalContent>Delete {selectedEvent?.name}?</GoAModalContent>
         <GoAModalActions>
           <GoAButton
             buttonType="tertiary"
-            data-testid="delete-cancel"
+            data-testid="event-delete-cancel"
             onClick={() => setShowEventDeleteConfirmation(false)}
           >
             Cancel
           </GoAButton>
           <GoAButton
             buttonType="primary"
-            data-testid="delete-confirm"
+            data-testid="event-delete-confirm"
             onClick={() => {
               setShowEventDeleteConfirmation(false);
               console.log(
                 JSON.stringify(`${selectedEvent.namespace}:${selectedEvent.name}`) +
                   '<-- selectedEvent.namespace selectedEvent.name '
               );
-              console.log(JSON.stringify(selectedDefinition.events) + '<-- selectedDefinition');
-              const updatedEvents = selectedDefinition.events.filter(
+              console.log(JSON.stringify(selectedType.events) + '<-- selectedType');
+              const updatedEvents = selectedType.events.filter(
                 (event) => `${event.namespace}:${event.name}` !== `${selectedEvent.namespace}:${selectedEvent.name}`
               );
-              selectedDefinition.events = updatedEvents;
-              console.log(JSON.stringify(selectedDefinition.events) + '<-- selectedDefinition.events ');
-              dispatch(UpdateNotificationTypeService(selectedDefinition));
+              selectedType.events = updatedEvents;
+              console.log(JSON.stringify(selectedType.events) + '<-- selectedType.events ');
+              dispatch(UpdateNotificationTypeService(selectedType));
             }}
           >
             Confirm
@@ -242,30 +244,30 @@ export const NotificationTypes: FunctionComponent = () => {
         </GoAModalActions>
       </GoAModal>
       {/* Form */}
-      <NotificationDefinitionModalForm
-        open={editDefinition}
-        initialValue={selectedDefinition}
+      <NotificationTypeModalForm
+        open={editType}
+        initialValue={selectedType}
         errors={errors}
-        onSave={(definition) => {
-          definition.subscriberRoles = definition.subscriberRoles || [];
-          definition.events = definition.events || [];
-          dispatch(UpdateNotificationTypeService(definition));
+        onSave={(type) => {
+          type.subscriberRoles = type.subscriberRoles || [];
+          type.events = type.events || [];
+          dispatch(UpdateNotificationTypeService(type));
           reset();
         }}
         onCancel={() => {
           reset();
         }}
       />
-      {console.log(JSON.stringify(selectedDefinition) + '<selectedDEf')}
+      {console.log(JSON.stringify(selectedType) + '<selectedDEf')}
       <EventModalForm
         open={editEvent}
         initialValue={editEvent}
         selectedEvent={selectedEvent}
         errors={errors}
-        onSave={(definition) => {
-          console.log(JSON.stringify(definition) + '<defxx');
-          definition.subscriberRoles = [];
-          dispatch(UpdateNotificationTypeService(definition));
+        onSave={(type) => {
+          console.log(JSON.stringify(type) + '<defxx');
+          type.subscriberRoles = [];
+          dispatch(UpdateNotificationTypeService(type));
           reset();
         }}
         onCancel={() => {

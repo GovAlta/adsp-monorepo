@@ -45,7 +45,6 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
   }, [dispatch]);
 
   useEffect(() => {
-    console.log(JSON.stringify(selectedEvent) + '<selectedEventxxxx');
     if (selectedEvent) {
       console.log(JSON.stringify(selectedEvent) + '<selectedEvent');
       setValues([`${selectedEvent.namespace}:${selectedEvent.name}`]);
@@ -107,18 +106,19 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
   console.log(JSON.stringify(eventDefinitions) + '<define');
   console.log(JSON.stringify(selectedValues) + '<selectedvalues');
 
-  console.log(JSON.stringify(dropDownOptions) + '<dropDownOptions');
+  console.log(JSON.stringify(dropDownOptions) + '<dropDownOptionsxxxxxx');
 
   console.log(JSON.stringify(definition) + '<definition');
 
   return (
-    <GoAModal testId="notification-types-form" isOpen={open}>
+    <GoAModal testId="event-form" isOpen={open}>
       <GoAModalTitle>{'Select an event'}</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>
           <GoAFormItem>
             <div style={{ margin: '0 0 200px 0' }}>
-              <GoADropdown name="basic" onChange={onChange} selectedValues={selectedValues}>
+              <GoADropdown name="event" onChange={onChange} selectedValues={selectedValues}>
+                <GoADropdownOption label="cheese" value="cake" key="1" data-testid="123" />
                 {dropDownOptions.map((item, key) => (
                   <GoADropdownOption label={item.label} value={item.value} key={key} data-testid={item.dataTestId} />
                 ))}
@@ -128,13 +128,13 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
         </GoAForm>
       </GoAModalContent>
       <GoAModalActions>
-        <GoAButton data-testid="form-cancel" buttonType="tertiary" type="button" onClick={onCancel}>
+        <GoAButton data-testid="event-form-cancel" buttonType="tertiary" type="button" onClick={onCancel}>
           Cancel
         </GoAButton>
         <GoAButton
           disabled={selectedValues[0] === ''}
           buttonType="primary"
-          data-testid="form-save"
+          data-testid="event-form-save"
           type="submit"
           onClick={() => {
             console.log(JSON.stringify(dropDownOptions) + '<dropDownOptions');
