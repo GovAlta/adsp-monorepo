@@ -55,20 +55,43 @@ Then('the user views Add a Draft Notice dialog', function () {
   statusObj.noticeModalTitle().invoke('text').should('eq', 'Add a Draft Notice');
 });
 
-//Date time picker UI isn't finalized and the step uses the default dates and times without entering any data/time data
+//Date time picker UI isn't finalized and the step uses the default dates without entering any date data
 When(
   'the user enters {string}, {string}, {string}, {string}, {string}, {string}',
   function (desc, app, startDate, startTime, endDate, endTime) {
     statusObj.noticeModalDescField().clear().type(desc);
     statusObj.noticeModalApplicationDropdown().click();
     statusObj.noticeModalApplicationDropdownItem(app).click();
-    cy.log(startDate, startTime, endDate, endTime);
+    // Get hour, minute and am/pm for start time and end time
+    const startHr = startTime.substring(0, 2);
+    const startMin = startTime.substring(3, 5);
+    const startAmPm = startTime.substring(6, 8);
+    cy.log(startHr, startMin, startAmPm);
+    const endHr = endTime.substring(0, 2);
+    const endMin = endTime.substring(3, 5);
+    const endAmPm = endTime.substring(6, 8);
+    // Enter start time
+    if (startHr.substring(0, 1) == '0') {
+      statusObj.noticeModalStartTimeHourField().type(startHr.substring(1, 2));
+    } else {
+      statusObj.noticeModalStartTimeHourField().type(startHr);
+    }
+    statusObj.noticeModalStartTimeMinuteField().type(startMin);
+    statusObj.noticeModalStartTimeAmPmDropdown().select(startAmPm);
+    // Enter end time
+    if (endHr.substring(0, 1) == '0') {
+      statusObj.noticeModalEndTimeHourField().type(endHr.substring(1, 2));
+    } else {
+      statusObj.noticeModalEndTimeHourField().type(endHr);
+    }
+    statusObj.noticeModalEndTimeMinuteField().type(endMin);
+    statusObj.noticeModalEndTimeAmPmDropdown().select(endAmPm), cy.log(startDate, startTime, endDate, endTime);
   }
 );
 
 When('the user clicks Save as Draft button', function () {
   statusObj.noticeModalSaveButton().click();
-  cy.wait(3000);
+  cy.wait(5000);
 });
 
 // Date time picker UI isn't finalized and dates are today only for now

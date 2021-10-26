@@ -35,6 +35,42 @@ class StatusServicePage {
     return cy.xpath(`//div[@class="optionListContainer displayBlock"]//li[contains(text(), "${itemText}")]`);
   }
 
+  noticeModalStartTimeHourField() {
+    return cy.xpath(
+      '//div[@class="react-time-picker__inputGroup"]/input[@name="startTime"]/following-sibling::input[@max="12"]'
+    );
+  }
+
+  noticeModalStartTimeMinuteField() {
+    return cy.xpath(
+      '//div[@class="react-time-picker__inputGroup"]/input[@name="startTime"]/following-sibling::input[@max="59"]'
+    );
+  }
+
+  noticeModalStartTimeAmPmDropdown() {
+    return cy.xpath(
+      '//div[@class="react-time-picker__inputGroup"]/input[@name="startTime"]/following-sibling::select[@name="amPm"]'
+    );
+  }
+
+  noticeModalEndTimeHourField() {
+    return cy.xpath(
+      '//div[@class="react-time-picker__inputGroup"]/input[@name="endTime"]/following-sibling::input[@max="12"]'
+    );
+  }
+
+  noticeModalEndTimeMinuteField() {
+    return cy.xpath(
+      '//div[@class="react-time-picker__inputGroup"]/input[@name="endTime"]/following-sibling::input[@max="59"]'
+    );
+  }
+
+  noticeModalEndTimeAmPmDropdown() {
+    return cy.xpath(
+      '//div[@class="react-time-picker__inputGroup"]/input[@name="endTime"]/following-sibling::select[@name="amPm"]'
+    );
+  }
+
   noticeModalSaveButton() {
     return cy.get('[data-testid=notice-form-submit]');
   }
