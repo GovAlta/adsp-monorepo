@@ -7,6 +7,7 @@ import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { PublicServiceStatusType } from '../types';
 import { TenantService, EventService } from '@abgov/adsp-service-sdk';
+import { applicationStatusToStarted, applicationStatusToStopped } from '../events';
 
 export interface ServiceStatusRouterProps {
   logger: Logger;
@@ -19,6 +20,7 @@ export function createServiceStatusRouter({
   logger,
   serviceStatusRepository,
   tenantService,
+  eventService,
   endpointStatusEntryRepository,
 }: ServiceStatusRouterProps): Router {
   const router = Router();
@@ -160,6 +162,12 @@ export function createServiceStatusRouter({
     const user = req.user as Express.User;
     const { id } = req.params;
     const application = await serviceStatusRepository.get(id);
+
+    if (application.enabled) {
+      eventService.send(applicationStatusToStarted(application));
+    } else {
+      eventService.send(applicationStatusToStopped(application));
+    }
 
     if (user.tenantId?.toString() !== application.tenantId) {
       throw new UnauthorizedError('invalid tenant id');
