@@ -15,11 +15,11 @@ jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('createServiceDocs', () => {
-  const loggerMock = ({
+  const loggerMock = {
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
-  } as unknown) as Logger;
+  } as unknown as Logger;
 
   const tokenProviderMock = {
     getAccessToken: jest.fn(),
@@ -27,6 +27,7 @@ describe('createServiceDocs', () => {
 
   const directoryMock = {
     getServiceUrl: jest.fn(() => Promise.resolve(new URL('http://totally-real-directory'))),
+    getResourceUrl: jest.fn(),
   };
 
   it('can create ServiceDocs', () => {

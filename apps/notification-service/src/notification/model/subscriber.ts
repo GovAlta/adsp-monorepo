@@ -14,7 +14,7 @@ export class SubscriberEntity implements Subscriber {
   static canCreate(user: User, subscriber: New<Subscriber>): boolean {
     // User is an subscription admin, or user is creating a subscriber for self.
     return (
-      isAllowedUser(user, subscriber.tenantId, [ServiceUserRoles.SubscriptionAdmin], true) ||
+      isAllowedUser(user, subscriber.tenantId, [ServiceUserRoles.SubscriptionAdmin, ServiceUserRoles.SubscriptionApp], true) ||
       (!!user && user.tenantId?.toString() === subscriber.tenantId.toString() && user?.id === subscriber.userId)
     );
   }
@@ -47,7 +47,7 @@ export class SubscriberEntity implements Subscriber {
   canUpdate(user: User): boolean {
     // User is an subscription admin, or is the subscribed user.
     return (
-      isAllowedUser(user, this.tenantId, [ServiceUserRoles.SubscriptionAdmin], true) ||
+      isAllowedUser(user, this.tenantId, [ServiceUserRoles.SubscriptionAdmin, ServiceUserRoles.SubscriptionApp], true) ||
       (!!user && user?.id === this.userId)
     );
   }

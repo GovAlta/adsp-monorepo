@@ -78,4 +78,34 @@ describe('ServiceDirectory', () => {
     await expect(directory.getServiceUrl(apiId)).rejects.toThrowError(/^Failed to find directory entry for /);
     expect(axiosMock.get).toHaveBeenCalled();
   });
+
+  it('can retrieve resource URL from directory', async () => {
+    const resourceId = adspId`urn:ads:test-sandbox:test-service:v1:/tests/test`;
+    const apiUrl = new URL('https://test-service/v1');
+
+    const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'), tokenProvider);
+
+    cacheMock.mockReturnValueOnce(null);
+    cacheMock.mockReturnValueOnce(apiUrl);
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: [{ urn: `${adspId}`, url: apiUrl }] }));
+    const result = await directory.getResourceUrl(resourceId);
+
+    expect(result.href).toBe(`${apiUrl.href}/tests/test`);
+    expect(axiosMock.get).toHaveBeenCalled();
+  });
+
+  it('can retrieve resource URL from directory with trailing slashes', async () => {
+    const resourceId = adspId`urn:ads:test-sandbox:test-service:v1:/tests/test`;
+    const apiUrl = new URL('https://test-service/v1/');
+
+    const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'), tokenProvider);
+
+    cacheMock.mockReturnValueOnce(null);
+    cacheMock.mockReturnValueOnce(apiUrl);
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: [{ urn: `${adspId}`, url: apiUrl }] }));
+    const result = await directory.getResourceUrl(resourceId);
+
+    expect(result.href).toBe(`${apiUrl.href}tests/test`);
+    expect(axiosMock.get).toHaveBeenCalled();
+  });
 });
