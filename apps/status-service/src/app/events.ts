@@ -1,5 +1,4 @@
 import { AdspId, DomainEvent, DomainEventDefinition } from '@abgov/adsp-service-sdk';
-import { url } from 'inspector';
 import { ServiceStatusApplication } from './types'
 
 const ApplicationDefinition = {
@@ -21,7 +20,7 @@ interface ApplicationEvent {
 
 export const HealthCheckStartedDefinition: DomainEventDefinition = {
   name: 'health-check-started',
-  description: 'Signalled when healthcheck started for an event',
+  description: 'Signalled when healthcheck started for an event.',
   payloadSchema: {
     type: 'object',
     properties: {
