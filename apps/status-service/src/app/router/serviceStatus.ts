@@ -163,7 +163,7 @@ export function createServiceStatusRouter({
     const { id } = req.params;
     const application = await serviceStatusRepository.get(id);
 
-    if (application.enabled) {
+    if (!application.enabled) {
       eventService.send(applicationStatusToStarted(application));
     } else {
       eventService.send(applicationStatusToStopped(application));

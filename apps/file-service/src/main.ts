@@ -112,6 +112,7 @@ async function initializeApp(): Promise<express.Application> {
   });
 
   applyFileMiddleware(app, {
+    serviceId,
     logger,
     storageProvider,
     scanService,
