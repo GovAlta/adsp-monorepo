@@ -97,7 +97,7 @@ export const applicationStatusToStopped = (application: ServiceStatusApplication
 });
 
 export const applicationStatusToUnhealthy = (application: ServiceStatusApplication, error: string): DomainEvent => ({
-  name: 'health-check-unhealthy',
+  name: 'application-unhealthy',
   timestamp: new Date(),
   tenantId: AdspId.parse(application.tenantId),
   payload: {
@@ -107,7 +107,7 @@ export const applicationStatusToUnhealthy = (application: ServiceStatusApplicati
 });
 
 export const applicationStatusToHealthy = (application: ServiceStatusApplication): DomainEvent => ({
-  name: 'health-check-healthy',
+  name: 'application-healthy',
   timestamp: new Date(),
   tenantId: AdspId.parse(application.tenantId),
   payload: {
