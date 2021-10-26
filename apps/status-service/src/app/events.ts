@@ -1,5 +1,4 @@
 import { AdspId, DomainEvent, DomainEventDefinition } from '@abgov/adsp-service-sdk';
-import { url } from 'inspector';
 import { ServiceStatusApplication } from './types'
 
 const ApplicationDefinition = {
