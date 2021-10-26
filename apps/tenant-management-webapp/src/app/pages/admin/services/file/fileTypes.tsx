@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import React from 'react';
 import { FetchFileTypeService } from '@store/file/actions';
@@ -7,7 +7,7 @@ import { RootState } from '@store/index';
 import { FileTypeTable } from './fileTypesTable';
 import { GoAPageLoader } from '@abgov/react-components';
 
-export default function FileTypes(): JSX.Element {
+export const FileTypes: FunctionComponent = () => {
   const dispatch = useDispatch();
   const realmRoles = useSelector((state: RootState) => state.tenant.realmRoles);
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
@@ -27,7 +27,7 @@ export default function FileTypes(): JSX.Element {
 
   return (
     <div>
-      {showLoadingIndicator && <GoAPageLoader visible={true} message="Loading..." type="infinite" />}
+      {showLoadingIndicator && <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />}
       <div>
         {!showLoadingIndicator && (
           <FileTypeTable roles={realmRoles} fileTypes={fileTypes} data-testid="file-type-table" />
@@ -35,4 +35,4 @@ export default function FileTypes(): JSX.Element {
       </div>
     </div>
   );
-}
+};

@@ -23,7 +23,6 @@ import { ThemeProvider } from 'styled-components';
 import { theme } from 'theme';
 import PublicApp from './publicApp';
 
-
 const AppRouters = () => {
   return (
     <Router>
