@@ -9,6 +9,7 @@ const axiosMock = axios as jest.Mocked<typeof axios>;
 describe('verify', () => {
   const directory = {
     getServiceUrl: jest.fn(() => Promise.resolve(new URL('https://verify-service'))),
+    getResourceUrl: jest.fn(),
   };
   const tokenProvider = {
     getAccessToken: jest.fn(() => Promise.resolve('token')),

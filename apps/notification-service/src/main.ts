@@ -72,6 +72,10 @@ async function initializeApp() {
           inTenantAdmin: true,
         },
         {
+          role: ServiceUserRoles.SubscriptionApp,
+          description: 'Role for service accounts that allows update of subscribers and subscriptions.',
+        },
+        {
           role: ServiceUserRoles.CodeSender,
           description: 'Role for sending and checking verify codes to subscribers',
         },

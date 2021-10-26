@@ -14,11 +14,11 @@ jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('healthCheck', () => {
-  const logger: Logger = ({
+  const logger: Logger = {
     debug: jest.fn(),
     info: jest.fn(),
     error: jest.fn(),
-  } as unknown) as Logger;
+  } as unknown as Logger;
 
   beforeEach(() => {
     cacheMock.mockReset();
@@ -51,6 +51,7 @@ describe('healthCheck', () => {
   describe('createHealthCheck', () => {
     const directoryMock = {
       getServiceUrl: jest.fn(() => Promise.resolve(new URL('http://totally-real-service'))),
+      getResourceUrl: jest.fn(),
     };
 
     it('can create health check', () => {
