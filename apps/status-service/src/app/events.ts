@@ -7,7 +7,7 @@ const ApplicationDefinition = {
     id: { type: 'string' },
     name: { type: 'string' },
     description: { type: 'string' },
-    metadata: { type: 'object' }
+    url: { type: 'string' }
   }
 }
 
