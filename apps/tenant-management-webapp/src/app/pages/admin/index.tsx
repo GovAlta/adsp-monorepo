@@ -5,7 +5,7 @@ import { HeaderCtx } from '@lib/headerContext';
 
 import Sidebar from './sidebar';
 import Dashboard from './dashboard';
-import File from './services/file';
+import { File } from './services/file';
 import AccessPage from './services/access/access';
 import Container from '@components/Container';
 import Status from './services/status';
