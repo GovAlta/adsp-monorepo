@@ -16,12 +16,11 @@ export const Notifications: FunctionComponent = () => {
 
   const activateEdit = (edit: boolean) => {
     setActiveIndex(1);
-    console.log(JSON.stringify("we're setting active index"));
     setActivateEditState(edit);
   };
 
   useEffect(() => {
-    if (activeIndex != null) {
+    if (activeIndex !== null) {
       setActiveIndex(null);
     }
   }, [activeIndex]);
