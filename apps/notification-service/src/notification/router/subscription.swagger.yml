@@ -44,6 +44,8 @@ components:
     Subscriber:
       type: object
       properties:
+        urn:
+          type: string
         id:
           type: string
         userId:
