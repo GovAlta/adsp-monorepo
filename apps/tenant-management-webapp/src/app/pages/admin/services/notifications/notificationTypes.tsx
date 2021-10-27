@@ -27,7 +27,7 @@ const emptyNotificationType: NotificationItem = {
   events: [],
   subscriberRoles: [],
   id: null,
-  publicSubscribe: true,
+  publicSubscribe: false,
 };
 
 interface ParentCompProps {
@@ -72,8 +72,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     setEditEvent(notificationType);
   }
 
-  console.log(selectedType + '<selectedDEfxxx');
-
   return (
     <NotficationStyles>
       <div>
@@ -103,21 +101,20 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       {notification.notificationTypes &&
         Object.values(notification.notificationTypes).map((notificationType) => (
           <div className="topBottomMargin" key={notificationType.name}>
-            {console.log(JSON.stringify(notificationType) + '<notificationTypexxx')}
             <GoACard
               title={
                 <div className="rowFlex">
                   <h2 className="flex1">{notificationType.name}</h2>
-                  <div className="rowFlex">
+                  <div className="rowFlex height30">
                     <a
                       className="flex1"
-                      data-testid="edit-details"
+                      data-testid={`edit-notification-type-${notificationType.id}`}
                       onClick={() => {
                         setSelectedType(notificationType);
                         setEditType(true);
                       }}
                     >
-                      <NotificationBorder className="smallPadding" delete-details>
+                      <NotificationBorder className="smallPadding">
                         <GoAIcon type="create" />
                       </NotificationBorder>
                     </a>
@@ -127,7 +124,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                         setSelectedType(notificationType);
                         setShowDeleteConfirmation(true);
                       }}
-                      data-testid="delete-details"
+                      data-testid={`delete-notification-type-${notificationType.id}`}
                     >
                       <NotificationBorder className="smallPadding">
                         <GoAIcon type="trash" />
@@ -139,21 +136,20 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               description={notificationType.description}
             >
               <Grid>
-                {notificationType.events.map((event) => (
-                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <EventBorder style={{ minHeight: '163px' }}>
+                {notificationType.events.map((event, key) => (
+                  <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
+                    <EventBorder className="height168">
                       <div className="rowFlex">
                         <div className="flex1">{event.name}</div>
                         <div className="rowFlex">
                           <a
-                            className="flex1"
-                            style={{ display: 'flex', maxHeight: '34px' }}
+                            className="flex1 flex height34"
                             onClick={() => {
                               setSelectedEvent(event);
                               setSelectedType(notificationType);
                               setShowEventDeleteConfirmation(true);
                             }}
-                            data-testid="delete-event"
+                            data-testid={`delete-event-${notificationType.id}`}
                           >
                             <NotificationBorder className="smallPadding">
                               <GoAIcon type="trash" />
@@ -161,11 +157,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           </a>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', height: '100px' }}>
-                        <div className="flex1" style={{ display: 'flex', alignItems: 'flex-end' }}>
-                          <div style={{ textAlign: 'end', width: '100%' }}>
+                      <div className="columnFlex height100">
+                        <div className="flex1 flex flexEndAlign">
+                          <div className="rightAlignEdit">
                             <a
-                              data-testid="edit-event"
+                              data-testid={`edit-event-${notificationType.id}`}
                               onClick={() => {
                                 setSelectedEvent(event);
                                 manageEvents(notificationType);
@@ -184,7 +180,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                     <EventButtonWrapper>
                       <GoAButton
                         buttonType="secondary"
-                        data-testid="add-event"
+                        data-testid={`add-event-${notificationType.id}`}
                         onClick={() => {
                           setSelectedEvent(null);
                           manageEvents(notificationType);
@@ -225,8 +221,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       </GoAModal>
       {/* Event delete confirmation */}
       <GoAModal testId="event-delete-confirmation" isOpen={showEventDeleteConfirmation}>
-        <GoAModalTitle>Delete Type</GoAModalTitle>
-        <GoAModalContent>Delete {selectedEvent?.name}?</GoAModalContent>
+        <GoAModalTitle>Remove Event</GoAModalTitle>
+        <GoAModalContent>Remove {selectedEvent?.name}?</GoAModalContent>
         <GoAModalActions>
           <GoAButton
             buttonType="tertiary"
@@ -240,16 +236,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             data-testid="event-delete-confirm"
             onClick={() => {
               setShowEventDeleteConfirmation(false);
-              console.log(
-                JSON.stringify(`${selectedEvent.namespace}:${selectedEvent.name}`) +
-                  '<-- selectedEvent.namespace selectedEvent.name '
-              );
-              console.log(JSON.stringify(selectedType.events) + '<-- selectedType');
               const updatedEvents = selectedType.events.filter(
                 (event) => `${event.namespace}:${event.name}` !== `${selectedEvent.namespace}:${selectedEvent.name}`
               );
               selectedType.events = updatedEvents;
-              console.log(JSON.stringify(selectedType.events) + '<-- selectedType.events ');
               dispatch(UpdateNotificationTypeService(selectedType));
             }}
           >
@@ -273,14 +263,12 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           reset();
         }}
       />
-      {console.log(JSON.stringify(selectedType) + '<selectedDEf')}
       <EventModalForm
         open={editEvent}
         initialValue={editEvent}
         selectedEvent={selectedEvent}
         errors={errors}
         onSave={(type) => {
-          console.log(JSON.stringify(type) + '<defxx');
           type.subscriberRoles = [];
           dispatch(UpdateNotificationTypeService(type));
           reset();
@@ -333,8 +321,33 @@ const NotficationStyles = styled.div`
     flex-direction: row;
   }
 
+  .columnFlex {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .height100 {
+    height: 100px;
+  }
+
+  .flex {
+    display: flex;
+  }
+
   .flex1 {
     flex: 1;
+  }
+
+  .height30 {
+    max-height: 30px;
+  }
+
+  .height34 {
+    max-height: 34px;
+  }
+
+  .height163 {
+    max-height: 163px;
   }
 
   .padding {
@@ -343,5 +356,14 @@ const NotficationStyles = styled.div`
 
   .smallPadding {
     padding: 3px;
+  }
+
+  .flexEndAlign {
+    align-items: flex-end;
+  }
+
+  .rightAlignEdit {
+    text-align: end;
+    width: 100%;
   }
 `;

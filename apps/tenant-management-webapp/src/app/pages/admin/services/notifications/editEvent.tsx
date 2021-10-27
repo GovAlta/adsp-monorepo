@@ -47,7 +47,6 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
 
   useEffect(() => {
     if (selectedEvent) {
-      console.log(JSON.stringify(selectedEvent) + '<selectedEvent');
       setValues([`${selectedEvent.namespace}:${selectedEvent.name}`]);
     } else {
       setValues(['']);
@@ -55,12 +54,8 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
   }, [selectedEvent]);
 
   function onChange(name, values) {
-    console.log(JSON.stringify(values) + '<values');
-    console.log(JSON.stringify(name) + '<name');
     setValues(values);
   }
-
-  console.log(JSON.stringify(initialValue) + '<initialValue');
 
   useEffect(() => {
     setDefinition(initialValue);
@@ -68,29 +63,13 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
 
   let dropDownOptions = [];
 
-  //console.log(JSON.stringify(initialValue) + '<--initialValue');
-
-  console.log(JSON.stringify(initialValue?.events) + '<--initialValue?.events?');
-
-  console.log(JSON.stringify(selectedValues[0]) + '<--selectedValues[0]');
-
   const existingEventList =
     initialValue?.events?.filter((def) => `${def.namespace}:${def.name}` !== selectedValues[0]) || [];
-
-  console.log(JSON.stringify(existingEventList) + '<--existingEventList');
 
   if (initialValue) {
     dropDownOptions = Object.keys(eventDefinitions)
       .filter((def) => {
-        console.log(
-          JSON.stringify(existingEventList.map((events) => `${events.namespace}:${events.name}`)) +
-            '<--existingEventList'
-        );
-        console.log(JSON.stringify(def) + '<--def');
-
-        const x = !existingEventList.map((events) => `${events.namespace}:${events.name}`).includes(def);
-        console.log(JSON.stringify(x) + '<--x');
-        return x;
+        return !existingEventList.map((events) => `${events.namespace}:${events.name}`).includes(def);
       })
       .map((eventKey, index) => {
         return {
@@ -104,13 +83,6 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
       });
   }
 
-  console.log(JSON.stringify(eventDefinitions) + '<define');
-  console.log(JSON.stringify(selectedValues) + '<selectedvalues');
-
-  console.log(JSON.stringify(dropDownOptions) + '<dropDownOptionsxxxxxx');
-
-  console.log(JSON.stringify(definition) + '<definition');
-
   return (
     <GoAModal testId="event-form" isOpen={open}>
       <GoAModalTitle>{'Select an event'}</GoAModalTitle>
@@ -119,7 +91,6 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
           <GoAFormItem>
             <div style={{ margin: '0 0 200px 0' }}>
               <GoADropdown name="event" onChange={onChange} selectedValues={selectedValues}>
-                <GoADropdownOption label="cheese" value="cake" key="1" data-testid="123" />
                 {dropDownOptions.map((item, key) => (
                   <GoADropdownOption label={item.label} value={item.value} key={key} data-testid={item.dataTestId} />
                 ))}
@@ -138,12 +109,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
           data-testid="event-form-save"
           type="submit"
           onClick={() => {
-            console.log(JSON.stringify(dropDownOptions) + '<dropDownOptions');
-            console.log(JSON.stringify(selectedValues[0]) + '<selectedValues[0]');
-
             const dropdownObject = dropDownOptions.find((dropdown) => dropdown.value === selectedValues[0]);
-
-            console.log(JSON.stringify(dropdownObject) + '<dropdownObject');
 
             const eventObject: EventItem = {
               namespace: dropdownObject.nameSpace,
@@ -151,22 +117,17 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
               templates: {},
               channels: [],
             };
-            console.log(JSON.stringify(eventObject) + '<eventObject');
-            console.log(JSON.stringify(definition?.events) + '<definition?.events');
 
             if (selectedEvent) {
               const definitionEventIndex = definition?.events?.findIndex(
                 (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`
               );
 
-              console.log(JSON.stringify(definitionEventIndex) + '<definitionEventIndex');
-
               definition.events[definitionEventIndex] = eventObject;
             } else {
               definition.events.push(eventObject);
             }
 
-            console.log(JSON.stringify(definition) + '<definitionqqq');
             onSave(definition);
             setValues(['']);
           }}
