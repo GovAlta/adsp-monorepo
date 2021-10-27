@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import type { NotificationItem, NotificationTypeItem } from '@store/notification/models';
+import type { NotificationItem } from '@store/notification/models';
 import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
@@ -13,12 +13,13 @@ interface NotificationDefinitionFormProps {
   errors?: Record<string, string>;
 }
 
-const emptyNotificationDefinition: NotificationTypeItem = {
+const emptyNotificationDefinition: NotificationItem = {
   name: '',
   description: '',
   events: [],
   subscriberRoles: [],
   id: null,
+  publicSubscribe: false,
 };
 
 export const NotificationDefinitionModalForm: FunctionComponent<NotificationDefinitionFormProps> = ({

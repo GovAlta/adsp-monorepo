@@ -16,19 +16,25 @@ import {
   DeleteNotificationTypeService,
   FetchNotificationTypeService,
 } from '@store/notification/actions';
-import { NotificationTypeItem } from '@store/notification/models';
+import { NotificationItem } from '@store/notification/models';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 
-const emptyNotificationDefinition: NotificationTypeItem = {
+const emptyNotificationDefinition: NotificationItem = {
   name: '',
   description: '',
   events: [],
   subscriberRoles: [],
   id: null,
+  publicSubscribe: true,
 };
 
-export const NotificationTypes: FunctionComponent = () => {
+interface ParentCompProps {
+  activeEdit?: boolean;
+  activateEdit?: (boolean) => void;
+}
+
+export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEdit, activateEdit }) => {
   const [editDefinition, setEditDefinition] = useState(false);
   const [selectedDefinition, setSelectedDefinition] = useState(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -46,6 +52,14 @@ export const NotificationTypes: FunctionComponent = () => {
     setSelectedDefinition(emptyNotificationDefinition);
     setErrors({});
   }
+
+  useEffect(() => {
+    if (activeEdit) {
+      setSelectedDefinition(null);
+      setEditDefinition(true);
+      activateEdit(false);
+    }
+  }, [activeEdit]);
 
   function manageEvents() {
     //Manage Events
@@ -83,7 +97,7 @@ export const NotificationTypes: FunctionComponent = () => {
             <GoACard
               title={
                 <div className="rowFlex">
-                  <div className="flex1">{notificationType.name}</div>
+                  <h2 className="flex1">{notificationType.name}</h2>
                   <div className="rowFlex">
                     <a
                       className="flex1"
@@ -165,6 +179,7 @@ export const NotificationTypes: FunctionComponent = () => {
         onSave={(definition) => {
           definition.subscriberRoles = [];
           definition.events = [];
+          definition.publicSubscribe = false;
           dispatch(UpdateNotificationTypeService(definition));
           reset();
         }}
