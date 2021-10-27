@@ -87,6 +87,7 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
               description: payload.description,
               subscriberRoles: payload.subscriberRoles,
               events: payload.events,
+              publicSubscribe: payload.publicSubscribe,
             },
           },
         },

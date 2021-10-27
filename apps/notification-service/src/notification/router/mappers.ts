@@ -4,7 +4,7 @@ import { NotificationType } from '../types';
 
 export const mapSubscriber = (apiId: AdspId, subscriber: SubscriberEntity): unknown => ({
   id: subscriber.id,
-  urn: adspId`${apiId}:/subscribers/${subscriber.id}`,
+  urn: adspId`${apiId}:/subscribers/${subscriber.id}`.toString(),
   addressAs: subscriber.addressAs,
   channels: subscriber.channels?.map((c) => ({
     channel: c.channel,

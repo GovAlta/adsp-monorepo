@@ -4,7 +4,14 @@ import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useParams } from 'react-router-dom';
 import { GoAButton, GoACheckbox } from '@abgov/react-components';
-import { GoAForm, GoAFormItem, GoAModalActions, GoAModal, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
+import {
+  GoAForm,
+  GoAFormItem,
+  GoAModalActions,
+  GoAModal,
+  GoAModalContent,
+  GoAModalTitle,
+} from '@abgov/react-components/experimental';
 import TimePicker from 'react-time-picker';
 import DatePicker from 'react-date-picker';
 import styled from 'styled-components';
@@ -21,8 +28,8 @@ const dateTime = (date, time) => {
 };
 
 interface NoticeModalProps {
-  title: string,
-  isOpen: boolean
+  title: string;
+  isOpen: boolean;
 }
 
 function NoticeModal(props: NoticeModalProps): JSX.Element {
@@ -52,7 +59,8 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
       setEndDate(currentEndDate);
 
       setStartTime(
-        `${currentStartDate.getHours()}:${currentStartDate.getMinutes() < 10 ? '0' : ''
+        `${currentStartDate.getHours()}:${
+          currentStartDate.getMinutes() < 10 ? '0' : ''
         }${currentStartDate.getMinutes()}`
       );
       setEndTime(
@@ -116,7 +124,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
           tennantServRef: selectedApplications,
           startDate: dateTime(startDate, startTime),
           endDate: dateTime(endDate, endTime),
-          isAllApplications: isAllApplications
+          isAllApplications: isAllApplications,
         })
       );
 
@@ -138,7 +146,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
   }
 
   return (
-    <GoAModal isOpen={props.isOpen} testId='notice-modal'>
+    <GoAModal isOpen={props.isOpen} testId="notice-modal">
       <GoAModalTitle>{props.title}</GoAModalTitle>
       <GoAModalContent>
         <NoticeFormStyle>
@@ -159,14 +167,18 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
               <ErrorWrapper className={errors?.['applications'] && 'error'}>
                 <label className="notice-title">Application</label>
                 <div>
-                  <GoACheckbox checked={isAllApplications}
-                    labelPosition='after'
-                    data-testid='notice-form-all-applications-checkbox'
-                    selectionChange={() => { setIsAllApplications(!isAllApplications) }}>
+                  <GoACheckbox
+                    name="isAllApplications"
+                    checked={isAllApplications}
+                    data-testid="notice-form-all-applications-checkbox"
+                    onChange={() => {
+                      setIsAllApplications(!isAllApplications);
+                    }}
+                  >
                     <span>All applications</span>
                   </GoACheckbox>
                 </div>
-                {isAllApplications === false &&
+                {isAllApplications === false && (
                   <MultiDropdownStyle>
                     <Multiselect
                       options={applications}
@@ -181,7 +193,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
                       customCloseIcon={<img src={CloseIcon} alt="Close" width="16" />}
                     />
                   </MultiDropdownStyle>
-                }
+                )}
                 <div className="error-msg">{errors?.['applications']}</div>
               </ErrorWrapper>
             </div>

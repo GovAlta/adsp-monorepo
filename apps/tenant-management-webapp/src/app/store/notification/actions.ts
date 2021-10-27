@@ -1,4 +1,4 @@
-import { NotificationItem, NotificationTypeItem } from './models';
+import { NotificationItem } from './models';
 
 export const FETCH_NOTIFICATION_LIST = 'tenant/notification-service/notification/fetch';
 export const FETCH_NOTIFICATION_LIST_SUCCESSES = 'tenant/notification-service/notification/fetch/success';
@@ -68,7 +68,7 @@ interface DeleteNotificationFailedAction {
 interface FetchNotificationTypeSucceededAction {
   type: typeof FETCH_NOTIFICATION_TYPE_SUCCEEDED;
   payload: {
-    notificationInfo: { data: NotificationTypeItem[] };
+    notificationInfo: { data: NotificationItem[] };
   };
 }
 
@@ -78,12 +78,12 @@ interface FetchNotificationTypeAction {
 
 export interface UpdateNotificationTypeAction {
   type: typeof UPDATE_NOTIFICATION_TYPE;
-  payload: NotificationTypeItem;
+  payload: NotificationItem;
 }
 
 export interface DeleteNotificationTypeAction {
   type: typeof DELETE_NOTIFICATION_TYPE;
-  payload: NotificationTypeItem;
+  payload: NotificationItem;
 }
 
 // ==============
@@ -132,7 +132,7 @@ export const DeleteNotificationFailedService = (data: string): DeleteNotificatio
 });
 
 export const FetchNotificationTypeSucceededService = (notificationInfo: {
-  data: NotificationTypeItem[];
+  data: NotificationItem[];
 }): FetchNotificationTypeSucceededAction => ({
   type: FETCH_NOTIFICATION_TYPE_SUCCEEDED,
   payload: {
@@ -144,16 +144,12 @@ export const FetchNotificationTypeService = (): FetchNotificationTypeAction => (
   type: FETCH_NOTIFICATION_TYPE,
 });
 
-export const UpdateNotificationTypeService = (
-  notificationType: NotificationTypeItem
-): UpdateNotificationTypeAction => ({
+export const UpdateNotificationTypeService = (notificationType: NotificationItem): UpdateNotificationTypeAction => ({
   type: UPDATE_NOTIFICATION_TYPE,
   payload: notificationType,
 });
 
-export const DeleteNotificationTypeService = (
-  notificationType: NotificationTypeItem
-): DeleteNotificationTypeAction => ({
+export const DeleteNotificationTypeService = (notificationType: NotificationItem): DeleteNotificationTypeAction => ({
   type: DELETE_NOTIFICATION_TYPE,
   payload: notificationType,
 });

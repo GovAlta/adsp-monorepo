@@ -17,19 +17,25 @@ import {
   DeleteNotificationTypeService,
   FetchNotificationTypeService,
 } from '@store/notification/actions';
-import { NotificationTypeItem } from '@store/notification/models';
+import { NotificationItem } from '@store/notification/models';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 
-const emptyNotificationType: NotificationTypeItem = {
+const emptyNotificationType: NotificationItem = {
   name: '',
   description: '',
   events: [],
   subscriberRoles: [],
   id: null,
+  publicSubscribe: true,
 };
 
-export const NotificationTypes: FunctionComponent = () => {
+interface ParentCompProps {
+  activeEdit?: boolean;
+  activateEdit?: (boolean) => void;
+}
+
+export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEdit, activateEdit }) => {
   const [editType, setEditType] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -51,6 +57,14 @@ export const NotificationTypes: FunctionComponent = () => {
     setSelectedType(emptyNotificationType);
     setErrors({});
   }
+
+  useEffect(() => {
+    if (activeEdit) {
+      setSelectedType(null);
+      setEditType(true);
+      activateEdit(false);
+    }
+  }, [activeEdit]);
 
   function manageEvents(notificationType) {
     //Manage Events
@@ -93,7 +107,7 @@ export const NotificationTypes: FunctionComponent = () => {
             <GoACard
               title={
                 <div className="rowFlex">
-                  <div className="flex1">{notificationType.name}</div>
+                  <h2 className="flex1">{notificationType.name}</h2>
                   <div className="rowFlex">
                     <a
                       className="flex1"
@@ -251,6 +265,7 @@ export const NotificationTypes: FunctionComponent = () => {
         onSave={(type) => {
           type.subscriberRoles = type.subscriberRoles || [];
           type.events = type.events || [];
+          type.publicSubscribe = type.publicSubscribe || false;
           dispatch(UpdateNotificationTypeService(type));
           reset();
         }}
