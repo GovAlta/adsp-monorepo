@@ -1,4 +1,4 @@
-import { EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
   UnauthorizedError,
@@ -15,6 +15,7 @@ import { ServiceConfiguration } from '../configuration';
 import { FileStorageProvider } from '../storage';
 
 interface FileRouterProps {
+  serviceId: AdspId;
   logger: Logger;
   storageProvider: FileStorageProvider;
   fileRepository: FileRepository;
@@ -31,8 +32,9 @@ function mapFileType(entity: FileTypeEntity) {
   };
 }
 
-function mapFile(entity: FileEntity) {
+function mapFile(apiId: AdspId, entity: FileEntity) {
   return {
+    urn: adspId`${apiId}:/files/${entity.id}`.toString(),
     id: entity.id,
     filename: entity.filename,
     size: entity.size,
@@ -81,7 +83,7 @@ export function getType(_logger: Logger): RequestHandler {
   };
 }
 
-export function getFiles(repository: FileRepository): RequestHandler {
+export function getFiles(apiId: AdspId, repository: FileRepository): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -99,7 +101,7 @@ export function getFiles(repository: FileRepository): RequestHandler {
 
       res.send({
         page: files.page,
-        results: files.results.filter((r) => r.canAccess(user)).map(mapFile),
+        results: files.results.filter((r) => r.canAccess(user)).map((f) => mapFile(apiId, f)),
       });
     } catch (err) {
       next(err);
@@ -107,7 +109,7 @@ export function getFiles(repository: FileRepository): RequestHandler {
   };
 }
 
-export function uploadFile(logger: Logger, eventService: EventService): RequestHandler {
+export function uploadFile(apiId: AdspId, logger: Logger, eventService: EventService): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -116,7 +118,7 @@ export function uploadFile(logger: Logger, eventService: EventService): RequestH
         throw new InvalidOperationError('No file uploaded.');
       }
 
-      res.send(mapFile(fileEntity));
+      res.send(mapFile(apiId, fileEntity));
 
       // This is an example.
       eventService.send(
@@ -223,19 +225,22 @@ export function deleteFile(logger: Logger, eventService: EventService): RequestH
 }
 
 export const createFileRouter = ({
+  serviceId,
   logger,
   storageProvider,
   fileRepository,
   eventService,
 }: FileRouterProps): Router => {
+  const apiId = adspId`${serviceId}:v1`;
+
   const upload = createUpload({ storageProvider, fileRepository });
   const fileRouter = Router();
 
   fileRouter.get('/types', assertAuthenticatedHandler, getTypes);
   fileRouter.get('/types/:fileTypeId', assertAuthenticatedHandler, getType(logger));
 
-  fileRouter.get('/files', assertAuthenticatedHandler, getFiles(fileRepository));
-  fileRouter.post('/files', assertAuthenticatedHandler, upload.single('file'), uploadFile(logger, eventService));
+  fileRouter.get('/files', assertAuthenticatedHandler, getFiles(apiId, fileRepository));
+  fileRouter.post('/files', assertAuthenticatedHandler, upload.single('file'), uploadFile(apiId, logger, eventService));
 
   fileRouter.delete(
     '/files/:fileId',
@@ -243,7 +248,7 @@ export const createFileRouter = ({
     getFile(fileRepository),
     deleteFile(logger, eventService)
   );
-  fileRouter.get('/files/:fileId', getFile(fileRepository), (req, res) => res.send(mapFile(req.fileEntity)));
+  fileRouter.get('/files/:fileId', getFile(fileRepository), (req, res) => res.send(mapFile(apiId, req.fileEntity)));
   fileRouter.get('/files/:fileId/download', getFile(fileRepository), downloadFile);
 
   return fileRouter;

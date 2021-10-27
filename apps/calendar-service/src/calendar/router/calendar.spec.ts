@@ -62,6 +62,7 @@ describe('calendar router', () => {
 
   const directoryMock = {
     getServiceUrl: jest.fn(() => Promise.resolve(new URL('https://calendar-service'))),
+    getResourceUrl: jest.fn(),
   };
 
   const calendar: Calendar = {

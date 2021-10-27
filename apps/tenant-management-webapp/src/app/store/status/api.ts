@@ -15,7 +15,9 @@ export class StatusApi {
   }
 
   async getEndpointStatusEntries(applicationId: string): Promise<EndpointStatusEntry[]> {
-    const res = await this.http.get(`/applications/${applicationId}/endpoint-status-entries`);
+    // We show up to 30 right now.
+    const limit = 35;
+    const res = await this.http.get(`/applications/${applicationId}/endpoint-status-entries?top=${limit}`);
     return res.data;
   }
 

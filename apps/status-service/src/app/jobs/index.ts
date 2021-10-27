@@ -9,12 +9,14 @@ import {
   fetchQueuedDeletedApplications,
   fetchQueuedDisabledApplications,
 } from './watchApplications';
+import { EventService } from '@abgov/adsp-service-sdk';
 
 const JOB_TIME_INTERVAL_MIN = 1;
 
 interface ServiceStatusJobProps {
   logger: Logger;
   serviceStatusRepository: ServiceStatusRepository;
+  eventService: EventService;
   endpointStatusEntryRepository: EndpointStatusEntryRepository;
 }
 

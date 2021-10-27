@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, FunctionComponent } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { GoAPageLoader } from '@abgov/react-components';
 
 import FileOverview from './fileOverview';
-import FileTypes from './fileTypes';
+import { FileTypes } from './fileTypes';
 import FileList from './fileList';
 import { RootState } from '@store/index';
 import { Aside, Main, Page } from '@components/Html';
@@ -36,7 +36,7 @@ const HelpLink = (): JSX.Element => {
   );
 };
 
-export default function File(): JSX.Element {
+export const File: FunctionComponent = () => {
   const dispatch = useDispatch();
   const [isLoaded, setIsLoaded] = useState(false);
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function File(): JSX.Element {
         {isLoaded ? (
           <>
             <h2>File Services</h2>
-            <Tabs>
+            <Tabs activeIndex={0}>
               <Tab label="Overview">
                 <FileOverview />
               </Tab>
@@ -70,4 +70,4 @@ export default function File(): JSX.Element {
       </Aside>
     </Page>
   );
-}
+};

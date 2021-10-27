@@ -1,27 +1,44 @@
-import { ActionTypes } from './actions';
+import {
+  ActionTypes,
+  DELETE_APPLICATION_SUCCESS_ACTION,
+  FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION,
+  FETCH_SERVICE_STATUS_APP_HEALTH_SUCCESS_ACTION,
+  SAVE_APPLICATION_SUCCESS_ACTION,
+  SET_APPLICATION_SUCCESS_STATUS_ACTION,
+  TOGGLE_APPLICATION_SUCCESS_STATUS_ACTION,
+} from './actions';
 import { ServiceStatus } from './models';
 
 const initialState: ServiceStatus = {
   applications: [],
+  endpointHealth: {},
 };
 
 const compareIds = (a: { _id?: string }, b: { _id?: string }): number => (a._id <= b._id ? 1 : -1);
 
 export default function statusReducer(state: ServiceStatus = initialState, action: ActionTypes): ServiceStatus {
   switch (action.type) {
-    case 'status/FETCH_SERVICE_STATUS_APPS_SUCCESS':
+    case FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION:
       return {
         ...state,
         applications: action.payload.sort(compareIds),
       };
-    case 'status/DELETE_APPLICATION_SUCCESS':
+    case FETCH_SERVICE_STATUS_APP_HEALTH_SUCCESS_ACTION:
+      return {
+        ...state,
+        endpointHealth: {
+          ...state.endpointHealth,
+          [action.payload.applicationId]: { url: action.payload.url, entries: action.payload.entries || [] },
+        },
+      };
+    case DELETE_APPLICATION_SUCCESS_ACTION:
       return {
         ...state,
         applications: [...state.applications.filter((app) => app._id !== action.payload)].sort(compareIds),
       };
-    case 'status/SAVE_APPLICATION_SUCCESS':
-    case 'status/SET_APPLICATION_STATUS_SUCCESS':
-    case 'status/TOGGLE_APPLICATION_STATUS_SUCCESS':
+    case SAVE_APPLICATION_SUCCESS_ACTION:
+    case SET_APPLICATION_SUCCESS_STATUS_ACTION:
+    case TOGGLE_APPLICATION_SUCCESS_STATUS_ACTION:
       return {
         ...state,
         applications: [...state.applications.filter((app) => app._id !== action.payload._id), action.payload].sort(

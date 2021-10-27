@@ -5,6 +5,7 @@ import {
   createAmqpQueueService,
   createErrorHandler,
   assertAuthenticatedHandler,
+  createAmqpConfigUpdateService,
 } from '@core-services/core-common';
 import { InstallProvider } from '@slack/oauth';
 import * as express from 'express';
@@ -29,6 +30,7 @@ import {
 import { createRepositories } from './mongo';
 import { createABNotifySmsProvider, createEmailProvider, createSlackProvider } from './provider';
 import { createTemplateService } from './handlebars';
+import { createVerifyService } from './verify';
 
 const logger = createLogger('notification-service', environment.LOG_LEVEL || 'info');
 
@@ -47,6 +49,8 @@ async function initializeApp() {
     tokenProvider,
     configurationHandler,
     configurationService,
+    clearCached,
+    directory,
     eventService,
     healthCheck,
   } = await initializePlatform(
@@ -66,6 +70,14 @@ async function initializeApp() {
           role: ServiceUserRoles.SubscriptionAdmin,
           description: 'Administrator role for managing subscriptions',
           inTenantAdmin: true,
+        },
+        {
+          role: ServiceUserRoles.SubscriptionApp,
+          description: 'Role for service accounts that allows update of subscribers and subscriptions.',
+        },
+        {
+          role: ServiceUserRoles.CodeSender,
+          description: 'Role for sending and checking verify codes to subscribers',
         },
       ],
     },
@@ -99,6 +111,16 @@ async function initializeApp() {
     logger,
   });
 
+  const configurationSync = await createAmqpConfigUpdateService({
+    ...environment,
+    logger,
+  });
+
+  configurationSync.getItems().subscribe(({ item, done }) => {
+    clearCached(item.tenantId, item.serviceId);
+    done();
+  });
+
   const slackInstaller = new InstallProvider({
     clientId: environment.SLACK_CLIENT_ID,
     clientSecret: environment.SLACK_CLIENT_SECRET,
@@ -107,6 +129,15 @@ async function initializeApp() {
   });
 
   const templateService = createTemplateService();
+
+  const providers = {
+    [Channel.email]: environment.SMTP_HOST ? createEmailProvider(environment) : null,
+    [Channel.sms]: environment.NOTIFY_API_KEY ? createABNotifySmsProvider(environment) : null,
+    [Channel.slack]: environment.SLACK_CLIENT_ID ? createSlackProvider(logger, slackInstaller) : null,
+  };
+
+  const verifyService = createVerifyService({ providers, templateService, directory, tokenProvider });
+
   applyNotificationMiddleware(app, {
     ...repositories,
     serviceId,
@@ -117,11 +148,8 @@ async function initializeApp() {
     templateService,
     eventSubscriber,
     queueService,
-    providers: {
-      [Channel.email]: environment.SMTP_HOST ? createEmailProvider(environment) : null,
-      [Channel.sms]: environment.NOTIFY_API_KEY ? createABNotifySmsProvider(environment) : null,
-      [Channel.slack]: environment.SLACK_CLIENT_ID ? createSlackProvider(logger, slackInstaller) : null,
-    },
+    verifyService,
+    providers,
   });
 
   // This should be done with 'trust proxy', but that depends on the proxies using the x-forward headers.

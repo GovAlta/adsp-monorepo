@@ -1,74 +1,5 @@
 {
   "version": 1,
-  "cli": {
-    "defaultCollection": "@nrwl/express"
-  },
-  "defaultProject": "file-service",
-  "schematics": {
-    "@nrwl/workspace": {
-      "library": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/cypress": {
-      "cypress-project": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/react": {
-      "application": {
-        "style": "scss",
-        "linter": "eslint",
-        "babel": true
-      },
-      "library": {
-        "style": "scss",
-        "linter": "eslint"
-      },
-      "storybook-configuration": {
-        "linter": "eslint"
-      },
-      "component": {
-        "style": "scss"
-      }
-    },
-    "@nrwl/next": {
-      "application": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/web": {
-      "application": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/node": {
-      "application": {
-        "linter": "eslint"
-      },
-      "library": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/nx-plugin": {
-      "plugin": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/nest": {
-      "application": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/express": {
-      "application": {
-        "linter": "eslint"
-      },
-      "library": {
-        "linter": "eslint"
-      }
-    }
-  },
   "projects": {
     "adsp-service-sdk": {
       "root": "libs/adsp-service-sdk",
@@ -100,7 +31,8 @@
             "assets": ["libs/adsp-service-sdk/*.md"]
           }
         }
-      }
+      },
+      "tags": []
     },
     "api-docs-app": {
       "root": "apps/api-docs-app",
@@ -146,7 +78,8 @@
             "passWithNoTests": true
           }
         }
-      }
+      },
+      "tags": []
     },
     "calendar-service": {
       "root": "apps/calendar-service",
@@ -200,7 +133,8 @@
             "passWithNoTests": true
           }
         }
-      }
+      },
+      "tags": []
     },
     "configuration-service": {
       "root": "apps/configuration-service",
@@ -247,7 +181,8 @@
             "passWithNoTests": true
           }
         }
-      }
+      },
+      "tags": []
     },
     "core-common": {
       "root": "libs/core-common",
@@ -271,7 +206,8 @@
           },
           "outputs": ["coverage/libs/core-common"]
         }
-      }
+      },
+      "tags": []
     },
     "event-service": {
       "root": "apps/event-service",
@@ -322,7 +258,8 @@
           },
           "outputs": ["coverage/apps/event-service"]
         }
-      }
+      },
+      "tags": []
     },
     "file-service": {
       "root": "apps/file-service",
@@ -374,7 +311,8 @@
           },
           "outputs": ["coverage/apps/file-service"]
         }
-      }
+      },
+      "tags": []
     },
     "notification-service": {
       "root": "apps/notification-service",
@@ -390,7 +328,7 @@
             "outputPath": "dist/apps/notification-service",
             "main": "apps/notification-service/src/main.ts",
             "tsConfig": "apps/notification-service/tsconfig.app.json",
-            "assets": []
+            "assets": ["apps/notification-service/src/assets"]
           },
           "configurations": {
             "production": {
@@ -425,7 +363,8 @@
           },
           "outputs": ["coverage/apps/notification-service"]
         }
-      }
+      },
+      "tags": []
     },
     "push-service": {
       "root": "apps/push-service",
@@ -476,7 +415,8 @@
           },
           "outputs": ["coverage/apps/push-service"]
         }
-      }
+      },
+      "tags": []
     },
     "status-app": {
       "root": "apps/status-app",
@@ -503,7 +443,7 @@
             ],
             "styles": ["apps/status-app/src/styles.css"],
             "scripts": [],
-            "webpackConfig": "apps/status-app/webpack.conf.js"
+            "webpackConfig": "@nrwl/react/plugins/webpack"
           },
           "configurations": {
             "production": {
@@ -551,7 +491,8 @@
             "passWithNoTests": true
           }
         }
-      }
+      },
+      "tags": []
     },
     "status-app-e2e": {
       "root": "apps/status-app-e2e",
@@ -577,7 +518,9 @@
             "lintFilePatterns": ["apps/status-app-e2e/**/*.{js,ts}"]
           }
         }
-      }
+      },
+      "tags": [],
+      "implicitDependencies": ["status-app"]
     },
     "status-service": {
       "root": "apps/status-service",
@@ -624,7 +567,8 @@
             "runInBand": true
           }
         }
-      }
+      },
+      "tags": []
     },
     "task-service": {
       "root": "apps/task-service",
@@ -677,7 +621,8 @@
             "passWithNoTests": true
           }
         }
-      }
+      },
+      "tags": []
     },
     "tenant-management-api": {
       "root": "apps/tenant-management-api",
@@ -732,7 +677,8 @@
           },
           "outputs": ["coverage/apps/tenant-management-api"]
         }
-      }
+      },
+      "tags": []
     },
     "tenant-management-webapp": {
       "root": "apps/tenant-management-webapp",
@@ -759,7 +705,7 @@
             ],
             "scripts": [],
             "styles": [],
-            "webpackConfig": "apps/tenant-management-webapp/webpack.config.js"
+            "webpackConfig": "@nrwl/react/plugins/webpack"
           },
           "configurations": {
             "production": {
@@ -818,7 +764,8 @@
           },
           "outputs": ["coverage/apps/tenant-management-webapp"]
         }
-      }
+      },
+      "tags": []
     },
     "tenant-management-webapp-e2e": {
       "root": "apps/tenant-management-webapp-e2e",
@@ -846,7 +793,9 @@
             "exclude": ["**/node_modules/**", "!apps/tenant-management-webapp-e2e/**/*"]
           }
         }
-      }
+      },
+      "tags": [],
+      "implicitDependencies": ["tenant-management-webapp"]
     },
     "tools-scripts": {
       "root": "tools/scripts",
@@ -898,7 +847,8 @@
           },
           "outputs": ["coverage/tools/scripts"]
         }
-      }
+      },
+      "tags": []
     },
     "value-service": {
       "root": "apps/value-service",
@@ -956,7 +906,8 @@
           },
           "outputs": ["coverage/apps/value-service"]
         }
-      }
+      },
+      "tags": []
     },
     "verify-service": {
       "root": "apps/verify-service",
@@ -1002,7 +953,8 @@
             "passWithNoTests": true
           }
         }
-      }
+      },
+      "tags": []
     }
   }
 }

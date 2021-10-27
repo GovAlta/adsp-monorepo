@@ -1,5 +1,5 @@
 import { NotifyClient } from 'notifications-node-client';
-import { Notification, NotificationProvider } from '../notification';
+import { NotificationContent, NotificationProvider } from '../notification';
 
 interface NotifySmsProviderProps {
   NOTIFY_URL: string;
@@ -15,7 +15,7 @@ export const createABNotifySmsProvider = ({
   const client = new NotifyClient(NOTIFY_URL, NOTIFY_API_KEY);
 
   return {
-    send: async (notification: Notification) => {
+    send: async (notification: NotificationContent) => {
       await client.sendSms(NOTIFY_TEMPLATE_ID, notification.to, {
         personalisation: {
           subject: notification.message.subject,

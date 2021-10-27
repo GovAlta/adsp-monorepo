@@ -21,67 +21,6 @@
       }
     }
   },
-  "projects": {
-    "adsp-service-sdk": {
-      "tags": []
-    },
-    "api-docs-app": {
-      "tags": []
-    },
-    "calendar-service": {
-      "tags": []
-    },
-    "configuration-service": {
-      "tags": []
-    },
-    "core-common": {
-      "tags": []
-    },
-    "event-service": {
-      "tags": []
-    },
-    "file-service": {
-      "tags": []
-    },
-    "notification-service": {
-      "tags": []
-    },
-    "push-service": {
-      "tags": []
-    },
-    "status-app": {
-      "tags": []
-    },
-    "status-app-e2e": {
-      "tags": [],
-      "implicitDependencies": ["status-app"]
-    },
-    "status-service": {
-      "tags": []
-    },
-    "task-service": {
-      "tags": []
-    },
-    "tenant-management-api": {
-      "tags": []
-    },
-    "tenant-management-webapp": {
-      "tags": []
-    },
-    "tenant-management-webapp-e2e": {
-      "tags": [],
-      "implicitDependencies": ["tenant-management-webapp"]
-    },
-    "tools-scripts": {
-      "tags": []
-    },
-    "value-service": {
-      "tags": []
-    },
-    "verify-service": {
-      "tags": []
-    }
-  },
   "targetDependencies": {
     "build": [
       {
@@ -89,5 +28,74 @@
         "projects": "dependencies"
       }
     ]
+  },
+  "cli": {
+    "defaultCollection": "@nrwl/express"
+  },
+  "defaultProject": "file-service",
+  "generators": {
+    "@nrwl/workspace": {
+      "library": {
+        "linter": "eslint"
+      }
+    },
+    "@nrwl/cypress": {
+      "cypress-project": {
+        "linter": "eslint"
+      }
+    },
+    "@nrwl/react": {
+      "application": {
+        "style": "scss",
+        "linter": "eslint",
+        "babel": true
+      },
+      "library": {
+        "style": "scss",
+        "linter": "eslint"
+      },
+      "storybook-configuration": {
+        "linter": "eslint"
+      },
+      "component": {
+        "style": "scss"
+      }
+    },
+    "@nrwl/next": {
+      "application": {
+        "linter": "eslint"
+      }
+    },
+    "@nrwl/web": {
+      "application": {
+        "linter": "eslint"
+      }
+    },
+    "@nrwl/node": {
+      "application": {
+        "linter": "eslint"
+      },
+      "library": {
+        "linter": "eslint"
+      }
+    },
+    "@nrwl/nx-plugin": {
+      "plugin": {
+        "linter": "eslint"
+      }
+    },
+    "@nrwl/nest": {
+      "application": {
+        "linter": "eslint"
+      }
+    },
+    "@nrwl/express": {
+      "application": {
+        "linter": "eslint"
+      },
+      "library": {
+        "linter": "eslint"
+      }
+    }
   }
 }

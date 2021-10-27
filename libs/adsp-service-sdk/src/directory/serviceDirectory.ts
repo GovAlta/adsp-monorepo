@@ -4,7 +4,7 @@ import * as NodeCache from 'node-cache';
 const retry = require('promise-retry');
 import type { Logger } from 'winston';
 import { TokenProvider } from '../access';
-import { AdspId, assertAdspId } from '../utils';
+import { adspId, AdspId, assertAdspId } from '../utils';
 
 interface DirectoryEntry {
   urn: string;
@@ -12,7 +12,8 @@ interface DirectoryEntry {
 }
 
 export interface ServiceDirectory {
-  getServiceUrl(id: AdspId): Promise<URL>;
+  getServiceUrl(serviceId: AdspId): Promise<URL>;
+  getResourceUrl(resourceId: AdspId): Promise<URL>;
 }
 
 export class ServiceDirectoryImpl implements ServiceDirectory {
@@ -88,5 +89,18 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
     }
 
     return value;
+  }
+
+  async getResourceUrl(id: AdspId): Promise<URL> {
+    assertAdspId(id, 'Provided ID is not for a Resource.', 'resource');
+
+    const serviceUrl = await this.getServiceUrl(adspId`urn:ads:${id.namespace}:${id.service}:${id.api}`);
+    // Trim any trailing slash on API url and leading slash on resource
+    const resourceUrl = new URL(
+      `${serviceUrl.pathname.replace(/\/$/g, '')}/${id.resource.replace(/^\//, '')}`,
+      serviceUrl
+    );
+
+    return resourceUrl;
   }
 }

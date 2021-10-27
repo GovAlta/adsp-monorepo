@@ -1,5 +1,6 @@
 import React from 'react';
-import { GoACard, GoAButton, GoACallout } from '@abgov/react-components';
+import { GoAButton, GoACallout } from '@abgov/react-components';
+import { GoACard } from '@abgov/react-components/experimental';
 import { Link } from 'react-router-dom';
 import ReactTooltip from 'react-tooltip';
 import { Grid, GridItem } from '@components/Grid';
@@ -19,9 +20,8 @@ const Dashboard = (): JSX.Element => {
         tenantName: state.tenant.name,
         adminEmail: state.tenant.adminEmail,
         keycloakConfig: state.config.keycloakApi,
-        hasAdminRole: state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes(
-          tenantAdminRole
-        ),
+        hasAdminRole:
+          state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes(tenantAdminRole),
       };
     }
   );
@@ -48,31 +48,46 @@ const Dashboard = (): JSX.Element => {
                 <GoACard
                   title={<Link to="/admin/access">Access</Link>}
                   description="Access allows you to add a secure sign in to you application and services with minimum effort and configuration. No need to deal with storing or authenticating users. It's all available out of the box."
-                />
+                >
+                  <div>
+                    Access allows you to add a secure sign in to you application and services with minimum effort and
+                    configuration. No need to deal with storing or authenticating users. It's all available out of the
+                    box.
+                  </div>
+                </GoACard>
               </GridItem>
               <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                <GoACard
-                  title={<Link to="/admin/services/files">File Service</Link>}
-                  description="The file service provides the capability to upload and download files. Consumers are registered with their own space (tenant) containing file types that include role based access policy, and can associate files to domain records."
-                />
+                <GoACard title={<Link to="/admin/services/files">File Service</Link>}>
+                  <div>
+                    The file service provides the capability to upload and download files. Consumers are registered with
+                    their own space (tenant) containing file types that include role based access policy, and can
+                    associate files to domain records.
+                  </div>
+                </GoACard>
               </GridItem>
               <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                <GoACard
-                  title={<Link to="/admin/services/status">Status</Link>}
-                  description="The status service allows for easy monitoring of application downtime. Each Application should represent a service that is useful to the end user by itself, such as child care subsidy and child care certification."
-                />
+                <GoACard title={<Link to="/admin/services/status">Status</Link>}>
+                  <div>
+                    The status service allows for easy monitoring of application downtime. Each Application should
+                    represent a service that is useful to the end user by itself, such as child care subsidy and child
+                    care certification.
+                  </div>
+                </GoACard>
               </GridItem>
               <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                <GoACard
-                  title={<Link to="/admin/services/events">Events</Link>}
-                  description="The event service provides tenant applications with the ability to send domain events. Applications are able to leverage additional capabilities as side effects through these events."
-                />
+                <GoACard title={<Link to="/admin/services/events">Events</Link>}>
+                  <div>
+                    The event service provides tenant applications with the ability to send domain events. Applications
+                    are able to leverage additional capabilities as side effects through these events.
+                  </div>
+                </GoACard>
               </GridItem>
               <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                <GoACard
-                  title={<Link to="/admin/services/notifications">Notifications</Link>}
-                  description="The notifications service provides tenant applications with the ability to configure notifications."
-                />
+                <GoACard title={<Link to="/admin/services/notifications">Notifications</Link>}>
+                  <div>
+                    The notifications service provides tenant applications with the ability to configure notifications.
+                  </div>
+                </GoACard>
               </GridItem>
             </Grid>
           </Main>

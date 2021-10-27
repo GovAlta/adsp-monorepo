@@ -20,6 +20,8 @@ components:
     File:
       type: object
       properties:
+        urn:
+          type: string
         id:
           type: string
         filename:

@@ -1,5 +1,5 @@
-import { adspId, User } from '@abgov/adsp-service-sdk';
-import { New } from '@core-services/core-common';
+import { adspId, Channel, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { InvalidOperationError, New } from '@core-services/core-common';
 import { SubscriptionRepository } from '../repository';
 import { ServiceUserRoles, Subscriber } from '../types';
 import { SubscriberEntity } from './subscriber';
@@ -16,8 +16,15 @@ describe('SubscriberEntity', () => {
     saveSubscriber: jest.fn((entity: SubscriberEntity) => Promise.resolve(entity)),
   };
 
+  const verifyServiceMock = {
+    sendCode: jest.fn(),
+    verifyCode: jest.fn(),
+  };
+
   beforeEach(() => {
     repositoryMock.deleteSubscriber.mockReset();
+    verifyServiceMock.sendCode.mockReset();
+    verifyServiceMock.verifyCode.mockReset();
   });
 
   it('can be created', () => {
@@ -175,8 +182,58 @@ describe('SubscriberEntity', () => {
 
       const updated = await entity.update({ tenantId, roles: [ServiceUserRoles.SubscriptionAdmin] } as User, {
         addressAs: 'Mr. Tester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'testy@test.co',
+            verified: false,
+          },
+        ],
       });
       expect(updated.addressAs).toBe('Mr. Tester');
+    });
+
+    it('can update channels and retain verify status', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const entity = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+        tenantId,
+        id: 'test',
+        userId: 'test-user',
+        addressAs: 'Testy McTester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'testy@test.co',
+            verified: true,
+          },
+        ],
+      });
+
+      const updated = await entity.update({ tenantId, roles: [ServiceUserRoles.SubscriptionAdmin] } as User, {
+        addressAs: 'Mr. Tester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'testy-2@test.co',
+            verified: false,
+          },
+          {
+            channel: Channel.email,
+            address: 'testy@test.co',
+            verified: false,
+          },
+        ],
+      });
+      expect(updated.channels[0]).toMatchObject({
+        channel: Channel.email,
+        address: 'testy-2@test.co',
+        verified: false,
+      });
+      expect(updated.channels[1]).toMatchObject({
+        channel: Channel.email,
+        address: 'testy@test.co',
+        verified: true,
+      });
     });
 
     it('can throw for unauthorized', () => {
@@ -224,6 +281,313 @@ describe('SubscriberEntity', () => {
       });
 
       expect(() => entity.delete({ tenantId, roles: [] } as User)).toThrow(/User not authorized to delete subscriber./);
+    });
+  });
+
+  describe('sendVerifyCode', () => {
+    it('can send code', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const entity = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+        tenantId,
+        id: 'test',
+        userId: 'test-user',
+        addressAs: 'Testy McTester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'tester@test.com',
+            verified: false,
+          },
+        ],
+      });
+
+      await entity.sendVerifyCode(
+        verifyServiceMock,
+        { tenantId, roles: [ServiceUserRoles.SubscriptionAdmin] } as User,
+        Channel.email,
+        'tester@test.com'
+      );
+      expect(verifyServiceMock.sendCode).toHaveBeenCalledWith(
+        entity.channels[0],
+        'Enter this code to verify your contact address.'
+      );
+    });
+
+    it('can send code for self', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const entity = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+        tenantId,
+        id: 'test',
+        userId: 'test-user',
+        addressAs: 'Testy McTester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'tester@test.com',
+            verified: false,
+          },
+        ],
+      });
+
+      await entity.sendVerifyCode(
+        verifyServiceMock,
+        { tenantId, id: 'test-user', roles: [] } as User,
+        Channel.email,
+        'tester@test.com'
+      );
+      expect(verifyServiceMock.sendCode).toHaveBeenCalledWith(
+        entity.channels[0],
+        'Enter this code to verify your contact address.'
+      );
+    });
+
+    it('can send code as code-sender', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const entity = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+        tenantId,
+        id: 'test',
+        userId: 'test-user',
+        addressAs: 'Testy McTester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'tester@test.com',
+            verified: false,
+          },
+        ],
+      });
+
+      await entity.sendVerifyCode(
+        verifyServiceMock,
+        { tenantId, roles: [ServiceUserRoles.CodeSender] } as User,
+        Channel.email,
+        'tester@test.com'
+      );
+      expect(verifyServiceMock.sendCode).toHaveBeenCalledWith(
+        entity.channels[0],
+        'Enter this code to verify your contact address.'
+      );
+    });
+
+    it('can throw for unrecognized channel', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const entity = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+        tenantId,
+        id: 'test',
+        userId: 'test-user',
+        addressAs: 'Testy McTester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'tester@test.com',
+            verified: false,
+          },
+        ],
+      });
+
+      await expect(
+        entity.sendVerifyCode(
+          verifyServiceMock,
+          { tenantId, roles: [ServiceUserRoles.SubscriptionAdmin] } as User,
+          Channel.email,
+          'unknown@test.com'
+        )
+      ).rejects.toThrowError(InvalidOperationError);
+    });
+
+    it('can throw for unauthorized user', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const entity = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+        tenantId,
+        id: 'test',
+        userId: 'test-user',
+        addressAs: 'Testy McTester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'tester@test.com',
+            verified: false,
+          },
+        ],
+      });
+
+      await expect(
+        entity.sendVerifyCode(verifyServiceMock, { tenantId, roles: [] } as User, Channel.email, 'tester@test.com')
+      ).rejects.toThrowError(UnauthorizedUserError);
+    });
+  });
+
+  describe('checkVerifyCode', () => {
+    it('can check code', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const entity = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+        tenantId,
+        id: 'test',
+        userId: 'test-user',
+        addressAs: 'Testy McTester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'tester@test.com',
+            verified: false,
+          },
+        ],
+      });
+
+      verifyServiceMock.verifyCode.mockResolvedValueOnce(true);
+
+      await entity.checkVerifyCode(
+        verifyServiceMock,
+        { tenantId, roles: [ServiceUserRoles.SubscriptionAdmin] } as User,
+        Channel.email,
+        'tester@test.com',
+        '123'
+      );
+      expect(verifyServiceMock.verifyCode).toHaveBeenCalledWith(entity.channels[0], '123');
+      expect(entity.channels[0].verified).toBe(false);
+    });
+
+    it('can check code and verify channel.', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const entity = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+        tenantId,
+        id: 'test',
+        userId: 'test-user',
+        addressAs: 'Testy McTester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'tester@test.com',
+            verified: false,
+          },
+        ],
+      });
+
+      verifyServiceMock.verifyCode.mockResolvedValueOnce(true);
+
+      await entity.checkVerifyCode(
+        verifyServiceMock,
+        { tenantId, roles: [ServiceUserRoles.SubscriptionAdmin] } as User,
+        Channel.email,
+        'tester@test.com',
+        '123',
+        true
+      );
+      expect(verifyServiceMock.verifyCode).toHaveBeenCalledWith(entity.channels[0], '123');
+      expect(entity.channels[0].verified).toBe(true);
+    });
+
+    it('can check code as code-sender', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const entity = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+        tenantId,
+        id: 'test',
+        userId: 'test-user',
+        addressAs: 'Testy McTester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'tester@test.com',
+            verified: false,
+          },
+        ],
+      });
+
+      verifyServiceMock.verifyCode.mockResolvedValueOnce(true);
+
+      await entity.checkVerifyCode(
+        verifyServiceMock,
+        { tenantId, roles: [ServiceUserRoles.CodeSender] } as User,
+        Channel.email,
+        'tester@test.com',
+        '123'
+      );
+      expect(verifyServiceMock.verifyCode).toHaveBeenCalledWith(entity.channels[0], '123');
+      expect(entity.channels[0].verified).toBe(false);
+    });
+
+    it('can throw for verify channel as code-sender', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const entity = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+        tenantId,
+        id: 'test',
+        userId: 'test-user',
+        addressAs: 'Testy McTester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'tester@test.com',
+            verified: false,
+          },
+        ],
+      });
+
+      verifyServiceMock.verifyCode.mockResolvedValueOnce(true);
+
+      await expect(
+        entity.checkVerifyCode(
+          verifyServiceMock,
+          { tenantId, roles: [ServiceUserRoles.CodeSender] } as User,
+          Channel.email,
+          'tester@test.com',
+          '123',
+          true
+        )
+      ).rejects.toThrowError(UnauthorizedUserError);
+    });
+
+    it('can throw for unrecognized channel', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const entity = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+        tenantId,
+        id: 'test',
+        userId: 'test-user',
+        addressAs: 'Testy McTester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'tester@test.com',
+            verified: false,
+          },
+        ],
+      });
+
+      await expect(
+        entity.checkVerifyCode(
+          verifyServiceMock,
+          { tenantId, roles: [ServiceUserRoles.SubscriptionAdmin] } as User,
+          Channel.email,
+          'unknown@test.com',
+          '123'
+        )
+      ).rejects.toThrowError(InvalidOperationError);
+    });
+
+    it('can throw for unauthorized user', async () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const entity = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+        tenantId,
+        id: 'test',
+        userId: 'test-user',
+        addressAs: 'Testy McTester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'tester@test.com',
+            verified: false,
+          },
+        ],
+      });
+
+      await expect(
+        entity.checkVerifyCode(
+          verifyServiceMock,
+          { tenantId, roles: [] } as User,
+          Channel.email,
+          'tester@test.com',
+          '123'
+        )
+      ).rejects.toThrowError(UnauthorizedUserError);
     });
   });
 });

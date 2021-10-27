@@ -49,7 +49,7 @@ export class AdspId {
     public service: string,
     public api: string,
     public resource: string
-  ) { }
+  ) {}
 
   #formatSegment = (segment: string): string => {
     return segment ? `:${segment}` : '';
@@ -68,9 +68,9 @@ export class AdspId {
  * @param parameters
  * @returns Parsed AdspId
  */
-export function adspId(strings: TemplateStringsArray, ...parameters: string[]): AdspId {
+export function adspId(strings: TemplateStringsArray, ...parameters: unknown[]): AdspId {
   const combined = strings.reduce((result, string, i) => {
-    return result + string + (parameters[i] || '');
+    return result + string + (`${parameters[i] || ''}`);
   }, '');
 
   return AdspId.parse(combined);

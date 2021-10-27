@@ -14,7 +14,7 @@ class VerifyServiceImpl implements VerifyService {
 
   constructor(private readonly logger: Logger, private readonly repository: CodeRepository) {}
 
-  @AssertRole('generate code', VerifyUserRoles.Generator)
+  @AssertRole('generate code', VerifyUserRoles.Generator, null, true)
   async generate(user: User, key: string, expireIn = 10) {
     this.logger.debug(`Generating new verify code at key '${key}' for user ${user.name} (ID: ${user.id})...`, {
       ...this.LOG_CONTEXT,
@@ -33,7 +33,7 @@ class VerifyServiceImpl implements VerifyService {
     return { key, code, expiresAt };
   }
 
-  @AssertRole('verify code', VerifyUserRoles.Verifier)
+  @AssertRole('verify code', VerifyUserRoles.Verifier, null, true)
   async verify(user: User, key: string, code: string) {
     this.logger.debug(`Verifying code at key '${key}' for user ${user.name} (ID: ${user.id})...`, {
       ...this.LOG_CONTEXT,
@@ -69,7 +69,7 @@ class VerifyServiceImpl implements VerifyService {
   }
 
   private getCacheKey(user: User, key: string) {
-    const prefix = user.tenantId.resource;
+    const prefix = user.tenantId?.resource || 'core';
     return `${prefix}:${key}`;
   }
 }

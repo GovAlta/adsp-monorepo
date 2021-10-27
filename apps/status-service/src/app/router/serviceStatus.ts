@@ -1,26 +1,26 @@
 import type { User } from '@abgov/adsp-service-sdk';
 import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
-import axios, { AxiosRequestConfig } from 'axios';
 import { Router } from 'express';
 import { Logger } from 'winston';
 import { ServiceStatusApplicationEntity } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { PublicServiceStatusType } from '../types';
-import { environment } from '../../environments/environment';
-import { TenantService } from '@abgov/adsp-service-sdk';
+import { TenantService, EventService } from '@abgov/adsp-service-sdk';
+import { applicationStatusToStarted, applicationStatusToStopped } from '../events';
 
 export interface ServiceStatusRouterProps {
   logger: Logger;
   tenantService: TenantService;
+  eventService: EventService;
   serviceStatusRepository: ServiceStatusRepository;
   endpointStatusEntryRepository: EndpointStatusEntryRepository;
 }
-
 export function createServiceStatusRouter({
   logger,
   serviceStatusRepository,
   tenantService,
+  eventService,
   endpointStatusEntryRepository,
 }: ServiceStatusRouterProps): Router {
   const router = Router();
@@ -74,13 +74,11 @@ export function createServiceStatusRouter({
 
     const user = req.user;
     const { name, description, endpoint } = req.body;
-    const tenant = await tenantService.getTenant(user.tenantId)
-
+    const tenant = await tenantService.getTenant(user.tenantId);
 
     try {
       const tenantName = tenant.name;
       const tenantRealm = tenant.realm;
-
       const app = await ServiceStatusApplicationEntity.create({ ...(req.user as User) }, serviceStatusRepository, {
         name,
         description,
@@ -95,7 +93,6 @@ export function createServiceStatusRouter({
       });
 
       res.status(201).json(app);
-
     } catch (e) {
       res.status(400).send(e.message);
     }
@@ -166,6 +163,12 @@ export function createServiceStatusRouter({
     const { id } = req.params;
     const application = await serviceStatusRepository.get(id);
 
+    if (!application.enabled) {
+      eventService.send(applicationStatusToStarted(application));
+    } else {
+      eventService.send(applicationStatusToStopped(application));
+    }
+
     if (user.tenantId?.toString() !== application.tenantId) {
       throw new UnauthorizedError('invalid tenant id');
     }
@@ -180,6 +183,9 @@ export function createServiceStatusRouter({
 
     const { tenantId } = req.user;
     const { applicationId } = req.params;
+    const { top: topValue } = req.query;
+    const top = topValue ? parseInt(topValue as string) : 200;
+
     if (!tenantId) {
       throw new UnauthorizedError('missing tenant id');
     }
@@ -194,7 +200,7 @@ export function createServiceStatusRouter({
       throw new UnauthorizedError('invalid tenant id');
     }
 
-    const entries = await endpointStatusEntryRepository.findRecentByUrl(application.endpoint.url);
+    const entries = await endpointStatusEntryRepository.findRecentByUrl(application.endpoint.url, top);
 
     res.send(entries);
   });

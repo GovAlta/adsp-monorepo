@@ -4,7 +4,12 @@ import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
 import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
-import { AjvValidationService, createLogger, createErrorHandler } from '@core-services/core-common';
+import {
+  AjvValidationService,
+  createAmqpConfigUpdateService,
+  createLogger,
+  createErrorHandler,
+} from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { createEventService } from './amqp';
 import { applyEventMiddleware, configurationSchema, EventServiceRoles, Namespace, NamespaceEntity } from './event';
@@ -37,6 +42,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tokenProvider,
     configurationHandler,
     configurationService,
+    clearCached,
     healthCheck,
   } = await initializePlatform(
     {
@@ -62,6 +68,18 @@ const initializeApp = async (): Promise<express.Application> => {
     },
     { logger }
   );
+
+  // This update connection is per instance (when horizontally scaled) rather than
+  // a shared work queue like the regular event queue (for logging, etc.)
+  const configurationSync = await createAmqpConfigUpdateService({
+    ...environment,
+    logger,
+  });
+
+  configurationSync.getItems().subscribe(({ item, done }) => {
+    clearCached(item.tenantId, item.serviceId);
+    done();
+  });
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);

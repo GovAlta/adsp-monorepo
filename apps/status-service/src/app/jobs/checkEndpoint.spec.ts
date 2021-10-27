@@ -20,6 +20,10 @@ describe.skip('Validate endpoint checking', () => {
     token: null,
   };
 
+  const eventServiceMock = {
+    send: jest.fn(),
+  };
+
   beforeEach(async () => {
     mongoose = await connect(process.env.MONGO_URL);
     await model('ServiceStatus').deleteMany({});
@@ -55,6 +59,7 @@ describe.skip('Validate endpoint checking', () => {
     const job = createCheckEndpointJob({
       application,
       serviceStatusRepository,
+      eventService: eventServiceMock,
       endpointStatusEntryRepository,
       getter: (_url: string) => {
         if (res.status > 400) {

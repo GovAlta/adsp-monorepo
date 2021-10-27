@@ -1,15 +1,21 @@
+import { adspId, AdspId } from '@abgov/adsp-service-sdk';
 import { NotificationTypeEntity, SubscriberEntity, SubscriptionEntity } from '../model';
 import { NotificationType } from '../types';
 
-export const mapSubscriber = (subscriber: SubscriberEntity): unknown => ({
+export const mapSubscriber = (apiId: AdspId, subscriber: SubscriberEntity): unknown => ({
   id: subscriber.id,
+  urn: adspId`${apiId}:/subscribers/${subscriber.id}`,
   addressAs: subscriber.addressAs,
-  channels: subscriber.channels,
+  channels: subscriber.channels?.map((c) => ({
+    channel: c.channel,
+    address: c.address,
+    verified: c.verified,
+  })),
   userId: subscriber.userId,
 });
 
-export const mapSubscription = (subscription: SubscriptionEntity): unknown => ({
-  subscriber: subscription.subscriber ? mapSubscriber(subscription.subscriber) : null,
+export const mapSubscription = (apiId: AdspId, subscription: SubscriptionEntity): unknown => ({
+  subscriber: subscription.subscriber ? mapSubscriber(apiId, subscription.subscriber) : null,
   typeId: subscription.typeId,
   criteria: subscription.criteria,
 });

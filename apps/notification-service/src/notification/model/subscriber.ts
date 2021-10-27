@@ -1,10 +1,11 @@
-import { AdspId, isAllowedUser, User } from '@abgov/adsp-service-sdk';
-import { New, UnauthorizedError, Update } from '@core-services/core-common';
+import { AdspId, Channel, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { InvalidOperationError, New, UnauthorizedError, Update } from '@core-services/core-common';
+import { VerifyService } from '../verify';
 import { SubscriptionRepository } from '../repository';
-import { Subscriber, Channel, ServiceUserRoles } from '../types';
+import { Subscriber, ServiceUserRoles, SubscriberChannel } from '../types';
 
 export class SubscriberEntity implements Subscriber {
-  channels: { channel: Channel; address: string }[] = [];
+  channels: SubscriberChannel[] = [];
   userId?: string;
   tenantId: AdspId;
   id: string;
@@ -13,7 +14,7 @@ export class SubscriberEntity implements Subscriber {
   static canCreate(user: User, subscriber: New<Subscriber>): boolean {
     // User is an subscription admin, or user is creating a subscriber for self.
     return (
-      isAllowedUser(user, subscriber.tenantId, [ServiceUserRoles.SubscriptionAdmin], true) ||
+      isAllowedUser(user, subscriber.tenantId, [ServiceUserRoles.SubscriptionAdmin, ServiceUserRoles.SubscriptionApp], true) ||
       (!!user && user.tenantId?.toString() === subscriber.tenantId.toString() && user?.id === subscriber.userId)
     );
   }
@@ -46,7 +47,8 @@ export class SubscriberEntity implements Subscriber {
   canUpdate(user: User): boolean {
     // User is an subscription admin, or is the subscribed user.
     return (
-      isAllowedUser(user, this.tenantId, [ServiceUserRoles.SubscriptionAdmin], true) || (!!user && user?.id === this.userId)
+      isAllowedUser(user, this.tenantId, [ServiceUserRoles.SubscriptionAdmin, ServiceUserRoles.SubscriptionApp], true) ||
+      (!!user && user?.id === this.userId)
     );
   }
 
@@ -56,7 +58,12 @@ export class SubscriberEntity implements Subscriber {
     }
 
     if (update.channels) {
-      this.channels = update.channels;
+      // Retain verified status for matching channel/address values.
+      this.channels = update.channels.map(({ channel, address }) => ({
+        channel,
+        address,
+        verified: this.channels.find((c) => c.channel === channel && c.address === address)?.verified || false,
+      }));
     }
 
     if (update.addressAs) {
@@ -72,5 +79,51 @@ export class SubscriberEntity implements Subscriber {
     }
 
     return this.repository.deleteSubscriber(this);
+  }
+
+  async sendVerifyCode(verifyService: VerifyService, user: User, channel: Channel, address: string): Promise<void> {
+    if (!this.canUpdate(user) && !isAllowedUser(user, this.tenantId, ServiceUserRoles.CodeSender, true)) {
+      throw new UnauthorizedUserError('send code to subscriber', user);
+    }
+
+    const verifyChannel = this.channels.find((sub) => sub.channel === channel && sub.address === address);
+    if (!verifyChannel) {
+      throw new InvalidOperationError('Specified subscriber channel not recognized.');
+    }
+
+    verifyChannel.verifyKey = await verifyService.sendCode(
+      verifyChannel,
+      'Enter this code to verify your contact address.'
+    );
+    await this.repository.saveSubscriber(this);
+  }
+
+  async checkVerifyCode(
+    verifyService: VerifyService,
+    user: User,
+    channel: Channel,
+    address: string,
+    code: string,
+    verifyChannel?: boolean
+  ): Promise<boolean> {
+    if (
+      !this.canUpdate(user) &&
+      (verifyChannel || !isAllowedUser(user, this.tenantId, ServiceUserRoles.CodeSender, true))
+    ) {
+      throw new UnauthorizedUserError('verify code', user);
+    }
+
+    const codeChannel = this.channels.find((sub) => sub.channel === channel && sub.address === address);
+    if (!codeChannel) {
+      throw new InvalidOperationError('Specified subscriber channel not recognized.');
+    }
+
+    const verified = await verifyService.verifyCode(codeChannel, code);
+    if (verifyChannel) {
+      codeChannel.verified = verified;
+      await this.repository.saveSubscriber(this);
+    }
+
+    return verified;
   }
 }

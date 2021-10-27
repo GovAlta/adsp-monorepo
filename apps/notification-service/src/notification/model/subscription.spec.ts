@@ -109,6 +109,7 @@ describe('SubscriptionEntity', () => {
       const channel = {
         channel: Channel.email,
         address: 'test@test.co',
+        verified: false,
       };
       const subscriber = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
         tenantId,
@@ -117,6 +118,7 @@ describe('SubscriptionEntity', () => {
           {
             channel: Channel.sms,
             address: '123',
+            verified: false,
           },
           channel,
         ],
@@ -145,6 +147,7 @@ describe('SubscriptionEntity', () => {
           {
             channel: Channel.sms,
             address: '123',
+            verified: false,
           },
         ],
       });

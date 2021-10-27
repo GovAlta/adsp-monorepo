@@ -5,10 +5,11 @@ import { ServiceStatusApplicationEntity } from '../model';
 import { EndpointStatusEntry, ServiceStatusEndpoint } from '../types';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
+import { EventService } from '@abgov/adsp-service-sdk';
+import { applicationStatusToHealthy, applicationStatusToUnhealthy } from '../events';
 
 const ENTRY_SAMPLE_SIZE = 5;
 const MIN_PASS_COUNT = 3;
-const MIN_FAIL_COUNT = 3;
 
 type Getter = (url: string) => Promise<{ status: number | string }>;
 
@@ -17,6 +18,7 @@ export interface CreateCheckEndpointProps {
   application: ServiceStatusApplicationEntity;
   serviceStatusRepository: ServiceStatusRepository;
   endpointStatusEntryRepository: EndpointStatusEntryRepository;
+  eventService: EventService;
   getter: Getter;
 }
 
@@ -67,8 +69,28 @@ async function doRequest(getter: Getter, endpoint: ServiceStatusEndpoint): Promi
   }
 }
 
+const doesPassValidation = (history: EndpointStatusEntry[], EntrySampleSize: number): boolean => {
+  let pass = false
+  let passCount = 0;
+  const recentHistory =
+    history.sort((prev, next) => {return next.timestamp - prev.timestamp}).slice(0, EntrySampleSize);
+
+  if (recentHistory.length < EntrySampleSize) {
+    return false;
+  }
+
+  for (const h of recentHistory) {
+    passCount += h.ok ? 1 : 0;
+
+    if (passCount >= MIN_PASS_COUNT) {
+      pass = true;
+      return pass
+    }
+  }
+}
+
 async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStatusEntry) {
-  const { application, serviceStatusRepository, endpointStatusEntryRepository } = props;
+  const { application, serviceStatusRepository, endpointStatusEntryRepository, eventService, logger } = props;
 
   // overall status for application endpoints
   let allEndpointsUp = true;
@@ -78,43 +100,35 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
   await EndpointStatusEntryEntity.create(endpointStatusEntryRepository, statusEntry);
 
   // verify that in the last [ENTRY_SAMPLE_SIZE] minutes, at least [MIN_OK_COUNT] are ok
-  const history = await (await endpointStatusEntryRepository.findRecentByUrl(application.endpoint.url));
-  const recentHistory = history.slice(history.length - ENTRY_SAMPLE_SIZE);
-
-  let pass = false,
-    fail = false;
-  let failCount = 0,
-    passCount = 0;
-
-  for (const h of recentHistory) {
-    passCount += h.ok ? 1 : 0;
-    failCount += h.ok ? 0 : 1;
-
-    if (passCount >= MIN_PASS_COUNT) {
-      pass = true;
-      break;
-    }
-    if (failCount >= MIN_FAIL_COUNT) {
-      fail = true;
-      break;
-    }
-  }
+  const recentHistory = (await endpointStatusEntryRepository.findRecentByUrl(application.endpoint.url, ENTRY_SAMPLE_SIZE));
+  const pass = doesPassValidation(recentHistory, ENTRY_SAMPLE_SIZE);
 
   // if it doesn't pass or fail, it retains the initial value
   if (pass) {
     application.endpoint.status = 'online';
     allEndpointsUp = true;
-    isStatusChanged = true;
-  } else if (fail) {
+    isStatusChanged = application.internalStatus !== 'healthy';
+
+  } else {
     application.endpoint.status = 'offline';
     allEndpointsUp = false;
-    isStatusChanged = true;
+    isStatusChanged = application.internalStatus !== 'unhealthy';
   }
 
   // set the application status based on the endpoints
   if (isStatusChanged) {
     application.internalStatus = allEndpointsUp ? 'healthy' : 'unhealthy';
 
+    if (allEndpointsUp) {
+      logger.info(`Application: ${application.name} with id ${application._id} status changed to healthy`)
+      eventService.send(applicationStatusToHealthy(application));
+    } else {
+      logger.info(`Application: ${application.name} with id ${application._id} status changed to unhealthy`)
+      eventService.send(applicationStatusToUnhealthy(
+        application, `The application ${application.name} with id ${application._id} becomes unhealthy.`));
+    }
+
+    //TODO: add healthy and unhealthy events
     await serviceStatusRepository
       .save(application)
       .catch((err) => console.error('failed to update service status: ', err));
