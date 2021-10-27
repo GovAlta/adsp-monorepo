@@ -13,7 +13,7 @@ import { createEventService, EventService } from './event';
 import { createHealthCheck, PlatformHealthCheck } from './healthCheck';
 import { createServiceRegistrar, ServiceRegistration } from './registration';
 import { createTenantHandler, createTenantService, TenantService } from './tenant';
-import { AdspId, createLogger } from './utils';
+import { adspId, AdspId, createLogger } from './utils';
 
 interface AdspOptions extends ServiceRegistration {
   /** Client Secret: Client secret of the service. */
@@ -92,7 +92,7 @@ export async function initializePlatform(
   const coreStrategy = createCoreStrategy({ logger, serviceId, accessServiceUrl, ignoreServiceAud });
 
   const tenantService = service?.tenantService || createTenantService({ logger, directory, tokenProvider });
-  const tenantHandler = createTenantHandler(tenantService);
+  const tenantHandler = createTenantHandler(adspId`urn:ads:platform:tenant-service:v2`, tenantService);
   const tenantStrategy = createTenantStrategy({ logger, serviceId, accessServiceUrl, tenantService, ignoreServiceAud });
 
   let configurationService = service?.configurationService;

@@ -72,8 +72,10 @@ export function getTypeSubscriptions(apiId: AdspId, repository: SubscriptionRepo
 export function createTypeSubscription(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
   return async (req, res, next) => {
     try {
+      const tenant = req.tenant;
       const user = req.user as User;
       const type: NotificationTypeEntity = req[TYPE_KEY];
+      const { criteria, ...subscriberInfo } = req.body;
       const subscriber: Subscriber =
         req.query.userSub === 'true'
           ? {
@@ -87,18 +89,29 @@ export function createTypeSubscription(apiId: AdspId, repository: SubscriptionRe
                 },
               ],
             }
-          : { ...req.body, tenantId: user.tenantId };
+          : {
+              ...subscriberInfo,
+              tenantId: req.tenant.id,
+            };
+
+      if (!tenant) {
+        throw new InvalidOperationError('Tenant context is required.');
+      }
+
       let subscriberEntity: SubscriberEntity = null;
       if (subscriber.userId) {
         // Try to find an existing subscriber associated with the user ID.
-        subscriberEntity = await repository.getSubscriber(user.tenantId, subscriber.userId, true);
+        subscriberEntity = await repository.getSubscriber(tenant.id, subscriber.userId, true);
       }
 
       if (!subscriberEntity) {
         subscriberEntity = await SubscriberEntity.create(user, repository, subscriber);
       }
 
-      const subscription = await type.subscribe(repository, user, subscriberEntity);
+      const subscription = await type.subscribe(repository, user, subscriberEntity, {
+        correlationId: criteria?.correlationId,
+        context: criteria?.context,
+      });
       res.send(mapSubscription(apiId, subscription));
     } catch (err) {
       next(err);
@@ -109,11 +122,16 @@ export function createTypeSubscription(apiId: AdspId, repository: SubscriptionRe
 export function addTypeSubscription(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
   return async (req, res, next) => {
     try {
-      const user = req.user as User;
+      const tenant = req.tenant;
+      const user = req.user;
       const type: NotificationTypeEntity = req[TYPE_KEY];
       const { subscriber } = req.params;
 
-      const subscriberEntity = await repository.getSubscriber(req.user.tenantId, subscriber, false);
+      if (!tenant) {
+        throw new InvalidOperationError('Tenant context is required.');
+      }
+
+      const subscriberEntity = await repository.getSubscriber(tenant.id, subscriber, false);
       if (!subscriberEntity) {
         throw new NotFoundError('Subscriber', subscriber);
       }
@@ -143,11 +161,16 @@ export function getTypeSubscription(apiId: AdspId, repository: SubscriptionRepos
 export function deleteTypeSubscription(repository: SubscriptionRepository): RequestHandler {
   return async (req, res, next) => {
     try {
+      const tenant = req.tenant;
       const type: NotificationTypeEntity = req[TYPE_KEY];
       const user = req.user as User;
       const { subscriber } = req.params;
 
-      const subscriberEntity = await repository.getSubscriber(user.tenantId, subscriber);
+      if (!tenant) {
+        throw new InvalidOperationError('Tenant context is required.');
+      }
+
+      const subscriberEntity = await repository.getSubscriber(tenant.id, subscriber);
       const result = await type.unsubscribe(repository, user, subscriberEntity);
       res.send({ deleted: result });
     } catch (err) {
@@ -159,14 +182,19 @@ export function deleteTypeSubscription(repository: SubscriptionRepository): Requ
 export function getSubscribers(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
   return async (req, res, next) => {
     try {
+      const tenant = req.tenant;
       const { top: topValue, after } = req.query;
       const top = topValue ? parseInt(topValue as string, 10) : 10;
+
+      if (!tenant) {
+        throw new InvalidOperationError('Tenant context is required.');
+      }
 
       if (!req.user?.roles?.includes(ServiceUserRoles.SubscriptionAdmin)) {
         throw new UnauthorizedError('User not authorized to get subscribers');
       }
 
-      const result = await repository.findSubscribers(top, after as string, { tenantIdEquals: req.user.tenantId });
+      const result = await repository.findSubscribers(top, after as string, { tenantIdEquals: tenant.id });
       res.send({
         results: result.results.map((r) => mapSubscriber(apiId, r)),
         page: result.page,
@@ -180,7 +208,8 @@ export function getSubscribers(apiId: AdspId, repository: SubscriptionRepository
 export function createSubscriber(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
   return async (req, res, next) => {
     try {
-      const user = req.user as User;
+      const tenant = req.tenant;
+      const user = req.user;
       const subscriber: Subscriber =
         req.query.userSub === 'true'
           ? {
@@ -194,7 +223,7 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
                 },
               ],
             }
-          : { ...req.body, tenantId: user.tenantId };
+          : { ...req.body, tenantId: tenant.id };
 
       const subscriberEntity = await SubscriberEntity.create(user, repository, subscriber);
       res.send(mapSubscriber(apiId, subscriberEntity));
@@ -208,10 +237,14 @@ const SUBSCRIBER_KEY = 'subscriber';
 export function getSubscriber(repository: SubscriptionRepository): RequestHandler {
   return async (req, _res, next) => {
     try {
-      const user = req.user;
+      const tenant = req.tenant;
       const { subscriber } = req.params;
 
-      const entity = await repository.getSubscriber(user.tenantId, subscriber);
+      if (!tenant) {
+        throw new InvalidOperationError('Tenant context is required.');
+      }
+
+      const entity = await repository.getSubscriber(tenant.id, subscriber);
       if (!entity) {
         throw new NotFoundError('Subscriber', subscriber);
       }

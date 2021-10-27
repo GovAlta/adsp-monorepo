@@ -44,6 +44,7 @@ async function initializeApp() {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const {
+    coreStrategy,
     tenantStrategy,
     tenantHandler,
     tokenProvider,
@@ -84,7 +85,8 @@ async function initializeApp() {
     { logger }
   );
 
-  passport.use('jwt', tenantStrategy);
+  passport.use('core', coreStrategy);
+  passport.use('tenant', tenantStrategy);
 
   passport.serializeUser(function (user, done) {
     done(null, user);
@@ -95,7 +97,12 @@ async function initializeApp() {
   });
 
   app.use(passport.initialize());
-  app.use('/subscription', passport.authenticate(['jwt'], { session: false }), tenantHandler, configurationHandler);
+  app.use(
+    '/subscription',
+    passport.authenticate(['core', 'tenant'], { session: false }),
+    tenantHandler,
+    configurationHandler
+  );
 
   const { installationStore, ...repositories } = await createRepositories({ ...environment, logger });
 
