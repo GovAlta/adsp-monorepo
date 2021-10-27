@@ -83,6 +83,9 @@ describe('subscription router', () => {
   describe('getNotificationTypes', () => {
     it('can get types', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         getConfiguration: jest.fn(),
       };
       const res = { send: jest.fn() };
@@ -97,6 +100,9 @@ describe('subscription router', () => {
   describe('getNotificationType', () => {
     it('can get type', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         params: { type: 'test' },
         getConfiguration: jest.fn(),
       };
@@ -112,6 +118,9 @@ describe('subscription router', () => {
 
     it('can call next with not found', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         params: { type: 'not-there' },
         getConfiguration: jest.fn(),
       };
@@ -132,6 +141,9 @@ describe('subscription router', () => {
 
     it('can get subscriptions', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         query: {},
         notificationType: new NotificationTypeEntity(notificationType, tenantId),
       };
@@ -148,6 +160,9 @@ describe('subscription router', () => {
 
     it('can get handle query params', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         query: { top: '11', after: '123' },
         notificationType: new NotificationTypeEntity(notificationType, tenantId),
       };
@@ -172,6 +187,9 @@ describe('subscription router', () => {
 
     it('can create subscription', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           tenantId,
           roles: [ServiceUserRoles.SubscriptionAdmin],
@@ -205,6 +223,9 @@ describe('subscription router', () => {
 
     it('can create user subscription', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -247,6 +268,9 @@ describe('subscription router', () => {
 
     it('can create subscription for existing subscriber', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -291,6 +315,9 @@ describe('subscription router', () => {
 
     it('can add subscription', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -327,6 +354,9 @@ describe('subscription router', () => {
 
     it('can call next with not found', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -357,6 +387,9 @@ describe('subscription router', () => {
 
     it('can get subscription', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -402,6 +435,9 @@ describe('subscription router', () => {
 
     it('can delete subscription', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -441,6 +477,9 @@ describe('subscription router', () => {
 
     it('can get subscribers', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -465,6 +504,9 @@ describe('subscription router', () => {
 
     it('can get subscribers with query params', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -494,6 +536,9 @@ describe('subscription router', () => {
 
     it('can call next with error for non-admin', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -522,6 +567,9 @@ describe('subscription router', () => {
 
     it('can create subscriber', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           tenantId,
           roles: [ServiceUserRoles.SubscriptionAdmin],
@@ -548,6 +596,9 @@ describe('subscription router', () => {
 
     it('can create user subscriber', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -590,6 +641,9 @@ describe('subscription router', () => {
 
     it('can get subscriber', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -621,6 +675,9 @@ describe('subscription router', () => {
 
     it('can call next with not found.', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -653,6 +710,9 @@ describe('subscription router', () => {
       });
 
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -681,6 +741,9 @@ describe('subscription router', () => {
       });
 
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -715,6 +778,9 @@ describe('subscription router', () => {
       });
 
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -744,6 +810,9 @@ describe('subscription router', () => {
       });
 
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -785,6 +854,9 @@ describe('subscription router', () => {
       });
 
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -831,6 +903,9 @@ describe('subscription router', () => {
       });
 
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -874,6 +949,9 @@ describe('subscription router', () => {
       });
 
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -917,6 +995,9 @@ describe('subscription router', () => {
       });
 
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
