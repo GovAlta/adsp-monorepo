@@ -1,0 +1,47 @@
+name: Nightly Regression
+
+on:
+  schedule:
+    - cron: "15 3 * * *"
+
+jobs:
+  testRegression:
+    runs-on: ubuntu-20.04
+    environment:
+      name: Test-e2e
+    strategy:
+      matrix:
+        app: [tenant-management-webapp, status-app]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "12"
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      - run: |
+          sed -i -r \
+            -e "s/\"TAGS\":.+\"\"/\"TAGS\": \"@regression and not @ignore\"/" \
+            -e "s/\"core-api-client-secret\":.+\"\"/\"core-api-client-secret\": \"${{ secrets.CY_CORE_API_CLIENT_SECRET }}\"/" \
+            -e "s/\"core-api-user-password\":.+\"\"/\"core-api-user-password\": \"${{ secrets.CY_CORE_API_USER_PASSWORD }}\"/" \
+            -e "s/\"client-secret\":.+\"\"/\"client-secret\": \"${{ secrets.CY_CLIENT_SECRET }}\"/" \
+            -e "s/\"password\":.+\"\"/\"password\": \"${{ secrets.CY_PASSWORD }}\"/" \
+            -e "s/\"password2\":.+\"\"/\"password2\": \"${{ secrets.CY_PASSWORD2 }}\"/" \
+            -e "s/\"password3\":.+\"\"/\"password3\": \"${{ secrets.CY_PASSWORD3 }}\"/" \
+            apps/${{ matrix.app }}-e2e/cypress.test.json
+      - name: E2E Test
+        uses: cypress-io/github-action@v2
+        with:
+          install-command: npm ci
+          command: npx nx e2e ${{ matrix.app }}-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config="apps/${{ matrix.app }}-e2e/cypress.test.json"
+      - if: ${{ always() }}
+        run: |
+          node apps/${{ matrix.app }}-e2e/src/support/multiple-cucumber-html-reporter.js
+      - if: ${{ always() }}
+        name: Upload Cypress Results
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.app }}-test-cypress-reports
+          path: dist/cypress/apps/${{ matrix.app }}-e2e/
