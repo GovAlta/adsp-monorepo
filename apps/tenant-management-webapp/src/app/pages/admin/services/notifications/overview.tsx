@@ -1,6 +1,15 @@
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useState } from 'react';
+import { GoAButton } from '@abgov/react-components';
+import { useHistory } from 'react-router-dom';
 
-export const NotificationsOverview: FunctionComponent = () => {
+interface ParentCompProps {
+  setActiveEdit?: (boolean) => void;
+}
+
+export const NotificationsOverview: FunctionComponent<ParentCompProps> = (props) => {
+  const history = useHistory();
+  const { setActiveEdit } = props;
+
   return (
     <div>
       <p>
@@ -8,6 +17,15 @@ export const NotificationsOverview: FunctionComponent = () => {
         event service. This service also includes a concept of subscriptions and subscribers to support management of
         subscriber preferences and unsubscribe.
       </p>
+      <GoAButton
+        data-testid="add-notification-overview"
+        buttonSize="small"
+        onClick={() => {
+          setActiveEdit(true);
+        }}
+      >
+        Add a notification type
+      </GoAButton>
     </div>
   );
 };
