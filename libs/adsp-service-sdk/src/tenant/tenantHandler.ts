@@ -1,12 +1,12 @@
 import type { RequestHandler } from 'express';
-import { AdspId, adspId } from '../utils';
+import { AdspId } from '../utils';
 import { TenantService } from './tenantService';
 
 export const createTenantHandler =
-  (tenantApiId: AdspId, service: TenantService): RequestHandler =>
+  (service: TenantService): RequestHandler =>
   async (req, _res, next) => {
-    const { tenant } = req?.query;
-    const tenantId = req.user?.isCore && tenant ? adspId`${tenantApiId}:/tenants/${tenant}` : req.user?.tenantId;
+    const { tenantId: tenantIdValue } = req.query;
+    const tenantId = req.user?.isCore && tenantIdValue ? AdspId.parse(tenantIdValue as string) : req.user?.tenantId;
     if (tenantId) {
       try {
         const tenant = await service.getTenant(tenantId);

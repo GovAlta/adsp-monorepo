@@ -15,12 +15,12 @@ describe('createTenantHandler', () => {
   });
 
   it('can create handler', () => {
-    const handler = createTenantHandler(tenantApiId, serviceMock);
+    const handler = createTenantHandler(serviceMock);
     expect(handler).toBeTruthy();
   });
 
   it('can set request tenant', (done) => {
-    const handler = createTenantHandler(tenantApiId, serviceMock);
+    const handler = createTenantHandler(serviceMock);
 
     const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
     const tenant = { id: tenantId, name: 'test', realm: 'test' };
@@ -35,8 +35,41 @@ describe('createTenantHandler', () => {
     handler(req, {} as unknown as Response, next);
   });
 
+  it('can set request tenant from query', (done) => {
+    const handler = createTenantHandler(serviceMock);
+
+    const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+    const tenant = { id: tenantId, name: 'test', realm: 'test' };
+
+    const req: Request = { user: { isCore: true }, query: { tenantId: tenantId.toString() } } as unknown as Request;
+    const next = () => {
+      expect(req.tenant).toBe(tenant);
+      done();
+    };
+
+    serviceMock.getTenant.mockReturnValueOnce(Promise.resolve(tenant));
+    handler(req, {} as unknown as Response, next);
+  });
+
+  it('can ignore request tenant from query for non core user', (done) => {
+    const handler = createTenantHandler(serviceMock);
+
+    const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+    const tenant = { id: tenantId, name: 'test', realm: 'test' };
+
+    const req: Request = { user: { tenantId }, query: { tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/test2' } } as unknown as Request;
+    const next = () => {
+      expect(req.tenant).toBe(tenant);
+      done();
+    };
+
+    serviceMock.getTenant.mockReturnValueOnce(Promise.resolve(tenant));
+    handler(req, {} as unknown as Response, next);
+    expect(serviceMock.getTenant).toHaveBeenCalledWith(tenantId);
+  });
+
   it('can ignore request without user.', (done) => {
-    const handler = createTenantHandler(tenantApiId, serviceMock);
+    const handler = createTenantHandler(serviceMock);
 
     const req: Request = { query: {} } as Request;
     const next = () => {
@@ -49,7 +82,7 @@ describe('createTenantHandler', () => {
   });
 
   it('can ignore request without tenantId.', (done) => {
-    const handler = createTenantHandler(tenantApiId, serviceMock);
+    const handler = createTenantHandler(serviceMock);
 
     const req: Request = { user: {}, query: {} } as Request;
     const next = () => {
@@ -62,7 +95,7 @@ describe('createTenantHandler', () => {
   });
 
   it('can return error if service throws.', (done) => {
-    const handler = createTenantHandler(tenantApiId, serviceMock);
+    const handler = createTenantHandler(serviceMock);
 
     const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
 

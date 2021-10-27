@@ -39,7 +39,7 @@ function hasRequiredRole(user: User, roles: string | string[]): boolean {
 
 export function isUserAllowed(user: User, tenantId: AdspId, roles: string | string[], allowCore = false): boolean {
   const isAllowedTenant =
-    (allowCore && user?.isCore) || (user?.tenantId && (!tenantId || tenantId.toString() === user.tenantId.toString()));
+    (allowCore && user?.isCore) || (!!user?.tenantId && (!tenantId || tenantId.toString() === user.tenantId.toString()));
 
   return isAllowedTenant && hasRequiredRole(user, roles);
 }
