@@ -2,14 +2,15 @@ import React, { FunctionComponent, useState, useEffect } from 'react';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import type { EventSearchCriteria } from '@store/event/models';
-import { GoAButton } from '@abgov/react-components';
+
 import {
   GoAForm,
   GoAFormItem,
   GoAFormActions,
   GoAFlexRow,
-  GoAIcon,
   GoAInputDateTime,
+  GoAIconButton,
+  GoAButton,
 } from '@abgov/react-components/experimental';
 import { getEventDefinitions } from '@store/event/actions';
 import styled from 'styled-components';
@@ -75,6 +76,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
     e.preventDefault();
     selectSuggestion(suggestion);
     setFilteredSuggestions([suggestion]);
+    setOpen(false);
   }
 
   const onKeyDown = (e) => {
@@ -130,20 +132,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
   return (
     <GoAForm>
       <GoAFlexRow gap="small">
-        <SearchBox
-          style={{ flexBasis: '45%' }}
-          onClick={(e) => {
-            e.preventDefault();
-            setError(false);
-            setOpen(!open);
-            if (!open && searchBox.length === 0) {
-              setFilteredSuggestions(autoCompleteList);
-            }
-            if (open && searchBox.length > 0) {
-              setSearchBox('');
-            }
-          }}
-        >
+        <SearchBox style={{ flexBasis: '40%' }}>
           <GoAFormItem helpText={!open && !error && message} error={error && message}>
             <label>Search event namespace and name</label>
             <div className={open ? 'search search-open' : 'search'}>
@@ -153,8 +142,30 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                 value={searchBox}
                 onChange={suggestionOnChange}
                 onKeyDown={onKeyDown}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setError(false);
+                  setOpen(!open);
+                  if (!open && searchBox.length === 0) {
+                    setFilteredSuggestions(autoCompleteList);
+                  }
+                }}
               />
-              <GoAIcon type={open ? 'close-circle' : 'chevron-down'} size="medium" />
+              <GoAIconButton
+                type={open ? 'close-circle' : 'chevron-down'}
+                size="medium"
+                variant="round"
+                testId="menu-open-close"
+                onClick={() => {
+                  if (!open && searchBox.length === 0) {
+                    setFilteredSuggestions(autoCompleteList);
+                  }
+                  if (open && searchBox.length > 0) {
+                    setSearchBox('');
+                  }
+                  setOpen(!open);
+                }}
+              />
             </div>
             {open && autoCompleteList && (
               <ul className="suggestions">
@@ -218,7 +229,7 @@ const SearchBox = styled.div`
     display: flex;
     border: 1px solid var(--color-gray-700);
     border-radius: 3px;
-    padding: 0.5rem;
+    padding: 0.15rem;
   }
   .search-open {
     border: 2px solid var(--color-orange);
