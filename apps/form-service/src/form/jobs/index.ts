@@ -13,7 +13,7 @@ interface FormJobProps {
 
 export const scheduleFormJobs = (props: FormJobProps): void => {
   const lockJob = createLockJob(props);
-  schedule.scheduleJob('* */1 * * *', lockJob);
+  schedule.scheduleJob('0 */1 * * *', lockJob);
   props.logger.info(`Scheduled lock job.`);
 
   const deleteJob = createDeleteJob(props);
