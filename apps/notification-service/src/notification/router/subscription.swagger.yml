@@ -90,6 +90,8 @@ components:
           enum: [email, sms, slack]
         address:
           type: string
+        reason:
+          type: string
       required: [operation, channel, address]
     CheckCodeOperation:
       type: object

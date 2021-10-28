@@ -282,7 +282,7 @@ export function subscriberOperations(verifyService: VerifyService): RequestHandl
       let result = null;
       switch (request.operation) {
         case SUBSCRIBER_SEND_VERIFY_CODE:
-          await subscriber.sendVerifyCode(verifyService, user, request.channel, request.address);
+          await subscriber.sendVerifyCode(verifyService, user, request.channel, request.address, request.reason);
           result = { sent: true };
           break;
         case SUBSCRIBER_CHECK_CODE: {

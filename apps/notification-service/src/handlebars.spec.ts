@@ -41,7 +41,7 @@ describe('HandlebarsTemplateService', () => {
       );
 
       expect(message.subject).toBe('tester 123');
-      expect(message.body).toBe(DateTime.fromJSDate(timestamp).toFormat('ff'));
+      expect(message.body).toBe(DateTime.fromJSDate(timestamp).toFormat('ff ZZZZ'));
     });
 
     it('can generate message with formatDate for string value', () => {
@@ -58,7 +58,7 @@ describe('HandlebarsTemplateService', () => {
       );
 
       expect(message.subject).toBe('tester 123');
-      expect(message.body).toBe(DateTime.fromISO(timestamp).toFormat('ff'));
+      expect(message.body).toBe(DateTime.fromISO(timestamp).toFormat('ff ZZZZ'));
     });
 
     it('can generate message with formatDate with format parameter', () => {
@@ -66,7 +66,7 @@ describe('HandlebarsTemplateService', () => {
       const message = templateService.generateMessage(
         {
           subject: '{{ subscriber.addressAs }} {{ event.payload.value }}',
-          body: '{{ formatDate event.timestamp format="fff" }}',
+          body: '{{ formatDate event.timestamp format="fff ZZZZ" }}',
         },
         {
           event: { timestamp, payload: { value: 123 } } as unknown as DomainEvent,
@@ -75,7 +75,7 @@ describe('HandlebarsTemplateService', () => {
       );
 
       expect(message.subject).toBe('tester 123');
-      expect(message.body).toBe(DateTime.fromJSDate(timestamp).toFormat('fff'));
+      expect(message.body).toBe(DateTime.fromJSDate(timestamp).toFormat('fff ZZZZ'));
     });
   });
 });

@@ -5,6 +5,7 @@ export interface SendVerifyCodeRequest {
   operation: typeof SUBSCRIBER_SEND_VERIFY_CODE;
   channel: Channel;
   address: string;
+  reason?: string;
 }
 
 export const SUBSCRIBER_CHECK_CODE = 'check-code';
