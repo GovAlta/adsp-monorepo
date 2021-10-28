@@ -2,7 +2,7 @@ name: Nightly Regression
 
 on:
   schedule:
-    - cron: "15 3 * * *"
+    - cron: "15 8 * * *"
 
 jobs:
   testRegression:
