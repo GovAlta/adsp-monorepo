@@ -43,7 +43,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
 
   useEffect(() => {
     dispatch(getEventDefinitions());
-  }, [dispatch]);
+  }, []);
 
   useEffect(() => {
     if (selectedEvent) {

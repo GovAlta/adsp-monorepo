@@ -105,7 +105,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               title={
                 <div className="rowFlex">
                   <h2 className="flex1">{notificationType.name}</h2>
-                  <div className="rowFlex height30">
+                  <MaxHeight height={30} className="rowFlex">
                     <a
                       className="flex1"
                       data-testid={`edit-notification-type-${notificationType.id}`}
@@ -130,7 +130,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                         <GoAIcon type="trash" />
                       </NotificationBorder>
                     </a>
-                  </div>
+                  </MaxHeight>
                 </div>
               }
               description={notificationType.description}
@@ -138,40 +138,44 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               <Grid>
                 {notificationType.events.map((event, key) => (
                   <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
-                    <EventBorder className="height168">
-                      <div className="rowFlex">
-                        <div className="flex1">{event.name}</div>
+                    <EventBorder>
+                      <MaxHeight height={168}>
                         <div className="rowFlex">
-                          <a
-                            className="flex1 flex height34"
-                            onClick={() => {
-                              setSelectedEvent(event);
-                              setSelectedType(notificationType);
-                              setShowEventDeleteConfirmation(true);
-                            }}
-                            data-testid={`delete-event-${notificationType.id}`}
-                          >
-                            <NotificationBorder className="smallPadding">
-                              <GoAIcon type="trash" />
-                            </NotificationBorder>
-                          </a>
-                        </div>
-                      </div>
-                      <div className="columnFlex height100">
-                        <div className="flex1 flex flexEndAlign">
-                          <div className="rightAlignEdit">
-                            <a
-                              data-testid={`edit-event-${notificationType.id}`}
-                              onClick={() => {
-                                setSelectedEvent(event);
-                                manageEvents(notificationType);
-                              }}
-                            >
-                              Edit
-                            </a>
+                          <div className="flex1">{event.name}</div>
+                          <div className="rowFlex">
+                            <MaxHeight height={34}>
+                              <a
+                                className="flex1 flex"
+                                onClick={() => {
+                                  setSelectedEvent(event);
+                                  setSelectedType(notificationType);
+                                  setShowEventDeleteConfirmation(true);
+                                }}
+                                data-testid={`delete-event-${notificationType.id}`}
+                              >
+                                <NotificationBorder className="smallPadding">
+                                  <GoAIcon type="trash" />
+                                </NotificationBorder>
+                              </a>
+                            </MaxHeight>
                           </div>
                         </div>
-                      </div>
+                        <div className="columnFlex height-100">
+                          <div className="flex1 flex flexEndAlign">
+                            <div className="rightAlignEdit">
+                              <a
+                                data-testid={`edit-event-${notificationType.id}`}
+                                onClick={() => {
+                                  setSelectedEvent(event);
+                                  manageEvents(notificationType);
+                                }}
+                              >
+                                Edit
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      </MaxHeight>
                     </EventBorder>
                   </GridItem>
                 ))}
@@ -283,6 +287,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
 export default NotificationTypes;
 
+interface HeightProps {
+  height: number;
+}
+
 const Buttons = styled.div`
   margin: 2rem 0 2rem 0;
   text-align: left;
@@ -306,6 +314,10 @@ const EventButtonWrapper = styled.div`
   margin: 19px 0;
 `;
 
+const MaxHeight = styled.div`
+  max-height: ${(p: HeightProps) => p.height + 'px'};
+`;
+
 const NotficationStyles = styled.div`
   svg {
     fill: #56a0d8;
@@ -326,7 +338,7 @@ const NotficationStyles = styled.div`
     flex-direction: column;
   }
 
-  .height100 {
+  .height-100 {
     height: 100px;
   }
 
@@ -336,18 +348,6 @@ const NotficationStyles = styled.div`
 
   .flex1 {
     flex: 1;
-  }
-
-  .height30 {
-    max-height: 30px;
-  }
-
-  .height34 {
-    max-height: 34px;
-  }
-
-  .height163 {
-    max-height: 163px;
   }
 
   .padding {
