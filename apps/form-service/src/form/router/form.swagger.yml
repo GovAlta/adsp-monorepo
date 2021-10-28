@@ -1,0 +1,213 @@
+components:
+  schemas:
+    FormDefinition:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        anonymousApply:
+          type: boolean
+        applicantRoles:
+          type: array
+          items:
+            type: string
+        assessorRoles:
+          type: array
+          items:
+            type: string
+    Form:
+      type: object
+      properties:
+        id:
+          type: string
+        definitionId:
+          type: string
+        status:
+          type: string
+          enum: [draft, locked, submitted, archived]
+        created:
+          type: string
+          format: date-time
+        createdBy:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+          required: [id, name]
+        lastAccessed:
+          type: string
+          format: date-time
+        submitted:
+          type: string
+          format: date-time
+    FormData:
+      type: object
+      properties:
+        data:
+          type: object
+        files:
+          type: object
+          additionalProperties:
+            type: string
+    SendCodeOperation:
+      type: object
+      properties:
+        operation:
+          type: string
+          enum: [send-code]
+    UnlockFormOperation:
+      type: object
+      properties:
+        operation:
+          type: string
+          enum: [unlock]
+    SubmitFormOperation:
+      type: object
+      properties:
+        operation:
+          type: string
+          enum: [submit]
+    ArchiveFormOperation:
+      type: object
+      properties:
+        operation:
+          type: string
+          enum: [archive]
+
+/form/v1/definitions:
+  get:
+    description: Retrieves form definitions.
+    responses:
+      200:
+        description: Successfully retrieved form definitions.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/FormDefinition"
+/form/v1/definitions/{definitionId}:
+  get:
+    description: Retrieves a form definition.
+    parameters:
+      - name: definitionId
+        description: ID of the form definition.
+        required: true
+        in: path
+        schema:
+          type: string
+    responses:
+      200:
+        description: Successfully retrieved a form definition.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FormDefinition"
+
+/form/v1/forms:
+  post:
+    description: Creates a draft form.
+    responses:
+      200:
+        description: Successfully created a form.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Form"
+
+/form/v1/forms/{formId}:
+  parameters:
+    - name: formId
+      description: ID of the form.
+      required: true
+      in: path
+      schema:
+        type: string
+  get:
+    description: Retrieves a form.
+    responses:
+      200:
+        description: Successfully retrieved the form.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Form"
+  post:
+    description: Executes a form operation.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: "#/components/schemas/UnlockFormOperation"
+              - $ref: "#/components/schemas/SubmitFormOperation"
+              - $ref: "#/components/schemas/ArchiveFormOperation"
+              - $ref: "#/components/schemas/SendCodeOperation"
+            discriminator:
+              propertyName: operation
+              mapping:
+                unlock: "#/components/schemas/UnlockFormOperation"
+                submit: "#/components/schemas/SubmitFormOperation"
+                archive: "#/components/schemas/ArchiveFormOperation"
+                send-code: "#/components/schemas/SendCodeOperation"
+    responses:
+      200:
+        description: Successfully executed operation.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Form"
+
+/form/v1/forms/{formId}/data:
+  parameters:
+    - name: formId
+      description: ID of the form.
+      required: true
+      in: path
+      schema:
+        type: string
+  get:
+    description: Retrieves form data.
+    parameters:
+      - name: code
+        description: Verify code for accessing the form data.
+        required: false
+        in: query
+        schema:
+          type: string
+    responses:
+      200:
+        description: Successfully retrieved the form.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FormData"
+  put:
+    description: Sets the form data.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: object
+              files:
+                type: object
+                additionalProperties:
+                  type: string
+    responses:
+      200:
+        description: Successfully updated the form.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FormData"

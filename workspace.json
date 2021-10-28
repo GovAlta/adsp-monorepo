@@ -314,6 +314,55 @@
       },
       "tags": []
     },
+    "form-service": {
+      "root": "apps/form-service",
+      "sourceRoot": "apps/form-service/src",
+      "projectType": "application",
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/form-service",
+            "main": "apps/form-service/src/main.ts",
+            "tsConfig": "apps/form-service/tsconfig.app.json",
+            "assets": [],
+            "webpackConfig": "apps/form-service/webpack.config.js"
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "form-service:build",
+            "port": 7783
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/form-service/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/form-service"],
+          "options": {
+            "jestConfig": "apps/form-service/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
     "notification-service": {
       "root": "apps/notification-service",
       "sourceRoot": "apps/notification-service/src",
