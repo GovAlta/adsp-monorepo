@@ -28,11 +28,11 @@ class StatusServicePage {
   }
 
   noticeModalApplicationDropdown() {
-    return cy.get('.search-wrapper');
+    return cy.get('[id="multiselectContainerReact"]');
   }
 
   noticeModalApplicationDropdownItem(itemText) {
-    return cy.xpath(`//div[@class="optionListContainer displayBlock"]//li[contains(text(), "${itemText}")]`);
+    return cy.xpath(`//div[@class="optionListContainer displayBlock"]//li[text() = "${itemText}"]`);
   }
 
   noticeModalStartTimeHourField() {
