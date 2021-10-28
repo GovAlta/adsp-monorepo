@@ -18,7 +18,7 @@ services:
       - KEYCLOAK_ROOT_URL=http://keycloak:8080
       - DIRECTORY_URL=http://tenant-management-api:3333
       - CLIENT_ID=urn:ads:platform:form-service
-      - CLIENT_SECRET=
+      - CLIENT_SECRET=e0d96310-60e8-479d-bb94-31120301dcb1
       - MONGO_URI=mongodb://form-service-mongo:27017
       - MONGO_DB=form
       - PORT=3343
