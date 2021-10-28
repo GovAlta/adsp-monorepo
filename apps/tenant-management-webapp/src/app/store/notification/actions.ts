@@ -1,4 +1,4 @@
-import { NotificationItem, NotificationTypeItem } from './models';
+import { NotificationItem } from './models';
 
 export const FETCH_NOTIFICATION_LIST = 'tenant/notification-service/notification/fetch';
 export const FETCH_NOTIFICATION_LIST_SUCCESSES = 'tenant/notification-service/notification/fetch/success';
@@ -12,10 +12,8 @@ export const FETCH_NOTIFICATION_TYPE = 'tenant/notification-service/notification
 export const FETCH_NOTIFICATION_TYPE_SUCCEEDED = 'notification-service/space/notificationType/succeeded';
 
 export const DELETE_NOTIFICATION_TYPE = 'tenant/notification-service/notificationType/delete';
-export const DELETE_NOTIFICATION_TYPE_SUCCEEDED = 'notification-service/notificationType/delete/success';
 
 export const UPDATE_NOTIFICATION_TYPE = 'tenant/notification-service/notificationType/update';
-export const UPDATE_NOTIFICATION_TYPE_SUCCEEDED = 'notification-service/notificationType/update/success';
 
 export const FETCH_NOTIFICATION_TYPE_HAS_NOTIFICATION = 'notification-service/docs/fetch/notification/notificationtype';
 export const FETCH_NOTIFICATION_TYPE_HAS_NOTIFICATION_SUCCEEDED =
@@ -33,8 +31,6 @@ export type ActionTypes =
   | DeleteNotificationSuccessAction
   | DeleteNotificationFailedAction
   | FetchNotificationTypeSucceededAction
-  | DeleteNotificationTypeSucceededAction
-  | UpdateNotificationTypeSucceededAction
   | FetchNotificationTypeAction
   | UpdateNotificationTypeAction
   | DeleteNotificationTypeAction;
@@ -72,19 +68,8 @@ interface DeleteNotificationFailedAction {
 interface FetchNotificationTypeSucceededAction {
   type: typeof FETCH_NOTIFICATION_TYPE_SUCCEEDED;
   payload: {
-    notificationInfo: { data: NotificationTypeItem[] };
+    notificationInfo: { data: NotificationItem[] };
   };
-}
-interface DeleteNotificationTypeSucceededAction {
-  type: typeof DELETE_NOTIFICATION_TYPE_SUCCEEDED;
-  payload: {
-    notificationInfo: { data: string };
-  };
-}
-
-interface UpdateNotificationTypeSucceededAction {
-  type: typeof UPDATE_NOTIFICATION_TYPE_SUCCEEDED;
-  payload: NotificationTypeItem;
 }
 
 interface FetchNotificationTypeAction {
@@ -93,12 +78,12 @@ interface FetchNotificationTypeAction {
 
 export interface UpdateNotificationTypeAction {
   type: typeof UPDATE_NOTIFICATION_TYPE;
-  payload: NotificationTypeItem;
+  payload: NotificationItem;
 }
 
 export interface DeleteNotificationTypeAction {
   type: typeof DELETE_NOTIFICATION_TYPE;
-  payload: NotificationTypeItem;
+  payload: NotificationItem;
 }
 
 // ==============
@@ -147,7 +132,7 @@ export const DeleteNotificationFailedService = (data: string): DeleteNotificatio
 });
 
 export const FetchNotificationTypeSucceededService = (notificationInfo: {
-  data: NotificationTypeItem[];
+  data: NotificationItem[];
 }): FetchNotificationTypeSucceededAction => ({
   type: FETCH_NOTIFICATION_TYPE_SUCCEEDED,
   payload: {
@@ -155,38 +140,16 @@ export const FetchNotificationTypeSucceededService = (notificationInfo: {
   },
 });
 
-export const DeleteNotificationTypeSucceededService = (notificationInfo: {
-  data: string;
-}): DeleteNotificationTypeSucceededAction => {
-  return {
-    type: DELETE_NOTIFICATION_TYPE_SUCCEEDED,
-    payload: {
-      notificationInfo,
-    },
-  };
-};
-
-export const UpdateNotificationTypeSucceededService = (
-  notificationType: NotificationTypeItem
-): UpdateNotificationTypeSucceededAction => ({
-  type: UPDATE_NOTIFICATION_TYPE_SUCCEEDED,
-  payload: notificationType,
-});
-
 export const FetchNotificationTypeService = (): FetchNotificationTypeAction => ({
   type: FETCH_NOTIFICATION_TYPE,
 });
 
-export const UpdateNotificationTypeService = (
-  notificationType: NotificationTypeItem
-): UpdateNotificationTypeAction => ({
+export const UpdateNotificationTypeService = (notificationType: NotificationItem): UpdateNotificationTypeAction => ({
   type: UPDATE_NOTIFICATION_TYPE,
   payload: notificationType,
 });
 
-export const DeleteNotificationTypeService = (
-  notificationType: NotificationTypeItem
-): DeleteNotificationTypeAction => ({
+export const DeleteNotificationTypeService = (notificationType: NotificationItem): DeleteNotificationTypeAction => ({
   type: DELETE_NOTIFICATION_TYPE,
   payload: notificationType,
 });

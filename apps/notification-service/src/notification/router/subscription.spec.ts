@@ -21,6 +21,8 @@ import { NotificationType, ServiceUserRoles } from '../types';
 import { createSubscriber, deleteSubscriber, updateSubscriber } from '.';
 
 describe('subscription router', () => {
+  const serviceId = adspId`urn:ads:platform:notification-service`;
+  const apiId = adspId`${serviceId}:v1`;
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
 
   const loggerMock = {
@@ -69,6 +71,7 @@ describe('subscription router', () => {
   describe('createSubscriptionRouter', () => {
     it('can create router', () => {
       const router = createSubscriptionRouter({
+        serviceId,
         logger: loggerMock,
         subscriptionRepository: repositoryMock,
         verifyService: verifyServiceMock,
@@ -80,6 +83,9 @@ describe('subscription router', () => {
   describe('getNotificationTypes', () => {
     it('can get types', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         getConfiguration: jest.fn(),
       };
       const res = { send: jest.fn() };
@@ -94,6 +100,9 @@ describe('subscription router', () => {
   describe('getNotificationType', () => {
     it('can get type', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         params: { type: 'test' },
         getConfiguration: jest.fn(),
       };
@@ -109,6 +118,9 @@ describe('subscription router', () => {
 
     it('can call next with not found', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         params: { type: 'not-there' },
         getConfiguration: jest.fn(),
       };
@@ -123,12 +135,15 @@ describe('subscription router', () => {
 
   describe('getTypeSubscriptions', () => {
     it('can create handler', () => {
-      const handler = getTypeSubscriptions(repositoryMock);
+      const handler = getTypeSubscriptions(apiId, repositoryMock);
       expect(handler).toBeTruthy();
     });
 
     it('can get subscriptions', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         query: {},
         notificationType: new NotificationTypeEntity(notificationType, tenantId),
       };
@@ -138,13 +153,16 @@ describe('subscription router', () => {
       const result = { results: [], page: {} };
       repositoryMock.getSubscriptions.mockResolvedValueOnce(result);
 
-      const handler = getTypeSubscriptions(repositoryMock);
+      const handler = getTypeSubscriptions(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
     });
 
     it('can get handle query params', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         query: { top: '11', after: '123' },
         notificationType: new NotificationTypeEntity(notificationType, tenantId),
       };
@@ -154,7 +172,7 @@ describe('subscription router', () => {
       const result = { results: [], page: {} };
       repositoryMock.getSubscriptions.mockResolvedValueOnce(result);
 
-      const handler = getTypeSubscriptions(repositoryMock);
+      const handler = getTypeSubscriptions(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.getSubscriptions).toHaveBeenCalledWith(req.notificationType, 11, '123');
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
@@ -163,12 +181,15 @@ describe('subscription router', () => {
 
   describe('createTypeSubscription', () => {
     it('can create handler', () => {
-      const handler = createTypeSubscription(repositoryMock);
+      const handler = createTypeSubscription(apiId, repositoryMock);
       expect(handler).toBeTruthy();
     });
 
     it('can create subscription', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           tenantId,
           roles: [ServiceUserRoles.SubscriptionAdmin],
@@ -194,7 +215,7 @@ describe('subscription router', () => {
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
-      const handler = createTypeSubscription(repositoryMock);
+      const handler = createTypeSubscription(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(expect.objectContaining({ addressAs: 'tester' }));
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
@@ -202,6 +223,9 @@ describe('subscription router', () => {
 
     it('can create user subscription', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -230,7 +254,7 @@ describe('subscription router', () => {
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
-      const handler = createTypeSubscription(repositoryMock);
+      const handler = createTypeSubscription(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -244,6 +268,9 @@ describe('subscription router', () => {
 
     it('can create subscription for existing subscriber', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -272,7 +299,7 @@ describe('subscription router', () => {
       repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
-      const handler = createTypeSubscription(repositoryMock);
+      const handler = createTypeSubscription(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'tester', true);
       expect(repositoryMock.saveSubscriber).not.toBeCalled();
@@ -282,12 +309,15 @@ describe('subscription router', () => {
 
   describe('addTypeSubscription', () => {
     it('can create handler', () => {
-      const handler = addTypeSubscription(repositoryMock);
+      const handler = addTypeSubscription(apiId, repositoryMock);
       expect(handler).toBeTruthy();
     });
 
     it('can add subscription', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -316,7 +346,7 @@ describe('subscription router', () => {
       repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
-      const handler = addTypeSubscription(repositoryMock);
+      const handler = addTypeSubscription(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'subscriber', false);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
@@ -324,6 +354,9 @@ describe('subscription router', () => {
 
     it('can call next with not found', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -340,7 +373,7 @@ describe('subscription router', () => {
 
       repositoryMock.getSubscriber.mockResolvedValueOnce(null);
 
-      const handler = addTypeSubscription(repositoryMock);
+      const handler = addTypeSubscription(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toBeCalledWith(expect.any(NotFoundError));
     });
@@ -348,12 +381,15 @@ describe('subscription router', () => {
 
   describe('getTypeSubscription', () => {
     it('can create handler', () => {
-      const handler = getTypeSubscription(repositoryMock);
+      const handler = getTypeSubscription(apiId, repositoryMock);
       expect(handler).toBeTruthy();
     });
 
     it('can get subscription', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -382,7 +418,7 @@ describe('subscription router', () => {
 
       repositoryMock.getSubscription.mockResolvedValueOnce(subscription);
 
-      const handler = getTypeSubscription(repositoryMock);
+      const handler = getTypeSubscription(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.getSubscription).toHaveBeenCalledWith(req.notificationType, 'subscriber');
       expect(res.send).toHaveBeenCalledWith(
@@ -399,6 +435,9 @@ describe('subscription router', () => {
 
     it('can delete subscription', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -432,12 +471,15 @@ describe('subscription router', () => {
 
   describe('getSubscribers', () => {
     it('can create handler', () => {
-      const handler = getSubscribers(repositoryMock);
+      const handler = getSubscribers(apiId, repositoryMock);
       expect(handler).toBeTruthy();
     });
 
     it('can get subscribers', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -455,13 +497,16 @@ describe('subscription router', () => {
       const result = { results: [], page: {} };
       repositoryMock.findSubscribers.mockResolvedValueOnce(result);
 
-      const handler = getSubscribers(repositoryMock);
+      const handler = getSubscribers(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
     });
 
     it('can get subscribers with query params', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -479,7 +524,7 @@ describe('subscription router', () => {
       const result = { results: [], page: {} };
       repositoryMock.findSubscribers.mockResolvedValueOnce(result);
 
-      const handler = getSubscribers(repositoryMock);
+      const handler = getSubscribers(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.findSubscribers).toHaveBeenCalledWith(
         11,
@@ -491,6 +536,9 @@ describe('subscription router', () => {
 
     it('can call next with error for non-admin', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -505,7 +553,7 @@ describe('subscription router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = getSubscribers(repositoryMock);
+      const handler = getSubscribers(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
     });
@@ -513,12 +561,15 @@ describe('subscription router', () => {
 
   describe('createSubscriber', () => {
     it('can create handler', () => {
-      const handler = createSubscriber(repositoryMock);
+      const handler = createSubscriber(apiId, repositoryMock);
       expect(handler).toBeTruthy();
     });
 
     it('can create subscriber', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           tenantId,
           roles: [ServiceUserRoles.SubscriptionAdmin],
@@ -537,7 +588,7 @@ describe('subscription router', () => {
       });
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
 
-      const handler = createSubscriber(repositoryMock);
+      const handler = createSubscriber(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(expect.objectContaining({ addressAs: 'tester' }));
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ addressAs: 'tester' }));
@@ -545,6 +596,9 @@ describe('subscription router', () => {
 
     it('can create user subscriber', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -566,7 +620,7 @@ describe('subscription router', () => {
       });
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
 
-      const handler = createSubscriber(repositoryMock);
+      const handler = createSubscriber(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -587,6 +641,9 @@ describe('subscription router', () => {
 
     it('can get subscriber', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -618,6 +675,9 @@ describe('subscription router', () => {
 
     it('can call next with not found.', async () => {
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -650,6 +710,9 @@ describe('subscription router', () => {
       });
 
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -678,6 +741,9 @@ describe('subscription router', () => {
       });
 
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -698,6 +764,11 @@ describe('subscription router', () => {
   });
 
   describe('updateSubscriber', () => {
+    it('can create handler', () => {
+      const handler = updateSubscriber(apiId);
+      expect(handler).toBeTruthy();
+    });
+
     it('can delete subscriber', async () => {
       const subscriber = new SubscriberEntity(repositoryMock, {
         id: 'subscriber',
@@ -707,6 +778,9 @@ describe('subscription router', () => {
       });
 
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -722,7 +796,8 @@ describe('subscription router', () => {
 
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
 
-      await updateSubscriber(req as unknown as Request, res as unknown as Response, next);
+      const handler = updateSubscriber(apiId);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining(req.body));
     });
 
@@ -735,6 +810,9 @@ describe('subscription router', () => {
       });
 
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -748,7 +826,8 @@ describe('subscription router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      await updateSubscriber(req as unknown as Request, res as unknown as Response, next);
+      const handler = updateSubscriber(apiId);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
       expect(res.send).not.toHaveBeenCalled();
     });
@@ -775,6 +854,9 @@ describe('subscription router', () => {
       });
 
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -821,6 +903,9 @@ describe('subscription router', () => {
       });
 
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -864,6 +949,9 @@ describe('subscription router', () => {
       });
 
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,
@@ -907,6 +995,9 @@ describe('subscription router', () => {
       });
 
       const req = {
+        tenant: {
+          id: tenantId,
+        },
         user: {
           id: 'tester',
           tenantId,

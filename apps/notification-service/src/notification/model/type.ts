@@ -31,7 +31,7 @@ export class NotificationTypeEntity implements NotificationType {
   canSubscribe(user: User, subscriber: Subscriber): boolean {
     // User is an subscription admin, or user has subscriber role and is creating subscription for self.
     return (
-      isAllowedUser(user, this.tenantId, [ServiceUserRoles.SubscriptionAdmin]) ||
+      isAllowedUser(user, this.tenantId, [ServiceUserRoles.SubscriptionAdmin, ServiceUserRoles.SubscriptionApp], true) ||
       (!!user &&
         user?.id === subscriber.userId &&
         (this.publicSubscribe || isAllowedUser(user, this.tenantId, [...this.subscriberRoles])))

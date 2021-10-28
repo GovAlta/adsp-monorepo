@@ -14,6 +14,6 @@ services:
       - KEYCLOAK_ROOT_URL=http://keycloak:8080
       - DIRECTORY_URL=http://tenant-management-api:3333
       - CLIENT_ID=urn:ads:platform:<%= projectName %>
-      - CLIENT_SECRET=
+      - CLIENT_SECRET=<%= secret %>
       - PORT=<%= port %>
       - LOG_LEVEL=debug

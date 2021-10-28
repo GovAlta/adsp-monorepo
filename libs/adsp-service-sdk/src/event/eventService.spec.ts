@@ -16,6 +16,7 @@ describe('EventService', () => {
 
   const directoryMock = {
     getServiceUrl: jest.fn(() => Promise.resolve(new URL('http://totally-real-directory'))),
+    getResourceUrl: jest.fn(),
   };
 
   const tokenProviderMock = {

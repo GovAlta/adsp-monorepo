@@ -7,11 +7,14 @@ import {
   names,
   updateProjectConfiguration,
   readProjectConfiguration,
+  readJsonFile,
+  writeJsonFile,
 } from '@nrwl/devkit';
 import { applicationGenerator } from '@nrwl/express';
 import { Linter } from '@nrwl/linter';
 import * as path from 'path';
 import { NormalizedSchema, Schema } from './schema';
+import { addService } from './utils/keycloak';
 
 function addProjectFiles(host: Tree, options: NormalizedSchema) {
   const templateOptions = {
@@ -21,15 +24,25 @@ function addProjectFiles(host: Tree, options: NormalizedSchema) {
   generateFiles(host, path.join(__dirname, 'project-files'), options.projectRoot, templateOptions);
 }
 
-function addComposeFiles(host: Tree, options: NormalizedSchema) {
+function addComposeFiles(host: Tree, options: NormalizedSchema, secret: string) {
   const templateOptions = {
     ...options,
     tmpl: '',
+    secret,
   };
   generateFiles(host, path.join(__dirname, 'compose-files'), '.compose', templateOptions);
 }
 
-function addOpenshiftFiles(host: Tree, options: NormalizedSchema) {
+function updateRealm(host: Tree, options: NormalizedSchema): string {
+  const realmFilePath = path.join(host.root, '.compose/realms/import.json');
+  const [master, core] = readJsonFile(realmFilePath);
+  const secret = addService(core, options.projectName);
+
+  writeJsonFile(realmFilePath, [master, core]);
+  return secret;
+}
+
+function addOpenShiftFiles(host: Tree, options: NormalizedSchema) {
   const templateOptions = {
     ...options,
     tmpl: '',
@@ -69,8 +82,9 @@ export default async function (host: Tree, { name, displayName, port }: Schema) 
   host.write(`${projectRoot}/src/${api}/.gitkeep`, '');
 
   addProjectFiles(host, options);
-  addComposeFiles(host, options);
-  addOpenshiftFiles(host, options);
+  const secret = updateRealm(host, options);
+  addComposeFiles(host, options, secret);
+  addOpenShiftFiles(host, options);
 
   const configuration = readProjectConfiguration(host, projectName);
   configuration.targets.build.options.assets = [];

@@ -1,7 +1,9 @@
 # Alberta Digital Service Platform (ADSP)
 This project is a monorepo using [Nx](https://nx.dev).
 
-[![Pipeline](https://github.com/GovAlta/adsp-monorepo/actions/workflows/delivery-ci.yml/badge.svg)](https://github.com/GovAlta/adsp-monorepo/actions/workflows/delivery-ci.yml)
+[![Delivery CI](https://github.com/GovAlta/adsp-monorepo/actions/workflows/delivery-ci.yml/badge.svg)](https://github.com/GovAlta/adsp-monorepo/actions/workflows/delivery-ci.yml)
+
+[![Nightly Regression](https://github.com/GovAlta/adsp-monorepo/actions/workflows/nightly.yml/badge.svg)](https://github.com/GovAlta/adsp-monorepo/actions/workflows/nightly.yml)
 
 ## Development using ADSP
 See the [ADSP Development Guide](https://glowing-parakeet-0563ab2e.pages.github.io)

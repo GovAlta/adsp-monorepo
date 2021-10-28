@@ -62,7 +62,7 @@ function Status(): JSX.Element {
   };
 
   useEffect(() => {
-    if (activeIndex != null) {
+    if (activeIndex !== null) {
       setActiveIndex(null);
     }
   }, [activeIndex]);

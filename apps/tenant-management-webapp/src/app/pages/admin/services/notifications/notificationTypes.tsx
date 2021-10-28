@@ -2,7 +2,8 @@ import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton, GoACard, GoAPageLoader } from '@abgov/react-components';
 import { Grid, GridItem } from '@components/Grid';
-import { NotificationDefinitionModalForm } from './edit';
+import { NotificationTypeModalForm } from './edit';
+import { EventModalForm } from './editEvent';
 import {
   GoAModal,
   GoAModalActions,
@@ -16,22 +17,31 @@ import {
   DeleteNotificationTypeService,
   FetchNotificationTypeService,
 } from '@store/notification/actions';
-import { NotificationTypeItem } from '@store/notification/models';
+import { NotificationItem } from '@store/notification/models';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 
-const emptyNotificationDefinition: NotificationTypeItem = {
+const emptyNotificationType: NotificationItem = {
   name: '',
   description: '',
   events: [],
   subscriberRoles: [],
   id: null,
+  publicSubscribe: false,
 };
 
-export const NotificationTypes: FunctionComponent = () => {
-  const [editDefinition, setEditDefinition] = useState(false);
-  const [selectedDefinition, setSelectedDefinition] = useState(null);
+interface ParentCompProps {
+  activeEdit?: boolean;
+  activateEdit?: (boolean) => void;
+}
+
+export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEdit, activateEdit }) => {
+  const [editType, setEditType] = useState(false);
+  const [selectedType, setSelectedType] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [editEvent, setEditEvent] = useState(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [showEventDeleteConfirmation, setShowEventDeleteConfirmation] = useState(false);
 
   const notification = useSelector((state: RootState) => state.notification);
 
@@ -42,13 +52,24 @@ export const NotificationTypes: FunctionComponent = () => {
   }, [dispatch]);
 
   function reset() {
-    setEditDefinition(false);
-    setSelectedDefinition(emptyNotificationDefinition);
+    setEditType(false);
+    setEditEvent(false);
+    setSelectedType(emptyNotificationType);
     setErrors({});
   }
 
-  function manageEvents() {
+  useEffect(() => {
+    if (activeEdit) {
+      setSelectedType(null);
+      setEditType(true);
+      activateEdit(false);
+    }
+  }, [activeEdit]);
+
+  function manageEvents(notificationType) {
     //Manage Events
+    setSelectedType(notificationType);
+    setEditEvent(notificationType);
   }
 
   return (
@@ -70,8 +91,8 @@ export const NotificationTypes: FunctionComponent = () => {
           data-testid="add-notification"
           buttonSize="small"
           onClick={() => {
-            setSelectedDefinition(null);
-            setEditDefinition(true);
+            setSelectedType(null);
+            setEditType(true);
           }}
         >
           Add a notification type
@@ -83,45 +104,90 @@ export const NotificationTypes: FunctionComponent = () => {
             <GoACard
               title={
                 <div className="rowFlex">
-                  <div className="flex1">{notificationType.name}</div>
-                  <div className="rowFlex">
+                  <h2 className="flex1">{notificationType.name}</h2>
+                  <MaxHeight height={30} className="rowFlex">
                     <a
                       className="flex1"
-                      data-testid="edit-details"
+                      data-testid={`edit-notification-type-${notificationType.id}`}
                       onClick={() => {
-                        setSelectedDefinition(notificationType);
-                        setEditDefinition(true);
+                        setSelectedType(notificationType);
+                        setEditType(true);
                       }}
                     >
-                      <NotificationBorder className="smallPadding" delete-details>
+                      <NotificationBorder className="smallPadding">
                         <GoAIcon type="create" />
                       </NotificationBorder>
                     </a>
                     <a
                       className="flex1"
                       onClick={() => {
-                        setSelectedDefinition(notificationType);
+                        setSelectedType(notificationType);
                         setShowDeleteConfirmation(true);
                       }}
-                      data-testid="delete-details"
+                      data-testid={`delete-notification-type-${notificationType.id}`}
                     >
                       <NotificationBorder className="smallPadding">
                         <GoAIcon type="trash" />
                       </NotificationBorder>
                     </a>
-                  </div>
+                  </MaxHeight>
                 </div>
               }
               description={notificationType.description}
             >
               <Grid>
+                {notificationType.events.map((event, key) => (
+                  <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
+                    <EventBorder>
+                      <MaxHeight height={168}>
+                        <div className="rowFlex">
+                          <div className="flex1">{event.name}</div>
+                          <div className="rowFlex">
+                            <MaxHeight height={34}>
+                              <a
+                                className="flex1 flex"
+                                onClick={() => {
+                                  setSelectedEvent(event);
+                                  setSelectedType(notificationType);
+                                  setShowEventDeleteConfirmation(true);
+                                }}
+                                data-testid={`delete-event-${notificationType.id}`}
+                              >
+                                <NotificationBorder className="smallPadding">
+                                  <GoAIcon type="trash" />
+                                </NotificationBorder>
+                              </a>
+                            </MaxHeight>
+                          </div>
+                        </div>
+                        <div className="columnFlex height-100">
+                          <div className="flex1 flex flexEndAlign">
+                            <div className="rightAlignEdit">
+                              <a
+                                data-testid={`edit-event-${notificationType.id}`}
+                                onClick={() => {
+                                  setSelectedEvent(event);
+                                  manageEvents(notificationType);
+                                }}
+                              >
+                                Edit
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      </MaxHeight>
+                    </EventBorder>
+                  </GridItem>
+                ))}
                 <GridItem md={6} vSpacing={1} hSpacing={0.5}>
                   <NotificationBorder className="padding">
                     <EventButtonWrapper>
                       <GoAButton
                         buttonType="secondary"
+                        data-testid={`add-event-${notificationType.id}`}
                         onClick={() => {
-                          manageEvents();
+                          setSelectedEvent(null);
+                          manageEvents(notificationType);
                         }}
                       >
                         + Select an Event
@@ -139,8 +205,8 @@ export const NotificationTypes: FunctionComponent = () => {
       )}
       {/* Delete confirmation */}
       <GoAModal testId="delete-confirmation" isOpen={showDeleteConfirmation}>
-        <GoAModalTitle>Delete Definition</GoAModalTitle>
-        <GoAModalContent>Delete {selectedDefinition?.name}?</GoAModalContent>
+        <GoAModalTitle>Delete Type</GoAModalTitle>
+        <GoAModalContent>Delete {selectedType?.name}?</GoAModalContent>
         <GoAModalActions>
           <GoAButton buttonType="tertiary" data-testid="delete-cancel" onClick={() => setShowDeleteConfirmation(false)}>
             Cancel
@@ -150,7 +216,35 @@ export const NotificationTypes: FunctionComponent = () => {
             data-testid="delete-confirm"
             onClick={() => {
               setShowDeleteConfirmation(false);
-              dispatch(DeleteNotificationTypeService(selectedDefinition));
+              dispatch(DeleteNotificationTypeService(selectedType));
+            }}
+          >
+            Confirm
+          </GoAButton>
+        </GoAModalActions>
+      </GoAModal>
+      {/* Event delete confirmation */}
+      <GoAModal testId="event-delete-confirmation" isOpen={showEventDeleteConfirmation}>
+        <GoAModalTitle>Remove Event</GoAModalTitle>
+        <GoAModalContent>Remove {selectedEvent?.name}?</GoAModalContent>
+        <GoAModalActions>
+          <GoAButton
+            buttonType="tertiary"
+            data-testid="event-delete-cancel"
+            onClick={() => setShowEventDeleteConfirmation(false)}
+          >
+            Cancel
+          </GoAButton>
+          <GoAButton
+            buttonType="primary"
+            data-testid="event-delete-confirm"
+            onClick={() => {
+              setShowEventDeleteConfirmation(false);
+              const updatedEvents = selectedType.events.filter(
+                (event) => `${event.namespace}:${event.name}` !== `${selectedEvent.namespace}:${selectedEvent.name}`
+              );
+              selectedType.events = updatedEvents;
+              dispatch(UpdateNotificationTypeService(selectedType));
             }}
           >
             Confirm
@@ -158,14 +252,29 @@ export const NotificationTypes: FunctionComponent = () => {
         </GoAModalActions>
       </GoAModal>
       {/* Form */}
-      <NotificationDefinitionModalForm
-        open={editDefinition}
-        initialValue={selectedDefinition}
+      <NotificationTypeModalForm
+        open={editType}
+        initialValue={selectedType}
         errors={errors}
-        onSave={(definition) => {
-          definition.subscriberRoles = [];
-          definition.events = [];
-          dispatch(UpdateNotificationTypeService(definition));
+        onSave={(type) => {
+          type.subscriberRoles = type.subscriberRoles || [];
+          type.events = type.events || [];
+          type.publicSubscribe = type.publicSubscribe || false;
+          dispatch(UpdateNotificationTypeService(type));
+          reset();
+        }}
+        onCancel={() => {
+          reset();
+        }}
+      />
+      <EventModalForm
+        open={editEvent}
+        initialValue={editEvent}
+        selectedEvent={selectedEvent}
+        errors={errors}
+        onSave={(type) => {
+          type.subscriberRoles = [];
+          dispatch(UpdateNotificationTypeService(type));
           reset();
         }}
         onCancel={() => {
@@ -178,6 +287,10 @@ export const NotificationTypes: FunctionComponent = () => {
 
 export default NotificationTypes;
 
+interface HeightProps {
+  height: number;
+}
+
 const Buttons = styled.div`
   margin: 2rem 0 2rem 0;
   text-align: left;
@@ -189,9 +302,20 @@ const NotificationBorder = styled.div`
   border-radius: 3px;
 `;
 
+const EventBorder = styled.div`
+  border: 1px solid #e6e6e6;
+  margin: 3px;
+  border-radius: 3px;
+  padding: 20px;
+`;
+
 const EventButtonWrapper = styled.div`
   text-align: center;
-  margin: 30px 0;
+  margin: 19px 0;
+`;
+
+const MaxHeight = styled.div`
+  max-height: ${(p: HeightProps) => p.height + 'px'};
 `;
 
 const NotficationStyles = styled.div`
@@ -209,6 +333,19 @@ const NotficationStyles = styled.div`
     flex-direction: row;
   }
 
+  .columnFlex {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .height-100 {
+    height: 100px;
+  }
+
+  .flex {
+    display: flex;
+  }
+
   .flex1 {
     flex: 1;
   }
@@ -219,5 +356,14 @@ const NotficationStyles = styled.div`
 
   .smallPadding {
     padding: 3px;
+  }
+
+  .flexEndAlign {
+    align-items: flex-end;
+  }
+
+  .rightAlignEdit {
+    text-align: end;
+    width: 100%;
   }
 `;

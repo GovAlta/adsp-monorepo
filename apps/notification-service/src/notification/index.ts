@@ -60,6 +60,7 @@ export const applyNotificationMiddleware = (
   });
 
   const routerProps = {
+    serviceId,
     logger,
     subscriptionRepository,
     verifyService,

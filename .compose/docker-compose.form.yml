@@ -1,0 +1,25 @@
+version: '3.2'
+services:
+  form-service-mongo:
+    image: mongo:3.6
+    expose:
+      - 27017
+  form-service:
+    build:
+      context: ../
+      dockerfile: .compose/service/Dockerfile
+      args:
+        - SERVICE=form-service
+    ports:
+      - 3343:3343
+    expose:
+      - 3343
+    environment:
+      - KEYCLOAK_ROOT_URL=http://keycloak:8080
+      - DIRECTORY_URL=http://tenant-management-api:3333
+      - CLIENT_ID=urn:ads:platform:form-service
+      - CLIENT_SECRET=e0d96310-60e8-479d-bb94-31120301dcb1
+      - MONGO_URI=mongodb://form-service-mongo:27017
+      - MONGO_DB=form
+      - PORT=3343
+      - LOG_LEVEL=debug

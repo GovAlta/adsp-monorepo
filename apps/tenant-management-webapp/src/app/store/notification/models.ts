@@ -1,17 +1,17 @@
-export interface NotificationTypeItem {
+export interface NotificationItem {
   name: string;
   description?: string;
-  events: [];
+  events: Array<EventItem>;
   subscriberRoles: [];
   id: string;
+  publicSubscribe: boolean;
 }
 
-export interface NotificationItem {
-  id: string;
+export interface EventItem {
   name: string;
-  description?: string;
-  subscriberRoles: [];
-  events: [];
+  namespace?: string;
+  templates?: unknown;
+  channels?: [];
 }
 
 export interface RequestBodyProperties {
@@ -27,10 +27,10 @@ export interface RequestBodySchema {
 
 export interface NotificationService {
   notificationList: Array<NotificationItem>;
-  notificationTypes: Array<NotificationTypeItem>;
+  notificationTypes: Array<NotificationItem>;
 }
 
 export const NOTIFICATION_INIT: NotificationService = {
   notificationList: [],
-  notificationTypes: undefined,
+  notificationTypes: [],
 };

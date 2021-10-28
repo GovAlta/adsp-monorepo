@@ -2,7 +2,7 @@ import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import { Tab, Tabs } from '@components/Tabs';
 import { RootState } from '@store/index';
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { NotificationsOverview } from './overview';
 import { NotificationTypes } from './notificationTypes';
@@ -10,16 +10,31 @@ import { NotificationTypes } from './notificationTypes';
 export const Notifications: FunctionComponent = () => {
   const tenantId = useSelector((state: RootState) => state.tenant?.id);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
+
+  const [activateEditState, setActivateEditState] = useState<boolean>(false);
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+
+  const activateEdit = (edit: boolean) => {
+    setActiveIndex(1);
+    setActivateEditState(edit);
+  };
+
+  useEffect(() => {
+    if (activeIndex !== null) {
+      setActiveIndex(null);
+    }
+  }, [activeIndex]);
+
   return (
     <Page>
       <Main>
         <h2>Notifications</h2>
-        <Tabs activeIndex={0}>
+        <Tabs activeIndex={activeIndex}>
           <Tab label="Overview">
-            <NotificationsOverview />
+            <NotificationsOverview setActiveEdit={activateEdit} />
           </Tab>
-          <Tab label="Notification Types">
-            <NotificationTypes />
+          <Tab label="Notification types">
+            <NotificationTypes activeEdit={activateEditState} activateEdit={activateEdit} />
           </Tab>
         </Tabs>
       </Main>

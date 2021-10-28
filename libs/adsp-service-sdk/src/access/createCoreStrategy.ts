@@ -55,7 +55,7 @@ export const createCoreStrategy = ({
       },
       passReqToCallback: true,
       audience: !ignoreServiceAud ? serviceAud : null,
-      issuer: coreIss
+      issuer: coreIss,
     },
     verifyCallback
   );

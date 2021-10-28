@@ -14,7 +14,12 @@ export class SubscriberEntity implements Subscriber {
   static canCreate(user: User, subscriber: New<Subscriber>): boolean {
     // User is an subscription admin, or user is creating a subscriber for self.
     return (
-      isAllowedUser(user, subscriber.tenantId, [ServiceUserRoles.SubscriptionAdmin], true) ||
+      isAllowedUser(
+        user,
+        subscriber.tenantId,
+        [ServiceUserRoles.SubscriptionAdmin, ServiceUserRoles.SubscriptionApp],
+        true
+      ) ||
       (!!user && user.tenantId?.toString() === subscriber.tenantId.toString() && user?.id === subscriber.userId)
     );
   }
@@ -47,7 +52,12 @@ export class SubscriberEntity implements Subscriber {
   canUpdate(user: User): boolean {
     // User is an subscription admin, or is the subscribed user.
     return (
-      isAllowedUser(user, this.tenantId, [ServiceUserRoles.SubscriptionAdmin], true) ||
+      isAllowedUser(
+        user,
+        this.tenantId,
+        [ServiceUserRoles.SubscriptionAdmin, ServiceUserRoles.SubscriptionApp],
+        true
+      ) ||
       (!!user && user?.id === this.userId)
     );
   }
@@ -81,7 +91,13 @@ export class SubscriberEntity implements Subscriber {
     return this.repository.deleteSubscriber(this);
   }
 
-  async sendVerifyCode(verifyService: VerifyService, user: User, channel: Channel, address: string): Promise<void> {
+  async sendVerifyCode(
+    verifyService: VerifyService,
+    user: User,
+    channel: Channel,
+    address: string,
+    reason: string = null
+  ): Promise<void> {
     if (!this.canUpdate(user) && !isAllowedUser(user, this.tenantId, ServiceUserRoles.CodeSender, true)) {
       throw new UnauthorizedUserError('send code to subscriber', user);
     }
@@ -93,7 +109,7 @@ export class SubscriberEntity implements Subscriber {
 
     verifyChannel.verifyKey = await verifyService.sendCode(
       verifyChannel,
-      'Enter this code to verify your contact address.'
+      reason || 'Enter this code to verify your contact address.'
     );
     await this.repository.saveSubscriber(this);
   }

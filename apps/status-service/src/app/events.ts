@@ -7,7 +7,7 @@ const ApplicationDefinition = {
     id: { type: 'string' },
     name: { type: 'string' },
     description: { type: 'string' },
-    metadata: { type: 'object' }
+    url: { type: 'string' }
   }
 }
 
@@ -15,12 +15,12 @@ interface ApplicationEvent {
   id: string,
   name: string,
   description: string,
-  metadata: Record<string, any>,
+  url: string
 }
 
 export const HealthCheckStartedDefinition: DomainEventDefinition = {
   name: 'health-check-started',
-  description: 'Signalled when healthcheck started for an event',
+  description: 'Signalled when healthcheck started for an event.',
   payloadSchema: {
     type: 'object',
     properties: {
@@ -41,7 +41,7 @@ export const HealthCheckStoppedDefinition: DomainEventDefinition = {
 }
 
 export const HealthCheckHealthyDefinition: DomainEventDefinition = {
-  name: 'health-check-healthy',
+  name: 'application-healthy',
   description: 'Signalled when an application is determined to be healthy by the health check.',
   payloadSchema: {
     type: 'object',
@@ -52,7 +52,7 @@ export const HealthCheckHealthyDefinition: DomainEventDefinition = {
 }
 
 export const HealthCheckUnhealthyDefinition: DomainEventDefinition = {
-  name: 'health-check-unhealthy',
+  name: 'application-unhealthy',
   description: 'Signalled when an application is determined to be unhealthy by the health check.',
   payloadSchema: {
     type: 'object',
@@ -64,17 +64,12 @@ export const HealthCheckUnhealthyDefinition: DomainEventDefinition = {
 }
 
 const mapApplication = (application: ServiceStatusApplication): ApplicationEvent => {
-  let metadata = {}
-  //TODO: need to update this part when we determine the type of the meta data
-  if (application.metadata && typeof application.metadata === 'string') {
-    metadata = JSON.parse(application.metadata)
-  }
 
   return {
     id: application._id,
     name: application.name,
     description: application.description,
-    metadata: metadata
+    url: application.endpoint.url
   }
 }
 

@@ -2,7 +2,7 @@ import { logger } from '../../middleware/logger';
 import { ApiError } from '../../util/apiError';
 import * as HttpStatusCodes from 'http-status-codes';
 import { validateUrn, validateVersion, validatePath } from './util/patternUtil';
-import { AdspId } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId } from '@abgov/adsp-service-sdk';
 import { DirectoryRepository } from '../repository';
 import { MongoDirectoryRepository } from '../mongo/directory';
 
@@ -162,4 +162,15 @@ export const getServiceUrl = async (id: AdspId): Promise<URL> => {
     throw new Error(`Directory entry for ${id} not found.`);
   }
   return new URL(entry.url);
+};
+
+export const getResourceUrl = async (id: AdspId): Promise<URL> => {
+  const serviceUrl = await getServiceUrl(adspId`urn:ads:${id.namespace}:${id.service}:${id.api}`);
+  // Trim any trailing slash on API url and leading slash on resource
+  const resourceUrl = new URL(
+    `${serviceUrl.pathname.replace(/\/$/g, '')}/${id.resource.replace(/^\//, '')}`,
+    serviceUrl
+  );
+
+  return resourceUrl;
 };
