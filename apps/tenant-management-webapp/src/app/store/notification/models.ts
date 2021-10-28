@@ -1,10 +1,17 @@
 export interface NotificationItem {
-  id: string;
   name: string;
   description?: string;
+  events: Array<EventItem>;
   subscriberRoles: [];
-  events: [];
+  id: string;
   publicSubscribe: boolean;
+}
+
+export interface EventItem {
+  name: string;
+  namespace?: string;
+  templates?: unknown;
+  channels?: [];
 }
 
 export interface RequestBodyProperties {

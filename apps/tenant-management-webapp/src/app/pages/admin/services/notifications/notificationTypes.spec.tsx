@@ -19,6 +19,26 @@ describe('NotificationTypes Page', () => {
           events: [],
           subscriberRoles: [],
           id: 'notificationId',
+          publicSubscribe: false,
+        },
+        anotherNotificationId: {
+          name: 'Some other subsidy application',
+          description: 'Lorem ipsum dolor sit amet',
+          events: [{ namespace: 'file-service', name: 'file-deleted', templates: {}, channels: [] }],
+          subscriberRoles: [],
+          id: 'anotherNotificationId',
+          publicSubscribe: false,
+        },
+      },
+    },
+    event: {
+      definitions: {
+        'foo:bar': {
+          namespace: 'foo',
+          name: 'bar',
+          description: 'foobar',
+          isCore: false,
+          payloadSchema: {},
         },
       },
     },
@@ -57,7 +77,7 @@ describe('NotificationTypes Page', () => {
       </Provider>
     );
 
-    const deleteBtn = queryByTestId('delete-details');
+    const deleteBtn = queryByTestId('delete-notification-type-notificationId');
     fireEvent.click(deleteBtn);
 
     const confirmation = queryByTestId('delete-confirmation');
@@ -79,7 +99,7 @@ describe('NotificationTypes Page', () => {
       </Provider>
     );
 
-    const deleteBtn = queryByTestId('delete-details');
+    const deleteBtn = queryByTestId('delete-notification-type-notificationId');
     fireEvent.click(deleteBtn);
 
     const deleteCancel = queryByTestId('delete-cancel');
@@ -96,7 +116,7 @@ describe('NotificationTypes Page', () => {
         <NotificationTypes />
       </Provider>
     );
-    const editBtn = queryByTestId('edit-details');
+    const editBtn = queryByTestId('edit-notification-type-notificationId');
     await waitFor(() => {
       fireEvent.click(editBtn);
     });
@@ -130,8 +150,10 @@ describe('NotificationTypes Page', () => {
       </Provider>
     );
 
-    const editBtn = queryByTestId('edit-details');
-    fireEvent.click(editBtn);
+    await waitFor(() => {
+      const editBtn = queryByTestId('edit-notification-type-notificationId');
+      fireEvent.click(editBtn);
+    });
 
     const cancelButton = queryByTestId('form-cancel');
     fireEvent.click(cancelButton);
@@ -172,5 +194,94 @@ describe('NotificationTypes Page', () => {
     const saveAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
 
     expect(saveAction).toBeTruthy();
+  });
+
+  it('add an event', async () => {
+    const { queryByTestId } = render(
+      <Provider store={store}>
+        <NotificationTypes />
+      </Provider>
+    );
+
+    const addBtn = queryByTestId('add-event-notificationId');
+    await waitFor(() => {
+      fireEvent.click(addBtn);
+    });
+
+    // fields
+    const eventDropDown = queryByTestId('event-dropdown');
+    const cancelBtn = queryByTestId('event-form-cancel');
+    const saveBtn = queryByTestId('event-form-save');
+
+    expect(eventDropDown).toBeTruthy();
+    expect(cancelBtn).toBeTruthy();
+    expect(saveBtn).toBeTruthy();
+
+    // fill
+    fireEvent.click(queryByTestId('event-dropdown'));
+    fireEvent.click(queryByTestId('event-dropdown-option--foo:bar'));
+
+    fireEvent.click(saveBtn);
+
+    const actions = store.getActions();
+
+    const saveAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
+
+    expect(saveAction).toBeTruthy();
+  });
+
+  it('edit an event', async () => {
+    const { queryByTestId } = render(
+      <Provider store={store}>
+        <NotificationTypes />
+      </Provider>
+    );
+    const editBtn = queryByTestId('edit-event-notificationId');
+    await waitFor(() => {
+      fireEvent.click(editBtn);
+    });
+
+    // fields
+    const eventDropDown = queryByTestId('event-dropdown');
+    const cancelBtn = queryByTestId('event-form-cancel');
+    const saveBtn = queryByTestId('event-form-save');
+
+    expect(eventDropDown).toBeTruthy();
+    expect(cancelBtn).toBeTruthy();
+    expect(saveBtn).toBeTruthy();
+
+    // fill
+    fireEvent.click(queryByTestId('event-dropdown'));
+    fireEvent.click(queryByTestId('event-dropdown-option--foo:bar'));
+
+    fireEvent.click(saveBtn);
+
+    const actions = store.getActions();
+
+    const saveAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
+
+    expect(saveAction).toBeTruthy();
+  });
+
+  it('deletes an event', async () => {
+    const { queryByTestId } = render(
+      <Provider store={store}>
+        <NotificationTypes />
+      </Provider>
+    );
+
+    const deleteBtn = queryByTestId('delete-event-notificationId');
+    fireEvent.click(deleteBtn);
+
+    const confirmation = queryByTestId('event-delete-confirmation');
+    expect(confirmation).not.toBeNull();
+
+    const deleteConfirm = queryByTestId('event-delete-confirm');
+    fireEvent.click(deleteConfirm);
+
+    const actions = store.getActions();
+
+    const deleteAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
+    expect(deleteAction).toBeTruthy();
   });
 });

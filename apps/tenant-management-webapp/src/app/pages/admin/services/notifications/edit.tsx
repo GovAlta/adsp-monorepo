@@ -4,16 +4,16 @@ import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 
-interface NotificationDefinitionFormProps {
+interface NotificationTypeFormProps {
   initialValue?: NotificationItem;
   onCancel?: () => void;
-  onSave?: (definition: NotificationItem) => void;
+  onSave?: (type: NotificationItem) => void;
   open: boolean;
 
   errors?: Record<string, string>;
 }
 
-const emptyNotificationDefinition: NotificationItem = {
+const emptyNotificationType: NotificationItem = {
   name: '',
   description: '',
   events: [],
@@ -22,7 +22,7 @@ const emptyNotificationDefinition: NotificationItem = {
   publicSubscribe: false,
 };
 
-export const NotificationDefinitionModalForm: FunctionComponent<NotificationDefinitionFormProps> = ({
+export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormProps> = ({
   initialValue,
   onCancel,
   onSave,
@@ -30,15 +30,15 @@ export const NotificationDefinitionModalForm: FunctionComponent<NotificationDefi
   open,
 }) => {
   const isEdit = !!initialValue;
-  const [definition, setDefinition] = useState(emptyNotificationDefinition);
+  const [type, setType] = useState(emptyNotificationType);
 
   useEffect(() => {
-    isEdit && setDefinition(initialValue);
+    isEdit && setType(initialValue);
   }, [initialValue]);
 
   return (
     <GoAModal testId="notification-types-form" isOpen={open}>
-      <GoAModalTitle>{isEdit ? 'Edit Definition' : 'Add a notification type'}</GoAModalTitle>
+      <GoAModalTitle>{isEdit ? 'Edit notification type' : 'Add a notification type'}</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>
           <GoAFormItem className={errors?.['name'] && 'error'}>
@@ -46,9 +46,9 @@ export const NotificationDefinitionModalForm: FunctionComponent<NotificationDefi
             <input
               type="text"
               name="name"
-              value={definition.name}
+              value={type.name}
               data-testid="form-name"
-              onChange={(e) => setDefinition({ ...definition, name: e.target.value })}
+              onChange={(e) => setType({ ...type, name: e.target.value })}
             />
             <div className="error-msg">{errors?.['name']}</div>
           </GoAFormItem>
@@ -57,8 +57,8 @@ export const NotificationDefinitionModalForm: FunctionComponent<NotificationDefi
             <textarea
               name="description"
               data-testid="form-description"
-              value={definition.description}
-              onChange={(e) => setDefinition({ ...definition, description: e.target.value })}
+              value={type.description}
+              onChange={(e) => setType({ ...type, description: e.target.value })}
             />
           </GoAFormItem>
         </GoAForm>
@@ -68,11 +68,11 @@ export const NotificationDefinitionModalForm: FunctionComponent<NotificationDefi
           Cancel
         </GoAButton>
         <GoAButton
-          disabled={!definition.description || !definition.name}
+          disabled={!type.name}
           buttonType="primary"
           data-testid="form-save"
           type="submit"
-          onClick={(e) => onSave(definition)}
+          onClick={(e) => onSave(type)}
         >
           Save
         </GoAButton>
