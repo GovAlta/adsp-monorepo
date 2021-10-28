@@ -3,7 +3,6 @@ import { adspId } from '../utils';
 import { createTenantHandler } from './tenantHandler';
 
 describe('createTenantHandler', () => {
-  const tenantApiId = adspId`urn:ads:platform:tenant-service:v2`;
   const serviceMock = {
     getTenant: jest.fn(),
     getTenants: jest.fn(),
