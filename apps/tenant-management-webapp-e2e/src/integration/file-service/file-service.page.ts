@@ -22,7 +22,7 @@ class FileServicePage {
   }
 
   fileTypesAPIsTitle() {
-    return cy.xpath('//h2[contains(text(), "File Types APIs")]');
+    return cy.xpath('//h2[contains(text(), "File types APIs")]');
   }
 
   filesAPIsTitle() {

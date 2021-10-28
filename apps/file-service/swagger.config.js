@@ -4,7 +4,7 @@ const tenant = 'autotest';
 module.exports = {
   openapi: '3.0.0',
   info: {
-    title: 'File Service',
+    title: 'File service',
     version: '0.0.0',
     description:
       'The file service provides the capability to upload and download files. ' +

@@ -14,8 +14,8 @@ const emptyEventDefinition: EventDefinition = {
   namespace: '',
   name: '',
   description: '',
-  payloadSchema: {}
-}
+  payloadSchema: {},
+};
 
 export const EventDefinitions: FunctionComponent = () => {
   const [editDefinition, setEditDefinition] = useState(false);
@@ -56,7 +56,7 @@ export const EventDefinitions: FunctionComponent = () => {
             setEditDefinition(true);
           }}
         >
-          Add Definition
+          Add definition
         </GoAButton>
       </Buttons>
 

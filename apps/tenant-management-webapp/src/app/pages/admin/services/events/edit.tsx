@@ -43,7 +43,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
 
   return (
     <GoAModal testId="definition-form" isOpen={open}>
-      <GoAModalTitle>{isEdit ? 'Edit Event' : 'Add Event'}</GoAModalTitle>
+      <GoAModalTitle>{isEdit ? 'Edit definition' : 'Add definition'}</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>
           <GoAFormItem className={errors?.['namespace'] && 'error'}>

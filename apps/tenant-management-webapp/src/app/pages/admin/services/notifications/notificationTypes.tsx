@@ -205,7 +205,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       )}
       {/* Delete confirmation */}
       <GoAModal testId="delete-confirmation" isOpen={showDeleteConfirmation}>
-        <GoAModalTitle>Delete Type</GoAModalTitle>
+        <GoAModalTitle>Delete notification type</GoAModalTitle>
         <GoAModalContent>Delete {selectedType?.name}?</GoAModalContent>
         <GoAModalActions>
           <GoAButton buttonType="tertiary" data-testid="delete-cancel" onClick={() => setShowDeleteConfirmation(false)}>
@@ -225,7 +225,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       </GoAModal>
       {/* Event delete confirmation */}
       <GoAModal testId="event-delete-confirmation" isOpen={showEventDeleteConfirmation}>
-        <GoAModalTitle>Remove Event</GoAModalTitle>
+        <GoAModalTitle>Remove event</GoAModalTitle>
         <GoAModalContent>Remove {selectedEvent?.name}?</GoAModalContent>
         <GoAModalActions>
           <GoAButton

@@ -5,7 +5,7 @@ metadata:
   annotations:
     tags: core-services, file-service
     template.openshift.io/provider-display-name: platform team
-    description: File Service
+    description: File service
 labels:
   application: file-service
 parameters:
@@ -22,7 +22,7 @@ parameters:
   - name: NAME_SUFFIX
     description: Suffix applied to the names of the objects created.
     displayName: Name Suffix
-    value: ""
+    value: ''
   - name: BUILD_TAG
     description: Name of the ImageStreamTag to build.
     displayName: Build Tag
@@ -34,7 +34,7 @@ parameters:
   - name: ROUTE_HOST
     description: Host for the route.
     displayName: Route Host
-    value: ""
+    value: ''
   - description: Username for MongoDB user that will be used for accessing the database.
     displayName: MongoDB Connection Username
     from: user[A-Z0-9]{3}
@@ -43,13 +43,13 @@ parameters:
     required: true
   - description: Password for the MongoDB connection user.
     displayName: MongoDB Connection Password
-    from: "[a-zA-Z0-9]{16}"
+    from: '[a-zA-Z0-9]{16}'
     generate: expression
     name: MONGODB_PASSWORD
     required: true
   - description: Password for the database admin user.
     displayName: MongoDB Admin Password
-    from: "[a-zA-Z0-9]{16}"
+    from: '[a-zA-Z0-9]{16}'
     generate: expression
     name: MONGODB_ADMIN_PASSWORD
     required: true
@@ -67,8 +67,8 @@ objects:
       labels:
         app: file-service${NAME_SUFFIX}
         component: database
-        apply-init: "true"
-        apply-branch: "true"
+        apply-init: 'true'
+        apply-branch: 'true'
       name: file-service-mongodb${NAME_SUFFIX}
     stringData:
       database-admin-password: ${MONGODB_ADMIN_PASSWORD}
@@ -83,8 +83,8 @@ objects:
       labels:
         app: file-service${NAME_SUFFIX}
         component: database
-        apply-init: "true"
-        apply-branch: "true"
+        apply-init: 'true'
+        apply-branch: 'true'
       name: file-service-mongodb${NAME_SUFFIX}
     spec:
       accessModes:
@@ -100,11 +100,11 @@ objects:
       labels:
         app: file-service${NAME_SUFFIX}
         component: database
-        apply-branch: "true"
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-branch: 'true'
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-staging: 'true'
+        apply-prod: 'true'
       name: file-service-mongodb${NAME_SUFFIX}
     spec:
       ports:
@@ -124,15 +124,15 @@ objects:
     kind: DeploymentConfig
     metadata:
       annotations:
-        template.alpha.openshift.io/wait-for-ready: "true"
+        template.alpha.openshift.io/wait-for-ready: 'true'
       labels:
         app: file-service${NAME_SUFFIX}
         component: database
-        apply-branch: "true"
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-branch: 'true'
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-staging: 'true'
+        apply-prod: 'true'
       name: file-service-mongodb${NAME_SUFFIX}
     spec:
       replicas: 1
@@ -170,7 +170,7 @@ objects:
                     secretKeyRef:
                       key: database-name
                       name: file-service-mongodb${NAME_SUFFIX}
-              image: " "
+              image: ' '
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 initialDelaySeconds: 30
@@ -222,7 +222,7 @@ objects:
               namespace: openshift
           type: ImageChange
 
-  # File Service Objects
+  # File service Objects
 
   # ImageStream is here for reference.
   # There is a single ImageStream created in the infra project.
@@ -232,7 +232,7 @@ objects:
       labels:
         app: file-service
         component: api
-        apply-infra: "true"
+        apply-infra: 'true'
       name: file-service
       namespace: ${INFRA_NAMESPACE}
     spec: {}
@@ -245,8 +245,8 @@ objects:
       labels:
         app: file-service${NAME_SUFFIX}
         component: api
-        apply-infra: "true"
-        apply-branch: "true"
+        apply-infra: 'true'
+        apply-branch: 'true'
       name: file-service${NAME_SUFFIX}
     spec:
       output:
@@ -280,8 +280,8 @@ objects:
       labels:
         app: file-service${NAME_SUFFIX}
         component: api
-        apply-init: "true"
-        apply-branch: "true"
+        apply-init: 'true'
+        apply-branch: 'true'
       name: file-service-files${NAME_SUFFIX}
     spec:
       accessModes:
@@ -298,11 +298,11 @@ objects:
       labels:
         app: file-service${NAME_SUFFIX}
         component: api
-        apply-branch: "true"
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-branch: 'true'
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-staging: 'true'
+        apply-prod: 'true'
       name: file-service${NAME_SUFFIX}
     spec:
       replicas: 1
@@ -330,7 +330,7 @@ objects:
                     name: file-service
               env:
                 - name: PORT
-                  value: "3333"
+                  value: '3333'
                 - name: FILE_PATH
                   value: /data/files
                 - name: MONGO_USER
@@ -396,11 +396,11 @@ objects:
       labels:
         app: file-service${NAME_SUFFIX}
         component: api
-        apply-branch: "true"
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-branch: 'true'
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-staging: 'true'
+        apply-prod: 'true'
       name: file-service${NAME_SUFFIX}
     spec:
       ports:
@@ -419,11 +419,11 @@ objects:
       labels:
         app: file-service${NAME_SUFFIX}
         component: api
-        apply-branch: "true"
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-branch: 'true'
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-staging: 'true'
+        apply-prod: 'true'
       name: file-service${NAME_SUFFIX}
     spec:
       host: ${ROUTE_HOST}

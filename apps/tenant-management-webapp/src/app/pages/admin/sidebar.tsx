@@ -28,7 +28,8 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
       tenantName: state.tenant.name,
       authenticated: state.session.authenticated,
       realm: state.session.realm,
-      hasAdminRole: state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes(tenantAdminRole),
+      hasAdminRole:
+        state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes(tenantAdminRole),
     };
   });
 
@@ -91,7 +92,7 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
                   dispatch(TenantLogout());
                 }}
               >
-                Sign Out
+                Sign out
               </span>
             ) : (
               <span onClick={() => dispatch(TenantAdminLogin())}>Sign In</span>

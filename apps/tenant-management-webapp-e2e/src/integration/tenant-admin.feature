@@ -14,8 +14,8 @@ Feature: Tenant admin
     Then the "<Page Title>" landing page is displayed
     Examples:
       | Menu          | Page Title     |
-      | File Services | File Services  |
-      | Status        | Service Status |
+      | File services | File services  |
+      | Status        | Service status |
       | Event log     | Event log      |
 
 
@@ -71,12 +71,12 @@ Feature: Tenant admin
     # Getting content from clipboard doesn't work on build agent. Commented out this validation.
     # When the user clicks click to copy button
     # Then the autologin link is copied to the clipboard
-    And the user views introductions and links for "Access", "File Service", "Status", "Events" and "Notifications"
+    And the user views introductions and links for "Access", "File service", "Status", "Events" and "Notifications"
     When the user clicks "Access" link
     Then the user is directed to "Access" page
     When the user selects the "Dashboard" menu item
-    And the user clicks "File Service" link
-    Then the user is directed to "File Service" page
+    And the user clicks "File service" link
+    Then the user is directed to "File service" page
     When the user selects the "Dashboard" menu item
     And the user clicks "Status" link
     Then the user is directed to "Status" page

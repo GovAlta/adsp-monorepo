@@ -37,7 +37,7 @@ const CardContent = styled.div`
 `;
 
 const MessageContainer = styled.div`
-   margin-bottom: 1rem;
+  margin-bottom: 1rem;
 `;
 const ServiceHref = styled.div`
   font-weight: var(--fw-bold);
@@ -70,39 +70,45 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
     return (
       <HeaderContainer>
         <IconContext>
-          {props.mode === 'draft' && <GoABadge
-            key={`${notice.id}-badge-draft`}
-            data-testid='notice-card-mode'
-            content={'Draft'}
-            type='information'
-            testId='notice-card-mode'
-          />}
+          {props.mode === 'draft' && (
+            <GoABadge
+              key={`${notice.id}-badge-draft`}
+              data-testid="notice-card-mode"
+              content={'Draft'}
+              type="information"
+              testId="notice-card-mode"
+            />
+          )}
           {props.mode === 'active' && (
             <GoABadge
               key={`${notice.id}-badge-published`}
               content={'Published'}
-              data-testid='notice-card-mode'
+              data-testid="notice-card-mode"
               type="success"
-              testId='notice-card-mode'
+              testId="notice-card-mode"
             />
           )}
           {props.mode === 'archived' && (
-            <GoABadge key={`${notice.id}-badge-archived`}
+            <GoABadge
+              key={`${notice.id}-badge-archived`}
               content={'Archived'}
-              data-testid='notice-card-mode'
-              testId='notice-card-mode'
-              type="midtone" />
+              data-testid="notice-card-mode"
+              testId="notice-card-mode"
+              type="midtone"
+            />
           )}
-          {props.mode !== 'archived' && <img
-            className="goa-icon"
-            src={SettingIcon}
-            width="30"
-            alt="notice-card-setting"
-            data-testid='notice-card-gear-button'
-            onClick={() => {
-              clickMenuFn(notice.id, false)
-            }}
-          />}
+          {props.mode !== 'archived' && (
+            <img
+              className="goa-icon"
+              src={SettingIcon}
+              width="30"
+              alt="notice-card-setting"
+              data-testid="notice-card-gear-button"
+              onClick={() => {
+                clickMenuFn(notice.id, false);
+              }}
+            />
+          )}
         </IconContext>
       </HeaderContainer>
     );
@@ -115,7 +121,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      year: 'numeric'
+      year: 'numeric',
     };
 
     const timeParts = new Date(date).toLocaleString('en-US', options).split(',');
@@ -125,30 +131,39 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
 
   return (
     <NoticeCardContainer key={`notice-card-container-${notice.id}`}>
-      {isMenuOpen && <div className='dropdown-overlay' onClick={() => { clickMenuFn(notice.id, true) }} />}
-      <CardHeader
-        mode={notice.mode}
-        key={`notice-card-header-${notice.id}`}
-        data-testid="notice-card-header" />
+      {isMenuOpen && (
+        <div
+          className="dropdown-overlay"
+          onClick={() => {
+            clickMenuFn(notice.id, true);
+          }}
+        />
+      )}
+      <CardHeader mode={notice.mode} key={`notice-card-header-${notice.id}`} data-testid="notice-card-header" />
       <CardContent
         key={`notice-content-${notice.id}`}
-        onClick={() => { clickMenuFn(notice.id, true) }}
-        data-testid="notice-card-content">
+        onClick={() => {
+          clickMenuFn(notice.id, true);
+        }}
+        data-testid="notice-card-content"
+      >
         <MessageContainer key={`notice-card-message-${notice.id}`} data-testid={`notice-card-message`}>
           {notice.message}
         </MessageContainer>
-        {notice.isAllApplications && <ServiceHref
-          data-testid='notice-card-application'
-          key={`notice-service-Href-${notice.id}`}>
-          All Applications
-        </ServiceHref>}
-        {notice.tennantServRef && notice.isAllApplications === false &&
+        {notice.isAllApplications && (
+          <ServiceHref data-testid="notice-card-application" key={`notice-service-Href-${notice.id}`}>
+            All applications
+          </ServiceHref>
+        )}
+        {notice.tennantServRef &&
+          notice.isAllApplications === false &&
           notice.tennantServRef.map((application) => {
             const currentApplication = applications.find((app) => application.id === app._id);
             return (
               <ServiceHref
-                data-testid='notice-card-application'
-                key={`notice-service-Href-${notice.id}-${application.id}`}>
+                data-testid="notice-card-application"
+                key={`notice-service-Href-${notice.id}-${application.id}`}
+              >
                 {currentApplication?.name}
               </ServiceHref>
             );
@@ -158,22 +173,29 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
             notice={notice}
             id={`${notice.id}`}
             data-testid="notice-card-draft-menu"
-            closeActionFn={() => { clickMenuFn(notice.id, true) }} />
+            closeActionFn={() => {
+              clickMenuFn(notice.id, true);
+            }}
+          />
         )}
         {isMenuOpen && notice.mode === 'active' && (
           <PublishedDropdownMenu
-            notice={notice} id={`${notice.id}`}
+            notice={notice}
+            id={`${notice.id}`}
             data-testid="notice-card-published-menu"
-            closeActionFn={() => { clickMenuFn(notice.id, true) }} />
+            closeActionFn={() => {
+              clickMenuFn(notice.id, true);
+            }}
+          />
         )}
       </CardContent>
-      <div data-testid='notice-card-start-date'>
-        <span className='time-title'>Start Date: </span>
-        <span className='time'>{FormatNoticeDate(notice.startDate)}</span>
+      <div data-testid="notice-card-start-date">
+        <span className="time-title">Start date: </span>
+        <span className="time">{FormatNoticeDate(notice.startDate)}</span>
       </div>
-      <div data-testid='notice-card-end-date'>
-        <span className='time-title'>End Date: </span>
-        <span className='time'>{FormatNoticeDate(notice.endDate)}</span>
+      <div data-testid="notice-card-end-date">
+        <span className="time-title">End date: </span>
+        <span className="time">{FormatNoticeDate(notice.endDate)}</span>
       </div>
     </NoticeCardContainer>
   );

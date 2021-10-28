@@ -50,7 +50,7 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
             <UserIconBox>
               <UserIcon />
               <Link to={''} onClick={() => dispatch(TenantLogout())}>
-                Sign Out
+                Sign out
               </Link>
             </UserIconBox>
           )}

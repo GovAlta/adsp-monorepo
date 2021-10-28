@@ -7,7 +7,7 @@
     {
       "type": "node",
       "request": "attach",
-      "name": "Attach File Service",
+      "name": "Attach file service",
       "port": 7770,
       "outFiles": [
         "${workspaceFolder}/dist/**/*.js"

@@ -34,8 +34,8 @@ When('the user clicks the sign in button', function () {
 });
 
 Then('the user is logged in tenant management web app', function () {
-  welcomPageObj.signoutDiv().contains('Sign Out');
-  welcomPageObj.userIcon().next().contains('Sign Out'); //user icon is next to sign out
+  welcomPageObj.signoutDiv().contains('Sign out');
+  welcomPageObj.userIcon().next().contains('Sign out'); //user icon is next to sign out
 });
 
 Then('the user views the page of {string} based on if the user created a tenant before or not', function (page) {
