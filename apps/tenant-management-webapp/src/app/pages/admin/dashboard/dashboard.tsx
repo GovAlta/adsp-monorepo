@@ -39,7 +39,7 @@ const Dashboard = (): JSX.Element => {
 
   const adminDashboard = () => {
     return (
-      <div>
+      <DashboardDiv>
         <Page>
           <Main>
             <h2>{tenantName} Dashboard</h2>
@@ -138,7 +138,7 @@ const Dashboard = (): JSX.Element => {
             />
           </div>
         </div>
-      </div>
+      </DashboardDiv>
     );
   };
 
@@ -182,5 +182,12 @@ const DashboardAside = styled(Aside)`
 
   .mt-2 {
     margin-top: 2em;
+  }
+`;
+const DashboardDiv = styled.div`
+  a {
+    &:visited {
+      color: var(--color-primary);
+    }
   }
 `;
