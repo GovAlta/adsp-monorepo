@@ -35,7 +35,6 @@ const initializeApp = async (): Promise<express.Application> => {
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
   const {
-    coreStrategy,
     tenantStrategy,
     eventService,
     directory,

@@ -72,11 +72,9 @@ export class FormEntity implements Form {
     return isAllowedUser(user, this.tenantId, this.definition.assessorRoles);
   }
 
-  private async access(user: User): Promise<FormEntity> {
+  private async access(_user: User): Promise<FormEntity> {
     if (this.status === FormStatus.Locked) {
       throw new InvalidOperationError('Locked form cannot be read.');
-    } else if (this.status === FormStatus.Submitted && !this.canAssess(user)) {
-      throw new UnauthorizedUserError('assess form', user);
     }
 
     this.lastAccessed = new Date();
@@ -84,7 +82,7 @@ export class FormEntity implements Form {
   }
 
   async sendCode(user: User, notificationService: NotificationService): Promise<FormEntity> {
-    if (!isAllowedUser(user, this.tenantId, FormServiceRoles.IntakeApp, true)) {
+    if (!isAllowedUser(user, this.tenantId, FormServiceRoles.IntakeApp)) {
       throw new UnauthorizedUserError('send code', user);
     }
 
@@ -113,11 +111,14 @@ export class FormEntity implements Form {
   }
 
   async accessByUser(user: User): Promise<FormEntity> {
-    if (this.status === FormStatus.Draft && !isAllowedUser(user, this.tenantId, this.definition.applicantRoles)) {
+    if (
+      this.status === FormStatus.Draft &&
+      (!isAllowedUser(user, this.tenantId, this.definition.applicantRoles) || user.id !== this.createdBy.id)
+    ) {
       throw new UnauthorizedUserError('access draft form', user);
     }
 
-    if (this.status === FormStatus.Submitted && !isAllowedUser(user, this.tenantId, this.definition.assessorRoles)) {
+    if (this.status === FormStatus.Submitted && !this.canAssess(user)) {
       throw new UnauthorizedUserError('access submitted form', user);
     }
 
@@ -125,12 +126,12 @@ export class FormEntity implements Form {
   }
 
   async update(user: User, data?: Record<string, unknown>, files?: Record<string, AdspId>): Promise<FormEntity> {
-    if (!this.definition.canApply(user) && user.id === this.createdBy.id) {
-      throw new UnauthorizedUserError('update form', user);
-    }
-
     if (this.status !== FormStatus.Draft) {
       throw new InvalidOperationError('Cannot update form not in draft.');
+    }
+
+    if (!this.definition.canApply(user) || user.id !== this.createdBy.id) {
+      throw new UnauthorizedUserError('update form', user);
     }
 
     if (data) {
@@ -178,7 +179,7 @@ export class FormEntity implements Form {
   }
 
   async submit(user: User): Promise<FormEntity> {
-    if (!this.definition.canApply(user) && user.id === this.createdBy.id) {
+    if (!this.definition.canApply(user) || user.id !== this.createdBy.id) {
       throw new UnauthorizedUserError('update form', user);
     }
 
