@@ -15,6 +15,7 @@ import {
   SUBMIT_FORM_OPERATION,
   UNLOCK_FORM_OPERATION,
 } from './types';
+import { FileService } from '../../file';
 
 export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition {
   return {
@@ -224,13 +225,33 @@ export function formOperation(eventService: EventService, notificationService: N
   };
 }
 
+export function deleteForm(fileService: FileService): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const form: FormEntity = req[FORM];
+
+      const deleted = await form.delete(user, fileService);
+      res.send({ deleted });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 interface FormRouterProps {
   repository: FormRepository;
   eventService: EventService;
   notificationService: NotificationService;
+  fileService: FileService;
 }
 
-export function createFormRouter({ repository, eventService, notificationService }: FormRouterProps): Router {
+export function createFormRouter({
+  repository,
+  eventService,
+  notificationService,
+  fileService,
+}: FormRouterProps): Router {
   const router = Router();
   router.get('/definitions', getFormDefinitions);
   router.get('/definitions/:definitionId', getFormDefinition);
@@ -240,6 +261,7 @@ export function createFormRouter({ repository, eventService, notificationService
 
   router.get('/forms/:formId', getForm(repository), (req, res) => res.send(mapForm(req[FORM])));
   router.post('/forms/:formId', getForm(repository), formOperation(eventService, notificationService));
+  router.delete('/forms/:formId', getForm(repository), deleteForm(fileService));
 
   router.get('/forms/:formId/data', getForm(repository), accessForm(notificationService));
   router.put('/forms/:formId/data', getForm(repository), updateFormData);

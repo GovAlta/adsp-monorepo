@@ -42,6 +42,10 @@ export const fileSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  infected: {
+    type: Boolean,
+    default: false,
+  },
   deleted: {
     type: Boolean,
     default: false,

@@ -1,6 +1,7 @@
 import { EventService } from '@abgov/adsp-service-sdk';
 import { DateTime, Duration } from 'luxon';
 import { Logger } from 'winston';
+import { FileService } from '../../file';
 import { formDeleted } from '../events';
 import { FormRepository } from '../repository';
 import { FormStatus } from '../types';
@@ -10,10 +11,11 @@ interface DeleteJobProps {
   logger: Logger;
   repository: FormRepository;
   eventService: EventService;
+  fileService: FileService;
 }
 
 const MAX_LOCKED_AGE = Duration.fromISO('P15D');
-export function createDeleteJob({ logger, repository, eventService }: DeleteJobProps) {
+export function createDeleteJob({ logger, repository, eventService, fileService }: DeleteJobProps) {
   return async (): Promise<void> => {
     try {
       logger.debug('Starting form delete job...');
@@ -27,7 +29,7 @@ export function createDeleteJob({ logger, repository, eventService }: DeleteJobP
         });
 
         for (const result of results) {
-          const deleted = await result.delete(jobUser);
+          const deleted = await result.delete(jobUser, fileService);
           if (deleted) {
             numberDeleted++;
             eventService.send(formDeleted(jobUser, result));

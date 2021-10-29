@@ -69,6 +69,7 @@ describe('File Entity', () => {
       },
       scanned: false,
       deleted: true,
+      infected: false,
     };
 
     const entity = new FileEntity(storageProviderMock.object(), repositoryMock.object(), typeMock.object(), file);
@@ -186,6 +187,7 @@ describe('File Entity', () => {
         },
         scanned: false,
         deleted: false,
+        infected: false,
       };
 
       entity = new FileEntity(storageProviderMock.object(), repositoryMock.object(), typeMock.object(), file);
