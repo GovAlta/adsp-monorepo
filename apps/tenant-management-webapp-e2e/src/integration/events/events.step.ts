@@ -71,7 +71,7 @@ Then('the user views Add definition dialog', function () {
 });
 
 Then('the user views Edit definition dialog', function () {
-  eventsObj.definitionModalTitle().invoke('text').should('eq', 'edit Definition');
+  eventsObj.definitionModalTitle().invoke('text').should('eq', 'Edit definition');
 });
 
 When(
