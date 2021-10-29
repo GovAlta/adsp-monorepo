@@ -69,6 +69,7 @@ describe('File Entity', () => {
       },
       scanned: false,
       deleted: true,
+      infected: false,
     };
 
     const entity = new FileEntity(storageProviderMock.object(), repositoryMock.object(), typeMock.object(), file);
@@ -186,6 +187,7 @@ describe('File Entity', () => {
         },
         scanned: false,
         deleted: false,
+        infected: false,
       };
 
       entity = new FileEntity(storageProviderMock.object(), repositoryMock.object(), typeMock.object(), file);
@@ -220,6 +222,20 @@ describe('File Entity', () => {
         expect(entity.lastAccessed >= start).toBeTruthy();
         done();
       });
+    });
+
+    it('can throw for file marked for deletion', async () => {
+      typeMock.setup((m) => m.canAccessFile(user)).returns(true);
+
+      await entity.markForDeletion(user);
+      await expect(entity.readFile(user)).rejects.toThrowError(InvalidOperationError);
+    });
+
+    it('can throw for infected file', async () => {
+      typeMock.setup((m) => m.canAccessFile(user)).returns(true);
+
+      await entity.updateScanResult(true);
+      expect(entity.readFile(user)).rejects.toThrowError(InvalidOperationError);
     });
 
     it('can throw on read by unauthorized', async () => {

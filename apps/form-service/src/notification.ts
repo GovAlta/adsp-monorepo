@@ -16,7 +16,7 @@ export interface NotificationService {
   verifyCode(tenantId: AdspId, subscriber: Subscriber, code: string): Promise<boolean>;
 }
 
-const LOG_CONTEXT = 'NotificationService';
+const LOG_CONTEXT = { context: 'NotificationService' };
 class NotificationServiceImpl implements NotificationService {
   private notificationApiId = adspId`urn:ads:platform:notification-service:v1`;
 
@@ -42,7 +42,7 @@ class NotificationServiceImpl implements NotificationService {
       };
     } catch (err) {
       this.logger.error(`Error encountered getting subscriber from notification service. ${err}`, {
-        context: LOG_CONTEXT,
+        ...LOG_CONTEXT,
         tenant: tenantId?.toString(),
       });
     }
@@ -67,7 +67,7 @@ class NotificationServiceImpl implements NotificationService {
       this.logger.error(
         `Error encountered subscribing for form (ID: ${formId}) applicant ${subscriber.addressAs} (User ID: ${subscriber.userId}). ${err}`,
         {
-          context: LOG_CONTEXT,
+          ...LOG_CONTEXT,
           tenant: tenantId?.toString(),
         }
       );
@@ -95,7 +95,7 @@ class NotificationServiceImpl implements NotificationService {
         this.logger.info(
           `Sent code to subscriber ${subscriber.addressAs} (User ID: ${subscriber.userId}) at ${subscriber.channels[0].address}`,
           {
-            context: LOG_CONTEXT,
+            ...LOG_CONTEXT,
             tenant: tenantId?.toString(),
           }
         );
@@ -104,7 +104,7 @@ class NotificationServiceImpl implements NotificationService {
       this.logger.error(
         `Error encountered sending code to applicant ${subscriber.addressAs} (User ID: ${subscriber.userId}). ${err}`,
         {
-          context: LOG_CONTEXT,
+          ...LOG_CONTEXT,
           tenant: tenantId?.toString(),
         }
       );
@@ -133,7 +133,7 @@ class NotificationServiceImpl implements NotificationService {
       this.logger.error(
         `Error encountered verifying code for applicant ${subscriber.addressAs} (User ID: ${subscriber.userId}). ${err}`,
         {
-          context: LOG_CONTEXT,
+          ...LOG_CONTEXT,
           tenant: tenantId?.toString(),
         }
       );
