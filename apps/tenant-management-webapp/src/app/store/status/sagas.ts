@@ -131,7 +131,9 @@ export function* toggleApplicationStatus(action: ToggleApplicationStatusAction) 
       action.payload.applicationId
     );
     data.endpoint.statusEntries = entryMap;
-
+    data.enabled = action.payload.enabled;
+    // set as pending after toggling
+    data.internalStatus = 'pending';
     yield put(setApplicationStatusSuccess(data));
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
