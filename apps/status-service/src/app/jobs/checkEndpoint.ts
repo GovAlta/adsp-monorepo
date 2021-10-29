@@ -2,7 +2,7 @@ import { Logger } from 'winston';
 
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { ServiceStatusApplicationEntity } from '../model';
-import { EndpointStatusEntry, ServiceStatusEndpoint } from '../types';
+import { EndpointStatusEntry, ServiceStatusEndpoint, EndpointStatusType, EndpointToInternalStatusMapping } from '../types';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
 import { EventService } from '@abgov/adsp-service-sdk';
@@ -69,66 +69,55 @@ async function doRequest(getter: Getter, endpoint: ServiceStatusEndpoint): Promi
   }
 }
 
-const doesPassValidation = (history: EndpointStatusEntry[], EntrySampleSize: number): boolean => {
-  let pass = false
+const getNewEndpointStatus = (history: EndpointStatusEntry[], EntrySampleSize: number): EndpointStatusType => {
   let passCount = 0;
   const recentHistory =
     history.sort((prev, next) => {return next.timestamp - prev.timestamp}).slice(0, EntrySampleSize);
 
   if (recentHistory.length < EntrySampleSize) {
-    return false;
+    return 'pending';
   }
 
   for (const h of recentHistory) {
     passCount += h.ok ? 1 : 0;
 
     if (passCount >= MIN_PASS_COUNT) {
-      pass = true;
-      return pass
+      return 'online';
     }
   }
+  return 'offline';
 }
 
 async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStatusEntry) {
   const { application, serviceStatusRepository, endpointStatusEntryRepository, eventService, logger } = props;
-
-  // overall status for application endpoints
-  let allEndpointsUp = true;
-  let isStatusChanged = false;
-
   // create endpoint status entry before determining if the state is changed
   await EndpointStatusEntryEntity.create(endpointStatusEntryRepository, statusEntry);
 
   // verify that in the last [ENTRY_SAMPLE_SIZE] minutes, at least [MIN_OK_COUNT] are ok
   const recentHistory = (await endpointStatusEntryRepository.findRecentByUrl(application.endpoint.url, ENTRY_SAMPLE_SIZE));
-  const pass = doesPassValidation(recentHistory, ENTRY_SAMPLE_SIZE);
-
-  // if it doesn't pass or fail, it retains the initial value
-  if (pass) {
-    application.endpoint.status = 'online';
-    allEndpointsUp = true;
-    isStatusChanged = application.internalStatus !== 'healthy';
-
-  } else {
-    application.endpoint.status = 'offline';
-    allEndpointsUp = false;
-    isStatusChanged = application.internalStatus !== 'unhealthy';
-  }
-
+  const oldStatus = application.endpoint.status
+  const newStatus = getNewEndpointStatus(recentHistory, ENTRY_SAMPLE_SIZE);
   // set the application status based on the endpoints
-  if (isStatusChanged) {
-    application.internalStatus = allEndpointsUp ? 'healthy' : 'unhealthy';
+  if (newStatus !== oldStatus) {
+    application.endpoint.status = newStatus;
+    application.internalStatus = EndpointToInternalStatusMapping[newStatus];
 
-    if (allEndpointsUp) {
-      logger.info(`Application: ${application.name} with id ${application._id} status changed to healthy`)
-      eventService.send(applicationStatusToHealthy(application));
-    } else {
-      logger.info(`Application: ${application.name} with id ${application._id} status changed to unhealthy`)
-      eventService.send(applicationStatusToUnhealthy(
-        application, `The application ${application.name} with id ${application._id} becomes unhealthy.`));
+    if (newStatus === 'pending') {
+      logger.info(`Application: ${application.name} with id ${application._id} status changed to pending.`);
     }
 
-    //TODO: add healthy and unhealthy events
+    if (newStatus === 'online') {
+      logger.info(`Application: ${application.name} with id ${application._id} status changed to healthy.`);
+      eventService.send(applicationStatusToHealthy(application));
+    }
+
+    if (newStatus === 'offline') {
+      logger.info(`Application: ${application.name} with id ${application._id} status changed to unhealthy.`);
+      const errMessage = `The application ${application.name} with id ${application._id} becomes unhealthy.`;
+      eventService.send(applicationStatusToUnhealthy(
+        application, errMessage));
+    }
+
     await serviceStatusRepository
       .save(application)
       .catch((err) => console.error('failed to update service status: ', err));
