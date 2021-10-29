@@ -4,11 +4,13 @@ import { FormRepository } from '../repository';
 import { createDeleteJob } from './delete';
 import { createLockJob } from './lock';
 import { EventService } from '@abgov/adsp-service-sdk';
+import { FileService } from '../../file';
 
 interface FormJobProps {
   logger: Logger;
   repository: FormRepository;
   eventService: EventService;
+  fileService: FileService;
 }
 
 export const scheduleFormJobs = (props: FormJobProps): void => {

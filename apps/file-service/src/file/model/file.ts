@@ -18,6 +18,7 @@ export class FileEntity implements File {
   lastAccessed?: Date;
   scanned = false;
   deleted = false;
+  infected = false;
 
   static async create(
     storageProvider: FileStorageProvider,
@@ -69,6 +70,7 @@ export class FileEntity implements File {
       this.lastAccessed = record.lastAccessed;
       this.scanned = record.scanned;
       this.deleted = record.deleted;
+      this.infected = record.infected;
       this.size = record.size;
     } else {
       this.tenantId = type.tenantId;
@@ -124,6 +126,14 @@ export class FileEntity implements File {
   async readFile(user: User): Promise<Readable> {
     if (!this.canAccess(user)) {
       throw new UnauthorizedError('User not authorized to access file.');
+    }
+
+    if (this.deleted) {
+      throw new InvalidOperationError('Cannot access file marked for deletion.');
+    }
+
+    if (this.infected) {
+      throw new InvalidOperationError('Cannot access infected file.');
     }
 
     const stream = await this.storageProvider.readFile(this);

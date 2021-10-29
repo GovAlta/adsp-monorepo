@@ -1,4 +1,4 @@
-import { AdspId } from "@abgov/adsp-service-sdk";
+import { AdspId } from '@abgov/adsp-service-sdk';
 
 export interface UserInfo {
   id: string;
@@ -19,12 +19,14 @@ export interface FileRecord extends File {
   tenantId: AdspId;
   deleted: boolean;
   scanned: boolean;
+  infected: boolean;
 }
 
 export interface FileCriteria {
   filenameContains?: string;
   scanned?: boolean;
   deleted?: boolean;
+  infected?: boolean;
   tenantEquals?: string;
   typeEquals?: string;
   recordIdEquals?: string;

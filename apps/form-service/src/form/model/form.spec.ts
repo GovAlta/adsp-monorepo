@@ -38,6 +38,10 @@ describe('FormEntity', () => {
     verifyCode: jest.fn(),
   };
 
+  const fileMock = {
+    delete: jest.fn(),
+  };
+
   beforeEach(() => {
     repositoryMock.save.mockClear();
     repositoryMock.delete.mockClear();
@@ -461,13 +465,18 @@ describe('FormEntity', () => {
 
     it('can delete form', async () => {
       repositoryMock.delete.mockResolvedValueOnce(true);
-      const deleted = await entity.delete({ tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User);
+      const deleted = await entity.delete(
+        { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User,
+        fileMock
+      );
       expect(deleted).toBe(true);
       expect(repositoryMock.delete).toHaveBeenCalledWith(entity);
     });
 
     it('can throw for non admin user', async () => {
-      await expect(entity.delete({ tenantId, id: 'tester', roles: [] } as User)).rejects.toThrow(UnauthorizedUserError);
+      await expect(entity.delete({ tenantId, id: 'tester', roles: [] } as User, fileMock)).rejects.toThrow(
+        UnauthorizedUserError
+      );
     });
   });
 });

@@ -21,6 +21,7 @@ import {
 } from './form';
 import { createRepositories } from './mongo';
 import { createNotificationService } from './notification';
+import { createFileService } from './file';
 
 const logger = createLogger('form-service', environment.LOG_LEVEL);
 
@@ -86,6 +87,7 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use('/form', passport.authenticate(['tenant'], { session: false }), configurationHandler);
 
   const notificationService = createNotificationService(logger, directory, tokenProvider);
+  const fileService = createFileService(logger, directory, tokenProvider);
   const repositories = await createRepositories({
     ...environment,
     serviceId,
@@ -95,7 +97,7 @@ const initializeApp = async (): Promise<express.Application> => {
     notificationService,
   });
 
-  applyFormMiddleware(app, { ...repositories, logger, eventService, notificationService });
+  applyFormMiddleware(app, { ...repositories, logger, eventService, notificationService, fileService });
 
   let swagger = null;
   app.use('/swagger/docs/v1', (_req, res) => {

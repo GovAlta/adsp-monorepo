@@ -113,6 +113,35 @@ components:
 /form/v1/forms:
   post:
     description: Creates a draft form.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              definitionId:
+                type: string
+              applicant:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                  addressAs:
+                    type: string
+                  channels:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        channel:
+                          type: string
+                          enum: [email, sms]
+                        address:
+                          type: string
+                      required: [channel, address]
+            required: [definitionId, applicant]
+
     responses:
       200:
         description: Successfully created a form.
@@ -164,6 +193,18 @@ components:
           application/json:
             schema:
               $ref: "#/components/schemas/Form"
+  delete:
+    description: Deletes a form.
+    responses:
+      200:
+        description: Successfully deleted the form.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean
 
 /form/v1/forms/{formId}/data:
   parameters:
