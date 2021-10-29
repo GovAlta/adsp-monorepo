@@ -224,6 +224,20 @@ describe('File Entity', () => {
       });
     });
 
+    it('can throw for file marked for deletion', async () => {
+      typeMock.setup((m) => m.canAccessFile(user)).returns(true);
+
+      await entity.markForDeletion(user);
+      await expect(entity.readFile(user)).rejects.toThrowError(InvalidOperationError);
+    });
+
+    it('can throw for infected file', async () => {
+      typeMock.setup((m) => m.canAccessFile(user)).returns(true);
+
+      await entity.updateScanResult(true);
+      expect(entity.readFile(user)).rejects.toThrowError(InvalidOperationError);
+    });
+
     it('can throw on read by unauthorized', async () => {
       typeMock.setup((m) => m.canAccessFile(user)).returns(true);
       expect(entity.readFile(null)).rejects.toThrowError(UnauthorizedError);
