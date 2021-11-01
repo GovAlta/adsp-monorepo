@@ -55,7 +55,7 @@ export function mapFormData(entity: FormEntity): Pick<Form, 'id' | 'data' | 'fil
   };
 }
 
-const getFormDefinitions: RequestHandler = async (req, res, next) => {
+export const getFormDefinitions: RequestHandler = async (req, res, next) => {
   try {
     const [configuration] = await req.getConfiguration<Record<string, FormDefinitionEntity>>();
     const definitions = Object.entries(configuration).map(([_id, entity]) => mapFormDefinition(entity));
@@ -65,7 +65,7 @@ const getFormDefinitions: RequestHandler = async (req, res, next) => {
   }
 };
 
-const getFormDefinition: RequestHandler = async (req, res, next) => {
+export const getFormDefinition: RequestHandler = async (req, res, next) => {
   try {
     const { definitionId } = req.params;
 
@@ -81,7 +81,7 @@ const getFormDefinition: RequestHandler = async (req, res, next) => {
   }
 };
 
-function findForms(repository: FormRepository): RequestHandler {
+export function findForms(repository: FormRepository): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -108,7 +108,7 @@ function findForms(repository: FormRepository): RequestHandler {
   };
 }
 
-function createForm(
+export function createForm(
   repository: FormRepository,
   eventService: EventService,
   notificationService: NotificationService

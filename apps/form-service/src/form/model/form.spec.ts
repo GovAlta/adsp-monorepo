@@ -459,17 +459,21 @@ describe('FormEntity', () => {
       submitted: null,
       lastAccessed: new Date(),
       data: {},
-      files: {},
+      files: {
+        test: adspId`urn:ads:platform:file-service:/files/test`
+      },
     };
     const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
 
     it('can delete form', async () => {
       repositoryMock.delete.mockResolvedValueOnce(true);
+      fileMock.delete.mockResolvedValueOnce(true);
       const deleted = await entity.delete(
         { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User,
         fileMock
       );
       expect(deleted).toBe(true);
+      expect(fileMock.delete).toHaveBeenCalled();
       expect(repositoryMock.delete).toHaveBeenCalledWith(entity);
     });
 
