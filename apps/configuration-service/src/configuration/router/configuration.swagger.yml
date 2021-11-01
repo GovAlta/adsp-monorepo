@@ -12,6 +12,7 @@ components:
       properties:
         operation:
           type: string
+          enum: [UPDATE]
         update:
           type: object
       required: [operation, update]
@@ -20,6 +21,7 @@ components:
       properties:
         operation:
           type: string
+          enum: [REPLACE]
         configuration:
           type: object
       required: [operation, configuration]
@@ -28,6 +30,7 @@ components:
       properties:
         operation:
           type: string
+          enum: [DELETE]
         property:
           type: string
       required: [operation, property]
