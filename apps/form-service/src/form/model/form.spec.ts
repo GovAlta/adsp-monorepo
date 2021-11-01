@@ -460,7 +460,7 @@ describe('FormEntity', () => {
       lastAccessed: new Date(),
       data: {},
       files: {
-        test: adspId`urn:ads:platform:file-service:/files/test`
+        test: adspId`urn:ads:platform:file-service:v1:/files/test`
       },
     };
     const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);

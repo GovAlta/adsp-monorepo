@@ -97,7 +97,7 @@ const initializeApp = async (): Promise<express.Application> => {
     notificationService,
   });
 
-  applyFormMiddleware(app, { ...repositories, logger, eventService, notificationService, fileService });
+  applyFormMiddleware(app, { ...repositories, serviceId, logger, eventService, notificationService, fileService });
 
   let swagger = null;
   app.use('/swagger/docs/v1', (_req, res) => {
