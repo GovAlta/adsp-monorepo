@@ -11,7 +11,7 @@ Notification service provides the ability to generate and send notifications bas
 *Subscribers* and *subscriptions* fall broadly into two categories: self-managed and application managed. Authenticated users with a subscriber role may subscribe to, managed, and unsubscribe from notifications based on their own access permissions; in this case the *subscriber* is associated with the user. Alternatively, applications can manage *subscriptions* under service account credentials and in this case the application determines the management actions available to the *subscriber*.
 
 ## Client roles
-client `urn:ads:platform:file-service`
+client `urn:ads:platform:notification-service`
 
 | name | description |
 |:-|:-|
