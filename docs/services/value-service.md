@@ -29,7 +29,37 @@ Metrics are numeric values that can be included in value writes. The are automat
 
 ## Code examples
 ### Write a value
-TODO: add example
+```typescript
+  const namespace = 'support';
+  const name = 'application-stats';
+  const value = {
+    correlationId,
+    context,
+    timestamp: new Date(),
+    value: {
+      property: 123,
+    },
+  }
+
+  const response = await fetch(
+    `https://value-service.alpha.alberta.ca/value/v1/${namespace}/values/${name}`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(value)
+    }
+  );
+
+  const {
+    correlationId,
+    context,
+    timestamp,
+    value,
+  } = await response.json();
+```
 
 ### Read a value
 ```typescript
@@ -39,9 +69,7 @@ TODO: add example
     `https://value-service.alpha.alberta.ca/value/v1/${namespace}/values/${name}`,
     {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
+      headers: { Authorization: `Bearer ${accessToken}` },
     }
   );
 

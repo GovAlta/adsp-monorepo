@@ -21,7 +21,7 @@ client `urn:ads:platform:form-service`
 
 ## Concepts
 ### Form definition
-Form definition describes a type of form including the allowed applicant and assessor roles and whether anonymous applicants are permitted.
+Form definition describes a type of form including the allowed applicant and assessor roles and whether anonymous applicants are permitted. Form definitions are configured in the [configuration service](configuration-service.md) under the `platform:form-service` namespace and name.
 
 ### Form
 Form represents a particular instance of an application including the information entered by the *applicant*. Each form is associated with a *definition* and has a status. Statuses represent the lifecycle steps of the form and include: Draft, Locked, Submitted, and Archived.
@@ -47,7 +47,10 @@ Draft forms include an expiry process so that information entered into draft for
     'https://form-service.alpha.alberta.ca/form/v1/forms',
     {
       method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(form),
     }
   );
@@ -70,7 +73,10 @@ Intake applications can retrieve form data on behalf of anonymous applicants by 
     `https://form-service.alpha.alberta.ca/form/v1/forms/${formId}`,
     {
       method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         operation: 'send-code',
       }),
@@ -105,7 +111,10 @@ Intake applications can retrieve form data on behalf of anonymous applicants by 
     `https://form-service.alpha.alberta.ca/form/v1/forms/${formId}/data`,
     {
       method: 'PUT',
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(formData),
     }
   );
@@ -122,7 +131,10 @@ Intake applications can retrieve form data on behalf of anonymous applicants by 
     `https://form-service.alpha.alberta.ca/form/v1/forms/${formId}`,
     {
       method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         operation: 'submit'
       }),
@@ -135,8 +147,3 @@ Intake applications can retrieve form data on behalf of anonymous applicants by 
     submitted,
   } = await response.json();
 ```
-
-
-
-
-

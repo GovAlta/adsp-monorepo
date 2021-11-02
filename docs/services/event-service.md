@@ -17,7 +17,7 @@ client `urn:ads:platform:event-service`
 
 ## Concepts
 ### Event definition
-Event definition is an optional metadata descriptions of a domain *event* (identified by a specific namespace and name). They are used for downstream capabilities. For example, the payload schema description allows the notification service to validate variables within notification message templates. Event definitions are configured in the [configuration service](configuration-service.md) under the `platform:event-service` namespace and name.
+Event definition is an optional metadata description of a *domain event* (identified by a specific namespace and name). They are used for downstream capabilities. For example, the payload schema description allows the [notification service](notification-service.md) to validate variables within notification message templates. Event definitions are configured in the [configuration service](configuration-service.md) under the `platform:event-service` namespace and name.
 
 ### Event
 Domain events represent key changes at a domain model level. For example, an intake application process could include events like: application draft created, application submitted, application processing started, application processing completed.
@@ -53,7 +53,7 @@ Event log records all *events* emitted via the event service and keeps basic met
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(event),
     }
@@ -72,9 +72,7 @@ The event log is stored as a value (event-service:event) in the [value service](
     `${valueServiceUrl}/value/v1/event-service/values/event?top=${top}&timestampMin=${timestampMin}`,
     {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      }
+      headers: { Authorization: `Bearer ${accessToken}` }
     }
   );
 
