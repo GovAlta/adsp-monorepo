@@ -15,11 +15,11 @@ const HelpLink = (): JSX.Element => {
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
   return (
     <>
-      <h5>Helpful Links</h5>
+      <h5>Helpful links</h5>
       <a
         rel="noopener noreferrer"
         target="_blank"
-        href={`${docBaseUrl}?tenant=${tenantId}&urls.primaryName=File Service`}
+        href={`${docBaseUrl}?tenant=${tenantId}&urls.primaryName=File service`}
       >
         Read the API docs
       </a>
@@ -48,15 +48,15 @@ export const File: FunctionComponent = () => {
       <Main>
         {isLoaded ? (
           <>
-            <h2>File Services</h2>
+            <h2>File services</h2>
             <Tabs activeIndex={0}>
               <Tab label="Overview">
                 <FileOverview />
               </Tab>
-              <Tab label="File Types">
+              <Tab label="File types">
                 <FileTypes />
               </Tab>
-              <Tab label="Test Files">
+              <Tab label="Test files">
                 <FileList />
               </Tab>
             </Tabs>

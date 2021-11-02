@@ -18,7 +18,7 @@ class Common {
 
   readTheApiDocsLink() {
     return cy.xpath(
-      '//*[contains(text(), "Helpful Links")]/following-sibling::a[contains(text(), "Read the API docs")]'
+      '//*[contains(text(), "Helpful links")]/following-sibling::a[contains(text(), "Read the API docs")]'
     );
   }
 

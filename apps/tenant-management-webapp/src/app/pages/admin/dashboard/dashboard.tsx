@@ -42,7 +42,7 @@ const Dashboard = (): JSX.Element => {
       <DashboardDiv>
         <Page>
           <Main>
-            <h2>{tenantName} Dashboard</h2>
+            <h2>{tenantName} dashboard</h2>
             <Grid>
               <GridItem md={6} vSpacing={1} hSpacing={0.5}>
                 <GoACard
@@ -57,7 +57,7 @@ const Dashboard = (): JSX.Element => {
                 </GoACard>
               </GridItem>
               <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                <GoACard title={<Link to="/admin/services/files">File Service</Link>}>
+                <GoACard title={<Link to="/admin/services/files">File service</Link>}>
                   <div>
                     The file service provides the capability to upload and download files. Consumers are registered with
                     their own space (tenant) containing file types that include role based access policy, and can
@@ -96,7 +96,7 @@ const Dashboard = (): JSX.Element => {
             <p>To give another user limited access to your realm:</p>
 
             <p>
-              1. Add the 'tenant-admin' role to the user's Assigned roles from{' '}
+              1. Add the 'tenant-admin' role to the user's assigned roles from{' '}
               <a href={getKeycloakAdminPortalUsers()} rel="noopener noreferrer" target="_blank">
                 here
               </a>
@@ -145,7 +145,7 @@ const Dashboard = (): JSX.Element => {
   const calloutMessage = () => {
     return (
       <Main>
-        <h2>{tenantName} Dashboard</h2>
+        <h2>{tenantName} dashboard</h2>
         <GoACallout type="important" data-testid="delete-modal">
           <h3>Access to tenant admin app requires tenant-admin role</h3>
           <p>

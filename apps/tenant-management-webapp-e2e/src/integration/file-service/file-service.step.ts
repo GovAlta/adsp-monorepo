@@ -496,9 +496,9 @@ When(
 
       // Enter new read roles
       if (readRole.includes('Anyone (Anonymous)')) {
-        // Select "Deselect Anonymous"
+        // Select "Deselect anonymous"
         fileServiceObj.fileTypeReadRoles(rowNumber).click();
-        fileServiceObj.fileTypeReadRolesDropdownItem(rowNumber, 'Deselect Anonymous').trigger('mousemove').click();
+        fileServiceObj.fileTypeReadRolesDropdownItem(rowNumber, 'Deselect anonymous').trigger('mousemove').click();
         cy.wait(1000);
 
         // Deselect all selected roles if any
