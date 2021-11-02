@@ -75,6 +75,9 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
   if (configBaseUrl && token) {
     try {
       const payloadId = payload.id || uuidv4();
+      console.log(JSON.stringify(payloadId) + '<payloadId');
+      console.log(JSON.stringify(payload) + '<payload');
+
       yield call(
         axios.patch,
         `${configBaseUrl}/configuration/v2/configuration/platform/notification-service`,

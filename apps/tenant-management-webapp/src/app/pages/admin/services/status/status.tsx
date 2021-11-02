@@ -3,7 +3,9 @@ import { Page, Main, Aside } from '@components/Html';
 import { deleteApplication, fetchServiceStatusApps, toggleApplicationStatus } from '@store/status/actions';
 import { RootState } from '@store/index';
 import ReactTooltip from 'react-tooltip';
+import { NotificationItem } from '@store/notification/models';
 import { useDispatch, useSelector } from 'react-redux';
+import JsxParser from 'react-jsx-parser';
 import {
   ServiceStatusType,
   PublicServiceStatusTypes,
@@ -11,11 +13,19 @@ import {
   ServiceStatusEndpoint,
   EndpointStatusEntry,
 } from '@store/status/models';
+
+import Editor from '@monaco-editor/react';
+
+//import Barhandles from 'barhandles';
+
+import { FetchNotificationTypeService, UpdateNotificationTypeService } from '@store/notification/actions';
+
 import { Route, Switch, useHistory, useLocation } from 'react-router-dom';
 import styled, { CSSProperties } from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import GoALinkButton from '@components/LinkButton';
 import { GoAButton, GoARadio, GoARadioGroup } from '@abgov/react-components';
+import { GoAInput } from '@abgov/react-components/experimental';
 import {
   GoABadge,
   GoAModal,
@@ -38,15 +48,21 @@ function Status(): JSX.Element {
   const dispatch = useDispatch();
   const history = useHistory();
 
-  const { applications, serviceStatusAppUrl, tenantName } = useSelector((state: RootState) => ({
-    applications: state.serviceStatus.applications,
-    serviceStatusAppUrl: state.config.serviceUrls.serviceStatusAppUrl,
-    tenantName: state.tenant.name,
-  }));
+  const { applications, serviceStatusAppUrl, tenantName, notificationTypes, notification } = useSelector(
+    (state: RootState) => ({
+      applications: state.serviceStatus.applications,
+      serviceStatusAppUrl: state.config.serviceUrls.serviceStatusAppUrl,
+      tenantName: state.tenant.name,
+      notification: state.notification,
+      notificationTypes: state.notification.notificationTypes,
+    })
+  );
 
   const location = useLocation();
 
   const [activeIndex, setActiveIndex] = useState<number>(0);
+  const [eventMap, setEventMap] = useState<NotificationItem>(null);
+  const [templateName, setTemplateName] = useState('');
 
   useEffect(() => {
     dispatch(fetchServiceStatusApps());
@@ -55,10 +71,136 @@ function Status(): JSX.Element {
     return () => clearInterval(intervalId);
   }, []);
 
+  useEffect(() => {
+    dispatch(FetchNotificationTypeService());
+  }, [dispatch]);
+
+  useEffect(() => {
+    console.log(JSON.stringify(notificationTypes['applicationCore']) + "<notificationTypes['applicationCore']");
+    console.log(JSON.stringify(notificationTypes) + '<notificationTypes');
+    console.log(JSON.stringify(notification) + '<notificationxx');
+    if (!notificationTypes['applicationCore'] && notification.loaded) {
+      const applicationCore: NotificationItem = {
+        id: 'applicationCore',
+        name: 'Applications',
+        description: 'Applications ',
+        subscriberRoles: [],
+        events: [
+          {
+            namespace: 'status-service',
+            name: 'health-check-started',
+            templates: {
+              email: {
+                subject: '{{ event.payload.form.definition.name }} locked',
+                body: `<!doctype html>
+<html>
+  <head>
+  </head>
+  <body>
+    <p>Your draft {{ event.payload.form.definition.name }} form has been locked and will be deleted on {{ formatDate event.payload.deleteOn }}.</p>
+    <p>
+      No action is required if you do not intend to complete the submission.
+      If you do wish to continue, please contact {{ event.payload.definition.supportEmail }} to unlock the draft.
+    </p>
+  </body>
+</html>`,
+              },
+            },
+            channels: ['email'],
+          },
+          {
+            namespace: 'status-service',
+            name: 'health-check-stopped',
+            templates: {
+              email: {
+                subject: '{{ event.payload.form.definition.name }} unlocked',
+                body: `<!doctype html>
+<html>
+  <head>
+  </head>
+  <body>
+    <p>Your draft {{ event.payload.form.definition.name }} form has been unlocked.</p>
+  </body>
+</html>`,
+              },
+            },
+            channels: ['email'],
+          },
+          {
+            namespace: 'Status-Service',
+            name: 'application-unhealthy',
+            templates: {
+              email: {
+                subject: '{{ event.payload.form.definition.name }} received',
+                body: `<!doctype html>
+<html>
+  <head>
+  </head>
+  <body>
+    <p>Your {{ event.payload.form.definition.name }} submission has been received.</p>
+  </body>
+</html>`,
+              },
+            },
+            channels: ['email'],
+          },
+          {
+            namespace: 'Status-Service',
+            name: 'application-healthy',
+            templates: {
+              email: {
+                subject: '{{ event.payload.form.definition.name }} received',
+                body: `<!doctype html>
+<html>
+  <head>
+  </head>
+  <body>
+    <p>Your {{ event.payload.form.definition.name }} submission has been received.</p>
+  </body>
+</html>`,
+              },
+            },
+            channels: ['email'],
+          },
+        ],
+        publicSubscribe: false,
+      };
+
+      console.log(JSON.stringify(applicationCore) + '<applicationCore');
+
+      dispatch(UpdateNotificationTypeService(applicationCore));
+      setEventMap(applicationCore);
+    }
+  }, [notificationTypes]);
+
+  useEffect(() => {
+    setEventMap(notificationTypes['applicationCore']);
+  }, [notificationTypes]);
+
   const publicStatusUrl = `${serviceStatusAppUrl}/${tenantName.replace(/\s/g, '-').toLowerCase()}`;
 
   const _afterShow = (copyText) => {
     navigator.clipboard.writeText(copyText);
+  };
+
+  const handleEditorChange = (value, event) => {
+    console.log(JSON.stringify(eventMap) + '<eventMap');
+    const index = eventMap?.events?.findIndex((event) => event.name === templateName);
+    console.log(JSON.stringify(index) + '<index');
+    if (index !== null) {
+      eventMap.events[index].templates.email.body = value;
+      setEventMap(eventMap);
+    }
+  };
+
+  const handleEditorChangeSubject = (name, value) => {
+    console.log(JSON.stringify(eventMap) + '<eventMap');
+    const index = eventMap?.events?.findIndex((event) => event.name === templateName);
+    console.log(JSON.stringify(index) + '<index');
+    if (index !== null) {
+      eventMap.events[index].templates.email.subject = value;
+      setEventMap(eventMap);
+    }
   };
 
   useEffect(() => {
@@ -68,12 +210,22 @@ function Status(): JSX.Element {
   }, [activeIndex]);
 
   useEffect(() => {
+    if (templateName === '' && eventMap?.events && eventMap.events.length > 0) {
+      setTemplateName(eventMap.events[0].name);
+    }
+  }, [eventMap]);
+
+  useEffect(() => {
     dispatch(getNotices());
   }, []);
 
   const addApplication = () => {
     setActiveIndex(1);
     history.push(`${location.pathname}/new`);
+  };
+
+  const saveNotification = () => {
+    dispatch(UpdateNotificationTypeService(eventMap));
   };
 
   return (
@@ -119,6 +271,82 @@ function Status(): JSX.Element {
               Add a Draft Notice
             </GoALinkButton>
             <NoticeList />
+          </Tab>
+          <Tab label="Notifications Type">
+            <p>This allows for the configuration of email channels</p>
+
+            {notificationTypes['applicationCore'] && (
+              <div>
+                <div style={{ display: 'flex', flexDirection: 'row' }}>
+                  {notificationTypes['applicationCore'].events.map((ev) => {
+                    //const schema = Barhandles.extractSchema(ev.name);
+                    return (
+                      <div style={{ marginTop: '20px' }}>
+                        <GoAButton disabled={templateName === ev.name} onClick={() => setTemplateName(ev.name)}>
+                          {ev.name}
+                        </GoAButton>
+
+                        {/* <Editor
+                          height="30vh"
+                          defaultLanguage="javascript"
+                          defaultValue={event.templates.email.body}
+                          onChange={handleEditorChange}
+                        /> */}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div>
+                  <GoAFormItem>
+                    <label>Subject:</label>
+                    <GoAInput
+                      type="text"
+                      name="firstName"
+                      value={
+                        eventMap?.events &&
+                        eventMap.events.find((ev) => ev.name === templateName)?.templates?.email?.subject
+                      }
+                      onChange={handleEditorChangeSubject}
+                    />
+                  </GoAFormItem>
+                  <GoAFormItem>
+                    <label>Body:</label>
+                    <Editor
+                      data-testid="form-schema"
+                      height={350}
+                      value={
+                        eventMap?.events &&
+                        eventMap.events.find((ev) => ev.name === templateName)?.templates?.email?.body.toString()
+                      }
+                      onChange={handleEditorChange}
+                      options={{
+                        automaticLayout: true,
+                        scrollBeyondLastLine: false,
+                        tabSize: 2,
+                        minimap: { enabled: false },
+                      }}
+                    />
+                  </GoAFormItem>
+                  <GoAFormItem>
+                    <label>Selected Applications:</label>
+                  </GoAFormItem>
+                  <GoAButton onClick={saveNotification}>Save</GoAButton>
+                  <h2>Preview</h2>
+                  <JsxParser
+                    bindings={{
+                      foo: 'bar',
+                      myEventHandler: () => {
+                        /* ... do stuff ... */
+                      },
+                    }}
+                    jsx={
+                      eventMap?.events &&
+                      eventMap.events.find((ev) => ev.name === templateName)?.templates?.email?.body.toString()
+                    }
+                  />
+                </div>
+              </div>
+            )}
           </Tab>
           <Tab label="Guidelines">
             Guidelines for choosing a health check endpoint:

@@ -18,16 +18,19 @@ export default function (state = NOTIFICATION_INIT, action: ActionTypes): Notifi
       return {
         ...state, // remove delete notification from reducer
         notificationList: deleteNotification(state.notificationList, action.payload.data),
+        loaded: true,
       };
     case FETCH_NOTIFICATION_LIST_SUCCESSES:
       return {
         ...state,
         notificationList: action.payload.results.data,
+        loaded: true,
       };
     case FETCH_NOTIFICATION_TYPE_SUCCEEDED:
       return {
         ...state,
         notificationTypes: action.payload.notificationInfo.data,
+        loaded: true,
       };
     default:
       return state;
