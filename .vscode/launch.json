@@ -93,6 +93,15 @@
       "outFiles": [
         "${workspaceFolder}/dist/**/*.js"
       ]
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach Form Service",
+      "port": 7783,
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.js"
+      ]
     }
   ]
 }

@@ -30,6 +30,12 @@ components:
           type: boolean
         isAllDay:
           type: boolean
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
         attendees:
           type: array
           items:

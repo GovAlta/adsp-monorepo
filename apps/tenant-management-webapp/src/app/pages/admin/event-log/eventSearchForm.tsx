@@ -100,7 +100,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
   };
 
   const validation = () => {
-    if (searchBox.indexOf(':') < 0) {
+    if (searchBox && searchBox.indexOf(':') < 0) {
       setError(true);
       return false;
     }

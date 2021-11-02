@@ -4,12 +4,12 @@ const tenant = 'autotest';
 module.exports = {
   openapi: '3.0.0',
   info: {
-    title: 'File service',
-    version: '0.0.0',
+    title: 'File Service',
+    version: '1.0.0',
     description:
       'The file service provides the capability to upload and download files. ' +
-      'Consumers are registered with their own space (tenant) containing file types that include ' +
-      'role based access policy, and can associate files to domain records.',
+      'Tenants are registered with their own space  containing file types that include ' +
+      'role based access policy.',
   },
   tags: [
     {

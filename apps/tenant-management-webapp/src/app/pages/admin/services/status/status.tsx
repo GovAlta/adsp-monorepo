@@ -62,7 +62,7 @@ function Status(): JSX.Element {
   };
 
   useEffect(() => {
-    if (activeIndex !== null) {
+    if (activeIndex != null) {
       setActiveIndex(null);
     }
   }, [activeIndex]);
@@ -402,13 +402,22 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
   }
 
   const statusEntries = app.endpoint ? getStatusEntries(app.endpoint) : null;
+  const getStatus = (app: ServiceStatusApplication): string => {
+    if (app.internalStatus !== 'pending' && !app.enabled) {
+      return 'stopped'
+    }
+
+    return app.internalStatus;
+  }
+
+  const status = getStatus(app);
 
   return (
     <div style={css}>
       <StatusBarDetails>
         <span></span>
-        <small style={{ textTransform: 'capitalize' }}>
-          {statusEntries?.[statusEntries?.length - 1].status !== 'n/a' ? app.internalStatus : 'Stopped'}
+        <small style={{ textTransform: 'capitalize' }} className={status === 'pending' && 'blink-text'}>
+          {status}
         </small>
       </StatusBarDetails>
 
@@ -420,8 +429,8 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
               backgroundColor: entry.ok
                 ? 'var(--color-green)'
                 : entry.status === 'n/a'
-                ? 'var(--color-gray-300)'
-                : 'var(--color-red)',
+                  ? 'var(--color-gray-300)'
+                  : 'var(--color-red)',
             }}
             title={entry.status + ': ' + new Date(entry.timestamp).toLocaleString()}
           />
@@ -438,6 +447,15 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
 const StatusBarDetails = styled.div`
   display: flex;
   justify-content: space-between;
+  .blink-text{
+		color: var(--color-black);
+    animation: blinkingText 1.5s infinite;
+	}
+	@keyframes blinkingText{
+		0%		{  color: var(--color-black)}
+    50%   {  color: var(--color-black)}
+		100%	{  color: var(--color-white)}
+	}
 `;
 
 const EndpointStatusEntries = styled.div`

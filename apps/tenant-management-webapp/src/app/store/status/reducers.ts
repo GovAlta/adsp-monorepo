@@ -16,6 +16,7 @@ const initialState: ServiceStatus = {
 
 const compareIds = (a: { _id?: string }, b: { _id?: string }): number => (a._id <= b._id ? 1 : -1);
 
+
 export default function statusReducer(state: ServiceStatus = initialState, action: ActionTypes): ServiceStatus {
   switch (action.type) {
     case FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION:
@@ -23,6 +24,7 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
         ...state,
         applications: action.payload.sort(compareIds),
       };
+
     case FETCH_SERVICE_STATUS_APP_HEALTH_SUCCESS_ACTION:
       return {
         ...state,
@@ -37,7 +39,15 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
         applications: [...state.applications.filter((app) => app._id !== action.payload)].sort(compareIds),
       };
     case SAVE_APPLICATION_SUCCESS_ACTION:
-    case SET_APPLICATION_SUCCESS_STATUS_ACTION:
+    case SET_APPLICATION_SUCCESS_STATUS_ACTION: {
+      // After toggle set the application internalStatus to pending
+      const index = state.applications.findIndex((app) => { return app._id === action.payload._id });
+      if (index !== -1) {
+        console.log(action.payload)
+        state.applications[index] = action.payload;
+      }
+      return { ...state }
+    }
     case TOGGLE_APPLICATION_SUCCESS_STATUS_ACTION:
       return {
         ...state,
