@@ -243,13 +243,13 @@ export function formOperation(
   };
 }
 
-export function deleteForm(fileService: FileService): RequestHandler {
+export function deleteForm(fileService: FileService, notificationService: NotificationService): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
       const form: FormEntity = req[FORM];
 
-      const deleted = await form.delete(user, fileService);
+      const deleted = await form.delete(user, fileService, notificationService);
       res.send({ deleted });
     } catch (err) {
       next(err);
@@ -283,7 +283,7 @@ export function createFormRouter({
 
   router.get('/forms/:formId', getForm(repository), (req, res) => res.send(mapForm(apiId, req[FORM])));
   router.post('/forms/:formId', getForm(repository), formOperation(apiId, eventService, notificationService));
-  router.delete('/forms/:formId', getForm(repository), deleteForm(fileService));
+  router.delete('/forms/:formId', getForm(repository), deleteForm(fileService, notificationService));
 
   router.get('/forms/:formId/data', getForm(repository), accessForm(notificationService));
   router.put('/forms/:formId/data', getForm(repository), updateFormData);

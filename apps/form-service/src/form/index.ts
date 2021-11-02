@@ -27,7 +27,7 @@ export const applyFormMiddleware = (
   app: Application,
   { serviceId, logger, formRepository: repository, eventService, notificationService, fileService }: FormMiddlewareProps
 ): Application => {
-  scheduleFormJobs({ logger, repository, eventService, fileService });
+  scheduleFormJobs({ logger, repository, eventService, fileService, notificationService });
 
   const router = createFormRouter({ serviceId, repository, eventService, notificationService, fileService });
   app.use('/form/v1', router);
