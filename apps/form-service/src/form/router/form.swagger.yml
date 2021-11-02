@@ -82,6 +82,8 @@ components:
 
 /form/v1/definitions:
   get:
+    tags:
+      - Form
     description: Retrieves form definitions.
     responses:
       200:
@@ -94,6 +96,8 @@ components:
                 $ref: "#/components/schemas/FormDefinition"
 /form/v1/definitions/{definitionId}:
   get:
+    tags:
+      - Form
     description: Retrieves a form definition.
     parameters:
       - name: definitionId
@@ -112,6 +116,8 @@ components:
 
 /form/v1/forms:
   get:
+    tags:
+      - Form
     description: Find forms.
     parameters:
       - name: top
@@ -168,6 +174,8 @@ components:
                     size:
                       type: number
   post:
+    tags:
+      - Form
     description: Creates a draft form.
     requestBody:
       required: true
@@ -197,7 +205,6 @@ components:
                           type: string
                       required: [channel, address]
             required: [definitionId, applicant]
-
     responses:
       200:
         description: Successfully created a form.
@@ -215,6 +222,8 @@ components:
       schema:
         type: string
   get:
+    tags:
+      - Form
     description: Retrieves a form.
     responses:
       200:
@@ -224,6 +233,8 @@ components:
             schema:
               $ref: "#/components/schemas/Form"
   post:
+    tags:
+      - Form
     description: Executes a form operation.
     requestBody:
       required: true
@@ -250,6 +261,8 @@ components:
             schema:
               $ref: "#/components/schemas/Form"
   delete:
+    tags:
+      - Form
     description: Deletes a form.
     responses:
       200:
@@ -271,6 +284,8 @@ components:
       schema:
         type: string
   get:
+    tags:
+      - Form
     description: Retrieves form data.
     parameters:
       - name: code
@@ -287,6 +302,8 @@ components:
             schema:
               $ref: "#/components/schemas/FormData"
   put:
+    tags:
+      - Form
     description: Sets the form data.
     requestBody:
       required: true

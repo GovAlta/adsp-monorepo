@@ -11,6 +11,7 @@ import { environment } from './environments/environment';
 import {
   applyFormMiddleware,
   configurationSchema,
+  FormCreatedDefinition,
   FormDefinition,
   FormDefinitionEntity,
   FormServiceRoles,
@@ -58,7 +59,12 @@ const initializeApp = async (): Promise<express.Application> => {
           description: 'Intake application role for form service.',
         },
       ],
-      events: [FormStatusLockedDefinition, FormStatusUnlockedDefinition, FormStatusSubmittedDefinition],
+      events: [
+        FormCreatedDefinition,
+        FormStatusLockedDefinition,
+        FormStatusUnlockedDefinition,
+        FormStatusSubmittedDefinition,
+      ],
       notifications: [FormStatusNotificationType],
       configurationSchema,
       configurationConverter: (config: Record<string, FormDefinition>, tenantId) =>
