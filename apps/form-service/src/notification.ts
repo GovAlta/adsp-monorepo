@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Logger } from 'winston';
 
 export interface Subscriber {
+  id: string;
   urn: AdspId;
   userId: string;
   addressAs: string;
@@ -12,6 +13,7 @@ export interface Subscriber {
 export interface NotificationService {
   getSubscriber(tenantId: AdspId, urn: AdspId): Promise<Subscriber>;
   subscribe(tenantId: AdspId, formId: string, subscriber: Omit<Subscriber, 'urn'>): Promise<Subscriber>;
+  unsubscribe(tenantId: AdspId, urn: AdspId): Promise<boolean>;
   sendCode(tenantId: AdspId, subscriber: Subscriber): Promise<void>;
   verifyCode(tenantId: AdspId, subscriber: Subscriber, code: string): Promise<boolean>;
 }
@@ -35,6 +37,7 @@ class NotificationServiceImpl implements NotificationService {
       );
 
       return {
+        id: data.id,
         urn: AdspId.parse(data.urn),
         userId: data.userId,
         addressAs: data.addressAs,
@@ -72,6 +75,30 @@ class NotificationServiceImpl implements NotificationService {
         }
       );
       throw err;
+    }
+  }
+
+  async unsubscribe(tenantId: AdspId, urn: AdspId): Promise<boolean> {
+    try {
+      const subscriber = await this.getSubscriber(tenantId, urn);
+
+      const apiUrl = await this.directory.getServiceUrl(this.notificationApiId);
+      const subscriptionUrl = new URL(
+        `v1/types/form-status-updates/subscriptions/${subscriber.id}?tenantId=${tenantId}`,
+        apiUrl
+      );
+
+      const token = await this.tokenProvider.getAccessToken();
+      const { data } = await axios.delete<{ deleted: boolean }>(subscriptionUrl.href, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      return data.deleted;
+    } catch (err) {
+      this.logger.warn(`Error encountered unsubscribing for subscriber ${urn}. ${err}`, {
+        ...LOG_CONTEXT,
+        tenant: tenantId?.toString(),
+      });
     }
   }
 

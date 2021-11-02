@@ -201,7 +201,7 @@ export class FormEntity implements Form {
     return await this.repository.save(this);
   }
 
-  async delete(user: User, fileService: FileService): Promise<boolean> {
+  async delete(user: User, fileService: FileService, notificationService: NotificationService): Promise<boolean> {
     if (!isAllowedUser(user, this.tenantId, FormServiceRoles.Admin, true)) {
       throw new UnauthorizedUserError('delete form', user);
     }
@@ -210,6 +210,8 @@ export class FormEntity implements Form {
     for (const file of Object.values(this.files)) {
       await fileService.delete(this.tenantId, file);
     }
+
+    await notificationService.unsubscribe(this.tenantId, this.applicant.urn);
 
     const deleted = this.repository.delete(this);
     return deleted;

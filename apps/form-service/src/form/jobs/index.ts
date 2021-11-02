@@ -5,12 +5,14 @@ import { createDeleteJob } from './delete';
 import { createLockJob } from './lock';
 import { EventService } from '@abgov/adsp-service-sdk';
 import { FileService } from '../../file';
+import { NotificationService } from '../../notification';
 
 interface FormJobProps {
   logger: Logger;
   repository: FormRepository;
   eventService: EventService;
   fileService: FileService;
+  notificationService: NotificationService;
 }
 
 export const scheduleFormJobs = (props: FormJobProps): void => {
