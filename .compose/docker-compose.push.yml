@@ -1,13 +1,11 @@
 version: '3.2'
 services:
-  push-service-mongo:
-    image: mongo:3.6
+  push-service-redis:
+    image: redis:5.0
     expose:
-      - 27017
-    ports:
-      - 27017:27017
+      - 6379
   push-service:
-    build: 
+    build:
       context: ../
       dockerfile: .compose/service/Dockerfile
       args:
@@ -17,13 +15,14 @@ services:
       - push-service-mongo
     ports:
       - 3333:3333
-    expose: 
+    expose:
       - 3333
     environment:
       - KEYCLOAK_ROOT_URL=http://keycloak:8080
       - KEYCLOAK_REALM=core
-      - MONGO_URI=mongodb://push-service-mongo:27017
-      - MONGO_DB=push
+      - REDIS_HOST=push-service-redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
       - AMQP_HOST=rabbitmq
       - AMQP_USER=guest
       - AMQP_PASSWORD=guest

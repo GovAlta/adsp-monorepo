@@ -4,7 +4,9 @@ import * as fs from 'fs';
 import { Logger } from 'winston';
 import { DomainEventSubscriberService } from '@core-services/core-common';
 import { createStreamRouter } from './router';
+import { Server as IoServer } from 'socket.io';
 
+export * from './configuration';
 export * from './types';
 export * from './model';
 
@@ -13,8 +15,13 @@ interface PushMiddlewareProps {
   eventService: DomainEventSubscriberService;
 }
 
-export const applyPushMiddleware = (app: Application, ws: WsApplication, props: PushMiddlewareProps): Application => {
-  const streamRouter = createStreamRouter(ws, props);
+export const applyPushMiddleware = (
+  app: Application,
+  ws: WsApplication,
+  io: IoServer,
+  props: PushMiddlewareProps
+): Application => {
+  const streamRouter = createStreamRouter(ws, io, props);
   app.use('/stream/v1', streamRouter);
 
   let swagger = null;
