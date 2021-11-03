@@ -15,6 +15,10 @@ export const environment = envalid.cleanEnv(
     AMQP_HOST: envalid.str({ default: 'localhost' }),
     AMQP_USER: envalid.str({ default: 'guest' }),
     AMQP_PASSWORD: envalid.str({ default: 'guest' }),
+    REDIS_HOST: envalid.str({ default: 'push-redis' }),
+    REDIS_PORT: envalid.num({ default: 6379 }),
+    REDIS_PASSWORD: envalid.str({ default: '' }),
+    SESSION_SECRET: envalid.str({ default: 'cheesy principle automated mallard' }),
     PORT: envalid.num({ default: 3334 }),
   },
   {

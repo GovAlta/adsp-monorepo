@@ -52,7 +52,7 @@ export class StreamEntity implements Stream {
     );
   }
 
-  private mapEvent(event: DomainEvent, streamEvent: StreamEvent) {
+  private mapEvent({ tenantId: _tenantId, ...event}: DomainEvent, streamEvent: StreamEvent) {
     return streamEvent.map
       ? Object.entries(streamEvent.map).reduce((o, [k, p]) => ({ ...o, [k]: _.get(event, p, undefined) }), {
           correlationId: event.correlationId,

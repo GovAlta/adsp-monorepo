@@ -1,25 +1,31 @@
-import * as cors from 'cors';
-import * as express from 'express';
-import * as expressWs from 'express-ws';
-import * as passport from 'passport';
-import { Strategy as AnonymousStrategy } from 'passport-anonymous';
-import * as compression from 'compression';
-import * as helmet from 'helmet';
+import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
 import {
   createLogger,
   createAmqpEventService,
   createAmqpConfigUpdateService,
   createErrorHandler,
 } from '@core-services/core-common';
+import * as compression from 'compression';
+import * as createRedisStore from 'connect-redis';
+import * as cors from 'cors';
+import * as express from 'express';
+import * as session from 'express-session';
+import * as expressWs from 'express-ws';
+import * as helmet from 'helmet';
+import { createServer, Server } from 'http';
+import * as passport from 'passport';
+import { Strategy as AnonymousStrategy } from 'passport-anonymous';
+import { createClient as createRedisClient } from 'redis';
+import { Server as IoServer } from 'socket.io';
 import { environment } from './environments/environment';
-import { applyPushMiddleware, Stream, StreamEntity } from './push';
-import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
-import { configurationSchema } from './push/configuration';
+import { applyPushMiddleware, configurationSchema, Stream, StreamEntity } from './push';
 
 const logger = createLogger('push-service', environment.LOG_LEVEL || 'info');
 
-const initializeApp = async (): Promise<express.Application> => {
+const initializeApp = async (): Promise<Server> => {
   const app = express();
+  const server = createServer(app);
+  const ioServer = new IoServer(server, { path: '/socket.io/v1', serveClient: false, cors: {} });
   const wsApp = expressWs(app, null, { leaveRouterUntouched: true });
 
   app.use(compression());
@@ -66,12 +72,34 @@ const initializeApp = async (): Promise<express.Application> => {
   passport.deserializeUser(function (user, done) {
     done(null, user as User);
   });
-  app.use(passport.initialize());
 
+  app.use(passport.initialize());
   app.use('/stream', passport.authenticate(['jwt', 'anonymous'], { session: false }), configurationHandler);
+
+  const { REDIS_HOST, REDIS_PORT, REDIS_PASSWORD } = environment;
+  const credentials = REDIS_PASSWORD ? `:${REDIS_PASSWORD}@` : '';
+  const redisClient = createRedisClient(`redis://${credentials}${REDIS_HOST}:${REDIS_PORT}/0`);
+  const RedisStore = createRedisStore(session);
+
+  ioServer.use((socket, next) =>
+    session({
+      store: new RedisStore({ client: redisClient }),
+      saveUninitialized: false,
+      secret: environment.SESSION_SECRET,
+      resave: false,
+    })(socket.request as express.Request, {} as express.Response, next as express.NextFunction)
+  );
+  ioServer.use((socket, next) =>
+    passport.initialize()(socket.request as express.Request, {} as express.Response, next as express.NextFunction)
+  );
+  ioServer.use((socket, next) => passport.authenticate(['session', 'jwt', 'anonymous'])(socket.request, {}, next));
+  ioServer.use((socket, next) =>
+    configurationHandler(socket.request as express.Request, {} as express.Response, next as express.NextFunction)
+  );
+
   const eventService = await createAmqpEventService({ ...environment, queue: 'event-push', logger });
 
-  applyPushMiddleware(app, wsApp, { logger, eventService });
+  applyPushMiddleware(app, wsApp, ioServer, { logger, eventService });
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();
@@ -95,13 +123,12 @@ const initializeApp = async (): Promise<express.Application> => {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  return app;
+  return server;
 };
 
-initializeApp().then((app) => {
+initializeApp().then((server) => {
   const port = environment.PORT || 3333;
-
-  const server = app.listen(port, () => {
+  server.listen(port, () => {
     logger.info(`Listening at http://localhost:${port}`);
   });
   server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
