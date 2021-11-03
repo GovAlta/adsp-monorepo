@@ -127,7 +127,7 @@ export const createStreamRouter = (
     try {
       const req = socket.request as Request;
       const user = req.user;
-      const { criteria: criteriaValue, stream } = req.query;
+      const { criteria: criteriaValue, stream } = socket.handshake.query;
       const criteria: EventCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
 
       await getStream(req, stream as string, (err: unknown) => {
@@ -137,10 +137,12 @@ export const createStreamRouter = (
       });
 
       const entity: StreamEntity = req[STREAM_KEY];
-      entity.connect(events);
-      const sub = entity.getEvents(user, criteria).subscribe((next) => socket.emit(stream as string, next));
+      if (entity) {
+        entity.connect(events);
+        const sub = entity.getEvents(user, criteria).subscribe((next) => socket.emit(stream as string, next));
 
-      socket.on('disconnect', () => sub.unsubscribe());
+        socket.on('disconnect', () => sub.unsubscribe());
+      }
     } catch (err) {
       socket.disconnect(true);
     }

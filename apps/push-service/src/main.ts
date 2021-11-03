@@ -25,7 +25,7 @@ const logger = createLogger('push-service', environment.LOG_LEVEL || 'info');
 const initializeApp = async (): Promise<Server> => {
   const app = express();
   const server = createServer(app);
-  const ioServer = new IoServer(server, { path: '/socket.io/v1', serveClient: false, cors: {} });
+  const ioServer = new IoServer(server, { serveClient: false, cors: {} });
   const wsApp = expressWs(app, null, { leaveRouterUntouched: true });
 
   app.use(compression());
