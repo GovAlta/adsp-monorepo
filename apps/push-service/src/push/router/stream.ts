@@ -37,6 +37,7 @@ export const getStream = async (req: Request, stream: string, next: NextFunction
   }
 };
 
+const LOG_CONTEXT = { context: 'StreamRouter' };
 export const createStreamRouter = (
   ws: WsApplication,
   io: IoServer,
@@ -94,8 +95,30 @@ export const createStreamRouter = (
           res.flush();
         });
 
-        res.on('close', () => sub.unsubscribe());
-        res.on('error', () => sub.unsubscribe());
+        logger.info(
+          `Client connected on stream '${entity.name}' for user ${user?.name || 'anonymous'} (ID: ${
+            user?.id || 'anonymous'
+          }) on server side event.`,
+          {
+            ...LOG_CONTEXT,
+            tenant: entity.tenantId?.toString(),
+          }
+        );
+
+        res.on('close', () => {
+          sub.unsubscribe();
+          logger.info(`Client disconnected from stream '${entity.name}' on server side event.`, {
+            ...LOG_CONTEXT,
+            tenant: entity.tenantId?.toString(),
+          });
+        });
+        res.on('error', (err) => {
+          sub.unsubscribe();
+          logger.info(`Client disconnected from stream '${entity.name}' on server side event. ${err}`, {
+            ...LOG_CONTEXT,
+            tenant: entity.tenantId?.toString(),
+          });
+        });
       } catch (err) {
         next(err);
       }
@@ -115,8 +138,30 @@ export const createStreamRouter = (
         entity.connect(events);
         const sub = entity.getEvents(user, criteria).subscribe((next) => ws.send(JSON.stringify(next)));
 
-        ws.on('close', () => sub.unsubscribe());
-        ws.on('error', () => sub.unsubscribe());
+        logger.info(
+          `Client connected on stream '${entity.name}' for user ${user?.name || 'anonymous'} (ID: ${
+            user?.id || 'anonymous'
+          }) on web socket.`,
+          {
+            ...LOG_CONTEXT,
+            tenant: entity.tenantId?.toString(),
+          }
+        );
+
+        ws.on('close', () => {
+          sub.unsubscribe();
+          logger.info(`Client disconnected from stream '${entity.name}' on web socket.`, {
+            ...LOG_CONTEXT,
+            tenant: entity.tenantId?.toString(),
+          });
+        });
+        ws.on('error', (err) => {
+          sub.unsubscribe();
+          logger.info(`Client disconnected from stream '${entity.name}' on web socket due to error. ${err}`, {
+            ...LOG_CONTEXT,
+            tenant: entity.tenantId?.toString(),
+          });
+        });
       } catch (err) {
         next(err);
       }
@@ -125,9 +170,9 @@ export const createStreamRouter = (
 
   io.of('/').on('connection', async (socket) => {
     try {
-      const req = socket.request as Request;
+      const req = { ...socket.request, query: socket.handshake.query } as Request;
       const user = req.user;
-      const { criteria: criteriaValue, stream } = socket.handshake.query;
+      const { criteria: criteriaValue, stream } = req.query;
       const criteria: EventCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
 
       await getStream(req, stream as string, (err: unknown) => {
@@ -141,9 +186,26 @@ export const createStreamRouter = (
         entity.connect(events);
         const sub = entity.getEvents(user, criteria).subscribe((next) => socket.emit(stream as string, next));
 
-        socket.on('disconnect', () => sub.unsubscribe());
+        logger.info(
+          `Client connected on stream '${entity.name}' for user ${user?.name || 'anonymous'} (ID: ${
+            user?.id || 'anonymous'
+          }) on socket.io with ID ${socket.id}.`,
+          {
+            ...LOG_CONTEXT,
+            tenant: entity.tenantId?.toString(),
+          }
+        );
+
+        socket.on('disconnect', () => {
+          sub.unsubscribe();
+          logger.info(`Client disconnected from stream '${entity.name}' on socket.io with ID ${socket.id}.`, {
+            ...LOG_CONTEXT,
+            tenant: entity.tenantId?.toString(),
+          });
+        });
       }
     } catch (err) {
+      logger.warn(`Error encountered on socket.io connection. ${err}`);
       socket.disconnect(true);
     }
   });

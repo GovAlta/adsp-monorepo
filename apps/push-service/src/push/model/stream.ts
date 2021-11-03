@@ -15,7 +15,7 @@ export class StreamEntity implements Stream {
 
   stream: Observable<unknown & Pick<DomainEvent, 'correlationId' | 'context'>>;
 
-  constructor(private tenantId: AdspId, stream: Stream) {
+  constructor(public tenantId: AdspId, stream: Stream) {
     this.id = stream.id;
     this.name = stream.name;
     this.description = stream.description;
