@@ -24,7 +24,7 @@ export const Events: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <h5>Helpful Links</h5>
+        <h5>Helpful links</h5>
         <a
           rel="noopener noreferrer"
           target="_blank"

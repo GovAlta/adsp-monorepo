@@ -202,7 +202,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
               <div className="row-flex">
                 <div className="flex1 mr-1">
                   <DatePickerStyle>
-                    <label>Start Date</label>
+                    <label>Start date</label>
                     <DatePicker
                       data-testid="notice-form-start-date-picker"
                       name="startDate"
@@ -213,7 +213,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
                 </div>
                 <div className="flex1 ml-1">
                   <DatePickerStyle>
-                    <label>End Date</label>
+                    <label>End date</label>
                     <DatePicker
                       name="endDate"
                       data-testid="notice-form-end-date-picker"
@@ -227,7 +227,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
               <div className="row-flex">
                 <div className="flex1 mr-1">
                   <DatePickerStyle>
-                    <label>Start Time</label>
+                    <label>Start time</label>
                     <TimePicker
                       name="startTime"
                       onChange={setStartTime}
@@ -238,7 +238,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
                 </div>
                 <div className="flex1 ml-1">
                   <DatePickerStyle>
-                    <label>End Time</label>
+                    <label>End time</label>
                     <TimePicker
                       name="endTime"
                       onChange={setEndTime}

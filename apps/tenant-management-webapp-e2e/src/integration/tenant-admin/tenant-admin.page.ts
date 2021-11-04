@@ -48,15 +48,15 @@ class TenantAdminPage {
   }
 
   goaCardTitles() {
-    return cy.xpath('//div[@class="goa-card"]//div[@class="goa-title"]//a');
+    return cy.xpath('//*[@data-testid="card-container"]/div/h3/a');
   }
 
   goaCardTexts() {
-    return cy.xpath('//div[@class="goa-card"]//*[@class="goa-text"]');
+    return cy.xpath('//*[@data-testid="card-content"]/div');
   }
 
   goaCardLink(text) {
-    return cy.xpath(`//div[@class="goa-title"]//a[contains(text(), "${text}")]`);
+    return cy.xpath(`//*[@data-testid="card-container"]/div/h3/a[contains(text(), "${text}")]`);
   }
 
   servicePageTitle(text) {

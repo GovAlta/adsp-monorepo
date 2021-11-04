@@ -82,11 +82,11 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen }: Props) => {
 
   return (
     <GoAModal isOpen={isModalOpen}>
-      <GoAModalTitle>New Application</GoAModalTitle>
+      <GoAModalTitle>New application</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>
           <GoAFormItem>
-            <label>Application Name</label>
+            <label>Application name</label>
             <GoAInput type="text" name="name" value={application?.name} onChange={setValue} />
           </GoAFormItem>
 
@@ -96,7 +96,7 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen }: Props) => {
           </GoAFormItem>
 
           <GoAFormItem>
-            <label>Endpoint Url</label>
+            <label>Endpoint url</label>
             <GoAInput type="text" name="endpoint" value={application?.endpoint?.url} onChange={setValue} />
           </GoAFormItem>
         </GoAForm>

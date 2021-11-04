@@ -11,6 +11,7 @@ import { environment } from './environments/environment';
 import {
   applyFormMiddleware,
   configurationSchema,
+  FormCreatedDefinition,
   FormDefinition,
   FormDefinitionEntity,
   FormServiceRoles,
@@ -21,6 +22,7 @@ import {
 } from './form';
 import { createRepositories } from './mongo';
 import { createNotificationService } from './notification';
+import { createFileService } from './file';
 
 const logger = createLogger('form-service', environment.LOG_LEVEL);
 
@@ -57,7 +59,12 @@ const initializeApp = async (): Promise<express.Application> => {
           description: 'Intake application role for form service.',
         },
       ],
-      events: [FormStatusLockedDefinition, FormStatusUnlockedDefinition, FormStatusSubmittedDefinition],
+      events: [
+        FormCreatedDefinition,
+        FormStatusLockedDefinition,
+        FormStatusUnlockedDefinition,
+        FormStatusSubmittedDefinition,
+      ],
       notifications: [FormStatusNotificationType],
       configurationSchema,
       configurationConverter: (config: Record<string, FormDefinition>, tenantId) =>
@@ -86,6 +93,7 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use('/form', passport.authenticate(['tenant'], { session: false }), configurationHandler);
 
   const notificationService = createNotificationService(logger, directory, tokenProvider);
+  const fileService = createFileService(logger, directory, tokenProvider);
   const repositories = await createRepositories({
     ...environment,
     serviceId,
@@ -95,7 +103,7 @@ const initializeApp = async (): Promise<express.Application> => {
     notificationService,
   });
 
-  applyFormMiddleware(app, { ...repositories, logger, eventService, notificationService });
+  applyFormMiddleware(app, { ...repositories, serviceId, logger, eventService, notificationService, fileService });
 
   let swagger = null;
   app.use('/swagger/docs/v1', (_req, res) => {

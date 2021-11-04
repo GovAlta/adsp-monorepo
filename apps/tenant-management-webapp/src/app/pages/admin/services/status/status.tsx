@@ -79,7 +79,7 @@ function Status(): JSX.Element {
   return (
     <Page>
       <Main>
-        <h2>Service Status</h2>
+        <h2>Service status</h2>
         <Tabs activeIndex={activeIndex}>
           <Tab label="Overview">
             This service allows for easy monitoring of application downtime.
@@ -88,7 +88,7 @@ function Status(): JSX.Element {
               subsidy and child care certification
             </p>
             <GoAButton data-testid="add-application" onClick={() => addApplication()} buttonType="primary">
-              Add Application
+              Add application
             </GoAButton>
           </Tab>
           <Tab label="Applications">
@@ -102,7 +102,7 @@ function Status(): JSX.Element {
               subsidy and child care certification
             </p>
             <GoALinkButton data-testid="add-application" to={`${location.pathname}/new`} buttonType="primary">
-              Add Application
+              Add application
             </GoALinkButton>
             <ApplicationList>
               {applications.map((app) => (
@@ -116,7 +116,7 @@ function Status(): JSX.Element {
               about upcoming maintenance windows or other events
             </p>
             <GoALinkButton data-testid="add-notice" to={`${location.pathname}/notice/new`} buttonType="primary">
-              Add a Draft Notice
+              Add a draft notice
             </GoALinkButton>
             <NoticeList />
           </Tab>
@@ -141,7 +141,7 @@ function Status(): JSX.Element {
       </Main>
 
       <Aside>
-        <h5>Helpful Links</h5>
+        <h5>Helpful links</h5>
         <a
           rel="noopener noreferrer"
           target="_blank"
@@ -151,7 +151,7 @@ function Status(): JSX.Element {
         </a>
         <SupportLinks />
 
-        <h3>Public Status Page</h3>
+        <h3>Public status page</h3>
 
         <p>Url of the current tenant's public status page:</p>
 
@@ -174,10 +174,10 @@ function Status(): JSX.Element {
           <ApplicationFormModal isOpen={true} />
         </Route>
         <Route path="/admin/services/status/notice/new">
-          <NoticeModal isOpen={true} title="Add a Draft Notice" />
+          <NoticeModal isOpen={true} title="Add a draft notice" />
         </Route>
         <Route path="/admin/services/status/notice/:noticeId">
-          <NoticeModal isOpen={true} title="Edit Draft Notice" />
+          <NoticeModal isOpen={true} title="Edit draft notice" />
         </Route>
         <Route path="/admin/services/status/:applicationId/edit">
           <ApplicationFormModal isOpen={true} />
@@ -301,7 +301,7 @@ function Application(app: ServiceStatusApplication) {
 
       {/* Manual status change dialog */}
       <GoAModal isOpen={showStatusForm}>
-        <GoAModalTitle>Manual Status Change</GoAModalTitle>
+        <GoAModalTitle>Manual status change</GoAModalTitle>
         <GoAModalContent>
           <GoAForm>
             <GoAFormItem>

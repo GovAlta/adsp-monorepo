@@ -18,6 +18,7 @@ describe('FormEntity', () => {
 
   const subscriberId = adspId`urn:ads:platform:notification-service:v1:/subscribers/test`;
   const subscriber = {
+    id: 'test',
     urn: subscriberId,
     userId: null,
     addressAs: 'Tester',
@@ -34,8 +35,13 @@ describe('FormEntity', () => {
   const notificationMock = {
     getSubscriber: jest.fn(),
     subscribe: jest.fn(),
+    unsubscribe: jest.fn(),
     sendCode: jest.fn(),
     verifyCode: jest.fn(),
+  };
+
+  const fileMock = {
+    delete: jest.fn(),
   };
 
   beforeEach(() => {
@@ -455,19 +461,30 @@ describe('FormEntity', () => {
       submitted: null,
       lastAccessed: new Date(),
       data: {},
-      files: {},
+      files: {
+        test: adspId`urn:ads:platform:file-service:v1:/files/test`,
+      },
     };
     const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
 
     it('can delete form', async () => {
       repositoryMock.delete.mockResolvedValueOnce(true);
-      const deleted = await entity.delete({ tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User);
+      fileMock.delete.mockResolvedValueOnce(true);
+      const deleted = await entity.delete(
+        { tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User,
+        fileMock,
+        notificationMock
+      );
       expect(deleted).toBe(true);
+      expect(fileMock.delete).toHaveBeenCalled();
+      expect(notificationMock.unsubscribe).toHaveBeenCalled();
       expect(repositoryMock.delete).toHaveBeenCalledWith(entity);
     });
 
     it('can throw for non admin user', async () => {
-      await expect(entity.delete({ tenantId, id: 'tester', roles: [] } as User)).rejects.toThrow(UnauthorizedUserError);
+      await expect(
+        entity.delete({ tenantId, id: 'tester', roles: [] } as User, fileMock, notificationMock)
+      ).rejects.toThrow(UnauthorizedUserError);
     });
   });
 });

@@ -9,7 +9,7 @@ class WelcomePage {
   }
 
   signoutDiv() {
-    return cy.xpath('//a[contains(text(), "Sign Out")]');
+    return cy.xpath('//a[contains(text(), "Sign out")]');
   }
 
   userHasOneTenantMessage() {

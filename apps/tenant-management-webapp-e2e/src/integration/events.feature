@@ -31,13 +31,13 @@ Feature: Events
     Given a service owner user is on tenant admin page
     When the user selects the "Events" menu item
     And the user selects "Definitions" tab for "Events"
-    And the user clicks Add Definition button
-    Then the user views Add Definition dialog
+    And the user clicks Add definition button
+    Then the user views Add definition dialog
     When the user enters "Autotest-Service" in Namespace, "autotest-eventname" in Name, "autotest event desc" in Description
     And the user clicks Save button on Definition modal
     Then the user "views" an event definition of "autotest-eventname" and "autotest event desc" under "Autotest-Service"
     When the user clicks "Edit" button for the definition of "autotest-eventname" and "autotest event desc" under "Autotest-Service"
-    Then the user views Edit Definition dialog
+    Then the user views Edit definition dialog
     When the user enters "autotest event desc2" in Description
     And the user clicks Save button on Definition modal
     Then the user "views" an event definition of "autotest-eventname" and "autotest event desc2" under "Autotest-Service"
@@ -56,7 +56,7 @@ Feature: Events
   @TEST_CS-739 @REQ_CS-250 @regression
   Scenario Outline: As a service owner, I cannot add event definitions with names or namespaces contains ":"
     Given a service owner user is on event definitions page
-    When the user clicks Add Definition button
+    When the user clicks Add definition button
     And the user enters "<Namespace>" in Namespace, "<Name>" in Name, "<Description>" in Description
     And the user clicks Save button on Definition modal
     Then the user views the "<Error Message>" for "<Error Field>"
@@ -71,7 +71,7 @@ Feature: Events
   Scenario: As a service owner, I cannot add/modify/delete event definitions within platform service namespaces
     Given a service owner user is on event definitions page
     Then the user only views show button for event definitions of "tenant-service, configuration-service, notification-service, value-service, file-service"
-    When the user clicks Add Definition button
+    When the user clicks Add definition button
     And the user enters "tenant-service" in Namespace, "test" in Name, "test" in Description
     And the user clicks Save button on Definition modal
     Then the user views the "Cannot add definitions to core namespaces" for "Namespace"

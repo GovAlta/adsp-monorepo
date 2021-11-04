@@ -15,7 +15,7 @@ export class StreamEntity implements Stream {
 
   stream: Observable<unknown & Pick<DomainEvent, 'correlationId' | 'context'>>;
 
-  constructor(private tenantId: AdspId, stream: Stream) {
+  constructor(public tenantId: AdspId, stream: Stream) {
     this.id = stream.id;
     this.name = stream.name;
     this.description = stream.description;
@@ -52,7 +52,7 @@ export class StreamEntity implements Stream {
     );
   }
 
-  private mapEvent(event: DomainEvent, streamEvent: StreamEvent) {
+  private mapEvent({ tenantId: _tenantId, ...event}: DomainEvent, streamEvent: StreamEvent) {
     return streamEvent.map
       ? Object.entries(streamEvent.map).reduce((o, [k, p]) => ({ ...o, [k]: _.get(event, p, undefined) }), {
           correlationId: event.correlationId,

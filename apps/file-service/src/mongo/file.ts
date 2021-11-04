@@ -18,6 +18,7 @@ interface QueryProps {
   filename: { $regex: string; $options: string };
   scanned: boolean;
   deleted: boolean;
+  infected: boolean;
   recordId: string;
 }
 
@@ -112,6 +113,7 @@ export class MongoFileRepository implements FileRepository {
           created: values.created,
           lastAccessed: values.lastAccessed,
           scanned: values.scanned,
+          infected: values.infected,
           deleted: values.deleted,
         })
       : null;
@@ -128,6 +130,7 @@ export class MongoFileRepository implements FileRepository {
       created: entity.created,
       lastAccessed: entity.lastAccessed,
       scanned: entity.scanned,
+      infected: entity.infected,
       deleted: entity.deleted,
     };
   }
@@ -153,6 +156,10 @@ export class MongoFileRepository implements FileRepository {
 
     if (criteria.deleted !== undefined) {
       query.deleted = criteria.deleted;
+    }
+
+    if (criteria.infected !== undefined) {
+      query.infected = criteria.infected;
     }
 
     if (criteria.filenameContains) {

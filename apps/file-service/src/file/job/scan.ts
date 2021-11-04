@@ -26,10 +26,8 @@ export const createScanJob = ({ logger, scanService, fileRepository }: ScanJobPr
           scans.push({ scanned, infected });
 
           const updated = await result.updateScanResult(infected);
-          if (infected && updated.deleted) {
-            logger.warn(
-              `File ${updated.filename} (ID: ${updated.id}) marked for deletion because it scanned as infected.`
-            );
+          if (updated.infected) {
+            logger.warn(`File ${updated.filename} (ID: ${updated.id}) scanned as infected.`);
           }
         } catch (err) {
           logger.warn(`Error encountered scanning file ${result.filename} (ID: ${result.id}). ${err}`);
