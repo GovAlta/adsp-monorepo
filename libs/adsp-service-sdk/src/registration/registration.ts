@@ -73,6 +73,7 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
         }),
         {}
       );
+
       await this.updateConfiguration(adspId`urn:ads:platform:notification-service`, update);
     }
   }
