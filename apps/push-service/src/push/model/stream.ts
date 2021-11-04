@@ -1,10 +1,12 @@
 import * as _ from 'lodash';
 import { Observable } from 'rxjs';
 import { map, filter } from 'rxjs/operators';
-import { AdspId, isAllowedUser, User } from '@abgov/adsp-service-sdk';
-import { DomainEvent, InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
+import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { DomainEvent, InvalidOperationError } from '@core-services/core-common';
 import { EventCriteria, Stream, StreamEvent } from '../types';
+import { PushServiceRoles } from '..';
 
+type StreamItem = unknown & Pick<DomainEvent, 'namespace' | 'name' | 'correlationId' | 'context'>;
 export class StreamEntity implements Stream {
   id: string;
   name: string;
@@ -13,7 +15,7 @@ export class StreamEntity implements Stream {
   subscriberRoles: string[];
   publicSubscribe: boolean;
 
-  stream: Observable<unknown & Pick<DomainEvent, 'correlationId' | 'context'>>;
+  stream: Observable<StreamItem>;
 
   constructor(public tenantId: AdspId, stream: Stream) {
     this.id = stream.id;
@@ -44,7 +46,7 @@ export class StreamEntity implements Stream {
     return this;
   }
 
-  private isMatch(event: Pick<DomainEvent, 'correlationId' | 'context'>, criteria?: EventCriteria) {
+  private isMatch(event: StreamItem, criteria?: EventCriteria) {
     return (
       !criteria ||
       (!(criteria.correlationId && criteria.correlationId !== event.correlationId) &&
@@ -52,9 +54,11 @@ export class StreamEntity implements Stream {
     );
   }
 
-  private mapEvent({ tenantId: _tenantId, ...event}: DomainEvent, streamEvent: StreamEvent) {
+  private mapEvent({ tenantId: _tenantId, ...event }: DomainEvent, streamEvent: StreamEvent): StreamItem {
     return streamEvent.map
       ? Object.entries(streamEvent.map).reduce((o, [k, p]) => ({ ...o, [k]: _.get(event, p, undefined) }), {
+          namespace: event.namespace,
+          name: event.name,
           correlationId: event.correlationId,
           context: event.context,
         })
@@ -62,12 +66,15 @@ export class StreamEntity implements Stream {
   }
 
   canSubscribe(user: User): boolean {
-    return this.publicSubscribe || isAllowedUser(user, this.tenantId, this.subscriberRoles);
+    return (
+      this.publicSubscribe ||
+      isAllowedUser(user, this.tenantId, [PushServiceRoles.StreamListener, ...this.subscriberRoles], true)
+    );
   }
 
-  getEvents(user: User, criteria?: EventCriteria): Observable<Pick<DomainEvent, 'correlationId' | 'context'>> {
+  getEvents(user: User, criteria?: EventCriteria): Observable<StreamItem> {
     if (!this.canSubscribe(user)) {
-      throw new UnauthorizedError('User not authorized to access stream.');
+      throw new UnauthorizedUserError('access stream', user);
     }
 
     if (!this.stream) {
