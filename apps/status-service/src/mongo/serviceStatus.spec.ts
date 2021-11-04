@@ -60,48 +60,6 @@ describe('Service status mongo repository', () => {
     expect(apps.length).toEqual(applications.length);
   });
 
-  it('find the queued disabled applications', async () => {
-    const applications = await insertMockData([
-      { name: 'app 1', enabled: false, tenantId: '99' },
-      { name: 'app 2', enabled: false, tenantId: '99' },
-      { name: 'app 3', enabled: true, status: 'operational', tenantId: '99' },
-    ]);
-    const queuedIds = applications.map((app) => app._id);
-    const actual = await repo.findQueuedDisabledApplications(queuedIds);
-    expect(actual.length).toEqual(2);
-  });
-
-  it('finds the enabled applications that are not yet on the process queue', async () => {
-    const applications = await insertMockData([
-      { name: 'app 1', enabled: true, tenantId: '99' },
-      { name: 'app 2', enabled: true, tenantId: '99' }, // non-queued
-      { name: 'app 3', enabled: false, tenantId: '99' }, // not enabled so shouldn't be queued
-      { name: 'app 4', enabled: true, tenantId: '33' },
-    ]);
-    const queuedApps = ['app 1', 'app 4'];
-    const queuedIds = applications.filter((app) => queuedApps.includes(app.name)).map((app) => app._id);
-    const actual = await repo.findNonQueuedApplications(queuedIds);
-    expect(actual.length).toEqual(1);
-  });
-
-  it('finds the applications that exist in the process queue, but have been deleted in the db', async () => {
-    const applications = await insertMockData([
-      { name: 'app 1', enabled: true, tenantId: '99' },
-      { name: 'app 2', enabled: true, tenantId: '99' }, // non-queued
-      { name: 'app 3', enabled: false, tenantId: '99' }, // not enabled so shouldn't be queued
-      { name: 'app 4', enabled: true, tenantId: '33' },
-    ]);
-    const queuedApps = ['app 1', 'app 4'];
-    const queuedIds = applications.filter((app) => queuedApps.includes(app.name)).map((app) => app._id);
-
-    // simulate additional ids in the queue that don't exist in the db i.e. have been deleted
-    const deletedIds = await generateDeletedIds(2);
-    queuedIds.push(...deletedIds);
-
-    const actual = await repo.findQueuedDeletedApplicationIds(queuedIds);
-    expect(actual.length).toEqual(2);
-  });
-
   it('enables an application', async () => {
     const applications = await insertMockData([
       {

@@ -55,9 +55,9 @@ describe.skip('Validate endpoint checking', () => {
     return await serviceStatusRepository.save(appData as ServiceStatusApplicationEntity);
   }
 
-  async function checkServiceStatus(application: ServiceStatusApplicationEntity, res: { status: number }) {
+  async function checkServiceStatus(url: string, res: { status: number }) {
     const job = createCheckEndpointJob({
-      application,
+      url,
       serviceStatusRepository,
       eventService: eventServiceMock,
       endpointStatusEntryRepository,
@@ -80,7 +80,7 @@ describe.skip('Validate endpoint checking', () => {
     const application = await createMockApplication('operational');
     const url = application.endpoint.url;
 
-    await checkServiceStatus(application, { status: 200 });
+    await checkServiceStatus(url, { status: 200 });
 
     const entries = await endpointStatusEntryRepository.findRecentByUrl(url);
     expect(entries.length).toEqual(1);
@@ -101,7 +101,7 @@ describe.skip('Validate endpoint checking', () => {
 
     // pass 1 - should be `unhealthy`
     {
-      await checkServiceStatus(application, { status: 200 });
+      await checkServiceStatus(url, { status: 200 });
 
       entries = await endpointStatusEntryRepository.findRecentByUrl(url);
       expect(entries.length).toEqual(1);
@@ -114,7 +114,7 @@ describe.skip('Validate endpoint checking', () => {
 
     // pass 2 - should still be `unhealthy`
     {
-      await checkServiceStatus(application, { status: 200 });
+      await checkServiceStatus(url, { status: 200 });
 
       entries = await endpointStatusEntryRepository.findRecentByUrl(url);
       expect(entries.length).toEqual(2);
@@ -128,7 +128,7 @@ describe.skip('Validate endpoint checking', () => {
 
     // pass 3 - should now be `healthy`
     {
-      await checkServiceStatus(application, { status: 200 });
+      await checkServiceStatus(url, { status: 200 });
 
       entries = await endpointStatusEntryRepository.findRecentByUrl(url);
       expect(entries.length).toEqual(3);
@@ -155,7 +155,7 @@ describe.skip('Validate endpoint checking', () => {
 
     // pass 1 - should be `operational`
     {
-      await checkServiceStatus(application, { status: 500 });
+      await checkServiceStatus(url, { status: 500 });
 
       entries = await endpointStatusEntryRepository.findRecentByUrl(url);
       expect(entries.length).toEqual(1);
@@ -168,7 +168,7 @@ describe.skip('Validate endpoint checking', () => {
 
     // pass 2 - should still be `operational`
     {
-      await checkServiceStatus(application, { status: 500 });
+      await checkServiceStatus(url, { status: 500 });
 
       entries = await endpointStatusEntryRepository.findRecentByUrl(url);
       expect(entries.length).toEqual(2);
@@ -182,7 +182,7 @@ describe.skip('Validate endpoint checking', () => {
 
     // pass 3 - should now be `reported-issues`
     {
-      await checkServiceStatus(application, { status: 500 });
+      await checkServiceStatus(url, { status: 500 });
 
       entries = await endpointStatusEntryRepository.findRecentByUrl(url);
       expect(entries.length).toEqual(3);
@@ -198,12 +198,13 @@ describe.skip('Validate endpoint checking', () => {
 
   it('should go up, then back down', async () => {
     const application = await createMockApplication('operational');
+    const url = application.endpoint.url;
 
     // init state check
     {
-      await checkServiceStatus(application, { status: 500 });
-      await checkServiceStatus(application, { status: 500 });
-      await checkServiceStatus(application, { status: 500 });
+      await checkServiceStatus(url, { status: 500 });
+      await checkServiceStatus(url, { status: 500 });
+      await checkServiceStatus(url, { status: 500 });
 
       const service = await serviceStatusRepository.get(application._id);
       expect(service.internalStatus).toBe('unhealthy');
@@ -212,9 +213,9 @@ describe.skip('Validate endpoint checking', () => {
 
     // now up
     {
-      await checkServiceStatus(application, { status: 200 });
-      await checkServiceStatus(application, { status: 200 });
-      await checkServiceStatus(application, { status: 200 });
+      await checkServiceStatus(url, { status: 200 });
+      await checkServiceStatus(url, { status: 200 });
+      await checkServiceStatus(url, { status: 200 });
       const service = await serviceStatusRepository.get(application._id);
       expect(service.internalStatus).toBe('healthy');
       expect(service.endpoint.status).toBe('online');
@@ -222,7 +223,7 @@ describe.skip('Validate endpoint checking', () => {
 
     // still up
     {
-      await checkServiceStatus(application, { status: 500 });
+      await checkServiceStatus(url, { status: 500 });
 
       const service = await serviceStatusRepository.get(application._id);
       expect(service.internalStatus).toBe('healthy');
@@ -231,8 +232,8 @@ describe.skip('Validate endpoint checking', () => {
 
     // back down
     {
-      await checkServiceStatus(application, { status: 500 });
-      await checkServiceStatus(application, { status: 500 });
+      await checkServiceStatus(url, { status: 500 });
+      await checkServiceStatus(url, { status: 500 });
 
       const service = await serviceStatusRepository.get(application._id);
       expect(service.internalStatus).toBe('unhealthy');
@@ -261,11 +262,12 @@ describe.skip('Validate endpoint checking', () => {
     application.status = 'maintenance';
     application.statusTimestamp = 0
     application = await serviceStatusRepository.save(application);
+    const url = application.endpoint.url;
 
     // status checks
-    await checkServiceStatus(application, { status: 200 });
-    await checkServiceStatus(application, { status: 200 });
-    await checkServiceStatus(application, { status: 200 });
+    await checkServiceStatus(url, { status: 200 });
+    await checkServiceStatus(url, { status: 200 });
+    await checkServiceStatus(url, { status: 200 });
 
     application = await serviceStatusRepository.get(application._id);
 

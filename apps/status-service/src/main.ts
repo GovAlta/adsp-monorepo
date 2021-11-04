@@ -16,8 +16,9 @@ import {
   HealthCheckStartedDefinition,
   HealthCheckStoppedDefinition,
   HealthCheckUnhealthyDefinition,
-  HealthCheckHealthyDefinition
-} from './app/events'
+  HealthCheckHealthyDefinition,
+} from './app/events';
+import { StatusApplicationHealthChange } from './app/notificationTypes';
 
 const logger = createLogger('status-service', environment?.LOG_LEVEL || 'info');
 const app = express();
@@ -26,7 +27,6 @@ app.use(cors());
 app.use(compression());
 app.use(helmet());
 app.use(express.json({ limit: '1mb' }));
-
 
 logger.debug(`Environment variables: ${util.inspect(environment)}`);
 
@@ -48,9 +48,12 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
         },
       ],
       events: [
-        HealthCheckStartedDefinition, HealthCheckStoppedDefinition,
-        HealthCheckUnhealthyDefinition, HealthCheckHealthyDefinition
+        HealthCheckStartedDefinition,
+        HealthCheckStoppedDefinition,
+        HealthCheckUnhealthyDefinition,
+        HealthCheckHealthyDefinition,
       ],
+      notifications: [StatusApplicationHealthChange],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
@@ -94,7 +97,7 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
   });
 
   const errorHandler = createErrorHandler(logger);
-  app.use(errorHandler)
+  app.use(errorHandler);
   // start service
   const port = environment.PORT || 3338;
   const server = app.listen(port, () => {

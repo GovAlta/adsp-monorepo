@@ -21,6 +21,7 @@ items:
       name: push-service
     stringData:
       CLIENT_ID: urn:ads:platform:push-service
-      CLIENT_SECRET: 
+      CLIENT_SECRET:
       AMQP_USER: push-service
       AMQP_PASSWORD:
+      SESSION_SECRET: 
