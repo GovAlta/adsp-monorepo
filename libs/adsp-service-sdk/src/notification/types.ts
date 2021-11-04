@@ -14,6 +14,7 @@ export interface NotificationTypeEvent {
   namespace: string;
   name: string;
   templates: Partial<Record<Channel, Template>>;
+  channels?: string[];
 }
 
 export interface NotificationType {

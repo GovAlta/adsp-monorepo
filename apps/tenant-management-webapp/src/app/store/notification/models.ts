@@ -10,8 +10,18 @@ export interface NotificationItem {
 export interface EventItem {
   name: string;
   namespace?: string;
-  templates?: unknown;
-  channels?: [];
+  templates?: Template;
+  channels?: string[];
+}
+
+export interface Template {
+  email?: notifyText;
+  sms?: notifyText;
+}
+
+export interface notifyText {
+  subject: string;
+  body: string;
 }
 
 export interface RequestBodyProperties {
@@ -28,9 +38,11 @@ export interface RequestBodySchema {
 export interface NotificationService {
   notificationList: Array<NotificationItem>;
   notificationTypes: Array<NotificationItem>;
+  core: Array<NotificationItem>;
 }
 
 export const NOTIFICATION_INIT: NotificationService = {
   notificationList: [],
-  notificationTypes: [],
+  notificationTypes: undefined,
+  core: [],
 };

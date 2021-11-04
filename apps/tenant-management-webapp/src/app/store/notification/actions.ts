@@ -1,15 +1,12 @@
 import { NotificationItem } from './models';
 
-export const FETCH_NOTIFICATION_LIST = 'tenant/notification-service/notification/fetch';
-export const FETCH_NOTIFICATION_LIST_SUCCESSES = 'tenant/notification-service/notification/fetch/success';
-export const FETCH_NOTIFICATION_LIST_FAILED = 'tenant/notification-service/notification/fetch/fail';
-
 export const DELETE_NOTIFICATION = 'tenant/notification-service/notification/delete';
-export const DELETE_NOTIFICATION_SUCCESSES = 'tenant/notification-service/notification/delete/success';
 export const DELETE_NOTIFICATION_FAILED = 'tenant/notification-service/notification/delete/fail';
 
 export const FETCH_NOTIFICATION_TYPE = 'tenant/notification-service/notificationType/fetch';
+export const FETCH_CORE_NOTIFICATION_TYPE = 'tenant/core-notification-service/notificationType/fetch';
 export const FETCH_NOTIFICATION_TYPE_SUCCEEDED = 'notification-service/space/notificationType/succeeded';
+export const FETCH_CORE_NOTIFICATION_TYPE_SUCCEEDED = 'notification-service-core/space/notificationType/succeeded';
 
 export const DELETE_NOTIFICATION_TYPE = 'tenant/notification-service/notificationType/delete';
 
@@ -24,42 +21,14 @@ export const FETCH_NOTIFICATION_TYPE_HAS_NOTIFICATION_SUCCEEDED =
 // =============
 
 export type ActionTypes =
-  | FetchNotificationsAction
-  | FetchNotificationsSuccessAction
-  | FetchNotificationsFailedAction
-  | DeleteNotificationAction
-  | DeleteNotificationSuccessAction
   | DeleteNotificationFailedAction
   | FetchNotificationTypeSucceededAction
+  | FetchCoreNotificationTypeSucceededAction
   | FetchNotificationTypeAction
+  | FetchCoreNotificationTypeAction
   | UpdateNotificationTypeAction
   | DeleteNotificationTypeAction;
 
-interface FetchNotificationsAction {
-  type: typeof FETCH_NOTIFICATION_LIST;
-}
-
-interface FetchNotificationsSuccessAction {
-  type: typeof FETCH_NOTIFICATION_LIST_SUCCESSES;
-  payload: {
-    results: { data: NotificationItem[] };
-  };
-}
-
-interface FetchNotificationsFailedAction {
-  type: typeof FETCH_NOTIFICATION_LIST_FAILED;
-  payload: { data: string };
-}
-
-export interface DeleteNotificationAction {
-  type: typeof DELETE_NOTIFICATION;
-  payload: { data: string };
-}
-
-interface DeleteNotificationSuccessAction {
-  type: typeof DELETE_NOTIFICATION_SUCCESSES;
-  payload: { data: string };
-}
 interface DeleteNotificationFailedAction {
   type: typeof DELETE_NOTIFICATION_FAILED;
   payload: { data: string };
@@ -72,8 +41,19 @@ interface FetchNotificationTypeSucceededAction {
   };
 }
 
+interface FetchCoreNotificationTypeSucceededAction {
+  type: typeof FETCH_CORE_NOTIFICATION_TYPE_SUCCEEDED;
+  payload: {
+    notificationInfo: { data: NotificationItem[] };
+  };
+}
+
 interface FetchNotificationTypeAction {
   type: typeof FETCH_NOTIFICATION_TYPE;
+}
+
+interface FetchCoreNotificationTypeAction {
+  type: typeof FETCH_CORE_NOTIFICATION_TYPE;
 }
 
 export interface UpdateNotificationTypeAction {
@@ -89,40 +69,6 @@ export interface DeleteNotificationTypeAction {
 // ==============
 // Action Methods
 // ==============
-
-export const FetchNotificationsService = (): FetchNotificationsAction => ({
-  type: FETCH_NOTIFICATION_LIST,
-});
-
-export const FetchNotificationsSuccessService = (results: {
-  data: NotificationItem[];
-}): FetchNotificationsSuccessAction => ({
-  type: FETCH_NOTIFICATION_LIST_SUCCESSES,
-  payload: {
-    results,
-  },
-});
-
-export const FetchNotificationsFailedService = (data: string): FetchNotificationsFailedAction => ({
-  type: FETCH_NOTIFICATION_LIST_FAILED,
-  payload: {
-    data,
-  },
-});
-
-export const DeleteNotificationService = (data: string): DeleteNotificationAction => ({
-  type: DELETE_NOTIFICATION,
-  payload: {
-    data,
-  },
-});
-
-export const DeleteNotificationSuccessService = (data: string): DeleteNotificationSuccessAction => ({
-  type: DELETE_NOTIFICATION_SUCCESSES,
-  payload: {
-    data,
-  },
-});
 
 export const DeleteNotificationFailedService = (data: string): DeleteNotificationFailedAction => ({
   type: DELETE_NOTIFICATION_FAILED,
@@ -140,8 +86,21 @@ export const FetchNotificationTypeSucceededService = (notificationInfo: {
   },
 });
 
+export const FetchCoreNotificationTypeSucceededService = (notificationInfo: {
+  data: NotificationItem[];
+}): FetchCoreNotificationTypeSucceededAction => ({
+  type: FETCH_CORE_NOTIFICATION_TYPE_SUCCEEDED,
+  payload: {
+    notificationInfo,
+  },
+});
+
 export const FetchNotificationTypeService = (): FetchNotificationTypeAction => ({
   type: FETCH_NOTIFICATION_TYPE,
+});
+
+export const FetchCoreNotificationTypeService = (): FetchCoreNotificationTypeAction => ({
+  type: FETCH_CORE_NOTIFICATION_TYPE,
 });
 
 export const UpdateNotificationTypeService = (notificationType: NotificationItem): UpdateNotificationTypeAction => ({
