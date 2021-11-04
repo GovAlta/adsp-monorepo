@@ -1,10 +1,6 @@
 import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
-import {
-  createLogger,
-  createAmqpEventService,
-  createAmqpConfigUpdateService,
-  createErrorHandler,
-} from '@core-services/core-common';
+import { createLogger, createAmqpConfigUpdateService, createErrorHandler } from '@core-services/core-common';
+import { createAdapter as createIoAdapter } from '@socket.io/redis-adapter';
 import * as compression from 'compression';
 import * as createRedisStore from 'connect-redis';
 import * as cors from 'cors';
@@ -16,17 +12,17 @@ import { createServer, Server } from 'http';
 import * as passport from 'passport';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import { createClient as createRedisClient } from 'redis';
-import { Server as IoServer } from 'socket.io';
+import { Server as IoServer, Socket } from 'socket.io';
+import { createAmqpEventService } from './amqp';
 import { environment } from './environments/environment';
-import { applyPushMiddleware, configurationSchema, Stream, StreamEntity } from './push';
+import { applyPushMiddleware, configurationSchema, PushServiceRoles, Stream, StreamEntity } from './push';
 
 const logger = createLogger('push-service', environment.LOG_LEVEL || 'info');
 
 const initializeApp = async (): Promise<Server> => {
   const app = express();
   const server = createServer(app);
-  const ioServer = new IoServer(server, { serveClient: false, cors: {} });
-  const wsApp = expressWs(app, null, { leaveRouterUntouched: true });
+  const wsApp = expressWs(app, server, { leaveRouterUntouched: true });
 
   app.use(compression());
   app.use(helmet());
@@ -40,7 +36,13 @@ const initializeApp = async (): Promise<Server> => {
       serviceId,
       displayName: 'Push Service',
       description: 'Service for push mode connections.',
-      roles: [],
+      roles: [
+        {
+          role: PushServiceRoles.StreamListener,
+          description: 'Role used to allow an account to listen to all streams.',
+          inTenantAdmin: true,
+        },
+      ],
       configurationSchema,
       configurationConverter: (config: Record<string, Stream>, tenantId): Record<string, StreamEntity> =>
         config
@@ -81,25 +83,41 @@ const initializeApp = async (): Promise<Server> => {
   const redisClient = createRedisClient(`redis://${credentials}${REDIS_HOST}:${REDIS_PORT}/0`);
   const RedisStore = createRedisStore(session);
 
-  ioServer.use((socket, next) =>
-    session({
-      store: new RedisStore({ client: redisClient }),
-      saveUninitialized: false,
-      secret: environment.SESSION_SECRET,
-      resave: false,
-    })(socket.request as express.Request, {} as express.Response, next as express.NextFunction)
-  );
-  ioServer.use((socket, next) =>
-    passport.initialize()(socket.request as express.Request, {} as express.Response, next as express.NextFunction)
-  );
-  ioServer.use((socket, next) => passport.authenticate(['session', 'jwt', 'anonymous'])(socket.request, {}, next));
-  ioServer.use((socket, next) =>
-    configurationHandler(socket.request as express.Request, {} as express.Response, next as express.NextFunction)
+  const ioServer = new IoServer(server, { serveClient: false, cors: {} });
+  ioServer.adapter(createIoAdapter(redisClient, redisClient.duplicate()));
+
+  // No connection on default namespace.
+  ioServer.of('/').on('connection', async (socket) => socket.disconnect(true));
+
+  // Connections on namespace correspond to tenants.
+  const io = ioServer.of(/^\/[a-z0-9]{24}$/);
+
+  const wrapForIo = (handler: express.RequestHandler) => (socket: Socket, next) =>
+    handler(socket.request as express.Request, {} as express.Response, next);
+
+  io.use(
+    wrapForIo(
+      session({
+        store: new RedisStore({ client: redisClient.duplicate() }),
+        saveUninitialized: false,
+        secret: environment.SESSION_SECRET,
+        resave: false,
+        cookie: {
+          maxAge: 12 * 60 * 60 * 1000,
+          secure: environment.TLS_ENABLED,
+          sameSite: 'none',
+        },
+      })
+    )
   );
 
-  const eventService = await createAmqpEventService({ ...environment, queue: 'event-push', logger });
+  io.use(wrapForIo(passport.initialize()));
+  io.use(wrapForIo(passport.authenticate(['session', 'jwt', 'anonymous'])));
+  io.use(wrapForIo(configurationHandler));
 
-  applyPushMiddleware(app, wsApp, ioServer, { logger, eventService });
+  const eventService = await createAmqpEventService({ ...environment, logger });
+
+  applyPushMiddleware(app, wsApp, io, { logger, eventService });
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();
