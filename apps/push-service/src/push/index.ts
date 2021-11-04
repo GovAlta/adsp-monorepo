@@ -1,5 +1,4 @@
 import { Application } from 'express';
-import { Instance as WsApplication } from 'express-ws';
 import * as fs from 'fs';
 import { Logger } from 'winston';
 import { DomainEventSubscriberService } from '@core-services/core-common';
@@ -18,11 +17,10 @@ interface PushMiddlewareProps {
 
 export const applyPushMiddleware = (
   app: Application,
-  ws: WsApplication,
   io: IoNamespace,
   props: PushMiddlewareProps
 ): Application => {
-  const streamRouter = createStreamRouter(ws, io, props);
+  const streamRouter = createStreamRouter(io, props);
   app.use('/stream/v1', streamRouter);
 
   let swagger = null;

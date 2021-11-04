@@ -1,20 +1,15 @@
 import { adspId, User } from '@abgov/adsp-service-sdk';
 import { DomainEventSubscriberService, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request, Response } from 'express';
-import { Instance } from 'express-ws';
 import { of } from 'rxjs';
 import { Namespace } from 'socket.io';
 import { Logger } from 'winston';
-import WebSocket = require('ws');
-import { getStream, getStreams, subscribeBySse, subscribeByWs } from '.';
+import { getStream, getStreams, subscribeBySse } from './stream';
 import { StreamEntity } from '../model';
 import { createStreamRouter } from './stream';
 
 describe('stream router', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
-  const wsMock = {
-    applyTo: jest.fn((router) => (router.ws = jest.fn())),
-  };
 
   const ioMock = {
     on: jest.fn(),
@@ -62,7 +57,7 @@ describe('stream router', () => {
   });
 
   it('createStreamRouter', () => {
-    const router = createStreamRouter(wsMock as unknown as Instance, ioMock as unknown as Namespace, {
+    const router = createStreamRouter(ioMock as unknown as Namespace, {
       logger: loggerMock,
       eventService: eventServiceMock as DomainEventSubscriberService,
     });
@@ -241,45 +236,6 @@ describe('stream router', () => {
         })
       );
       handler(req as unknown as Request, res as unknown as Response, next);
-    });
-  });
-
-  describe('subscribeByWs', () => {
-    it('can create handler', () => {
-      const handler = subscribeByWs(loggerMock, of());
-      expect(handler).toBeTruthy();
-    });
-
-    it('can subscribe', (done) => {
-      const ws = {
-        on: jest.fn(),
-        send: jest.fn((value) => {
-          expect(value).toBeTruthy();
-          done();
-        }),
-      };
-      const req = {
-        tenantId,
-        user: { isCore: true, id: 'tester', roles: ['test-subscriber'] } as User,
-        params: { stream: 'test' },
-        query: {},
-        stream,
-        getConfiguration: jest.fn(),
-      };
-      const next = jest.fn();
-
-      const handler = subscribeByWs(
-        loggerMock,
-        of({
-          tenantId,
-          namespace: 'test-service',
-          name: 'test-started',
-          timestamp: new Date(),
-          correlationId: '321',
-          payload: {},
-        })
-      );
-      handler(ws as unknown as WebSocket, req as unknown as Request, next);
     });
   });
 });

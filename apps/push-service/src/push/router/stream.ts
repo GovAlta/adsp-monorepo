@@ -7,7 +7,6 @@ import {
 } from '@core-services/core-common';
 import 'compression'; // For unit tests to load the type extensions.
 import { Request, RequestHandler, Router } from 'express';
-import { Instance as WsApplication, WebsocketRequestHandler } from 'express-ws';
 import { Observable } from 'rxjs';
 import { map, share } from 'rxjs/operators';
 import { Namespace as IoNamespace, Socket } from 'socket.io';
@@ -134,47 +133,6 @@ export function subscribeBySse(logger: Logger, events: Observable<DomainEvent>):
   };
 }
 
-export function subscribeByWs(logger: Logger, events: Observable<DomainEvent>): WebsocketRequestHandler {
-  return async (ws, req, next) => {
-    try {
-      const user = req.user;
-      const { criteria: criteriaValue } = req.query;
-      const criteria: EventCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
-      const entity: StreamEntity = req[STREAM_KEY];
-
-      entity.connect(events);
-      const sub = entity.getEvents(user, criteria).subscribe((next) => ws.send(JSON.stringify(next)));
-
-      logger.info(
-        `Client connected on stream '${entity.name}' for user ${user?.name || 'anonymous'} (ID: ${
-          user?.id || 'anonymous'
-        }) on web socket.`,
-        {
-          ...LOG_CONTEXT,
-          tenant: entity.tenantId?.toString(),
-        }
-      );
-
-      ws.on('close', () => {
-        sub.unsubscribe();
-        logger.info(`Client disconnected from stream '${entity.name}' on web socket.`, {
-          ...LOG_CONTEXT,
-          tenant: entity.tenantId?.toString(),
-        });
-      });
-      ws.on('error', (err) => {
-        sub.unsubscribe();
-        logger.info(`Client disconnected from stream '${entity.name}' on web socket due to error. ${err}`, {
-          ...LOG_CONTEXT,
-          tenant: entity.tenantId?.toString(),
-        });
-      });
-    } catch (err) {
-      next(err);
-    }
-  };
-}
-
 export function onIoConnection(logger: Logger, events: Observable<DomainEvent>) {
   return async (socket: Socket): Promise<void> => {
     try {
@@ -225,11 +183,7 @@ export function onIoConnection(logger: Logger, events: Observable<DomainEvent>) 
 }
 
 const LOG_CONTEXT = { context: 'StreamRouter' };
-export const createStreamRouter = (
-  ws: WsApplication,
-  io: IoNamespace,
-  { logger, eventService }: StreamRouterProps
-): Router => {
+export const createStreamRouter = (io: IoNamespace, { logger, eventService }: StreamRouterProps): Router => {
   const events = eventService.getItems().pipe(
     map(({ item, done }) => {
       done();
@@ -243,11 +197,8 @@ export const createStreamRouter = (
   });
 
   const streamRouter = Router();
-  ws.applyTo(streamRouter);
-
   streamRouter.get('/streams', getStreams);
   streamRouter.get('/streams/:stream', getStream, subscribeBySse(logger, events));
-  streamRouter.ws('/streams/:stream', (_ws, req, next) => getStream(req, null, next), subscribeByWs(logger, events));
 
   io.on('connection', onIoConnection(logger, events));
 

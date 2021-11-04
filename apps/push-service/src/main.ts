@@ -6,7 +6,6 @@ import * as createRedisStore from 'connect-redis';
 import * as cors from 'cors';
 import * as express from 'express';
 import * as session from 'express-session';
-import * as expressWs from 'express-ws';
 import * as helmet from 'helmet';
 import { createServer, Server } from 'http';
 import * as passport from 'passport';
@@ -22,7 +21,6 @@ const logger = createLogger('push-service', environment.LOG_LEVEL || 'info');
 const initializeApp = async (): Promise<Server> => {
   const app = express();
   const server = createServer(app);
-  const wsApp = expressWs(app, server, { leaveRouterUntouched: true });
 
   app.use(compression());
   app.use(helmet());
@@ -83,7 +81,13 @@ const initializeApp = async (): Promise<Server> => {
   const redisClient = createRedisClient(`redis://${credentials}${REDIS_HOST}:${REDIS_PORT}/0`);
   const RedisStore = createRedisStore(session);
 
-  const ioServer = new IoServer(server, { serveClient: false, cors: {} });
+  const ioServer = new IoServer(server, {
+    serveClient: false,
+    cors: {
+      credentials: true,
+      origin: true,
+    },
+  });
   ioServer.adapter(createIoAdapter(redisClient, redisClient.duplicate()));
 
   // No connection on default namespace.
@@ -117,7 +121,7 @@ const initializeApp = async (): Promise<Server> => {
 
   const eventService = await createAmqpEventService({ ...environment, logger });
 
-  applyPushMiddleware(app, wsApp, io, { logger, eventService });
+  applyPushMiddleware(app, io, { logger, eventService });
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();

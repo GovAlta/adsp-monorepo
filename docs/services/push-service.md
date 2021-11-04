@@ -6,7 +6,7 @@ parent: Services
 ---
 
 # Push service
-Push service provides push mode gateway to events emitted in the [event service](event-service.md). It supports server side events, web sockets, and [socket.io](https://socket.io).
+Push service provides push mode gateway to events emitted in the [event service](event-service.md). It supports server side events and web sockets via [socket.io](https://socket.io).
 
 Note that the web socket and socket.io endpoints are not part of the RESTful API and are not included in the Open API documentation for the service.
 
@@ -25,7 +25,7 @@ Stream represents a collection of domain events that can be subscribed to throug
 
 ## Code examples
 ### Connect to a stream via server side events
-Server side event with Authorization header may require a pollyfill. Alternatively, use a token query parameter to provide the access token.
+Server side event with Authorization header may require a polyfill. Alternatively, use a token query parameter to provide the access token.
 
 ```typescript
   const eventSource = new EventSource(
@@ -42,25 +42,22 @@ Server side event with Authorization header may require a pollyfill. Alternative
   }
 ```
 
-### Connect to a stream via web sockets
-TODO: Add example here
-
 ### Connect to a stream via socket.io
 Socket.io connections use namespaces for tenancy. Each connection is made to a specific tenant.
 
 ```typescript
-import { io } from 'socket.io-client';
-const socket = io(
-  `https://push-service.alpha.alberta.ca/${tenantId}?stream=${streamId}`,
-  {
-    withCredentials: true,
-    extraHeaders: {
-      Authorization: `Bearer ${accessToken}`,
+  import { io } from 'socket.io-client';
+  const socket = io(
+    `https://push-service.alpha.alberta.ca/${tenantId}?stream=${streamId}`,
+    {
+      withCredentials: true,
+      extraHeaders: {
+        Authorization: `Bearer ${accessToken}`,
+      },
     },
-  },
-);
+  );
 
-socket.on(`${eventNamespace}:${eventName}`, (event) => {
-  // Handle the event.
-})
+  socket.on(`${eventNamespace}:${eventName}`, (event) => {
+    // Handle the event.
+  });
 ```
