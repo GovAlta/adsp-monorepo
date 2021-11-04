@@ -9,38 +9,15 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
   constructor() {
     this.model = model<ServiceStatusApplication & Document>('ServiceStatus', serviceStatusApplicationSchema);
   }
+
   async findEnabledApplications(): Promise<ServiceStatusApplicationEntity[]> {
     const docs = await this.model.find({ enabled: true });
     return docs.map((doc) => this.fromDoc(doc));
   }
+
   async get(id: string): Promise<ServiceStatusApplicationEntity> {
     const doc = await this.model.findById(id);
     return Promise.resolve(this.fromDoc(doc));
-  }
-
-  async findQueuedDisabledApplications(queuedApplicationIds: string[]): Promise<ServiceStatusApplicationEntity[]> {
-    const docs = await this.model.find({
-      _id: { $in: queuedApplicationIds },
-      enabled: false,
-    });
-    return docs.map((doc) => this.fromDoc(doc));
-  }
-
-  async findQueuedDeletedApplicationIds(queuedApplicationIds: string[]): Promise<string[]> {
-    const existingApps = await this.model.find({ _id: { $in: queuedApplicationIds } });
-    const existingAppIds = existingApps.map((app) => app._id);
-
-    return queuedApplicationIds.filter((appId) => {
-      const exists = existingAppIds.find((id) => id.toString() === appId.toString());
-      return !exists;
-    });
-  }
-  async findNonQueuedApplications(queuedApplicationIds: string[]): Promise<ServiceStatusApplicationEntity[]> {
-    const docs = await this.model.find({
-      _id: { $nin: queuedApplicationIds },
-      enabled: true,
-    });
-    return docs.map((doc) => this.fromDoc(doc));
   }
 
   async find(filter: Partial<ServiceStatusApplicationFilter>): Promise<ServiceStatusApplicationEntity[]> {
