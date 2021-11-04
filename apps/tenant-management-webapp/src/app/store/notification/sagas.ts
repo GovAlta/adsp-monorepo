@@ -53,7 +53,7 @@ export function* fetchCoreNotificationTypes(): SagaIterator {
     try {
       const { data: configuration } = yield call(
         axios.get,
-        `${configBaseUrl}/configuration/v2/configuration/platform/notification-service?coreData=true`,
+        `${configBaseUrl}/configuration/v2/configuration/platform/notification-service?core`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
