@@ -8,7 +8,7 @@ class TenantAdminPage {
   }
 
   keycloakLink() {
-    return cy.contains('Keycloak Admin');
+    return cy.contains('Keycloak admin');
   }
 
   userCount() {
