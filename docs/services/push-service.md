@@ -6,12 +6,16 @@ parent: Services
 ---
 
 # Push service
-Push service provides push mode gateway to events emitted in the [event service](event-service.md). It supports server side events and web sockets.
+Push service provides push mode gateway to events emitted in the [event service](event-service.md). It supports server side events, web sockets, and [socket.io](https://socket.io).
+
+Note that the web socket and socket.io endpoints are not part of the RESTful API and are not included in the Open API documentation for the service.
 
 ## Client roles
 client `urn:ads:platform:push-service`
 
-Push service does not include any default client roles.
+| name | description |
+|:-|:-|
+| stream-listener | Stream listener role for push service. This role is used to allow an account to subscribe to any stream.  |
 
 User access is primary controlled via configuration on each stream with `subscriberRoles` representing the roles that grant read permission.
 
@@ -20,9 +24,6 @@ User access is primary controlled via configuration on each stream with `subscri
 Stream represents a collection of domain events that can be subscribed to through the gateway. Streams can optionally include projections for the events, so that only a subset of the payload is provided to the subscribing clients. Streams are configured in the [configuration service](configuration-service.md) under the `platform:push-service` namespace and name.
 
 ## Code examples
-### Connect to a stream via web sockets
-TODO: Add example here
-
 ### Connect to a stream via server side events
 Server side event with Authorization header may require a pollyfill. Alternatively, use a token query parameter to provide the access token.
 
@@ -39,4 +40,27 @@ Server side event with Authorization header may require a pollyfill. Alternative
   eventSource.onerror = function(err) {
     // on error
   }
+```
+
+### Connect to a stream via web sockets
+TODO: Add example here
+
+### Connect to a stream via socket.io
+Socket.io connections use namespaces for tenancy. Each connection is made to a specific tenant.
+
+```typescript
+import { io } from 'socket.io-client';
+const socket = io(
+  `https://push-service.alpha.alberta.ca/${tenantId}?stream=${streamId}`,
+  {
+    withCredentials: true,
+    extraHeaders: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  },
+);
+
+socket.on(`${eventNamespace}:${eventName}`, (event) => {
+  // Handle the event.
+})
 ```
