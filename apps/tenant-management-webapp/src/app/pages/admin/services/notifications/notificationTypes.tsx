@@ -16,6 +16,7 @@ import {
   UpdateNotificationTypeService,
   DeleteNotificationTypeService,
   FetchNotificationTypeService,
+  FetchCoreNotificationTypeService,
 } from '@store/notification/actions';
 import { NotificationItem } from '@store/notification/models';
 import { RootState } from '@store/index';
@@ -44,11 +45,13 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [showEventDeleteConfirmation, setShowEventDeleteConfirmation] = useState(false);
 
   const notification = useSelector((state: RootState) => state.notification);
+  const coreNotification = useSelector((state: RootState) => state.notification.core);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(FetchNotificationTypeService());
+    dispatch(FetchCoreNotificationTypeService());
   }, [dispatch]);
 
   function reset() {
@@ -196,6 +199,33 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                     <div>Domain events represent key changes at a domain model level.</div>
                   </NotificationBorder>
                 </GridItem>
+              </Grid>
+            </GoACard>
+          </div>
+        ))}
+      <h2>Core notifications:</h2>
+      {coreNotification &&
+        Object.values(coreNotification).map((notificationType) => (
+          <div className="topBottomMargin" key={notificationType.name}>
+            <GoACard
+              title={
+                <div className="rowFlex">
+                  <h2 className="flex1">{notificationType.name}</h2>
+                </div>
+              }
+              description={notificationType.description}
+            >
+              <h2>Events:</h2>
+              <Grid>
+                {notificationType?.events?.map((event, key) => (
+                  <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
+                    <EventBorder>
+                      <div className="height-100 rowFlex">
+                        <div className="flex1">{event.name}</div>
+                      </div>
+                    </EventBorder>
+                  </GridItem>
+                ))}
               </Grid>
             </GoACard>
           </div>

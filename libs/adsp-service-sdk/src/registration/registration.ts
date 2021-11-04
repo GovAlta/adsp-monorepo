@@ -61,11 +61,7 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
       await this.updateConfiguration(adspId`urn:ads:platform:event-service`, update);
     }
 
-    console.log(JSON.stringify(registration) + "<registration") ;
-
     if (registration.notifications) {
-      console.log(JSON.stringify(registration.notifications) + "<registration notifications") ;
-
       const update = registration.notifications.reduce(
         (types, type) => ({
           ...types,
@@ -77,8 +73,7 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
         }),
         {}
       );
-      console.log(JSON.stringify(update) + "<update") ;
-      console.log(JSON.stringify(await this.updateConfiguration(adspId`urn:ads:platform:notification-service`, update)) + "<await this.updateConfiguration(adspId`urn:ads:platform:notification-service`, update);") ;
+
       await this.updateConfiguration(adspId`urn:ads:platform:notification-service`, update);
     }
   }

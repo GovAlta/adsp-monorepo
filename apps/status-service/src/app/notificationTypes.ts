@@ -27,26 +27,29 @@ export interface NotificationType {
 
 export const StatusApplicationHealthChange: NotificationType = {
   name: 'status-application-health-change',
-  description: 'Default email templates for application health changes',
-  subscriberRoles: [],
+  description:
+    'Default email templates for application health changes - includes the following events: health-check-started, health-check-stopped, application-unhealthy, application-unhealthy',
+  subscriberRoles: ['status-admin'],
   events: [
     {
       namespace: 'status-service',
       name: 'health-check-started',
       templates: {
         email: {
-          subject: '{{ event.payload.form.definition.name }} locked',
+          subject: 'Health Check for {{ healthCheck.application.name }} has started',
           body: `<!doctype html>
 <html>
-<head>
-</head>
-<body>
-<p>Your draft {{ event.payload.form.definition.name }} form has been locked and will be deleted on {{ formatDate event.payload.deleteOn }}.</p>
-<p>
-No action is required if you do not intend to complete the submission.
-If you do wish to continue, please contact {{ event.payload.definition.supportEmail }} to unlock the draft.
-</p>
-</body>
+  <head>
+  </head>
+  <body>
+    <p>Health checking has been activated for application {{ healthCheck.application.name }}</p>
+    <p>
+      {{ healthCheck.application.name }} is described as follows: {{ healthCheck.application.description }}
+    </p>
+    <p>
+      {{ healthCheck.application.name }} is available at <a href="{{ healthCheck.application.url }}">{{ healthCheck.application.url }}</a>
+    </p>
+  </body>
 </html>`,
         },
       },
@@ -57,14 +60,20 @@ If you do wish to continue, please contact {{ event.payload.definition.supportEm
       name: 'health-check-stopped',
       templates: {
         email: {
-          subject: '{{ event.payload.form.definition.name }} unlocked',
+          subject: 'Health Check for {{ healthCheck.application.name }} has stopped',
           body: `<!doctype html>
 <html>
-<head>
-</head>
-<body>
-<p>Your draft {{ event.payload.form.definition.name }} form has been unlocked.</p>
-</body>
+  <head>
+  </head>
+  <body>
+    <p>Health checking has been disabled for application {{ healthCheck.application.name }}</p>
+    <p>
+      {{ healthCheck.application.name }} is described as follows: {{ healthCheck.application.description }}
+    </p>
+    <p>
+      {{ healthCheck.application.name }} is available at <a href="{{ healthCheck.application.url }}">{{ healthCheck.application.url }}</a>
+    </p>
+  </body>
 </html>`,
         },
       },
@@ -75,14 +84,20 @@ If you do wish to continue, please contact {{ event.payload.definition.supportEm
       name: 'application-unhealthy',
       templates: {
         email: {
-          subject: '{{ event.payload.form.definition.name }} received',
+          subject: 'Status of {{ healthCheck.application.name }} is deemed to be unhealthy',
           body: `<!doctype html>
 <html>
-<head>
-</head>
-<body>
-<p>Your {{ event.payload.form.definition.name }} submission has been received.</p>
-</body>
+  <head>
+  </head>
+  <body>
+    <p>{{ healthCheck.application.name }} may be offline</p>
+    <p>
+      {{ healthCheck.application.name }} is described as follows: {{ healthCheck.application.description }}
+    </p>
+    <p>
+      {{ healthCheck.application.name }} is available at <a href="{{ healthCheck.application.url }}">{{ healthCheck.application.url }}</a>
+    </p>
+  </body>
 </html>`,
         },
       },
@@ -90,17 +105,23 @@ If you do wish to continue, please contact {{ event.payload.definition.supportEm
     },
     {
       namespace: 'Status-Service',
-      name: 'application-healthy',
+      name: 'application-unhealthy',
       templates: {
         email: {
-          subject: '{{ event.payload.form.definition.name }} received',
+          subject: 'Status of {{ healthCheck.application.name }} is healthy',
           body: `<!doctype html>
 <html>
-<head>
-</head>
-<body>
-<p>Your {{ event.payload.form.definition.name }} submission has been received.</p>
-</body>
+  <head>
+  </head>
+  <body>
+    <p>{{ healthCheck.application.name }} seems to be available</p>
+    <p>
+      {{ healthCheck.application.name }} is described as follows: {{ healthCheck.application.description }}
+    </p>
+    <p>
+      {{ healthCheck.application.name }} is available at <a href="{{ healthCheck.application.url }}">{{ healthCheck.application.url }}</a>
+    </p>
+  </body>
 </html>`,
         },
       },

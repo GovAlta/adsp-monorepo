@@ -38,11 +38,11 @@ export interface RequestBodySchema {
 export interface NotificationService {
   notificationList: Array<NotificationItem>;
   notificationTypes: Array<NotificationItem>;
-  loaded: boolean;
+  core: Array<NotificationItem>;
 }
 
 export const NOTIFICATION_INIT: NotificationService = {
   notificationList: [],
-  notificationTypes: [],
-  loaded: false,
+  notificationTypes: undefined,
+  core: [],
 };

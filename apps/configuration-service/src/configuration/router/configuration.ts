@@ -51,11 +51,14 @@ export const getConfigurationEntity =
   async (req, _res, next) => {
     const user = req.user;
     const { namespace, name } = req.params;
-    const { tenantId: tenantIdValue } = req.query;
+    const { tenantId: tenantIdValue, coreData } = req.query;
     const getCore = requestCore(req);
 
     try {
-      const tenantId = user?.isCore && tenantIdValue ? AdspId.parse(tenantIdValue as string) : user.tenantId;
+      let tenantId = user?.isCore && tenantIdValue ? AdspId.parse(tenantIdValue as string) : user.tenantId;
+      if (coreData === 'true') {
+        tenantId = null;
+      }
 
       const definition = await getDefinition(configurationServiceId, repository, namespace, name, tenantId);
 
@@ -120,6 +123,7 @@ export const patchConfigurationRevision =
         default:
           throw new InvalidOperationError('Request does not include recognized operation.');
       }
+
       const updated = await entity.update(user, update);
 
       res.send(mapConfiguration(updated));
