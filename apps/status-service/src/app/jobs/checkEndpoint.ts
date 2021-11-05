@@ -87,6 +87,9 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
       return;
     }
 
+    logger.info(`${recentHistory.length} recent history for endpoint ${url} is collected.`);
+    logger.info(`Current status of application ${id} is ${newStatus}`);
+
     const oldStatus = application.endpoint.status;
     // set the application status based on the endpoints
     if (newStatus !== oldStatus) {
