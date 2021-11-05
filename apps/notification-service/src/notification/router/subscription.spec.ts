@@ -16,6 +16,7 @@ import {
   getSubscribers,
   getTypeSubscription,
   subscriberOperations,
+  getSubscriberSubscriptions,
 } from './subscription';
 import { NotificationType, ServiceUserRoles } from '../types';
 import { createSubscriber, deleteSubscriber, updateSubscriber } from '.';
@@ -174,7 +175,12 @@ describe('subscription router', () => {
 
       const handler = getTypeSubscriptions(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(repositoryMock.getSubscriptions).toHaveBeenCalledWith(req.notificationType, 11, '123');
+      expect(repositoryMock.getSubscriptions).toHaveBeenCalledWith(
+        req.tenant.id,
+        11,
+        '123',
+        expect.objectContaining({ typeIdEquals: notificationType.id })
+      );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
     });
   });
@@ -1019,6 +1025,70 @@ describe('subscription router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+  });
+
+  describe('getSubscriberSubscriptions', () => {
+    const subscriber = new SubscriberEntity(repositoryMock, {
+      id: 'subscriber',
+      tenantId,
+      addressAs: 'tester',
+      channels: [
+        {
+          channel: Channel.email,
+          address: 'tester@test.co',
+          verified: false,
+        },
+      ],
+    });
+
+    it('can create handler', () => {
+      const handler = getSubscriberSubscriptions(apiId, repositoryMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can get subscriptions', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        query: {},
+        subscriber,
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const result = { results: [], page: {} };
+      repositoryMock.getSubscriptions.mockResolvedValueOnce(result);
+
+      const handler = getSubscriberSubscriptions(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
+    });
+
+    it('can get handle query params', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        query: { top: '11', after: '123' },
+        subscriber,
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const result = { results: [], page: {} };
+      repositoryMock.getSubscriptions.mockResolvedValueOnce(result);
+
+      const handler = getSubscriberSubscriptions(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getSubscriptions).toHaveBeenCalledWith(
+        req.tenant.id,
+        11,
+        '123',
+        expect.objectContaining({ subscriberIdEquals: subscriber.id })
+      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
     });
   });
 });

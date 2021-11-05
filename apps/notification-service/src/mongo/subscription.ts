@@ -7,6 +7,7 @@ import {
   SubscriberEntity,
   SubscriptionEntity,
   SubscriptionRepository,
+  SubscriptionSearchCriteria,
 } from '../notification';
 import { subscriberSchema, subscriptionSchema } from './schema';
 import { SubscriberDoc, SubscriptionDoc } from './types';
@@ -43,7 +44,7 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
       this.subscriptionModel
         .findOne(
           {
-            tenantId: type.tenantId,
+            tenantId: type.tenantId?.toString(),
             typeId: type.id,
             subscriberId,
           },
@@ -55,11 +56,29 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     );
   }
 
-  getSubscriptions(type: NotificationTypeEntity, top: number, after: string): Promise<Results<SubscriptionEntity>> {
+  getSubscriptions(
+    tenantId: AdspId,
+    top: number,
+    after: string,
+    criteria: SubscriptionSearchCriteria
+  ): Promise<Results<SubscriptionEntity>> {
     const skip = decodeAfter(after);
+
+    const query: Record<string, unknown> = {
+      tenantId: tenantId?.toString(),
+    };
+
+    if (criteria?.typeIdEquals) {
+      query.typeId = criteria.typeIdEquals;
+    }
+
+    if (criteria?.subscriberIdEquals) {
+      query.subscriberId;
+    }
+
     return new Promise<Results<SubscriptionEntity>>((resolve, reject) => {
       this.subscriptionModel
-        .find({ tenantId: type.tenantId, typeId: type.id }, null, { lean: true })
+        .find(query, null, { lean: true })
         .populate('subscriberId')
         .skip(skip)
         .limit(top)
@@ -84,7 +103,7 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query: any = {};
     if (criteria.tenantIdEquals) {
-      query.tenantId = criteria.tenantIdEquals;
+      query.tenantId = criteria.tenantIdEquals.toString();
     }
 
     return new Promise<Results<SubscriberEntity>>((resolve, reject) => {
@@ -128,7 +147,7 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     return new Promise<SubscriptionEntity>((resolve, reject) =>
       this.subscriptionModel.findOneAndUpdate(
         {
-          tenantId: subscription.tenantId,
+          tenantId: subscription.tenantId.toString(),
           typeId: subscription.typeId,
           subscriberId: subscription.subscriberId,
         },

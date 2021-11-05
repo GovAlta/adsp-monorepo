@@ -13,3 +13,8 @@ export interface Subscription {
   criteria: SubscriptionCriteria;
   subscriberId: string;
 }
+
+export interface SubscriptionSearchCriteria {
+  typeIdEquals?: string;
+  subscriberIdEquals?: string;
+}

@@ -54,11 +54,12 @@ export const getNotificationType: RequestHandler = async (req, _res, next) => {
 export function getTypeSubscriptions(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
   return async (req, res, next) => {
     try {
+      const tenantId = req.tenant?.id;
       const type: NotificationTypeEntity = req[TYPE_KEY];
       const { top: topValue, after } = req.query;
       const top = topValue ? parseInt(topValue as string, 10) : 10;
 
-      const result = await repository.getSubscriptions(type, top, after as string);
+      const result = await repository.getSubscriptions(tenantId, top, after as string, { typeIdEquals: type.id });
       res.send({
         results: result.results.map((r) => mapSubscription(apiId, r)),
         page: result.page,
@@ -331,6 +332,27 @@ export const deleteSubscriber: RequestHandler = async (req, res, next) => {
   }
 };
 
+export function getSubscriberSubscriptions(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenantId = req.tenant?.id;
+      const subscriber: SubscriberEntity = req[SUBSCRIBER_KEY];
+      const { top: topValue, after } = req.query;
+      const top = topValue ? parseInt(topValue as string, 10) : 10;
+
+      const result = await repository.getSubscriptions(tenantId, top, after as string, {
+        subscriberIdEquals: subscriber.id,
+      });
+      res.send({
+        results: result.results.map((r) => mapSubscription(apiId, r)),
+        page: result.page,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export const createSubscriptionRouter = ({
   serviceId,
   subscriptionRepository,
@@ -384,6 +406,11 @@ export const createSubscriptionRouter = ({
     subscriberOperations(verifyService)
   );
   subscriptionRouter.delete('/subscribers/:subscriber', getSubscriber(subscriptionRepository), deleteSubscriber);
+  subscriptionRouter.get(
+    '/subscribers/:subscriber/subscriptions',
+    getSubscriber(subscriptionRepository),
+    getSubscriberSubscriptions(apiId, subscriptionRepository)
+  );
 
   return subscriptionRouter;
 };
