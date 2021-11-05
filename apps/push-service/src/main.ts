@@ -2,10 +2,8 @@ import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
 import { createLogger, createAmqpConfigUpdateService, createErrorHandler } from '@core-services/core-common';
 import { createAdapter as createIoAdapter } from '@socket.io/redis-adapter';
 import * as compression from 'compression';
-import * as createRedisStore from 'connect-redis';
 import * as cors from 'cors';
 import * as express from 'express';
-import * as session from 'express-session';
 import * as helmet from 'helmet';
 import { createServer, Server } from 'http';
 import * as passport from 'passport';
@@ -79,7 +77,6 @@ const initializeApp = async (): Promise<Server> => {
   const { REDIS_HOST, REDIS_PORT, REDIS_PASSWORD } = environment;
   const credentials = REDIS_PASSWORD ? `:${REDIS_PASSWORD}@` : '';
   const redisClient = createRedisClient(`redis://${credentials}${REDIS_HOST}:${REDIS_PORT}/0`);
-  const RedisStore = createRedisStore(session);
 
   const ioServer = new IoServer(server, {
     serveClient: false,
@@ -99,24 +96,8 @@ const initializeApp = async (): Promise<Server> => {
   const wrapForIo = (handler: express.RequestHandler) => (socket: Socket, next) =>
     handler(socket.request as express.Request, {} as express.Response, next);
 
-  io.use(
-    wrapForIo(
-      session({
-        store: new RedisStore({ client: redisClient.duplicate() }),
-        saveUninitialized: false,
-        secret: environment.SESSION_SECRET,
-        resave: false,
-        cookie: {
-          maxAge: 12 * 60 * 60 * 1000,
-          secure: environment.TLS_ENABLED,
-          sameSite: 'none',
-        },
-      })
-    )
-  );
-
   io.use(wrapForIo(passport.initialize()));
-  io.use(wrapForIo(passport.authenticate(['session', 'jwt', 'anonymous'])));
+  io.use(wrapForIo(passport.authenticate(['jwt', 'anonymous'])));
   io.use(wrapForIo(configurationHandler));
 
   const eventService = await createAmqpEventService({ ...environment, logger });
