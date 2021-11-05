@@ -5,9 +5,9 @@ const ApplicationDefinition = {
   type: 'object',
   properties: {
     id: { type: 'string' },
-    name: { type: 'string' },
-    description: { type: 'string' },
-    url: { type: 'string' }
+    name: { type: ['string', 'null'] },
+    description: { type: ['string', 'null'] },
+    url: { type: ['string', 'null'] }
   }
 }
 

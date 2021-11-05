@@ -1,17 +1,24 @@
 import { adspId, User } from '@abgov/adsp-service-sdk';
-import { DomainEventSubscriberService, InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import {
+  DomainEvent,
+  DomainEventSubscriberService,
+  InvalidOperationError,
+  NotFoundError,
+} from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { of } from 'rxjs';
-import { Namespace } from 'socket.io';
+import { Namespace, Socket } from 'socket.io';
 import { Logger } from 'winston';
 import { getStream, getStreams, subscribeBySse } from './stream';
 import { StreamEntity } from '../model';
 import { createStreamRouter } from './stream';
+import { onIoConnection } from '.';
 
 describe('stream router', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
 
   const ioMock = {
+    use: jest.fn(),
     on: jest.fn(),
   };
 
@@ -77,7 +84,7 @@ describe('stream router', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce([{ test: stream }, {}]);
-      await getStream(req as unknown as Request, {} as Response, next);
+      await getStream(req as unknown as Request, req.query.tenant, req.params.stream, next);
       expect(req['stream']).toBe(stream);
     });
 
@@ -92,7 +99,7 @@ describe('stream router', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce([{ test: stream }, {}]);
-      await getStream(req as unknown as Request, {} as Response, next);
+      await getStream(req as unknown as Request, req.query.tenant, req.params.stream, next);
       expect(req['stream']).toBe(stream);
       expect(req.getConfiguration.mock.calls[0][0].toString()).toMatch(
         'urn:ads:platform:tenant-service:v2:/tenants/test-2'
@@ -112,7 +119,7 @@ describe('stream router', () => {
       };
       const next = jest.fn();
 
-      await getStream(req as unknown as Request, res as unknown as Response, next);
+      await getStream(req as unknown as Request, null, req.params.stream, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
@@ -131,7 +138,7 @@ describe('stream router', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce([{}, {}]);
-      await getStream(req as unknown as Request, res as unknown as Response, next);
+      await getStream(req as unknown as Request, req.query.tenant, req.params.stream, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
     });
@@ -236,6 +243,45 @@ describe('stream router', () => {
         })
       );
       handler(req as unknown as Request, res as unknown as Response, next);
+    });
+  });
+
+  describe('onIoConnection', () => {
+    it('can create listener', () => {
+      const listener = onIoConnection(loggerMock, of());
+      expect(listener).toBeTruthy();
+    });
+
+    it('can handle connect', (done) => {
+      const req = {
+        tenantId,
+        user: { isCore: true, id: 'tester', roles: ['test-subscriber'] } as User,
+        params: { stream: 'test' },
+        query: {},
+        stream,
+        getConfiguration: jest.fn(),
+      };
+
+      const socket = {
+        request: req,
+        emit: jest.fn((name, value) => {
+          expect(name).toBe('test-service:test-started');
+          done();
+        }),
+      };
+
+      const listener = onIoConnection(
+        loggerMock,
+        of({
+          tenantId,
+          namespace: 'test-service',
+          name: 'test-started',
+          timestamp: new Date(),
+          correlationId: '321',
+          payload: {},
+        })
+      );
+      listener(socket as unknown as Socket);
     });
   });
 });

@@ -1,4 +1,4 @@
-import { adspId, User } from '@abgov/adsp-service-sdk';
+import { adspId, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import {
   DomainEvent,
   DomainEventSubscriberService,
@@ -6,13 +6,14 @@ import {
   NotFoundError,
 } from '@core-services/core-common';
 import 'compression'; // For unit tests to load the type extensions.
-import { Request, RequestHandler, Router } from 'express';
+import { NextFunction, Request, RequestHandler, Router } from 'express';
 import { Observable } from 'rxjs';
 import { map, share } from 'rxjs/operators';
 import { Namespace as IoNamespace, Socket } from 'socket.io';
 import { Logger } from 'winston';
 import { EventCriteria, Stream } from '../types';
 import { StreamEntity } from '../model';
+import { ExtendedError } from 'socket.io/dist/namespace';
 
 interface StreamRouterProps {
   logger: Logger;
@@ -31,11 +32,9 @@ function mapStream(entity: StreamEntity): Stream {
 }
 
 const STREAM_KEY = 'stream';
-export const getStream: RequestHandler = async (req, _res, next) => {
+export const getStream = async (req: Request, tenant: string, stream: string, next: NextFunction): Promise<void> => {
   try {
     const user = req.user as User;
-    const { stream } = req.params;
-    const { tenant } = req.query;
 
     const tenantId =
       (tenant && adspId`urn:ads:platform:tenant-service:v2:/tenants/${tenant as string}`) || user?.tenantId;
@@ -136,22 +135,11 @@ export function subscribeBySse(logger: Logger, events: Observable<DomainEvent>):
 export function onIoConnection(logger: Logger, events: Observable<DomainEvent>) {
   return async (socket: Socket): Promise<void> => {
     try {
-      const tenant = socket.nsp.name;
-      const req = { ...socket.request, query: socket.handshake.query } as Request;
+      const req = socket.request as Request;
       const user = req.user;
-      const { criteria: criteriaValue, stream } = req.query;
+      const { criteria: criteriaValue } = req.query;
       const criteria: EventCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
-
-      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants${tenant as string}`;
-
-      const [entities, coreEntities] = await req.getConfiguration<
-        Record<string, StreamEntity>,
-        Record<string, StreamEntity>
-      >(tenantId);
-      const entity = { ...coreEntities, ...entities }[stream as string];
-      if (!entity) {
-        throw new NotFoundError('stream', stream as string);
-      }
+      const entity = req[STREAM_KEY];
 
       entity.connect(events);
       const sub = entity
@@ -198,7 +186,26 @@ export const createStreamRouter = (io: IoNamespace, { logger, eventService }: St
 
   const streamRouter = Router();
   streamRouter.get('/streams', getStreams);
-  streamRouter.get('/streams/:stream', getStream, subscribeBySse(logger, events));
+  streamRouter.get(
+    '/streams/:stream',
+    (req, _res, next) => getStream(req, req.query.tenant as string, req.params.stream, next),
+    subscribeBySse(logger, events)
+  );
+
+  io.use((socket, next) => {
+    const tenant = socket.nsp.name?.replace(/^\//, '');
+    const req = socket.request as Request;
+    const user = req.user;
+    req.query = socket.handshake.query;
+
+    getStream(req, tenant, req.query.stream as string, (err?: unknown) => {
+      if (!err && !(req[STREAM_KEY] as StreamEntity).canSubscribe(user)) {
+        next(new UnauthorizedUserError('connect stream', user));
+      } else {
+        next(err as ExtendedError);
+      }
+    });
+  });
 
   io.on('connection', onIoConnection(logger, events));
 
