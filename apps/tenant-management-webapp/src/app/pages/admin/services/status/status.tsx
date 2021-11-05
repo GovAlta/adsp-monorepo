@@ -403,8 +403,8 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
 
   const statusEntries = app.endpoint ? getStatusEntries(app.endpoint) : null;
   const getStatus = (app: ServiceStatusApplication): string => {
-    if (app.internalStatus !== 'pending' && !app.enabled) {
-      return 'stopped'
+    if (!app.enabled) {
+      return 'stopped';
     }
 
     return app.internalStatus;
