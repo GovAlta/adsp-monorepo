@@ -77,3 +77,19 @@ Feature: Events
     Then the user views the "Cannot add definitions to core namespaces" for "Namespace"
     When the user clicks Cancel button on Definition modal
     Then the user exits the add definition dialog
+
+  @TEST_CS-930 @REQ_CS-897 @regression
+  Scenario: As a tenant admin, I can see health check event definitions for the status service, so that I know what events are available.
+    Given a service owner user is on event definitions page
+    Then the user "views" an event definition of "health-check-started" and "Signalled when healthcheck started for an event" under "status-service"
+    And the user "views" an event definition of "health-check-stopped" and "Signalled when an application health check is stopped." under "status-service"
+    And the user "views" an event definition of "application-unhealthy" and "Signalled when an application is determined to be unhealthy by the health check." under "status-service"
+    And the user "views" an event definition of "application-healthy" and "Signalled when an application is determined to be healthy by the health check." under "status-service"
+    When the user clicks "show" details button for the definition of "health-check-started" under "status-service"
+    Then the user "views" the definition details of "health-check-started" under "status-service"
+    When the user clicks "show" details button for the definition of "health-check-stopped" under "status-service"
+    Then the user "views" the definition details of "health-check-stopped" under "status-service"
+    When the user clicks "show" details button for the definition of "application-unhealthy" under "status-service"
+    Then the user "views" the definition details of "application-unhealthy" under "status-service"
+    When the user clicks "show" details button for the definition of "application-healthy" under "status-service"
+    Then the user "views" the definition details of "application-healthy" under "status-service"
