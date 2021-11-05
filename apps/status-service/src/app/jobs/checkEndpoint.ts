@@ -35,6 +35,8 @@ async function doRequest(getter: Getter, url: string, logger: Logger): Promise<E
   const start = Date.now();
   try {
     const res = await getter(url);
+    logger.info(`Do request to ${url} starting at ${start}`)
+
     return {
       ok: true,
       url,
@@ -42,7 +44,6 @@ async function doRequest(getter: Getter, url: string, logger: Logger): Promise<E
       timestamp: start,
       responseTime: Date.now() - start,
     };
-    logger.info(`Do request to ${url} starting at ${start}`)
   } catch (err) {
     return {
       ok: false,
