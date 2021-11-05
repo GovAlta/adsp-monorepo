@@ -1,4 +1,4 @@
-import { Given, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, Then, And } from 'cypress-cucumber-preprocessor/steps';
 import ServiceStatusPage from './status-notice.page';
 const statusNoticeObj = new ServiceStatusPage();
 import { injectAxe } from '../../support/app.po';
@@ -59,4 +59,13 @@ Then('no critical or serious accessibility issues on public service status page'
   cy.checkA11y(null!, { includedImpacts: ['critical', 'serious'] }, (violations) => {
     htmlReport(violations, true, 'public service status page' + '-critical&serious');
   });
+});
+
+And('the user views the timezone information', function () {
+  statusNoticeObj
+    .timezoneInfo()
+    .invoke('text')
+    .then((text) => {
+      expect(text).to.match(/All times are in [a-zA-Z0-9 ]+ Time/g);
+    });
 });
