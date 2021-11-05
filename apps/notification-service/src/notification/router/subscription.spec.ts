@@ -1054,9 +1054,12 @@ describe('subscription router', () => {
         },
         query: {},
         subscriber,
+        getConfiguration: jest.fn(),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
+      
+      req.getConfiguration.mockResolvedValueOnce([new NotificationConfiguration({ test: notificationType }, tenantId)]);
 
       const result = { results: [], page: {} };
       repositoryMock.getSubscriptions.mockResolvedValueOnce(result);
@@ -1073,9 +1076,12 @@ describe('subscription router', () => {
         },
         query: { top: '11', after: '123' },
         subscriber,
+        getConfiguration: jest.fn(),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce([new NotificationConfiguration({ test: notificationType }, tenantId)]);
 
       const result = { results: [], page: {} };
       repositoryMock.getSubscriptions.mockResolvedValueOnce(result);

@@ -340,11 +340,24 @@ export function getSubscriberSubscriptions(apiId: AdspId, repository: Subscripti
       const { top: topValue, after } = req.query;
       const top = topValue ? parseInt(topValue as string, 10) : 10;
 
+      const [configuration, options] = await req.getConfiguration<
+        NotificationConfiguration,
+        NotificationConfiguration
+      >();
+
       const result = await repository.getSubscriptions(tenantId, top, after as string, {
         subscriberIdEquals: subscriber.id,
       });
       res.send({
-        results: result.results.map((r) => mapSubscription(apiId, r)),
+        results: result.results.map((r) => {
+          const { subscriber: _subscriber, ...subscription } = mapSubscription(apiId, r);
+          const typeEntity = configuration?.getNotificationType(r.typeId) || options?.getNotificationType(r.typeId);
+
+          return {
+            ...subscription,
+            type: typeEntity ? mapType(typeEntity) : null,
+          };
+        }),
         page: result.page,
       });
     } catch (err) {

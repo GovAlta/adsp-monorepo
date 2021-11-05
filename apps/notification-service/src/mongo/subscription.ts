@@ -73,7 +73,7 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     }
 
     if (criteria?.subscriberIdEquals) {
-      query.subscriberId;
+      query.subscriberId = criteria.subscriberIdEquals;
     }
 
     return new Promise<Results<SubscriptionEntity>>((resolve, reject) => {

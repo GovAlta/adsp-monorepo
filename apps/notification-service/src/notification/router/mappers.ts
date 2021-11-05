@@ -14,8 +14,9 @@ export const mapSubscriber = (apiId: AdspId, subscriber: SubscriberEntity): unkn
   userId: subscriber.userId,
 });
 
-export const mapSubscription = (apiId: AdspId, subscription: SubscriptionEntity): unknown => ({
+export const mapSubscription = (apiId: AdspId, subscription: SubscriptionEntity): Record<string, unknown> => ({
   subscriber: subscription.subscriber ? mapSubscriber(apiId, subscription.subscriber) : null,
+  subscriberId: subscription.subscriberId,
   typeId: subscription.typeId,
   criteria: subscription.criteria,
 });
