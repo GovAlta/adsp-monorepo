@@ -266,6 +266,7 @@ describe('stream router', () => {
         request: req,
         emit: jest.fn((name, value) => {
           expect(name).toBe('test-service:test-started');
+          expect(value).toBeTruthy();
           done();
         }),
       };

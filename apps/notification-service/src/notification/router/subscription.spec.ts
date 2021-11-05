@@ -1,4 +1,4 @@
-import { adspId, Channel } from '@abgov/adsp-service-sdk';
+import { adspId, Channel, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
@@ -19,7 +19,7 @@ import {
   getSubscriberSubscriptions,
 } from './subscription';
 import { NotificationType, ServiceUserRoles } from '../types';
-import { createSubscriber, deleteSubscriber, updateSubscriber } from '.';
+import { assertHasTenant, createSubscriber, deleteSubscriber, updateSubscriber } from '.';
 
 describe('subscription router', () => {
   const serviceId = adspId`urn:ads:platform:notification-service`;
@@ -78,6 +78,33 @@ describe('subscription router', () => {
         verifyService: verifyServiceMock,
       });
       expect(router).toBeTruthy();
+    });
+  });
+
+  describe('assertHasTenant', () => {
+    it('can call next with tenant', () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        getConfiguration: jest.fn(),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      assertHasTenant(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith();
+    });
+
+    it('can call next with error for no tenant', () => {
+      const req = {
+        getConfiguration: jest.fn(),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      assertHasTenant(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
   });
 
@@ -142,6 +169,13 @@ describe('subscription router', () => {
 
     it('can get subscriptions', async () => {
       const req = {
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [ServiceUserRoles.SubscriptionAdmin],
+        },
         tenant: {
           id: tenantId,
         },
@@ -161,6 +195,13 @@ describe('subscription router', () => {
 
     it('can get handle query params', async () => {
       const req = {
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [ServiceUserRoles.SubscriptionAdmin],
+        },
         tenant: {
           id: tenantId,
         },
@@ -182,6 +223,30 @@ describe('subscription router', () => {
         expect.objectContaining({ typeIdEquals: notificationType.id })
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
+    });
+
+    it('can call next for unauthorized user', async () => {
+      const req = {
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [],
+        },
+        tenant: {
+          id: tenantId,
+        },
+        query: {},
+        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = getTypeSubscriptions(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
   });
 
@@ -431,6 +496,31 @@ describe('subscription router', () => {
         expect.objectContaining({ typeId: 'test', subscriber: expect.objectContaining({ id: 'subscriber' }) })
       );
     });
+
+    it('can call next for unauthorized', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [],
+        },
+        query: {},
+        params: { subscriber: 'subscriber' },
+        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = getTypeSubscription(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenLastCalledWith(expect.any(UnauthorizedUserError));
+    });
   });
 
   describe('deleteTypeSubscription', () => {
@@ -561,7 +651,7 @@ describe('subscription router', () => {
 
       const handler = getSubscribers(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
   });
 
@@ -640,6 +730,13 @@ describe('subscription router', () => {
   });
 
   describe('getSubscriber', () => {
+    const subscriber = new SubscriberEntity(repositoryMock, {
+      id: 'subscriber',
+      tenantId,
+      addressAs: 'tester',
+      channels: [],
+    });
+
     it('can create handler', () => {
       const handler = getSubscriber(repositoryMock);
       expect(handler).toBeTruthy();
@@ -663,13 +760,6 @@ describe('subscription router', () => {
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
-
-      const subscriber = new SubscriberEntity(repositoryMock, {
-        id: 'subscriber',
-        tenantId,
-        addressAs: 'tester',
-        channels: [],
-      });
 
       repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
 
@@ -703,6 +793,32 @@ describe('subscription router', () => {
       const handler = getSubscriber(repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+
+    it('can call next for unauthorized.', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [],
+        },
+        query: {},
+        params: { subscriber: 'subscriber' },
+        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
+
+      const handler = getSubscriber(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
   });
 
@@ -1049,6 +1165,13 @@ describe('subscription router', () => {
 
     it('can get subscriptions', async () => {
       const req = {
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [ServiceUserRoles.SubscriptionAdmin],
+        },
         tenant: {
           id: tenantId,
         },
@@ -1058,7 +1181,7 @@ describe('subscription router', () => {
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
-      
+
       req.getConfiguration.mockResolvedValueOnce([new NotificationConfiguration({ test: notificationType }, tenantId)]);
 
       const result = { results: [], page: {} };
@@ -1071,6 +1194,13 @@ describe('subscription router', () => {
 
     it('can get handle query params', async () => {
       const req = {
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [ServiceUserRoles.SubscriptionAdmin],
+        },
         tenant: {
           id: tenantId,
         },
@@ -1083,7 +1213,13 @@ describe('subscription router', () => {
 
       req.getConfiguration.mockResolvedValueOnce([new NotificationConfiguration({ test: notificationType }, tenantId)]);
 
-      const result = { results: [], page: {} };
+      const subscription = new SubscriptionEntity(
+        repositoryMock,
+        { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        subscriber
+      );
+
+      const result = { results: [subscription], page: {} };
       repositoryMock.getSubscriptions.mockResolvedValueOnce(result);
 
       const handler = getSubscriberSubscriptions(apiId, repositoryMock);
@@ -1095,6 +1231,31 @@ describe('subscription router', () => {
         expect.objectContaining({ subscriberIdEquals: subscriber.id })
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
+    });
+
+    it('can call next for unauthorized user', async () => {
+      const req = {
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [],
+        },
+        tenant: {
+          id: tenantId,
+        },
+        query: {},
+        subscriber,
+        getConfiguration: jest.fn(),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = getSubscriberSubscriptions(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
   });
 });
