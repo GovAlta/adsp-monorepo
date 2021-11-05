@@ -32,6 +32,50 @@ A subscriber represents a receiver of notifications. Subscriber is not a represe
 *Subscribers* have subscriptions to *notification types*. Each subscription relates a subscriber to a notification type and optionally includes criteria. The subscription criteria filters events that result in notifications to the associated subscriber. For example, in the case of 'Application Progress', the applicant is only subscribed to notifications regarding their specific application and this is handled as a subscription criteria.
 
 ## Code examples
+### Configure a stream
+Notification types are configured using the [configuration service](configuration-service.md).
+
+```typescript
+  const configurationServiceUrl = 'https://configuration-service.alpha.alberta.ca';
+  const request = {
+    operation: 'UPDATE',
+    update: {
+      'application-health-updates': {
+        id: 'application-health-updates',
+        name: 'Application Health Updates',
+        description: 'Provides notification of changes on application health checks.',
+        publicSubscribe: true,
+        subscriberRoles: [],
+        events: [
+          {
+            namespace: 'status-service',
+            name: 'health-check-started',
+            templates: {
+              email: {
+                subject: '{{ event.payload.application.name }} Health Check Started',
+                body: 'Application health check started for {{ event.payload.application.name }}.',
+              }
+            },
+            channels: ['email'],
+          }
+        ],
+      }
+    }
+  }
+
+  await fetch(
+    `${configurationServiceUrl}/configuration/v1/configuration/platform/notification-service`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(request),
+    }
+  );
+```
+
 ### Subscribe to a notification type for the current user
 Users can create a subscription for themselves and user details from the access token, like user email address, are used to populate the subscriber. A subscriber is created if there is no existing subscriber associated with the user ID.
 

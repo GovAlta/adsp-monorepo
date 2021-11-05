@@ -24,6 +24,49 @@ User access is primary controlled via configuration on each stream with `subscri
 Stream represents a collection of domain events that can be subscribed to through the gateway. Streams can optionally include projections for the events, so that only a subset of the payload is provided to the subscribing clients. Streams are configured in the [configuration service](configuration-service.md) under the `platform:push-service` namespace and name.
 
 ## Code examples
+### Configure a stream
+Streams are configured using the [configuration service](configuration-service.md).
+
+```typescript
+  const configurationServiceUrl = 'https://configuration-service.alpha.alberta.ca';
+  const request = {
+    operation: 'UPDATE',
+    update: {
+      'application-health': {
+        id: 'application-health',
+        name: 'Application Health',
+        description: 'Includes events indicating application health.',
+        publicSubscribe: true,
+        subscriberRoles: [],
+        events: [
+          {
+            namespace: 'status-service',
+            name: 'health-check-started',
+            map: {
+              // Optional configuration of the projection of the event.
+            },
+            criteria: {
+              // Optional criteria for events included in the stream.
+            }
+          }
+        ],
+      }
+    }
+  }
+
+  await fetch(
+    `${configurationServiceUrl}/configuration/v1/configuration/platform/push-service`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(request),
+    }
+  );
+```
+
 ### Connect to a stream via server side events
 Server side event with Authorization header may require a polyfill. Alternatively, use a token query parameter to provide the access token.
 
