@@ -1,5 +1,5 @@
 export interface Interval {
-  metric: string;
+  metric: string | string[];
   namespace: string;
   name: string;
 }
