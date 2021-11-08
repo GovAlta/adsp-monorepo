@@ -137,8 +137,14 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
           );
         }
 
-        await TenantService.validateEmailInDB(tenantEmail);
-        const { ...tenant } = await TenantService.createNewTenantInDB(tenantEmail, tenantName, tenantName, tokenIssuer);
+        await TenantService.validateEmailInDB(tenantRepository, tenantEmail);
+        const { ...tenant } = await TenantService.createNewTenantInDB(
+          tenantRepository,
+          tenantEmail,
+          tenantName,
+          tenantName,
+          tokenIssuer
+        );
         const response = { ...tenant, newTenant: false };
         eventService.send(tenantCreated(req.user, response, false));
         res.status(HttpStatusCodes.OK).json(response);
@@ -146,14 +152,20 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
 
       logger.info('Starting create realm....');
 
-      await TenantService.validateName(tenantName);
+      await TenantService.validateName(tenantRepository, tenantName);
 
       const generatedRealmName = uuidv4();
 
       const [_, clients] = await req.getConfiguration<ServiceClient[], ServiceClient[]>();
-      await TenantService.validateEmailInDB(email);
+      await TenantService.validateEmailInDB(tenantRepository, email);
       await TenantService.createRealm(clients || [], generatedRealmName, email, tenantName);
-      const { ...tenant } = await TenantService.createNewTenantInDB(email, generatedRealmName, tenantName, tokenIssuer);
+      const { ...tenant } = await TenantService.createNewTenantInDB(
+        tenantRepository,
+        email,
+        generatedRealmName,
+        tenantName,
+        tokenIssuer
+      );
 
       const data = { status: 'ok', message: 'Create Realm Success!', realm: generatedRealmName };
 
@@ -174,7 +186,7 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
     const keycloakRealm = payload.realm;
 
     try {
-      const results = await TenantService.deleteTenant(keycloakRealm);
+      const results = await TenantService.deleteTenant(tenantRepository, keycloakRealm);
       res.status(HttpStatusCodes.OK).json({
         success: results.IdPBrokerClient.isDeleted && results.keycloakRealm.isDeleted && results.db.isDeleted,
         ...results,

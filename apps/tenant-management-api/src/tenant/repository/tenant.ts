@@ -1,4 +1,5 @@
 import { TenantEntity, Tenant } from '../models';
+
 export interface TenantRepository {
   save(type: TenantEntity): Promise<TenantEntity>;
   delete(realm: string): Promise<void>;

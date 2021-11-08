@@ -1,7 +1,7 @@
+import { TenantRepository } from '../..';
 import { createkcAdminClient } from '../../../keycloak';
 import { logger } from '../../../middleware/logger';
 import { brokerClientName } from './create';
-import { tenantRepository } from '../../repository';
 
 interface DeleteResponse {
   isDeleted: boolean;
@@ -75,9 +75,9 @@ const deleteKeycloakBrokerClient = async (keycloakRealm): Promise<DeleteResponse
   }
 };
 
-const deleteTenantFromDB = async (realmName): Promise<DeleteResponse> => {
+const deleteTenantFromDB = async (repository: TenantRepository, realmName: string): Promise<DeleteResponse> => {
   try {
-    await tenantRepository.delete(realmName);
+    await repository.delete(realmName);
     return Promise.resolve({
       isDeleted: true,
     });
@@ -91,11 +91,14 @@ const deleteTenantFromDB = async (realmName): Promise<DeleteResponse> => {
   }
 };
 
-export const deleteTenant = async (keycloakRealm: string): Promise<DeleteTenantResponse> => {
+export const deleteTenant = async (
+  repository: TenantRepository,
+  keycloakRealm: string
+): Promise<DeleteTenantResponse> => {
   const deleteTenantResponse: DeleteTenantResponse = {
     keycloakRealm: await deleteKeycloakRealm(keycloakRealm),
     IdPBrokerClient: await deleteKeycloakBrokerClient(keycloakRealm),
-    db: await deleteTenantFromDB(keycloakRealm),
+    db: await deleteTenantFromDB(repository, keycloakRealm),
   };
   return Promise.resolve(deleteTenantResponse);
 };

@@ -4,7 +4,6 @@ import * as HttpStatusCodes from 'http-status-codes';
 import { validateUrn, validateVersion, validatePath } from './util/patternUtil';
 import { adspId, AdspId } from '@abgov/adsp-service-sdk';
 import { DirectoryRepository } from '../repository';
-import { MongoDirectoryRepository } from '../mongo/directory';
 
 interface ServiceProps {
   directoryRepository: DirectoryRepository;
@@ -119,12 +118,13 @@ export const discovery = async (urn: string, { directoryRepository }: ServicePro
   );
 };
 
-export const getDirectories = async (): Promise<{ urn: string; url: string }[]> => {
+export const getDirectories = async (
+  directoryRepository: DirectoryRepository
+): Promise<{ urn: string; url: string }[]> => {
   logger.info('Starting get directory from mongo db...');
   try {
     const response = [];
     // FIXME: using this repository with dependency injection make this impossible to test
-    const directoryRepository = new MongoDirectoryRepository();
     const result = await directoryRepository.find(100, null, null);
     const directories = result.results;
     if (directories && directories.length > 0) {
@@ -155,8 +155,8 @@ export const getDirectories = async (): Promise<{ urn: string; url: string }[]> 
   }
 };
 
-export const getServiceUrl = async (id: AdspId): Promise<URL> => {
-  const directories = await getDirectories();
+export const getServiceUrl = async (directoryRepository: DirectoryRepository, id: AdspId): Promise<URL> => {
+  const directories = await getDirectories(directoryRepository);
   const entry = directories.find((entry) => entry.urn === `${id}`);
   if (!entry) {
     throw new Error(`Directory entry for ${id} not found.`);
@@ -164,8 +164,8 @@ export const getServiceUrl = async (id: AdspId): Promise<URL> => {
   return new URL(entry.url);
 };
 
-export const getResourceUrl = async (id: AdspId): Promise<URL> => {
-  const serviceUrl = await getServiceUrl(adspId`urn:ads:${id.namespace}:${id.service}:${id.api}`);
+export const getResourceUrl = async (directoryRepository: DirectoryRepository, id: AdspId): Promise<URL> => {
+  const serviceUrl = await getServiceUrl(directoryRepository, adspId`urn:ads:${id.namespace}:${id.service}:${id.api}`);
   // Trim any trailing slash on API url and leading slash on resource
   const resourceUrl = new URL(
     `${serviceUrl.pathname.replace(/\/$/g, '')}/${id.resource.replace(/^\//, '')}`,

@@ -1,13 +1,13 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { tenantRepository } from '../../repository';
+import type RoleRepresentation from 'keycloak-admin/lib/defs/roleRepresentation';
 import { TenantEntity } from '../../models';
 import { createkcAdminClient } from '../../../keycloak';
-import type RoleRepresentation from 'keycloak-admin/lib/defs/roleRepresentation';
+import { TenantRepository } from '../..';
 
-export const getTenant = async (id: AdspId): Promise<TenantEntity> => {
+export const getTenant = async (repository: TenantRepository, id: AdspId): Promise<TenantEntity> => {
   try {
     const objId = id.resource.split('/').pop();
-    const entity = await tenantRepository.findBy({ _id: objId });
+    const entity = await repository.findBy({ _id: objId });
     return Promise.resolve(entity);
   } catch (e) {
     return Promise.reject(e);
@@ -22,9 +22,9 @@ export const hasTenantOfRealm = async (_realm: string): Promise<boolean> => {
   }
 };
 
-export const getTenants = async (): Promise<TenantEntity[]> => {
+export const getTenants = async (repository: TenantRepository): Promise<TenantEntity[]> => {
   try {
-    const entities = await tenantRepository.find();
+    const entities = await repository.find();
     return Promise.resolve(entities);
   } catch (e) {
     return Promise.reject(e);
