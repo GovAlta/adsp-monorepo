@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useState, useEffect } from 'react';
 import type { NotificationItem } from '@store/notification/models';
 import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
@@ -8,10 +8,10 @@ import MonacoEditor from '@monaco-editor/react';
 import styled from 'styled-components';
 
 interface TemplateFormProps {
-  initialValue?: NotificationItem;
   onCancel?: () => void;
-  onSubmit?: (definition: NotificationItem) => void;
+  onSubmit?: (NotificationItem) => void;
   open: boolean;
+  initialValue?: NotificationItem;
   selectedEvent: EventItem;
   notifications: NotificationItem;
   errors?: Record<string, string>;
@@ -26,16 +26,23 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
 }) => {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
+  useEffect(() => {
+    if (selectedEvent) {
+      setSubject(selectedEvent?.templates?.email?.subject);
+      setBody(selectedEvent?.templates?.email?.body);
+    }
+  }, [selectedEvent]);
   const validate = () => {
-    if (!subject || !body) {
+    if (subject.length === 0 || body.length === 0) {
       return false;
     }
+    return true;
   };
   const addOrEdit = () => {
     if (!selectedEvent) {
       return 'Add';
     }
-    return selectedEvent?.templates?.body?.length === 0 && selectedEvent?.templates?.subject?.length === 0
+    return selectedEvent?.templates?.email?.body?.length === 0 && selectedEvent?.templates?.email?.subject?.length === 0
       ? 'Add'
       : 'Edit';
   };
@@ -52,7 +59,7 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
                 height={50}
                 width="80vh"
                 language="handlebars"
-                value={selectedEvent?.templates?.subject}
+                value={selectedEvent?.templates?.email?.subject}
                 onChange={(value) => setSubject(value)}
                 options={{
                   wordWrap: 'off',
@@ -75,7 +82,7 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
               <MonacoEditor
                 data-testid="templateForm-body"
                 height={200}
-                value={selectedEvent?.templates?.body}
+                value={selectedEvent?.templates?.email?.body}
                 onChange={(value) => setBody(value)}
                 language="handlebars"
                 options={{
@@ -97,19 +104,15 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
           data-testid="template-form-save"
           type="submit"
           onClick={() => {
-            selectedEvent.templates.subject = subject;
-            selectedEvent.templates.body = body;
+            selectedEvent.templates.email.subject = subject;
+            selectedEvent.templates.email.body = body;
             if (validate()) {
-              if (selectedEvent) {
-                const definitionEventIndex = notifications?.events?.findIndex(
-                  (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`
-                );
-                if (definitionEventIndex > -1) {
-                  notifications.events[definitionEventIndex] = selectedEvent;
-                }
-              } else {
-                notifications.events.push(selectedEvent);
-              }
+              const definitionEventIndex = notifications?.events?.findIndex(
+                (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`
+              );
+
+              notifications.events[definitionEventIndex] = selectedEvent;
+
               onSubmit(notifications);
             }
           }}

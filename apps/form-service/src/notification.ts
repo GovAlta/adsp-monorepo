@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Logger } from 'winston';
 
 export interface Subscriber {
+  id: string;
   urn: AdspId;
   userId: string;
   addressAs: string;
@@ -12,11 +13,12 @@ export interface Subscriber {
 export interface NotificationService {
   getSubscriber(tenantId: AdspId, urn: AdspId): Promise<Subscriber>;
   subscribe(tenantId: AdspId, formId: string, subscriber: Omit<Subscriber, 'urn'>): Promise<Subscriber>;
+  unsubscribe(tenantId: AdspId, urn: AdspId): Promise<boolean>;
   sendCode(tenantId: AdspId, subscriber: Subscriber): Promise<void>;
   verifyCode(tenantId: AdspId, subscriber: Subscriber, code: string): Promise<boolean>;
 }
 
-const LOG_CONTEXT = 'NotificationService';
+const LOG_CONTEXT = { context: 'NotificationService' };
 class NotificationServiceImpl implements NotificationService {
   private notificationApiId = adspId`urn:ads:platform:notification-service:v1`;
 
@@ -35,6 +37,7 @@ class NotificationServiceImpl implements NotificationService {
       );
 
       return {
+        id: data.id,
         urn: AdspId.parse(data.urn),
         userId: data.userId,
         addressAs: data.addressAs,
@@ -42,7 +45,7 @@ class NotificationServiceImpl implements NotificationService {
       };
     } catch (err) {
       this.logger.error(`Error encountered getting subscriber from notification service. ${err}`, {
-        context: LOG_CONTEXT,
+        ...LOG_CONTEXT,
         tenant: tenantId?.toString(),
       });
     }
@@ -67,11 +70,35 @@ class NotificationServiceImpl implements NotificationService {
       this.logger.error(
         `Error encountered subscribing for form (ID: ${formId}) applicant ${subscriber.addressAs} (User ID: ${subscriber.userId}). ${err}`,
         {
-          context: LOG_CONTEXT,
+          ...LOG_CONTEXT,
           tenant: tenantId?.toString(),
         }
       );
       throw err;
+    }
+  }
+
+  async unsubscribe(tenantId: AdspId, urn: AdspId): Promise<boolean> {
+    try {
+      const subscriber = await this.getSubscriber(tenantId, urn);
+
+      const apiUrl = await this.directory.getServiceUrl(this.notificationApiId);
+      const subscriptionUrl = new URL(
+        `v1/types/form-status-updates/subscriptions/${subscriber.id}?tenantId=${tenantId}`,
+        apiUrl
+      );
+
+      const token = await this.tokenProvider.getAccessToken();
+      const { data } = await axios.delete<{ deleted: boolean }>(subscriptionUrl.href, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      return data.deleted;
+    } catch (err) {
+      this.logger.warn(`Error encountered unsubscribing for subscriber ${urn}. ${err}`, {
+        ...LOG_CONTEXT,
+        tenant: tenantId?.toString(),
+      });
     }
   }
 
@@ -95,7 +122,7 @@ class NotificationServiceImpl implements NotificationService {
         this.logger.info(
           `Sent code to subscriber ${subscriber.addressAs} (User ID: ${subscriber.userId}) at ${subscriber.channels[0].address}`,
           {
-            context: LOG_CONTEXT,
+            ...LOG_CONTEXT,
             tenant: tenantId?.toString(),
           }
         );
@@ -104,7 +131,7 @@ class NotificationServiceImpl implements NotificationService {
       this.logger.error(
         `Error encountered sending code to applicant ${subscriber.addressAs} (User ID: ${subscriber.userId}). ${err}`,
         {
-          context: LOG_CONTEXT,
+          ...LOG_CONTEXT,
           tenant: tenantId?.toString(),
         }
       );
@@ -133,7 +160,7 @@ class NotificationServiceImpl implements NotificationService {
       this.logger.error(
         `Error encountered verifying code for applicant ${subscriber.addressAs} (User ID: ${subscriber.userId}). ${err}`,
         {
-          context: LOG_CONTEXT,
+          ...LOG_CONTEXT,
           tenant: tenantId?.toString(),
         }
       );

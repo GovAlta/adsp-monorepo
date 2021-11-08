@@ -12,24 +12,24 @@ Given('the user goes to tenant management login link', function () {
 
 Then('the tenant management admin page is displayed', function () {
   cy.url().should('include', '/admin');
-  tenantAdminObj.dashboardTitle().contains('Tenant Management');
+  tenantAdminObj.dashboardTitle().contains('Tenant management');
   tenantAdminObj.dashboardServicesMenuCategory();
 });
 
 Then('the {string} landing page is displayed', function (pageTitle) {
   let urlPart = 'undefined';
   switch (pageTitle) {
-    case 'File Services':
+    case 'File services':
       urlPart = '/admin/services/files';
       break;
-    case 'Service Status':
+    case 'Service status':
       urlPart = '/admin/services/status';
       break;
     case 'Event log':
       urlPart = '/admin/event-log';
       break;
     default:
-      expect(pageTitle).to.be.oneOf(['File Services', 'Service Status', 'Event log']);
+      expect(pageTitle).to.be.oneOf(['File services', 'Service status', 'Event log']);
   }
   cy.url().should('include', urlPart);
   tenantAdminObj.servicePageTitle(pageTitle).then((title) => {

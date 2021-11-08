@@ -56,7 +56,7 @@ export class FileTypeEntity implements FileType {
   }
 
   canUpdateFile(user: User): boolean {
-    return isAllowedUser(user, this.tenantId, [ServiceUserRoles.Admin, ...this.updateRoles]);
+    return isAllowedUser(user, this.tenantId, [ServiceUserRoles.Admin, ...this.updateRoles], true);
   }
 
   canAccess(user: User): boolean {

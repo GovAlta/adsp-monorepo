@@ -44,6 +44,7 @@ function mapFile(apiId: AdspId, entity: FileEntity) {
     createdBy: entity.createdBy,
     lastAccessed: entity.lastAccessed,
     scanned: entity.scanned,
+    infected: entity.infected,
   };
 }
 
@@ -120,7 +121,6 @@ export function uploadFile(apiId: AdspId, logger: Logger, eventService: EventSer
 
       res.send(mapFile(apiId, fileEntity));
 
-      // This is an example.
       eventService.send(
         fileUploaded(user, {
           id: fileEntity.id,

@@ -47,7 +47,7 @@ async function initializeApp(): Promise<express.Application> {
   } = await initializePlatform(
     {
       serviceId,
-      displayName: 'File Service',
+      displayName: 'File service',
       description: 'Service for upload and download of files.',
       roles: [
         {

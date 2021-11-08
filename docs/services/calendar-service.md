@@ -54,4 +54,33 @@ Calendar service API provides information endpoints for dates, including which d
 ```
 
 ### Creating a calendar event
-TODO: Add example here
+```typescript
+  const calendarEvent = {
+    name: 'My Event',
+    description: 'This is an example of a calendar event.',
+    start: '2021-11-02T12:00:00Z',
+    end: '2021-11-02T13:30:00Z',
+    isPublic: false,
+  }
+
+  const response = await fetch(
+    `https://calendar-service.alpha.alberta.ca/calendar/v1/calendars/${calendar}/events`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(calendarEvent),
+    }
+  );
+
+  const {
+    id,
+    name,
+    description,
+    start,
+    end,
+    isPublic,
+  } = await response.json();
+```

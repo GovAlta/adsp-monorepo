@@ -25,20 +25,9 @@ export default class MongoEndpointStatusEntryRepository implements EndpointStatu
       .sort({ timestamp: -1 })
       .limit(top);
 
-      // ensure duplicate status entries are not returned
     const entries = docs.map((doc) => this.fromDoc(doc));
-    const urlMap: { [key: number]: EndpointStatusEntryEntity } = {};
-    for (const entry of entries) {
-      const timeMin = entry.timestamp - (entry.timestamp % this.opts.everyMilliseconds);
-      urlMap[timeMin] = entry;
-    }
 
-    const filteredEntries = Object.values(urlMap)
-      .map((entry: EndpointStatusEntryEntity) => entry)
-      .sort((entry: EndpointStatusEntryEntity) => entry.timestamp)
-      .filter((_entity: EndpointStatusEntryEntity, index: number) => index < this.opts.limit);
-
-    return filteredEntries;
+    return entries;
   }
 
   async delete(_entity: EndpointStatusEntryEntity): Promise<boolean> {

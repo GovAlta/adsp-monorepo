@@ -61,7 +61,7 @@ const FileList = (): JSX.Element => {
   return (
     <>
       <GoAForm>
-        <h3>Please upload a File</h3>
+        <h3>Please upload a file</h3>
 
         <input type="file" onChange={onChange} />
         <GoARadioGroup

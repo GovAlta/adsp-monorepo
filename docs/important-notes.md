@@ -9,6 +9,9 @@ ADSP consists of highly interconnected micro-services. Caching is used extensive
 
 Configuration service is used by multiple platform services to store relatively static configuration. Platform services cache their configuration with a 15 min TTL for cache invalidation. In practice, this means that configuration applied within the tenant administration may take up to 15 mins to apply.
 
+## Open API site and client credentials
+ADSP includes a Swagger UI based [API documentation site](https://api-docs.alpha.alberta.ca) that includes tenant specific OpenID Connect configuration for authorizing requests. When using 'Try it out' from this site, the requests are made from the frontend and so the realm configuration must include this site in Web Origins (for CORS) and in Redirect URLs if using a frontend flow.
+
 ## Access management
 ADSP capabilities are provided by micro-services that recognize and accept your tenant realm's access tokens. This means that the tenant realm administrators can grant platform service specific permissions to any user or service accounts in their realm.
 

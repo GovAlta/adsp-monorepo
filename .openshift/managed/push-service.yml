@@ -35,7 +35,142 @@ parameters:
     description: Host for the route.
     displayName: Route Host
     value: ""
+  - description: Password for the Redis connection user.
+    displayName: Redis Connection Password
+    from: "[a-zA-Z0-9]{24}"
+    generate: expression
+    name: REDIS_PASSWORD
+    required: true
 objects:
+  # Redis Objects
+  # NOTE: Secret will generate new values if updated, so this is only for branch deployments.
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        app: push-service${NAME_SUFFIX}
+        component: database
+        apply-init: "true"
+        apply-branch: "true"
+      name: push-service-redis${NAME_SUFFIX}
+    stringData:
+      database-password: ${REDIS_PASSWORD}
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        template.openshift.io/expose-uri: redis://{.spec.clusterIP}:{.spec.ports[?(.name=="redis")].port}
+      labels:
+        app: push-service${NAME_SUFFIX}
+        component: database
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: push-service-redis${NAME_SUFFIX}
+    spec:
+      ports:
+        - name: redis
+          nodePort: 0
+          port: 6379
+          protocol: TCP
+          targetPort: 6379
+      selector:
+        app: push-service${NAME_SUFFIX}
+        component: database
+      sessionAffinity: None
+      type: ClusterIP
+    status:
+      loadBalancer: {}
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      annotations:
+        template.alpha.openshift.io/wait-for-ready: "true"
+      labels:
+        app: push-service${NAME_SUFFIX}
+        component: database
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: push-service-redis${NAME_SUFFIX}
+    spec:
+      replicas: 1
+      selector:
+        app: push-service${NAME_SUFFIX}
+        component: database
+      strategy:
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            app: push-service${NAME_SUFFIX}
+            component: database
+        spec:
+          containers:
+            - capabilities: {}
+              env:
+                - name: REDIS_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-password
+                      name: push-service-redis${NAME_SUFFIX}
+              image: " "
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                initialDelaySeconds: 60
+                tcpSocket:
+                  port: 6379
+                timeoutSeconds: 30
+              name: redis
+              ports:
+                - containerPort: 6379
+                  protocol: TCP
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -i
+                    - -c
+                    - test "$(redis-cli -h 127.0.0.1 -a $REDIS_PASSWORD ping)" == "PONG"
+                initialDelaySeconds: 60
+                timeoutSeconds: 1
+              resources:
+                requests:
+                  cpu: 20m
+                  memory: 100Mi
+                limits:
+                  cpu: 200m
+                  memory: 512Mi
+              securityContext:
+                capabilities: {}
+                privileged: false
+              terminationMessagePath: /dev/termination-log
+              volumeMounts:
+                - mountPath: /var/lib/redis/data
+                  name: push-service-redis-data
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          volumes:
+            - emptyDir:
+                medium: ""
+              name: push-service-redis-data
+      triggers:
+        - imageChangeParams:
+            automatic: true
+            containerNames:
+              - redis
+            from:
+              kind: ImageStreamTag
+              name: redis-5-rhel7:5-48
+              namespace: ${INFRA_NAMESPACE}
+            lastTriggeredImage: ""
+          type: ImageChange
+        - type: ConfigChange
+
   # ImageStream is here for reference.
   # There is a single ImageStream created in the infra project.
   - apiVersion: v1
@@ -128,6 +263,13 @@ objects:
                   value: "3333"
                 - name: AMQP_HOST
                   value: event-service-rabbitmq-balancer
+                - name: REDIS_HOST
+                  value: push-service-redis
+                - name: REDIS_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-password
+                      name: push-service-redis${NAME_SUFFIX}
               imagePullPolicy: IfNotPresent
               name: push-service
               ports:

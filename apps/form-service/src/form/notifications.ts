@@ -1,5 +1,5 @@
 import { NotificationType } from '@abgov/adsp-service-sdk';
-import { FORM_LOCKED, FORM_SUBMITTED, FORM_UNLOCKED } from './events';
+import { FORM_CREATED, FORM_LOCKED, FORM_SUBMITTED, FORM_UNLOCKED } from './events';
 
 const FORM_EVENT_NAMESPACE = 'form-service';
 
@@ -9,6 +9,24 @@ export const FormStatusNotificationType: NotificationType = {
   publicSubscribe: false,
   subscriberRoles: [],
   events: [
+    {
+      namespace: FORM_EVENT_NAMESPACE,
+      name: FORM_CREATED,
+      templates: {
+        email: {
+          subject: '{{ event.payload.form.definition.name }} draft created',
+          body: `
+            <!doctype html>
+            <html>
+            <head>
+            </head>
+            <body>
+            <p>Your draft {{ event.payload.form.definition.name }} form haas been created. We will use this email address to keep you updated</p>
+            </body>
+            </html>`,
+        },
+      },
+    },
     {
       namespace: FORM_EVENT_NAMESPACE,
       name: FORM_LOCKED,

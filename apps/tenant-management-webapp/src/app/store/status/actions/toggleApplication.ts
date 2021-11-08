@@ -8,7 +8,6 @@ interface Params {
 
 export const TOGGLE_APPLICATION_STATUS_ACTION = 'status/TOGGLE_APPLICATION_STATUS';
 export const TOGGLE_APPLICATION_SUCCESS_STATUS_ACTION = 'status/TOGGLE_APPLICATION_STATUS_SUCCESS';
-
 export interface ToggleApplicationStatusAction {
   type: typeof TOGGLE_APPLICATION_STATUS_ACTION;
   payload: Params;

@@ -7,7 +7,7 @@ const eventsObj = new events();
 const commonObj = new common();
 
 Then('the user views events overview page', function () {
-  eventsObj.eventsOverviewh3Title().invoke('text').should('contain', 'Event Definitions');
+  eventsObj.eventsOverviewh3Title().invoke('text').should('contain', 'Event definitions');
 });
 
 Then('the user views an event definition of {string} under {string}', function (eventName, eventNamespace) {
@@ -62,16 +62,16 @@ Then(
   }
 );
 
-When('the user clicks Add Definition button', function () {
+When('the user clicks Add definition button', function () {
   eventsObj.addDefinitionButton().click();
 });
 
-Then('the user views Add Definition dialog', function () {
-  eventsObj.definitionModalTitle().invoke('text').should('eq', 'Add Definition');
+Then('the user views Add definition dialog', function () {
+  eventsObj.definitionModalTitle().invoke('text').should('eq', 'Add definition');
 });
 
-Then('the user views Edit Definition dialog', function () {
-  eventsObj.definitionModalTitle().invoke('text').should('eq', 'Edit Definition');
+Then('the user views Edit definition dialog', function () {
+  eventsObj.definitionModalTitle().invoke('text').should('eq', 'Edit definition');
 });
 
 When(
@@ -125,7 +125,7 @@ Given('a service owner user is on event definitions page', function () {
     Cypress.env('password')
   );
   commonObj.adminMenuItem('/admin/services/events').click();
-  eventsObj.eventsOverviewh3Title().invoke('text').should('contain', 'Event Definitions');
+  eventsObj.eventsOverviewh3Title().invoke('text').should('contain', 'Event definitions');
   commonObj.serviceTab('Events', 'Definitions').click();
   cy.wait(2000);
 });

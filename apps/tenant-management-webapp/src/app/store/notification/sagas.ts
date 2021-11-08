@@ -4,11 +4,13 @@ import { SagaIterator } from '@redux-saga/core';
 import { v4 as uuidv4 } from 'uuid';
 import {
   FetchNotificationTypeSucceededService,
+  FetchCoreNotificationTypeSucceededService,
   FetchNotificationTypeService,
   DeleteNotificationTypeAction,
   UpdateNotificationTypeAction,
   DELETE_NOTIFICATION_TYPE,
   FETCH_NOTIFICATION_TYPE,
+  FETCH_CORE_NOTIFICATION_TYPE,
   UPDATE_NOTIFICATION_TYPE,
 } from './actions';
 
@@ -35,6 +37,30 @@ export function* fetchNotificationTypes(): SagaIterator {
 
       const notificationTypeInfo = configuration.latest && configuration.latest.configuration;
       yield put(FetchNotificationTypeSucceededService({ data: notificationTypeInfo }));
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+    }
+  }
+}
+
+export function* fetchCoreNotificationTypes(): SagaIterator {
+  const configBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  if (configBaseUrl && token) {
+    try {
+      const { data: configuration } = yield call(
+        axios.get,
+        `${configBaseUrl}/configuration/v2/configuration/platform/notification-service?core`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const notificationTypeInfo = configuration.latest && configuration.latest.configuration;
+      yield put(FetchCoreNotificationTypeSucceededService({ data: notificationTypeInfo }));
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
     }
@@ -75,6 +101,7 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
   if (configBaseUrl && token) {
     try {
       const payloadId = payload.id || uuidv4();
+
       yield call(
         axios.patch,
         `${configBaseUrl}/configuration/v2/configuration/platform/notification-service`,
@@ -105,6 +132,7 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
 
 export function* watchNotificationSagas(): Generator {
   yield takeEvery(FETCH_NOTIFICATION_TYPE, fetchNotificationTypes);
+  yield takeEvery(FETCH_CORE_NOTIFICATION_TYPE, fetchCoreNotificationTypes);
   yield takeEvery(DELETE_NOTIFICATION_TYPE, deleteNotificationTypes);
   yield takeEvery(UPDATE_NOTIFICATION_TYPE, updateNotificationType);
   yield takeEvery(CREATE_TENANT, createTenant);

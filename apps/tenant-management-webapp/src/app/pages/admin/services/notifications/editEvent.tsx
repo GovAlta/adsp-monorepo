@@ -6,12 +6,12 @@ import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgo
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { RootState } from '@store/index';
 import { getEventDefinitions } from '@store/event/actions';
-import { EventItem } from '@store/notification/models';
+import { EventItem, Template } from '@store/notification/models';
 
 interface NotificationDefinitionFormProps {
   initialValue?: NotificationItem;
   onCancel?: () => void;
-  onNext?: (definition: NotificationItem) => void;
+  onNext?: (notify: NotificationItem, event: EventItem) => void;
   open: boolean;
   selectedEvent: EventItem;
   errors?: Record<string, string>;
@@ -110,11 +110,16 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
           type="submit"
           onClick={() => {
             const dropdownObject = dropDownOptions.find((dropdown) => dropdown.value === selectedValues[0]);
-
+            const emptyTemplate: Template = {
+              email: {
+                subject: '',
+                body: '',
+              },
+            };
             const eventObject: EventItem = {
               namespace: dropdownObject.nameSpace,
               name: dropdownObject.name,
-              templates: { subject: '', body: '' },
+              templates: emptyTemplate,
               channels: [],
             };
 
@@ -124,11 +129,12 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
               );
 
               definition.events[definitionEventIndex] = eventObject;
+              onNext(definition, selectedEvent);
             } else {
               definition.events.push(eventObject);
+              onNext(definition, eventObject);
             }
 
-            onNext(definition);
             setValues(['']);
           }}
         >

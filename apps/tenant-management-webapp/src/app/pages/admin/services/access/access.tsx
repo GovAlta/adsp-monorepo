@@ -66,7 +66,7 @@ export default function (): JSX.Element {
               className="link-button"
               title="Keycloak Admin"
             >
-              Keycloak Admin Portal
+              Keycloak admin portal
             </a>
           </TitleLinkHeader>
 
@@ -121,7 +121,7 @@ export default function (): JSX.Element {
       </Main>
 
       <Aside>
-        <h5>Helpful Links</h5>
+        <h5>Helpful links</h5>
         <a rel="noopener noreferrer" target="_blank" href="https://gitlab.gov.ab.ca/dio/keycloak-themes">
           See the code
         </a>

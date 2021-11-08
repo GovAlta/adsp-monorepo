@@ -1,6 +1,5 @@
 import { adspId, AdspId } from '@abgov/adsp-service-sdk';
 import { NotificationTypeEntity, SubscriberEntity, SubscriptionEntity } from '../model';
-import { NotificationType } from '../types';
 
 export const mapSubscriber = (apiId: AdspId, subscriber: SubscriberEntity): unknown => ({
   id: subscriber.id,
@@ -14,17 +13,25 @@ export const mapSubscriber = (apiId: AdspId, subscriber: SubscriberEntity): unkn
   userId: subscriber.userId,
 });
 
-export const mapSubscription = (apiId: AdspId, subscription: SubscriptionEntity): unknown => ({
+export const mapSubscription = (apiId: AdspId, subscription: SubscriptionEntity): Record<string, unknown> => ({
   subscriber: subscription.subscriber ? mapSubscriber(apiId, subscription.subscriber) : null,
+  subscriberId: subscription.subscriberId,
   typeId: subscription.typeId,
   criteria: subscription.criteria,
 });
 
-export const mapType = (type: NotificationTypeEntity): NotificationType => ({
-  id: type.id,
-  name: type.name,
-  description: type.description,
-  publicSubscribe: type.publicSubscribe,
-  subscriberRoles: type.subscriberRoles,
-  events: type.events,
-});
+export const mapType = (type: NotificationTypeEntity, lean?: boolean): Record<string, unknown> =>
+  lean
+    ? {
+        id: type.id,
+        name: type.name,
+        description: type.description,
+      }
+    : {
+        id: type.id,
+        name: type.name,
+        description: type.description,
+        publicSubscribe: type.publicSubscribe,
+        subscriberRoles: type.subscriberRoles,
+        events: type.events,
+      };

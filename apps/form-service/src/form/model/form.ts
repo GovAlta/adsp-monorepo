@@ -7,6 +7,7 @@ import { FormRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
 import { Form, FormStatus } from '../types';
 import { NotificationService, Subscriber } from '../../notification';
+import { FileService } from '../../file';
 
 export class FormEntity implements Form {
   tenantId: AdspId;
@@ -200,10 +201,19 @@ export class FormEntity implements Form {
     return await this.repository.save(this);
   }
 
-  async delete(user: User): Promise<boolean> {
+  async delete(user: User, fileService: FileService, notificationService: NotificationService): Promise<boolean> {
     if (!isAllowedUser(user, this.tenantId, FormServiceRoles.Admin, true)) {
       throw new UnauthorizedUserError('delete form', user);
     }
-    return this.repository.delete(this);
+
+    // Delete the files linked to this form.
+    for (const file of Object.values(this.files)) {
+      await fileService.delete(this.tenantId, file);
+    }
+
+    await notificationService.unsubscribe(this.tenantId, this.applicant.urn);
+
+    const deleted = this.repository.delete(this);
+    return deleted;
   }
 }

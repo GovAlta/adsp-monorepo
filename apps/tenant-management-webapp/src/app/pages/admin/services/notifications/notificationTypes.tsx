@@ -16,6 +16,7 @@ import {
   UpdateNotificationTypeService,
   DeleteNotificationTypeService,
   FetchNotificationTypeService,
+  FetchCoreNotificationTypeService,
 } from '@store/notification/actions';
 import { NotificationItem } from '@store/notification/models';
 import { RootState } from '@store/index';
@@ -44,11 +45,13 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [showEventDeleteConfirmation, setShowEventDeleteConfirmation] = useState(false);
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const notification = useSelector((state: RootState) => state.notification);
+  const coreNotification = useSelector((state: RootState) => state.notification.core);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(FetchNotificationTypeService());
+    dispatch(FetchCoreNotificationTypeService());
   }, [dispatch]);
 
   function reset() {
@@ -59,7 +62,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     setShowTemplateForm(false);
   }
   function isEmptyTemplate(event) {
-    return event.templates?.body?.length === 0 && event.templates?.subject?.length === 0;
+    return event.templates?.email?.body?.length === 0 && event.templates?.email?.subject?.length === 0;
   }
 
   useEffect(() => {
@@ -172,6 +175,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                 onClick={() => {
                                   setShowTemplateForm(true);
                                   setSelectedEvent(event);
+                                  setSelectedType(notificationType);
                                 }}
                               >
                                 <NotificationBorder className="smallPadding">
@@ -221,12 +225,39 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             </GoACard>
           </div>
         ))}
+      <h2>Core notifications:</h2>
+      {coreNotification &&
+        Object.values(coreNotification).map((notificationType) => (
+          <div className="topBottomMargin" key={notificationType.name}>
+            <GoACard
+              title={
+                <div className="rowFlex">
+                  <h2 className="flex1">{notificationType.name}</h2>
+                </div>
+              }
+              description={notificationType.description}
+            >
+              <h2>Events:</h2>
+              <Grid>
+                {notificationType?.events?.map((event, key) => (
+                  <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
+                    <EventBorder>
+                      <div className="height-100 rowFlex">
+                        <div className="flex1">{event.name}</div>
+                      </div>
+                    </EventBorder>
+                  </GridItem>
+                ))}
+              </Grid>
+            </GoACard>
+          </div>
+        ))}
       {notification.notificationTypes === undefined && (
         <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
       )}
       {/* Delete confirmation */}
       <GoAModal testId="delete-confirmation" isOpen={showDeleteConfirmation}>
-        <GoAModalTitle>Delete Type</GoAModalTitle>
+        <GoAModalTitle>Delete notification type</GoAModalTitle>
         <GoAModalContent>Delete {selectedType?.name}?</GoAModalContent>
         <GoAModalActions>
           <GoAButton buttonType="tertiary" data-testid="delete-cancel" onClick={() => setShowDeleteConfirmation(false)}>
@@ -246,7 +277,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       </GoAModal>
       {/* Event delete confirmation */}
       <GoAModal testId="event-delete-confirmation" isOpen={showEventDeleteConfirmation}>
-        <GoAModalTitle>Remove Event</GoAModalTitle>
+        <GoAModalTitle>Remove event</GoAModalTitle>
         <GoAModalContent>Remove {selectedEvent?.name}?</GoAModalContent>
         <GoAModalActions>
           <GoAButton
@@ -293,7 +324,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         initialValue={editEvent}
         selectedEvent={selectedEvent}
         errors={errors}
-        onNext={() => {
+        onNext={(notifications, event) => {
+          setSelectedEvent(event);
+          setSelectedType(notifications);
           setShowTemplateForm(true);
         }}
         onCancel={() => {
@@ -301,13 +334,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         }}
       />
       <TemplateForm
-        open={showTemplateForm}
         initialValue={editEvent}
         selectedEvent={selectedEvent}
-        errors={errors}
         notifications={selectedType}
+        open={showTemplateForm}
+        errors={errors}
         onSubmit={(type) => {
           dispatch(UpdateNotificationTypeService(type));
+          setShowTemplateForm(false);
           reset();
         }}
         onCancel={() => {

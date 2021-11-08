@@ -114,7 +114,7 @@ export class MongoFormRepository implements FormRepository {
       lastAccessed: entity.lastAccessed,
       hash: entity.hash,
       data: entity.data,
-      files: entity.files,
+      files: Object.entries(entity.files).reduce((fs, [key, f]) => ({ ...fs, [key]: f?.toString() }), {}),
     };
   }
 
@@ -137,7 +137,7 @@ export class MongoFormRepository implements FormRepository {
         submitted: doc.submitted,
         lastAccessed: doc.lastAccessed,
         data: doc.data,
-        files: doc.files,
+        files: Object.entries(doc.files).reduce((fs, [key, f]) => ({ ...fs, [key]: f ? AdspId.parse(f) : null }), {}),
       },
       doc.hash
     );

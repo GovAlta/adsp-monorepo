@@ -35,7 +35,7 @@ class eventsPage {
 
   hideDetailsIcon(namespace, eventName) {
     return cy.xpath(
-      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td//*[@data-testid="toggle-details-visibility"]/*[@data-testid="icon-eyeOff"]`
+      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td//*[@data-testid="toggle-details-visibility"]/*[@data-testid="icon-eye-off"]`
     );
   }
 
@@ -122,9 +122,7 @@ class eventsPage {
   }
 
   deleteDefinitionModalContent() {
-    return cy.xpath(
-      '//*[@data-testid="delete-confirmation" and @data-state="visible"]//div[@class="goa-scrollable"]/div'
-    );
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//div[@class="goa-scrollable"]');
   }
 
   deleteDefinitionConfirmButton() {

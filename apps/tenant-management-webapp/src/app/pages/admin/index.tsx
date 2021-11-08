@@ -17,7 +17,7 @@ const TenantManagement = (): JSX.Element => {
   const { setTitle } = useContext(HeaderCtx);
 
   useEffect(() => {
-    setTitle('Alberta Digital Service Platform - Tenant Management');
+    setTitle('Alberta Digital Service Platform - Tenant management');
   }, [setTitle]);
 
   return (

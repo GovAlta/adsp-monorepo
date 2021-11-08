@@ -17,7 +17,7 @@ client `urn:ads:platform:event-service`
 
 ## Concepts
 ### Event definition
-Event definition is an optional metadata descriptions of a domain *event* (identified by a specific namespace and name). They are used for downstream capabilities. For example, the payload schema description allows the notification service to validate variables within notification message templates. Event definitions are configured in the [configuration service](configuration-service.md) under the `platform:event-service` namespace and name.
+Event definition is an optional metadata description of a *domain event* (identified by a specific namespace and name). They are used for downstream capabilities. For example, the payload schema description allows the [notification service](notification-service.md) to validate variables within notification message templates. Event definitions are configured in the [configuration service](configuration-service.md) under the `platform:event-service` namespace and name.
 
 ### Event
 Domain events represent key changes at a domain model level. For example, an intake application process could include events like: application draft created, application submitted, application processing started, application processing completed.
@@ -26,6 +26,45 @@ Domain events represent key changes at a domain model level. For example, an int
 Event log records all *events* emitted via the event service and keeps basic metrics including a count of different events. These metrics can represent key domain metrics; in the intake application example, the count of application submitted events represents the volume of applications.
 
 ## Code examples
+### Configure an event definition
+Event definitions are configured using the [configuration service](configuration-service.md). Note that new configuration may take up to 15 mins to apply.
+
+```typescript
+  const configurationServiceUrl = 'https://configuration-service.alpha.alberta.ca';
+  const request = {
+    operation: 'UPDATE',
+    update: {
+      'domain-service': {
+        name: 'domain-service',
+        definitions: {
+          'domain-event': {
+            name: 'domain-event',
+            description: 'Signalled on significant domain state change.',
+            payloadSchema: {
+              type: 'object',
+              properties: {
+                value: { type: 'string' }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  await fetch(
+    `${configurationServiceUrl}/configuration/v1/configuration/platform/event-service`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(request),
+    }
+  );
+```
+
 ### Send an event
 ```typescript
   const event = {
@@ -38,7 +77,7 @@ Event log records all *events* emitted via the event service and keeps basic met
     payload: {
       application: {
         id: 'f669be59-bd38-4ca4-8749-19248060fc63',
-        ...
+        /* ... */
       }
       applicant: {
         id: 'a8e5ec09-d60a-4c60-94bd-71dc97d8c80e',
@@ -53,7 +92,7 @@ Event log records all *events* emitted via the event service and keeps basic met
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(event),
     }
@@ -72,9 +111,7 @@ The event log is stored as a value (event-service:event) in the [value service](
     `${valueServiceUrl}/value/v1/event-service/values/event?top=${top}&timestampMin=${timestampMin}`,
     {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      }
+      headers: { Authorization: `Bearer ${accessToken}` }
     }
   );
 

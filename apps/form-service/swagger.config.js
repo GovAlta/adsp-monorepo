@@ -2,10 +2,15 @@ module.exports = {
   openapi: '3.0.0',
   info: {
     title: 'Form Service',
-    version: '0.0.0',
+    version: '1.0.0',
     description: '',
   },
-  tags: [],
+  tags: [
+    {
+      name: 'Form',
+      description: 'API to managed forms.',
+    },
+  ],
   components: {
     securitySchemes: {
       accessToken: {
