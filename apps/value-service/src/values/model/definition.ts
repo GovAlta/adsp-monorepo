@@ -1,4 +1,3 @@
-import { IsNotEmpty } from 'class-validator';
 import { AdspId, AssertRole } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { Results } from '@core-services/core-common';
@@ -10,7 +9,6 @@ export class ValueDefinitionEntity implements ValueDefinition {
   public static METRICS_KEY = 'metrics';
   public static METRIC_META_KEY = 'metric';
 
-  @IsNotEmpty()
   public name: string;
   public description: string;
   public type: string;
@@ -38,11 +36,14 @@ export class ValueDefinitionEntity implements ValueDefinition {
       tenantId,
       correlationId: value.correlationId,
       value: value.value,
+      metrics: value.metrics,
     };
 
     const metrics: Record<string, number> = value.value?.[ValueDefinitionEntity.METRICS_KEY];
+    // If the value itself has a metrics property, then merge them into the record.
+    // Note: This is part of the custom schema handling that copies from a value object into a metrics property.
     if (metrics) {
-      value.metrics = {
+      valueRecord.metrics = {
         ...(value.metrics || {}),
         ...metrics,
       };
@@ -52,7 +53,7 @@ export class ValueDefinitionEntity implements ValueDefinition {
     return this.namespace.repository.writeValue(this.namespace.name, this.name, tenantId, valueRecord);
   }
 
-  @AssertRole('read value', ServiceUserRoles.Reader)
+  @AssertRole('read value', ServiceUserRoles.Reader, null, true)
   public readValues(
     _user: User,
     tenantId?: AdspId,
@@ -69,6 +70,6 @@ export class ValueDefinitionEntity implements ValueDefinition {
   }
 
   public getSchemaKey(): string {
-    return `${this.namespace}${this.name}`;
+    return `${this.namespace.name}:${this.name}`;
   }
 }

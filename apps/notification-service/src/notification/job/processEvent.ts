@@ -65,7 +65,9 @@ export const createProcessEventJob =
         const notifications = [];
         let after: string = null;
         do {
-          const { results, page } = await subscriptionRepository.getSubscriptions(type, 1000, after);
+          const { results, page } = await subscriptionRepository.getSubscriptions(tenantId, 1000, after, {
+            typeIdEquals: type.id,
+          });
           const pageNotifications = type.generateNotifications(templateService, event, results);
           notifications.push(...pageNotifications);
           after = page.next;

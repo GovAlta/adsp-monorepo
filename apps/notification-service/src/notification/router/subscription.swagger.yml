@@ -448,3 +448,37 @@ components:
               properties:
                 deleted:
                   type: boolean
+
+/subscription/v1/subscribers/{subscriber}/subscriptions:
+  parameters:
+    - name: subscriber
+      description: ID of the subscriber.
+      in: path
+      required: true
+      schema:
+        type: string
+  get:
+    tags:
+      - Subscription
+    description: Retrieves subscriptions for a subscriber.
+    responses:
+      200:
+        description: Subscriptions successfully retrieved.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Subscription"
+                page:
+                  type: object
+                  properties:
+                    after:
+                      type: string
+                    size:
+                      type: number
+                    next:
+                      type: string

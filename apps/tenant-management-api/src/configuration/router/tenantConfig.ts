@@ -5,9 +5,9 @@ import { TenantConfigEntity } from '../model';
 import HttpException from '../errorHandlers/httpException';
 import * as HttpStatusCodes from 'http-status-codes';
 import { errorHandler } from '../errorHandlers';
-import { TenantServiceRoles } from '../../../roles';
 import { EventService } from '@abgov/adsp-service-sdk';
-import { configurationUpdated } from '../../events';
+import { TenantServiceRoles } from '../../roles';
+import { configurationUpdated } from '../events';
 
 interface TenantConfigRouterProps {
   eventService: EventService;

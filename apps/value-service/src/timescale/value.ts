@@ -52,7 +52,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
     query = query.offset(skip).limit(top);
 
     if (criteria) {
-      const queryCriteria = {};
+      const queryCriteria: Record<string, unknown> = {};
       if (criteria.tenantId) {
         queryCriteria['tenant'] = criteria.tenantId.toString();
       }

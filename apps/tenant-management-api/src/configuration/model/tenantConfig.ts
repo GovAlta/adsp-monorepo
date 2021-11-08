@@ -1,8 +1,8 @@
 import { AssertCoreRole, AssertRole } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
-import { TenantServiceRoles } from '../../../roles';
 import type { TenantConfigurationRepository } from '../repository';
 import type { TenantConfig } from '../types';
+import { TenantServiceRoles } from '../../roles';
 
 interface ServiceSettings {
   isEnabled: boolean;

@@ -1,5 +1,5 @@
 import { adspId, User } from '@abgov/adsp-service-sdk';
-import { TenantServiceRoles } from '../../../roles';
+import { TenantServiceRoles } from '../../roles';
 import { It, Mock } from 'moq.ts';
 import { ServiceConfigurationRepository } from '../repository';
 import { ServiceOption } from '../types';
