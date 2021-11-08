@@ -1,6 +1,5 @@
 import { adspId, User } from '@abgov/adsp-service-sdk';
 import {
-  DomainEvent,
   DomainEventSubscriberService,
   InvalidOperationError,
   NotFoundError,
@@ -11,8 +10,7 @@ import { Namespace, Socket } from 'socket.io';
 import { Logger } from 'winston';
 import { getStream, getStreams, subscribeBySse } from './stream';
 import { StreamEntity } from '../model';
-import { createStreamRouter } from './stream';
-import { onIoConnection } from '.';
+import { createStreamRouter, onIoConnection } from './stream';
 
 describe('stream router', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
