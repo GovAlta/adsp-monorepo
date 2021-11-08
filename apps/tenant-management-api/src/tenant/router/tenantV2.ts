@@ -4,6 +4,7 @@ import { requirePlatformService } from '../../middleware/authentication';
 import * as tenantService from '../services/tenant';
 import { logger } from '../../middleware/logger';
 import { TenantEntity } from '../models';
+import { TenantRepository } from '..';
 
 const mapTenant = (entity: TenantEntity) => ({
   id: `${entity.id}`,
@@ -12,13 +13,17 @@ const mapTenant = (entity: TenantEntity) => ({
   name: entity.name,
 });
 
-export const createTenantV2Router = (): Router => {
+interface TenantRouterProps {
+  tenantRepository: TenantRepository;
+}
+
+export const createTenantV2Router = ({ tenantRepository }: TenantRouterProps): Router => {
   const tenantV2Router: Router = Router();
 
   tenantV2Router.get('/tenants', requirePlatformService, async (_req, res, next) => {
     try {
       // FIXME: accessing a non-injected dependency makes this hard to test
-      const tenants = await tenantService.getTenants();
+      const tenants = await tenantService.getTenants(tenantRepository);
 
       res.json({
         results: tenants.map(mapTenant),
@@ -36,7 +41,7 @@ export const createTenantV2Router = (): Router => {
     const { id } = req.params;
 
     try {
-      const tenant = await tenantService.getTenant(adspId`urn:ads:platform:tenant-service:v2:${id}`);
+      const tenant = await tenantService.getTenant(tenantRepository, adspId`urn:ads:platform:tenant-service:v2:${id}`);
       res.json(mapTenant(tenant));
     } catch (err) {
       logger.error(`Failed to get tenant with error: ${err.message}`);

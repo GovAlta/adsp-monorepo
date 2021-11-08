@@ -1,9 +1,9 @@
 import { connect, disconnect, createMockData } from '@core-services/core-common/mongo';
-import { TenantEntity } from '../models';
-import { TenantMongoRepository } from './tenant';
+import { TenantEntity } from '../tenant';
+import { MongoTenantRepository } from './tenant';
 
 describe('Mongo: Tenant', () => {
-  const repo = new TenantMongoRepository();
+  const repo = new MongoTenantRepository();
 
   beforeEach(async () => {
     await connect();

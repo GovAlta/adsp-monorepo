@@ -1,12 +1,15 @@
+import { EventService } from '@abgov/adsp-service-sdk';
 import { Application } from 'express';
+import * as passport from 'passport';
+import { Logger } from 'winston';
 import { Repositories } from './repository';
 import { createConfigurationRouter, createTenantConfigurationRouter } from './router';
-import { Logger } from 'winston';
+
 export * from './types';
-export * from './repository';
+export * from './events';
 export * from './model';
-import * as passport from 'passport';
-import { EventService } from '@abgov/adsp-service-sdk';
+export * from './repository';
+
 
 const passportMiddleware = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
 

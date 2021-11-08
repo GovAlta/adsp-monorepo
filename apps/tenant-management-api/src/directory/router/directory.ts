@@ -32,7 +32,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
       else if (name) {
         result = await directoryRepository.getDirectories(name as string);
       } else {
-        result = await getDirectories();
+        result = await getDirectories(directoryRepository);
       }
 
       res.json(result);

@@ -1,36 +1,59 @@
-import { connect, ConnectOptions, connection } from 'mongoose';
-import { logger } from '../middleware/logger';
-import { environment } from '../environments/environment';
+import { connect, connection, ConnectionStates } from 'mongoose';
+import { Logger } from 'winston';
+import { Repositories as ConfigurationRepositories } from '../configuration';
+import { Repositories as DirectoryRepositories } from '../directory';
+import { Repositories as TenantRepositories } from '../tenant';
+import { MongoDirectoryRepository } from './directory';
+import { MongoServiceOptionRepository } from './serviceOption';
+import { MongoTenantRepository } from './tenant';
+import { MongoTenantConfigurationRepository } from './tenantConfig';
 
-export const connectMongo = async (): Promise<void> => {
-  try {
-    const mongoHost = environment.MONGO_URI;
-    const mongoDb = environment.MONGO_DB;
-    const mongoUser = environment.MONGO_USER;
-    const mongoPassword = environment.MONGO_PASSWORD;
-
-    const mongoURI = `${mongoHost}/${mongoDb}`;
-
-    logger.info(`Mongodb URI is  ${mongoURI}`);
-
-    const options: ConnectOptions = {
-      user: mongoUser,
-      pass: mongoPassword,
-      useNewUrlParser: true,
-      useFindAndModify: false,
-      useUnifiedTopology: true,
-    };
-
-    await connect(mongoURI, options);
-    logger.info('MongoDB Connected...');
-  } catch (err) {
-    // Exit process with failure
-    logger.error(`MongoDB has error, ${err.message} will exit ...`);
-    process.exit(1);
-  }
-};
-
-export const disconnect = async (): Promise<void> => {
+export const disconnect = async (logger: Logger): Promise<void> => {
   logger.info('MongoDB disconnected...');
   await connection.close();
 };
+
+interface MongoRepositoryProps {
+  logger: Logger;
+  MONGO_URI: string;
+  MONGO_DB: string;
+  MONGO_USER: string;
+  MONGO_PASSWORD: string;
+  MONGO_TLS: boolean;
+}
+
+type Repositories = ConfigurationRepositories & DirectoryRepositories & TenantRepositories;
+
+export const createRepositories = ({
+  logger,
+  MONGO_URI,
+  MONGO_DB,
+  MONGO_USER,
+  MONGO_PASSWORD,
+  MONGO_TLS,
+}: MongoRepositoryProps): Promise<Repositories> =>
+  new Promise((resolve, reject) => {
+    const mongoConnectionString = `${MONGO_URI}/${MONGO_DB}?ssl=${MONGO_TLS}`;
+    connect(
+      mongoConnectionString,
+      {
+        user: MONGO_USER,
+        pass: MONGO_PASSWORD,
+      },
+      (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve({
+            tenantRepository: new MongoTenantRepository(),
+            serviceConfigurationRepository: new MongoServiceOptionRepository(),
+            tenantConfigurationRepository: new MongoTenantConfigurationRepository(),
+            directoryRepository: new MongoDirectoryRepository(),
+            isConnected: () => connection.readyState === ConnectionStates.connected,
+          });
+
+          logger.info(`Connected to MongoDB at: ${mongoConnectionString}`);
+        }
+      }
+    );
+  });

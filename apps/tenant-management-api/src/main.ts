@@ -1,39 +1,31 @@
-import * as fs from 'fs';
+import { AdspId, adspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
+import { createErrorHandler } from '@core-services/core-common';
 import * as cors from 'cors';
 import * as express from 'express';
 import { Request, Response, NextFunction } from 'express';
 import * as healthCheck from 'express-healthcheck';
+import * as fs from 'fs';
 import * as passport from 'passport';
 import * as swaggerUi from 'swagger-ui-express';
-import { AdspId, adspId, initializePlatform } from '@abgov/adsp-service-sdk';
-import { createErrorHandler } from '@core-services/core-common';
-import { ConfigurationUpdatedDefinition, createConfigService } from './configuration-management';
-import { createDirectoryService } from './directory';
-import { connectMongo, disconnect } from './mongo/index';
+import { version } from '../../../package.json';
+import { environment } from './environments/environment';
+import { applyConfigMiddleware, ConfigurationUpdatedDefinition } from './configuration';
+import { applyDirectoryMiddleware, bootstrapDirectory, directoryService } from './directory';
+import { createRepositories, disconnect } from './mongo';
+import { logger } from './middleware/logger';
+import { TenantServiceRoles } from './roles';
 import {
-  createTenantRouter,
-  createTenantV2Router,
   tenantService,
   TenantCreatedDefinition,
   TenantDeletedDefinition,
   configurationSchema,
+  applyTenantMiddleware,
 } from './tenant';
-import { bootstrapDirectory } from './directory';
-import { logger } from './middleware/logger';
-import { environment } from './environments/environment';
-
-import { version } from '../../../package.json';
-import * as directoryService from './directory/services';
-import type { User } from '@abgov/adsp-service-sdk';
-import { TenantServiceRoles } from './roles';
-import { TenantMongoRepository } from './tenant/mongo';
 
 async function initializeApp(): Promise<express.Application> {
-  /* Connect to mongo db */
-  await connectMongo();
-
+  const repositories = await createRepositories({ ...environment, logger });
   if (environment.DIRECTORY_BOOTSTRAP) {
-    await bootstrapDirectory(logger, environment.DIRECTORY_BOOTSTRAP);
+    await bootstrapDirectory(logger, environment.DIRECTORY_BOOTSTRAP, repositories.directoryRepository);
   }
 
   const app = express();
@@ -63,8 +55,14 @@ async function initializeApp(): Promise<express.Application> {
     },
     { logger },
     {
-      directory: directoryService,
-      tenantService,
+      directory: {
+        getServiceUrl: (serviceId) => directoryService.getServiceUrl(repositories.directoryRepository, serviceId),
+        getResourceUrl: (resourceId) => directoryService.getResourceUrl(repositories.directoryRepository, resourceId),
+      },
+      tenantService: {
+        getTenant: (tenantId) => tenantService.getTenant(repositories.tenantRepository, tenantId),
+        getTenants: () => tenantService.getTenants(repositories.tenantRepository),
+      },
     }
   );
 
@@ -101,20 +99,9 @@ async function initializeApp(): Promise<express.Application> {
     next();
   });
 
-  // TODO: For now these endpoints authenticate core realm as well as tenant realm, but
-  // need to verify which endpoints require which type of authentication.
-  const authenticate = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
-  const authenticateCore = passport.authenticate(['jwt'], { session: false });
-
-  const tenantRepository = new TenantMongoRepository();
-  const tenantRouter = createTenantRouter({ tenantRepository, eventService });
-  app.use('/api/tenant/v1', authenticate, configurationHandler, tenantRouter);
-
-  const tenantV2Router = createTenantV2Router();
-  app.use('/api/tenant/v2', authenticateCore, tenantV2Router);
-
-  createConfigService(app, eventService);
-  createDirectoryService(app);
+  applyTenantMiddleware(app, { ...repositories, logger, eventService, configurationHandler });
+  applyConfigMiddleware(app, { ...repositories, logger, eventService });
+  applyDirectoryMiddleware(app, { ...repositories, logger });
 
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
@@ -175,7 +162,7 @@ initializeApp()
     });
 
     const handleExit = async (message: string, code: number, err: Error) => {
-      await disconnect();
+      await disconnect(logger);
       server.close();
       err === null ? logger.info(message) : logger.error(message, err);
       process.exit(code);

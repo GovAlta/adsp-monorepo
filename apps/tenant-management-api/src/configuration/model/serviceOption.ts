@@ -1,7 +1,7 @@
 import type { ServiceRole, User } from '@abgov/adsp-service-sdk';
 import { AssertCoreRole } from '@abgov/adsp-service-sdk';
 import type { Update } from '@core-services/core-common';
-import { TenantServiceRoles } from '../../../roles';
+import { TenantServiceRoles } from '../../roles';
 import type { ServiceConfigurationRepository } from '../repository';
 import type { ServiceOption } from '../types';
 

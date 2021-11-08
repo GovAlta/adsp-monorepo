@@ -1,5 +1,5 @@
 import { connect, disconnect, createMockData } from '@core-services/core-common/mongo';
-import { DirectoryEntity } from '../model';
+import { DirectoryEntity } from '../directory';
 import { MongoDirectoryRepository } from './directory';
 
 describe('Mongo: Directory', () => {
