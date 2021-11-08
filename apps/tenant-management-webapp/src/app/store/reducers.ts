@@ -5,6 +5,7 @@ import File from './file/reducers';
 import Notification from './notification/reducers';
 import Session from './session/reducers';
 import Notifications from './notifications/reducers';
+import Subscription from './subscription/reducers';
 import Tenant from './tenant/reducers';
 import ServiceStatus from './status/reducers';
 import TenantConfig from './tenantConfig/reducers';
@@ -18,6 +19,7 @@ export const rootReducer = combineReducers({
   access: Access,
   tenant: Tenant,
   notification: Notification,
+  subscription: Subscription,
   notifications: Notifications,
   tenantConfig: TenantConfig,
   serviceStatus: ServiceStatus,
