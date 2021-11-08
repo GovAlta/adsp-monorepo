@@ -10,7 +10,7 @@ export interface NotificationItem {
 export interface EventItem {
   name: string;
   namespace?: string;
-  templates?: unknown;
+  templates?: { subject: string; body: string };
   channels?: [];
 }
 

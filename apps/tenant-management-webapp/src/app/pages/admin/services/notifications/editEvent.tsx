@@ -11,7 +11,7 @@ import { EventItem } from '@store/notification/models';
 interface NotificationDefinitionFormProps {
   initialValue?: NotificationItem;
   onCancel?: () => void;
-  onSave?: (definition: NotificationItem) => void;
+  onNext?: (definition: NotificationItem) => void;
   open: boolean;
   selectedEvent: EventItem;
   errors?: Record<string, string>;
@@ -29,7 +29,7 @@ const emptyNotificationDefinition: NotificationItem = {
 export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> = ({
   initialValue,
   onCancel,
-  onSave,
+  onNext,
   errors,
   open,
   selectedEvent,
@@ -114,7 +114,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
             const eventObject: EventItem = {
               namespace: dropdownObject.nameSpace,
               name: dropdownObject.name,
-              templates: {},
+              templates: { subject: '', body: '' },
               channels: [],
             };
 
@@ -128,11 +128,11 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
               definition.events.push(eventObject);
             }
 
-            onSave(definition);
+            onNext(definition);
             setValues(['']);
           }}
         >
-          Save
+          Next
         </GoAButton>
       </GoAModalActions>
     </GoAModal>

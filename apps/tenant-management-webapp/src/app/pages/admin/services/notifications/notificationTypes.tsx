@@ -20,7 +20,7 @@ import {
 import { NotificationItem } from '@store/notification/models';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
-
+import { TemplateForm } from './templateForm';
 const emptyNotificationType: NotificationItem = {
   name: '',
   description: '',
@@ -42,7 +42,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [editEvent, setEditEvent] = useState(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showEventDeleteConfirmation, setShowEventDeleteConfirmation] = useState(false);
-
+  const [showTemplateForm, setShowTemplateForm] = useState(false);
   const notification = useSelector((state: RootState) => state.notification);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -56,6 +56,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     setEditEvent(false);
     setSelectedType(emptyNotificationType);
     setErrors({});
+    setShowTemplateForm(false);
+  }
+  function isEmptyTemplate(event) {
+    return event.templates?.body?.length === 0 && event.templates?.subject?.length === 0;
   }
 
   useEffect(() => {
@@ -63,6 +67,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       setSelectedType(null);
       setEditType(true);
       activateEdit(false);
+      setShowTemplateForm(false);
     }
   }, [activeEdit]);
 
@@ -162,7 +167,23 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                         </div>
                         <div className="columnFlex height-100">
                           <div className="flex1 flex flexEndAlign">
+                            {!isEmptyTemplate(event) && (
+                              <a
+                                onClick={() => {
+                                  setShowTemplateForm(true);
+                                  setSelectedEvent(event);
+                                }}
+                              >
+                                <NotificationBorder className="smallPadding">
+                                  <GoAIcon type="mail" />
+                                </NotificationBorder>
+                              </a>
+                            )}
                             <div className="rightAlignEdit">
+                              <a style={{ marginRight: '20px' }} data-testid={`preview-event-${notificationType.id}`}>
+                                Preview
+                              </a>
+
                               <a
                                 data-testid={`edit-event-${notificationType.id}`}
                                 onClick={() => {
@@ -272,13 +293,25 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         initialValue={editEvent}
         selectedEvent={selectedEvent}
         errors={errors}
-        onSave={(type) => {
-          type.subscriberRoles = [];
+        onNext={() => {
+          setShowTemplateForm(true);
+        }}
+        onCancel={() => {
+          reset();
+        }}
+      />
+      <TemplateForm
+        open={showTemplateForm}
+        initialValue={editEvent}
+        selectedEvent={selectedEvent}
+        errors={errors}
+        notifications={selectedType}
+        onSubmit={(type) => {
           dispatch(UpdateNotificationTypeService(type));
           reset();
         }}
         onCancel={() => {
-          reset();
+          setShowTemplateForm(false);
         }}
       />
     </NotficationStyles>
