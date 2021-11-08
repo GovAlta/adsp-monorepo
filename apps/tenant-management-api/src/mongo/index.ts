@@ -8,8 +8,9 @@ export const connectMongo = async (): Promise<void> => {
     const mongoDb = environment.MONGO_DB;
     const mongoUser = environment.MONGO_USER;
     const mongoPassword = environment.MONGO_PASSWORD;
+    const mongoTls = environment.MONGO_TLS;
 
-    const mongoURI = `${mongoHost}/${mongoDb}`;
+    const mongoURI = `${mongoHost}/${mongoDb}?ssl=${mongoTls}`;
 
     logger.info(`Mongodb URI is  ${mongoURI}`);
 
