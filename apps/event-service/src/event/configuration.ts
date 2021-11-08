@@ -17,7 +17,9 @@ export const configurationSchema = {
               properties: {
                 namespace: { type: 'string' },
                 name: { type: 'string' },
-                metric: { type: 'string' },
+                metric: {
+                  oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }],
+                },
               },
             },
           },
