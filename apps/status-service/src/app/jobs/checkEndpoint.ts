@@ -57,20 +57,28 @@ async function doRequest(getter: Getter, url: string, logger: Logger): Promise<E
 
 const getNewEndpointStatus = (history: EndpointStatusEntry[], EntrySampleSize: number): EndpointStatusType => {
   let passCount = 0;
+  let failedCount = 0;
   const recentHistory =
     history.sort((prev, next) => { return next.timestamp - prev.timestamp }).slice(0, EntrySampleSize);
+
+
+  for (const h of recentHistory) {
+    passCount += h.ok ? 1 : 0;
+    failedCount += h.ok ? 0 : 1;
+
+    if (passCount >= MIN_PASS_COUNT) {
+      return 'online';
+    }
+
+    if (failedCount > (EntrySampleSize - MIN_PASS_COUNT)) {
+      return 'offline'
+    }
+  }
 
   if (recentHistory.length < EntrySampleSize) {
     return 'pending';
   }
 
-  for (const h of recentHistory) {
-    passCount += h.ok ? 1 : 0;
-
-    if (passCount >= MIN_PASS_COUNT) {
-      return 'online';
-    }
-  }
   return 'offline';
 }
 
