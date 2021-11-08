@@ -144,7 +144,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                     <EventBorder>
                       <MaxHeight height={168}>
                         <div className="rowFlex">
-                          <div className="flex1">{event.name}</div>
+                          <div className="flex1">
+                            {event.namespace}:{event.name}
+                          </div>
                           <div className="rowFlex">
                             <MaxHeight height={34}>
                               <a
