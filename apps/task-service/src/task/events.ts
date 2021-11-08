@@ -138,7 +138,7 @@ export const TaskStartedDefinition: DomainEventDefinition = {
   interval: {
     namespace: 'task-service',
     name: TASK_CREATED,
-    metric: 'task-queue',
+    metric: ['task-service', 'queueNamespace', 'queueName', 'queue'],
   },
 };
 
@@ -156,7 +156,7 @@ export const TaskCompletedDefinition: DomainEventDefinition = {
   interval: {
     namespace: 'task-service',
     name: TASK_STARTED,
-    metric: 'task-completed',
+    metric: ['task-service', 'queueNamespace', 'queueName', 'completion'],
   },
 };
 

@@ -37,7 +37,7 @@ function hasRequiredRole(user: User, roles: string | string[]): boolean {
   return !!matchedRole;
 }
 
-export function isUserAllowed(user: User, tenantId: AdspId, roles: string | string[], allowCore = false): boolean {
+export function isAllowedUser(user: User, tenantId: AdspId, roles: string | string[], allowCore = false): boolean {
   const isAllowedTenant =
     (allowCore && user?.isCore) || (!!user?.tenantId && (!tenantId || tenantId.toString() === user.tenantId.toString()));
 
@@ -61,7 +61,7 @@ export const AssertRole: AssertRole =
       // If we don't allow core user or user is not a core user, AND
       // User has no tenant ID or tenant context on this exists and doesn't match user tenant, THEN
       // user is not authorized.
-      if (!isUserAllowed(user, this.tenantId, roles, allowCore)) {
+      if (!isAllowedUser(user, this.tenantId, roles, allowCore)) {
         throw new UnauthorizedUserError(operation, user as User);
       }
 
