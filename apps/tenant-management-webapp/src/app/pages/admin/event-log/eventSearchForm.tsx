@@ -162,6 +162,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                   }
                   if (open && searchBox.length > 0) {
                     setSearchBox('');
+                    setSearchCriteria({ ...searchCriteria, namespace: '', name: '' });
                   }
                   setOpen(!open);
                 }}
