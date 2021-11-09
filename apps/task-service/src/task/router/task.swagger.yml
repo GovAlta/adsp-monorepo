@@ -94,6 +94,7 @@ components:
       properties:
         operation:
           type: string
+          enum: [assign]
         assignTo:
           type: object
           properties:
@@ -109,6 +110,7 @@ components:
       properties:
         operation:
           type: string
+          enum: [set-priority]
         priority:
           type: number
       required: [operation, priority]
@@ -117,18 +119,21 @@ components:
       properties:
         operation:
           type: string
+          enum: [start]
       required: [operation]
     CompleteTask:
       type: object
       properties:
         operation:
           type: string
+          enum: [complete]
       required: [operation]
     CancelTask:
       type: object
       properties:
         operation:
           type: string
+          enum: [cancel]
         reason:
           type: string
       required: [operation]
