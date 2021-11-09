@@ -30,7 +30,7 @@ const initializeApp = async (): Promise<Server> => {
   const { tenantStrategy, configurationHandler, clearCached, healthCheck } = await initializePlatform(
     {
       serviceId,
-      displayName: 'Push Service',
+      displayName: 'Push service',
       description: 'Service for push mode connections.',
       roles: [
         {

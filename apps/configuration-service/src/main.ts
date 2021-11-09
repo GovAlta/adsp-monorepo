@@ -30,7 +30,7 @@ const initializeApp = async (): Promise<express.Application> => {
   const { coreStrategy, tenantStrategy, eventService, healthCheck } = await initializePlatform(
     {
       serviceId,
-      displayName: 'Configuration Service',
+      displayName: 'Configuration service',
       description: 'Service for managing configuration',
       roles: [
         {

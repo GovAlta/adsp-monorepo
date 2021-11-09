@@ -38,7 +38,7 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
   const { coreStrategy, tenantStrategy, tenantService, eventService } = await initializePlatform(
     {
       serviceId,
-      displayName: 'Status Service',
+      displayName: 'Status service',
       description: 'Service for publishing service status information.',
       roles: [
         {

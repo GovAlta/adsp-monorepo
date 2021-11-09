@@ -12,7 +12,7 @@ export default (): JSX.Element => {
         <div>This should not take long, please explore our features while you wait</div>
 
         <h2>Introducing our Access Service</h2>
-        <img src={CreatingRealmCarousel0} alt="Access Service" />
+        <img src={CreatingRealmCarousel0} alt="Access service" />
         <p>
           Quickly provide your project with a secure, robust and easy to use authentication system that supports
           Government of Alberta, Microsoft and Google credentials out of the box
@@ -21,7 +21,7 @@ export default (): JSX.Element => {
         <hr />
 
         <h2>Update your users</h2>
-        <img src={CreatingRealmCarousel1} alt="Access Service" />
+        <img src={CreatingRealmCarousel1} alt="Access service" />
         <p>
           Through our notification service, we make it easy to send personalized messages from a single template, for
           SMS or email. You do not need technical knowledge to use it. Yay!

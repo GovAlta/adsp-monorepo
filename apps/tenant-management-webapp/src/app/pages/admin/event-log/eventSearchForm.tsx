@@ -185,11 +185,11 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
           </GoAFormItem>
         </SearchBox>
         <GoAFormItem>
-          <label>Minimum Timestamp</label>
+          <label>Minimum timestamp</label>
           <GoAInputDateTime name="timestampMin" max={today} value={searchCriteria.timestampMin} onChange={setValue} />
         </GoAFormItem>
         <GoAFormItem>
-          <label>Maximum Timestamp</label>
+          <label>Maximum timestamp</label>
           <GoAInputDateTime name="timestampMax" max={today} value={searchCriteria.timestampMax} onChange={setValue} />
         </GoAFormItem>
       </GoAFlexRow>

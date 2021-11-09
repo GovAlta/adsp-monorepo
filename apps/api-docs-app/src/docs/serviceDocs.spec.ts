@@ -53,7 +53,7 @@ describe('createServiceDocs', () => {
           test: {
             service: {
               id: adspId`urn:ads:platform:test-service`,
-              name: 'Test Service',
+              name: 'Test service',
             },
             docs: {},
             url: 'http://test-service',
@@ -75,7 +75,7 @@ describe('createServiceDocs', () => {
         const service = {
           service: 'test-service',
           version: 'v1',
-          displayName: 'Test Service',
+          displayName: 'Test service',
         };
         const docs = {
           openapi: '3.0.0',
@@ -101,7 +101,7 @@ describe('createServiceDocs', () => {
         const service = {
           service: 'test-service',
           version: 'v1',
-          displayName: 'Test Service',
+          displayName: 'Test service',
         };
         cacheMock.mockReturnValueOnce(null);
         tokenProviderMock.getAccessToken.mockResolvedValueOnce('test');
@@ -125,7 +125,7 @@ describe('createServiceDocs', () => {
       const service = {
         service: 'test-service',
         version: 'v1',
-        displayName: 'Test Service',
+        displayName: 'Test service',
       };
       cacheMock.mockReturnValueOnce(null);
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('test');
@@ -149,7 +149,7 @@ describe('createServiceDocs', () => {
       const service = {
         service: 'test-service',
         version: 'v2',
-        displayName: 'Test Service',
+        displayName: 'Test service',
       };
       cacheMock.mockReturnValueOnce(null);
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('test');

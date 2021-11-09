@@ -1,10 +1,10 @@
 module.exports = {
   openapi: '3.0.0',
   info: {
-    title: 'Push Service',
+    title: 'Push service',
     version: '0.0.0',
     description:
-      'The Push Service is a gateway for push mode connections to projections of domain events. ' +
+      'The push service is a gateway for push mode connections to projections of domain events. ' +
       'Server side events and WebSockets are supported.',
   },
   tags: [

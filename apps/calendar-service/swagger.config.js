@@ -1,7 +1,7 @@
 module.exports = {
   openapi: '3.0.0',
   info: {
-    title: 'Calendar Service',
+    title: 'Calendar service',
     version: '0.0.0',
     description: '',
   },

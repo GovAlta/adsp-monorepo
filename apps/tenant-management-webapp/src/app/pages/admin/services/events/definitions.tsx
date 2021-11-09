@@ -73,7 +73,7 @@ export const EventDefinitions: FunctionComponent = () => {
 
       {/* Delete confirmation */}
       <GoAModal testId="delete-confirmation" isOpen={showDeleteConfirmation}>
-        <GoAModalTitle>Delete Definition</GoAModalTitle>
+        <GoAModalTitle>Delete definition</GoAModalTitle>
         <GoAModalContent>Delete {selectedDefinition?.name}?</GoAModalContent>
         <GoAModalActions>
           <GoAButton buttonType="tertiary" data-testid="delete-cancel" onClick={() => setShowDeleteConfirmation(false)}>

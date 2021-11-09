@@ -1,7 +1,7 @@
 module.exports = {
   openapi: '3.0.0',
   info: {
-    title: 'Notification Service',
+    title: 'Notification service',
     version: '0.0.0',
     description:
       'The notification service provides the capability to define notification types and manage subscriptions.',

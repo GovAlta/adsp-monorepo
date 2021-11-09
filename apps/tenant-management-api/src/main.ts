@@ -36,7 +36,7 @@ async function initializeApp(): Promise<express.Application> {
   const { coreStrategy, tenantStrategy, directory, eventService, configurationHandler } = await initializePlatform(
     {
       serviceId,
-      displayName: 'Tenant Service',
+      displayName: 'Tenant service',
       description: 'Service for management of ADSP tenants.',
       clientSecret: environment.CLIENT_SECRET,
       directoryUrl: null,

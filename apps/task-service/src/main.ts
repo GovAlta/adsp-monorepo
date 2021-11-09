@@ -38,52 +38,46 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const {
-    coreStrategy,
-    configurationHandler,
-    eventService,
-    tenantHandler,
-    tenantStrategy,
-    healthCheck,
-  } = await initializePlatform(
-    {
-      serviceId,
-      displayName: 'Task Service',
-      description: 'Service that provides a model for tasks and work queues.',
-      roles: [
-        {
-          role: TaskServiceRoles.Admin,
-          description: 'Administrator role for tasks, definitions, and queues.',
-          inTenantAdmin: true,
-        },
-        {
-          role: TaskServiceRoles.TaskReader,
-          description: 'Reader role for access tasks.',
-        },
-        {
-          role: TaskServiceRoles.TaskWriter,
-          description: 'Writer role for creating and updating tasks.',
-        },
-      ],
-      events: [
-        TaskCreatedDefinition,
-        TaskUpdatedDefinition,
-        TaskPrioritySetDefinition,
-        TaskAssignedDefinition,
-        TaskStartedDefinition,
-        TaskCompletedDefinition,
-        TaskCancelledDefinition,
-      ],
-      configurationSchema,
-      configurationConverter: ({ queues }: TaskServiceConfiguration) => ({
-        queues: Object.entries(queues || {}).reduce((qs, [k, q]) => ({ ...qs, [k]: new QueueEntity(q) }), {}),
-      }),
-      clientSecret: environment.CLIENT_SECRET,
-      accessServiceUrl,
-      directoryUrl: new URL(environment.DIRECTORY_URL),
-    },
-    { logger }
-  );
+  const { coreStrategy, configurationHandler, eventService, tenantHandler, tenantStrategy, healthCheck } =
+    await initializePlatform(
+      {
+        serviceId,
+        displayName: 'Task service',
+        description: 'Service that provides a model for tasks and work queues.',
+        roles: [
+          {
+            role: TaskServiceRoles.Admin,
+            description: 'Administrator role for tasks, definitions, and queues.',
+            inTenantAdmin: true,
+          },
+          {
+            role: TaskServiceRoles.TaskReader,
+            description: 'Reader role for access tasks.',
+          },
+          {
+            role: TaskServiceRoles.TaskWriter,
+            description: 'Writer role for creating and updating tasks.',
+          },
+        ],
+        events: [
+          TaskCreatedDefinition,
+          TaskUpdatedDefinition,
+          TaskPrioritySetDefinition,
+          TaskAssignedDefinition,
+          TaskStartedDefinition,
+          TaskCompletedDefinition,
+          TaskCancelledDefinition,
+        ],
+        configurationSchema,
+        configurationConverter: ({ queues }: TaskServiceConfiguration) => ({
+          queues: Object.entries(queues || {}).reduce((qs, [k, q]) => ({ ...qs, [k]: new QueueEntity(q) }), {}),
+        }),
+        clientSecret: environment.CLIENT_SECRET,
+        accessServiceUrl,
+        directoryUrl: new URL(environment.DIRECTORY_URL),
+      },
+      { logger }
+    );
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
