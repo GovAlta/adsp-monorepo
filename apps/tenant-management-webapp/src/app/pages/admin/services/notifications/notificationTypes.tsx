@@ -245,7 +245,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                   <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
                     <EventBorder>
                       <div className="height-100 rowFlex">
-                        <div className="flex1">{event.name}</div>
+                        <div className="flex1">
+                          {event.namespace}:{event.name}
+                        </div>
                       </div>
                     </EventBorder>
                   </GridItem>
