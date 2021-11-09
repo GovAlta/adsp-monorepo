@@ -54,11 +54,14 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
     setSearchBox(userInput);
     setFilteredSuggestions(unLinked);
     setActiveSuggestionIndex(0);
+
     if (userInput.indexOf(':') === 0) {
       setSearchCriteria({ ...searchCriteria, namespace: '', name: userInput.substr(1) });
     } else if (userInput.indexOf(':') > 0) {
       const nameAndSpace = userInput.split(':');
       setSearchCriteria({ ...searchCriteria, namespace: nameAndSpace[0], name: nameAndSpace[1] });
+    } else {
+      setSearchCriteria({ ...searchCriteria, namespace: '', name: '' });
     }
   };
 
