@@ -72,10 +72,20 @@ const EventDefinitionsListComponent: FunctionComponent<EventDefinitionsListCompo
     acc[def.namespace].push(def);
     return acc;
   }, {});
+  const orderedGroupNames = Object.keys(groupedDefinitions).sort((prev, next): number => {
+    // Each group must have at least one element
+    if (groupedDefinitions[prev][0].isCore > groupedDefinitions[next][0].isCore) {
+      return 1
+    }
+    if (prev > next) {
+      return 1
+    }
+    return -1
+  })
 
   return (
     <div className={className}>
-      {Object.keys(groupedDefinitions).map((group) => (
+      {orderedGroupNames.map((group) => (
         <div key={group}>
           <div className="group-name">{group}</div>
           <DataTable data-testid="events-definitions-table">
@@ -87,7 +97,13 @@ const EventDefinitionsListComponent: FunctionComponent<EventDefinitionsListCompo
               </tr>
             </thead>
             <tbody>
-              {groupedDefinitions[group].map((definition) => (
+              {groupedDefinitions[group].sort((prev, next): number => {
+                // in each group sort by alphabetic order
+                if (prev.name > next.name) {
+                  return 1
+                }
+                return -1
+              }).map((definition) => (
                 <EventDefinitionComponent
                   onEdit={onEdit}
                   onDelete={onDelete}
