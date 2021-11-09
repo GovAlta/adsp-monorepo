@@ -13,6 +13,7 @@ export const environment = envalid.cleanEnv(
     MONGO_DB: envalid.str({ default: 'file' }),
     MONGO_USER: envalid.str({ default: '' }),
     MONGO_PASSWORD: envalid.str({ default: '' }),
+    MONGO_TLS: envalid.bool({ default: false }),
     STORAGE_PROVIDER: envalid.str({ default: 'file' }),
     FILE_PATH: envalid.str({ default: 'data/file/' }),
     BLOB_ACCOUNT_URL: envalid.str({ default: '' }),

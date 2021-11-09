@@ -1,9 +1,0 @@
-apiVersion: v1
-data:
-  database-name: 
-  database-password: 
-  database-user: 
-kind: Secret
-metadata:
-  name: value-service-timescaledb
-type: Opaque

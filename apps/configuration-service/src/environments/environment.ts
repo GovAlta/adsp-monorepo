@@ -11,6 +11,7 @@ export const environment = envalid.cleanEnv(
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     MONGO_URI: envalid.str({ default: 'mongodb://localhost:27017' }),
     MONGO_DB: envalid.str({ default: 'config' }),
+    MONGO_TLS: envalid.bool({ default: false }),
     MONGO_USER: envalid.str({ default: '' }),
     MONGO_PASSWORD: envalid.str({ default: '' }),
     PORT: envalid.num({ default: 3337 }),
