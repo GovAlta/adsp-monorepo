@@ -39,10 +39,10 @@ Feature: Events
     When the user clicks "Edit" button for the definition of "autotest-eventname" and "autotest event desc" under "Autotest-Service"
     Then the user views Edit definition dialog
     When the user enters "autotest event desc2" in Description
-    And the user clicks Save button on Definition modal
+    And the user clicks Save button on definition modal
     Then the user "views" an event definition of "autotest-eventname" and "autotest event desc2" under "Autotest-Service"
     When the user clicks "Delete" button for the definition of "autotest-eventname" and "autotest event desc2" under "Autotest-Service"
-    Then the user views Delete Definition dialog for the definition of "autotest-eventname"
+    Then the user views Delete definition dialog for the definition of "autotest-eventname"
     And the user clicks Confirm button
     Then the user "should not view" an event definition of "autotest-eventname" and "autotest event desc2" under "Autotest-Service"
 

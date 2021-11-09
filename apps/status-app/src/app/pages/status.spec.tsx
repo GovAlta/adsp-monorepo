@@ -38,7 +38,7 @@ describe('Service statuses', () => {
       },
       application: ApplicationInit,
       session: SessionInit,
-      notices: NoticeInit
+      notices: NoticeInit,
     });
 
     axiosMock.get.mockResolvedValueOnce({ data: {} });
@@ -78,7 +78,7 @@ describe('Service statuses (2 of them)', () => {
       ],
       notices: [],
       metadata: null,
-      name: 'Status Service',
+      name: 'Status service',
       description: 'This service allows for easy monitoring of application downtime.',
       statusTimestamp: 1626378840127,
       tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/60e76e9e852db55d8ce1fa80',
@@ -98,7 +98,7 @@ describe('Service statuses (2 of them)', () => {
       ],
       notices: [],
       metadata: null,
-      name: 'Tenant Service',
+      name: 'Tenant service',
       description: 'Allows the provisioning of distinct services in their own namespace.',
       statusTimestamp: 1626380220228,
       tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/60e76e9e852db55d8ce1fa80',
@@ -146,8 +146,8 @@ describe('Service statuses (2 of them)', () => {
         <ServiceStatuses />
       </Provider>
     );
-    await waitFor(() => expect(getByText('Status Service')).toBeTruthy());
-    await waitFor(() => expect(getByText('Tenant Service')).toBeTruthy());
+    await waitFor(() => expect(getByText('Status service')).toBeTruthy());
+    await waitFor(() => expect(getByText('Tenant service')).toBeTruthy());
   });
 
   it('has service status descriptions', async () => {

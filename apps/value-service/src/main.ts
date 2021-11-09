@@ -23,75 +23,69 @@ const initializeApp = async () => {
 
   const repositories = await createRepositories({ ...environment, logger });
 
-  const {
-    coreStrategy,
-    tenantStrategy,
-    tenantHandler,
-    configurationHandler,
-    eventService,
-    healthCheck,
-  } = await initializePlatform(
-    {
-      serviceId: AdspId.parse(environment.CLIENT_ID),
-      displayName: 'Value Service',
-      description: 'Service for time-series values.',
-      roles: [
-        {
-          role: ServiceUserRoles.Reader,
-          description: 'Reader role for accessing values.',
-          inTenantAdmin: true,
-        },
-        {
-          role: ServiceUserRoles.Writer,
-          description: 'Writer role for writing new values.',
-        },
-      ],
-      configurationSchema: {
-        type: 'object',
-        additionalProperties: {
+  const { coreStrategy, tenantStrategy, tenantHandler, configurationHandler, eventService, healthCheck } =
+    await initializePlatform(
+      {
+        serviceId: AdspId.parse(environment.CLIENT_ID),
+        displayName: 'Value service',
+        description: 'Service for time-series values.',
+        roles: [
+          {
+            role: ServiceUserRoles.Reader,
+            description: 'Reader role for accessing values.',
+            inTenantAdmin: true,
+          },
+          {
+            role: ServiceUserRoles.Writer,
+            description: 'Writer role for writing new values.',
+          },
+        ],
+        configurationSchema: {
           type: 'object',
-          properties: {
-            name: { type: 'string' },
-            definitions: {
-              type: 'object',
-              additionalProperties: {
+          additionalProperties: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              definitions: {
                 type: 'object',
-                properties: {
-                  name: { type: 'string' },
-                  description: { type: 'string' },
-                  jsonSchema: { type: 'object' },
+                additionalProperties: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string' },
+                    description: { type: 'string' },
+                    jsonSchema: { type: 'object' },
+                  },
+                  required: ['name', 'description', 'jsonSchema'],
+                  additionalProperties: false,
                 },
-                required: ['name', 'description', 'jsonSchema'],
-                additionalProperties: false,
               },
             },
+            required: ['name', 'definitions'],
           },
-          required: ['name', 'definitions'],
+        },
+        events: [ValueWrittenDefinition],
+        clientSecret: environment.CLIENT_SECRET,
+        directoryUrl: new URL(environment.DIRECTORY_URL),
+        accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
+        configurationConverter: (config: Record<string, Namespace>, tenantId) => {
+          return config
+            ? Object.getOwnPropertyNames(config).reduce(
+                (namespaces, namespace) => ({
+                  ...namespaces,
+                  [namespace]: new NamespaceEntity(
+                    new AjvValueValidationService(logger),
+                    repositories.valueRepository,
+                    config[namespace],
+                    tenantId
+                  ),
+                }),
+                {}
+              )
+            : null;
         },
       },
-      events: [ValueWrittenDefinition],
-      clientSecret: environment.CLIENT_SECRET,
-      directoryUrl: new URL(environment.DIRECTORY_URL),
-      accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
-      configurationConverter: (config: Record<string, Namespace>, tenantId) => {
-        return config
-          ? Object.getOwnPropertyNames(config).reduce(
-              (namespaces, namespace) => ({
-                ...namespaces,
-                [namespace]: new NamespaceEntity(
-                  new AjvValueValidationService(logger),
-                  repositories.valueRepository,
-                  config[namespace],
-                  tenantId
-                ),
-              }),
-              {}
-            )
-          : null;
-      },
-    },
-    { logger }
-  );
+      { logger }
+    );
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);

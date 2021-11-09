@@ -4,11 +4,11 @@ class FileServicePage {
   }
 
   enableServiceButton() {
-    return cy.get('button:contains("Enable Service")');
+    return cy.get('button:contains("Enable service")');
   }
 
   disableServiceButton() {
-    return cy.get('button:contains("Disable Service")');
+    return cy.get('button:contains("Disable service")');
   }
 
   fileServiceTabs() {

@@ -56,7 +56,7 @@ async function initializeApp() {
     healthCheck,
   } = await initializePlatform(
     {
-      displayName: 'Notification Service',
+      displayName: 'Notification service',
       description: 'Service for subscription based notifications.',
       serviceId,
       accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),

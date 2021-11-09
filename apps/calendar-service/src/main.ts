@@ -42,7 +42,7 @@ const initializeApp = async (): Promise<express.Application> => {
     await initializePlatform(
       {
         serviceId,
-        displayName: 'Calendar Service',
+        displayName: 'Calendar service',
         description: 'Service that provides calendar date information, events, and scheduling.',
         roles: [
           {
