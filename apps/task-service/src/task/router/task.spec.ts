@@ -9,6 +9,7 @@ import { TaskPriority, TaskStatus } from '../types';
 import { createTaskRouter, getTask, mapTask } from './task';
 
 describe('task', () => {
+  const apiId = adspId`urn:ads:platform:task-service:v1`;
   const loggerMock = ({
     debug: jest.fn(),
     info: jest.fn(),
@@ -62,6 +63,7 @@ describe('task', () => {
   describe('createTaskRouter', () => {
     it('can create router', () => {
       const router = createTaskRouter({
+        apiId,
         logger: loggerMock,
         eventService: eventServiceMock,
         taskRepository: repositoryMock,
@@ -88,7 +90,7 @@ describe('task', () => {
           assignedTo: { id: 'tester-2', name: 'tester-2', email: 'tester-2@test.co' },
         },
       });
-      const result = mapTask(entity) as Record<string, unknown>;
+      const result = mapTask(apiId, entity) as Record<string, unknown>;
       expect(result.id).toBe(entity.id);
       expect(result.name).toBe(entity.name);
       expect(result.description).toBe(entity.description);
@@ -102,10 +104,10 @@ describe('task', () => {
   });
 
   describe('getTasks', () => {
-    const handler = getTasks(repositoryMock);
+    const handler = getTasks(apiId, repositoryMock);
 
     it('can create request handler', () => {
-      const result = getTasks(repositoryMock);
+      const result = getTasks(apiId, repositoryMock);
       expect(result).toBeTruthy();
     });
 
@@ -385,10 +387,10 @@ describe('task', () => {
   });
 
   describe('updateTask', () => {
-    const handler = updateTask(eventServiceMock);
+    const handler = updateTask(apiId, eventServiceMock);
 
     it('can create request handler', () => {
-      const result = updateTask(eventServiceMock);
+      const result = updateTask(apiId, eventServiceMock);
       expect(result).toBeTruthy();
     });
 
@@ -425,10 +427,10 @@ describe('task', () => {
   });
 
   describe('taskOperation', () => {
-    const handler = taskOperation(eventServiceMock);
+    const handler = taskOperation(apiId, eventServiceMock);
 
     it('can create request handler', () => {
-      const result = taskOperation(eventServiceMock);
+      const result = taskOperation(apiId, eventServiceMock);
       expect(result).toBeTruthy();
     });
 

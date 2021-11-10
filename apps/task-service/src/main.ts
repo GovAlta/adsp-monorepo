@@ -14,9 +14,6 @@ import {
   QueueEntity,
   TaskServiceConfiguration,
   TaskServiceRoles,
-} from './task';
-import { createRepositories } from './postgres';
-import {
   TaskAssignedDefinition,
   TaskCancelledDefinition,
   TaskCompletedDefinition,
@@ -24,7 +21,8 @@ import {
   TaskPrioritySetDefinition,
   TaskStartedDefinition,
   TaskUpdatedDefinition,
-} from './task/events';
+} from './task';
+import { createRepositories } from './postgres';
 
 const logger = createLogger('task-service', environment.LOG_LEVEL);
 
@@ -96,6 +94,7 @@ const initializeApp = async (): Promise<express.Application> => {
   const repositories = await createRepositories({ logger, ...environment });
   applyTaskMiddleware(app, {
     KEYCLOAK_ROOT_URL: environment.KEYCLOAK_ROOT_URL,
+    serviceId,
     logger,
     taskRepository: repositories.taskRepository,
     eventService,

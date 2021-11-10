@@ -22,6 +22,7 @@ const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('queue', () => {
   const KEYCLOAK_ROOT_URL = 'http://localhost:8080';
+  const apiId = adspId`urn:ads:platform:task-service:v1`;
   const loggerMock = ({
     debug: jest.fn(),
     info: jest.fn(),
@@ -75,6 +76,7 @@ describe('queue', () => {
     it('can create router', () => {
       const router = createQueueRouter({
         KEYCLOAK_ROOT_URL,
+        apiId,
         logger: loggerMock,
         taskRepository: repositoryMock,
         eventService: eventServiceMock,
@@ -183,10 +185,10 @@ describe('queue', () => {
   });
 
   describe('getQueuedTasks', () => {
-    const handler = getQueuedTasks(repositoryMock);
+    const handler = getQueuedTasks(apiId, repositoryMock);
 
     it('can create handler', () => {
-      const result = getQueuedTasks(repositoryMock);
+      const result = getQueuedTasks(apiId, repositoryMock);
       expect(result).toBeTruthy();
     });
 
@@ -256,10 +258,10 @@ describe('queue', () => {
   });
 
   describe('createTask', () => {
-    const handler = createTask(repositoryMock, eventServiceMock);
+    const handler = createTask(apiId, repositoryMock, eventServiceMock);
 
     it('can create handler', () => {
-      const result = createTask(repositoryMock, eventServiceMock);
+      const result = createTask(apiId, repositoryMock, eventServiceMock);
       expect(result).toBeTruthy();
     });
 
