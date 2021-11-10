@@ -69,7 +69,7 @@ const Dashboard = (): JSX.Element => {
               <GridItem md={6} vSpacing={1} hSpacing={0.5}>
                 <GoACard title={<Link to="/admin/services/status">Status</Link>}>
                   <div>
-                    The status service allows for easy monitoring of application downtime. Each Application should
+                    The status service allows for easy monitoring of application downtime. Each application should
                     represent a service that is useful to the end user by itself, such as child care subsidy and child
                     care certification.
                   </div>

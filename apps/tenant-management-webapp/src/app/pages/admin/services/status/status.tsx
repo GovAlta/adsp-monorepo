@@ -84,7 +84,7 @@ function Status(): JSX.Element {
           <Tab label="Overview">
             This service allows for easy monitoring of application downtime.
             <p>
-              Each Application should represent a service that is useful to the end user by itself, such as child care
+              Each application should represent a service that is useful to the end user by itself, such as child care
               subsidy and child care certification
             </p>
             <GoAButton data-testid="add-application" onClick={() => addApplication()} buttonType="primary">
@@ -98,7 +98,7 @@ function Status(): JSX.Element {
               database, storage servers, etc)
             </p>
             <p>
-              Each Application should represent a service that is useful to the end user by itself, such as child care
+              Each application should represent a service that is useful to the end user by itself, such as child care
               subsidy and child care certification
             </p>
             <GoALinkButton data-testid="add-application" to={`${location.pathname}/new`} buttonType="primary">
@@ -408,7 +408,7 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
     }
 
     return app.internalStatus;
-  }
+  };
 
   const status = getStatus(app);
 
@@ -429,8 +429,8 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
               backgroundColor: entry.ok
                 ? 'var(--color-green)'
                 : entry.status === 'n/a'
-                  ? 'var(--color-gray-300)'
-                  : 'var(--color-red)',
+                ? 'var(--color-gray-300)'
+                : 'var(--color-red)',
             }}
             title={entry.status + ': ' + new Date(entry.timestamp).toLocaleString()}
           />
@@ -447,15 +447,21 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
 const StatusBarDetails = styled.div`
   display: flex;
   justify-content: space-between;
-  .blink-text{
-		color: var(--color-black);
+  .blink-text {
+    color: var(--color-black);
     animation: blinkingText 1.5s infinite;
-	}
-	@keyframes blinkingText{
-		0%		{  color: var(--color-black)}
-    50%   {  color: var(--color-black)}
-		100%	{  color: var(--color-white)}
-	}
+  }
+  @keyframes blinkingText {
+    0% {
+      color: var(--color-black);
+    }
+    50% {
+      color: var(--color-black);
+    }
+    100% {
+      color: var(--color-white);
+    }
+  }
 `;
 
 const EndpointStatusEntries = styled.div`
