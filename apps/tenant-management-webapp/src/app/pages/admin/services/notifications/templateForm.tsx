@@ -15,6 +15,7 @@ interface TemplateFormProps {
   selectedEvent: EventItem;
   notifications: NotificationItem;
   errors?: Record<string, string>;
+  disabled: boolean;
 }
 
 export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
@@ -23,6 +24,7 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
   notifications,
   open,
   selectedEvent,
+  disabled,
 }) => {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -64,6 +66,7 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
                 options={{
                   wordWrap: 'off',
                   lineNumbers: 'off',
+                  readOnly: disabled,
                   scrollbar: { horizontal: 'hidden', vertical: 'hidden' },
                   find: {
                     addExtraSpaceOnTop: false,
@@ -87,6 +90,7 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
                 language="handlebars"
                 options={{
                   tabSize: 2,
+                  readOnly: disabled,
                   lineNumbers: 'off',
                   minimap: { enabled: false },
                 }}
@@ -99,26 +103,28 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
         <GoAButton data-testid="template-form-cancel" buttonType="tertiary" type="button" onClick={onCancel}>
           Cancel
         </GoAButton>
-        <GoAButton
-          buttonType="primary"
-          data-testid="template-form-save"
-          type="submit"
-          onClick={() => {
-            selectedEvent.templates.email.subject = subject;
-            selectedEvent.templates.email.body = body;
-            if (validate()) {
-              const definitionEventIndex = notifications?.events?.findIndex(
-                (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`
-              );
+        {!disabled && (
+          <GoAButton
+            buttonType="primary"
+            data-testid="template-form-save"
+            type="submit"
+            onClick={() => {
+              selectedEvent.templates.email.subject = subject;
+              selectedEvent.templates.email.body = body;
+              if (validate()) {
+                const definitionEventIndex = notifications?.events?.findIndex(
+                  (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`
+                );
 
-              notifications.events[definitionEventIndex] = selectedEvent;
+                notifications.events[definitionEventIndex] = selectedEvent;
 
-              onSubmit(notifications);
-            }
-          }}
-        >
-          {addOrEdit()}
-        </GoAButton>
+                onSubmit(notifications);
+              }
+            }}
+          >
+            {addOrEdit()}
+          </GoAButton>
+        )}
       </GoAModalActions>
     </GoAModal>
   );
