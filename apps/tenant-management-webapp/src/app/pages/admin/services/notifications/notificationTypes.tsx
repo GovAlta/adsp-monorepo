@@ -44,6 +44,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showEventDeleteConfirmation, setShowEventDeleteConfirmation] = useState(false);
   const [showTemplateForm, setShowTemplateForm] = useState(false);
+  const [disableTemplateForm, setDisableTemplateForm] = useState(false);
   const notification = useSelector((state: RootState) => state.notification);
   const coreNotification = useSelector((state: RootState) => state.notification.core);
 
@@ -60,6 +61,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     setSelectedType(emptyNotificationType);
     setErrors({});
     setShowTemplateForm(false);
+    setDisableTemplateForm(false);
   }
   function isEmptyTemplate(event) {
     return event.templates?.email?.body?.length === 0 && event.templates?.email?.subject?.length === 0;
@@ -177,6 +179,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                 onClick={() => {
                                   setShowTemplateForm(true);
                                   setSelectedEvent(event);
+                                  setDisableTemplateForm(false);
                                   setSelectedType(notificationType);
                                 }}
                               >
@@ -244,9 +247,25 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 {notificationType?.events?.map((event, key) => (
                   <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
                     <EventBorder>
-                      <div className="height-100 rowFlex">
+                      <div className="height-100 columnFlex">
                         <div className="flex1">
                           {event.namespace}:{event.name}
+                        </div>
+                        <div className="rowFlex">
+                          {!isEmptyTemplate(event) && (
+                            <a
+                              onClick={() => {
+                                setShowTemplateForm(true);
+                                setSelectedEvent(event);
+                                setDisableTemplateForm(true);
+                                setSelectedType(notificationType);
+                              }}
+                            >
+                              <NotificationBorder className="smallPadding">
+                                <GoAIcon type="mail" />
+                              </NotificationBorder>
+                            </a>
+                          )}
                         </div>
                       </div>
                     </EventBorder>
@@ -342,6 +361,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         selectedEvent={selectedEvent}
         notifications={selectedType}
         open={showTemplateForm}
+        disabled={disableTemplateForm}
         errors={errors}
         onSubmit={(type) => {
           dispatch(UpdateNotificationTypeService(type));
