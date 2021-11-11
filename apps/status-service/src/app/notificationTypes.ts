@@ -36,18 +36,18 @@ export const StatusApplicationHealthChange: NotificationType = {
       name: 'health-check-started',
       templates: {
         email: {
-          subject: 'Health Check for {{ healthCheck.application.name }} has started',
+          subject: 'Health Check for {{ event.payload.application.name }} has started',
           body: `<!doctype html>
 <html>
   <head>
   </head>
   <body>
-    <p>Health checking has been activated for application {{ healthCheck.application.name }}</p>
+    <p>Health checking has been activated for application {{ event.payload.application.name }}</p>
     <p>
-      {{ healthCheck.application.name }} is described as follows: {{ healthCheck.application.description }}
+      {{ event.payload.application.name }} is described as follows: {{ event.payload.application.description }}
     </p>
     <p>
-      {{ healthCheck.application.name }} is available at <a href="{{ healthCheck.application.url }}">{{ healthCheck.application.url }}</a>
+      {{ event.payload.application.name }} is available at <a href="{{ event.payload.application.url }}">{{ event.payload.application.url }}</a>
     </p>
   </body>
 </html>`,
@@ -60,18 +60,18 @@ export const StatusApplicationHealthChange: NotificationType = {
       name: 'health-check-stopped',
       templates: {
         email: {
-          subject: 'Health Check for {{ healthCheck.application.name }} has stopped',
+          subject: 'Health Check for {{ event.payload.application.name }} has stopped',
           body: `<!doctype html>
 <html>
   <head>
   </head>
   <body>
-    <p>Health checking has been disabled for application {{ healthCheck.application.name }}</p>
+    <p>Health checking has been disabled for application {{ event.payload.application.name }}</p>
     <p>
-      {{ healthCheck.application.name }} is described as follows: {{ healthCheck.application.description }}
+      {{ event.payload.application.name }} is described as follows: {{ event.payload.application.description }}
     </p>
     <p>
-      {{ healthCheck.application.name }} is available at <a href="{{ healthCheck.application.url }}">{{ healthCheck.application.url }}</a>
+      {{ event.payload.application.name }} is available at <a href="{{ event.payload.application.url }}">{{ event.payload.application.url }}</a>
     </p>
   </body>
 </html>`,
@@ -84,18 +84,18 @@ export const StatusApplicationHealthChange: NotificationType = {
       name: 'application-unhealthy',
       templates: {
         email: {
-          subject: 'Status of {{ healthCheck.application.name }} is deemed to be unhealthy',
+          subject: 'Status of {{ event.payload.application.name }} is deemed to be unhealthy',
           body: `<!doctype html>
 <html>
   <head>
   </head>
   <body>
-    <p>{{ healthCheck.application.name }} may be offline</p>
+    <p>{{ event.payload.application.name }} may be offline</p>
     <p>
-      {{ healthCheck.application.name }} is described as follows: {{ healthCheck.application.description }}
+      {{ event.payload.application.name }} is described as follows: {{ event.payload.application.description }}
     </p>
     <p>
-      {{ healthCheck.application.name }} is available at <a href="{{ healthCheck.application.url }}">{{ healthCheck.application.url }}</a>
+      {{ event.payload.application.name }} is available at <a href="{{ event.payload.application.url }}">{{ event.payload.application.url }}</a>
     </p>
   </body>
 </html>`,
@@ -105,21 +105,21 @@ export const StatusApplicationHealthChange: NotificationType = {
     },
     {
       namespace: 'Status-Service',
-      name: 'application-unhealthy',
+      name: 'application-healthy',
       templates: {
         email: {
-          subject: 'Status of {{ healthCheck.application.name }} is healthy',
+          subject: 'Status of {{ event.payload.application.name }} is healthy',
           body: `<!doctype html>
 <html>
   <head>
   </head>
   <body>
-    <p>{{ healthCheck.application.name }} seems to be available</p>
+    <p>{{ event.payload.application.name }} seems to be available</p>
     <p>
-      {{ healthCheck.application.name }} is described as follows: {{ healthCheck.application.description }}
+      {{ event.payload.application.name }} is described as follows: {{ event.payload.application.description }}
     </p>
     <p>
-      {{ healthCheck.application.name }} is available at <a href="{{ healthCheck.application.url }}">{{ healthCheck.application.url }}</a>
+      {{ event.payload.application.name }} is available at <a href="{{ event.payload.application.url }}">{{ event.payload.application.url }}</a>
     </p>
   </body>
 </html>`,
