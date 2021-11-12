@@ -40,7 +40,10 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
     }
     return true;
   };
-  const addOrEdit = () => {
+  const getModalState = () => {
+    if (disabled) {
+      return 'Preview';
+    }
     if (!selectedEvent) {
       return 'Add';
     }
@@ -50,7 +53,7 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
   };
   return (
     <GoAModal testId="template-form" isOpen={open}>
-      <GoAModalTitle>{'Add an email template'}</GoAModalTitle>
+      <GoAModalTitle>{`${getModalState()} an email template`}</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>
           <GoAFormItem>
@@ -122,7 +125,7 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
               }
             }}
           >
-            {addOrEdit()}
+            {getModalState()}
           </GoAButton>
         )}
       </GoAModalActions>

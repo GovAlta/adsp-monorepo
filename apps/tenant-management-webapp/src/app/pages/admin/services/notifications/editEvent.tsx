@@ -123,17 +123,8 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
               channels: [],
             };
 
-            if (selectedEvent) {
-              const definitionEventIndex = definition?.events?.findIndex(
-                (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`
-              );
-
-              definition.events[definitionEventIndex] = eventObject;
-              onNext(definition, selectedEvent);
-            } else {
-              definition.events.push(eventObject);
-              onNext(definition, eventObject);
-            }
+            definition.events.push(eventObject);
+            onNext(definition, eventObject);
 
             setValues(['']);
           }}

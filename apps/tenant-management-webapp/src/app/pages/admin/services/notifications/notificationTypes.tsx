@@ -57,7 +57,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   function reset() {
     setEditType(false);
-    setEditEvent(false);
+    setEditEvent(null);
     setSelectedType(emptyNotificationType);
     setErrors({});
     setShowTemplateForm(false);
@@ -156,40 +156,40 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           </div>
                           <div className="rowFlex">
                             <MaxHeight height={34}>
-                              <a
-                                className="flex1 flex"
-                                onClick={() => {
-                                  setSelectedEvent(event);
-                                  setSelectedType(notificationType);
-                                  setShowEventDeleteConfirmation(true);
-                                }}
-                                data-testid={`delete-event-${notificationType.id}`}
-                              >
-                                <NotificationBorder className="smallPadding">
+                              <NotificationBorder className="smallPadding">
+                                <a
+                                  className="flex1 flex"
+                                  onClick={() => {
+                                    setSelectedEvent(event);
+                                    setSelectedType(notificationType);
+                                    setShowEventDeleteConfirmation(true);
+                                  }}
+                                  data-testid={`delete-event-${notificationType.id}`}
+                                >
                                   <GoAIcon type="trash" />
-                                </NotificationBorder>
-                              </a>
+                                </a>
+                              </NotificationBorder>
                             </MaxHeight>
                           </div>
                         </div>
                         <div className="columnFlex height-100">
                           <div className="flex1 flex flexEndAlign">
-                            {!isEmptyTemplate(event) && (
+                            <a>
+                              <NotificationBorder className="smallPadding">
+                                <GoAIcon type="mail" style="filled" />
+                              </NotificationBorder>
+                            </a>
+                            <div className="rightAlignEdit">
                               <a
+                                style={{ marginRight: '20px' }}
+                                data-testid={`preview-event-${notificationType.id}`}
                                 onClick={() => {
-                                  setShowTemplateForm(true);
                                   setSelectedEvent(event);
-                                  setDisableTemplateForm(false);
                                   setSelectedType(notificationType);
+                                  setShowTemplateForm(true);
+                                  setDisableTemplateForm(true);
                                 }}
                               >
-                                <NotificationBorder className="smallPadding">
-                                  <GoAIcon type="mail" />
-                                </NotificationBorder>
-                              </a>
-                            )}
-                            <div className="rightAlignEdit">
-                              <a style={{ marginRight: '20px' }} data-testid={`preview-event-${notificationType.id}`}>
                                 Preview
                               </a>
 
@@ -197,7 +197,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                 data-testid={`edit-event-${notificationType.id}`}
                                 onClick={() => {
                                   setSelectedEvent(event);
-                                  manageEvents(notificationType);
+                                  setSelectedType(notificationType);
+                                  setShowTemplateForm(true);
+                                  setDisableTemplateForm(false);
                                 }}
                               >
                                 Edit
@@ -252,20 +254,26 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           {event.namespace}:{event.name}
                         </div>
                         <div className="rowFlex">
-                          {!isEmptyTemplate(event) && (
+                          <NotificationBorder className="smallPadding">
+                            <a>
+                              <GoAIcon type="mail" style="filled" />
+                            </a>
+                          </NotificationBorder>
+
+                          <div className="rightAlignEdit">
                             <a
+                              style={{ marginRight: '20px' }}
+                              data-testid={`preview-event-${notificationType.id}`}
                               onClick={() => {
-                                setShowTemplateForm(true);
                                 setSelectedEvent(event);
-                                setDisableTemplateForm(true);
                                 setSelectedType(notificationType);
+                                setShowTemplateForm(true);
+                                setDisableTemplateForm(true);
                               }}
                             >
-                              <NotificationBorder className="smallPadding">
-                                <GoAIcon type="mail" />
-                              </NotificationBorder>
+                              Preview
                             </a>
-                          )}
+                          </div>
                         </div>
                       </div>
                     </EventBorder>
@@ -370,6 +378,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         }}
         onCancel={() => {
           setShowTemplateForm(false);
+          setEditEvent(null);
+          setSelectedType(selectedType.events.pop());
         }}
       />
     </NotficationStyles>
