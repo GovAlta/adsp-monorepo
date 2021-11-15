@@ -53,6 +53,17 @@ describe('ServiceStatus Page', () => {
           },
         ],
       },
+      subscription: {
+        subscriber: {
+          id: '1234',
+          urn: '123:456:789',
+        },
+        subscription: {
+          id: '1234',
+          urn: '123:456:789',
+          channels: null,
+        },
+      },
     });
 
     renderPage(store);
@@ -111,6 +122,17 @@ describe('ServiceStatus Page', () => {
             endpoint: {},
           },
         ],
+      },
+      subscription: {
+        subscriber: {
+          id: '1234',
+          urn: '123:456:789',
+        },
+        subscription: {
+          id: '1234',
+          urn: '123:456:789',
+          channels: null,
+        },
       },
     });
 

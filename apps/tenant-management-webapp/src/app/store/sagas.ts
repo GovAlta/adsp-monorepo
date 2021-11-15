@@ -97,7 +97,6 @@ export function* watchSagas() {
     // notification
     watchNotificationSagas(),
     // subscription
-
     watchSubscriptionSagas(),
   ]);
 }
