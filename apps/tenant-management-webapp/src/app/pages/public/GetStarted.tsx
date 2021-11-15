@@ -24,7 +24,7 @@ const GetStarted = (): JSX.Element => {
               dispatch(TenantCreationLoginInit());
             }}
           >
-            Continue with Government Alberta account
+            Sign in
           </GoAButton>
 
           <GoALinkButton buttonType="secondary" to="/">
