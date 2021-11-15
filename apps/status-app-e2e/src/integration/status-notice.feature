@@ -9,9 +9,15 @@ Feature: public site for service status and notice
     Given a user is on the public service status page for "Platform"
     Then the user views the status and outages page
     And the user views the correct header and release version
-    And the user views service statuses for "Access service, Tenant service, File service, Status service"
+    And the user views service statuses for "Access Service, Tenant Service, File Service, Status Service"
 
   @accessibility @regression
   Scenario: As an interested member of the public, I can see the public service status page without any critical and serious accessibility issues
     Given a user is on the public service status page for "Platform"
     Then no critical or serious accessibility issues on public service status page
+
+  @TEST_CS-889
+  Scenario: As an interested stakeholder, I can see the time zone information on status app
+    Given a user is on the public service status page for "Platform"
+    Then the user views the status and outages page
+    And the user views the timezone information

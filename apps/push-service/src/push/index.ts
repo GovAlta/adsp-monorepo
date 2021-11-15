@@ -1,14 +1,14 @@
 import { Application } from 'express';
-import { Instance as WsApplication } from 'express-ws';
 import * as fs from 'fs';
 import { Logger } from 'winston';
 import { DomainEventSubscriberService } from '@core-services/core-common';
 import { createStreamRouter } from './router';
-import { Server as IoServer } from 'socket.io';
+import { Namespace as IoNamespace } from 'socket.io';
 
 export * from './configuration';
 export * from './types';
 export * from './model';
+export * from './roles';
 
 interface PushMiddlewareProps {
   logger: Logger;
@@ -17,11 +17,10 @@ interface PushMiddlewareProps {
 
 export const applyPushMiddleware = (
   app: Application,
-  ws: WsApplication,
-  io: IoServer,
+  io: IoNamespace,
   props: PushMiddlewareProps
 ): Application => {
-  const streamRouter = createStreamRouter(ws, io, props);
+  const streamRouter = createStreamRouter(io, props);
   app.use('/stream/v1', streamRouter);
 
   let swagger = null;

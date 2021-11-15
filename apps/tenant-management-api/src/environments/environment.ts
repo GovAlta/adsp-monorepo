@@ -13,6 +13,7 @@ export const environment = envalid.cleanEnv(
     MONGO_PASSWORD: envalid.str({ default: '' }),
     MONGO_URI: envalid.str({ default: 'mongodb://localhost:27017' }),
     MONGO_DB: envalid.str({ default: 'tenantDb' }),
+    MONGO_TLS: envalid.bool({ default: false }),
     PORT: envalid.num({ default: 3333 }),
     KEYCLOAK_ROOT_URL: envalid.str({ default: 'https://access-dev.os99.gov.ab.ca' }),
     KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_ID: envalid.str({ default: 'tenant-realm-admin' }),

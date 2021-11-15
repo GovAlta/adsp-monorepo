@@ -100,12 +100,14 @@ const LandingPage = (): JSX.Element => {
                 <GoACard title="Keycloak Access Management">
                   <div>Many GoA Services require secure transmission, storage, and records management of files.</div>
                   <a href={serviceUrls?.accessManagementApi}>Learn More</a>
+                  <div>&nbsp;</div>
                 </GoACard>
               </GridItem>
               <GridItem md={4} vSpacing={1} hSpacing={0.5}>
                 <GoACard title="File service">
                   <div>Many GoA Services require secure transmission, storage, and records management of files.</div>
                   <Link to="/file-service">Learn More</Link>
+                  <div>&nbsp;</div>
                 </GoACard>
               </GridItem>
             </Grid>

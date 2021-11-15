@@ -1,9 +1,6 @@
 import { Doc, decodeAfter, encodeNext, Results } from '@core-services/core-common';
-
 import { model, Types } from 'mongoose';
-
-import { DirectoryRepository, Directory, DirectoryEntity, Criteria } from '../';
-
+import { DirectoryRepository, Directory, DirectoryEntity, Criteria } from '../directory';
 import { directorySchema } from './schema';
 
 export class MongoDirectoryRepository implements DirectoryRepository {

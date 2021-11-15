@@ -114,7 +114,7 @@ function Status(): JSX.Element {
           <Tab label="Overview">
             This service allows for easy monitoring of application downtime.
             <p>
-              Each Application should represent a service that is useful to the end user by itself, such as child care
+              Each application should represent a service that is useful to the end user by itself, such as child care
               subsidy and child care certification
             </p>
             <GoAButton data-testid="add-application" onClick={() => addApplication()} buttonType="primary">
@@ -128,7 +128,7 @@ function Status(): JSX.Element {
               database, storage servers, etc)
             </p>
             <p>
-              Each Application should represent a service that is useful to the end user by itself, such as child care
+              Each application should represent a service that is useful to the end user by itself, such as child care
               subsidy and child care certification
             </p>
             <p>
@@ -450,7 +450,7 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
 
   const statusEntries = app.endpoint ? getStatusEntries(app.endpoint) : null;
   const getStatus = (app: ServiceStatusApplication): string => {
-    if (app.internalStatus !== 'pending' && !app.enabled) {
+    if (!app.enabled) {
       return 'stopped';
     }
 

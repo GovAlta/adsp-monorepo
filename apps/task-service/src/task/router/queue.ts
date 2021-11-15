@@ -1,4 +1,4 @@
-import { EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { NotFoundError } from '@core-services/core-common';
 import axios from 'axios';
 import { RequestHandler, Router } from 'express';
@@ -14,6 +14,7 @@ import { getTask, mapTask, taskOperation, TASK_KEY } from './task';
 import { UserInformation } from './types';
 
 interface QueueRouterProps {
+  apiId: AdspId;
   logger: Logger;
   taskRepository: TaskRepository;
   eventService: EventService;
@@ -75,115 +76,114 @@ export const getQueue: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const getQueuedTasks = (repository: TaskRepository): RequestHandler => async (req, res, next) => {
-  try {
-    const user = req.user;
-    const { top: topValue, after } = req.query;
-    const top = topValue ? parseInt(topValue as string) : 10;
+export const getQueuedTasks =
+  (apiId: AdspId, repository: TaskRepository): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      const user = req.user;
+      const { top: topValue, after } = req.query;
+      const top = topValue ? parseInt(topValue as string) : 10;
 
-    const queue: QueueEntity = req[QUEUE_KEY];
-    const tasks = await queue.getTasks(user, repository, top, after as string);
+      const queue: QueueEntity = req[QUEUE_KEY];
+      const tasks = await queue.getTasks(user, repository, top, after as string);
 
-    res.send({
-      page: tasks.page,
-      results: tasks.results.map(mapTask),
-    });
-  } catch (err) {
-    next(err);
-  }
-};
-
-export const createTask = (repository: TaskRepository, eventService: EventService): RequestHandler => async (
-  req,
-  res,
-  next
-) => {
-  try {
-    const user = req.user;
-    const tenantId = req.user.tenantId;
-    const { priority, ...task } = req.body;
-
-    const queue: QueueEntity = req[QUEUE_KEY];
-    const entity = await TaskEntity.create(user, repository, queue, {
-      tenantId,
-      priority: priority ? TaskPriority[priority] : null,
-      ...task,
-    });
-    res.send(mapTask(entity));
-
-    eventService.send(taskCreated(user, entity));
-  } catch (err) {
-    next(err);
-  }
-};
-
-export const getRoleUsers = (
-  logger: Logger,
-  KEYCLOAK_ROOT_URL: string,
-  rolesKey: 'assignerRoles' | 'workerRoles'
-): RequestHandler => async (req, res, next) => {
-  try {
-    const user = req.user;
-    const realm = req.tenant?.realm;
-    if (!realm) {
-      throw new UnauthorizedUserError('get queue users', user);
+      res.send({
+        page: tasks.page,
+        results: tasks.results.map((r) => mapTask(apiId, r)),
+      });
+    } catch (err) {
+      next(err);
     }
+  };
 
-    const queue: QueueEntity = req[QUEUE_KEY];
-    const roles: string[] = queue[rolesKey] || [];
+export const createTask =
+  (apiId: AdspId, repository: TaskRepository, eventService: EventService): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.user.tenantId;
+      const { priority, ...task } = req.body;
 
-    const max = 100;
+      const queue: QueueEntity = req[QUEUE_KEY];
+      const entity = await TaskEntity.create(user, repository, queue, {
+        tenantId,
+        priority: priority ? TaskPriority[priority] : null,
+        ...task,
+      });
+      res.send(mapTask(apiId, entity));
 
-    const users: Record<string, UserInformation> = {};
-    for (let i = 0; i < roles.length; i++) {
-      const role = roles[i];
-      let first = 0;
-      try {
-        do {
-          const { data: roleUsers = [] } = await axios.get<UserInformation[]>(
-            `${KEYCLOAK_ROOT_URL}/auth/admin/realms/${realm}/roles/${role}/users?first=${first}&max=${max}`,
-            {
-              headers: { Authorization: `Bearer ${user.token.bearer}` },
+      eventService.send(taskCreated(user, entity));
+    } catch (err) {
+      next(err);
+    }
+  };
+
+export const getRoleUsers =
+  (logger: Logger, KEYCLOAK_ROOT_URL: string, rolesKey: 'assignerRoles' | 'workerRoles'): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      const user = req.user;
+      const realm = req.tenant?.realm;
+      if (!realm) {
+        throw new UnauthorizedUserError('get queue users', user);
+      }
+
+      const queue: QueueEntity = req[QUEUE_KEY];
+      const roles: string[] = queue[rolesKey] || [];
+
+      const max = 100;
+
+      const users: Record<string, UserInformation> = {};
+      for (let i = 0; i < roles.length; i++) {
+        const role = roles[i];
+        let first = 0;
+        try {
+          do {
+            const { data: roleUsers = [] } = await axios.get<UserInformation[]>(
+              `${KEYCLOAK_ROOT_URL}/auth/admin/realms/${realm}/roles/${role}/users?first=${first}&max=${max}`,
+              {
+                headers: { Authorization: `Bearer ${user.token.bearer}` },
+              }
+            );
+
+            roleUsers.forEach((roleUser) => {
+              users[roleUser.id] = roleUser;
+            });
+
+            if (roleUsers.length === max) {
+              first += max + 1;
+            } else {
+              first = 0;
             }
-          );
-
-          roleUsers.forEach((roleUser) => {
-            users[roleUser.id] = roleUser;
-          });
-
-          if (roleUsers.length === max) {
-            first += max + 1;
+          } while (first > 0);
+        } catch (err) {
+          if (axios.isAxiosError(err)) {
+            if (err.response?.status === HttpStatusCodes.NOT_FOUND) {
+              logger.warn(`Role '${role}' not found.`);
+            } else if (err.response?.status === HttpStatusCodes.FORBIDDEN) {
+              throw new UnauthorizedUserError('get role users', user);
+            }
           } else {
-            first = 0;
+            throw err;
           }
-        } while (first > 0);
-      } catch (err) {
-        if (axios.isAxiosError(err)) {
-          if (err.response?.status === HttpStatusCodes.NOT_FOUND) {
-            logger.warn(`Role '${role}' not found.`);
-          } else if (err.response?.status === HttpStatusCodes.FORBIDDEN) {
-            throw new UnauthorizedUserError('get role users', user);
-          }
-        } else {
-          throw err;
         }
       }
-    }
 
-    res.send(
-      Object.entries(users).map(([_k, user]) => ({
-        id: user.id,
-        name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.username,
-        email: user.email,
-      }))
-    );
-  } catch (err) {
-    next(err);
-  }
-};
+      res.send(
+        Object.entries(users).map(([_k, user]) => ({
+          id: user.id,
+          name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.username,
+          email: user.email,
+        }))
+      );
+    } catch (err) {
+      next(err);
+    }
+  };
 
 export function createQueueRouter({
   KEYCLOAK_ROOT_URL,
+  apiId,
   logger,
   taskRepository: repository,
   eventService,
@@ -195,13 +195,23 @@ export function createQueueRouter({
     res.send(mapQueue(req[QUEUE_KEY]));
   });
 
-  router.get('/queues/:namespace/:name/tasks', getQueue, getQueuedTasks(repository));
-  router.post('/queues/:namespace/:name/tasks', getQueue, createTask(repository, eventService));
+  router.get('/queues/:namespace/:name/tasks', getQueue, getQueuedTasks(apiId, repository));
+  router.post('/queues/:namespace/:name/tasks', getQueue, createTask(apiId, repository, eventService));
   router.get('/queues/:namespace/:name/tasks/:id', getTask(repository), verifyQueuedTask, (req, res) =>
-    res.send(mapTask(req[TASK_KEY]))
+    res.send(mapTask(apiId, req[TASK_KEY]))
   );
-  router.patch('/queues/:namespace/:name/tasks/:id', getTask(repository), verifyQueuedTask, updateTask(eventService));
-  router.post('/queues/:namespace/:name/tasks/:id', getTask(repository), verifyQueuedTask, taskOperation(eventService));
+  router.patch(
+    '/queues/:namespace/:name/tasks/:id',
+    getTask(repository),
+    verifyQueuedTask,
+    updateTask(apiId, eventService)
+  );
+  router.post(
+    '/queues/:namespace/:name/tasks/:id',
+    getTask(repository),
+    verifyQueuedTask,
+    taskOperation(apiId, eventService)
+  );
 
   router.get('/queues/:namespace/:name/assigners', getQueue, getRoleUsers(logger, KEYCLOAK_ROOT_URL, 'assignerRoles'));
   router.get('/queues/:namespace/:name/workers', getQueue, getRoleUsers(logger, KEYCLOAK_ROOT_URL, 'workerRoles'));

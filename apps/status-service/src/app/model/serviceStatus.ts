@@ -53,13 +53,18 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     if (!this.canUpdate(user)) {
       throw new UnauthorizedError('User not authorized to update service status.');
     }
+
+    if (update.endpoint !== this.endpoint) {
+      // If update the endpoint, set internal status to be pending
+      this.internalStatus = 'pending';
+    }
+
     this.endpoint = update.endpoint ?? this.endpoint;
     this.metadata = update.metadata ?? this.metadata;
     this.name = update.name ?? this.name;
     this.description = update.description ?? this.description;
     this.statusTimestamp = update.statusTimestamp ?? this.statusTimestamp;
     this.status = update.status ?? this.status;
-    this.internalStatus = update.internalStatus ?? this.internalStatus;
     this.enabled = update.enabled ?? this.enabled;
 
     return this.repository.save(this);

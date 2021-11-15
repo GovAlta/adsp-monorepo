@@ -28,6 +28,36 @@ File type represents a category of files with specific access roles. For example
 A file represents an uploaded file and consists of a minimal metadata record and the actual file that was uploaded. File service provides minimal metadata and does not support extensible metadata; keep additional values in a domain record and reference it using `recordId`.
 
 ## Code examples
+### Configure a file type
+File types are configured using the [configuration service](configuration-service.md). Note that new configuration may take up to 15 mins to apply.
+
+```typescript
+  const configurationServiceUrl = 'https://configuration-service.alpha.alberta.ca';
+  const request = {
+    operation: 'UPDATE',
+    update: {
+      'supporting-document': {
+        id: 'supporting-document',
+        name: 'Support Document',
+        anonymousRead: false,
+        readRoles: ['assessor'],
+        updateRoles: ['applicant'],
+      }
+    }
+  }
+
+  await fetch(
+    `${configurationServiceUrl}/configuration/v1/configuration/platform/file-service`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(request),
+    }
+  );
+```
 
 ### Upload a file
 ```typescript

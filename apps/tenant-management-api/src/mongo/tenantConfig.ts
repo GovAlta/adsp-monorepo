@@ -1,9 +1,6 @@
 import { Doc, decodeAfter, encodeNext, Results } from '@core-services/core-common';
-
 import { model, Types } from 'mongoose';
-
 import { TenantConfigurationRepository, TenantConfig, TenantConfigEntity } from '../configuration';
-
 import { tenantConfigSchema } from './schema';
 
 export class MongoTenantConfigurationRepository implements TenantConfigurationRepository {

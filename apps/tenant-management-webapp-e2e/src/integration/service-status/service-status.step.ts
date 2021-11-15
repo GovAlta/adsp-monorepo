@@ -43,16 +43,16 @@ Given('a service owner user is on status notices page', function () {
       cy.url().should('include', '/admin/services/status');
       cy.wait(4000);
     });
-  commonObj.serviceTab('Status', 'Notices').click();
+  commonObj.serviceTab('Service status', 'Notices').click();
   cy.wait(10000);
 });
 
-When('the user clicks add a Draft Notice button', function () {
+When('the user clicks Add a draft notice button', function () {
   statusObj.addNoticeButton().click();
 });
 
-Then('the user views Add a Draft Notice dialog', function () {
-  statusObj.noticeModalTitle().invoke('text').should('eq', 'Add a Draft Notice');
+Then('the user views Add a draft notice dialog', function () {
+  statusObj.noticeModalTitle().invoke('text').should('eq', 'Add a draft notice');
 });
 
 //Date time picker UI isn't finalized and the step uses the default dates without entering any date data
@@ -89,7 +89,7 @@ When(
   }
 );
 
-When('the user clicks Save as Draft button', function () {
+When('the user clicks Save as draft button', function () {
   statusObj.noticeModalSaveButton().click();
   cy.wait(5000);
 });
@@ -204,8 +204,8 @@ When(
   }
 );
 
-Then('the user views Edit Draft Notice dialog', function () {
-  statusObj.noticeModalTitle().invoke('text').should('eq', 'Edit Draft Notice');
+Then('the user views Edit draft notice dialog', function () {
+  statusObj.noticeModalTitle().invoke('text').should('eq', 'Edit draft notice');
 });
 
 When('the user selects {string} filter by status radio button', function (filterType) {

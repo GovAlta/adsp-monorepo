@@ -26,6 +26,45 @@ Domain events represent key changes at a domain model level. For example, an int
 Event log records all *events* emitted via the event service and keeps basic metrics including a count of different events. These metrics can represent key domain metrics; in the intake application example, the count of application submitted events represents the volume of applications.
 
 ## Code examples
+### Configure an event definition
+Event definitions are configured using the [configuration service](configuration-service.md). Note that new configuration may take up to 15 mins to apply.
+
+```typescript
+  const configurationServiceUrl = 'https://configuration-service.alpha.alberta.ca';
+  const request = {
+    operation: 'UPDATE',
+    update: {
+      'domain-service': {
+        name: 'domain-service',
+        definitions: {
+          'domain-event': {
+            name: 'domain-event',
+            description: 'Signalled on significant domain state change.',
+            payloadSchema: {
+              type: 'object',
+              properties: {
+                value: { type: 'string' }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  await fetch(
+    `${configurationServiceUrl}/configuration/v1/configuration/platform/event-service`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(request),
+    }
+  );
+```
+
 ### Send an event
 ```typescript
   const event = {
@@ -38,7 +77,7 @@ Event log records all *events* emitted via the event service and keeps basic met
     payload: {
       application: {
         id: 'f669be59-bd38-4ca4-8749-19248060fc63',
-        ...
+        /* ... */
       }
       applicant: {
         id: 'a8e5ec09-d60a-4c60-94bd-71dc97d8c80e',

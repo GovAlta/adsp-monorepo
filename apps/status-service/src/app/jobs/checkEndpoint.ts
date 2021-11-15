@@ -25,15 +25,18 @@ export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
   return async (): Promise<void> => {
     const { getter } = props;
     // run all endpoint tests
-    const statusEntry = await doRequest(getter, props.url);
+    const statusEntry = await doRequest(getter, props.url, props.logger);
     await doSave(props, statusEntry);
   };
 }
 
-async function doRequest(getter: Getter, url: string): Promise<EndpointStatusEntry> {
+async function doRequest(getter: Getter, url: string, logger: Logger): Promise<EndpointStatusEntry> {
+
   const start = Date.now();
   try {
     const res = await getter(url);
+    logger.info(`Send request to ${url} starting at ${start}`)
+
     return {
       ok: true,
       url,
@@ -54,20 +57,28 @@ async function doRequest(getter: Getter, url: string): Promise<EndpointStatusEnt
 
 const getNewEndpointStatus = (history: EndpointStatusEntry[], EntrySampleSize: number): EndpointStatusType => {
   let passCount = 0;
+  let failedCount = 0;
   const recentHistory =
     history.sort((prev, next) => { return next.timestamp - prev.timestamp }).slice(0, EntrySampleSize);
+
+
+  for (const h of recentHistory) {
+    passCount += h.ok ? 1 : 0;
+    failedCount += h.ok ? 0 : 1;
+
+    if (passCount >= MIN_PASS_COUNT) {
+      return 'online';
+    }
+
+    if (failedCount > (EntrySampleSize - MIN_PASS_COUNT)) {
+      return 'offline'
+    }
+  }
 
   if (recentHistory.length < EntrySampleSize) {
     return 'pending';
   }
 
-  for (const h of recentHistory) {
-    passCount += h.ok ? 1 : 0;
-
-    if (passCount >= MIN_PASS_COUNT) {
-      return 'online';
-    }
-  }
   return 'offline';
 }
 
@@ -86,6 +97,9 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
     if (!application) {
       return;
     }
+
+    logger.info(`${recentHistory.length} recent history for endpoint ${url} is collected.`);
+    logger.info(`Current status of application ${id} is ${newStatus}`);
 
     const oldStatus = application.endpoint.status;
     // set the application status based on the endpoints

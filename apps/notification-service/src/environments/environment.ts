@@ -16,6 +16,7 @@ export const environment = envalid.cleanEnv(
     MONGO_DB: envalid.str({ default: 'notification' }),
     MONGO_USER: envalid.str({ default: '' }),
     MONGO_PASSWORD: envalid.str({ default: '' }),
+    MONGO_TLS: envalid.bool({ default: false }),
     AMQP_HOST: envalid.str({ default: 'localhost' }),
     AMQP_USER: envalid.str({ default: 'guest' }),
     AMQP_PASSWORD: envalid.str({ default: 'guest' }),

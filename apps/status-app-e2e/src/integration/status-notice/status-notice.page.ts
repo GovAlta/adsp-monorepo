@@ -16,6 +16,10 @@ class ServiceStatusPage {
       `//b[contains(text(),"${appTitle}")]/parent::div/following-sibling::div/div[@class="status-button"]/div`
     );
   }
+
+  timezoneInfo() {
+    return cy.xpath('//*[@class="timezone"]/i');
+  }
 }
 
 export default ServiceStatusPage;

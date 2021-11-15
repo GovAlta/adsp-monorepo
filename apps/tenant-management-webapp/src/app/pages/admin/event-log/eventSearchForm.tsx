@@ -54,11 +54,14 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
     setSearchBox(userInput);
     setFilteredSuggestions(unLinked);
     setActiveSuggestionIndex(0);
+
     if (userInput.indexOf(':') === 0) {
       setSearchCriteria({ ...searchCriteria, namespace: '', name: userInput.substr(1) });
     } else if (userInput.indexOf(':') > 0) {
       const nameAndSpace = userInput.split(':');
       setSearchCriteria({ ...searchCriteria, namespace: nameAndSpace[0], name: nameAndSpace[1] });
+    } else {
+      setSearchCriteria({ ...searchCriteria, namespace: '', name: '' });
     }
   };
 
@@ -162,6 +165,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                   }
                   if (open && searchBox.length > 0) {
                     setSearchBox('');
+                    setSearchCriteria({ ...searchCriteria, namespace: '', name: '' });
                   }
                   setOpen(!open);
                 }}
@@ -185,11 +189,11 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
           </GoAFormItem>
         </SearchBox>
         <GoAFormItem>
-          <label>Minimum Timestamp</label>
+          <label>Minimum timestamp</label>
           <GoAInputDateTime name="timestampMin" max={today} value={searchCriteria.timestampMin} onChange={setValue} />
         </GoAFormItem>
         <GoAFormItem>
-          <label>Maximum Timestamp</label>
+          <label>Maximum timestamp</label>
           <GoAInputDateTime name="timestampMax" max={today} value={searchCriteria.timestampMax} onChange={setValue} />
         </GoAFormItem>
       </GoAFlexRow>

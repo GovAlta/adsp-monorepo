@@ -14,8 +14,8 @@
     },
     "displayName": {
       "type": "string",
-      "description": "Service display name (e.g. Value Service)",
-      "x-prompt": "What is the display name of the service? (e.g. Value Service)"
+      "description": "Service display name (e.g. Value service)",
+      "x-prompt": "What is the display name of the service? (e.g. Value service)"
     },
     "port": {
       "type": "string",

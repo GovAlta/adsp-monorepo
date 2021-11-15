@@ -9,6 +9,7 @@ interface MongoRepositoryProps {
   MONGO_DB: string;
   MONGO_USER: string;
   MONGO_PASSWORD: string;
+  MONGO_TLS: boolean;
   logger: Logger;
   validationService: ValidationService;
 }
@@ -18,11 +19,12 @@ export const createRepositories = ({
   MONGO_DB,
   MONGO_USER,
   MONGO_PASSWORD,
+  MONGO_TLS,
   logger,
   validationService,
 }: MongoRepositoryProps): Promise<Repositories> => {
   return new Promise<Repositories>((resolve, reject) => {
-    const mongoConnectionString = `${MONGO_URI}/${MONGO_DB}`;
+    const mongoConnectionString = `${MONGO_URI}/${MONGO_DB}?ssl=${MONGO_TLS}`;
     connect(
       mongoConnectionString,
       {

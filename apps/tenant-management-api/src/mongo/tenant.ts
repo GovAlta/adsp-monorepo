@@ -1,11 +1,11 @@
-import { TenantRepository } from '../repository';
-import { TenantEntity, Tenant } from '../models';
-import { Doc } from '@core-services/core-common';
+import { TenantRepository } from '../tenant/repository';
+import { TenantEntity, Tenant } from '../tenant/models';
+import { Doc, NotFoundError } from '@core-services/core-common';
 import { adspId } from '@abgov/adsp-service-sdk';
 import { model } from 'mongoose';
 import { tenantSchema } from './schema';
-import { NotFoundError } from '@core-services/core-common';
-export class TenantMongoRepository implements TenantRepository {
+
+export class MongoTenantRepository implements TenantRepository {
   private tenantModel;
 
   constructor() {

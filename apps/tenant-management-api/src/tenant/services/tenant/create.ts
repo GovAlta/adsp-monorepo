@@ -10,10 +10,10 @@ import { TenantError } from './error';
 import type ClientRepresentation from 'keycloak-admin/lib/defs/clientRepresentation';
 import type RealmRepresentation from 'keycloak-admin/lib/defs/realmRepresentation';
 import type RoleRepresentation from 'keycloak-admin/lib/defs/roleRepresentation';
-import { tenantRepository } from '../../repository';
 import { TenantEntity } from '../../models';
 import { TenantServiceRoles } from '../../../roles';
 import { ServiceClient } from '../../types';
+import { TenantRepository } from '../../repository';
 
 export const tenantManagementRealm = 'core';
 
@@ -224,9 +224,9 @@ const createBrokerClient = async (realm, secret, brokerClient) => {
   await client.clients.create(config);
 };
 
-export const validateEmailInDB = async (email: string): Promise<void> => {
+export const validateEmailInDB = async (repository: TenantRepository, email: string): Promise<void> => {
   logger.info(`Validate - has user created tenant realm before?`);
-  const isTenantAdmin = await tenantRepository.isTenantAdmin(email);
+  const isTenantAdmin = await repository.isTenantAdmin(email);
 
   if (isTenantAdmin) {
     const errorMessage = `${email} is the tenant admin in our record. One user can create only one realm.`;
@@ -234,7 +234,7 @@ export const validateEmailInDB = async (email: string): Promise<void> => {
   }
 };
 
-export const validateName = async (name: string): Promise<void> => {
+export const validateName = async (repository: TenantRepository, name: string): Promise<void> => {
   logger.info(`Validate - is the tenant name valid and unique?`);
 
   const invalidChars = [
@@ -273,7 +273,7 @@ export const validateName = async (name: string): Promise<void> => {
     throw new TenantError(errorMessage, HttpStatusCodes.BAD_REQUEST);
   }
 
-  const doesTenantWithNameExist = await tenantRepository.findByName(name);
+  const doesTenantWithNameExist = await repository.findByName(name);
 
   if (doesTenantWithNameExist) {
     const errorMessage = `This tenant name has already been used. Please enter a different tenant name.`;
@@ -392,13 +392,14 @@ export const createRealm = async (
 };
 
 export const createNewTenantInDB = async (
+  repository: TenantRepository,
   email: string,
   realmName: string,
   tenantName: string,
   tokenIssuer: string
 ): Promise<TenantEntity> => {
   tokenIssuer = tokenIssuer.replace('core', tenantName);
-  const tenantEntity = new TenantEntity(tenantRepository, uuidv4(), realmName, email, tokenIssuer, tenantName);
+  const tenantEntity = new TenantEntity(repository, uuidv4(), realmName, email, tokenIssuer, tenantName);
   const tenant = await tenantEntity.save();
   return tenant;
 };

@@ -21,7 +21,7 @@ import {
 import { NotificationItem } from '@store/notification/models';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
-
+import { TemplateForm } from './templateForm';
 const emptyNotificationType: NotificationItem = {
   name: '',
   description: '',
@@ -43,7 +43,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [editEvent, setEditEvent] = useState(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showEventDeleteConfirmation, setShowEventDeleteConfirmation] = useState(false);
-
+  const [showTemplateForm, setShowTemplateForm] = useState(false);
+  const [disableTemplateForm, setDisableTemplateForm] = useState(false);
   const notification = useSelector((state: RootState) => state.notification);
   const coreNotification = useSelector((state: RootState) => state.notification.core);
 
@@ -56,9 +57,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   function reset() {
     setEditType(false);
-    setEditEvent(false);
+    setEditEvent(null);
     setSelectedType(emptyNotificationType);
     setErrors({});
+    setShowTemplateForm(false);
+    setDisableTemplateForm(false);
+  }
+  function isEmptyTemplate(event) {
+    return event.templates?.email?.body?.length === 0 && event.templates?.email?.subject?.length === 0;
   }
 
   useEffect(() => {
@@ -66,6 +72,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       setSelectedType(null);
       setEditType(true);
       activateEdit(false);
+      setShowTemplateForm(false);
     }
   }, [activeEdit]);
 
@@ -144,33 +151,55 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                     <EventBorder>
                       <MaxHeight height={168}>
                         <div className="rowFlex">
-                          <div className="flex1">{event.name}</div>
+                          <div className="flex1">
+                            {event.namespace}:{event.name}
+                          </div>
                           <div className="rowFlex">
                             <MaxHeight height={34}>
-                              <a
-                                className="flex1 flex"
-                                onClick={() => {
-                                  setSelectedEvent(event);
-                                  setSelectedType(notificationType);
-                                  setShowEventDeleteConfirmation(true);
-                                }}
-                                data-testid={`delete-event-${notificationType.id}`}
-                              >
-                                <NotificationBorder className="smallPadding">
+                              <NotificationBorder className="smallPadding">
+                                <a
+                                  className="flex1 flex"
+                                  onClick={() => {
+                                    setSelectedEvent(event);
+                                    setSelectedType(notificationType);
+                                    setShowEventDeleteConfirmation(true);
+                                  }}
+                                  data-testid={`delete-event-${notificationType.id}`}
+                                >
                                   <GoAIcon type="trash" />
-                                </NotificationBorder>
-                              </a>
+                                </a>
+                              </NotificationBorder>
                             </MaxHeight>
                           </div>
                         </div>
                         <div className="columnFlex height-100">
                           <div className="flex1 flex flexEndAlign">
+                            <a>
+                              <NotificationBorder className="smallPadding">
+                                <GoAIcon type="mail" style="filled" />
+                              </NotificationBorder>
+                            </a>
                             <div className="rightAlignEdit">
+                              <a
+                                style={{ marginRight: '20px' }}
+                                data-testid={`preview-event-${notificationType.id}`}
+                                onClick={() => {
+                                  setSelectedEvent(event);
+                                  setSelectedType(notificationType);
+                                  setShowTemplateForm(true);
+                                  setDisableTemplateForm(true);
+                                }}
+                              >
+                                Preview
+                              </a>
+
                               <a
                                 data-testid={`edit-event-${notificationType.id}`}
                                 onClick={() => {
                                   setSelectedEvent(event);
-                                  manageEvents(notificationType);
+                                  setSelectedType(notificationType);
+                                  setShowTemplateForm(true);
+                                  setDisableTemplateForm(false);
                                 }}
                               >
                                 Edit
@@ -220,8 +249,32 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 {notificationType?.events?.map((event, key) => (
                   <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
                     <EventBorder>
-                      <div className="height-100 rowFlex">
-                        <div className="flex1">{event.name}</div>
+                      <div className="height-100 columnFlex">
+                        <div className="flex1">
+                          {event.namespace}:{event.name}
+                        </div>
+                        <div className="rowFlex">
+                          <NotificationBorder className="smallPadding">
+                            <a>
+                              <GoAIcon type="mail" style="filled" />
+                            </a>
+                          </NotificationBorder>
+
+                          <div className="rightAlignEdit">
+                            <a
+                              style={{ marginRight: '20px' }}
+                              data-testid={`preview-event-${notificationType.id}`}
+                              onClick={() => {
+                                setSelectedEvent(event);
+                                setSelectedType(notificationType);
+                                setShowTemplateForm(true);
+                                setDisableTemplateForm(true);
+                              }}
+                            >
+                              Preview
+                            </a>
+                          </div>
+                        </div>
                       </div>
                     </EventBorder>
                   </GridItem>
@@ -302,13 +355,31 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         initialValue={editEvent}
         selectedEvent={selectedEvent}
         errors={errors}
-        onSave={(type) => {
-          type.subscriberRoles = [];
-          dispatch(UpdateNotificationTypeService(type));
-          reset();
+        onNext={(notifications, event) => {
+          setSelectedEvent(event);
+          setSelectedType(notifications);
+          setShowTemplateForm(true);
         }}
         onCancel={() => {
           reset();
+        }}
+      />
+      <TemplateForm
+        initialValue={editEvent}
+        selectedEvent={selectedEvent}
+        notifications={selectedType}
+        open={showTemplateForm}
+        disabled={disableTemplateForm}
+        errors={errors}
+        onSubmit={(type) => {
+          dispatch(UpdateNotificationTypeService(type));
+          setShowTemplateForm(false);
+          reset();
+        }}
+        onCancel={() => {
+          setShowTemplateForm(false);
+          setEditEvent(null);
+          setSelectedType(selectedType.events.pop());
         }}
       />
     </NotficationStyles>

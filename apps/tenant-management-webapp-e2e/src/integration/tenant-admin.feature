@@ -79,7 +79,7 @@ Feature: Tenant admin
     Then the user is directed to "File service" page
     When the user selects the "Dashboard" menu item
     And the user clicks "Status" link
-    Then the user is directed to "Status" page
+    Then the user is directed to "Service status" page
     When the user selects the "Dashboard" menu item
     And the user clicks "Events" link
     Then the user is directed to "Events" page

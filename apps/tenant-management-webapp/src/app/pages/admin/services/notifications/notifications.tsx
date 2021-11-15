@@ -43,7 +43,7 @@ export const Notifications: FunctionComponent = () => {
         <a
           rel="noopener noreferrer"
           target="_blank"
-          href={`${docBaseUrl}?tenant=${tenantId}&urls.primaryName=Notification Service`}
+          href={`${docBaseUrl}?tenant=${tenantId}&urls.primaryName=Notification service`}
         >
           Read the API docs
         </a>

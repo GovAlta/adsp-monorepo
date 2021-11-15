@@ -16,7 +16,7 @@ export interface DomainEventDefinition {
   description: string;
   payloadSchema: Record<string, unknown>;
   interval?: {
-    metric: string;
+    metric: string | string[];
     namespace: string;
     name: string;
   };
