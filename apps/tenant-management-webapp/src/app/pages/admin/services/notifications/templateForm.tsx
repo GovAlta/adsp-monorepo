@@ -111,18 +111,18 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
             buttonType="primary"
             data-testid="template-form-save"
             type="submit"
+            disabled={!validate()}
             onClick={() => {
               selectedEvent.templates.email.subject = subject;
               selectedEvent.templates.email.body = body;
-              if (validate()) {
-                const definitionEventIndex = notifications?.events?.findIndex(
-                  (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`
-                );
 
-                notifications.events[definitionEventIndex] = selectedEvent;
+              const definitionEventIndex = notifications?.events?.findIndex(
+                (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`
+              );
 
-                onSubmit(notifications);
-              }
+              notifications.events[definitionEventIndex] = selectedEvent;
+
+              onSubmit(notifications);
             }}
           >
             {getModalState()}
