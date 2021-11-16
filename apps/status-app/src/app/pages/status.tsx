@@ -14,6 +14,7 @@ import { fetchApplications } from '@store/status/actions';
 import { RootState } from '@store/index';
 import { PageLoader } from '@components/PageLoader';
 import { LocalTime } from '@components/Date';
+import { GoAPageLoader } from '@abgov/react-components';
 import moment from 'moment';
 
 function capitalizeFirstLetter(string) {
@@ -32,8 +33,9 @@ const ServiceStatusPage = (): JSX.Element => {
     applications: state.application?.applications,
   }));
 
-  const { tenantName } = useSelector((state: RootState) => ({
+  const { tenantName, loaded } = useSelector((state: RootState) => ({
     tenantName: state.session?.tenant?.name,
+    loaded: state.session?.isLoadingReady,
   }));
 
   const { allApplicationsNotices } = useSelector((state: RootState) => ({
@@ -54,8 +56,8 @@ const ServiceStatusPage = (): JSX.Element => {
         <br />
         <p>
           These are the services currently being offered by{' '}
-          {location.pathname.slice(1) ? capitalizeFirstLetter(tenantName) : 'the Alberta Digital Service Platform'}. All statuses are
-          in real time and reflect current states of the individual services. Please{' '}
+          {location.pathname.slice(1) ? capitalizeFirstLetter(tenantName) : 'the Alberta Digital Service Platform'}. All
+          statuses are in real time and reflect current states of the individual services. Please{' '}
           <a href="mailto: DIO@gov.ab.ca">contact support</a> for additional information or any other inquiries
           regarding service statuses.
         </p>
@@ -65,6 +67,7 @@ const ServiceStatusPage = (): JSX.Element => {
         <br />
         {allApplicationsNotices.length > 0 && <AllApplicationsNotices />}
         <br />
+        {applications?.length === 0 && <div>There are no services available by this provider</div>}
         <Grid>
           {applications.map((app, index) => {
             return (
@@ -85,17 +88,24 @@ const ServiceStatusPage = (): JSX.Element => {
     );
   };
 
-  const noServices = () => {
+  const noProvider = () => {
     return (
       <div className="small-container">
-        <h2>No services at this address</h2>
-        <p>Either there are no services available by this provider, or you have an incorrect ID</p>
+        <h2>Provider not found</h2>
+        <p>Cannot find a provider at this url</p>
       </div>
     );
   };
 
   const SectionView = () => {
-    return <div>{applications && (applications?.length > 0 || allApplicationsNotices?.length > 0) ? services() : noServices()}</div>;
+    if (!applications) {
+      if (loaded) {
+        return noProvider();
+      }
+      return <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />;
+    } else {
+      return services();
+    }
   };
 
   const AllApplicationsNotices = () => {
@@ -140,7 +150,7 @@ const ServiceStatusPage = (): JSX.Element => {
           <section>
             <SectionView />
           </section>
-          <section>{ }</section>
+          <br />
         </ServiceStatusesCss>
       </main>
       <Footer>
