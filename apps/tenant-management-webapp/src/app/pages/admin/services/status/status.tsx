@@ -15,7 +15,7 @@ import { Route, Switch, useHistory, useLocation } from 'react-router-dom';
 import styled, { CSSProperties } from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import GoALinkButton from '@components/LinkButton';
-import { GoAButton, GoARadio, GoARadioGroup } from '@abgov/react-components';
+import { GoAButton, GoARadio, GoARadioGroup, GoACheckbox } from '@abgov/react-components';
 import {
   GoABadge,
   GoAModal,
@@ -29,6 +29,13 @@ import type { GoABadgeType } from '@abgov/react-components/experimental';
 import ApplicationFormModal from './form';
 import NoticeModal from './noticeModal';
 import { setApplicationStatus } from '@store/status/actions/setApplicationStatus';
+import {
+  CreateSubscriberService,
+  SubscribeSubscriberService,
+  getSubscriber,
+  getSubscription,
+  Unsubscribe,
+} from '@store/subscription/actions';
 import { Tab, Tabs } from '@components/Tabs';
 import { getNotices } from '@store/notice/actions';
 import { NoticeList } from './noticeList';
@@ -38,11 +45,15 @@ function Status(): JSX.Element {
   const dispatch = useDispatch();
   const history = useHistory();
 
-  const { applications, serviceStatusAppUrl, tenantName } = useSelector((state: RootState) => ({
-    applications: state.serviceStatus.applications,
-    serviceStatusAppUrl: state.config.serviceUrls.serviceStatusAppUrl,
-    tenantName: state.tenant.name,
-  }));
+  const { applications, serviceStatusAppUrl, tenantName, subscriber, subscription } = useSelector(
+    (state: RootState) => ({
+      applications: state.serviceStatus.applications,
+      serviceStatusAppUrl: state.config.serviceUrls.serviceStatusAppUrl,
+      tenantName: state.tenant.name,
+      subscriber: state.subscription.subscriber,
+      subscription: state.subscription.subscription,
+    })
+  );
 
   const location = useLocation();
 
@@ -69,7 +80,26 @@ function Status(): JSX.Element {
 
   useEffect(() => {
     dispatch(getNotices());
+    dispatch(getSubscriber());
   }, []);
+
+  useEffect(() => {
+    if (subscriber) {
+      dispatch(getSubscription({ data: { type: 'status-application-health-change', data: subscriber } }));
+    }
+  }, [subscriber]);
+
+  const subscribeToggle = () => {
+    if (subscription) {
+      dispatch(Unsubscribe({ data: { type: 'status-application-health-change', data: subscriber } }));
+    } else {
+      if (subscriber) {
+        dispatch(SubscribeSubscriberService({ data: { type: 'status-application-health-change', data: subscriber } }));
+      } else {
+        dispatch(CreateSubscriberService('status-application-health-change'));
+      }
+    }
+  };
 
   const addApplication = () => {
     setActiveIndex(1);
@@ -101,9 +131,24 @@ function Status(): JSX.Element {
               Each application should represent a service that is useful to the end user by itself, such as child care
               subsidy and child care certification
             </p>
-            <GoALinkButton data-testid="add-application" to={`${location.pathname}/new`} buttonType="primary">
-              Add application
-            </GoALinkButton>
+            <p>
+              <GoALinkButton data-testid="add-application" to={`${location.pathname}/new`} buttonType="primary">
+                Add application
+              </GoALinkButton>
+            </p>
+            <p>
+              <b>Do you want to subscribe and receive notifications for application health changes?</b>
+            </p>
+            <GoACheckbox
+              name="subscribe"
+              checked={!!subscription}
+              onChange={() => {
+                subscribeToggle();
+              }}
+              value="subscribed"
+            >
+              I want to subscribe and receive notifications
+            </GoACheckbox>
             <ApplicationList>
               {applications.map((app) => (
                 <Application key={app._id} {...app} />
@@ -312,7 +357,9 @@ function Application(app: ServiceStatusApplication) {
                 orientation="vertical"
               >
                 {PublicServiceStatusTypes.map((statusType) => (
-                  <GoARadio value={statusType}>{formatStatus(statusType)}</GoARadio>
+                  <GoARadio key={statusType} value={statusType}>
+                    {formatStatus(statusType)}
+                  </GoARadio>
                 ))}
               </GoARadioGroup>
             </GoAFormItem>
@@ -416,7 +463,7 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
     <div style={css}>
       <StatusBarDetails>
         <span></span>
-        <small style={{ textTransform: 'capitalize' }} className={status === 'pending' && 'blink-text'}>
+        <small style={{ textTransform: 'capitalize' }} className={status === 'pending' ? 'blink-text' : ''}>
           {status}
         </small>
       </StatusBarDetails>

@@ -158,12 +158,20 @@ export function getTypeSubscription(apiId: AdspId, repository: SubscriptionRepos
       const type: NotificationTypeEntity = req[TYPE_KEY];
       const { subscriber } = req.params;
 
+      if (!type.tenantId) {
+        type.tenantId = user.tenantId;
+      }
+
       if (!isAllowedUser(user, tenantId, ServiceUserRoles.SubscriptionAdmin, true)) {
         throw new UnauthorizedUserError('get subscribers', user);
       }
 
       const subscription = await repository.getSubscription(type, subscriber);
-      res.send(mapSubscription(apiId, subscription));
+      if (subscription) {
+        res.send(mapSubscription(apiId, subscription));
+      } else {
+        res.send(null);
+      }
     } catch (err) {
       next(err);
     }
