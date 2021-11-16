@@ -55,11 +55,7 @@ describe('Service statuses', () => {
         <ServiceStatuses />
       </Provider>
     );
-    await waitFor(() =>
-      expect(
-        getByText('Either there are no services available by this provider, or you have an incorrect ID')
-      ).toBeTruthy()
-    );
+    await waitFor(() => expect(getByText('Cannot find a provider at this url')).toBeTruthy());
   });
 });
 

@@ -73,11 +73,11 @@ export interface Notices {
 
 export const NoticeInit: Notices = {
   notices: [],
-  allApplicationsNotices: []
+  allApplicationsNotices: [],
 };
 
 export const ApplicationInit: ServiceStatus = {
-  applications: [],
+  applications: null,
 };
 
 // Helper functions
@@ -100,7 +100,10 @@ export const bindApplicationsWithNotices = (
   });
   for (const application of applications) {
     const noticesOfApplication = notices.filter((notice) => {
-      return notice.isAllApplications !== true && notice.tennantServRef.find((applicationRef) => applicationRef.id === application._id);
+      return (
+        notice.isAllApplications !== true &&
+        notice.tennantServRef.find((applicationRef) => applicationRef.id === application._id)
+      );
     });
 
     application.notices = sortNotices(noticesOfApplication);
@@ -131,4 +134,4 @@ export const sortApplications = (applications: ServiceStatusApplication[]): Serv
 
 export const toTenantName = (nameInUrl: string): string => {
   return nameInUrl.replace(/-/g, ' ');
-}
+};

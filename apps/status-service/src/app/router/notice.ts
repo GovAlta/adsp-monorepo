@@ -16,24 +16,24 @@ export interface NoticeRouterProps {
 interface NoticeFilter {
   mode?: NoticeModeType;
   tenantName?: string;
-  tenantId?: string
+  tenantId?: string;
 }
 
 interface applicationRef {
   name?: string;
-  id?: UrlWithStringQuery
+  id?: UrlWithStringQuery;
 }
 
 const parseTenantServRef = (tennantServRef?: string | applicationRef[] | null): string => {
   if (!tennantServRef) {
-    return JSON.stringify([])
+    return JSON.stringify([]);
   } else {
     if (typeof tennantServRef !== 'string') {
-      return JSON.stringify(tennantServRef)
+      return JSON.stringify(tennantServRef);
     }
   }
-  return tennantServRef
-}
+  return tennantServRef;
+};
 
 export function createNoticeRouter({ logger, tenantService, noticeRepository }: NoticeRouterProps): Router {
   const router = Router();
@@ -41,7 +41,7 @@ export function createNoticeRouter({ logger, tenantService, noticeRepository }: 
   // Get notices by query
   router.get('/notices', async (req, res, next) => {
     const { top, after, mode } = req.query;
-    const tenantName = req.query.name
+    const tenantName = req.query.name as string;
     const user = req.user as Express.User;
 
     logger.info(req.method, req.url);
@@ -56,10 +56,11 @@ export function createNoticeRouter({ logger, tenantService, noticeRepository }: 
       } else {
         if (tenantName) {
           // tenant is an array, but it shall only contain 1 or 0 element
-          const tenant = (await tenantService.getTenants())
-            .filter((tenant) => { return tenant.name === tenantName });
+          const tenant = (await tenantService.getTenants()).filter((tenant) => {
+            return tenant.name.toLowerCase() === tenantName.toLowerCase();
+          });
           if (tenant) {
-            filter.tenantId = tenant[0].id.toString()
+            filter.tenantId = tenant[0].id.toString();
           }
         }
       }
@@ -77,7 +78,8 @@ export function createNoticeRouter({ logger, tenantService, noticeRepository }: 
       res.json({
         page: applications.page,
         results: applications.results.map((result) => ({
-          ...result, tennantServRef: JSON.parse(result.tennantServRef),
+          ...result,
+          tennantServRef: JSON.parse(result.tennantServRef),
         })),
       });
     } catch (err) {
@@ -167,7 +169,7 @@ export function createNoticeRouter({ logger, tenantService, noticeRepository }: 
     const { message, startDate, endDate, mode, isAllApplications } = req.body;
     const { id } = req.params;
     const user = req.user as Express.User;
-    const tennantServRef = parseTenantServRef(req.body.tennantServRef)
+    const tennantServRef = parseTenantServRef(req.body.tennantServRef);
 
     try {
       // TODO: this needs to be moved to a service
@@ -185,11 +187,10 @@ export function createNoticeRouter({ logger, tenantService, noticeRepository }: 
         isAllApplications,
       });
 
-      res.status(200).json(
-        {
-          ...updatedApplication,
-          tennantServRef: JSON.parse(updatedApplication.tennantServRef)
-        });
+      res.status(200).json({
+        ...updatedApplication,
+        tennantServRef: JSON.parse(updatedApplication.tennantServRef),
+      });
     } catch (err) {
       const errMessage = `Error updating notice: ${err.message}`;
       logger.error(errMessage);

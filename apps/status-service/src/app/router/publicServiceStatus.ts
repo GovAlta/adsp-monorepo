@@ -10,7 +10,11 @@ export interface ServiceStatusRouterProps {
   serviceStatusRepository: ServiceStatusRepository;
 }
 
-export function createPublicServiceStatusRouter({ logger, tenantService, serviceStatusRepository }: ServiceStatusRouterProps): Router {
+export function createPublicServiceStatusRouter({
+  logger,
+  tenantService,
+  serviceStatusRepository,
+}: ServiceStatusRouterProps): Router {
   const router = Router();
 
   // Get the public service for the tenant
@@ -51,10 +55,13 @@ export function createPublicServiceStatusRouter({ logger, tenantService, service
     let applications: ServiceStatusApplicationEntity[] = [];
     try {
       applications = await serviceStatusRepository.find({
-        tenantId: (await tenantService
-          .getTenants())
-          .filter((tenant) => { return tenant.name === searchName })[0]
-          .id.toString()
+        tenantId: (
+          await tenantService.getTenants()
+        )
+          .filter((tenant) => {
+            return tenant.name.toLowerCase() === searchName.toLowerCase();
+          })[0]
+          .id.toString(),
       });
       res.json(applications);
     } catch (err) {
