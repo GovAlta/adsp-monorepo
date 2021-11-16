@@ -18,7 +18,7 @@ import {
   HealthCheckUnhealthyDefinition,
   HealthCheckHealthyDefinition,
 } from './app/events';
-import { StatusApplicationHealthChange } from './app/notificationTypes';
+import { StatusApplicationHealthChange, StatusApplicationStatusChange } from './app/notificationTypes';
 
 const logger = createLogger('status-service', environment?.LOG_LEVEL || 'info');
 const app = express();
@@ -53,7 +53,7 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
         HealthCheckUnhealthyDefinition,
         HealthCheckHealthyDefinition,
       ],
-      notifications: [StatusApplicationHealthChange],
+      notifications: [StatusApplicationHealthChange, StatusApplicationStatusChange],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),

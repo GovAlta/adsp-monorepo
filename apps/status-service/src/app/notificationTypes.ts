@@ -130,3 +130,37 @@ export const StatusApplicationHealthChange: NotificationType = {
   ],
   publicSubscribe: false,
 };
+
+export const StatusApplicationStatusChange: NotificationType = {
+  name: 'status-application-status-change',
+  description:
+    'Default email templates for application health changes - includes the following events: health-check-started, health-check-stopped, application-unhealthy, application-unhealthy',
+  subscriberRoles: ['status-admin'],
+  events: [
+    {
+      namespace: 'status-service',
+      name: 'application-status-changed',
+      templates: {
+        email: {
+          subject: '{{ event.payload.application.name }} status has changed',
+          body: `<!doctype html>
+<html>
+  <head>
+  </head>
+  <body>
+    <p> {{ event.payload.application.name }}  status has changed</p>
+    <p>
+      {{ event.payload.application.name }} is described as follows: {{ event.payload.application.description }}
+    </p>
+    <p>
+      {{ event.payload.application.name }} is available at <a href="{{ event.payload.application.url }}">{{ event.payload.application.url }}</a>
+    </p>
+  </body>
+</html>`,
+        },
+      },
+      channels: ['email'],
+    },
+  ],
+  publicSubscribe: true,
+};

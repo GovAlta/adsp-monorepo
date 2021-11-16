@@ -379,7 +379,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         onCancel={() => {
           setShowTemplateForm(false);
           setEditEvent(null);
-          setSelectedType(selectedType.events.pop());
         }}
       />
     </NotficationStyles>
