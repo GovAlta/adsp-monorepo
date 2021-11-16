@@ -36,7 +36,7 @@ export async function scheduleServiceStatusJobs(props: ServiceStatusJobProps): P
     });
   });
 
-  scheduleJob('* */1 * * *', watchApps(props));
+  scheduleJob('* */5 * * *', watchApps(props));
 }
 
 // *******
