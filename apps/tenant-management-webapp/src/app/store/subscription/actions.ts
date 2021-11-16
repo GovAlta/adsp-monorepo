@@ -26,7 +26,7 @@ export type ActionTypes =
 export interface SubscribeSubscriberServiceAction {
   type: typeof SUBSCRIBE_SUBSCRIBER;
   payload: {
-    notificationInfo: { data: { type: string; data: Subscription } };
+    notificationInfo: { data: { type: string } };
   };
 }
 
@@ -88,7 +88,7 @@ export interface GetSubscriberAction {
 // ==============
 
 export const SubscribeSubscriberService = (notificationInfo: {
-  data: { type: string; data: Subscriber };
+  data: { type: string };
 }): SubscribeSubscriberServiceAction => ({
   type: SUBSCRIBE_SUBSCRIBER,
   payload: {
