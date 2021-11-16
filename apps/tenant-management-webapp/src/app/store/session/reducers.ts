@@ -3,12 +3,18 @@ import { Session, SESSION_INIT } from './models';
 
 export default function (state: Session = SESSION_INIT, action: ActionType): Session {
   switch (action.type) {
-    case 'session/login/success':
-      return {
-        ...state,
-        ...action.payload,
-      };
+    case 'session/login/success': {
+      const payloadKeys = Object.keys(action.payload);
+      let returnObject = state;
 
+      for (let i = 0; i < payloadKeys.length; i++) {
+        if (JSON.stringify(state[payloadKeys[i]]) !== JSON.stringify(action.payload[payloadKeys[i]])) {
+          returnObject = { ...returnObject, [payloadKeys[i]]: action.payload[payloadKeys[i]] };
+        }
+      }
+
+      return returnObject;
+    }
     case 'credential/refresh':
       return {
         ...state,
@@ -22,8 +28,8 @@ export default function (state: Session = SESSION_INIT, action: ActionType): Ses
       return {
         ...state,
         indicator: {
-          ...action.payload
-        }
+          ...action.payload,
+        },
       };
 
     case 'session/logout':
