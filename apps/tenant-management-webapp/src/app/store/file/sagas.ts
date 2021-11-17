@@ -27,8 +27,6 @@ import {
 } from './actions';
 
 import { FileApi } from './api';
-import { CREATE_TENANT } from '@store/tenant/actions';
-import { createTenant } from '@store/tenant/sagas';
 import { RootState } from '../index';
 import axios from 'axios';
 import { FileTypeItem } from './models';
@@ -237,5 +235,4 @@ export function* watchFileSagas(): Generator {
   yield takeEvery(DELETE_FILE_TYPE, deleteFileTypes);
   yield takeEvery(CREATE_FILE_TYPE, createFileType);
   yield takeEvery(UPDATE_FILE_TYPE, updateFileType);
-  yield takeEvery(CREATE_TENANT, createTenant);
 }
