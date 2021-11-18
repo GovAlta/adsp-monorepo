@@ -80,7 +80,7 @@ export const StatusApplicationHealthChange: NotificationType = {
       channels: ['email'],
     },
     {
-      namespace: 'Status-Service',
+      namespace: 'status-service',
       name: 'application-unhealthy',
       templates: {
         email: {
@@ -104,7 +104,7 @@ export const StatusApplicationHealthChange: NotificationType = {
       channels: ['email'],
     },
     {
-      namespace: 'Status-Service',
+      namespace: 'status-service',
       name: 'application-healthy',
       templates: {
         email: {

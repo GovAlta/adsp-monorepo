@@ -222,7 +222,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           manageEvents(notificationType);
                         }}
                       >
-                        + Select an Event
+                        + Select an event
                       </GoAButton>
                     </EventButtonWrapper>
                     <div>Domain events represent key changes at a domain model level.</div>
