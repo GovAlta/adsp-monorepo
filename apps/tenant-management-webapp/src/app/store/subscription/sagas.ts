@@ -88,7 +88,7 @@ export function* createSubscriber(action: CreateSubscriberAction): SagaIterator 
 
   if (configBaseUrl && token) {
     try {
-      const response = yield call(
+      yield call(
         axios.post,
         `${configBaseUrl}/subscription/v1/subscribers`,
         { data: 'data' },
@@ -97,13 +97,7 @@ export function* createSubscriber(action: CreateSubscriberAction): SagaIterator 
         }
       );
 
-      const subData: Subscriber = {
-        id: response.data.id,
-        urn: response.data.urn,
-        channels: response.data.channels,
-      };
-
-      yield put(SubscribeSubscriberService({ data: { type: type, data: subData } }));
+      yield put(SubscribeSubscriberService({ data: { type: type } }));
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
     }
@@ -112,7 +106,6 @@ export function* createSubscriber(action: CreateSubscriberAction): SagaIterator 
 
 export function* addTypeSubscription(action: SubscribeSubscriberServiceAction): SagaIterator {
   const type = action.payload.notificationInfo.data.type;
-  const id = action.payload.notificationInfo.data.data.id;
 
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
@@ -122,7 +115,7 @@ export function* addTypeSubscription(action: SubscribeSubscriberServiceAction): 
     try {
       const response = yield call(
         axios.post,
-        `${configBaseUrl}/subscription/v1/types/${type}/subscriptions/${id}`,
+        `${configBaseUrl}/subscription/v1/types/${type}/subscriptions?userSub=true`,
         { data: 'data' },
         {
           headers: { Authorization: `Bearer ${token}` },

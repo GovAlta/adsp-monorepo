@@ -94,7 +94,7 @@ function Status(): JSX.Element {
       dispatch(Unsubscribe({ data: { type: 'status-application-health-change', data: subscriber } }));
     } else {
       if (subscriber) {
-        dispatch(SubscribeSubscriberService({ data: { type: 'status-application-health-change', data: subscriber } }));
+        dispatch(SubscribeSubscriberService({ data: { type: 'status-application-health-change' } }));
       } else {
         dispatch(CreateSubscriberService('status-application-health-change'));
       }
