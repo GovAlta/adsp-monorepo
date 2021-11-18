@@ -4,9 +4,8 @@ import styled from 'styled-components';
 import { GoABadge } from '@abgov/react-components/experimental';
 import SettingIcon from '@assets/icons/setting-filled.svg';
 import { DraftDropdownMenu, PublishedDropdownMenu } from './noticeCardMenu';
-import { fetchServiceStatusApps } from '@store/status/actions';
 import { IconContext } from '@components/icons/IconContext';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 
 const NoticeCardContainer = styled.div`
@@ -55,15 +54,12 @@ interface NoticeCardProps {
 }
 
 export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
-  const dispatch = useDispatch();
   const { applications } = useSelector((state: RootState) => ({
     applications: state.serviceStatus.applications,
   }));
   const { isMenuOpen, clickMenuFn } = props;
-
-  useEffect(() => {
-    dispatch(fetchServiceStatusApps());
-  }, []);
+  // eslint-disable-next-line
+  useEffect(() => {}, [applications]);
 
   const { notice } = props;
   const CardHeader = (props: CardHeaderProps): JSX.Element => {

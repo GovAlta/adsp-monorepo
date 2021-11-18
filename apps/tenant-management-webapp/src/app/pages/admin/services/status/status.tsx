@@ -61,22 +61,21 @@ function Status(): JSX.Element {
 
   useEffect(() => {
     dispatch(fetchServiceStatusApps());
-    const intervalId = setInterval(() => dispatch(fetchServiceStatusApps()), 30000);
-
-    return () => clearInterval(intervalId);
   }, []);
+
+  useEffect(() => {
+    if (applications && applications.length > 0) {
+      const intervalId = setInterval(() => dispatch(fetchServiceStatusApps()), 30000);
+      return () => clearInterval(intervalId);
+    }
+  }, [applications]);
+
 
   const publicStatusUrl = `${serviceStatusAppUrl}/${tenantName.replace(/\s/g, '-').toLowerCase()}`;
 
   const _afterShow = (copyText) => {
     navigator.clipboard.writeText(copyText);
   };
-
-  useEffect(() => {
-    if (activeIndex != null) {
-      setActiveIndex(null);
-    }
-  }, [activeIndex]);
 
   useEffect(() => {
     dispatch(getNotices());
