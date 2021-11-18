@@ -110,7 +110,7 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
       </GoAModalContent>
       <GoAModalActions>
         <GoAButton data-testid="template-form-cancel" buttonType="tertiary" type="button" onClick={onCancel}>
-          Cancel
+          {disabled ? 'Close' : 'Cancel'}
         </GoAButton>
         {!disabled && (
           <GoAButton
