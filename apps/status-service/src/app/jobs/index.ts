@@ -37,6 +37,16 @@ export async function scheduleServiceStatusJobs(props: ServiceStatusJobProps): P
   });
 
   scheduleJob('* */5 * * *', watchApps(props));
+  scheduleJob('* * */1 * *', deleteOldStatus(props));
+
+}
+
+function deleteOldStatus(props: ServiceStatusJobProps) {
+  return async () => {
+    props.logger.info("Start to delete the old application status.")
+    await props.endpointStatusEntryRepository.deleteOldUrlStatus();
+    props.logger.info("Completed the old application status deletion.")
+  }
 }
 
 // *******
