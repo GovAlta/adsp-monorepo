@@ -133,8 +133,7 @@ export const StatusApplicationHealthChange: NotificationType = {
 
 export const StatusApplicationStatusChange: NotificationType = {
   name: 'status-application-status-change',
-  description:
-    'Default email templates for application health changes - includes the following events: health-check-started, health-check-stopped, application-unhealthy, application-unhealthy',
+  description: 'Default email templates for application status changes',
   subscriberRoles: ['status-admin'],
   events: [
     {
@@ -142,18 +141,41 @@ export const StatusApplicationStatusChange: NotificationType = {
       name: 'application-status-changed',
       templates: {
         email: {
-          subject: '{{ event.payload.application.name }} status has changed',
+          subject: '{{ event.payload.applicationName }} status has changed',
           body: `<!doctype html>
 <html>
   <head>
   </head>
   <body>
-    <p> {{ event.payload.application.name }}  status has changed</p>
+    <p> {{ event.payload.applicationName }} status has changed</p>
     <p>
-      {{ event.payload.application.name }} is described as follows: {{ event.payload.application.description }}
+      {{ event.payload.applicationName }} is described as follows: {{ event.payload.applicationDescription }}
+    </p>
+    <p>The original status was: {{ event.payload.originalStatus }}</p>
+    <p>The new status is now: {{ event.payload.newStatus }}</p>
+  </body>
+</html>`,
+        },
+      },
+      channels: ['email'],
+    },
+    {
+      namespace: 'status-service',
+      name: 'application-notice-published',
+      templates: {
+        email: {
+          subject: '{{ event.payload.description }} ',
+          body: `<!doctype html>
+<html>
+  <head>
+  </head>
+  <body>
+    <p> A notice related to application {{ JSON.parse(event.payload.tenantServRef).name }} has been published</p>
+    <p>
+      The notice is described as follows: {{ event.payload.description }}
     </p>
     <p>
-      {{ event.payload.application.name }} is available at <a href="{{ event.payload.application.url }}">{{ event.payload.application.url }}</a>
+      The notice is related to the following tenant: {{  event.payload.tenantName }}</a>
     </p>
   </body>
 </html>`,
