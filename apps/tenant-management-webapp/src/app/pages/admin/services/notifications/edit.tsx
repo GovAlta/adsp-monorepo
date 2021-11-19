@@ -1,8 +1,11 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { NotificationItem } from '@store/notification/models';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton, GoADropdownOption } from '@abgov/react-components';
+import { useSelector } from 'react-redux';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import { GoADropdown } from '@abgov/react-components';
+import { RootState } from '@store/index';
 
 interface NotificationTypeFormProps {
   initialValue?: NotificationItem;
@@ -36,6 +39,33 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
     isEdit && setType(initialValue);
   }, [initialValue]);
 
+  const realmRoles = useSelector((state: RootState) => state.tenant.realmRoles);
+
+  let dropDownOptions = [];
+
+  dropDownOptions = [
+    {
+      value: 'anonymousRead',
+      label: 'Anyone (Anonymous)',
+      key: 'anonymous',
+      dataTestId: 'anonymous-option',
+    },
+  ];
+
+  let defaultDropDowns = [];
+
+  if (realmRoles) {
+    defaultDropDowns = realmRoles.map((realmRole) => {
+      return {
+        value: realmRole.name,
+        label: realmRole.name,
+        key: realmRole.id,
+        dataTestId: `${realmRole}-update-roles-options`,
+      };
+    });
+    dropDownOptions = dropDownOptions.concat(defaultDropDowns);
+  }
+
   return (
     <GoAModal testId="notification-types-form" isOpen={open}>
       <GoAModalTitle>{isEdit ? 'Edit notification type' : 'Add a notification type'}</GoAModalTitle>
@@ -61,6 +91,41 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               onChange={(e) => setType({ ...type, description: e.target.value })}
             />
           </GoAFormItem>
+          <div style={{ margin: '0 0 200px 0' }}>
+            <GoAFormItem>
+              <label>Select subscriber roles</label>
+              <GoADropdown
+                name="subscriberRoles"
+                selectedValues={type?.subscriberRoles}
+                multiSelect={true}
+                onChange={(name, values) => {
+                  if (values[values.length - 1] === 'anonymousRead') {
+                    values = values.filter((value) => !realmRoles.map((realmRole) => realmRole.name).includes(value));
+                  }
+                  if (values.includes('anonymousRead') && values[values.length - 1] !== 'anonymousRead') {
+                    values = values.filter((value) => value !== 'anonymousRead');
+                  }
+
+                  let publicSubscribe = false;
+
+                  if (values.includes('anonymousRead')) {
+                    publicSubscribe = true;
+                  }
+
+                  setType({ ...type, subscriberRoles: values, publicSubscribe });
+                }}
+              >
+                {dropDownOptions.map((item) => (
+                  <GoADropdownOption
+                    label={item.label}
+                    value={item.value}
+                    key={item.key}
+                    data-testid={item.dataTestId}
+                  />
+                ))}
+              </GoADropdown>
+            </GoAFormItem>
+          </div>
         </GoAForm>
       </GoAModalContent>
       <GoAModalActions>

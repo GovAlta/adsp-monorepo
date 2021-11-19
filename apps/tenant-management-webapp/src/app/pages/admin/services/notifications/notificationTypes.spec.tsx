@@ -44,6 +44,9 @@ describe('NotificationTypes Page', () => {
     },
     user: { jwt: { token: '' } },
     session: { realm: 'core' },
+    tenant: {
+      realmRoles: ['uma_auth'],
+    },
   });
 
   it('renders', () => {

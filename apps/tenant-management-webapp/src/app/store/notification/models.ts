@@ -2,7 +2,7 @@ export interface NotificationItem {
   name: string;
   description?: string;
   events: Array<EventItem>;
-  subscriberRoles: [];
+  subscriberRoles: string[];
   id: string;
   publicSubscribe: boolean;
 }
