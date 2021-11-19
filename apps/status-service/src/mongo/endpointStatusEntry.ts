@@ -39,6 +39,15 @@ export default class MongoEndpointStatusEntryRepository implements EndpointStatu
     return this.fromDoc(doc);
   }
 
+  async deleteOldUrlStatus(): Promise<boolean> {
+    try {
+      await this.model.deleteMany({ timestamp: {$lt: Date.now() - 1000 * 3600 * 2}})
+      return true
+    } catch (e) {
+      return false
+    }
+  }
+
   private toDoc(endpoint: EndpointStatusEntryEntity): Doc<EndpointStatusEntry> {
     return {
       ok: endpoint.ok,

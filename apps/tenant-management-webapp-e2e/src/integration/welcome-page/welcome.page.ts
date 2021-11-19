@@ -48,8 +48,8 @@ class WelcomePage {
     return cy.get('#kc-header-wrapper');
   }
 
-  getStartedContinueButton() {
-    return cy.get('button:contains("Continue")');
+  getStartedSigninButton() {
+    return cy.get('button:contains("Sign in")');
   }
 
   tenantSignInTitle() {

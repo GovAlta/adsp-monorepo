@@ -28,12 +28,13 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
 }) => {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
+
   useEffect(() => {
     if (selectedEvent) {
       setSubject(selectedEvent?.templates?.email?.subject);
       setBody(selectedEvent?.templates?.email?.body);
     }
-  }, [selectedEvent]);
+  }, [selectedEvent, open]);
   const validate = () => {
     if (subject.length === 0 || body.length === 0) {
       return false;
@@ -64,7 +65,7 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
                 height={50}
                 width="80vh"
                 language="handlebars"
-                value={selectedEvent?.templates?.email?.subject}
+                value={subject}
                 onChange={(value) => setSubject(value)}
                 options={{
                   wordWrap: 'off',
@@ -75,8 +76,10 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
                     addExtraSpaceOnTop: false,
                     autoFindInSelection: 'never',
                     seedSearchStringFromSelection: false,
+                    overviewRulerBorder: false,
                   },
                   minimap: { enabled: false },
+                  renderLineHighlight: 'none',
                 }}
               />
             </MonacoDiv>
@@ -88,7 +91,7 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
               <MonacoEditor
                 data-testid="templateForm-body"
                 height={200}
-                value={selectedEvent?.templates?.email?.body}
+                value={body}
                 onChange={(value) => setBody(value)}
                 language="handlebars"
                 options={{
@@ -96,6 +99,9 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
                   readOnly: disabled,
                   lineNumbers: 'off',
                   minimap: { enabled: false },
+                  overviewRulerBorder: false,
+                  lineHeight: 25,
+                  renderLineHighlight: 'none',
                 }}
               />
             </MonacoDiv>
@@ -104,7 +110,7 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
       </GoAModalContent>
       <GoAModalActions>
         <GoAButton data-testid="template-form-cancel" buttonType="tertiary" type="button" onClick={onCancel}>
-          Cancel
+          {disabled ? 'Close' : 'Cancel'}
         </GoAButton>
         {!disabled && (
           <GoAButton

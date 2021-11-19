@@ -1,13 +1,11 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent } from 'react';
 import { GoAButton } from '@abgov/react-components';
-import { useHistory } from 'react-router-dom';
 
 interface ParentCompProps {
   setActiveEdit?: (boolean) => void;
 }
 
 export const NotificationsOverview: FunctionComponent<ParentCompProps> = (props) => {
-  const history = useHistory();
   const { setActiveEdit } = props;
 
   return (

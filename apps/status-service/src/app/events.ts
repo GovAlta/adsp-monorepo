@@ -1,5 +1,6 @@
 import { AdspId, DomainEvent, DomainEventDefinition } from '@abgov/adsp-service-sdk';
 import { ServiceStatusApplication } from './types';
+import { NoticeApplicationEntity } from './model/notice';
 
 const ApplicationDefinition = {
   type: 'object',
@@ -16,6 +17,17 @@ interface ApplicationEvent {
   name: string;
   description: string;
   url: string;
+}
+
+interface ApplicationNotificationEvent {
+  id: string;
+  message: string;
+  tennantServRef: string;
+  startDate: Date;
+  endDate: Date;
+  created: Date;
+  tenantId: string;
+  tenantName: string;
 }
 
 export const HealthCheckStartedDefinition: DomainEventDefinition = {
@@ -63,6 +75,40 @@ export const HealthCheckUnhealthyDefinition: DomainEventDefinition = {
   },
 };
 
+export const ApplicationNoticePublishedDefinition: DomainEventDefinition = {
+  name: 'application-notice-published',
+  description: 'A notice related to the current application is published.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      id: {
+        type: 'string',
+      },
+      message: {
+        type: ['string', 'null'],
+      },
+      tennantServRef: {
+        type: 'string',
+      },
+      startDate: {
+        type: 'date',
+      },
+      endDate: {
+        type: 'data',
+      },
+      created: {
+        type: 'data',
+      },
+      tenantId: {
+        type: 'string',
+      },
+      tenantName: {
+        type: 'string',
+      },
+    },
+  },
+};
+
 export const ApplicationStatusChangedDefinition: DomainEventDefinition = {
   name: 'application-status-changed',
   description: 'Signalled when an application status is changed.',
@@ -101,6 +147,19 @@ const mapApplication = (application: ServiceStatusApplication): ApplicationEvent
     name: application.name,
     description: application.description,
     url: application.endpoint.url,
+  };
+};
+
+const mapNotice = (notice: NoticeApplicationEntity): ApplicationNotificationEvent => {
+  return {
+    id: notice.id,
+    message: notice.message,
+    tennantServRef: notice.tennantServRef,
+    startDate: notice.startDate,
+    endDate: notice.endDate,
+    created: notice.created,
+    tenantId: notice.tenantId,
+    tenantName: notice.tenantName,
   };
 };
 
@@ -161,5 +220,14 @@ export const applicationStatusChange = (
         userName: user.name,
       },
     },
+  },
+});
+
+export const applicationNoticePublished = (notice: NoticeApplicationEntity): DomainEvent => ({
+  name: 'application-notice-published',
+  timestamp: new Date(),
+  tenantId: AdspId.parse(notice.tenantId),
+  payload: {
+    notice: mapNotice(notice),
   },
 });
