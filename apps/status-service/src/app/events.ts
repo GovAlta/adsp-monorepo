@@ -85,7 +85,7 @@ export const ApplicationNoticePublishedDefinition: DomainEventDefinition = {
         type: 'string',
       },
       message: {
-        type: 'string',
+        type: ['string', 'null'] },
       },
       tennantServRef: {
         type: 'string',
