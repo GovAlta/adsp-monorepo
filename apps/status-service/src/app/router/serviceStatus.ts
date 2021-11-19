@@ -154,7 +154,7 @@ export function createServiceStatusRouter({
 
     const updatedApplication = await application.setStatus(user, status as PublicServiceStatusType);
 
-    eventService.send(applicationStatusChange(updatedApplication));
+    eventService.send(applicationStatusChange(updatedApplication, application.status, user));
 
     res.status(200).json(updatedApplication);
   });

@@ -69,13 +69,13 @@ export const ApplicationStatusChangedDefinition: DomainEventDefinition = {
   payloadSchema: {
     type: 'object',
     properties: {
-      applicationId: {
+      id: {
         type: 'string',
       },
-      applicationName: {
+      name: {
         type: 'string',
       },
-      applicationDescription: {
+      description: {
         type: 'string',
       },
       originalStatus: {
@@ -141,11 +141,25 @@ export const applicationStatusToHealthy = (application: ServiceStatusApplication
   },
 });
 
-export const applicationStatusChange = (application: ServiceStatusApplication): DomainEvent => ({
+export const applicationStatusChange = (
+  application: ServiceStatusApplication,
+  originalStatus: string,
+  user: Express.User
+): DomainEvent => ({
   name: 'application-status-changed',
   timestamp: new Date(),
   tenantId: AdspId.parse(application.tenantId),
   payload: {
-    application: mapApplication(application),
+    application: {
+      id: application._id,
+      name: application.name,
+      description: application.description,
+      originalStatus: originalStatus,
+      newStatus: application.status,
+      updatedBy: {
+        userId: user.id,
+        userName: user.name,
+      },
+    },
   },
 });
