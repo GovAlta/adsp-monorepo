@@ -64,7 +64,7 @@ When('the user selects get started button', function () {
 });
 
 When('the user clicks Sign in button', function () {
-  welcomPageObj.getStartedContinueButton().click();
+  welcomPageObj.getStartedSigninButton().click();
   cy.wait(5000); // Wait for the web app to check if the user has created a tenant or not
 });
 
