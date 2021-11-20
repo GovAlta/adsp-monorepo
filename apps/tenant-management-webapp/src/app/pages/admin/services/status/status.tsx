@@ -29,13 +29,7 @@ import type { GoABadgeType } from '@abgov/react-components/experimental';
 import ApplicationFormModal from './form';
 import NoticeModal from './noticeModal';
 import { setApplicationStatus } from '@store/status/actions/setApplicationStatus';
-import {
-  CreateSubscriberService,
-  SubscribeSubscriberService,
-  getSubscriber,
-  getSubscription,
-  Unsubscribe,
-} from '@store/subscription/actions';
+import { SubscribeSubscriberService, getSubscriber, getSubscription, Unsubscribe } from '@store/subscription/actions';
 import { Tab, Tabs } from '@components/Tabs';
 import { getNotices } from '@store/notice/actions';
 import { NoticeList } from './noticeList';
@@ -70,7 +64,6 @@ function Status(): JSX.Element {
     }
   }, [applications]);
 
-
   const publicStatusUrl = `${serviceStatusAppUrl}/${tenantName.replace(/\s/g, '-').toLowerCase()}`;
 
   const _afterShow = (copyText) => {
@@ -92,11 +85,7 @@ function Status(): JSX.Element {
     if (subscription) {
       dispatch(Unsubscribe({ data: { type: 'status-application-health-change', data: subscriber } }));
     } else {
-      if (subscriber) {
-        dispatch(SubscribeSubscriberService({ data: { type: 'status-application-health-change' } }));
-      } else {
-        dispatch(CreateSubscriberService('status-application-health-change'));
-      }
+      dispatch(SubscribeSubscriberService({ data: { type: 'status-application-health-change' } }));
     }
   };
 
