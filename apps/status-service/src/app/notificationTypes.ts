@@ -42,10 +42,7 @@ export const StatusApplicationHealthChange: NotificationType = {
   <head>
   </head>
   <body>
-    <p>Health checking has been activated for application {{ event.payload.application.name }}</p>
-    <p>
-      {{ event.payload.application.name }} is described as follows: {{ event.payload.application.description }}
-    </p>
+    <p>Health check has been activated for {{ event.payload.application.name }}</p>
     <p>
       {{ event.payload.application.name }} is available at <a href="{{ event.payload.application.url }}">{{ event.payload.application.url }}</a>
     </p>
@@ -66,10 +63,7 @@ export const StatusApplicationHealthChange: NotificationType = {
   <head>
   </head>
   <body>
-    <p>Health checking has been disabled for application {{ event.payload.application.name }}</p>
-    <p>
-      {{ event.payload.application.name }} is described as follows: {{ event.payload.application.description }}
-    </p>
+    <p>Health check has been disabled for {{ event.payload.application.name }}</p>
     <p>
       {{ event.payload.application.name }} is available at <a href="{{ event.payload.application.url }}">{{ event.payload.application.url }}</a>
     </p>
@@ -84,16 +78,13 @@ export const StatusApplicationHealthChange: NotificationType = {
       name: 'application-unhealthy',
       templates: {
         email: {
-          subject: 'Status of {{ event.payload.application.name }} is deemed to be unhealthy',
+          subject: '{{ event.payload.application.name }} is unhealthy',
           body: `<!doctype html>
 <html>
   <head>
   </head>
   <body>
-    <p>{{ event.payload.application.name }} may be offline</p>
-    <p>
-      {{ event.payload.application.name }} is described as follows: {{ event.payload.application.description }}
-    </p>
+    <p>The healthcheck for {{ event.payload.application.name }} has failed multiple times</p>
     <p>
       {{ event.payload.application.name }} is available at <a href="{{ event.payload.application.url }}">{{ event.payload.application.url }}</a>
     </p>
@@ -108,16 +99,13 @@ export const StatusApplicationHealthChange: NotificationType = {
       name: 'application-healthy',
       templates: {
         email: {
-          subject: 'Status of {{ event.payload.application.name }} is healthy',
+          subject: '{{ event.payload.application.name }} is healthy',
           body: `<!doctype html>
 <html>
   <head>
   </head>
   <body>
-    <p>{{ event.payload.application.name }} seems to be available</p>
-    <p>
-      {{ event.payload.application.name }} is described as follows: {{ event.payload.application.description }}
-    </p>
+    <p>{{ event.payload.application.name }} is currently available</p>
     <p>
       {{ event.payload.application.name }} is available at <a href="{{ event.payload.application.url }}">{{ event.payload.application.url }}</a>
     </p>
