@@ -51,7 +51,7 @@ export class FileTypeEntity implements FileType {
   canAccessFile(user: User): boolean {
     return (
       this.anonymousRead ||
-      isAllowedUser(user, this.tenantId, [ServiceUserRoles.Admin, ...this.readRoles, ...this.updateRoles])
+      isAllowedUser(user, this.tenantId, [ServiceUserRoles.Admin, ...this.readRoles, ...this.updateRoles], true)
     );
   }
 

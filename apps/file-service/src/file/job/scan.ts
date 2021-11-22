@@ -14,7 +14,7 @@ export const createScanJob = ({ logger, scanService, fileRepository }: ScanJobPr
     logger.debug('Starting file scan job...');
 
     const scans = [];
-    let after = null;
+    let after: string = null;
     do {
       const { results, page } = await fileRepository.find(10, after, { scanned: false, deleted: false });
       after = page.next;
@@ -33,6 +33,7 @@ export const createScanJob = ({ logger, scanService, fileRepository }: ScanJobPr
           logger.warn(`Error encountered scanning file ${result.filename} (ID: ${result.id}). ${err}`);
         }
       }
+      logger.debug(`Scanned page and proceeding to next: ${after}...`);
     } while (after);
 
     const numberScanned = scans.filter((scan) => scan.scanned).length;

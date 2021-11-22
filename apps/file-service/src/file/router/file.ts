@@ -178,10 +178,10 @@ export const downloadFile: RequestHandler = async (req, res, next) => {
     }
 
     const stream = await fileEntity.readFile(user);
-    res.writeHead(200, null, {
-      'Content-Disposition': `attachment; filename="${fileEntity.filename}"`,
-      'Cache-Control': fileEntity.type.anonymousRead ? 'public' : 'no-store',
-    });
+    res.status(200);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileEntity.filename}"`);
+    res.setHeader('Cache-Control', fileEntity.type.anonymousRead ? 'public' : 'no-store');
+    
     stream.pipe(res);
   } catch (err) {
     next(err);

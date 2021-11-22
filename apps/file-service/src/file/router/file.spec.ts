@@ -299,7 +299,8 @@ describe('file router', () => {
         fileEntity: file,
       };
       const res = {
-        writeHead: jest.fn(),
+        setHeader: jest.fn(),
+        status: jest.fn(),
       };
       const next = jest.fn();
 
@@ -308,7 +309,8 @@ describe('file router', () => {
       fileRepositoryMock.get.mockResolvedValueOnce(file);
 
       await downloadFile(req as unknown as Request, res as unknown as Response, next);
-      expect(res.writeHead).toHaveBeenCalledWith(200, null, expect.anything());
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.setHeader).toHaveBeenCalled();
       expect(stream.pipe).toHaveBeenCalled();
     });
 
@@ -368,7 +370,8 @@ describe('file router', () => {
         }),
       };
       const res = {
-        writeHead: jest.fn(),
+        status: jest.fn(),
+        setHeader: jest.fn(),
       };
       const next = jest.fn();
 
@@ -377,7 +380,8 @@ describe('file router', () => {
       fileRepositoryMock.get.mockResolvedValueOnce(file);
 
       await downloadFile(req as unknown as Request, res as unknown as Response, next);
-      expect(res.writeHead).toHaveBeenCalledWith(200, null, expect.anything());
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.setHeader).toHaveBeenCalled();
       expect(stream.pipe).toHaveBeenCalled();
     });
   });

@@ -28,8 +28,9 @@ export const createDeleteJob =
           logger.error(`Error encountered deleting file ${result.filename} (ID: ${result.id}): ${err}`);
         }
       }
-
-      logger.info(`Completed file delete job and deleted ${numberDeleted} files.`);
-      return numberDeleted;
+      logger.debug(`Deleted page and proceeding to next: ${after}...`);
     } while (after);
+
+    logger.info(`Completed file delete job and deleted ${numberDeleted} files.`);
+    return numberDeleted;
   };
