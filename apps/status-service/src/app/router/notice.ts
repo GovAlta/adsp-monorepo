@@ -1,4 +1,5 @@
 import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
+import { EventService } from '@abgov/adsp-service-sdk';
 import { Router } from 'express';
 import { UrlWithStringQuery } from 'url';
 import { Logger } from 'winston';
@@ -6,10 +7,12 @@ import { NoticeApplicationEntity } from '../model/notice';
 import { NoticeRepository } from '../repository/notice';
 import { ServiceUserRoles, NoticeModeType } from '../types';
 import { TenantService } from '@abgov/adsp-service-sdk';
+import { applicationNoticePublished } from '../events';
 
 export interface NoticeRouterProps {
   logger: Logger;
   noticeRepository: NoticeRepository;
+  eventService?: EventService;
   tenantService: TenantService;
 }
 
@@ -35,7 +38,12 @@ const parseTenantServRef = (tennantServRef?: string | applicationRef[] | null): 
   return tennantServRef;
 };
 
-export function createNoticeRouter({ logger, tenantService, noticeRepository }: NoticeRouterProps): Router {
+export function createNoticeRouter({
+  logger,
+  tenantService,
+  noticeRepository,
+  eventService,
+}: NoticeRouterProps): Router {
   const router = Router();
 
   // Get notices by query
@@ -154,6 +162,7 @@ export function createNoticeRouter({ logger, tenantService, noticeRepository }: 
         isAllApplications: isAllApplications || false,
         tenantId: user.tenantId.toString(),
       });
+
       res.status(201).json({ ...notice, tennantServRef: JSON.parse(notice.tennantServRef) });
     } catch (err) {
       const errMessage = `Error creating notice: ${err.message}`;
@@ -186,6 +195,10 @@ export function createNoticeRouter({ logger, tenantService, noticeRepository }: 
         mode,
         isAllApplications,
       });
+
+      if (updatedApplication.mode === 'active') {
+        eventService.send(applicationNoticePublished(updatedApplication));
+      }
 
       res.status(200).json({
         ...updatedApplication,

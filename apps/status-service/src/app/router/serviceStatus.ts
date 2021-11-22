@@ -7,7 +7,7 @@ import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { PublicServiceStatusType } from '../types';
 import { TenantService, EventService } from '@abgov/adsp-service-sdk';
-import { applicationStatusToStarted, applicationStatusToStopped } from '../events';
+import { applicationStatusToStarted, applicationStatusToStopped, applicationStatusChange } from '../events';
 
 export interface ServiceStatusRouterProps {
   logger: Logger;
@@ -153,6 +153,9 @@ export function createServiceStatusRouter({
     }
 
     const updatedApplication = await application.setStatus(user, status as PublicServiceStatusType);
+
+    eventService.send(applicationStatusChange(updatedApplication, application.status, user));
+
     res.status(200).json(updatedApplication);
   });
 

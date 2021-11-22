@@ -108,6 +108,39 @@ export const ApplicationNoticePublishedDefinition: DomainEventDefinition = {
     },
   },
 };
+
+export const ApplicationStatusChangedDefinition: DomainEventDefinition = {
+  name: 'application-status-changed',
+  description: 'Signalled when an application status is changed.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      id: {
+        type: 'string',
+      },
+      name: {
+        type: 'string',
+      },
+      description: {
+        type: 'string',
+      },
+      originalStatus: {
+        type: 'string',
+      },
+      newStatus: {
+        type: 'string',
+      },
+      updatedBy: {
+        type: 'object',
+        properties: {
+          userId: { type: 'string' },
+          userName: { type: 'string' },
+        },
+      },
+    },
+  },
+};
+
 const mapApplication = (application: ServiceStatusApplication): ApplicationEvent => {
   return {
     id: application._id,
@@ -164,6 +197,29 @@ export const applicationStatusToHealthy = (application: ServiceStatusApplication
   tenantId: AdspId.parse(application.tenantId),
   payload: {
     application: mapApplication(application),
+  },
+});
+
+export const applicationStatusChange = (
+  application: ServiceStatusApplication,
+  originalStatus: string,
+  user: Express.User
+): DomainEvent => ({
+  name: 'application-status-changed',
+  timestamp: new Date(),
+  tenantId: AdspId.parse(application.tenantId),
+  payload: {
+    application: {
+      id: application._id,
+      name: application.name,
+      description: application.description,
+      originalStatus: originalStatus,
+      newStatus: application.status,
+      updatedBy: {
+        userId: user.id,
+        userName: user.name,
+      },
+    },
   },
 });
 
