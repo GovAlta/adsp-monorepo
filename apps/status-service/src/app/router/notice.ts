@@ -6,11 +6,14 @@ import { NoticeApplicationEntity } from '../model/notice';
 import { NoticeRepository } from '../repository/notice';
 import { ServiceUserRoles, NoticeModeType } from '../types';
 import { TenantService } from '@abgov/adsp-service-sdk';
+import { applicationNoticePublished } from '../events';
+import { EventService } from '@abgov/adsp-service-sdk';
 
 export interface NoticeRouterProps {
   logger: Logger;
   noticeRepository: NoticeRepository;
   tenantService: TenantService;
+  eventService: EventService;
 }
 
 interface NoticeFilter {
@@ -35,7 +38,12 @@ const parseTenantServRef = (tennantServRef?: string | applicationRef[] | null): 
   return tennantServRef;
 };
 
-export function createNoticeRouter({ logger, tenantService, noticeRepository }: NoticeRouterProps): Router {
+export function createNoticeRouter({
+  logger,
+  tenantService,
+  noticeRepository,
+  eventService,
+}: NoticeRouterProps): Router {
   const router = Router();
 
   // Get notices by query
@@ -177,7 +185,7 @@ export function createNoticeRouter({ logger, tenantService, noticeRepository }: 
       if (!application) {
         throw new NotFoundError('Service Notice', id);
       }
-
+      const applicationMode = application.mode;
       const updatedApplication = await application.update(user, {
         message,
         tennantServRef,
@@ -186,7 +194,9 @@ export function createNoticeRouter({ logger, tenantService, noticeRepository }: 
         mode,
         isAllApplications,
       });
-
+      if (applicationMode !== 'active' && mode === 'active') {
+        eventService.send(applicationNoticePublished(application, JSON.parse(tennantServRef)));
+      }
       res.status(200).json({
         ...updatedApplication,
         tennantServRef: JSON.parse(updatedApplication.tennantServRef),

@@ -20,14 +20,10 @@ interface ApplicationEvent {
 }
 
 interface ApplicationNotificationEvent {
-  id: string;
-  message: string;
-  tennantServRef: string;
-  startDate: Date;
-  endDate: Date;
+  description: string;
+  startTimestamp: Date;
+  endTimestamp: Date;
   created: Date;
-  tenantId: string;
-  tenantName: string;
 }
 
 export const HealthCheckStartedDefinition: DomainEventDefinition = {
@@ -81,29 +77,34 @@ export const ApplicationNoticePublishedDefinition: DomainEventDefinition = {
   payloadSchema: {
     type: 'object',
     properties: {
-      id: {
-        type: 'string',
+      application: {
+        id: { type: 'string' },
+        name: { type: 'string' },
+        description: {
+          type: ['string', 'null'],
+        },
       },
-      message: {
-        type: ['string', 'null'],
+      notice: {
+        description: {
+          type: ['string', 'null'],
+        },
+        startTimestamp: {
+          type: 'date',
+        },
+        endTimestamp: {
+          type: 'date',
+        },
+        created: {
+          type: 'date',
+        },
       },
-      tennantServRef: {
-        type: 'string',
-      },
-      startDate: {
-        type: 'date',
-      },
-      endDate: {
-        type: 'data',
-      },
-      created: {
-        type: 'data',
-      },
-      tenantId: {
-        type: 'string',
-      },
-      tenantName: {
-        type: 'string',
+      postBy: {
+        tenantId: {
+          type: 'string',
+        },
+        tenantName: {
+          type: 'string',
+        },
       },
     },
   },
@@ -119,14 +120,10 @@ const mapApplication = (application: ServiceStatusApplication): ApplicationEvent
 
 const mapNotice = (notice: NoticeApplicationEntity): ApplicationNotificationEvent => {
   return {
-    id: notice.id,
-    message: notice.message,
-    tennantServRef: notice.tennantServRef,
-    startDate: notice.startDate,
-    endDate: notice.endDate,
+    description: notice.message,
+    startTimestamp: notice.startDate,
+    endTimestamp: notice.endDate,
     created: notice.created,
-    tenantId: notice.tenantId,
-    tenantName: notice.tenantName,
   };
 };
 
@@ -167,11 +164,21 @@ export const applicationStatusToHealthy = (application: ServiceStatusApplication
   },
 });
 
-export const applicationNoticePublished = (notice: NoticeApplicationEntity): DomainEvent => ({
+export const applicationNoticePublished = (notice: NoticeApplicationEntity, tennantServRef): DomainEvent => ({
   name: 'application-notice-published',
   timestamp: new Date(),
   tenantId: AdspId.parse(notice.tenantId),
   payload: {
+    application: {
+      id: tennantServRef[0].id,
+      name: tennantServRef[0].name,
+      description: tennantServRef[0].description ? tennantServRef[0].description : '',
+    },
+
     notice: mapNotice(notice),
+    postBy: {
+      tenantId: notice.tenantId,
+      tenantName: notice.tenantName,
+    },
   },
 });
