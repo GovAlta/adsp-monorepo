@@ -105,7 +105,7 @@ export const StatusApplicationHealthChange: NotificationType = {
   <head>
   </head>
   <body>
-    <p>{{ event.payload.application.name }} is currently available</p>
+    <p>{{ event.payload.application.name }} has succeeded multiple times</p>
     <p>
       {{ event.payload.application.name }} is available at <a href="{{ event.payload.application.url }}">{{ event.payload.application.url }}</a>
     </p>
