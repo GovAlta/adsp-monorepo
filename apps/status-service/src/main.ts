@@ -17,6 +17,7 @@ import {
   HealthCheckStoppedDefinition,
   HealthCheckUnhealthyDefinition,
   HealthCheckHealthyDefinition,
+  ApplicationStatusChangedDefinition,
   ApplicationNoticePublishedDefinition,
 } from './app/events';
 import { StatusApplicationHealthChange, StatusApplicationStatusChange } from './app/notificationTypes';
@@ -53,6 +54,7 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
         HealthCheckStoppedDefinition,
         HealthCheckUnhealthyDefinition,
         HealthCheckHealthyDefinition,
+        ApplicationStatusChangedDefinition,
         ApplicationNoticePublishedDefinition,
       ],
       notifications: [StatusApplicationHealthChange, StatusApplicationStatusChange],

@@ -1,4 +1,5 @@
 import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
+import { EventService } from '@abgov/adsp-service-sdk';
 import { Router } from 'express';
 import { UrlWithStringQuery } from 'url';
 import { Logger } from 'winston';
@@ -7,13 +8,12 @@ import { NoticeRepository } from '../repository/notice';
 import { ServiceUserRoles, NoticeModeType } from '../types';
 import { TenantService } from '@abgov/adsp-service-sdk';
 import { applicationNoticePublished } from '../events';
-import { EventService } from '@abgov/adsp-service-sdk';
 
 export interface NoticeRouterProps {
   logger: Logger;
   noticeRepository: NoticeRepository;
+  eventService?: EventService;
   tenantService: TenantService;
-  eventService: EventService;
 }
 
 interface NoticeFilter {
@@ -162,6 +162,7 @@ export function createNoticeRouter({
         isAllApplications: isAllApplications || false,
         tenantId: user.tenantId.toString(),
       });
+
       res.status(201).json({ ...notice, tennantServRef: JSON.parse(notice.tennantServRef) });
     } catch (err) {
       const errMessage = `Error creating notice: ${err.message}`;
@@ -195,7 +196,7 @@ export function createNoticeRouter({
         isAllApplications,
       });
       if (applicationMode !== 'active' && mode === 'active') {
-        eventService.send(applicationNoticePublished(application, JSON.parse(tennantServRef)));
+        eventService.send(applicationNoticePublished(application, JSON.parse(tennantServRef), user));
       }
       res.status(200).json({
         ...updatedApplication,
