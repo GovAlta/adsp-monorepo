@@ -186,7 +186,7 @@ export function createNoticeRouter({
       if (!application) {
         throw new NotFoundError('Service Notice', id);
       }
-
+      const applicationMode = application.mode;
       const updatedApplication = await application.update(user, {
         message,
         tennantServRef,
@@ -195,11 +195,9 @@ export function createNoticeRouter({
         mode,
         isAllApplications,
       });
-
-      if (updatedApplication.mode === 'active') {
-        eventService.send(applicationNoticePublished(updatedApplication));
+      if (applicationMode !== 'active' && mode === 'active') {
+        eventService.send(applicationNoticePublished(application, JSON.parse(tennantServRef), user));
       }
-
       res.status(200).json({
         ...updatedApplication,
         tennantServRef: JSON.parse(updatedApplication.tennantServRef),
