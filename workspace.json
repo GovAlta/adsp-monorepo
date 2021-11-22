@@ -619,6 +619,103 @@
       },
       "tags": []
     },
+    "subscriber-app": {
+      "root": "apps/subscriber-app",
+      "sourceRoot": "apps/subscriber-app/src",
+      "projectType": "application",
+      "architect": {
+        "build": {
+          "builder": "@nrwl/web:build",
+          "outputs": ["{options.outputPath}"],
+          "defaultConfiguration": "production",
+          "options": {
+            "outputPath": "dist/apps/subscriber-app",
+            "index": "apps/subscriber-app/src/index.html",
+            "baseHref": "/",
+            "main": "apps/subscriber-app/src/main.tsx",
+            "polyfills": "apps/subscriber-app/src/polyfills.ts",
+            "tsConfig": "apps/subscriber-app/tsconfig.app.json",
+            "assets": ["apps/subscriber-app/src/favicon.ico", "apps/subscriber-app/src/assets"],
+            "styles": ["apps/subscriber-app/src/styles.scss"],
+            "scripts": [],
+            "webpackConfig": "@nrwl/react/plugins/webpack"
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "apps/subscriber-app/src/environments/environment.ts",
+                  "with": "apps/subscriber-app/src/environments/environment.prod.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "namedChunks": false,
+              "extractLicenses": true,
+              "vendorChunk": false
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/web:dev-server",
+          "options": {
+            "buildTarget": "subscriber-app:build",
+            "hmr": true
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "subscriber-app:build:production",
+              "hmr": false
+            }
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/subscriber-app/**/*.{ts,tsx,js,jsx}"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/subscriber-app"],
+          "options": {
+            "jestConfig": "apps/subscriber-app/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "subscriber-app-e2e": {
+      "root": "apps/subscriber-app-e2e",
+      "sourceRoot": "apps/subscriber-app-e2e/src",
+      "projectType": "application",
+      "architect": {
+        "e2e": {
+          "builder": "@nrwl/cypress:cypress",
+          "options": {
+            "cypressConfig": "apps/subscriber-app-e2e/cypress.json",
+            "devServerTarget": "subscriber-app:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "subscriber-app:serve:production"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/subscriber-app-e2e/**/*.{js,ts}"]
+          }
+        }
+      },
+      "tags": [],
+      "implicitDependencies": ["subscriber-app"]
+    },
     "task-service": {
       "root": "apps/task-service",
       "sourceRoot": "apps/task-service/src",
