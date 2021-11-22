@@ -168,6 +168,14 @@ export function getFile(repository: FileRepository): RequestHandler {
   };
 }
 
+// This is from mozilla example of RFC 5987 encode; not sure why it's not a standard function.
+function encodeRFC5987(value: string) {
+  return encodeURIComponent(value).
+    replace(/['()]/g, escape).
+    replace(/\*/g, '%2A').
+    replace(/%(?:7C|60|5E)/g, unescape);
+}
+
 export const downloadFile: RequestHandler = async (req, res, next) => {
   try {
     const user = req.user;
@@ -179,9 +187,9 @@ export const downloadFile: RequestHandler = async (req, res, next) => {
 
     const stream = await fileEntity.readFile(user);
     res.status(200);
-    res.setHeader('Content-Disposition', `attachment; filename="${fileEntity.filename}"`);
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeRFC5987(fileEntity.filename)}`);
     res.setHeader('Cache-Control', fileEntity.type.anonymousRead ? 'public' : 'no-store');
-    
+
     stream.pipe(res);
   } catch (err) {
     next(err);
