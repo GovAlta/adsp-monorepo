@@ -33,7 +33,7 @@ export const createScanJob = ({ logger, scanService, fileRepository }: ScanJobPr
           logger.warn(`Error encountered scanning file ${result.filename} (ID: ${result.id}). ${err}`);
         }
       }
-      logger.debug(`Scanned page and proceeding to next: ${after}...`);
+      logger.debug(`Scanned page and proceeding to next: ${after || '(none)'}...`);
     } while (after);
 
     const numberScanned = scans.filter((scan) => scan.scanned).length;

@@ -1,5 +1,4 @@
 import * as appRoot from 'app-root-path';
-import { ENOENT } from 'constants';
 import { createReadStream, createWriteStream, ReadStream, stat, unlink } from 'fs';
 import * as mkdirp from 'mkdirp';
 import * as path from 'path';
@@ -38,7 +37,7 @@ export class FileSystemStorageProvider implements FileStorageProvider {
       // If the error is file not found, then proceed with deletion of the record.
       const filePath = this.getFilePath(entity);
       unlink(filePath, (err) => {
-        if (err && err.errno !== ENOENT) {
+        if (err && err.code !== 'ENOENT') {
           this.logger.error(
             `Error on deleting file ${entity.filename} (ID: ${entity.id}) to file system at ${filePath}.`,
             {
