@@ -6,15 +6,23 @@ export default function (state: Session = SESSION_INIT, action: ActionType): Ses
     case 'session/login/success': {
       const payloadKeys = Object.keys(action.payload);
       let returnObject = state;
+      const modifiedKeys = [];
 
       for (let i = 0; i < payloadKeys.length; i++) {
         if (JSON.stringify(state[payloadKeys[i]]) !== JSON.stringify(action.payload[payloadKeys[i]])) {
+          modifiedKeys.push(payloadKeys[i]);
           returnObject = { ...returnObject, [payloadKeys[i]]: action.payload[payloadKeys[i]] };
         }
       }
 
-      return returnObject;
+      if (modifiedKeys[0] === 'credentials' && modifiedKeys.length === 1) {
+        state.credentials = action.payload.credentials;
+        return state;
+      } else {
+        return returnObject;
+      }
     }
+
     case 'credential/refresh':
       return {
         ...state,
