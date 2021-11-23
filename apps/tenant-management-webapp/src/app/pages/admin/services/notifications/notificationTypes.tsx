@@ -11,6 +11,7 @@ import {
   GoAModalTitle,
   GoAIcon,
 } from '@abgov/react-components/experimental';
+import { FetchRealmRoles } from '@store/tenant/actions';
 
 import {
   UpdateNotificationTypeService,
@@ -53,6 +54,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   useEffect(() => {
     dispatch(FetchNotificationTypeService());
     dispatch(FetchCoreNotificationTypeService());
+    dispatch(FetchRealmRoles());
   }, [dispatch]);
 
   function reset() {
@@ -113,37 +115,52 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           <div className="topBottomMargin" key={notificationType.name}>
             <GoACard
               title={
-                <div className="rowFlex">
-                  <h2 className="flex1">{notificationType.name}</h2>
-                  <MaxHeight height={30} className="rowFlex">
-                    <a
-                      className="flex1"
-                      data-testid={`edit-notification-type-${notificationType.id}`}
-                      onClick={() => {
-                        setSelectedType(notificationType);
-                        setEditType(true);
-                      }}
-                    >
-                      <NotificationBorder className="smallPadding">
-                        <GoAIcon type="create" />
-                      </NotificationBorder>
-                    </a>
-                    <a
-                      className="flex1"
-                      onClick={() => {
-                        setSelectedType(notificationType);
-                        setShowDeleteConfirmation(true);
-                      }}
-                      data-testid={`delete-notification-type-${notificationType.id}`}
-                    >
-                      <NotificationBorder className="smallPadding">
-                        <GoAIcon type="trash" />
-                      </NotificationBorder>
-                    </a>
-                  </MaxHeight>
+                <div>
+                  <div className="rowFlex">
+                    <h2 className="flex1">{notificationType.name}</h2>
+                    <MaxHeight height={30} className="rowFlex">
+                      <a
+                        className="flex1"
+                        data-testid={`edit-notification-type-${notificationType.id}`}
+                        onClick={() => {
+                          setSelectedType(notificationType);
+                          setEditType(true);
+                        }}
+                      >
+                        <NotificationBorder className="smallPadding">
+                          <GoAIcon type="create" />
+                        </NotificationBorder>
+                      </a>
+                      <a
+                        className="flex1"
+                        onClick={() => {
+                          setSelectedType(notificationType);
+                          setShowDeleteConfirmation(true);
+                        }}
+                        data-testid={`delete-notification-type-${notificationType.id}`}
+                      >
+                        <NotificationBorder className="smallPadding">
+                          <GoAIcon type="trash" />
+                        </NotificationBorder>
+                      </a>
+                    </MaxHeight>
+                  </div>
+                  <div className="rowFlex smallFont">
+                    <div className="flex1">
+                      Subscriber Roles:{' '}
+                      <b>
+                        {notificationType.subscriberRoles
+                          .filter((value) => value !== 'anonymousRead')
+                          .map(
+                            (roles, ix) => roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
+                          )}{' '}
+                      </b>
+                    </div>
+                    <div>Public Subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}</div>
+                  </div>
                 </div>
               }
-              description={notificationType.description}
+              description={`Description: ${notificationType.description}`}
             >
               <Grid>
                 {notificationType.events.map((event, key) => (
@@ -419,9 +436,17 @@ const MaxHeight = styled.div`
 `;
 
 const NotficationStyles = styled.div`
+  .smallFont {
+    font-size: 12px;
+  }
+
   svg {
     fill: #56a0d8;
     color: #56a0d8;
+  }
+
+  .goa-title {
+    margin-bottom: 14px !important;
   }
 
   .topBottomMargin {
