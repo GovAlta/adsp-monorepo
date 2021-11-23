@@ -81,7 +81,7 @@ export const ApplicationNoticePublishedDefinition: DomainEventDefinition = {
         id: { type: 'string' },
         name: { type: 'string' },
         description: {
-          type: ['string', 'null'],
+          type: 'string',
         },
       },
       notice: {
@@ -232,7 +232,7 @@ export const applicationNoticePublished = (
     application: {
       id: tennantServRef[0].id,
       name: tennantServRef[0].name,
-      description: tennantServRef[0].description ? tennantServRef[0].description : '',
+      description: tennantServRef[0].description,
     },
 
     notice: mapNotice(notice),

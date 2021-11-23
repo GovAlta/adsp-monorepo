@@ -50,7 +50,7 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
     }
     return selectedEvent?.templates?.email?.body?.length === 0 && selectedEvent?.templates?.email?.subject?.length === 0
       ? 'Add'
-      : 'Edit';
+      : 'Save';
   };
   return (
     <GoAModal testId="template-form" isOpen={open}>
@@ -80,6 +80,7 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
                   },
                   minimap: { enabled: false },
                   renderLineHighlight: 'none',
+                  scrollBeyondLastLine: false,
                 }}
               />
             </MonacoDiv>
