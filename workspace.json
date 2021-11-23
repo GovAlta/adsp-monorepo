@@ -635,25 +635,36 @@
             "main": "apps/subscriber-app/src/main.tsx",
             "polyfills": "apps/subscriber-app/src/polyfills.ts",
             "tsConfig": "apps/subscriber-app/tsconfig.app.json",
-            "assets": ["apps/subscriber-app/src/favicon.ico", "apps/subscriber-app/src/assets"],
+            "assets": [
+                "apps/subscriber-app/src/favicon.ico",
+                "apps/subscriber-app/src/assets",
+                {
+                    "glob": "nginx.conf",
+                    "input": "./",
+                    "output": "./"
+                }
+            ],
             "styles": ["apps/subscriber-app/src/styles.scss"],
             "scripts": [],
             "webpackConfig": "@nrwl/react/plugins/webpack"
           },
           "configurations": {
             "production": {
-              "fileReplacements": [
-                {
-                  "replace": "apps/subscriber-app/src/environments/environment.ts",
-                  "with": "apps/subscriber-app/src/environments/environment.prod.ts"
-                }
-              ],
+              "fileReplacements": [],
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
+              "extractCss": true,
               "namedChunks": false,
               "extractLicenses": true,
-              "vendorChunk": false
+              "vendorChunk": false,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
+                }
+              ]
             }
           }
         },
