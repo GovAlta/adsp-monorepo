@@ -7,8 +7,16 @@ module.exports = {
   },
   tags: [
     {
-      name: 'Subscription',
-      description: 'API to managed subscribers and subscriptions.',
+      name: 'Status',
+      description: 'API to access and updated service status.',
+    },
+    {
+      name: 'Public status',
+      description: 'API to access published application statuses.',
+    },
+    {
+      name: 'Notice',
+      description: 'API to access and updated service notices.',
     },
   ],
   components: {
