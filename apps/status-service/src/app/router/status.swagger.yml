@@ -16,7 +16,7 @@ components:
           type: string
           format: date-time
 
-/public_status/v1/{tenant}:
+/public_status/v1/applications/{tenant}:
   get:
     tags: ["Public status"]
     description: Retrieves tenant applications and their statuses.
