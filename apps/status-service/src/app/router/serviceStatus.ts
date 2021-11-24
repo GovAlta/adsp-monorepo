@@ -147,6 +147,7 @@ export function createServiceStatusRouter({
     const { id } = req.params;
     const { status } = req.body;
     const application = await serviceStatusRepository.get(id);
+    const applicationStatus = application.status;
 
     if (user.tenantId?.toString() !== application.tenantId) {
       throw new UnauthorizedError('invalid tenant id');
@@ -154,7 +155,7 @@ export function createServiceStatusRouter({
 
     const updatedApplication = await application.setStatus(user, status as PublicServiceStatusType);
 
-    eventService.send(applicationStatusChange(updatedApplication, application.status, user));
+    eventService.send(applicationStatusChange(updatedApplication, applicationStatus, user));
 
     res.status(200).json(updatedApplication);
   });
