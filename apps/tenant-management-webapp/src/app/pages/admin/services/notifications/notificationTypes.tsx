@@ -188,11 +188,12 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                         </div>
                         <div className="columnFlex height-100">
                           <div className="flex1 flex flexEndAlign">
-                            <a>
-                              <NotificationBorder className="smallPadding">
+                            <NotificationBorder className="smallPadding">
+                              <a className="noCursor">
                                 <GoAIcon type="mail" style="filled" />
-                              </NotificationBorder>
-                            </a>
+                              </a>
+                            </NotificationBorder>
+
                             <div className="rightAlignEdit">
                               <a
                                 style={{ marginRight: '20px' }}
@@ -269,7 +270,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                         </div>
                         <div className="rowFlex">
                           <NotificationBorder className="smallPadding">
-                            <a>
+                            <a className="noCursor">
                               <GoAIcon type="mail" style="filled" />
                             </a>
                           </NotificationBorder>
@@ -487,5 +488,8 @@ const NotficationStyles = styled.div`
   .rightAlignEdit {
     text-align: end;
     width: 100%;
+  }
+  .noCursor {
+    cursor: default;
   }
 `;
