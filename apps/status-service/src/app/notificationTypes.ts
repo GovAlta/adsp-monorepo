@@ -152,19 +152,23 @@ export const StatusApplicationStatusChange: NotificationType = {
       name: 'application-notice-published',
       templates: {
         email: {
-          subject: '{{ event.payload.description }} ',
+          subject: 'A notice for {{ event.payload.application.name }} was published',
           body: `<!doctype html>
 <html>
   <head>
   </head>
   <body>
-    <p> A notice related to application {{ JSON.parse(event.payload.tenantServRef).name }} has been published</p>
+    <p>A notice related to application {{ event.payload.application.name}} has been published by {{event.payload.postBy.name}}</p>
     <p>
-      The notice is described as follows: {{ event.payload.description }}
+      The notice is described as follows: {{ event.payload.notice.description }}
     </p>
     <p>
-      The notice is related to the following tenant: {{  event.payload.tenantName }}</a>
+      The notice is related to the following tenant: {{ event.payload.postBy.tenantName }}
     </p>
+    <p>
+      The notice is in effect between {{ event.payload.notice.startTimestamp }} and {{ event.payload.notice.endTimestamp }}
+    </p>
+    <p>The notice was originally published at {{ event.payload.notice.created }}</p>
   </body>
 </html>`,
         },
