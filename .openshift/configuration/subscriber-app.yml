@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: subscriber
+        component: app
+      name: subscriber-app
+    data:
+      configuration: |-
+        {
+          "production":true,
+          "serviceUrls":{
+          "notificationServiceUrl":"https://notification-service-core-services-dev.os99.gov.ab.ca"
+          },
+          "platformTenantRealm":"platform",
+          "envLoaded":true
+        }
