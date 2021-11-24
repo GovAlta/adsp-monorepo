@@ -39,6 +39,6 @@ jobs:
         with:
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.build-image.outputs.tags }}
-          registry: ghcr.io
+          registry: ghcr.io/GovAlta
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
