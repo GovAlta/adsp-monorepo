@@ -65,9 +65,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     setShowTemplateForm(false);
     setDisableTemplateForm(false);
   }
-  function isEmptyTemplate(event) {
-    return event.templates?.email?.body?.length === 0 && event.templates?.email?.subject?.length === 0;
-  }
 
   useEffect(() => {
     if (activeEdit) {
