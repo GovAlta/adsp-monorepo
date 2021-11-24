@@ -30,7 +30,7 @@ jobs:
         id: build-image
         uses: redhat-actions/buildah-build@v2
         with:
-          image: "@adsp/tenant-management-api"
+          image: tenant-management-api
           tags: latest ${{ github.sha }}
           dockerfiles: |
             ./openshift/service/Dockerfile
