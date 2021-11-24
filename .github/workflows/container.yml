@@ -32,7 +32,9 @@ jobs:
         with:
           image: tenant-management-api
           tags: latest ${{ github.sha }}
-          dockerfiles: |
+          build-args: |
+            SERVICE=tenant-management-api
+          containerfiles: |
             .openshift/service/Dockerfile
       - name: Push To GitHub
         uses: redhat-actions/push-to-registry@v2
