@@ -64,44 +64,20 @@ describe('Service statuses (2 of them)', () => {
 
   const data = [
     {
-      repository: {},
-      _id: '60ef54d5a3bdbd4d6c117381',
-      endpoints: [
-        {
-          status: 'online',
-          url: 'http://localhost:3338/health',
-        },
-      ],
-      notices: [],
-      metadata: null,
+      id: '60ef54d5a3bdbd4d6c117381',
       name: 'Status service',
       description: 'This service allows for easy monitoring of application downtime.',
-      statusTimestamp: 1626378840127,
-      tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/60e76e9e852db55d8ce1fa80',
-      tenantName: 'platform',
-      tenantUUID: '0014430f-abb9-4b57-915c-de9f3c889696',
+      lastUpdated: new Date(1626378840127).toISOString(),
       status: 'operational',
-      manualOverride: 'off',
+      notices: [],
     },
     {
-      repository: {},
-      _id: '60ef569d68ce787398e578f6',
-      endpoints: [
-        {
-          status: 'online',
-          url: 'http://localhost:3333/health',
-        },
-      ],
-      notices: [],
-      metadata: null,
+      id: '60ef569d68ce787398e578f6',
       name: 'Tenant service',
       description: 'Allows the provisioning of distinct services in their own namespace.',
-      statusTimestamp: 1626380220228,
-      tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/60e76e9e852db55d8ce1fa80',
-      tenantName: 'platform',
-      tenantUUID: '0014430f-abb9-4b57-915c-de9f3c889696',
+      lastUpdated: new Date(1626380220228).toISOString(),
       status: 'operational',
-      manualOverride: 'off',
+      notices: [],
     },
   ];
 
@@ -168,7 +144,7 @@ describe('Service statuses (2 of them)', () => {
       </Provider>
     );
 
-    await waitFor(() => expect(getByText(moment(data[0].statusTimestamp).calendar())).toBeTruthy());
-    await waitFor(() => expect(getByText(moment(data[1].statusTimestamp).calendar())).toBeTruthy());
+    await waitFor(() => expect(getByText(moment(data[0].lastUpdated).calendar())).toBeTruthy());
+    await waitFor(() => expect(getByText(moment(data[1].lastUpdated).calendar())).toBeTruthy());
   });
 });

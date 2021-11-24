@@ -13,6 +13,7 @@ export interface ServiceStatusRouterProps {
 
 export function mapApplication(entity: ServiceStatusApplicationEntity): unknown {
   return {
+    id: entity._id,
     name: entity.name,
     description: entity.description,
     status: entity.status,

@@ -76,7 +76,7 @@ const ServiceStatusPage = (): JSX.Element => {
                   data-testid={`service-${app.name}`}
                   name={app.name}
                   state={app.status}
-                  date={app.statusTimestamp ? moment(app.statusTimestamp).calendar() : 'Never Ran Yet'}
+                  date={app.lastUpdated ? moment(app.lastUpdated).calendar() : 'Never Ran Yet'}
                   description={app.description}
                   notices={app.notices}
                 />

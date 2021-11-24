@@ -10,17 +10,11 @@ export interface ServiceStatus {
 }
 
 export interface ServiceStatusApplication {
-  _id?: string;
-  tenantId: string;
-  tenantName: string;
+  id: string;
   name: string;
   description: string;
-  metadata?: unknown;
-  enabled: boolean;
-  statusTimestamp?: number;
-  status?: ServiceStatusType;
-  internalStatus?: InternalServiceStatusType;
-  endpoint?: ServiceStatusEndpoint;
+  lastUpdated: string;
+  status: ServiceStatusType;
   notices?: Notice[];
 }
 
@@ -102,7 +96,7 @@ export const bindApplicationsWithNotices = (
     const noticesOfApplication = notices.filter((notice) => {
       return (
         notice.isAllApplications !== true &&
-        notice.tennantServRef.find((applicationRef) => applicationRef.id === application._id)
+        notice.tennantServRef.find((applicationRef) => applicationRef.id === application.id)
       );
     });
 
