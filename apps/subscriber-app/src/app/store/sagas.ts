@@ -1,4 +1,4 @@
-import { ForkEffect, takeEvery } from 'redux-saga/effects';
+import { ForkEffect } from 'redux-saga/effects';
 
 // import actions and functions here
 
