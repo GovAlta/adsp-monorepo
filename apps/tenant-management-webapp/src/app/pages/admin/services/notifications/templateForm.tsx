@@ -80,7 +80,9 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
                   },
                   minimap: { enabled: false },
                   renderLineHighlight: 'none',
-                  scrollBeyondLastLine: false,
+                  overviewRulerLanes: 0,
+                  hideCursorInOverviewRuler: true,
+                  overviewRulerBorder: false,
                 }}
               />
             </MonacoDiv>
@@ -103,6 +105,8 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
                   overviewRulerBorder: false,
                   lineHeight: 25,
                   renderLineHighlight: 'none',
+                  overviewRulerLanes: 0,
+                  hideCursorInOverviewRuler: true,
                 }}
               />
             </MonacoDiv>

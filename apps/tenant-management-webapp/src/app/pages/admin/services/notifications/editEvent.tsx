@@ -17,15 +17,6 @@ interface NotificationDefinitionFormProps {
   errors?: Record<string, string>;
 }
 
-const emptyNotificationDefinition: NotificationItem = {
-  name: '',
-  description: '',
-  events: [],
-  subscriberRoles: [],
-  id: null,
-  publicSubscribe: false,
-};
-
 export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> = ({
   initialValue,
   onCancel,
