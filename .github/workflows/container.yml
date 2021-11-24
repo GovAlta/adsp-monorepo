@@ -32,6 +32,7 @@ jobs:
         with:
           image: tenant-management-api
           tags: latest ${{ github.sha }}
+          context: ./
           build-args: |
             SERVICE=tenant-management-api
           containerfiles: |
