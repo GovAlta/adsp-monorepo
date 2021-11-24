@@ -29,7 +29,7 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       return {
         ...state,
         subscription: null,
-        successMessage: null,
+        successMessage: 'You have unsubscribed from the notification service!',
       };
     default:
       return state;
