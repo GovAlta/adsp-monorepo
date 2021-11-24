@@ -1,0 +1,6 @@
+service_namespace,service_name
+platform,event-service
+platform,configuration-service
+platform,file-service
+platform,value-service
+platform,tenant-service
