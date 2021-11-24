@@ -1,6 +1,6 @@
 import { combineReducers } from 'redux';
-import { sampleReducer } from './sample_store/reducers';
+import Config from './config/reducers';
 
 export const rootReducer = combineReducers({
-  testReducer: sampleReducer,
+  config: Config,
 });

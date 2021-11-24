@@ -7,10 +7,18 @@ import '@abgov/core-css/src/lib/stories/page-template/page-template.story.scss';
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 import SubscriberPage from './pages/subscriber';
 
+import { fetchConfig } from './store/config/actions';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState} from '@store/index'
+
 export function App(): JSX.Element {
+  const dispatch = useDispatch();
+
+  const { config } = useSelector((state: RootState) => ({
+    config: state.config,
+  }));
   useEffect(() => {
-    // TODO Fetch config
-    // dispatch(fetchConfig());
+    dispatch(fetchConfig());
   }, []);
   return (
     <Router>
