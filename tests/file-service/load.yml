@@ -1,0 +1,85 @@
+config:
+  environments:
+    dev:
+      target: "https://file-service-core-services-dev.os99.gov.ab.ca"
+    test:
+      target: "https://file-service-core-services-test.os99.gov.ab.ca"
+    uat:
+      target: "https://file-service-uat.alpha.alberta.ca"
+  processor: "./functions.js"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+  payload:
+    - path: "../artillery.{{ $environment }}.csv"
+      skipHeader: true
+      fields:
+        - "keycloak_url"
+        - "tenant_realm_id"
+        - "client_id"
+        - "client_secret"
+        - "username"
+        - "password"
+    - path: "./files.csv"
+      skipHeader: true
+      fields:
+        - "file_id"
+  variables:
+    typeId:
+      - "public-files"
+    filename:
+      - "logo.png"
+  phases:
+    - name: warm up
+      duration: 60
+      arrivalCount: 50
+    - name: load
+      duration: 120
+      arrivalCount: 500
+before:
+  flow:
+    - log: "Getting the access token (tenant: {{ tenant_realm_id }}) for user {{ username }}"
+    - post:
+        url: "{{ keycloak_url }}/auth/realms/{{ tenant_realm_id }}/protocol/openid-connect/token"
+        headers:
+          Content-Type: "application/x-www-form-urlencoded"
+          Accept: "application/json"
+        form:
+          {
+            grant_type: "password",
+            client_id: "{{ client_id }}",
+            client_secret: "{{ client_secret }}",
+            username: "{{ username }}",
+            password: "{{ password }}",
+          }
+        capture:
+          - json: "$.access_token"
+            as: token
+scenarios:
+  - name: read file metadata
+    weight: 20
+    flow:
+      - get:
+          url: "/file/v1/files/{{ file_id }}"
+          headers:
+            authorization: "Bearer {{ token }}"
+  - name: read and download file
+    weight: 5
+    flow:
+      - get:
+          url: "/file/v1/files/{{ file_id }}"
+          headers:
+            authorization: "Bearer {{ token }}"
+      - get:
+          url: "/file/v1/files/{{ file_id }}/download"
+          headers:
+            authorization: "Bearer {{ token }}"
+  - name: upload a file
+    weight: 1
+    flow:
+      - post:
+          url: "/file/v1/files"
+          headers:
+            authorization: "Bearer {{ token }}"
+          beforeRequest: "setFormFile"

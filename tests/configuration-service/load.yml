@@ -1,0 +1,60 @@
+config:
+  environments:
+    dev:
+      target: "https://configuration-service-core-services-dev.os99.gov.ab.ca"
+    test:
+      target: "https://configuration-service-core-services-test.os99.gov.ab.ca"
+    uat:
+      target: "https://configuration-service-uat.alpha.alberta.ca"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+  payload:
+    - path: "../artillery.{{ $environment }}.csv"
+      skipHeader: true
+      fields:
+        - "keycloak_url"
+        - "tenant_realm_id"
+        - "client_id"
+        - "client_secret"
+        - "username"
+        - "password"
+    - path: "./services.csv"
+      skipHeader: true
+      fields:
+        - "service_namespace"
+        - "service_name"
+  phases:
+    - name: warm up
+      duration: 60
+      arrivalCount: 50
+    - name: load
+      duration: 120
+      arrivalCount: 500
+before:
+  flow:
+    - log: "Getting the access token (tenant: {{ tenant_realm_id }}) for user {{ username }}"
+    - post:
+        url: "{{ keycloak_url }}/auth/realms/{{ tenant_realm_id }}/protocol/openid-connect/token"
+        headers:
+          Content-Type: "application/x-www-form-urlencoded"
+          Accept: "application/json"
+        form:
+          {
+            grant_type: "password",
+            client_id: "{{ client_id }}",
+            client_secret: "{{ client_secret }}",
+            username: "{{ username }}",
+            password: "{{ password }}",
+          }
+        capture:
+          - json: "$.access_token"
+            as: token
+scenarios:
+  - name: read service configuration
+    flow:
+      - get:
+          url: "/configuration/v2/configuration/{{ service_namespace }}/{{ service_name }}/latest"
+          headers:
+            authorization: "Bearer {{ token }}"
