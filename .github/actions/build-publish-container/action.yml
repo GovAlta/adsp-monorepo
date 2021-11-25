@@ -3,10 +3,13 @@ description: "Builds and publishes a container."
 inputs:
   app:
     description: "Application to build container for."
+    required: true
   redhat-io-username:
     description: "Username for registry.redhat.io"
+    required: true
   redhat-io-password:
     description: "Password for registry.redhat.io"
+    required: true
 runs:
   using: "composite"
   steps:

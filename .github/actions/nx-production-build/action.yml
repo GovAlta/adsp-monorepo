@@ -12,13 +12,16 @@ runs:
   using: "composite"
   steps:
     - name: Lint
+      shell: bash
       run: npx nx affected --target=lint --base=${{ inputs.affected-base }}
     - name: Test
+      shell: bash
       run: npx nx affected --target=test --base=${{ inputs.affected-base }}
     - name: Build
+      shell: bash
       run: npx nx affected --configuration=production --target=build --base=${{ inputs.affected-base }}
     # Set affected apps to output.
     - id: nx-affected
       name: Set affected-apps
+      shell: bash
       run: echo "::set-output name=affected-apps::$(npx nx affected:apps --plain --base=${{ inputs.affected-base }})"
-

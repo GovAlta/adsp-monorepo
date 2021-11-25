@@ -13,7 +13,8 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - run: |
+    - shell: bash
+      run: |
         sed -i -r \
           -e "s/\"TAGS\":.+\"\"/\"TAGS\": \"${{ github.event.inputs.tags }}\"/" \
           -e "s/\"core-api-client-secret\":.+\"\"/\"core-api-client-secret\": \"${{ secrets.CY_CORE_API_CLIENT_SECRET }}\"/" \
@@ -29,6 +30,7 @@ runs:
         install-command: npm ci
         command: npx nx e2e ${{ github.event.inputs.app }}-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config="apps/${{ github.event.inputs.app }}-e2e/cypress.${{ github.event.inputs.environment }}.json"
     - if: ${{ always() }}
+      shell: bash
       run: |
         node apps/${{ inputs.app }}-e2e/src/support/multiple-cucumber-html-reporter.js
     - if: ${{ always() }}
