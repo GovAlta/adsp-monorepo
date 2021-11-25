@@ -10,6 +10,9 @@ inputs:
   redhat-io-password:
     description: "Password for registry.redhat.io"
     required: true
+  ghcr-token:
+    description: "Token for GHCR"
+    required: true
 runs:
   using: "composite"
   steps:
@@ -37,4 +40,4 @@ runs:
         tags: ${{ steps.build-image.outputs.tags }}
         registry: ghcr.io/govalta
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ inputs.ghcr-token }}

@@ -26,3 +26,4 @@ jobs:
           app: tenant-management-api
           redhat-io-username: ${{ secrets.REGISTRY_REDHAT_IO_USER }}
           redhat-io-password: ${{ secrets.REGISTRY_REDHAT_IO_PASSWORD }}
+          ghcr-token: ${{ secrets.GITHUB_TOKEN }}
