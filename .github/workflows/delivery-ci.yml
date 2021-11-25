@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-20.04
     outputs:
       affected_apps: ${{ steps.set_outputs.outputs.affected_apps }}
+      affected_apps_array: ${{ steps.set_outputs.outputs.affected_apps_array }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -47,7 +48,9 @@ jobs:
           path: adsp-build-dist.tar.gz
       # Set build job outputs for subsequent jobs.
       - id: set_outputs
-        run: echo ::set-output name=affected_apps::$(echo ${{ steps.production-build.outputs.affected-apps }})
+        run: |
+          echo ::set-output name=affected_apps::$(echo ${{ steps.production-build.outputs.affected-apps }})
+          echo ::set-output name=affected_apps_array::$(echo ${{ steps.production-build.outputs.affected-apps }} | sed -e "s/ /\",\"/g" -e "s/^/[\"/" -e "s/$/\"]/")
 
   build-containers:
     runs-on: ubuntu-20.04
@@ -55,7 +58,7 @@ jobs:
     if: needs.build.outputs.affected_apps
     strategy:
       matrix:
-        app: ${{ fromJson(needs.build.outputs.affected_apps) }}
+        app: ${{ fromJson(needs.build.outputs.affected_apps_array) }}
     steps:
       - uses: actions/download-artifact@v2
         with:
