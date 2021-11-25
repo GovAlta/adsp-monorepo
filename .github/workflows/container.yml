@@ -27,7 +27,7 @@ jobs:
           username: ${{ secrets.REGISTRY_REDHAT_IO_USER }}
           password: ${{ secrets.REGISTRY_REDHAT_IO_PASSWORD }}
       - run: |
-          ls dist/apps/tenant-management-api
+          ls -d $PWD/dist/apps/tenant-management-api
       - name: Build Image
         id: build-image
         uses: redhat-actions/buildah-build@v2
@@ -40,7 +40,7 @@ jobs:
           containerfiles: |
             .openshift/service/Dockerfile
       - run: |
-          ls dist/apps/tenant-management-api
+          ls -d $PWD/dist/apps/tenant-management-api
       - name: Push To GitHub
         uses: redhat-actions/push-to-registry@v2
         with:
