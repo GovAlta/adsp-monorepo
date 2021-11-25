@@ -41,7 +41,7 @@ jobs:
         with:
           affected-base: ${{ steps.last_successful_commit.outputs.commit_hash }}
       - run: npm prune --production
-      - run: tar czf adsp-build-dist.tar.gz node_modules/ dist/ .openshift/ package.json package-lock.json
+      - run: tar czf adsp-build-dist.tar.gz node_modules/ dist/ .github/ .openshift/ package.json package-lock.json
       - uses: actions/upload-artifact@v2
         with:
           name: build-dist
