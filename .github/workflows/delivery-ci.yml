@@ -43,7 +43,7 @@ jobs:
       - name: Set AFFECTED_APPS for OC steps
         run: echo "AFFECTED_APPS=$(echo ${{ steps.production-build.outputs.affected-apps }})" >> $GITHUB_ENV
       - run: npm prune --production
-      - run: tar czf adsp-build-dist.tar.gz .
+      - run: tar czf adsp-build-dist.tar.gz node_modules/ dist/ .openshift/ package.json package-lock.json
       - uses: actions/upload-artifact@v2
         with:
           name: build-dist
