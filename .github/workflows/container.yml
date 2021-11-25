@@ -21,7 +21,7 @@ jobs:
         run: npx nx build tenant-management-api --configuration=production
       - run: npm prune --production
       - name: Build container
-        uses: ../actions/build-publish-container.yml
+        uses: ../actions/build-publish-container
         with:
           app: tenant-management-api
           redhat-io-username: ${{ secrets.REGISTRY_REDHAT_IO_USER }}
