@@ -31,7 +31,7 @@ jobs:
         uses: nrwl/last-successful-commit-action@v1
         id: last_successful_commit
         with:
-          branch: main
+          branch: ${{ steps.get_branch_name.outputs.short_ref }}
           workflow_id: delivery-ci.yml
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build
@@ -43,14 +43,16 @@ jobs:
       - name: Set AFFECTED_APPS for OC steps
         run: echo "AFFECTED_APPS=$(echo ${{ steps.production-build.outputs.affected-apps }})" >> $GITHUB_ENV
       - run: npm prune --production
+      - run: tar czf adsp-build-dist.tar.gz .
       - uses: actions/upload-artifact@v2
         with:
           name: build-dist
-          path: .
+          path: adsp-build-dist.tar.gz
 
   build-containers:
     runs-on: ubuntu-20.04
     needs: build
+    if: needs.build.outputs.affected_apps
     strategy:
       matrix:
         app: ${{ fromJson(needs.build.outputs.affected_apps) }}
