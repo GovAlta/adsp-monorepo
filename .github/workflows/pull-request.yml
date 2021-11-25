@@ -22,9 +22,7 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
       - run: npm ci
       # Run with the target branch as the base.
-      - name: Lint
-        run: npx nx affected --target=lint --base=origin/${{ github.base_ref }}
-      - name: Test
-        run: npx nx affected --target=test --base=origin/${{ github.base_ref }}
       - name: Build
-        run: npx nx affected --configuration=production --target=build --base=origin/${{ github.base_ref }}
+        uses: actions/nx-production-build
+        with:
+          affected-base: origin/${{ github.base_ref }}

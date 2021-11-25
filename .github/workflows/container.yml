@@ -20,32 +20,9 @@ jobs:
       - name: Build
         run: npx nx build tenant-management-api --configuration=production
       - run: npm prune --production
-      - name: Log in to Red Hat Registry
-        uses: redhat-actions/podman-login@v1
+      - name: Build container
+        uses: actions/build-publish-container
         with:
-          registry: registry.redhat.io
-          username: ${{ secrets.REGISTRY_REDHAT_IO_USER }}
-          password: ${{ secrets.REGISTRY_REDHAT_IO_PASSWORD }}
-      - run: |
-          ls -d $PWD/dist/apps/tenant-management-api
-      - name: Build Image
-        id: build-image
-        uses: redhat-actions/buildah-build@v2
-        with:
-          image: tenant-management-api
-          tags: latest ${{ github.sha }}
-          context: ./
-          build-args: |
-            SERVICE=tenant-management-api
-          containerfiles: |
-            .openshift/service/Dockerfile
-      - run: |
-          ls -d $PWD/dist/apps/tenant-management-api
-      - name: Push To GitHub
-        uses: redhat-actions/push-to-registry@v2
-        with:
-          image: ${{ steps.build-image.outputs.image }}
-          tags: ${{ steps.build-image.outputs.tags }}
-          registry: ghcr.io/govalta
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          app: tenant-management-api
+          redhat-io-username: ${{ secrets.REGISTRY_REDHAT_IO_USER }}
+          redhat-io-password: ${{ secrets.REGISTRY_REDHAT_IO_PASSWORD }}

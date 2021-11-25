@@ -1,0 +1,39 @@
+name: "NX cypress e2e run"
+description: "Executes nx e2e for target project."
+inputs:
+  app:
+    description: APP to run against.
+    required: true
+  environment:
+    description: Environment to run against.
+    required: true
+  tags:
+    description: Tags of suite of tests to run.
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        sed -i -r \
+          -e "s/\"TAGS\":.+\"\"/\"TAGS\": \"${{ github.event.inputs.tags }}\"/" \
+          -e "s/\"core-api-client-secret\":.+\"\"/\"core-api-client-secret\": \"${{ secrets.CY_CORE_API_CLIENT_SECRET }}\"/" \
+          -e "s/\"core-api-user-password\":.+\"\"/\"core-api-user-password\": \"${{ secrets.CY_CORE_API_USER_PASSWORD }}\"/" \
+          -e "s/\"client-secret\":.+\"\"/\"client-secret\": \"${{ secrets.CY_CLIENT_SECRET }}\"/" \
+          -e "s/\"password\":.+\"\"/\"password\": \"${{ secrets.CY_PASSWORD }}\"/" \
+          -e "s/\"password2\":.+\"\"/\"password2\": \"${{ secrets.CY_PASSWORD2 }}\"/" \
+          -e "s/\"password3\":.+\"\"/\"password3\": \"${{ secrets.CY_PASSWORD3 }}\"/" \
+          apps/${{ inputs.app }}-e2e/cypress.${{ inputs.environment }}.json
+    - name: E2E Test
+      uses: cypress-io/github-action@v2
+      with:
+        install-command: npm ci
+        command: npx nx e2e ${{ github.event.inputs.app }}-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config="apps/${{ github.event.inputs.app }}-e2e/cypress.${{ github.event.inputs.environment }}.json"
+    - if: ${{ always() }}
+      run: |
+        node apps/${{ inputs.app }}-e2e/src/support/multiple-cucumber-html-reporter.js
+    - if: ${{ always() }}
+      name: Upload Cypress Results
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ github.event.inputs.app }}-cypress-html-report
+        path: dist/cypress/

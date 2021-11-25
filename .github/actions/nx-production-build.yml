@@ -1,0 +1,24 @@
+name: "NX production build"
+description: "Executes nx lint, test, and build on affected projects."
+inputs:
+  affected-base:
+    description: "Value of the --base argument for nx affected"
+    required: true
+outputs:
+  affected-apps:
+    description: "Apps affected by the commit."
+    value: ${{ steps.nx-affected.outputs.affected-apps }}
+runs:
+  using: "composite"
+  steps:
+    - name: Lint
+      run: npx nx affected --target=lint --base=${{ inputs.affected-base }}
+    - name: Test
+      run: npx nx affected --target=test --base=${{ inputs.affected-base }}
+    - name: Build
+      run: npx nx affected --configuration=production --target=build --base=${{ inputs.affected-base }}
+    # Set affected apps to output.
+    - id: nx-affected
+      name: Set affected-apps
+      run: echo "::set-output name=affected-apps::$(npx nx affected:apps --plain --base=${{ inputs.affected-base }})"
+
