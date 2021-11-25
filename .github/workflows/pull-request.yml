@@ -23,6 +23,6 @@ jobs:
       - run: npm ci
       # Run with the target branch as the base.
       - name: Build
-        uses: ./.github/actions/nx-production-build
+        uses: ./.github/actions/nx-production-build.yml
         with:
           affected-base: origin/${{ github.base_ref }}
