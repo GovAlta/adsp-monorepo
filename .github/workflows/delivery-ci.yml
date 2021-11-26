@@ -57,6 +57,7 @@ jobs:
     needs: build
     if: needs.build.outputs.affected_apps
     strategy:
+      fail-fast: false
       matrix:
         app: ${{ fromJson(needs.build.outputs.affected_apps_array) }}
     steps:
