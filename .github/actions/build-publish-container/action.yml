@@ -10,6 +10,9 @@ inputs:
   redhat-io-password:
     description: "Password for registry.redhat.io"
     required: true
+  build-context:
+    description: "Context directory path for the build input."
+    required: true
   ghcr-token:
     description: "Token for GHCR"
     required: true
@@ -22,22 +25,32 @@ runs:
         registry: registry.redhat.io
         username: ${{ inputs.redhat-io-username }}
         password: ${{ inputs.redhat-io-password }}
-    - name: Build Image
-      id: build-image
+    - if: ${{ contains(inputs.build-context, 'dist') }}
+      name: Build app image
+      id: build_app_image
+      uses: redhat-actions/s2i-build@v2
+      with:
+        path_context: ${{ inputs.build-context }}
+        builder_image: 'registry.access.redhat.com/ubi8/nginx:latest'
+        image: ${{ inputs.app }}
+        tags: latest ${{ github.sha }}
+    - if: ${{ !contains(inputs.build-context, 'dist') }}
+      name: Build service image
+      id: build_service_image
       uses: redhat-actions/buildah-build@v2
       with:
         image: ${{ inputs.app }}
         tags: latest ${{ github.sha }}
-        context: ./
+        context: ${{ inputs.build-context }}
         build-args: |
           SERVICE=${{ inputs.app }}
         containerfiles: |
           .openshift/service/Dockerfile
-    - name: Push To GitHub
+    - name: Push to GitHub container registry
       uses: redhat-actions/push-to-registry@v2
       with:
-        image: ${{ steps.build-image.outputs.image }}
-        tags: ${{ steps.build-image.outputs.tags }}
+        image: ${{ steps.build_app_image.outputs.image || steps.build_service_image.outputs.image }}
+        tags: ${{ steps.build_app_image.outputs.tags || steps.build_service_image.outputs.tags }}
         registry: ghcr.io/govalta
         username: ${{ github.actor }}
         password: ${{ inputs.ghcr-token }}
