@@ -26,8 +26,6 @@ jobs:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
       - run: npm ci
-      - id: get_branch_name
-        run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
       - name: Get last successful commit
         uses: nrwl/last-successful-commit-action@v1
         id: last_successful_commit
@@ -76,146 +74,124 @@ jobs:
           build-context: ${{ hashFiles(format('./dist/apps/{0}/nginx.conf', matrix.app)) && format('./dist/apps/{0}', matrix.app) || './' }}
           ghcr-token: ${{ secrets.GITHUB_TOKEN }}
 
-  #     - name: Oc login
-  #       uses: redhat-actions/oc-login@v1
-  #       with:
-  #         openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
-  #         openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
-  #         # Disables SSL cert checking. Use this if you don't have the certificate authority data.
-  #         insecure_skip_tls_verify: true
-  #         # This method is more secure, if the certificate from Step 4 is available.
-  #         # certificate_authority_data: ${{ secrets.CA_DATA }}
-  #         namespace: core-services-infra
-  #     - name: Build containers
-  #       run: |
-  #         for app in $AFFECTED_APPS
-  #         do
-  #           if [[ $(oc describe build $app) == *"Source"* ]]
-  #           then
-  #             oc start-build $app --from-dir=dist/apps/$app --wait --follow
-  #           else
-  #             tar czf $app.tar.gz node_modules/ dist/apps/$app .openshift/service/ package.json package-lock.json
-  #             oc start-build $app --from-archive=$app.tar.gz --wait --follow
-  #           fi
-  #         done
+  deployDev:
+    runs-on: ubuntu-20.04
+    needs: [build, buildContainers]
+    if: needs.build.outputs.affected_apps
+    env:
+      AFFECTED_APPS: ${{ needs.build.outputs.affected_apps }}
+    environment:
+      name: Dev
+    steps:
+      - name: Oc login
+        uses: redhat-actions/oc-login@v1
+        with:
+          openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
+          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
+          namespace: core-services-infra
+          insecure_skip_tls_verify: true
+      - name: Tag Dev
+        run: |
+          for app in $AFFECTED_APPS
+          do
+            oc import-image ghcr.io/govalta/$app:latest --reference-policy='local'
+            oc tag $app:latest $app:dev --reference-policy='local'
+          done
+      - name: Deploy Dev
+        run: |
+          for app in $AFFECTED_APPS
+          do
+            oc project core-services-dev
+            oc rollout latest dc/$app
+            oc rollout status dc/$app
+          done
 
-  # deployDev:
-  #   runs-on: ubuntu-20.04
-  #   needs: [build, buildContainers]
-  #   if: needs.build.outputs.affected_apps
-  #   env:
-  #     AFFECTED_APPS: ${{ needs.build.outputs.affected_apps }}
-  #   environment:
-  #     name: Dev
-  #   steps:
-  #     - name: Oc login
-  #       uses: redhat-actions/oc-login@v1
-  #       with:
-  #         openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
-  #         openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
-  #         namespace: core-services-infra
-  #         insecure_skip_tls_verify: true
-  #     - name: Tag Dev
-  #       run: |
-  #         for app in $AFFECTED_APPS
-  #         do
-  #           oc tag $app:latest $app:dev
-  #         done
-  #     - name: Deploy Dev
-  #       run: |
-  #         for app in $AFFECTED_APPS
-  #         do
-  #           oc project core-services-dev
-  #           oc rollout latest dc/$app
-  #           oc rollout status dc/$app
-  #         done
+  devSmokeTest:
+    runs-on: ubuntu-20.04
+    needs: [build, deployDev]
+    environment:
+      name: Dev-e2e
+    strategy:
+      matrix:
+        app: [tenant-management-webapp, status-app]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "12"
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      - name: E2E Test
+        uses: ./.github/actions/nx-cypress-e2e
+        with:
+          app: ${{ matrix.app }}
+          environment: dev
+          tags: "@smoke-test and not @ignore"
+          core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
+          core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
+          api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
+          cy-password: ${{ secrets.CY_PASSWORD }}
+          cy-password-2: ${{ secrets.CY_PASSWORD2 }}
+          cy-password-3: ${{ secrets.CY_PASSWORD3 }}
 
-  # devSmokeTest:
-  #   runs-on: ubuntu-20.04
-  #   needs: [build, deployDev]
-  #   environment:
-  #     name: Dev-e2e
-  #   strategy:
-  #     matrix:
-  #       app: [tenant-management-webapp, status-app]
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - uses: actions/setup-node@v2
-  #       with:
-  #         node-version: "12"
-  #     - uses: actions/cache@v2
-  #       with:
-  #         path: ~/.npm
-  #         key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-  #     - name: E2E Test
-  #       uses: ./.github/actions/nx-cypress-e2e
-  #       with:
-  #         app: ${{ matrix.app }}
-  #         environment: dev
-  #         tags: "@smoke-test and not @ignore"
-  #         core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
-  #         core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
-  #         api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
-  #         cy-password: ${{ secrets.CY_PASSWORD }}
-  #         cy-password-2: ${{ secrets.CY_PASSWORD2 }}
-  #         cy-password-3: ${{ secrets.CY_PASSWORD3 }}
+  deployTest:
+    runs-on: ubuntu-20.04
+    needs: [build, devSmokeTest]
+    env:
+      AFFECTED_APPS: ${{ needs.build.outputs.affected_apps }}
+    environment:
+      name: Test
+    steps:
+      - name: Oc login
+        uses: redhat-actions/oc-login@v1
+        with:
+          openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
+          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
+          namespace: core-services-infra
+          insecure_skip_tls_verify: true
+      - name: Tag Test
+        run: |
+          for app in $AFFECTED_APPS
+          do
+            oc tag $app:dev $app:test --reference-policy='local'
+          done
+      - name: Deploy Test
+        run: |
+          for app in $AFFECTED_APPS
+          do
+            oc project core-services-test
+            oc rollout latest dc/$app
+            oc rollout status dc/$app
+          done
 
-  # deployTest:
-  #   runs-on: ubuntu-20.04
-  #   needs: [build, devSmokeTest]
-  #   env:
-  #     AFFECTED_APPS: ${{ needs.build.outputs.affected_apps }}
-  #   environment:
-  #     name: Test
-  #   steps:
-  #     - name: Oc login
-  #       uses: redhat-actions/oc-login@v1
-  #       with:
-  #         openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
-  #         openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
-  #         namespace: core-services-infra
-  #         insecure_skip_tls_verify: true
-  #     - name: Tag Test
-  #       run: |
-  #         for app in $AFFECTED_APPS
-  #         do
-  #           oc tag $app:dev $app:test
-  #         done
-  #     - name: Deploy Test
-  #       run: |
-  #         for app in $AFFECTED_APPS
-  #         do
-  #           oc project core-services-test
-  #           oc rollout latest dc/$app
-  #           oc rollout status dc/$app
-  #         done
-
-  # testSmokeTest:
-  #   runs-on: ubuntu-20.04
-  #   needs: [build, deployTest]
-  #   environment:
-  #     name: Test-e2e
-  #   strategy:
-  #     matrix:
-  #       app: [tenant-management-webapp, status-app]
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - uses: actions/setup-node@v2
-  #       with:
-  #         node-version: "12"
-  #     - uses: actions/cache@v2
-  #       with:
-  #         path: ~/.npm
-  #         key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-  #     - name: E2E Test
-  #       uses: ./.github/actions/nx-cypress-e2e
-  #       with:
-  #         app: ${{ matrix.app }}
-  #         environment: test
-  #         tags: "@smoke-test and not @ignore"
-  #         core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
-  #         core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
-  #         api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
-  #         cy-password: ${{ secrets.CY_PASSWORD }}
-  #         cy-password-2: ${{ secrets.CY_PASSWORD2 }}
-  #         cy-password-3: ${{ secrets.CY_PASSWORD3 }}
+  testSmokeTest:
+    runs-on: ubuntu-20.04
+    needs: [build, deployTest]
+    environment:
+      name: Test-e2e
+    strategy:
+      matrix:
+        app: [tenant-management-webapp, status-app]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "12"
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      - name: E2E Test
+        uses: ./.github/actions/nx-cypress-e2e
+        with:
+          app: ${{ matrix.app }}
+          environment: test
+          tags: "@smoke-test and not @ignore"
+          core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
+          core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
+          api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
+          cy-password: ${{ secrets.CY_PASSWORD }}
+          cy-password-2: ${{ secrets.CY_PASSWORD2 }}
+          cy-password-3: ${{ secrets.CY_PASSWORD3 }}

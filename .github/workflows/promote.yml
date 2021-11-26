@@ -57,7 +57,7 @@ jobs:
         run: |
           for app in $AFFECTED_APPS
           do
-            oc tag $app:test $app:uat
+            oc tag $app:test $app:uat --reference-policy='local'
           done
       - name: Deploy UAT
         run: |
