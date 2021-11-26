@@ -78,32 +78,44 @@ export const ApplicationNoticePublishedDefinition: DomainEventDefinition = {
     type: 'object',
     properties: {
       application: {
-        id: { type: 'string' },
-        name: { type: 'string' },
-        description: {
-          type: 'string',
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+          description: {
+            type: 'string',
+          },
         },
       },
       notice: {
-        description: {
-          type: ['string', 'null'],
-        },
-        startTimestamp: {
-          type: 'date',
-        },
-        endTimestamp: {
-          type: 'date',
-        },
-        created: {
-          type: 'date',
+        type: 'object',
+        properties: {
+          description: {
+            type: ['string', 'null'],
+          },
+          startTimestamp: {
+            type: 'string',
+            format: 'date-time',
+          },
+          endTimestamp: {
+            type: 'string',
+            format: 'date-time',
+          },
+          created: {
+            type: 'string',
+            format: 'date-time',
+          },
         },
       },
-      postBy: {
-        tenantId: {
-          type: 'string',
-        },
-        tenantName: {
-          type: 'string',
+      postedBy: {
+        type: 'object',
+        properties: {
+          tenantId: {
+            type: 'string',
+          },
+          tenantName: {
+            type: 'string',
+          },
         },
       },
     },
@@ -220,25 +232,25 @@ export const applicationStatusChange = (
   },
 });
 
-export const applicationNoticePublished = (
-  notice: NoticeApplicationEntity,
-  tennantServRef,
-  user: Express.User
-): DomainEvent => ({
-  name: 'application-notice-published',
-  timestamp: new Date(),
-  tenantId: AdspId.parse(notice.tenantId),
-  payload: {
-    application: {
-      id: tennantServRef[0].id,
-      name: tennantServRef[0].name,
-      description: tennantServRef[0].description,
+export const applicationNoticePublished = (notice: NoticeApplicationEntity, user: Express.User): DomainEvent => {
+  const event = {
+    name: 'application-notice-published',
+    timestamp: new Date(),
+    tenantId: AdspId.parse(notice.tenantId),
+    payload: {
+      notice: mapNotice(notice),
+      postedBy: {
+        userId: user.id,
+        userName: user.name,
+      },
     },
-
-    notice: mapNotice(notice),
-    postBy: {
-      userId: user.id,
-      userName: user.name,
-    },
-  },
-});
+  };
+  if (!notice.isAllApplications) {
+    event.payload['application'] = {
+      id: notice.tennantServRef && JSON.parse(notice.tennantServRef)[0]?.id,
+      name: notice.tennantServRef && JSON.parse(notice.tennantServRef)[0]?.name,
+      description: '',
+    };
+  }
+  return event;
+};
