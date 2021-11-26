@@ -64,6 +64,11 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: build-dist
+          path: ./
+      - run: |
+          tar -xf adsp-build-dist.tar.gz
+          echo ${{ format('./dist/apps/{0}/nginx.conf', matrix.app) }}
+          echo ${{ hashFiles(format('./dist/apps/{0}/nginx.conf', matrix.app)) }}
       - name: Build container
         uses: ./.github/actions/build-publish-container
         with:
