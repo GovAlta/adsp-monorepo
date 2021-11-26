@@ -196,7 +196,7 @@ export function createNoticeRouter({
         isAllApplications,
       });
       if (applicationMode !== 'active' && mode === 'active') {
-        eventService.send(applicationNoticePublished(application, JSON.parse(tennantServRef), user));
+        eventService.send(applicationNoticePublished(application, user));
       }
       res.status(200).json({
         ...updatedApplication,
