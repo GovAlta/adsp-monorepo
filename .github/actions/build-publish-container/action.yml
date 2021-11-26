@@ -31,7 +31,7 @@ runs:
       uses: redhat-actions/s2i-build@v2
       with:
         path_context: ${{ inputs.build-context }}
-        builder_image: 'registry.access.redhat.com/ubi8/nginx:latest'
+        builder_image: 'registry.redhat.io/ubi8/nginx-118:latest'
         image: ${{ inputs.app }}
         tags: latest ${{ github.sha }}
     - if: ${{ !contains(inputs.build-context, 'dist') }}
