@@ -306,7 +306,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         <GoAModalTitle>Delete notification type</GoAModalTitle>
         <GoAModalContent>Delete {selectedType?.name}?</GoAModalContent>
         <GoAModalActions>
-          <GoAButton buttonType="tertiary" data-testid="delete-cancel" onClick={() => setShowDeleteConfirmation(false)}>
+          <GoAButton
+            buttonType="tertiary"
+            data-testid="delete-cancel"
+            onClick={() => {
+              setShowDeleteConfirmation(false);
+              setSelectedType(emptyNotificationType);
+            }}
+          >
             Cancel
           </GoAButton>
           <GoAButton
@@ -315,6 +322,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             onClick={() => {
               setShowDeleteConfirmation(false);
               dispatch(DeleteNotificationTypeService(selectedType));
+              setSelectedType(emptyNotificationType);
             }}
           >
             Confirm
@@ -329,7 +337,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           <GoAButton
             buttonType="tertiary"
             data-testid="event-delete-cancel"
-            onClick={() => setShowEventDeleteConfirmation(false)}
+            onClick={() => {
+              setShowEventDeleteConfirmation(false);
+              setSelectedType(emptyNotificationType);
+            }}
           >
             Cancel
           </GoAButton>
@@ -343,6 +354,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               );
               selectedType.events = updatedEvents;
               dispatch(UpdateNotificationTypeService(selectedType));
+              setSelectedType(emptyNotificationType);
             }}
           >
             Confirm
@@ -394,6 +406,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         onCancel={() => {
           setShowTemplateForm(false);
           setEditEvent(null);
+          reset();
         }}
       />
     </NotficationStyles>
