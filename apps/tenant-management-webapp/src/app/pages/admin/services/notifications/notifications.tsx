@@ -28,7 +28,7 @@ export const Notifications: FunctionComponent = () => {
   return (
     <Page>
       <Main>
-        <h2>Notifications</h2>
+        <h1>Notifications</h1>
         <Tabs activeIndex={activeIndex}>
           <Tab label="Overview">
             <NotificationsOverview setActiveEdit={activateEdit} />
@@ -39,7 +39,7 @@ export const Notifications: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <h5>Helpful links</h5>
+        <h3>Helpful links</h3>
         <a
           rel="noopener noreferrer"
           target="_blank"

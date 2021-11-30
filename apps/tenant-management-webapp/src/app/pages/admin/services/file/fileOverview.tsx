@@ -8,7 +8,7 @@ const FileOverview: FunctionComponent = () => {
         space (tenant) containing file types that include role based access policy, and can associate files to domain
         records.
       </div>
-      <h3>File types</h3>
+      <h2>File types</h2>
       <div>
         File types describe categories of files and include configuration of roles permitted to access and updated
         files.

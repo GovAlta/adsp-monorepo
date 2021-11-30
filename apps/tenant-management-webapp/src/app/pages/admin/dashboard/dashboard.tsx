@@ -42,13 +42,13 @@ const Dashboard = (): JSX.Element => {
       <DashboardDiv>
         <Page>
           <Main>
-            <h2>{tenantName} dashboard</h2>
+            <h1>{tenantName} dashboard</h1>
             <Grid>
               <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                <GoACard
-                  title={<Link to="/admin/access">Access</Link>}
-                  description="Access allows you to add a secure sign in to you application and services with minimum effort and configuration. No need to deal with storing or authenticating users. It's all available out of the box."
-                >
+                <GoACard type="primary">
+                  <h2>
+                    <Link to="/admin/access">Access</Link>
+                  </h2>
                   <div>
                     Access allows you to add a secure sign in to you application and services with minimum effort and
                     configuration. No need to deal with storing or authenticating users. It's all available out of the
@@ -58,7 +58,10 @@ const Dashboard = (): JSX.Element => {
                 </GoACard>
               </GridItem>
               <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                <GoACard title={<Link to="/admin/services/files">File service</Link>}>
+                <GoACard type="primary">
+                  <h2>
+                    <Link to="/admin/services/files">File service</Link>
+                  </h2>
                   <div>
                     The file service provides the capability to upload and download files. Consumers are registered with
                     their own space (tenant) containing file types that include role based access policy, and can
@@ -67,7 +70,10 @@ const Dashboard = (): JSX.Element => {
                 </GoACard>
               </GridItem>
               <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                <GoACard title={<Link to="/admin/services/status">Status</Link>}>
+                <GoACard type="primary">
+                  <h2>
+                    <Link to="/admin/services/status">Status</Link>
+                  </h2>
                   <div>
                     The status service allows for easy monitoring of application downtime. Each application should
                     represent a service that is useful to the end user by itself, such as child care subsidy and child
@@ -76,7 +82,10 @@ const Dashboard = (): JSX.Element => {
                 </GoACard>
               </GridItem>
               <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                <GoACard title={<Link to="/admin/services/events">Events</Link>}>
+                <GoACard type="primary">
+                  <h2>
+                    <Link to="/admin/services/events">Events</Link>
+                  </h2>
                   <div>
                     The event service provides tenant applications with the ability to send domain events. Applications
                     are able to leverage additional capabilities as side effects through these events.
@@ -85,7 +94,10 @@ const Dashboard = (): JSX.Element => {
                 </GoACard>
               </GridItem>
               <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                <GoACard title={<Link to="/admin/services/notifications">Notifications</Link>}>
+                <GoACard type="primary">
+                  <h2>
+                    <Link to="/admin/services/notifications">Notifications</Link>
+                  </h2>
                   <div>
                     The notifications service provides tenant applications with the ability to configure notifications.
                   </div>
@@ -123,7 +135,7 @@ const Dashboard = (): JSX.Element => {
             />
           </DashboardAside>
         </Page>
-        <div>
+        <footer>
           <div style={{ flex: 1 }} data-testid="beta-release">
             This service is in <b>BETA</b> release. If you have any questions, please email{' '}
             <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca </a>
@@ -139,7 +151,7 @@ const Dashboard = (): JSX.Element => {
               afterShow={() => _afterShow('DIO@gov.ab.ca')}
             />
           </div>
-        </div>
+        </footer>
       </DashboardDiv>
     );
   };

@@ -13,7 +13,7 @@ export const Events: FunctionComponent = () => {
   return (
     <Page>
       <Main>
-        <h2>Events</h2>
+        <h1>Events</h1>
         <Tabs activeIndex={0}>
           <Tab label="Overview">
             <EventsOverview />
@@ -24,7 +24,7 @@ export const Events: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <h5>Helpful links</h5>
+        <h3>Helpful links</h3>
         <a
           rel="noopener noreferrer"
           target="_blank"

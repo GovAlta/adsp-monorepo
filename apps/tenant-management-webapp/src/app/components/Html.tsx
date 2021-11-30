@@ -32,7 +32,7 @@ const Main = styled.main`
   /* Font sizes */
   h1 {
     font-size: var(--fs-2xl);
-    font-weight: var(--fw-bold);
+    font-weight: var(--fw-light);
   }
   h2 {
     font-size: var(--fs-xl);
