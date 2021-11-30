@@ -7,6 +7,10 @@ on:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      AFFECTED_BASE:
+        description: Value for --base= in nx affected commands
+        required: false
 
 jobs:
   build:
@@ -37,7 +41,7 @@ jobs:
         id: production-build
         uses: ./.github/actions/nx-production-build
         with:
-          affected-base: ${{ steps.last_successful_commit.outputs.commit_hash }}
+          affected-base: ${{ github.event.inputs.AFFECTED_BASE || steps.last_successful_commit.outputs.commit_hash }}
       - run: npm prune --production
       - run: tar czf adsp-build-dist.tar.gz node_modules/ dist/
       - uses: actions/upload-artifact@v2
