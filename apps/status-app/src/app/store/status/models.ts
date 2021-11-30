@@ -9,6 +9,10 @@ export interface ServiceStatus {
   applications: ServiceStatusApplication[];
 }
 
+export interface SubscriberState {
+  subscriber: Subscriber;
+}
+
 export interface ServiceStatusApplication {
   id: string;
   name: string;
@@ -29,6 +33,21 @@ export interface ServiceStatusNotifications {
   type: string;
   data: unknown;
   level: 'severe' | '???';
+}
+
+export interface SubscriberChannel {
+  channel?: string;
+  address?: string;
+  verified?: boolean;
+  verifyKey?: string;
+}
+
+export interface Subscriber {
+  tenantId: string;
+  id?: string;
+  channels: SubscriberChannel[];
+  userId?: string;
+  addressAs: string;
 }
 
 export interface ServiceStatusLog {
@@ -72,6 +91,10 @@ export const NoticeInit: Notices = {
 
 export const ApplicationInit: ServiceStatus = {
   applications: null,
+};
+
+export const SubscriberInit: SubscriberState = {
+  subscriber: null,
 };
 
 // Helper functions
