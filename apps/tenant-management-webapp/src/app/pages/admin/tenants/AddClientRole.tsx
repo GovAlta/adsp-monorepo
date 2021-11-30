@@ -34,7 +34,7 @@ const AddClientRole = (): JSX.Element => {
             <label htmlFor="email">Email</label>
             <input id="email" value={email} onChange={onChangeEmail} />
           </GoAFormItem>
-          <GoAFormActions>
+          <GoAFormActions alignment="right">
             <GoALinkButton to="/admin/tenants" buttonType="secondary">
               Back
             </GoALinkButton>

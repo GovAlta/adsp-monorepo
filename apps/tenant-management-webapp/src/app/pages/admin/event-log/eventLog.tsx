@@ -43,7 +43,7 @@ export const EventLog: FunctionComponent = () => {
   };
   return (
     <Main>
-      <h2>Event log</h2>
+      <h1>Event log</h1>
       <p>
         The event log shows the sequence of events for your tenant. Enable the adsp-event-listener in your realm to
         include access events. Send domain events via the event service to include your own events in the log.

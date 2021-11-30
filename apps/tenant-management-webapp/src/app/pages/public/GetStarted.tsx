@@ -17,7 +17,7 @@ const GetStarted = (): JSX.Element => {
           Currently, the Alberta Digital Service Platform only uses the Government of Alberta's account as
           authentication, with plans to expand to other federated login providers in the future.
         </p>
-        <GoAFormActions>
+        <GoAFormActions alignment="left">
           <GoAButton
             buttonType="primary"
             onClick={() => {

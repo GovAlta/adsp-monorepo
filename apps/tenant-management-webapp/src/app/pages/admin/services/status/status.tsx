@@ -97,7 +97,7 @@ function Status(): JSX.Element {
   return (
     <Page>
       <Main>
-        <h2>Service status</h2>
+        <h1>Service status</h1>
         <Tabs activeIndex={activeIndex}>
           <Tab label="Overview">
             This service allows for easy monitoring of application downtime.
@@ -154,7 +154,7 @@ function Status(): JSX.Element {
             <NoticeList />
           </Tab>
           <Tab label="Guidelines">
-            Guidelines for choosing a health check endpoint:
+            <p>Guidelines for choosing a health check endpoint:</p>
             <ol>
               <li>A Health check endpoint needs to be publicly accessible over the internet</li>
               <li>
@@ -174,7 +174,7 @@ function Status(): JSX.Element {
       </Main>
 
       <Aside>
-        <h5>Helpful links</h5>
+        <h3>Helpful links</h3>
         <a
           rel="noopener noreferrer"
           target="_blank"
