@@ -101,21 +101,13 @@ export const ApplicationNoticePublishedDefinition: DomainEventDefinition = {
             type: 'string',
             format: 'date-time',
           },
-          created: {
-            type: 'string',
-            format: 'date-time',
-          },
         },
       },
       postedBy: {
         type: 'object',
         properties: {
-          tenantId: {
-            type: 'string',
-          },
-          tenantName: {
-            type: 'string',
-          },
+          userId: { type: 'string' },
+          userName: { type: 'string' },
         },
       },
     },
