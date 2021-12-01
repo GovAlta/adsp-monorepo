@@ -121,6 +121,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
             onBlur={(e) => {
               updateFileType.name = e.target.value;
             }}
+            aria-label="name"
           />
         ) : (
           props.name
@@ -540,6 +541,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
                   setDisableCreate(e.target.value.length === 0);
                 }}
                 id="new-file-type-name"
+                aria-label="new-file-type-name"
                 data-testid="new-file-type-name"
                 value={name}
               />

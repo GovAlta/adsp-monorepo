@@ -61,9 +61,9 @@ const FileList = (): JSX.Element => {
   return (
     <>
       <GoAForm>
-        <h3>Please upload a file</h3>
+        <h2>Please upload a file</h2>
 
-        <input type="file" onChange={onChange} />
+        <input type="file" onChange={onChange} aria-label="file upload" />
         <GoARadioGroup
           orientation="vertical"
           name="fileSecurityOptions"
