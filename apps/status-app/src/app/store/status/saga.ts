@@ -2,11 +2,17 @@ import { put, select, call } from 'redux-saga/effects';
 import { RootState } from '@store/index';
 import { ApplicationApi } from './api';
 import { ServiceTokenApi } from './serviceTokenApi';
-import { fetchApplicationsSuccess, FetchApplicationsAction, fetchNoticesSuccess, SubscribeToTenantAction, subscribeToTenantSuccess } from './actions';
+import {
+  fetchApplicationsSuccess,
+  FetchApplicationsAction,
+  fetchNoticesSuccess,
+  SubscribeToTenantAction,
+  subscribeToTenantSuccess,
+} from './actions';
 import { parseNotices, bindApplicationsWithNotices } from './models';
 import { addErrorMessage, updateIsReady, updateTenantName } from '@store/session/actions';
 import { SagaIterator } from '@redux-saga/core';
-import { toTenantName } from './models'
+import { toTenantName } from './models';
 
 export function* fetchApplications(action: FetchApplicationsAction): SagaIterator {
   const rootState: RootState = yield select();
@@ -50,27 +56,20 @@ export function* subscribeToTenant(action: SubscribeToTenantAction): SagaIterato
   try {
     const keyCloak = new ServiceTokenApi(baseUrl, clientSecret);
 
-
     const token = yield call([keyCloak, keyCloak.getToken]);
-
 
     const subscriberApi = new ServiceTokenApi(notificationUrl, clientSecret);
 
-    subscriberApi.setToken(token.access_token)
+    subscriberApi.setToken(token.access_token);
 
-    console.log(JSON.stringify(token) + "<token")
+    const subscribeResponse = yield call([subscriberApi, subscriberApi.subscribe], tenant, email);
 
-    const subscribeResponse = yield call([subscriberApi, subscriberApi.subscribe],tenant, email);
-
-    console.log(JSON.stringify(subscribeResponse) + "<subscribeResponse")
-    localStorage.setItem("subscriber", JSON.stringify(subscribeResponse))
     yield put(subscribeToTenantSuccess(subscribeResponse));
   } catch (e) {
-    console.log(JSON.stringify(e) + "<eee");
     console.error(e.message);
-    let message = e.message
-    if (JSON.parse(e.message).codeName === "DuplicateKey" && JSON.parse(e.message).keyValue.userId ) {
-      message = `The email ${JSON.parse(e.message).keyValue.userId} is already subscribed`
+    let message = e.message;
+    if (JSON.parse(e.message).codeName === 'DuplicateKey' && JSON.parse(e.message).keyValue.userId) {
+      message = `The email ${JSON.parse(e.message).keyValue.userId} is already subscribed`;
     }
     yield put(addErrorMessage({ message: message }));
   }

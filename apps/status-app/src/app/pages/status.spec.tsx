@@ -1,13 +1,14 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import { getDefaultMiddleware } from '@reduxjs/toolkit';
-import { render, waitFor, cleanup } from '@testing-library/react';
+import { fireEvent, render, waitFor, cleanup } from '@testing-library/react';
 import configureStore from 'redux-mock-store';
 import ServiceStatuses from './status';
 import axios from 'axios';
 import moment from 'moment';
-import { ApplicationInit, NoticeInit } from '@store/status/models';
+import { ApplicationInit, NoticeInit, SubscriberInit } from '@store/status/models';
 import { SessionInit } from '@store/session/models';
+import { SUBSCRIBE_TO_TENANT } from '../store/status/actions';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
@@ -39,6 +40,9 @@ describe('Service statuses', () => {
       application: ApplicationInit,
       session: SessionInit,
       notices: NoticeInit,
+      subscription: {
+        subscriber: null,
+      },
     });
 
     axiosMock.get.mockResolvedValueOnce({ data: {} });
@@ -103,6 +107,9 @@ describe('Service statuses (2 of them)', () => {
       },
       session: SessionInit,
       notice: NoticeInit,
+      subscription: {
+        subscriber: null,
+      },
     });
     axiosMock.get.mockResolvedValueOnce({ data: data });
   });
@@ -146,5 +153,35 @@ describe('Service statuses (2 of them)', () => {
 
     await waitFor(() => expect(getByText(moment(data[0].lastUpdated).calendar())).toBeTruthy());
     await waitFor(() => expect(getByText(moment(data[1].lastUpdated).calendar())).toBeTruthy());
+  });
+
+  it('has notification signup display', async () => {
+    const { getByText } = render(
+      <Provider store={store}>
+        <ServiceStatuses />
+      </Provider>
+    );
+
+    await waitFor(() => expect(getByText('Sign up for notifications')).toBeTruthy());
+  });
+
+  it('allows signup using email', async () => {
+    const { queryByTestId } = render(
+      <Provider store={store}>
+        <ServiceStatuses />
+      </Provider>
+    );
+
+    const email = await queryByTestId('email');
+
+    fireEvent.change(email, { target: { value: 'bob@smith.com' } });
+
+    const subscribeButton = await queryByTestId('subscribe');
+    fireEvent.click(subscribeButton);
+    const actions = store.getActions();
+
+    const saveAction = actions.find((action) => action.type === SUBSCRIBE_TO_TENANT);
+
+    expect(saveAction).toBeTruthy();
   });
 });

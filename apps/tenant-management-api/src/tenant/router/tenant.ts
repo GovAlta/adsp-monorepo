@@ -53,9 +53,6 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
   async function getTenantByEmail(req, res) {
     try {
       const { email } = req.payload;
-      console.log(JSON.stringify(req.payload) + "<params");
-      console.log(JSON.stringify(req.payload.email) + "<email");
-      console.log(JSON.stringify(req.payload.name) + "<name");
       const tenant = await tenantRepository.findBy({ adminEmail: email });
       res.json(tenant.obj());
     } catch (e) {
@@ -65,18 +62,13 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
 
   async function getTenantByName(req, res) {
     try {
-      console.log("getbyname");
-      console.log(JSON.stringify(req.payload) + "<params");
       const { name } = req.payload;
-      console.log(JSON.stringify(name) + "<name");
       const tenant = await tenantRepository.findBy({ name: name });
-      console.log(JSON.stringify(tenant) + "<tenant");
       res.json(tenant.obj());
     } catch (e) {
       res.status(HttpStatusCodes.NOT_FOUND).json();
     }
   }
-
 
   async function getTenantByRealm(req, res) {
     const { realm } = req.payload;

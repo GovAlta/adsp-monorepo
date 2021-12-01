@@ -11,6 +11,8 @@ import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { useDispatch } from 'react-redux';
 import { fetchApplications, subscribeToTenant, subscribeToTenantSuccess } from '@store/status/actions';
+import { clearNotification } from '@store/session/actions';
+import { toTenantName } from '@store/status/models';
 import { RootState } from '@store/index';
 import { PageLoader } from '@components/PageLoader';
 import { LocalTime } from '@components/Date';
@@ -38,7 +40,7 @@ const ServiceStatusPage = (): JSX.Element => {
     loaded: state.session?.isLoadingReady,
     subscriber: state.subscription.subscriber,
     applications: state.application?.applications,
-    error: state.session?.notifications
+    error: state.session?.notifications,
   }));
 
   const { allApplicationsNotices } = useSelector((state: RootState) => ({
@@ -50,12 +52,10 @@ const ServiceStatusPage = (): JSX.Element => {
   }, [realm]);
 
   useEffect(() => {
-    localStorage.setItem("subscriber", null)
-    const subscriber = JSON.parse(localStorage.getItem("subscriber"));
-    if (subscriber) {
-      dispatch(subscribeToTenantSuccess(subscriber))
+    if (error && error.length > 0) {
+      dispatch(subscribeToTenantSuccess(null));
     }
-  }, [])
+  }, [error[error.length - 1]]);
 
   const timeZone = new Date().toString().split('(')[1].split(')')[0];
 
@@ -120,7 +120,7 @@ const ServiceStatusPage = (): JSX.Element => {
   };
 
   function emailErrors() {
-    if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)){
+    if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
       return { email: 'You must enter a valid email' };
     }
   }
@@ -128,16 +128,15 @@ const ServiceStatusPage = (): JSX.Element => {
   function formErrorsFunc() {
     const validEmailSelectedConst = emailErrors();
 
-    return {...validEmailSelectedConst};
+    return { ...validEmailSelectedConst };
   }
 
   const save = (e: FormEvent) => {
-    console.log(JSON.stringify(realm) + '<realmxx');
     e.preventDefault();
     const formErrorList = formErrorsFunc();
-    console.log(JSON.stringify(formErrorList)  +"<formErrorListformErrorListformErrorList")
     if (Object.keys(formErrorList).length === 0) {
-      const payload = { tenant: realm, email: email };
+      dispatch(clearNotification());
+      const payload = { tenant: toTenantName(realm), email: email };
       dispatch(subscribeToTenant(payload));
       setFormErrors(formErrorList);
     } else {
@@ -186,46 +185,63 @@ const ServiceStatusPage = (): JSX.Element => {
         <h1>Status & Outages</h1>
         <div className="descriptor">Real time monitoring of our applications and services</div>
       </div> */}
-      {error.length > 0 && (
-        <GoANotification key={new Date().getTime()} type="emergency" isDismissable={true}>
-          {error[error.length - 1].message}
-        </GoANotification>
-      )}
-      {subscriber && (
-        <GoANotification key={new Date().getTime()} type="information" isDismissable={true}>
-          Your email {subscriber.addressAs} has been subscribed
-        </GoANotification>
-      )}
       <main>
         <ServiceStatusesCss>
           <section>
             <SectionView />
           </section>
           <br />
-          <div className="small-container">
-            <div>
-              <h1>Sign up for notifications</h1>
+          {applications && (
+            <div className="small-container">
               <div>
-                Sign up to receive notifications by email for current states of the individual services. Please
-                contact <a href="mailto: DIO@gov.ab.ca">DIA@gov.ab.ca</a> for additional information or any other
-                inquiries regarding services statuses.
+                <h1>Sign up for notifications</h1>
+                <div>
+                  Sign up to receive notifications by email for current states of the individual services. Please
+                  contact <a href="mailto: DIO@gov.ab.ca">DIA@gov.ab.ca</a> for additional information or any other
+                  inquiries regarding service statuses.
+                </div>
+                {subscriber ? (
+                  <GoACallout title="You have signed up for notifications" key={new Date().getTime()} type="success">
+                    Thank you for signing up. You will receive notifications regarding service statuses on your
+                    registered email.
+                  </GoACallout>
+                ) : (
+                  <div>
+                    {error && error.length > 0 && (
+                      <GoACallout
+                        key={`${new Date().getTime()}-${error.length}`}
+                        type="emergency"
+                        title="Your signup attempt has failed"
+                      >
+                        {error[error.length - 1].message}
+                      </GoACallout>
+                    )}
+                    <GoAForm>
+                      <ErrorWrapper className={(formErrors?.['email'] || error?.length > 0) && 'error'}>
+                        <GoAFormItem>
+                          <label>Receive updates by email</label>
+                          <GoAInput
+                            id="email"
+                            type="email"
+                            name="email"
+                            value={email}
+                            data-testid="email"
+                            onChange={setValue}
+                          />
+                        </GoAFormItem>
+                        <div className="error-msg">{formErrors?.['email']}</div>
+                      </ErrorWrapper>
+                    </GoAForm>
+                    <GoAFormActions>
+                      <GoAButton buttonType="primary" data-testid="subscribe" onClick={save}>
+                        Submit
+                      </GoAButton>
+                    </GoAFormActions>
+                  </div>
+                )}
               </div>
-              <GoAForm>
-                <ErrorWrapper className={(formErrors?.['email'] || error?.length > 0) && 'error'}>
-                  <GoAFormItem>
-                    <label>Receive updates by email</label>
-                    <GoAInput id="name" type="text" name="name" value={email} onChange={setValue} />
-                  </GoAFormItem>
-                  <div className="error-msg">{formErrors?.['email']}</div>
-                </ErrorWrapper>
-              </GoAForm>
-              <GoAFormActions>
-                <GoAButton buttonType="primary" onClick={save}>
-                  Submit
-                </GoAButton>
-              </GoAFormActions>
             </div>
-          </div>
+          )}
         </ServiceStatusesCss>
       </main>
       <Footer>

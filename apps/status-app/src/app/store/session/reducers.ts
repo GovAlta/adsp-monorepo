@@ -6,24 +6,30 @@ export const sessionReducer = (state: Session = SessionInit, action: ActionTypes
     case 'session/loading/ready/update':
       return {
         ...state,
-        isLoadingReady: action.payload
+        isLoadingReady: action.payload,
       };
 
     case 'session/notifications/add':
-      state.notifications.push(action.payload)
+      state.notifications.push(action.payload);
       return {
-        ...state
-      }
+        ...state,
+      };
+
+    case 'session/notifications/clear':
+      state.notifications = [];
+      return {
+        ...state,
+      };
 
     case 'session/tenant/name/update':
       return {
         ...state,
         tenant: {
-          name: action.payload
-        }
-      }
+          name: action.payload,
+        },
+      };
 
     default:
       return state;
   }
-}
+};

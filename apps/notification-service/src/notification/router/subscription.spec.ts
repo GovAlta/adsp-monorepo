@@ -671,7 +671,7 @@ describe('subscription router', () => {
           roles: [ServiceUserRoles.SubscriptionAdmin],
         },
         query: {},
-        body: { addressAs: 'tester' },
+        body: { addressAs: 'tester@test.com', email: 'tester@test.com' },
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -679,15 +679,24 @@ describe('subscription router', () => {
       const subscriber = new SubscriberEntity(repositoryMock, {
         id: 'subscriber',
         tenantId,
-        addressAs: 'tester',
+        addressAs: 'tester@test.com',
         channels: [],
       });
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
 
       const handler = createSubscriber(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(expect.objectContaining({ addressAs: 'tester' }));
-      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ addressAs: 'tester' }));
+      expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(
+        expect.objectContaining({
+          addressAs: 'tester@test.com',
+          userId: 'tester@test.com',
+        })
+      );
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          addressAs: 'tester@test.com',
+        })
+      );
     });
 
     it('can create user subscriber', async () => {
@@ -910,7 +919,13 @@ describe('subscription router', () => {
           email: 'tester@test.co',
           roles: [ServiceUserRoles.SubscriptionAdmin],
         },
-        body: { addressAs: 'Best Tester' },
+        body: {
+          addressAs: 'tester',
+          channels: [],
+          id: 'subscriber',
+          urn: 'urn:ads:platform:notification-service:v1:/subscribers/subscriber',
+          userId: undefined,
+        },
         subscriber,
       };
       const res = { send: jest.fn() };
