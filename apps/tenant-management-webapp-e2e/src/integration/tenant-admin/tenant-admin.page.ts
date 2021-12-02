@@ -48,7 +48,7 @@ class TenantAdminPage {
   }
 
   goaCardTitles() {
-    return cy.xpath('//*[@data-testid="card-container"]/div/h3/a');
+    return cy.xpath('//*[@data-testid="card-container"]/div/div/h2/a');
   }
 
   goaCardTexts() {
@@ -56,11 +56,11 @@ class TenantAdminPage {
   }
 
   goaCardLink(text) {
-    return cy.xpath(`//*[@data-testid="card-container"]/div/h3/a[contains(text(), "${text}")]`);
+    return cy.xpath(`//*[@data-testid="card-container"]/div/div/h2/a[contains(text(), "${text}")]`);
   }
 
   servicePageTitle(text) {
-    return cy.xpath(`//h2[contains(text(), "${text}")]`);
+    return cy.xpath(`//h1[contains(text(), "${text}")]`);
   }
 
   roleInstructionParagragh() {
