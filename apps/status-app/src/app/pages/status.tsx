@@ -197,7 +197,7 @@ const ServiceStatusPage = (): JSX.Element => {
                 <h1>Sign up for notifications</h1>
                 <div>
                   Sign up to receive notifications by email for current states of the individual services. Please
-                  contact <a href="mailto: DIO@gov.ab.ca">DIA@gov.ab.ca</a> for additional information or any other
+                  contact <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a> for additional information or any other
                   inquiries regarding service statuses.
                 </div>
                 {subscriber ? (
@@ -219,7 +219,7 @@ const ServiceStatusPage = (): JSX.Element => {
                     <GoAForm>
                       <ErrorWrapper className={(formErrors?.['email'] || error?.length > 0) && 'error'}>
                         <GoAFormItem>
-                          <label>Receive updates by email</label>
+                          <label>Enter your email to receive updates</label>
                           <GoAInput
                             id="email"
                             type="email"
@@ -232,7 +232,7 @@ const ServiceStatusPage = (): JSX.Element => {
                         <div className="error-msg">{formErrors?.['email']}</div>
                       </ErrorWrapper>
                     </GoAForm>
-                    <GoAFormActions>
+                    <GoAFormActions alignment="left">
                       <GoAButton buttonType="primary" data-testid="subscribe" onClick={save}>
                         Submit
                       </GoAButton>
