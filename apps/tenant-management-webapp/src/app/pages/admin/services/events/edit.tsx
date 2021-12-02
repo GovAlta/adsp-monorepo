@@ -54,6 +54,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               value={definition.namespace}
               disabled={isEdit}
               data-testid="form-namespace"
+              aria-label="nameSpace"
               onChange={(e) => setDefinition({ ...definition, namespace: e.target.value })}
             />
             <div className="error-msg">{errors?.['namespace']}</div>
@@ -66,6 +67,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               value={definition.name}
               disabled={isEdit}
               data-testid="form-name"
+              aria-label="name"
               onChange={(e) => setDefinition({ ...definition, name: e.target.value })}
             />
             <div className="error-msg">{errors?.['name']}</div>
