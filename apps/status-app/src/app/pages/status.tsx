@@ -18,7 +18,7 @@ import { PageLoader } from '@components/PageLoader';
 import { LocalTime } from '@components/Date';
 import { GoAPageLoader } from '@abgov/react-components';
 import moment from 'moment';
-import { GoAButton, GoANotification } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components';
 import { GoAForm, GoAFormItem, GoAInput, GoAFormActions } from '@abgov/react-components/experimental';
 
 function capitalizeFirstLetter(string) {
@@ -55,7 +55,7 @@ const ServiceStatusPage = (): JSX.Element => {
     if (error && error.length > 0) {
       dispatch(subscribeToTenantSuccess(null));
     }
-  }, [error[error.length - 1]]);
+  }, [error[error?.length - 1]]);
 
   const timeZone = new Date().toString().split('(')[1].split(')')[0];
 
@@ -120,7 +120,7 @@ const ServiceStatusPage = (): JSX.Element => {
   };
 
   function emailErrors() {
-    if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
+    if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
       return { email: 'You must enter a valid email' };
     }
   }

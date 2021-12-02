@@ -6,7 +6,7 @@ import configureStore from 'redux-mock-store';
 import ServiceStatuses from './status';
 import axios from 'axios';
 import moment from 'moment';
-import { ApplicationInit, NoticeInit, SubscriberInit } from '@store/status/models';
+import { ApplicationInit, NoticeInit } from '@store/status/models';
 import { SessionInit } from '@store/session/models';
 import { SUBSCRIBE_TO_TENANT } from '../store/status/actions';
 

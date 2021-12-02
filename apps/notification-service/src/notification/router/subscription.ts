@@ -219,7 +219,7 @@ export function getSubscribers(apiId: AdspId, repository: SubscriptionRepository
 }
 
 export function createSubscriber(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
-  return async (req, res, next) => {
+  return async (req, res) => {
     try {
       let tenantId;
       const user = req.user;

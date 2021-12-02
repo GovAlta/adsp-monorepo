@@ -20,6 +20,12 @@ describe('App', () => {
         platformTenantRealm: '0014430f-abb9-4b57-915c-de9f3c889696',
         envLoaded: true,
       },
+      subscription: {
+        subscriber: null,
+      },
+      session: {
+        notifications: [],
+      },
     });
   });
   it('should render successfully', () => {

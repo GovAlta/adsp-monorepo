@@ -12,7 +12,7 @@ export class ServiceTokenApi {
     this.clientSecret = clientSecret;
   }
 
-  async setToken(token) {
+  async setToken(token: string): Promise<void> {
     this.token = token;
   }
 
@@ -48,4 +48,3 @@ export class ServiceTokenApi {
     return res.data;
   }
 }
-//http://localhost:3335/subscription/v1/types/status-application-health-change/subscriptions?userSub=true
