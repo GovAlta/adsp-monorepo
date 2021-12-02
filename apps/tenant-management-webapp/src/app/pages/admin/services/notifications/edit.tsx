@@ -80,6 +80,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 name="name"
                 value={type.name}
                 data-testid="form-name"
+                aria-label="name"
                 onChange={(e) => setType({ ...type, name: e.target.value })}
               />
               <div className="error-msg">{errors?.['name']}</div>

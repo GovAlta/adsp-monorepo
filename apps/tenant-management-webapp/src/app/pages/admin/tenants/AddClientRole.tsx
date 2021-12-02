@@ -27,12 +27,12 @@ const AddClientRole = (): JSX.Element => {
         <GoAForm>
           <GoAFormItem>
             <label htmlFor="first-name">Tenant Name</label>
-            <input id="first-name" value={name} onChange={onChangeName} />
+            <input id="first-name" value={name} onChange={onChangeName} aria-label="firstName" />
             <div>Names cannot container special characters (ex. ! % &)</div>
           </GoAFormItem>
           <GoAFormItem>
             <label htmlFor="email">Email</label>
-            <input id="email" value={email} onChange={onChangeEmail} />
+            <input id="email" value={email} onChange={onChangeEmail} aria-label="e-mail" />
           </GoAFormItem>
           <GoAFormActions alignment="right">
             <GoALinkButton to="/admin/tenants" buttonType="secondary">
