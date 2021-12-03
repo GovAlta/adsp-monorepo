@@ -122,7 +122,7 @@ const ServiceStatusCss = styled.div`
   .status-button {
     padding: 0 6px;
     margin: 5px;
-    font-size: 11px;
+    font-size: var(--fs-xs);
     border-radius: 4px;
   }
 
@@ -132,8 +132,8 @@ const ServiceStatusCss = styled.div`
 
   .date-assignment-status {
     flex: 1;
-    font-size: 15px;
-    padding-bottom: 10px;
+    font-size: 1rem;
+    padding-bottom: 0.625rem;
   }
 
   .flex-row {
@@ -151,20 +151,20 @@ const ServiceStatusCss = styled.div`
   }
 
   .goa-error {
-    padding-left: 20px;
+    padding-left: 1.25rem;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M11,9.41v4.52a1,1,0,0,0,2,0V9.41a1,1,0,0,0-2,0Z'/%3E%3Cpath fill='%23fff' d='M12,16.15a1.29,1.29,0,1,0,1.29,1.29A1.29,1.29,0,0,0,12,16.15Z'/%3E%3Cpath fill='%23fff' d='M22.87,20.14l-10-17.32a1,1,0,0,0-1.74,0l-10,17.32a1,1,0,0,0,0,1,1,1,0,0,0,.87.5H22a1,1,0,0,0,.87-.5A1,1,0,0,0,22.87,20.14Zm-19.14-.5L12,5.32l8.27,14.32Z'/%3E%3C/svg%3E");
     background-color: transparent;
     background-repeat: no-repeat;
     background-position: 1px 6px;
-    background-size: 16px 16px;
+    background-size: 1rem 1rem;
   }
 
   .goa-warning {
-    padding-left: 20px;
+    padding-left: 1.25rem;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,20a9,9,0,1,1,9-9A9,9,0,0,1,12,21Z'/%3E%3Cpath fill='%23000' d='M12,14.46a1,1,0,0,0,1-1V6.57a1,1,0,0,0-2,0v6.89A1,1,0,0,0,12,14.46Z'/%3E%3Cpath fill='%23000' d='M12,15.68A1.29,1.29,0,1,0,13.29,17,1.29,1.29,0,0,0,12,15.68Z'/%3E%3C/svg%3E");
     background-color: transparent;
     background-repeat: no-repeat;
     background-position: 1px 6px;
-    background-size: 16px 16px;
+    background-size: 1rem 1rem;
   }
 `;

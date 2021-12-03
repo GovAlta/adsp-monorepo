@@ -1,9 +1,6 @@
 import React, { useState, useEffect, FormEvent } from 'react';
 import { GoAHeader, GoACallout } from '@abgov/react-components';
 
-import '@abgov/core-css/goa-core.css';
-import '@abgov/core-css/goa-components.css';
-import '@abgov/core-css/src/lib/stories/page-template/page-template.story.scss';
 import { Grid, GridItem } from '@components/Grid';
 import ServiceStatus from './statusCard';
 import { useLocation } from 'react-router-dom';
@@ -63,7 +60,7 @@ const ServiceStatusPage = (): JSX.Element => {
     return (
       <div className="small-container">
         <PageLoader />
-        <h2 data-testid="service-name">All {capitalizeFirstLetter(tenantName)} services</h2>
+        <Title data-testid="service-name">All {capitalizeFirstLetter(tenantName)} services</Title>
         <br />
         <p>
           These are the services currently being offered by{' '}
@@ -102,7 +99,7 @@ const ServiceStatusPage = (): JSX.Element => {
   const noProvider = () => {
     return (
       <div className="small-container">
-        <h2>Provider not found</h2>
+        <Title>Provider not found</Title>
         <p>Cannot find a provider at this url</p>
       </div>
     );
@@ -258,10 +255,16 @@ const ServiceStatusPage = (): JSX.Element => {
   );
 };
 
-const Footer = styled.div`
-  padding-top: 20px;
+const Footer = styled.footer`
+  padding-top: 1.25rem;
   text-align: center;
-  background-color: #f1f1f1;
+  background-color: var(--color-gray-100);
+`;
+
+const Title = styled.h1`
+  && {
+    font-weight: var(--fw-regular);
+  }
 `;
 
 const FooterLinks = styled.div`
@@ -284,13 +287,13 @@ const FooterCopyright = styled.div`
 
 const ServiceStatusesCss = styled.div`
   .small-container {
-    max-width: 700px;
-    padding: 20px;
+    max-width: 43.75rem;
+    padding: 1.25rem;
     margin: 0 auto;
   }
 
   .small-font {
-    font-size: 10px;
+    font-size: 0.625rem;
   }
 
   .flex {
@@ -300,7 +303,7 @@ const ServiceStatusesCss = styled.div`
   .timezone {
     text-align: right;
     color: #70757a;
-    font-size: 13px;
+    font-size: var(-fs-xs);
   }
 `;
 
