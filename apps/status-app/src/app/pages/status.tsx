@@ -200,9 +200,9 @@ const ServiceStatusPage = (): JSX.Element => {
                   contact <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a> for additional information or any other
                   inquiries regarding service statuses.
                 </div>
-                {subscriber ? (
+                {(subscriber || JSON.parse(localStorage.getItem('subscriber'))) ? (
                   <GoACallout title="You have signed up for notifications" key={new Date().getTime()} type="success">
-                    Thank you for signing up. You will receive notifications regarding service statuses on your
+                    {subscriber && 'Thank you for signing up.'} You will receive notifications regarding service statuses on your
                     registered email.
                   </GoACallout>
                 ) : (
