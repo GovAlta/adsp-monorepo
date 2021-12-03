@@ -208,7 +208,7 @@ const ServiceStatusPage = (): JSX.Element => {
                         <GoAInput
                           id="email"
                           type="email"
-                          disabled={subscriber}
+                          disabled={subscriber !== null}
                           name="email"
                           value={email}
                           data-testid="email"
@@ -219,15 +219,20 @@ const ServiceStatusPage = (): JSX.Element => {
                     </ErrorWrapper>
                   </GoAForm>
                   <GoAFormActions alignment="left">
-                    <GoAButton disabled={subscriber} buttonType="primary" data-testid="subscribe" onClick={save}>
+                    <GoAButton
+                      disabled={subscriber !== null}
+                      buttonType="primary"
+                      data-testid="subscribe"
+                      onClick={save}
+                    >
                       Submit
                     </GoAButton>
                   </GoAFormActions>
                 </div>
                 {subscriber && (
                   <GoACallout title="You have signed up for notifications" key="success" type="success">
-                    Thank you for signing up. You will receive notifications regarding service
-                    statuses on {subscriber.addressAs}.
+                    Thank you for signing up. You will receive notifications regarding service statuses on{' '}
+                    {subscriber.addressAs}.
                   </GoACallout>
                 )}
                 {error && error.length > 0 && (
