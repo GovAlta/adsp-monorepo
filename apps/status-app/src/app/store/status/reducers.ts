@@ -37,7 +37,6 @@ export const applicationReducer = (state: ServiceStatus = ApplicationInit, actio
 export const subscriptionReducer = (state: SubscriberState = SubscriberInit, action: ActionTypes): SubscriberState => {
   switch (action.type) {
     case 'status/subscribe/to/tenant/success': {
-      localStorage.setItem('subscriber', JSON.stringify(action.payload));
       return {
         ...state,
         subscriber: action.payload,
