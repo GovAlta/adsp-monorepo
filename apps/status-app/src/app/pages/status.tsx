@@ -200,19 +200,15 @@ const ServiceStatusPage = (): JSX.Element => {
                   contact <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a> for additional information or any other
                   inquiries regarding service statuses.
                 </div>
-                {(subscriber || JSON.parse(localStorage.getItem('subscriber'))) ? (
-                  <GoACallout title="You have signed up for notifications" key={new Date().getTime()} type="success">
-                    {subscriber && 'Thank you for signing up.'} You will receive notifications regarding service statuses on your
-                    registered email.
+                {subscriber || JSON.parse(localStorage.getItem('subscriber')) ? (
+                  <GoACallout title="You have signed up for notifications" key="success" type="success">
+                    {subscriber && 'Thank you for signing up.'} You will receive notifications regarding service
+                    statuses on your registered email.
                   </GoACallout>
                 ) : (
                   <div>
                     {error && error.length > 0 && (
-                      <GoACallout
-                        key={`${new Date().getTime()}-${error.length}`}
-                        type="emergency"
-                        title="Your signup attempt has failed"
-                      >
+                      <GoACallout key="error" type="emergency" title="Your signup attempt has failed">
                         {error[error.length - 1].message}
                       </GoACallout>
                     )}
