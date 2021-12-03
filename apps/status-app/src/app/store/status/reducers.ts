@@ -1,5 +1,5 @@
 import { ActionTypes } from './actions';
-import { NoticeInit, Notices, ServiceStatus, ApplicationInit } from './models';
+import { NoticeInit, Notices, ServiceStatus, ApplicationInit, SubscriberInit, SubscriberState } from './models';
 
 export const noticeReducer = (state: Notices = NoticeInit, action: ActionTypes): Notices => {
   switch (action.type) {
@@ -26,6 +26,21 @@ export const applicationReducer = (state: ServiceStatus = ApplicationInit, actio
       return {
         ...state,
         applications: applications,
+      };
+    }
+
+    default:
+      return state;
+  }
+}
+
+export const subscriptionReducer = (state: SubscriberState = SubscriberInit, action: ActionTypes): SubscriberState => {
+  switch (action.type) {
+    case 'status/subscribe/to/tenant/success': {
+      localStorage.setItem('subscriber', JSON.stringify(action.payload));
+      return {
+        ...state,
+        subscriber: action.payload,
       };
     }
 

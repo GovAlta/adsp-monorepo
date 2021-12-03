@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect, FormEvent } from 'react';
 import { GoAHeader, GoACallout } from '@abgov/react-components';
 
 import '@abgov/core-css/goa-core.css';
@@ -10,18 +10,24 @@ import { useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { useDispatch } from 'react-redux';
-import { fetchApplications } from '@store/status/actions';
+import { fetchApplications, subscribeToTenant, subscribeToTenantSuccess } from '@store/status/actions';
+import { clearNotification } from '@store/session/actions';
+import { toTenantName } from '@store/status/models';
 import { RootState } from '@store/index';
 import { PageLoader } from '@components/PageLoader';
 import { LocalTime } from '@components/Date';
 import { GoAPageLoader } from '@abgov/react-components';
 import moment from 'moment';
+import { GoAButton } from '@abgov/react-components';
+import { GoAForm, GoAFormItem, GoAInput, GoAFormActions } from '@abgov/react-components/experimental';
 
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 const ServiceStatusPage = (): JSX.Element => {
+  const [email, setEmail] = useState('');
+  const [formErrors, setFormErrors] = useState({});
   const { config } = useSelector((state: RootState) => ({
     config: state.config,
   }));
@@ -29,13 +35,12 @@ const ServiceStatusPage = (): JSX.Element => {
   const realm = location.pathname.slice(1) || config.platformTenantRealm;
   const dispatch = useDispatch();
 
-  const { applications } = useSelector((state: RootState) => ({
-    applications: state.application?.applications,
-  }));
-
-  const { tenantName, loaded } = useSelector((state: RootState) => ({
+  const { tenantName, loaded, subscriber, applications, error } = useSelector((state: RootState) => ({
     tenantName: state.session?.tenant?.name,
     loaded: state.session?.isLoadingReady,
+    subscriber: state.subscription.subscriber,
+    applications: state.application?.applications,
+    error: state.session?.notifications,
   }));
 
   const { allApplicationsNotices } = useSelector((state: RootState) => ({
@@ -45,6 +50,12 @@ const ServiceStatusPage = (): JSX.Element => {
   useEffect(() => {
     dispatch(fetchApplications(realm));
   }, [realm]);
+
+  useEffect(() => {
+    if (error && error.length > 0) {
+      dispatch(subscribeToTenantSuccess(null));
+    }
+  }, [error[error?.length - 1]]);
 
   const timeZone = new Date().toString().split('(')[1].split(')')[0];
 
@@ -108,6 +119,35 @@ const ServiceStatusPage = (): JSX.Element => {
     }
   };
 
+  function emailErrors() {
+    if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
+      return { email: 'You must enter a valid email' };
+    }
+  }
+
+  function formErrorsFunc() {
+    const validEmailSelectedConst = emailErrors();
+
+    return { ...validEmailSelectedConst };
+  }
+
+  const save = (e: FormEvent) => {
+    e.preventDefault();
+    const formErrorList = formErrorsFunc();
+    if (Object.keys(formErrorList).length === 0) {
+      dispatch(clearNotification());
+      const payload = { tenant: toTenantName(realm), email: email };
+      dispatch(subscribeToTenant(payload));
+      setFormErrors(formErrorList);
+    } else {
+      setFormErrors(formErrorList);
+    }
+  };
+
+  const setValue = (name: string, value: string) => {
+    setEmail(value);
+  };
+
   const AllApplicationsNotices = () => {
     return (
       <AllApplications>
@@ -151,6 +191,53 @@ const ServiceStatusPage = (): JSX.Element => {
             <SectionView />
           </section>
           <br />
+          {applications && (
+            <div className="small-container">
+              <div>
+                <h1>Sign up for notifications</h1>
+                <div>
+                  Sign up to receive notifications by email for current states of the individual services. Please
+                  contact <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a> for additional information or any other
+                  inquiries regarding service statuses.
+                </div>
+                {subscriber || JSON.parse(localStorage.getItem('subscriber')) ? (
+                  <GoACallout title="You have signed up for notifications" key="success" type="success">
+                    {subscriber && 'Thank you for signing up.'} You will receive notifications regarding service
+                    statuses on your registered email.
+                  </GoACallout>
+                ) : (
+                  <div>
+                    {error && error.length > 0 && (
+                      <GoACallout key="error" type="emergency" title="Your signup attempt has failed">
+                        {error[error.length - 1].message}
+                      </GoACallout>
+                    )}
+                    <GoAForm>
+                      <ErrorWrapper className={(formErrors?.['email'] || error?.length > 0) && 'error'}>
+                        <GoAFormItem>
+                          <label>Enter your email to receive updates</label>
+                          <GoAInput
+                            id="email"
+                            type="email"
+                            name="email"
+                            value={email}
+                            data-testid="email"
+                            onChange={setValue}
+                          />
+                        </GoAFormItem>
+                        <div className="error-msg">{formErrors?.['email']}</div>
+                      </ErrorWrapper>
+                    </GoAForm>
+                    <GoAFormActions alignment="left">
+                      <GoAButton buttonType="primary" data-testid="subscribe" onClick={save}>
+                        Submit
+                      </GoAButton>
+                    </GoAFormActions>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </ServiceStatusesCss>
       </main>
       <Footer>
@@ -214,6 +301,32 @@ const ServiceStatusesCss = styled.div`
 
 const AllApplications = styled.div`
   margin-right: 0.5rem;
+`;
+
+export const ErrorWrapper = styled.div`
+  .error-msg {
+    display: none;
+  }
+
+  &.error {
+    label {
+      color: var(--color-red);
+    }
+    input,
+    textarea {
+      border-color: var(--color-red);
+    }
+    .error-msg {
+      display: block;
+      color: var(--color-red);
+    }
+
+    .searchWrapper,
+    .react-date-picker__wrapper,
+    .react-time-picker__wrapper {
+      border-color: var(--color-red);
+    }
+  }
 `;
 
 export default ServiceStatusPage;
