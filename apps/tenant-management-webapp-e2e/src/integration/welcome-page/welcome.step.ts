@@ -1,4 +1,3 @@
-import { getGreeting } from '../../support/app.po';
 import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 
 import WelcomPage from './welcome.page';
@@ -15,17 +14,13 @@ When('the user goes to the tenant management welcome page', function () {
 });
 
 Then('the user views the tenant management welcome page title', function () {
-  getGreeting().then((h1) => {
-    expect(h1.length).to.be.gt(0); // h1 element exists
-  });
+  welcomPageObj.welcomePageTitle().should('have.text', 'The Alberta Digital Service Platform');
 });
 
 Given('the user is on the tenant management welcome page', function () {
   const urlToSkipSSO = Cypress.config().baseUrl + '?kc_idp_hint=';
   cy.visit(urlToSkipSSO);
-  getGreeting().then((h1) => {
-    expect(h1.length).to.be.gt(0); // h1 element exists
-  });
+  welcomPageObj.welcomePageTitle().should('have.text', 'The Alberta Digital Service Platform');
 });
 
 When('the user clicks the sign in button', function () {

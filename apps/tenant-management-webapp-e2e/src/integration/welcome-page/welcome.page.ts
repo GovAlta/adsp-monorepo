@@ -67,6 +67,10 @@ class WelcomePage {
   tenantCreationFailedErrorMessage() {
     return cy.xpath('//h1[contains(text(), "Tenant creation failed")]/following-sibling::p');
   }
+
+  welcomePageTitle() {
+    return cy.xpath('//*[@class="goa-hero"]/div/h1');
+  }
 }
 
 export default WelcomePage;
