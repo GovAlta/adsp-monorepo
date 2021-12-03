@@ -200,40 +200,40 @@ const ServiceStatusPage = (): JSX.Element => {
                   contact <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a> for additional information or any other
                   inquiries regarding service statuses.
                 </div>
-                {subscriber || JSON.parse(localStorage.getItem('subscriber')) ? (
+                <div>
+                  <GoAForm>
+                    <ErrorWrapper className={(formErrors?.['email'] || error?.length > 0) && 'error'}>
+                      <GoAFormItem>
+                        <label>Enter your email to receive updates</label>
+                        <GoAInput
+                          id="email"
+                          type="email"
+                          disabled={subscriber}
+                          name="email"
+                          value={email}
+                          data-testid="email"
+                          onChange={setValue}
+                        />
+                      </GoAFormItem>
+                      <div className="error-msg">{formErrors?.['email']}</div>
+                    </ErrorWrapper>
+                  </GoAForm>
+                  <GoAFormActions alignment="left">
+                    <GoAButton disabled={subscriber} buttonType="primary" data-testid="subscribe" onClick={save}>
+                      Submit
+                    </GoAButton>
+                  </GoAFormActions>
+                </div>
+                {subscriber && (
                   <GoACallout title="You have signed up for notifications" key="success" type="success">
-                    {subscriber && 'Thank you for signing up.'} You will receive notifications regarding service
-                    statuses on your registered email.
+                    Thank you for signing up. You will receive notifications regarding service
+                    statuses on {subscriber.addressAs}.
                   </GoACallout>
-                ) : (
-                  <div>
-                    {error && error.length > 0 && (
-                      <GoACallout key="error" type="emergency" title="Your signup attempt has failed">
-                        {error[error.length - 1].message}
-                      </GoACallout>
-                    )}
-                    <GoAForm>
-                      <ErrorWrapper className={(formErrors?.['email'] || error?.length > 0) && 'error'}>
-                        <GoAFormItem>
-                          <label>Enter your email to receive updates</label>
-                          <GoAInput
-                            id="email"
-                            type="email"
-                            name="email"
-                            value={email}
-                            data-testid="email"
-                            onChange={setValue}
-                          />
-                        </GoAFormItem>
-                        <div className="error-msg">{formErrors?.['email']}</div>
-                      </ErrorWrapper>
-                    </GoAForm>
-                    <GoAFormActions alignment="left">
-                      <GoAButton buttonType="primary" data-testid="subscribe" onClick={save}>
-                        Submit
-                      </GoAButton>
-                    </GoAFormActions>
-                  </div>
+                )}
+                {error && error.length > 0 && (
+                  <GoACallout key="error" type="emergency" title="Your signup attempt has failed">
+                    {error[error.length - 1].message}
+                  </GoACallout>
                 )}
               </div>
             </div>

@@ -45,7 +45,7 @@ export interface SubscriberChannel {
 export interface Subscriber {
   tenantId: string;
   id?: string;
-  channels: SubscriberChannel[];
+  channels?: SubscriberChannel[];
   userId?: string;
   addressAs: string;
 }
