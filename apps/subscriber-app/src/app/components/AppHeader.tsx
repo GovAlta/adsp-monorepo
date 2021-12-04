@@ -7,7 +7,7 @@ import { RootState } from '@store/index';
 // import MenuIcon from '@icons/menu-outline.svg';
 // import CloseIcon from '@icons/close-outline.svg';
 // import { ReactComponent as UserIcon } from '@icons/person-circle-outline.svg';
-import { TenantAdminLogin, TenantLogout } from '@store/tenant/actions';
+import { TenantLogout } from '@store/tenant/actions';
 import '@abgov/core-css/src/lib/styles/v2/colors.scss';
 
 interface HeaderMenuProps {
@@ -22,11 +22,6 @@ interface HeaderProps {
 const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
   const authenticated = useSelector((state: RootState) => state.session.authenticated);
   const dispatch = useDispatch();
-  const [menuState, setMenuState] = useState<MenuState>({ state: 'closed' });
-
-  function toggleMenu() {
-    setMenuState({ state: menuState.state === 'closed' ? 'open' : 'closed' });
-  }
 
   return (
     <Actions>
@@ -40,17 +35,6 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
                 Sign out
               </Link>
             </UserIconBox>
-          )}
-
-          {!authenticated && !props.admin && (
-            <Link
-              to={''}
-              onClick={() => {
-                dispatch(TenantAdminLogin());
-              }}
-            >
-              Sign In
-            </Link>
           )}
         </div>
       ) : null}
@@ -77,35 +61,6 @@ export default AppHeader;
 interface MenuState {
   state: 'open' | 'closed';
 }
-
-const SidebarController = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
-const SidebarWrapper = styled.div<MenuState>`
-  position: absolute;
-  top: 0;
-  right: ${(menu: MenuState) => (menu.state === 'open' ? '0' : '-15rem')};
-  transition: right 200ms;
-  min-height: 100vh;
-  z-index: 1;
-  background-color: var(--color-white);
-  box-shadow: -10px 0 8px ${(menu: MenuState) => (menu.state === 'open' ? '999px' : '-8px')} rgba(0, 0, 0, 0.1);
-  width: 14rem;
-  padding-top: 3rem;
-
-  .close {
-    position: absolute;
-    top: 0;
-    right: 0;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    margin-right: 1rem;
-    min-height: 66px;
-  }
-`;
 
 const UserIconBox = styled.div`
   display: flex;

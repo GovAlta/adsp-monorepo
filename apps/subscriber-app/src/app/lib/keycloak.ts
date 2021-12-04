@@ -5,8 +5,6 @@ export let keycloakAuth: KeycloakAuth = null;
 
 const LOGOUT_REDIRECT = '/logout-redirect';
 
-const LOGIN_REDIRECT = '/login-redirect';
-
 export const LOGIN_TYPES = {
   tenantAdmin: 'tenant-admin',
   tenantCreationInit: 'tenant-creation-init',
@@ -14,7 +12,8 @@ export const LOGIN_TYPES = {
 };
 
 export const createKeycloakAuth = (config: KeycloakConfig): void => {
-  keycloakAuth = new KeycloakAuth(config);
+  const loginRedirectUrl = `${window.location.origin}/subscriptions`;
+  keycloakAuth = new KeycloakAuth(config, loginRedirectUrl);
 };
 
 type checkSSOSuccess = (keycloak: KeycloakInstance) => void;
@@ -27,10 +26,10 @@ class KeycloakAuth {
   loginRedirect: string;
   logoutRedirect: string;
 
-  constructor(config: KeycloakConfig) {
+  constructor(config: KeycloakConfig, loginRedirectUrl?: string) {
     this.config = config;
     this.keycloak = this.initKeycloak();
-    this.loginRedirect = `${window.location.origin}${LOGIN_REDIRECT}`;
+    this.loginRedirect = loginRedirectUrl;
     this.logoutRedirect = `${window.location.origin}${LOGOUT_REDIRECT}`;
   }
 
@@ -133,7 +132,7 @@ class KeycloakAuth {
     const urlParams = new URLSearchParams(window.location.search);
     const idpFromUrl = urlParams.get('kc_idp_hint');
 
-    let redirectUri = `${this.loginRedirect}?realm=${realm}&type=${LOGIN_TYPES.tenant}`;
+    let redirectUri = `${this.loginRedirect}/${realm}`;
     console.debug(`Keycloak redirect URL: ${redirectUri}`);
 
     if (skipSSO && !idpFromUrl) {

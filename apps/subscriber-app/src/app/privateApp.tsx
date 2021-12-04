@@ -1,6 +1,6 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Route } from 'react-router-dom';
+import { Route, useParams } from 'react-router-dom';
 import Header from '@components/AppHeader';
 import { HeaderCtx } from '@lib/headerContext';
 import Container from '@components/Container';
@@ -8,26 +8,26 @@ import { RootState } from '@store/index';
 import { KeycloakCheckSSOWithLogout, KeycloakRefreshToken } from '@store/tenant/actions';
 import { GoAPageLoader } from '@abgov/react-components';
 import { NotificationBanner } from './notificationBanner';
+import { UpdateConfigRealm } from '@store/config/actions';
 
 interface privateAppProps {
   children: ReactNode;
 }
 export function PrivateApp({ children }: privateAppProps): JSX.Element {
-  const [title, setTitle] = useState<string>('');
+  const [title, setTitle] = useState<string>('Alberta Digital Service Platform - Subscription Management');
   const dispatch = useDispatch();
-  const urlParams = new URLSearchParams(window.location.search);
-  const realm = urlParams.get('realm') || localStorage.getItem('realm');
-
+  const realm = useParams()['realm'];
   useEffect(() => {
+    dispatch(UpdateConfigRealm(realm));
     setInterval(async () => {
-      dispatch(KeycloakRefreshToken());
+      dispatch(KeycloakRefreshToken(realm));
     }, 120 * 1000);
     dispatch(KeycloakCheckSSOWithLogout(realm));
   }, []);
 
   return (
     <HeaderCtx.Provider value={{ setTitle }}>
-      <Header serviceName={title} admin={true} />
+      <Header serviceName={title} />
       {/*
       NOTE: we might need to add the following function in the near feature
       */}
@@ -53,9 +53,8 @@ const PageLoader = (): JSX.Element => {
 // eslint-disable-next-line
 export function PrivateRoute({ component: Component, ...rest }): JSX.Element {
   const userInfo = useSelector((state: RootState) => state.session?.userInfo);
-  const tenantRealm = useSelector((state: RootState) => state.tenant?.realm);
-  const ready = userInfo !== undefined && tenantRealm === '';
 
+  const ready = userInfo !== undefined;
   return <Route {...rest} render={(props) => (ready ? <Component {...props} /> : <PageLoader />)} />;
 }
 

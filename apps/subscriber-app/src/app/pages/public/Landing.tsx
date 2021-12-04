@@ -24,9 +24,9 @@ const LandingPage = (): JSX.Element => {
 
   return (
     <>
-      <Header serviceName="" />
+      <Header serviceName="Subscriber app" />
       <Main>
-        <GoAHeroBanner title="" backgroundUrl={bannerBackground}>
+        {/* <GoAHeroBanner title="" backgroundUrl={bannerBackground}>
           <Container hs={1}>
             <BoldTitle>The Alberta Digital Service Platform</BoldTitle>
             <p>
@@ -38,7 +38,7 @@ const LandingPage = (): JSX.Element => {
               Get Started
             </GoALinkButton>
           </Container>
-        </GoAHeroBanner>
+        </GoAHeroBanner> */}
 
         <Section>
           <Container vs={3} hs={1}>
