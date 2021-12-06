@@ -5,3 +5,5 @@
  */
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(window as any).global = window;
