@@ -23,7 +23,6 @@ export function App(): JSX.Element {
 
   return (
     <>
-      {' '}
       {config.envLoaded && (
         <Router>
           <Switch>

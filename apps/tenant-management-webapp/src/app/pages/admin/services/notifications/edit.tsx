@@ -73,7 +73,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
         <GoAModalTitle>{isEdit ? 'Edit notification type' : 'Add a notification type'}</GoAModalTitle>
         <GoAModalContent>
           <GoAForm>
-            <GoAFormItem error={errors?.['name'] && 'error'}>
+            <GoAFormItem error={errors?.['name']}>
               <label>Name</label>
               <input
                 type="text"
@@ -83,7 +83,6 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 aria-label="name"
                 onChange={(e) => setType({ ...type, name: e.target.value })}
               />
-              <div className="error-msg">{errors?.['name']}</div>
             </GoAFormItem>
             <GoAFormItem>
               <label>Description</label>
