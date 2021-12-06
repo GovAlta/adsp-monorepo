@@ -135,7 +135,7 @@ Feature: File service
     Given a service owner user is on file services overview page
     When the user selects "File types" tab for "File services"
     Then the user views file types page
-    When the user selects file "autotest-type5" and click delete button
+    When the user clicks Delete button for file type "autotest-type5"
     Then the user views File type current in user modal for "autotest-type5"
     When the user clicks Okay button
     Then the File type current in "autotest-type5" user modal is closed
