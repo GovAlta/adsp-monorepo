@@ -13,8 +13,9 @@ export function* keycloakCheckSSO(action: KeycloakCheckSSOAction): SagaIterator 
     const state: RootState = yield select();
     const realm = action.payload;
 
+    const loginRedirectUrl = `${window.location.origin}/subscriptions`;
     const keycloakConfig = state.config.keycloakApi;
-    createKeycloakAuth({ ...keycloakConfig, realm });
+    createKeycloakAuth({ ...keycloakConfig, realm }, loginRedirectUrl);
     keycloakAuth.checkSSO(
       (keycloak) => {
         const session = convertToSession(keycloak);
@@ -36,8 +37,9 @@ export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAc
   try {
     const state: RootState = yield select();
     const realm = action.payload;
+    const loginRedirectUrl = `${window.location.origin}/subscriptions`;
     const keycloakConfig = state.config.keycloakApi;
-    createKeycloakAuth({ ...keycloakConfig, realm });
+    createKeycloakAuth({ ...keycloakConfig, realm }, loginRedirectUrl);
     console.debug('Checkout keycloak SSO');
     keycloakAuth.checkSSO(
       (keycloak) => {
@@ -56,8 +58,9 @@ export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAc
 export function* tenantLogin(action: TenantLoginAction): SagaIterator {
   try {
     const state: RootState = yield select();
+    const loginRedirectUrl = `${window.location.origin}/subscriptions`;
     const keycloakConfig = state.config.keycloakApi;
-    createKeycloakAuth(keycloakConfig);
+    createKeycloakAuth({ ...keycloakConfig }, loginRedirectUrl);
 
     keycloakAuth.loginByIdP('core', action.payload);
   } catch (e) {

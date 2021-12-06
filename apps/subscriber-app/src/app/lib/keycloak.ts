@@ -11,8 +11,7 @@ export const LOGIN_TYPES = {
   tenant: 'tenant',
 };
 
-export const createKeycloakAuth = (config: KeycloakConfig): void => {
-  const loginRedirectUrl = `${window.location.origin}/subscriptions`;
+export const createKeycloakAuth = (config: KeycloakConfig, loginRedirectUrl?: string): void => {
   keycloakAuth = new KeycloakAuth(config, loginRedirectUrl);
 };
 
