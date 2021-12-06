@@ -16,7 +16,7 @@ import { LocalTime } from '@components/Date';
 import { GoAPageLoader } from '@abgov/react-components';
 import moment from 'moment';
 import { GoAButton } from '@abgov/react-components';
-import { GoAForm, GoAFormItem, GoAInput, GoAFormActions } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem, GoAInputEmail, GoAFormActions } from '@abgov/react-components/experimental';
 
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
@@ -199,21 +199,17 @@ const ServiceStatusPage = (): JSX.Element => {
                 </div>
                 <div>
                   <GoAForm>
-                    <ErrorWrapper className={(formErrors?.['email'] || error?.length > 0) && 'error'}>
-                      <GoAFormItem>
-                        <label>Enter your email to receive updates</label>
-                        <GoAInput
-                          id="email"
-                          type="email"
-                          disabled={subscriber !== null}
-                          name="email"
-                          value={email}
-                          data-testid="email"
-                          onChange={setValue}
-                        />
-                      </GoAFormItem>
-                      <div className="error-msg">{formErrors?.['email']}</div>
-                    </ErrorWrapper>
+                    <GoAFormItem error={formErrors?.['email'] || error?.length > 0}>
+                      <label>Enter your email to receive updates</label>
+                      <GoAInputEmail
+                        id="email"
+                        disabled={subscriber !== null}
+                        name="email"
+                        value={email}
+                        data-testid="email"
+                        onChange={setValue}
+                      />
+                    </GoAFormItem>
                   </GoAForm>
                   <GoAFormActions alignment="left">
                     <GoAButton
@@ -290,6 +286,14 @@ const ServiceStatusesCss = styled.div`
     max-width: 43.75rem;
     padding: 1.25rem;
     margin: 0 auto;
+    div.goa-form input {
+      border: none;
+      margin: 0;
+      padding: 0;
+      :hover {
+        border: none;
+      }
+    }
   }
 
   .small-font {
@@ -309,32 +313,6 @@ const ServiceStatusesCss = styled.div`
 
 const AllApplications = styled.div`
   margin-right: 0.5rem;
-`;
-
-export const ErrorWrapper = styled.div`
-  .error-msg {
-    display: none;
-  }
-
-  &.error {
-    label {
-      color: var(--color-red);
-    }
-    input,
-    textarea {
-      border-color: var(--color-red);
-    }
-    .error-msg {
-      display: block;
-      color: var(--color-red);
-    }
-
-    .searchWrapper,
-    .react-date-picker__wrapper,
-    .react-time-picker__wrapper {
-      border-color: var(--color-red);
-    }
-  }
 `;
 
 export default ServiceStatusPage;

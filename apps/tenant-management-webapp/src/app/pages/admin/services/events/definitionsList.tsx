@@ -75,13 +75,13 @@ const EventDefinitionsListComponent: FunctionComponent<EventDefinitionsListCompo
   const orderedGroupNames = Object.keys(groupedDefinitions).sort((prev, next): number => {
     // Each group must have at least one element
     if (groupedDefinitions[prev][0].isCore > groupedDefinitions[next][0].isCore) {
-      return 1
+      return 1;
     }
     if (prev > next) {
-      return 1
+      return 1;
     }
-    return -1
-  })
+    return -1;
+  });
 
   return (
     <div className={className}>
@@ -91,26 +91,30 @@ const EventDefinitionsListComponent: FunctionComponent<EventDefinitionsListCompo
           <DataTable data-testid="events-definitions-table">
             <thead data-testid="events-definitions-table-header">
               <tr>
-                <th id="name" data-testid="events-definitions-table-header-name">Name</th>
+                <th id="name" data-testid="events-definitions-table-header-name">
+                  Name
+                </th>
                 <th id="description">Description</th>
-                <th id="actions"></th>
+                <th id="actions">Action</th>
               </tr>
             </thead>
             <tbody>
-              {groupedDefinitions[group].sort((prev, next): number => {
-                // in each group sort by alphabetic order
-                if (prev.name > next.name) {
-                  return 1
-                }
-                return -1
-              }).map((definition) => (
-                <EventDefinitionComponent
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  key={`${definition.namespace}:${definition.name}:${Math.random()}`}
-                  definition={definition}
-                />
-              ))}
+              {groupedDefinitions[group]
+                .sort((prev, next): number => {
+                  // in each group sort by alphabetic order
+                  if (prev.name > next.name) {
+                    return 1;
+                  }
+                  return -1;
+                })
+                .map((definition) => (
+                  <EventDefinitionComponent
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    key={`${definition.namespace}:${definition.name}:${Math.random()}`}
+                    definition={definition}
+                  />
+                ))}
             </tbody>
           </DataTable>
         </div>

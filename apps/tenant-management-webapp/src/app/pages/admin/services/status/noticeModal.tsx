@@ -151,7 +151,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
       <GoAModalContent>
         <NoticeFormStyle>
           <GoAForm data-testid="notice-form">
-            <GoAFormItem error={errors?.['message'] && 'error'}>
+            <GoAFormItem error={errors?.['message']}>
               <label>Description</label>
               <textarea
                 data-testid="notice-form-description"
@@ -160,7 +160,6 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
                 onChange={setValue}
                 maxLength={280}
               />
-              <div className="error-msg">{errors?.['message']}</div>
             </GoAFormItem>
 
             <div>
