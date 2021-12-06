@@ -2,7 +2,6 @@ export interface TenantApi {
   host: string;
   endpoints: {
     spaceAdmin: string;
-    createTenant: string;
     tenantNameByRealm: string;
     tenantByName: string;
     tenantByEmail: string;
@@ -16,14 +15,6 @@ export interface KeycloakApi {
   clientId: string;
   checkLoginIframe?: boolean;
   flow?: string;
-}
-export interface FileApi {
-  host: string;
-  endpoints: {
-    spaceAdmin: string;
-    fileTypeAdmin: string;
-    fileAdmin: string;
-  };
 }
 export interface ServiceUrls {
   eventServiceApiUrl: string;
@@ -45,7 +36,6 @@ export interface ConfigState {
   keycloakApi?: KeycloakApi;
   tenantApi?: TenantApi;
   serviceUrls?: ServiceUrls;
-  fileApi?: FileApi;
 }
 
 export const CONFIG_INIT: ConfigState = {};
