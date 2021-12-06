@@ -624,3 +624,26 @@ When('the user removes the file type of {string}, {string}, {string}', function 
 Then('the user views an error message for duplicated file name', function () {
   fileServiceObj.fileTypesErrorMessage().invoke('text').should('contain', 'status code 400');
 });
+
+When('the user selects file {string} and click delete button', function (filename) {
+  fileServiceObj.fileTypeTableBody().contains('tr', filename).first().find('.right').click();
+  cy.wait(1000);
+});
+
+Then('the user views File type current in user modal for {string}', function (filename) {
+  fileServiceObj.fileTypeModalTitle().invoke('text').should('eq', 'File type current in use');
+  fileServiceObj
+    .fileTypeModalContent()
+    .invoke('text')
+    .should(
+      'contain',
+      'You are unable to delete the file type ' + filename + ' because there are files within the file type.'
+    );
+});
+When('the user clicks Okay button', function () {
+  fileServiceObj.fileTypeModalOkayBtn().contains('Okay').click();
+  cy.wait(1000);
+});
+Then('the File type current in {string} user modal is closed', function (filename) {
+  fileServiceObj.fileTypeTableBody().contains('tr', filename);
+});

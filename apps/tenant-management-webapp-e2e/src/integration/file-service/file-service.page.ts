@@ -112,4 +112,14 @@ class FileServicePage {
   }
 }
 
+  fileTypeModalTitle() {
+  return cy.xpath('//div[@class="modal-root" and @data-state="visible"]/div[@class="modal"]/div[@class="modal-container"]/div[@class="modal-title"]');
+}
+ fileTypeModalContent() {
+  return cy.get('[data-testid="file-delete-modal-content"]');
+}
+ fileTypeModalOkayBtn() {
+  return cy.get('[data-testid="delete-modal-okay-button"]');
+}
+
 export default FileServicePage;
