@@ -67,8 +67,7 @@ export function* subscribeToTenant(action: SubscribeToTenantAction): SagaIterato
     yield put(subscribeToTenantSuccess(subscribeResponse));
   } catch (e) {
     console.error(e.message);
-    if (JSON.parse(e.message).codeName === 'DuplicateKey' && JSON.parse(e.message).keyValue.userId) {
-      const email = JSON.parse(e.message).keyValue.userId
+    if (JSON.parse(e.message).codeName === 'DuplicateKey') {
       yield put(subscribeToTenantSuccess({ addressAs: email, tenantId: `urn:ads:platform:tenant-service:v2:/tenants/${tenant}`}));
     } else {
       yield put(addErrorMessage({ message: e.message }));
