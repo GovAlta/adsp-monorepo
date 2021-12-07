@@ -208,6 +208,7 @@ const ServiceStatusPage = (): JSX.Element => {
                         value={email}
                         data-testid="email"
                         onChange={setValue}
+                        aria-label="email"
                       />
                     </GoAFormItem>
                   </GoAForm>

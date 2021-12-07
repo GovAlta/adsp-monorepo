@@ -171,6 +171,20 @@ function Status(): JSX.Element {
             </ol>
           </Tab>
         </Tabs>
+        <Switch>
+          <Route path="/admin/services/status/new">
+            <ApplicationFormModal isOpen={true} />
+          </Route>
+          <Route path="/admin/services/status/notice/new">
+            <NoticeModal isOpen={true} title="Add a draft notice" />
+          </Route>
+          <Route path="/admin/services/status/notice/:noticeId">
+            <NoticeModal isOpen={true} title="Edit draft notice" />
+          </Route>
+          <Route path="/admin/services/status/:applicationId/edit">
+            <ApplicationFormModal isOpen={true} />
+          </Route>
+        </Switch>
       </Main>
 
       <Aside>
@@ -201,21 +215,6 @@ function Status(): JSX.Element {
           afterShow={() => _afterShow(publicStatusUrl)}
         />
       </Aside>
-
-      <Switch>
-        <Route path="/admin/services/status/new">
-          <ApplicationFormModal isOpen={true} />
-        </Route>
-        <Route path="/admin/services/status/notice/new">
-          <NoticeModal isOpen={true} title="Add a draft notice" />
-        </Route>
-        <Route path="/admin/services/status/notice/:noticeId">
-          <NoticeModal isOpen={true} title="Edit draft notice" />
-        </Route>
-        <Route path="/admin/services/status/:applicationId/edit">
-          <ApplicationFormModal isOpen={true} />
-        </Route>
-      </Switch>
     </Page>
   );
 }
