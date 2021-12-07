@@ -124,7 +124,7 @@ Feature: File service
     When the user adds a file type of "autotest-type6", "auto-test-role1", "auto-test-role2"
     Then the user views an error message for duplicated file name
 
-  @FileTypes @accessibility @regression
+  @FileTypes @accessibility @regression @ignore
   Scenario: As a service owner, I can manage file types without any critical or serious accessibility issues
     Given a service owner user is on file services overview page
     When the user selects "File types" tab for "File services"
@@ -135,7 +135,7 @@ Feature: File service
     Given a service owner user is on file services overview page
     When the user selects "File types" tab for "File services"
     Then the user views file types page
-    When the user clicks Delete button for file type "autotest-type5"
-    Then the user views File type current in user modal for "autotest-type5"
+    When the user clicks Delete button for file type "autotest-type5", "Anonymous", "file-service-admin"
+    Then the user views file type current in user modal for "autotest-type5"
     When the user clicks Okay button
-    Then the File type current in "autotest-type5" user modal is closed
+    Then the user views the file type "autotest-type5"

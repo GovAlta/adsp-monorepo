@@ -625,15 +625,17 @@ Then('the user views an error message for duplicated file name', function () {
   fileServiceObj.fileTypesErrorMessage().invoke('text').should('contain', 'status code 400');
 });
 
-When('the user clicks Delete button for file type {string}', function (fileTypeName) {
-  fileServiceObj.fileTypeTableBody().contains('tr', fileTypeName).first().find('.right').click();
-  cy.wait(1000);
+When('the user clicks Delete button for file type {string}, {string}, {string}', function (name, readRole, updateRole) {
+  findFileType(name, readRole, updateRole).then((rowNumber) => {
+    fileServiceObj.fileTypeDeleteButton(rowNumber).click();
+    cy.wait(1000);
+  });
 });
 
-Then('the user views File type current in user modal for {string}', function (fileTypeName) {
-  fileServiceObj.fileTypeDeleteModalContent().invoke('text').should('eq', 'File type current in use');
+Then('the user views file type current in user modal for {string}', function (fileTypeName) {
+  fileServiceObj.fileTypeModalTitle().invoke('text').should('eq', 'File type current in use');
   fileServiceObj
-    .fileTypeModalContent()
+    .fileTypeDeleteModalContent()
     .invoke('text')
     .should(
       'contain',
@@ -646,6 +648,6 @@ When('the user clicks Okay button', function () {
   cy.wait(1000);
 });
 
-Then('the File type current in {string} user modal is closed', function (fileTypeName) {
+Then('the user views the file type {string}', function (fileTypeName) {
   fileServiceObj.fileTypeTableBody().contains('tr', fileTypeName);
 });

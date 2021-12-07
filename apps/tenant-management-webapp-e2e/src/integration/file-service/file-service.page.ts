@@ -111,13 +111,13 @@ class FileServicePage {
     return cy.get('[data-testid="FileType-0"]');
   }
 
-  fileTypeDeleteModalContent() {
+  fileTypeModalTitle() {
     return cy.xpath(
       '//div[@class="modal-root" and @data-state="visible"]/div[@class="modal"]/div[@class="modal-container"]/div[@class="modal-title"]'
     );
   }
 
-  fileTypeModalContent() {
+  fileTypeDeleteModalContent() {
     return cy.get('[data-testid="file-delete-modal-content"]');
   }
 
