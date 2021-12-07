@@ -482,3 +482,21 @@ components:
                       type: number
                     next:
                       type: string
+# /subscription/v1/subscribers/my-subscriber:
+#   parameters:
+#     name: includeSubscriptions
+#     description: Indicator whether to include user current subscriptions or not
+#     in: query
+#     required: false
+#     schema:
+#       type: boolean
+#   get:
+#     tags: subscription
+#     description: Retrievers user subscriber information along with current subscriptions if needed
+#     responses:
+#     200:
+#       description: User subscriber and subscriptions information retrieved successfully
+#       content:
+#         application/json:
+#           schema:
+#             $ref:
