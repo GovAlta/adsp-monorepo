@@ -1,34 +1,73 @@
-import { useEffect } from 'react';
+import './app.css';
 
-import '@abgov/core-css/goa-core.css';
-import '@abgov/core-css/goa-components.css';
-import '@abgov/core-css/src/lib/stories/page-template/page-template.story.scss';
+import React, { useEffect } from 'react';
+import { Route, BrowserRouter as Router, Switch, Redirect } from 'react-router-dom';
+import { Provider, useDispatch, useSelector } from 'react-redux';
 
-import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
-import SubscriberPage from './pages/subscriber';
+import LandingPage from '@pages/public/Landing';
+import Login from '@pages/public/Login';
+import LogoutRedirect from '@pages/public/LogoutRedirect';
+import { store, RootState } from '@store/index';
+import { PrivateApp, PrivateRoute } from './privateApp';
+import { fetchConfig } from '@store/config/actions';
+import AuthContext from '@lib/authContext';
 
-import { fetchConfig } from './store/config/actions';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState} from '@store/index'
+import { ThemeProvider } from 'styled-components';
+import { theme } from 'theme';
+import PublicApp from './publicApp';
 
-export function App(): JSX.Element {
-  const dispatch = useDispatch();
-
-  const { config } = useSelector((state: RootState) => ({
-    config: state.config,
-  }));
-  useEffect(() => {
-    dispatch(fetchConfig());
-  }, []);
+const AppRouters = () => {
   return (
     <Router>
       <Switch>
-        <Route exact path="/">
-          <SubscriberPage />
+        <Route exact path="/" render={() => <Redirect to="/overview" />} />
+        <Route path="/overview">
+          <LandingPage />
         </Route>
+
+        <Route path="/subscriptions/:realm">
+          <PrivateApp>
+            <PrivateRoute path="/subscriptions/:realm" component={(props: any) => <div>yolo</div>} />
+          </PrivateApp>
+        </Route>
+
+        <PublicApp>
+          <Route path="/:realm/autologin">
+            <Login />
+          </Route>
+
+          <Route exact path="/logout-redirect">
+            <LogoutRedirect />
+          </Route>
+        </PublicApp>
       </Switch>
     </Router>
   );
+};
+
+export const App = (): JSX.Element => {
+  return (
+    <div style={{ overflowX: 'hidden', minHeight: '100vh' }}>
+      <ThemeProvider theme={theme}>
+        <Provider store={store}>
+          <AppWithAuthContext />
+        </Provider>
+      </ThemeProvider>
+    </div>
+  );
+};
+
+function AppWithAuthContext() {
+  const keycloakConfig = useSelector((state: RootState) => state.config.keycloakApi);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    // Fetch config
+    if (!keycloakConfig) {
+      dispatch(fetchConfig());
+    }
+  }, [dispatch, keycloakConfig]);
+
+  return <AuthContext.Provider value={{}}>{keycloakConfig && <AppRouters />}</AuthContext.Provider>;
 }
 
 export default App;
