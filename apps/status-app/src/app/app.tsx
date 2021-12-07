@@ -22,7 +22,7 @@ export function App(): JSX.Element {
   }, []);
 
   return (
-    <>
+    <div>
       {config.envLoaded && (
         <Router>
           <Switch>
@@ -35,7 +35,7 @@ export function App(): JSX.Element {
           </Switch>
         </Router>
       )}
-    </>
+    </div>
   );
 }
 

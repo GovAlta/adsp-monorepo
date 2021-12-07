@@ -76,6 +76,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               name="description"
               data-testid="form-description"
               value={definition.description}
+              aria-label="description"
               onChange={(e) => setDefinition({ ...definition, description: e.target.value })}
             />
           </GoAFormItem>

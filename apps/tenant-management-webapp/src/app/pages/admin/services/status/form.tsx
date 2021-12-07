@@ -9,7 +9,6 @@ import {
   GoAForm,
   GoAFormItem,
   GoAInput,
-  GoATextArea,
   GoAModal,
   GoAModalActions,
   GoAModalContent,
@@ -92,10 +91,10 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen }: Props) => {
 
           <GoAFormItem>
             <label>Description</label>
-            <GoATextArea
+            <textarea
               name="description"
               value={application?.description}
-              onChange={setValue}
+              onChange={(e) => setValue}
               aria-label="description"
             />
           </GoAFormItem>
