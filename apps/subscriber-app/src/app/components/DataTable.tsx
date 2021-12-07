@@ -34,17 +34,19 @@ const Table = styled.table`
     border-top: 1px solid var(--color-row-border);
   }
 
-  tr.selected {
-    background-color: var(--color-row--selected);
-  }
-
   th {
-    border-bottom: 2px solid var(--color-header-border);
     color: var(--color-th);
     font-size: var(--fs-base);
     font-weight: var(--fw-bold);
     padding: 0.5rem;
     text-align: left;
     white-space: nowrap;
+  }
+  tr > th {
+    padding-bottom: 2rem;
+  }
+  tr > td {
+    padding-bottom: 1rem;
+    padding-top: 1rem;
   }
 `;
