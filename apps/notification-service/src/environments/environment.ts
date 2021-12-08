@@ -10,7 +10,7 @@ export const environment = envalid.cleanEnv(
     KEYCLOAK_ROOT_URL: envalid.str({ default: 'https://access-dev.os99.gov.ab.ca' }),
     DIRECTORY_URL: envalid.str({ default: 'https://tenant-management-api-core-services-dev.os99.gov.ab.ca' }),
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:notification-service' }),
-    CLIENT_SECRET: envalid.str({ default: '706b336d-9e8f-41d1-bb41-61f0459dbe96' }),
+    CLIENT_SECRET: envalid.str(),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     MONGO_URI: envalid.str({ default: 'mongodb://localhost:27017' }),
     MONGO_DB: envalid.str({ default: 'notification' }),

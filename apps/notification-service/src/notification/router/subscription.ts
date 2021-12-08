@@ -430,13 +430,45 @@ export function getSubscriberSubscriptions(apiId: AdspId, repository: Subscripti
     }
   };
 }
+
 export function getMySubscriberDetails(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
   return async (req, res, next) => {
-    const user = req.user;
-    const tenantId = req.tenant?.id;
-    const subscriber = mapSubscriber(apiId, req[SUBSCRIBER_KEY]);
-    subscriber['subscriptions'] = [];
-    res.send(subscriber);
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+      const subscriberDetails = mapSubscriber(apiId, req[SUBSCRIBER_KEY]) as SubscriberEntity;
+      const { includeSubscriptions } = req.query;
+
+      const result = await repository.getSubscriptions(tenantId, 0, undefined, {
+        subscriberIdEquals: subscriberDetails.id,
+      });
+
+      let subscriberSubscriptions = [];
+      if (includeSubscriptions && includeSubscriptions === 'true') {
+        const [configuration, options] = await req.getConfiguration<
+          NotificationConfiguration,
+          NotificationConfiguration
+        >();
+        subscriberSubscriptions = result.results.map((r) => {
+          const { subscriber: _subscriber, ...subscription } = mapSubscription(apiId, r);
+          const typeEntity = configuration?.getNotificationType(r.typeId) || options?.getNotificationType(r.typeId);
+
+          return {
+            ...subscription,
+            type: typeEntity ? mapType(typeEntity, true) : null,
+            canUnsubscribe: typeEntity.canSubscribe(user, subscriberDetails),
+          };
+        });
+        return res.send({
+          ...subscriberDetails,
+          subscriptions: subscriberSubscriptions,
+        });
+      }
+
+      res.send(subscriberDetails);
+    } catch (err) {
+      next(err);
+    }
   };
 }
 
