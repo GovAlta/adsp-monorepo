@@ -439,12 +439,11 @@ export function getMySubscriberDetails(apiId: AdspId, repository: SubscriptionRe
       const subscriberDetails = mapSubscriber(apiId, req[SUBSCRIBER_KEY]) as SubscriberEntity;
       const { includeSubscriptions } = req.query;
 
-      const result = await repository.getSubscriptions(tenantId, 0, undefined, {
-        subscriberIdEquals: subscriberDetails.id,
-      });
-
-      let subscriberSubscriptions = [];
       if (includeSubscriptions && includeSubscriptions === 'true') {
+        let subscriberSubscriptions = [];
+        const result = await repository.getSubscriptions(tenantId, 0, undefined, {
+          subscriberIdEquals: subscriberDetails.id,
+        });
         const [configuration, options] = await req.getConfiguration<
           NotificationConfiguration,
           NotificationConfiguration
