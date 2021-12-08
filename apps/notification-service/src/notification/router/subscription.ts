@@ -134,7 +134,7 @@ export function createTypeSubscription(apiId: AdspId, repository: SubscriptionRe
 }
 
 export function addTypeSubscription(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
-  return async (req, res, next) => {
+  return async (req, res) => {
     try {
       let tenantId;
       const user = req.user;

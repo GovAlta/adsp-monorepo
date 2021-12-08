@@ -191,7 +191,7 @@ const ServiceStatusPage = (): JSX.Element => {
           {applications && (
             <div className="small-container">
               <div>
-                <h1>Sign up for notifications</h1>
+                <h2>Sign up for notifications</h2>
                 <div>
                   Sign up to receive notifications by email for status change of the individual services and notices.
                   Please contact <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a> for additional information or any
