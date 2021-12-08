@@ -47,7 +47,7 @@ export function* fetchApplications(action: FetchApplicationsAction): SagaIterato
 
 export function* subscribeToTenant(action: SubscribeToTenantAction): SagaIterator {
   const rootState: RootState = yield select();
-  const { email, tenant } = action.payload;
+  const { email, tenant, type } = action.payload;
 
   const baseUrl = rootState.config.keycloakUrl;
   const clientSecret = rootState.config.clientSecret;
@@ -62,7 +62,7 @@ export function* subscribeToTenant(action: SubscribeToTenantAction): SagaIterato
 
     subscriberApi.setToken(token.access_token);
 
-    const subscribeResponse = yield call([subscriberApi, subscriberApi.subscribe], tenant, email);
+    const subscribeResponse = yield call([subscriberApi, subscriberApi.subscribe], tenant, email, type);
 
     yield put(subscribeToTenantSuccess(subscribeResponse));
   } catch (e) {

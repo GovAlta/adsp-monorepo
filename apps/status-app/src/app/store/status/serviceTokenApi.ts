@@ -32,7 +32,7 @@ export class ServiceTokenApi {
     return res.data;
   }
 
-  async subscribe(tenant: string, email: string): Promise<ServiceStatusApplication[]> {
+  async subscribe(tenant: string, email: string, type: string): Promise<ServiceStatusApplication[]> {
     const res = await this.http
       .post(
         `${this.baseUrl}/subscription/v1/subscribers`,
@@ -45,6 +45,18 @@ export class ServiceTokenApi {
         throw new Error(error?.response?.data?.error);
       });
 
-    return res.data;
+    const res2 = await this.http
+      .post(
+        `${this.baseUrl}/subscription/v1/types/${type}/subscriptions/${res.data?.id}`,
+        { tenant: tenant },
+        {
+          headers: { Authorization: `Bearer ${this.token}`, 'Content-Type': 'application/json' },
+        }
+      )
+      .catch(function (error) {
+        throw new Error(error?.response?.data?.error);
+      });
+
+    return res2.data;
   }
 }

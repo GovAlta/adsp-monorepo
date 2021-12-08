@@ -133,7 +133,7 @@ const ServiceStatusPage = (): JSX.Element => {
     const formErrorList = formErrorsFunc();
     if (Object.keys(formErrorList).length === 0) {
       dispatch(clearNotification());
-      const payload = { tenant: toTenantName(realm), email: email };
+      const payload = { tenant: toTenantName(realm), email: email, type: 'status-application-status-change' };
       dispatch(subscribeToTenant(payload));
       setFormErrors(formErrorList);
     } else {
@@ -191,11 +191,11 @@ const ServiceStatusPage = (): JSX.Element => {
           {applications && (
             <div className="small-container">
               <div>
-                <h1>Sign up for notifications</h1>
+                <h2>Sign up for notifications</h2>
                 <div>
-                  Sign up to receive notifications by email for current states of the individual services. Please
-                  contact <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a> for additional information or any other
-                  inquiries regarding service statuses.
+                  Sign up to receive notifications by email for status change of the individual services and notices.
+                  Please contact <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a> for additional information or any
+                  other inquiries regarding service statuses.
                 </div>
                 <div>
                   <GoAForm>
