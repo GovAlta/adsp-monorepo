@@ -287,14 +287,13 @@ const ServiceStatusesCss = styled.div`
     max-width: 43.75rem;
     padding: 1.25rem;
     margin: 0 auto;
+    div.goa-form div {
+      padding: 0;
+      outline: none;
+    }
     div.goa-form input {
       border: none;
       margin: 0;
-      padding: 0;
-      :hover {
-        border: none;
-        outline: none;
-      }
     }
   }
 
