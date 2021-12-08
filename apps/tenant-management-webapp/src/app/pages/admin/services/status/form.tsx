@@ -94,7 +94,7 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen }: Props) => {
             <textarea
               name="description"
               value={application?.description}
-              onChange={(e) => setValue}
+              onChange={(e) => setValue('description', e.target.value)}
               aria-label="description"
             />
           </GoAFormItem>
