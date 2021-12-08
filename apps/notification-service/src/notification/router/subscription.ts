@@ -48,7 +48,11 @@ export const getNotificationType: RequestHandler = async (req, _res, next) => {
   try {
     const { type } = req.params;
     const [configuration, options] = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
-    const typeEntity = configuration?.getNotificationType(type) || options?.getNotificationType(type);
+
+    const typeEntity =
+      (Object.keys(configuration).length > 0 && configuration?.getNotificationType(type)) ||
+      options?.getNotificationType(type);
+
     if (!typeEntity) {
       throw new NotFoundError('Notification Type', type);
     }
@@ -132,8 +136,22 @@ export function createTypeSubscription(apiId: AdspId, repository: SubscriptionRe
 export function addTypeSubscription(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
   return async (req, res, next) => {
     try {
-      const tenantId = req.tenant.id;
+      let tenantId;
       const user = req.user;
+
+      if (req.tenant?.id) {
+        tenantId = req.tenant?.id;
+      } else {
+        const response = await axios.post(
+          `${environment.DIRECTORY_URL}/api/tenant/v1/name`,
+          { name: req.body.tenant },
+          {
+            headers: { Authorization: `Bearer ${user.token.bearer}` },
+          }
+        );
+        tenantId = `urn:ads:platform:tenant-service:v2:/tenants/${response.data.id}`;
+      }
+
       const type: NotificationTypeEntity = req[TYPE_KEY];
       const { subscriber } = req.params;
 
@@ -145,7 +163,7 @@ export function addTypeSubscription(apiId: AdspId, repository: SubscriptionRepos
       const subscription = await type.subscribe(repository, user, subscriberEntity);
       res.send(mapSubscription(apiId, subscription));
     } catch (err) {
-      next(err);
+      res.status(400).json({ error: JSON.stringify(err) });
     }
   };
 }

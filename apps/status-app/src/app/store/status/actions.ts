@@ -25,7 +25,7 @@ export interface FetchApplicationsAction {
 
 export interface SubscribeToTenantAction {
   type: typeof SUBSCRIBE_TO_TENANT;
-  payload: { tenant: string; email: string };
+  payload: { tenant: string; email: string, type: string };
 }
 
 export interface FetchApplicationsSuccessAction {
@@ -48,7 +48,7 @@ export const fetchNotices = (realm: string): FetchNoticesAction => ({
   payload: realm,
 });
 
-export const subscribeToTenant = (payload: { tenant: string; email: string }): SubscribeToTenantAction => ({
+export const subscribeToTenant = (payload: { tenant: string; email: string, type: string }): SubscribeToTenantAction => ({
   type: 'status/subscribe/to/tenant',
   payload: payload,
 });
