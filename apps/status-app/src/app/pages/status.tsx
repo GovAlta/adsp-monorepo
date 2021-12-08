@@ -293,6 +293,7 @@ const ServiceStatusesCss = styled.div`
       padding: 0;
       :hover {
         border: none;
+        outline: none;
       }
     }
   }
