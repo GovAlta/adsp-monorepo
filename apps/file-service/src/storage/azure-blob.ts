@@ -1,4 +1,5 @@
 import { BlobServiceClient, ContainerClient, StorageSharedKeyCredential } from '@azure/storage-blob';
+import * as hasha from 'hasha';
 import { Readable } from 'stream';
 import { Logger } from 'winston';
 import { FileEntity, FileStorageProvider } from '../file';
@@ -47,11 +48,10 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
         tags: {
           tenant: entity.tenantId.resource,
           fileId: entity.id,
-          // typeId: entity.type.id,
-          // filename: entity.filename,
-          // recordId: entity.recordId,
-          // createdById: entity.createdBy.id,
-          // createdByName: entity.createdBy.name,
+          typeId: entity.type.id,
+          filename: hasha(entity.filename, { algorithm: 'sha1', encoding: 'base64' }),
+          recordId: hasha(entity.recordId, { algorithm: 'sha1', encoding: 'base64' }),
+          createdById: entity.createdBy.id,
         },
       });
 
