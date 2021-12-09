@@ -45,13 +45,13 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
       const blobClient = containerClient.getBlockBlobClient(entity.id);
       const { requestId } = await blobClient.uploadStream(content, BUFFER_SIZE, MAX_BUFFERS, {
         tags: {
-          tenant: entity.tenantId.toString(),
-          typeId: entity.type.id,
+          tenant: entity.tenantId.resource,
           fileId: entity.id,
-          filename: entity.filename,
-          recordId: entity.recordId,
-          createdById: entity.createdBy.id,
-          createdByName: entity.createdBy.name,
+          // typeId: entity.type.id,
+          // filename: entity.filename,
+          // recordId: entity.recordId,
+          // createdById: entity.createdBy.id,
+          // createdByName: entity.createdBy.name,
         },
       });
 
