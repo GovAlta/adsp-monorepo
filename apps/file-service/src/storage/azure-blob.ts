@@ -9,8 +9,12 @@ interface AzureBlobStorageProviderProps {
   BLOB_ACCOUNT_URL: string;
 }
 
+const BUFFER_SIZE = 4 * 1024 * 1024;
+const MAX_BUFFERS = 20;
+
 export class AzureBlobStorageProvider implements FileStorageProvider {
   private blobServiceClient: BlobServiceClient;
+
   constructor(
     private logger: Logger,
     { BLOB_ACCOUNT_URL, BLOB_ACCOUNT_NAME, BLOB_ACCOUNT_KEY }: AzureBlobStorageProviderProps
@@ -39,7 +43,7 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
     try {
       const containerClient = await this.getContainerClient(entity);
       const blobClient = containerClient.getBlockBlobClient(entity.id);
-      const { requestId } = await blobClient.uploadStream(content, null, null, {
+      const { requestId } = await blobClient.uploadStream(content, BUFFER_SIZE, MAX_BUFFERS, {
         tags: {
           tenant: entity.tenantId.toString(),
           typeId: entity.type.id,
