@@ -27,7 +27,7 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
 
       return new Readable().wrap(result.readableStreamBody);
     } catch (err) {
-      this.logger.error(`Error in read file ${entity.filename} (ID: ${entity.id}) blob ${entity.id}.`, {
+      this.logger.error(`Error in read file ${entity.filename} (ID: ${entity.id}) blob ${entity.id}. ${err}`, {
         tenant: entity.tenantId?.toString(),
         context: 'AzureBlobStorageProvider',
       });
@@ -64,7 +64,7 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
 
       return true;
     } catch (err) {
-      this.logger.error(`Error in file upload ${entity.filename} (ID: ${entity.id}) as blob ${entity.id}.`, {
+      this.logger.error(`Error in file upload ${entity.filename} (ID: ${entity.id}) as blob ${entity.id}. ${err}`, {
         tenant: entity.tenantId?.toString(),
         context: 'AzureBlobStorageProvider',
       });
@@ -80,7 +80,7 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
 
       return true;
     } catch (err) {
-      this.logger.error(`Error in delete file ${entity.filename} (ID: ${entity.id}) blob ${entity.id}.`, {
+      this.logger.error(`Error in delete file ${entity.filename} (ID: ${entity.id}) blob ${entity.id}. ${err}`, {
         tenant: entity.tenantId?.toString(),
         context: 'AzureBlobStorageProvider',
       });
