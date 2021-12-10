@@ -519,12 +519,12 @@ components:
 
 /subscription/v1/subscribers/my-subscriber:
   parameters:
-    name: includeSubscriptions
-    description: Indicator whether to include user current subscriptions or not
-    in: query
-    required: false
-    schema:
-      type: boolean
+    - name: includeSubscriptions
+      description: Indicator whether to include user current subscriptions or not
+      in: query
+      required: false
+      schema:
+        type: boolean
   get:
     tags:
       - Subscription
