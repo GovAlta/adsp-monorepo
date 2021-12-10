@@ -1,5 +1,6 @@
 import { RequestHandler, Router } from 'express';
 import { Logger } from 'winston';
+import axios from 'axios';
 import { adspId, AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { SubscriptionRepository } from '../repository';
@@ -7,6 +8,7 @@ import { NotificationTypeEntity, SubscriberEntity } from '../model';
 import { mapSubscriber, mapSubscription, mapType } from './mappers';
 import { NotificationConfiguration } from '../configuration';
 import { Channel, ServiceUserRoles, Subscriber } from '../types';
+import { environment } from '../../environments/environment';
 import {
   SubscriberOperationRequests,
   SUBSCRIBER_CHECK_CODE,
@@ -45,13 +47,15 @@ const TYPE_KEY = 'notificationType';
 export const getNotificationType: RequestHandler = async (req, _res, next) => {
   try {
     const { type } = req.params;
-
     const [configuration, options] = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
-    const typeEntity = configuration?.getNotificationType(type) || options?.getNotificationType(type);
+
+    const typeEntity =
+      (Object.keys(configuration).length > 0 && configuration?.getNotificationType(type)) ||
+      options?.getNotificationType(type);
+
     if (!typeEntity) {
       throw new NotFoundError('Notification Type', type);
     }
-
     req[TYPE_KEY] = typeEntity;
     next();
   } catch (err) {
@@ -130,10 +134,24 @@ export function createTypeSubscription(apiId: AdspId, repository: SubscriptionRe
 }
 
 export function addTypeSubscription(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
-  return async (req, res, next) => {
+  return async (req, res) => {
     try {
-      const tenantId = req.tenant.id;
+      let tenantId;
       const user = req.user;
+
+      if (req.tenant?.id) {
+        tenantId = req.tenant?.id;
+      } else {
+        const response = await axios.post(
+          `${environment.DIRECTORY_URL}/api/tenant/v1/name`,
+          { name: req.body.tenant },
+          {
+            headers: { Authorization: `Bearer ${user.token.bearer}` },
+          }
+        );
+        tenantId = `urn:ads:platform:tenant-service:v2:/tenants/${response.data.id}`;
+      }
+
       const type: NotificationTypeEntity = req[TYPE_KEY];
       const { subscriber } = req.params;
 
@@ -145,7 +163,7 @@ export function addTypeSubscription(apiId: AdspId, repository: SubscriptionRepos
       const subscription = await type.subscribe(repository, user, subscriberEntity);
       res.send(mapSubscription(apiId, subscription));
     } catch (err) {
-      next(err);
+      res.status(400).json({ error: JSON.stringify(err) });
     }
   };
 }
@@ -219,10 +237,24 @@ export function getSubscribers(apiId: AdspId, repository: SubscriptionRepository
 }
 
 export function createSubscriber(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
-  return async (req, res, next) => {
+  return async (req, res) => {
     try {
-      const tenantId = req.tenant.id;
+      let tenantId;
       const user = req.user;
+
+      if (req.tenant?.id) {
+        tenantId = req.tenant?.id;
+      } else {
+        const response = await axios.post(
+          `${environment.DIRECTORY_URL}/api/tenant/v1/name`,
+          { name: req.body.tenant },
+          {
+            headers: { Authorization: `Bearer ${user.token.bearer}` },
+          }
+        );
+        tenantId = `urn:ads:platform:tenant-service:v2:/tenants/${response.data.id}`;
+      }
+
       const subscriber: Subscriber =
         req.query.userSub === 'true'
           ? {
@@ -236,12 +268,22 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
                 },
               ],
             }
-          : { ...req.body, tenantId };
+          : {
+              tenantId,
+              userId: req.body?.email.toLowerCase(),
+              addressAs: req.body?.email,
+              channels: [
+                {
+                  channel: Channel.email,
+                  address: req.body?.email,
+                },
+              ],
+            };
 
       const subscriberEntity = await SubscriberEntity.create(user, repository, subscriber);
       res.send(mapSubscriber(apiId, subscriberEntity));
     } catch (err) {
-      next(err);
+      res.status(400).json({ error: JSON.stringify(err) });
     }
   };
 }
@@ -257,6 +299,29 @@ export function getSubscriber(repository: SubscriptionRepository): RequestHandle
       const entity = await repository.getSubscriber(tenantId, subscriber);
       if (!entity) {
         throw new NotFoundError('Subscriber', subscriber);
+      }
+
+      if (!entity.canUpdate(user)) {
+        throw new UnauthorizedUserError('access subscriber', user);
+      }
+
+      req[SUBSCRIBER_KEY] = entity;
+      next();
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function getSubscriberByUserId(repository: SubscriptionRepository): RequestHandler {
+  return async (req, _res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant.id;
+
+      const entity = await repository.getSubscriber(tenantId, user.id, true);
+      if (!entity) {
+        throw new NotFoundError('Subscriber', user.id);
       }
 
       if (!entity.canUpdate(user)) {
@@ -384,6 +449,46 @@ export function getSubscriberSubscriptions(apiId: AdspId, repository: Subscripti
   };
 }
 
+export function getMySubscriberDetails(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenantId = req.tenant?.id;
+      const subscriberDetails = mapSubscriber(apiId, req[SUBSCRIBER_KEY]) as SubscriberEntity;
+      const { includeSubscriptions } = req.query;
+
+      if (includeSubscriptions && includeSubscriptions === 'true') {
+        let subscriberSubscriptions = [];
+        const result = await repository.getSubscriptions(tenantId, 0, undefined, {
+          subscriberIdEquals: subscriberDetails.id,
+        });
+        const [configuration, options] = await req.getConfiguration<
+          NotificationConfiguration,
+          NotificationConfiguration
+        >();
+        subscriberSubscriptions = result.results.map((r) => {
+          const { subscriber: _subscriber, ...subscription } = mapSubscription(apiId, r);
+          const typeEntity = configuration?.getNotificationType(r.typeId) || options?.getNotificationType(r.typeId);
+
+          return {
+            ...subscription,
+            type: typeEntity ? mapType(typeEntity, true) : null,
+            canUnsubscribe: typeEntity.canSubscribe(user, subscriberDetails),
+          };
+        });
+        return res.send({
+          ...subscriberDetails,
+          subscriptions: subscriberSubscriptions,
+        });
+      }
+
+      res.send(subscriberDetails);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export const createSubscriptionRouter = ({
   serviceId,
   subscriptionRepository,
@@ -392,7 +497,6 @@ export const createSubscriptionRouter = ({
   const apiId = adspId`${serviceId}:v1`;
   const subscriptionRouter = Router();
 
-  subscriptionRouter.use(assertHasTenant);
   subscriptionRouter.get('/types', getNotificationTypes);
   subscriptionRouter.get('/types/:type', getNotificationType, async (req, res) => res.send(mapType(req[TYPE_KEY])));
 
@@ -427,6 +531,12 @@ export const createSubscriptionRouter = ({
 
   subscriptionRouter.get('/subscribers', getSubscribers(apiId, subscriptionRepository));
   subscriptionRouter.post('/subscribers', createSubscriber(apiId, subscriptionRepository));
+
+  subscriptionRouter.get(
+    '/subscribers/my-subscriber',
+    getSubscriberByUserId(subscriptionRepository),
+    getMySubscriberDetails(apiId, subscriptionRepository)
+  );
 
   subscriptionRouter.get('/subscribers/:subscriber', getSubscriber(subscriptionRepository), (req, res) =>
     res.send(mapSubscriber(apiId, req[SUBSCRIBER_KEY]))
