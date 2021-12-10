@@ -1,40 +1,52 @@
 import React, { useEffect } from 'react';
 
-import { Main, Page } from '@components/Html';
+import { Main } from '@components/Html';
 import Container from '@components/Container';
 import styled from 'styled-components';
-import { GoAButton, GoACard, GoAPageLoader } from '@abgov/react-components';
 import DataTable from '@components/DataTable';
+import { GoAButton, GoACard, GoAPageLoader } from '@abgov/react-components';
 
 import { useDispatch, useSelector } from 'react-redux';
-import { getSubsciptionTypes } from '@store/subscription/actions';
+import { getMySubscriberDetails } from '@store/subscription/actions';
 import { RootState } from '@store/index';
 import SubscriptionsList from './SubscriptionsList';
-// import { useParams } from 'react-router-dom';
-// import { TenantLogin } from '@store/tenant/actions';
-// import { RootState } from '@store/index';
+import { SubscriberChannel } from '@store/subscription/models';
 
 const Subscriptions = (): JSX.Element => {
   const dispatch = useDispatch();
-  const { subscriptions } = useSelector((state: RootState) => ({
-    subscriptions: state.subscription,
+  const { subscriber } = useSelector((state: RootState) => ({
+    subscriber: state.subscription.subscriber,
   }));
-  console.log('subscriptions', subscriptions);
+  const subscriberEmail = subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === 'email')[0]?.address;
   useEffect(() => {
-    dispatch(getSubsciptionTypes());
+    dispatch(getMySubscriberDetails());
   }, []);
 
-  return subscriptions.subscriptionTypes ? (
-    <main>
+  return subscriber?.subscriptions ? (
+    <Main>
       <Container hs={2} vs={4} xlHSpacing={12}>
-        <h2 data-testid="service-name">Subscription preferences</h2>
-        <div>
+        <h1 data-testid="service-name">Subscription management</h1>
+        <p data-testid="service-description">
           Use this page to manage notifications from the services of Government of Alberta. Please note, unsubscribing
           from some notifications might require additional verification from the government authorities.
-        </div>
+        </p>
+        <br />
+        <br />
+        <GoACard title="Contact information" data-testid="contact-information">
+          <Label>Email</Label>
+          <ContactInformationContainer>
+            <div>
+              <p>{subscriberEmail}</p>
+            </div>
+            <div>
+              <GoAButton buttonSize="small" data-testid="edit-contact">
+                Edit contact information
+              </GoAButton>
+            </div>
+          </ContactInformationContainer>
+        </GoACard>
         <Container hs={1} vs={5}>
-          <GoACard title="Contact information" content={<span>test</span>}></GoACard>
-          <SubscriptionDetailsContainer>
+          <SubscriptionListContainer>
             <DataTable data-testid="subscriptions-table">
               <TableHeaders>
                 <tr>
@@ -44,20 +56,29 @@ const Subscriptions = (): JSX.Element => {
                 </tr>
               </TableHeaders>
               <tbody>
-                <SubscriptionsList subscriptionTypes={subscriptions.subscriptionTypes} />
+                <SubscriptionsList subscriptions={subscriber.subscriptions} />
               </tbody>
             </DataTable>
-          </SubscriptionDetailsContainer>
+          </SubscriptionListContainer>
         </Container>
       </Container>
-    </main>
+    </Main>
   ) : (
     <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
   );
 };
 export default Subscriptions;
 
-const SubscriptionDetailsContainer = styled.div`
+const Label = styled.label`
+  font-weight: bold;
+`;
+const ContactInformationContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding-top: 1.5rem;
+`;
+const SubscriptionListContainer = styled.div`
   padding-top: 5rem;
 `;
 

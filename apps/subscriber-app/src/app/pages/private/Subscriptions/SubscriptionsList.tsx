@@ -1,33 +1,33 @@
 import { GoAButton } from '@abgov/react-components';
 import { GoAIcon } from '@abgov/react-components/experimental';
+import { Subscription } from '@store/subscription/models';
 import React from 'react';
 import styled from 'styled-components';
 
 interface SubscriptionsListProps {
-  subscriptionTypes: any;
+  subscriptions: Subscription[];
 }
 const SubscriptionsList = (props: SubscriptionsListProps): JSX.Element => {
   return (
     <>
-      {props.subscriptionTypes.map((sub: any) => {
+      {props.subscriptions.map((subscription: Subscription) => {
         return (
-          <tr key={`${sub.id}`}>
-            <td>{sub.name}</td>
+          <tr key={`${subscription.typeId}`}>
+            <td data-testid="subscription-name">{subscription.type.name}</td>
             <IconsCell>
-              <GoAIcon size="medium" type="mail" />
-              <GoAIcon size="medium" type="chatbox-ellipses" />
+              <GoAIcon data-testid="mail-icon" size="medium" type="mail" />
             </IconsCell>
             <ButtonsCell>
               <GoAButton
                 buttonSize="small"
-                buttonType="primary"
-                key={`${sub.id}`}
+                buttonType="tertiary"
+                key={`${subscription.typeId}`}
                 onClick={() => {
-                  console.log(sub.name);
+                  console.log(subscription.typeId);
                 }}
-                data-testid={`${sub.id}-subscribe`}
+                data-testid="unsubscribe-button"
               >
-                Subscribe
+                Unsubscribe
               </GoAButton>
             </ButtonsCell>
           </tr>
