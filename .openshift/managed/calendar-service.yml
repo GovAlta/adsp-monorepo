@@ -80,6 +80,7 @@ objects:
         apply-branch: "true"
       name: calendar-service-postgres${NAME_SUFFIX}
     spec:
+      storageClassName: azure-disk
       accessModes:
         - ReadWriteOnce
       resources:
@@ -216,46 +217,17 @@ objects:
         apply-infra: "true"
       name: calendar-service
       namespace: ${INFRA_NAMESPACE}
-    spec: {}
-
-  # BuildConfig is created for the primary pipeline as well as branch deployment.
-  # NOTE: Each instance should publish a unique Tag to the common ImageStream in infra.
-  - apiVersion: v1
-    kind: BuildConfig
-    metadata:
-      labels:
-        app: calendar-service${NAME_SUFFIX}
-        component: api
-        apply-infra: "true"
-        apply-branch: "true"
-      name: calendar-service${NAME_SUFFIX}
     spec:
-      output:
-        to:
-          kind: ImageStreamTag
-          name: calendar-service:${BUILD_TAG}
-          namespace: ${INFRA_NAMESPACE}
-      postCommit: {}
-      resources:
-        limits:
-          cpu: 200m
-          memory: 200Mi
-        requests:
-          cpu: 20m
-          memory: 50Mi
-      source:
-        binary: {}
-        type: Binary
-      strategy:
-        dockerStrategy:
-          buildArgs:
-            - name: SERVICE
-              value: calendar-service
-          dockerfilePath: .openshift/service/Dockerfile
-        type: Docker
+      tags:
+        - name: ${BUILD_TAG}
+          from:
+            kind: DockerImage
+            name: ghcr.io/govalta/calendar-service:${BUILD_TAG}
+          referencePolicy:
+            type: Local
 
   # DeploymentConfig (and Service and Route) is created in each environment of the
-  # primary pipline as well as branch deployment.
+  # primary pipeline as well as branch deployment.
   - apiVersion: v1
     kind: DeploymentConfig
     metadata:

@@ -76,6 +76,7 @@ objects:
       database-password: ${MONGODB_PASSWORD}
       database-user: ${MONGODB_USER}
       database-uri: mongodb://form-service-mongodb${NAME_SUFFIX}:27017
+      database-tls: 'false'
   # PersistentVolumeClaim is only generated for branch deployment to avoid losing persistent data.
   - apiVersion: v1
     kind: PersistentVolumeClaim
@@ -87,6 +88,7 @@ objects:
         apply-branch: "true"
       name: form-service-mongodb${NAME_SUFFIX}
     spec:
+      storageClassName: azure-disk
       accessModes:
         - ReadWriteOnce
       resources:
@@ -234,43 +236,14 @@ objects:
         apply-infra: "true"
       name: form-service
       namespace: ${INFRA_NAMESPACE}
-    spec: {}
-
-  # BuildConfig is created for the primary pipeline as well as branch deployment.
-  # NOTE: Each instance should publish a unique Tag to the common ImageStream in infra.
-  - apiVersion: v1
-    kind: BuildConfig
-    metadata:
-      labels:
-        app: form-service${NAME_SUFFIX}
-        component: api
-        apply-infra: "true"
-        apply-branch: "true"
-      name: form-service${NAME_SUFFIX}
     spec:
-      output:
-        to:
-          kind: ImageStreamTag
-          name: form-service:${BUILD_TAG}
-          namespace: ${INFRA_NAMESPACE}
-      postCommit: {}
-      resources:
-        limits:
-          cpu: 200m
-          memory: 200Mi
-        requests:
-          cpu: 20m
-          memory: 50Mi
-      source:
-        binary: {}
-        type: Binary
-      strategy:
-        dockerStrategy:
-          buildArgs:
-            - name: SERVICE
-              value: form-service
-          dockerfilePath: .openshift/service/Dockerfile
-        type: Docker
+      tags:
+        - name: ${BUILD_TAG}
+          from:
+            kind: DockerImage
+            name: ghcr.io/govalta/form-service:${BUILD_TAG}
+          referencePolicy:
+            type: Local
 
   # DeploymentConfig (and Service and Route) is created in each environment of the
   # primary pipline as well as branch deployment.
@@ -332,6 +305,11 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-name
+                      name: form-service-mongodb${NAME_SUFFIX}
+                - name: MONGO_TLS
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-tls
                       name: form-service-mongodb${NAME_SUFFIX}
               imagePullPolicy: IfNotPresent
               name: form-service
