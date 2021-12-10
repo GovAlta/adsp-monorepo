@@ -362,16 +362,6 @@ When('user goes to {string} tab', function (tabText) {
   cy.wait(2000);
 });
 
-Then('user views file service api documentation', function () {
-  // Verify the api titles
-  fileServiceObj.fileTypesAPIsTitle().then((fileTypesAPITitle) => {
-    expect(fileTypesAPITitle.length).to.be.gt(0); // title element exists
-  });
-  fileServiceObj.filesAPIsTitle().then((filesAPITitle) => {
-    expect(filesAPITitle.length).to.be.gt(0); // title element exists
-  });
-});
-
 Then('the user views file types page', function () {
   // Check if the new file type button presents
   fileServiceObj.newFileTypeButton().then((button) => {

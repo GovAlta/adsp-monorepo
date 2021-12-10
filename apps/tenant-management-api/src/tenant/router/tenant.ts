@@ -32,6 +32,11 @@ class TenantByEmailDto {
   email;
 }
 
+class TenantByNameDto {
+  @IsDefined()
+  name;
+}
+
 class TenantByRealmDto {
   @IsDefined()
   realm;
@@ -49,6 +54,16 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
     try {
       const { email } = req.payload;
       const tenant = await tenantRepository.findBy({ adminEmail: email });
+      res.json(tenant.obj());
+    } catch (e) {
+      res.status(HttpStatusCodes.NOT_FOUND).json();
+    }
+  }
+
+  async function getTenantByName(req, res) {
+    try {
+      const { name } = req.payload;
+      const tenant = await tenantRepository.findBy({ name: name });
       res.json(tenant.obj());
     } catch (e) {
       res.status(HttpStatusCodes.NOT_FOUND).json();
@@ -229,6 +244,7 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
   tenantRouter.get('/:id', [validationMiddleware(GetTenantDto)], getTenant);
   tenantRouter.get('/realm/:realm', validationMiddleware(TenantByRealmDto), getTenantByRealm);
   tenantRouter.post('/email', [validationMiddleware(TenantByEmailDto)], getTenantByEmail);
+  tenantRouter.post('/name', [validationMiddleware(TenantByNameDto)], getTenantByName);
   tenantRouter.delete('/', [requireTenantServiceAdmin, validationMiddleware(DeleteTenantDto)], deleteTenant);
 
   return tenantRouter;

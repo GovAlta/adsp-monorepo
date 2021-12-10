@@ -8,7 +8,7 @@ import { fetchConfig } from './store/config/actions';
 import { useDispatch, useSelector } from 'react-redux';
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 import ServiceStatusPage from './pages/status';
-import { RootState} from '@store/index'
+import { RootState } from '@store/index';
 
 export function App(): JSX.Element {
   const dispatch = useDispatch();
@@ -22,20 +22,20 @@ export function App(): JSX.Element {
   }, []);
 
   return (
-    <> { config.envLoaded &&
-    <Router>
-      <Switch>
-        <Route exact path="/">
-          <ServiceStatusPage />
-        </Route>
-        <Route exact path="/:name">
-          <ServiceStatusPage />
-        </Route>
-      </Switch>
-    </Router>
-    }
-    </>
-
+    <div>
+      {config.envLoaded && (
+        <Router>
+          <Switch>
+            <Route exact path="/">
+              <ServiceStatusPage />
+            </Route>
+            <Route exact path="/:name">
+              <ServiceStatusPage />
+            </Route>
+          </Switch>
+        </Router>
+      )}
+    </div>
   );
 }
 

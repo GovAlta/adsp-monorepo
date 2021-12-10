@@ -26,7 +26,7 @@ const LandingPage = (): JSX.Element => {
     <>
       <Header serviceName="" />
       <Main>
-        <GoAHeroBanner backgroundUrl={bannerBackground}>
+        <GoAHeroBanner title="" backgroundUrl={bannerBackground}>
           <Container hs={1}>
             <BoldTitle>The Alberta Digital Service Platform</BoldTitle>
             <p>

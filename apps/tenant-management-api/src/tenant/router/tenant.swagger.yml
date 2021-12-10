@@ -119,3 +119,17 @@ webInit401: &webInit401
     responses:
       200: *Ok
       401: *admin401
+'/api/tenant/public/v1/realm/id':
+  get:
+  tags:
+    - Tenant
+  description:
+    Fetch the keycloak realm id by tenant name
+  parameters:
+    - in: query
+      name: tenantName
+      schema:
+        type: string
+      description: tenant name
+  responses:
+    200: *Ok

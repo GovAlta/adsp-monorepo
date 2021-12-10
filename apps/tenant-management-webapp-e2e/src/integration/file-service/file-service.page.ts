@@ -21,14 +21,6 @@ class FileServicePage {
     );
   }
 
-  fileTypesAPIsTitle() {
-    return cy.xpath('//h2[contains(text(), "File types APIs")]');
-  }
-
-  filesAPIsTitle() {
-    return cy.xpath('//h2[contains(text(), "Files APIs")]');
-  }
-
   newFileTypeButton() {
     return cy.get('[data-testid="new-file-type-button-top"]');
   }

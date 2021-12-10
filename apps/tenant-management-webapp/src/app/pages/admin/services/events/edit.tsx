@@ -46,7 +46,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
       <GoAModalTitle>{isEdit ? 'Edit definition' : 'Add definition'}</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>
-          <GoAFormItem error={errors?.['namespace'] && 'error'}>
+          <GoAFormItem error={errors?.['namespace']}>
             <label>Namespace</label>
             <input
               type="text"
@@ -54,11 +54,11 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               value={definition.namespace}
               disabled={isEdit}
               data-testid="form-namespace"
+              aria-label="nameSpace"
               onChange={(e) => setDefinition({ ...definition, namespace: e.target.value })}
             />
-            <div className="error-msg">{errors?.['namespace']}</div>
           </GoAFormItem>
-          <GoAFormItem error={errors?.['name'] && 'error'}>
+          <GoAFormItem error={errors?.['name']}>
             <label>Name</label>
             <input
               type="text"
@@ -66,9 +66,9 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               value={definition.name}
               disabled={isEdit}
               data-testid="form-name"
+              aria-label="name"
               onChange={(e) => setDefinition({ ...definition, name: e.target.value })}
             />
-            <div className="error-msg">{errors?.['name']}</div>
           </GoAFormItem>
           <GoAFormItem>
             <label>Description</label>
@@ -76,6 +76,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               name="description"
               data-testid="form-description"
               value={definition.description}
+              aria-label="description"
               onChange={(e) => setDefinition({ ...definition, description: e.target.value })}
             />
           </GoAFormItem>

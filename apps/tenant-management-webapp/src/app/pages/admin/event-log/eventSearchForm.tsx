@@ -8,7 +8,6 @@ import {
   GoAFormItem,
   GoAFormActions,
   GoAFlexRow,
-  GoAInputDateTime,
   GoAIconButton,
   GoAButton,
 } from '@abgov/react-components/experimental';
@@ -191,30 +190,35 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
         </SearchBox>
         <GoAFormItem>
           <label>Minimum timestamp</label>
-          <GoAInputDateTime
-            name="timestampMin"
-            max={today}
-            aria-label="timestampMin"
-            value={searchCriteria.timestampMin}
-            onChange={setValue}
-          />
+          <DateTimeInput>
+            <input
+              type="datetime-local"
+              name="timestampMin"
+              max={today}
+              aria-label="timestampMin"
+              value={searchCriteria.timestampMin}
+              onChange={(e) => setValue('timestampMin', e.target.value)}
+            />
+          </DateTimeInput>
         </GoAFormItem>
         <GoAFormItem>
           <label>Maximum timestamp</label>
-          <GoAInputDateTime
-            name="timestampMax"
-            max={today}
-            aria-label="timestampMax"
-            value={searchCriteria.timestampMax}
-            onChange={setValue}
-          />
+          <DateTimeInput>
+            <input
+              type="datetime-local"
+              name="timestampMax"
+              max={today}
+              aria-label="timestampMax"
+              value={searchCriteria.timestampMax}
+              onChange={(e) => setValue('timestampMax', e.target.value)}
+            />
+          </DateTimeInput>
         </GoAFormItem>
       </GoAFlexRow>
       <GoAFormActions alignment="right">
         <GoAButton
           title="Reset"
           onClick={() => {
-            // e.preventDefault();
             setOpen(false);
             setError(false);
             setSearchCriteria(initCriteria);
@@ -227,7 +231,6 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
         <GoAButton
           title="Search"
           onClick={() => {
-            //  e.preventDefault();
             setOpen(false);
             if (validation()) {
               onSearch(searchCriteria);
@@ -279,5 +282,17 @@ const SearchBox = styled.div`
     color: var(--color-white);
     cursor: pointer;
     font-weight: var(--fw-bold);
+  }
+`;
+
+const DateTimeInput = styled.div`
+  display: flex;
+  align-content: center;
+  line-height: var(--input-height);
+  height: var(--input-height);
+  border: 1px solid var(--color-gray-700);
+  border-radius: 3px;
+  > input {
+    border: none;
   }
 `;
