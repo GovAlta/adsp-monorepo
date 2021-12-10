@@ -28,18 +28,6 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
   return (
     <HeaderCtx.Provider value={{ setTitle }}>
       <Header serviceName={title} />
-      {/*
-      NOTE: we might need to add the following function in the near feature
-      */}
-      {/* <IdleTimer
-        checkInterval={10}
-        timeoutFn={() => {
-          dispatch(TenantLogout());
-        }}
-        continueFn={() => {
-          location.reload();
-        }}
-      /> */}
       <NotificationBanner />
       <Container>{children}</Container>
     </HeaderCtx.Provider>
