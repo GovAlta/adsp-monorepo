@@ -9,8 +9,8 @@ items:
         component: api
       name: verify-service
     data:
-      KEYCLOAK_ROOT_URL: https://access-uat.alberta.ca
-      DIRECTORY_URL: https://tenant-management-api-adsp-uat.apps.aro.gov.ab.ca
+      KEYCLOAK_ROOT_URL: https://access-dev.os99.gov.ab.ca
+      DIRECTORY_URL: https://tenant-management-api-core-services-dev.os99.gov.ab.ca
       LOG_LEVEL: debug
   - apiVersion: v1
     kind: Secret
@@ -21,4 +21,4 @@ items:
       name: verify-service
     stringData:
       CLIENT_ID: urn:ads:platform:verify-service
-      CLIENT_SECRET: dbc07600-0fd8-45cc-b294-a2301168ecaf
+      CLIENT_SECRET:
