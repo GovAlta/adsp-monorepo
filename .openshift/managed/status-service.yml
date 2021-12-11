@@ -1,4 +1,4 @@
-apiVersion: v1
+apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
   name: service status
@@ -321,7 +321,7 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       key: database-tls
-                      name: f${APP_NAME}-mongodb${NAME_SUFFIX}
+                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
               imagePullPolicy: IfNotPresent
               name: ${APP_NAME}
               ports:
