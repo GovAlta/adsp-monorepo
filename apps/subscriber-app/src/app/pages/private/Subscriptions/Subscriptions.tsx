@@ -86,4 +86,7 @@ const TableHeaders = styled.thead`
   #action {
     text-align: right;
   }
+  #available-channels {
+    text-align: center;
+  }
 `;
