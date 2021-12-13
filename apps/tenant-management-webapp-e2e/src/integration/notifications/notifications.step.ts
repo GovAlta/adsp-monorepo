@@ -21,3 +21,76 @@ Given('a service owner user is on notification overview page', function () {
       cy.wait(4000);
     });
 });
+
+When('the user clicks Add notification type button', function () {
+  notificationsObj.addANotificationTypeButtonOnOverview().click();
+});
+
+Then('the user views Add notification modal', function () {
+  notificationsObj.notificationTypeModal().should('exist');
+});
+
+When('the user enters {string}, {string}, {string}', function (name, description, role) {
+  const roles = role.split(',');
+  notificationsObj.notificationTypeModalNameField().clear().type(name);
+  notificationsObj.notificationTypeModalDescriptionField().clear().type(description);
+  notificationsObj.notificationTypeModalSubscriberRolesDropdown().click();
+  for (let i = 0; i < roles.length; i++) {
+    notificationsObj.notificationTypeModalSubscriberRolesDropdownItem(roles[i].trim()).click();
+  }
+  notificationsObj.notificationTypeModalSubscriberRolesDropdownBackground().click({ force: true }); // To collapse the dropdown after selection
+});
+
+Then('the user clicks save button', function () {
+  notificationsObj.notificationTypeModalSaveBtn().click();
+});
+
+Then(
+  'the user {string} the notification type card of {string}, {string}, {string}',
+  function (viewOrNot, name, roles, publicOrNot) {
+    roles = roles.replace('Anyone (Anonymous)', '');
+    if (viewOrNot == 'views') {
+      notificationsObj.notificationTypeCardTitle(name).should('exist');
+      notificationsObj.notificationTypeSubscriberRoles(name).invoke('text').should('contain', roles);
+      notificationsObj.notificationTypePublicSubscription(name).invoke('text').should('contain', publicOrNot);
+    } else if (viewOrNot == 'should not view') {
+      notificationsObj.notificationTypeCardTitle(name).should('not.exist');
+    } else {
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
+  }
+);
+
+Then('the user views Add notification type button on Notification types page', function () {
+  notificationsObj.addANotificationTypeButtonOnNotificationTypesPage().should('exist');
+});
+
+When('the user clicks {string} button for the notification type card of {string}', function (buttonType, cardTitle) {
+  switch (buttonType) {
+    case 'edit':
+      notificationsObj.notificationTypeEditBtn(cardTitle).click();
+      break;
+    case 'delete':
+      notificationsObj.notificationTypeDeleteBtn(cardTitle).click();
+      break;
+    default:
+      expect(buttonType).to.be.oneOf(['edit', 'delete']);
+  }
+});
+
+Then('the user views Edit notification type modal for {string}', function (cardTitle) {
+  notificationsObj.notificationTypeModalTitle().invoke('text').should('eq', 'Edit notification type');
+  notificationsObj.notificationTypeModalNameField().invoke('attr', 'value').should('eq', cardTitle);
+});
+
+Then('the user views delete confirmation modal for {string}', function (cardTitle) {
+  notificationsObj
+    .notificationTypeDeleteConfirmationModalTitle()
+    .invoke('text')
+    .should('eq', 'Delete notification type');
+  notificationsObj.notificationTypeDeleteConfirmationModal().invoke('text').should('contains', cardTitle);
+});
+
+When('the user clicks Confirm button on delete confirmation modal', function () {
+  notificationsObj.notificationTypeDeleteConfirmationModalConfirmBtn().click();
+});
