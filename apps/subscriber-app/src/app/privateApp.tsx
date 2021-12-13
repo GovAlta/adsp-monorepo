@@ -9,6 +9,8 @@ import { KeycloakCheckSSOWithLogout, KeycloakRefreshToken } from '@store/tenant/
 import { GoAPageLoader } from '@abgov/react-components';
 import { NotificationBanner } from './notificationBanner';
 import { UpdateConfigRealm } from '@store/config/actions';
+import GoaLogo from '../assets/goa-logo.svg';
+import Footer from '@components/Footer';
 
 interface privateAppProps {
   children: ReactNode;
@@ -30,6 +32,7 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
       <Header serviceName={title} />
       <NotificationBanner />
       <Container>{children}</Container>
+      <Footer logoSrc={GoaLogo} />
     </HeaderCtx.Provider>
   );
 }
