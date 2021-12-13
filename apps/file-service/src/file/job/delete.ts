@@ -19,7 +19,10 @@ export const createDeleteJob =
       const result = await fileRepository.get(id);
       const deleted = await result.delete();
       if (deleted) {
-        logger.debug(`Deleted file ${filename} (ID: ${id}).`);
+        logger.debug(`Deleted file ${filename} (ID: ${id}).`, {
+          context: 'FileDeleteJob',
+          tenant: tenantId?.toString(),
+        });
       }
 
       done();
