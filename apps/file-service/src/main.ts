@@ -3,7 +3,7 @@ import * as passport from 'passport';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as helmet from 'helmet';
-import { createLogger, createErrorHandler } from '@core-services/core-common';
+import { createLogger, createErrorHandler, createAmqpConfigUpdateService } from '@core-services/core-common';
 import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import { environment } from './environments/environment';
 import {
@@ -22,6 +22,7 @@ import type { User } from '@abgov/adsp-service-sdk';
 import { FileSystemStorageProvider } from './storage/file-system';
 import { createScanService } from './scan';
 import { AzureBlobStorageProvider } from './storage';
+import { createFileQueueService } from './amqp';
 
 const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
 
@@ -42,6 +43,7 @@ async function initializeApp(): Promise<express.Application> {
     tokenProvider,
     configurationHandler,
     configurationService,
+    clearCached,
     healthCheck,
     eventService,
   } = await initializePlatform(
@@ -111,12 +113,25 @@ async function initializeApp(): Promise<express.Application> {
     port: environment.AV_PORT,
   });
 
+  const queueService = await createFileQueueService({ ...environment, logger });
+
+  const configurationSync = await createAmqpConfigUpdateService({
+    ...environment,
+    logger,
+  });
+
+  configurationSync.getItems().subscribe(({ item, done }) => {
+    clearCached(item.tenantId, item.serviceId);
+    done();
+  });
+
   applyFileMiddleware(app, {
     serviceId,
     logger,
     storageProvider,
     scanService,
     eventService,
+    queueService,
     ...repositories,
   });
 
