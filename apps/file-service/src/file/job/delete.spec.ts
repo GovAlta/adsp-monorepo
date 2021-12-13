@@ -1,11 +1,13 @@
+import { adspId } from '@abgov/adsp-service-sdk';
+import { InvalidOperationError } from '@core-services/core-common';
 import { Mock, It } from 'moq.ts';
 import { Logger } from 'winston';
-import { InvalidOperationError } from '@core-services/core-common';
-import { FileRepository } from '../repository';
 import { FileEntity } from '../model';
+import { FileRepository } from '../repository';
 import { createDeleteJob } from './delete';
 
 describe('Delete Job', () => {
+  const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const logger = {
     debug: jest.fn(),
     info: jest.fn(),
@@ -38,7 +40,7 @@ describe('Delete Job', () => {
     repositoryMock.setup((instance) => instance.get(It.IsAny())).returns(Promise.resolve(fileEntityMock.object()));
 
     const done = jest.fn();
-    await deleteJob(fileEntityMock.object(), done);
+    await deleteJob(tenantId, fileEntityMock.object(), done);
 
     fileEntityMock.verify((entity) => entity.delete());
     expect(done).toHaveBeenCalledWith();
@@ -55,7 +57,7 @@ describe('Delete Job', () => {
     repositoryMock.setup((instance) => instance.get(It.IsAny())).returns(Promise.resolve(fileEntityMock.object()));
 
     const done = jest.fn();
-    await deleteJob(fileEntityMock.object(), done);
+    await deleteJob(tenantId, fileEntityMock.object(), done);
 
     expect(done).toHaveBeenCalledWith(expect.any(InvalidOperationError));
   });

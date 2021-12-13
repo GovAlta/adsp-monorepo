@@ -28,10 +28,10 @@ export const createFileJobs = (props: FileJobProps): void => {
   props.queueService.getItems().subscribe(({ item, done }) => {
     switch (item.work) {
       case 'scan':
-        scanJob(item.file, done);
+        scanJob(item.tenantId, item.file, done);
         break;
       case 'delete':
-        deleteJob(item.file, done);
+        deleteJob(item.tenantId, item.file, done);
         break;
       default: {
         props.logger.warn(

@@ -1,11 +1,13 @@
+import { adspId } from '@abgov/adsp-service-sdk';
 import { Mock, It, Times } from 'moq.ts';
 import { Logger } from 'winston';
-import { FileRepository } from '../repository';
 import { FileEntity } from '../model';
+import { FileRepository } from '../repository';
 import { ScanService } from '../scan';
 import { createScanJob } from './scan';
 
 describe('Scan Job', () => {
+  const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const logger = {
     debug: jest.fn(),
     info: jest.fn(),
@@ -49,7 +51,7 @@ describe('Scan Job', () => {
     repositoryMock.setup((instance) => instance.get(It.IsAny())).returns(Promise.resolve(fileEntityMock.object()));
 
     const done = jest.fn();
-    await scanJob(fileEntityMock.object(), done);
+    await scanJob(tenantId, fileEntityMock.object(), done);
     expect(done).toHaveBeenCalledWith();
     fileEntityMock.verify((instance) => instance.updateScanResult(true));
   });
@@ -70,7 +72,7 @@ describe('Scan Job', () => {
     repositoryMock.setup((instance) => instance.get(It.IsAny())).returns(Promise.resolve(fileEntityMock.object()));
 
     const done = jest.fn();
-    await scanJob(fileEntityMock.object(), done);
+    await scanJob(tenantId, fileEntityMock.object(), done);
     expect(done).toHaveBeenCalledWith();
     fileEntityMock.verify((instance) => instance.updateScanResult(It.IsAny()), Times.Never());
   });
@@ -91,7 +93,7 @@ describe('Scan Job', () => {
     repositoryMock.setup((instance) => instance.get(It.IsAny())).returns(Promise.resolve(fileEntityMock.object()));
 
     const done = jest.fn();
-    await scanJob(fileEntityMock.object(), done);
+    await scanJob(tenantId, fileEntityMock.object(), done);
     expect(done).toHaveBeenCalledWith(expect.any(Error));
     fileEntityMock.verify((instance) => instance.updateScanResult(It.IsAny()), Times.Never());
   });

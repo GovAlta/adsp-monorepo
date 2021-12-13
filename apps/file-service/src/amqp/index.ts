@@ -27,6 +27,6 @@ export const createFileQueueService = async ({
   const service = new AmqpFileQueueService(logger, connection);
   await service.connect();
 
+  logger.info(`Connected to RabbitMQ as file work queue service at: ${AMQP_HOST}`);
   return service;
 };
-

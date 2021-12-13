@@ -1,3 +1,4 @@
+import { AdspId } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import { File } from '..';
 import { FileRepository } from '../repository';
@@ -11,22 +12,34 @@ interface ScanJobProps {
 
 export const createScanJob =
   ({ logger, scanService, fileRepository }: ScanJobProps) =>
-  async ({ id, filename }: File, done: (err?: Error) => void): Promise<void> => {
+  async (tenantId: AdspId, { id, filename }: File, done: (err?: Error) => void): Promise<void> => {
     try {
-      logger.debug(`Scanning file ${filename} (ID: ${id})...`);
+      logger.debug(`Scanning file ${filename} (ID: ${id})...`, {
+        context: 'FileScanJob',
+        tenant: tenantId?.toString(),
+      });
       const result = await fileRepository.get(id);
       const { scanned, infected } = await scanService.scan(result);
       if (scanned) {
         const updated = await result.updateScanResult(infected);
         if (updated.infected) {
-          logger.warn(`File ${filename} (ID: ${id}) scanned as infected.`);
+          logger.warn(`File ${filename} (ID: ${id}) scanned as infected.`, {
+            context: 'FileScanJob',
+            tenant: tenantId?.toString(),
+          });
         } else {
-          logger.debug(`Scanned file ${filename} (ID: ${id}).`);
+          logger.debug(`Scanned file ${filename} (ID: ${id}).`, {
+            context: 'FileScanJob',
+            tenant: tenantId?.toString(),
+          });
         }
       }
       done();
     } catch (err) {
-      logger.warn(`Error encountered scanning file ${filename} (ID: ${id}). ${err}`);
+      logger.warn(`Error encountered scanning file ${filename} (ID: ${id}). ${err}`, {
+        context: 'FileScanJob',
+        tenant: tenantId?.toString(),
+      });
       done(err);
     }
   };
