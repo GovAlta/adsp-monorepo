@@ -2,17 +2,16 @@ import { Mock, It } from 'moq.ts';
 import { Logger } from 'winston';
 import { InvalidOperationError } from '@core-services/core-common';
 import { FileRepository } from '../repository';
-import { createDeleteJob } from './delete';
-import { FileCriteria } from '../types';
 import { FileEntity } from '../model';
+import { createDeleteJob } from './delete';
 
 describe('Delete Job', () => {
-  const logger = ({
+  const logger = {
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
-  } as unknown) as Logger;
+  } as unknown as Logger;
   let repositoryMock: Mock<FileRepository> = null;
 
   beforeEach(() => {
@@ -28,7 +27,7 @@ describe('Delete Job', () => {
     expect(deleteJob).toBeTruthy();
   });
 
-  it('can be executed', (done) => {
+  it('can be executed', async () => {
     const deleteJob = createDeleteJob({
       logger,
       fileRepository: repositoryMock.object(),
@@ -36,99 +35,28 @@ describe('Delete Job', () => {
 
     const fileEntityMock = new Mock<FileEntity>();
     fileEntityMock.setup((instance) => instance.delete()).returns(Promise.resolve(true));
+    repositoryMock.setup((instance) => instance.get(It.IsAny())).returns(Promise.resolve(fileEntityMock.object()));
 
-    repositoryMock
-      .setup((instance) =>
-        instance.find(
-          10,
-          It.IsAny(),
-          It.Is<FileCriteria>((c) => !!c.deleted)
-        )
-      )
-      .returns(
-        Promise.resolve({
-          page: {
-            size: 1,
-            after: null,
-            next: null,
-          },
-          results: [fileEntityMock.object()],
-        })
-      );
+    const done = jest.fn();
+    await deleteJob(fileEntityMock.object(), done);
 
-    deleteJob().then((deleted) => {
-      expect(deleted).toEqual(1);
-      done();
-    });
+    fileEntityMock.verify((entity) => entity.delete());
+    expect(done).toHaveBeenCalledWith();
   });
 
-  it('can exclude not deleted from count', (done) => {
+  it('can call done with error for failed', async () => {
     const deleteJob = createDeleteJob({
       logger,
       fileRepository: repositoryMock.object(),
     });
 
     const fileEntityMock = new Mock<FileEntity>();
-    fileEntityMock.setup((instance) => instance.delete()).returns(Promise.resolve(false));
+    fileEntityMock.setup((instance) => instance.delete()).returns(Promise.reject(new InvalidOperationError('failed')));
+    repositoryMock.setup((instance) => instance.get(It.IsAny())).returns(Promise.resolve(fileEntityMock.object()));
 
-    repositoryMock
-      .setup((instance) =>
-        instance.find(
-          10,
-          It.IsAny(),
-          It.Is<FileCriteria>((c) => !!c.deleted)
-        )
-      )
-      .returns(
-        Promise.resolve({
-          page: {
-            size: 1,
-            after: null,
-            next: null,
-          },
-          results: [fileEntityMock.object()],
-        })
-      );
+    const done = jest.fn();
+    await deleteJob(fileEntityMock.object(), done);
 
-    deleteJob().then((deleted) => {
-      expect(deleted).toEqual(0);
-      done();
-    });
-  });
-
-  it('can exclude not failed from count', (done) => {
-    const deleteJob = createDeleteJob({
-      logger,
-      fileRepository: repositoryMock.object(),
-    });
-
-    const fileEntityMock = new Mock<FileEntity>();
-    fileEntityMock
-      .setup((instance) => instance.delete())
-      .returns(Promise.reject(new InvalidOperationError('failed')));
-
-    repositoryMock
-      .setup((instance) =>
-        instance.find(
-          10,
-          It.IsAny(),
-          It.Is<FileCriteria>((c) => !!c.deleted)
-        )
-      )
-      .returns(
-        Promise.resolve({
-          page: {
-            size: 1,
-            after: null,
-            next: null,
-          },
-          results: [fileEntityMock.object()],
-        })
-      );
-
-    deleteJob().then((deleted) => {
-      expect(deleted).toEqual(0);
-      done();
-    });
+    expect(done).toHaveBeenCalledWith(expect.any(InvalidOperationError));
   });
 });
