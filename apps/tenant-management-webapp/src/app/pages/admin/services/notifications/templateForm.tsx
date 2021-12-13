@@ -6,6 +6,7 @@ import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { EventItem } from '@store/notification/models';
 import MonacoEditor from '@monaco-editor/react';
 import styled from 'styled-components';
+import * as handlebars from 'handlebars/dist/cjs/handlebars';
 
 interface TemplateFormProps {
   onCancel?: () => void;
@@ -39,7 +40,13 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
     if (subject.length === 0 || body.length === 0) {
       return false;
     }
-    return true;
+    try {
+      handlebars.parse(body);
+      handlebars.parse(subject);
+      return true;
+    } catch (e) {
+      return false;
+    }
   };
   const getModalState = () => {
     if (disabled) {

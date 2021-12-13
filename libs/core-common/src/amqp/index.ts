@@ -76,4 +76,5 @@ export const createAmqpConfigUpdateService = async ({
 };
 
 export { AmqpEventSubscriberService } from './event';
+export { AmqpWorkQueueService } from './work';
 export type { ConfigurationUpdate } from './configuration';

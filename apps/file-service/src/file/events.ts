@@ -1,8 +1,11 @@
 import type { DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
 import type { File } from './types';
 
+export const FILE_UPLOADED_EVENT = 'file-uploaded';
+export const FILE_DELETED_EVENT = 'file-deleted';
+
 export const FileUploadedDefinition: DomainEventDefinition = {
-  name: 'file-uploaded',
+  name: FILE_UPLOADED_EVENT,
   description: 'Signalled when a file is uploaded.',
   payloadSchema: {
     type: 'object',
@@ -22,7 +25,7 @@ export const FileUploadedDefinition: DomainEventDefinition = {
 };
 
 export const FileDeletedDefinition: DomainEventDefinition = {
-  name: 'file-deleted',
+  name: FILE_DELETED_EVENT,
   description: 'Signalled when a file is deleted.',
   payloadSchema: {
     type: 'object',
@@ -43,7 +46,7 @@ export const FileDeletedDefinition: DomainEventDefinition = {
 
 export function fileUploaded(user: User, file: File): DomainEvent {
   return {
-    name: 'file-uploaded',
+    name: FILE_UPLOADED_EVENT,
     tenantId: user.tenantId,
     timestamp: new Date(),
     correlationId: file.recordId,
@@ -59,7 +62,7 @@ export function fileUploaded(user: User, file: File): DomainEvent {
 
 export function fileDeleted(user: User, file: File): DomainEvent {
   return {
-    name: 'file-deleted',
+    name: FILE_DELETED_EVENT,
     tenantId: user.tenantId,
     timestamp: new Date(),
     correlationId: file.recordId,

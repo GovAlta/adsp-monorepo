@@ -29,3 +29,5 @@ items:
       CLIENT_SECRET:
       BLOB_ACCOUNT_NAME:
       BLOB_ACCOUNT_KEY:
+      AMQP_USER: file-service
+      AMQP_PASSWORD:
