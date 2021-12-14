@@ -45,35 +45,35 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
         <>
           <Title>{tenantName}</Title>
           <NavLink to="/admin" exact={true} activeClassName="current" title="Dashboard">
-            <img src={DashboardIcon} width="16" alt="Dashboard" />
+            <img src={DashboardIcon} width="16" alt="Admin Dashboard" />
             <span>Dashboard</span>
           </NavLink>
           {hasAdminRole && (
             <>
               <NavLink to="/admin/event-log" activeClassName="current" title="Event log">
-                <img src={ReceiptIcon} width="16" alt="Admin" />
+                <img src={ReceiptIcon} width="16" alt="Admin Event log" />
                 <span>Event log</span>
               </NavLink>
 
               <Title>Services</Title>
               <NavLink to="/admin/access" activeClassName="current" title="Access">
-                <img src={BarChartIcon} width="16" alt="Access" />
+                <img src={BarChartIcon} width="16" alt="Access Service " />
                 <span>Access</span>
               </NavLink>
               <NavLink to="/admin/services/files" activeClassName="current" title="Files">
-                <img src={FileIcon} width="16" alt="Files" />
+                <img src={FileIcon} width="16" alt="Files Service" />
                 <span>Files</span>
               </NavLink>
               <NavLink to="/admin/services/status" activeClassName="current" title="Status">
-                <img src={FitnessIcon} width="16" alt="Status" />
+                <img src={FitnessIcon} width="16" alt="Status Service" />
                 <span>Status</span>
               </NavLink>
               <NavLink to="/admin/services/events" activeClassName="current" title="Events">
-                <img src={MegaphoneIcon} width="16" alt="Status" />
+                <img src={MegaphoneIcon} width="16" alt="Events Service" />
                 <span>Events</span>
               </NavLink>
               <NavLink to="/admin/services/notifications" activeClassName="current" title="Notifications">
-                <img src={NotificationsIcon} width="16" alt="Notifications" />
+                <img src={NotificationsIcon} width="16" alt="Notifications Service" />
                 <span>Notifications</span>
               </NavLink>
             </>

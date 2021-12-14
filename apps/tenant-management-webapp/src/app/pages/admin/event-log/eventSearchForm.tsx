@@ -8,7 +8,6 @@ import {
   GoAFormItem,
   GoAFormActions,
   GoAFlexRow,
-  GoAInputDateTime,
   GoAIconButton,
   GoAButton,
 } from '@abgov/react-components/experimental';
@@ -54,11 +53,14 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
     setSearchBox(userInput);
     setFilteredSuggestions(unLinked);
     setActiveSuggestionIndex(0);
+
     if (userInput.indexOf(':') === 0) {
       setSearchCriteria({ ...searchCriteria, namespace: '', name: userInput.substr(1) });
     } else if (userInput.indexOf(':') > 0) {
       const nameAndSpace = userInput.split(':');
       setSearchCriteria({ ...searchCriteria, namespace: nameAndSpace[0], name: nameAndSpace[1] });
+    } else {
+      setSearchCriteria({ ...searchCriteria, namespace: '', name: '' });
     }
   };
 
@@ -142,6 +144,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                 value={searchBox}
                 onChange={suggestionOnChange}
                 onKeyDown={onKeyDown}
+                aria-label="Search"
                 onClick={(e) => {
                   e.preventDefault();
                   setError(false);
@@ -154,14 +157,15 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
               <GoAIconButton
                 type={open ? 'close-circle' : 'chevron-down'}
                 size="medium"
-                variant="round"
                 testId="menu-open-close"
+                variant="tertiary"
                 onClick={() => {
                   if (!open && searchBox.length === 0) {
                     setFilteredSuggestions(autoCompleteList);
                   }
                   if (open && searchBox.length > 0) {
                     setSearchBox('');
+                    setSearchCriteria({ ...searchCriteria, namespace: '', name: '' });
                   }
                   setOpen(!open);
                 }}
@@ -185,19 +189,36 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
           </GoAFormItem>
         </SearchBox>
         <GoAFormItem>
-          <label>Minimum Timestamp</label>
-          <GoAInputDateTime name="timestampMin" max={today} value={searchCriteria.timestampMin} onChange={setValue} />
+          <label>Minimum timestamp</label>
+          <DateTimeInput>
+            <input
+              type="datetime-local"
+              name="timestampMin"
+              max={today}
+              aria-label="timestampMin"
+              value={searchCriteria.timestampMin}
+              onChange={(e) => setValue('timestampMin', e.target.value)}
+            />
+          </DateTimeInput>
         </GoAFormItem>
         <GoAFormItem>
-          <label>Maximum Timestamp</label>
-          <GoAInputDateTime name="timestampMax" max={today} value={searchCriteria.timestampMax} onChange={setValue} />
+          <label>Maximum timestamp</label>
+          <DateTimeInput>
+            <input
+              type="datetime-local"
+              name="timestampMax"
+              max={today}
+              aria-label="timestampMax"
+              value={searchCriteria.timestampMax}
+              onChange={(e) => setValue('timestampMax', e.target.value)}
+            />
+          </DateTimeInput>
         </GoAFormItem>
       </GoAFlexRow>
       <GoAFormActions alignment="right">
         <GoAButton
           title="Reset"
-          onClick={(e) => {
-            e.preventDefault();
+          onClick={() => {
             setOpen(false);
             setError(false);
             setSearchCriteria(initCriteria);
@@ -209,8 +230,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
         </GoAButton>
         <GoAButton
           title="Search"
-          onClick={(e) => {
-            e.preventDefault();
+          onClick={() => {
             setOpen(false);
             if (validation()) {
               onSearch(searchCriteria);
@@ -262,5 +282,17 @@ const SearchBox = styled.div`
     color: var(--color-white);
     cursor: pointer;
     font-weight: var(--fw-bold);
+  }
+`;
+
+const DateTimeInput = styled.div`
+  display: flex;
+  align-content: center;
+  line-height: var(--input-height);
+  height: var(--input-height);
+  border: 1px solid var(--color-gray-700);
+  border-radius: 3px;
+  > input {
+    border: none;
   }
 `;

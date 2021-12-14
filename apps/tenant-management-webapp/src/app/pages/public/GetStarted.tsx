@@ -12,19 +12,19 @@ const GetStarted = (): JSX.Element => {
   return (
     <Page>
       <Main>
-        <h2>Let's get you signed in</h2>
+        <h1>Let's get you signed in</h1>
         <p>
           Currently, the Alberta Digital Service Platform only uses the Government of Alberta's account as
           authentication, with plans to expand to other federated login providers in the future.
         </p>
-        <GoAFormActions>
+        <GoAFormActions alignment="left">
           <GoAButton
             buttonType="primary"
             onClick={() => {
               dispatch(TenantCreationLoginInit());
             }}
           >
-            Continue with Government Alberta account
+            Sign in
           </GoAButton>
 
           <GoALinkButton buttonType="secondary" to="/">

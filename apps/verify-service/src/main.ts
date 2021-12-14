@@ -27,7 +27,7 @@ const initializeApp = async (): Promise<express.Application> => {
   const { coreStrategy, tenantStrategy, healthCheck } = await initializePlatform(
     {
       serviceId,
-      displayName: 'Verify Service',
+      displayName: 'Verify service',
       description: 'Service for generating and verifying codes.',
       roles: [
         {

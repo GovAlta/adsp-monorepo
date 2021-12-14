@@ -151,6 +151,18 @@ components:
       - File
     description: Retrieves files.
     parameters:
+      - name: top
+        description: Number of files to return in a page.
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: after
+        description: Cursor for retrieving additional pages.
+        in: query
+        required: false
+        schema:
+          type: string
       - name: criteria
         description: Criteria for files to retrieve.
         in: query

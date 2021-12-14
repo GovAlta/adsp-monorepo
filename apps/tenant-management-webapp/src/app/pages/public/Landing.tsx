@@ -25,20 +25,21 @@ const LandingPage = (): JSX.Element => {
   return (
     <>
       <Header serviceName="" />
-      <GoAHeroBanner title="" backgroundUrl={bannerBackground}>
-        <Container hs={1}>
-          <h1>The Alberta Digital Service Platform</h1>
-          <p>
-            Enabling you to add, configure, and manage a range of services that can integrate with your new or existing
-            project. Quick to deploy, easy to manage and free to use.
-          </p>
-
-          <GoALinkButton buttonType="primary" to="/get-started">
-            Get Started
-          </GoALinkButton>
-        </Container>
-      </GoAHeroBanner>
       <Main>
+        <GoAHeroBanner title="" backgroundUrl={bannerBackground}>
+          <Container hs={1}>
+            <BoldTitle>The Alberta Digital Service Platform</BoldTitle>
+            <p>
+              Enabling you to add, configure, and manage a range of services that can integrate with your new or
+              existing project. Quick to deploy, easy to manage and free to use.
+            </p>
+
+            <GoALinkButton buttonType="primary" to="/get-started">
+              Get Started
+            </GoALinkButton>
+          </Container>
+        </GoAHeroBanner>
+
         <Section>
           <Container vs={3} hs={1}>
             <Grid>
@@ -85,7 +86,7 @@ const LandingPage = (): JSX.Element => {
 
             <Grid>
               <GridItem md={4} vSpacing={1} hSpacing={0.5}>
-                <GoACard title="UI Component Libraries">
+                <GoACard title="UI Component Libraries" type="primary">
                   <div>
                     Common UI components that implement common Government of Alberta styles that can be used across
                     various projects.
@@ -97,15 +98,17 @@ const LandingPage = (): JSX.Element => {
               </GridItem>
 
               <GridItem md={4} vSpacing={1} hSpacing={0.5}>
-                <GoACard title="Keycloak Access Management">
+                <GoACard title="Keycloak Access Management" type="primary">
                   <div>Many GoA Services require secure transmission, storage, and records management of files.</div>
                   <a href={serviceUrls?.accessManagementApi}>Learn More</a>
+                  <div>&nbsp;</div>
                 </GoACard>
               </GridItem>
               <GridItem md={4} vSpacing={1} hSpacing={0.5}>
-                <GoACard title="File service">
+                <GoACard title="File service" type="primary">
                   <div>Many GoA Services require secure transmission, storage, and records management of files.</div>
                   <Link to="/file-service">Learn More</Link>
+                  <div>&nbsp;</div>
                 </GoACard>
               </GridItem>
             </Grid>
@@ -197,4 +200,9 @@ const FooterLinks = styled.div`
 const FooterCopyright = styled.div`
   text-align: center;
   padding: 1rem;
+`;
+const BoldTitle = styled.h1`
+  && {
+    font-weight: var(--fw-bold);
+  }
 `;

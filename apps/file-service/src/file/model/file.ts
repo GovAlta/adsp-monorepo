@@ -103,7 +103,7 @@ export class FileEntity implements File {
   updateScanResult(infected: boolean): Promise<FileEntity> {
     this.scanned = true;
     if (infected) {
-      this.deleted = true;
+      this.infected = true;
     }
 
     return this.repository.save(this);

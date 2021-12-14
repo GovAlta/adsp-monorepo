@@ -62,6 +62,20 @@ const createWebappClientConfig = (id: string): ClientRepresentation => {
   return config;
 };
 
+const createSubscriberAppPublicClientConfig = (id: string): ClientRepresentation => {
+  const config: ClientRepresentation = {
+    id,
+    clientId: environment.SUBSCRIBER_APP_CLIENT_ID,
+    publicClient: true,
+    directAccessGrantsEnabled: false,
+    redirectUris: [`${environment.SUBSCRIBER_APP_HOST}/*`],
+    webOrigins: [environment.SUBSCRIBER_APP_HOST],
+    description: 'Client created by platform team to support the subscriber app. Please do not delete it',
+  };
+
+  return config;
+};
+
 const createTenantAdminComposite = async (
   registeredClients: ServiceClient[],
   realm: string,
@@ -319,6 +333,7 @@ export const createRealm = async (
   try {
     const brokerClientSecret = uuidv4();
     const tenantPublicClientId = uuidv4();
+    const subscriberAppPublicClientId = uuidv4();
     const brokerClient = brokerClientName(realm);
     logger.info(`Start to create IdP broker client on the core for ${realm} realm`);
 
@@ -327,6 +342,7 @@ export const createRealm = async (
     logger.info(`Created IdP broker client on the core realm for ${realm} realm`);
 
     const publicClientConfig = createWebappClientConfig(tenantPublicClientId);
+    const subscriberAppPublicClientConfig = createSubscriberAppPublicClientConfig(subscriberAppPublicClientId);
     const idpConfig = createIdpConfig(brokerClientSecret, brokerClient, FLOW_ALIAS, realm);
 
     const clients = serviceClients.map((registeredClient) =>
@@ -340,7 +356,7 @@ export const createRealm = async (
       displayNameHtml: tenantName,
       loginTheme: 'ads-theme',
       accountTheme: 'ads-theme',
-      clients: [publicClientConfig, ...clients.map((c) => c.client)],
+      clients: [subscriberAppPublicClientConfig, publicClientConfig, ...clients.map((c) => c.client)],
       roles: {
         client: clients.reduce((cs, c) => ({ ...cs, [c.client.clientId]: c.clientRoles }), {}),
       },

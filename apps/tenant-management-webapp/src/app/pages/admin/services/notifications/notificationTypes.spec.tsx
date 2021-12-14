@@ -44,6 +44,9 @@ describe('NotificationTypes Page', () => {
     },
     user: { jwt: { token: '' } },
     session: { realm: 'core' },
+    tenant: {
+      realmRoles: ['uma_auth'],
+    },
   });
 
   it('renders', () => {
@@ -206,39 +209,6 @@ describe('NotificationTypes Page', () => {
     const addBtn = queryByTestId('add-event-notificationId');
     await waitFor(() => {
       fireEvent.click(addBtn);
-    });
-
-    // fields
-    const eventDropDown = queryByTestId('event-dropdown');
-    const cancelBtn = queryByTestId('event-form-cancel');
-    const saveBtn = queryByTestId('event-form-save');
-
-    expect(eventDropDown).toBeTruthy();
-    expect(cancelBtn).toBeTruthy();
-    expect(saveBtn).toBeTruthy();
-
-    // fill
-    fireEvent.click(queryByTestId('event-dropdown'));
-    fireEvent.click(queryByTestId('event-dropdown-option--foo:bar'));
-
-    fireEvent.click(saveBtn);
-
-    const actions = store.getActions();
-
-    const saveAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
-
-    expect(saveAction).toBeTruthy();
-  });
-
-  it('edit an event', async () => {
-    const { queryByTestId } = render(
-      <Provider store={store}>
-        <NotificationTypes />
-      </Provider>
-    );
-    const editBtn = queryByTestId('edit-event-notificationId');
-    await waitFor(() => {
-      fireEvent.click(editBtn);
     });
 
     // fields

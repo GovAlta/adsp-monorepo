@@ -15,6 +15,7 @@ items:
       APP_ENVIRONMENT: Development
       TENANT_WEB_APP_CLIENT_ID: tenant-management-webapp
       TENANT_WEB_APP_HOST: "https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca"
+      SUBSCRIBER_APP_HOST: "https://subscriber-app-core-services-dev.os99.gov.ab.ca"
       LOG_LEVEL: info
   - apiVersion: v1
     kind: Secret

@@ -183,6 +183,15 @@ components:
         required: true
         schema:
           type: string
+      - name: interval
+        description: Interval to get metric aggregates for.
+        required: false
+        schema:
+          type: string
+          enum:
+            - hourly
+            - daily
+            - weekly
       - name: criteria
         description: Criteria for the read.
         in: query
@@ -192,12 +201,6 @@ components:
             schema:
               type: object
               properties:
-                interval:
-                  type: string
-                  enum:
-                    - hourly
-                    - daily
-                    - weekly
                 intervalMax:
                   type: string
                   format: date-time

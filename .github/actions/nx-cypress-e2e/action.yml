@@ -1,0 +1,59 @@
+name: "NX cypress e2e run"
+description: "Executes nx e2e for target project."
+inputs:
+  app:
+    description: APP to run against.
+    required: true
+  environment:
+    description: Environment to run against.
+    required: true
+  tags:
+    description: Tags of suite of tests to run.
+    required: true
+  core-api-client-secret:
+    description: Client secret for the Core realm client.
+    required: true
+  core-api-user-password:
+    description: Password for user in Core realm.
+    required: true
+  api-client-secret:
+    description: Client secret for the test realm client.
+    required: true
+  cy-password:
+    description: Test user password.
+    required: true
+  cy-password-2:
+    description: Test user 2 password.
+    required: true
+  cy-password-3:
+    description: Test user 3 password.
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      run: |
+        sed -i -r \
+          -e "s/\"TAGS\":.+\"\"/\"TAGS\": \"${{ inputs.tags }}\"/" \
+          -e "s/\"core-api-client-secret\":.+\"\"/\"core-api-client-secret\": \"${{ inputs.core-api-client-secret }}\"/" \
+          -e "s/\"core-api-user-password\":.+\"\"/\"core-api-user-password\": \"${{ inputs.core-api-user-password }}\"/" \
+          -e "s/\"client-secret\":.+\"\"/\"client-secret\": \"${{ inputs.api-client-secret }}\"/" \
+          -e "s/\"password\":.+\"\"/\"password\": \"${{ inputs.cy-password }}\"/" \
+          -e "s/\"password2\":.+\"\"/\"password2\": \"${{ inputs.cy-password-2 }}\"/" \
+          -e "s/\"password3\":.+\"\"/\"password3\": \"${{ inputs.cy-password-3 }}\"/" \
+          apps/${{ inputs.app }}-e2e/cypress.${{ inputs.environment }}.json
+    - name: E2E Test
+      uses: cypress-io/github-action@v2
+      with:
+        install-command: npm ci
+        command: npx nx e2e ${{ inputs.app }}-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config="apps/${{ inputs.app }}-e2e/cypress.${{ inputs.environment }}.json"
+    - if: ${{ always() }}
+      shell: bash
+      run: |
+        node apps/${{ inputs.app }}-e2e/src/support/multiple-cucumber-html-reporter.js
+    - if: ${{ always() }}
+      name: Upload Cypress Results
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ inputs.app }}-test-cypress-reports
+        path: dist/cypress/apps/${{ inputs.app }}-e2e/

@@ -47,6 +47,7 @@ export const createRepositories = async ({
     logger.debug(`Try ${count}: connecting to timescale and running migration...`);
     try {
       await knex.migrate.latest();
+      logger.info('Completed running knex migrations on timescale.');
     } catch (err) {
       logger.debug(`Try ${count} failed with error. ${err}`, { context: 'createRepositories' });
       next(err);

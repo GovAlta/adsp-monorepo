@@ -31,13 +31,8 @@ export class FileApi {
   }
 
   async downloadFiles(id: string): Promise<FileService> {
-    this.http.interceptors.request.use((req: AxiosRequestConfig) => {
-      req.headers['responseType'] = ['blob'];
-      return req;
-    });
-
     const url = `${this.fileConfig.endpoints.fileAdmin}/${id}/download`;
-    const res = await this.http.get(url);
+    const res = await this.http.get(url, { responseType: 'blob' });
     return res.data;
   }
 

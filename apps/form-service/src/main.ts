@@ -47,7 +47,7 @@ const initializeApp = async (): Promise<express.Application> => {
   } = await initializePlatform(
     {
       serviceId,
-      displayName: 'Form Service',
+      displayName: 'Form service',
       description: 'Service that provides a model for intake forms completed by applicants and processed by assessors.',
       roles: [
         {

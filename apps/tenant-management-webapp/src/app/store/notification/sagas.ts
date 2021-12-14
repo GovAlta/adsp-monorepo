@@ -14,8 +14,6 @@ import {
   UPDATE_NOTIFICATION_TYPE,
 } from './actions';
 
-import { CREATE_TENANT } from '@store/tenant/actions';
-import { createTenant } from '@store/tenant/sagas';
 import { RootState } from '../index';
 import axios from 'axios';
 
@@ -135,5 +133,4 @@ export function* watchNotificationSagas(): Generator {
   yield takeEvery(FETCH_CORE_NOTIFICATION_TYPE, fetchCoreNotificationTypes);
   yield takeEvery(DELETE_NOTIFICATION_TYPE, deleteNotificationTypes);
   yield takeEvery(UPDATE_NOTIFICATION_TYPE, updateNotificationType);
-  yield takeEvery(CREATE_TENANT, createTenant);
 }

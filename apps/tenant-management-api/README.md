@@ -1,6 +1,6 @@
 # Tenant Management API
 
-The tenant management api is an api for managing tenant information. It will serve as a wrapper for encapuslating keycloak credentials so they don't have to be exposed to the public
+The tenant management api is an api for managing tenant information.
 
 ### Running the service
 Start the service using:

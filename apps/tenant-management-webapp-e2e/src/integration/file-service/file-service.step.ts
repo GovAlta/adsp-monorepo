@@ -362,16 +362,6 @@ When('user goes to {string} tab', function (tabText) {
   cy.wait(2000);
 });
 
-Then('user views file service api documentation', function () {
-  // Verify the api titles
-  fileServiceObj.fileTypesAPIsTitle().then((fileTypesAPITitle) => {
-    expect(fileTypesAPITitle.length).to.be.gt(0); // title element exists
-  });
-  fileServiceObj.filesAPIsTitle().then((filesAPITitle) => {
-    expect(filesAPITitle.length).to.be.gt(0); // title element exists
-  });
-});
-
 Then('the user views file types page', function () {
   // Check if the new file type button presents
   fileServiceObj.newFileTypeButton().then((button) => {
@@ -633,4 +623,31 @@ When('the user removes the file type of {string}, {string}, {string}', function 
 
 Then('the user views an error message for duplicated file name', function () {
   fileServiceObj.fileTypesErrorMessage().invoke('text').should('contain', 'status code 400');
+});
+
+When('the user clicks Delete button for file type {string}, {string}, {string}', function (name, readRole, updateRole) {
+  findFileType(name, readRole, updateRole).then((rowNumber) => {
+    fileServiceObj.fileTypeDeleteButton(rowNumber).click();
+    cy.wait(1000);
+  });
+});
+
+Then('the user views file type current in user modal for {string}', function (fileTypeName) {
+  fileServiceObj.fileTypeModalTitle().invoke('text').should('eq', 'File type current in use');
+  fileServiceObj
+    .fileTypeDeleteModalContent()
+    .invoke('text')
+    .should(
+      'contain',
+      'You are unable to delete the file type ' + fileTypeName + ' because there are files within the file type.'
+    );
+});
+
+When('the user clicks Okay button', function () {
+  fileServiceObj.fileTypeDeleteModalOkayBtn().click();
+  cy.wait(1000);
+});
+
+Then('the user views the file type {string}', function (fileTypeName) {
+  fileServiceObj.fileTypeTableBody().contains('tr', fileTypeName);
 });

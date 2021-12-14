@@ -1,13 +1,31 @@
-400: &400
-  description: Bad request
-401: &401
-  description: Unauthorized
-500: &500
-  description: Internal server error
+components:
+  schemas:
+    Notice:
+      type: object
+      properties:
+        message:
+          type: string
+        tennantServRef:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        mode:
+          type: string
+  responses:
+    BadRequest:
+      description: Bad request
+    Unauthorized:
+      description: Unauthorized
+    InternalServerError:
+      description: Internal server error
 
-'/notice/v1/notices':
+/notice/v1/notices:
   get:
-    tags: [NoticeApplicationEntity]
+    tags: [Notice]
     description: Retrieves all published (mode=active) notices for public user;
       Retrieves all of notices of a tenant for tenant admin;
       Retrieves published notices of a tenant for non tenant admin.
@@ -30,13 +48,9 @@
         required: false
         schema:
           type: string
-      - name: tenantid
-        description: All notices with the given tenant id
-        required: false
-        schema:
-          type: string
       - name: name
-        description: Fetch public (active) notices by tenant name
+        description: Fetch public (active) notices by tenant name.
+        in: query
         required: false
         schema:
           type: string
@@ -44,100 +58,59 @@
       200:
         description: Notices successfully retrieved.
   post:
-    tags: [NoticeApplicationEntity]
+    tags: [Notice]
     description: Creates a notice.
     requestBody:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              message:
-                type: string
-                required: true
-              tennantServRef:
-                type: string
-                required: true
-              startDate:
-                type: date
-                required: true
-              endDate:
-                type: date
-                required: true
-              mode:
-                type: string
-                required: true
+            $ref: "#/components/schemas/Notice"
     responses:
       200:
         description: Notice successfully created.
-      400: *400
-      401: *401
-      500: *500
+      400:
+        $ref: "#/components/responses/BadRequest"
+      401:
+        $ref: "#/components/responses/Unauthorized"
+      500:
+        $ref: "#/components/responses/InternalServerError"
 
-'/notice/v1/notices{id}':
+/notice/v1/notices/{id}:
+  parameters:
+    - name: id
+      description: Notice id.
+      in: path
+      required: true
+      schema:
+        type: string
   get:
-    tags: [NoticeApplicationEntity]
+    tags: [Notice]
     description: Retrieves a single notice.
-    parameters:
-      - name: id
-        description: Notice id.
-        in: path
-        required: true
-        schema:
-          type: string
     responses:
       200:
         description: Notice successfully retrieved.
       404:
         description: Notice not found.
   patch:
-    tags: [NoticeApplicationEntity]
+    tags: [Notice]
     description: Update a notice.
-    parameters:
-      - name: id
-        description: Notice id.
-        in: path
-        required: true
-        schema:
-          type: string
     requestBody:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              message:
-                type: string
-                required: true
-              tennantServRef:
-                type: string
-                required: true
-              startDate:
-                type: date
-                required: true
-              endDate:
-                type: date
-                required: true
-              mode:
-                type: string
-                required: true
+            $ref: "#/components/schemas/Notice"
     responses:
       200:
         description: Notice successfully updated.
-      401: *401
+      401:
+        $ref: "#/components/responses/Unauthorized"
   delete:
-    tags: [NoticeApplicationEntity]
-    description: Deletes notice..
-    parameters:
-      - name: id
-        description: Id of the notice.
-        in: path
-        required: true
-        schema:
-          $ref: '#.../model/NoticeApplicationEntity'
+    tags: [Notice]
+    description: Deletes a notice.
     responses:
       200:
         description: Notice successfully deleted.
-      401: *401
+      401:
+        $ref: "#/components/responses/Unauthorized"
       404:
         description: Notice not found.

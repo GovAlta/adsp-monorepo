@@ -4,59 +4,48 @@ import { ServiceStatusApplicationEntity } from '../model';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { environment } from '../../environments/environment';
 import { TenantService } from '@abgov/adsp-service-sdk';
+import { NotFoundError } from '@core-services/core-common';
 export interface ServiceStatusRouterProps {
   logger: Logger;
   tenantService: TenantService;
   serviceStatusRepository: ServiceStatusRepository;
 }
 
-export function createPublicServiceStatusRouter({ logger, tenantService, serviceStatusRepository }: ServiceStatusRouterProps): Router {
+export function mapApplication(entity: ServiceStatusApplicationEntity): unknown {
+  return {
+    id: entity._id,
+    name: entity.name,
+    description: entity.description,
+    status: entity.status,
+    lastUpdated: entity.statusTimestamp ? new Date(entity.statusTimestamp) : null,
+  };
+}
+
+export function createPublicServiceStatusRouter({
+  logger,
+  tenantService,
+  serviceStatusRepository,
+}: ServiceStatusRouterProps): Router {
   const router = Router();
 
   // Get the public service for the tenant
   router.get('/applications/:name', async (req, res, next) => {
     logger.info(req.method, req.url);
     const { name } = req.params;
-    const searchName = name || environment.PLATFORM_TENANT_REALM;
-    const invalidChars = [
-      '!',
-      '*',
-      "'",
-      '(',
-      ')',
-      ';',
-      ':',
-      '@',
-      '&',
-      '=',
-      '+',
-      '$',
-      ',',
-      '/',
-      '?',
-      '%',
-      '?',
-      '#',
-      '[',
-      ']',
-      '-',
-    ];
+    const searchName = (name || environment.PLATFORM_TENANT_REALM).toLowerCase();
 
-    invalidChars.forEach((char) => {
-      if (name.indexOf(char) !== -1) {
-        res.json([]);
-      }
-    });
-
-    let applications: ServiceStatusApplicationEntity[] = [];
     try {
-      applications = await serviceStatusRepository.find({
-        tenantId: (await tenantService
-          .getTenants())
-          .filter((tenant) => { return tenant.name === searchName })[0]
-          .id.toString()
+      const tenants = await tenantService.getTenants();
+      const tenantId = tenants.find((tenant) => tenant.name.toLowerCase() === searchName)?.id;
+      if (!tenantId) {
+        throw new NotFoundError('tenant', name);
+      }
+
+      const applications = await serviceStatusRepository.find({
+        tenantId: tenantId.toString(),
       });
-      res.json(applications);
+
+      res.json(applications.map(mapApplication));
     } catch (err) {
       const errMessage = `Error getting applications: ${err.message}`;
       logger.error(errMessage);

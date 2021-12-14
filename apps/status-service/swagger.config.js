@@ -1,15 +1,22 @@
 module.exports = {
   openapi: '3.0.0',
   info: {
-    title: 'Status Service',
+    title: 'Status service',
     version: '0.0.0',
-    description:
-      'The status service provides the capability to publish service status information. ',
+    description: 'The status service provides the capability to publish service status information. ',
   },
   tags: [
     {
-      name: 'Subscription',
-      description: 'API to managed subscribers and subscriptions.',
+      name: 'Status',
+      description: 'API to access and updated service status.',
+    },
+    {
+      name: 'Public status',
+      description: 'API to access published application statuses.',
+    },
+    {
+      name: 'Notice',
+      description: 'API to access and updated service notices.',
     },
   ],
   components: {

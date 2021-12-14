@@ -93,6 +93,42 @@ components:
         reason:
           type: string
       required: [operation, channel, address]
+    MySubscriberSubscriptions:
+      type: object
+      properties:
+        typeId:
+          type: string
+        subscriber:
+          $ref: "#/components/schemas/Subscriber"
+        criteria:
+          $ref: "#/components/schemas/SubscriptionCriteria"
+        canUnsubscribe:
+          type: boolean
+    MySubscriberDetails:
+      type: object
+      properties:
+        urn:
+          type: string
+        id:
+          type: string
+        userId:
+          type: string
+        addressAs:
+          type: string
+        channels:
+          type: array
+          items:
+            type: object
+            properties:
+              channel:
+                type: string
+                enum: [email, sms, slack]
+              address:
+                type: string
+        subscriptions:
+          type: array
+          items:
+            $ref: "#/components/schemas/MySubscriberSubscriptions"
     CheckCodeOperation:
       type: object
       properties:
@@ -482,3 +518,22 @@ components:
                       type: number
                     next:
                       type: string
+
+/subscription/v1/subscribers/my-subscriber:
+  parameters:
+    name: includeSubscriptions
+    description: Indicator whether to include user current subscriptions or not
+    in: query
+    required: false
+    schema:
+      type: boolean
+  get:
+    tags: subscription
+    description: Retrievers user subscriber information along with current subscriptions if needed
+    responses:
+      200:
+        description: User subscriber and subscriptions information retrieved successfully
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MySubscriberDetails"

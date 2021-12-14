@@ -34,7 +34,7 @@ describe('ServiceRegistrar', () => {
     axiosMock.post.mockResolvedValue({ data: {} });
     await registrar.register({
       serviceId: adspId`urn:ads:platform:test-service`,
-      displayName: 'Test Service',
+      displayName: 'Test service',
       description: 'This is a test service.',
       configurationSchema: {},
     });
@@ -50,7 +50,7 @@ describe('ServiceRegistrar', () => {
 
     await registrar.register({
       serviceId: adspId`urn:ads:platform:test-service`,
-      displayName: 'Test Service',
+      displayName: 'Test service',
       description: 'This is a test service.',
       events: [
         {
@@ -75,7 +75,7 @@ describe('ServiceRegistrar', () => {
 
     await registrar.register({
       serviceId: adspId`urn:ads:platform:test-service`,
-      displayName: 'Test Service',
+      displayName: 'Test service',
       description: 'This is a test service.',
       configurationSchema: {},
       events: [
@@ -100,7 +100,7 @@ describe('ServiceRegistrar', () => {
 
     await registrar.register({
       serviceId: adspId`urn:ads:platform:test-service`,
-      displayName: 'Test Service',
+      displayName: 'Test service',
       description: 'This is a test service.',
       notifications: [
         {

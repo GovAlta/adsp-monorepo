@@ -11,6 +11,7 @@ import {
   GoAModalTitle,
   GoAIcon,
 } from '@abgov/react-components/experimental';
+import { FetchRealmRoles } from '@store/tenant/actions';
 
 import {
   UpdateNotificationTypeService,
@@ -21,7 +22,7 @@ import {
 import { NotificationItem } from '@store/notification/models';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
-
+import { TemplateForm } from './templateForm';
 const emptyNotificationType: NotificationItem = {
   name: '',
   description: '',
@@ -43,7 +44,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [editEvent, setEditEvent] = useState(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showEventDeleteConfirmation, setShowEventDeleteConfirmation] = useState(false);
-
+  const [showTemplateForm, setShowTemplateForm] = useState(false);
+  const [disableTemplateForm, setDisableTemplateForm] = useState(false);
   const notification = useSelector((state: RootState) => state.notification);
   const coreNotification = useSelector((state: RootState) => state.notification.core);
 
@@ -52,13 +54,16 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   useEffect(() => {
     dispatch(FetchNotificationTypeService());
     dispatch(FetchCoreNotificationTypeService());
+    dispatch(FetchRealmRoles());
   }, [dispatch]);
 
   function reset() {
     setEditType(false);
-    setEditEvent(false);
+    setEditEvent(null);
     setSelectedType(emptyNotificationType);
     setErrors({});
+    setShowTemplateForm(false);
+    setDisableTemplateForm(false);
   }
 
   useEffect(() => {
@@ -66,6 +71,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       setSelectedType(null);
       setEditType(true);
       activateEdit(false);
+      setShowTemplateForm(false);
     }
   }, [activeEdit]);
 
@@ -106,37 +112,52 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           <div className="topBottomMargin" key={notificationType.name}>
             <GoACard
               title={
-                <div className="rowFlex">
-                  <h2 className="flex1">{notificationType.name}</h2>
-                  <MaxHeight height={30} className="rowFlex">
-                    <a
-                      className="flex1"
-                      data-testid={`edit-notification-type-${notificationType.id}`}
-                      onClick={() => {
-                        setSelectedType(notificationType);
-                        setEditType(true);
-                      }}
-                    >
-                      <NotificationBorder className="smallPadding">
-                        <GoAIcon type="create" />
-                      </NotificationBorder>
-                    </a>
-                    <a
-                      className="flex1"
-                      onClick={() => {
-                        setSelectedType(notificationType);
-                        setShowDeleteConfirmation(true);
-                      }}
-                      data-testid={`delete-notification-type-${notificationType.id}`}
-                    >
-                      <NotificationBorder className="smallPadding">
-                        <GoAIcon type="trash" />
-                      </NotificationBorder>
-                    </a>
-                  </MaxHeight>
+                <div>
+                  <div className="rowFlex">
+                    <h2 className="flex1">{notificationType.name}</h2>
+                    <MaxHeight height={30} className="rowFlex">
+                      <a
+                        className="flex1"
+                        data-testid={`edit-notification-type-${notificationType.id}`}
+                        onClick={() => {
+                          setSelectedType(notificationType);
+                          setEditType(true);
+                        }}
+                      >
+                        <NotificationBorder className="smallPadding">
+                          <GoAIcon type="create" />
+                        </NotificationBorder>
+                      </a>
+                      <a
+                        className="flex1"
+                        onClick={() => {
+                          setSelectedType(notificationType);
+                          setShowDeleteConfirmation(true);
+                        }}
+                        data-testid={`delete-notification-type-${notificationType.id}`}
+                      >
+                        <NotificationBorder className="smallPadding">
+                          <GoAIcon type="trash" />
+                        </NotificationBorder>
+                      </a>
+                    </MaxHeight>
+                  </div>
+                  <div className="rowFlex smallFont">
+                    <div className="flex1">
+                      Subscriber Roles:{' '}
+                      <b>
+                        {notificationType.subscriberRoles
+                          .filter((value) => value !== 'anonymousRead')
+                          .map(
+                            (roles, ix) => roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
+                          )}{' '}
+                      </b>
+                    </div>
+                    <div>Public Subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}</div>
+                  </div>
                 </div>
               }
-              description={notificationType.description}
+              description={`Description: ${notificationType.description}`}
             >
               <Grid>
                 {notificationType.events.map((event, key) => (
@@ -144,33 +165,56 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                     <EventBorder>
                       <MaxHeight height={168}>
                         <div className="rowFlex">
-                          <div className="flex1">{event.name}</div>
+                          <div className="flex1">
+                            {event.namespace}:{event.name}
+                          </div>
                           <div className="rowFlex">
                             <MaxHeight height={34}>
-                              <a
-                                className="flex1 flex"
-                                onClick={() => {
-                                  setSelectedEvent(event);
-                                  setSelectedType(notificationType);
-                                  setShowEventDeleteConfirmation(true);
-                                }}
-                                data-testid={`delete-event-${notificationType.id}`}
-                              >
-                                <NotificationBorder className="smallPadding">
+                              <NotificationBorder className="smallPadding">
+                                <a
+                                  className="flex1 flex"
+                                  onClick={() => {
+                                    setSelectedEvent(event);
+                                    setSelectedType(notificationType);
+                                    setShowEventDeleteConfirmation(true);
+                                  }}
+                                  data-testid={`delete-event-${notificationType.id}`}
+                                >
                                   <GoAIcon type="trash" />
-                                </NotificationBorder>
-                              </a>
+                                </a>
+                              </NotificationBorder>
                             </MaxHeight>
                           </div>
                         </div>
                         <div className="columnFlex height-100">
                           <div className="flex1 flex flexEndAlign">
+                            <NotificationBorder className="smallPadding">
+                              <a className="noCursor">
+                                <GoAIcon type="mail" style="filled" />
+                              </a>
+                            </NotificationBorder>
+
                             <div className="rightAlignEdit">
+                              <a
+                                style={{ marginRight: '20px' }}
+                                data-testid={`preview-event-${notificationType.id}`}
+                                onClick={() => {
+                                  setSelectedEvent(event);
+                                  setSelectedType(notificationType);
+                                  setShowTemplateForm(true);
+                                  setDisableTemplateForm(true);
+                                }}
+                              >
+                                Preview
+                              </a>
+
                               <a
                                 data-testid={`edit-event-${notificationType.id}`}
                                 onClick={() => {
                                   setSelectedEvent(event);
-                                  manageEvents(notificationType);
+                                  setSelectedType(notificationType);
+                                  setShowTemplateForm(true);
+                                  setDisableTemplateForm(false);
                                 }}
                               >
                                 Edit
@@ -193,7 +237,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           manageEvents(notificationType);
                         }}
                       >
-                        + Select an Event
+                        + Select an event
                       </GoAButton>
                     </EventButtonWrapper>
                     <div>Domain events represent key changes at a domain model level.</div>
@@ -220,8 +264,32 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 {notificationType?.events?.map((event, key) => (
                   <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
                     <EventBorder>
-                      <div className="height-100 rowFlex">
-                        <div className="flex1">{event.name}</div>
+                      <div className="height-100 columnFlex">
+                        <div className="flex1">
+                          {event.namespace}:{event.name}
+                        </div>
+                        <div className="rowFlex">
+                          <NotificationBorder className="smallPadding">
+                            <a className="noCursor">
+                              <GoAIcon type="mail" style="filled" />
+                            </a>
+                          </NotificationBorder>
+
+                          <div className="rightAlignEdit">
+                            <a
+                              style={{ marginRight: '20px' }}
+                              data-testid={`preview-event-${notificationType.id}`}
+                              onClick={() => {
+                                setSelectedEvent(event);
+                                setSelectedType(notificationType);
+                                setShowTemplateForm(true);
+                                setDisableTemplateForm(true);
+                              }}
+                            >
+                              Preview
+                            </a>
+                          </div>
+                        </div>
                       </div>
                     </EventBorder>
                   </GridItem>
@@ -238,7 +306,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         <GoAModalTitle>Delete notification type</GoAModalTitle>
         <GoAModalContent>Delete {selectedType?.name}?</GoAModalContent>
         <GoAModalActions>
-          <GoAButton buttonType="tertiary" data-testid="delete-cancel" onClick={() => setShowDeleteConfirmation(false)}>
+          <GoAButton
+            buttonType="tertiary"
+            data-testid="delete-cancel"
+            onClick={() => {
+              setShowDeleteConfirmation(false);
+              setSelectedType(emptyNotificationType);
+            }}
+          >
             Cancel
           </GoAButton>
           <GoAButton
@@ -247,6 +322,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             onClick={() => {
               setShowDeleteConfirmation(false);
               dispatch(DeleteNotificationTypeService(selectedType));
+              setSelectedType(emptyNotificationType);
             }}
           >
             Confirm
@@ -261,7 +337,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           <GoAButton
             buttonType="tertiary"
             data-testid="event-delete-cancel"
-            onClick={() => setShowEventDeleteConfirmation(false)}
+            onClick={() => {
+              setShowEventDeleteConfirmation(false);
+              setSelectedType(emptyNotificationType);
+            }}
           >
             Cancel
           </GoAButton>
@@ -275,6 +354,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               );
               selectedType.events = updatedEvents;
               dispatch(UpdateNotificationTypeService(selectedType));
+              setSelectedType(emptyNotificationType);
             }}
           >
             Confirm
@@ -302,12 +382,30 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         initialValue={editEvent}
         selectedEvent={selectedEvent}
         errors={errors}
-        onSave={(type) => {
-          type.subscriberRoles = [];
+        onNext={(notifications, event) => {
+          setSelectedEvent(event);
+          setSelectedType(notifications);
+          setShowTemplateForm(true);
+        }}
+        onCancel={() => {
+          reset();
+        }}
+      />
+      <TemplateForm
+        initialValue={editEvent}
+        selectedEvent={selectedEvent}
+        notifications={selectedType}
+        open={showTemplateForm}
+        disabled={disableTemplateForm}
+        errors={errors}
+        onSubmit={(type) => {
           dispatch(UpdateNotificationTypeService(type));
+          setShowTemplateForm(false);
           reset();
         }}
         onCancel={() => {
+          setShowTemplateForm(false);
+          setEditEvent(null);
           reset();
         }}
       />
@@ -349,9 +447,17 @@ const MaxHeight = styled.div`
 `;
 
 const NotficationStyles = styled.div`
+  .smallFont {
+    font-size: 12px;
+  }
+
   svg {
     fill: #56a0d8;
     color: #56a0d8;
+  }
+
+  .goa-title {
+    margin-bottom: 14px !important;
   }
 
   .topBottomMargin {
@@ -395,5 +501,8 @@ const NotficationStyles = styled.div`
   .rightAlignEdit {
     text-align: end;
     width: 100%;
+  }
+  .noCursor {
+    cursor: default;
   }
 `;

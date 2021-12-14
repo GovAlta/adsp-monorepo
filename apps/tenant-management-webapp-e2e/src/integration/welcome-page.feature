@@ -21,7 +21,7 @@ Feature: Tenant management welcome page
     Scenario: User created a tenant cannot create another tenant
         Given the user is on the tenant management welcome page
         When the user selects get started button
-        And the user clicks continue with Government Alberta account button
+        And the user clicks Sign in button
         And the user enters "env{email}" and "env{password}", and clicks login button
         Then the user views a message of cannot create another tenant
 
@@ -29,7 +29,7 @@ Feature: Tenant management welcome page
     Scenario: User didn't create a tenant before can create a new tenant
         Given the user is on the tenant management welcome page
         When the user selects get started button
-        And the user clicks continue with Government Alberta account button
+        And the user clicks Sign in button
         And the user enters "env{email2}" and "env{password2}", and clicks login button
         Then the user views create tenant page
         When the user enters "autotest signup" as tenant name and clicks create tenant button
@@ -50,7 +50,7 @@ Feature: Tenant management welcome page
     Scenario: As a non-beta-tester user, I cannot create a new tenant in ADSP
         Given the user is on the tenant management welcome page
         When the user selects get started button
-        And the user clicks continue with Government Alberta account button
+        And the user clicks Sign in button
         And the user enters "env{email3}" and "env{password3}", and clicks login button
         Then the user views a message of cannot create a tenant without beta-tester role
         When the user clicks back to sign in page button

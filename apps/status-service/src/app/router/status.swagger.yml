@@ -1,0 +1,40 @@
+components:
+  schemas:
+    Application:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [operational, reported-issues, maintenance, outage]
+        lastUpdated:
+          type: string
+          format: date-time
+
+/public_status/v1/applications/{tenant}:
+  get:
+    tags: ["Public status"]
+    description: Retrieves tenant applications and their statuses.
+    parameters:
+      - name: tenant
+        description: Name of the tenant to retrieve applications for.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      404:
+        description: Tenant not found.
+      200:
+        description: Successfully retrieved statuses.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Application"

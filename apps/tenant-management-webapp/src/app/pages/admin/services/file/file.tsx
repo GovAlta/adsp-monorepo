@@ -15,7 +15,7 @@ const HelpLink = (): JSX.Element => {
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
   return (
     <>
-      <h5>Helpful links</h5>
+      <h3>Helpful links</h3>
       <a
         rel="noopener noreferrer"
         target="_blank"
@@ -48,7 +48,7 @@ export const File: FunctionComponent = () => {
       <Main>
         {isLoaded ? (
           <>
-            <h2>File services</h2>
+            <h1>File services</h1>
             <Tabs activeIndex={0}>
               <Tab label="Overview">
                 <FileOverview />

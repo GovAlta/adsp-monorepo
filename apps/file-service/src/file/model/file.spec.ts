@@ -303,7 +303,7 @@ describe('File Entity', () => {
 
       entity.updateScanResult(true).then((result) => {
         expect(result.scanned).toBeTruthy();
-        expect(result.deleted).toBeTruthy();
+        expect(result.infected).toBeTruthy();
         done();
       });
     });

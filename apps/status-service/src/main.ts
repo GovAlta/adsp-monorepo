@@ -17,8 +17,10 @@ import {
   HealthCheckStoppedDefinition,
   HealthCheckUnhealthyDefinition,
   HealthCheckHealthyDefinition,
+  ApplicationStatusChangedDefinition,
+  ApplicationNoticePublishedDefinition,
 } from './app/events';
-import { StatusApplicationHealthChange } from './app/notificationTypes';
+import { StatusApplicationHealthChange, StatusApplicationStatusChange } from './app/notificationTypes';
 
 const logger = createLogger('status-service', environment?.LOG_LEVEL || 'info');
 const app = express();
@@ -38,7 +40,7 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
   const { coreStrategy, tenantStrategy, tenantService, eventService } = await initializePlatform(
     {
       serviceId,
-      displayName: 'Status Service',
+      displayName: 'Status service',
       description: 'Service for publishing service status information.',
       roles: [
         {
@@ -52,8 +54,10 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
         HealthCheckStoppedDefinition,
         HealthCheckUnhealthyDefinition,
         HealthCheckHealthyDefinition,
+        ApplicationStatusChangedDefinition,
+        ApplicationNoticePublishedDefinition,
       ],
-      notifications: [StatusApplicationHealthChange],
+      notifications: [StatusApplicationHealthChange, StatusApplicationStatusChange],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),

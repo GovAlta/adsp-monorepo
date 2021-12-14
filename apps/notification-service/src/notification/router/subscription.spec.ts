@@ -423,7 +423,7 @@ describe('subscription router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
     });
 
-    it('can call next with not found', async () => {
+    it('can call with error 400', async () => {
       const req = {
         tenant: {
           id: tenantId,
@@ -439,14 +439,22 @@ describe('subscription router', () => {
         params: { subscriber: 'subscriber' },
         notificationType: new NotificationTypeEntity(notificationType, tenantId),
       };
-      const res = { send: jest.fn() };
+
+      const mockResponse = () => {
+        const res = { send: jest.fn(), status: {}, json: {} };
+        res.status = jest.fn().mockReturnValue(res);
+        res.json = jest.fn().mockReturnValue(res);
+        return res;
+      };
+
+      const res = mockResponse();
       const next = jest.fn();
 
       repositoryMock.getSubscriber.mockResolvedValueOnce(null);
 
       const handler = addTypeSubscription(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(next).toBeCalledWith(expect.any(NotFoundError));
+      expect(res.status).toHaveBeenCalledWith(400);
     });
   });
 
@@ -671,7 +679,7 @@ describe('subscription router', () => {
           roles: [ServiceUserRoles.SubscriptionAdmin],
         },
         query: {},
-        body: { addressAs: 'tester' },
+        body: { addressAs: 'tester@test.com', email: 'tester@test.com' },
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -679,15 +687,24 @@ describe('subscription router', () => {
       const subscriber = new SubscriberEntity(repositoryMock, {
         id: 'subscriber',
         tenantId,
-        addressAs: 'tester',
+        addressAs: 'tester@test.com',
         channels: [],
       });
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
 
       const handler = createSubscriber(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(expect.objectContaining({ addressAs: 'tester' }));
-      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ addressAs: 'tester' }));
+      expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(
+        expect.objectContaining({
+          addressAs: 'tester@test.com',
+          userId: 'tester@test.com',
+        })
+      );
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          addressAs: 'tester@test.com',
+        })
+      );
     });
 
     it('can create user subscriber', async () => {
@@ -910,7 +927,13 @@ describe('subscription router', () => {
           email: 'tester@test.co',
           roles: [ServiceUserRoles.SubscriptionAdmin],
         },
-        body: { addressAs: 'Best Tester' },
+        body: {
+          addressAs: 'tester',
+          channels: [],
+          id: 'subscriber',
+          urn: 'urn:ads:platform:notification-service:v1:/subscribers/subscriber',
+          userId: undefined,
+        },
         subscriber,
       };
       const res = { send: jest.fn() };

@@ -13,7 +13,7 @@ export const Events: FunctionComponent = () => {
   return (
     <Page>
       <Main>
-        <h2>Events</h2>
+        <h1>Events</h1>
         <Tabs activeIndex={0}>
           <Tab label="Overview">
             <EventsOverview />
@@ -24,23 +24,26 @@ export const Events: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <h5>Helpful links</h5>
-        <a
-          rel="noopener noreferrer"
-          target="_blank"
-          href={`${docBaseUrl}?tenant=${tenantId}&urls.primaryName=Event Service`}
-        >
-          Read the API docs
-        </a>
-        <br />
-        <a
-          rel="noopener noreferrer"
-          target="_blank"
-          href="https://gitlab.gov.ab.ca/dio/core/core-services/-/tree/master/apps/event-service"
-        >
-          See the code
-        </a>
-        <SupportLinks />
+        <>
+          <h3>Helpful links</h3>
+          <a
+            rel="noopener noreferrer"
+            target="_blank"
+            href={`${docBaseUrl}?tenant=${tenantId}&urls.primaryName=Event service`}
+          >
+            Read the API docs
+          </a>
+          <br />
+          <a
+            rel="noopener noreferrer"
+            target="_blank"
+            href="https://gitlab.gov.ab.ca/dio/core/core-services/-/tree/master/apps/event-service"
+          >
+            See the code
+          </a>
+
+          <SupportLinks />
+        </>
       </Aside>
     </Page>
   );

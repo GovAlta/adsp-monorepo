@@ -11,6 +11,7 @@ interface MongoRepositoryProps {
   MONGO_DB: string;
   MONGO_USER: string;
   MONGO_PASSWORD: string;
+  MONGO_TLS: boolean;
 }
 
 export const createRepositories = ({
@@ -19,9 +20,10 @@ export const createRepositories = ({
   MONGO_DB,
   MONGO_USER,
   MONGO_PASSWORD,
+  MONGO_TLS,
 }: MongoRepositoryProps): Promise<Repositories & { installationStore: InstallationStore }> =>
   new Promise((resolve, reject) => {
-    const mongoConnectionString = `${MONGO_URI}/${MONGO_DB}`;
+    const mongoConnectionString = `${MONGO_URI}/${MONGO_DB}?ssl=${MONGO_TLS}`;
     connect(
       mongoConnectionString,
       {

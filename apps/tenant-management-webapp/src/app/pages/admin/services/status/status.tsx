@@ -15,7 +15,7 @@ import { Route, Switch, useHistory, useLocation } from 'react-router-dom';
 import styled, { CSSProperties } from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import GoALinkButton from '@components/LinkButton';
-import { GoAButton, GoARadio, GoARadioGroup } from '@abgov/react-components';
+import { GoAButton, GoARadio, GoARadioGroup, GoACheckbox } from '@abgov/react-components';
 import {
   GoABadge,
   GoAModal,
@@ -29,6 +29,7 @@ import type { GoABadgeType } from '@abgov/react-components/experimental';
 import ApplicationFormModal from './form';
 import NoticeModal from './noticeModal';
 import { setApplicationStatus } from '@store/status/actions/setApplicationStatus';
+import { SubscribeSubscriberService, getSubscriber, getSubscription, Unsubscribe } from '@store/subscription/actions';
 import { Tab, Tabs } from '@components/Tabs';
 import { getNotices } from '@store/notice/actions';
 import { NoticeList } from './noticeList';
@@ -38,11 +39,15 @@ function Status(): JSX.Element {
   const dispatch = useDispatch();
   const history = useHistory();
 
-  const { applications, serviceStatusAppUrl, tenantName } = useSelector((state: RootState) => ({
-    applications: state.serviceStatus.applications,
-    serviceStatusAppUrl: state.config.serviceUrls.serviceStatusAppUrl,
-    tenantName: state.tenant.name,
-  }));
+  const { applications, serviceStatusAppUrl, tenantName, subscriber, subscription } = useSelector(
+    (state: RootState) => ({
+      applications: state.serviceStatus.applications,
+      serviceStatusAppUrl: state.config.serviceUrls.serviceStatusAppUrl,
+      tenantName: state.tenant.name,
+      subscriber: state.subscription.subscriber,
+      subscription: state.subscription.subscription,
+    })
+  );
 
   const location = useLocation();
 
@@ -50,10 +55,14 @@ function Status(): JSX.Element {
 
   useEffect(() => {
     dispatch(fetchServiceStatusApps());
-    const intervalId = setInterval(() => dispatch(fetchServiceStatusApps()), 30000);
-
-    return () => clearInterval(intervalId);
   }, []);
+
+  useEffect(() => {
+    if (applications && applications.length > 0) {
+      const intervalId = setInterval(() => dispatch(fetchServiceStatusApps()), 30000);
+      return () => clearInterval(intervalId);
+    }
+  }, [applications]);
 
   const publicStatusUrl = `${serviceStatusAppUrl}/${tenantName.replace(/\s/g, '-').toLowerCase()}`;
 
@@ -62,14 +71,23 @@ function Status(): JSX.Element {
   };
 
   useEffect(() => {
-    if (activeIndex != null) {
-      setActiveIndex(null);
-    }
-  }, [activeIndex]);
+    dispatch(getNotices());
+    dispatch(getSubscriber());
+  }, []);
 
   useEffect(() => {
-    dispatch(getNotices());
-  }, []);
+    if (subscriber) {
+      dispatch(getSubscription({ data: { type: 'status-application-health-change', data: subscriber } }));
+    }
+  }, [subscriber]);
+
+  const subscribeToggle = () => {
+    if (subscription) {
+      dispatch(Unsubscribe({ data: { type: 'status-application-health-change', data: subscriber } }));
+    } else {
+      dispatch(SubscribeSubscriberService({ data: { type: 'status-application-health-change' } }));
+    }
+  };
 
   const addApplication = () => {
     setActiveIndex(1);
@@ -79,12 +97,12 @@ function Status(): JSX.Element {
   return (
     <Page>
       <Main>
-        <h2>Service status</h2>
+        <h1>Service status</h1>
         <Tabs activeIndex={activeIndex}>
           <Tab label="Overview">
             This service allows for easy monitoring of application downtime.
             <p>
-              Each Application should represent a service that is useful to the end user by itself, such as child care
+              Each application should represent a service that is useful to the end user by itself, such as child care
               subsidy and child care certification
             </p>
             <GoAButton data-testid="add-application" onClick={() => addApplication()} buttonType="primary">
@@ -98,12 +116,27 @@ function Status(): JSX.Element {
               database, storage servers, etc)
             </p>
             <p>
-              Each Application should represent a service that is useful to the end user by itself, such as child care
+              Each application should represent a service that is useful to the end user by itself, such as child care
               subsidy and child care certification
             </p>
-            <GoALinkButton data-testid="add-application" to={`${location.pathname}/new`} buttonType="primary">
-              Add application
-            </GoALinkButton>
+            <p>
+              <GoALinkButton data-testid="add-application" to={`${location.pathname}/new`} buttonType="primary">
+                Add application
+              </GoALinkButton>
+            </p>
+            <p>
+              <b>Do you want to subscribe and receive notifications for application health changes?</b>
+            </p>
+            <GoACheckbox
+              name="subscribe"
+              checked={!!subscription}
+              onChange={() => {
+                subscribeToggle();
+              }}
+              value="subscribed"
+            >
+              I want to subscribe and receive notifications
+            </GoACheckbox>
             <ApplicationList>
               {applications.map((app) => (
                 <Application key={app._id} {...app} />
@@ -121,7 +154,7 @@ function Status(): JSX.Element {
             <NoticeList />
           </Tab>
           <Tab label="Guidelines">
-            Guidelines for choosing a health check endpoint:
+            <p>Guidelines for choosing a health check endpoint:</p>
             <ol>
               <li>A Health check endpoint needs to be publicly accessible over the internet</li>
               <li>
@@ -138,10 +171,24 @@ function Status(): JSX.Element {
             </ol>
           </Tab>
         </Tabs>
+        <Switch>
+          <Route path="/admin/services/status/new">
+            <ApplicationFormModal isOpen={true} />
+          </Route>
+          <Route path="/admin/services/status/notice/new">
+            <NoticeModal isOpen={true} title="Add a draft notice" />
+          </Route>
+          <Route path="/admin/services/status/notice/:noticeId">
+            <NoticeModal isOpen={true} title="Edit draft notice" />
+          </Route>
+          <Route path="/admin/services/status/:applicationId/edit">
+            <ApplicationFormModal isOpen={true} />
+          </Route>
+        </Switch>
       </Main>
 
       <Aside>
-        <h5>Helpful links</h5>
+        <h3>Helpful links</h3>
         <a
           rel="noopener noreferrer"
           target="_blank"
@@ -168,21 +215,6 @@ function Status(): JSX.Element {
           afterShow={() => _afterShow(publicStatusUrl)}
         />
       </Aside>
-
-      <Switch>
-        <Route path="/admin/services/status/new">
-          <ApplicationFormModal isOpen={true} />
-        </Route>
-        <Route path="/admin/services/status/notice/new">
-          <NoticeModal isOpen={true} title="Add a draft notice" />
-        </Route>
-        <Route path="/admin/services/status/notice/:noticeId">
-          <NoticeModal isOpen={true} title="Edit draft notice" />
-        </Route>
-        <Route path="/admin/services/status/:applicationId/edit">
-          <ApplicationFormModal isOpen={true} />
-        </Route>
-      </Switch>
     </Page>
   );
 }
@@ -312,7 +344,9 @@ function Application(app: ServiceStatusApplication) {
                 orientation="vertical"
               >
                 {PublicServiceStatusTypes.map((statusType) => (
-                  <GoARadio value={statusType}>{formatStatus(statusType)}</GoARadio>
+                  <GoARadio key={statusType} value={statusType}>
+                    {formatStatus(statusType)}
+                  </GoARadio>
                 ))}
               </GoARadioGroup>
             </GoAFormItem>
@@ -408,7 +442,7 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
     }
 
     return app.internalStatus;
-  }
+  };
 
   const status = getStatus(app);
 
@@ -416,7 +450,7 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
     <div style={css}>
       <StatusBarDetails>
         <span></span>
-        <small style={{ textTransform: 'capitalize' }} className={status === 'pending' && 'blink-text'}>
+        <small style={{ textTransform: 'capitalize' }} className={status === 'pending' ? 'blink-text' : ''}>
           {status}
         </small>
       </StatusBarDetails>
@@ -429,8 +463,8 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
               backgroundColor: entry.ok
                 ? 'var(--color-green)'
                 : entry.status === 'n/a'
-                  ? 'var(--color-gray-300)'
-                  : 'var(--color-red)',
+                ? 'var(--color-gray-300)'
+                : 'var(--color-red)',
             }}
             title={entry.status + ': ' + new Date(entry.timestamp).toLocaleString()}
           />
@@ -447,15 +481,21 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
 const StatusBarDetails = styled.div`
   display: flex;
   justify-content: space-between;
-  .blink-text{
-		color: var(--color-black);
+  .blink-text {
+    color: var(--color-black);
     animation: blinkingText 1.5s infinite;
-	}
-	@keyframes blinkingText{
-		0%		{  color: var(--color-black)}
-    50%   {  color: var(--color-black)}
-		100%	{  color: var(--color-white)}
-	}
+  }
+  @keyframes blinkingText {
+    0% {
+      color: var(--color-black);
+    }
+    50% {
+      color: var(--color-black);
+    }
+    100% {
+      color: var(--color-white);
+    }
+  }
 `;
 
 const EndpointStatusEntries = styled.div`

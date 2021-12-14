@@ -4,11 +4,11 @@ class FileServicePage {
   }
 
   enableServiceButton() {
-    return cy.get('button:contains("Enable Service")');
+    return cy.get('button:contains("Enable service")');
   }
 
   disableServiceButton() {
-    return cy.get('button:contains("Disable Service")');
+    return cy.get('button:contains("Disable service")');
   }
 
   fileServiceTabs() {
@@ -19,14 +19,6 @@ class FileServicePage {
     return cy.xpath(
       `//h2[@class="file-header"]/following-sibling::div[1]//descendant::div[contains(text(), "${text}")]`
     );
-  }
-
-  fileTypesAPIsTitle() {
-    return cy.xpath('//h2[contains(text(), "File types APIs")]');
-  }
-
-  filesAPIsTitle() {
-    return cy.xpath('//h2[contains(text(), "Files APIs")]');
   }
 
   newFileTypeButton() {
@@ -118,6 +110,19 @@ class FileServicePage {
   fileTypesErrorMessage() {
     return cy.get('[data-testid="FileType-0"]');
   }
-}
 
+  fileTypeModalTitle() {
+    return cy.xpath(
+      '//div[@class="modal-root" and @data-state="visible"]/div[@class="modal"]/div[@class="modal-container"]/div[@class="modal-title"]'
+    );
+  }
+
+  fileTypeDeleteModalContent() {
+    return cy.get('[data-testid="file-delete-modal-content"]');
+  }
+
+  fileTypeDeleteModalOkayBtn() {
+    return cy.get('[data-testid="delete-modal-okay-button"]');
+  }
+}
 export default FileServicePage;

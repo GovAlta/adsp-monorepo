@@ -28,7 +28,7 @@ class Common {
 
   serviceTab(service, text) {
     return cy.xpath(
-      `//h2[contains(text(),"${service}")]/following-sibling::div[1]//descendant::div[contains(text(), "${text}")]`
+      `//h1[contains(text(),"${service}")]/following-sibling::div[1]//descendant::div[contains(text(), "${text}")]`
     );
   }
 }

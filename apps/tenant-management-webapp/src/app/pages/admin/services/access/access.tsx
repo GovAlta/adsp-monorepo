@@ -50,7 +50,7 @@ export default function (): JSX.Element {
   return (
     <Page>
       <Main>
-        <h2>Access</h2>
+        <h1>Access</h1>
         <p>
           Access allows you to add a secure sign in to you application and services with minimum effort and
           configuration. No need to deal with storing or authenticating users. It's all available out of the box.
@@ -121,7 +121,7 @@ export default function (): JSX.Element {
       </Main>
 
       <Aside>
-        <h5>Helpful links</h5>
+        <h4>Helpful links</h4>
         <a rel="noopener noreferrer" target="_blank" href="https://gitlab.gov.ab.ca/dio/keycloak-themes">
           See the code
         </a>
@@ -148,7 +148,7 @@ const TitleLinkHeader = styled.div`
   margin-bottom: 0.5rem;
 `;
 
-const Title = styled.h3`
+const Title = styled.h2`
   && {
     margin: 0;
   }

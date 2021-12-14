@@ -6,30 +6,21 @@ import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgo
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { RootState } from '@store/index';
 import { getEventDefinitions } from '@store/event/actions';
-import { EventItem } from '@store/notification/models';
+import { EventItem, Template } from '@store/notification/models';
 
 interface NotificationDefinitionFormProps {
   initialValue?: NotificationItem;
   onCancel?: () => void;
-  onSave?: (definition: NotificationItem) => void;
+  onNext?: (notify: NotificationItem, event: EventItem) => void;
   open: boolean;
   selectedEvent: EventItem;
   errors?: Record<string, string>;
 }
 
-const emptyNotificationDefinition: NotificationItem = {
-  name: '',
-  description: '',
-  events: [],
-  subscriberRoles: [],
-  id: null,
-  publicSubscribe: false,
-};
-
 export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> = ({
   initialValue,
   onCancel,
-  onSave,
+  onNext,
   errors,
   open,
   selectedEvent,
@@ -110,29 +101,26 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
           type="submit"
           onClick={() => {
             const dropdownObject = dropDownOptions.find((dropdown) => dropdown.value === selectedValues[0]);
-
+            const emptyTemplate: Template = {
+              email: {
+                subject: '',
+                body: '',
+              },
+            };
             const eventObject: EventItem = {
               namespace: dropdownObject.nameSpace,
               name: dropdownObject.name,
-              templates: {},
+              templates: emptyTemplate,
               channels: [],
             };
 
-            if (selectedEvent) {
-              const definitionEventIndex = definition?.events?.findIndex(
-                (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`
-              );
+            definition.events.push(eventObject);
+            onNext(definition, eventObject);
 
-              definition.events[definitionEventIndex] = eventObject;
-            } else {
-              definition.events.push(eventObject);
-            }
-
-            onSave(definition);
             setValues(['']);
           }}
         >
-          Save
+          Next
         </GoAButton>
       </GoAModalActions>
     </GoAModal>

@@ -108,8 +108,8 @@ When('the user enters {string} in Description', function (desc) {
   eventsObj.definitionModalDescriptionField().clear().type(desc);
 });
 
-Then('the user views Delete Definition dialog for the definition of {string}', function (name) {
-  eventsObj.deleteDefinitionModalTitle().invoke('text').should('eq', 'Delete Definition');
+Then('the user views Delete definition dialog for the definition of {string}', function (name) {
+  eventsObj.deleteDefinitionModalTitle().invoke('text').should('eq', 'Delete definition');
   eventsObj.deleteDefinitionModalContent().invoke('text').should('contain', name);
 });
 

@@ -9,18 +9,16 @@ export interface ServiceStatus {
   applications: ServiceStatusApplication[];
 }
 
+export interface SubscriberState {
+  subscriber: Subscriber;
+}
+
 export interface ServiceStatusApplication {
-  _id?: string;
-  tenantId: string;
-  tenantName: string;
+  id: string;
   name: string;
   description: string;
-  metadata?: unknown;
-  enabled: boolean;
-  statusTimestamp?: number;
-  status?: ServiceStatusType;
-  internalStatus?: InternalServiceStatusType;
-  endpoint?: ServiceStatusEndpoint;
+  lastUpdated: string;
+  status: ServiceStatusType;
   notices?: Notice[];
 }
 
@@ -35,6 +33,21 @@ export interface ServiceStatusNotifications {
   type: string;
   data: unknown;
   level: 'severe' | '???';
+}
+
+export interface SubscriberChannel {
+  channel?: string;
+  address?: string;
+  verified?: boolean;
+  verifyKey?: string;
+}
+
+export interface Subscriber {
+  tenantId: string;
+  id?: string;
+  channels?: SubscriberChannel[];
+  userId?: string;
+  addressAs: string;
 }
 
 export interface ServiceStatusLog {
@@ -73,11 +86,15 @@ export interface Notices {
 
 export const NoticeInit: Notices = {
   notices: [],
-  allApplicationsNotices: []
+  allApplicationsNotices: [],
 };
 
 export const ApplicationInit: ServiceStatus = {
-  applications: [],
+  applications: null,
+};
+
+export const SubscriberInit: SubscriberState = {
+  subscriber: null,
 };
 
 // Helper functions
@@ -100,7 +117,10 @@ export const bindApplicationsWithNotices = (
   });
   for (const application of applications) {
     const noticesOfApplication = notices.filter((notice) => {
-      return notice.isAllApplications !== true && notice.tennantServRef.find((applicationRef) => applicationRef.id === application._id);
+      return (
+        notice.isAllApplications !== true &&
+        notice.tennantServRef.find((applicationRef) => applicationRef.id === application.id)
+      );
     });
 
     application.notices = sortNotices(noticesOfApplication);
@@ -131,4 +151,4 @@ export const sortApplications = (applications: ServiceStatusApplication[]): Serv
 
 export const toTenantName = (nameInUrl: string): string => {
   return nameInUrl.replace(/-/g, ' ');
-}
+};

@@ -7,20 +7,22 @@ export class NamespaceEntity implements Namespace {
   public name: string;
   public definitions: { [name: string]: EventDefinitionEntity };
 
-  constructor(
-    public validationService: ValidationService,
-    namespace: Namespace,
-    public tenantId: AdspId = null
-  ) {
+  constructor(public validationService: ValidationService, namespace: Namespace, public tenantId: AdspId = null) {
     this.tenantId = namespace.tenantId;
     this.name = namespace.name;
     this.definitions = Object.entries(namespace.definitions || {}).reduce((defs, [name, definition]) => {
       const entity = new EventDefinitionEntity(this, { ...definition, name });
-      validationService.setSchema(entity.getSchemaKey(), entity.payloadSchema || {});
-      return {
-        ...defs,
-        [name]: entity,
-      };
+      try {
+        // Try to set the schema of the definition, but don't register if the schema is invalid.
+        validationService.setSchema(entity.getSchemaKey(), entity.payloadSchema || {});
+
+        return {
+          ...defs,
+          [name]: entity,
+        };
+      } catch (err) {
+        return defs;
+      }
     }, {});
   }
 }

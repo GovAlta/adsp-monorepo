@@ -11,10 +11,11 @@ interface MongoRepositoryProps {
   MONGO_DB: string;
   MONGO_USER: string;
   MONGO_PASSWORD: string;
+  MONGO_TLS: boolean;
 }
 
 export const createRepositories = async ({ logger, ...props }: MongoRepositoryProps): Promise<Repositories> => {
-  const mongoConnectionString = `${props.MONGO_URI}/${props.MONGO_DB}`;
+  const mongoConnectionString = `${props.MONGO_URI}/${props.MONGO_DB}?ssl=${props.MONGO_TLS}`;
   logger.info(`Connected to MongoDB at: ${mongoConnectionString}`);
 
   await connect(mongoConnectionString, {

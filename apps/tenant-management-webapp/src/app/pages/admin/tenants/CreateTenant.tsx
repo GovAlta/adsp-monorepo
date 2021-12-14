@@ -133,7 +133,7 @@ const CreateRealm = (): JSX.Element => {
                     <GoAForm>
                       <GoAFormItem error={notifications[notifications.length - 1]?.message}>
                         <label htmlFor="name">Tenant name</label>
-                        <GoAInput id="name" type="text" value={name} onChange={onChangeName} />
+                        <GoAInput name="name" id="name" type="text" value={name} onChange={onChangeName} />
                       </GoAFormItem>
                       <GoAFormActions alignment="left">
                         {isLoaded ? <TenantCreateView /> : <ButtonLoader />}

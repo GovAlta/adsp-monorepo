@@ -31,7 +31,7 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
 
   return (
     <Actions>
-      <section className="mobile">
+      <div className="mobile">
         <SidebarController onClick={toggleMenu}>
           <img src={MenuIcon} width="24" alt="Menu" style={{ position: 'fixed', right: 0 }} />
           <SidebarWrapper state={menuState.state}>
@@ -41,10 +41,10 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
             <Sidebar type="mobile" />
           </SidebarWrapper>
         </SidebarController>
-      </section>
+      </div>
 
       {props.hasLoginLink ? (
-        <section className="desktop">
+        <div className="desktop">
           {/* For admin pages, only logout is required */}
           {(authenticated === true || props.admin) && (
             <UserIconBox>
@@ -65,7 +65,7 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
               Sign In
             </Link>
           )}
-        </section>
+        </div>
       ) : null}
     </Actions>
   );

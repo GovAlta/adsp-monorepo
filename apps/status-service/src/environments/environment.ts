@@ -13,6 +13,7 @@ export const environment = envalid.cleanEnv(
     MONGO_DB: envalid.str({ default: 'status' }),
     MONGO_USER: envalid.str({ default: '' }),
     MONGO_PASSWORD: envalid.str({ default: '' }),
+    MONGO_TLS: envalid.bool({ default: false }),
     PORT: envalid.num({ default: 3338 }),
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:status-service' }),
     CLIENT_SECRET: envalid.str({ default: '' }),

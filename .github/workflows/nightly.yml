@@ -10,6 +10,7 @@ jobs:
     environment:
       name: Test-e2e
     strategy:
+      fail-fast: false
       matrix:
         app: [tenant-management-webapp, status-app]
     steps:
@@ -21,27 +22,15 @@ jobs:
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-      - run: |
-          sed -i -r \
-            -e "s/\"TAGS\":.+\"\"/\"TAGS\": \"@regression and not @ignore\"/" \
-            -e "s/\"core-api-client-secret\":.+\"\"/\"core-api-client-secret\": \"${{ secrets.CY_CORE_API_CLIENT_SECRET }}\"/" \
-            -e "s/\"core-api-user-password\":.+\"\"/\"core-api-user-password\": \"${{ secrets.CY_CORE_API_USER_PASSWORD }}\"/" \
-            -e "s/\"client-secret\":.+\"\"/\"client-secret\": \"${{ secrets.CY_CLIENT_SECRET }}\"/" \
-            -e "s/\"password\":.+\"\"/\"password\": \"${{ secrets.CY_PASSWORD }}\"/" \
-            -e "s/\"password2\":.+\"\"/\"password2\": \"${{ secrets.CY_PASSWORD2 }}\"/" \
-            -e "s/\"password3\":.+\"\"/\"password3\": \"${{ secrets.CY_PASSWORD3 }}\"/" \
-            apps/${{ matrix.app }}-e2e/cypress.test.json
       - name: E2E Test
-        uses: cypress-io/github-action@v2
+        uses: ./.github/actions/nx-cypress-e2e
         with:
-          install-command: npm ci
-          command: npx nx e2e ${{ matrix.app }}-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config="apps/${{ matrix.app }}-e2e/cypress.test.json"
-      - if: ${{ always() }}
-        run: |
-          node apps/${{ matrix.app }}-e2e/src/support/multiple-cucumber-html-reporter.js
-      - if: ${{ always() }}
-        name: Upload Cypress Results
-        uses: actions/upload-artifact@v2
-        with:
-          name: ${{ matrix.app }}-test-cypress-reports
-          path: dist/cypress/apps/${{ matrix.app }}-e2e/
+          app: ${{ matrix.app }}
+          environment: test
+          tags: "@regression and not @ignore"
+          core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
+          core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
+          api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
+          cy-password: ${{ secrets.CY_PASSWORD }}
+          cy-password-2: ${{ secrets.CY_PASSWORD2 }}
+          cy-password-3: ${{ secrets.CY_PASSWORD3 }}

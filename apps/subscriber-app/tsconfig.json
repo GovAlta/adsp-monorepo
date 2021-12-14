@@ -1,0 +1,40 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "allowJs": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@assets/*": [
+        "assets/*"
+      ],
+      "@components/*": [
+        "app/components/*"
+      ],
+      "@icons/*": [
+        "assets/icons/*"
+      ],
+      "@lib/*": [
+        "app/lib/*"
+      ],
+      "@pages/*": [
+        "app/pages/*"
+      ],
+      "@store/*": [
+        "app/store/*"
+      ],
+    }
+  },
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-# File Service
+# File service
 
 The file service provides the capability to upload and download files.
 Consumers are registered with their own space (tenant) containing file types

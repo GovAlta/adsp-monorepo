@@ -1,0 +1,2 @@
+keycloak_url,realm_id,client_id,client_secret,username,password
+{ keycloak_url },{ realm_id },{ client_id },{ client_secret },{ username },{ password }
