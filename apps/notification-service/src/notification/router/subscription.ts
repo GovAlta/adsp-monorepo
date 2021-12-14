@@ -452,7 +452,6 @@ export function getSubscriberSubscriptions(apiId: AdspId, repository: Subscripti
 export function getMySubscriberDetails(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
   return async (req, res, next) => {
     try {
-      const user = req.user;
       const tenantId = req.tenant?.id;
       const subscriberDetails = mapSubscriber(apiId, req[SUBSCRIBER_KEY]) as SubscriberEntity;
       const { includeSubscriptions } = req.query;
@@ -473,7 +472,6 @@ export function getMySubscriberDetails(apiId: AdspId, repository: SubscriptionRe
           return {
             ...subscription,
             type: typeEntity ? mapType(typeEntity, true) : null,
-            canUnsubscribe: typeEntity.canSubscribe(user, subscriberDetails),
           };
         });
         return res.send({

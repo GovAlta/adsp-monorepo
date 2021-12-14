@@ -102,8 +102,6 @@ components:
           $ref: "#/components/schemas/Subscriber"
         criteria:
           $ref: "#/components/schemas/SubscriptionCriteria"
-        canUnsubscribe:
-          type: boolean
     MySubscriberDetails:
       type: object
       properties:
@@ -521,14 +519,15 @@ components:
 
 /subscription/v1/subscribers/my-subscriber:
   parameters:
-    name: includeSubscriptions
-    description: Indicator whether to include user current subscriptions or not
-    in: query
-    required: false
-    schema:
-      type: boolean
+    - name: includeSubscriptions
+      description: Indicator whether to include user current subscriptions or not
+      in: query
+      required: false
+      schema:
+        type: boolean
   get:
-    tags: subscription
+    tags:
+      - Subscription
     description: Retrievers user subscriber information along with current subscriptions if needed
     responses:
       200:
