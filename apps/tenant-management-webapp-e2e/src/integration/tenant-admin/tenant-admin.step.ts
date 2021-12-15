@@ -462,3 +462,63 @@ Then(
 Then('the user should not have regular admin view', function () {
   tenantAdminObj.dashboardServicesMenuCategory().should('not.exist');
 });
+
+Then('the user search event with {string}', function (namespace) {
+  tenantAdminObj.eventLogSearchBox().click();
+  tenantAdminObj.eventLogSearchBox().type(namespace).click();
+  tenantAdminObj.eventLogSearchBox().should('have.value', namespace);
+  tenantAdminObj.eventLogSearchBtn().click();
+  tenantAdminObj.eventLogResetBtn().click();
+});
+
+Then('the user search with {string}, {string} range', function (minTimestamp, maxTimestamp) {
+  tenantAdminObj.eventLogMinTimesStamp().type(minTimestamp);
+  tenantAdminObj.eventLogMaxTimesStamp().type(maxTimestamp);
+  tenantAdminObj.eventLogSearchBtn().click();
+  tenantAdminObj.eventLogResetBtn().click();
+});
+
+Then('the user search event with {string}, minimum timestamp {string}', function (namespace, minTimestamp) {
+  tenantAdminObj.eventLogSearchBox().type(namespace).click();
+  tenantAdminObj.eventLogMinTimesStamp().type(minTimestamp);
+  tenantAdminObj.eventLogSearchBtn().click();
+  tenantAdminObj.eventLogResetBtn().click();
+});
+
+Then('the user search event with {string}, maximum timestamp {string}', function (namespace, maxTimestamp) {
+  tenantAdminObj.eventLogSearchBox().type(namespace).click();
+  tenantAdminObj.eventLogMaxTimesStamp().type(maxTimestamp);
+  tenantAdminObj.eventLogSearchBtn().click();
+  tenantAdminObj.eventLogResetBtn().click();
+});
+
+Then(
+  'the user search event with {string}, minimum timestamp {string} maximum timestamp {string}',
+  function (namespace, minTimestamp, maxTimestamp) {
+    tenantAdminObj.eventLogSearchBox().type(namespace).click();
+    tenantAdminObj.eventLogMinTimesStamp().type(minTimestamp);
+    tenantAdminObj.eventLogMaxTimesStamp().type(maxTimestamp);
+    tenantAdminObj.eventLogSearchBtn().click();
+    cy.wait(500);
+    //verify that search return 3 row
+    tenantAdminObj.eventTableBody().find('tr').should('have.length', '3');
+  }
+);
+
+When('the user selects the event and click show details', function () {
+  tenantAdminObj
+    .eventTableBody()
+    .find('tr')
+    .eq(0)
+    .within(() => {
+      cy.get('td').eq(3).click(); //click on show details on first row
+    });
+  //verify details of the event body
+  tenantAdminObj.eventDetailsBody().should('contain', '"name": "file-service"');
+  tenantAdminObj.eventHideDetailsBtn().click();
+});
+
+Then('the user reset and load events', function () {
+  tenantAdminObj.eventLogResetBtn().click();
+  tenantAdminObj.eventLoadMoreBtn().click();
+});
