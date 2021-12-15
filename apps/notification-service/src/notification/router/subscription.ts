@@ -238,10 +238,9 @@ export function getSubscribers(apiId: AdspId, repository: SubscriptionRepository
 
 export function createSubscriber(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
   return async (req, res) => {
+    let tenantId;
+    const user = req.user;
     try {
-      let tenantId;
-      const user = req.user;
-
       if (req.tenant?.id) {
         tenantId = req.tenant?.id;
       } else {
@@ -283,6 +282,8 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
       const subscriberEntity = await SubscriberEntity.create(user, repository, subscriber);
       res.send(mapSubscriber(apiId, subscriberEntity));
     } catch (err) {
+      const entity = await repository.getSubscriberByEmail(tenantId, req.body?.email);
+      err.id = entity?.id;
       res.status(400).json({ error: JSON.stringify(err) });
     }
   };
