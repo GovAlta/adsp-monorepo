@@ -99,11 +99,21 @@ class TenantAdminPage {
   }
 
   eventTableBody() {
-    return cy.get('tbody').find('tr');
+    return cy.get('tbody');
   }
 
   eventTableShowDetailsBtn() {
     return cy.get('button:contains("Show details")');
+  }
+  eventLoadMoreBtn() {
+    return cy.get('button:contains("Load more...")');
+  }
+  eventHideDetailsBtn() {
+    return cy.get('button:contains("Hide details")');
+  }
+
+  eventDetailsBody() {
+    return cy.get('.event-details');
   }
 }
 export default TenantAdminPage;
