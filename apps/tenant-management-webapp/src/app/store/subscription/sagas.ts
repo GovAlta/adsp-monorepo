@@ -140,17 +140,18 @@ export function* addTypeSubscription(action: SubscribeSubscriberServiceAction): 
 export function* unsubscribe(action: UnsubscribeAction): SagaIterator {
   const type = action.payload.subscriptionInfo.data.type;
   const id = action.payload.subscriptionInfo.data.data.id;
+  const subscriber = action.payload.subscriptionInfo.data.data;
 
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
 
   if (configBaseUrl && token) {
     try {
-      const data = yield call(axios.delete, `${configBaseUrl}/subscription/v1/types/${type}/subscriptions/${id}`, {
+      yield call(axios.delete, `${configBaseUrl}/subscription/v1/types/${type}/subscriptions/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      yield put(UnsubscribeSuccess(data.data?.deleted));
+      yield put(UnsubscribeSuccess(subscriber));
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
     }
