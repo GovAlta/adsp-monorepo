@@ -5,6 +5,7 @@ import { SubscriberCriteria, SubscriptionSearchCriteria } from '../types';
 
 export interface SubscriptionRepository {
   getSubscriber(tenantId: AdspId, subscriberId: string, byUserId?: boolean): Promise<SubscriberEntity>;
+  getSubscriberByEmail(tenantId: AdspId, email: string): Promise<SubscriberEntity>;
 
   getSubscription(type: NotificationTypeEntity, subscriberId: string): Promise<SubscriptionEntity>;
   getSubscriptions(

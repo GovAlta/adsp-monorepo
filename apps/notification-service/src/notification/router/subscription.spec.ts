@@ -34,6 +34,7 @@ describe('subscription router', () => {
 
   const repositoryMock = {
     getSubscriber: jest.fn(),
+    getSubscriberByEmail: jest.fn(),
     getSubscriptions: jest.fn(),
     getSubscription: jest.fn(),
     findSubscribers: jest.fn(),
@@ -60,6 +61,7 @@ describe('subscription router', () => {
   beforeEach(() => {
     repositoryMock.findSubscribers.mockReset();
     repositoryMock.getSubscriber.mockReset();
+    repositoryMock.getSubscriberByEmail.mockReset();
     repositoryMock.getSubscriptions.mockReset();
     repositoryMock.saveSubscriber.mockClear();
     repositoryMock.saveSubscription.mockReset();

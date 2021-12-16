@@ -27,13 +27,15 @@
   --color-gray-800: hsla(216, 10%, 29%, 1);
   --color-gray-900: hsla(216, 10%, 19%, 1);
 
-  --color-green: hsl(148,100%,26%);
+  --color-green: hsl(148, 100%, 26%);
 
   --color-primary: #0070c4;
   --color-primary-dark: #004f84;
   --color-primary-link: #0067b5;
   --color-white: #f1f1f1;
   --color-active-orange: #feba35;
+
+  --color-blue-border: #0081a2;
 
   /* notices */
   --color-notice-primary: var(--color-primary);

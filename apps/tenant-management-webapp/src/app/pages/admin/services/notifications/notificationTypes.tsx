@@ -58,12 +58,12 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   }, [dispatch]);
 
   function reset() {
+    setShowTemplateForm(false);
+    setDisableTemplateForm(false);
     setEditType(false);
     setEditEvent(null);
     setSelectedType(emptyNotificationType);
     setErrors({});
-    setShowTemplateForm(false);
-    setDisableTemplateForm(false);
   }
 
   useEffect(() => {
@@ -400,13 +400,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         errors={errors}
         onSubmit={(type) => {
           dispatch(UpdateNotificationTypeService(type));
-          setShowTemplateForm(false);
           reset();
         }}
         onCancel={() => {
           setShowTemplateForm(false);
-          setEditEvent(null);
-          reset();
         }}
       />
     </NotficationStyles>
