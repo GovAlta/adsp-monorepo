@@ -277,11 +277,13 @@ objects:
         app: ${APP_NAME}${NAME_SUFFIX}
         component: api
       strategy:
-        activeDeadlineSeconds: 21600
-        recreateParams:
+        type: Rolling
+        rollingParams:
           timeoutSeconds: 600
+          maxUnavailable: 25%
+          maxSurge: 25%
+        activeDeadlineSeconds: 21600
         resources: {}
-        type: Recreate
       template:
         metadata:
           labels:

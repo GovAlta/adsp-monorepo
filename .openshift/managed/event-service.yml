@@ -336,11 +336,13 @@ objects:
         app: event-service${NAME_SUFFIX}
         component: api
       strategy:
-        activeDeadlineSeconds: 21600
-        recreateParams:
+        type: Rolling
+        rollingParams:
           timeoutSeconds: 600
+          maxUnavailable: 25%
+          maxSurge: 25%
+        activeDeadlineSeconds: 21600
         resources: {}
-        type: Recreate
       template:
         metadata:
           labels:
@@ -356,8 +358,6 @@ objects:
               env:
                 - name: PORT
                   value: "3333"
-                - name: AMQP_HOST
-                  value: event-service-rabbitmq-balancer
               imagePullPolicy: IfNotPresent
               name: event-service
               ports:

@@ -83,7 +83,13 @@ objects:
         app: ${APP_NAME}${NAME_SUFFIX}
         component: app
       strategy:
-        type: Recreate
+        type: Rolling
+        rollingParams:
+          timeoutSeconds: 600
+          maxUnavailable: 25%
+          maxSurge: 25%
+        activeDeadlineSeconds: 21600
+        resources: {}
       template:
         metadata:
           labels:
