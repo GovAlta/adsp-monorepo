@@ -3,9 +3,15 @@ export interface Subscription {
   urn?: string;
 }
 
+export interface Channel {
+  address: string;
+  channel: string;
+  verified: boolean;
+}
+
 export interface Subscriber {
   id: string;
-  channels: string;
+  channels: Channel[];
   urn?: string;
 }
 
