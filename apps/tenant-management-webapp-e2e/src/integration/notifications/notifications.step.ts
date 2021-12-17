@@ -94,3 +94,59 @@ Then('the user views delete confirmation modal for {string}', function (cardTitl
 When('the user clicks Confirm button on delete confirmation modal', function () {
   notificationsObj.notificationTypeDeleteConfirmationModalConfirmBtn().click();
 });
+
+Given('a service owner user is on notification types page', function () {
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
+  commonObj
+    .adminMenuItem('/admin/services/notifications')
+    .click()
+    .then(function () {
+      cy.url().should('include', '/admin/services/notifications');
+      cy.wait(4000);
+    });
+  commonObj.serviceTab('Notifications', 'Notification types').click();
+  cy.wait(2000);
+});
+
+When('the user clicks Select event button for {string}', function (cardTitle) {
+  notificationsObj.notificationTypeSelectAnEventBtn(cardTitle);
+});
+
+Then('the user views Select event modal', function () {
+  notificationsObj.notificationTypeSelectAnEventModal().should('exist');
+});
+
+When('the user selects {string} in the event dropdown', function (event) {
+  notificationsObj.notificationTypeSelectAnEventModalEventDropdown().click();
+  notificationsObj.notificationTypeSelectAnEventModalEventDropdownItem(event).click();
+});
+
+Then('the user clicks Save button in Select event modal', function () {
+  notificationsObj.notificationTypeModalSaveBtn().click();
+});
+
+Then('the user {string} the event of {string} in {string}', function (viewOrNot, event, cardTitle) {
+  let numOfMatch = 0;
+  if (viewOrNot == 'views') {
+    notificationsObj.notificationTypeEvents(cardTitle).then((elements) => {
+      for (let i = 0; i < elements.length; i++) {
+        if (elements[i].innerText == event) numOfMatch = numOfMatch + 1;
+      }
+      expect(numOfMatch).equals(1);
+    });
+  } else if (viewOrNot == 'should not view') {
+    notificationsObj.notificationTypeEvents(cardTitle).then((elements) => {
+      for (let i = 0; i < elements.length; i++) {
+        if (elements[i].innerText == event) numOfMatch = numOfMatch + 1;
+      }
+      expect(numOfMatch).equals(0);
+    });
+  } else {
+    expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});

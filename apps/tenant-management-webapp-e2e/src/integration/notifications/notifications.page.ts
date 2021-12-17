@@ -39,15 +39,15 @@ class notificationsPage {
     return cy.get('[data-testid="form-save"]');
   }
 
-  notificationTypeEditBtn(notificationTitle) {
+  notificationTypeEditBtn(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTitle}")]/following-sibling::*//*[@data-testid="icon-create"]`
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/following-sibling::*//*[@data-testid="icon-create"]`
     );
   }
 
-  notificationTypeDeleteBtn(notificationTitle) {
+  notificationTypeDeleteBtn(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTitle}")]/following-sibling::*//*[@data-testid="icon-trash"]`
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/following-sibling::*//*[@data-testid="icon-trash"]`
     );
   }
 
@@ -55,19 +55,19 @@ class notificationsPage {
     return cy.get('[data-testid="add-notification"]');
   }
 
-  notificationTypeCardTitle(notificationTitle) {
-    return cy.xpath(`//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTitle}")]`);
+  notificationTypeCardTitle(notificationTypeTitle) {
+    return cy.xpath(`//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]`);
   }
 
-  notificationTypeSubscriberRoles(notificationTitle) {
+  notificationTypeSubscriberRoles(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTitle}")]/parent::*/following-sibling::*/div[contains(text(),  "Subscriber Roles")]`
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*/div[contains(text(),  "Subscriber Roles")]`
     );
   }
 
-  notificationTypePublicSubscription(notificationTitle) {
+  notificationTypePublicSubscription(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTitle}")]/parent::*/following-sibling::*/div[contains(text(), "Public Subscription")]`
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*/div[contains(text(), "Public Subscription")]`
     );
   }
 
@@ -83,6 +83,40 @@ class notificationsPage {
 
   notificationTypeDeleteConfirmationModalConfirmBtn() {
     return cy.get('[data-testid="delete-confirm"]');
+  }
+
+  notificationTypeSelectAnEventBtn(cardTitle) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]//button[contains(text(), "Select an event")]`
+    );
+  }
+
+  notificationTypeSelectAnEventModal() {
+    return cy.xpath('//*[@data-testid="event-form" and @data-state="visible"]/*[@class="modal"]');
+  }
+
+  notificationTypeSelectAnEventModalTitle() {
+    return cy.xpath(
+      '//*[@data-testid="event-form" and @data-state="visible"]/*[@class="modal"]//*[@class="modal-title"]'
+    );
+  }
+
+  notificationTypeSelectAnEventModalEventDropdown() {
+    return cy.xpath(
+      '//*[@data-testid="event-form" and @data-state="visible"]/*[@class="modal"]//*[@data-testid="event-dropdown"]'
+    );
+  }
+
+  notificationTypeSelectAnEventModalEventDropdownItem(text) {
+    return cy.xpath(
+      `//*[@data-testid="event-form" and @data-state="visible"]/*[@class="modal"]//*[@data-testid="event-dropdown"]/following-sibling::*//*[contains(text(), "${text}")]`
+    );
+  }
+
+  notificationTypeEvents(notificationTypeTitle) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]//ancestor::*[@class="card-content"]//*[@data-testid="card-footer"]//*[@class="flex1"]`
+    );
   }
 }
 
