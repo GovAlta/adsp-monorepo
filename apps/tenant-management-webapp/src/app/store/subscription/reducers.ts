@@ -35,7 +35,7 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       return {
         ...state,
         subscription: null,
-        successMessage: `You are unsubscribed! You will no longer receive notifications on ${addresses.join('; ')}}`,
+        successMessage: `You are unsubscribed! You will no longer receive notifications on ${addresses.join('; ')}`,
       };
     }
     default:
