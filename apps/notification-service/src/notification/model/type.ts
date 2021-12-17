@@ -66,7 +66,7 @@ export class NotificationTypeEntity implements NotificationType {
       throw new UnauthorizedError('User not authorized to unsubscribe.');
     }
 
-    return repository.deleteSubscriptions(this.tenantId, this.id, subscriber.id);
+    return repository.deleteSubscriptions(subscriber.tenantId, this.id, subscriber.id);
   }
 
   generateNotifications(
