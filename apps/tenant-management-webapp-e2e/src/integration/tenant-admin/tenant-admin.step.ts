@@ -522,3 +522,66 @@ Then('the user reset and load events', function () {
   tenantAdminObj.eventLogResetBtn().click();
   tenantAdminObj.eventLoadMoreBtn().click();
 });
+
+When('the user clicks Add definition button', function () {
+  tenantAdminObj.addDefinitionButton().click();
+});
+
+Then('the user views Add definition dialog', function () {
+  tenantAdminObj.definitionModalTitle().invoke('text').should('eq', 'Add definition');
+});
+
+When(
+  'the user enters {string} in Namespace, {string} in Name, {string} in Description',
+  function (namespace, name, desc) {
+    tenantAdminObj.definitionModalNamespaceField().type(namespace);
+    tenantAdminObj.definitionModalNameField().type(name);
+    tenantAdminObj.definitionModalDescriptionField().type(desc);
+  }
+);
+
+When('the user clicks Save button on Definition modal', function () {
+  tenantAdminObj.definitionModalSaveButton().click();
+  cy.wait(1000);
+});
+
+Then(
+  'the user {string} an event definition of {string} and {string} under {string}',
+  function (viewOrNot, eventName, eventDesc, eventNamespace) {
+    switch (viewOrNot) {
+      case 'views':
+        tenantAdminObj.eventWithDesc(eventNamespace, eventName, eventDesc).should('exist');
+        break;
+      case 'should not view':
+        tenantAdminObj.eventWithDesc(eventNamespace, eventName, eventDesc).should('not.exist');
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
+  }
+);
+
+When(
+  'the user clicks {string} button for the definition of {string} and {string} under {string}',
+  function (button, eventName, eventDesc, eventNamespace) {
+    switch (button) {
+      case 'Edit':
+        tenantAdminObj.editDefinitionButton(eventNamespace, eventName, eventDesc).click();
+        break;
+      case 'Delete':
+        tenantAdminObj.deleteDefinitionButton(eventNamespace, eventName, eventDesc).click();
+        break;
+      default:
+        expect(button).to.be.oneOf(['Edit', 'Delete']);
+    }
+  }
+);
+
+Then('the user views Delete definition dialog for the definition of {string}', function (name) {
+  tenantAdminObj.deleteDefinitionModalTitle().invoke('text').should('eq', 'Delete definition');
+  tenantAdminObj.deleteDefinitionModalContent().invoke('text').should('contain', name);
+});
+
+Then('the user clicks Confirm button', function () {
+  tenantAdminObj.deleteDefinitionConfirmButton().click();
+});

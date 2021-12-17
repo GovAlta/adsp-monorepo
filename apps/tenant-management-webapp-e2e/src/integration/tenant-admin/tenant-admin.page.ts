@@ -115,5 +115,63 @@ class TenantAdminPage {
   eventDetailsBody() {
     return cy.get('.event-details');
   }
+
+  addDefinitionButton() {
+    return cy.get('[data-testid="add-definition"]');
+  }
+
+  definitionModalTitle() {
+    return cy.xpath('//*[@data-testid="definition-form" and @data-state="visible"]//div[@class="modal-title"]');
+  }
+
+  definitionModalNamespaceField() {
+    return cy.xpath('//*[@data-testid="definition-form" and @data-state="visible"]//*[@data-testid="form-namespace"]');
+  }
+
+  definitionModalNameField() {
+    return cy.xpath('//*[@data-testid="definition-form" and @data-state="visible"]//*[@data-testid="form-name"]');
+  }
+
+  definitionModalDescriptionField() {
+    return cy.xpath(
+      '//*[@data-testid="definition-form" and @data-state="visible"]//*[@data-testid="form-description"]'
+    );
+  }
+
+  definitionModalSaveButton() {
+    return cy.xpath('//*[@data-testid="definition-form" and @data-state="visible"]//*[@data-testid="form-save"]');
+  }
+
+  eventWithDesc(namespace, eventName, eventDesc) {
+    return cy.xpath(
+      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td[contains(text(), "${eventDesc}")]`
+    );
+  }
+
+  editDefinitionButton(namespace, eventName, eventDesc) {
+    return cy.xpath(
+      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td[@data-testid="description" and contains(text(), "${eventDesc}")]/following-sibling::td//*[@data-testid="edit-details"]`
+    );
+  }
+
+  deleteDefinitionButton(namespace, eventName, eventDesc) {
+    return cy.xpath(
+      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td[@data-testid="description" and contains(text(), "${eventDesc}")]/following-sibling::td//*[@data-testid="delete-details"]`
+    );
+  }
+
+  deleteDefinitionConfirmButton() {
+    return cy.xpath(
+      '//*[@data-testid="delete-confirmation" and @data-state="visible"]//button[@data-testid="delete-confirm"]'
+    );
+  }
+
+  deleteDefinitionModalTitle() {
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//div[@class="modal-title"]');
+  }
+
+  deleteDefinitionModalContent() {
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//div[@class="goa-scrollable"]');
+  }
 }
 export default TenantAdminPage;
