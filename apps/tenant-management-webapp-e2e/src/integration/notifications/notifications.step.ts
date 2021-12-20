@@ -46,11 +46,12 @@ Then('the user clicks save button', function () {
 });
 
 Then(
-  'the user {string} the notification type card of {string}, {string}, {string}',
-  function (viewOrNot, name, roles, publicOrNot) {
+  'the user {string} the notification type card of {string}, {string}, {string}, {string}',
+  function (viewOrNot, name, desc, roles, publicOrNot) {
     roles = roles.replace('Anyone (Anonymous)', '');
     if (viewOrNot == 'views') {
       notificationsObj.notificationTypeCardTitle(name).should('exist');
+      notificationsObj.notificationTypeCardDesc(name).invoke('text').should('contain', desc);
       notificationsObj.notificationTypeSubscriberRoles(name).invoke('text').should('contain', roles);
       notificationsObj.notificationTypePublicSubscription(name).invoke('text').should('contain', publicOrNot);
     } else if (viewOrNot == 'should not view') {

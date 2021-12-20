@@ -59,6 +59,12 @@ class notificationsPage {
     return cy.xpath(`//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTitle}")]`);
   }
 
+  notificationTypeCardDesc(notificationTitle) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTitle}")]//ancestor::*[@data-testid="card-title"]/following-sibling::*[@data-testid="card-content"]`
+    );
+  }
+
   notificationTypeSubscriberRoles(notificationTitle) {
     return cy.xpath(
       `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTitle}")]/parent::*/following-sibling::*/div[contains(text(),  "Subscriber Roles")]`
