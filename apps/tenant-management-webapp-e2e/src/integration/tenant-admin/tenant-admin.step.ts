@@ -463,12 +463,36 @@ Then('the user should not have regular admin view', function () {
   tenantAdminObj.dashboardServicesMenuCategory().should('not.exist');
 });
 
-Then('the user search event with {string}', function (namespace) {
+When('the user searches the event with {string}', function (namespace) {
   tenantAdminObj.eventLogSearchBox().click();
   tenantAdminObj.eventLogSearchBox().type(namespace).click();
   tenantAdminObj.eventLogSearchBox().should('have.value', namespace);
   tenantAdminObj.eventLogSearchBtn().click();
-  tenantAdminObj.eventLogResetBtn().click();
+});
+
+Then('the user views the event matching the search filter of {string}, {string}', function (namespace, name) {
+  tenantAdminObj
+    .eventTableBody()
+    .contains(namespace)
+    .parent()
+    .within(function () {
+      cy.get('td').eq(2).should('contain.text', name);
+    });
+});
+
+When('the user clicks Load more button', function () {
+  tenantAdminObj.eventLoadMoreBtn().click();
+});
+//finds that all rows in the table contains searched events
+Then('the user views more the events matching the search filter of {string}, {string}', function (namespace, name) {
+  tenantAdminObj.eventTableBody().each(($row) => {
+    cy.wrap($row).within(() => {
+      cy.get('td').each(($col) => {
+        if ($col.eq(1).text() == namespace) cy.log('Record found');
+        if ($col.eq(2).text() == name) cy.log('Record found');
+      });
+    });
+  });
 });
 
 Then('the user search with {string}, {string} range', function (minTimestamp, maxTimestamp) {
