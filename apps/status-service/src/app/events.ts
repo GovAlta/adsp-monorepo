@@ -158,8 +158,8 @@ const mapApplication = (application: ServiceStatusApplication): ApplicationEvent
 const mapNotice = (notice: NoticeApplicationEntity): ApplicationNotificationEvent => {
   return {
     description: notice.message,
-    startTimestamp: new Date(notice.startDate),
-    endTimestamp: new Date(notice.endDate),
+    startTimestamp: notice.startDate,
+    endTimestamp: notice.endDate,
     created: notice.created,
   };
 };

@@ -163,7 +163,7 @@ export const StatusApplicationStatusChange: NotificationType = {
       The notice is described as follows: {{ event.payload.notice.description }}
     </p>
     <p>
-      The notice is in effect between {{ event.payload.notice.startTimestamp }} and {{ event.payload.notice.endTimestamp }}
+      The notice is in effect between {{ formatDate event.payload.notice.startTimestamp }} and {{ formatDate event.payload.notice.endTimestamp }}
     </p>
   </body>
 </html>`,
