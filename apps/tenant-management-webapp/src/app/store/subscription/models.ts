@@ -17,7 +17,7 @@ export interface Subscriber {
   id: string;
   urn?: string;
   addressAs?: string;
-  channels?: Channels;
+  channels?: Channels[];
   userId?: string;
 }
 

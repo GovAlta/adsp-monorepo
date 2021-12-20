@@ -1,12 +1,10 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent } from 'react';
 import { useSelector } from 'react-redux';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
-import type { Subscription, Subscriber } from '@store/subscription/models';
+import type { Subscriber } from '@store/subscription/models';
 import styled from 'styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
-
-import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 
 interface SubscriptionProps {
   subscription: Subscriber;
@@ -14,34 +12,23 @@ interface SubscriptionProps {
 }
 
 const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscription }) => {
-  const [showDetails, setShowDetails] = useState(false);
-
   return (
     <>
       <tr>
-        <td headers="name" data-testid="name">
+        <td headers="Address As" data-testid="addressAs">
           {subscription?.addressAs}
         </td>
-        <td headers="description" data-testid="description">
-          {subscription?.userId}
-        </td>
-        <td headers="actions" data-testid="actions">
-          {/* <GoAContextMenu>
-            <GoAContextMenuIcon
-              type={showDetails ? 'eye-off' : 'eye'}
-              onClick={() => setShowDetails(!showDetails)}
-              testId="toggle-details-visibility"
-            />
-          </GoAContextMenu> */}
+        <td headers="Channels" data-testid="channels">
+          {subscription?.channels.map((channel, i) => (
+            <div key={`channels-id-${i}`} style={{ display: 'flex' }}>
+              <div style={{ flex: 1, marginRight: '5px' }}>
+                <b>{channel.channel}: </b>
+              </div>
+              <div>{channel.address}</div>
+            </div>
+          ))}
         </td>
       </tr>
-      {showDetails && (
-        <tr>
-          {/* <td className="payload-details" headers="namespace name description payload" colSpan={5}>
-            <div data-testid="details">{JSON.stringify(subscription.payloadSchema, null, 2)}</div>
-          </td> */}
-        </tr>
-      )}
     </>
   );
 };
@@ -68,38 +55,25 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
     return acc;
   }, {});
 
-  console.log(JSON.stringify(groupedSubscriptions) + '<groupedSubscriptions');
   const orderedGroupNames = Object.keys(groupedSubscriptions).sort((prev, next): number => {
-    // Each group must have at least one element
     if (prev > next) {
       return 1;
     }
     return -1;
   });
 
-  // [group]
-  //               .sort((prev, next): number => {
-  //                 // in each group sort by alphabetic order
-  //                 if (prev.name > next.name) {
-  //                   return 1;
-  //                 }
-  //                 return -1;
-  //               })
-  //   return <div>xxx</div>;
-  // };
   return (
     <div className={className}>
-      {orderedGroupNames.map((group) => (
+      {orderedGroupNames.map((group, index) => (
         <div key={group}>
           <div className="group-name">{group}</div>
-          <DataTable data-testid="events-definitions-table">
-            <thead data-testid="events-definitions-table-header">
+          <DataTable data-testid={`subscription-table-${index}`}>
+            <thead>
               <tr>
-                <th id="name" data-testid="events-definitions-table-header-name">
-                  Name
+                <th id="addressAs" data-testid={`subscription-header-address-as-${index}`}>
+                  Address As
                 </th>
-                <th id="description">Description</th>
-                <th id="actions">Action</th>
+                <th id="channels">Channels</th>
               </tr>
             </thead>
             <tbody>
