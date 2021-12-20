@@ -7,6 +7,7 @@ import { SubscriberEntity } from './subscriber';
 describe('SubscriberEntity', () => {
   const repositoryMock = {
     getSubscriber: jest.fn(),
+    getSubscriberByEmail: jest.fn(),
     getSubscriptions: jest.fn(),
     getSubscription: jest.fn(),
     findSubscribers: jest.fn(),

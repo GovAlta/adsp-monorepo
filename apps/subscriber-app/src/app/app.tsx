@@ -15,6 +15,7 @@ import AuthContext from '@lib/authContext';
 import { ThemeProvider } from 'styled-components';
 import { theme } from 'theme';
 import PublicApp from './publicApp';
+import Subscriptions from '@pages/private/Subscriptions/Subscriptions';
 
 const AppRouters = () => {
   return (
@@ -27,7 +28,7 @@ const AppRouters = () => {
 
         <Route path="/subscriptions/:realm">
           <PrivateApp>
-            <PrivateRoute path="/subscriptions/:realm" component={(props: any) => <div>yolo</div>} />
+            <PrivateRoute path="/subscriptions/:realm" component={Subscriptions} />
           </PrivateApp>
         </Route>
 

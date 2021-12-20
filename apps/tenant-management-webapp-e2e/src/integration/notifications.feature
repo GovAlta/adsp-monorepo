@@ -8,34 +8,15 @@ Feature: Notifications
     Then the user views Add notification modal
     When the user enters "autotest-addNotificationType", "autotest notification desc", "Anyone (Anonymous)"
     And the user clicks save button
-    Then the user "views" the notification type card of "autotest-addNotificationType", "Anyone (Anonymous)", "yes"
+    Then the user "views" the notification type card of "autotest-addNotificationType", "autotest notification desc", "Anyone (Anonymous)", "yes"
     # Verify there is Add notification button on the notification type page as well after saving a new notification type
     And the user views Add notification type button on Notification types page
     When the user clicks "edit" button for the notification type card of "autotest-addNotificationType"
     Then the user views Edit notification type modal for "autotest-addNotificationType"
-    When the user enters "autotest-editNotificationType", "Edit notification type", "auto-test-role1, file-service-admin"
+    When the user enters "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, file-service-admin"
     And the user clicks save button
-    Then the user "views" the notification type card of "autotest-editNotificationType", "auto-test-role1, file-service-admin", "no"
+    Then the user "views" the notification type card of "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, file-service-admin", "no"
     When the user clicks "delete" button for the notification type card of "autotest-editNotificationType"
     Then the user views delete confirmation modal for "autotest-editNotificationType"
     When the user clicks Confirm button on delete confirmation modal
-    Then the user "should not view" the notification type card of "autotest-editNotificationType", "auto-test-role1, file-service-admin", "no"
-
-  @TEST_CS-949 @REQ_CS-277 @regression
-  Scenario: As a service owner, I can add and delete events of a notification type
-    Given a service owner user is on notification types page
-    # Add an event and verify the event can't be added again
-    When the user clicks Select event button for "autotest-notificationType"
-    Then the user views Select event modal
-    When the user selects "tenant-service:tenant-created" in the event dropdown
-    And the user clicks Save button in Select event modal
-    Then the user "views" the event of "tenant-service:tenant-created" in "autotest-notificationType"
-# When the user clicks Select event button for "autotest-notificationType"
-# Then the user views Select event modal
-# When the user cannot select "tenant-service:tenant-created" in the event dropdown
-# And the user clicks Cancel button in Select event modal
-# # Delete an event
-# When the user clicks "delete" button for "tenant-service:tenant-deleted" in "autotest-notificationType"
-# Then the user views Remove event modal for "tenant-service:tenant-deleted"
-# When the user clicks Confirm button
-# Then the user "should not view" "tenant-service:tenant-deleted" in "autotest-notificationType"
+    Then the user "should not view" the notification type card of "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, file-service-admin", "no"
