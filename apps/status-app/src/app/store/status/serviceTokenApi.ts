@@ -42,7 +42,11 @@ export class ServiceTokenApi {
         }
       )
       .catch(function (error) {
-        throw new Error(error?.response?.data?.error);
+        if (JSON.parse(error?.response?.data?.error).id) {
+          return { data: { id: JSON.parse(error?.response?.data?.error).id } };
+        } else {
+          throw new Error(error?.response?.data?.error);
+        }
       });
 
     const res2 = await this.http

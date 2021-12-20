@@ -448,6 +448,73 @@ describe('NotificationTypeEntity', () => {
 
     it('can return notification for criteria match', () => {
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+
+      const entity = new NotificationTypeEntity(
+        {
+          id: 'test-type',
+          name: 'test type',
+          description: null,
+          publicSubscribe: false,
+          subscriberRoles: [],
+          events: [
+            {
+              namespace: 'test-service',
+              name: 'test-started',
+              templates: {
+                [Channel.email]: {
+                  subject: '',
+                  body: '',
+                },
+              },
+              channels: [Channel.email],
+            },
+          ],
+        },
+        tenantId
+      );
+
+      const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
+        tenantId,
+        addressAs: 'Tester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'test@testco.org',
+            verified: false,
+          },
+        ],
+      });
+
+      const subscription = new SubscriptionEntity(
+        repositoryMock as unknown as SubscriptionRepository,
+        { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: { correlationId: '123' } },
+        subscriber
+      );
+
+      const message = {
+        subject: 'test',
+        body: 'test content',
+      };
+      templateServiceMock.generateMessage.mockReturnValueOnce(message);
+
+      const event: DomainEvent = {
+        tenantId,
+        namespace: 'test-service',
+        name: 'test-started',
+        timestamp: new Date(),
+        payload: {},
+        correlationId: '123',
+      };
+
+      const [notification] = entity.generateNotifications(templateServiceMock, event, [subscription]);
+      expect(notification.to).toBe('test@testco.org');
+      expect(notification.channel).toBe(Channel.email);
+      expect(notification.message).toBe(message);
+    });
+
+    it('can return notification for criteria match without tenantid', () => {
+      const tenantId = null;
+
       const entity = new NotificationTypeEntity(
         {
           id: 'test-type',

@@ -39,6 +39,19 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     );
   }
 
+  getSubscriberByEmail(tenantId: AdspId, email: string): Promise<SubscriberEntity> {
+    const criteria: Record<string, string> = {
+      tenantId: tenantId?.toString(),
+      addressAs: email,
+    };
+
+    return new Promise<SubscriberEntity>((resolve, reject) =>
+      this.subscriberModel.findOne(criteria, null, { lean: true }, (err, doc) =>
+        err ? reject(err) : resolve(this.fromDoc(doc))
+      )
+    );
+  }
+
   getSubscription(type: NotificationTypeEntity, subscriberId: string): Promise<SubscriptionEntity> {
     return new Promise<SubscriptionEntity>((resolve, reject) =>
       this.subscriptionModel

@@ -64,11 +64,16 @@ export function* subscribeToTenant(action: SubscribeToTenantAction): SagaIterato
 
     const subscribeResponse = yield call([subscriberApi, subscriberApi.subscribe], tenant, email, type);
 
-    yield put(subscribeToTenantSuccess(subscribeResponse));
+    yield put(subscribeToTenantSuccess(subscribeResponse?.subscriber));
   } catch (e) {
     console.error(e.message);
     if (JSON.parse(e.message).codeName === 'DuplicateKey') {
-      yield put(subscribeToTenantSuccess({ addressAs: email, tenantId: `urn:ads:platform:tenant-service:v2:/tenants/${tenant}`}));
+      yield put(
+        subscribeToTenantSuccess({
+          addressAs: email,
+          tenantId: `urn:ads:platform:tenant-service:v2:/tenants/${tenant}`,
+        })
+      );
     } else {
       yield put(addErrorMessage({ message: e.message }));
     }

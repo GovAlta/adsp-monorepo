@@ -31,7 +31,12 @@ export class NotificationTypeEntity implements NotificationType {
   canSubscribe(user: User, subscriber: Subscriber): boolean {
     // User is an subscription admin, or user has subscriber role and is creating subscription for self.
     return (
-      isAllowedUser(user, this.tenantId, [ServiceUserRoles.SubscriptionAdmin, ServiceUserRoles.SubscriptionApp], true) ||
+      isAllowedUser(
+        user,
+        this.tenantId,
+        [ServiceUserRoles.SubscriptionAdmin, ServiceUserRoles.SubscriptionApp],
+        true
+      ) ||
       (!!user &&
         user?.id === subscriber.userId &&
         (this.publicSubscribe || isAllowedUser(user, this.tenantId, [...this.subscriberRoles])))
@@ -61,7 +66,7 @@ export class NotificationTypeEntity implements NotificationType {
       throw new UnauthorizedError('User not authorized to unsubscribe.');
     }
 
-    return repository.deleteSubscriptions(this.tenantId, this.id, subscriber.id);
+    return repository.deleteSubscriptions(subscriber.tenantId, this.id, subscriber.id);
   }
 
   generateNotifications(
@@ -95,7 +100,7 @@ export class NotificationTypeEntity implements NotificationType {
       return null;
     } else {
       return {
-        tenantId: this.tenantId.toString(),
+        tenantId: this.tenantId?.toString() || subscription.subscriber.tenantId?.toString(),
         type: {
           id: this.id,
           name: this.name,

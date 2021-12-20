@@ -1,22 +1,37 @@
 export interface Subscription {
-  id: string;
-  urn?: string;
+  subscriberId: string;
+  typeId: string;
+  criteria: SubscriptionCriteria;
+  type: SubscriptionType;
 }
-
+export interface SubscriptionCriteria {
+  correlationId?: string;
+  context?: {
+    [key: string]: unknown;
+  };
+}
+export interface SubscriptionType {
+  description: string;
+  id: string;
+  name: string;
+}
+export interface SubscriberChannel {
+  address: string;
+  channel: string;
+  verified: boolean;
+}
 export interface Subscriber {
   id: string;
-  channels: string;
+  channels: SubscriberChannel[];
+  addressAs: string;
   urn?: string;
+  userId?: string;
+  subscriptions?: Subscription[];
 }
-
 export interface SubscriberService {
-  subscription: Subscription;
   subscriber: Subscriber;
-  successMessage: string;
 }
 
 export const SUBSCRIBER_INIT: SubscriberService = {
-  subscription: undefined,
   subscriber: undefined,
-  successMessage: null,
 };
