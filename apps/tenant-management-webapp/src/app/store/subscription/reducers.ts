@@ -4,6 +4,7 @@ import {
   GET_SUBSCRIBER_SUCCESS,
   UNSUBSCRIBE_SUCCESS,
   GET_SUBSCRIPTION_SUCCESS,
+  GET_SUBSCRIPTIONS_SUCCESS,
 } from './actions';
 import { SUBSCRIBER_INIT, SubscriberService } from './models';
 
@@ -19,6 +20,11 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       return {
         ...state,
         subscription: action.payload.subscriberInfo,
+      };
+    case GET_SUBSCRIPTIONS_SUCCESS:
+      return {
+        ...state,
+        subscriptions: action.payload.subscriberInfo,
       };
     case GET_SUBSCRIBER_SUCCESS:
       return {
