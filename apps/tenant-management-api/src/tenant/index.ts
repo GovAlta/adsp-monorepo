@@ -20,7 +20,7 @@ interface TenantMiddlewareProps {
 
 export function applyTenantMiddleware(
   app: Application,
-  { tenantRepository, configurationHandler, eventService, logger }: TenantMiddlewareProps
+  { tenantRepository, configurationHandler, eventService }: TenantMiddlewareProps
 ): Application {
   const tenantRouter = createTenantRouter({ tenantRepository, eventService });
   const tenantV2Router = createTenantV2Router({ tenantRepository });

@@ -17,4 +17,6 @@ export interface Subscriber {
 
 export interface SubscriberCriteria {
   tenantIdEquals?: AdspId;
+  name?: string;
+  email?: string;
 }
