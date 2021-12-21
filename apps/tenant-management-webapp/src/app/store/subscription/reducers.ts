@@ -31,12 +31,19 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
         ...state,
         subscriber: action.payload.subscriberInfo,
       };
-    case UNSUBSCRIBE_SUCCESS:
+    case UNSUBSCRIBE_SUCCESS: {
+      const channels = action.payload?.channels;
+      let addresses: string[] = []
+      if (channels) {
+        addresses = channels.map((c): string => { return c.address })
+      }
+
       return {
         ...state,
         subscription: null,
-        successMessage: 'You have unsubscribed from the notification service!',
+        successMessage: `You are unsubscribed! You will no longer receive notifications on ${addresses.join('; ')}`,
       };
+    }
     default:
       return state;
   }

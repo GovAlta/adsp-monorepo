@@ -70,9 +70,7 @@ export interface UnsubscribeAction {
 
 export interface UnsubscribeSuccessAction {
   type: typeof UNSUBSCRIBE_SUCCESS;
-  payload: {
-    subscriptionInfo: Subscription;
-  };
+  payload: Subscriber;
 }
 
 export interface CreateSubscriberAction {
@@ -162,11 +160,9 @@ export const Unsubscribe = (subscriptionInfo: { data: { type: string; data: Subs
   },
 });
 
-export const UnsubscribeSuccess = (subscriptionInfo: Subscription): UnsubscribeSuccessAction => ({
+export const UnsubscribeSuccess = (subscriber: Subscriber): UnsubscribeSuccessAction => ({
   type: UNSUBSCRIBE_SUCCESS,
-  payload: {
-    subscriptionInfo,
-  },
+  payload: subscriber
 });
 
 export const SubscribeSubscriberSuccess = (notificationInfo: {

@@ -13,18 +13,18 @@ export interface SubscriptionWrapper {
   criterial?: string;
 }
 
+export interface Channels {
+  address?: string;
+  channel?: string;
+  verified?: boolean;
+}
+
 export interface Subscriber {
   id: string;
   urn?: string;
   addressAs?: string;
   channels?: Channels[];
   userId?: string;
-}
-
-export interface Channels {
-  channel?: string;
-  address?: string;
-  verified?: boolean;
 }
 
 export interface SubscriberService {
