@@ -200,9 +200,7 @@ export function* unsubscribe(action: UnsubscribeAction): SagaIterator {
 }
 
 export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
-  //const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
-
-  const configBaseUrl: string = "http://localhost:3335"
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
 
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
   const findSubscriberPath = 'subscription/v1/subscribers';

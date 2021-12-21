@@ -46,9 +46,12 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       };
     }
     case FIND_SUBSCRIBERS_SUCCESS: {
-      // Not necessary to return a new object.
-      state.search.subscribers = { ...action.payload.subscribers }
-      return state
+      return {
+        ...state,
+        search: {
+          subscribers: action.payload.subscribers
+        }
+      }
     }
 
     default:
