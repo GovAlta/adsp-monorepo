@@ -126,13 +126,13 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     if (criteria.email) {
       query.channels = { $elemMatch: { address: criteria.email.toLocaleLowerCase() } };
     }
+
     return new Promise<Results<SubscriberEntity>>((resolve, reject) => {
       this.subscriberModel
         .find(query, null, { lean: true })
         .skip(skip)
         .limit(top)
         .exec((err, docs) => {
-          console.log(docs)
           err
             ? reject(err)
             : resolve({
