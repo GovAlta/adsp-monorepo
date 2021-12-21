@@ -4,6 +4,7 @@ import {
   GET_SUBSCRIBER_SUCCESS,
   UNSUBSCRIBE_SUCCESS,
   GET_SUBSCRIPTION_SUCCESS,
+  FIND_SUBSCRIBERS_SUCCESS
 } from './actions';
 import { SUBSCRIBER_INIT, SubscriberService } from './models';
 
@@ -38,6 +39,12 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
         successMessage: `You are unsubscribed! You will no longer receive notifications on ${addresses.join('; ')}`,
       };
     }
+    case FIND_SUBSCRIBERS_SUCCESS: {
+      // Not necessary to return a new object.
+      state.search.subscribers = { ...action.payload.subscribers }
+      return state
+    }
+
     default:
       return state;
   }

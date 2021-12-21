@@ -19,10 +19,21 @@ export interface SubscriberService {
   subscription: Subscription;
   subscriber: Subscriber;
   successMessage: string;
+  search: {
+    subscribers: Subscriber[] | undefined
+  }
 }
 
 export const SUBSCRIBER_INIT: SubscriberService = {
   subscription: undefined,
   subscriber: undefined,
   successMessage: null,
+  search: {
+    subscribers: undefined
+  }
 };
+
+export interface SubscriberSearchCriteria {
+  email?: string;
+  name?: string;
+}

@@ -1,4 +1,4 @@
-import { Subscription, Subscriber } from './models';
+import { Subscription, Subscriber, SubscriberSearchCriteria } from './models';
 export const CREATE_SUBSCRIBER = 'tenant/subscriber-service/create-subscriber';
 
 export const GET_SUBSCRIBER_SUCCESS = 'tenant/subscriber-service/get-subscriber-success';
@@ -9,6 +9,8 @@ export const GET_SUBSCRIBER = 'tenant/subscriber-service/get-subscriber';
 export const GET_SUBSCRIPTION = 'tenant/subscriber-service/get-subscription';
 export const UNSUBSCRIBE = 'tenant/subscriber-service/unsubscribe';
 export const UNSUBSCRIBE_SUCCESS = 'tenant/subscriber-service/unsubscribe-success';
+export const FIND_SUBSCRIBERS_SUCCESS = 'tenant/subscriber-service/find-subscribers/success';
+export const FIND_SUBSCRIBERS = 'tenant/subscriber-service/find-subscribers';
 
 // =============
 // Actions Types
@@ -21,7 +23,9 @@ export type ActionTypes =
   | GetSubscriberSuccessAction
   | GetSubscriptionSuccessAction
   | UnsubscribeAction
-  | UnsubscribeSuccessAction;
+  | UnsubscribeSuccessAction
+  | FindSubscribersAction
+  | FindSubscribersSuccessAction;
 
 export interface SubscribeSubscriberServiceAction {
   type: typeof SUBSCRIBE_SUBSCRIBER;
@@ -79,6 +83,18 @@ export interface GetSubscriptionAction {
 
 export interface GetSubscriberAction {
   type: typeof GET_SUBSCRIBER;
+}
+
+export interface FindSubscribersAction {
+  type: typeof FIND_SUBSCRIBERS;
+  payload: SubscriberSearchCriteria
+}
+
+export interface FindSubscribersSuccessAction {
+  type: typeof FIND_SUBSCRIBERS_SUCCESS;
+  payload: {
+    subscribers: Subscriber[];
+  }
 }
 
 // ==============
@@ -147,4 +163,16 @@ export const SubscribeSubscriberSuccess = (notificationInfo: {
   payload: {
     notificationInfo,
   },
+});
+
+export const FindSubscribers = (criteria: SubscriberSearchCriteria): FindSubscribersAction => ({
+  type: FIND_SUBSCRIBERS,
+  payload: criteria
+});
+
+export const FindSubscribersSuccess = (subscribers: Subscriber[]): FindSubscribersSuccessAction => ({
+  type: FIND_SUBSCRIBERS_SUCCESS,
+  payload: {
+    subscribers
+  }
 });

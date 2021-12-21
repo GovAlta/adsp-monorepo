@@ -16,6 +16,8 @@ import {
   UnsubscribeAction,
   GetSubscriptionAction,
   GetSubscriptionSuccess,
+  FindSubscribersAction,
+  FindSubscribersSuccess
 } from './actions';
 import { Subscription, Subscriber } from './models';
 
@@ -154,6 +156,37 @@ export function* unsubscribe(action: UnsubscribeAction): SagaIterator {
       yield put(UnsubscribeSuccess(subscriber));
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+    }
+  }
+}
+
+export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
+  //const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+
+  const configBaseUrl: string = "http://localhost:3335"
+
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const findSubscriberPath = 'subscription/v1/subscribers';
+  const criteria = action.payload;
+  const params: any = {}
+  if (criteria.email) {
+    params.email = criteria.email;
+  }
+
+  if (criteria.name) {
+    params.name = criteria.name;
+  }
+
+  if (configBaseUrl && token) {
+    try {
+      const response = yield call(axios.get, `${configBaseUrl}/${findSubscriberPath}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params
+      });
+      const subscribers = response.data.results;
+      yield put(FindSubscribersSuccess(subscribers));
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.message} - find subscribers` }));
     }
   }
 }
