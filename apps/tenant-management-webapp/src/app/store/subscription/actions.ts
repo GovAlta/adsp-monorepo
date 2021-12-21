@@ -1,12 +1,13 @@
-import { Subscription, Subscriber, SubscriberSearchCriteria } from './models';
+import { Subscription, Subscriber, SubscriptionWrapper, SubscriberSearchCriteria } from './models';
 export const CREATE_SUBSCRIBER = 'tenant/subscriber-service/create-subscriber';
-
 export const GET_SUBSCRIBER_SUCCESS = 'tenant/subscriber-service/get-subscriber-success';
 export const GET_SUBSCRIPTION_SUCCESS = 'tenant/subscriber-service/get-subscription-success';
+export const GET_SUBSCRIPTIONS_SUCCESS = 'tenant/subscriber-service/get-subscriptions-success';
 export const SUBSCRIBE_SUBSCRIBER_SUCCESS = 'tenant/subscriber-service/subscribe-subscriber-success';
 export const SUBSCRIBE_SUBSCRIBER = 'tenant/subscriber-service/subscribe-subscriber';
 export const GET_SUBSCRIBER = 'tenant/subscriber-service/get-subscriber';
 export const GET_SUBSCRIPTION = 'tenant/subscriber-service/get-subscription';
+export const GET_SUBSCRIPTIONS = 'tenant/subscriber-service/get-subscriptions';
 export const UNSUBSCRIBE = 'tenant/subscriber-service/unsubscribe';
 export const UNSUBSCRIBE_SUCCESS = 'tenant/subscriber-service/unsubscribe-success';
 export const FIND_SUBSCRIBERS_SUCCESS = 'tenant/subscriber-service/find-subscribers/success';
@@ -22,6 +23,7 @@ export type ActionTypes =
   | CreateSubscriberAction
   | GetSubscriberSuccessAction
   | GetSubscriptionSuccessAction
+  | GetSubscriptionsSuccessAction
   | UnsubscribeAction
   | UnsubscribeSuccessAction
   | FindSubscribersAction
@@ -45,6 +47,13 @@ export interface GetSubscriptionSuccessAction {
   type: typeof GET_SUBSCRIPTION_SUCCESS;
   payload: {
     subscriberInfo: Subscription;
+  };
+}
+
+export interface GetSubscriptionsSuccessAction {
+  type: typeof GET_SUBSCRIPTIONS_SUCCESS;
+  payload: {
+    subscriberInfo: SubscriptionWrapper[];
   };
 }
 
@@ -79,6 +88,10 @@ export interface GetSubscriptionAction {
   payload: {
     subscriptionInfo: { data: { type: string; data: Subscriber } };
   };
+}
+
+export interface GetSubscriptionsAction {
+  type: typeof GET_SUBSCRIPTIONS;
 }
 
 export interface GetSubscriberAction {
@@ -130,6 +143,10 @@ export const getSubscription = (subscriptionInfo: {
   },
 });
 
+export const getSubscriptions = (): GetSubscriptionsAction => ({
+  type: GET_SUBSCRIPTIONS,
+});
+
 export const GetSubscriberSuccess = (subscriberInfo: Subscriber): GetSubscriberSuccessAction => ({
   type: GET_SUBSCRIBER_SUCCESS,
   payload: {
@@ -139,6 +156,13 @@ export const GetSubscriberSuccess = (subscriberInfo: Subscriber): GetSubscriberS
 
 export const GetSubscriptionSuccess = (subscriberInfo: Subscription): GetSubscriptionSuccessAction => ({
   type: GET_SUBSCRIPTION_SUCCESS,
+  payload: {
+    subscriberInfo,
+  },
+});
+
+export const GetSubscriptionsSuccess = (subscriberInfo: SubscriptionWrapper[]): GetSubscriptionsSuccessAction => ({
+  type: GET_SUBSCRIPTIONS_SUCCESS,
   payload: {
     subscriberInfo,
   },

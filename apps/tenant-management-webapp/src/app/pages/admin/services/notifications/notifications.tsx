@@ -6,6 +6,7 @@ import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { NotificationsOverview } from './overview';
 import { NotificationTypes } from './notificationTypes';
+import { Subscriptions } from './subscriptions';
 
 export const Notifications: FunctionComponent = () => {
   const tenantId = useSelector((state: RootState) => state.tenant?.id);
@@ -35,6 +36,9 @@ export const Notifications: FunctionComponent = () => {
           </Tab>
           <Tab label="Notification types">
             <NotificationTypes activeEdit={activateEditState} activateEdit={activateEdit} />
+          </Tab>
+          <Tab label="Subscriptions">
+            <Subscriptions />
           </Tab>
         </Tabs>
       </Main>
