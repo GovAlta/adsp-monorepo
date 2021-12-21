@@ -205,7 +205,7 @@ export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
   const findSubscriberPath = 'subscription/v1/subscribers';
   const criteria = action.payload;
-  const params: any = {}
+  const params: Record<string, string> = {}
   if (criteria.email) {
     params.email = criteria.email;
   }
