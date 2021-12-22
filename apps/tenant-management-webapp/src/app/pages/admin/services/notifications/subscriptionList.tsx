@@ -1,17 +1,21 @@
-import React, { FunctionComponent } from 'react';
-import { useSelector } from 'react-redux';
+import React, { FunctionComponent, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
-import type { Subscriber } from '@store/subscription/models';
+import type { Subscriber, Subscription } from '@store/subscription/models';
+import { UpdateSubscriber } from '@store/subscription/actions';
 import styled from 'styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
+import { SubscriberModalForm } from './editSubscriber';
+import { GoAIcon } from '@abgov/react-components/experimental';
 
 interface SubscriptionProps {
   subscription: Subscriber;
   readonly?: boolean;
+  openModal?: (subscription: Subscription) => void;
 }
 
-const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscription }) => {
+const UnstyledSubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscription, openModal }) => {
   return (
     <>
       <tr>
@@ -28,6 +32,15 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscript
             </div>
           ))}
         </td>
+        <a
+          className="flex1"
+          data-testid={`edit-notification-type-${subscription.id}`}
+          onClick={() => openModal(subscription)}
+        >
+          <ButtonBorder className="smallPadding">
+            <GoAIcon type="create" />
+          </ButtonBorder>
+        </a>
       </tr>
     </>
   );
@@ -38,7 +51,19 @@ interface SubscriptionsListComponentProps {
 }
 
 const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentProps> = ({ className }) => {
+  const dispatch = useDispatch();
   const subscriptions = useSelector((state: RootState) => state.subscription.subscriptions);
+  const [editSubscription, setEditSubscription] = useState(false);
+  const [selectedSubscription, setSelectedSubscription] = useState(null);
+
+  const openModalFunction = (subscription) => {
+    setSelectedSubscription(subscription);
+    setEditSubscription(true);
+  };
+
+  function reset() {
+    setEditSubscription(false);
+  }
 
   if (!subscriptions) {
     return (
@@ -74,6 +99,7 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
                   Address As
                 </th>
                 <th id="channels">Channels</th>
+                <th id="actions">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -81,15 +107,41 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
                 <SubscriptionComponent
                   key={`${subscription?.subscriber?.id}:${subscription?.subscriber?.urn}:${Math.random()}`}
                   subscription={subscription?.subscriber}
+                  openModal={openModalFunction}
                 />
               ))}
             </tbody>
           </DataTable>
         </div>
       ))}
+      {/* Form */}
+      <SubscriberModalForm
+        open={editSubscription}
+        initialValue={selectedSubscription}
+        // errors={errors}
+        onSave={(subscriber) => {
+          dispatch(UpdateSubscriber(subscriber));
+          reset();
+        }}
+        onCancel={() => {
+          reset();
+        }}
+      />
     </div>
   );
 };
+
+const ButtonBorder = styled.div`
+  border: 1px solid #56a0d8;
+  margin: 3px;
+  border-radius: 3px;
+`;
+
+export const SubscriptionComponent = styled(UnstyledSubscriptionComponent)`
+  .smallPadding {
+    padding: 3px;
+  }
+`;
 
 export const SubscriptionList = styled(SubscriptionsListComponent)`
   display: flex-inline-table;

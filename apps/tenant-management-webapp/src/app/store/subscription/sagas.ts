@@ -20,6 +20,7 @@ import {
   FindSubscribersAction,
   FindSubscribersSuccess,
   GetSubscriptionsAction,
+  UpdateSubscriberAction,
   GetSubscriptionsSuccess,
 } from './actions';
 import { Subscription, Subscriber } from './models';
@@ -122,6 +123,29 @@ export function* getSubscriber(): SagaIterator {
   }
 }
 
+export function* updateSubscriber(action: UpdateSubscriberAction): SagaIterator {
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const subscriber = action.payload.subscriber;
+
+  if (configBaseUrl && token) {
+    try {
+      const response = yield call(
+        axios.patch,
+        `${configBaseUrl}/subscription/v1/subscribers/${subscriber.id}`,
+        subscriber,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const result = response.data?.results[0];
+      yield put(UpdateSubscriberSuccess(result));
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+    }
+  }
+}
+
 export function* createSubscriber(action: CreateSubscriberAction): SagaIterator {
   const type = action.payload.notificationName;
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
@@ -205,7 +229,7 @@ export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
   const findSubscriberPath = 'subscription/v1/subscribers';
   const criteria = action.payload;
-  const params: Record<string, string> = {}
+  const params: Record<string, string> = {};
   if (criteria.email) {
     params.email = criteria.email;
   }
@@ -218,7 +242,7 @@ export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
     try {
       const response = yield call(axios.get, `${configBaseUrl}/${findSubscriberPath}`, {
         headers: { Authorization: `Bearer ${token}` },
-        params
+        params,
       });
       const subscribers = response.data.results;
       yield put(FindSubscribersSuccess(subscribers));
