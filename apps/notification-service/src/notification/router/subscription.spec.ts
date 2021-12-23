@@ -698,7 +698,6 @@ describe('subscription router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(
         expect.objectContaining({
-          addressAs: 'tester@test.com',
           userId: 'tester@test.com',
         })
       );
