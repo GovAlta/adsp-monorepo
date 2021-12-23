@@ -97,20 +97,20 @@ export function createTypeSubscription(apiId: AdspId, repository: SubscriptionRe
       const subscriber: Subscriber =
         req.query.userSub === 'true'
           ? {
-            tenantId,
-            userId: user.id,
-            addressAs: user.name,
-            channels: [
-              {
-                channel: Channel.email,
-                address: user.email,
-              },
-            ],
-          }
+              tenantId,
+              userId: user.id,
+              addressAs: user.name,
+              channels: [
+                {
+                  channel: Channel.email,
+                  address: user.email,
+                },
+              ],
+            }
           : {
-            ...subscriberInfo,
-            tenantId,
-          };
+              ...subscriberInfo,
+              tenantId,
+            };
 
       let subscriberEntity: SubscriberEntity = null;
       if (subscriber.userId) {
@@ -224,7 +224,11 @@ export function getSubscribers(apiId: AdspId, repository: SubscriptionRepository
       if (!isAllowedUser(user, tenantId, ServiceUserRoles.SubscriptionAdmin, true)) {
         throw new UnauthorizedUserError('get subscribers', user);
       }
-      const criteria = { tenantIdEquals: tenantId, name: name as string | undefined, email: email as string | undefined };
+      const criteria = {
+        tenantIdEquals: tenantId,
+        name: name as string | undefined,
+        email: email as string | undefined,
+      };
 
       const result = await repository.findSubscribers(top, after as string, criteria);
       res.send({
@@ -258,27 +262,27 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
       const subscriber: Subscriber =
         req.query.userSub === 'true'
           ? {
-            tenantId,
-            userId: user.id,
-            addressAs: user.name,
-            channels: [
-              {
-                channel: Channel.email,
-                address: user.email,
-              },
-            ],
-          }
+              tenantId,
+              userId: user.id,
+              addressAs: user.name,
+              channels: [
+                {
+                  channel: Channel.email,
+                  address: user.email,
+                },
+              ],
+            }
           : {
-            tenantId,
-            userId: req.body?.email.toLowerCase(),
-            addressAs: req.body?.email,
-            channels: [
-              {
-                channel: Channel.email,
-                address: req.body?.email,
-              },
-            ],
-          };
+              tenantId,
+              userId: req.body?.email.toLowerCase(),
+              addressAs: req.body?.name,
+              channels: [
+                {
+                  channel: Channel.email,
+                  address: req.body?.email,
+                },
+              ],
+            };
 
       const subscriberEntity = await SubscriberEntity.create(user, repository, subscriber);
       res.send(mapSubscriber(apiId, subscriberEntity));

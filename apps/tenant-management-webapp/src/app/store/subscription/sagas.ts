@@ -1,4 +1,4 @@
-import { put, select, call, takeEvery, all } from 'redux-saga/effects';
+import { put, select, call, takeEvery, takeLatest, all } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { SagaIterator } from '@redux-saga/core';
 import {
@@ -22,6 +22,7 @@ import {
   GetSubscriptionsAction,
   UpdateSubscriberAction,
   GetSubscriptionsSuccess,
+  FIND_SUBSCRIBERS,
 } from './actions';
 import { Subscription, Subscriber } from './models';
 
@@ -225,11 +226,13 @@ export function* unsubscribe(action: UnsubscribeAction): SagaIterator {
 
 export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
-
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const pageSize = yield select((state: RootState) => state.subscription.search.subscribers.pageSize);
+  const top = yield select((state: RootState) => state.subscription.search.subscribers.top);
+
   const findSubscriberPath = 'subscription/v1/subscribers';
   const criteria = action.payload;
-  const params: Record<string, string> = {};
+  const params: Record<string, string | number> = {};
   if (criteria.email) {
     params.email = criteria.email;
   }
@@ -238,6 +241,9 @@ export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
     params.name = criteria.name;
   }
 
+  // Fetch one more to calculate hasNext
+  params.top = criteria?.next ? pageSize + top + 1 : top + 1;
+
   if (configBaseUrl && token) {
     try {
       const response = yield call(axios.get, `${configBaseUrl}/${findSubscriberPath}`, {
@@ -245,7 +251,7 @@ export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
         params,
       });
       const subscribers = response.data.results;
-      yield put(FindSubscribersSuccess(subscribers));
+      yield put(FindSubscribersSuccess(subscribers, (params.top as number) - 1));
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - find subscribers` }));
     }
@@ -259,4 +265,5 @@ export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(UNSUBSCRIBE, unsubscribe);
   yield takeEvery(GET_SUBSCRIPTION, getSubscription);
   yield takeEvery(GET_SUBSCRIPTIONS, getAllSubscriptions);
+  yield takeLatest(FIND_SUBSCRIBERS, findSubscribers);
 }

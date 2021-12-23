@@ -19,14 +19,22 @@ const UnstyledSubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ s
   return (
     <>
       <tr>
-        <td headers="Address As" data-testid="addressAs">
+        <td headers="userName" data-testid="addressAs">
           {subscription?.addressAs}
         </td>
-        <td headers="Channels" data-testid="channels">
+        <td headers="channels" data-testid="channels">
           {subscription?.channels.map((channel, i) => (
             <div key={`channels-id-${i}`} style={{ display: 'flex' }}>
-              <div style={{ flex: 1, marginRight: '5px' }}>
-                <b>{channel.channel}: </b>
+              <div>
+                <b>
+                  {channel.channel === 'email' ? (
+                    <IconsCell>
+                      <GoAIcon data-testid="mail-icon" size="medium" type="mail" />
+                    </IconsCell>
+                  ) : (
+                    `${channel.channel}:`
+                  )}{' '}
+                </b>
               </div>
               <div>{channel.address}</div>
             </div>
@@ -95,8 +103,8 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
           <DataTable data-testid={`subscription-table-${index}`}>
             <thead>
               <tr>
-                <th id="addressAs" data-testid={`subscription-header-address-as-${index}`}>
-                  Address As
+                <th id="userName" data-testid={`subscription-header-address-as-${index}`}>
+                  User name
                 </th>
                 <th id="channels">Channels</th>
                 <th id="actions">Actions</th>
@@ -180,4 +188,11 @@ export const SubscriptionList = styled(SubscriptionsListComponent)`
   table {
     margin-bottom: 2rem;
   }
+`;
+
+const IconsCell = styled.td`
+  display: flex;
+  justify-content: space-around;
+  width: 90%;
+  width: 50%;
 `;
