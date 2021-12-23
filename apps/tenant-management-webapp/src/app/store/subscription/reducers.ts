@@ -7,6 +7,7 @@ import {
   FIND_SUBSCRIBERS_SUCCESS,
   GET_SUBSCRIPTIONS_SUCCESS,
 } from './actions';
+
 import { SUBSCRIBER_INIT, SubscriberService } from './models';
 
 export default function (state = SUBSCRIBER_INIT, action: ActionTypes): SubscriberService {
@@ -46,10 +47,20 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       };
     }
     case FIND_SUBSCRIBERS_SUCCESS: {
+      const { subscribers, top } = action.payload;
+      let hasNext = false;
+      if (subscribers.length > top) {
+        hasNext = true
+      }
       return {
         ...state,
         search: {
-          subscribers: action.payload.subscribers
+          subscribers: {
+            ...state.search.subscribers,
+            data: subscribers.slice(0, top),
+            hasNext,
+            top
+          }
         }
       }
     }

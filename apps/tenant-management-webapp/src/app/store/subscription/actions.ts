@@ -107,6 +107,7 @@ export interface FindSubscribersSuccessAction {
   type: typeof FIND_SUBSCRIBERS_SUCCESS;
   payload: {
     subscribers: Subscriber[];
+    top: number;
   }
 }
 
@@ -194,9 +195,10 @@ export const FindSubscribers = (criteria: SubscriberSearchCriteria): FindSubscri
   payload: criteria
 });
 
-export const FindSubscribersSuccess = (subscribers: Subscriber[]): FindSubscribersSuccessAction => ({
+export const FindSubscribersSuccess = (subscribers: Subscriber[], top: number): FindSubscribersSuccessAction => ({
   type: FIND_SUBSCRIBERS_SUCCESS,
   payload: {
-    subscribers
+    subscribers,
+    top
   }
 });

@@ -1,3 +1,5 @@
+export const DEFAULT_PAGE_SIZE = 10;
+
 export interface Subscription {
   id: string;
   subscriberId?: string;
@@ -33,7 +35,12 @@ export interface SubscriberService {
   subscriber: Subscriber;
   successMessage: string;
   search: {
-    subscribers: Subscriber[] | undefined
+    subscribers: {
+      data: Subscriber[] | undefined;
+      hasNext: boolean;
+      pageSize: number;
+      top: number;
+    }
   }
 }
 
@@ -43,11 +50,17 @@ export const SUBSCRIBER_INIT: SubscriberService = {
   subscriber: undefined,
   successMessage: null,
   search: {
-    subscribers: undefined
+    subscribers: {
+      data: undefined,
+      hasNext: false,
+      pageSize: DEFAULT_PAGE_SIZE,
+      top: DEFAULT_PAGE_SIZE
+    }
   }
 };
 
 export interface SubscriberSearchCriteria {
   email?: string;
   name?: string;
+  next?: boolean;
 }
