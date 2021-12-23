@@ -8,7 +8,8 @@ import {
   GoAFormItem,
   GoAFlexRow,
   GoAButton,
-  GoAInput
+  GoAInputText,
+  GoAInputEmail
 } from '@abgov/react-components/experimental';
 import '@abgov/core-css/src/lib/styles/v2/colors.scss';
 import { SubscriberList } from './subscriberList'
@@ -66,8 +67,7 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
         <GoAFlexRow gap="small">
           <GoAFormItem>
             <label htmlFor="name">Name </label>
-            <GoAInput
-              type="text"
+            <GoAInputText
               name="name"
               id="name"
               value={criteriaState?.name}
@@ -76,8 +76,7 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
           </GoAFormItem>
           <GoAFormItem>
             <label htmlFor="email">Email</label>
-            <GoAInput
-              type="text"
+            <GoAInputEmail
               name="email"
               id="email"
               value={criteriaState?.email}
