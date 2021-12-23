@@ -51,16 +51,9 @@ const FooterLinks = styled.div`
     margin-right: 1rem;
   }
   a:link {
-    text-decoration: none;
     color: var(--black-100);
   }
   a:visited {
-    color: var(--color-primary-link);
-  }
-  a:hover {
-    text-decoration: underline;
-  }
-  a:active {
-    text-decoration: underline;
+    color: var(--color-link-visited);
   }
 `;

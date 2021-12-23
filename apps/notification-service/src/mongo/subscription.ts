@@ -99,13 +99,13 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
           err
             ? reject(err)
             : resolve({
-                results: docs.map((doc) => this.fromSubscriptionDoc(doc)),
-                page: {
-                  after,
-                  next: encodeNext(docs.length, top, skip),
-                  size: docs.length,
-                },
-              })
+              results: docs.map((doc) => this.fromSubscriptionDoc(doc)),
+              page: {
+                after,
+                next: encodeNext(docs.length, top, skip),
+                size: docs.length,
+              },
+            })
         );
     });
   }
@@ -119,23 +119,31 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
       query.tenantId = criteria.tenantIdEquals.toString();
     }
 
+    if (criteria.name) {
+      query.addressAs = criteria.name;
+    }
+
+    if (criteria.email) {
+      query.channels = { $elemMatch: { address: criteria.email.toLocaleLowerCase() } };
+    }
+
     return new Promise<Results<SubscriberEntity>>((resolve, reject) => {
       this.subscriberModel
         .find(query, null, { lean: true })
         .skip(skip)
         .limit(top)
-        .exec((err, docs) =>
+        .exec((err, docs) => {
           err
             ? reject(err)
             : resolve({
-                results: docs.map((doc) => this.fromDoc(doc)),
-                page: {
-                  after,
-                  next: encodeNext(docs.length, top, skip),
-                  size: docs.length,
-                },
-              })
-        );
+              results: docs.map((doc) => this.fromDoc(doc)),
+              page: {
+                after,
+                next: encodeNext(docs.length, top, skip),
+                size: docs.length,
+              },
+            })
+        });
     });
   }
 
@@ -203,38 +211,38 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
   private fromDoc(doc: SubscriberDoc) {
     return doc
       ? new SubscriberEntity(this, {
-          tenantId: AdspId.parse(doc.tenantId),
-          userId: doc.userId,
-          id: `${doc._id}`,
-          addressAs: doc.addressAs,
-          channels:
-            doc.channels?.map((c) => ({
-              channel: c.channel,
-              address: c.address,
-              verified: !!c.verified,
-              verifyKey: c.verifyKey,
-            })) || [],
-        })
+        tenantId: AdspId.parse(doc.tenantId),
+        userId: doc.userId,
+        id: `${doc._id}`,
+        addressAs: doc.addressAs,
+        channels:
+          doc.channels?.map((c) => ({
+            channel: c.channel,
+            address: c.address,
+            verified: !!c.verified,
+            verifyKey: c.verifyKey,
+          })) || [],
+      })
       : null;
   }
 
   private fromSubscriptionDoc(doc: SubscriptionDoc, subscriber?: SubscriberEntity) {
     return doc
       ? new SubscriptionEntity(
-          this,
-          {
-            tenantId: AdspId.parse(doc.tenantId),
-            typeId: doc.typeId,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            subscriberId: `${((doc.subscriberId as any) || {})._id || doc.subscriberId}`,
-            criteria: doc.criteria,
-          },
+        this,
+        {
+          tenantId: AdspId.parse(doc.tenantId),
+          typeId: doc.typeId,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          subscriber ||
-            (doc.subscriberId?.['tenantId']
-              ? new SubscriberEntity(this, this.fromDoc(doc.subscriberId as unknown as SubscriberDoc))
-              : null)
-        )
+          subscriberId: `${((doc.subscriberId as any) || {})._id || doc.subscriberId}`,
+          criteria: doc.criteria,
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        subscriber ||
+        (doc.subscriberId?.['tenantId']
+          ? new SubscriberEntity(this, this.fromDoc(doc.subscriberId as unknown as SubscriberDoc))
+          : null)
+      )
       : null;
   }
 
@@ -242,14 +250,18 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     const doc: SubscriberDoc = {
       tenantId: entity.tenantId.toString(),
       addressAs: entity.addressAs,
-      channels: entity.channels,
+      channels: entity.channels.map((c) => {
+        if (c.channel === 'email') {
+          c.address = c.address.toLocaleLowerCase()
+        }
+        return c
+      }),
     };
 
     // Only include userId property if there is a value; this is for the parse unique index.
     if (entity.userId) {
       doc.userId = entity.userId;
     }
-
     return doc;
   }
 
