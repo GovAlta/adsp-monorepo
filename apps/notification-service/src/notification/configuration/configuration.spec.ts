@@ -2,6 +2,8 @@ import { adspId } from '@abgov/adsp-service-sdk';
 import { DomainEvent } from '@core-services/core-common';
 import { NotificationConfiguration } from './configuration';
 import { Channel } from '../types';
+import { configurationSchema } from './schema';
+import * as Ajv from "ajv";
 
 describe('NotificationConfiguration', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -108,5 +110,41 @@ describe('NotificationConfiguration', () => {
       expect(types).toBeTruthy();
       expect(types.length).toBe(0);
     });
+  });
+
+  describe('Test notification configuration schema', () => {
+
+    const ajv = new Ajv();
+    // eslint-disable-next-line
+    require("ajv-keywords")(ajv, ["uniqueItemProperties"]);
+
+    const event = {
+      namespace: 'mock-realm',
+      name: 'name-a',
+      templates: {
+        email: {
+          subject: 'mock-email',
+          body: 'mock-email-body'
+        }
+      },
+      channels: [
+        'email'
+      ]
+    }
+
+    const data = {
+      id: 'mock12345',
+      name: 'mock-notification',
+      publicSubscribe: false,
+      subscriberRoles: ['mock-role'],
+      events: [event]
+    }
+
+    const validate = ajv.compile(configurationSchema.additionalProperties)
+    validate(data);
+    expect(validate.errors).toBeNull();
+    data.events.push(event);
+    validate(data);
+    expect(validate.errors.length > 0).toBeTruthy();
   });
 });
