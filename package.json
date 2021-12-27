@@ -47,6 +47,7 @@
     "@slack/web-api": "^6.4.0",
     "@socket.io/redis-adapter": "^7.0.0",
     "ajv": "^6.12.6",
+    "ajv-keywords": "3.5.2",
     "amqp-connection-manager": "^3.7.0",
     "amqplib": "^0.8.0",
     "app-root-path": "^3.0.0",

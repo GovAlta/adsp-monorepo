@@ -22,6 +22,7 @@ export const configurationSchema = {
       },
       events: {
         type: 'array',
+        uniqueItemProperties: ["name"],
         items: {
           type: 'object',
           properties: {
