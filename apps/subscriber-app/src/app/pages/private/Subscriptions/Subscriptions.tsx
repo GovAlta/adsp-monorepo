@@ -52,9 +52,9 @@ const Subscriptions = (): JSX.Element => {
   };
   const unSubscribeModal = () => {
     return (
-      <GoAModal isOpen={true} key={1} testId="unsubscribe-modal">
+      <GoAModal isOpen={true} key={1} data-testId="unsubscribe-modal">
         <GoAModalTitle>Are you sure you want unsubscribe?</GoAModalTitle>
-        <GoAModalContent testId="unsubscribe-modal-content">
+        <GoAModalContent data-testId="unsubscribe-modal-content">
           If you decide to unsubscribe from “{selectedUnsubscribeSub.type.name}” you won’t receive any updates from the
           service in the future.{' '}
         </GoAModalContent>
@@ -144,10 +144,9 @@ const Subscriptions = (): JSX.Element => {
                 <GoAInput
                   aria-label="email"
                   name="email"
-                  input="text"
                   value={emailContactInformation}
                   onChange={setValue}
-                  test-id="edit-contact-input-text"
+                  data-testid="edit-contact-input-text"
                 />
               ) : (
                 <p>{subscriberEmail}</p>
