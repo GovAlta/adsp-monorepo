@@ -144,9 +144,6 @@ const Subscriptions = (): JSX.Element => {
                 <GoAInput
                   aria-label="email"
                   name="email"
-                  style={{
-                    width: '100%',
-                  }}
                   input="text"
                   value={emailContactInformation}
                   onChange={setValue}
