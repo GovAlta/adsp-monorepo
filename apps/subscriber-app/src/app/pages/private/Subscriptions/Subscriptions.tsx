@@ -147,7 +147,6 @@ const Subscriptions = (): JSX.Element => {
                   style={{
                     width: '100%',
                   }}
-                  size={emailContactInformation.length + 2}
                   input="text"
                   value={emailContactInformation}
                   onChange={setValue}
