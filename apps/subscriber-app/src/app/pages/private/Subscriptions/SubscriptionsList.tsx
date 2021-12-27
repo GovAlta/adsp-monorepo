@@ -6,6 +6,7 @@ import styled from 'styled-components';
 
 interface SubscriptionsListProps {
   subscriptions: Subscription[];
+  onUnsubscribe: (typeId: string) => void;
 }
 const SubscriptionsList = (props: SubscriptionsListProps): JSX.Element => {
   return (
@@ -23,7 +24,7 @@ const SubscriptionsList = (props: SubscriptionsListProps): JSX.Element => {
                 buttonType="tertiary"
                 key={`${subscription.typeId}`}
                 onClick={() => {
-                  console.log(subscription.typeId);
+                  props.onUnsubscribe(subscription.typeId);
                 }}
                 data-testid="unsubscribe-button"
               >
