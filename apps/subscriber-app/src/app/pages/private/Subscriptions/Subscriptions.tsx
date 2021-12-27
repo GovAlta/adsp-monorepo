@@ -141,8 +141,9 @@ const Subscriptions = (): JSX.Element => {
           <ContactInformationContainer>
             <div>
               {editContactInformation ? (
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                /* // @ts-ignore */
                 <GoAInput
-                  // eslint-disable-next-line
                   aria-label="email"
                   name="email"
                   size={emailContactInformation.length + 2}
