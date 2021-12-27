@@ -1,4 +1,3 @@
-import { Notification } from '@store/notifications/models';
 import { Subscriber, SubscriberChannel } from './models';
 
 export const GET_MY_SUBSCRIBER_DETAILS_SUCCESS = 'tenant/notification-service/get-mySubscriber-success';

@@ -4,7 +4,7 @@ import { Main } from '@components/Html';
 import Container from '@components/Container';
 import styled from 'styled-components';
 import DataTable from '@components/DataTable';
-import { GoAButton, GoACallout, GoACard, GoAPageLoader } from '@abgov/react-components';
+import { GoAButton, GoACard, GoAPageLoader } from '@abgov/react-components';
 import {
   GoAInput,
   GoAModal,
@@ -142,6 +142,7 @@ const Subscriptions = (): JSX.Element => {
             <div>
               {editContactInformation ? (
                 <GoAInput
+                  // eslint-disable-next-line
                   aria-label="email"
                   name="email"
                   size={emailContactInformation.length + 2}
