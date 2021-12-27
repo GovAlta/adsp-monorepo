@@ -141,11 +141,12 @@ const Subscriptions = (): JSX.Element => {
           <ContactInformationContainer>
             <div>
               {editContactInformation ? (
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                /* // @ts-ignore */
                 <GoAInput
                   aria-label="email"
                   name="email"
+                  style={{
+                    width: '100%',
+                  }}
                   size={emailContactInformation.length + 2}
                   input="text"
                   value={emailContactInformation}
