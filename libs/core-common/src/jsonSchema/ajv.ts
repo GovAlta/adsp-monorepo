@@ -4,13 +4,9 @@ import { InvalidValueError } from '..';
 import { ValidationService } from './service';
 
 export class AjvValidationService implements ValidationService {
-  protected ajv: Ajv.Ajv;
+  protected ajv: Ajv.Ajv = new Ajv();
 
-  constructor(private logger: Logger) {
-    this.ajv = new Ajv();
-    // eslint-disable-next-line
-    require("ajv-keywords")(this.ajv, ["uniqueItemProperties"]);
-  }
+  constructor(private logger: Logger) {}
 
   setSchema(schemaKey: string, schema: Record<string, unknown>): void {
     if (schema?.$async) {
