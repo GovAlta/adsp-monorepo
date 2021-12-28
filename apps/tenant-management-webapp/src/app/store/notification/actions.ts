@@ -1,4 +1,4 @@
-import { NotificationItem } from './models';
+import { NotificationItem, NotificationType } from './models';
 
 export const DELETE_NOTIFICATION = 'tenant/notification-service/notification/delete';
 export const DELETE_NOTIFICATION_FAILED = 'tenant/notification-service/notification/delete/fail';
@@ -37,14 +37,14 @@ interface DeleteNotificationFailedAction {
 interface FetchNotificationTypeSucceededAction {
   type: typeof FETCH_NOTIFICATION_TYPE_SUCCEEDED;
   payload: {
-    notificationInfo: { data: NotificationItem[] };
+    notificationInfo: { data: NotificationType };
   };
 }
 
 interface FetchCoreNotificationTypeSucceededAction {
   type: typeof FETCH_CORE_NOTIFICATION_TYPE_SUCCEEDED;
   payload: {
-    notificationInfo: { data: NotificationItem[] };
+    notificationInfo: { data: NotificationType };
   };
 }
 
@@ -78,7 +78,7 @@ export const DeleteNotificationFailedService = (data: string): DeleteNotificatio
 });
 
 export const FetchNotificationTypeSucceededService = (notificationInfo: {
-  data: NotificationItem[];
+  data: NotificationType;
 }): FetchNotificationTypeSucceededAction => ({
   type: FETCH_NOTIFICATION_TYPE_SUCCEEDED,
   payload: {
@@ -87,7 +87,7 @@ export const FetchNotificationTypeSucceededService = (notificationInfo: {
 });
 
 export const FetchCoreNotificationTypeSucceededService = (notificationInfo: {
-  data: NotificationItem[];
+  data: NotificationType
 }): FetchCoreNotificationTypeSucceededAction => ({
   type: FETCH_CORE_NOTIFICATION_TYPE_SUCCEEDED,
   payload: {

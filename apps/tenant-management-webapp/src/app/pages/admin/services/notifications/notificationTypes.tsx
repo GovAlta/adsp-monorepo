@@ -12,6 +12,7 @@ import {
   GoAIcon,
 } from '@abgov/react-components/experimental';
 import { FetchRealmRoles } from '@store/tenant/actions';
+import { isDuplicatedNotificationName } from './validation';
 
 import {
   UpdateNotificationTypeService,
@@ -23,6 +24,7 @@ import { NotificationItem } from '@store/notification/models';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 import { TemplateForm } from './templateForm';
+
 const emptyNotificationType: NotificationItem = {
   name: '',
   description: '',
@@ -109,7 +111,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       </Buttons>
       {notification.notificationTypes &&
         Object.values(notification.notificationTypes).map((notificationType) => (
-          <div className="topBottomMargin" key={notificationType.name}>
+          <div className="topBottomMargin" key={`notification-list-${notificationType.id}`} >
             <GoACard
               title={
                 <div>
@@ -246,11 +248,13 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               </Grid>
             </GoACard>
           </div>
-        ))}
+        ))
+      }
       <h2>Core notifications:</h2>
-      {coreNotification &&
+      {
+        coreNotification &&
         Object.values(coreNotification).map((notificationType) => (
-          <div className="topBottomMargin" key={notificationType.name}>
+          <div className="topBottomMargin" key={`notification-list-${notificationType.id}`}>
             <GoACard
               title={
                 <div className="rowFlex">
@@ -297,10 +301,13 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               </Grid>
             </GoACard>
           </div>
-        ))}
-      {notification.notificationTypes === undefined && (
-        <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
-      )}
+        ))
+      }
+      {
+        notification.notificationTypes === undefined && (
+          <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
+        )
+      }
       {/* Delete confirmation */}
       <GoAModal testId="delete-confirmation" isOpen={showDeleteConfirmation}>
         <GoAModalTitle>Delete notification type</GoAModalTitle>
@@ -370,8 +377,18 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           type.subscriberRoles = type.subscriberRoles || [];
           type.events = type.events || [];
           type.publicSubscribe = type.publicSubscribe || false;
-          dispatch(UpdateNotificationTypeService(type));
-          reset();
+          const isDuplicatedName = notification.notificationTypes && isDuplicatedNotificationName(
+            coreNotification,
+            notification.notificationTypes,
+            selectedType,
+            type.name
+          )
+          if (isDuplicatedName) {
+            setErrors({ 'name': 'Duplicated name of notification type.' })
+          } else {
+            dispatch(UpdateNotificationTypeService(type));
+            reset();
+          }
         }}
         onCancel={() => {
           reset();
