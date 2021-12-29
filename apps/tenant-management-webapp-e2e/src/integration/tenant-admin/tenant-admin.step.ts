@@ -561,13 +561,13 @@ Then('the user views the events matching the search filter now-day {string} as m
 });
 
 When(
-  'the user searches with {string} now-min {string} as minimum timestamp, as now maximum timestamp',
-  function (namespace, submin) {
+  'the user searches with {string} now-min {string} as minimum timestamp, now+min {string} as maximum timestamp',
+  function (namespace, submin, addmin) {
     const formattedDate = dayjs().format('YYYY-MM-DD');
     const subtractformattedTime = dayjs().subtract(submin, 'minutes').format('HH:mm');
-    const formattedTime = dayjs().format('HH:mm');
+    const addformattedTime = dayjs().add(addmin, 'minutes').format('HH:mm');
     const minDayTime = formattedDate + 'T' + subtractformattedTime;
-    const maxDayTime = formattedDate + 'T' + formattedTime;
+    const maxDayTime = formattedDate + 'T' + addformattedTime;
 
     tenantAdminObj.eventLogSearchBox().type(namespace).click();
     tenantAdminObj.eventLogMinTimesStamp().type(minDayTime);
