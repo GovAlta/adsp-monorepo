@@ -17,9 +17,10 @@ import {
 
 interface Props {
   isOpen: boolean;
+  title: string;
 }
 
-export const ApplicationFormModal: FC<Props> = ({ isOpen }: Props) => {
+export const ApplicationFormModal: FC<Props> = ({ isOpen, title }: Props) => {
   const dispatch = useDispatch();
   const serviceStatus = useSelector((state: RootState) => state.serviceStatus);
   const history = useHistory();
@@ -81,7 +82,7 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen }: Props) => {
 
   return (
     <GoAModal isOpen={isModalOpen}>
-      <GoAModalTitle>New application</GoAModalTitle>
+      <GoAModalTitle>{title}</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>
           <GoAFormItem>
