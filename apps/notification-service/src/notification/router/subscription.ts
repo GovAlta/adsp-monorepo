@@ -218,14 +218,19 @@ export function getSubscribers(apiId: AdspId, repository: SubscriptionRepository
     try {
       const tenantId = req.tenant.id;
       const user = req.user;
-      const { top: topValue, after } = req.query;
+      const { top: topValue, after, email, name } = req.query;
       const top = topValue ? parseInt(topValue as string, 10) : 10;
 
       if (!isAllowedUser(user, tenantId, ServiceUserRoles.SubscriptionAdmin, true)) {
         throw new UnauthorizedUserError('get subscribers', user);
       }
+      const criteria = {
+        tenantIdEquals: tenantId,
+        name: name as string | undefined,
+        email: email as string | undefined,
+      };
 
-      const result = await repository.findSubscribers(top, after as string, { tenantIdEquals: tenantId });
+      const result = await repository.findSubscribers(top, after as string, criteria);
       res.send({
         results: result.results.map((r) => mapSubscriber(apiId, r)),
         page: result.page,
@@ -270,7 +275,7 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
           : {
               tenantId,
               userId: req.body?.email.toLowerCase(),
-              addressAs: req.body?.email,
+              addressAs: req.body?.name,
               channels: [
                 {
                   channel: Channel.email,

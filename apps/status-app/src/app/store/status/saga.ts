@@ -70,7 +70,7 @@ export function* subscribeToTenant(action: SubscribeToTenantAction): SagaIterato
     if (JSON.parse(e.message).codeName === 'DuplicateKey') {
       yield put(
         subscribeToTenantSuccess({
-          addressAs: email,
+          addressAs: '',
           tenantId: `urn:ads:platform:tenant-service:v2:/tenants/${tenant}`,
         })
       );

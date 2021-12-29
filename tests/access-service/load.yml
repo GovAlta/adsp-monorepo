@@ -1,0 +1,57 @@
+config:
+  environments:
+    alpha:
+      target: "https://access-uat.alpha.alberta.ca"
+    live:
+      target: "https://access-uat.alberta.ca"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+  payload:
+    - path: "../artillery.{{ $environment }}.csv"
+      skipHeader: true
+      fields:
+        - "keycloak_url"
+        - "tenant_realm_id"
+        - "client_id"
+        - "client_secret"
+        - "username"
+        - "password"
+  phases:
+    - name: warm up
+      duration: 60
+      arrivalCount: 50
+    - name: load
+      duration: 240
+      arrivalCount: 950
+scenarios:
+  - name: authenticate user
+    weight: 1
+    flow:
+      - post:
+          url: "/auth/realms/{{ tenant_realm_id }}/protocol/openid-connect/token"
+          headers:
+            Content-Type: "application/x-www-form-urlencoded"
+            Accept: "application/json"
+          form:
+            {
+              grant_type: "password",
+              client_id: "{{ client_id }}",
+              client_secret: "{{ client_secret }}",
+              username: "{{ username }}",
+              password: "{{ password }}",
+            }
+          capture:
+            - json: "$.access_token"
+              as: token
+  - name: get landing page
+    weight: 2
+    flow:
+      - get:
+          url: "/"
+  - name: get login page
+    weight: 2
+    flow:
+      - get:
+          url: "/auth/admin/core/console"

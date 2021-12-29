@@ -4,7 +4,10 @@ import {
   GET_SUBSCRIBER_SUCCESS,
   UNSUBSCRIBE_SUCCESS,
   GET_SUBSCRIPTION_SUCCESS,
+  FIND_SUBSCRIBERS_SUCCESS,
+  GET_SUBSCRIPTIONS_SUCCESS,
 } from './actions';
+
 import { SUBSCRIBER_INIT, SubscriberService } from './models';
 
 export default function (state = SUBSCRIBER_INIT, action: ActionTypes): SubscriberService {
@@ -19,6 +22,11 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       return {
         ...state,
         subscription: action.payload.subscriberInfo,
+      };
+    case GET_SUBSCRIPTIONS_SUCCESS:
+      return {
+        ...state,
+        subscriptions: action.payload.subscriberInfo,
       };
     case GET_SUBSCRIBER_SUCCESS:
       return {
@@ -38,6 +46,25 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
         successMessage: `You are unsubscribed! You will no longer receive notifications on ${addresses.join('; ')}`,
       };
     }
+    case FIND_SUBSCRIBERS_SUCCESS: {
+      const { subscribers, top } = action.payload;
+      let hasNext = false;
+      if (subscribers.length > top) {
+        hasNext = true
+      }
+      return {
+        ...state,
+        search: {
+          subscribers: {
+            ...state.search.subscribers,
+            data: subscribers.slice(0, top),
+            hasNext,
+            top
+          }
+        }
+      }
+    }
+
     default:
       return state;
   }

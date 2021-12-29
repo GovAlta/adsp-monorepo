@@ -18,7 +18,7 @@ export interface SubscriptionType {
 export interface SubscriberChannel {
   address: string;
   channel: string;
-  verified: boolean;
+  verified?: boolean;
 }
 export interface Subscriber {
   id: string;
