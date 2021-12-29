@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-
+import React, { FormEvent, useEffect, useState } from 'react';
 import { Main } from '@components/Html';
 import Container from '@components/Container';
 import styled from 'styled-components';
@@ -7,6 +6,8 @@ import DataTable from '@components/DataTable';
 import { GoAButton, GoACard, GoAPageLoader } from '@abgov/react-components';
 import {
   GoAInput,
+  GoAForm,
+  GoAFormItem,
   GoAModal,
   GoAModalActions,
   GoAModalContent,
@@ -25,6 +26,7 @@ const Subscriptions = (): JSX.Element => {
   const { subscriber } = useSelector((state: RootState) => ({
     subscriber: state.subscription.subscriber,
   }));
+  const [formErrors, setFormErrors] = useState({});
   const subscriberEmail = subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === EMAIL)[0]?.address;
   const [emailContactInformation, setEmailContactInformation] = useState(subscriberEmail);
   const [editContactInformation, setEditContactInformation] = useState(false);
@@ -87,6 +89,31 @@ const Subscriptions = (): JSX.Element => {
       </GoAModal>
     );
   };
+  const isValidEmail = (email: string): boolean => {
+    return /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email);
+  };
+  const saveContactInformation = async (e: FormEvent) => {
+    e.preventDefault();
+    if (isValidEmail(emailContactInformation)) {
+      setFormErrors({});
+      if (subscriberEmail !== emailContactInformation) {
+        dispatch(
+          patchSubscriber(
+            [
+              {
+                channel: EMAIL,
+                address: emailContactInformation,
+              },
+            ],
+            subscriber.id
+          )
+        );
+      }
+      setEditContactInformation(!editContactInformation);
+    } else {
+      setFormErrors({ email: 'You must enter a valid email' });
+    }
+  };
   const updateContactInfoButtons = () => {
     return (
       <div>
@@ -96,30 +123,12 @@ const Subscriptions = (): JSX.Element => {
           data-testid="edit-contact-cancel-button"
           onClick={() => {
             setEditContactInformation(!editContactInformation);
+            setFormErrors({});
           }}
         >
           Cancel
         </GoAButton>
-        <GoAButton
-          buttonSize="small"
-          data-testid="edit-contact-save-button"
-          onClick={async () => {
-            if (subscriberEmail !== emailContactInformation) {
-              dispatch(
-                patchSubscriber(
-                  [
-                    {
-                      channel: EMAIL,
-                      address: emailContactInformation,
-                    },
-                  ],
-                  subscriber.id
-                )
-              );
-            }
-            setEditContactInformation(!editContactInformation);
-          }}
-        >
+        <GoAButton buttonSize="small" data-testid="edit-contact-save-button" onClick={saveContactInformation}>
           Save
         </GoAButton>
       </div>
@@ -141,14 +150,18 @@ const Subscriptions = (): JSX.Element => {
           <ContactInformationContainer>
             <div>
               {editContactInformation ? (
-                <GoAInput
-                  aria-label="email"
-                  name="email"
-                  type="text"
-                  value={emailContactInformation}
-                  onChange={setValue}
-                  data-testid="edit-contact-input-text"
-                />
+                <GoAForm>
+                  <GoAFormItem error={formErrors?.['email']}>
+                    <GoAInput
+                      aria-label="email"
+                      name="email"
+                      type="text"
+                      value={emailContactInformation}
+                      onChange={setValue}
+                      data-testid="edit-contact-input-text"
+                    />
+                  </GoAFormItem>
+                </GoAForm>
               ) : (
                 <p>{subscriberEmail}</p>
               )}
