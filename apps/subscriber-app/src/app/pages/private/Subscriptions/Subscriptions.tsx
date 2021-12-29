@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import DataTable from '@components/DataTable';
 import { GoAButton, GoACard, GoAPageLoader } from '@abgov/react-components';
 import {
-  GoAInput,
+  GoAInputEmail,
   GoAForm,
   GoAFormItem,
   GoAModal,
@@ -152,10 +152,9 @@ const Subscriptions = (): JSX.Element => {
               {editContactInformation ? (
                 <GoAForm>
                   <GoAFormItem error={formErrors?.['email']}>
-                    <GoAInput
+                    <GoAInputEmail
                       aria-label="email"
                       name="email"
-                      type="text"
                       value={emailContactInformation}
                       onChange={setValue}
                       data-testid="edit-contact-input-text"
