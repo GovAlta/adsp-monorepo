@@ -47,6 +47,6 @@ const ButtonsCell = styled.td`
 const IconsCell = styled.td`
   display: flex;
   justify-content: space-around;
-  width: 90%;
   width: 50%;
+  margin-top: 0.4rem;
 `;
