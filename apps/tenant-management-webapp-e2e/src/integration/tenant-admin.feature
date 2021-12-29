@@ -93,12 +93,35 @@ Feature: Tenant admin
   @TEST_CS-715 @REQ_CS-254 @regression
   Scenario: Test As a service owner, I can search the event log, so I can find events of interest
     Given a service owner user is on tenant admin page
+    # //First create an event definition under events it will be used to verify the event log
+    When the user selects the "Events" menu item
+    And the user selects "Definitions" tab for "Events"
+    And the user clicks Add definition button
+    Then the user views Add definition dialog
+    When the user enters "Autotest" in Namespace, "Autotest-eventDefinition" in Name, "event log testing" in Description
+    And the user clicks Save button on Definition modal
+    Then the user "views" an event definition of "Autotest-eventDefinition" and "event log testing" under "Autotest"
+    # //Test event log
     When the user selects the "Event log" menu item
     Then the "Event log" landing page is displayed
-    Then the user search event with "tenant-service:tenant-created"
-    Then the user search with "2021-12-10T11:23", "2021-12-10T11:46" range
-    Then the user search event with "file-service:file-deleted", minimum timestamp "2021-12-03T11:46"
-    Then the user search event with "tenant-service:tenant-deleted", maximum timestamp "2021-12-10T03:24"
-    Then the user search event with "configuration-service:configuration-updated", minimum timestamp "2021-12-10T03:28" maximum timestamp "2021-12-10T03:40"
-    When the user selects the event and click show details
-    Then the user reset and load events
+    When the user searches the event with "configuration-service:configuration-updated"
+    Then the user views the event matching the search filter of "configuration-service", "configuration-updated"
+    When the user clicks Load more events
+    Then the user views more the events matching the search filter of "configuration-service", "configuration-updated"
+    When the user searches with now-min "5" minimum timestamp, now+min "1" as maximum timestamp
+    Then the user views the events matching the search filter of "configuration-service" and today date
+    When the user searches with now-min "1" as minimum timestamp
+    Then the user views the events matching the search filter of "configuration-service" and today date
+    When the user searches with now-1day as maximum timestamp
+    Then the user views the events matching the search filter now-day "1" as maximum timestamp
+    When the user searches with "configuration-service:configuration-updated" now-min "5" as minimum timestamp, now+min "1" as maximum timestamp
+    Then the user views the events matching the search filter of "configuration-service" and today date
+    Then the user resets event log views
+    Then the user clicks Load more events
+    #//Last the user deletes the event at the end of the test
+    When the user selects the "Events" menu item
+    And the user selects "Definitions" tab for "Events"
+    When the user clicks "Delete" button for the definition of "Autotest-eventDefinition" and "event log testing" under "Autotest"
+    Then the user views Delete definition dialog for the definition of "Autotest-eventDefinition"
+    And the user clicks Confirm button
+    Then the user "should not view" an event definition of "Autotest-eventDefinition" and "event log testing" under "Autotest"
