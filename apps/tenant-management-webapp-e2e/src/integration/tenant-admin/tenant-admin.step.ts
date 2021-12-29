@@ -3,6 +3,7 @@ import tenantAdminPage from './tenant-admin.page';
 
 const tenantAdminObj = new tenantAdminPage();
 let responseObj: Cypress.Response<any>;
+const dayjs = require('dayjs');
 
 Given('the user goes to tenant management login link', function () {
   const urlToTenantLogin = Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/autologin?kc_idp_hint=';
@@ -480,7 +481,7 @@ Then('the user views the event matching the search filter of {string}, {string}'
     });
 });
 
-When('the user clicks Load more button', function () {
+When('the user clicks Load more events', function () {
   tenantAdminObj.eventLoadMoreBtn().click();
 });
 //finds that all rows in the table contains searched events
@@ -493,58 +494,91 @@ Then('the user views more the events matching the search filter of {string}, {st
       });
     });
   });
+  tenantAdminObj.eventLogSearchBox().clear();
 });
+//LD Time formatting
+When(
+  'the user searches with now-min {string} minimum timestamp, now+min {string} as maximum timestamp',
+  function (submin, addmin) {
+    const formattedDate = dayjs().format('YYYY-MM-DD'); //requires a valid datetime with the format YYYY-MM-DDThh:mm, for example 2017-06-01T08:30
+    const addformattedTime = dayjs().add(addmin, 'minutes').format('HH:mm');
+    const subtractformattedTime = dayjs().subtract(submin, 'minutes').format('HH:mm');
 
-Then('the user search with {string}, {string} range', function (minTimestamp, maxTimestamp) {
-  tenantAdminObj.eventLogMinTimesStamp().type(minTimestamp);
-  tenantAdminObj.eventLogMaxTimesStamp().type(maxTimestamp);
-  tenantAdminObj.eventLogSearchBtn().click();
-  tenantAdminObj.eventLogResetBtn().click();
-});
+    const minDayTime = formattedDate + 'T' + subtractformattedTime;
+    const maxDayTime = formattedDate + 'T' + addformattedTime;
 
-Then('the user search event with {string}, minimum timestamp {string}', function (namespace, minTimestamp) {
-  tenantAdminObj.eventLogSearchBox().type(namespace).click();
-  tenantAdminObj.eventLogMinTimesStamp().type(minTimestamp);
-  tenantAdminObj.eventLogSearchBtn().click();
-  tenantAdminObj.eventLogResetBtn().click();
-});
+    cy.log(minDayTime);
+    cy.log(maxDayTime);
 
-Then('the user search event with {string}, maximum timestamp {string}', function (namespace, maxTimestamp) {
-  tenantAdminObj.eventLogSearchBox().type(namespace).click();
-  tenantAdminObj.eventLogMaxTimesStamp().type(maxTimestamp);
-  tenantAdminObj.eventLogSearchBtn().click();
-  tenantAdminObj.eventLogResetBtn().click();
-});
-
-Then(
-  'the user search event with {string}, minimum timestamp {string} maximum timestamp {string}',
-  function (namespace, minTimestamp, maxTimestamp) {
-    tenantAdminObj.eventLogSearchBox().type(namespace).click();
-    tenantAdminObj.eventLogMinTimesStamp().type(minTimestamp);
-    tenantAdminObj.eventLogMaxTimesStamp().type(maxTimestamp);
+    tenantAdminObj.eventLogMinTimesStamp().type(minDayTime);
+    tenantAdminObj.eventLogMaxTimesStamp().type(maxDayTime);
     tenantAdminObj.eventLogSearchBtn().click();
     cy.wait(500);
-    //verify that search return 3 row
-    tenantAdminObj.eventTableBody().find('tr').should('have.length', '3');
   }
 );
 
-When('the user selects the event and click show details', function () {
+Then('the user views the events matching the search filter of {string} and today date', function (namespace) {
+  const formattedDateTable = dayjs().format('MM/DD/YYYY');
+  cy.log(formattedDateTable);
+
   tenantAdminObj
     .eventTableBody()
-    .find('tr')
-    .eq(0)
-    .within(() => {
-      cy.get('td').eq(3).click(); //click on show details on first row
+    .contains(namespace)
+    .parent()
+    .within(function () {
+      cy.get('td').eq(0).should('contain.text', formattedDateTable);
     });
-  //verify details of the event body
-  tenantAdminObj.eventDetailsBody().should('contain', '"name": "file-service"');
-  tenantAdminObj.eventHideDetailsBtn().click();
+  tenantAdminObj.eventLogResetBtn().click();
 });
 
-Then('the user reset and load events', function () {
+When('the user searches with now-min {string} as minimum timestamp', function (submin) {
+  const formattedDate = dayjs().format('YYYY-MM-DD');
+  const subtractformattedTime = dayjs().subtract(submin, 'minutes').format('HH:mm');
+  const minDayTime = formattedDate + 'T' + subtractformattedTime;
+
+  tenantAdminObj.eventLogMinTimesStamp().type(minDayTime);
+  tenantAdminObj.eventLogSearchBtn().click();
+  cy.wait(500);
+});
+
+When('the user searches with now-1day as maximum timestamp', function () {
+  const subtractformattedDate = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
+  const formattedTime = dayjs().format('HH:mm');
+  const maxDayTime = subtractformattedDate + 'T' + formattedTime;
+  cy.log(maxDayTime);
+  tenantAdminObj.eventLogMaxTimesStamp().type(maxDayTime);
+  tenantAdminObj.eventLogSearchBtn().click();
+  cy.wait(500);
+});
+
+Then('the user views the events matching the search filter now-day {string} as maximum timestamp', function (subday) {
+  const formattedDateTable = dayjs().subtract(subday, 'day').format('MM/DD/YYYY');
+  cy.log(formattedDateTable);
+  tenantAdminObj.eventTableBody().within(function () {
+    cy.get('td').eq(0).should('contain.text', formattedDateTable);
+  });
   tenantAdminObj.eventLogResetBtn().click();
-  tenantAdminObj.eventLoadMoreBtn().click();
+});
+
+When(
+  'the user searches with {string} now-min {string} as minimum timestamp, as now maximum timestamp',
+  function (namespace, submin) {
+    const formattedDate = dayjs().format('YYYY-MM-DD');
+    const subtractformattedTime = dayjs().subtract(submin, 'minutes').format('HH:mm');
+    const formattedTime = dayjs().format('HH:mm');
+    const minDayTime = formattedDate + 'T' + subtractformattedTime;
+    const maxDayTime = formattedDate + 'T' + formattedTime;
+
+    tenantAdminObj.eventLogSearchBox().type(namespace).click();
+    tenantAdminObj.eventLogMinTimesStamp().type(minDayTime);
+    tenantAdminObj.eventLogMaxTimesStamp().type(maxDayTime);
+    tenantAdminObj.eventLogSearchBtn().click();
+    cy.wait(500);
+  }
+);
+
+Then('the user resets event log views', function () {
+  tenantAdminObj.eventLogResetBtn().click();
 });
 
 When('the user clicks Add definition button', function () {
@@ -582,6 +616,7 @@ Then(
       default:
         expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
     }
+    cy.wait(5000);
   }
 );
 
