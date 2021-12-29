@@ -108,13 +108,13 @@ Feature: Tenant admin
     Then the user views the event matching the search filter of "configuration-service", "configuration-updated"
     When the user clicks Load more events
     Then the user views more the events matching the search filter of "configuration-service", "configuration-updated"
-    When the user searches with now-min "5" minimum timestamp, now+min "1" as maximum timestamp
+    When the user searches with now-"5" mins as minimum timestamp, now+"1" mins as maximum timestamp
     Then the user views the events matching the search filter of "configuration-service" and today date
-    When the user searches with now-min "1" as minimum timestamp
+    When the user searches with now-"1" mins as minimum timestamp
     Then the user views the events matching the search filter of "configuration-service" and today date
     When the user searches with now-1day as maximum timestamp
-    Then the user views the events matching the search filter now-day "1" as maximum timestamp
-    When the user searches with "configuration-service:configuration-updated" now-min "5" as minimum timestamp, now+min "1" as maximum timestamp
+    Then the user views the events matching the search filter now-"1" days as maximum timestamp
+    When the user searches with "configuration-service:configuration-updated" now-"5" mins as minimum timestamp, now+"1" mins as maximum timestamp
     Then the user views the events matching the search filter of "configuration-service" and today date
     Then the user resets event log views
     Then the user clicks Load more events
