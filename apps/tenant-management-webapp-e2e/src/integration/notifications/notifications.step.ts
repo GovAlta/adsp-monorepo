@@ -115,20 +115,43 @@ Given('a service owner user is on notification types page', function () {
 });
 
 When('the user clicks Select event button for {string}', function (cardTitle) {
-  notificationsObj.notificationTypeSelectAnEventBtn(cardTitle);
+  notificationsObj.NotificationTypeSelectAnEventBtn(cardTitle).click();
 });
 
-Then('the user views Select event modal', function () {
-  notificationsObj.notificationTypeSelectAnEventModal().should('exist');
+Then('the user views Select an event modal', function () {
+  notificationsObj.SelectAnEventModalTitle().invoke('text').should('equal', 'Select an event');
 });
 
 When('the user selects {string} in the event dropdown', function (event) {
-  notificationsObj.notificationTypeSelectAnEventModalEventDropdown().click();
-  notificationsObj.notificationTypeSelectAnEventModalEventDropdownItem(event).click();
+  notificationsObj.SelectAnEventModalEventDropdown().click();
+  notificationsObj.SelectAnEventModalEventDropdownItem(event).click();
 });
 
-Then('the user clicks Save button in Select event modal', function () {
-  notificationsObj.notificationTypeModalSaveBtn().click();
+When('the user cannot select {string} in the event dropdown', function (event) {
+  notificationsObj.SelectAnEventModalEventDropdown().click();
+  notificationsObj.SelectAnEventModalEventDropdownItem(event).should('not.exist');
+  notificationsObj.SelectAnEventModalEventDropdown().click({ force: true }); //Force clicking the dropdown to collapse the dropdown
+});
+
+When('the user clicks Next button on Select an event page', function () {
+  notificationsObj.SelectAnEventModalNextBtn().click();
+});
+
+When('the user clicks Cancel button in Select an event modal', function () {
+  notificationsObj.SelectAnEventModalCancelBtn().click();
+});
+
+Then('the user views Add an email template page', function () {
+  notificationsObj.AddAnEmailTemplateModalTitle().invoke('text').should('equal', 'Add an email template');
+});
+
+When('the user enter {string} as subject and {string} as body', function (subjectText, bodyText) {
+  notificationsObj.AddAnEmailTemplateModalSubject().type(subjectText);
+  notificationsObj.AddAnEmailTemplateModalBody().type(bodyText);
+});
+
+When('the user clicks Add button in Add an email template page', function () {
+  notificationsObj.AddAnEmailTemplateModalAddBtn().click();
 });
 
 Then('the user {string} the event of {string} in {string}', function (viewOrNot, event, cardTitle) {
@@ -150,4 +173,23 @@ Then('the user {string} the event of {string} in {string}', function (viewOrNot,
   } else {
     expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
   }
+});
+
+When('the user clicks {string} button for {string} in {string}', function (buttonName, event, cardTitle) {
+  switch (buttonName) {
+    case 'delete':
+      notificationsObj.eventDeleteIcon(cardTitle, event).click();
+      break;
+    default:
+      expect(buttonName).to.be.oneOf(['delete']);
+  }
+});
+
+Then('the user views Remove event modal for {string}', function (event) {
+  notificationsObj.removeEventModalTitle().invoke('text').should('equal', 'Remove event');
+  notificationsObj.removeEventModalContent().invoke('text').should('contain', event);
+});
+
+When('the user clicks Confirm button in Remove event modal', function () {
+  notificationsObj.removeEventModalConfirmBtn().click();
 });
