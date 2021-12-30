@@ -1,6 +1,8 @@
 import { Subscription, Subscriber, SubscriptionWrapper, SubscriberSearchCriteria } from './models';
 export const CREATE_SUBSCRIBER = 'tenant/subscriber-service/create-subscriber';
+export const UPDATE_SUBSCRIBER = 'tenant/subscriber-service/update-subscriber';
 export const GET_SUBSCRIBER_SUCCESS = 'tenant/subscriber-service/get-subscriber-success';
+export const UPDATE_SUBSCRIBER_SUCCESS = 'tenant/subscriber-service/update-subscriber-success';
 export const GET_SUBSCRIPTION_SUCCESS = 'tenant/subscriber-service/get-subscription-success';
 export const GET_SUBSCRIPTIONS_SUCCESS = 'tenant/subscriber-service/get-subscriptions-success';
 export const SUBSCRIBE_SUBSCRIBER_SUCCESS = 'tenant/subscriber-service/subscribe-subscriber-success';
@@ -27,7 +29,8 @@ export type ActionTypes =
   | UnsubscribeAction
   | UnsubscribeSuccessAction
   | FindSubscribersAction
-  | FindSubscribersSuccessAction;
+  | FindSubscribersSuccessAction
+  | UpdateSubscriptionsSuccessAction;
 
 export interface SubscribeSubscriberServiceAction {
   type: typeof SUBSCRIBE_SUBSCRIBER;
@@ -83,6 +86,13 @@ export interface CreateSubscriberAction {
   };
 }
 
+export interface UpdateSubscriberAction {
+  type: typeof UPDATE_SUBSCRIBER;
+  payload: {
+    subscriber: Subscriber;
+  };
+}
+
 export interface GetSubscriptionAction {
   type: typeof GET_SUBSCRIPTION;
   payload: {
@@ -100,7 +110,14 @@ export interface GetSubscriberAction {
 
 export interface FindSubscribersAction {
   type: typeof FIND_SUBSCRIBERS;
-  payload: SubscriberSearchCriteria
+  payload: SubscriberSearchCriteria;
+}
+
+export interface UpdateSubscriptionsSuccessAction {
+  type: typeof UPDATE_SUBSCRIBER_SUCCESS;
+  payload: {
+    subscriberInfo: Subscriber;
+  };
 }
 
 export interface FindSubscribersSuccessAction {
@@ -108,7 +125,7 @@ export interface FindSubscribersSuccessAction {
   payload: {
     subscribers: Subscriber[];
     top: number;
-  }
+  };
 }
 
 // ==============
@@ -129,6 +146,11 @@ export const CreateSubscriberService = (notificationName: string): CreateSubscri
   payload: {
     notificationName,
   },
+});
+
+export const UpdateSubscriberService = (subscriber: Subscriber): UpdateSubscriberAction => ({
+  type: UPDATE_SUBSCRIBER,
+  payload: { subscriber: subscriber },
 });
 
 export const getSubscriber = (): GetSubscriberAction => ({
@@ -155,6 +177,13 @@ export const GetSubscriberSuccess = (subscriberInfo: Subscriber): GetSubscriberS
   },
 });
 
+export const UpdateSubscriberSuccess = (subscriberInfo: Subscriber): UpdateSubscriptionsSuccessAction => ({
+  type: UPDATE_SUBSCRIBER_SUCCESS,
+  payload: {
+    subscriberInfo,
+  },
+});
+
 export const GetSubscriptionSuccess = (subscriberInfo: Subscription): GetSubscriptionSuccessAction => ({
   type: GET_SUBSCRIPTION_SUCCESS,
   payload: {
@@ -169,6 +198,13 @@ export const GetSubscriptionsSuccess = (subscriberInfo: SubscriptionWrapper[]): 
   },
 });
 
+export const UpdateSubscriptionsSuccess = (subscriberInfo: Subscriber): UpdateSubscriptionsSuccessAction => ({
+  type: UPDATE_SUBSCRIBER_SUCCESS,
+  payload: {
+    subscriberInfo,
+  },
+});
+
 export const Unsubscribe = (subscriptionInfo: { data: { type: string; data: Subscriber } }): UnsubscribeAction => ({
   type: UNSUBSCRIBE,
   payload: {
@@ -178,7 +214,7 @@ export const Unsubscribe = (subscriptionInfo: { data: { type: string; data: Subs
 
 export const UnsubscribeSuccess = (subscriber: Subscriber): UnsubscribeSuccessAction => ({
   type: UNSUBSCRIBE_SUCCESS,
-  payload: subscriber
+  payload: subscriber,
 });
 
 export const SubscribeSubscriberSuccess = (notificationInfo: {
@@ -192,13 +228,13 @@ export const SubscribeSubscriberSuccess = (notificationInfo: {
 
 export const FindSubscribers = (criteria: SubscriberSearchCriteria): FindSubscribersAction => ({
   type: FIND_SUBSCRIBERS,
-  payload: criteria
+  payload: criteria,
 });
 
 export const FindSubscribersSuccess = (subscribers: Subscriber[], top: number): FindSubscribersSuccessAction => ({
   type: FIND_SUBSCRIBERS_SUCCESS,
   payload: {
     subscribers,
-    top
-  }
+    top,
+  },
 });

@@ -1,29 +1,21 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import type { NotificationItem } from '@store/notification/models';
+import type { Subscriber } from '@store/subscription/models';
 import { GoAButton } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
+import { stringify } from 'uuid';
 
 interface NotificationTypeFormProps {
-  initialValue?: NotificationItem;
+  initialValue?: Subscriber;
   onCancel?: () => void;
-  onSave?: (type: NotificationItem) => void;
+  onSave?: (type: Subscriber) => void;
   open: boolean;
 
   errors?: Record<string, string>;
 }
-
-const emptyNotificationType: NotificationItem = {
-  name: '',
-  description: '',
-  events: [],
-  subscriberRoles: [],
-  id: null,
-  publicSubscribe: false,
-};
 
 export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> = ({
   initialValue,
@@ -32,48 +24,46 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
   errors,
   open,
 }) => {
-  const [subscriber, setSubscriber] = useState(emptyNotificationType);
+  //const newInitialValue = Object.assign({}, initialValue) || null;
+  //  console.log(JSON.stringify(newInitialValue) + '<newInitialVAlue');
+  const x = JSON.stringify(initialValue);
+  const [subscriber, setSubscriber] = useState(JSON.parse(x));
+  const [formErrors, setFormErrors] = useState(null);
 
   useEffect(() => {
-    setSubscriber(initialValue);
+    const x = JSON.stringify(initialValue);
+    setSubscriber(JSON.parse(x));
   }, [initialValue]);
 
-  const realmRoles = useSelector((state: RootState) => state.tenant.realmRoles);
+  function emailErrors(email) {
+    if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
+      return { email: 'You must enter a valid email' };
+    }
+  }
 
-  const setSubscriberFunction = (value) => {
-    const newSubscriber = subscriber;
+  const emailIndex = subscriber?.channels?.findIndex((channel) => channel.channel === 'email');
+  console.log(JSON.stringify(emailIndex) + '<emailIndex');
 
-    const emailIndex = newSubscriber.channels.findIndex((channel) => channel.channel === 'email');
+  console.log(JSON.stringify(subscriber) + '<subscriber');
 
-    newSubscriber.channel[emailIndex] = value;
-
-    setSubscriber(newSubscriber);
+  const trySave = (subscriber) => {
+    const emailIndex = subscriber?.channels?.findIndex((channel) => channel.channel === 'email');
+    console.log(
+      JSON.stringify(emailErrors(subscriber.channels[emailIndex].address)) +
+        '<emailErrors(subscriber.channels[emailIndex].address)'
+    );
+    const formErrorList = emailErrors(subscriber.channels[emailIndex].address);
+    if (!formErrorList) {
+      onSave(subscriber);
+    } else {
+      setFormErrors(formErrorList);
+    }
   };
 
-  let dropDownOptions = [];
-
-  dropDownOptions = [
-    {
-      value: 'anonymousRead',
-      label: 'Anyone (Anonymous)',
-      key: 'anonymous',
-      dataTestId: 'anonymous-option',
-    },
-  ];
-
-  let defaultDropDowns = [];
-
-  if (realmRoles) {
-    defaultDropDowns = realmRoles.map((realmRole) => {
-      return {
-        value: realmRole.name,
-        label: realmRole.name,
-        key: realmRole.id,
-        dataTestId: `${realmRole}-update-roles-options`,
-      };
-    });
-    dropDownOptions = dropDownOptions.concat(defaultDropDowns);
-  }
+  const tryCancel = () => {
+    setFormErrors(null);
+    onCancel();
+  };
 
   return (
     <EditStyles>
@@ -81,40 +71,40 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
         <GoAModalTitle>Edit subscriber</GoAModalTitle>
         <GoAModalContent>
           <GoAForm>
-            <GoAFormItem error={errors?.['name']}>
-              <label>Address As</label>
-              <input
-                type="text"
-                name="name"
-                value={subscriber.addressAs}
-                data-testid="form-name"
-                aria-label="name"
-                onChange={(e) => setSubscriber({ ...subscriber, addressAs: e.target.value })}
-              />
-            </GoAFormItem>
-            <GoAFormItem>
-              <label>Email</label>
-              <textarea
-                name="email"
-                data-testid="form-email"
-                value={subscriber.email}
-                aria-label="email"
-                onChange={(e) => setSubscriberFunction(e.target.value)}
-              />
-            </GoAFormItem>
+            <ErrorWrapper>
+              <GoAFormItem error={formErrors?.['name']}>
+                <label>Address As</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={subscriber?.addressAs || ''}
+                  data-testid="form-name"
+                  aria-label="name"
+                  onChange={(e) => setSubscriber({ ...subscriber, addressAs: e.target.value })}
+                />
+              </GoAFormItem>
+              <GoAFormItem error={formErrors?.['email']}>
+                <label>Email</label>
+                <textarea
+                  name="email"
+                  data-testid="form-email"
+                  value={subscriber?.channels[emailIndex].address || ''}
+                  aria-label="email"
+                  onChange={(e) => {
+                    const channel = subscriber.channels;
+                    channel[emailIndex].address = e.target.value;
+                    setSubscriber({ ...subscriber, channels: channel });
+                  }}
+                />
+              </GoAFormItem>
+            </ErrorWrapper>
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
-          <GoAButton data-testid="form-cancel" buttonType="tertiary" type="button" onClick={onCancel}>
+          <GoAButton data-testid="form-cancel" buttonType="tertiary" type="button" onClick={tryCancel}>
             Cancel
           </GoAButton>
-          <GoAButton
-            disabled={!subscriber.name}
-            buttonType="primary"
-            data-testid="form-save"
-            type="submit"
-            onClick={(e) => onSave(subscriber)}
-          >
+          <GoAButton buttonType="primary" data-testid="form-save" type="submit" onClick={(e) => trySave(subscriber)}>
             Save
           </GoAButton>
         </GoAModalActions>
@@ -133,6 +123,14 @@ const EditStyles = styled.div`
   }
 `;
 
-const DropdownContainer = styled.div`
-  margin: 0 0 200px 0;
+export const ErrorWrapper = styled.div`
+  .goa-state--error {
+    label {
+      color: var(--color-red);
+    }
+    input,
+    textarea {
+      border-color: var(--color-red);
+    }
+  }
 `;

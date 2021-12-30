@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
 import type { Subscriber, Subscription } from '@store/subscription/models';
-import { UpdateSubscriber } from '@store/subscription/actions';
+import { UpdateSubscriberService } from '@store/subscription/actions';
 import styled from 'styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
 import { SubscriberModalForm } from './editSubscriber';
@@ -15,7 +15,7 @@ interface SubscriptionProps {
   openModal?: (subscription: Subscription) => void;
 }
 
-const UnstyledSubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscription, openModal }) => {
+const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscription, openModal }) => {
   return (
     <>
       <tr>
@@ -26,7 +26,7 @@ const UnstyledSubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ s
           {subscription?.channels.map((channel, i) => (
             <div key={`channels-id-${i}`} style={{ display: 'flex' }}>
               <div>
-                <b>
+                <div>
                   {channel.channel === 'email' ? (
                     <IconsCell>
                       <GoAIcon data-testid="mail-icon" size="medium" type="mail" />
@@ -34,21 +34,23 @@ const UnstyledSubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ s
                   ) : (
                     `${channel.channel}:`
                   )}{' '}
-                </b>
+                </div>
               </div>
               <div>{channel.address}</div>
             </div>
           ))}
         </td>
-        <a
-          className="flex1"
-          data-testid={`edit-notification-type-${subscription.id}`}
-          onClick={() => openModal(subscription)}
-        >
-          <ButtonBorder className="smallPadding">
-            <GoAIcon type="create" />
-          </ButtonBorder>
-        </a>
+        <td headers="actions" data-testid="actions">
+          <a
+            className="flex1"
+            data-testid={`edit-notification-type-${subscription.id}`}
+            onClick={() => openModal(subscription)}
+          >
+            <ButtonBorder className="smallPadding">
+              <GoAIcon type="create" />
+            </ButtonBorder>
+          </a>
+        </td>
       </tr>
     </>
   );
@@ -60,7 +62,7 @@ interface SubscriptionsListComponentProps {
 
 const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentProps> = ({ className }) => {
   const dispatch = useDispatch();
-  const subscriptions = useSelector((state: RootState) => state.subscription.subscriptions);
+  const subscription = useSelector((state: RootState) => state.subscription);
   const [editSubscription, setEditSubscription] = useState(false);
   const [selectedSubscription, setSelectedSubscription] = useState(null);
 
@@ -73,7 +75,7 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
     setEditSubscription(false);
   }
 
-  if (!subscriptions) {
+  if (!subscription?.subscriptions) {
     return (
       <div>
         {' '}
@@ -82,7 +84,9 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
     );
   }
 
-  const groupedSubscriptions = subscriptions.reduce((acc, def) => {
+  console.log(JSON.stringify(subscription.subscriptions) + '<subscriptionsddd');
+
+  const groupedSubscriptions = subscription?.subscriptions.reduce((acc, def) => {
     acc[def.typeId] = acc[def.typeId] || [];
     acc[def.typeId].push(def);
     return acc;
@@ -128,7 +132,7 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
         initialValue={selectedSubscription}
         // errors={errors}
         onSave={(subscriber) => {
-          dispatch(UpdateSubscriber(subscriber));
+          dispatch(UpdateSubscriberService(subscriber));
           reset();
         }}
         onCancel={() => {
@@ -143,13 +147,19 @@ const ButtonBorder = styled.div`
   border: 1px solid #56a0d8;
   margin: 3px;
   border-radius: 3px;
+  width: fit-content;
+  padding: 3px;
 `;
 
-export const SubscriptionComponent = styled(UnstyledSubscriptionComponent)`
-  .smallPadding {
-    padding: 3px;
-  }
-`;
+// export const SubscriptionComponent = styled(UnstyledSubscriptionComponent)`
+//   .smallPadding {
+//     padding: 3px;
+//   }
+
+//   .flex1 {
+//     flex: 1;
+//   }
+// `;
 
 export const SubscriptionList = styled(SubscriptionsListComponent)`
   display: flex-inline-table;

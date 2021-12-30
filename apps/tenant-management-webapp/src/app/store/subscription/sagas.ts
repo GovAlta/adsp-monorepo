@@ -22,7 +22,9 @@ import {
   GetSubscriptionsAction,
   UpdateSubscriberAction,
   GetSubscriptionsSuccess,
+  UpdateSubscriberSuccess,
   FIND_SUBSCRIBERS,
+  UPDATE_SUBSCRIBER,
 } from './actions';
 import { Subscription, Subscriber } from './models';
 
@@ -127,6 +129,7 @@ export function* getSubscriber(): SagaIterator {
 export function* updateSubscriber(action: UpdateSubscriberAction): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  console.log(JSON.stringify(action.payload) + '<action.payload');
   const subscriber = action.payload.subscriber;
 
   if (configBaseUrl && token) {
@@ -139,7 +142,8 @@ export function* updateSubscriber(action: UpdateSubscriberAction): SagaIterator 
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      const result = response.data?.results[0];
+      console.log(JSON.stringify(response) + '<resultxx');
+      const result = response.data;
       yield put(UpdateSubscriberSuccess(result));
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
@@ -265,5 +269,6 @@ export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(UNSUBSCRIBE, unsubscribe);
   yield takeEvery(GET_SUBSCRIPTION, getSubscription);
   yield takeEvery(GET_SUBSCRIPTIONS, getAllSubscriptions);
+  yield takeEvery(UPDATE_SUBSCRIBER, updateSubscriber);
   yield takeLatest(FIND_SUBSCRIBERS, findSubscribers);
 }
