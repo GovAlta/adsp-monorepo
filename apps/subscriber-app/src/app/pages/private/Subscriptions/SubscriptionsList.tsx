@@ -6,6 +6,7 @@ import styled from 'styled-components';
 
 interface SubscriptionsListProps {
   subscriptions: Subscription[];
+  onUnsubscribe: (typeId: string) => void;
 }
 const SubscriptionsList = (props: SubscriptionsListProps): JSX.Element => {
   return (
@@ -23,7 +24,7 @@ const SubscriptionsList = (props: SubscriptionsListProps): JSX.Element => {
                 buttonType="tertiary"
                 key={`${subscription.typeId}`}
                 onClick={() => {
-                  console.log(subscription.typeId);
+                  props.onUnsubscribe(subscription.typeId);
                 }}
                 data-testid="unsubscribe-button"
               >
@@ -46,6 +47,6 @@ const ButtonsCell = styled.td`
 const IconsCell = styled.td`
   display: flex;
   justify-content: space-around;
-  width: 90%;
   width: 50%;
+  margin-top: 0.4rem;
 `;
