@@ -55,9 +55,14 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
         });
       }
 
+      const newState = Object.assign({}, state);
+      const subscriptions = newState.subscriptions;
+      const newSubs = subscriptions.filter((subscription) => subscription.subscriber.id !== action.payload.id);
+
       return {
         ...state,
         subscription: null,
+        subscriptions: newSubs,
         successMessage: `You are unsubscribed! You will no longer receive notifications on ${addresses.join('; ')}`,
       };
     }

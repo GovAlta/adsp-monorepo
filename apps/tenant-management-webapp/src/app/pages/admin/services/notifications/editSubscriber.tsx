@@ -1,12 +1,9 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { Subscriber } from '@store/subscription/models';
 import { GoAButton } from '@abgov/react-components';
-import { useSelector } from 'react-redux';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
-import { RootState } from '@store/index';
 import styled from 'styled-components';
-import { stringify } from 'uuid';
 
 interface NotificationTypeFormProps {
   initialValue?: Subscriber;
@@ -43,10 +40,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
 
   const trySave = (subscriber) => {
     const emailIndex = subscriber?.channels?.findIndex((channel) => channel.channel === 'email');
-    console.log(
-      JSON.stringify(emailErrors(subscriber.channels[emailIndex].address)) +
-        '<emailErrors(subscriber.channels[emailIndex].address)'
-    );
+
     const formErrorList = emailErrors(subscriber.channels[emailIndex].address);
     if (!formErrorList) {
       onSave(subscriber);

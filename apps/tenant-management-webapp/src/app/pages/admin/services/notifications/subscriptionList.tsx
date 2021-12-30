@@ -8,7 +8,7 @@ import styled from 'styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
 import { SubscriberModalForm } from './editSubscriber';
 import { GoAIcon } from '@abgov/react-components/experimental';
-import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
+
 interface SubscriptionProps {
   subscription: Subscriber;
   type: string;
@@ -28,49 +28,51 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscript
   }
 
   return (
-    <>
-      <tr>
-        <td headers="userName" data-testid="addressAs">
-          {characterLimit(subscription?.addressAs, 30)}
-        </td>
-        <td headers="channels" data-testid="channels">
-          {subscription?.channels.map((channel, i) => (
-            <div key={`channels-id-${i}`} style={{ display: 'flex' }}>
+    <tr>
+      <td headers="userName" data-testid="addressAs">
+        {characterLimit(subscription?.addressAs, 30)}
+      </td>
+      <td headers="channels" data-testid="channels">
+        {subscription?.channels.map((channel, i) => (
+          <div key={`channels-id-${i}`} style={{ display: 'flex' }}>
+            <div>
               <div>
-                <div>
-                  {channel.channel === 'email' ? (
-                    <IconsCell>
-                      <GoAIcon data-testid="mail-icon" size="medium" type="mail" />
-                    </IconsCell>
-                  ) : (
-                    `${channel.channel}:`
-                  )}{' '}
-                </div>
+                {channel.channel === 'email' ? (
+                  <IconsCell>
+                    <GoAIcon data-testid="mail-icon" size="medium" type="mail" />
+                  </IconsCell>
+                ) : (
+                  `${channel.channel}:`
+                )}{' '}
               </div>
-              <div>{channel.address}</div>
             </div>
-          ))}
-        </td>
-        <td headers="actions" data-testid="actions">
+            <div>{channel.address}</div>
+          </div>
+        ))}
+      </td>
+      <td headers="actions" data-testid="actions">
+        <div style={{ display: 'flex', flexDirection: 'row' }}>
           <a
             className="flex1"
             data-testid={`edit-subscription-item-${subscription.id}`}
             onClick={() => openModal(subscription)}
           >
-            <ButtonBorder className="smallPadding">
+            <ButtonBorder>
               <GoAIcon type="create" />
             </ButtonBorder>
           </a>
-          <GoAContextMenu>
-            <GoAContextMenuIcon
-              type="trash"
-              onClick={() => onDelete(subscription, type)}
-              testId="delete-subscription"
-            />
-          </GoAContextMenu>
-        </td>
-      </tr>
-    </>
+          <a
+            className="flex1"
+            data-testid={`delete-subscription-${subscription.id}`}
+            onClick={() => onDelete(subscription, type)}
+          >
+            <ButtonBorder>
+              <GoAIcon type="trash" />
+            </ButtonBorder>
+          </a>
+        </div>
+      </td>
+    </tr>
   );
 };
 
@@ -208,9 +210,10 @@ export const SubscriptionList = styled(SubscriptionsListComponent)`
   }
 `;
 
-const IconsCell = styled.td`
+const IconsCell = styled.div`
   display: flex;
   justify-content: space-around;
   width: 90%;
   width: 50%;
+  margin: 5px 3px 0 0;
 `;
