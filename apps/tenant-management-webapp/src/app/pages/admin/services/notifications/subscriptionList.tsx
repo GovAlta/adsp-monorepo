@@ -13,11 +13,19 @@ interface SubscriptionProps {
 }
 
 const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscription }) => {
+  function characterLimit(string, limit) {
+    if (string?.length > limit) {
+      const slicedString = string.slice(0, limit);
+      return slicedString + '...';
+    } else {
+      return string;
+    }
+  }
   return (
     <>
       <tr>
         <td headers="userName" data-testid="addressAs">
-          {subscription?.addressAs}
+          {characterLimit(subscription?.addressAs, 30)}
         </td>
         <td headers="channels" data-testid="channels">
           {subscription?.channels.map((channel, i) => (
