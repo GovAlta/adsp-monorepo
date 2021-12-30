@@ -605,7 +605,6 @@ When(
 
 When('the user clicks Save button on Definition modal', function () {
   commonObj.definitionModalSaveButton().click();
-  cy.wait(1000);
 });
 
 Then(
