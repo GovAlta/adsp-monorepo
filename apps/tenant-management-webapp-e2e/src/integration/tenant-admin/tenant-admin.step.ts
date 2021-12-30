@@ -481,22 +481,25 @@ Then('the user views the event matching the search filter of {string}, {string}'
     .within(function () {
       cy.get('td').eq(2).should('contain.text', name);
     });
+  tenantAdminObj.eventTableBody().children().should('have.length.lessThan', 11);
 });
 
 When('the user clicks Load more events', function () {
   tenantAdminObj.eventLoadMoreBtn().click();
+  cy.wait(500);
 });
 //finds that all rows in the table contains searched events
 Then('the user views more the events matching the search filter of {string}, {string}', function (namespace, name) {
   tenantAdminObj.eventTableBody().each(($row) => {
     cy.wrap($row).within(() => {
-      cy.get('td').each(($col) => {
-        if ($col.eq(1).text() == namespace) cy.log('Record found');
-        if ($col.eq(2).text() == name) cy.log('Record found');
+      cy.get('tr').each(($row) => {
+        if ($row.eq(1).text() == namespace) cy.log('Record found');
+        if ($row.eq(2).text() == name) cy.log('Record found');
       });
     });
   });
-  tenantAdminObj.eventLogSearchBox().clear();
+
+  tenantAdminObj.eventTableBody().children().should('have.length.greaterThan', 10);
 });
 
 When(
