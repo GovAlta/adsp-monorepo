@@ -6,13 +6,17 @@ import type { Subscriber } from '@store/subscription/models';
 import styled from 'styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
 import { GoAIcon } from '@abgov/react-components/experimental';
-
+import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 interface SubscriptionProps {
   subscription: Subscriber;
+  type: string;
   readonly?: boolean;
+  onDelete: (subscription: Subscriber, type: string) => void;
 }
 
-const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscription }) => {
+
+const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscription, type, onDelete }) => {
+
   function characterLimit(string, limit) {
     if (string?.length > limit) {
       const slicedString = string.slice(0, limit);
@@ -21,6 +25,7 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscript
       return string;
     }
   }
+
   return (
     <>
       <tr>
@@ -45,6 +50,15 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscript
             </div>
           ))}
         </td>
+        <td headers="actions" data-testid="actions">
+          <GoAContextMenu>
+            <GoAContextMenuIcon
+              type="trash"
+              onClick={() => onDelete(subscription, type)}
+              testId="delete-subscription"
+            />
+          </GoAContextMenu>
+        </td>
       </tr>
     </>
   );
@@ -52,11 +66,11 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscript
 
 interface SubscriptionsListComponentProps {
   className?: string;
+  onDelete: (subscription: Subscriber, type: string) => void;
 }
 
-const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentProps> = ({ className }) => {
+const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentProps> = ({ className, onDelete }) => {
   const subscriptions = useSelector((state: RootState) => state.subscription.subscriptions);
-
   if (!subscriptions) {
     return (
       <div>
@@ -71,7 +85,6 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
     acc[def.typeId].push(def);
     return acc;
   }, {});
-
   const orderedGroupNames = Object.keys(groupedSubscriptions).sort((prev, next): number => {
     if (prev > next) {
       return 1;
@@ -91,6 +104,7 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
                   User name
                 </th>
                 <th id="channels">Channels</th>
+                <th id="action">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -98,6 +112,8 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
                 <SubscriptionComponent
                   key={`${subscription?.subscriber?.id}:${subscription?.subscriber?.urn}:${Math.random()}`}
                   subscription={subscription?.subscriber}
+                  type={subscription?.typeId}
+                  onDelete={onDelete}
                 />
               ))}
             </tbody>
