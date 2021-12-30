@@ -51,7 +51,7 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscript
         <td headers="actions" data-testid="actions">
           <a
             className="flex1"
-            data-testid={`edit-notification-type-${subscription.id}`}
+            data-testid={`edit-subscription-item-${subscription.id}`}
             onClick={() => openModal(subscription)}
           >
             <ButtonBorder className="smallPadding">
@@ -91,8 +91,6 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
       </div>
     );
   }
-
-  console.log(JSON.stringify(subscription.subscriptions) + '<subscriptionsddd');
 
   const groupedSubscriptions = subscription?.subscriptions.reduce((acc, def) => {
     acc[def.typeId] = acc[def.typeId] || [];

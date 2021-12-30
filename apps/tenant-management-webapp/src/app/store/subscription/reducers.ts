@@ -17,11 +17,8 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       const newState = Object.assign({}, state);
       const subs = newState.subscriptions;
       const subscriberIndex = subs.findIndex((subs) => subs.subscriber.id === action.payload.subscriberInfo.id);
-      console.log(JSON.stringify(action.payload.subscriberInfo) + '<action.payload.subscriberInfo');
 
       subs[subscriberIndex].subscriber = action.payload.subscriberInfo;
-
-      console.log(JSON.stringify(subs) + '<subs');
 
       return {
         ...state,

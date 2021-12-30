@@ -24,8 +24,6 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
   errors,
   open,
 }) => {
-  //const newInitialValue = Object.assign({}, initialValue) || null;
-  //  console.log(JSON.stringify(newInitialValue) + '<newInitialVAlue');
   const x = JSON.stringify(initialValue);
   const [subscriber, setSubscriber] = useState(JSON.parse(x));
   const [formErrors, setFormErrors] = useState(null);
@@ -42,9 +40,6 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
   }
 
   const emailIndex = subscriber?.channels?.findIndex((channel) => channel.channel === 'email');
-  console.log(JSON.stringify(emailIndex) + '<emailIndex');
-
-  console.log(JSON.stringify(subscriber) + '<subscriber');
 
   const trySave = (subscriber) => {
     const emailIndex = subscriber?.channels?.findIndex((channel) => channel.channel === 'email');
@@ -61,6 +56,8 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
   };
 
   const tryCancel = () => {
+    const x = JSON.stringify(initialValue);
+    setSubscriber(JSON.parse(x));
     setFormErrors(null);
     onCancel();
   };
