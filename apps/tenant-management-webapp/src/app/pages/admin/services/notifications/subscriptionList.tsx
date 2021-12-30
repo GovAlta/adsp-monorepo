@@ -8,14 +8,16 @@ import styled from 'styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
 import { SubscriberModalForm } from './editSubscriber';
 import { GoAIcon } from '@abgov/react-components/experimental';
-
+import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 interface SubscriptionProps {
   subscription: Subscriber;
+  type: string;
   readonly?: boolean;
   openModal?: (subscription: Subscription) => void;
+  onDelete: (subscription: Subscriber, type: string) => void;
 }
 
-const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscription, openModal }) => {
+const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscription, openModal, onDelete, type }) => {
   function characterLimit(string, limit) {
     if (string?.length > limit) {
       const slicedString = string.slice(0, limit);
@@ -24,6 +26,7 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscript
       return string;
     }
   }
+
   return (
     <>
       <tr>
@@ -58,6 +61,13 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscript
               <GoAIcon type="create" />
             </ButtonBorder>
           </a>
+          <GoAContextMenu>
+            <GoAContextMenuIcon
+              type="trash"
+              onClick={() => onDelete(subscription, type)}
+              testId="delete-subscription"
+            />
+          </GoAContextMenu>
         </td>
       </tr>
     </>
@@ -66,9 +76,10 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscript
 
 interface SubscriptionsListComponentProps {
   className?: string;
+  onDelete: (subscription: Subscriber, type: string) => void;
 }
 
-const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentProps> = ({ className }) => {
+const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentProps> = ({ className, onDelete }) => {
   const dispatch = useDispatch();
   const subscription = useSelector((state: RootState) => state.subscription);
   const [editSubscription, setEditSubscription] = useState(false);
@@ -97,7 +108,6 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
     acc[def.typeId].push(def);
     return acc;
   }, {});
-
   const orderedGroupNames = Object.keys(groupedSubscriptions).sort((prev, next): number => {
     if (prev > next) {
       return 1;
@@ -126,6 +136,8 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
                   key={`${subscription?.subscriber?.id}:${subscription?.subscriber?.urn}:${Math.random()}`}
                   subscription={subscription?.subscriber}
                   openModal={openModalFunction}
+                  type={subscription?.typeId}
+                  onDelete={onDelete}
                 />
               ))}
             </tbody>
