@@ -15,6 +15,8 @@ export const Subscriptions: FunctionComponent = () => {
     dispatch(getSubscriptions());
   }, []);
 
+  const emailIndex = selectedSubscription?.channels?.findIndex((channel) => channel.channel === 'email');
+
   return (
     <>
       <SubscriptionList
@@ -27,7 +29,7 @@ export const Subscriptions: FunctionComponent = () => {
       {/* Delete confirmation */}
       <GoAModal testId="delete-confirmation" isOpen={showDeleteConfirmation}>
         <GoAModalTitle>Delete Subscriber</GoAModalTitle>
-        <GoAModalContent>Delete Subscriber {selectedSubscription?.userId}?</GoAModalContent>
+        <GoAModalContent>Delete Subscriber {selectedSubscription?.channels[emailIndex]?.address}?</GoAModalContent>
         <GoAModalActions>
           <GoAButton buttonType="tertiary" data-testid="delete-cancel" onClick={() => setShowDeleteConfirmation(false)}>
             Cancel
