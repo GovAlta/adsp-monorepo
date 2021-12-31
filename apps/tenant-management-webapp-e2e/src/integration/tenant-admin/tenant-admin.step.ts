@@ -519,22 +519,33 @@ Then('the user views more events matching the search filter of {string}', functi
   });
   tenantAdminObj.eventTableBody().children().should('have.length.greaterThan', 10);
 });
+//function takes datetime, and string that looks like "-5" or "5" or "+5" as change in minutes
+//to make even more generic more changes will need to be made, i.e. indicating change in hours or minutes
+function timeChanger(datetime, addedMins) {
+  //parse minutes into integer for generic addition/formatting
+  const minChange = parseInt(addedMins);
+  //dayjs().format,  dayjs().add as original intention, making generic
+  const formattedDate = datetime.format('YYYY-MM-DD');
+  const finalTime = datetime.add(minChange, 'minutes').format('HH:mm');
+  const finalDate = formattedDate + 'T' + finalTime;
+  return finalDate;
+}
 
 When(
-  'the user searches with now-{string} mins as minimum timestamp, now+{string} mins as maximum timestamp',
+  'the user searches with now {string} mins as minimum timestamp, now {string} mins as maximum timestamp',
   function (submin, addmin) {
-    const formattedDate = dayjs().format('YYYY-MM-DD'); //requires a valid datetime with the format YYYY-MM-DDThh:mm, for example 2017-06-01T08:30
-    const addformattedTime = dayjs().add(addmin, 'minutes').format('HH:mm');
-    const subtractformattedTime = dayjs().subtract(submin, 'minutes').format('HH:mm');
+    //const formattedDate = dayjs().format('YYYY-MM-DD'); //requires a valid datetime with the format YYYY-MM-DDThh:mm, for example 2017-06-01T08:30
+    //const timeOne = dayjs().add(sub, 'minutes').format('HH:mm');
+    //const timeTwo = dayjs().add(add, 'minutes').format('HH:mm');
 
-    const minDayTime = formattedDate + 'T' + subtractformattedTime;
-    const maxDayTime = formattedDate + 'T' + addformattedTime;
+    const timestampOne = timeChanger(dayjs(), submin);
+    const timestampTwo = timeChanger(dayjs(), addmin);
 
-    cy.log(minDayTime);
-    cy.log(maxDayTime);
+    cy.log(timestampOne);
+    cy.log(timestampTwo);
 
-    tenantAdminObj.eventLogMinTimesStamp().type(minDayTime);
-    tenantAdminObj.eventLogMaxTimesStamp().type(maxDayTime);
+    tenantAdminObj.eventLogMinTimesStamp().type(timestampOne);
+    tenantAdminObj.eventLogMaxTimesStamp().type(timestampTwo);
     tenantAdminObj.eventLogSearchBtn().click();
     cy.wait(500);
   }
@@ -542,6 +553,7 @@ When(
 
 Then('the user views the events matching the search filter of now-1min as minimum timestamp', function () {
   const formattedDateTable = dayjs().format('MM/DD/YYYY');
+
   cy.log(formattedDateTable);
 
   tenantAdminObj
