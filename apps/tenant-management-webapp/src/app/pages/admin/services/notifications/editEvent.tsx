@@ -113,9 +113,11 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
               templates: emptyTemplate,
               channels: [],
             };
-
-            definition.events.push(eventObject);
-            onNext(definition, eventObject);
+            // deep cloning props to avoid unwanted side effects
+            // note: do not mutate props directly, it will cause unnecessary side effects
+            const deepClonedDefinition = JSON.parse(JSON.stringify(definition));
+            deepClonedDefinition.events.push(eventObject);
+            onNext(deepClonedDefinition, eventObject);
 
             setValues(['']);
           }}
