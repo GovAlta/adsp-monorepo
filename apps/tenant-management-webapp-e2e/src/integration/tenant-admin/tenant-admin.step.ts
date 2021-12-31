@@ -483,9 +483,13 @@ Then('the user views the events matching the search filter of {string}, {string}
     });
   tenantAdminObj.eventTableBody().each(($row) => {
     cy.wrap($row).within(() => {
-      cy.get('tr').each(($row) => {
-        if ($row.eq(1).text() == namespace) cy.log('Record found');
-        if ($row.eq(2).text() == name) cy.log('Record found');
+      cy.get('td').each(($col) => {
+        if ($col.eq(1).text() == namespace) {
+          throw new Error('Record not found');
+        }
+        if ($col.eq(2).text() == name) {
+          throw new Error('Record not found');
+        }
       });
     });
   });
