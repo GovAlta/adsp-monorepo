@@ -16,7 +16,19 @@ describe('NotificationTypes Page', () => {
         notificationId: {
           name: 'Child care subsidy application',
           description: 'Lorem ipsum dolor sit amet',
-          events: [],
+          events: [
+            {
+              namespace: 'file-service',
+              name: 'file-uploaded',
+              templates: {
+                email: {
+                  subject: 'dfds',
+                  body: 'sdfsdf',
+                },
+              },
+              channels: [],
+            },
+          ],
           subscriberRoles: [],
           id: 'notificationId',
           publicSubscribe: false,
@@ -240,7 +252,7 @@ describe('NotificationTypes Page', () => {
       </Provider>
     );
 
-    const deleteBtn = queryByTestId('delete-event-notificationId');
+    const deleteBtn = queryByTestId('delete-event-notificationId-0');
     fireEvent.click(deleteBtn);
 
     const confirmation = queryByTestId('event-delete-confirmation');
