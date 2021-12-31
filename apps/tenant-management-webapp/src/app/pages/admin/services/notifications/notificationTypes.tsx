@@ -334,7 +334,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       {/* Event delete confirmation */}
       <GoAModal testId="event-delete-confirmation" isOpen={showEventDeleteConfirmation}>
         <GoAModalTitle>Remove event</GoAModalTitle>
-        <GoAModalContent>Remove {selectedEvent?.name}?</GoAModalContent>
+        <GoAModalContent>Remove {selectedEvent?.namespace}:{selectedEvent?.name}?</GoAModalContent>
         <GoAModalActions>
           <GoAButton
             buttonType="tertiary"
