@@ -484,12 +484,12 @@ Then('the user views the event matching the search filter of {string}, {string}'
   tenantAdminObj.eventTableBody().children().should('have.length.lessThan', 11);
 });
 
-When('the user clicks Load more events', function () {
+When('the user clicks Load more button', function () {
   tenantAdminObj.eventLoadMoreBtn().click();
   cy.wait(500);
 });
 //finds that all rows in the table contains searched events
-Then('the user views more the events matching the search filter of {string}, {string}', function (namespace, name) {
+Then('the user views more of the events matching the search filter of {string}, {string}', function (namespace, name) {
   tenantAdminObj.eventTableBody().each(($row) => {
     cy.wrap($row).within(() => {
       cy.get('tr').each(($row) => {
@@ -498,7 +498,6 @@ Then('the user views more the events matching the search filter of {string}, {st
       });
     });
   });
-
   tenantAdminObj.eventTableBody().children().should('have.length.greaterThan', 10);
 });
 
@@ -522,18 +521,17 @@ When(
   }
 );
 
-Then('the user views the events matching the search filter of {string} and today date', function (namespace) {
+Then('the user views the events matching the search filter of now-1min as minimum timestamp', function () {
   const formattedDateTable = dayjs().format('MM/DD/YYYY');
   cy.log(formattedDateTable);
 
   tenantAdminObj
     .eventTableBody()
-    .contains(namespace)
+    //.contains(namespace)
     .parent()
     .within(function () {
       cy.get('td').eq(0).should('contain.text', formattedDateTable);
     });
-  tenantAdminObj.eventLogResetBtn().click();
 });
 
 When('the user searches with now-{string} mins as minimum timestamp', function (submin) {
@@ -562,7 +560,6 @@ Then('the user views the events matching the search filter now-{string} days as 
   tenantAdminObj.eventTableBody().within(function () {
     cy.get('td').eq(0).should('contain.text', formattedDateTable);
   });
-  tenantAdminObj.eventLogResetBtn().click();
 });
 
 When(
