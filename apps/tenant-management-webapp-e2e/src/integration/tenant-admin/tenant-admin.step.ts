@@ -2,6 +2,7 @@ import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import tenantAdminPage from './tenant-admin.page';
 import common from '../common/common.page';
 import dayjs = require('dayjs');
+import { split } from 'cypress/types/lodash';
 
 const commonObj = new common();
 const tenantAdminObj = new tenantAdminPage();
@@ -473,21 +474,22 @@ When('the user searches with {string}', function (namespaceName) {
   tenantAdminObj.eventLogSearchBtn().click();
 });
 
-Then('the user views the events matching the search filter of {string}, {string}', function (namespace, name) {
+Then('the user views the events matching the search filter of {string}', function (namespaceName) {
   tenantAdminObj
     .eventTableBody()
-    .contains(namespace)
+    .contains(namespaceName.split(':')[0])
     .parent()
     .within(function () {
-      cy.get('td').eq(2).should('contain.text', name);
+      cy.get('td').eq(2).should('contain.text', namespaceName.split(':')[1]);
     });
+
   tenantAdminObj.eventTableBody().each(($row) => {
     cy.wrap($row).within(() => {
       cy.get('td').each(($col) => {
-        if ($col.eq(1).text() == namespace) {
+        if ($col.eq(1).text() == namespaceName.split(':')[0]) {
           throw new Error('Record not found');
         }
-        if ($col.eq(2).text() == name) {
+        if ($col.eq(2).text() == namespaceName.split(':')[1]) {
           throw new Error('Record not found');
         }
       });
@@ -502,14 +504,14 @@ When('the user clicks Load more button', function () {
   cy.wait(500);
 });
 
-Then('the user views more events matching the search filter of {string}, {string}', function (namespace, name) {
+Then('the user views more events matching the search filter of {string}', function (namespaceName) {
   tenantAdminObj.eventTableBody().each(($row) => {
     cy.wrap($row).within(() => {
-      cy.get('tr').each(($row) => {
-        if ($row.eq(1).text() == namespace) {
+      cy.get('td').each(($row) => {
+        if ($row.eq(1).text() == namespaceName.split(':')[0]) {
           throw new Error('Record not found');
         }
-        if ($row.eq(2).text() == name) {
+        if ($row.eq(2).text() == namespaceName.split(':')[1]) {
           throw new Error('Record not found');
         }
       });
