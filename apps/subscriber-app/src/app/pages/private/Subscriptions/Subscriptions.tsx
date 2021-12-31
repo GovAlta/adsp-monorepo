@@ -20,6 +20,8 @@ import { RootState } from '@store/index';
 import SubscriptionsList from './SubscriptionsList';
 import { SubscriberChannel, Subscription } from '@store/subscription/models';
 
+import { Prompt } from 'react-router'
+
 const Subscriptions = (): JSX.Element => {
   const dispatch = useDispatch();
   const EMAIL = 'email';
@@ -36,6 +38,14 @@ const Subscriptions = (): JSX.Element => {
   useEffect(() => {
     dispatch(getMySubscriberDetails());
   }, []);
+
+  useEffect(() => {
+    if (editContactInformation) {
+      window.onbeforeunload = () => true
+    } else {
+      window.onbeforeunload = undefined
+    }
+  }, [editContactInformation]);
 
   const unSubscribe = (typeId: string) => {
     setShowUnSubscribeModal(true);
@@ -166,6 +176,10 @@ const Subscriptions = (): JSX.Element => {
               )}
             </div>
             <div>
+            <Prompt
+              when={editContactInformation}
+              message='Changes you made may not be saved.'
+            />
               {editContactInformation ? (
                 updateContactInfoButtons()
               ) : (
