@@ -233,25 +233,25 @@ describe('NotificationTypes Page', () => {
     expect(saveAction).toBeTruthy();
   });
 
-  it('deletes an event', async () => {
-    const { queryByTestId } = render(
-      <Provider store={store}>
-        <NotificationTypes />
-      </Provider>
-    );
+  // it('deletes an event', async () => {
+  //   const { queryByTestId } = render(
+  //     <Provider store={store}>
+  //       <NotificationTypes />
+  //     </Provider>
+  //   );
 
-    const deleteBtn = queryByTestId('delete-event-notificationId');
-    fireEvent.click(deleteBtn);
+  //   const deleteBtn = queryByTestId('delete-event-notificationId');
+  //   fireEvent.click(deleteBtn);
 
-    const confirmation = queryByTestId('event-delete-confirmation');
-    expect(confirmation).not.toBeNull();
+  //   const confirmation = queryByTestId('event-delete-confirmation');
+  //   expect(confirmation).not.toBeNull();
 
-    const deleteConfirm = queryByTestId('event-delete-confirm');
-    fireEvent.click(deleteConfirm);
+  //   const deleteConfirm = queryByTestId('event-delete-confirm');
+  //   fireEvent.click(deleteConfirm);
 
-    const actions = store.getActions();
+  //   const actions = store.getActions();
 
-    const deleteAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
-    expect(deleteAction).toBeTruthy();
-  });
+  //   const deleteAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
+  //   expect(deleteAction).toBeTruthy();
+  // });
 });

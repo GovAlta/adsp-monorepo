@@ -1,18 +1,23 @@
-import React, { FunctionComponent } from 'react';
-import { useSelector } from 'react-redux';
+import React, { FunctionComponent, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
-import type { Subscriber } from '@store/subscription/models';
+import type { Subscriber, Subscription } from '@store/subscription/models';
+import { UpdateSubscriberService } from '@store/subscription/actions';
 import styled from 'styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
+import { SubscriberModalForm } from './editSubscriber';
 import { GoAIcon } from '@abgov/react-components/experimental';
 
 interface SubscriptionProps {
   subscription: Subscriber;
+  type: string;
   readonly?: boolean;
+  openModal?: (subscription: Subscription) => void;
+  onDelete: (subscription: Subscriber, type: string) => void;
 }
 
-const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscription }) => {
+const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscription, openModal, onDelete, type }) => {
   function characterLimit(string, limit) {
     if (string?.length > limit) {
       const slicedString = string.slice(0, limit);
@@ -21,43 +26,77 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscript
       return string;
     }
   }
+
   return (
-    <>
-      <tr>
-        <td headers="userName" data-testid="addressAs">
-          {characterLimit(subscription?.addressAs, 30)}
-        </td>
-        <td headers="channels" data-testid="channels">
-          {subscription?.channels.map((channel, i) => (
-            <div key={`channels-id-${i}`} style={{ display: 'flex' }}>
+    <tr>
+      <td headers="userName" data-testid="addressAs">
+        {characterLimit(subscription?.addressAs, 30)}
+      </td>
+      <td headers="channels" data-testid="channels">
+        {subscription?.channels.map((channel, i) => (
+          <div key={`channels-id-${i}`} style={{ display: 'flex' }}>
+            <div>
               <div>
-                <b>
-                  {channel.channel === 'email' ? (
-                    <IconsCell>
-                      <GoAIcon data-testid="mail-icon" size="medium" type="mail" />
-                    </IconsCell>
-                  ) : (
-                    `${channel.channel}:`
-                  )}{' '}
-                </b>
+                {channel.channel === 'email' ? (
+                  <IconsCell>
+                    <GoAIcon data-testid="mail-icon" size="medium" type="mail" />
+                  </IconsCell>
+                ) : (
+                  `${channel.channel}:`
+                )}{' '}
               </div>
-              <div>{channel.address}</div>
             </div>
-          ))}
-        </td>
-      </tr>
-    </>
+            <div>{channel.address}</div>
+          </div>
+        ))}
+      </td>
+      <td headers="actions" data-testid="actions">
+        <div style={{ display: 'flex', flexDirection: 'row' }}>
+          <a
+            className="flex1"
+            data-testid={`edit-subscription-item-${subscription.id}`}
+            onClick={() => openModal(subscription)}
+          >
+            <ButtonBorder>
+              <GoAIcon type="create" />
+            </ButtonBorder>
+          </a>
+          <a
+            className="flex1"
+            data-testid={`delete-subscription-${subscription.id}`}
+            onClick={() => onDelete(subscription, type)}
+          >
+            <ButtonBorder>
+              <GoAIcon type="trash" />
+            </ButtonBorder>
+          </a>
+        </div>
+      </td>
+    </tr>
   );
 };
 
 interface SubscriptionsListComponentProps {
   className?: string;
+  onDelete: (subscription: Subscriber, type: string) => void;
 }
 
-const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentProps> = ({ className }) => {
-  const subscriptions = useSelector((state: RootState) => state.subscription.subscriptions);
+const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentProps> = ({ className, onDelete }) => {
+  const dispatch = useDispatch();
+  const subscription = useSelector((state: RootState) => state.subscription);
+  const [editSubscription, setEditSubscription] = useState(false);
+  const [selectedSubscription, setSelectedSubscription] = useState(null);
 
-  if (!subscriptions) {
+  const openModalFunction = (subscription) => {
+    setSelectedSubscription(subscription);
+    setEditSubscription(true);
+  };
+
+  function reset() {
+    setEditSubscription(false);
+  }
+
+  if (!subscription?.subscriptions) {
     return (
       <div>
         {' '}
@@ -66,12 +105,11 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
     );
   }
 
-  const groupedSubscriptions = subscriptions.reduce((acc, def) => {
+  const groupedSubscriptions = subscription?.subscriptions.reduce((acc, def) => {
     acc[def.typeId] = acc[def.typeId] || [];
     acc[def.typeId].push(def);
     return acc;
   }, {});
-
   const orderedGroupNames = Object.keys(groupedSubscriptions).sort((prev, next): number => {
     if (prev > next) {
       return 1;
@@ -91,6 +129,7 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
                   User name
                 </th>
                 <th id="channels">Channels</th>
+                <th id="actions">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -98,15 +137,39 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
                 <SubscriptionComponent
                   key={`${subscription?.subscriber?.id}:${subscription?.subscriber?.urn}:${Math.random()}`}
                   subscription={subscription?.subscriber}
+                  openModal={openModalFunction}
+                  type={subscription?.typeId}
+                  onDelete={onDelete}
                 />
               ))}
             </tbody>
           </DataTable>
         </div>
       ))}
+      {/* Form */}
+      <SubscriberModalForm
+        open={editSubscription}
+        initialValue={selectedSubscription}
+        // errors={errors}
+        onSave={(subscriber) => {
+          dispatch(UpdateSubscriberService(subscriber));
+          reset();
+        }}
+        onCancel={() => {
+          reset();
+        }}
+      />
     </div>
   );
 };
+
+const ButtonBorder = styled.div`
+  border: 1px solid #56a0d8;
+  margin: 3px;
+  border-radius: 3px;
+  width: fit-content;
+  padding: 3px;
+`;
 
 export const SubscriptionList = styled(SubscriptionsListComponent)`
   display: flex-inline-table;
@@ -147,9 +210,10 @@ export const SubscriptionList = styled(SubscriptionsListComponent)`
   }
 `;
 
-const IconsCell = styled.td`
+const IconsCell = styled.div`
   display: flex;
   justify-content: space-around;
   width: 90%;
   width: 50%;
+  margin: 5px 3px 0 0;
 `;
