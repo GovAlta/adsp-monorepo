@@ -466,10 +466,10 @@ Then('the user should not have regular admin view', function () {
   tenantAdminObj.dashboardServicesMenuCategory().should('not.exist');
 });
 
-When('the user searches the event with {string}', function (namespace) {
+When('the user searches the event with {string}', function (namespaceName) {
   tenantAdminObj.eventLogSearchBox().click();
-  tenantAdminObj.eventLogSearchBox().type(namespace).click();
-  tenantAdminObj.eventLogSearchBox().should('have.value', namespace);
+  tenantAdminObj.eventLogSearchBox().type(namespaceName).click();
+  tenantAdminObj.eventLogSearchBox().should('have.value', namespaceName);
   tenantAdminObj.eventLogSearchBtn().click();
 });
 
@@ -488,7 +488,7 @@ When('the user clicks Load more button', function () {
   tenantAdminObj.eventLoadMoreBtn().click();
   cy.wait(500);
 });
-//finds that all rows in the table contains searched events
+
 Then('the user views more of the events matching the search filter of {string}, {string}', function (namespace, name) {
   tenantAdminObj.eventTableBody().each(($row) => {
     cy.wrap($row).within(() => {
