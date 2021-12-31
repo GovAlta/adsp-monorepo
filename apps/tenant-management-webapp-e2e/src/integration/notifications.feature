@@ -43,3 +43,31 @@ Feature: Notifications
     Then the user views Remove event modal for "tenant-created"
     When the user clicks Confirm button in Remove event modal
     Then the user "should not view" the event of "tenant-service:tenant-created" in "autotest-notificationType"
+
+  @TEST_CS-976 @REQ_CS-906 @Regression
+  Scenario: Test the registration of notification type in status service for application health change
+    Given a service owner user is on notification types page
+    # Verify the type and its events
+    Then the user "views" the notification type card of "status-application-health-change"
+    And the user "views" the event of "status-service:health-check-started" in "status-application-health-change"
+    And the user "views" the event of "status-service:health-check-stopped" in "status-application-health-change"
+    And the user "views" the event of "Status-Service:application-unhealthy" in "status-application-health-change"
+    And the user "views" the event of "Status-Service:application-healthy" in "status-application-health-change"
+    # Verify the events' email icons and preview links, and no edit buttons
+    And the user "views" an email template indicator and a preview link for "status-service:health-check-started" in "status-application-health-change"
+    And the user "views" an email template indicator and a preview link for "status-service:health-check-stopped" in "status-application-health-change"
+    And the user "views" an email template indicator and a preview link for "Status-Service:application-unhealthy" in "status-application-health-change"
+    And the user "views" an email template indicator and a preview link for "Status-Service:application-healthy" in "status-application-health-change"
+    And the user "should not view" "Edit" button for "status-service:health-check-started" in "status-application-health-change"
+    And the user "should not view" "Edit" button for "status-service:health-check-stopped" in "status-application-health-change"
+    And the user "should not view" "Edit" button for "Status-Service:application-unhealthy" in "status-application-health-change"
+    And the user "should not view" "Edit" button for "Status-Service:application-healthy" in "status-application-health-change"
+    # Verify email template is read-only (pick one event)
+    When the user clicks "Preview" button on "status-service:health-check-started" event
+    Then the user views "Preview an email template" modal
+    When the user attempts to edit the template
+    Then the user gets "Cannot edit in read-only editor"
+    When the user clicks "Close"
+    Then "Preview an email template" template is closed
+    # Verify the event is still there (had a bug of the event disappearing after preview)
+    And the user "views" the event of "status-service:health-check-started" in "status-application-health-change"
