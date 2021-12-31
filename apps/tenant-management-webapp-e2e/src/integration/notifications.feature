@@ -39,7 +39,6 @@ Feature: Notifications
     And the user clicks Cancel button in Select an event modal
     # Delete an event
     When the user clicks "delete" button for "tenant-service:tenant-created" in "autotest-notificationType"
-    # Due to Bug#CS-1058, only event name is used for the modal validation. After the bug fix, <namespace>:<event name> needs to be used
-    Then the user views Remove event modal for "tenant-created"
+    Then the user views Remove event modal for "tenant-service:tenant-created"
     When the user clicks Confirm button in Remove event modal
     Then the user "should not view" the event of "tenant-service:tenant-created" in "autotest-notificationType"
