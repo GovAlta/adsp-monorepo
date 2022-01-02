@@ -17,7 +17,6 @@ import DatePicker from 'react-date-picker';
 import styled from 'styled-components';
 import Multiselect from 'multiselect-react-dropdown';
 import CloseIcon from '@icons/close-outline.svg';
-import '@abgov/core-css/src/lib/styles/v2/colors.scss';
 
 const dateTime = (date, time) => {
   const newDate = new Date(date);
