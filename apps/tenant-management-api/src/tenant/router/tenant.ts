@@ -4,7 +4,6 @@ import validationMiddleware from '../../middleware/requestValidator';
 import * as HttpStatusCodes from 'http-status-codes';
 import {
   requireTenantServiceAdmin,
-  requireTenantAdmin,
   requireBetaTesterOrAdmin,
 } from '../../middleware/authentication';
 import * as TenantService from '../services/tenant';
@@ -14,6 +13,7 @@ import { EventService } from '@abgov/adsp-service-sdk';
 import { tenantCreated } from '../events';
 import { TenantRepository } from '../repository';
 import { ServiceClient } from '../types';
+import { InvalidOperationError } from '@core-services/core-common';
 
 class CreateTenantDto {
   @IsDefined()
@@ -50,27 +50,29 @@ interface TenantRouterProps {
 export const createTenantRouter = ({ tenantRepository, eventService }: TenantRouterProps): Router => {
   const tenantRouter = Router();
 
-  async function getTenantByEmail(req, res) {
+  async function getTenantByEmail(req, res, next) {
     try {
       const { email } = req.payload;
       const tenant = await tenantRepository.findBy({ adminEmail: email });
       res.json(tenant.obj());
-    } catch (e) {
-      res.status(HttpStatusCodes.NOT_FOUND).json();
+    } catch (err) {
+      logger.error(`Failed fetching tenant info by email address: ${err.message}`);
+      next(err);
     }
   }
 
-  async function getTenantByName(req, res) {
+  async function getTenantByName(req, res, next) {
     try {
       const { name } = req.payload;
       const tenant = await tenantRepository.findBy({ name: name });
       res.json(tenant.obj());
-    } catch (e) {
-      res.status(HttpStatusCodes.NOT_FOUND).json();
+    } catch (err) {
+      logger.error(`Failed fetching tenant info by name: ${err.message}`);
+      next(err);
     }
   }
 
-  async function getTenantByRealm(req, res) {
+  async function getTenantByRealm(req, res, next) {
     const { realm } = req.payload;
 
     try {
@@ -79,34 +81,13 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
         success: true,
         tenant: tenant.obj(),
       });
-    } catch (e) {
-      logger.error(`Failed to get tenant by realm: ${e.message}`);
-      res.status(HttpStatusCodes.BAD_REQUEST).json({
-        success: false,
-        errors: [e.message],
-      });
+    } catch (err) {
+      logger.error(`Failed fetching tenant info by realm: ${err.message}`);
+      next(err);
     }
   }
 
-  async function fetchIssuers(req, res) {
-    const issuers = await tenantRepository.issuers();
-    if (issuers) {
-      res.json(issuers);
-    } else {
-      res.status(HttpStatusCodes.BAD_REQUEST).json();
-    }
-  }
-
-  async function fetchRealmTenantMapping(req, res) {
-    const mapping = await tenantRepository.fetchRealmToNameMapping();
-    if (mapping) {
-      res.json(mapping);
-    } else {
-      res.status(HttpStatusCodes.BAD_REQUEST);
-    }
-  }
-
-  async function getTenant(req, res) {
+  async function getTenant(req, res, next) {
     const { id } = req.payload;
 
     try {
@@ -115,16 +96,13 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
         success: true,
         tenant: tenant.obj(),
       });
-    } catch (e) {
-      logger.error(`Failed to get tenant by id: ${e.message}`);
-      res.status(HttpStatusCodes.BAD_REQUEST).json({
-        success: false,
-        errors: [e.message],
-      });
+    } catch (err) {
+      logger.error(`Failed fetching tenant by id: ${err.message}`);
+      next(err);
     }
   }
 
-  async function createTenant(req: Request, res: Response) {
+  async function createTenant(req: Request, res: Response, next) {
     const payload = req['payload'];
     const tenantName = payload.name;
     const email = req.user.email;
@@ -138,7 +116,8 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
         const hasRealm = await TenantService.isRealmExisted(tenantName);
         // To upgrade existing realm to support platform team service. Email is from the payload
         if (!hasRealm) {
-          throw new TenantService.TenantError(`${tenantName} does not exit`, HttpStatusCodes.BAD_REQUEST);
+          const message = `${tenantName} does not exit`;
+          throw new InvalidOperationError(message);
         }
         const tenantRealm = tenantName;
         logger.info(`Found key realm with name ${tenantRealm}`);
@@ -146,10 +125,8 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
         const hasTenant = await TenantService.hasTenantOfRealm(tenantName);
 
         if (hasTenant) {
-          throw new TenantService.TenantError(
-            `Tenant ${tenantName} has already been created`,
-            HttpStatusCodes.BAD_REQUEST
-          );
+          const message = `Duplicated tenant.`;
+          throw new InvalidOperationError(message);
         }
 
         await TenantService.validateEmailInDB(tenantRepository, tenantEmail);
@@ -160,6 +137,7 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
           tenantName,
           tokenIssuer
         );
+
         const response = { ...tenant, newTenant: false };
         eventService.send(tenantCreated(req.user, response, false));
         res.status(HttpStatusCodes.OK).json(response);
@@ -183,20 +161,15 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
       );
 
       const data = { status: 'ok', message: 'Create Realm Success!', realm: generatedRealmName };
-
       eventService.send(tenantCreated(req.user, { ...tenant }, true));
-
       res.status(HttpStatusCodes.OK).json(data);
     } catch (err) {
-      if (err instanceof TenantService.TenantError) {
-        res.status(err.errorCode).json({ error: err.message });
-      } else {
-        res.status(err.response.status).json({ error: err.message });
-      }
+      logger.error(`Error creating new tenant ${err.message}`);
+      next(err);
     }
   }
 
-  async function deleteTenant(req, res) {
+  async function deleteTenant(req, res, next) {
     const payload = req.payload;
     const keycloakRealm = payload.realm;
 
@@ -207,39 +180,13 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
         ...results,
       });
     } catch (err) {
-      if (err instanceof TenantService.TenantError) {
-        res.status(err.errorCode).json({ error: err.message });
-      } else {
-        res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({ error: err.message });
-      }
-    }
-  }
-
-  async function getRealmRoles(req, res, next) {
-    //TODO: suppose we can use the req.tenant to fetch the realm
-    const tenant = req.user.token.iss.split('/').pop();
-
-    try {
-      const roles = await TenantService.getRealmRoles(tenant);
-      res.json({
-        roles: roles,
-      });
-    } catch (err) {
-      logger.error(`Failed to get tenant realm roles with error: ${err.message}`);
-
+      // The tenant delete include rescure functions. Serious error occur when reach here.
+      logger.error(`Error deleting tenant: ${err.message}`);
       next(err);
     }
   }
 
-  /**
-   * @deprecated Used for issuers cache and mappings to tenants.
-   */
-  tenantRouter.get('/issuers', requireTenantServiceAdmin, fetchIssuers);
-  tenantRouter.get('/realm/roles', requireTenantAdmin, getRealmRoles);
-  tenantRouter.get('/realms/names', requireTenantServiceAdmin, fetchRealmTenantMapping);
-
-  // Tenant admin only APIs
-  // Used by the admin web app.
+  // Tenant admin only APIs. Used by the admin web app.
   tenantRouter.post('/', [requireBetaTesterOrAdmin, validationMiddleware(CreateTenantDto)], createTenant);
   tenantRouter.get('/:id', [validationMiddleware(GetTenantDto)], getTenant);
   tenantRouter.get('/realm/:realm', validationMiddleware(TenantByRealmDto), getTenantByRealm);
