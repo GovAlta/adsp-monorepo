@@ -334,7 +334,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       {/* Event delete confirmation */}
       <GoAModal testId="event-delete-confirmation" isOpen={showEventDeleteConfirmation}>
         <GoAModalTitle>Remove event</GoAModalTitle>
-        <GoAModalContent>Remove {selectedEvent?.namespace}:{selectedEvent?.name}?</GoAModalContent>
+        <GoAModalContent>
+          Remove {selectedEvent?.namespace}:{selectedEvent?.name}?
+        </GoAModalContent>
         <GoAModalActions>
           <GoAButton
             buttonType="tertiary"
@@ -399,6 +401,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         onCancel={() => {
           reset();
         }}
+        onClickedOutside={() => {
+          reset();
+        }}
       />
       <TemplateForm
         initialValue={editEvent}
@@ -413,6 +418,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         }}
         onCancel={() => {
           setShowTemplateForm(false);
+        }}
+        onClickedOutside={() => {
+          reset();
         }}
       />
     </NotficationStyles>
