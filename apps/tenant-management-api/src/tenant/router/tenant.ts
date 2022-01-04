@@ -4,6 +4,7 @@ import validationMiddleware from '../../middleware/requestValidator';
 import * as HttpStatusCodes from 'http-status-codes';
 import {
   requireTenantServiceAdmin,
+  requireTenantAdmin,
   requireBetaTesterOrAdmin,
 } from '../../middleware/authentication';
 import * as TenantService from '../services/tenant';
@@ -169,6 +170,21 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
     }
   }
 
+  async function getRealmRoles(req, res, next) {
+    //TODO: suppose we can use the req.tenant to fetch the realm
+    const tenant = req.user.token.iss.split('/').pop();
+
+    try {
+      const roles = await TenantService.getRealmRoles(tenant);
+      res.json({
+        roles: roles,
+      });
+    } catch (err) {
+      logger.error(`Failed to get tenant realm roles with error: ${err.message}`);
+      next(err);
+    }
+  }
+
   async function deleteTenant(req, res, next) {
     const payload = req.payload;
     const keycloakRealm = payload.realm;
@@ -187,6 +203,7 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
   }
 
   // Tenant admin only APIs. Used by the admin web app.
+  tenantRouter.get('/realm/roles', requireTenantAdmin, getRealmRoles);
   tenantRouter.post('/', [requireBetaTesterOrAdmin, validationMiddleware(CreateTenantDto)], createTenant);
   tenantRouter.get('/:id', [validationMiddleware(GetTenantDto)], getTenant);
   tenantRouter.get('/realm/:realm', validationMiddleware(TenantByRealmDto), getTenantByRealm);
