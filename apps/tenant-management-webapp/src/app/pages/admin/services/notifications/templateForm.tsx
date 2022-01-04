@@ -11,6 +11,7 @@ import * as handlebars from 'handlebars/dist/cjs/handlebars';
 interface TemplateFormProps {
   onCancel?: () => void;
   onSubmit?: (NotificationItem) => void;
+  onClickedOutside?: () => void;
   open: boolean;
   initialValue?: NotificationItem;
   selectedEvent: EventItem;
@@ -22,6 +23,7 @@ interface TemplateFormProps {
 export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
   onCancel,
   onSubmit,
+  onClickedOutside,
   notifications,
   open,
   selectedEvent,
@@ -60,7 +62,7 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
       : 'Save';
   };
   return (
-    <GoAModal testId="template-form" isOpen={open}>
+    <GoAModal testId="template-form" isOpen={open} onClose={onClickedOutside}>
       <GoAModalTitle>{`${getModalState()} an email template`}</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>
@@ -122,7 +124,7 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
       </GoAModalContent>
       <GoAModalActions>
         <GoAButton data-testid="template-form-cancel" buttonType="tertiary" type="button" onClick={onCancel}>
-          {disabled ? 'Close' : 'Cancel'}
+          {disabled ? 'Close' : 'Back'}
         </GoAButton>
         {!disabled && (
           <GoAButton

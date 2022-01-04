@@ -401,6 +401,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         onCancel={() => {
           reset();
         }}
+        onClickedOutside={() => {
+          reset();
+        }}
       />
       <TemplateForm
         initialValue={editEvent}
@@ -415,6 +418,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         }}
         onCancel={() => {
           setShowTemplateForm(false);
+        }}
+        onClickedOutside={() => {
+          reset();
         }}
       />
     </NotficationStyles>
