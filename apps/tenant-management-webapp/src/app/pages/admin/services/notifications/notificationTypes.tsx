@@ -120,7 +120,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                     <MaxHeight height={30} className="rowFlex">
                       <a
                         className="flex1"
-                        data-testid={`edit-notification-type-${notificationType.id}`}
+                        data-testid="edit-notification-type"
                         onClick={() => {
                           setSelectedType(notificationType);
                           setEditType(true);
@@ -136,7 +136,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           setSelectedType(notificationType);
                           setShowDeleteConfirmation(true);
                         }}
-                        data-testid={`delete-notification-type-${notificationType.id}`}
+                        data-testid="delete-notification-type"
                       >
                         <NotificationBorder className="smallPadding">
                           <GoAIcon type="trash" />
@@ -180,7 +180,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                     setSelectedType(notificationType);
                                     setShowEventDeleteConfirmation(true);
                                   }}
-                                  data-testid={`delete-event-${notificationType.id}-${key}`}
+                                  data-testid="delete-event"
                                 >
                                   <GoAIcon type="trash" />
                                 </a>
@@ -199,7 +199,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                             <div className="rightAlignEdit">
                               <a
                                 style={{ marginRight: '20px' }}
-                                data-testid={`preview-event-${notificationType.id}`}
+                                data-testid="preview-event"
                                 onClick={() => {
                                   setSelectedEvent(event);
                                   setSelectedType(notificationType);
@@ -211,7 +211,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                               </a>
 
                               <a
-                                data-testid={`edit-event-${notificationType.id}`}
+                                data-testid="edit-event"
                                 onClick={() => {
                                   setSelectedEvent(event);
                                   setSelectedType(notificationType);
@@ -233,7 +233,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                     <EventButtonWrapper>
                       <GoAButton
                         buttonType="secondary"
-                        data-testid={`add-event-${notificationType.id}`}
+                        data-testid="add-event"
                         onClick={() => {
                           setSelectedEvent(null);
                           manageEvents(notificationType);
@@ -280,7 +280,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           <div className="rightAlignEdit">
                             <a
                               style={{ marginRight: '20px' }}
-                              data-testid={`preview-event-${notificationType.id}`}
+                              data-testid="preview-event"
                               onClick={() => {
                                 setSelectedEvent(event);
                                 setSelectedType(notificationType);

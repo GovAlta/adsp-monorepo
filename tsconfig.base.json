@@ -18,7 +18,8 @@
     "paths": {
       "@abgov/adsp-service-sdk": ["libs/adsp-service-sdk/src/index.ts"],
       "@core-services/core-common": ["libs/core-common/src/index.ts"],
-      "@core-services/core-common/mongo": ["libs/core-common/src/mongo/index.ts"]
+      "@core-services/core-common/mongo": ["libs/core-common/src/mongo/index.ts"],
+      "@core-services/stylesheets/scss": ["libs/stylesheets/scss/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
