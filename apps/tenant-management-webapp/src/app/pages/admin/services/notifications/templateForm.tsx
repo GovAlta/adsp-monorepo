@@ -131,14 +131,19 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
             type="submit"
             disabled={!validate()}
             onClick={() => {
-              selectedEvent.templates.email.subject = subject;
-              selectedEvent.templates.email.body = body;
-
               const definitionEventIndex = notifications?.events?.findIndex(
                 (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`
               );
 
-              notifications.events[definitionEventIndex] = selectedEvent;
+              notifications.events[definitionEventIndex] = {
+                ...selectedEvent,
+                templates: {
+                  email: {
+                    subject,
+                    body,
+                  },
+                },
+              };
 
               onSubmit(notifications);
             }}

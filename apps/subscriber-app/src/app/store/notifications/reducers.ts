@@ -1,21 +1,25 @@
 import { ActionTypes } from './actions';
 import { NotificationState, NOTIFICATION_INIT } from './models';
 
-const MessageExpiryTime = 5000;
-
 export default function (state: NotificationState = NOTIFICATION_INIT, action: ActionTypes): NotificationState {
   switch (action.type) {
-    case 'notifications/basic':
     case 'notifications/error':
+      return {
+        notification: {
+          message: action.payload.message,
+          type: 'emergency',
+        },
+      };
     case 'notifications/success':
       return {
-        notifications: [
-          ...state.notifications,
-          {
-            message: action.payload.message,
-            expiry: Date.now() + MessageExpiryTime,
-          },
-        ],
+        notification: {
+          message: action.payload.message,
+          type: 'information',
+        },
+      };
+    case 'notifications/clear':
+      return {
+        notification: undefined,
       };
     default:
       return state;

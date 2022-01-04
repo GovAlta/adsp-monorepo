@@ -173,7 +173,7 @@ function Status(): JSX.Element {
         </Tabs>
         <Switch>
           <Route path="/admin/services/status/new">
-            <ApplicationFormModal isOpen={true} />
+            <ApplicationFormModal isOpen={true} title='New application' />
           </Route>
           <Route path="/admin/services/status/notice/new">
             <NoticeModal isOpen={true} title="Add a draft notice" />
@@ -182,7 +182,7 @@ function Status(): JSX.Element {
             <NoticeModal isOpen={true} title="Edit draft notice" />
           </Route>
           <Route path="/admin/services/status/:applicationId/edit">
-            <ApplicationFormModal isOpen={true} />
+            <ApplicationFormModal isOpen={true} title='Edit application' />
           </Route>
         </Switch>
       </Main>
@@ -463,8 +463,8 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
               backgroundColor: entry.ok
                 ? 'var(--color-green)'
                 : entry.status === 'n/a'
-                ? 'var(--color-gray-300)'
-                : 'var(--color-red)',
+                  ? 'var(--color-gray-300)'
+                  : 'var(--color-red)',
             }}
             title={entry.status + ': ' + new Date(entry.timestamp).toLocaleString()}
           />

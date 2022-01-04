@@ -1,12 +1,14 @@
 export interface Notification {
   message: string;
   expiry?: number;
+  type?: NotificationType;
 }
+type NotificationType = 'important' | 'information' | 'event' | 'emergency';
 
 export interface NotificationState {
-  notifications: Notification[];
+  notification: Notification;
 }
 
 export const NOTIFICATION_INIT: NotificationState = {
-  notifications: [],
+  notification: undefined,
 };

@@ -1,4 +1,4 @@
-import { put, select, call } from 'redux-saga/effects';
+import { put, select } from 'redux-saga/effects';
 import { RootState, store } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
 import { KeycloakCheckSSOAction, TenantLoginAction, KeycloakCheckSSOWithLogOutAction } from './actions';
