@@ -172,6 +172,50 @@ class notificationsPage {
   removeEventModalConfirmBtn() {
     return cy.get('[data-testid="event-delete-confirm"]');
   }
+
+  internalNotificationTypeEventMailIcon(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/following-sibling::*[@class="rowFlex"]//*[@data-testid="icon-mail"]`
+    );
+  }
+
+  internalNotificationTypeEventPreviewLink(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/following-sibling::*[@class="rowFlex"]//*[@data-testid="preview-event"]`
+    );
+  }
+
+  internalNotificationTypeEventEditButton(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/following-sibling::*[@class="rowFlex"]//*[@data-testid="edit-event"]`
+    );
+  }
+
+  eventTemplatePreviewModal() {
+    return cy.xpath('//*[@data-testid="template-form" and @data-state="visible"]');
+  }
+
+  eventTemplatePreviewModalTitle() {
+    return cy.xpath('//*[@data-testid="template-form" and @data-state="visible"]//*[@class="modal-title"]');
+  }
+
+  eventTemplatePreviewModalSubjectEditor() {
+    return cy.xpath(
+      '(//*[@data-testid="template-form" and @data-state="visible"]//*[@class="goa-form-item"]//*[contains(@class, "monaco-editor") and @role="code"])[1]'
+    );
+  }
+
+  eventTemplatePreviewModalBodyEditor() {
+    return cy.xpath(
+      '(//*[@data-testid="template-form" and @data-state="visible"]//*[@class="goa-form-item"]//*[contains(@class, "monaco-editor") and @role="code"])[2]'
+    );
+  }
+
+  eventTemplatePreviewModalCloseBtn() {
+    return cy.xpath(
+      '//*[@data-testid="template-form" and @data-state="visible"]//*[@data-testid="template-form-cancel"]'
+    );
+  }
 }
 
 export default notificationsPage;
