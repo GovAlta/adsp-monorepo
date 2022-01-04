@@ -1,5 +1,5 @@
-import './app.css';
-
+import '../../../../libs/stylesheets/scss/src/lib/app.css';
+import '../../../../libs/stylesheets/scss/src/lib/colors.scss';
 import React, { useEffect } from 'react';
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 import { Provider, useDispatch, useSelector } from 'react-redux';
@@ -45,19 +45,16 @@ const AppRouters = () => {
           <Route path="/get-started">
             <GetStarted />
           </Route>
-
           <Route exact path="/login-redirect">
             <LoginRedirect />
           </Route>
-
+          This style is from the alberta design system
           <Route exact path="/login-error">
             <SignInError />
           </Route>
-
           <Route exact path="/logout-redirect">
             <LogoutRedirect />
           </Route>
-
           <Route exact path="/tenant/creation">
             <CreateTenant />
           </Route>
