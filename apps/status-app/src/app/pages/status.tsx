@@ -2,6 +2,7 @@ import React, { useState, useEffect, FormEvent } from 'react';
 import { GoAHeader, GoACallout } from '@abgov/react-components';
 
 import { Grid, GridItem } from '@components/Grid';
+import Footer from '@components/Footer';
 import ServiceStatus from './statusCard';
 import { useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -15,6 +16,7 @@ import { PageLoader } from '@components/PageLoader';
 import { LocalTime } from '@components/Date';
 import { GoAPageLoader } from '@abgov/react-components';
 import moment from 'moment';
+import GoaLogo from '../../assets/goa-logo.svg';
 import { GoAButton } from '@abgov/react-components';
 import { GoAForm, GoAFormItem, GoAInputEmail, GoAFormActions } from '@abgov/react-components/experimental';
 
@@ -239,47 +241,15 @@ const ServiceStatusPage = (): JSX.Element => {
           )}
         </ServiceStatusesCss>
       </main>
-      <Footer>
-        <a href="https://www.alberta.ca">Go to Alberta.ca</a>
-        <FooterLinks>
-          <a href="https://www.alberta.ca/disclaimer.aspx">Disclaimer</a>
-          <a href="https://www.alberta.ca/privacystatement.aspx">Privacy</a>
-          <a href="https://www.alberta.ca/accessibility.aspx">Accessibility</a>
-        </FooterLinks>
-        <FooterCopyright>&#169; 2020 Government of Alberta</FooterCopyright>
-      </Footer>
+      <Footer logoSrc={GoaLogo} />
     </div>
   );
 };
-
-const Footer = styled.footer`
-  padding-top: 1.25rem;
-  text-align: center;
-  background-color: var(--color-gray-100);
-`;
 
 const Title = styled.h1`
   && {
     font-weight: var(--fw-regular);
   }
-`;
-
-const FooterLinks = styled.div`
-  display: flex;
-  justify-content: center;
-  margin: 0 1rem;
-  > * {
-    display: inline-block;
-    margin-right: 1rem;
-    &:last-of-type {
-      margin-right: 0;
-    }
-  }
-`;
-
-const FooterCopyright = styled.div`
-  text-align: center;
-  padding: 1rem;
 `;
 
 const ServiceStatusesCss = styled.div`
