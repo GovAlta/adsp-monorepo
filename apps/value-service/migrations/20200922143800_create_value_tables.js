@@ -2,6 +2,8 @@
 
 exports.up = function (knex) {
   return knex.schema
+    .raw('ALTER EXTENSION timescaledb UPDATE;')
+    .raw('CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;')
     .createTable('values', function (table) {
       table.string('namespace').notNullable();
       table.string('name').notNullable();
