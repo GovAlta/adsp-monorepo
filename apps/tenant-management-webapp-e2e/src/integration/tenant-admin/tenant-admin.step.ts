@@ -519,14 +519,13 @@ Then('the user views more events matching the search filter of {string}', functi
   });
   tenantAdminObj.eventTableBody().children().should('have.length.greaterThan', 10);
 });
+
 //function takes datetime, and string that looks like "-5" or "5" or "+5" as change in minutes
 //to make even more generic more changes will need to be made, i.e. indicating change in hours or minutes
-function timeChanger(datetime, addedMins) {
-  //parse minutes into integer for generic addition/formatting
-  const minChange = parseInt(addedMins);
-  //dayjs().format,  dayjs().add as original intention, making generic
-  const formattedDate = datetime.format('YYYY-MM-DD');
-  const finalTime = datetime.add(minChange, 'minutes').format('HH:mm');
+function timeChanger(dateTime, addedMins) {
+  const minChange = parseInt(addedMins); //parse minutes into integer for generic addition/formatting
+  const formattedDate = dateTime.format('YYYY-MM-DD'); //dayjs is date time utility
+  const finalTime = dateTime.add(minChange, 'minutes').format('HH:mm');
   const finalDate = formattedDate + 'T' + finalTime;
   return finalDate;
 }
@@ -534,10 +533,6 @@ function timeChanger(datetime, addedMins) {
 When(
   'the user searches with now {string} mins as minimum timestamp, now {string} mins as maximum timestamp',
   function (submin, addmin) {
-    //const formattedDate = dayjs().format('YYYY-MM-DD'); //requires a valid datetime with the format YYYY-MM-DDThh:mm, for example 2017-06-01T08:30
-    //const timeOne = dayjs().add(sub, 'minutes').format('HH:mm');
-    //const timeTwo = dayjs().add(add, 'minutes').format('HH:mm');
-
     const timestampOne = timeChanger(dayjs(), submin);
     const timestampTwo = timeChanger(dayjs(), addmin);
 
@@ -547,9 +542,100 @@ When(
     tenantAdminObj.eventLogMinTimesStamp().type(timestampOne);
     tenantAdminObj.eventLogMaxTimesStamp().type(timestampTwo);
     tenantAdminObj.eventLogSearchBtn().click();
-    cy.wait(500);
+    //testing new
+    // const formattedDateTable = dayjs().format('MM/DD/YYYY');
+    // const formattedTimeTable = dayjs().format('HH:mm:ss A');
+    // const dateTimeTable = formattedDateTable + '' + formattedTimeTable;
+    tenantAdminObj
+      .eventTableBody()
+      .parent()
+      .within(function () {
+        cy.get('td')
+          .eq(0)
+          .then((elem) => {
+            const tableDateTime = elem.text();
+            const tableLastSlash = tableDateTime.lastIndexOf('/');
+            const tableDate = tableDateTime.substring(0, tableLastSlash + 5);
+            const tableTime = tableDateTime.substring(tableLastSlash + 5, tableDateTime.length + 1);
+            const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
+            const minTimestamp = dayjs(
+              timestampOne.split('T')[0] + ' ' + timestampOne.split('T')[1],
+              'YYYY-MM-DD hh:mm'
+            );
+            const maxTimestamp = dayjs(
+              timestampTwo.split('T')[0] + ' ' + timestampTwo.split('T')[1],
+              'YYYY-MM-DD hh:mm'
+            );
+            cy.log(minTimestamp + '');
+            cy.log(maxTimestamp + '');
+            cy.log(parseDateTime + '');
+            //comparing the min and max
+            expect(parseInt(parseDateTime + '')).to.be.gte(parseInt(minTimestamp + ''));
+            expect(parseInt(parseDateTime + '')).to.be.lte(parseInt(maxTimestamp + ''));
+          });
+      });
   }
 );
+
+Then('the user views the events matching the search filter of', function () {
+  tenantAdminObj
+    .eventLogMinTimesStamp()
+    .invoke('val')
+    .then((val) => {
+      const timestampOne = val;
+      cy.log(timestampOne + '');
+
+      tenantAdminObj
+        .eventTableBody()
+        .parent()
+        .within(function () {
+          cy.get('td')
+            .eq(0)
+            .then((elem) => {
+              const tableDateTime = elem.text();
+              const tableLastSlash = tableDateTime.lastIndexOf('/');
+              const tableDate = tableDateTime.substring(0, tableLastSlash + 5);
+              const tableTime = tableDateTime.substring(tableLastSlash + 5, tableDateTime.length + 1);
+              const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
+              const minTimestamp = dayjs(
+                timestampOne.split('T')[0] + ' ' + timestampOne.split('T')[1],
+                'YYYY-MM-DD hh:mm'
+              );
+              expect(parseInt(parseDateTime + '')).to.be.gte(parseInt(minTimestamp + ''));
+            });
+        });
+    });
+  tenantAdminObj
+    .eventLogMaxTimesStamp()
+    .invoke('val')
+    .then((val) => {
+      const timestampTwo = val;
+      cy.log(timestampTwo + '');
+    });
+
+  //   tenantAdminObj
+  //     .eventTableBody()
+  //     .parent()
+  //     .within(function () {
+  //       cy.get('td')
+  //         .eq(0)
+  //         .then((elem) => {
+  //           const tableDateTime = elem.text();
+  //           const tableLastSlash = tableDateTime.lastIndexOf('/');
+  //           const tableDate = tableDateTime.substring(0, tableLastSlash + 5);
+  //           const tableTime = tableDateTime.substring(tableLastSlash + 5, tableDateTime.length + 1);
+  //           const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
+  //           const minTimestamp = dayjs(timestampOne.split('T')[0] + ' ' + timestampOne.split('T')[1], 'YYYY-MM-DD hh:mm');
+  //           const maxTimestamp = dayjs(timestampTwo.split('T')[0] + ' ' + timestampTwo.split('T')[1], 'YYYY-MM-DD hh:mm');
+  //           cy.log(minTimestamp + '');
+  //           cy.log(maxTimestamp + '');
+  //           cy.log(parseDateTime + '');
+  //           //comparing table timestamp with the min and max
+  //           expect(parseInt(parseDateTime + '')).to.be.gte(parseInt(minTimestamp + ''));
+  //           expect(parseInt(parseDateTime + '')).to.be.lte(parseInt(maxTimestamp + ''));
+  //         });
+  //     });
+});
 
 Then('the user views the events matching the search filter of now-1min as minimum timestamp', function () {
   const formattedDateTable = dayjs().format('MM/DD/YYYY');
