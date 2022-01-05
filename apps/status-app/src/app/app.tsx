@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import '../../../../libs/stylesheets/scss/src/lib/app.css';
-import '../../../../libs/stylesheets/scss/src/lib/goa-core.scss';
-import '../../../../libs/stylesheets/scss/src/lib/colors.scss';
+import '@style/app.css';
+import '@style/colors.scss';
+import '@style/goa-core.scss';
 import { fetchConfig } from './store/config/actions';
 import { useDispatch, useSelector } from 'react-redux';
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
