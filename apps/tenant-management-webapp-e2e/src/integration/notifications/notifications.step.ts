@@ -1,10 +1,10 @@
 import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import commonlib from '../common/common-library';
 import common from '../common/common.page';
-import notificationsPage from './notifications.page';
+import NotificationsPage from './notifications.page';
 
 const commonObj = new common();
-const notificationsObj = new notificationsPage();
+const notificationsObj = new NotificationsPage();
 
 Given('a service owner user is on notification overview page', function () {
   commonlib.tenantAdminDirectURLLogin(
@@ -115,43 +115,43 @@ Given('a service owner user is on notification types page', function () {
 });
 
 When('the user clicks Select event button for {string}', function (cardTitle) {
-  notificationsObj.NotificationTypeSelectAnEventBtn(cardTitle).click();
+  notificationsObj.notificationTypeSelectAnEventBtn(cardTitle).click();
 });
 
 Then('the user views Select an event modal', function () {
-  notificationsObj.SelectAnEventModalTitle().invoke('text').should('equal', 'Select an event');
+  notificationsObj.selectAnEventModalTitle().invoke('text').should('equal', 'Select an event');
 });
 
 When('the user selects {string} in the event dropdown', function (event) {
-  notificationsObj.SelectAnEventModalEventDropdown().click();
-  notificationsObj.SelectAnEventModalEventDropdownItem(event).click();
+  notificationsObj.selectAnEventModalEventDropdown().click();
+  notificationsObj.selectAnEventModalEventDropdownItem(event).click();
 });
 
 When('the user cannot select {string} in the event dropdown', function (event) {
-  notificationsObj.SelectAnEventModalEventDropdown().click();
-  notificationsObj.SelectAnEventModalEventDropdownItem(event).should('not.exist');
-  notificationsObj.SelectAnEventModalEventDropdown().click({ force: true }); //Force clicking the dropdown to collapse the dropdown
+  notificationsObj.selectAnEventModalEventDropdown().click();
+  notificationsObj.selectAnEventModalEventDropdownItem(event).should('not.exist');
+  notificationsObj.selectAnEventModalEventDropdown().click({ force: true }); //Force clicking the dropdown to collapse the dropdown
 });
 
 When('the user clicks Next button on Select an event page', function () {
-  notificationsObj.SelectAnEventModalNextBtn().click();
+  notificationsObj.selectAnEventModalNextBtn().click();
 });
 
 When('the user clicks Cancel button in Select an event modal', function () {
-  notificationsObj.SelectAnEventModalCancelBtn().click();
+  notificationsObj.selectAnEventModalCancelBtn().click();
 });
 
 Then('the user views Add an email template page', function () {
-  notificationsObj.AddAnEmailTemplateModalTitle().invoke('text').should('equal', 'Add an email template');
+  notificationsObj.addAnEmailTemplateModalTitle().invoke('text').should('equal', 'Add an email template');
 });
 
 When('the user enter {string} as subject and {string} as body', function (subjectText, bodyText) {
-  notificationsObj.AddAnEmailTemplateModalSubject().type(subjectText);
-  notificationsObj.AddAnEmailTemplateModalBody().type(bodyText);
+  notificationsObj.addAnEmailTemplateModalSubject().type(subjectText);
+  notificationsObj.addAnEmailTemplateModalBody().type(bodyText);
 });
 
 When('the user clicks Add button in Add an email template page', function () {
-  notificationsObj.AddAnEmailTemplateModalAddBtn().click();
+  notificationsObj.addAnEmailTemplateModalAddBtn().click();
 });
 
 Then('the user {string} the event of {string} in {string}', function (viewOrNot, event, cardTitle) {

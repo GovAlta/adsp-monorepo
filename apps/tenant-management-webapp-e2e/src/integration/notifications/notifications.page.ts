@@ -1,4 +1,4 @@
-class notificationsPage {
+class NotificationsPage {
   addANotificationTypeButtonOnOverview() {
     return cy.get('[data-testid="add-notification-overview"]');
   }
@@ -91,57 +91,57 @@ class notificationsPage {
     return cy.get('[data-testid="delete-confirm"]');
   }
 
-  NotificationTypeSelectAnEventBtn(cardTitle) {
+  notificationTypeSelectAnEventBtn(cardTitle) {
     return cy.xpath(
       `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]//button[contains(text(), "Select an event")]`
     );
   }
 
-  SelectAnEventModalTitle() {
+  selectAnEventModalTitle() {
     return cy.xpath(
       '//*[@data-testid="event-form" and @data-state="visible"]/*[@class="modal"]//*[@class="modal-title"]'
     );
   }
 
-  SelectAnEventModalEventDropdown() {
+  selectAnEventModalEventDropdown() {
     return cy.xpath(
       '//*[@data-testid="event-form" and @data-state="visible"]/*[@class="modal"]//*[@data-testid="event-dropdown"]'
     );
   }
 
-  SelectAnEventModalEventDropdownItem(text) {
+  selectAnEventModalEventDropdownItem(text) {
     return cy.xpath(
       `//*[@data-testid="event-form" and @data-state="visible"]/*[@class="modal"]//*[@data-testid="event-dropdown"]/following-sibling::*//*[contains(text(), "${text}")]`
     );
   }
 
-  SelectAnEventModalNextBtn() {
+  selectAnEventModalNextBtn() {
     return cy.get('[data-testid="event-form-save"]');
   }
 
-  SelectAnEventModalCancelBtn() {
+  selectAnEventModalCancelBtn() {
     return cy.get('[data-testid="event-form-cancel"]');
   }
 
-  AddAnEmailTemplateModalTitle() {
+  addAnEmailTemplateModalTitle() {
     return cy.xpath(
       '//*[@data-testid="template-form" and @data-state="visible"]/*[@class="modal"]//*[@class="modal-title"]'
     );
   }
 
-  AddAnEmailTemplateModalSubject() {
+  addAnEmailTemplateModalSubject() {
     return cy.xpath(
       '//*[@data-testid="template-form" and @data-state="visible"]//label[contains(text(), "Subject")]/parent::div[@class="goa-form-item"]//*[@class="monaco-scrollable-element editor-scrollable vs"]'
     );
   }
 
-  AddAnEmailTemplateModalBody() {
+  addAnEmailTemplateModalBody() {
     return cy.xpath(
       '//*[@data-testid="template-form" and @data-state="visible"]//label[contains(text(), "Body")]/parent::div[@class="goa-form-item"]//*[@class="monaco-scrollable-element editor-scrollable vs"]'
     );
   }
 
-  AddAnEmailTemplateModalAddBtn() {
+  addAnEmailTemplateModalAddBtn() {
     return cy.get('[data-testid="template-form-save"]');
   }
 
@@ -218,4 +218,4 @@ class notificationsPage {
   }
 }
 
-export default notificationsPage;
+export default NotificationsPage;
