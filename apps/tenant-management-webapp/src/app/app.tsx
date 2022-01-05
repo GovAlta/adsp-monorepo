@@ -48,7 +48,6 @@ const AppRouters = () => {
           <Route exact path="/login-redirect">
             <LoginRedirect />
           </Route>
-          This style is from the alberta design system
           <Route exact path="/login-error">
             <SignInError />
           </Route>
