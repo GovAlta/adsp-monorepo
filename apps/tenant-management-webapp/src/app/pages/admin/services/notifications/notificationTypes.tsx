@@ -24,6 +24,7 @@ import { NotificationItem } from '@store/notification/models';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 import { TemplateForm } from './templateForm';
+import { EditIcon } from '@components/icons/EditIcon';
 
 const emptyNotificationType: NotificationItem = {
   name: '',
@@ -126,8 +127,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           setEditType(true);
                         }}
                       >
-                        <NotificationBorder className="smallPadding">
-                          <GoAIcon type="create" />
+                        <NotificationBorder className="smallPadding" style={{ height: '26px', display: 'flex' }}>
+                          <EditIcon size="small" />
                         </NotificationBorder>
                       </a>
                       <a
