@@ -61,9 +61,26 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
       ? 'Add'
       : 'Save';
   };
+  const getModalHeadingState = () => {
+    if (disabled) {
+      return 'Preview';
+    }
+    if (!selectedEvent) {
+      return 'Add';
+    }
+    return selectedEvent?.templates?.email?.body?.length === 0 && selectedEvent?.templates?.email?.subject?.length === 0
+      ? 'Add'
+      : 'Edit';
+  };
+  const getEditEventModalState = () => {
+    if (selectedEvent?.templates?.email?.body?.length >= 1 && selectedEvent?.templates?.email?.subject?.length >= 1) {
+      return 'Cancel';
+    }
+    return 'Back';
+  };
   return (
     <GoAModal testId="template-form" isOpen={open} onClose={onClickedOutside}>
-      <GoAModalTitle>{`${getModalState()} an email template`}</GoAModalTitle>
+      <GoAModalTitle>{`${getModalHeadingState()} an email template`}</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>
           <GoAFormItem>
@@ -124,7 +141,7 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
       </GoAModalContent>
       <GoAModalActions>
         <GoAButton data-testid="template-form-cancel" buttonType="tertiary" type="button" onClick={onCancel}>
-          {disabled ? 'Close' : 'Back'}
+          {disabled ? 'Close' : getEditEventModalState()}
         </GoAButton>
         {!disabled && (
           <GoAButton
