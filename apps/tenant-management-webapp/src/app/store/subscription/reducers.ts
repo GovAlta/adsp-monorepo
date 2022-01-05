@@ -29,7 +29,7 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       return {
         ...state,
         subscriber: action.payload.notificationInfo.data.data,
-        successMessage: `You are subscribed! You will receive notifications on ${action.payload.notificationInfo.data.email}`,
+        successMessage: `You are subscribed! You will receive notifications on ${action.payload.notificationInfo.data.email} for ${action.payload.notificationInfo.data.type}`,
       };
     case GET_SUBSCRIPTION_SUCCESS:
       return {
@@ -58,12 +58,14 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       const newState = Object.assign({}, state);
       const subscriptions = newState.subscriptions;
       const newSubs = subscriptions.filter((subscription) => subscription.subscriber.id !== action.payload.id);
-
+      const type = newSubs[0].typeId;
       return {
         ...state,
         subscription: null,
         subscriptions: newSubs,
-        successMessage: `You are unsubscribed! You will no longer receive notifications on ${addresses.join('; ')}`,
+        successMessage: `You are unsubscribed! You will no longer receive notifications on ${addresses.join(
+          '; '
+        )} for ${type}`,
       };
     }
     case FIND_SUBSCRIBERS_SUCCESS: {
