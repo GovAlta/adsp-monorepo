@@ -9,7 +9,6 @@ import MenuIcon from '@icons/menu-outline.svg';
 import CloseIcon from '@icons/close-outline.svg';
 import { ReactComponent as UserIcon } from '@icons/person-circle-outline.svg';
 import { TenantAdminLogin, TenantLogout } from '@store/tenant/actions';
-import '@abgov/core-css/src/lib/styles/v2/colors.scss';
 
 interface HeaderMenuProps {
   hasLoginLink: boolean;

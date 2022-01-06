@@ -46,7 +46,7 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscript
                 )}{' '}
               </div>
             </div>
-            <div>{channel.address}</div>
+            <div>{characterLimit(channel?.address, 30)}</div>
           </div>
         ))}
       </td>

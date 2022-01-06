@@ -9,11 +9,10 @@ import {
   GoAFlexRow,
   GoAButton,
   GoAInputText,
-  GoAInputEmail
+  GoAInputEmail,
 } from '@abgov/react-components/experimental';
-import '@abgov/core-css/src/lib/styles/v2/colors.scss';
-import { SubscriberList } from './subscriberList'
 
+import { SubscriberList } from './subscriberList';
 
 interface EventSearchFormProps {
   onSearch?: (searchCriteria: SubscriberSearchCriteria) => void;
@@ -29,23 +28,25 @@ export const NextLoader: FunctionComponent<EventSearchNextProps> = ({ onSearch, 
 
   if (hasNext) {
     return (
-      <GoAButton onClick={() => {
-        searchCriteria.next = true;
-        onSearch(searchCriteria)
-      }}>
+      <GoAButton
+        onClick={() => {
+          searchCriteria.next = true;
+          onSearch(searchCriteria);
+        }}
+      >
         Load more...
       </GoAButton>
-    )
+    );
   } else {
-    return (<></>)
+    return <></>;
   }
-}
+};
 
 export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({ onSearch }) => {
   const criteriaInit = {
     email: '',
     name: '',
-  }
+  };
 
   const [criteriaState, setCriteriaState] = useState<SubscriberSearchCriteria>(criteriaInit);
 
@@ -59,7 +60,7 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
     }
     setCriteriaState({ ...criteriaState });
     onSearch(criteriaState);
-  }
+  };
 
   return (
     <div>
@@ -67,26 +68,16 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
         <GoAFlexRow gap="small">
           <GoAFormItem>
             <label htmlFor="name">Name </label>
-            <GoAInputText
-              name="name"
-              id="name"
-              value={criteriaState?.name}
-              onChange={onChangeFn}
-            />
+            <GoAInputText name="name" id="name" value={criteriaState?.name} onChange={onChangeFn} />
           </GoAFormItem>
           <GoAFormItem>
             <label htmlFor="email">Email</label>
-            <GoAInputEmail
-              name="email"
-              id="email"
-              value={criteriaState?.email}
-              onChange={onChangeFn}
-            />
+            <GoAInputEmail name="email" id="email" value={criteriaState?.email} onChange={onChangeFn} />
           </GoAFormItem>
         </GoAFlexRow>
       </GoAForm>
       <SubscriberList />
       <NextLoader onSearch={onSearch} searchCriteria={criteriaState} />
     </div>
-  )
-}
+  );
+};

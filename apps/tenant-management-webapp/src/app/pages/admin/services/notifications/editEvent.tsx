@@ -11,6 +11,7 @@ import { EventItem, Template } from '@store/notification/models';
 interface NotificationDefinitionFormProps {
   initialValue?: NotificationItem;
   onCancel?: () => void;
+  onClickedOutside?: () => void;
   onNext?: (notify: NotificationItem, event: EventItem) => void;
   open: boolean;
   selectedEvent: EventItem;
@@ -21,6 +22,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
   initialValue,
   onCancel,
   onNext,
+  onClickedOutside,
   errors,
   open,
   selectedEvent,
@@ -75,7 +77,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
   }
 
   return (
-    <GoAModal testId="event-form" isOpen={open}>
+    <GoAModal testId="event-form" isOpen={open} onClose={onClickedOutside}>
       <GoAModalTitle>{'Select an event'}</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>

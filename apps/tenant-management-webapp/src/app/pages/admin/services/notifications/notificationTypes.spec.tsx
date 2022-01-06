@@ -16,7 +16,19 @@ describe('NotificationTypes Page', () => {
         notificationId: {
           name: 'Child care subsidy application',
           description: 'Lorem ipsum dolor sit amet',
-          events: [],
+          events: [
+            {
+              namespace: 'file-service',
+              name: 'file-uploaded',
+              templates: {
+                email: {
+                  subject: 'dfds',
+                  body: 'sdfsdf',
+                },
+              },
+              channels: [],
+            },
+          ],
           subscriberRoles: [],
           id: 'notificationId',
           publicSubscribe: false,
@@ -74,13 +86,13 @@ describe('NotificationTypes Page', () => {
   });
 
   it('deletes a notification type', async () => {
-    const { queryByTestId } = render(
+    const { getAllByTestId, queryByTestId } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>
     );
 
-    const deleteBtn = queryByTestId('delete-notification-type-notificationId');
+    const deleteBtn = getAllByTestId('delete-notification-type')[0];
     fireEvent.click(deleteBtn);
 
     const confirmation = queryByTestId('delete-confirmation');
@@ -96,13 +108,13 @@ describe('NotificationTypes Page', () => {
   });
 
   it('cancels deleting a notification type', async () => {
-    const { queryByTestId } = render(
+    const { getAllByTestId, queryByTestId } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>
     );
 
-    const deleteBtn = queryByTestId('delete-notification-type-notificationId');
+    const deleteBtn = getAllByTestId('delete-notification-type')[0];
     fireEvent.click(deleteBtn);
 
     const deleteCancel = queryByTestId('delete-cancel');
@@ -114,12 +126,12 @@ describe('NotificationTypes Page', () => {
   });
 
   it('edits the notification types', async () => {
-    const { queryByTestId } = render(
+    const { getAllByTestId, queryByTestId } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>
     );
-    const editBtn = queryByTestId('edit-notification-type-notificationId');
+    const editBtn = getAllByTestId('edit-notification-type')[0];
     await waitFor(() => {
       fireEvent.click(editBtn);
     });
@@ -147,14 +159,14 @@ describe('NotificationTypes Page', () => {
   });
 
   it('cancels editing the notification type', async () => {
-    const { queryByTestId } = render(
+    const { getAllByTestId, queryByTestId } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>
     );
 
     await waitFor(() => {
-      const editBtn = queryByTestId('edit-notification-type-notificationId');
+      const editBtn = getAllByTestId('edit-notification-type')[0];
       fireEvent.click(editBtn);
     });
 
@@ -200,13 +212,12 @@ describe('NotificationTypes Page', () => {
   });
 
   it('add an event', async () => {
-    const { queryByTestId } = render(
+    const { getAllByTestId, queryByTestId } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>
     );
-
-    const addBtn = queryByTestId('add-event-notificationId');
+    const addBtn = getAllByTestId('add-event')[1];
     await waitFor(() => {
       fireEvent.click(addBtn);
     });
@@ -227,31 +238,30 @@ describe('NotificationTypes Page', () => {
     fireEvent.click(saveBtn);
 
     const actions = store.getActions();
-
     const saveAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
 
     expect(saveAction).toBeTruthy();
   });
 
-  // it('deletes an event', async () => {
-  //   const { queryByTestId } = render(
-  //     <Provider store={store}>
-  //       <NotificationTypes />
-  //     </Provider>
-  //   );
+  it('deletes an event', async () => {
+    const { getAllByTestId, queryByTestId } = render(
+      <Provider store={store}>
+        <NotificationTypes />
+      </Provider>
+    );
+    const deleteBtn = getAllByTestId('delete-event')[0];
 
-  //   const deleteBtn = queryByTestId('delete-event-notificationId');
-  //   fireEvent.click(deleteBtn);
+    fireEvent.click(deleteBtn);
 
-  //   const confirmation = queryByTestId('event-delete-confirmation');
-  //   expect(confirmation).not.toBeNull();
+    const confirmation = queryByTestId('event-delete-confirmation');
+    expect(confirmation).not.toBeNull();
 
-  //   const deleteConfirm = queryByTestId('event-delete-confirm');
-  //   fireEvent.click(deleteConfirm);
+    const deleteConfirm = queryByTestId('event-delete-confirm');
+    fireEvent.click(deleteConfirm);
 
-  //   const actions = store.getActions();
+    const actions = store.getActions();
 
-  //   const deleteAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
-  //   expect(deleteAction).toBeTruthy();
-  // });
+    const deleteAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
+    expect(deleteAction).toBeTruthy();
+  });
 });

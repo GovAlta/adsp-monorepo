@@ -1,9 +1,7 @@
 import React, { useEffect } from 'react';
-
-import '@abgov/core-css/goa-core.css';
-import '@abgov/core-css/goa-components.css';
-import '@abgov/core-css/src/lib/stories/page-template/page-template.story.scss';
-
+import '@style/app.css';
+import '@style/colors.scss';
+import '@style/goa-core.scss';
 import { fetchConfig } from './store/config/actions';
 import { useDispatch, useSelector } from 'react-redux';
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
