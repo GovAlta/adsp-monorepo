@@ -1,12 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as util from 'util';
-import * as HttpStatusCodes from 'http-status-codes';
 import { AdspId, ServiceRole } from '@abgov/adsp-service-sdk';
 import { createkcAdminClient } from '../../../keycloak';
 import { logger } from '../../../middleware/logger';
 import { environment } from '../../../environments/environment';
 import { FLOW_ALIAS, createAuthenticationFlow } from './createAuthenticationFlow';
-import { TenantError } from './error';
 import type ClientRepresentation from 'keycloak-admin/lib/defs/clientRepresentation';
 import type RealmRepresentation from 'keycloak-admin/lib/defs/realmRepresentation';
 import type RoleRepresentation from 'keycloak-admin/lib/defs/roleRepresentation';
@@ -14,6 +12,7 @@ import { TenantEntity } from '../../models';
 import { TenantServiceRoles } from '../../../roles';
 import { ServiceClient } from '../../types';
 import { TenantRepository } from '../../repository';
+import { InvalidOperationError, InvalidValueError } from '@core-services/core-common';
 
 export const tenantManagementRealm = 'core';
 
@@ -244,7 +243,7 @@ export const validateEmailInDB = async (repository: TenantRepository, email: str
 
   if (isTenantAdmin) {
     const errorMessage = `${email} is the tenant admin in our record. One user can create only one realm.`;
-    throw new TenantError(errorMessage, HttpStatusCodes.CONFLICT);
+    throw new InvalidOperationError(errorMessage);
   }
 };
 
@@ -278,20 +277,20 @@ export const validateName = async (repository: TenantRepository, name: string): 
   invalidChars.forEach((char) => {
     if (name.indexOf(char) !== -1) {
       const errorMessage = `Names cannot contain special characters (e.g. ! & %).`;
-      throw new TenantError(errorMessage, HttpStatusCodes.BAD_REQUEST);
+      throw new InvalidValueError('Tenant name', errorMessage);
     }
   });
 
   if (name.length === 0) {
     const errorMessage = `Enter a tenant name.`;
-    throw new TenantError(errorMessage, HttpStatusCodes.BAD_REQUEST);
+    throw new InvalidValueError('Tenant name', errorMessage);
   }
 
   const doesTenantWithNameExist = await repository.findByName(name);
 
   if (doesTenantWithNameExist) {
     const errorMessage = `This tenant name has already been used. Please enter a different tenant name.`;
-    throw new TenantError(errorMessage, HttpStatusCodes.BAD_REQUEST);
+    throw new InvalidValueError('Tenant name', errorMessage);
   }
 };
 
@@ -299,13 +298,14 @@ export const validateRealmCreation = async (realm: string): Promise<void> => {
   // Re-init the keycloak client after realm creation
   logger.info(`Start to validate the tenant creation: ${realm}`);
   const kcClient = await createkcAdminClient();
+  const clientName = brokerClientName(realm)
   const brokerClient = await kcClient.clients.find({
-    clientId: brokerClientName(realm),
+    clientId: clientName,
     realm: tenantManagementRealm,
   });
 
   if (brokerClient.length === 0) {
-    throw new TenantError('[Tenant][Creation] cannot find broker client', HttpStatusCodes.INTERNAL_SERVER_ERROR);
+    throw new InvalidOperationError(`Cannot find broker client: ${clientName}`);
   }
 
   const newRealm = await kcClient.realms.findOne({
@@ -313,7 +313,7 @@ export const validateRealmCreation = async (realm: string): Promise<void> => {
   });
 
   if (newRealm === null) {
-    throw new TenantError('[Tenant][Creation] cannot find the tenant realm', HttpStatusCodes.INTERNAL_SERVER_ERROR);
+    throw new InvalidOperationError(`Cannot find the tenant realm: ${realm}`);
   }
 };
 
@@ -330,81 +330,73 @@ export const createRealm = async (
   tenantName: string
 ): Promise<void> => {
   logger.info(`Start to create ${realm} realm`);
-  try {
-    const brokerClientSecret = uuidv4();
-    const tenantPublicClientId = uuidv4();
-    const subscriberAppPublicClientId = uuidv4();
-    const brokerClient = brokerClientName(realm);
-    logger.info(`Start to create IdP broker client on the core for ${realm} realm`);
+  const brokerClientSecret = uuidv4();
+  const tenantPublicClientId = uuidv4();
+  const subscriberAppPublicClientId = uuidv4();
+  const brokerClient = brokerClientName(realm);
+  logger.info(`Start to create IdP broker client on the core for ${realm} realm`);
 
-    let client = await createkcAdminClient();
-    await createBrokerClient(realm, brokerClientSecret, brokerClient);
-    logger.info(`Created IdP broker client on the core realm for ${realm} realm`);
+  let client = await createkcAdminClient();
+  await createBrokerClient(realm, brokerClientSecret, brokerClient);
+  logger.info(`Created IdP broker client on the core realm for ${realm} realm`);
 
-    const publicClientConfig = createWebappClientConfig(tenantPublicClientId);
-    const subscriberAppPublicClientConfig = createSubscriberAppPublicClientConfig(subscriberAppPublicClientId);
-    const idpConfig = createIdpConfig(brokerClientSecret, brokerClient, FLOW_ALIAS, realm);
+  const publicClientConfig = createWebappClientConfig(tenantPublicClientId);
+  const subscriberAppPublicClientConfig = createSubscriberAppPublicClientConfig(subscriberAppPublicClientId);
+  const idpConfig = createIdpConfig(brokerClientSecret, brokerClient, FLOW_ALIAS, realm);
 
-    const clients = serviceClients.map((registeredClient) =>
-      createPlatformServiceConfig(registeredClient.serviceId, ...registeredClient.roles)
-    );
+  const clients = serviceClients.map((registeredClient) =>
+    createPlatformServiceConfig(registeredClient.serviceId, ...registeredClient.roles)
+  );
 
-    const realmConfig: RealmRepresentation = {
-      id: realm,
-      realm: realm,
-      displayName: tenantName,
-      displayNameHtml: tenantName,
-      loginTheme: 'ads-theme',
-      accountTheme: 'ads-theme',
-      clients: [subscriberAppPublicClientConfig, publicClientConfig, ...clients.map((c) => c.client)],
-      roles: {
-        client: clients.reduce((cs, c) => ({ ...cs, [c.client.clientId]: c.clientRoles }), {}),
-      },
-      enabled: true,
-    };
+  const realmConfig: RealmRepresentation = {
+    id: realm,
+    realm: realm,
+    displayName: tenantName,
+    displayNameHtml: tenantName,
+    loginTheme: 'ads-theme',
+    accountTheme: 'ads-theme',
+    clients: [subscriberAppPublicClientConfig, publicClientConfig, ...clients.map((c) => c.client)],
+    roles: {
+      client: clients.reduce((cs, c) => ({ ...cs, [c.client.clientId]: c.clientRoles }), {}),
+    },
+    enabled: true,
+  };
 
-    logger.info(`New realm config: ${util.inspect(realmConfig)}`);
+  logger.info(`New realm config: ${util.inspect(realmConfig)}`);
 
-    await client.realms.create(realmConfig);
+  await client.realms.create(realmConfig);
 
-    // Find the tenant admin role
-    client = await createkcAdminClient();
-    const tenantServiceClient = (
-      await client.clients.find({
-        realm,
-        clientId: 'urn:ads:platform:tenant-service',
-      })
-    )[0];
-    logger.debug(`Found tenant service client: ${tenantServiceClient?.id}`);
-
-    const tenantAdminRole = await client.clients.findRole({
+  // Find the tenant admin role
+  client = await createkcAdminClient();
+  const tenantServiceClient = (
+    await client.clients.find({
       realm,
-      id: tenantServiceClient.id,
-      roleName: TenantServiceRoles.TenantAdmin,
-    });
-    logger.debug(`Found tenant service client admin role: ${tenantAdminRole?.id}`);
+      clientId: 'urn:ads:platform:tenant-service',
+    })
+  )[0];
+  logger.debug(`Found tenant service client: ${tenantServiceClient?.id}`);
 
-    await createTenantAdminComposite(serviceClients, realm, tenantAdminRole);
-    logger.info(`Created tenant admin composite role.`);
+  const tenantAdminRole = await client.clients.findRole({
+    realm,
+    id: tenantServiceClient.id,
+    roleName: TenantServiceRoles.TenantAdmin,
+  });
+  logger.debug(`Found tenant service client admin role: ${tenantAdminRole?.id}`);
 
-    await createAuthenticationFlow(realm);
+  await createTenantAdminComposite(serviceClients, realm, tenantAdminRole);
+  logger.info(`Created tenant admin composite role.`);
 
-    client = await createkcAdminClient();
+  await createAuthenticationFlow(realm);
 
-    // IdP shall be created after authentication flow
-    await client.identityProviders.create(idpConfig);
+  client = await createkcAdminClient();
 
-    await createAdminUser(realm, email, tenantServiceClient.id, tenantAdminRole);
+  // IdP shall be created after authentication flow
+  await client.identityProviders.create(idpConfig);
 
-    validateRealmCreation(realm);
-  } catch (err) {
-    if (err instanceof TenantError) {
-      throw err;
-    } else {
-      logger.error(err);
-      throw new TenantError(err.message, HttpStatusCodes.INTERNAL_SERVER_ERROR);
-    }
-  }
+  await createAdminUser(realm, email, tenantServiceClient.id, tenantAdminRole);
+
+  validateRealmCreation(realm);
+
 };
 
 export const createNewTenantInDB = async (

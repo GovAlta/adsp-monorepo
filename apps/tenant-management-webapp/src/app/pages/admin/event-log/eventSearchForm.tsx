@@ -13,7 +13,6 @@ import {
 } from '@abgov/react-components/experimental';
 import { getEventDefinitions } from '@store/event/actions';
 import styled from 'styled-components';
-import '@abgov/core-css/src/lib/styles/v2/colors.scss';
 
 const initCriteria: EventSearchCriteria = {
   namespace: '',

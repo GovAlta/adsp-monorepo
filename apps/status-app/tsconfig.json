@@ -16,6 +16,9 @@
       "@store/*": [
         "app/store/*"
       ],
+      "@style/*": [
+        "../../../libs/stylesheets/scss/src/lib/*"
+      ],
     }
   },
   "files": [],
