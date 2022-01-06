@@ -542,10 +542,8 @@ When(
     tenantAdminObj.eventLogMinTimesStamp().type(timestampOne);
     tenantAdminObj.eventLogMaxTimesStamp().type(timestampTwo);
     tenantAdminObj.eventLogSearchBtn().click();
-    //testing new
-    // const formattedDateTable = dayjs().format('MM/DD/YYYY');
-    // const formattedTimeTable = dayjs().format('HH:mm:ss A');
-    // const dateTimeTable = formattedDateTable + '' + formattedTimeTable;
+    //to compare table timestamp with min, max values
+    //first step is to parse date, time
     tenantAdminObj
       .eventTableBody()
       .parent()
@@ -582,7 +580,7 @@ Then('the user views the events matching the search filter of', function () {
     .eventLogMinTimesStamp()
     .invoke('val')
     .then((val) => {
-      const timestampOne = val;
+      const timestampOne = String(val);
       cy.log(timestampOne + '');
 
       tenantAdminObj
@@ -605,6 +603,7 @@ Then('the user views the events matching the search filter of', function () {
             });
         });
     });
+
   tenantAdminObj
     .eventLogMaxTimesStamp()
     .invoke('val')
