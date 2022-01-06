@@ -1,5 +1,6 @@
-import '../../../../libs/stylesheets/scss/src/lib/app.css';
-import '../../../../libs/stylesheets/scss/src/lib/colors.scss';
+import '@style/app.css';
+import '@style/colors.scss';
+
 import React, { useEffect } from 'react';
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 import { Provider, useDispatch, useSelector } from 'react-redux';
