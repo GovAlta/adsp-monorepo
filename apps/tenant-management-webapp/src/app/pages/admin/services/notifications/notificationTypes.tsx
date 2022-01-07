@@ -24,6 +24,7 @@ import { NotificationItem } from '@store/notification/models';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 import { TemplateForm } from './templateForm';
+import { EmailPreview } from './emailPreview';
 import { EditIcon } from '@components/icons/EditIcon';
 
 const emptyNotificationType: NotificationItem = {
@@ -48,7 +49,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showEventDeleteConfirmation, setShowEventDeleteConfirmation] = useState(false);
   const [showTemplateForm, setShowTemplateForm] = useState(false);
-  const [disableTemplateForm, setDisableTemplateForm] = useState(false);
+  const [showEmailPreview, setShowEmailPreview] = useState(false);
   const notification = useSelector((state: RootState) => state.notification);
   const coreNotification = useSelector((state: RootState) => state.notification.core);
 
@@ -62,10 +63,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   function reset() {
     setShowTemplateForm(false);
-    setDisableTemplateForm(false);
     setEditType(false);
     setEditEvent(null);
     setSelectedType(emptyNotificationType);
+    setShowEmailPreview(false);
     setErrors({});
   }
 
@@ -204,8 +205,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                 onClick={() => {
                                   setSelectedEvent(event);
                                   setSelectedType(notificationType);
-                                  setShowTemplateForm(true);
-                                  setDisableTemplateForm(true);
+                                  setShowEmailPreview(true);
                                 }}
                               >
                                 Preview
@@ -217,7 +217,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                   setSelectedEvent(event);
                                   setSelectedType(notificationType);
                                   setShowTemplateForm(true);
-                                  setDisableTemplateForm(false);
                                 }}
                               >
                                 Edit
@@ -285,8 +284,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                               onClick={() => {
                                 setSelectedEvent(event);
                                 setSelectedType(notificationType);
-                                setShowTemplateForm(true);
-                                setDisableTemplateForm(true);
+                                setShowEmailPreview(true);
                               }}
                             >
                               Preview
@@ -411,7 +409,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         selectedEvent={selectedEvent}
         notifications={selectedType}
         open={showTemplateForm}
-        disabled={disableTemplateForm}
         errors={errors}
         onSubmit={(type) => {
           dispatch(UpdateNotificationTypeService(type));
@@ -422,6 +419,17 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         }}
         onClickedOutside={() => {
           reset();
+        }}
+      />
+
+      <EmailPreview
+        initialValue={editEvent}
+        selectedEvent={selectedEvent}
+        notifications={selectedType}
+        open={showEmailPreview}
+        errors={errors}
+        onCancel={() => {
+          setShowEmailPreview(false);
         }}
       />
     </NotficationStyles>
