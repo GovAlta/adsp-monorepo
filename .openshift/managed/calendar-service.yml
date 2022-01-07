@@ -69,6 +69,7 @@ objects:
       database-name: ${DATABASE_NAME}
       database-password: ${DATABASE_PASSWORD}
       database-user: ${DATABASE_USER}
+      database-tls: 'false'
   # PersistentVolumeClaim is only generated for branch deployment to avoid losing persistent data.
   - apiVersion: v1
     kind: PersistentVolumeClaim
@@ -294,6 +295,11 @@ objects:
                     secretKeyRef:
                       key: database-name
                       name: calendar-service-postgres${NAME_SUFFIX}
+                - name: DB_TLS
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-tls
+                      name: task-service-postgres${NAME_SUFFIX}
               imagePullPolicy: IfNotPresent
               name: calendar-service
               ports:
