@@ -2,7 +2,7 @@ import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import { Tab, Tabs } from '@components/Tabs';
 import { RootState } from '@store/index';
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { EventDefinitions } from './definitions';
 import { EventsOverview } from './overview';
@@ -10,13 +10,19 @@ import { EventsOverview } from './overview';
 export const Events: FunctionComponent = () => {
   const tenantId = useSelector((state: RootState) => state.tenant?.id);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+
   return (
     <Page>
       <Main>
         <h1>Events</h1>
-        <Tabs activeIndex={0}>
+        <Tabs activeIndex={activeIndex}>
           <Tab label="Overview">
-            <EventsOverview />
+            <EventsOverview
+              toEventListTab={() => {
+                setActiveIndex(1);
+              }}
+            />
           </Tab>
           <Tab label="Definitions">
             <EventDefinitions />

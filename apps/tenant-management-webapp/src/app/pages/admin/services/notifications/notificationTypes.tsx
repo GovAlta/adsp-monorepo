@@ -50,6 +50,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [disableTemplateForm, setDisableTemplateForm] = useState(false);
   const notification = useSelector((state: RootState) => state.notification);
   const coreNotification = useSelector((state: RootState) => state.notification.core);
+  const [formTitle, setFormTitle] = useState<string>('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
@@ -104,9 +105,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           onClick={() => {
             setSelectedType(null);
             setEditType(true);
+            setFormTitle('Add notification type');
           }}
         >
-          Add a notification type
+          Add notification type
         </GoAButton>
       </Buttons>
       {notification.notificationTypes &&
@@ -124,6 +126,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                         onClick={() => {
                           setSelectedType(notificationType);
                           setEditType(true);
+                          setFormTitle('Edit notification type');
                         }}
                       >
                         <NotificationBorder className="smallPadding">
@@ -370,6 +373,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         open={editType}
         initialValue={selectedType}
         errors={errors}
+        title={formTitle}
         onSave={(type) => {
           type.subscriberRoles = type.subscriberRoles || [];
           type.events = type.events || [];

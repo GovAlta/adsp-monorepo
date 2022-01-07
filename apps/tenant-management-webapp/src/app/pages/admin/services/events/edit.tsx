@@ -4,14 +4,15 @@ import type { EventDefinition } from '@store/event/models';
 import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import { updateEventDefinition } from '@store/event/actions';
+import { useDispatch } from 'react-redux';
 
 interface EventDefinitionFormProps {
   initialValue?: EventDefinition;
-  onCancel?: () => void;
-  onSave?: (definition: EventDefinition) => void;
+  onClose?: () => void;
+  onSave?: () => void;
   open: boolean;
-
-  errors?: Record<string, string>;
+  coreNamespaces: string[];
 }
 
 const emptyValue = {
@@ -29,13 +30,15 @@ const emptyValue = {
 
 export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProps> = ({
   initialValue,
-  onCancel,
-  onSave,
-  errors,
+  onClose,
   open,
+  onSave,
+  coreNamespaces,
 }) => {
   const isEdit = !!initialValue;
   const [definition, setDefinition] = useState<EventDefinition>(emptyValue);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const dispatch = useDispatch();
 
   useEffect(() => {
     isEdit && setDefinition(initialValue);
@@ -94,7 +97,15 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
         </GoAForm>
       </GoAModalContent>
       <GoAModalActions>
-        <GoAButton data-testid="form-cancel" buttonType="tertiary" type="button" onClick={onCancel}>
+        <GoAButton
+          data-testid="form-cancel"
+          buttonType="tertiary"
+          type="button"
+          onClick={() => {
+            onClose();
+            setErrors({});
+          }}
+        >
           Cancel
         </GoAButton>
         <GoAButton
@@ -102,7 +113,28 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
           buttonType="primary"
           data-testid="form-save"
           type="submit"
-          onClick={(e) => onSave(definition)}
+          onClick={(e) => {
+            if (definition.namespace.includes(':')) {
+              setErrors({ ...errors, namespace: 'Must not contain `:` character' });
+              return;
+            }
+            if (definition.name.includes(':')) {
+              setErrors({ ...errors, name: 'Must not contain `:` character' });
+              return;
+            }
+
+            if (coreNamespaces.includes(definition.namespace.toLowerCase())) {
+              setErrors({ ...errors, namespace: 'Cannot add definitions to core namespaces' });
+              return;
+            }
+
+            dispatch(updateEventDefinition(definition));
+            if (onSave) {
+              onSave();
+            }
+            onClose();
+            setErrors({});
+          }}
         >
           Save
         </GoAButton>

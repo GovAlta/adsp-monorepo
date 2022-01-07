@@ -4,27 +4,18 @@ import { GoAButton } from '@abgov/react-components';
 import { EventDefinitionsList } from './definitionsList';
 import { EventDefinitionModalForm } from './edit';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { deleteEventDefinition, getEventDefinitions, updateEventDefinition } from '@store/event/actions';
-import { EventDefinition } from '@store/event/models';
+import { deleteEventDefinition, getEventDefinitions } from '@store/event/actions';
+import { defaultEventDefinition, EventDefinition } from '@store/event/models';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
-
-const emptyEventDefinition: EventDefinition = {
-  isCore: false,
-  namespace: '',
-  name: '',
-  description: '',
-  payloadSchema: {},
-};
 
 export const EventDefinitions: FunctionComponent = () => {
   const [editDefinition, setEditDefinition] = useState(false);
   const [selectedDefinition, setSelectedDefinition] = useState<EventDefinition>(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-
   const definitions = useSelector((state: RootState) => state.event.definitions);
-
   const [coreNamespaces, setCoreNamespaces] = useState<string[]>([]);
+
   useEffect(() => {
     const namespaces = Object.values(definitions)
       .filter((d: EventDefinition) => d.isCore)
@@ -33,7 +24,6 @@ export const EventDefinitions: FunctionComponent = () => {
     setCoreNamespaces(namespaces);
   }, [definitions]);
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(getEventDefinitions());
@@ -41,8 +31,7 @@ export const EventDefinitions: FunctionComponent = () => {
 
   function reset() {
     setEditDefinition(false);
-    setSelectedDefinition(emptyEventDefinition);
-    setErrors({});
+    setSelectedDefinition(defaultEventDefinition);
   }
 
   return (
@@ -92,30 +81,11 @@ export const EventDefinitions: FunctionComponent = () => {
         </GoAModalActions>
       </GoAModal>
 
-      {/* Form */}
       <EventDefinitionModalForm
         open={editDefinition}
         initialValue={selectedDefinition}
-        errors={errors}
-        onSave={(definition) => {
-          if (definition.namespace.includes(':')) {
-            setErrors({ ...errors, namespace: 'Must not contain `:` character' });
-            return;
-          }
-          if (definition.name.includes(':')) {
-            setErrors({ ...errors, name: 'Must not contain `:` character' });
-            return;
-          }
-
-          if (coreNamespaces.includes(definition.namespace.toLowerCase())) {
-            setErrors({ ...errors, namespace: 'Cannot add definitions to core namespaces' });
-            return;
-          }
-
-          dispatch(updateEventDefinition(definition));
-          reset();
-        }}
-        onCancel={() => {
+        coreNamespaces={coreNamespaces}
+        onClose={() => {
           reset();
         }}
       />
