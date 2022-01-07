@@ -104,20 +104,19 @@ Feature: Tenant admin
     # //Test event log
     When the user selects the "Event log" menu item
     Then the "Event log" landing page is displayed
-    When the user searches the event with "configuration-service:configuration-updated"
-    Then the user views the event matching the search filter of "configuration-service", "configuration-updated"
-    When the user clicks Load more events
-    Then the user views more the events matching the search filter of "configuration-service", "configuration-updated"
-    When the user searches with now-"5" mins as minimum timestamp, now+"1" mins as maximum timestamp
-    Then the user views the events matching the search filter of "configuration-service" and today date
-    When the user searches with now-"1" mins as minimum timestamp
-    Then the user views the events matching the search filter of "configuration-service" and today date
-    When the user searches with now-1day as maximum timestamp
-    Then the user views the events matching the search filter now-"1" days as maximum timestamp
-    When the user searches with "configuration-service:configuration-updated" now-"5" mins as minimum timestamp, now+"1" mins as maximum timestamp
-    Then the user views the events matching the search filter of "configuration-service" and today date
-    Then the user resets event log views
-    Then the user clicks Load more events
+    When the user searches with "configuration-service:configuration-updated"
+    Then the user views the events matching the search filter of "configuration-service:configuration-updated"
+    When the user clicks Load more button
+    When the user searches with now "-5" mins as minimum timestamp, now "5" mins as maximum timestamp
+    Then the user views the events matching the search filter of min and max timestamp
+    When the user searches with now "-5" mins as minimum timestamp
+    Then the user views the events matching the search filter of min timestamp
+    When the user searches with now "5" mins as maximum timestamp
+    Then the user views the events matching the search filter of maximum timestamp
+    When the user searches with "configuration-service:configuration-updated", now "-5" mins as minimum timestamp, now "5" mins as maximum timestamp
+    Then the user views the events matching the search filter of "configuration-service:configuration-updated"  and timestamp value between min and max timestamps
+    Then the user reset event log views
+    Then the user clicks Load more button
     #//Last the user deletes the event at the end of the test
     When the user selects the "Events" menu item
     And the user selects "Definitions" tab for "Events"
