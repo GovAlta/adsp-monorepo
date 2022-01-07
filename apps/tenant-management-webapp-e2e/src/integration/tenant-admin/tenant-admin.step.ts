@@ -521,7 +521,6 @@ Then('the user views more events matching the search filter of {string}', functi
 });
 
 //function takes datetime, and string that looks like "-5" or "5" or "+5" as change in minutes
-//to make even more generic more changes will need to be made, i.e. indicating change in hours or minutes
 function timeChanger(dateTime, addedMins) {
   const minChange = parseInt(addedMins); //parse minutes into integer for generic addition/formatting
   const formattedDate = dateTime.format('YYYY-MM-DD'); //dayjs is date time utility
@@ -533,55 +532,78 @@ function timeChanger(dateTime, addedMins) {
 When(
   'the user searches with now {string} mins as minimum timestamp, now {string} mins as maximum timestamp',
   function (submin, addmin) {
-    const timestampOne = timeChanger(dayjs(), submin);
-    const timestampTwo = timeChanger(dayjs(), addmin);
+    const timestampMin = timeChanger(dayjs(), submin);
+    const timestampMax = timeChanger(dayjs(), addmin);
 
-    cy.log(timestampOne);
-    cy.log(timestampTwo);
+    cy.log(timestampMin);
+    cy.log(timestampMax);
 
-    tenantAdminObj.eventLogMinTimesStamp().type(timestampOne);
-    tenantAdminObj.eventLogMaxTimesStamp().type(timestampTwo);
+    tenantAdminObj.eventLogMinTimesStamp().type(timestampMin);
+    tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
     tenantAdminObj.eventLogSearchBtn().click();
-    //to compare table timestamp with min, max values
-    //first step is to parse date, time
-    tenantAdminObj
-      .eventTableBody()
-      .parent()
-      .within(function () {
-        cy.get('td')
-          .eq(0)
-          .then((elem) => {
-            const tableDateTime = elem.text();
-            const tableLastSlash = tableDateTime.lastIndexOf('/');
-            const tableDate = tableDateTime.substring(0, tableLastSlash + 5);
-            const tableTime = tableDateTime.substring(tableLastSlash + 5, tableDateTime.length + 1);
-            const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
-            const minTimestamp = dayjs(
-              timestampOne.split('T')[0] + ' ' + timestampOne.split('T')[1],
-              'YYYY-MM-DD hh:mm'
-            );
-            const maxTimestamp = dayjs(
-              timestampTwo.split('T')[0] + ' ' + timestampTwo.split('T')[1],
-              'YYYY-MM-DD hh:mm'
-            );
-            cy.log(minTimestamp + '');
-            cy.log(maxTimestamp + '');
-            cy.log(parseDateTime + '');
-            //comparing the min and max
-            expect(parseInt(parseDateTime + '')).to.be.gte(parseInt(minTimestamp + ''));
-            expect(parseInt(parseDateTime + '')).to.be.lte(parseInt(maxTimestamp + ''));
-          });
-      });
   }
 );
 
-Then('the user views the events matching the search filter of', function () {
+Then('the user views the events matching the search filter of min and max timestamp', function () {
   tenantAdminObj
     .eventLogMinTimesStamp()
     .invoke('val')
     .then((val) => {
-      const timestampOne = String(val);
-      cy.log(timestampOne + '');
+      const timestampMin = String(val);
+
+      tenantAdminObj
+        .eventLogMaxTimesStamp()
+        .invoke('val')
+        .then((val) => {
+          const timestampMax = String(val);
+
+          //parse date, time from min, max and table
+          tenantAdminObj
+            .eventTableBody()
+            .parent()
+            .within(function () {
+              cy.get('td')
+                .eq(0)
+                .then((elem) => {
+                  const tableDateTime = elem.text();
+                  const tableLastSlash = tableDateTime.lastIndexOf('/');
+                  const tableDate = tableDateTime.substring(0, tableLastSlash + 5);
+                  const tableTime = tableDateTime.substring(tableLastSlash + 5, tableDateTime.length + 1);
+                  const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
+                  const minTimestamp = dayjs(
+                    timestampMin.split('T')[0] + ' ' + timestampMin.split('T')[1],
+                    'YYYY-MM-DD hh:mm'
+                  );
+                  const maxTimestamp = dayjs(
+                    timestampMax.split('T')[0] + ' ' + timestampMax.split('T')[1],
+                    'YYYY-MM-DD hh:mm'
+                  );
+                  cy.log(minTimestamp + '');
+                  cy.log(maxTimestamp + '');
+                  cy.log(parseDateTime + '');
+                  //comparing table timestamp with the min and max values
+                  expect(parseInt(parseDateTime + '')).to.be.gte(parseInt(minTimestamp + ''));
+                  expect(parseInt(parseDateTime + '')).to.be.lte(parseInt(maxTimestamp + ''));
+                });
+            });
+        });
+    });
+});
+
+When('the user searches with now {string} mins as minimum timestamp', function (submin) {
+  const timestampMin = timeChanger(dayjs(), submin);
+  cy.log(timestampMin);
+
+  tenantAdminObj.eventLogMinTimesStamp().type(timestampMin);
+  tenantAdminObj.eventLogSearchBtn().click();
+});
+
+Then('the user views the events matching the search filter of min timestamp', function () {
+  tenantAdminObj
+    .eventLogMinTimesStamp()
+    .invoke('val')
+    .then((val) => {
+      const timestampMin = String(val);
 
       tenantAdminObj
         .eventTableBody()
@@ -596,104 +618,76 @@ Then('the user views the events matching the search filter of', function () {
               const tableTime = tableDateTime.substring(tableLastSlash + 5, tableDateTime.length + 1);
               const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
               const minTimestamp = dayjs(
-                timestampOne.split('T')[0] + ' ' + timestampOne.split('T')[1],
+                timestampMin.split('T')[0] + ' ' + timestampMin.split('T')[1],
                 'YYYY-MM-DD hh:mm'
               );
+
+              cy.log(minTimestamp + '');
+              cy.log(parseDateTime + '');
+
               expect(parseInt(parseDateTime + '')).to.be.gte(parseInt(minTimestamp + ''));
             });
         });
     });
+});
 
+When('the user searches with now {string} mins as maximum timestamp', function (addmin) {
+  const timestampMax = timeChanger(dayjs(), addmin);
+  cy.log(timestampMax);
+
+  tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
+  tenantAdminObj.eventLogSearchBtn().click();
+});
+
+Then('the user views the events matching the search filter of maximum timestamp', function () {
   tenantAdminObj
     .eventLogMaxTimesStamp()
     .invoke('val')
     .then((val) => {
-      const timestampTwo = val;
-      cy.log(timestampTwo + '');
-    });
+      const timestampMax = String(val);
 
-  //   tenantAdminObj
-  //     .eventTableBody()
-  //     .parent()
-  //     .within(function () {
-  //       cy.get('td')
-  //         .eq(0)
-  //         .then((elem) => {
-  //           const tableDateTime = elem.text();
-  //           const tableLastSlash = tableDateTime.lastIndexOf('/');
-  //           const tableDate = tableDateTime.substring(0, tableLastSlash + 5);
-  //           const tableTime = tableDateTime.substring(tableLastSlash + 5, tableDateTime.length + 1);
-  //           const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
-  //           const minTimestamp = dayjs(timestampOne.split('T')[0] + ' ' + timestampOne.split('T')[1], 'YYYY-MM-DD hh:mm');
-  //           const maxTimestamp = dayjs(timestampTwo.split('T')[0] + ' ' + timestampTwo.split('T')[1], 'YYYY-MM-DD hh:mm');
-  //           cy.log(minTimestamp + '');
-  //           cy.log(maxTimestamp + '');
-  //           cy.log(parseDateTime + '');
-  //           //comparing table timestamp with the min and max
-  //           expect(parseInt(parseDateTime + '')).to.be.gte(parseInt(minTimestamp + ''));
-  //           expect(parseInt(parseDateTime + '')).to.be.lte(parseInt(maxTimestamp + ''));
-  //         });
-  //     });
-});
+      tenantAdminObj
+        .eventTableBody()
+        .parent()
+        .within(function () {
+          cy.get('td')
+            .eq(0)
+            .then((elem) => {
+              const tableDateTime = elem.text();
+              const tableLastSlash = tableDateTime.lastIndexOf('/');
+              const tableDate = tableDateTime.substring(0, tableLastSlash + 5);
+              const tableTime = tableDateTime.substring(tableLastSlash + 5, tableDateTime.length + 1);
+              const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
+              const maxTimestamp = dayjs(
+                timestampMax.split('T')[0] + ' ' + timestampMax.split('T')[1],
+                'YYYY-MM-DD hh:mm'
+              );
 
-Then('the user views the events matching the search filter of now-1min as minimum timestamp', function () {
-  const formattedDateTable = dayjs().format('MM/DD/YYYY');
+              cy.log(maxTimestamp + '');
+              cy.log(parseDateTime + '');
 
-  cy.log(formattedDateTable);
-
-  tenantAdminObj
-    .eventTableBody()
-    //.contains(namespace)
-    .parent()
-    .within(function () {
-      cy.get('td').eq(0).should('contain.text', formattedDateTable);
+              expect(parseInt(parseDateTime + '')).to.be.gte(parseInt(maxTimestamp + ''));
+            });
+        });
     });
 });
 
-When('the user searches with now-{string} mins as minimum timestamp', function (submin) {
-  const formattedDate = dayjs().format('YYYY-MM-DD');
-  const subtractformattedTime = dayjs().subtract(submin, 'minutes').format('HH:mm');
-  const minDayTime = formattedDate + 'T' + subtractformattedTime;
+// When(
+//   'the user searches with {string} now-{string} mins as minimum timestamp, now+{string} mins as maximum timestamp',
+//   function (namespace, submin, addmin) {
+//     const formattedDate = dayjs().format('YYYY-MM-DD');
+//     const subtractformattedTime = dayjs().subtract(submin, 'minutes').format('HH:mm');
+//     const addformattedTime = dayjs().add(addmin, 'minutes').format('HH:mm');
+//     const minDayTime = formattedDate + 'T' + subtractformattedTime;
+//     const maxDayTime = formattedDate + 'T' + addformattedTime;
 
-  tenantAdminObj.eventLogMinTimesStamp().type(minDayTime);
-  tenantAdminObj.eventLogSearchBtn().click();
-  cy.wait(500);
-});
-
-When('the user searches with now-1day as maximum timestamp', function () {
-  const subtractformattedDate = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
-  const formattedTime = dayjs().format('HH:mm');
-  const maxDayTime = subtractformattedDate + 'T' + formattedTime;
-  cy.log(maxDayTime);
-  tenantAdminObj.eventLogMaxTimesStamp().type(maxDayTime);
-  tenantAdminObj.eventLogSearchBtn().click();
-  cy.wait(500);
-});
-
-Then('the user views the events matching the search filter now-{string} days as maximum timestamp', function (subday) {
-  const formattedDateTable = dayjs().subtract(subday, 'day').format('MM/DD/YYYY');
-  cy.log(formattedDateTable);
-  tenantAdminObj.eventTableBody().within(function () {
-    cy.get('td').eq(0).should('contain.text', formattedDateTable);
-  });
-});
-
-When(
-  'the user searches with {string} now-{string} mins as minimum timestamp, now+{string} mins as maximum timestamp',
-  function (namespace, submin, addmin) {
-    const formattedDate = dayjs().format('YYYY-MM-DD');
-    const subtractformattedTime = dayjs().subtract(submin, 'minutes').format('HH:mm');
-    const addformattedTime = dayjs().add(addmin, 'minutes').format('HH:mm');
-    const minDayTime = formattedDate + 'T' + subtractformattedTime;
-    const maxDayTime = formattedDate + 'T' + addformattedTime;
-
-    tenantAdminObj.eventLogSearchBox().type(namespace).click();
-    tenantAdminObj.eventLogMinTimesStamp().type(minDayTime);
-    tenantAdminObj.eventLogMaxTimesStamp().type(maxDayTime);
-    tenantAdminObj.eventLogSearchBtn().click();
-    cy.wait(500);
-  }
-);
+//     tenantAdminObj.eventLogSearchBox().type(namespace).click();
+//     tenantAdminObj.eventLogMinTimesStamp().type(minDayTime);
+//     tenantAdminObj.eventLogMaxTimesStamp().type(maxDayTime);
+//     tenantAdminObj.eventLogSearchBtn().click();
+//     cy.wait(500);
+//   }
+// );
 
 Then('the user reset event log views', function () {
   tenantAdminObj.eventLogResetBtn().click();
