@@ -12,8 +12,8 @@ interface NotificationTypeFormProps {
   initialValue?: NotificationItem;
   onCancel?: () => void;
   onSave?: (type: NotificationItem) => void;
+  title: string;
   open: boolean;
-
   errors?: Record<string, string>;
 }
 
@@ -31,6 +31,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   onCancel,
   onSave,
   errors,
+  title,
   open,
 }) => {
   const isEdit = !!initialValue;
@@ -70,7 +71,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   return (
     <EditStyles>
       <GoAModal testId="notification-types-form" isOpen={open}>
-        <GoAModalTitle>{isEdit ? 'Edit notification type' : 'Add a notification type'}</GoAModalTitle>
+        <GoAModalTitle>{title}</GoAModalTitle>
         <GoAModalContent>
           <GoAForm>
             <GoAFormItem error={errors?.['name']}>

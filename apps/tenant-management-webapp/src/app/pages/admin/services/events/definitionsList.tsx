@@ -4,14 +4,12 @@ import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
 import type { EventDefinition } from '@store/event/models';
 import styled from 'styled-components';
-
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 
 interface EventDefinitionProps {
   definition: EventDefinition;
   readonly?: boolean;
   onEdit: (definition: EventDefinition) => void;
-
   onDelete: (definition: EventDefinition) => void;
 }
 

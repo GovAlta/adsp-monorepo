@@ -106,7 +106,12 @@ function Status(): JSX.Element {
               Each application should represent a service that is useful to the end user by itself, such as child care
               subsidy and child care certification
             </p>
-            <GoAButton data-testid="add-application" onClick={() => addApplication()} buttonType="primary">
+            <GoAButton
+              data-testid="add-application"
+              buttonSize="small"
+              Click={() => addApplication()}
+              buttonType="primary"
+            >
               Add application
             </GoAButton>
           </Tab>
@@ -150,7 +155,7 @@ function Status(): JSX.Element {
               about upcoming maintenance windows or other events
             </p>
             <GoALinkButton data-testid="add-notice" to={`${location.pathname}/notice/new`} buttonType="primary">
-              Add a draft notice
+              Add notice
             </GoALinkButton>
             <NoticeList />
           </Tab>

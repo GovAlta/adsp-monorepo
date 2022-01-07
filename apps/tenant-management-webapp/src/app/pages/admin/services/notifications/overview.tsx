@@ -22,7 +22,7 @@ export const NotificationsOverview: FunctionComponent<ParentCompProps> = (props)
           setActiveEdit(true);
         }}
       >
-        Add a notification type
+        Add notification type
       </GoAButton>
     </div>
   );
