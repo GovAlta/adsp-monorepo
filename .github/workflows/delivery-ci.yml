@@ -177,8 +177,8 @@ jobs:
         run: |
           for app in $AFFECTED_APPS
           do
-            oc process -f .openshift/managed/$app.yml -p INFRA_NAMESPACE=adsp-build -p NAMESPACE=adsp-uat -p DEPLOY_TAG=uat > $app.dev.json
-            oc apply -f $app.dev.json -l apply-dev=true,component!=database
+            oc process -f .openshift/managed/$app.yml -p INFRA_NAMESPACE=adsp-build -p NAMESPACE=adsp-uat -p DEPLOY_TAG=uat > $app.uat.json
+            oc apply -f $app.uat.json -l apply-staging=true,component!=database
           done
       - name: Deploy Staging
         run: |

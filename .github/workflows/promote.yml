@@ -6,18 +6,17 @@ on:
     inputs:
       APPS:
         description: APPS to promote.
-        required: true
+        required: false
 
 jobs:
-  testRegression:
+  affected:
     runs-on: ubuntu-20.04
-    environment:
-      name: Test-e2e
-    strategy:
-      matrix:
-        app: [tenant-management-webapp, status-app]
+    outputs:
+      affected_apps: ${{ github.event.inputs.APPs || steps.get-affected.outputs.affected_apps }}
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v2
         with:
           node-version: "12"
@@ -25,45 +24,82 @@ jobs:
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-      - name: E2E Test
-        uses: ./.github/actions/nx-cypress-e2e
+      - run: npm ci
+      - name: Get last successful commit
+        uses: nrwl/last-successful-commit-action@v1
+        id: last_successful_commit
         with:
-          app: ${{ matrix.app }}
-          environment: test
-          tags: "@regression and not @ignore"
-          core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
-          core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
-          api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
-          cy-password: ${{ secrets.CY_PASSWORD }}
-          cy-password-2: ${{ secrets.CY_PASSWORD2 }}
-          cy-password-3: ${{ secrets.CY_PASSWORD3 }}
+          branch: aro
+          workflow_id: delivery-ci.yml
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get affected apps
+        id: get-affected
+        uses: ./.github/actions/nx-production-build
+        shell: bash
+        run: echo "::set-output name=affected-apps::$(npx nx affected:apps --plain --base=${{ inputs.affected-base }})"
+
+  # testRegression:
+  #   runs-on: ubuntu-20.04
+  #   environment:
+  #     name: Test-e2e
+  #   strategy:
+  #     matrix:
+  #       app: [tenant-management-webapp, status-app]
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: actions/setup-node@v2
+  #       with:
+  #         node-version: "12"
+  #     - uses: actions/cache@v2
+  #       with:
+  #         path: ~/.npm
+  #         key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+  #     - name: E2E Test
+  #       uses: ./.github/actions/nx-cypress-e2e
+  #       with:
+  #         app: ${{ matrix.app }}
+  #         environment: test
+  #         tags: "@regression and not @ignore"
+  #         core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
+  #         core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
+  #         api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
+  #         cy-password: ${{ secrets.CY_PASSWORD }}
+  #         cy-password-2: ${{ secrets.CY_PASSWORD2 }}
+  #         cy-password-3: ${{ secrets.CY_PASSWORD3 }}
 
   deployStaging:
     runs-on: ubuntu-20.04
-    needs: testRegression
+    needs: affected
     env:
-      AFFECTED_APPS: ${{ github.event.inputs.APPs }}
+      AFFECTED_APPS: ${{ needs.affected.outputs.affected_apps }}
     environment:
-      name: Staging
+      name: Production
     steps:
       - name: Oc login
         uses: redhat-actions/oc-login@v1
         with:
-          openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
-          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
-          namespace: core-services-infra
+          openshift_server_url: ${{ secrets.ARO_SERVER }}
+          openshift_token: ${{ secrets.ARO_TOKEN }}
+          namespace: adsp-build
           insecure_skip_tls_verify: true
-      - name: Tag UAT
+      - name: Tag Production
         run: |
           for app in $AFFECTED_APPS
           do
-            oc tag $app:test $app:uat --reference-policy='local'
+            oc tag $app:uat $app:prod --reference-policy='local'
           done
-      - name: Deploy UAT
+      - run: oc project adsp-prod
+      - name: Apply Manifests
         run: |
           for app in $AFFECTED_APPS
           do
-            oc project core-services-uat
+            oc process -f .openshift/managed/$app.yml -p INFRA_NAMESPACE=adsp-build -p NAMESPACE=adsp-prod -p DEPLOY_TAG=prod > $app.prod.json
+            oc apply -f $app.prod.json -l apply-prod=true,component!=database
+          done
+      - name: Deploy Production
+        run: |
+          for app in $AFFECTED_APPS
+          do
             oc rollout latest dc/$app
             oc rollout status dc/$app
           done
