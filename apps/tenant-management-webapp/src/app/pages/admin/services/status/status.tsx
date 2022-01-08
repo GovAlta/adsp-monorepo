@@ -109,7 +109,7 @@ function Status(): JSX.Element {
             <GoAButton
               data-testid="add-application"
               buttonSize="small"
-              Click={() => addApplication()}
+              onClick={() => addApplication()}
               buttonType="primary"
             >
               Add application

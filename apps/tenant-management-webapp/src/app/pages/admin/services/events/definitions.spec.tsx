@@ -59,15 +59,11 @@ describe('Definitions Page', () => {
     );
     const deleteBtn = queryByTestId('delete-details');
     fireEvent.click(deleteBtn);
-
     const confirmation = queryByTestId('delete-confirmation');
     expect(confirmation).not.toBeNull();
-
     const deleteConfirm = queryByTestId('delete-confirm');
     fireEvent.click(deleteConfirm);
-
     const actions = store.getActions();
-
     const deleteAction = actions.find((action) => action.type === DELETE_EVENT_DEFINITION_ACTION);
     expect(deleteAction).toBeTruthy();
   });
@@ -85,7 +81,7 @@ describe('Definitions Page', () => {
     fireEvent.click(deleteCancel);
 
     await waitFor(() => {
-      expect(queryByTestId('delete-cancel')).toBeVisible();
+      expect(queryByTestId('delete-cancel')).toBeNull();
     });
   });
 
@@ -155,7 +151,7 @@ describe('Definitions Page', () => {
 
     await waitFor(() => {
       const form = queryByTestId('definition-form');
-      expect(form).not.toBeVisible();
+      expect(form).toBeNull();
     });
   });
 
@@ -188,9 +184,7 @@ describe('Definitions Page', () => {
     fireEvent.click(saveBtn);
 
     const actions = store.getActions();
-
     const saveAction = actions.find((action) => action.type === UPDATE_EVENT_DEFINITION_ACTION);
-
     expect(saveAction).toBeTruthy();
   });
 });

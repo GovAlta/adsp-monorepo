@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components';
 import { RootState } from '@store/index';
-import { EventDefinition } from '@store/event/models';
+import { EventDefinition, defaultEventDefinition } from '@store/event/models';
 import { useSelector } from 'react-redux';
 import { EventDefinitionModalForm } from './edit';
 
@@ -54,6 +54,8 @@ export const EventsOverview: FunctionComponent<OverviewProps> = ({ toEventListTa
         open={editDefinition}
         coreNamespaces={coreNamespaces}
         onClose={reset}
+        isEdit={false}
+        initialValue={defaultEventDefinition}
         onSave={toEventListTab}
       />
       <br />
