@@ -76,6 +76,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       setEditType(true);
       activateEdit(false);
       setShowTemplateForm(false);
+      setFormTitle('Add notification type');
     }
   }, [activeEdit]);
 
