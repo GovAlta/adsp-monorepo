@@ -207,7 +207,7 @@ describe('subscription router', () => {
         tenant: {
           id: tenantId,
         },
-        query: { top: '11', after: '123' },
+        query: { topValue: '11', after: '123' },
         notificationType: new NotificationTypeEntity(notificationType, tenantId),
       };
       const res = { send: jest.fn() };
