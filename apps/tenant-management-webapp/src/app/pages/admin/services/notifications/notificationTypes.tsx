@@ -24,6 +24,7 @@ import { NotificationItem } from '@store/notification/models';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 import { TemplateForm } from './templateForm';
+import { EditIcon } from '@components/icons/EditIcon';
 
 const emptyNotificationType: NotificationItem = {
   name: '',
@@ -50,6 +51,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [disableTemplateForm, setDisableTemplateForm] = useState(false);
   const notification = useSelector((state: RootState) => state.notification);
   const coreNotification = useSelector((state: RootState) => state.notification.core);
+  const [formTitle, setFormTitle] = useState<string>('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
@@ -104,9 +106,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           onClick={() => {
             setSelectedType(null);
             setEditType(true);
+            setFormTitle('Add notification type');
           }}
         >
-          Add a notification type
+          Add notification type
         </GoAButton>
       </Buttons>
       {notification.notificationTypes &&
@@ -120,14 +123,15 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                     <MaxHeight height={30} className="rowFlex">
                       <a
                         className="flex1"
-                        data-testid={`edit-notification-type-${notificationType.id}`}
+                        data-testid="edit-notification-type"
                         onClick={() => {
                           setSelectedType(notificationType);
                           setEditType(true);
+                          setFormTitle('Edit notification type');
                         }}
                       >
-                        <NotificationBorder className="smallPadding">
-                          <GoAIcon type="create" />
+                        <NotificationBorder className="smallPadding" style={{ height: '26px', display: 'flex' }}>
+                          <EditIcon size="small" />
                         </NotificationBorder>
                       </a>
                       <a
@@ -136,7 +140,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           setSelectedType(notificationType);
                           setShowDeleteConfirmation(true);
                         }}
-                        data-testid={`delete-notification-type-${notificationType.id}`}
+                        data-testid="delete-notification-type"
                       >
                         <NotificationBorder className="smallPadding">
                           <GoAIcon type="trash" />
@@ -180,7 +184,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                     setSelectedType(notificationType);
                                     setShowEventDeleteConfirmation(true);
                                   }}
-                                  data-testid={`delete-event-${notificationType.id}-${key}`}
+                                  data-testid="delete-event"
                                 >
                                   <GoAIcon type="trash" />
                                 </a>
@@ -199,7 +203,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                             <div className="rightAlignEdit">
                               <a
                                 style={{ marginRight: '20px' }}
-                                data-testid={`preview-event-${notificationType.id}`}
+                                data-testid="preview-event"
                                 onClick={() => {
                                   setSelectedEvent(event);
                                   setSelectedType(notificationType);
@@ -211,7 +215,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                               </a>
 
                               <a
-                                data-testid={`edit-event-${notificationType.id}`}
+                                data-testid="edit-event"
                                 onClick={() => {
                                   setSelectedEvent(event);
                                   setSelectedType(notificationType);
@@ -233,7 +237,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                     <EventButtonWrapper>
                       <GoAButton
                         buttonType="secondary"
-                        data-testid={`add-event-${notificationType.id}`}
+                        data-testid="add-event"
                         onClick={() => {
                           setSelectedEvent(null);
                           manageEvents(notificationType);
@@ -280,7 +284,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           <div className="rightAlignEdit">
                             <a
                               style={{ marginRight: '20px' }}
-                              data-testid={`preview-event-${notificationType.id}`}
+                              data-testid="preview-event"
                               onClick={() => {
                                 setSelectedEvent(event);
                                 setSelectedType(notificationType);
@@ -334,7 +338,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       {/* Event delete confirmation */}
       <GoAModal testId="event-delete-confirmation" isOpen={showEventDeleteConfirmation}>
         <GoAModalTitle>Remove event</GoAModalTitle>
-        <GoAModalContent>Remove {selectedEvent?.namespace}:{selectedEvent?.name}?</GoAModalContent>
+        <GoAModalContent>
+          Remove {selectedEvent?.namespace}:{selectedEvent?.name}?
+        </GoAModalContent>
         <GoAModalActions>
           <GoAButton
             buttonType="tertiary"
@@ -368,6 +374,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         open={editType}
         initialValue={selectedType}
         errors={errors}
+        title={formTitle}
         onSave={(type) => {
           type.subscriberRoles = type.subscriberRoles || [];
           type.events = type.events || [];
@@ -399,6 +406,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         onCancel={() => {
           reset();
         }}
+        onClickedOutside={() => {
+          reset();
+        }}
       />
       <TemplateForm
         initialValue={editEvent}
@@ -413,6 +423,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         }}
         onCancel={() => {
           setShowTemplateForm(false);
+        }}
+        onClickedOutside={() => {
+          reset();
         }}
       />
     </NotficationStyles>

@@ -1,4 +1,4 @@
-class notificationsPage {
+class NotificationsPage {
   addANotificationTypeButtonOnOverview() {
     return cy.get('[data-testid="add-notification-overview"]');
   }
@@ -39,15 +39,15 @@ class notificationsPage {
     return cy.get('[data-testid="form-save"]');
   }
 
-  notificationTypeEditBtn(notificationTitle) {
+  notificationTypeEditBtn(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTitle}")]/following-sibling::*//*[@data-testid="icon-create"]`
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/following-sibling::*//*[@data-testid="icon-create"]`
     );
   }
 
-  notificationTypeDeleteBtn(notificationTitle) {
+  notificationTypeDeleteBtn(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTitle}")]/following-sibling::*//*[@data-testid="icon-trash"]`
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/following-sibling::*//*[@data-testid="icon-trash"]`
     );
   }
 
@@ -55,25 +55,25 @@ class notificationsPage {
     return cy.get('[data-testid="add-notification"]');
   }
 
-  notificationTypeCardTitle(notificationTitle) {
-    return cy.xpath(`//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTitle}")]`);
+  notificationTypeCardTitle(notificationTypeTitle) {
+    return cy.xpath(`//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]`);
   }
 
-  notificationTypeCardDesc(notificationTitle) {
+  notificationTypeCardDesc(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTitle}")]//ancestor::*[@data-testid="card-title"]/following-sibling::*[@data-testid="card-content"]`
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]//ancestor::*[@data-testid="card-title"]/following-sibling::*[@data-testid="card-content"]`
     );
   }
 
-  notificationTypeSubscriberRoles(notificationTitle) {
+  notificationTypeSubscriberRoles(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTitle}")]/parent::*/following-sibling::*/div[contains(text(),  "Subscriber Roles")]`
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*/div[contains(text(),  "Subscriber Roles")]`
     );
   }
 
-  notificationTypePublicSubscription(notificationTitle) {
+  notificationTypePublicSubscription(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTitle}")]/parent::*/following-sibling::*/div[contains(text(), "Public Subscription")]`
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*/div[contains(text(), "Public Subscription")]`
     );
   }
 
@@ -90,6 +90,88 @@ class notificationsPage {
   notificationTypeDeleteConfirmationModalConfirmBtn() {
     return cy.get('[data-testid="delete-confirm"]');
   }
+
+  notificationTypeSelectAnEventBtn(cardTitle) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]//button[contains(text(), "Select an event")]`
+    );
+  }
+
+  selectAnEventModalTitle() {
+    return cy.xpath(
+      '//*[@data-testid="event-form" and @data-state="visible"]/*[@class="modal"]//*[@class="modal-title"]'
+    );
+  }
+
+  selectAnEventModalEventDropdown() {
+    return cy.xpath(
+      '//*[@data-testid="event-form" and @data-state="visible"]/*[@class="modal"]//*[@data-testid="event-dropdown"]'
+    );
+  }
+
+  selectAnEventModalEventDropdownItem(text) {
+    return cy.xpath(
+      `//*[@data-testid="event-form" and @data-state="visible"]/*[@class="modal"]//*[@data-testid="event-dropdown"]/following-sibling::*//*[contains(text(), "${text}")]`
+    );
+  }
+
+  selectAnEventModalNextBtn() {
+    return cy.get('[data-testid="event-form-save"]');
+  }
+
+  selectAnEventModalCancelBtn() {
+    return cy.get('[data-testid="event-form-cancel"]');
+  }
+
+  addAnEmailTemplateModalTitle() {
+    return cy.xpath(
+      '//*[@data-testid="template-form" and @data-state="visible"]/*[@class="modal"]//*[@class="modal-title"]'
+    );
+  }
+
+  addAnEmailTemplateModalSubject() {
+    return cy.xpath(
+      '//*[@data-testid="template-form" and @data-state="visible"]//label[contains(text(), "Subject")]/parent::div[@class="goa-form-item"]//*[@class="monaco-scrollable-element editor-scrollable vs"]'
+    );
+  }
+
+  addAnEmailTemplateModalBody() {
+    return cy.xpath(
+      '//*[@data-testid="template-form" and @data-state="visible"]//label[contains(text(), "Body")]/parent::div[@class="goa-form-item"]//*[@class="monaco-scrollable-element editor-scrollable vs"]'
+    );
+  }
+
+  addAnEmailTemplateModalAddBtn() {
+    return cy.get('[data-testid="template-form-save"]');
+  }
+
+  notificationTypeEvents(notificationTypeTitle) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]//ancestor::*[@class="card-content"]//*[@data-testid="card-footer"]//*[@class="flex1"]`
+    );
+  }
+
+  eventDeleteIcon(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/following-sibling::*[@class="rowFlex"]//*[@data-testid="icon-trash"]`
+    );
+  }
+
+  removeEventModalTitle() {
+    return cy.xpath(
+      '//*[@data-testid="event-delete-confirmation" and @data-state="visible"]/*[@class="modal"]//*[@class="modal-title"]'
+    );
+  }
+
+  removeEventModalContent() {
+    return cy.xpath(
+      '//*[@data-testid="event-delete-confirmation" and @data-state="visible"]/*[@class="modal"]//*[@class="goa-scrollable"]'
+    );
+  }
+
+  removeEventModalConfirmBtn() {
+    return cy.get('[data-testid="event-delete-confirm"]');
+  }
 }
 
-export default notificationsPage;
+export default NotificationsPage;

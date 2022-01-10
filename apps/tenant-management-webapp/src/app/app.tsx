@@ -1,4 +1,5 @@
-import './app.css';
+import '@style/app.css';
+import '@style/colors.scss';
 
 import React, { useEffect } from 'react';
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
@@ -45,19 +46,15 @@ const AppRouters = () => {
           <Route path="/get-started">
             <GetStarted />
           </Route>
-
           <Route exact path="/login-redirect">
             <LoginRedirect />
           </Route>
-
           <Route exact path="/login-error">
             <SignInError />
           </Route>
-
           <Route exact path="/logout-redirect">
             <LogoutRedirect />
           </Route>
-
           <Route exact path="/tenant/creation">
             <CreateTenant />
           </Route>

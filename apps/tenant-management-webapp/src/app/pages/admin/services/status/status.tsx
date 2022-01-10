@@ -34,6 +34,7 @@ import { Tab, Tabs } from '@components/Tabs';
 import { getNotices } from '@store/notice/actions';
 import { NoticeList } from './noticeList';
 import SupportLinks from '@components/SupportLinks';
+import { EditIconButton } from '@components/icons/EditIcon';
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
@@ -105,7 +106,12 @@ function Status(): JSX.Element {
               Each application should represent a service that is useful to the end user by itself, such as child care
               subsidy and child care certification
             </p>
-            <GoAButton data-testid="add-application" onClick={() => addApplication()} buttonType="primary">
+            <GoAButton
+              data-testid="add-application"
+              buttonSize="small"
+              Click={() => addApplication()}
+              buttonType="primary"
+            >
               Add application
             </GoAButton>
           </Tab>
@@ -149,7 +155,7 @@ function Status(): JSX.Element {
               about upcoming maintenance windows or other events
             </p>
             <GoALinkButton data-testid="add-notice" to={`${location.pathname}/notice/new`} buttonType="primary">
-              Add a draft notice
+              Add notice
             </GoALinkButton>
             <NoticeList />
           </Tab>
@@ -173,7 +179,7 @@ function Status(): JSX.Element {
         </Tabs>
         <Switch>
           <Route path="/admin/services/status/new">
-            <ApplicationFormModal isOpen={true} title='New application' />
+            <ApplicationFormModal isOpen={true} title="New application" />
           </Route>
           <Route path="/admin/services/status/notice/new">
             <NoticeModal isOpen={true} title="Add a draft notice" />
@@ -182,7 +188,7 @@ function Status(): JSX.Element {
             <NoticeModal isOpen={true} title="Edit draft notice" />
           </Route>
           <Route path="/admin/services/status/:applicationId/edit">
-            <ApplicationFormModal isOpen={true} title='Edit application' />
+            <ApplicationFormModal isOpen={true} title="Edit application" />
           </Route>
         </Switch>
       </Main>
@@ -288,7 +294,11 @@ function Application(app: ServiceStatusApplication) {
         </div>
 
         <GoAContextMenu>
-          <GoAContextMenuIcon type="create" onClick={() => history.push(`${location.pathname}/${app._id}/edit`)} />
+          <EditIconButton
+            iconSize="tiny"
+            onClick={() => history.push(`${location.pathname}/${app._id}/edit`)}
+            data-testid="status-edit-button"
+          />
           <GoAContextMenuIcon type="trash" onClick={() => setShowDeleteConfirmation(true)} />
         </GoAContextMenu>
       </AppHeader>
@@ -463,8 +473,8 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
               backgroundColor: entry.ok
                 ? 'var(--color-green)'
                 : entry.status === 'n/a'
-                  ? 'var(--color-gray-300)'
-                  : 'var(--color-red)',
+                ? 'var(--color-gray-300)'
+                : 'var(--color-red)',
             }}
             title={entry.status + ': ' + new Date(entry.timestamp).toLocaleString()}
           />

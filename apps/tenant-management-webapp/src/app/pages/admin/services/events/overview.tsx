@@ -1,6 +1,31 @@
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useState, useEffect } from 'react';
+import { GoAButton } from '@abgov/react-components';
+import { RootState } from '@store/index';
+import { EventDefinition } from '@store/event/models';
+import { useSelector } from 'react-redux';
+import { EventDefinitionModalForm } from './edit';
 
-export const EventsOverview: FunctionComponent = () => {
+interface OverviewProps {
+  toEventListTab: () => void;
+}
+
+export const EventsOverview: FunctionComponent<OverviewProps> = ({ toEventListTab }) => {
+  const definitions = useSelector((state: RootState) => state.event.definitions);
+  const [coreNamespaces, setCoreNamespaces] = useState<string[]>([]);
+  const [editDefinition, setEditDefinition] = useState(false);
+
+  useEffect(() => {
+    const namespaces = Object.values(definitions)
+      .filter((d: EventDefinition) => d.isCore)
+      .map((d: EventDefinition) => d.namespace);
+
+    setCoreNamespaces(namespaces);
+  }, [definitions]);
+
+  function reset() {
+    setEditDefinition(false);
+  }
+
   return (
     <div>
       <p>
@@ -15,6 +40,24 @@ export const EventsOverview: FunctionComponent = () => {
         utilized by services consuming events. For example, notification template configuration can validate template
         variables as matching the payload from a triggering event.
       </p>
+      <GoAButton
+        data-testid="add-definition"
+        buttonSize="small"
+        onClick={() => {
+          setEditDefinition(true);
+        }}
+      >
+        Add definition
+      </GoAButton>
+
+      <EventDefinitionModalForm
+        open={editDefinition}
+        coreNamespaces={coreNamespaces}
+        onClose={reset}
+        onSave={toEventListTab}
+      />
+      <br />
+      <br />
     </div>
   );
 };

@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { GoACallout } from '@abgov/react-components';
 import { Notice, sortNotices } from '@store/status/models';
 import { LocalTime } from '@components/Date';
-import '@abgov/core-css/src/lib/styles/v2/colors.scss';
+
 interface ServiceOptions {
   name: string;
   date: string;
@@ -124,6 +124,7 @@ const ServiceStatusCss = styled.div`
     margin: 5px;
     font-size: var(--fs-xs);
     border-radius: 4px;
+    line-height: 28px;
   }
 
   .align-right {

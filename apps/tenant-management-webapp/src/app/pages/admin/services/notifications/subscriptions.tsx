@@ -43,8 +43,8 @@ export const Subscriptions: FunctionComponent = () => {
       />
       {/* Delete confirmation */}
       <GoAModal testId="delete-confirmation" isOpen={showDeleteConfirmation}>
-        <GoAModalTitle>Delete Subscriber</GoAModalTitle>
-        <GoAModalContent>Delete Subscriber {selectedSubscription?.channels[emailIndex]?.address}?</GoAModalContent>
+        <GoAModalTitle>Delete subscription</GoAModalTitle>
+        <GoAModalContent>Delete subscription {selectedSubscription?.channels[emailIndex]?.address}?</GoAModalContent>
         <GoAModalActions>
           <GoAButton buttonType="tertiary" data-testid="delete-cancel" onClick={() => setShowDeleteConfirmation(false)}>
             Cancel
