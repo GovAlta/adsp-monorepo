@@ -29,8 +29,15 @@ export interface Subscriber {
   userId?: string;
 }
 
+export interface HasNext {
+  id: string;
+  hasNext: boolean;
+  top: number;
+}
+
 export interface SubscriberService {
   subscription: Subscription;
+  subscriptionsHasNext: HasNext[];
   subscriptions: SubscriptionWrapper[];
   subscriber: Subscriber;
   successMessage: string;
@@ -40,12 +47,13 @@ export interface SubscriberService {
       hasNext: boolean;
       pageSize: number;
       top: number;
-    }
-  }
+    };
+  };
 }
 
 export const SUBSCRIBER_INIT: SubscriberService = {
   subscription: undefined,
+  subscriptionsHasNext: [],
   subscriptions: undefined,
   subscriber: undefined,
   successMessage: null,
@@ -54,9 +62,9 @@ export const SUBSCRIBER_INIT: SubscriberService = {
       data: undefined,
       hasNext: false,
       pageSize: DEFAULT_PAGE_SIZE,
-      top: DEFAULT_PAGE_SIZE
-    }
-  }
+      top: DEFAULT_PAGE_SIZE,
+    },
+  },
 };
 
 export interface SubscriberSearchCriteria {

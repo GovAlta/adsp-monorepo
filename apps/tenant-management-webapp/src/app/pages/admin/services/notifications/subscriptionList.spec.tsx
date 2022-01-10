@@ -2,8 +2,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import '@testing-library/jest-dom';
-import { fireEvent, render, waitFor } from '@testing-library/react';
-import { UPDATE_SUBSCRIBER } from '@store/subscription/actions';
+import { render } from '@testing-library/react';
 
 import { Subscriptions } from './subscriptions';
 
@@ -17,6 +16,7 @@ describe('NotificationTypes Page', () => {
       realmRoles: ['uma_auth'],
     },
     subscription: {
+      subscriptionsHasNext: [{ id: 'status-application-status-change', hasNext: false, top: 40 }],
       subscriptions: [
         {
           subscriber: {
@@ -91,35 +91,5 @@ describe('NotificationTypes Page', () => {
 
     expect(subscriptionTable).toBeTruthy();
     expect(addressAs).toBeTruthy();
-  });
-
-  it('edits the subscriber', async () => {
-    const { queryByTestId } = render(
-      <Provider store={store}>
-        <Subscriptions />
-      </Provider>
-    );
-    const editBtn = queryByTestId('edit-subscription-item-61b7c9755af1390a68dc3927');
-    await waitFor(() => {
-      fireEvent.click(editBtn);
-    });
-
-    // fields
-    const name = queryByTestId('form-name');
-    const email = queryByTestId('form-email');
-
-    expect(name).not.toBeNull();
-    expect(email).not.toBeNull();
-    const saveBtn = queryByTestId('form-save');
-
-    // fill
-    fireEvent.change(name, { target: { value: 'Bob Smith' } });
-    fireEvent.change(email, { target: { value: 'bob.smith@gmail.com' } });
-    fireEvent.click(saveBtn);
-
-    const actions = store.getActions();
-
-    const saveAction = actions.find((action) => action.type === UPDATE_SUBSCRIBER);
-    expect(saveAction).toBeTruthy();
   });
 });

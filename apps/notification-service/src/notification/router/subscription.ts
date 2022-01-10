@@ -69,14 +69,21 @@ export function getTypeSubscriptions(apiId: AdspId, repository: SubscriptionRepo
       const user = req.user;
       const tenantId = req.tenant.id;
       const type: NotificationTypeEntity = req[TYPE_KEY];
-      const { top: topValue, after } = req.query;
+      const { topValue, after, email, name } = req.query;
       const top = topValue ? parseInt(topValue as string, 10) : 10;
 
       if (!isAllowedUser(user, tenantId, ServiceUserRoles.SubscriptionAdmin, true)) {
         throw new UnauthorizedUserError('get subscribers', user);
       }
 
-      const result = await repository.getSubscriptions(tenantId, top, after as string, { typeIdEquals: type.id });
+      const criteria = {
+        typeIdEquals: type.id,
+        name: name as string | '',
+        email: email as string | '',
+      };
+
+      const result = await repository.getSubscriptions(tenantId, top, after as string, criteria);
+
       res.send({
         results: result.results.map((r) => mapSubscription(apiId, r)),
         page: result.page,
