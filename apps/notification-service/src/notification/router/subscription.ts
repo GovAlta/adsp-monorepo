@@ -286,7 +286,7 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
               channels: [
                 {
                   channel: Channel.email,
-                  address: req.body?.email,
+                  address: req.body?.email.toLowerCase(),
                 },
               ],
             };
@@ -357,6 +357,8 @@ export function updateSubscriber(apiId: AdspId, repository: SubscriptionReposito
       const subscriber: SubscriberEntity = req[SUBSCRIBER_KEY];
 
       const emailIndex = update?.channels?.findIndex((channel) => channel.channel === 'email');
+
+      update.channels[emailIndex].address = update?.channels[emailIndex]?.address.toLowerCase();
 
       const criteria = { email: update?.channels[emailIndex]?.address };
       const response = await repository.findSubscribers(1, '1', criteria);

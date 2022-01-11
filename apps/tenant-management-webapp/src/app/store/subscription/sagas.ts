@@ -78,22 +78,17 @@ export function* getAllSubscriptions(action: GetSubscriptionsAction): SagaIterat
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      let requestCriteria = ''; //criteria.email ? `email=${criteria.email}&` : '';
-      // requestCriteria = requestCriteria + (criteria.name ? `name=${criteria.name}&` : '');
-
+      let params = {};
       if (criteria.email || criteria.name) {
-        requestCriteria = requestCriteria + 'topValue=10000';
+        params = { topValue: 10000 };
       }
 
       const results = yield all(
         typeResponse.data.map((type, id) => {
-          const response = call(
-            axios.get,
-            `${configBaseUrl}/subscription/v1/types/${type?.id}/subscriptions?${requestCriteria}`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
+          const response = call(axios.get, `${configBaseUrl}/subscription/v1/types/${type?.id}/subscriptions`, {
+            params,
+            headers: { Authorization: `Bearer ${token}` },
+          });
 
           return response;
         })

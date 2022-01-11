@@ -124,7 +124,7 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     }
 
     if (criteria.email) {
-      query.channels = { $elemMatch: { address: { $regex: criteria.email.toLocaleLowerCase(), $options: 'i' } } };
+      query.channels = { $elemMatch: { address: { $regex: criteria.email.toLocaleLowerCase() } } };
     }
 
     return new Promise<Results<SubscriberEntity>>((resolve, reject) => {
