@@ -17,4 +17,6 @@ export interface Subscription {
 export interface SubscriptionSearchCriteria {
   typeIdEquals?: string;
   subscriberIdEquals?: string;
+  name?: string;
+  email?: string;
 }

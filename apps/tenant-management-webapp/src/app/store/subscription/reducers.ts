@@ -7,6 +7,7 @@ import {
   FIND_SUBSCRIBERS_SUCCESS,
   GET_SUBSCRIPTIONS_SUCCESS,
   UPDATE_SUBSCRIBER_SUCCESS,
+  GET_TYPE_SUBSCRIPTION_SUCCESS,
 } from './actions';
 
 import { SUBSCRIBER_INIT, SubscriberService } from './models';
@@ -14,15 +15,23 @@ import { SUBSCRIBER_INIT, SubscriberService } from './models';
 export default function (state = SUBSCRIBER_INIT, action: ActionTypes): SubscriberService {
   switch (action.type) {
     case UPDATE_SUBSCRIBER_SUCCESS: {
-      const newState = Object.assign({}, state);
-      const subs = newState.subscriptions;
-      const subscriberIndex = subs.findIndex((subs) => subs.subscriber.id === action.payload.subscriberInfo.id);
+      const existingSubscribers = state.search.subscribers;
+      const subscriberIndex = existingSubscribers.data.findIndex(
+        (subs) => subs.id === action.payload.subscriberInfo.id
+      );
 
-      subs[subscriberIndex].subscriber = action.payload.subscriberInfo;
+      existingSubscribers.data[subscriberIndex] = action.payload.subscriberInfo;
 
       return {
         ...state,
-        subscriptions: subs,
+        search: {
+          subscribers: {
+            data: existingSubscribers.data,
+            hasNext: existingSubscribers.hasNext,
+            top: existingSubscribers.top,
+            pageSize: existingSubscribers.pageSize,
+          },
+        },
       };
     }
     case SUBSCRIBE_SUBSCRIBER_SUCCESS:
@@ -36,11 +45,46 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
         ...state,
         subscription: action.payload.subscriberInfo,
       };
-    case GET_SUBSCRIPTIONS_SUCCESS:
+    case GET_SUBSCRIPTIONS_SUCCESS: {
+      const { subscriberInfo } = action.payload;
+
       return {
         ...state,
-        subscriptions: action.payload.subscriberInfo,
+        subscriptions: subscriberInfo,
+        subscriptionsHasNext: [],
       };
+    }
+    case GET_TYPE_SUBSCRIPTION_SUCCESS: {
+      const { subscriberInfo, top, type } = action.payload;
+
+      const hasNext = state.subscriptionsHasNext;
+
+      let typeIndex = hasNext.findIndex((item) => item.id === type);
+      if (typeIndex === -1) {
+        typeIndex = 0;
+        const ix = { id: type, hasNext: false, top: top };
+        if (subscriberInfo.length >= 10) {
+          ix.hasNext = true;
+        }
+
+        hasNext.push(ix);
+      } else {
+        hasNext[typeIndex].id = type;
+        hasNext[typeIndex].hasNext = false;
+        hasNext[typeIndex].top = top;
+
+        if (subscriberInfo.length >= 10) {
+          hasNext[typeIndex].hasNext = true;
+        }
+      }
+
+      return {
+        ...state,
+        subscriptionsHasNext: hasNext,
+        subscriptions: state.subscriptions.concat(subscriberInfo),
+      };
+    }
+
     case GET_SUBSCRIBER_SUCCESS:
       return {
         ...state,

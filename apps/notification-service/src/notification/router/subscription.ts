@@ -69,14 +69,21 @@ export function getTypeSubscriptions(apiId: AdspId, repository: SubscriptionRepo
       const user = req.user;
       const tenantId = req.tenant.id;
       const type: NotificationTypeEntity = req[TYPE_KEY];
-      const { top: topValue, after } = req.query;
+      const { topValue, after, email, name } = req.query;
       const top = topValue ? parseInt(topValue as string, 10) : 10;
 
       if (!isAllowedUser(user, tenantId, ServiceUserRoles.SubscriptionAdmin, true)) {
         throw new UnauthorizedUserError('get subscribers', user);
       }
 
-      const result = await repository.getSubscriptions(tenantId, top, after as string, { typeIdEquals: type.id });
+      const criteria = {
+        typeIdEquals: type.id,
+        name: name as string | '',
+        email: email as string | '',
+      };
+
+      const result = await repository.getSubscriptions(tenantId, top, after as string, criteria);
+
       res.send({
         results: result.results.map((r) => mapSubscription(apiId, r)),
         page: result.page,
@@ -279,7 +286,7 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
               channels: [
                 {
                   channel: Channel.email,
-                  address: req.body?.email,
+                  address: req.body?.email.toLowerCase(),
                 },
               ],
             };
@@ -342,15 +349,26 @@ export function getSubscriberByUserId(repository: SubscriptionRepository): Reque
   };
 }
 
-export function updateSubscriber(apiId: AdspId): RequestHandler {
+export function updateSubscriber(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
       const update = req.body;
       const subscriber: SubscriberEntity = req[SUBSCRIBER_KEY];
 
-      const updated = await subscriber.update(user, update);
-      res.send(mapSubscriber(apiId, updated));
+      const emailIndex = update?.channels?.findIndex((channel) => channel.channel === 'email');
+
+      update.channels[emailIndex].address = update?.channels[emailIndex]?.address.toLowerCase();
+
+      const criteria = { email: update?.channels[emailIndex]?.address };
+      const response = await repository.findSubscribers(1, '1', criteria);
+
+      if (response.results.length === 0) {
+        const updated = await subscriber.update(user, update);
+        res.send(mapSubscriber(apiId, updated));
+      } else {
+        throw new InvalidOperationError('Subscriber with this email already exists');
+      }
     } catch (err) {
       next(err);
     }
@@ -545,7 +563,11 @@ export const createSubscriptionRouter = ({
   subscriptionRouter.get('/subscribers/:subscriber', getSubscriber(subscriptionRepository), (req, res) =>
     res.send(mapSubscriber(apiId, req[SUBSCRIBER_KEY]))
   );
-  subscriptionRouter.patch('/subscribers/:subscriber', getSubscriber(subscriptionRepository), updateSubscriber(apiId));
+  subscriptionRouter.patch(
+    '/subscribers/:subscriber',
+    getSubscriber(subscriptionRepository),
+    updateSubscriber(apiId, subscriptionRepository)
+  );
   subscriptionRouter.post(
     '/subscribers/:subscriber',
     getSubscriber(subscriptionRepository),

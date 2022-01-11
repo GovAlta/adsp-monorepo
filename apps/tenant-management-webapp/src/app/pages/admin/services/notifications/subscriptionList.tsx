@@ -2,12 +2,13 @@ import React, { FunctionComponent, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
-import type { Subscriber, Subscription } from '@store/subscription/models';
-import { UpdateSubscriberService } from '@store/subscription/actions';
+import type { Subscriber, Subscription, SubscriberSearchCriteria } from '@store/subscription/models';
+import { UpdateSubscriberService, getTypeSubscriptions } from '@store/subscription/actions';
 import styled from 'styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
 import { SubscriberModalForm } from './editSubscriber';
 import { GoAIcon } from '@abgov/react-components/experimental';
+import { SubscriptionNextLoader } from './subscriptionNextLoader';
 
 interface SubscriptionProps {
   subscription: Subscriber;
@@ -54,15 +55,6 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscript
         <div style={{ display: 'flex', flexDirection: 'row' }}>
           <a
             className="flex1"
-            data-testid={`edit-subscription-item-${subscription.id}`}
-            onClick={() => openModal(subscription)}
-          >
-            <ButtonBorder>
-              <GoAIcon type="create" />
-            </ButtonBorder>
-          </a>
-          <a
-            className="flex1"
             data-testid={`delete-subscription-${subscription.id}`}
             onClick={() => onDelete(subscription, type)}
           >
@@ -79,9 +71,14 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscript
 interface SubscriptionsListComponentProps {
   className?: string;
   onDelete: (subscription: Subscriber, type: string) => void;
+  searchCriteria: SubscriberSearchCriteria;
 }
 
-const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentProps> = ({ className, onDelete }) => {
+const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentProps> = ({
+  className,
+  onDelete,
+  searchCriteria,
+}) => {
   const dispatch = useDispatch();
   const subscription = useSelector((state: RootState) => state.subscription);
   const [editSubscription, setEditSubscription] = useState(false);
@@ -117,6 +114,10 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
     return -1;
   });
 
+  const searchFn = ({ type, searchCriteria }) => {
+    dispatch(getTypeSubscriptions(type, searchCriteria));
+  };
+
   return (
     <div className={className}>
       {orderedGroupNames.map((group, index) => (
@@ -144,6 +145,12 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
               ))}
             </tbody>
           </DataTable>
+          <SubscriptionNextLoader
+            onSearch={searchFn}
+            length={groupedSubscriptions[group].length}
+            type={group}
+            searchCriteria={searchCriteria}
+          />
         </div>
       ))}
       {/* Form */}
