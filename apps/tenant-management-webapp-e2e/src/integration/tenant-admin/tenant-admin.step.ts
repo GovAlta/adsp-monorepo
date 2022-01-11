@@ -1,10 +1,7 @@
 import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import tenantAdminPage from './tenant-admin.page';
-import common from '../common/common.page';
 import dayjs = require('dayjs');
-import { split } from 'cypress/types/lodash';
 
-const commonObj = new common();
 const tenantAdminObj = new tenantAdminPage();
 let responseObj: Cypress.Response<any>;
 
@@ -496,12 +493,12 @@ Then('the user views the events matching the search filter of {string}', functio
     });
   });
 
-  tenantAdminObj.eventTableBody().children().should('have.length.lessThan', 11);
+  // tenantAdminObj.eventTableBody().children().should('have.length.lessThan', 11);
 });
 
 When('the user clicks Load more button', function () {
   tenantAdminObj.eventLoadMoreBtn().click();
-  cy.wait(500);
+  cy.wait(1000);
 });
 
 Then('the user views more events matching the search filter of {string}', function (namespaceName) {
@@ -520,29 +517,34 @@ Then('the user views more events matching the search filter of {string}', functi
   tenantAdminObj.eventTableBody().children().should('have.length.greaterThan', 10);
 });
 
-//function takes datetime, and string that looks like "-5" or "5" or "+5" as change in minutes
+//function inputs datetime into min or max timestamp
 function timeChanger(dateTime, addedMins) {
-  const minChange = parseInt(addedMins); //parse minutes into integer for generic addition/formatting
-  const formattedDate = dateTime.format('YYYY-MM-DD'); //dayjs is date time utility
-  const finalTime = dateTime.add(minChange, 'minutes').format('HH:mm');
-  const finalDate = formattedDate + 'T' + finalTime;
+  if (dateTime.match()) {
+  }
+
+  const minInput = addedMins.replace(/([a-zA-Z])/g, '', /([a-zA-Z])/g); //
+  const minChange = parseInt(minInput); //parse minutes into integer for generic addition/formatting
+  //dayjs is date time utility
+  const finalTime = dateTime.add(minChange, 'minutes').format('YYYY-MM-DD HH:mm');
+  const finalDate = finalTime.split(' ')[0] + 'T' + finalTime.split(' ')[1];
   return finalDate;
 }
 
-When(
-  'the user searches with now {string} mins as minimum timestamp, now {string} mins as maximum timestamp',
-  function (submin, addmin) {
-    const timestampMin = timeChanger(dayjs(), submin);
-    const timestampMax = timeChanger(dayjs(), addmin);
+When('the user searches with {string} as minimum timestamp, {string} as maximum timestamp', function (submin, addmin) {
+  //
+  expect(submin).to.match(/now([-+])([0-9]+)mins/);
+  expect(addmin).to.match(/now([-+])([0-9]+)mins/);
 
-    cy.log(timestampMin);
-    cy.log(timestampMax);
+  const timestampMin = timeChanger(dayjs(), submin);
+  const timestampMax = timeChanger(dayjs(), addmin);
 
-    tenantAdminObj.eventLogMinTimesStamp().type(timestampMin);
-    tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
-    tenantAdminObj.eventLogSearchBtn().click();
-  }
-);
+  cy.log(timestampMin);
+  cy.log(timestampMax);
+
+  tenantAdminObj.eventLogMinTimesStamp().type(timestampMin);
+  tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
+  tenantAdminObj.eventLogSearchBtn().click();
+});
 
 Then('the user views the events matching the search filter of min and max timestamp', function () {
   tenantAdminObj
@@ -753,67 +755,4 @@ Then(
 
 Then('the user reset event log views', function () {
   tenantAdminObj.eventLogResetBtn().click();
-});
-
-When('the user clicks Add definition button', function () {
-  commonObj.addDefinitionButton().click();
-});
-
-Then('the user views Add definition dialog', function () {
-  commonObj.definitionModalTitle().invoke('text').should('eq', 'Add definition');
-});
-
-When(
-  'the user enters {string} in Namespace, {string} in Name, {string} in Description',
-  function (namespace, name, desc) {
-    commonObj.definitionModalNamespaceField().type(namespace);
-    commonObj.definitionModalNameField().type(name);
-    commonObj.definitionModalDescriptionField().type(desc);
-  }
-);
-
-When('the user clicks Save button on Definition modal', function () {
-  commonObj.definitionModalSaveButton().click();
-});
-
-Then(
-  'the user {string} an event definition of {string} and {string} under {string}',
-  function (viewOrNot, eventName, eventDesc, eventNamespace) {
-    switch (viewOrNot) {
-      case 'views':
-        commonObj.eventWithDesc(eventNamespace, eventName, eventDesc).should('exist');
-        break;
-      case 'should not view':
-        commonObj.eventWithDesc(eventNamespace, eventName, eventDesc).should('not.exist');
-        break;
-      default:
-        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
-    }
-    cy.wait(5000);
-  }
-);
-
-When(
-  'the user clicks {string} button for the definition of {string} and {string} under {string}',
-  function (button, eventName, eventDesc, eventNamespace) {
-    switch (button) {
-      case 'Edit':
-        commonObj.editDefinitionButton(eventNamespace, eventName, eventDesc).click();
-        break;
-      case 'Delete':
-        commonObj.deleteDefinitionButton(eventNamespace, eventName, eventDesc).click();
-        break;
-      default:
-        expect(button).to.be.oneOf(['Edit', 'Delete']);
-    }
-  }
-);
-
-Then('the user views Delete definition dialog for the definition of {string}', function (name) {
-  commonObj.deleteDefinitionModalTitle().invoke('text').should('eq', 'Delete definition');
-  commonObj.deleteDefinitionModalContent().invoke('text').should('contain', name);
-});
-
-Then('the user clicks Confirm button', function () {
-  commonObj.deleteDefinitionConfirmButton().click();
 });
