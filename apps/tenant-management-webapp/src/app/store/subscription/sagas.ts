@@ -34,6 +34,7 @@ import { Subscription, Subscriber, SubscriptionWrapper } from './models';
 import { RootState } from '../index';
 import axios from 'axios';
 import { request } from 'node:https';
+import { Api } from './api';
 
 export function* getSubscription(action: GetSubscriptionAction): SagaIterator {
   const type = action.payload.subscriptionInfo.data.type;
@@ -193,18 +194,14 @@ export function* updateSubscriber(action: UpdateSubscriberAction): SagaIterator 
 
   if (configBaseUrl && token) {
     try {
-      const response = yield call(
-        axios.patch,
-        `${configBaseUrl}/subscription/v1/subscribers/${subscriber.id}`,
-        subscriber,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      const result = response.data;
+      const api = new Api(configBaseUrl, token);
+
+      const response = yield call([api, api.update], subscriber);
+
+      const result = response;
       yield put(UpdateSubscriberSuccess(result));
     } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+      yield put(ErrorNotification({ message: `${e.message}` }));
     }
   }
 }

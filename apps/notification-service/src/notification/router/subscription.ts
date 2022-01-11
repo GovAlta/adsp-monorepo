@@ -349,15 +349,24 @@ export function getSubscriberByUserId(repository: SubscriptionRepository): Reque
   };
 }
 
-export function updateSubscriber(apiId: AdspId): RequestHandler {
+export function updateSubscriber(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
       const update = req.body;
       const subscriber: SubscriberEntity = req[SUBSCRIBER_KEY];
 
-      const updated = await subscriber.update(user, update);
-      res.send(mapSubscriber(apiId, updated));
+      const emailIndex = update?.channels?.findIndex((channel) => channel.channel === 'email');
+
+      const criteria = { email: update?.channels[emailIndex]?.address };
+      const response = await repository.findSubscribers(1, '1', criteria);
+
+      if (response.results.length === 0) {
+        const updated = await subscriber.update(user, update);
+        res.send(mapSubscriber(apiId, updated));
+      } else {
+        throw new InvalidOperationError('Subscriber with this email already exists');
+      }
     } catch (err) {
       next(err);
     }
@@ -552,7 +561,11 @@ export const createSubscriptionRouter = ({
   subscriptionRouter.get('/subscribers/:subscriber', getSubscriber(subscriptionRepository), (req, res) =>
     res.send(mapSubscriber(apiId, req[SUBSCRIBER_KEY]))
   );
-  subscriptionRouter.patch('/subscribers/:subscriber', getSubscriber(subscriptionRepository), updateSubscriber(apiId));
+  subscriptionRouter.patch(
+    '/subscribers/:subscriber',
+    getSubscriber(subscriptionRepository),
+    updateSubscriber(apiId, subscriptionRepository)
+  );
   subscriptionRouter.post(
     '/subscribers/:subscriber',
     getSubscriber(subscriptionRepository),
