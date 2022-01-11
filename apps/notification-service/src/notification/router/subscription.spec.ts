@@ -930,7 +930,7 @@ describe('subscription router', () => {
         },
         body: {
           addressAs: 'tester',
-          channels: [],
+          channels: [{ channel: Channel.email, address: 'bob@gmail.com', verified: false }],
           id: 'subscriber',
           urn: 'urn:ads:platform:notification-service:v1:/subscribers/subscriber',
           userId: undefined,
@@ -941,6 +941,7 @@ describe('subscription router', () => {
       const next = jest.fn();
 
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
+      repositoryMock.findSubscribers.mockResolvedValueOnce({ results: [] });
 
       const handler = updateSubscriber(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -966,11 +967,19 @@ describe('subscription router', () => {
           email: 'tester@test.co',
           roles: [],
         },
-        body: {},
+        body: {
+          addressAs: 'tester',
+          channels: [{ channel: Channel.email, address: 'bob@gmail.com', verified: false }],
+          id: 'subscriber',
+          urn: 'urn:ads:platform:notification-service:v1:/subscribers/subscriber',
+          userId: undefined,
+        },
         subscriber,
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
+
+      repositoryMock.findSubscribers.mockResolvedValueOnce({ results: [] });
 
       const handler = updateSubscriber(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
