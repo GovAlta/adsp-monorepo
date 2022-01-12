@@ -763,6 +763,6 @@ Then(
   }
 );
 
-Then('the user reset event log views', function () {
+Then('the user resets event log views', function () {
   tenantAdminObj.eventLogResetBtn().click();
 });
