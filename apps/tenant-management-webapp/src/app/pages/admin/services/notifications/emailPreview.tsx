@@ -8,8 +8,9 @@ import { EventItem } from '@store/notification/models';
 import { getHeaderPreview, getFooterPreview } from '@shared/events/';
 
 import DOMPurify from 'dompurify';
-import * as handlebars from 'handlebars/dist/cjs/handlebars';
-
+import { generateMessage } from '@lib/handlebarHelper';
+import { RootState } from '@store/index';
+import { dynamicGeneratePayload } from '@lib/dynamicPlaceHolder';
 interface PreviewProps {
   onCancel?: () => void;
   open: boolean;
@@ -19,56 +20,44 @@ interface PreviewProps {
   errors?: Record<string, string>;
 }
 
-const simplePayload = {
-  event: {
-    payload: {
-      application: {
-        id: '6196e231430bc60012299389',
-        url: 'https://status-app-core-services-dev.os99.gov.ab.ca/athenatest',
-        name: 'Status',
-        description: '',
-      },
-    },
-  },
-};
-
 export const EmailPreview: FunctionComponent<PreviewProps> = ({ onCancel, open, selectedEvent }) => {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
-  console.log('selectedEvent', selectedEvent);
   useEffect(() => {
     if (selectedEvent) {
       setSubject(selectedEvent?.templates?.email?.subject);
       setBody(selectedEvent?.templates?.email?.body);
     }
   }, [selectedEvent, open]);
+  const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
+  const eventDef = eventDefinitions[`${selectedEvent?.namespace}:${selectedEvent?.name}`];
 
-  const dynamicGeneratePayload = () => {};
-  const serviceName = `${selectedEvent?.namespace}:${selectedEvent?.name}`;
+  const htmlPayload = dynamicGeneratePayload(eventDef);
+
   return (
     <GoAModal testId="email-preview" isOpen={open}>
-      <GoAModalTitle>{`Preview an email template---${serviceName}`}</GoAModalTitle>
+      <GoAModalTitle>{`Preview an email template---${selectedEvent?.namespace}:${selectedEvent?.name}`}</GoAModalTitle>
       <GoAModalContent>
-        {/* header  */}
-        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(getHeaderPreview()) }}></div>
         <GoAForm>
-          <hr />
           <GoAFormItem>
-            <h2>
+            <h3>
               <div
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(handlebars.compile(subject)(simplePayload)) }}
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(generateMessage(subject, htmlPayload)),
+                }}
               ></div>
-            </h2>
+            </h3>
           </GoAFormItem>
-          <hr />
+
           <GoAFormItem>
-            <div
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(handlebars.compile(body)(simplePayload)) }}
-            ></div>
+            <p
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(generateMessage(body, htmlPayload)),
+              }}
+            ></p>
           </GoAFormItem>
         </GoAForm>
-        {/* footer  */}
-        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(getFooterPreview(serviceName)) }}></div>
+        <hr />
       </GoAModalContent>
       <GoAModalActions>
         <GoAButton data-testid="preview-cancel" buttonType="tertiary" type="button" onClick={onCancel}>
