@@ -466,7 +466,7 @@ Then('the user should not have regular admin view', function () {
 
 When('the user searches with {string}', function (namespaceName) {
   tenantAdminObj.eventLogSearchBox().click();
-  tenantAdminObj.eventLogSearchBox().type(namespaceName).click();
+  tenantAdminObj.eventLogSearchBox().type(namespaceName);
   tenantAdminObj.eventLogSearchBox().should('have.value', namespaceName);
   tenantAdminObj.eventLogSearchBtn().click();
 });
