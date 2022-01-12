@@ -94,6 +94,7 @@ class TenantAdminPage {
   eventLogSearchBtn() {
     return cy.get('button:contains("Search")');
   }
+
   eventLogResetBtn() {
     return cy.get('button:contains("Reset")');
   }
