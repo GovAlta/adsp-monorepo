@@ -105,6 +105,7 @@ class TenantAdminPage {
   eventTableShowDetailsBtn() {
     return cy.get('button:contains("Show details")');
   }
+
   eventLoadMoreBtn() {
     return cy.get('button:contains("Load more...")');
   }
