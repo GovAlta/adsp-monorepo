@@ -11,12 +11,15 @@ import { Subscriptions } from './subscriptions';
 import { Subscribers } from './subscribers';
 
 export const Notifications: FunctionComponent = () => {
-  const tenantAdminRole = 'tenant-admin';
   const tenantId = useSelector((state: RootState) => state.tenant?.id);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
   const adminEmail = useSelector((state: RootState) => state.tenant.adminEmail);
-  const hasAdminRole = useSelector((state: RootState) =>
-    state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes(tenantAdminRole)
+  const hasTenantAdminRole = useSelector((state: RootState) =>
+    state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes('tenant-admin')
+  );
+
+  const hasNotificationAdminRole = useSelector((state: RootState) =>
+    state.session?.resourceAccess?.['urn:ads:platform:notification-service']?.roles?.includes('subscription-admin')
   );
 
   const [activateEditState, setActivateEditState] = useState<boolean>(false);
@@ -43,10 +46,10 @@ export const Notifications: FunctionComponent = () => {
         </Tabs>
 
         <GoACallout type="important" data-testid="delete-modal">
-          <h3>Access to tenant admin app requires tenant-admin role</h3>
+          <h3>Access to notifications requires admin roles</h3>
           <p>
-            You require administrator role to access the admin interface and will need to contact the tenant created at{' '}
-            <a href={`mailto: ${adminEmail}`}>{adminEmail}</a>
+            You require the tenant-admin role or subscription-admin role to access notifications and will need to
+            contact the administrator of the tenant at <a href={`mailto: ${adminEmail}`}>{adminEmail}</a>
           </p>
         </GoACallout>
       </Main>
@@ -57,7 +60,7 @@ export const Notifications: FunctionComponent = () => {
     <Page>
       <Main>
         <h1>Notifications</h1>
-        {hasAdminRole ? (
+        {hasTenantAdminRole || hasNotificationAdminRole ? (
           <Tabs activeIndex={activeIndex}>
             <Tab label="Overview">
               <NotificationsOverview setActiveEdit={activateEdit} />
