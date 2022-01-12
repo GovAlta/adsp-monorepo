@@ -1,4 +1,5 @@
-export const headerPreview = `
+export const getHeaderPreview = () => {
+  return `
 <div>
   <style>
     .goa-header {
@@ -33,3 +34,4 @@ export const headerPreview = `
   <div id="goa-callout-custom"><div class="title">Alberta Digital Service Platform</div></div>
 </div>
 `;
+};

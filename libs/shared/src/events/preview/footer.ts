@@ -1,5 +1,6 @@
-export const footerPreview = `
-<div>
+export const getFooterPreview = (serviceName: string) => {
+  return `
+  <div>
   <style>
     .goa-footer {
       background-color: var(--light-grey);
@@ -49,7 +50,7 @@ export const footerPreview = `
       </div>
     </div>
     <div class="footer-disclaimer">
-      This email was sent from the <b>service name</b> and any files transmitted
+      This email was sent from the <b>${serviceName}</b> and any files transmitted
       with it are confidential and intended solely for the use of the individual
       For entity to whom they are addressed. If you have received this email in
       error please notify the system manager. This message contains confidential
@@ -60,3 +61,4 @@ export const footerPreview = `
   </div>
 </div>
 `;
+};
