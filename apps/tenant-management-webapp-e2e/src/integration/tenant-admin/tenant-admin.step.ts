@@ -516,27 +516,37 @@ Then('the user views more events matching the search filter of {string}', functi
   });
   tenantAdminObj.eventTableBody().children().should('have.length.greaterThan', 10);
 });
-
-//function inputs datetime into min or max timestamp
-function timeChanger(dateTime, addedMins) {
-  if (dateTime.match()) {
+//dayjs is date time utility to format the date time
+//replace "now-5mins" with "2022-01-09T04:02" to input absolute timestamp as static date and time
+function timeChanger(dateTime) {
+  if (
+    String(dateTime).match(/[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/)
+  ) {
+    return dateTime;
+  } else {
+    const addedMins = String(dateTime).substring(
+      String(dateTime).search(/([+-])([0-9])/),
+      String(dateTime).search(/mins/)
+    );
+    const minInput = addedMins.replace(/([a-zA-Z])/g, ''); //
+    const minChange = parseInt(minInput);
+    const finalTime = dayjs().add(minChange, 'minutes').format('YYYY-MM-DD HH:mm');
+    const finalDate = finalTime.split(' ')[0] + 'T' + finalTime.split(' ')[1];
+    return finalDate;
   }
-
-  const minInput = addedMins.replace(/([a-zA-Z])/g, '', /([a-zA-Z])/g); //
-  const minChange = parseInt(minInput); //parse minutes into integer for generic addition/formatting
-  //dayjs is date time utility
-  const finalTime = dateTime.add(minChange, 'minutes').format('YYYY-MM-DD HH:mm');
-  const finalDate = finalTime.split(' ')[0] + 'T' + finalTime.split(' ')[1];
-  return finalDate;
 }
 
 When('the user searches with {string} as minimum timestamp, {string} as maximum timestamp', function (submin, addmin) {
-  //
-  expect(submin).to.match(/now([-+])([0-9]+)mins/);
-  expect(addmin).to.match(/now([-+])([0-9]+)mins/);
+  //replace "now-5mins" with "2022-01-09T04:02" to input absolute timestamp as static date and time
+  expect(submin).to.match(
+    /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
+  );
+  expect(addmin).to.match(
+    /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
+  );
 
-  const timestampMin = timeChanger(dayjs(), submin);
-  const timestampMax = timeChanger(dayjs(), addmin);
+  const timestampMin = timeChanger(submin);
+  const timestampMax = timeChanger(addmin);
 
   cy.log(timestampMin);
   cy.log(timestampMax);
@@ -592,8 +602,8 @@ Then('the user views the events matching the search filter of min and max timest
     });
 });
 
-When('the user searches with now {string} mins as minimum timestamp', function (submin) {
-  const timestampMin = timeChanger(dayjs(), submin);
+When('the user searches with {string} as minimum timestamp', function (submin) {
+  const timestampMin = timeChanger(submin);
   cy.log(timestampMin);
 
   tenantAdminObj.eventLogMinTimesStamp().type(timestampMin);
@@ -633,8 +643,8 @@ Then('the user views the events matching the search filter of min timestamp', fu
     });
 });
 
-When('the user searches with now {string} mins as maximum timestamp', function (addmin) {
-  const timestampMax = timeChanger(dayjs(), addmin);
+When('the user searches with {string} as maximum timestamp', function (addmin) {
+  const timestampMax = timeChanger(addmin);
   cy.log(timestampMax);
 
   tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
@@ -675,13 +685,13 @@ Then('the user views the events matching the search filter of maximum timestamp'
 });
 
 When(
-  'the user searches with {string}, now {string} mins as minimum timestamp, now {string} mins as maximum timestamp',
+  'the user searches with {string}, {string} as minimum timestamp, {string} as maximum timestamp',
   function (namespaceName, submin, addmin) {
     tenantAdminObj.eventLogSearchBox().click();
     tenantAdminObj.eventLogSearchBox().type(namespaceName).click();
 
-    const timestampMin = timeChanger(dayjs(), submin);
-    const timestampMax = timeChanger(dayjs(), addmin);
+    const timestampMin = timeChanger(submin);
+    const timestampMax = timeChanger(addmin);
 
     cy.log(timestampMin);
     cy.log(timestampMax);
