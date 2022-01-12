@@ -9,17 +9,17 @@ export const getFooterPreview = (serviceName: string) => {
       padding-bottom: 3rem;
     }
     .goa-footer .link {
-      /* padding-left: 18%; */
+      padding-left: 4.5rem;
       flex: 5;
       padding-bottom: 1.5rem;
     }
     .goa-footer .logo {
-      /* padding-right: 6.75rem; */
+      padding-right: 6.75rem;
       flex: 1;
     }
     .goa-footer .footer-disclaimer {
-      /* padding-left: 18%; */
-      /* padding-right: 18%; */
+      padding-left: 4.5rem;
+      padding-right: 5.5rem;
       color: var(--dark-grey);
       padding-top: 1.75rem;
 
@@ -36,12 +36,10 @@ export const getFooterPreview = (serviceName: string) => {
   <div class="goa-footer">
     <div class="container footer-link-border">
       <div class="link">
-        <span
-          >Please do not reply to this email. Manage your notifications by
-          visiting:
+        <span>
+          Please do not reply to this email.
         </span>
-        <br />
-        <a href="https://google.ca">footer link label</a>
+        <br/>
       </div>
       <div class="logo">
         <img
