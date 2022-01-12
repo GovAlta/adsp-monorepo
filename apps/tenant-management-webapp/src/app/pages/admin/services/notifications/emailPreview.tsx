@@ -5,7 +5,7 @@ import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { EventItem } from '@store/notification/models';
-import { headerPreview, footerPreview } from '@shared/events/';
+import { getHeaderPreview, getFooterPreview } from '@shared/events/';
 
 import DOMPurify from 'dompurify';
 import * as handlebars from 'handlebars/dist/cjs/handlebars';
@@ -44,12 +44,13 @@ export const EmailPreview: FunctionComponent<PreviewProps> = ({ onCancel, open, 
   }, [selectedEvent, open]);
 
   const dynamicGeneratePayload = () => {};
+  const serviceName = `${selectedEvent?.namespace}:${selectedEvent?.name}`;
   return (
     <GoAModal testId="email-preview" isOpen={open}>
-      <GoAModalTitle>{`Preview an email template---${selectedEvent?.namespace}:${selectedEvent?.name}`}</GoAModalTitle>
+      <GoAModalTitle>{`Preview an email template---${serviceName}`}</GoAModalTitle>
       <GoAModalContent>
         {/* header  */}
-        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(headerPreview) }}></div>
+        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(getHeaderPreview()) }}></div>
         <GoAForm>
           <hr />
           <GoAFormItem>
@@ -61,13 +62,13 @@ export const EmailPreview: FunctionComponent<PreviewProps> = ({ onCancel, open, 
           </GoAFormItem>
           <hr />
           <GoAFormItem>
-            {/* footer  */}
             <div
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(handlebars.compile(body)(simplePayload)) }}
             ></div>
           </GoAFormItem>
         </GoAForm>
-        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(footerPreview) }}></div>
+        {/* footer  */}
+        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(getFooterPreview(serviceName)) }}></div>
       </GoAModalContent>
       <GoAModalActions>
         <GoAButton data-testid="preview-cancel" buttonType="tertiary" type="button" onClick={onCancel}>
