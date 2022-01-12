@@ -427,7 +427,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         selectedEvent={selectedEvent}
         notifications={selectedType}
         open={showEmailPreview}
-        errors={errors}
         onCancel={() => {
           setShowEmailPreview(false);
         }}

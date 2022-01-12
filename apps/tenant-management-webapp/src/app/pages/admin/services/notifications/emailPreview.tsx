@@ -5,8 +5,10 @@ import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { EventItem } from '@store/notification/models';
+import { getHeaderPreview, getFooterPreview } from '@shared/events/';
 
 import DOMPurify from 'dompurify';
+import styled from 'styled-components';
 import { generateMessage } from '@lib/handlebarHelper';
 import { RootState } from '@store/index';
 import { dynamicGeneratePayload } from '@lib/dynamicPlaceHolder';
@@ -16,7 +18,6 @@ interface PreviewProps {
   initialValue?: NotificationItem;
   selectedEvent: EventItem;
   notifications: NotificationItem;
-  errors?: Record<string, string>;
 }
 
 export const EmailPreview: FunctionComponent<PreviewProps> = ({ onCancel, open, selectedEvent }) => {
@@ -32,30 +33,42 @@ export const EmailPreview: FunctionComponent<PreviewProps> = ({ onCancel, open, 
   const eventDef = eventDefinitions[`${selectedEvent?.namespace}:${selectedEvent?.name}`];
 
   const htmlPayload = dynamicGeneratePayload(eventDef);
-
+  const serviceName = `${selectedEvent?.namespace}:${selectedEvent?.name}`;
+  const hasWrapper = () => {
+    return body.startsWith('<!doctype html>') || body.startsWith('<html>');
+  };
+  hasWrapper();
   return (
     <GoAModal testId="email-preview" isOpen={open}>
-      <GoAModalTitle>{`Preview an email template---${selectedEvent?.namespace}:${selectedEvent?.name}`}</GoAModalTitle>
+      <GoAModalTitle>{`Preview an email template---${serviceName}`}</GoAModalTitle>
       <GoAModalContent>
-        <GoAForm>
-          <GoAFormItem>
-            <h3>
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(generateMessage(subject, htmlPayload)),
-                }}
-              ></div>
-            </h3>
-          </GoAFormItem>
+        {hasWrapper() && <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(getHeaderPreview()) }}></div>}
+        <EventContentWrapper>
+          <GoAForm>
+            <GoAFormItem>
+              <h3>
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(generateMessage(subject, htmlPayload)),
+                  }}
+                ></div>
+              </h3>
+            </GoAFormItem>
 
-          <GoAFormItem>
-            <p
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(generateMessage(body, htmlPayload)),
-              }}
-            ></p>
-          </GoAFormItem>
-        </GoAForm>
+            <GoAFormItem>
+              <p
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(generateMessage(body, htmlPayload)),
+                }}
+              ></p>
+            </GoAFormItem>
+          </GoAForm>
+        </EventContentWrapper>
+
+        {hasWrapper() && (
+          <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(getFooterPreview(serviceName)) }}></div>
+        )}
+
         <hr />
       </GoAModalContent>
       <GoAModalActions>
@@ -66,3 +79,8 @@ export const EmailPreview: FunctionComponent<PreviewProps> = ({ onCancel, open, 
     </GoAModal>
   );
 };
+const EventContentWrapper = styled.div`
+  margin-top: 2rem;
+  padding-left: 4.5rem;
+  padding-right: 4.5rem;
+`;
