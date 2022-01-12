@@ -492,8 +492,6 @@ Then('the user views the events matching the search filter of {string}', functio
       });
     });
   });
-
-  // tenantAdminObj.eventTableBody().children().should('have.length.lessThan', 11);
 });
 
 When('the user clicks Load more button', function () {
