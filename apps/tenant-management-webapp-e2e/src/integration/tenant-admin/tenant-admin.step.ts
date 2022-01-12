@@ -484,10 +484,10 @@ Then('the user views the events matching the search filter of {string}', functio
     cy.wrap($row).within(() => {
       cy.get('td').each(($col) => {
         if ($col.eq(1).text() == namespaceName.split(':')[0]) {
-          throw new Error('Record not found');
+          expect($col.eq(1).text()).to.equal(namespaceName.split(':')[0]);
         }
         if ($col.eq(2).text() == namespaceName.split(':')[1]) {
-          throw new Error('Record not found');
+          expect($col.eq(1).text()).to.equal(namespaceName.split(':')[1]);
         }
       });
     });
