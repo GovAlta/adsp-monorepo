@@ -33,7 +33,6 @@ import { Subscription, Subscriber, SubscriptionWrapper } from './models';
 
 import { RootState } from '../index';
 import axios from 'axios';
-import { request } from 'node:https';
 import { Api } from './api';
 
 export function* getSubscription(action: GetSubscriptionAction): SagaIterator {
@@ -54,6 +53,7 @@ export function* getSubscription(action: GetSubscriptionAction): SagaIterator {
         const subData: Subscription = {
           id: result.id,
           urn: result.urn,
+          typeId: response.data.typeId,
         };
 
         yield put(GetSubscriptionSuccess(subData));
