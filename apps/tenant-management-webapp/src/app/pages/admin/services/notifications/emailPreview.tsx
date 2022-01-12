@@ -5,6 +5,7 @@ import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { EventItem } from '@store/notification/models';
+import { headerPreview, footerPreview } from '@shared/events/';
 
 import DOMPurify from 'dompurify';
 import * as handlebars from 'handlebars/dist/cjs/handlebars';
@@ -47,6 +48,8 @@ export const EmailPreview: FunctionComponent<PreviewProps> = ({ onCancel, open, 
     <GoAModal testId="email-preview" isOpen={open}>
       <GoAModalTitle>{`Preview an email template---${selectedEvent?.namespace}:${selectedEvent?.name}`}</GoAModalTitle>
       <GoAModalContent>
+        {/* header  */}
+        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(headerPreview) }}></div>
         <GoAForm>
           <hr />
           <GoAFormItem>
@@ -58,11 +61,13 @@ export const EmailPreview: FunctionComponent<PreviewProps> = ({ onCancel, open, 
           </GoAFormItem>
           <hr />
           <GoAFormItem>
+            {/* footer  */}
             <div
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(handlebars.compile(body)(simplePayload)) }}
             ></div>
           </GoAFormItem>
         </GoAForm>
+        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(footerPreview) }}></div>
       </GoAModalContent>
       <GoAModalActions>
         <GoAButton data-testid="preview-cancel" buttonType="tertiary" type="button" onClick={onCancel}>
