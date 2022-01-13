@@ -1,25 +1,29 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { RootState } from '@store/index';
 
 import { GoANotification } from '@abgov/react-components';
+import { clearNotification } from '@store/notifications/actions';
 
 export function NotificationBanner(): JSX.Element {
-  const notifications = useSelector((state: RootState) => state.notifications.notifications);
-  const successMessages = useSelector((state: RootState) => state.subscription.successMessage);
-
+  const notification = useSelector((state: RootState) => state.notifications.notification);
+  const dispatch = useDispatch();
   return (
     <div style={{ marginBottom: '10px' }}>
-      {notifications.length > 0 && (
-        <GoANotification key={new Date().getTime()} type="emergency" isDismissable={true}>
-          {notifications[notifications.length - 1].message}
+      {notification ? (
+        <GoANotification
+          key={new Date().getMilliseconds()}
+          onDismiss={() => {
+            dispatch(clearNotification());
+          }}
+          type={notification.type}
+          isDismissable={true}
+        >
+          {notification.message}
         </GoANotification>
-      )}
-      {successMessages && (
-        <GoANotification key={new Date().getTime()} type="information" isDismissable={true}>
-          {successMessages}
-        </GoANotification>
+      ) : (
+        ''
       )}
     </div>
   );

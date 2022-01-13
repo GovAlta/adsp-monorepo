@@ -39,6 +39,19 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     );
   }
 
+  getSubscriberByEmail(tenantId: AdspId, email: string): Promise<SubscriberEntity> {
+    const criteria: Record<string, string> = {
+      tenantId: tenantId?.toString(),
+      addressAs: email,
+    };
+
+    return new Promise<SubscriberEntity>((resolve, reject) =>
+      this.subscriberModel.findOne(criteria, null, { lean: true }, (err, doc) =>
+        err ? reject(err) : resolve(this.fromDoc(doc))
+      )
+    );
+  }
+
   getSubscription(type: NotificationTypeEntity, subscriberId: string): Promise<SubscriptionEntity> {
     return new Promise<SubscriptionEntity>((resolve, reject) =>
       this.subscriptionModel
@@ -62,7 +75,7 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     after: string,
     criteria: SubscriptionSearchCriteria
   ): Promise<Results<SubscriptionEntity>> {
-    const skip = decodeAfter(after);
+    const skip = parseInt(after);
 
     const query: Record<string, unknown> = {
       tenantId: tenantId?.toString(),
@@ -106,12 +119,20 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
       query.tenantId = criteria.tenantIdEquals.toString();
     }
 
+    if (criteria.name) {
+      query.addressAs = { $regex: criteria.name, $options: 'i' };
+    }
+
+    if (criteria.email) {
+      query.channels = { $elemMatch: { address: { $regex: criteria.email.toLocaleLowerCase() } } };
+    }
+
     return new Promise<Results<SubscriberEntity>>((resolve, reject) => {
       this.subscriberModel
         .find(query, null, { lean: true })
         .skip(skip)
         .limit(top)
-        .exec((err, docs) =>
+        .exec((err, docs) => {
           err
             ? reject(err)
             : resolve({
@@ -121,8 +142,8 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
                   next: encodeNext(docs.length, top, skip),
                   size: docs.length,
                 },
-              })
-        );
+              });
+        });
     });
   }
 
@@ -229,14 +250,18 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     const doc: SubscriberDoc = {
       tenantId: entity.tenantId.toString(),
       addressAs: entity.addressAs,
-      channels: entity.channels,
+      channels: entity.channels.map((c) => {
+        if (c.channel === 'email') {
+          c.address = c.address.toLocaleLowerCase();
+        }
+        return c;
+      }),
     };
 
     // Only include userId property if there is a value; this is for the parse unique index.
     if (entity.userId) {
       doc.userId = entity.userId;
     }
-
     return doc;
   }
 

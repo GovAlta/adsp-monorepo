@@ -41,7 +41,6 @@ const FileTypeTableContainer = styled.div`
     padding-top: 0rem !important;
     padding-bottom: 0rem !important;
     border-radius: 0.25rem;
-    height: 2.43rem;
   }
 
   i {
@@ -72,6 +71,9 @@ const RolesCellContainer = styled.td`
   div + div {
     margin-left: 0.25rem;
   }
+`;
+const NameInput = styled.input`
+  height: 2.43rem;
 `;
 interface FileTypeRowProps {
   name: string;
@@ -112,7 +114,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
     return (
       <td data-testid="name">
         {props.editable ? (
-          <input
+          <NameInput
             value={name}
             onChange={(e) => {
               setName(e.target.value);
@@ -350,7 +352,6 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
     }
 
     const selectedRows = roles;
-
     if (props.anonymousRead === true && !selectedRows.includes('anonymousRead') && cellType === 'readRoles') {
       selectedRows.push('anonymousRead');
     }
@@ -529,7 +530,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
           <tr className="selected" key={id}>
             <ActionCell {...{ ...props, rowType: 'new' }} />
             <td data-testid="new-name">
-              <input
+              <NameInput
                 onBlur={(e) => {
                   const name = e.target.value.trim();
                   newFileType.name = name;
@@ -558,7 +559,7 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
   return (
     <FileTypeTableContainer>
       <GoAButton onClick={newEntryFn} data-testid="new-file-type-button-top" disabled={newFileType || isEdit}>
-        New file type
+        Add file type
       </GoAButton>
       {showDelete && <DeleteModal {...updateFileType} />}
       <DataTable data-testid="file-type-table">

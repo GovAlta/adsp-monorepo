@@ -1,4 +1,4 @@
-import { put, select, call, takeEvery } from 'redux-saga/effects';
+import { put, select, call, takeEvery, takeLatest, all } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { SagaIterator } from '@redux-saga/core';
 import {
@@ -13,14 +13,27 @@ import {
   UnsubscribeSuccess,
   UNSUBSCRIBE,
   GET_SUBSCRIPTION,
+  GET_SUBSCRIPTIONS,
   UnsubscribeAction,
   GetSubscriptionAction,
   GetSubscriptionSuccess,
+  FindSubscribersAction,
+  FindSubscribersSuccess,
+  GetSubscriptionsAction,
+  UpdateSubscriberAction,
+  GetSubscriptionsSuccess,
+  UpdateSubscriberSuccess,
+  FIND_SUBSCRIBERS,
+  UPDATE_SUBSCRIBER,
+  GET_TYPE_SUBSCRIPTION,
+  GetTypeSubscriptionActions,
+  GetTypeSubscriptionSuccess,
 } from './actions';
-import { Subscription, Subscriber } from './models';
+import { Subscription, Subscriber, SubscriptionWrapper } from './models';
 
 import { RootState } from '../index';
 import axios from 'axios';
+import { Api } from './api';
 
 export function* getSubscription(action: GetSubscriptionAction): SagaIterator {
   const type = action.payload.subscriptionInfo.data.type;
@@ -40,12 +53,100 @@ export function* getSubscription(action: GetSubscriptionAction): SagaIterator {
         const subData: Subscription = {
           id: result.id,
           urn: result.urn,
+          typeId: response.data.typeId,
         };
 
         yield put(GetSubscriptionSuccess(subData));
       } else {
         yield put(GetSubscriptionSuccess(result));
       }
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+    }
+  }
+}
+
+export function* getAllSubscriptions(action: GetSubscriptionsAction): SagaIterator {
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  const criteria = action.payload;
+
+  if (configBaseUrl && token) {
+    try {
+      const typeResponse = yield call(axios.get, `${configBaseUrl}/subscription/v1/types`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      let params = {};
+      if (criteria.email || criteria.name) {
+        params = { topValue: 10000 };
+      }
+
+      const results = yield all(
+        typeResponse.data.map((type, id) => {
+          const response = call(axios.get, `${configBaseUrl}/subscription/v1/types/${type?.id}/subscriptions`, {
+            params,
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          return response;
+        })
+      );
+
+      let subscriptions = results.map((result) => result.data.results);
+      const idList = typeResponse.data.map((result) => result.id);
+
+      subscriptions = subscriptions.map((element, index) => {
+        element.type = idList[index];
+        return element;
+      });
+
+      let subscriptionWrapper: SubscriptionWrapper[] = subscriptions.flat();
+
+      if (criteria.name) {
+        subscriptionWrapper = subscriptionWrapper.filter(
+          (sub) =>
+            sub.subscriber.addressAs && sub.subscriber.addressAs.toLowerCase().includes(criteria.name.toLowerCase())
+        );
+      }
+
+      if (criteria.email) {
+        subscriptionWrapper = subscriptionWrapper.filter((sub) => {
+          const emailIndex = sub.subscriber.channels?.findIndex((channel) => channel.channel === 'email');
+          return sub.subscriber.channels[emailIndex].address.toLowerCase().includes(criteria.email.toLowerCase());
+        });
+      }
+
+      yield put(GetSubscriptionsSuccess(subscriptionWrapper, 10));
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+    }
+  }
+}
+
+export function* getTypeSubscriptions(action: GetTypeSubscriptionActions): SagaIterator {
+  const { criteria, type } = action.payload;
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const hasNextList = yield select((state: RootState) => state.subscription.subscriptionsHasNext);
+  const typeIndex = hasNextList.findIndex((item) => item.id === type);
+  const top = hasNextList[typeIndex]?.top || 10;
+  const topParam = criteria?.next ? 10 + top + 1 : top + 1;
+
+  if (configBaseUrl && token) {
+    try {
+      const response = yield call(
+        axios.get,
+        `${configBaseUrl}/subscription/v1/types/${type}/subscriptions/?name=${criteria.name}&email=${
+          criteria.email
+        }&topValue=${topParam}&after=${topParam - 10}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const subscriptions: SubscriptionWrapper[] = response.data.results;
+
+      yield put(GetTypeSubscriptionSuccess(subscriptions, (topParam as number) - 1, type));
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
     }
@@ -77,6 +178,25 @@ export function* getSubscriber(): SagaIterator {
       }
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+    }
+  }
+}
+
+export function* updateSubscriber(action: UpdateSubscriberAction): SagaIterator {
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const subscriber = action.payload.subscriber;
+
+  if (configBaseUrl && token) {
+    try {
+      const api = new Api(configBaseUrl, token);
+
+      const response = yield call([api, api.update], subscriber);
+
+      const result = response;
+      yield put(UpdateSubscriberSuccess(result));
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.message}` }));
     }
   }
 }
@@ -140,19 +260,54 @@ export function* addTypeSubscription(action: SubscribeSubscriberServiceAction): 
 export function* unsubscribe(action: UnsubscribeAction): SagaIterator {
   const type = action.payload.subscriptionInfo.data.type;
   const id = action.payload.subscriptionInfo.data.data.id;
+  const subscriber = action.payload.subscriptionInfo.data.data;
 
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
 
   if (configBaseUrl && token) {
     try {
-      const data = yield call(axios.delete, `${configBaseUrl}/subscription/v1/types/${type}/subscriptions/${id}`, {
+      yield call(axios.delete, `${configBaseUrl}/subscription/v1/types/${type}/subscriptions/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      yield put(UnsubscribeSuccess(data.data?.deleted));
+      yield put(UnsubscribeSuccess(subscriber));
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+    }
+  }
+}
+
+export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const pageSize = yield select((state: RootState) => state.subscription.search.subscribers.pageSize);
+  const top = yield select((state: RootState) => state.subscription.search.subscribers.top);
+
+  const findSubscriberPath = 'subscription/v1/subscribers';
+  const criteria = action.payload;
+  const params: Record<string, string | number> = {};
+  if (criteria.email) {
+    params.email = criteria.email;
+  }
+
+  if (criteria.name) {
+    params.name = criteria.name;
+  }
+
+  // Fetch one more to calculate hasNext
+  params.top = criteria?.next ? pageSize + top + 1 : top + 1;
+
+  if (configBaseUrl && token) {
+    try {
+      const response = yield call(axios.get, `${configBaseUrl}/${findSubscriberPath}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params,
+      });
+      const subscribers = response.data.results;
+      yield put(FindSubscribersSuccess(subscribers, (params.top as number) - 1));
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.message} - find subscribers` }));
     }
   }
 }
@@ -163,4 +318,8 @@ export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(GET_SUBSCRIBER, getSubscriber);
   yield takeEvery(UNSUBSCRIBE, unsubscribe);
   yield takeEvery(GET_SUBSCRIPTION, getSubscription);
+  yield takeEvery(GET_SUBSCRIPTIONS, getAllSubscriptions);
+  yield takeEvery(UPDATE_SUBSCRIBER, updateSubscriber);
+  yield takeEvery(GET_TYPE_SUBSCRIPTION, getTypeSubscriptions);
+  yield takeLatest(FIND_SUBSCRIBERS, findSubscribers);
 }

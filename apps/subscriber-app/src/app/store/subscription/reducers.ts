@@ -1,35 +1,34 @@
 import {
   ActionTypes,
-  SUBSCRIBE_SUBSCRIBER_SUCCESS,
-  GET_SUBSCRIBER_SUCCESS,
+  GET_MY_SUBSCRIBER_DETAILS_SUCCESS,
+  PATCH_SUBSCRIBER_SUCCESS,
   UNSUBSCRIBE_SUCCESS,
-  GET_SUBSCRIPTION_SUCCESS,
 } from './actions';
 import { SUBSCRIBER_INIT, SubscriberService } from './models';
 
 export default function (state = SUBSCRIBER_INIT, action: ActionTypes): SubscriberService {
+  const prevStateSubscriptions = state.subscriber?.subscriptions;
   switch (action.type) {
-    case SUBSCRIBE_SUBSCRIBER_SUCCESS:
+    case GET_MY_SUBSCRIBER_DETAILS_SUCCESS:
       return {
         ...state,
-        subscriber: action.payload.notificationInfo.data.data,
-        successMessage: `You are subscribed! You will receive notifications on ${action.payload.notificationInfo.data.email}`,
-      };
-    case GET_SUBSCRIPTION_SUCCESS:
-      return {
-        ...state,
-        subscription: action.payload.subscriberInfo,
-      };
-    case GET_SUBSCRIBER_SUCCESS:
-      return {
-        ...state,
-        subscriber: action.payload.subscriberInfo,
+        subscriber: action.payload.subscriber,
       };
     case UNSUBSCRIBE_SUCCESS:
       return {
         ...state,
-        subscription: null,
-        successMessage: 'You have unsubscribed from the notification service!',
+        subscriber: {
+          ...state.subscriber,
+          subscriptions: prevStateSubscriptions.filter((item) => item.typeId !== action.payload.typeId),
+        },
+      };
+    case PATCH_SUBSCRIBER_SUCCESS:
+      return {
+        ...state,
+        subscriber: {
+          ...state.subscriber,
+          channels: action.payload.subscriber.channels,
+        },
       };
     default:
       return state;

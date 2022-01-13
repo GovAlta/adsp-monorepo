@@ -120,26 +120,31 @@ export const ApplicationStatusChangedDefinition: DomainEventDefinition = {
   payloadSchema: {
     type: 'object',
     properties: {
-      id: {
-        type: 'string',
-      },
-      name: {
-        type: 'string',
-      },
-      description: {
-        type: 'string',
-      },
-      originalStatus: {
-        type: 'string',
-      },
-      newStatus: {
-        type: 'string',
-      },
-      updatedBy: {
+      application: {
         type: 'object',
         properties: {
-          userId: { type: 'string' },
-          userName: { type: 'string' },
+          id: {
+            type: 'string',
+          },
+          name: {
+            type: 'string',
+          },
+          description: {
+            type: 'string',
+          },
+          originalStatus: {
+            type: 'string',
+          },
+          newStatus: {
+            type: 'string',
+          },
+          updatedBy: {
+            type: 'object',
+            properties: {
+              userId: { type: 'string' },
+              userName: { type: 'string' },
+            },
+          },
         },
       },
     },

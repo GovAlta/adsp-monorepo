@@ -1,5 +1,5 @@
-import './app.css';
-
+import '@style/app.css';
+import '@style/colors.scss';
 import React, { useEffect } from 'react';
 import { Route, BrowserRouter as Router, Switch, Redirect } from 'react-router-dom';
 import { Provider, useDispatch, useSelector } from 'react-redux';
@@ -15,6 +15,7 @@ import AuthContext from '@lib/authContext';
 import { ThemeProvider } from 'styled-components';
 import { theme } from 'theme';
 import PublicApp from './publicApp';
+import Subscriptions from '@pages/private/Subscriptions/Subscriptions';
 
 const AppRouters = () => {
   return (
@@ -27,7 +28,7 @@ const AppRouters = () => {
 
         <Route path="/subscriptions/:realm">
           <PrivateApp>
-            <PrivateRoute path="/subscriptions/:realm" component={(props: any) => <div>yolo</div>} />
+            <PrivateRoute path="/subscriptions/:realm" component={Subscriptions} />
           </PrivateApp>
         </Route>
 

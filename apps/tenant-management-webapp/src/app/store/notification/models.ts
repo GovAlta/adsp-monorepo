@@ -7,6 +7,8 @@ export interface NotificationItem {
   publicSubscribe: boolean;
 }
 
+export type NotificationType = Record<string, NotificationItem>
+
 export interface EventItem {
   name: string;
   namespace?: string;
@@ -36,13 +38,13 @@ export interface RequestBodySchema {
 }
 
 export interface NotificationService {
-  notificationList: Array<NotificationItem>;
-  notificationTypes: Array<NotificationItem>;
-  core: Array<NotificationItem>;
+  notificationList: NotificationType;
+  notificationTypes: NotificationType | undefined;
+  core: NotificationType
 }
 
 export const NOTIFICATION_INIT: NotificationService = {
-  notificationList: [],
+  notificationList: {},
   notificationTypes: undefined,
-  core: [],
+  core: {},
 };

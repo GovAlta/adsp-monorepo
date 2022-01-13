@@ -5,7 +5,7 @@ export interface TenantRepository {
   delete(realm: string): Promise<void>;
   find(): Promise<TenantEntity[]>;
   issuers(): Promise<string[]>;
-  findBy(filter: Record<string, string>): Promise<TenantEntity>;
+  findBy(filter: Record<string, { $regex: string; $options: 'i' } | string>): Promise<TenantEntity>;
   findByName(name: string): Promise<Tenant>;
   isTenantAdmin(email: string): Promise<boolean>;
   fetchRealmToNameMapping(): Promise<Record<string, string>>;

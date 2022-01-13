@@ -34,6 +34,7 @@ import { Tab, Tabs } from '@components/Tabs';
 import { getNotices } from '@store/notice/actions';
 import { NoticeList } from './noticeList';
 import SupportLinks from '@components/SupportLinks';
+import { EditIconButton } from '@components/icons/EditIcon';
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
@@ -149,7 +150,7 @@ function Status(): JSX.Element {
               about upcoming maintenance windows or other events
             </p>
             <GoALinkButton data-testid="add-notice" to={`${location.pathname}/notice/new`} buttonType="primary">
-              Add a draft notice
+              Add notice
             </GoALinkButton>
             <NoticeList />
           </Tab>
@@ -173,16 +174,16 @@ function Status(): JSX.Element {
         </Tabs>
         <Switch>
           <Route path="/admin/services/status/new">
-            <ApplicationFormModal isOpen={true} />
+            <ApplicationFormModal isOpen={true} title="Add application" />
           </Route>
           <Route path="/admin/services/status/notice/new">
-            <NoticeModal isOpen={true} title="Add a draft notice" />
+            <NoticeModal isOpen={true} title="Add notice" />
           </Route>
           <Route path="/admin/services/status/notice/:noticeId">
-            <NoticeModal isOpen={true} title="Edit draft notice" />
+            <NoticeModal isOpen={true} title="Edit notice" />
           </Route>
           <Route path="/admin/services/status/:applicationId/edit">
-            <ApplicationFormModal isOpen={true} />
+            <ApplicationFormModal isOpen={true} title="Edit application" />
           </Route>
         </Switch>
       </Main>
@@ -288,7 +289,11 @@ function Application(app: ServiceStatusApplication) {
         </div>
 
         <GoAContextMenu>
-          <GoAContextMenuIcon type="create" onClick={() => history.push(`${location.pathname}/${app._id}/edit`)} />
+          <EditIconButton
+            iconSize="tiny"
+            onClick={() => history.push(`${location.pathname}/${app._id}/edit`)}
+            data-testid="status-edit-button"
+          />
           <GoAContextMenuIcon type="trash" onClick={() => setShowDeleteConfirmation(true)} />
         </GoAContextMenu>
       </AppHeader>

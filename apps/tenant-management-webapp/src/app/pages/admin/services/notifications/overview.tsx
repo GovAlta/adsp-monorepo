@@ -3,10 +3,11 @@ import { GoAButton } from '@abgov/react-components';
 
 interface ParentCompProps {
   setActiveEdit?: (boolean) => void;
+  disabled?: boolean;
 }
 
 export const NotificationsOverview: FunctionComponent<ParentCompProps> = (props) => {
-  const { setActiveEdit } = props;
+  const { setActiveEdit, disabled } = props;
 
   return (
     <div>
@@ -17,12 +18,12 @@ export const NotificationsOverview: FunctionComponent<ParentCompProps> = (props)
       </p>
       <GoAButton
         data-testid="add-notification-overview"
-        buttonSize="small"
+        disabled={disabled}
         onClick={() => {
           setActiveEdit(true);
         }}
       >
-        Add a notification type
+        Add notification type
       </GoAButton>
     </div>
   );

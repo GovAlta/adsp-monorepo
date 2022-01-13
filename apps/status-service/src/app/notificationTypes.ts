@@ -129,18 +129,18 @@ export const StatusApplicationStatusChange: NotificationType = {
       name: 'application-status-changed',
       templates: {
         email: {
-          subject: '{{ event.payload.applicationName }} status has changed',
+          subject: '{{ event.payload.application.name }} status has changed',
           body: `<!doctype html>
 <html>
   <head>
   </head>
   <body>
-    <p> {{ event.payload.applicationName }} status has changed</p>
+    <p> {{ event.payload.application.name }} status has changed</p>
     <p>
-      {{ event.payload.applicationName }} is described as follows: {{ event.payload.applicationDescription }}
+      {{ event.payload.application.name }} is described as follows: {{ event.payload.application.description }}
     </p>
-    <p>The original status was: {{ event.payload.originalStatus }}</p>
-    <p>The new status is now: {{ event.payload.newStatus }}</p>
+    <p>The original status was: {{ event.payload.application.originalStatus }}</p>
+    <p>The new status is now: {{ event.payload.application.newStatus }}</p>
   </body>
 </html>`,
         },
@@ -158,17 +158,13 @@ export const StatusApplicationStatusChange: NotificationType = {
   <head>
   </head>
   <body>
-    <p>A notice related to application {{ event.payload.application.name}} has been published by {{event.payload.postBy.name}}</p>
+    <p>A notice related to application {{ event.payload.application.name}} has been published by {{event.payload.postedBy.userName}}</p>
     <p>
       The notice is described as follows: {{ event.payload.notice.description }}
     </p>
     <p>
-      The notice is related to the following tenant: {{ event.payload.postBy.tenantName }}
+      The notice is in effect between {{ formatDate event.payload.notice.startTimestamp }} and {{ formatDate event.payload.notice.endTimestamp }}
     </p>
-    <p>
-      The notice is in effect between {{ event.payload.notice.startTimestamp }} and {{ event.payload.notice.endTimestamp }}
-    </p>
-    <p>The notice was originally published at {{ event.payload.notice.created }}</p>
   </body>
 </html>`,
         },

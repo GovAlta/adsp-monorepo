@@ -69,14 +69,21 @@ export function getTypeSubscriptions(apiId: AdspId, repository: SubscriptionRepo
       const user = req.user;
       const tenantId = req.tenant.id;
       const type: NotificationTypeEntity = req[TYPE_KEY];
-      const { top: topValue, after } = req.query;
+      const { topValue, after, email, name } = req.query;
       const top = topValue ? parseInt(topValue as string, 10) : 10;
 
       if (!isAllowedUser(user, tenantId, ServiceUserRoles.SubscriptionAdmin, true)) {
         throw new UnauthorizedUserError('get subscribers', user);
       }
 
-      const result = await repository.getSubscriptions(tenantId, top, after as string, { typeIdEquals: type.id });
+      const criteria = {
+        typeIdEquals: type.id,
+        name: name as string | '',
+        email: email as string | '',
+      };
+
+      const result = await repository.getSubscriptions(tenantId, top, after as string, criteria);
+
       res.send({
         results: result.results.map((r) => mapSubscription(apiId, r)),
         page: result.page,
@@ -218,14 +225,19 @@ export function getSubscribers(apiId: AdspId, repository: SubscriptionRepository
     try {
       const tenantId = req.tenant.id;
       const user = req.user;
-      const { top: topValue, after } = req.query;
+      const { top: topValue, after, email, name } = req.query;
       const top = topValue ? parseInt(topValue as string, 10) : 10;
 
       if (!isAllowedUser(user, tenantId, ServiceUserRoles.SubscriptionAdmin, true)) {
         throw new UnauthorizedUserError('get subscribers', user);
       }
+      const criteria = {
+        tenantIdEquals: tenantId,
+        name: name as string | undefined,
+        email: email as string | undefined,
+      };
 
-      const result = await repository.findSubscribers(top, after as string, { tenantIdEquals: tenantId });
+      const result = await repository.findSubscribers(top, after as string, criteria);
       res.send({
         results: result.results.map((r) => mapSubscriber(apiId, r)),
         page: result.page,
@@ -238,10 +250,9 @@ export function getSubscribers(apiId: AdspId, repository: SubscriptionRepository
 
 export function createSubscriber(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
   return async (req, res) => {
+    let tenantId;
+    const user = req.user;
     try {
-      let tenantId;
-      const user = req.user;
-
       if (req.tenant?.id) {
         tenantId = req.tenant?.id;
       } else {
@@ -271,11 +282,11 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
           : {
               tenantId,
               userId: req.body?.email.toLowerCase(),
-              addressAs: req.body?.email,
+              addressAs: req.body?.name,
               channels: [
                 {
                   channel: Channel.email,
-                  address: req.body?.email,
+                  address: req.body?.email.toLowerCase(),
                 },
               ],
             };
@@ -283,6 +294,8 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
       const subscriberEntity = await SubscriberEntity.create(user, repository, subscriber);
       res.send(mapSubscriber(apiId, subscriberEntity));
     } catch (err) {
+      const entity = await repository.getSubscriberByEmail(tenantId, req.body?.email);
+      err.id = entity?.id;
       res.status(400).json({ error: JSON.stringify(err) });
     }
   };
@@ -336,15 +349,26 @@ export function getSubscriberByUserId(repository: SubscriptionRepository): Reque
   };
 }
 
-export function updateSubscriber(apiId: AdspId): RequestHandler {
+export function updateSubscriber(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
       const update = req.body;
       const subscriber: SubscriberEntity = req[SUBSCRIBER_KEY];
 
-      const updated = await subscriber.update(user, update);
-      res.send(mapSubscriber(apiId, updated));
+      const emailIndex = update?.channels?.findIndex((channel) => channel.channel === 'email');
+
+      update.channels[emailIndex].address = update?.channels[emailIndex]?.address.toLowerCase();
+
+      const criteria = { email: update?.channels[emailIndex]?.address };
+      const response = await repository.findSubscribers(1, '1', criteria);
+
+      if (response.results.length === 0) {
+        const updated = await subscriber.update(user, update);
+        res.send(mapSubscriber(apiId, updated));
+      } else {
+        throw new InvalidOperationError('Subscriber with this email already exists');
+      }
     } catch (err) {
       next(err);
     }
@@ -452,7 +476,6 @@ export function getSubscriberSubscriptions(apiId: AdspId, repository: Subscripti
 export function getMySubscriberDetails(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
   return async (req, res, next) => {
     try {
-      const user = req.user;
       const tenantId = req.tenant?.id;
       const subscriberDetails = mapSubscriber(apiId, req[SUBSCRIBER_KEY]) as SubscriberEntity;
       const { includeSubscriptions } = req.query;
@@ -473,7 +496,6 @@ export function getMySubscriberDetails(apiId: AdspId, repository: SubscriptionRe
           return {
             ...subscription,
             type: typeEntity ? mapType(typeEntity, true) : null,
-            canUnsubscribe: typeEntity.canSubscribe(user, subscriberDetails),
           };
         });
         return res.send({
@@ -541,7 +563,11 @@ export const createSubscriptionRouter = ({
   subscriptionRouter.get('/subscribers/:subscriber', getSubscriber(subscriptionRepository), (req, res) =>
     res.send(mapSubscriber(apiId, req[SUBSCRIBER_KEY]))
   );
-  subscriptionRouter.patch('/subscribers/:subscriber', getSubscriber(subscriptionRepository), updateSubscriber(apiId));
+  subscriptionRouter.patch(
+    '/subscribers/:subscriber',
+    getSubscriber(subscriptionRepository),
+    updateSubscriber(apiId, subscriptionRepository)
+  );
   subscriptionRouter.post(
     '/subscribers/:subscriber',
     getSubscriber(subscriptionRepository),

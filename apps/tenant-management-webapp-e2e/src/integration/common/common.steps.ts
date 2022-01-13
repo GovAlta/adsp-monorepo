@@ -87,8 +87,11 @@ When('the user selects the {string} menu item', function (menuItem) {
     case 'Events':
       menuItemSelector = '/admin/services/events';
       break;
+    case 'Notifications':
+      menuItemSelector = '/admin/services/notifications';
+      break;
     default:
-      expect(menuItem).to.be.oneOf(['File services', 'Access', 'Status', 'Events']);
+      expect(menuItem).to.be.oneOf(['File services', 'Access', 'Status', 'Events', 'Notifications']);
   }
 
   commonObj.adminMenuItem(menuItemSelector).click();

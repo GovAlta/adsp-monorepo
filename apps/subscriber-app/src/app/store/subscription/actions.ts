@@ -1,154 +1,89 @@
-import { Subscription, Subscriber } from './models';
-export const CREATE_SUBSCRIBER = 'tenant/subscriber-service/create-subscriber';
+import { Subscriber, SubscriberChannel } from './models';
 
-export const GET_SUBSCRIBER_SUCCESS = 'tenant/subscriber-service/get-subscriber-success';
-export const GET_SUBSCRIPTION_SUCCESS = 'tenant/subscriber-service/get-subscription-success';
-export const SUBSCRIBE_SUBSCRIBER_SUCCESS = 'tenant/subscriber-service/subscribe-subscriber-success';
-export const SUBSCRIBE_SUBSCRIBER = 'tenant/subscriber-service/subscribe-subscriber';
-export const GET_SUBSCRIBER = 'tenant/subscriber-service/get-subscriber';
-export const GET_SUBSCRIPTION = 'tenant/subscriber-service/get-subscription';
-export const UNSUBSCRIBE = 'tenant/subscriber-service/unsubscribe';
-export const UNSUBSCRIBE_SUCCESS = 'tenant/subscriber-service/unsubscribe-success';
+export const GET_MY_SUBSCRIBER_DETAILS_SUCCESS = 'tenant/notification-service/get-mySubscriber-success';
+export const GET_MY_SUBSCRIBER_DETAILS = 'tenant/notification-service/get-mySubscriber';
+
+export const UNSUBSCRIBE_SUCCESS = 'tenant/notification-service/unsubscribe-success';
+export const UNSUBSCRIBE_FAILED = 'tenant/notification-service/unsubscribe-failed';
+export const UNSUBSCRIBE = 'tenant/notification-service/unsubscribe';
+
+export const PATCH_SUBSCRIBER = 'tenant/notification-service/patch-subscriber';
+export const PATCH_SUBSCRIBER_SUCCESS = 'tenant/notification-service/patch-subscriber-success';
 
 // =============
 // Actions Types
 // =============
 
-export type ActionTypes =
-  | CreateSubscriberAction
-  | SubscribeSubscriberSuccessAction
-  | CreateSubscriberAction
-  | GetSubscriberSuccessAction
-  | GetSubscriptionSuccessAction
-  | UnsubscribeAction
-  | UnsubscribeSuccessAction;
-
-export interface SubscribeSubscriberServiceAction {
-  type: typeof SUBSCRIBE_SUBSCRIBER;
+export type ActionTypes = PatchSubscriberActionSuccess | GetMySubscriberActionSuccess | UnsubscribeActionSuccess;
+export interface GetMySubscriberActionSuccess {
+  type: typeof GET_MY_SUBSCRIBER_DETAILS_SUCCESS;
   payload: {
-    notificationInfo: { data: { type: string } };
+    subscriber: Subscriber;
   };
 }
-
-export interface GetSubscriberSuccessAction {
-  type: typeof GET_SUBSCRIBER_SUCCESS;
-  payload: {
-    subscriberInfo: Subscriber;
-  };
-}
-
-export interface GetSubscriptionSuccessAction {
-  type: typeof GET_SUBSCRIPTION_SUCCESS;
-  payload: {
-    subscriberInfo: Subscription;
-  };
-}
-
-export interface SubscribeSubscriberSuccessAction {
-  type: typeof SUBSCRIBE_SUBSCRIBER_SUCCESS;
-  payload: {
-    notificationInfo: { data: { type: string; data: Subscriber; email: string } };
-  };
-}
-
-export interface UnsubscribeAction {
-  type: typeof UNSUBSCRIBE;
-  payload: {
-    subscriptionInfo: { data: { type: string; data: Subscriber } };
-  };
-}
-
-export interface UnsubscribeSuccessAction {
+export interface UnsubscribeActionSuccess {
   type: typeof UNSUBSCRIBE_SUCCESS;
   payload: {
-    subscriptionInfo: Subscription;
+    typeId: string;
   };
 }
-
-export interface CreateSubscriberAction {
-  type: typeof CREATE_SUBSCRIBER;
+export interface GetMySubscriberAction {
+  type: typeof GET_MY_SUBSCRIBER_DETAILS;
+}
+export interface UnsubscribeAction {
+  type: typeof UNSUBSCRIBE;
+  payload: { type: string; subscriberId: string };
+}
+export interface PatchSubscriberAction {
+  type: typeof PATCH_SUBSCRIBER;
+  payload: { channels: SubscriberChannel[]; subscriberId: string };
+}
+export interface PatchSubscriberActionSuccess {
+  type: typeof PATCH_SUBSCRIBER_SUCCESS;
   payload: {
-    notificationName: string;
+    subscriber: Subscriber;
   };
-}
-
-export interface GetSubscriptionAction {
-  type: typeof GET_SUBSCRIPTION;
-  payload: {
-    subscriptionInfo: { data: { type: string; data: Subscriber } };
-  };
-}
-
-export interface GetSubscriberAction {
-  type: typeof GET_SUBSCRIBER;
 }
 
 // ==============
 // Action Methods
 // ==============
 
-export const SubscribeSubscriberService = (notificationInfo: {
-  data: { type: string };
-}): SubscribeSubscriberServiceAction => ({
-  type: SUBSCRIBE_SUBSCRIBER,
-  payload: {
-    notificationInfo,
-  },
-});
-
-export const CreateSubscriberService = (notificationName: string): CreateSubscriberAction => ({
-  type: CREATE_SUBSCRIBER,
-  payload: {
-    notificationName,
-  },
-});
-
-export const getSubscriber = (): GetSubscriberAction => ({
-  type: GET_SUBSCRIBER,
-});
-
-export const getSubscription = (subscriptionInfo: {
-  data: { type: string; data: Subscriber };
-}): GetSubscriptionAction => ({
-  type: GET_SUBSCRIPTION,
-  payload: {
-    subscriptionInfo,
-  },
-});
-
-export const GetSubscriberSuccess = (subscriberInfo: Subscriber): GetSubscriberSuccessAction => ({
-  type: GET_SUBSCRIBER_SUCCESS,
-  payload: {
-    subscriberInfo,
-  },
-});
-
-export const GetSubscriptionSuccess = (subscriberInfo: Subscription): GetSubscriptionSuccessAction => ({
-  type: GET_SUBSCRIPTION_SUCCESS,
-  payload: {
-    subscriberInfo,
-  },
-});
-
-export const Unsubscribe = (subscriptionInfo: { data: { type: string; data: Subscriber } }): UnsubscribeAction => ({
+export const unsubscribe = (subscriptionInfo: { type: string; subscriberId: string }): UnsubscribeAction => ({
   type: UNSUBSCRIBE,
   payload: {
-    subscriptionInfo,
+    ...subscriptionInfo,
   },
 });
 
-export const UnsubscribeSuccess = (subscriptionInfo: Subscription): UnsubscribeSuccessAction => ({
+export const UnsubscribeSuccess = (typeId: string): UnsubscribeActionSuccess => ({
   type: UNSUBSCRIBE_SUCCESS,
   payload: {
-    subscriptionInfo,
+    typeId,
   },
 });
 
-export const SubscribeSubscriberSuccess = (notificationInfo: {
-  data: { type: string; data: Subscriber; email: string };
-}): SubscribeSubscriberSuccessAction => ({
-  type: SUBSCRIBE_SUBSCRIBER_SUCCESS,
+export const PatchSubscriberSuccess = (subscriber: Subscriber): PatchSubscriberActionSuccess => ({
+  type: PATCH_SUBSCRIBER_SUCCESS,
   payload: {
-    notificationInfo,
+    subscriber,
   },
+});
+
+export const patchSubscriber = (channels: SubscriberChannel[], subscriberId: string): PatchSubscriberAction => ({
+  type: PATCH_SUBSCRIBER,
+  payload: {
+    channels,
+    subscriberId,
+  },
+});
+
+export const GetMySubscriberDetailsSuccess = (subscriber: Subscriber): GetMySubscriberActionSuccess => ({
+  type: GET_MY_SUBSCRIBER_DETAILS_SUCCESS,
+  payload: {
+    subscriber,
+  },
+});
+export const getMySubscriberDetails = (): GetMySubscriberAction => ({
+  type: GET_MY_SUBSCRIBER_DETAILS,
 });

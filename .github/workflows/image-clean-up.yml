@@ -1,0 +1,22 @@
+name: Image Clean Up
+
+on:
+  schedule:
+    - cron: "15 7 * * *"
+
+  workflow_dispatch:
+
+jobs:
+  clean-ghcr:
+    name: Delete old unused container images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete ADSP containers older than a week
+        uses: snok/container-retention-policy@v1
+        with:
+          image-names: tenant-management-webapp, tenant-management-api, file-service, notification-service, status-app, subscriber-app, push-service, status-service, calendar-service, event-service, task-service, configuration-service, value-service, api-docs-app, verify-service, form-service
+          cut-off: 1 week ago UTC
+          account-type: org
+          org-name: GovAlta
+          skip-tags: latest
+          token: ${{ secrets.CLEAN_UP_ACCESS_TOKEN }}

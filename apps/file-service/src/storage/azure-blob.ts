@@ -1,4 +1,5 @@
 import { BlobServiceClient, ContainerClient, StorageSharedKeyCredential } from '@azure/storage-blob';
+import * as hasha from 'hasha';
 import { Readable } from 'stream';
 import { Logger } from 'winston';
 import { FileEntity, FileStorageProvider } from '../file';
@@ -9,8 +10,12 @@ interface AzureBlobStorageProviderProps {
   BLOB_ACCOUNT_URL: string;
 }
 
+const BUFFER_SIZE = 4 * 1024 * 1024;
+const MAX_BUFFERS = 20;
+
 export class AzureBlobStorageProvider implements FileStorageProvider {
   private blobServiceClient: BlobServiceClient;
+
   constructor(
     private logger: Logger,
     { BLOB_ACCOUNT_URL, BLOB_ACCOUNT_NAME, BLOB_ACCOUNT_KEY }: AzureBlobStorageProviderProps
@@ -27,7 +32,7 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
 
       return new Readable().wrap(result.readableStreamBody);
     } catch (err) {
-      this.logger.error(`Error in read file ${entity.filename} (ID: ${entity.id}) blob ${entity.id}.`, {
+      this.logger.error(`Error in read file ${entity.filename} (ID: ${entity.id}) blob ${entity.id}. ${err}`, {
         tenant: entity.tenantId?.toString(),
         context: 'AzureBlobStorageProvider',
       });
@@ -39,15 +44,14 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
     try {
       const containerClient = await this.getContainerClient(entity);
       const blobClient = containerClient.getBlockBlobClient(entity.id);
-      const { requestId } = await blobClient.uploadStream(content, null, null, {
+      const { requestId } = await blobClient.uploadStream(content, BUFFER_SIZE, MAX_BUFFERS, {
         tags: {
-          tenant: entity.tenantId.toString(),
-          typeId: entity.type.id,
+          tenant: entity.tenantId.resource,
           fileId: entity.id,
-          filename: entity.filename,
-          recordId: entity.recordId,
+          typeId: entity.type.id,
+          filename: hasha(entity.filename, { algorithm: 'sha1', encoding: 'base64' }),
+          recordId: hasha(entity.recordId, { algorithm: 'sha1', encoding: 'base64' }),
           createdById: entity.createdBy.id,
-          createdByName: entity.createdBy.name,
         },
       });
 
@@ -64,7 +68,7 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
 
       return true;
     } catch (err) {
-      this.logger.error(`Error in file upload ${entity.filename} (ID: ${entity.id}) as blob ${entity.id}.`, {
+      this.logger.error(`Error in file upload ${entity.filename} (ID: ${entity.id}) as blob ${entity.id}. ${err}`, {
         tenant: entity.tenantId?.toString(),
         context: 'AzureBlobStorageProvider',
       });
@@ -80,7 +84,7 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
 
       return true;
     } catch (err) {
-      this.logger.error(`Error in delete file ${entity.filename} (ID: ${entity.id}) blob ${entity.id}.`, {
+      this.logger.error(`Error in delete file ${entity.filename} (ID: ${entity.id}) blob ${entity.id}. ${err}`, {
         tenant: entity.tenantId?.toString(),
         context: 'AzureBlobStorageProvider',
       });

@@ -25,6 +25,12 @@
       "@store/*": [
         "app/store/*"
       ],
+      "@style/*": [
+        "../../../libs/stylesheets/scss/src/lib/*"
+      ],
+      "@shared/*": [
+        "../../../libs/shared/src/*"
+      ]
     }
   },
   "files": [],
