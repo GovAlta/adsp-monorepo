@@ -495,54 +495,73 @@ Then('the user views the events matching the search filter of {string}', functio
 });
 
 When('the user clicks Load more button', function () {
+  // count numbers of row in the table before clicking Load more...
+  tenantAdminObj.eventTableBody().find('tr').as('tableRows');
   tenantAdminObj.eventLoadMoreBtn().click();
   cy.wait(1000);
 });
 
 Then('the user views more events matching the search filter of {string}', function (namespaceName) {
+  // count numbers of row in the table after clicking Load more... than compare the count
+  tenantAdminObj
+    .eventTableBody()
+    .find('tr')
+    .then((tableRowsAfterLoadMore) => {
+      cy.get('@tableRows').should('have.length.lt', tableRowsAfterLoadMore.length);
+    });
+
+  tenantAdminObj
+    .eventTableBody()
+    .children()
+    .then(($row) => {
+      const count = Cypress.$($row).length;
+      cy.log('option count: ', count);
+    });
   tenantAdminObj.eventTableBody().each(($row) => {
     cy.wrap($row).within(() => {
       cy.get('td').each(($row) => {
         if ($row.eq(1).text() == namespaceName.split(':')[0]) {
-          throw new Error('Record not found');
+          expect($row.eq(1).text()).to.equal(namespaceName.split(':')[0]);
         }
         if ($row.eq(2).text() == namespaceName.split(':')[1]) {
-          throw new Error('Record not found');
+          expect($row.eq(1).text()).to.equal(namespaceName.split(':')[1]);
         }
       });
     });
   });
-  tenantAdminObj.eventTableBody().children().should('have.length.greaterThan', 10);
 });
 //dayjs is date time utility to format the date time
 //replace "now-5mins" with "2022-01-09T04:02" to input absolute timestamp as static date and time
+//checking and converting datetime into the string to check if it is static time or now-+mins format
+//in case if it is static
 function timeChanger(dateTime) {
   if (
     String(dateTime).match(/[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/)
   ) {
+    //if static datetime used as an input, use following format "2022-01-07T04:02"
     return dateTime;
   } else {
+    //if it is not static datetime we need to parse to match input field +- mins, use following format "now+-5mins"
     const addedMins = String(dateTime).substring(
       String(dateTime).search(/([+-])([0-9])/),
       String(dateTime).search(/mins/)
     );
-    const minInput = addedMins.replace(/([a-zA-Z])/g, ''); //
+    const minInput = addedMins.replace(/([a-zA-Z])/g, '');
     const minChange = parseInt(minInput);
-    const finalTime = dayjs().add(minChange, 'minutes').format('YYYY-MM-DD HH:mm');
+    const finalTime = dayjs().add(minChange, 'minutes').format('YYYY-MM-DD HH:mm'); //it will add or subtract
     const finalDate = finalTime.split(' ')[0] + 'T' + finalTime.split(' ')[1];
     return finalDate;
   }
 }
 
 When('the user searches with {string} as minimum timestamp, {string} as maximum timestamp', function (submin, addmin) {
-  //replace "now-5mins" with "2022-01-09T04:02" to input absolute timestamp as static date and time
+  //for example replace "now-+5mins" with "2022-01-09T04:02" to input absolute timestamp as static date and time
   expect(submin).to.match(
     /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
   );
   expect(addmin).to.match(
     /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
   );
-
   const timestampMin = timeChanger(submin);
   const timestampMax = timeChanger(addmin);
 
@@ -553,52 +572,55 @@ When('the user searches with {string} as minimum timestamp, {string} as maximum 
   tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
   tenantAdminObj.eventLogSearchBtn().click();
 });
+//Then the user views the events matching the search filter of "now-5mins" and "now-1mins" max timestamp
+Then(
+  'the user views the events matching the search filter of {string} as min and {string} as max timestamp',
+  function () {
+    tenantAdminObj
+      .eventLogMinTimesStamp()
+      .invoke('val')
+      .then((val) => {
+        const timestampMin = String(val);
 
-Then('the user views the events matching the search filter of min and max timestamp', function () {
-  tenantAdminObj
-    .eventLogMinTimesStamp()
-    .invoke('val')
-    .then((val) => {
-      const timestampMin = String(val);
+        tenantAdminObj
+          .eventLogMaxTimesStamp()
+          .invoke('val')
+          .then((val) => {
+            const timestampMax = String(val);
 
-      tenantAdminObj
-        .eventLogMaxTimesStamp()
-        .invoke('val')
-        .then((val) => {
-          const timestampMax = String(val);
-
-          //parse date, time from min, max and table
-          tenantAdminObj
-            .eventTableBody()
-            .parent()
-            .within(function () {
-              cy.get('td')
-                .eq(0)
-                .then((elem) => {
-                  const tableDateTime = elem.text();
-                  const tableLastSlash = tableDateTime.lastIndexOf('/');
-                  const tableDate = tableDateTime.substring(0, tableLastSlash + 5);
-                  const tableTime = tableDateTime.substring(tableLastSlash + 5, tableDateTime.length + 1);
-                  const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
-                  const minTimestamp = dayjs(
-                    timestampMin.split('T')[0] + ' ' + timestampMin.split('T')[1],
-                    'YYYY-MM-DD hh:mm'
-                  );
-                  const maxTimestamp = dayjs(
-                    timestampMax.split('T')[0] + ' ' + timestampMax.split('T')[1],
-                    'YYYY-MM-DD hh:mm'
-                  );
-                  cy.log(minTimestamp + '');
-                  cy.log(maxTimestamp + '');
-                  cy.log(parseDateTime + '');
-                  //comparing table timestamp with the min and max values
-                  expect(parseInt(parseDateTime + '')).to.be.gte(parseInt(minTimestamp + ''));
-                  expect(parseInt(parseDateTime + '')).to.be.lte(parseInt(maxTimestamp + ''));
-                });
-            });
-        });
-    });
-});
+            //parse date, time from min, max and table
+            tenantAdminObj
+              .eventTableBody()
+              .parent()
+              .within(function () {
+                cy.get('td')
+                  .eq(0)
+                  .then((elem) => {
+                    const tableDateTime = elem.text();
+                    const tableLastSlash = tableDateTime.lastIndexOf('/');
+                    const tableDate = tableDateTime.substring(0, tableLastSlash + 5);
+                    const tableTime = tableDateTime.substring(tableLastSlash + 5, tableDateTime.length + 1);
+                    const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
+                    const minTimestamp = dayjs(
+                      timestampMin.split('T')[0] + ' ' + timestampMin.split('T')[1],
+                      'YYYY-MM-DD hh:mm'
+                    );
+                    const maxTimestamp = dayjs(
+                      timestampMax.split('T')[0] + ' ' + timestampMax.split('T')[1],
+                      'YYYY-MM-DD hh:mm'
+                    );
+                    cy.log(minTimestamp + '');
+                    cy.log(maxTimestamp + '');
+                    cy.log(parseDateTime + '');
+                    //comparing table timestamp with the min and max values
+                    expect(parseInt(parseDateTime + '')).to.be.gte(parseInt(minTimestamp + ''));
+                    expect(parseInt(parseDateTime + '')).to.be.lte(parseInt(maxTimestamp + ''));
+                  });
+              });
+          });
+      });
+  }
+);
 
 When('the user searches with {string} as minimum timestamp', function (submin) {
   const timestampMin = timeChanger(submin);
