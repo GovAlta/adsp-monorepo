@@ -18,5 +18,5 @@ jobs:
           cut-off: 1 week ago UTC
           account-type: org
           org-name: GovAlta
-          skip-tags: latest
+          keep-at-least: 3
           token: ${{ secrets.CLEAN_UP_ACCESS_TOKEN }}
