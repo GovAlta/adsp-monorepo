@@ -101,8 +101,9 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
 
       const newState = Object.assign({}, state);
       const subscriptions = newState.subscriptions;
-      const newSubs = subscriptions.filter((subscription) => subscription.subscriber.id !== action.payload.id);
-      const type = newSubs[0].typeId;
+      const newSubs = subscriptions?.filter((subscription) => subscription.subscriber.id !== action.payload.id);
+      const type = state.subscription.typeId;
+
       return {
         ...state,
         subscription: null,
