@@ -93,7 +93,7 @@ Feature: Tenant admin
   @TEST_CS-715 @REQ_CS-254 @regression
   Scenario: Test As a service owner, I can search the event log, so I can find events of interest
     Given a service owner user is on tenant admin page
-    # //First create an event definition under events it will be used to verify the event log
+    #//First create an event definition under events it will be used to verify the event log
     When the user selects the "Events" menu item
     And the user selects "Definitions" tab for "Events"
     And the user clicks Add definition button
@@ -101,7 +101,7 @@ Feature: Tenant admin
     When the user enters "Autotest" in Namespace, "Autotest-eventDefinition" in Name, "event log testing" in Description
     And the user clicks Save button on Definition modal
     Then the user "views" an event definition of "Autotest-eventDefinition" and "event log testing" under "Autotest"
-    # //Test event log
+    #//Test event log
     When the user selects the "Event log" menu item
     Then the "Event log" landing page is displayed
     When the user searches with "configuration-service:configuration-updated"
@@ -109,18 +109,16 @@ Feature: Tenant admin
     When the user clicks Load more button
     Then the user views more events matching the search filter of "configuration-service:configuration-updated"
     When the user searches with "now-5mins" as minimum timestamp, "now+5mins" as maximum timestamp
-    When the user searches with "2022-01-07T04:02" as minimum timestamp, "2022-01-11T04:02" as maximum timestamp
-    # Then the user views the events matching the search filter of "now-5" min and "now-1" max timestamp
+    Then the user views the events matching the search filter of "now-5mins" as min and "now+5mins" as max timestamps
     And the user resets event log views
     When the user searches with "now-5mins" as minimum timestamp
-    Then the user views the events matching the search filter of min timestamp
+    Then the user views the events matching the search filter of "now-5mins" as min timestamp
     When the user searches with "now+5mins" as maximum timestamp
-    Then the user views the events matching the search filter of maximum timestamp
+    Then the user views the events matching the search filter of "now+5mins" as maximum timestamp
     And the user resets event log views
     When the user searches with "configuration-service:configuration-updated", "now-5mins" as minimum timestamp, "now+5mins" as maximum timestamp
-    Then the user views the events matching the search filter of "configuration-service:configuration-updated"  and timestamp value between min and max timestamps
+    Then the user views the events matching the search filter of "configuration-service:configuration-updated", and timestamp value between "now-5mins" as min and "now+5mins" as max timestamps
     Then the user resets event log views
-    Then the user clicks Load more button
     #//Last the user deletes the event at the end of the test
     When the user selects the "Events" menu item
     And the user selects "Definitions" tab for "Events"
