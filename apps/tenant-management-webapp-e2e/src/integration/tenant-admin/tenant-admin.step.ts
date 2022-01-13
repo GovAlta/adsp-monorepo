@@ -508,6 +508,7 @@ Then('the user views more events matching the search filter of {string}', functi
     .find('tr')
     .then((tableRowsAfterLoadMore) => {
       cy.get('@tableRows').should('have.length.lt', tableRowsAfterLoadMore.length);
+      cy.log(tableRowsAfterLoadMore + '');
     });
 
   tenantAdminObj
@@ -530,6 +531,7 @@ Then('the user views more events matching the search filter of {string}', functi
     });
   });
 });
+
 //dayjs is date time utility to format the date time
 //replace "now-5mins" with "2022-01-09T04:02" to input absolute timestamp as static date and time
 //checking and converting datetime into the string to check if it is static time or now-+mins format
@@ -572,9 +574,10 @@ When('the user searches with {string} as minimum timestamp, {string} as maximum 
   tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
   tenantAdminObj.eventLogSearchBtn().click();
 });
+
 //Then the user views the events matching the search filter of "now-5mins" and "now-1mins" max timestamp
 Then(
-  'the user views the events matching the search filter of {string} as min and {string} as max timestamp',
+  'the user views the events matching the search filter of {string} as min and {string} as max timestamps',
   function () {
     tenantAdminObj
       .eventLogMinTimesStamp()
@@ -630,7 +633,7 @@ When('the user searches with {string} as minimum timestamp', function (submin) {
   tenantAdminObj.eventLogSearchBtn().click();
 });
 
-Then('the user views the events matching the search filter of min timestamp', function () {
+Then('the user views the events matching the search filter of {string} as min timestamp', function () {
   tenantAdminObj
     .eventLogMinTimesStamp()
     .invoke('val')
@@ -671,7 +674,7 @@ When('the user searches with {string} as maximum timestamp', function (addmin) {
   tenantAdminObj.eventLogSearchBtn().click();
 });
 
-Then('the user views the events matching the search filter of maximum timestamp', function () {
+Then('the user views the events matching the search filter of {string} as maximum timestamp', function () {
   tenantAdminObj
     .eventLogMaxTimesStamp()
     .invoke('val')
@@ -718,21 +721,21 @@ When(
 
     tenantAdminObj.eventLogMinTimesStamp().type(timestampMin);
     tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
-
     tenantAdminObj.eventLogSearchBtn().click();
   }
 );
+
 Then(
-  'the user views the events matching the search filter of {string} and timestamp value between min and max timestamps',
+  'the user views the events matching the search filter of {string}, and timestamp value between {string} as min and {string} as max timestamps',
   function (namespaceName) {
     tenantAdminObj.eventTableBody().each(($row) => {
       cy.wrap($row).within(() => {
         cy.get('td').each(($row) => {
           if ($row.eq(1).text() == namespaceName.split(':')[0]) {
-            throw new Error('Record not found');
+            expect($row.eq(1).text()).to.equal(namespaceName.split(':')[0]);
           }
           if ($row.eq(2).text() == namespaceName.split(':')[1]) {
-            throw new Error('Record not found');
+            expect($row.eq(1).text()).to.equal(namespaceName.split(':')[1]);
           }
         });
       });
@@ -748,7 +751,6 @@ Then(
             .then((val) => {
               const timestampMax = String(val);
 
-              //parse date, time from min, max and table
               tenantAdminObj
                 .eventTableBody()
                 .parent()
