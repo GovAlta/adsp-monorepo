@@ -104,7 +104,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       <Buttons>
         <GoAButton
           data-testid="add-notification"
-          buttonSize="small"
           onClick={() => {
             setSelectedType(null);
             setEditType(true);

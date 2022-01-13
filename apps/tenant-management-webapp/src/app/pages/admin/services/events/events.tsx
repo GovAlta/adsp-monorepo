@@ -19,8 +19,8 @@ export const Events: FunctionComponent = () => {
         <Tabs activeIndex={activeIndex} data-testid="events-tabs">
           <Tab label="Overview" data-testid="events-overview-tab">
             <EventsOverview
-              toEventListTab={() => {
-                setActiveIndex(1);
+              updateActiveIndex={(index: number) => {
+                setActiveIndex(index);
               }}
             />
           </Tab>

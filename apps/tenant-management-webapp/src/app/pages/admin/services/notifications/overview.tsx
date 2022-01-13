@@ -18,7 +18,6 @@ export const NotificationsOverview: FunctionComponent<ParentCompProps> = (props)
       </p>
       <GoAButton
         data-testid="add-notification-overview"
-        buttonSize="small"
         disabled={disabled}
         onClick={() => {
           setActiveEdit(true);
