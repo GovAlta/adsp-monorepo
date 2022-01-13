@@ -65,7 +65,8 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
   async function getTenantByName(req, res, next) {
     try {
       const { name } = req.payload;
-      const tenant = await tenantRepository.findBy({ name: name });
+
+      const tenant = await tenantRepository.findBy({ name: { $regex: '^' + name + '\\b', $options: 'i' } });
       res.json(tenant.obj());
     } catch (err) {
       logger.error(`Failed fetching tenant info by name: ${err.message}`);

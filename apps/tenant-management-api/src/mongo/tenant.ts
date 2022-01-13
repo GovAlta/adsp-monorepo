@@ -65,7 +65,7 @@ export class MongoTenantRepository implements TenantRepository {
     return Promise.resolve(mapping);
   }
 
-  async findBy(filter: Record<string, string>): Promise<TenantEntity> {
+  async findBy(filter: Record<string, string | { $regex: string; $options: 'i' }>): Promise<TenantEntity> {
     let currentFilter = filter;
 
     if (currentFilter.id) {

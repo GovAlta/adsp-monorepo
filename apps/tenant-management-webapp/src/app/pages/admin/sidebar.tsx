@@ -12,6 +12,7 @@ import LogoutIcon from '@icons/log-out-outline.svg';
 import FitnessIcon from '@icons/fitness-outline.svg';
 import MegaphoneIcon from '@icons/megaphone-outline.svg';
 import NotificationsIcon from '@icons/notifications-outline.svg';
+import DirectoryIcon from '@icons/list-outline.svg';
 import { RootState } from '@store/index';
 import { TenantAdminLogin, TenantLogout, FetchTenant } from '@store/tenant/actions';
 
@@ -59,6 +60,10 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
               <NavLink to="/admin/access" activeClassName="current" title="Access">
                 <img src={BarChartIcon} width="16" alt="Access Service " />
                 <span>Access</span>
+              </NavLink>
+              <NavLink to="/admin/services/directory" activeClassName="current" title="Directory">
+                <img src={DirectoryIcon} width="16" alt="Directory Service " />
+                <span>Directory</span>
               </NavLink>
               <NavLink to="/admin/services/files" activeClassName="current" title="Files">
                 <img src={FileIcon} width="16" alt="Files Service" />

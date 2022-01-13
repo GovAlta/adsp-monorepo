@@ -39,7 +39,6 @@ export const EventDefinitions: FunctionComponent = () => {
       <Buttons>
         <GoAButton
           data-testid="add-definition"
-          buttonSize="small"
           onClick={() => {
             setSelectedDefinition(defaultEventDefinition);
             setIsEdit(false);
@@ -109,5 +108,5 @@ export default EventDefinitions;
 
 const Buttons = styled.div`
   margin-bottom: 1rem;
-  text-align: right;
+  text-align: left;
 `;

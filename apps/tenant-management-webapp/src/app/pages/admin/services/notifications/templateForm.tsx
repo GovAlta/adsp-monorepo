@@ -6,6 +6,7 @@ import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { EventItem } from '@store/notification/models';
 import MonacoEditor from '@monaco-editor/react';
 import styled from 'styled-components';
+
 import * as handlebars from 'handlebars/dist/cjs/handlebars';
 
 interface TemplateFormProps {
@@ -17,7 +18,6 @@ interface TemplateFormProps {
   selectedEvent: EventItem;
   notifications: NotificationItem;
   errors?: Record<string, string>;
-  disabled: boolean;
 }
 
 export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
@@ -27,7 +27,6 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
   notifications,
   open,
   selectedEvent,
-  disabled,
 }) => {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -51,9 +50,6 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
     }
   };
   const getModalState = () => {
-    if (disabled) {
-      return 'Preview';
-    }
     if (!selectedEvent) {
       return 'Add';
     }
@@ -62,9 +58,6 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
       : 'Save';
   };
   const getModalHeadingState = () => {
-    if (disabled) {
-      return 'Preview';
-    }
     if (!selectedEvent) {
       return 'Add';
     }
@@ -84,7 +77,6 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
       <GoAModalContent>
         <GoAForm>
           <GoAFormItem>
-            <label>Subject</label>
             <MonacoDiv>
               <MonacoEditor
                 data-testid="templateForm-subject"
@@ -96,7 +88,6 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
                 options={{
                   wordWrap: 'off',
                   lineNumbers: 'off',
-                  readOnly: disabled,
                   scrollbar: { horizontal: 'hidden', vertical: 'hidden' },
                   find: {
                     addExtraSpaceOnTop: false,
@@ -115,7 +106,6 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
           </GoAFormItem>
 
           <GoAFormItem>
-            <label>Body</label>
             <MonacoDiv>
               <MonacoEditor
                 data-testid="templateForm-body"
@@ -125,7 +115,6 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
                 language="handlebars"
                 options={{
                   tabSize: 2,
-                  readOnly: disabled,
                   lineNumbers: 'off',
                   minimap: { enabled: false },
                   overviewRulerBorder: false,
@@ -141,35 +130,32 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
       </GoAModalContent>
       <GoAModalActions>
         <GoAButton data-testid="template-form-cancel" buttonType="tertiary" type="button" onClick={onCancel}>
-          {disabled ? 'Close' : getEditEventModalState()}
+          {getEditEventModalState()}
         </GoAButton>
-        {!disabled && (
-          <GoAButton
-            buttonType="primary"
-            data-testid="template-form-save"
-            type="submit"
-            disabled={!validate()}
-            onClick={() => {
-              const definitionEventIndex = notifications?.events?.findIndex(
-                (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`
-              );
+        <GoAButton
+          buttonType="primary"
+          data-testid="template-form-save"
+          type="submit"
+          disabled={!validate()}
+          onClick={() => {
+            const definitionEventIndex = notifications?.events?.findIndex(
+              (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`
+            );
 
-              notifications.events[definitionEventIndex] = {
-                ...selectedEvent,
-                templates: {
-                  email: {
-                    subject,
-                    body,
-                  },
+            notifications.events[definitionEventIndex] = {
+              ...selectedEvent,
+              templates: {
+                email: {
+                  subject,
+                  body,
                 },
-              };
-
-              onSubmit(notifications);
-            }}
-          >
-            {getModalState()}
-          </GoAButton>
-        )}
+              },
+            };
+            onSubmit(notifications);
+          }}
+        >
+          {getModalState()}
+        </GoAButton>
       </GoAModalActions>
     </GoAModal>
   );

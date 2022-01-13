@@ -106,12 +106,7 @@ function Status(): JSX.Element {
               Each application should represent a service that is useful to the end user by itself, such as child care
               subsidy and child care certification
             </p>
-            <GoAButton
-              data-testid="add-application"
-              buttonSize="small"
-              onClick={() => addApplication()}
-              buttonType="primary"
-            >
+            <GoAButton data-testid="add-application" onClick={() => addApplication()} buttonType="primary">
               Add application
             </GoAButton>
           </Tab>
@@ -179,13 +174,13 @@ function Status(): JSX.Element {
         </Tabs>
         <Switch>
           <Route path="/admin/services/status/new">
-            <ApplicationFormModal isOpen={true} title="New application" />
+            <ApplicationFormModal isOpen={true} title="Add application" />
           </Route>
           <Route path="/admin/services/status/notice/new">
-            <NoticeModal isOpen={true} title="Add a draft notice" />
+            <NoticeModal isOpen={true} title="Add notice" />
           </Route>
           <Route path="/admin/services/status/notice/:noticeId">
-            <NoticeModal isOpen={true} title="Edit draft notice" />
+            <NoticeModal isOpen={true} title="Edit notice" />
           </Route>
           <Route path="/admin/services/status/:applicationId/edit">
             <ApplicationFormModal isOpen={true} title="Edit application" />

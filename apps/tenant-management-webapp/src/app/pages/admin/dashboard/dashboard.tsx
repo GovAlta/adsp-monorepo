@@ -60,6 +60,18 @@ const Dashboard = (): JSX.Element => {
               <GridItem md={6} vSpacing={1} hSpacing={0.5}>
                 <GoACard type="primary">
                   <h2>
+                    <Link to="/admin/services/directory">Directory</Link>
+                  </h2>
+                  <div>
+                    The directory service is a registry of services and their APIs. Applications can use the directory
+                    to lookup URLs for service from a common directory API. Add entries for your own services so they
+                    can be found using the directory for service discovery.
+                  </div>
+                </GoACard>
+              </GridItem>
+              <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                <GoACard type="primary">
+                  <h2>
                     <Link to="/admin/services/files">File service</Link>
                   </h2>
                   <div>
@@ -78,6 +90,7 @@ const Dashboard = (): JSX.Element => {
                     The status service allows for easy monitoring of application downtime. Each application should
                     represent a service that is useful to the end user by itself, such as child care subsidy and child
                     care certification.
+                    <div>&nbsp;</div>
                   </div>
                 </GoACard>
               </GridItem>
@@ -89,7 +102,6 @@ const Dashboard = (): JSX.Element => {
                   <div>
                     The event service provides tenant applications with the ability to send domain events. Applications
                     are able to leverage additional capabilities as side effects through these events.
-                    <div>&nbsp;</div>
                   </div>
                 </GoACard>
               </GridItem>
@@ -101,6 +113,8 @@ const Dashboard = (): JSX.Element => {
                   <div>
                     The notifications service provides tenant applications with the ability to configure notifications.
                   </div>
+                  <div>&nbsp;</div>
+                  <div>&nbsp;</div>
                 </GoACard>
               </GridItem>
             </Grid>
