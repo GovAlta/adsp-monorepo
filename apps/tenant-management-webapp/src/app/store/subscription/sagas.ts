@@ -33,7 +33,7 @@ import { Subscription, Subscriber, SubscriptionWrapper } from './models';
 
 import { RootState } from '../index';
 import axios from 'axios';
-import { request } from 'node:https';
+
 import { Api } from './api';
 
 export function* getSubscription(action: GetSubscriptionAction): SagaIterator {
