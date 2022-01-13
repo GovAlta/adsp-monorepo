@@ -498,7 +498,7 @@ When('the user clicks Load more button', function () {
   // count numbers of row in the table before clicking Load more...
   tenantAdminObj.eventTableBody().find('tr').as('tableRows');
   tenantAdminObj.eventLoadMoreBtn().click();
-  cy.wait(1000);
+  cy.wait(2000);
 });
 
 Then('the user views more events matching the search filter of {string}', function (namespaceName) {
