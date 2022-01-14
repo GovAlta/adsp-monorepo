@@ -60,3 +60,24 @@ Feature: Service status
     Then the user views "Archived" notices
     When the user selects "All" filter by status radio button
     Then the user views "All" notices
+
+  @TEST_CS-936 @REQ_CS-907 @regression
+  Scenario: As a tenant admin, I can subscribe to health check notification type
+    Given a tenant admin user is on status applications page
+    # Autotest user should be already subscribed to application health change notifications. If not, set it to subscribed
+    When the user "selects" the subscribe checkbox for health check notification type
+    Then the user views the subscribe checkbox is "checked"
+    # Unsubscribe application health change notifications
+    When the user "unselects" the subscribe checkbox for health check notification type
+    Then the user views a subscription confirmation message for "unsubscribed"
+    When the user selects the "Dashboard" menu item
+    And the user selects the "status" menu item
+    And the user selects "Applications" tab for "Status"
+    Then the user views the subscribe checkbox is "unchecked"
+    # Subscribe application health change notifications
+    When the user "selects" the subscribe checkbox for health check notification type
+    Then the user views a subscription confirmation message for "subscribed"
+    When the user selects the "Dashboard" menu item
+    And the user selects the "status" menu item
+    And the user selects "Applications" tab for "Status"
+    Then the user views the subscribe checkbox is "checked"
