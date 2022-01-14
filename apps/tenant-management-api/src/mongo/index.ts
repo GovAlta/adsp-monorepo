@@ -33,12 +33,15 @@ export const createRepositories = ({
   MONGO_TLS,
 }: MongoRepositoryProps): Promise<Repositories> =>
   new Promise((resolve, reject) => {
-    const mongoConnectionString = `${MONGO_URI}/${MONGO_DB}?ssl=${MONGO_TLS}`;
+    const mongoConnectionString = `${MONGO_URI}/${MONGO_DB}?retryWrites=false&ssl=${MONGO_TLS}`;
     connect(
       mongoConnectionString,
       {
         user: MONGO_USER,
         pass: MONGO_PASSWORD,
+        useNewUrlParser: true,
+        useFindAndModify: false,
+        useUnifiedTopology: true,
       },
       (err) => {
         if (err) {
