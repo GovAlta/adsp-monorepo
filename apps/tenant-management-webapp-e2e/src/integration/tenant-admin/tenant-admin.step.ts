@@ -780,3 +780,9 @@ Then(
 Then('the user resets event log views', function () {
   tenantAdminObj.eventLogResetBtn().click();
 });
+
+Then('the user views that search fileds are empty', function () {
+  tenantAdminObj.eventLogSearchBox().should('have.value', '');
+  tenantAdminObj.eventLogMinTimesStamp().should('have.value', '');
+  tenantAdminObj.eventLogMaxTimesStamp().should('have.value', '');
+});
