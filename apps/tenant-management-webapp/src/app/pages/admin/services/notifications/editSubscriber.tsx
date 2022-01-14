@@ -10,7 +10,6 @@ interface NotificationTypeFormProps {
   onCancel?: () => void;
   onSave?: (type: Subscriber) => void;
   open: boolean;
-
   errors?: Record<string, string>;
 }
 

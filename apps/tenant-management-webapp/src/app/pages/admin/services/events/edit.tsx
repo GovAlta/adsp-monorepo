@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { FunctionComponent, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import type { EventDefinition } from '@store/event/models';
 import { GoAButton } from '@abgov/react-components';
@@ -12,37 +12,21 @@ interface EventDefinitionFormProps {
   onClose?: () => void;
   onSave?: () => void;
   open: boolean;
+  isEdit: boolean;
   coreNamespaces: string[];
 }
-
-const emptyValue = {
-  namespace: '',
-  name: '',
-  description: '',
-  isCore: false,
-  payloadSchema: {
-    type: 'object',
-    properties: {},
-    required: [],
-    additionalProperties: true,
-  },
-};
 
 export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProps> = ({
   initialValue,
   onClose,
   open,
   onSave,
+  isEdit,
   coreNamespaces,
 }) => {
-  const isEdit = !!initialValue;
-  const [definition, setDefinition] = useState<EventDefinition>(emptyValue);
+  const [definition, setDefinition] = useState<EventDefinition>(initialValue);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
-
-  useEffect(() => {
-    isEdit && setDefinition(initialValue);
-  }, [initialValue]);
 
   return (
     <GoAModal testId="definition-form" isOpen={open}>

@@ -47,12 +47,12 @@ Given('a service owner user is on status notices page', function () {
   cy.wait(10000);
 });
 
-When('the user clicks Add a draft notice button', function () {
+When('the user clicks Add draft notice button', function () {
   statusObj.addNoticeButton().click();
 });
 
-Then('the user views Add a draft notice dialog', function () {
-  statusObj.noticeModalTitle().invoke('text').should('eq', 'Add a draft notice');
+Then('the user views Add draft notice dialog', function () {
+  statusObj.noticeModalTitle().invoke('text').should('eq', 'Add notice');
 });
 
 //Date time picker UI isn't finalized and the step uses the default dates without entering any date data

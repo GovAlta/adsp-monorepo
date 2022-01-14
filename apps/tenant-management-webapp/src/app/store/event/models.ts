@@ -36,5 +36,10 @@ export const defaultEventDefinition: EventDefinition = {
   namespace: '',
   name: '',
   description: '',
-  payloadSchema: {},
+  payloadSchema: {
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: true,
+  },
 };

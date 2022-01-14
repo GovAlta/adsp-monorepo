@@ -16,15 +16,15 @@ export const Events: FunctionComponent = () => {
     <Page>
       <Main>
         <h1>Events</h1>
-        <Tabs activeIndex={activeIndex}>
-          <Tab label="Overview">
+        <Tabs activeIndex={activeIndex} data-testid="events-tabs">
+          <Tab label="Overview" data-testid="events-overview-tab">
             <EventsOverview
-              toEventListTab={() => {
-                setActiveIndex(1);
+              updateActiveIndex={(index: number) => {
+                setActiveIndex(index);
               }}
             />
           </Tab>
-          <Tab label="Definitions">
+          <Tab label="Definitions" data-testid="events-definitions-tab">
             <EventDefinitions />
           </Tab>
         </Tabs>

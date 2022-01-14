@@ -1,29 +1,28 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components';
 import { RootState } from '@store/index';
-import { EventDefinition } from '@store/event/models';
+import { EventDefinition, defaultEventDefinition } from '@store/event/models';
 import { useSelector } from 'react-redux';
 import { EventDefinitionModalForm } from './edit';
 
 interface OverviewProps {
-  toEventListTab: () => void;
+  updateActiveIndex: (index: number) => void;
 }
 
-export const EventsOverview: FunctionComponent<OverviewProps> = ({ toEventListTab }) => {
+export const EventsOverview: FunctionComponent<OverviewProps> = ({ updateActiveIndex }) => {
   const definitions = useSelector((state: RootState) => state.event.definitions);
   const [coreNamespaces, setCoreNamespaces] = useState<string[]>([]);
-  const [editDefinition, setEditDefinition] = useState(false);
+  const [openAddDefinition, setOpenAddDefinition] = useState(false);
 
   useEffect(() => {
     const namespaces = Object.values(definitions)
       .filter((d: EventDefinition) => d.isCore)
       .map((d: EventDefinition) => d.namespace);
-
     setCoreNamespaces(namespaces);
   }, [definitions]);
 
   function reset() {
-    setEditDefinition(false);
+    setOpenAddDefinition(false);
   }
 
   return (
@@ -42,20 +41,25 @@ export const EventsOverview: FunctionComponent<OverviewProps> = ({ toEventListTa
       </p>
       <GoAButton
         data-testid="add-definition"
-        buttonSize="small"
         onClick={() => {
-          setEditDefinition(true);
+          setOpenAddDefinition(true);
         }}
       >
         Add definition
       </GoAButton>
 
-      <EventDefinitionModalForm
-        open={editDefinition}
-        coreNamespaces={coreNamespaces}
-        onClose={reset}
-        onSave={toEventListTab}
-      />
+      {openAddDefinition && (
+        <EventDefinitionModalForm
+          open={true}
+          coreNamespaces={coreNamespaces}
+          onClose={reset}
+          isEdit={false}
+          initialValue={defaultEventDefinition}
+          onSave={() => {
+            updateActiveIndex(1);
+          }}
+        />
+      )}
       <br />
       <br />
     </div>

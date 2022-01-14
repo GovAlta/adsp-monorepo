@@ -194,3 +194,63 @@ Then('the user views Remove event modal for {string}', function (event) {
 When('the user clicks Confirm button in Remove event modal', function () {
   notificationsObj.removeEventModalConfirmBtn().click();
 });
+
+Then('the user {string} the notification type card of {string}', function (viewOrNot, name) {
+  if (viewOrNot == 'views') {
+    notificationsObj.notificationTypeCardTitle(name).should('exist');
+  } else if (viewOrNot == 'should not view') {
+    notificationsObj.notificationTypeCardTitle(name).should('not.exist');
+  } else {
+    expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});
+
+Then('the user {string} {string} for {string} in {string}', function (viewOrNot, elementType, eventName, typeName) {
+  if (viewOrNot == 'views') {
+    switch (elementType) {
+      case 'email template indicator':
+        notificationsObj.internalNotificationTypeEventMailIcon(typeName, eventName).should('exist');
+        break;
+      case 'Preview link':
+        notificationsObj.internalNotificationTypeEventPreviewLink(typeName, eventName).should('exist');
+        break;
+      case 'Edit button':
+        notificationsObj.internalNotificationTypeEventEditButton(typeName, eventName).should('exist');
+        break;
+      default:
+        expect(elementType).to.be.oneOf(['email template indicator', 'Preview link', 'Edit button']);
+    }
+  } else if (viewOrNot == 'should not view') {
+    switch (elementType) {
+      case 'email template indicator':
+        notificationsObj.internalNotificationTypeEventMailIcon(typeName, eventName).should('not.exist');
+        break;
+      case 'Preview link':
+        notificationsObj.internalNotificationTypeEventPreviewLink(typeName, eventName).should('not.exist');
+        break;
+      case 'Edit button':
+        notificationsObj.internalNotificationTypeEventEditButton(typeName, eventName).should('not.exist');
+        break;
+      default:
+        expect(elementType).to.be.oneOf(['email template indicator', 'Preview link', 'Edit button']);
+    }
+  } else {
+    expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});
+
+When('the user clicks Preview button on {string} in {string}', function (eventName, typeName) {
+  notificationsObj.internalNotificationTypeEventPreviewLink(typeName, eventName).click();
+});
+
+Then('the user views Preview an email template modal', function () {
+  notificationsObj.eventTemplatePreviewModalTitle().invoke('text').should('eq', 'Preview an email template');
+});
+
+When('the user clicks Close button in Preview an email template modal', function () {
+  notificationsObj.eventTemplatePreviewModalCloseBtn().click();
+});
+
+Then('Preview an email template modal is closed', function () {
+  notificationsObj.eventTemplatePreviewModal().should('not.exist');
+});

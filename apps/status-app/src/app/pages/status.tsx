@@ -170,6 +170,8 @@ const ServiceStatusPage = (): JSX.Element => {
     );
   };
 
+  const emailIndex = subscriber?.channels?.findIndex((channel) => channel.channel === 'email');
+
   return (
     <div>
       <GoAHeader
@@ -228,7 +230,7 @@ const ServiceStatusPage = (): JSX.Element => {
                 {subscriber && (
                   <GoACallout title="You have signed up for notifications" key="success" type="success">
                     Thank you for signing up. You will receive notifications regarding service statuses on{' '}
-                    {subscriber.addressAs}.
+                    {subscriber.channels[emailIndex].address}.
                   </GoACallout>
                 )}
                 {error && error.length > 0 && (

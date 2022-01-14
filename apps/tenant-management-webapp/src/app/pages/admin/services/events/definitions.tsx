@@ -11,16 +11,16 @@ import styled from 'styled-components';
 
 export const EventDefinitions: FunctionComponent = () => {
   const [editDefinition, setEditDefinition] = useState(false);
-  const [selectedDefinition, setSelectedDefinition] = useState<EventDefinition>(null);
+  const [selectedDefinition, setSelectedDefinition] = useState<EventDefinition>(defaultEventDefinition);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const definitions = useSelector((state: RootState) => state.event.definitions);
   const [coreNamespaces, setCoreNamespaces] = useState<string[]>([]);
+  const [isEdit, setIsEdit] = useState(false);
 
   useEffect(() => {
     const namespaces = Object.values(definitions)
       .filter((d: EventDefinition) => d.isCore)
       .map((d: EventDefinition) => d.namespace);
-
     setCoreNamespaces(namespaces);
   }, [definitions]);
 
@@ -39,9 +39,9 @@ export const EventDefinitions: FunctionComponent = () => {
       <Buttons>
         <GoAButton
           data-testid="add-definition"
-          buttonSize="small"
           onClick={() => {
-            setSelectedDefinition(null);
+            setSelectedDefinition(defaultEventDefinition);
+            setIsEdit(false);
             setEditDefinition(true);
           }}
         >
@@ -52,43 +52,54 @@ export const EventDefinitions: FunctionComponent = () => {
       <EventDefinitionsList
         onEdit={(def: EventDefinition) => {
           setSelectedDefinition(def);
+          setIsEdit(true);
           setEditDefinition(true);
         }}
         onDelete={(def: EventDefinition) => {
           setSelectedDefinition(def);
+          setIsEdit(false);
           setShowDeleteConfirmation(true);
         }}
       />
 
       {/* Delete confirmation */}
-      <GoAModal testId="delete-confirmation" isOpen={showDeleteConfirmation}>
-        <GoAModalTitle>Delete definition</GoAModalTitle>
-        <GoAModalContent>Delete {selectedDefinition?.name}?</GoAModalContent>
-        <GoAModalActions>
-          <GoAButton buttonType="tertiary" data-testid="delete-cancel" onClick={() => setShowDeleteConfirmation(false)}>
-            Cancel
-          </GoAButton>
-          <GoAButton
-            buttonType="primary"
-            data-testid="delete-confirm"
-            onClick={() => {
-              setShowDeleteConfirmation(false);
-              dispatch(deleteEventDefinition(selectedDefinition));
-            }}
-          >
-            Confirm
-          </GoAButton>
-        </GoAModalActions>
-      </GoAModal>
+      {showDeleteConfirmation && (
+        <GoAModal testId="delete-confirmation" isOpen={true}>
+          <GoAModalTitle>Delete definition</GoAModalTitle>
+          <GoAModalContent>Delete {selectedDefinition?.name}?</GoAModalContent>
+          <GoAModalActions>
+            <GoAButton
+              buttonType="tertiary"
+              data-testid="delete-cancel"
+              onClick={() => setShowDeleteConfirmation(false)}
+            >
+              Cancel
+            </GoAButton>
+            <GoAButton
+              buttonType="primary"
+              data-testid="delete-confirm"
+              onClick={() => {
+                setShowDeleteConfirmation(false);
+                dispatch(deleteEventDefinition(selectedDefinition));
+              }}
+            >
+              Confirm
+            </GoAButton>
+          </GoAModalActions>
+        </GoAModal>
+      )}
 
-      <EventDefinitionModalForm
-        open={editDefinition}
-        initialValue={selectedDefinition}
-        coreNamespaces={coreNamespaces}
-        onClose={() => {
-          reset();
-        }}
-      />
+      {editDefinition && (
+        <EventDefinitionModalForm
+          open={true}
+          initialValue={selectedDefinition}
+          isEdit={isEdit}
+          coreNamespaces={coreNamespaces}
+          onClose={() => {
+            reset();
+          }}
+        />
+      )}
     </>
   );
 };
@@ -97,5 +108,5 @@ export default EventDefinitions;
 
 const Buttons = styled.div`
   margin-bottom: 1rem;
-  text-align: right;
+  text-align: left;
 `;

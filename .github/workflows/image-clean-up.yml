@@ -15,9 +15,8 @@ jobs:
         uses: snok/container-retention-policy@v1
         with:
           image-names: tenant-management-webapp, tenant-management-api, file-service, notification-service, status-app, subscriber-app, push-service, status-service, calendar-service, event-service, task-service, configuration-service, value-service, api-docs-app, verify-service, form-service
-          cut-off: A week ago UTC
+          cut-off: 1 week ago UTC
           account-type: org
           org-name: GovAlta
-          untagged-only: false
           skip-tags: latest
           token: ${{ secrets.CLEAN_UP_ACCESS_TOKEN }}

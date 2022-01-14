@@ -207,7 +207,7 @@ describe('subscription router', () => {
         tenant: {
           id: tenantId,
         },
-        query: { top: '11', after: '123' },
+        query: { topValue: '11', after: '123' },
         notificationType: new NotificationTypeEntity(notificationType, tenantId),
       };
       const res = { send: jest.fn() };
@@ -905,7 +905,7 @@ describe('subscription router', () => {
 
   describe('updateSubscriber', () => {
     it('can create handler', () => {
-      const handler = updateSubscriber(apiId);
+      const handler = updateSubscriber(apiId, repositoryMock);
       expect(handler).toBeTruthy();
     });
 
@@ -930,7 +930,7 @@ describe('subscription router', () => {
         },
         body: {
           addressAs: 'tester',
-          channels: [],
+          channels: [{ channel: Channel.email, address: 'bob@gmail.com', verified: false }],
           id: 'subscriber',
           urn: 'urn:ads:platform:notification-service:v1:/subscribers/subscriber',
           userId: undefined,
@@ -941,8 +941,9 @@ describe('subscription router', () => {
       const next = jest.fn();
 
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
+      repositoryMock.findSubscribers.mockResolvedValueOnce({ results: [] });
 
-      const handler = updateSubscriber(apiId);
+      const handler = updateSubscriber(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining(req.body));
     });
@@ -966,13 +967,21 @@ describe('subscription router', () => {
           email: 'tester@test.co',
           roles: [],
         },
-        body: {},
+        body: {
+          addressAs: 'tester',
+          channels: [{ channel: Channel.email, address: 'bob@gmail.com', verified: false }],
+          id: 'subscriber',
+          urn: 'urn:ads:platform:notification-service:v1:/subscribers/subscriber',
+          userId: undefined,
+        },
         subscriber,
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = updateSubscriber(apiId);
+      repositoryMock.findSubscribers.mockResolvedValueOnce({ results: [] });
+
+      const handler = updateSubscriber(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
       expect(res.send).not.toHaveBeenCalled();
