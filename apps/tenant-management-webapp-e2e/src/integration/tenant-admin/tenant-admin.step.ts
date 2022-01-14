@@ -472,14 +472,6 @@ When('the user searches with {string}', function (namespaceName) {
 });
 
 Then('the user views the events matching the search filter of {string}', function (namespaceName) {
-  tenantAdminObj
-    .eventTableBody()
-    .contains(namespaceName.split(':')[0])
-    .parent()
-    .within(function () {
-      cy.get('td').eq(2).should('contain.text', namespaceName.split(':')[1]);
-    });
-
   tenantAdminObj.eventTableBody().each(($row) => {
     cy.wrap($row).within(() => {
       cy.get('td').each(($col) => {
@@ -536,7 +528,7 @@ Then('the user views more events matching the search filter of {string}', functi
 //replace "now-5mins" with "2022-01-09T04:02" to input absolute timestamp as static date and time
 //checking and converting datetime into the string to check if it is static time or now-+mins format
 //in case if it is static
-function timeChanger(dateTime) {
+function timestampUtil(dateTime) {
   if (
     String(dateTime).match(/[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/)
   ) {
@@ -564,8 +556,8 @@ When('the user searches with {string} as minimum timestamp, {string} as maximum 
   expect(addmin).to.match(
     /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
   );
-  const timestampMin = timeChanger(submin);
-  const timestampMax = timeChanger(addmin);
+  const timestampMin = timestampUtil(submin);
+  const timestampMax = timestampUtil(addmin);
 
   cy.log(timestampMin);
   cy.log(timestampMax);
@@ -626,7 +618,7 @@ Then(
 );
 
 When('the user searches with {string} as minimum timestamp', function (submin) {
-  const timestampMin = timeChanger(submin);
+  const timestampMin = timestampUtil(submin);
   cy.log(timestampMin);
 
   tenantAdminObj.eventLogMinTimesStamp().type(timestampMin);
@@ -667,7 +659,7 @@ Then('the user views the events matching the search filter of {string} as min ti
 });
 
 When('the user searches with {string} as maximum timestamp', function (addmin) {
-  const timestampMax = timeChanger(addmin);
+  const timestampMax = timestampUtil(addmin);
   cy.log(timestampMax);
 
   tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
@@ -713,8 +705,8 @@ When(
     tenantAdminObj.eventLogSearchBox().click();
     tenantAdminObj.eventLogSearchBox().type(namespaceName).click();
 
-    const timestampMin = timeChanger(submin);
-    const timestampMax = timeChanger(addmin);
+    const timestampMin = timestampUtil(submin);
+    const timestampMax = timestampUtil(addmin);
 
     cy.log(timestampMin);
     cy.log(timestampMax);
