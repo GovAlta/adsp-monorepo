@@ -47,11 +47,11 @@ Given('a service owner user is on status notices page', function () {
   cy.wait(10000);
 });
 
-When('the user clicks Add draft notice button', function () {
+When('the user clicks Add notice button', function () {
   statusObj.addNoticeButton().click();
 });
 
-Then('the user views Add draft notice dialog', function () {
+Then('the user views Add notice dialog', function () {
   statusObj.noticeModalTitle().invoke('text').should('eq', 'Add notice');
 });
 
@@ -204,8 +204,8 @@ When(
   }
 );
 
-Then('the user views Edit draft notice dialog', function () {
-  statusObj.noticeModalTitle().invoke('text').should('eq', 'Edit draft notice');
+Then('the user views Edit notice dialog', function () {
+  statusObj.noticeModalTitle().invoke('text').should('eq', 'Edit notice');
 });
 
 When('the user selects {string} filter by status radio button', function (filterType) {

@@ -41,7 +41,7 @@ class NotificationsPage {
 
   notificationTypeEditBtn(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/following-sibling::*//*[@data-testid="icon-create"]`
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/following-sibling::*//*[@data-testid="edit-notification-type"]`
     );
   }
 
@@ -131,13 +131,13 @@ class NotificationsPage {
 
   addAnEmailTemplateModalSubject() {
     return cy.xpath(
-      '//*[@data-testid="template-form" and @data-state="visible"]//label[contains(text(), "Subject")]/parent::div[@class="goa-form-item"]//*[@class="monaco-scrollable-element editor-scrollable vs"]'
+      '(//*[@data-testid="template-form" and @data-state="visible"]//*[@class="monaco-scrollable-element editor-scrollable vs"])[1]'
     );
   }
 
   addAnEmailTemplateModalBody() {
     return cy.xpath(
-      '//*[@data-testid="template-form" and @data-state="visible"]//label[contains(text(), "Body")]/parent::div[@class="goa-form-item"]//*[@class="monaco-scrollable-element editor-scrollable vs"]'
+      '(//*[@data-testid="template-form" and @data-state="visible"]//*[@class="monaco-scrollable-element editor-scrollable vs"])[2]'
     );
   }
 
@@ -197,7 +197,7 @@ class NotificationsPage {
   }
 
   eventTemplatePreviewModalTitle() {
-    return cy.xpath('//*[@data-testid="template-form" and @data-state="visible"]//*[@class="modal-title"]');
+    return cy.xpath('//*[@data-testid="email-preview" and @data-state="visible"]//*[@class="modal-title"]');
   }
 
   eventTemplatePreviewModalSubjectEditor() {
@@ -213,9 +213,7 @@ class NotificationsPage {
   }
 
   eventTemplatePreviewModalCloseBtn() {
-    return cy.xpath(
-      '//*[@data-testid="template-form" and @data-state="visible"]//*[@data-testid="template-form-cancel"]'
-    );
+    return cy.xpath('//*[@data-testid="email-preview" and @data-state="visible"]//*[@data-testid="preview-cancel"]');
   }
 }
 
