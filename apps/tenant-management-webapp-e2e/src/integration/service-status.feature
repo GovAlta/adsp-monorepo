@@ -9,13 +9,13 @@ Feature: Service status
   @TEST_CS-781 @REQ_CS-667 @regression
   Scenario Outline: As a service owner, I can add, edit and delete a notice
     Given a service owner user is on status notices page
-    When the user clicks Add a draft notice button
-    Then the user views Add a draft notice dialog
+    When the user clicks Add notice button
+    Then the user views Add notice dialog
     When the user enters "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
     And the user clicks Save as draft button
     Then the user "views" the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
     When the user clicks "edit" menu for the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
-    Then the user views Edit draft notice dialog
+    Then the user views Edit notice dialog
     When the user enters "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     And the user clicks Save as draft button
     Then the user "views" the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
@@ -38,8 +38,8 @@ Feature: Service status
   @TEST_CS-783 @REQ_CS-667 @regression
   Scenario: As a service owner, I can add, publish and archive a notice
     Given a service owner user is on status notices page
-    When the user clicks Add a draft notice button
-    Then the user views Add a draft notice dialog
+    When the user clicks Add notice button
+    Then the user views Add notice dialog
     When the user enters "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
     And the user clicks Save as draft button
     Then the user "views" the "Draft" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"

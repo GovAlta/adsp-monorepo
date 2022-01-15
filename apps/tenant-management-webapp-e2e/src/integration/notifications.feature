@@ -30,7 +30,7 @@ Feature: Notifications
     When the user selects "tenant-service:tenant-created" in the event dropdown
     And the user clicks Next button on Select an event page
     Then the user views Add an email template page
-    When the user enter "autotest subject" as subject and "autotest body" as body
+    When the user enters "autotest subject" as subject and "autotest body" as body
     And the user clicks Add button in Add an email template page
     Then the user "views" the event of "tenant-service:tenant-created" in "autotest-notificationType"
     When the user clicks Select event button for "autotest-notificationType"
