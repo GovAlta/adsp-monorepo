@@ -290,9 +290,13 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
                 },
               ],
             };
+      let entity = await repository.getSubscriberByEmail(tenantId, req.body?.email.toLowerCase());
 
-      const subscriberEntity = await SubscriberEntity.create(user, repository, subscriber);
-      res.send(mapSubscriber(apiId, subscriberEntity));
+      if (!entity) {
+        entity = await SubscriberEntity.create(user, repository, subscriber);
+      }
+
+      res.send(mapSubscriber(apiId, entity));
     } catch (err) {
       const entity = await repository.getSubscriberByEmail(tenantId, req.body?.email);
       err.id = entity?.id;
@@ -356,6 +360,8 @@ export function updateSubscriber(apiId: AdspId, repository: SubscriptionReposito
       const update = req.body;
       const subscriber: SubscriberEntity = req[SUBSCRIBER_KEY];
 
+      console.log(JSON.stringify(update) + '<update------------------');
+
       const emailIndex = update?.channels?.findIndex((channel) => channel.channel === 'email');
 
       update.channels[emailIndex].address = update?.channels[emailIndex]?.address.toLowerCase();
@@ -363,7 +369,9 @@ export function updateSubscriber(apiId: AdspId, repository: SubscriptionReposito
       const criteria = { email: update?.channels[emailIndex]?.address };
       const response = await repository.findSubscribers(1, '1', criteria);
 
-      if (response.results.length === 0) {
+      console.log(JSON.stringify(response) + '<response');
+
+      if (response.results.length === 0 || update.id === response.results[0].id) {
         const updated = await subscriber.update(user, update);
         res.send(mapSubscriber(apiId, updated));
       } else {

@@ -28,11 +28,16 @@ export const Subscriptions: FunctionComponent = () => {
     dispatch(getSubscriptions(criteria));
   };
 
+  const resetState = () => {
+    setCriteriaState(criteriaInit);
+    dispatch(getSubscriptions({}));
+  };
+
   const emailIndex = selectedSubscription?.channels?.findIndex((channel) => channel.channel === 'email');
 
   return (
     <>
-      <SubscribersSearchForm onSearch={searchFn} />
+      <SubscribersSearchForm onSearch={searchFn} reset={resetState} />
       <SubscriptionList
         onDelete={(sub: Subscriber, type: string) => {
           setSelectedSubscription(sub);

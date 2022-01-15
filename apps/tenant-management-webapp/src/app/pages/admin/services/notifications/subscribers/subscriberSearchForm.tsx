@@ -14,12 +14,20 @@ import '@abgov/core-css/src/lib/styles/v2/colors.scss';
 
 interface EventSearchFormProps {
   onSearch?: (searchCriteria: SubscriberSearchCriteria) => void;
+  reset?: (searchCriteria: SubscriberSearchCriteria) => void;
 }
 
-export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({ onSearch }) => {
+export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({ onSearch, reset }) => {
   const criteriaInit = {
     email: '',
     name: '',
+  };
+
+  const resetCriteria = {
+    email: '',
+    name: '',
+    top: 10,
+    next: false,
   };
 
   const [criteriaState, setCriteriaState] = useState<SubscriberSearchCriteria>(criteriaInit);
@@ -53,7 +61,7 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
             title="Reset"
             onClick={() => {
               setCriteriaState(criteriaInit);
-              onSearch(criteriaInit);
+              reset(resetCriteria);
             }}
           >
             Reset
