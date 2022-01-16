@@ -1,13 +1,9 @@
 export const getHeaderPreview = () => {
   return `
-<div>
+<header>
   <style>
     .goa-header {
       padding-bottom: 0.875rem;
-    }
-    .goa-logo {
-      /* padding-left: 1.25rem; */
-      /* padding-top: 0.625rem; */
     }
     #goa-callout-custom {
       background-color: #0081a2 !important;
@@ -32,6 +28,6 @@ export const getHeaderPreview = () => {
     </div>
   </div>
   <div id="goa-callout-custom"><div class="title">Alberta Digital Service Platform</div></div>
-</div>
+</header>
 `;
 };

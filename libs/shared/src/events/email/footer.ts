@@ -1,26 +1,26 @@
 export const getFooterPreview = (serviceName: string) => {
   return `
-  <div>
+  <footer>
   <style>
-    .goa-footer {
-      background-color: var(--light-grey);
+    .goa-footer-event {
+      background-color: #F1F1F1;
       padding-top: 2.5rem;
       padding-top: 3rem;
       padding-bottom: 3rem;
     }
-    .goa-footer .link {
+    .goa-footer-event .link {
       padding-left: 4.5rem;
       flex: 5;
       padding-bottom: 1.5rem;
     }
-    .goa-footer .logo {
+    .goa-footer-event .logo {
       padding-right: 6.75rem;
       flex: 1;
     }
-    .goa-footer .footer-disclaimer {
+    .goa-footer-event .footer-disclaimer {
       padding-left: 4.5rem;
       padding-right: 5.5rem;
-      color: var(--dark-grey);
+      color: #666666;
       padding-top: 1.75rem;
 
       font-size: 14px;
@@ -30,10 +30,10 @@ export const getFooterPreview = (serviceName: string) => {
       display: flex;
     }
     .footer-link-border {
-      border-bottom: 1px solid var(--grey);
+      border-bottom: 1px solid #DCDCDC;
     }
   </style>
-  <div class="goa-footer">
+  <div class="goa-footer-event">
     <div class="container footer-link-border">
       <div class="link">
         <span>
@@ -57,6 +57,6 @@ export const getFooterPreview = (serviceName: string) => {
       e-mail.
     </div>
   </div>
-</div>
+</footer>
 `;
 };
