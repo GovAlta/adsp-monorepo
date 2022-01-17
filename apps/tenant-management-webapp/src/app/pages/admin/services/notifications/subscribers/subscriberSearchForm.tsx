@@ -1,6 +1,4 @@
 import React, { FunctionComponent, useState } from 'react';
-import { RootState } from '@store/index';
-import { useSelector } from 'react-redux';
 import type { SubscriberSearchCriteria } from '@store/subscription/models';
 
 import {
@@ -10,42 +8,26 @@ import {
   GoAButton,
   GoAInputText,
   GoAInputEmail,
+  GoAFormActions,
 } from '@abgov/react-components/experimental';
-
-import { SubscriberList } from './subscriberList';
+import '@abgov/core-css/src/lib/styles/v2/colors.scss';
 
 interface EventSearchFormProps {
   onSearch?: (searchCriteria: SubscriberSearchCriteria) => void;
+  reset?: (searchCriteria: SubscriberSearchCriteria) => void;
 }
 
-interface EventSearchNextProps {
-  onSearch?: (searchCriteria: SubscriberSearchCriteria) => void;
-  searchCriteria: SubscriberSearchCriteria;
-}
-
-export const NextLoader: FunctionComponent<EventSearchNextProps> = ({ onSearch, searchCriteria }) => {
-  const hasNext = useSelector((state: RootState) => state.subscription.search.subscribers.hasNext);
-
-  if (hasNext) {
-    return (
-      <GoAButton
-        onClick={() => {
-          searchCriteria.next = true;
-          onSearch(searchCriteria);
-        }}
-      >
-        Load more...
-      </GoAButton>
-    );
-  } else {
-    return <></>;
-  }
-};
-
-export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({ onSearch }) => {
+export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({ onSearch, reset }) => {
   const criteriaInit = {
     email: '',
     name: '',
+  };
+
+  const resetCriteria = {
+    email: '',
+    name: '',
+    top: 10,
+    next: false,
   };
 
   const [criteriaState, setCriteriaState] = useState<SubscriberSearchCriteria>(criteriaInit);
@@ -59,7 +41,6 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
       criteriaState.email = value;
     }
     setCriteriaState({ ...criteriaState });
-    onSearch(criteriaState);
   };
 
   return (
@@ -67,17 +48,29 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
       <GoAForm>
         <GoAFlexRow gap="small">
           <GoAFormItem>
-            <label htmlFor="name">Name </label>
+            <label htmlFor="name">Search Subscriber Name</label>
             <GoAInputText name="name" id="name" value={criteriaState?.name} onChange={onChangeFn} />
           </GoAFormItem>
           <GoAFormItem>
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">Search Subscriber Email</label>
             <GoAInputEmail name="email" id="email" value={criteriaState?.email} onChange={onChangeFn} />
           </GoAFormItem>
         </GoAFlexRow>
+        <GoAFormActions alignment="right">
+          <GoAButton
+            title="Reset"
+            onClick={() => {
+              setCriteriaState(criteriaInit);
+              reset(resetCriteria);
+            }}
+          >
+            Reset
+          </GoAButton>
+          <GoAButton title="Search" onClick={() => onSearch(criteriaState)}>
+            Search
+          </GoAButton>
+        </GoAFormActions>
       </GoAForm>
-      <SubscriberList />
-      <NextLoader onSearch={onSearch} searchCriteria={criteriaState} />
     </div>
   );
 };

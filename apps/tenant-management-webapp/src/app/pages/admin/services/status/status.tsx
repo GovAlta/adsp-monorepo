@@ -150,7 +150,7 @@ function Status(): JSX.Element {
               about upcoming maintenance windows or other events
             </p>
             <GoALinkButton data-testid="add-notice" to={`${location.pathname}/notice/new`} buttonType="primary">
-              Add a draft notice
+              Add notice
             </GoALinkButton>
             <NoticeList />
           </Tab>
@@ -174,13 +174,13 @@ function Status(): JSX.Element {
         </Tabs>
         <Switch>
           <Route path="/admin/services/status/new">
-            <ApplicationFormModal isOpen={true} title="New application" />
+            <ApplicationFormModal isOpen={true} title="Add application" />
           </Route>
           <Route path="/admin/services/status/notice/new">
-            <NoticeModal isOpen={true} title="Add a draft notice" />
+            <NoticeModal isOpen={true} title="Add notice" />
           </Route>
           <Route path="/admin/services/status/notice/:noticeId">
-            <NoticeModal isOpen={true} title="Edit draft notice" />
+            <NoticeModal isOpen={true} title="Edit notice" />
           </Route>
           <Route path="/admin/services/status/:applicationId/edit">
             <ApplicationFormModal isOpen={true} title="Edit application" />

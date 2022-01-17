@@ -72,6 +72,7 @@ export function* subscribeToTenant(action: SubscribeToTenantAction): SagaIterato
         subscribeToTenantSuccess({
           addressAs: '',
           tenantId: `urn:ads:platform:tenant-service:v2:/tenants/${tenant}`,
+          channels: [{ channel: 'email', address: email }],
         })
       );
     } else {

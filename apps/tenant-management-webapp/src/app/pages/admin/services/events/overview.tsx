@@ -1,6 +1,30 @@
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useState, useEffect } from 'react';
+import { GoAButton } from '@abgov/react-components';
+import { RootState } from '@store/index';
+import { EventDefinition, defaultEventDefinition } from '@store/event/models';
+import { useSelector } from 'react-redux';
+import { EventDefinitionModalForm } from './edit';
 
-export const EventsOverview: FunctionComponent = () => {
+interface OverviewProps {
+  updateActiveIndex: (index: number) => void;
+}
+
+export const EventsOverview: FunctionComponent<OverviewProps> = ({ updateActiveIndex }) => {
+  const definitions = useSelector((state: RootState) => state.event.definitions);
+  const [coreNamespaces, setCoreNamespaces] = useState<string[]>([]);
+  const [openAddDefinition, setOpenAddDefinition] = useState(false);
+
+  useEffect(() => {
+    const namespaces = Object.values(definitions)
+      .filter((d: EventDefinition) => d.isCore)
+      .map((d: EventDefinition) => d.namespace);
+    setCoreNamespaces(namespaces);
+  }, [definitions]);
+
+  function reset() {
+    setOpenAddDefinition(false);
+  }
+
   return (
     <div>
       <p>
@@ -15,6 +39,29 @@ export const EventsOverview: FunctionComponent = () => {
         utilized by services consuming events. For example, notification template configuration can validate template
         variables as matching the payload from a triggering event.
       </p>
+      <GoAButton
+        data-testid="add-definition"
+        onClick={() => {
+          setOpenAddDefinition(true);
+        }}
+      >
+        Add definition
+      </GoAButton>
+
+      {openAddDefinition && (
+        <EventDefinitionModalForm
+          open={true}
+          coreNamespaces={coreNamespaces}
+          onClose={reset}
+          isEdit={false}
+          initialValue={defaultEventDefinition}
+          onSave={() => {
+            updateActiveIndex(1);
+          }}
+        />
+      )}
+      <br />
+      <br />
     </div>
   );
 };

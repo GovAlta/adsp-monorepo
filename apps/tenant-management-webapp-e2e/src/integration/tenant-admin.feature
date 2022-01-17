@@ -18,7 +18,6 @@ Feature: Tenant admin
       | Status        | Service status |
       | Event log     | Event log      |
 
-
   @regression @smoke-test @api
   Scenario Outline: As a GoA service owner I can get a list of "<Options>"
     When the user sends a configuration service request to "<End Point>"
@@ -71,7 +70,7 @@ Feature: Tenant admin
     # Getting content from clipboard doesn't work on build agent. Commented out this validation.
     # When the user clicks click to copy button
     # Then the autologin link is copied to the clipboard
-    And the user views introductions and links for "Access", "File service", "Status", "Events" and "Notifications"
+    And the user views introductions and links for "Access", "Directory", "File service", "Status", "Events" and "Notifications"
     When the user clicks "Access" link
     Then the user is directed to "Access" page
     When the user selects the "Dashboard" menu item

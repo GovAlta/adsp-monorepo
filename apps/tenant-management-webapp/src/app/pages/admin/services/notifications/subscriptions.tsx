@@ -5,26 +5,46 @@ import { getSubscriptions, Unsubscribe } from '@store/subscription/actions';
 import type { Subscriber } from '@store/subscription/models';
 import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
+import { SubscribersSearchForm } from './subscribers/subscriberSearchForm';
+import type { SubscriberSearchCriteria } from '@store/subscription/models';
 
 export const Subscriptions: FunctionComponent = () => {
+  const criteriaInit = {
+    email: '',
+    name: '',
+  };
   const dispatch = useDispatch();
   const [selectedSubscription, setSelectedSubscription] = useState<Subscriber>(null);
   const [selectedType, setSelectedType] = useState<string>(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+
+  const [criteriaState, setCriteriaState] = useState<SubscriberSearchCriteria>(criteriaInit);
   useEffect(() => {
-    dispatch(getSubscriptions());
+    dispatch(getSubscriptions({}));
   }, []);
+
+  const searchFn = (criteria: SubscriberSearchCriteria) => {
+    setCriteriaState(criteria);
+    dispatch(getSubscriptions(criteria));
+  };
+
+  const resetState = () => {
+    setCriteriaState(criteriaInit);
+    dispatch(getSubscriptions({}));
+  };
 
   const emailIndex = selectedSubscription?.channels?.findIndex((channel) => channel.channel === 'email');
 
   return (
     <>
+      <SubscribersSearchForm onSearch={searchFn} reset={resetState} />
       <SubscriptionList
         onDelete={(sub: Subscriber, type: string) => {
           setSelectedSubscription(sub);
           setShowDeleteConfirmation(true);
           setSelectedType(type);
         }}
+        searchCriteria={criteriaState}
       />
       {/* Delete confirmation */}
       <GoAModal testId="delete-confirmation" isOpen={showDeleteConfirmation}>

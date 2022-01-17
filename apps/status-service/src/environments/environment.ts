@@ -3,6 +3,10 @@ import * as envalid from 'envalid';
 import * as util from 'util';
 
 dotenv.config();
+export const POD_TYPES = {
+  api: 'api',
+  job: 'job',
+};
 
 export const environment = envalid.cleanEnv(
   process.env,
@@ -23,6 +27,8 @@ export const environment = envalid.cleanEnv(
     DIRECTORY_URL: envalid.str({ default: 'http://localhost:3333' }),
     TENANT_MANAGEMENT_API_HOST: envalid.str({ default: 'http://localhost:3333' }),
     PLATFORM_TENANT_REALM: envalid.str({ default: '0014430f-abb9-4b57-915c-de9f3c889696' }),
+    HA_MODEL: envalid.str({ default: 'false' }),
+    POD_TYPE: envalid.str({ default: POD_TYPES.api }), // FOR HA_MODEL = true only.
   },
   {
     reporter: ({ errors }) => {

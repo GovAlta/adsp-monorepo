@@ -26,7 +26,7 @@ parameters:
   - name: NAME_SUFFIX
     description: Suffix applied to the names of the objects created.
     displayName: Name Suffix
-    value: ""
+    value: ''
   - name: BUILD_TAG
     description: Name of the ImageStreamTag to build.
     displayName: Build Tag
@@ -38,7 +38,7 @@ parameters:
   - name: ROUTE_HOST
     description: Host for the route.
     displayName: Route Host
-    value: ""
+    value: ''
   - description: Username for MongoDB user that will be used for accessing the database.
     displayName: MongoDB Connection Username
     from: user[A-Z0-9]{3}
@@ -47,13 +47,13 @@ parameters:
     required: true
   - description: Password for the MongoDB connection user.
     displayName: MongoDB Connection Password
-    from: "[a-zA-Z0-9]{16}"
+    from: '[a-zA-Z0-9]{16}'
     generate: expression
     name: MONGODB_PASSWORD
     required: true
   - description: Password for the database admin user.
     displayName: MongoDB Admin Password
-    from: "[a-zA-Z0-9]{16}"
+    from: '[a-zA-Z0-9]{16}'
     generate: expression
     name: MONGODB_ADMIN_PASSWORD
     required: true
@@ -76,8 +76,8 @@ objects:
       labels:
         app: ${APP_NAME}${NAME_SUFFIX}
         component: database
-        apply-init: "true"
-        apply-branch: "true"
+        apply-init: 'true'
+        apply-branch: 'true'
       name: ${APP_NAME}-mongodb${NAME_SUFFIX}
     stringData:
       database-admin-password: ${MONGODB_ADMIN_PASSWORD}
@@ -92,8 +92,8 @@ objects:
       labels:
         app: ${APP_NAME}${NAME_SUFFIX}
         component: database
-        apply-init: "true"
-        apply-branch: "true"
+        apply-init: 'true'
+        apply-branch: 'true'
       name: ${APP_NAME}-mongodb${NAME_SUFFIX}
     spec:
       accessModes:
@@ -109,11 +109,11 @@ objects:
       labels:
         app: ${APP_NAME}${NAME_SUFFIX}
         component: database
-        apply-branch: "true"
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-branch: 'true'
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-staging: 'true'
+        apply-prod: 'true'
       name: ${APP_NAME}-mongodb${NAME_SUFFIX}
     spec:
       ports:
@@ -134,15 +134,15 @@ objects:
     kind: DeploymentConfig
     metadata:
       annotations:
-        template.alpha.openshift.io/wait-for-ready: "true"
+        template.alpha.openshift.io/wait-for-ready: 'true'
       labels:
         app: ${APP_NAME}${NAME_SUFFIX}
         component: database
-        apply-branch: "true"
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-branch: 'true'
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-staging: 'true'
+        apply-prod: 'true'
       name: ${APP_NAME}-mongodb${NAME_SUFFIX}
     spec:
       replicas: 1
@@ -180,7 +180,7 @@ objects:
                     secretKeyRef:
                       key: database-name
                       name: ${APP_NAME}-mongodb${NAME_SUFFIX}
-              image: " "
+              image: ' '
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 initialDelaySeconds: 30
@@ -242,7 +242,7 @@ objects:
       labels:
         app: ${APP_NAME}
         component: api
-        apply-infra: "true"
+        apply-infra: 'true'
       name: ${APP_NAME}
       namespace: ${INFRA_NAMESPACE}
     spec: {}
@@ -255,8 +255,8 @@ objects:
       labels:
         app: ${APP_NAME}${NAME_SUFFIX}
         component: api
-        apply-infra: "true"
-        apply-branch: "true"
+        apply-infra: 'true'
+        apply-branch: 'true'
       name: ${APP_NAME}${NAME_SUFFIX}
     spec:
       output:
@@ -291,11 +291,11 @@ objects:
       labels:
         app: ${APP_NAME}${NAME_SUFFIX}
         component: api
-        apply-branch: "true"
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-branch: 'true'
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-staging: 'true'
+        apply-prod: 'true'
       name: ${APP_NAME}${NAME_SUFFIX}
     spec:
       replicas: 1
@@ -323,7 +323,7 @@ objects:
                     name: ${APP_NAME}
               env:
                 - name: PORT
-                  value: "3333"
+                  value: '3333'
                 - name: MONGO_USER
                   valueFrom:
                     secretKeyRef:
@@ -344,6 +344,10 @@ objects:
                     secretKeyRef:
                       key: database-name
                       name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                - name: HA_MOEL
+                  value: 'true'
+                - name: POD_TYPE
+                  value: api
               imagePullPolicy: IfNotPresent
               name: ${APP_NAME}
               ports:
@@ -376,16 +380,103 @@ objects:
           type: ImageChange
 
   - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      labels:
+        app: ${APP_NAME}${NAME_SUFFIX}
+        component: job
+        apply-branch: 'true'
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-staging: 'true'
+        apply-prod: 'true'
+      name: ${APP_NAME}${NAME_SUFFIX}-job
+    spec:
+      replicas: 1
+      revisionHistoryLimit: 3
+      selector:
+        app: ${APP_NAME}${NAME_SUFFIX}
+        component: job
+      strategy:
+        activeDeadlineSeconds: 21600
+        recreateParams:
+          timeoutSeconds: 600
+        resources: {}
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            app: ${APP_NAME}${NAME_SUFFIX}
+            component: job
+        spec:
+          containers:
+            - envFrom:
+                - configMapRef:
+                    name: ${APP_NAME}
+                - secretRef:
+                    name: ${APP_NAME}
+              env:
+                - name: MONGO_USER
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-user
+                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                - name: MONGO_URI
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-uri
+                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                - name: MONGO_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-password
+                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                - name: MONGO_DB
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-name
+                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                - name: HA_MOEL
+                  value: 'true'
+                - name: POD_TYPE
+                  value: 'job'
+              imagePullPolicy: IfNotPresent
+              name: ${APP_NAME}
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 200Mi
+                requests:
+                  cpu: 20m
+                  memory: 50Mi
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+      test: false
+      triggers:
+        - imageChangeParams:
+            containerNames:
+              - ${APP_NAME}
+            from:
+              kind: ImageStreamTag
+              name: ${APP_NAME}:${DEPLOY_TAG}
+              namespace: ${INFRA_NAMESPACE}
+          type: ImageChange
+  - apiVersion: v1
     kind: Service
     metadata:
       labels:
         app: ${APP_NAME}${NAME_SUFFIX}
         component: api
-        apply-branch: "true"
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-branch: 'true'
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-staging: 'true'
+        apply-prod: 'true'
       name: ${APP_NAME}${NAME_SUFFIX}
     spec:
       ports:
@@ -404,11 +495,11 @@ objects:
       labels:
         app: ${APP_NAME}${NAME_SUFFIX}
         component: api
-        apply-branch: "true"
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-branch: 'true'
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-staging: 'true'
+        apply-prod: 'true'
       name: ${APP_NAME}${NAME_SUFFIX}
     spec:
       host: ${ROUTE_HOST}

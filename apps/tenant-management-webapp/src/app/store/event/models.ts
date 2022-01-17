@@ -30,3 +30,16 @@ export interface EventSearchCriteria {
   namespace: string;
   name: string;
 }
+
+export const defaultEventDefinition: EventDefinition = {
+  isCore: false,
+  namespace: '',
+  name: '',
+  description: '',
+  payloadSchema: {
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: true,
+  },
+};

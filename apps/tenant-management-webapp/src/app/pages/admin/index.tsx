@@ -7,6 +7,7 @@ import Sidebar from './sidebar';
 import Dashboard from './dashboard';
 import { File } from './services/file';
 import AccessPage from './services/access/access';
+import { Directory } from './services/directory';
 import Container from '@components/Container';
 import Status from './services/status';
 import { EventLog } from './event-log';
@@ -35,6 +36,9 @@ const TenantManagement = (): JSX.Element => {
           </Route>
           <Route path="/admin/access">
             <AccessPage />
+          </Route>
+          <Route exact path="/admin/services/directory">
+            <Directory />
           </Route>
           <Route exact path="/admin/services/files">
             <File />

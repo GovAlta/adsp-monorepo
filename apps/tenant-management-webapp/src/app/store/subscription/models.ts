@@ -13,6 +13,7 @@ export interface SubscriptionWrapper {
   subscriberId?: string;
   typeId?: string;
   criterial?: string;
+  visibleInSubscribers?: boolean;
 }
 
 export interface Channels {
@@ -29,10 +30,18 @@ export interface Subscriber {
   userId?: string;
 }
 
+export interface HasNext {
+  id: string;
+  hasNext: boolean;
+  top: number;
+}
+
 export interface SubscriberService {
   subscription: Subscription;
+  subscriptionsHasNext: HasNext[];
   subscriptions: SubscriptionWrapper[];
   subscriber: Subscriber;
+  subscriberSubscriptions: Record<string, SubscriptionWrapper[]>;
   successMessage: string;
   search: {
     subscribers: {
@@ -40,27 +49,30 @@ export interface SubscriberService {
       hasNext: boolean;
       pageSize: number;
       top: number;
-    }
-  }
+    };
+  };
 }
 
 export const SUBSCRIBER_INIT: SubscriberService = {
   subscription: undefined,
+  subscriptionsHasNext: [],
   subscriptions: undefined,
   subscriber: undefined,
+  subscriberSubscriptions: {},
   successMessage: null,
   search: {
     subscribers: {
       data: undefined,
       hasNext: false,
       pageSize: DEFAULT_PAGE_SIZE,
-      top: DEFAULT_PAGE_SIZE
-    }
-  }
+      top: DEFAULT_PAGE_SIZE,
+    },
+  },
 };
 
 export interface SubscriberSearchCriteria {
   email?: string;
   name?: string;
   next?: boolean;
+  top?: number;
 }
