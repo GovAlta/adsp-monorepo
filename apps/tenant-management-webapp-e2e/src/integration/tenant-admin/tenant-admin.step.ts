@@ -527,7 +527,7 @@ function timestampUtil(dateTime) {
   ) {
     //if static datetime used as an input, use following format "2022-01-07T04:02"
     return dateTime;
-  } else {
+  } else if (String(dateTime).match(/now([-+])([0-9]+)mins/)) {
     //if it is not static datetime we need to parse to match input field +- mins, use following format "now+-5mins"
     const addedMins = String(dateTime).substring(
       String(dateTime).search(/([+-])([0-9])/),
@@ -538,6 +538,10 @@ function timestampUtil(dateTime) {
     const finalTime = dayjs().add(minChange, 'minutes').format('YYYY-MM-DD HH:mm'); //it will add or subtract
     const finalDate = finalTime.split(' ')[0] + 'T' + finalTime.split(' ')[1];
     return finalDate;
+  } else {
+    expect(String(dateTime)).to.match(
+      /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
+    );
   }
 }
 
