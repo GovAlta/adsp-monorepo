@@ -84,7 +84,7 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
   app.use(passport.initialize());
 
   // start the endpoint checking jobs
-  if (!environment.HA_MODEL || (environment.HA_MODEL && environment.POD_TYPE === POD_TYPES.job)) {
+  if (environment.HA_MODEL !== 'true' || (environment.HA_MODEL === 'true' && environment.POD_TYPE === POD_TYPES.job)) {
     scheduleServiceStatusJobs({
       logger,
       eventService,
@@ -107,7 +107,7 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
   app.use(errorHandler);
   // start service
   const port = environment.PORT || 3338;
-  if (!environment.HA_MODEL || (environment.HA_MODEL && environment.POD_TYPE === POD_TYPES.api)) {
+  if (environment.HA_MODEL !== 'true' || (environment.HA_MODEL === 'true' && environment.POD_TYPE === POD_TYPES.api)) {
     const server = app.listen(port, () => {
       logger.info(`Listening at http://localhost:${port}`);
     });

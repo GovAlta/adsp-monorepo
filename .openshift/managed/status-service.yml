@@ -345,7 +345,7 @@ objects:
                       key: database-name
                       name: ${APP_NAME}-mongodb${NAME_SUFFIX}
                 - name: HA_MOEL
-                  value: true
+                  value: 'true'
                 - name: POD_TYPE
                   value: api
               imagePullPolicy: IfNotPresent
@@ -437,9 +437,9 @@ objects:
                       key: database-name
                       name: ${APP_NAME}-mongodb${NAME_SUFFIX}
                 - name: HA_MOEL
-                  value: true
+                  value: 'true'
                 - name: POD_TYPE
-                  value: job
+                  value: 'job'
               imagePullPolicy: IfNotPresent
               name: ${APP_NAME}
               resources:
