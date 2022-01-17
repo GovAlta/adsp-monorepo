@@ -125,3 +125,5 @@ export const noticeApplicationSchema = new Schema(
   },
   { timestamps: true }
 );
+
+noticeApplicationSchema.index({ createdAt: 1 });
