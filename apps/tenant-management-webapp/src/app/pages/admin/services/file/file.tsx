@@ -48,7 +48,7 @@ export const File: FunctionComponent = () => {
       <Main>
         {isLoaded ? (
           <>
-            <h1>File services</h1>
+            <h1>File service</h1>
             <Tabs activeIndex={0}>
               <Tab label="Overview">
                 <FileOverview />
