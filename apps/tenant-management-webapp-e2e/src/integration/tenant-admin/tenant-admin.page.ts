@@ -52,7 +52,7 @@ class TenantAdminPage {
   }
 
   goaCardTexts() {
-    return cy.xpath('//*[@data-testid="card-content"]/div');
+    return cy.xpath('//*[@data-testid="card-content"]/div[1]');
   }
 
   goaCardLink(text) {
