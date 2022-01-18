@@ -331,7 +331,7 @@ export function* getSubscriberSubscriptions(action: GetSubscriberSubscriptionsAc
         headers: { Authorization: `Bearer ${token}` },
       });
       const subscriptions: SubscriptionWrapper[] = response.data.results;
-      yield put(GetSubscriberSubscriptionsSuccess(subscriptions));
+      yield put(GetSubscriberSubscriptionsSuccess(subscriptions, subscriber));
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - getSubscriberSubscriptions` }));
     }

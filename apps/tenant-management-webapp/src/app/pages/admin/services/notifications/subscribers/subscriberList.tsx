@@ -24,7 +24,7 @@ const ActionComponent: FunctionComponent<ActionComponentProps> = ({ subscriber, 
       return string;
     }
   }
-  const currentSubscriptions = useSelector(
+  const currentSubscriberAndSubscription = useSelector(
     (state: RootState) => state.subscription.subscriberSubscriptions[subscriber.id]
   );
 
@@ -33,7 +33,7 @@ const ActionComponent: FunctionComponent<ActionComponentProps> = ({ subscriber, 
   const emailIndex = subscriber?.channels?.findIndex((channel) => channel.channel === 'email');
 
   const getSubscriptions = () => {
-    if (!currentSubscriptions) {
+    if (!currentSubscriberAndSubscription) {
       dispatch(getSubscriberSubscriptions(subscriber));
     } else {
       dispatch(TriggerVisibilitySubscribersService(subscriber));
@@ -49,7 +49,7 @@ const ActionComponent: FunctionComponent<ActionComponentProps> = ({ subscriber, 
           <RowFlex>
             <Flex1>
               <GoAContextMenuIcon
-                type={currentSubscriptions && currentSubscriptions[0]?.visibleInSubscribers ? 'eye-off' : 'eye'}
+                type={currentSubscriberAndSubscription?.subscriber?.visibleSubscriptions ? 'eye-off' : 'eye'}
                 onClick={() => getSubscriptions()}
                 testId="toggle-details-visibility"
               />
@@ -64,11 +64,11 @@ const ActionComponent: FunctionComponent<ActionComponentProps> = ({ subscriber, 
           </RowFlex>
         </td>
       </tr>
-      {currentSubscriptions && currentSubscriptions[0]?.visibleInSubscribers && (
+      {currentSubscriberAndSubscription?.subscriber?.visibleSubscriptions && (
         <tr>
           <td>
             <h2>Subscriptions</h2>
-            {currentSubscriptions?.map((subscription, i) => {
+            {currentSubscriberAndSubscription?.subscriptions.map((subscription, i) => {
               return <div data-testid={`subscriptions-${i}`}>{subscription.typeId}</div>;
             })}
           </td>
@@ -84,7 +84,6 @@ export const SubscriberList: FunctionComponent = () => {
   const [selectedSubscription, setSelectedSubscription] = useState(null);
 
   const subscription = useSelector((state: RootState) => state.subscription);
-  const search = useSelector((state: RootState) => state.subscription.search);
   const subscribers = subscription.search.subscribers.data;
   if (!subscribers || subscribers.length === 0) {
     return <></>;
@@ -105,7 +104,7 @@ export const SubscriberList: FunctionComponent = () => {
       <DataTable>
         <thead>
           <tr>
-            <th>Name</th>
+            <th>Address as</th>
             <th>Email</th>
             <th>Actions</th>
           </tr>

@@ -127,7 +127,7 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
             <thead>
               <tr>
                 <th id="userName" data-testid={`subscription-header-address-as-${index}`}>
-                  User name
+                  Address as
                 </th>
                 <th id="channels">Channels</th>
                 <th id="actions">Actions</th>
