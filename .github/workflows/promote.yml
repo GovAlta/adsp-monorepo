@@ -37,34 +37,34 @@ jobs:
         shell: bash
         run: echo "::set-output name=affected-apps::$(npx nx affected:apps --plain --base=${{ inputs.affected-base }})"
 
-  # testRegression:
-  #   runs-on: ubuntu-20.04
-  #   environment:
-  #     name: Test-e2e
-  #   strategy:
-  #     matrix:
-  #       app: [tenant-management-webapp, status-app]
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - uses: actions/setup-node@v2
-  #       with:
-  #         node-version: "12"
-  #     - uses: actions/cache@v2
-  #       with:
-  #         path: ~/.npm
-  #         key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-  #     - name: E2E Test
-  #       uses: ./.github/actions/nx-cypress-e2e
-  #       with:
-  #         app: ${{ matrix.app }}
-  #         environment: test
-  #         tags: "@regression and not @ignore"
-  #         core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
-  #         core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
-  #         api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
-  #         cy-password: ${{ secrets.CY_PASSWORD }}
-  #         cy-password-2: ${{ secrets.CY_PASSWORD2 }}
-  #         cy-password-3: ${{ secrets.CY_PASSWORD3 }}
+  stagingRegression:
+    runs-on: ubuntu-20.04
+    environment:
+      name: Staging-e2e
+    strategy:
+      matrix:
+        app: [tenant-management-webapp, status-app]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "12"
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      - name: E2E Test
+        uses: ./.github/actions/nx-cypress-e2e
+        with:
+          app: ${{ matrix.app }}
+          environment: uat
+          tags: "@regression and not @ignore"
+          core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
+          core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
+          api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
+          cy-password: ${{ secrets.CY_PASSWORD }}
+          cy-password-2: ${{ secrets.CY_PASSWORD2 }}
+          cy-password-3: ${{ secrets.CY_PASSWORD3 }}
 
   deployProduction:
     runs-on: ubuntu-20.04
