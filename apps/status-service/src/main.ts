@@ -4,7 +4,7 @@ import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as helmet from 'helmet';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
-import { environment } from './environments/environment';
+import { environment, POD_TYPES } from './environments/environment';
 import { createRepositories } from './mongo';
 import { bindEndpoints, ServiceUserRoles } from './app';
 import * as cors from 'cors';
@@ -20,6 +20,7 @@ import {
   ApplicationStatusChangedDefinition,
   ApplicationNoticePublishedDefinition,
 } from './app/events';
+
 import { StatusApplicationHealthChange, StatusApplicationStatusChange } from './app/notificationTypes';
 
 const logger = createLogger('status-service', environment?.LOG_LEVEL || 'info');
@@ -83,16 +84,21 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
   app.use(passport.initialize());
 
   // start the endpoint checking jobs
-  scheduleServiceStatusJobs({
-    logger,
-    eventService,
-    serviceStatusRepository: repositories.serviceStatusRepository,
-    endpointStatusEntryRepository: repositories.endpointStatusEntryRepository,
-  });
+  if (!environment.HA_MODEL || (environment.HA_MODEL && environment.POD_TYPE === POD_TYPES.job)) {
+    scheduleServiceStatusJobs({
+      logger,
+      eventService,
+      serviceStatusRepository: repositories.serviceStatusRepository,
+      endpointStatusEntryRepository: repositories.endpointStatusEntryRepository,
+    });
+  }
 
   // service endpoints
-  bindEndpoints(app, { logger, tenantService, authenticate, eventService, ...repositories });
-
+  if (!environment.HA_MODEL || (environment.HA_MODEL && environment.POD_TYPE === POD_TYPES.api)) {
+    bindEndpoints(app, { logger, tenantService, authenticate, eventService, ...repositories });
+  } else {
+    logger.info(`Job instance, skip the api binding.`);
+  }
   // non-service endpoints
   app.get('/health', (_req, res) => {
     res.json({
