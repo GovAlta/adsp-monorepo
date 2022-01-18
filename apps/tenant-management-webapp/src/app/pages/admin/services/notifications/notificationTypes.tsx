@@ -264,37 +264,74 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               }
               description={notificationType.description}
             >
+              {Object.values(notification?.notificationTypes).find((type) => type.id === notificationType?.id) &&
+                'Override editing activated'}
               <h2>Events:</h2>
               <Grid>
                 {notificationType?.events?.map((event, key) => (
                   <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
                     <EventBorder>
-                      <div className="height-100 columnFlex">
-                        <div className="flex1">
-                          {event.namespace}:{event.name}
-                        </div>
+                      <MaxHeight height={168}>
                         <div className="rowFlex">
-                          <NotificationBorder className="smallPadding">
-                            <a className="noCursor">
-                              <GoAIcon type="mail" style="filled" />
-                            </a>
-                          </NotificationBorder>
-
-                          <div className="rightAlignEdit">
-                            <a
-                              style={{ marginRight: '20px' }}
-                              data-testid="preview-event"
-                              onClick={() => {
-                                setSelectedEvent(event);
-                                setSelectedType(notificationType);
-                                setShowEmailPreview(true);
-                              }}
-                            >
-                              Preview
-                            </a>
+                          <div className="flex1">
+                            {event.namespace}:{event.name}
+                          </div>
+                          <div className="rowFlex">
+                            <MaxHeight height={34}>
+                              {notificationType?.events.find(
+                                (e) => JSON.stringify() !== JSON.stringify(notificationType?.events)
+                              ) && (
+                                <NotificationBorder className="smallPadding">
+                                  <a
+                                    className="flex1 flex"
+                                    onClick={() => {
+                                      setSelectedEvent(event);
+                                      setSelectedType(notificationType);
+                                      setShowEventDeleteConfirmation(true);
+                                    }}
+                                    data-testid="delete-event"
+                                  >
+                                    <GoAIcon type="trash" />
+                                  </a>
+                                </NotificationBorder>
+                              )}
+                            </MaxHeight>
                           </div>
                         </div>
-                      </div>
+                        <div className="columnFlex height-100">
+                          <div className="flex1 flex flexEndAlign">
+                            <NotificationBorder className="smallPadding">
+                              <a className="noCursor">
+                                <GoAIcon type="mail" style="filled" />
+                              </a>
+                            </NotificationBorder>
+
+                            <div className="rightAlignEdit">
+                              <a
+                                style={{ marginRight: '20px' }}
+                                data-testid="preview-event"
+                                onClick={() => {
+                                  setSelectedEvent(event);
+                                  setSelectedType(notificationType);
+                                  setShowEmailPreview(true);
+                                }}
+                              >
+                                Preview
+                              </a>
+                              <a
+                                data-testid="edit-event"
+                                onClick={() => {
+                                  setSelectedEvent(event);
+                                  setSelectedType(notificationType);
+                                  setShowTemplateForm(true);
+                                }}
+                              >
+                                Edit
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      </MaxHeight>
                     </EventBorder>
                   </GridItem>
                 ))}
@@ -374,6 +411,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         errors={errors}
         title={formTitle}
         onSave={(type) => {
+          console.log(JSON.stringify(type) + '<type');
           type.subscriberRoles = type.subscriberRoles || [];
           type.events = type.events || [];
           type.publicSubscribe = type.publicSubscribe || false;
@@ -415,6 +453,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         open={showTemplateForm}
         errors={errors}
         onSubmit={(type) => {
+          console.log(JSON.stringify(type) + '<type-------xx');
           dispatch(UpdateNotificationTypeService(type));
           reset();
         }}
