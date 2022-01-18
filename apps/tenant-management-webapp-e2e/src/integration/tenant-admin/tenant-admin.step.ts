@@ -726,49 +726,6 @@ Then(
         expect(parseInt(parseDateTime + '')).to.be.gte(parseInt(tableMinTimestamp + ''));
         expect(parseInt(parseDateTime + '')).to.be.lte(parseInt(tableMaxTimestamp + ''));
       });
-    //   tenantAdminObj
-    //     .eventLogMinTimesStamp()
-    //     .invoke('val')
-    //     .then((val) => {
-    //       const timestampMin = String(val);
-
-    //       tenantAdminObj
-    //         .eventLogMaxTimesStamp()
-    //         .invoke('val')
-    //         .then((val) => {
-    //           const timestampMax = String(val);
-
-    //           tenantAdminObj
-    //             .eventTableBody()
-    //             .parent()
-    //             .within(function () {
-    //               cy.get('td')
-    //                 .eq(0)
-    //                 .then((elem) => {
-    //                   const tableDateTime = elem.text();
-    //                   const tableLastSlash = tableDateTime.lastIndexOf('/');
-    //                   const tableDate = tableDateTime.substring(0, tableLastSlash + 5);
-    //                   const tableTime = tableDateTime.substring(tableLastSlash + 5, tableDateTime.length + 1);
-    //                   const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
-    //                   const minTimestamp = dayjs(
-    //                     timestampMin.split('T')[0] + ' ' + timestampMin.split('T')[1],
-    //                     'YYYY-MM-DD hh:mm'
-    //                   );
-    //                   const maxTimestamp = dayjs(
-    //                     timestampMax.split('T')[0] + ' ' + timestampMax.split('T')[1],
-    //                     'YYYY-MM-DD hh:mm'
-    //                   );
-    //                   cy.log(minTimestamp + '');
-    //                   cy.log(maxTimestamp + '');
-    //                   cy.log(parseDateTime + '');
-    //                   //comparing table timestamp with the min and max values
-    //                   expect(parseInt(parseDateTime + '')).to.be.gte(parseInt(minTimestamp + ''));
-    //                   expect(parseInt(parseDateTime + '')).to.be.lte(parseInt(maxTimestamp + ''));
-    //                 });
-    //             });
-    //         });
-    //     });
-    // });
   }
 );
 
