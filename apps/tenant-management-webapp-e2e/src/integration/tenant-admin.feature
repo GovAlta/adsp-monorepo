@@ -14,7 +14,7 @@ Feature: Tenant admin
     Then the "<Page Title>" landing page is displayed
     Examples:
       | Menu          | Page Title     |
-      | File services | File services  |
+      | File services | File service   |
       | Status        | Service status |
       | Event log     | Event log      |
 

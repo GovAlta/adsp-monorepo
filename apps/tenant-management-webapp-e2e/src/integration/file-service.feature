@@ -106,7 +106,7 @@ Feature: File service
   @TEST_CS-315 @REQ_CS-196 @FileTypes @regression
   Scenario: As a GoA service admin, I can add, update and remove file types
     Given a service owner user is on file services overview page
-    When the user selects "File types" tab for "File services"
+    When the user selects "File types" tab for "File service"
     Then the user views file types page
     When the user adds a file type of "autotest-add", "Anyone (Anonymous)", "auto-test-role1, file-service-admin"
     Then the user "views" the file type of "autotest-add", "Anyone (Anonymous)", "auto-test-role1, file-service-admin"
@@ -127,13 +127,13 @@ Feature: File service
   @FileTypes @accessibility @regression
   Scenario: As a service owner, I can manage file types without any critical or serious accessibility issues
     Given a service owner user is on file services overview page
-    When the user selects "File types" tab for "File services"
+    When the user selects "File types" tab for "File service"
     Then no critical or serious accessibility issues on "file types page"
 
   @TEST_CS-316 @REQ_CS-196 @FileTypes @regression
   Scenario: As a GoA service owner, I cannot remove an in-use file type
     Given a service owner user is on file services overview page
-    When the user selects "File types" tab for "File services"
+    When the user selects "File types" tab for "File service"
     Then the user views file types page
     When the user clicks Delete button for file type "autotest-type5", "Anonymous", "file-service-admin"
     Then the user views file type current in user modal for "autotest-type5"
