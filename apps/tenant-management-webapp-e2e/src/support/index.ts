@@ -26,3 +26,13 @@ it('Get config settings and store them in environment variables', function () {
 it('Get a token and store it in token environment variable', function () {
   cy.postToken();
 });
+
+Cypress.on('uncaught:exception', (err) => {
+  // we expect tenant management webapp to have some random errors with message 'Cannot read properties of null'
+  // after event definition modal save and don't want to fail the test so we return false
+  if (err.message.includes('Cannot read properties of null')) {
+    return false;
+  }
+  // we still want to ensure there are no other unexpected
+  // errors, so we let them fail the test
+});

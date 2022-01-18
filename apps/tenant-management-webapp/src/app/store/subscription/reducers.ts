@@ -8,6 +8,9 @@ import {
   GET_SUBSCRIPTIONS_SUCCESS,
   UPDATE_SUBSCRIBER_SUCCESS,
   GET_TYPE_SUBSCRIPTION_SUCCESS,
+  GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS,
+  TRIGGER_VISIBILITY_SUBSCRIBER,
+  RESET_VISIBILITY_IN_SUBSCRIBERS,
 } from './actions';
 
 import { SUBSCRIBER_INIT, SubscriberService } from './models';
@@ -129,6 +132,55 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
             top,
           },
         },
+      };
+    }
+    case GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS: {
+      const { subscriptions } = action.payload;
+
+      const key = subscriptions[0].subscriberId;
+
+      subscriptions[0].visibleInSubscribers = true;
+      return {
+        ...state,
+        subscriberSubscriptions: {
+          ...state.subscriberSubscriptions,
+          [key]: subscriptions,
+        },
+      };
+    }
+
+    case TRIGGER_VISIBILITY_SUBSCRIBER: {
+      const { subscriber } = action.payload;
+
+      const subscriberSubscriptions = state.subscriberSubscriptions;
+
+      const visible = subscriberSubscriptions[subscriber.id][0].visibleInSubscribers;
+
+      subscriberSubscriptions[subscriber.id][0].visibleInSubscribers = !visible;
+      const key = subscriber.id;
+      return {
+        ...state,
+        subscriberSubscriptions: {
+          ...state.subscriberSubscriptions,
+          [key]: subscriberSubscriptions[subscriber.id],
+        },
+      };
+    }
+
+    case RESET_VISIBILITY_IN_SUBSCRIBERS: {
+      const newState = Object.assign({}, state);
+
+      const subscriberSubscriptions = newState.subscriberSubscriptions;
+
+      const keys = Object.keys(subscriberSubscriptions);
+
+      keys.forEach((subs) => {
+        subscriberSubscriptions[subs][0].visibleInSubscribers = false;
+      });
+
+      return {
+        ...state,
+        subscriberSubscriptions: subscriberSubscriptions,
       };
     }
 

@@ -281,18 +281,22 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
             }
           : {
               tenantId,
-              userId: req.body?.email.toLowerCase(),
+              userId: req.body?.email?.toLowerCase(),
               addressAs: req.body?.name,
               channels: [
                 {
                   channel: Channel.email,
-                  address: req.body?.email.toLowerCase(),
+                  address: req.body?.email?.toLowerCase(),
                 },
               ],
             };
+      let entity = await repository.getSubscriberByEmail(tenantId, req.body?.email?.toLowerCase());
 
-      const subscriberEntity = await SubscriberEntity.create(user, repository, subscriber);
-      res.send(mapSubscriber(apiId, subscriberEntity));
+      if (!entity) {
+        entity = await SubscriberEntity.create(user, repository, subscriber);
+      }
+
+      res.send(mapSubscriber(apiId, entity));
     } catch (err) {
       const entity = await repository.getSubscriberByEmail(tenantId, req.body?.email);
       err.id = entity?.id;
@@ -356,18 +360,23 @@ export function updateSubscriber(apiId: AdspId, repository: SubscriptionReposito
       const update = req.body;
       const subscriber: SubscriberEntity = req[SUBSCRIBER_KEY];
 
-      const emailIndex = update?.channels?.findIndex((channel) => channel.channel === 'email');
+      if (update.channels.length > 0) {
+        const emailIndex = update?.channels?.findIndex((channel) => channel.channel === 'email');
 
-      update.channels[emailIndex].address = update?.channels[emailIndex]?.address.toLowerCase();
+        update.channels[emailIndex].address = update?.channels[emailIndex]?.address.toLowerCase();
 
-      const criteria = { email: update?.channels[emailIndex]?.address };
-      const response = await repository.findSubscribers(1, '1', criteria);
+        const criteria = { email: update?.channels[emailIndex]?.address };
+        const response = await repository.findSubscribers(1, '1', criteria);
 
-      if (response.results.length === 0) {
+        if (response.results.length === 0 || update.id === response.results[0].id) {
+          const updated = await subscriber.update(user, update);
+          res.send(mapSubscriber(apiId, updated));
+        } else {
+          throw new InvalidOperationError('Subscriber with this email already exists');
+        }
+      } else {
         const updated = await subscriber.update(user, update);
         res.send(mapSubscriber(apiId, updated));
-      } else {
-        throw new InvalidOperationError('Subscriber with this email already exists');
       }
     } catch (err) {
       next(err);

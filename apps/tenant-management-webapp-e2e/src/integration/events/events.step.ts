@@ -149,7 +149,7 @@ When('the user clicks Cancel button on Definition modal', function () {
 });
 
 Then('the user exits the add definition dialog', function () {
-  eventsObj.definitionModal().invoke('attr', 'data-state').should('not.exist');
+  eventsObj.definitionModal().should('not.exist');
 });
 
 Then('the user only views show button for event definitions of {string}', function (servicesString) {

@@ -145,7 +145,7 @@ Then('the user views Add an email template page', function () {
   notificationsObj.addAnEmailTemplateModalTitle().invoke('text').should('equal', 'Add an email template');
 });
 
-When('the user enter {string} as subject and {string} as body', function (subjectText, bodyText) {
+When('the user enters {string} as subject and {string} as body', function (subjectText, bodyText) {
   notificationsObj.addAnEmailTemplateModalSubject().type(subjectText);
   notificationsObj.addAnEmailTemplateModalBody().type(bodyText);
 });
@@ -244,7 +244,7 @@ When('the user clicks Preview button on {string} in {string}', function (eventNa
 });
 
 Then('the user views Preview an email template modal', function () {
-  notificationsObj.eventTemplatePreviewModalTitle().invoke('text').should('eq', 'Preview an email template');
+  notificationsObj.eventTemplatePreviewModalTitle().invoke('text').should('contain', 'Preview an email template');
 });
 
 When('the user clicks Close button in Preview an email template modal', function () {

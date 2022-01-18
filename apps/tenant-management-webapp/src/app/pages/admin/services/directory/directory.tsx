@@ -17,7 +17,7 @@ export const Directory: FunctionComponent = () => {
       <Main>
         {isLoaded ? (
           <>
-            <h1>Directory services</h1>
+            <h1>Directory service</h1>
             <Tabs activeIndex={0}>
               <Tab label="Overview">
                 <DirectoryOverview />
