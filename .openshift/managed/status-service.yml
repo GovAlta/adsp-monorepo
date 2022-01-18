@@ -324,7 +324,7 @@ objects:
                     secretKeyRef:
                       key: database-tls
                       name: ${APP_NAME}-mongodb${NAME_SUFFIX}
-                - name: HA_MOEL
+                - name: HA_MODEL
                   value: "true"
                 - name: POD_TYPE
                   value: api
@@ -416,7 +416,7 @@ objects:
                     secretKeyRef:
                       key: database-name
                       name: ${APP_NAME}-mongodb${NAME_SUFFIX}
-                - name: HA_MOEL
+                - name: HA_MODEL
                   value: "true"
                 - name: POD_TYPE
                   value: "job"
