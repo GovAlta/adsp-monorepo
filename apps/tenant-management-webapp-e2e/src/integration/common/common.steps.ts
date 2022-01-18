@@ -118,6 +118,7 @@ Then('the user views {string} API documentation', function (serviceName) {
   });
 });
 
+// Service title on the page instead of service menu item text needs to be used
 When('the user selects {string} tab for {string}', function (tab, service) {
   commonObj.serviceTab(service, tab).click();
   cy.wait(2000);

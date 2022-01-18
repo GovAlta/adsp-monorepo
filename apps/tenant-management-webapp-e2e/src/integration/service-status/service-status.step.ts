@@ -407,6 +407,7 @@ When('the user {string} the subscribe checkbox for health check notification typ
 });
 
 Then('the user views the subscribe checkbox is {string}', function (checkboxStatus) {
+  cy.wait(1000); // Wait for the checkbox status to show
   statusObj
     .applicationHealthChangeNotificationSubscribeCheckbox()
     .invoke('attr', 'class')
@@ -429,6 +430,7 @@ Then('the user views the subscribe checkbox is {string}', function (checkboxStat
 });
 
 Then('the user views a subscription confirmation message for {string}', function (subscriptionStatus) {
+  cy.wait(1000); // Wait for the message to show up
   switch (subscriptionStatus) {
     case 'subscribed':
       commonObj
@@ -445,7 +447,7 @@ Then('the user views a subscription confirmation message for {string}', function
         .invoke('text')
         .should(
           'contain',
-          'You are unsubscribed! You will no longer receive notifications on auto.test@gov.ab.ca for status-application-status-change'
+          'You are unsubscribed! You will no longer receive notifications on auto.test@gov.ab.ca for status-application-health-change'
         );
       break;
     default:

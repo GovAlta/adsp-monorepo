@@ -71,13 +71,13 @@ Feature: Service status
     When the user "unselects" the subscribe checkbox for health check notification type
     Then the user views a subscription confirmation message for "unsubscribed"
     When the user selects the "Dashboard" menu item
-    And the user selects the "status" menu item
-    And the user selects "Applications" tab for "Status"
+    And the user selects the "Status" menu item
+    And the user selects "Applications" tab for "Service status"
     Then the user views the subscribe checkbox is "unchecked"
     # Subscribe application health change notifications
     When the user "selects" the subscribe checkbox for health check notification type
     Then the user views a subscription confirmation message for "subscribed"
     When the user selects the "Dashboard" menu item
-    And the user selects the "status" menu item
-    And the user selects "Applications" tab for "Status"
+    And the user selects the "Status" menu item
+    And the user selects "Applications" tab for "Service status"
     Then the user views the subscribe checkbox is "checked"
