@@ -13,7 +13,7 @@ import {
   RESET_VISIBILITY_IN_SUBSCRIBERS,
 } from './actions';
 
-import { SUBSCRIBER_INIT, SubscriberService } from './models';
+import { SUBSCRIBER_INIT, SubscriberService, SubscriberAndSubscriptions } from './models';
 
 export default function (state = SUBSCRIBER_INIT, action: ActionTypes): SubscriberService {
   switch (action.type) {
@@ -135,16 +135,22 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       };
     }
     case GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS: {
-      const { subscriptions } = action.payload;
+      const { subscriptions, subscriber } = action.payload;
 
-      const key = subscriptions[0].subscriberId;
+      const key = subscriber.id;
 
-      subscriptions[0].visibleInSubscribers = true;
+      const SubscriberAndSubscriptions: SubscriberAndSubscriptions = {
+        subscriptions: subscriptions,
+        subscriber: subscriber,
+      };
+
+      SubscriberAndSubscriptions.subscriber.visibleSubscriptions = true;
+
       return {
         ...state,
         subscriberSubscriptions: {
           ...state.subscriberSubscriptions,
-          [key]: subscriptions,
+          [key]: SubscriberAndSubscriptions,
         },
       };
     }
@@ -154,9 +160,9 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
 
       const subscriberSubscriptions = state.subscriberSubscriptions;
 
-      const visible = subscriberSubscriptions[subscriber.id][0].visibleInSubscribers;
+      const visible = subscriberSubscriptions[subscriber.id].subscriber.visibleSubscriptions;
 
-      subscriberSubscriptions[subscriber.id][0].visibleInSubscribers = !visible;
+      subscriberSubscriptions[subscriber.id].subscriber.visibleSubscriptions = !visible;
       const key = subscriber.id;
       return {
         ...state,
@@ -175,7 +181,7 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       const keys = Object.keys(subscriberSubscriptions);
 
       keys.forEach((subs) => {
-        subscriberSubscriptions[subs][0].visibleInSubscribers = false;
+        subscriberSubscriptions[subs].subscriber.visibleSubscriptions = false;
       });
 
       return {

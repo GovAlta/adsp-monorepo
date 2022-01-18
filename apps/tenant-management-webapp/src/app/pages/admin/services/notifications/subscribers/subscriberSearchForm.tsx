@@ -5,11 +5,11 @@ import {
   GoAForm,
   GoAFormItem,
   GoAFlexRow,
-  GoAButton,
   GoAInputText,
   GoAInputEmail,
   GoAFormActions,
 } from '@abgov/react-components/experimental';
+import { GoAButton } from '@abgov/react-components';
 import '@abgov/core-css/src/lib/styles/v2/colors.scss';
 
 interface EventSearchFormProps {
@@ -48,16 +48,17 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
       <GoAForm>
         <GoAFlexRow gap="small">
           <GoAFormItem>
-            <label htmlFor="name">Search Subscriber Name</label>
+            <label htmlFor="name">Search subscriber address as</label>
             <GoAInputText name="name" id="name" value={criteriaState?.name} onChange={onChangeFn} />
           </GoAFormItem>
           <GoAFormItem>
-            <label htmlFor="email">Search Subscriber Email</label>
+            <label htmlFor="email">Search subscriber email</label>
             <GoAInputEmail name="email" id="email" value={criteriaState?.email} onChange={onChangeFn} />
           </GoAFormItem>
         </GoAFlexRow>
         <GoAFormActions alignment="right">
           <GoAButton
+            buttonType="secondary"
             title="Reset"
             onClick={() => {
               setCriteriaState(criteriaInit);
