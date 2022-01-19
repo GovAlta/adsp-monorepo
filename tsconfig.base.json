@@ -32,6 +32,9 @@
       ],
       "@core-services/stylesheets": [
         "libs/stylesheets/scss/src/index.ts"
+      ],
+      "@core-services/shared": [
+        "libs/shared/src/index.ts"
       ]
     }
   },
