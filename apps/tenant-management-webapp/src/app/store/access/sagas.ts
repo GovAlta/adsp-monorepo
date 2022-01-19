@@ -1,9 +1,10 @@
-import { put, select } from 'redux-saga/effects';
+import { put, select, call } from 'redux-saga/effects';
 import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
 import { FetchAccessSuccessAction } from './actions';
 import { KeycloakApi } from './api';
 import { Role, User } from './models';
+import { UpdateIndicator } from '@store/session/actions';
 
 // eslint-disable-next-line
 export function* fetchAccess() {
@@ -19,6 +20,13 @@ export function* fetchAccess() {
     const [users, roles] = [yield keycloakApi.getUsers(), yield keycloakApi.getRoles()];
 
     // add userId[] attribute to roles
+
+    yield put(
+      UpdateIndicator({
+        show: true,
+        message: 'Loading...',
+      })
+    );
     const rolesWithUsers = yield (async () => {
       const userIds = users.map((user: User) => user.id);
       const userRoles = roles.map(async (role: Role) => {
@@ -45,7 +53,17 @@ export function* fetchAccess() {
     };
 
     yield put(action);
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
   } catch (e) {
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
     yield put(ErrorNotification({ message: e.message }));
   }
 }

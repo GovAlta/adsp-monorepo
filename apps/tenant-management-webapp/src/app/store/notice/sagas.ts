@@ -9,9 +9,7 @@ import {
   SaveNoticeAction,
   DeleteNoticeAction,
 } from './actions';
-import {
-  UpdateIndicator
-} from '@store/session/actions';
+import { UpdateIndicator } from '@store/session/actions';
 import { Session } from '@store/session/models';
 import { ConfigState } from '@store/config/models';
 import { NoticesResult, Notice } from './models';
