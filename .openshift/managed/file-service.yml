@@ -349,18 +349,11 @@ objects:
                   memory: 50Mi
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
-              volumeMounts:
-                - mountPath: /data/files
-                  name: file-volume
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           schedulerName: default-scheduler
           securityContext: {}
           terminationGracePeriodSeconds: 30
-          volumes:
-            - name: file-volume
-              persistentVolumeClaim:
-                claimName: file-service-files${NAME_SUFFIX}
       test: false
       triggers:
         - imageChangeParams:

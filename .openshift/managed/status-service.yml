@@ -416,6 +416,11 @@ objects:
                     secretKeyRef:
                       key: database-name
                       name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                - name: MONGO_TLS
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-tls
+                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
                 - name: HA_MODEL
                   value: "true"
                 - name: POD_TYPE
