@@ -121,7 +121,7 @@ export const discovery = async (urn: string, { directoryRepository }: ServicePro
 export const getDirectories = async (
   directoryRepository: DirectoryRepository
 ): Promise<{ urn: string; url: string }[]> => {
-  logger.info('Starting get directory from mongo db...');
+  logger.debug('Starting get directory from mongo db...');
   try {
     const response = [];
     // FIXME: using this repository with dependency injection make this impossible to test
@@ -146,6 +146,8 @@ export const getDirectories = async (
         }
       }
     }
+
+    logger.debug('Retrieved directory from mongo db.');
     return response;
   } catch (err) {
     throw new ApiError(

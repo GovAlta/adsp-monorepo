@@ -1,4 +1,4 @@
-apiVersion: v1
+apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
   name: service status
@@ -26,7 +26,7 @@ parameters:
   - name: NAME_SUFFIX
     description: Suffix applied to the names of the objects created.
     displayName: Name Suffix
-    value: ''
+    value: ""
   - name: BUILD_TAG
     description: Name of the ImageStreamTag to build.
     displayName: Build Tag
@@ -38,7 +38,7 @@ parameters:
   - name: ROUTE_HOST
     description: Host for the route.
     displayName: Route Host
-    value: ''
+    value: ""
   - description: Username for MongoDB user that will be used for accessing the database.
     displayName: MongoDB Connection Username
     from: user[A-Z0-9]{3}
@@ -47,13 +47,13 @@ parameters:
     required: true
   - description: Password for the MongoDB connection user.
     displayName: MongoDB Connection Password
-    from: '[a-zA-Z0-9]{16}'
+    from: "[a-zA-Z0-9]{16}"
     generate: expression
     name: MONGODB_PASSWORD
     required: true
   - description: Password for the database admin user.
     displayName: MongoDB Admin Password
-    from: '[a-zA-Z0-9]{16}'
+    from: "[a-zA-Z0-9]{16}"
     generate: expression
     name: MONGODB_ADMIN_PASSWORD
     required: true
@@ -76,8 +76,8 @@ objects:
       labels:
         app: ${APP_NAME}${NAME_SUFFIX}
         component: database
-        apply-init: 'true'
-        apply-branch: 'true'
+        apply-init: "true"
+        apply-branch: "true"
       name: ${APP_NAME}-mongodb${NAME_SUFFIX}
     stringData:
       database-admin-password: ${MONGODB_ADMIN_PASSWORD}
@@ -85,6 +85,7 @@ objects:
       database-password: ${MONGODB_PASSWORD}
       database-user: ${MONGODB_USER}
       database-uri: mongodb://${APP_NAME}-mongodb${NAME_SUFFIX}:27017
+      database-tls: "false"
 
   - apiVersion: v1
     kind: PersistentVolumeClaim
@@ -92,10 +93,11 @@ objects:
       labels:
         app: ${APP_NAME}${NAME_SUFFIX}
         component: database
-        apply-init: 'true'
-        apply-branch: 'true'
+        apply-init: "true"
+        apply-branch: "true"
       name: ${APP_NAME}-mongodb${NAME_SUFFIX}
     spec:
+      storageClassName: azure-disk
       accessModes:
         - ReadWriteOnce
       resources:
@@ -109,11 +111,11 @@ objects:
       labels:
         app: ${APP_NAME}${NAME_SUFFIX}
         component: database
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
       name: ${APP_NAME}-mongodb${NAME_SUFFIX}
     spec:
       ports:
@@ -134,15 +136,15 @@ objects:
     kind: DeploymentConfig
     metadata:
       annotations:
-        template.alpha.openshift.io/wait-for-ready: 'true'
+        template.alpha.openshift.io/wait-for-ready: "true"
       labels:
         app: ${APP_NAME}${NAME_SUFFIX}
         component: database
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
       name: ${APP_NAME}-mongodb${NAME_SUFFIX}
     spec:
       replicas: 1
@@ -180,7 +182,7 @@ objects:
                     secretKeyRef:
                       key: database-name
                       name: ${APP_NAME}-mongodb${NAME_SUFFIX}
-              image: ' '
+              image: " "
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 initialDelaySeconds: 30
@@ -242,46 +244,17 @@ objects:
       labels:
         app: ${APP_NAME}
         component: api
-        apply-infra: 'true'
+        apply-infra: "true"
       name: ${APP_NAME}
       namespace: ${INFRA_NAMESPACE}
-    spec: {}
-
-  # BuildConfig is created for the primary pipeline as well as branch deployment.
-  # NOTE: Each instance should publish a unique Tag to the common ImageStream in infra.
-  - apiVersion: v1
-    kind: BuildConfig
-    metadata:
-      labels:
-        app: ${APP_NAME}${NAME_SUFFIX}
-        component: api
-        apply-infra: 'true'
-        apply-branch: 'true'
-      name: ${APP_NAME}${NAME_SUFFIX}
     spec:
-      output:
-        to:
-          kind: ImageStreamTag
-          name: ${APP_NAME}:${BUILD_TAG}
-          namespace: ${INFRA_NAMESPACE}
-      postCommit: {}
-      resources:
-        limits:
-          cpu: 200m
-          memory: 200Mi
-        requests:
-          cpu: 20m
-          memory: 50Mi
-      source:
-        binary: {}
-        type: Binary
-      strategy:
-        dockerStrategy:
-          buildArgs:
-            - name: SERVICE
-              value: ${APP_NAME}
-          dockerfilePath: .openshift/service/Dockerfile
-        type: Docker
+      tags:
+        - name: ${BUILD_TAG}
+          from:
+            kind: DockerImage
+            name: ghcr.io/govalta/status-service:${BUILD_TAG}
+          referencePolicy:
+            type: Local
 
   # DeploymentConfig (and Service and Route) is created in each environment of the
   # primary pipline as well as branch deployment.
@@ -291,11 +264,11 @@ objects:
       labels:
         app: ${APP_NAME}${NAME_SUFFIX}
         component: api
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
       name: ${APP_NAME}${NAME_SUFFIX}
     spec:
       replicas: 1
@@ -304,11 +277,13 @@ objects:
         app: ${APP_NAME}${NAME_SUFFIX}
         component: api
       strategy:
-        activeDeadlineSeconds: 21600
-        recreateParams:
+        type: Rolling
+        rollingParams:
           timeoutSeconds: 600
+          maxUnavailable: 25%
+          maxSurge: 25%
+        activeDeadlineSeconds: 21600
         resources: {}
-        type: Recreate
       template:
         metadata:
           labels:
@@ -323,7 +298,7 @@ objects:
                     name: ${APP_NAME}
               env:
                 - name: PORT
-                  value: '3333'
+                  value: "3333"
                 - name: MONGO_USER
                   valueFrom:
                     secretKeyRef:
@@ -344,8 +319,13 @@ objects:
                     secretKeyRef:
                       key: database-name
                       name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                - name: MONGO_TLS
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-tls
+                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
                 - name: HA_MODEL
-                  value: 'true'
+                  value: "true"
                 - name: POD_TYPE
                   value: api
               imagePullPolicy: IfNotPresent
@@ -385,11 +365,11 @@ objects:
       labels:
         app: ${APP_NAME}${NAME_SUFFIX}
         component: job
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
       name: ${APP_NAME}${NAME_SUFFIX}-job
     spec:
       replicas: 1
@@ -436,10 +416,15 @@ objects:
                     secretKeyRef:
                       key: database-name
                       name: ${APP_NAME}-mongodb${NAME_SUFFIX}
+                - name: MONGO_TLS
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-tls
+                      name: ${APP_NAME}-mongodb${NAME_SUFFIX}
                 - name: HA_MODEL
-                  value: 'true'
+                  value: "true"
                 - name: POD_TYPE
-                  value: 'job'
+                  value: "job"
               imagePullPolicy: IfNotPresent
               name: ${APP_NAME}
               resources:
@@ -472,11 +457,11 @@ objects:
       labels:
         app: ${APP_NAME}${NAME_SUFFIX}
         component: api
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
       name: ${APP_NAME}${NAME_SUFFIX}
     spec:
       ports:
@@ -495,11 +480,11 @@ objects:
       labels:
         app: ${APP_NAME}${NAME_SUFFIX}
         component: api
-        apply-branch: 'true'
-        apply-dev: 'true'
-        apply-test: 'true'
-        apply-staging: 'true'
-        apply-prod: 'true'
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
       name: ${APP_NAME}${NAME_SUFFIX}
     spec:
       host: ${ROUTE_HOST}
