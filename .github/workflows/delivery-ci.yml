@@ -210,7 +210,7 @@ jobs:
         uses: ./.github/actions/nx-cypress-e2e
         with:
           app: ${{ matrix.app }}
-          environment: uat
+          environment: staging
           tags: "@smoke-test and not @ignore"
           core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
           core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
