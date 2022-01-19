@@ -5,9 +5,10 @@ export interface NotificationItem {
   subscriberRoles: string[];
   id: string;
   publicSubscribe: boolean;
+  customized: boolean;
 }
 
-export type NotificationType = Record<string, NotificationItem>
+export type NotificationType = Record<string, NotificationItem>;
 
 export interface EventItem {
   name: string;
@@ -40,7 +41,7 @@ export interface RequestBodySchema {
 export interface NotificationService {
   notificationList: NotificationType;
   notificationTypes: NotificationType | undefined;
-  core: NotificationType
+  core: NotificationType;
 }
 
 export const NOTIFICATION_INIT: NotificationService = {

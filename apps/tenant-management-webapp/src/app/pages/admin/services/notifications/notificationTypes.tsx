@@ -34,6 +34,7 @@ const emptyNotificationType: NotificationItem = {
   subscriberRoles: [],
   id: null,
   publicSubscribe: false,
+  customized: false,
 };
 
 interface ParentCompProps {
@@ -58,9 +59,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(FetchNotificationTypeService());
-    dispatch(FetchCoreNotificationTypeService());
     dispatch(FetchRealmRoles());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (notification?.notificationTypes) {
+      dispatch(FetchCoreNotificationTypeService());
+    }
+  }, [notification?.notificationTypes]);
 
   function reset() {
     setShowTemplateForm(false);
@@ -264,9 +270,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               }
               description={notificationType.description}
             >
-              {Object.values(notification?.notificationTypes).find((type) => type.id === notificationType?.id) &&
-                'Override editing activated'}
+              {notificationType.customized && 'Override editing activated'}
               <h2>Events:</h2>
+              {/* {JSON.stringify(notification?.notificationTypes)} */}
               <Grid>
                 {notificationType?.events?.map((event, key) => (
                   <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
@@ -278,23 +284,35 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           </div>
                           <div className="rowFlex">
                             <MaxHeight height={34}>
-                              {notificationType?.events.find(
-                                (e) => JSON.stringify() !== JSON.stringify(notificationType?.events)
-                              ) && (
-                                <NotificationBorder className="smallPadding">
-                                  <a
-                                    className="flex1 flex"
-                                    onClick={() => {
-                                      setSelectedEvent(event);
-                                      setSelectedType(notificationType);
-                                      setShowEventDeleteConfirmation(true);
-                                    }}
-                                    data-testid="delete-event"
-                                  >
-                                    <GoAIcon type="trash" />
-                                  </a>
-                                </NotificationBorder>
+                              {console.log(
+                                JSON.stringify(
+                                  notification?.notificationTypes[notificationType?.id]?.events?.find(
+                                    (ev) => ev.name === event.name
+                                  )
+                                ) + '<1111'
                               )}
+                              {console.log(JSON.stringify(event) + '<2222')}
+                              {notification?.notificationTypes[notificationType?.id] &&
+                                JSON.stringify(event) !==
+                                  JSON.stringify(
+                                    notification?.notificationTypes[notificationType?.id]?.events?.find(
+                                      (ev) => ev.name === event.name
+                                    )
+                                  ) && (
+                                  <NotificationBorder className="smallPadding">
+                                    <a
+                                      className="flex1 flex"
+                                      onClick={() => {
+                                        setSelectedEvent(event);
+                                        setSelectedType(notificationType);
+                                        setShowEventDeleteConfirmation(true);
+                                      }}
+                                      data-testid="delete-event"
+                                    >
+                                      <GoAIcon type="trash" />
+                                    </a>
+                                  </NotificationBorder>
+                                )}
                             </MaxHeight>
                           </div>
                         </div>
