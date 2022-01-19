@@ -8,7 +8,7 @@ jobs:
   testRegression:
     runs-on: ubuntu-20.04
     environment:
-      name: Test-e2e
+      name: Staging-e2e
     strategy:
       fail-fast: false
       matrix:
@@ -26,7 +26,7 @@ jobs:
         uses: ./.github/actions/nx-cypress-e2e
         with:
           app: ${{ matrix.app }}
-          environment: test
+          environment: staging
           tags: "@regression and not @ignore"
           core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
           core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}

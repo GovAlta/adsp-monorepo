@@ -29,7 +29,7 @@ jobs:
         uses: nrwl/last-successful-commit-action@v1
         id: last_successful_commit
         with:
-          branch: aro
+          branch: main
           workflow_id: promote.yml
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Get affected apps
