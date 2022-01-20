@@ -39,6 +39,8 @@ jobs:
 
   stagingRegression:
     runs-on: ubuntu-20.04
+    needs: affected
+    if: needs.affected.outputs.affected_apps
     environment:
       name: Staging-e2e
     strategy:
@@ -57,7 +59,7 @@ jobs:
         uses: ./.github/actions/nx-cypress-e2e
         with:
           app: ${{ matrix.app }}
-          environment: uat
+          environment: staging
           tags: "@regression and not @ignore"
           core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
           core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
@@ -68,7 +70,7 @@ jobs:
 
   deployProduction:
     runs-on: ubuntu-20.04
-    needs: affected
+    needs: [affected, stagingRegression]
     env:
       AFFECTED_APPS: ${{ needs.affected.outputs.affected_apps }}
     environment:
