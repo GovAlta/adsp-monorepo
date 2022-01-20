@@ -14,13 +14,20 @@ interface MongoRepositoryProps {
   MONGO_TLS: boolean;
 }
 
-export const createRepositories = async ({ logger, ...props }: MongoRepositoryProps): Promise<Repositories> => {
-  const mongoConnectionString = `${props.MONGO_URI}/${props.MONGO_DB}?ssl=${props.MONGO_TLS}`;
+export const createRepositories = async ({
+  MONGO_URI,
+  MONGO_DB,
+  MONGO_USER,
+  MONGO_PASSWORD,
+  MONGO_TLS,
+  logger,
+}: MongoRepositoryProps): Promise<Repositories> => {
+  const mongoConnectionString = `${MONGO_URI}/${MONGO_DB}?retryWrites=false&ssl=${MONGO_TLS}`;
   logger.info(`Connected to MongoDB at: ${mongoConnectionString}`);
 
   await connect(mongoConnectionString, {
-    user: props.MONGO_USER,
-    pass: props.MONGO_PASSWORD,
+    user: MONGO_USER,
+    pass: MONGO_PASSWORD,
     useNewUrlParser: true,
     useFindAndModify: false,
     useUnifiedTopology: true,

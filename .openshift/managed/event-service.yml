@@ -1,4 +1,4 @@
-apiVersion: v1
+apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
   name: event-service
@@ -116,10 +116,7 @@ objects:
       labels:
         app: event-service
         component: queue
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-init: "true"
     spec:
       type: ClusterIP
       ports:
@@ -141,10 +138,7 @@ objects:
       labels:
         app: event-service
         component: queue
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-init: "true"
     spec:
       selector:
         app: event-service
@@ -157,28 +151,6 @@ objects:
         - name: clustering
           port: 25672
           targetPort: 25672
-  - apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: event-service-rabbitmq-internal-access
-      labels:
-        app: event-service
-        component: queue
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
-    spec:
-      podSelector:
-        matchLabels:
-          app: event-service
-          component: queue
-      ingress:
-        - from:
-            - podSelector:
-                matchLabels:
-                  app: event-service
-                  component: queue
   - apiVersion: apps/v1
     kind: StatefulSet
     metadata:
@@ -186,10 +158,7 @@ objects:
       labels:
         app: event-service
         component: queue
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-init: "true"
     spec:
       serviceName: event-service-rabbitmq
       replicas: 3
@@ -232,12 +201,14 @@ objects:
               livenessProbe:
                 exec:
                   command: ["rabbitmqctl", "status"]
-                initialDelaySeconds: 60
+                initialDelaySeconds: 120
+                periodSeconds: 60
                 timeoutSeconds: 30
               readinessProbe:
                 exec:
                   command: ["rabbitmqctl", "status"]
-                initialDelaySeconds: 60
+                initialDelaySeconds: 120
+                periodSeconds: 60
                 timeoutSeconds: 30
               env:
                 - name: RABBITMQ_DEFAULT_USER
@@ -277,7 +248,7 @@ objects:
                   value: /var/lib/rabbitmq/rabbitmq
               resources:
                 limits:
-                  cpu: 200m
+                  cpu: 150m
                   memory: 1Gi
                 requests:
                   cpu: 100m
@@ -298,7 +269,7 @@ objects:
               app: event-service
               component: queue
           spec:
-            storageClassName: standard-disk
+            storageClassName: azure-disk
             accessModes: ["ReadWriteOnce"]
             resources:
               requests:
@@ -310,12 +281,8 @@ objects:
       labels:
         app: event-service
         component: queue
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-init: "true"
     spec:
-      host: event-service-rabbitmq-${NAMESPACE}.os99.int.alberta.ca
       port:
         targetPort: http
       tls:
@@ -339,43 +306,14 @@ objects:
         apply-infra: "true"
       name: event-service
       namespace: ${INFRA_NAMESPACE}
-    spec: {}
-
-  # BuildConfig is created for the primary pipeline as well as branch deployment.
-  # NOTE: Each instance should publish a unique Tag to the common ImageStream in infra.
-  - apiVersion: v1
-    kind: BuildConfig
-    metadata:
-      labels:
-        app: event-service${NAME_SUFFIX}
-        component: api
-        apply-infra: "true"
-        apply-branch: "true"
-      name: event-service${NAME_SUFFIX}
     spec:
-      output:
-        to:
-          kind: ImageStreamTag
-          name: event-service:${BUILD_TAG}
-          namespace: ${INFRA_NAMESPACE}
-      postCommit: {}
-      resources:
-        limits:
-          cpu: 200m
-          memory: 200Mi
-        requests:
-          cpu: 20m
-          memory: 50Mi
-      source:
-        binary: {}
-        type: Binary
-      strategy:
-        dockerStrategy:
-          buildArgs:
-            - name: SERVICE
-              value: event-service
-          dockerfilePath: .openshift/service/Dockerfile
-        type: Docker
+      tags:
+        - name: ${BUILD_TAG}
+          from:
+            kind: DockerImage
+            name: ghcr.io/govalta/event-service:${BUILD_TAG}
+          referencePolicy:
+            type: Local
 
   # DeploymentConfig (and Service and Route) is created in each environment of the
   # primary pipline as well as branch deployment.
@@ -398,11 +336,13 @@ objects:
         app: event-service${NAME_SUFFIX}
         component: api
       strategy:
-        activeDeadlineSeconds: 21600
-        recreateParams:
+        type: Rolling
+        rollingParams:
           timeoutSeconds: 600
+          maxUnavailable: 25%
+          maxSurge: 25%
+        activeDeadlineSeconds: 21600
         resources: {}
-        type: Recreate
       template:
         metadata:
           labels:
@@ -418,8 +358,6 @@ objects:
               env:
                 - name: PORT
                   value: "3333"
-                - name: AMQP_HOST
-                  value: event-service-rabbitmq-balancer
               imagePullPolicy: IfNotPresent
               name: event-service
               ports:

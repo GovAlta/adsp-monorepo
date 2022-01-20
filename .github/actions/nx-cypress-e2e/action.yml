@@ -1,5 +1,5 @@
-name: "NX cypress e2e run"
-description: "Executes nx e2e for target project."
+name: 'NX cypress e2e run'
+description: 'Executes nx e2e for target project.'
 inputs:
   app:
     description: APP to run against.
@@ -29,7 +29,7 @@ inputs:
     description: Test user 3 password.
     required: true
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - shell: bash
       run: |
@@ -57,3 +57,10 @@ runs:
       with:
         name: ${{ inputs.app }}-test-cypress-reports
         path: dist/cypress/apps/${{ inputs.app }}-e2e/
+    - if: ${{ always() }}
+      name: Publish JUnit Test Results
+      uses: dorny/test-reporter@v1
+      with:
+        name: Cypress Test Results
+        path: dist/cypress/apps/${{ inputs.app }}-e2e/results/*.xml
+        reporter: java-junit

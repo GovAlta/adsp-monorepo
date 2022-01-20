@@ -1,4 +1,4 @@
-apiVersion: v1
+apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
   name: value-service
@@ -69,6 +69,7 @@ objects:
       database-name: ${DATABASE_NAME}
       database-password: ${DATABASE_PASSWORD}
       database-user: ${DATABASE_USER}
+      database-tls: 'false'
   # PersistentVolumeClaim is only generated for branch deployment to avoid losing persistent data.
   - apiVersion: v1
     kind: PersistentVolumeClaim
@@ -80,6 +81,7 @@ objects:
         apply-branch: "true"
       name: value-service-timescaledb${NAME_SUFFIX}
     spec:
+      storageClassName: azure-disk
       accessModes:
         - ReadWriteOnce
       resources:
@@ -217,43 +219,14 @@ objects:
         apply-infra: "true"
       name: value-service
       namespace: ${INFRA_NAMESPACE}
-    spec: {}
-
-  # BuildConfig is created for the primary pipeline as well as branch deployment.
-  # NOTE: Each instance should publish a unique Tag to the common ImageStream in infra.
-  - apiVersion: v1
-    kind: BuildConfig
-    metadata:
-      labels:
-        app: value-service${NAME_SUFFIX}
-        component: api
-        apply-infra: "true"
-        apply-branch: "true"
-      name: value-service${NAME_SUFFIX}
     spec:
-      output:
-        to:
-          kind: ImageStreamTag
-          name: value-service:${BUILD_TAG}
-          namespace: ${INFRA_NAMESPACE}
-      postCommit: {}
-      resources:
-        limits:
-          cpu: 200m
-          memory: 200Mi
-        requests:
-          cpu: 20m
-          memory: 50Mi
-      source:
-        binary: {}
-        type: Binary
-      strategy:
-        dockerStrategy:
-          buildArgs:
-            - name: SERVICE
-              value: value-service
-          dockerfilePath: .openshift/service/Dockerfile
-        type: Docker
+      tags:
+        - name: ${BUILD_TAG}
+          from:
+            kind: DockerImage
+            name: ghcr.io/govalta/value-service:${BUILD_TAG}
+          referencePolicy:
+            type: Local
 
   # DeploymentConfig (and Service and Route) is created in each environment of the
   # primary pipeline as well as branch deployment.
@@ -276,11 +249,13 @@ objects:
         app: value-service${NAME_SUFFIX}
         component: api
       strategy:
-        activeDeadlineSeconds: 21600
-        recreateParams:
+        type: Rolling
+        rollingParams:
           timeoutSeconds: 600
+          maxUnavailable: 25%
+          maxSurge: 25%
+        activeDeadlineSeconds: 21600
         resources: {}
-        type: Recreate
       template:
         metadata:
           labels:
@@ -321,6 +296,11 @@ objects:
                     secretKeyRef:
                       key: database-name
                       name: value-service-timescaledb${NAME_SUFFIX}
+                - name: DB_TLS
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-tls
+                      name: value-service-timescaledb${NAME_SUFFIX}
               imagePullPolicy: IfNotPresent
               name: value-service
               ports:
@@ -329,7 +309,7 @@ objects:
                   protocol: TCP
               resources:
                 limits:
-                  cpu: 200m
+                  cpu: 150m
                   memory: 200Mi
                 requests:
                   cpu: 20m

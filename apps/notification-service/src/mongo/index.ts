@@ -23,7 +23,7 @@ export const createRepositories = ({
   MONGO_TLS,
 }: MongoRepositoryProps): Promise<Repositories & { installationStore: InstallationStore }> =>
   new Promise((resolve, reject) => {
-    const mongoConnectionString = `${MONGO_URI}/${MONGO_DB}?ssl=${MONGO_TLS}`;
+    const mongoConnectionString = `${MONGO_URI}/${MONGO_DB}?retryWrites=false&ssl=${MONGO_TLS}`;
     connect(
       mongoConnectionString,
       {

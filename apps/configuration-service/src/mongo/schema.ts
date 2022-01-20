@@ -13,6 +13,7 @@ export const revisionSchema = new Schema({
   revision: {
     type: Number,
     required: true,
+    index: true,
   },
   configuration: {
     type: SchemaTypes.Mixed,

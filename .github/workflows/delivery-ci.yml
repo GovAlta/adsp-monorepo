@@ -43,8 +43,10 @@ jobs:
         with:
           affected-base: ${{ github.event.inputs.AFFECTED_BASE || steps.last_successful_commit.outputs.commit_hash }}
       - run: npm prune --production
-      - run: tar czf adsp-build-dist.tar.gz node_modules/ dist/
-      - uses: actions/upload-artifact@v2
+      - if: steps.production-build.outputs.affected-apps
+        run: tar czf adsp-build-dist.tar.gz node_modules/ dist/
+      - if: steps.production-build.outputs.affected-apps
+        uses: actions/upload-artifact@v2
         with:
           name: build-dist
           path: adsp-build-dist.tar.gz
@@ -81,18 +83,18 @@ jobs:
   deployDev:
     runs-on: ubuntu-20.04
     needs: [build, buildContainers]
-    if: needs.build.outputs.affected_apps
     env:
       AFFECTED_APPS: ${{ needs.build.outputs.affected_apps }}
     environment:
       name: Dev
     steps:
+      - uses: actions/checkout@v2
       - name: Oc login
         uses: redhat-actions/oc-login@v1
         with:
-          openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
-          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
-          namespace: core-services-infra
+          openshift_server_url: ${{ secrets.ARO_SERVER }}
+          openshift_token: ${{ secrets.ARO_TOKEN }}
+          namespace: adsp-build
           insecure_skip_tls_verify: true
       - name: Tag Dev
         run: |
@@ -101,80 +103,96 @@ jobs:
             oc import-image ghcr.io/govalta/$app:latest --reference-policy='local'
             oc tag $app:latest $app:dev --reference-policy='local'
           done
+      - run: oc project adsp-dev
+      - name: Apply Manifests
+        run: |
+          for app in $AFFECTED_APPS
+          do
+            oc process -f .openshift/managed/$app.yml -p INFRA_NAMESPACE=adsp-build -p NAMESPACE=adsp-dev -p DEPLOY_TAG=dev > $app.dev.json
+            oc apply -f $app.dev.json -l apply-dev=true,component!=database
+          done
       - name: Deploy Dev
         run: |
           for app in $AFFECTED_APPS
           do
-            oc project core-services-dev
             oc rollout latest dc/$app
             oc rollout status dc/$app
           done
 
-  devSmokeTest:
+  # TODO: Figure out smoke testing of dev environment.
+  # devSmokeTest:
+  #   runs-on: ubuntu-20.04
+  #   needs: [build, deployDev]
+  #   environment:
+  #     name: Dev-e2e
+  #   strategy:
+  #     matrix:
+  #       app: [tenant-management-webapp, status-app]
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: actions/setup-node@v2
+  #       with:
+  #         node-version: "12"
+  #     - uses: actions/cache@v2
+  #       with:
+  #         path: ~/.npm
+  #         key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+  #     - name: E2E Test
+  #       uses: ./.github/actions/nx-cypress-e2e
+  #       with:
+  #         app: ${{ matrix.app }}
+  #         environment: dev
+  #         tags: "@smoke-test and not @ignore"
+  #         core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
+  #         core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
+  #         api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
+  #         cy-password: ${{ secrets.CY_PASSWORD }}
+  #         cy-password-2: ${{ secrets.CY_PASSWORD2 }}
+  #         cy-password-3: ${{ secrets.CY_PASSWORD3 }}
+
+  deployStaging:
     runs-on: ubuntu-20.04
     needs: [build, deployDev]
-    environment:
-      name: Dev-e2e
-    strategy:
-      matrix:
-        app: [tenant-management-webapp, status-app]
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: "12"
-      - uses: actions/cache@v2
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-      - name: E2E Test
-        uses: ./.github/actions/nx-cypress-e2e
-        with:
-          app: ${{ matrix.app }}
-          environment: dev
-          tags: "@smoke-test and not @ignore"
-          core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
-          core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
-          api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
-          cy-password: ${{ secrets.CY_PASSWORD }}
-          cy-password-2: ${{ secrets.CY_PASSWORD2 }}
-          cy-password-3: ${{ secrets.CY_PASSWORD3 }}
-
-  deployTest:
-    runs-on: ubuntu-20.04
-    needs: [build, devSmokeTest]
     env:
       AFFECTED_APPS: ${{ needs.build.outputs.affected_apps }}
     environment:
-      name: Test
+      name: Staging
     steps:
+      - uses: actions/checkout@v2
       - name: Oc login
         uses: redhat-actions/oc-login@v1
         with:
-          openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
-          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
-          namespace: core-services-infra
+          openshift_server_url: ${{ secrets.ARO_SERVER }}
+          openshift_token: ${{ secrets.ARO_TOKEN }}
+          namespace: adsp-build
           insecure_skip_tls_verify: true
-      - name: Tag Test
+      - name: Tag Staging
         run: |
           for app in $AFFECTED_APPS
           do
-            oc tag $app:dev $app:test --reference-policy='local'
+            oc tag $app:dev $app:uat --reference-policy='local'
           done
-      - name: Deploy Test
+      - run: oc project adsp-uat
+      - name: Apply Manifests
         run: |
           for app in $AFFECTED_APPS
           do
-            oc project core-services-test
+            oc process -f .openshift/managed/$app.yml -p INFRA_NAMESPACE=adsp-build -p NAMESPACE=adsp-uat -p DEPLOY_TAG=uat > $app.uat.json
+            oc apply -f $app.uat.json -l apply-staging=true,component!=database
+          done
+      - name: Deploy Staging
+        run: |
+          for app in $AFFECTED_APPS
+          do
             oc rollout latest dc/$app
             oc rollout status dc/$app
           done
 
-  testSmokeTest:
+  stagingSmokeTest:
     runs-on: ubuntu-20.04
-    needs: [build, deployTest]
+    needs: [build, deployStaging]
     environment:
-      name: Test-e2e
+      name: Staging-e2e
     strategy:
       matrix:
         app: [tenant-management-webapp, status-app]
@@ -191,7 +209,7 @@ jobs:
         uses: ./.github/actions/nx-cypress-e2e
         with:
           app: ${{ matrix.app }}
-          environment: test
+          environment: staging
           tags: "@smoke-test and not @ignore"
           core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
           core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}

@@ -17,6 +17,7 @@ export const environment = envalid.cleanEnv(
     DB_NAME: envalid.str({ default: 'values-db' }),
     DB_USER: envalid.str({ default: 'postgres' }),
     DB_PASSWORD: envalid.str({ default: 'guest' }),
+    DB_TLS: envalid.bool({ default: false }),
     PORT: envalid.num({ default: 3336 }),
   },
   {

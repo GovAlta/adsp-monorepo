@@ -15,8 +15,7 @@ exports.up = function (knex) {
     })
     .raw("SELECT create_hypertable('metrics', 'timestamp')")
     .raw(
-      'CREATE VIEW metrics_hourly' +
-        '   WITH (timescaledb.continuous) AS ' +
+      'CREATE VIEW metrics_hourly AS ' +
         'SELECT namespace, name, tenant, metric,' +
         "   time_bucket(INTERVAL '1 hour', timestamp) AS bucket," +
         '   AVG(value),' +
@@ -27,8 +26,7 @@ exports.up = function (knex) {
         'GROUP BY namespace, name, tenant, metric, bucket;'
     )
     .raw(
-      'CREATE VIEW metrics_daily' +
-        '   WITH (timescaledb.continuous) AS ' +
+      'CREATE VIEW metrics_daily AS ' +
         'SELECT namespace, name, tenant, metric,' +
         "   time_bucket(INTERVAL '1 day', timestamp) AS bucket," +
         '   AVG(value),' +
@@ -39,8 +37,7 @@ exports.up = function (knex) {
         'GROUP BY namespace, name, tenant, metric, bucket;'
     )
     .raw(
-      'CREATE VIEW metrics_weekly' +
-        '   WITH (timescaledb.continuous) AS ' +
+      'CREATE VIEW metrics_weekly AS ' +
         'SELECT namespace, name, tenant, metric,' +
         "   time_bucket(INTERVAL '1 week', timestamp) AS bucket," +
         '   AVG(value),' +
