@@ -738,3 +738,50 @@ Then('the user views that search fields are empty', function () {
   tenantAdminObj.eventLogMinTimesStamp().should('have.value', '');
   tenantAdminObj.eventLogMaxTimesStamp().should('have.value', '');
 });
+Then(
+  'the user views that the event log is no longer filtered by {string}, {string}, {string}',
+  function (namespaceName, minTimestamp, maxTimestamp) {
+    expect(minTimestamp).to.match(
+      /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
+    );
+    expect(maxTimestamp).to.match(
+      /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
+    );
+    const userMinTimestamp = timestampUtil(minTimestamp);
+    const userMaxTimestamp = timestampUtil(maxTimestamp);
+    tenantAdminObj
+      .eventTableBody()
+      .parent()
+      .within(function () {
+        cy.get('tr')
+          .eq(1)
+          .within(function ($elem) {
+            const tableDateTime = $elem.text();
+            const tableLastSlash = tableDateTime.lastIndexOf('/');
+            const tableDate = tableDateTime.substring(0, tableLastSlash + 5);
+            const tableTime = tableDateTime.substring(tableLastSlash + 5, tableDateTime.length + 1);
+            const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
+            const tableMinTimestamp = dayjs(
+              String(userMinTimestamp).split('T')[0] + ' ' + String(userMinTimestamp).split('T')[1],
+              'YYYY-MM-DD hh:mm'
+            );
+            const tableMaxTimestamp = dayjs(
+              userMaxTimestamp.split('T')[0] + ' ' + userMaxTimestamp.split('T')[1],
+              'YYYY-MM-DD hh:mm'
+            );
+            cy.log(parseDateTime + '');
+
+            if (
+              //need to add verification for timestamps
+
+              expect(parseInt(parseDateTime + '')).to.be.gte(parseInt(tableMinTimestamp + '')) ||
+              expect(parseInt(parseDateTime + '')).to.be.lte(parseInt(tableMaxTimestamp + '')) ||
+              cy.get('td').eq(1).should('contain.text', namespaceName.split(':')[0]) ||
+              cy.get('td').eq(2).should('not.contain.text', namespaceName.split(':')[1])
+            ) {
+              cy.log('One of the conditions was not matched');
+            }
+          });
+      });
+  }
+);
