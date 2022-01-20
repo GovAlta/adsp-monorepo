@@ -1,6 +1,7 @@
 @REQ_CS-224 @file-service
 Feature: File service
 
+  # TEST DATA: the core api user needs to have directory-admin role to be able to call POST requests for discovery service
   @TEST_CS-311 @REQ_CS-232 @regression @api
   Scenario Outline: As a developer of a GoA digital service, I can get a map of urns to urls for all available services
     Given a testing mapping of "<Name>", "<Service>" and "<Service URL>" is inserted with "<RequestURL>"

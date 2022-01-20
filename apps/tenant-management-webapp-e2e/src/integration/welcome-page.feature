@@ -27,6 +27,7 @@ Feature: Tenant management welcome page
         Then the user views a message of cannot create another tenant
 
     # TEST DATA: a user has beta-test role, but never created a tenant before
+    # TEST DATA: the core api user needs tenant-service-admin role to delete a tenant
     @TEST_CS-297 @REQ_CS-370 @REQ-CS-193 @regression @tenantSignup
     Scenario: User didn't create a tenant before can create a new tenant
         Given the user is on the tenant management welcome page

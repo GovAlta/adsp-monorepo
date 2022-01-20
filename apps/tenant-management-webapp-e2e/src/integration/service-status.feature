@@ -6,7 +6,7 @@ Feature: Service status
     Given a service owner user is on service status page
     Then the user views the health check guidelines
 
-  # TEST DATA: an application named "Autotest"
+  # TEST DATA: need 2 applications named "Autotest" and "File Service"
   @TEST_CS-781 @REQ_CS-667 @regression
   Scenario Outline: As a service owner, I can add, edit and delete a notice
     Given a service owner user is on status notices page
