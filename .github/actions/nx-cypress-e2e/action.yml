@@ -58,19 +58,9 @@ runs:
         name: ${{ inputs.app }}-test-cypress-reports
         path: dist/cypress/apps/${{ inputs.app }}-e2e/
     - if: ${{ always() }}
-      name: Publish Unit Test Results
-      uses: EnricoMi/publish-unit-test-result-action/composite@v1
-      with:
-        files: dist/cypress/apps/${{ inputs.app }}-e2e/results/*.xml
-    - if: ${{ always() }}
       name: Publish JUnit Test Results
       uses: dorny/test-reporter@v1
       with:
-        name: Cypress Tests
+        name: Cypress Test Results
         path: dist/cypress/apps/${{ inputs.app }}-e2e/results/*.xml
         reporter: java-junit
-    - if: ${{ always() }}
-      name: Publish Junit Report
-      uses: mikepenz/action-junit-report@v2
-      with:
-        report_paths: dist/cypress/apps/${{ inputs.app }}-e2e/results/*.xml
