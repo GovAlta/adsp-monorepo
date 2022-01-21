@@ -71,7 +71,6 @@ objects:
         apply-prod: "true"
       name: tenant-management-webapp${NAME_SUFFIX}
     spec:
-      replicas: 1
       selector:
         app: tenant-management${NAME_SUFFIX}
         component: app

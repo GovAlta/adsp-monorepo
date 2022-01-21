@@ -78,7 +78,6 @@ objects:
         apply-prod: 'true'
       name: ${APP_NAME}${NAME_SUFFIX}
     spec:
-      replicas: 1
       selector:
         app: ${APP_NAME}${NAME_SUFFIX}
         component: app

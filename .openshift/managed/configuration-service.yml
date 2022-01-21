@@ -195,7 +195,7 @@ objects:
                 timeoutSeconds: 1
               resources:
                 limits:
-                  cpu: 150m
+                  cpu: 200m
                   memory: 500Mi
                 requests:
                   cpu: 20m
@@ -261,7 +261,6 @@ objects:
         apply-prod: "true"
       name: configuration-service${NAME_SUFFIX}
     spec:
-      replicas: 1
       revisionHistoryLimit: 3
       selector:
         app: configuration-service${NAME_SUFFIX}

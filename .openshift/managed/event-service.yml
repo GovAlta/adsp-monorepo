@@ -248,7 +248,7 @@ objects:
                   value: /var/lib/rabbitmq/rabbitmq
               resources:
                 limits:
-                  cpu: 150m
+                  cpu: 200m
                   memory: 1Gi
                 requests:
                   cpu: 100m
@@ -330,7 +330,6 @@ objects:
         apply-prod: "true"
       name: event-service${NAME_SUFFIX}
     spec:
-      replicas: 1
       revisionHistoryLimit: 3
       selector:
         app: event-service${NAME_SUFFIX}

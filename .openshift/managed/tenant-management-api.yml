@@ -260,7 +260,6 @@ objects:
         apply-prod: "true"
       name: tenant-management-api${NAME_SUFFIX}
     spec:
-      replicas: 1
       revisionHistoryLimit: 3
       selector:
         app: tenant-management${NAME_SUFFIX}
@@ -321,7 +320,7 @@ objects:
                   protocol: TCP
               resources:
                 limits:
-                  cpu: 150m
+                  cpu: 200m
                   memory: 200Mi
                 requests:
                   cpu: 20m

@@ -206,7 +206,6 @@ objects:
         apply-prod: "true"
       name: push-service${NAME_SUFFIX}
     spec:
-      replicas: 1
       revisionHistoryLimit: 3
       selector:
         app: push-service${NAME_SUFFIX}
@@ -249,7 +248,7 @@ objects:
                   protocol: TCP
               resources:
                 limits:
-                  cpu: 150m
+                  cpu: 200m
                   memory: 200Mi
                 requests:
                   cpu: 20m

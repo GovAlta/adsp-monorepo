@@ -209,7 +209,6 @@ objects:
         apply-prod: "true"
       name: verify-service${NAME_SUFFIX}
     spec:
-      replicas: 1
       revisionHistoryLimit: 3
       selector:
         app: verify-service${NAME_SUFFIX}
@@ -252,7 +251,7 @@ objects:
                   protocol: TCP
               resources:
                 limits:
-                  cpu: 150m
+                  cpu: 200m
                   memory: 200Mi
                 requests:
                   cpu: 20m
