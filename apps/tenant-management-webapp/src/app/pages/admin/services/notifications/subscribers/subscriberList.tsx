@@ -130,7 +130,6 @@ export const SubscriberList: FunctionComponent = () => {
         open={editSubscription}
         initialValue={selectedSubscription}
         onSave={(subscriber) => {
-          // dispatch(clearNotification());
           dispatch(UpdateSubscriberService(subscriber));
         }}
         onCancel={() => {

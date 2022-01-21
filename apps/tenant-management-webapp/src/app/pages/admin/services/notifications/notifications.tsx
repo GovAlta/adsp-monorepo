@@ -14,13 +14,6 @@ export const Notifications: FunctionComponent = () => {
   const tenantId = useSelector((state: RootState) => state.tenant?.id);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
   const adminEmail = useSelector((state: RootState) => state.tenant.adminEmail);
-  const hasTenantAdminRole = useSelector((state: RootState) =>
-    state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes('tenant-admin')
-  );
-
-  const hasNotificationAdminRole = useSelector((state: RootState) =>
-    state.session?.resourceAccess?.['urn:ads:platform:notification-service']?.roles?.includes('subscription-admin')
-  );
 
   const [activateEditState, setActivateEditState] = useState<boolean>(false);
   const [activeIndex, setActiveIndex] = useState<number>(0);

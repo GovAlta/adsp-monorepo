@@ -43,6 +43,12 @@ describe('Notification - Subscribers Tab', () => {
       ...SUBSCRIBER_INIT,
       search,
     },
+    tenant: {
+      adminEmail: 'agent.smith@matrix.com',
+    },
+    notifications: {
+      notifications: [],
+    },
   });
 
   it('renders', () => {

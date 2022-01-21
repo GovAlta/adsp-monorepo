@@ -14,6 +14,10 @@ describe('NotificationTypes Page', () => {
     session: { realm: 'core' },
     tenant: {
       realmRoles: ['uma_auth'],
+      adminEmail: 'agent.smith@matrix.com',
+    },
+    notifications: {
+      notifications: [],
     },
     subscription: {
       subscriptionsHasNext: [{ id: 'status-application-status-change', hasNext: false, top: 40 }],
