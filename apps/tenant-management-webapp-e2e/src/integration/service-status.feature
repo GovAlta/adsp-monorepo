@@ -6,7 +6,7 @@ Feature: Service status
     Given a service owner user is on service status page
     Then the user views the health check guidelines
 
-  # TEST DATA: an application named "Autotest"
+  # TEST DATA: need 2 applications named "Autotest" and "File Service"
   @TEST_CS-781 @REQ_CS-667 @regression
   Scenario Outline: As a service owner, I can add, edit and delete a notice
     Given a service owner user is on status notices page
@@ -62,3 +62,24 @@ Feature: Service status
     Then the user views "Archived" notices
     When the user selects "All" filter by status radio button
     Then the user views "All" notices
+
+  @TEST_CS-936 @REQ_CS-907 @regression
+  Scenario: As a tenant admin, I can subscribe to health check notification type
+    Given a tenant admin user is on status applications page
+    # Autotest user should be already subscribed to application health change notifications. If not, set it to subscribed
+    When the user "selects" the subscribe checkbox for health check notification type
+    Then the user views the subscribe checkbox is "checked"
+    # Unsubscribe application health change notifications
+    When the user "unselects" the subscribe checkbox for health check notification type
+    Then the user views a subscription confirmation message for "unsubscribed"
+    When the user selects the "Dashboard" menu item
+    And the user selects the "Status" menu item
+    And the user selects "Applications" tab for "Service status"
+    Then the user views the subscribe checkbox is "unchecked"
+    # Subscribe application health change notifications
+    When the user "selects" the subscribe checkbox for health check notification type
+    Then the user views a subscription confirmation message for "subscribed"
+    When the user selects the "Dashboard" menu item
+    And the user selects the "Status" menu item
+    And the user selects "Applications" tab for "Service status"
+    Then the user views the subscribe checkbox is "checked"

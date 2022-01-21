@@ -132,6 +132,10 @@ class StatusServicePage {
   filterByStatusRadio(type) {
     return cy.xpath(`//*[@class="goa-radio"]/input[@value="${type}"]/ancestor::div[@class="filter-radio"]`);
   }
+
+  applicationHealthChangeNotificationSubscribeCheckbox() {
+    return cy.xpath('//*[@class="goa-checkbox"]//*[@name="subscribe"]/parent::div');
+  }
 }
 
 export default StatusServicePage;
