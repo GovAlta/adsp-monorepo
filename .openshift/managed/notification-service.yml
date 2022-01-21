@@ -1,4 +1,4 @@
-apiVersion: v1
+apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
   name: notification-service
@@ -76,6 +76,7 @@ objects:
       database-password: ${MONGODB_PASSWORD}
       database-user: ${MONGODB_USER}
       database-uri: mongodb://notification-service-mongodb${NAME_SUFFIX}:27017
+      database-tls: 'false'
   # PersistentVolumeClaim is only generated for branch deployment to avoid losing persistent data.
   - apiVersion: v1
     kind: PersistentVolumeClaim
@@ -87,6 +88,7 @@ objects:
         apply-branch: "true"
       name: notification-service-mongodb${NAME_SUFFIX}
     spec:
+      storageClassName: azure-disk
       accessModes:
         - ReadWriteOnce
       resources:
@@ -235,43 +237,14 @@ objects:
         apply-infra: "true"
       name: notification-service
       namespace: ${INFRA_NAMESPACE}
-    spec: {}
-
-  # BuildConfig is created for the primary pipeline as well as branch deployment.
-  # NOTE: Each instance should publish a unique Tag to the common ImageStream in infra.
-  - apiVersion: v1
-    kind: BuildConfig
-    metadata:
-      labels:
-        app: notification-service${NAME_SUFFIX}
-        component: api
-        apply-infra: "true"
-        apply-branch: "true"
-      name: notification-service${NAME_SUFFIX}
     spec:
-      output:
-        to:
-          kind: ImageStreamTag
-          name: notification-service:${BUILD_TAG}
-          namespace: ${INFRA_NAMESPACE}
-      postCommit: {}
-      resources:
-        limits:
-          cpu: 200m
-          memory: 200Mi
-        requests:
-          cpu: 20m
-          memory: 50Mi
-      source:
-        binary: {}
-        type: Binary
-      strategy:
-        dockerStrategy:
-          buildArgs:
-            - name: SERVICE
-              value: notification-service
-          dockerfilePath: .openshift/service/Dockerfile
-        type: Docker
+      tags:
+        - name: ${BUILD_TAG}
+          from:
+            kind: DockerImage
+            name: ghcr.io/govalta/notification-service:${BUILD_TAG}
+          referencePolicy:
+            type: Local
 
   # DeploymentConfig (and Service and Route) is created in each environment of the
   # primary pipline as well as branch deployment.
@@ -294,11 +267,13 @@ objects:
         app: notification-service${NAME_SUFFIX}
         component: api
       strategy:
-        activeDeadlineSeconds: 21600
-        recreateParams:
+        type: Rolling
+        rollingParams:
           timeoutSeconds: 600
+          maxUnavailable: 25%
+          maxSurge: 25%
+        activeDeadlineSeconds: 21600
         resources: {}
-        type: Recreate
       template:
         metadata:
           labels:
@@ -334,6 +309,11 @@ objects:
                     secretKeyRef:
                       key: database-name
                       name: notification-service-mongodb${NAME_SUFFIX}
+                - name: MONGO_TLS
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-tls
+                      name: notification-service-mongodb${NAME_SUFFIX}
               imagePullPolicy: IfNotPresent
               name: notification-service
               ports:
@@ -342,7 +322,7 @@ objects:
                   protocol: TCP
               resources:
                 limits:
-                  cpu: 200m
+                  cpu: 150m
                   memory: 200Mi
                 requests:
                   cpu: 20m

@@ -32,7 +32,7 @@ export const createCoreStrategy = ({
       id: payload.sub,
       name: payload.name || payload.preferred_username,
       email: payload.email,
-      roles: [...(payload.realm_access?.roles || []), ...(payload.resource_access[serviceAud]?.roles || [])],
+      roles: [...(payload.realm_access?.roles || []), ...(payload.resource_access?.[serviceAud]?.roles || [])],
       isCore: true,
       token: {
         ...payload,
