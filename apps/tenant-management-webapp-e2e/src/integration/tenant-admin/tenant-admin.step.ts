@@ -595,8 +595,8 @@ Then(
           'YYYY-MM-DD hh:mm'
         );
         //comparing table timestamp with the min and max values
-        expect(parseInt(parseDateTime + '')).to.be.gte(parseInt(tableMinTimestamp + ''));
-        expect(parseInt(parseDateTime + '')).to.be.lte(parseInt(tableMaxTimestamp + ''));
+        expect(parseInt(parseDateTime + '')).to.be.gt(parseInt(tableMinTimestamp + ''));
+        expect(parseInt(parseDateTime + '')).to.be.lt(parseInt(tableMaxTimestamp + ''));
       });
   }
 );
@@ -722,9 +722,8 @@ Then(
           userMaxTimestamp.split('T')[0] + ' ' + userMaxTimestamp.split('T')[1],
           'YYYY-MM-DD hh:mm'
         );
-        //comparing table timestamp with the min and max values
-        expect(parseInt(parseDateTime + '')).to.be.gte(parseInt(tableMinTimestamp + ''));
-        expect(parseInt(parseDateTime + '')).to.be.lte(parseInt(tableMaxTimestamp + ''));
+        expect(parseInt(parseDateTime + '')).to.be.gt(parseInt(tableMinTimestamp + ''));
+        expect(parseInt(parseDateTime + '')).to.be.lt(parseInt(tableMaxTimestamp + ''));
       });
   }
 );
@@ -738,6 +737,7 @@ Then('the user views that search fields are empty', function () {
   tenantAdminObj.eventLogMinTimesStamp().should('have.value', '');
   tenantAdminObj.eventLogMaxTimesStamp().should('have.value', '');
 });
+
 Then(
   'the user views that the event log is no longer filtered by {string}, {string}, {string}',
   function (namespaceName, minTimestamp, maxTimestamp) {
@@ -749,39 +749,38 @@ Then(
     );
     const userMinTimestamp = timestampUtil(minTimestamp);
     const userMaxTimestamp = timestampUtil(maxTimestamp);
+    //checking first, second and third element from the first row of the table
     tenantAdminObj
       .eventTableBody()
-      .parent()
-      .within(function () {
-        cy.get('tr')
-          .eq(1)
-          .within(function ($elem) {
-            const tableDateTime = $elem.text();
-            const tableLastSlash = tableDateTime.lastIndexOf('/');
-            const tableDate = tableDateTime.substring(0, tableLastSlash + 5);
-            const tableTime = tableDateTime.substring(tableLastSlash + 5, tableDateTime.length + 1);
-            const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
-            const tableMinTimestamp = dayjs(
-              String(userMinTimestamp).split('T')[0] + ' ' + String(userMinTimestamp).split('T')[1],
-              'YYYY-MM-DD hh:mm'
-            );
-            const tableMaxTimestamp = dayjs(
-              userMaxTimestamp.split('T')[0] + ' ' + userMaxTimestamp.split('T')[1],
-              'YYYY-MM-DD hh:mm'
-            );
-            cy.log(parseDateTime + '');
+      .find('tr:nth-child(1)')
+      .each(($elem) => {
+        const tableDateTime = $elem.text().split(' ')[0];
+        const tableLastSlash = tableDateTime.lastIndexOf('/');
+        const tableDate = tableDateTime.substring(0, tableLastSlash + 5);
+        const tableTime = tableDateTime.substring(tableLastSlash + 5, tableDateTime.length + 1);
+        const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
+        const tableMinTimestamp = dayjs(
+          String(userMinTimestamp).split('T')[0] + ' ' + String(userMinTimestamp).split('T')[1],
+          'YYYY-MM-DD hh:mm'
+        );
+        const tableMaxTimestamp = dayjs(
+          userMaxTimestamp.split('T')[0] + ' ' + userMaxTimestamp.split('T')[1],
+          'YYYY-MM-DD hh:mm'
+        );
+        cy.log(parseDateTime + '  Table parsedDateTime');
+        cy.log(tableMinTimestamp + '');
+        cy.log(tableMaxTimestamp + '');
 
-            if (
-              //need to add verification for timestamps
-
-              expect(parseInt(parseDateTime + '')).to.be.gte(parseInt(tableMinTimestamp + '')) ||
-              expect(parseInt(parseDateTime + '')).to.be.lte(parseInt(tableMaxTimestamp + '')) ||
-              cy.get('td').eq(1).should('contain.text', namespaceName.split(':')[0]) ||
-              cy.get('td').eq(2).should('not.contain.text', namespaceName.split(':')[1])
-            ) {
-              cy.log('One of the conditions was not matched');
-            }
-          });
+        if (
+          expect(parseInt(parseDateTime + '')).to.be.lt(parseInt(tableMinTimestamp + '')) ||
+          expect(parseInt(parseDateTime + '')).to.be.gt(parseInt(tableMaxTimestamp + '')) ||
+          cy.get('td').eq(1).should('not.contain.text', namespaceName.split(':')[0]) ||
+          cy.get('td').eq(2).should('not.contain.text', namespaceName.split(':')[1])
+        ) {
+          cy.log('One of the conditions was not matched. Reset successful');
+        } else {
+          cy.log('FAILED: filter was not reset.');
+        }
       });
   }
 );
