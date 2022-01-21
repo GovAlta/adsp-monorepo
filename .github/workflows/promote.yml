@@ -35,10 +35,12 @@ jobs:
       - name: Get affected apps
         id: get-affected
         shell: bash
-        run: echo "::set-output name=affected-apps::$(npx nx affected:apps --plain --base=${{ inputs.affected-base }})"
+        run: echo "::set-output name=affected-apps::$(npx nx affected:apps --plain --base=${{ steps.last_successful_commit.outputs.commit_hash }})"
 
   stagingRegression:
     runs-on: ubuntu-20.04
+    needs: affected
+    if: needs.affected.outputs.affected_apps
     environment:
       name: Staging-e2e
     strategy:
@@ -57,7 +59,7 @@ jobs:
         uses: ./.github/actions/nx-cypress-e2e
         with:
           app: ${{ matrix.app }}
-          environment: uat
+          environment: staging
           tags: "@regression and not @ignore"
           core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
           core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
@@ -68,7 +70,7 @@ jobs:
 
   deployProduction:
     runs-on: ubuntu-20.04
-    needs: affected
+    needs: [affected, stagingRegression]
     env:
       AFFECTED_APPS: ${{ needs.affected.outputs.affected_apps }}
     environment:
@@ -103,3 +105,33 @@ jobs:
             oc rollout latest dc/$app
             oc rollout status dc/$app
           done
+
+  smokeTestProd:
+    runs-on: ubuntu-20.04
+    needs: deployProduction
+    environment:
+      name: Prod-e2e
+    strategy:
+      matrix:
+        app: [tenant-management-webapp, status-app]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "12"
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      - name: E2E Test
+        uses: ./.github/actions/nx-cypress-e2e
+        with:
+          app: ${{ matrix.app }}
+          environment: prod
+          tags: "@smoke-test and not @ignore"
+          core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
+          core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
+          api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
+          cy-password: ${{ secrets.CY_PASSWORD }}
+          cy-password-2: ${{ secrets.CY_PASSWORD2 }}
+          cy-password-3: ${{ secrets.CY_PASSWORD3 }}
