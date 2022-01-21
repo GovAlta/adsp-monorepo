@@ -60,24 +60,20 @@ export const Notifications: FunctionComponent = () => {
     <Page>
       <Main>
         <h1>Notifications</h1>
-        {hasTenantAdminRole || hasNotificationAdminRole ? (
-          <Tabs activeIndex={activeIndex}>
-            <Tab label="Overview">
-              <NotificationsOverview setActiveEdit={activateEdit} />
-            </Tab>
-            <Tab label="Notification types">
-              <NotificationTypes activeEdit={activateEditState} activateEdit={activateEdit} />
-            </Tab>
-            <Tab label="Subscriptions">
-              <Subscriptions />
-            </Tab>
-            <Tab label="Subscribers">
-              <Subscribers />
-            </Tab>
-          </Tabs>
-        ) : (
-          calloutMessage()
-        )}
+        <Tabs activeIndex={activeIndex}>
+          <Tab label="Overview">
+            <NotificationsOverview setActiveEdit={activateEdit} />
+          </Tab>
+          <Tab label="Notification types">
+            <NotificationTypes activeEdit={activateEditState} activateEdit={activateEdit} />
+          </Tab>
+          <Tab label="Subscriptions">
+            <Subscriptions />
+          </Tab>
+          <Tab label="Subscribers">
+            <Subscribers />
+          </Tab>
+        </Tabs>
       </Main>
       <Aside>
         <h3>Helpful links</h3>
