@@ -14,6 +14,7 @@ items:
       AV_PORT: "8008"
       KEYCLOAK_ROOT_URL: https://access-dev.os99.gov.ab.ca
       DIRECTORY_URL: https://tenant-management-api.core-services-dev.svc.cluster.local
+      AMQP_HOST: event-service-rabbitmq-balancer
       STORAGE_PROVIDER: file
       BLOB_ACCOUNT_URL:
       LOG_LEVEL: info

@@ -12,7 +12,7 @@ items:
       KEYCLOAK_ROOT_URL: https://access-test.os99.gov.ab.ca
       DIRECTORY_URL: https://tenant-management-api-core-services-test.os99.gov.ab.ca
       LOG_LEVEL: info
-      AMQP_HOST: event-service-rabbitmq
+      AMQP_HOST: event-service-rabbitmq-balancer
       SMTP_HOST: smtp.gov.ab.ca
       SMTP_PORT: "25"
       NOTIFY_URL: https://rest-api.notify.alberta.ca

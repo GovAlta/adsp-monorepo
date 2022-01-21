@@ -216,6 +216,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
       </GoAFlexRow>
       <GoAFormActions alignment="right">
         <GoAButton
+          buttonType="secondary"
           title="Reset"
           onClick={() => {
             setOpen(false);

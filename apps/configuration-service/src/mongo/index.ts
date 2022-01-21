@@ -24,7 +24,7 @@ export const createRepositories = ({
   validationService,
 }: MongoRepositoryProps): Promise<Repositories> => {
   return new Promise<Repositories>((resolve, reject) => {
-    const mongoConnectionString = `${MONGO_URI}/${MONGO_DB}?ssl=${MONGO_TLS}`;
+    const mongoConnectionString = `${MONGO_URI}/${MONGO_DB}?retryWrites=false&ssl=${MONGO_TLS}`;
     connect(
       mongoConnectionString,
       {

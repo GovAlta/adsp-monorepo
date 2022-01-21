@@ -357,3 +357,100 @@ function searchNoticeCards(mode, desc, app, startDateTime, endDateTime) {
     }
   });
 }
+
+Given('a tenant admin user is on status applications page', function () {
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
+  commonObj
+    .adminMenuItem('/admin/services/status')
+    .click()
+    .then(function () {
+      cy.url().should('include', '/admin/services/status');
+      cy.wait(4000);
+    });
+  commonObj.serviceTab('Service status', 'Applications').click();
+  cy.wait(10000); // Applications page is slow to load applications and healt check info
+});
+
+When('the user {string} the subscribe checkbox for health check notification type', function (checkboxOperation) {
+  statusObj
+    .applicationHealthChangeNotificationSubscribeCheckbox()
+    .invoke('attr', 'class')
+    .then((classAttVal) => {
+      if (classAttVal == undefined) {
+        expect.fail('Failed to get subscribe checkbox class attribute value.');
+      } else {
+        switch (checkboxOperation) {
+          case 'selects':
+            if (classAttVal.includes('selected')) {
+              cy.log('The subscribe checkbox was already checked.');
+            } else {
+              statusObj.applicationHealthChangeNotificationSubscribeCheckbox().click();
+            }
+            break;
+          case 'unselects':
+            if (classAttVal.includes('selected')) {
+              statusObj.applicationHealthChangeNotificationSubscribeCheckbox().click();
+            } else {
+              cy.log('The subscribe checkbox was already unchecked.');
+            }
+            break;
+          default:
+            expect(checkboxOperation).to.be.oneOf(['selects', 'unselects']);
+        }
+      }
+    });
+});
+
+Then('the user views the subscribe checkbox is {string}', function (checkboxStatus) {
+  cy.wait(1000); // Wait for the checkbox status to show
+  statusObj
+    .applicationHealthChangeNotificationSubscribeCheckbox()
+    .invoke('attr', 'class')
+    .then((classAttVal) => {
+      if (classAttVal == undefined) {
+        expect.fail('Failed to get subscribe checkbox class attribute value.');
+      } else {
+        switch (checkboxStatus) {
+          case 'checked':
+            expect(classAttVal).to.contain('selected');
+            break;
+          case 'unchecked':
+            expect(classAttVal).to.not.contain('selected');
+            break;
+          default:
+            expect(checkboxStatus).to.be.oneOf(['checked', 'unchecked']);
+        }
+      }
+    });
+});
+
+Then('the user views a subscription confirmation message for {string}', function (subscriptionStatus) {
+  cy.wait(1000); // Wait for the message to show up
+  switch (subscriptionStatus) {
+    case 'subscribed':
+      commonObj
+        .notificationMessage()
+        .invoke('text')
+        .should(
+          'contain',
+          'You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change'
+        );
+      break;
+    case 'unsubscribed':
+      commonObj
+        .notificationMessage()
+        .invoke('text')
+        .should(
+          'contain',
+          'You are unsubscribed! You will no longer receive notifications on auto.test@gov.ab.ca for status-application-health-change'
+        );
+      break;
+    default:
+      expect(subscriptionStatus).to.be.oneOf(['subscribed', 'unsubscribed']);
+  }
+});
