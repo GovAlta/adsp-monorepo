@@ -206,7 +206,7 @@ objects:
         apply-prod: "true"
       name: push-service${NAME_SUFFIX}
     spec:
-      replicas: 1
+      replicas: 3
       revisionHistoryLimit: 3
       selector:
         app: push-service${NAME_SUFFIX}
@@ -218,7 +218,13 @@ objects:
           maxUnavailable: 25%
           maxSurge: 25%
         activeDeadlineSeconds: 21600
-        resources: {}
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 20m
+            memory: 50Mi
       template:
         metadata:
           labels:
@@ -249,7 +255,7 @@ objects:
                   protocol: TCP
               resources:
                 limits:
-                  cpu: 150m
+                  cpu: 200m
                   memory: 200Mi
                 requests:
                   cpu: 20m

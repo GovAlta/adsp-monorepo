@@ -5,7 +5,7 @@ const stepDefinitionsPath = path.resolve(process.cwd(), './src/integration');
 const outputFolder = path.resolve(process.cwd(), '../../dist/cypress/apps/tenant-management-webapp-e2e/cucumber-json');
 
 module.exports = {
-  nonGlobalStepDefinitions: true,
+  nonGlobalStepDefinitions: false,
   stepDefinitions: stepDefinitionsPath,
   cucumberJson: {
     generate: true,
