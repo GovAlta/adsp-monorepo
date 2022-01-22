@@ -57,8 +57,8 @@ runs:
       with:
         name: ${{ inputs.app }}-test-cypress-reports
         path: dist/cypress/apps/${{ inputs.app }}-e2e/
-    - uses: KyleAure/junit-report-annotations-action@1.5
-      if: always()
+    - if: ${{ always() }}
+      name: Publish Test Report
+      uses: mikepenz/action-junit-report@v2
       with:
-        name: "Cypress test report"
-          path: "dist/cypress/apps/${{ inputs.app }}-e2e/results/*.xml"
+        report_paths: 'dist/cypress/apps/${{ inputs.app }}-e2e/results/*.xml'
