@@ -57,14 +57,7 @@ runs:
       with:
         name: ${{ inputs.app }}-test-cypress-reports
         path: dist/cypress/apps/${{ inputs.app }}-e2e/
-    # - if: ${{ always() }}
-    #   name: Publish JUnit Test Results
-    #   uses: dorny/test-reporter@v1
-    #   with:
-    #     name: Cypress Test Results
-    #     path: dist/cypress/apps/${{ inputs.app }}-e2e/results/*.xml
-    #     reporter: java-junit
-      - if: ${{ always() }}
+    - if: ${{ always() }}
         name: Cypress test reporting
         uses: KyleAure/junit-report-annotations-action@1.5
         with:
