@@ -14,13 +14,13 @@ When('the user goes to the tenant management welcome page', function () {
 });
 
 Then('the user views the tenant management welcome page title', function () {
-  welcomPageObj.welcomePageTitle().should('have.text', 'The Alberta Digital Service Platform');
+  welcomPageObj.welcomePageTitle().should('contain.text', 'The Alberta Digital Service Platform (ADSP)');
 });
 
 Given('the user is on the tenant management welcome page', function () {
   const urlToSkipSSO = Cypress.config().baseUrl + '?kc_idp_hint=';
   cy.visit(urlToSkipSSO);
-  welcomPageObj.welcomePageTitle().should('have.text', 'The Alberta Digital Service Platform');
+  welcomPageObj.welcomePageTitle().should('contain.text', 'The Alberta Digital Service Platform (ADSP)');
 });
 
 When('the user clicks the sign in button', function () {
