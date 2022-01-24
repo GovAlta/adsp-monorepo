@@ -83,7 +83,7 @@ class TenantAdminPage {
     return cy.get('input[name="searchBox"]');
   }
 
-  eventLogMinTimesStamp() {
+  eventLogMinTimeStamp() {
     return cy.get('input[name="timestampMin"]');
   }
 
