@@ -5,7 +5,7 @@ class WelcomePage {
   }
 
   getStartedButton() {
-    return cy.get('a:contains("Get Started")');
+    return cy.get('a:contains("Request a tenant")');
   }
 
   signoutDiv() {
@@ -69,7 +69,7 @@ class WelcomePage {
   }
 
   welcomePageTitle() {
-    return cy.xpath('//*[@class="goa-hero"]/div/h1');
+    return cy.xpath('//*[@class="goa-hero"]//div/h1');
   }
 }
 
