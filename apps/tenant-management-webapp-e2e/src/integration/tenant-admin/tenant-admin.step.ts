@@ -505,12 +505,12 @@ Then('the user views more events matching the search filter of {string}', functi
 
   tenantAdminObj.eventTableBody().each(($row) => {
     cy.wrap($row).within(() => {
-      cy.get('td').each(($row) => {
-        if ($row.eq(1).text() == namespaceName.split(':')[0]) {
-          expect($row.eq(1).text()).to.equal(namespaceName.split(':')[0]);
+      cy.get('td').each(($col) => {
+        if ($col.eq(1).text() == namespaceName.split(':')[0]) {
+          expect($col.eq(1).text()).to.equal(namespaceName.split(':')[0]);
         }
-        if ($row.eq(2).text() == namespaceName.split(':')[1]) {
-          expect($row.eq(1).text()).to.equal(namespaceName.split(':')[1]);
+        if ($col.eq(2).text() == namespaceName.split(':')[1]) {
+          expect($col.eq(1).text()).to.equal(namespaceName.split(':')[1]);
         }
       });
     });
@@ -685,12 +685,12 @@ Then(
   function (namespaceName, minTimestamp, maxTimestamp) {
     tenantAdminObj.eventTableBody().each(($row) => {
       cy.wrap($row).within(() => {
-        cy.get('td').each(($row) => {
-          if ($row.eq(1).text() == namespaceName.split(':')[0]) {
-            expect($row.eq(1).text()).to.equal(namespaceName.split(':')[0]);
+        cy.get('td').each(($col) => {
+          if ($col.eq(1).text() == namespaceName.split(':')[0]) {
+            expect($col.eq(1).text()).to.equal(namespaceName.split(':')[0]);
           }
-          if ($row.eq(2).text() == namespaceName.split(':')[1]) {
-            expect($row.eq(1).text()).to.equal(namespaceName.split(':')[1]);
+          if ($col.eq(2).text() == namespaceName.split(':')[1]) {
+            expect($col.eq(1).text()).to.equal(namespaceName.split(':')[1]);
           }
         });
       });
