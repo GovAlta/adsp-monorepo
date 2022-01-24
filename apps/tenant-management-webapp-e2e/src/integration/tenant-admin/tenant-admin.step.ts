@@ -559,7 +559,7 @@ When('the user searches with {string} as minimum timestamp, {string} as maximum 
   cy.log(timestampMin);
   cy.log(timestampMax);
 
-  tenantAdminObj.eventLogMinTimesStamp().type(timestampMin);
+  tenantAdminObj.eventLogMinTimeStamp().type(timestampMin);
   tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
   tenantAdminObj.eventLogSearchBtn().click();
 });
@@ -605,7 +605,7 @@ When('the user searches with {string} as minimum timestamp', function (submin) {
   const timestampMin = timestampUtil(submin);
   cy.log(timestampMin);
 
-  tenantAdminObj.eventLogMinTimesStamp().type(timestampMin);
+  tenantAdminObj.eventLogMinTimeStamp().type(timestampMin);
   tenantAdminObj.eventLogSearchBtn().click();
 });
 
@@ -675,7 +675,7 @@ When(
     cy.log(timestampMin);
     cy.log(timestampMax);
 
-    tenantAdminObj.eventLogMinTimesStamp().type(timestampMin);
+    tenantAdminObj.eventLogMinTimeStamp().type(timestampMin);
     tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
     tenantAdminObj.eventLogSearchBtn().click();
   }
@@ -734,7 +734,7 @@ Then('the user resets event log views', function () {
 
 Then('the user views that search fields are empty', function () {
   tenantAdminObj.eventLogSearchBox().should('have.value', '');
-  tenantAdminObj.eventLogMinTimesStamp().should('have.value', '');
+  tenantAdminObj.eventLogMinTimeStamp().should('have.value', '');
   tenantAdminObj.eventLogMaxTimesStamp().should('have.value', '');
 });
 
