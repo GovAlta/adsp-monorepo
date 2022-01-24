@@ -36,8 +36,8 @@ Then('the user is logged in tenant management web app', function () {
 Then('the user views the page of {string} based on if the user created a tenant before or not', function (page) {
   switch (page) {
     case 'Tenant Login':
-      welcomPageObj.realmHeader().invoke('text').should('be.a', 'string');
-      commonObj.loginButton().invoke('val').should('eq', 'Log In');
+      // welcomPageObj.realmHeader().invoke('text').should('be.a', 'string');
+      commonObj.loginButton().invoke('val').should('eq', 'Sign In');
       break;
     case 'Tenant Creation':
       welcomPageObj.createTenantLinkButton().then((element) => {

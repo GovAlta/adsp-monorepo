@@ -4,7 +4,7 @@ class ServiceStatusPage {
   }
 
   goaOfficialSiteHeader() {
-    return cy.xpath('//div[@class="goa-header goa-official-site-header"]');
+    return cy.xpath('//*[@class="goa-header goa-official-site-header"]');
   }
 
   statusPageTitle() {

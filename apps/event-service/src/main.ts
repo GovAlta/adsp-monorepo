@@ -47,7 +47,7 @@ const initializeApp = async (): Promise<express.Application> => {
   } = await initializePlatform(
     {
       serviceId,
-      displayName: 'Event Service',
+      displayName: 'Event service',
       description: 'Service for sending of domain events.',
       roles: [EventServiceRoles.sender],
       configurationSchema,

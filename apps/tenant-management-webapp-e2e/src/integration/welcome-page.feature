@@ -17,6 +17,7 @@ Feature: Tenant management welcome page
             | env{email}  | env{password}  | Tenant Login    |
             | env{email2} | env{password2} | Tenant Creation |
 
+    # TEST DATA: a user has created a tenant before
     @TEST_CS-331 @REQ_CS-370 @regression @tenantSignup
     Scenario: User created a tenant cannot create another tenant
         Given the user is on the tenant management welcome page
@@ -25,6 +26,8 @@ Feature: Tenant management welcome page
         And the user enters "env{email}" and "env{password}", and clicks login button
         Then the user views a message of cannot create another tenant
 
+    # TEST DATA: a user has beta-test role, but never created a tenant before
+    # TEST DATA: the core api user needs tenant-service-admin role to delete a tenant
     @TEST_CS-297 @REQ_CS-370 @REQ-CS-193 @regression @tenantSignup
     Scenario: User didn't create a tenant before can create a new tenant
         Given the user is on the tenant management welcome page
@@ -46,6 +49,7 @@ Feature: Tenant management welcome page
         When the user goes to the tenant management welcome page
         Then no critical or serious accessibility issues on "tenant management welcome page"
 
+    # TEST DATA: a user without beta-tester role
     @TEST_CS-733 @regression
     Scenario: As a non-beta-tester user, I cannot create a new tenant in ADSP
         Given the user is on the tenant management welcome page

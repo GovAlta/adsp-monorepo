@@ -1,4 +1,4 @@
-apiVersion: v1
+apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
   name: tenant-management-webapp
@@ -47,42 +47,14 @@ objects:
         apply-infra: "true"
       name: tenant-management-webapp
       namespace: ${INFRA_NAMESPACE}
-    spec: {}
-
-  # BuildConfig is created for the primary pipeline as well as branch deployment.
-  # NOTE: Each instance should publish a unique Tag to the common ImageStream in infra.
-  - apiVersion: v1
-    kind: BuildConfig
-    metadata:
-      labels:
-        app: tenant-management${NAME_SUFFIX}
-        component: app
-        apply-infra: "true"
-        apply-branch: "true"
-      name: tenant-management-webapp${NAME_SUFFIX}
     spec:
-      output:
-        to:
-          kind: ImageStreamTag
-          name: tenant-management-webapp:${BUILD_TAG}
-          namespace: ${INFRA_NAMESPACE}
-      resources:
-        limits:
-          cpu: 200m
-          memory: 200Mi
-        requests:
-          cpu: 20m
-          memory: 50Mi
-      source:
-        binary: {}
-        type: Binary
-      strategy:
-        sourceStrategy:
+      tags:
+        - name: ${BUILD_TAG}
           from:
-            kind: ImageStreamTag
-            name: nginx:latest
-            namespace: openshift
-        type: Source
+            kind: DockerImage
+            name: ghcr.io/govalta/tenant-management-webapp:${BUILD_TAG}
+          referencePolicy:
+            type: Local
 
   # DeploymentConfig (and Service and Route) is created in each environment of the
   # primary pipline as well as branch deployment.
@@ -99,12 +71,24 @@ objects:
         apply-prod: "true"
       name: tenant-management-webapp${NAME_SUFFIX}
     spec:
-      replicas: 1
+      replicas: 3
       selector:
         app: tenant-management${NAME_SUFFIX}
         component: app
       strategy:
-        type: Recreate
+        type: Rolling
+        rollingParams:
+          timeoutSeconds: 600
+          maxUnavailable: 25%
+          maxSurge: 25%
+        activeDeadlineSeconds: 21600
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 20m
+            memory: 50Mi
       template:
         metadata:
           labels:
@@ -126,7 +110,7 @@ objects:
                   name: config-volume
               resources:
                 limits:
-                  cpu: 200m
+                  cpu: 100m
                   memory: 200Mi
                 requests:
                   cpu: 20m

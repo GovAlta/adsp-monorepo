@@ -31,6 +31,7 @@ export const endpointStatusEntrySchema = new Schema({
   },
   timestamp: {
     type: Number,
+    index: true,
   },
 });
 
@@ -115,12 +116,14 @@ export const noticeApplicationSchema = new Schema(
     },
     isAllApplications: {
       type: Boolean,
-      default: false
+      default: false,
     },
     endpoints: [noticeEndpointSchema],
     tenantName: {
-      type: String
-    }
+      type: String,
+    },
   },
   { timestamps: true }
 );
+
+noticeApplicationSchema.index({ createdAt: 1 });

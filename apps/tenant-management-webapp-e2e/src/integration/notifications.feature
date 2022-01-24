@@ -21,6 +21,7 @@ Feature: Notifications
     When the user clicks Confirm button on delete confirmation modal
     Then the user "should not view" the notification type card of "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, file-service-admin", "no"
 
+  # TEST DATA: a precreated notification type named "autotest-notificationType" with an event other than "tenant-service:tenant-created"
   @TEST_CS-949 @REQ_CS-277 @regression
   Scenario: As a service owner, I can add and delete events of a notification type
     Given a service owner user is on notification types page

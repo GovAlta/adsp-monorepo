@@ -36,6 +36,7 @@ export const fileSchema = new Schema({
   created: {
     type: Date,
     required: true,
+    index: true,
   },
   lastAccessed: Date,
   scanned: {

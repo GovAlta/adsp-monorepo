@@ -64,6 +64,7 @@ export interface GetSubscriberSubscriptionsSuccessAction {
   type: typeof GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS;
   payload: {
     subscriptions: SubscriptionWrapper[];
+    subscriber: Subscriber;
   };
 }
 
@@ -240,11 +241,13 @@ export const GetSubscriberSuccess = (subscriberInfo: Subscriber): GetSubscriberS
 });
 
 export const GetSubscriberSubscriptionsSuccess = (
-  subscriptions: SubscriptionWrapper[]
+  subscriptions: SubscriptionWrapper[],
+  subscriber: Subscriber
 ): GetSubscriberSubscriptionsSuccessAction => ({
   type: GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS,
   payload: {
     subscriptions,
+    subscriber,
   },
 });
 
