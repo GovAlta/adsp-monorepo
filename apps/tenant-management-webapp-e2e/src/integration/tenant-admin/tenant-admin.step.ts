@@ -564,7 +564,6 @@ When('the user searches with {string} as minimum timestamp, {string} as maximum 
   tenantAdminObj.eventLogSearchBtn().click();
 });
 
-//Then the user views the events matching the search filter of "now-5mins" and "now-1mins" max timestamp
 Then(
   'the user views the events matching the search filter of {string} as min and {string} as max timestamps',
   function (minTimestamp, maxTimestamp) {
