@@ -16,7 +16,7 @@ interface ServiceStatusJobProps {
 
 function scheduleServiceStatusJob(props: CreateCheckEndpointProps): Job {
   const job = createCheckEndpointJob(props);
-  return scheduleJob(`*/${JOB_TIME_INTERVAL_MIN} * * * *`, job);
+  return scheduleJob(`* */${JOB_TIME_INTERVAL_MIN} * * *`, job);
 }
 
 export async function scheduleServiceStatusJobs(props: ServiceStatusJobProps): Promise<void> {
