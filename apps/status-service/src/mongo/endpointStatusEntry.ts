@@ -20,10 +20,7 @@ export default class MongoEndpointStatusEntryRepository implements EndpointStatu
   }
 
   async findRecentByUrl(url: string, top = this.opts.limit): Promise<EndpointStatusEntryEntity[]> {
-    const docs = await this.model
-      .find({ url: url })
-      .sort({ timestamp: -1 })
-      .limit(top);
+    const docs = await this.model.find({ url: url }).sort({ timestamp: -1 }).limit(top);
 
     const entries = docs.map((doc) => this.fromDoc(doc));
 
@@ -41,10 +38,10 @@ export default class MongoEndpointStatusEntryRepository implements EndpointStatu
 
   async deleteOldUrlStatus(): Promise<boolean> {
     try {
-      await this.model.deleteMany({ timestamp: {$lt: Date.now() - 1000 * 3600 * 2}})
-      return true
+      await this.model.deleteMany({ timestamp: { $lt: Date.now() - 1000 * 3600 * 48 } });
+      return true;
     } catch (e) {
-      return false
+      return false;
     }
   }
 
