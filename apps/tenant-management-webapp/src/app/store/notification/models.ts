@@ -5,7 +5,7 @@ export interface NotificationItem {
   subscriberRoles: string[];
   id: string;
   publicSubscribe: boolean;
-  customized: boolean;
+  customized?: boolean;
 }
 
 export type NotificationType = Record<string, NotificationItem>;
@@ -15,6 +15,7 @@ export interface EventItem {
   namespace?: string;
   templates?: Template;
   channels?: string[];
+  customized?: boolean;
 }
 
 export interface Template {

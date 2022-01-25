@@ -13,6 +13,7 @@ import {
 } from '@abgov/react-components/experimental';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { isDuplicatedNotificationName } from './validation';
+import { NotificationType } from '@store/notification/models';
 
 import {
   UpdateNotificationTypeService,
@@ -88,9 +89,24 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   }, [activeEdit]);
 
   function manageEvents(notificationType) {
-    //Manage Events
     setSelectedType(notificationType);
     setEditEvent(notificationType);
+  }
+
+  const nonCoreCopiedNotifications: NotificationType = Object.assign({}, notification?.notificationTypes);
+
+  if (Object.keys(coreNotification).length > 0) {
+    const NotificationsIntersection = [];
+
+    Object.keys(notification?.notificationTypes).forEach((notificationType) => {
+      if (Object.keys(coreNotification).includes(notificationType)) {
+        NotificationsIntersection.push(notificationType);
+      }
+    });
+
+    NotificationsIntersection.forEach((notificationType) => {
+      delete nonCoreCopiedNotifications[notificationType];
+    });
   }
 
   return (
@@ -119,8 +135,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           Add notification type
         </GoAButton>
       </Buttons>
-      {notification.notificationTypes &&
-        Object.values(notification.notificationTypes).map((notificationType) => (
+      {nonCoreCopiedNotifications &&
+        Object.values(nonCoreCopiedNotifications).map((notificationType) => (
           <div className="topBottomMargin" key={`notification-list-${notificationType.id}`}>
             <GoACard
               title={
@@ -284,35 +300,21 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           </div>
                           <div className="rowFlex">
                             <MaxHeight height={34}>
-                              {console.log(
-                                JSON.stringify(
-                                  notification?.notificationTypes[notificationType?.id]?.events?.find(
-                                    (ev) => ev.name === event.name
-                                  )
-                                ) + '<1111'
+                              {event.customized && (
+                                <NotificationBorder className="smallPadding">
+                                  <a
+                                    className="flex1 flex"
+                                    onClick={() => {
+                                      setSelectedEvent(event);
+                                      setSelectedType(notificationType);
+                                      setShowEventDeleteConfirmation(true);
+                                    }}
+                                    data-testid="delete-event"
+                                  >
+                                    <GoAIcon type="trash" />
+                                  </a>
+                                </NotificationBorder>
                               )}
-                              {console.log(JSON.stringify(event) + '<2222')}
-                              {notification?.notificationTypes[notificationType?.id] &&
-                                JSON.stringify(event) !==
-                                  JSON.stringify(
-                                    notification?.notificationTypes[notificationType?.id]?.events?.find(
-                                      (ev) => ev.name === event.name
-                                    )
-                                  ) && (
-                                  <NotificationBorder className="smallPadding">
-                                    <a
-                                      className="flex1 flex"
-                                      onClick={() => {
-                                        setSelectedEvent(event);
-                                        setSelectedType(notificationType);
-                                        setShowEventDeleteConfirmation(true);
-                                      }}
-                                      data-testid="delete-event"
-                                    >
-                                      <GoAIcon type="trash" />
-                                    </a>
-                                  </NotificationBorder>
-                                )}
                             </MaxHeight>
                           </div>
                         </div>
@@ -375,6 +377,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           >
             Cancel
           </GoAButton>
+
           <GoAButton
             buttonType="primary"
             data-testid="delete-confirm"
@@ -413,8 +416,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               const updatedEvents = selectedType.events.filter(
                 (event) => `${event.namespace}:${event.name}` !== `${selectedEvent.namespace}:${selectedEvent.name}`
               );
-              selectedType.events = updatedEvents;
-              dispatch(UpdateNotificationTypeService(selectedType));
+
+              const newType = JSON.parse(JSON.stringify(selectedType));
+              newType.events = updatedEvents;
+              dispatch(UpdateNotificationTypeService(newType));
               setSelectedType(emptyNotificationType);
             }}
           >
@@ -429,7 +434,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         errors={errors}
         title={formTitle}
         onSave={(type) => {
-          console.log(JSON.stringify(type) + '<type');
           type.subscriberRoles = type.subscriberRoles || [];
           type.events = type.events || [];
           type.publicSubscribe = type.publicSubscribe || false;
@@ -471,7 +475,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         open={showTemplateForm}
         errors={errors}
         onSubmit={(type) => {
-          console.log(JSON.stringify(type) + '<type-------xx');
           dispatch(UpdateNotificationTypeService(type));
           reset();
         }}

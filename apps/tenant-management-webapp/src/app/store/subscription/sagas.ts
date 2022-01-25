@@ -86,9 +86,11 @@ export function* getAllSubscriptions(action: GetSubscriptionsAction): SagaIterat
         params = { topValue: 10000 };
       }
 
+      const typeList = [...new Set(typeResponse.data.map((type) => type.id))];
+
       const results = yield all(
-        typeResponse.data.map((type, id) => {
-          const response = call(axios.get, `${configBaseUrl}/subscription/v1/types/${type?.id}/subscriptions`, {
+        typeList.map((id) => {
+          const response = call(axios.get, `${configBaseUrl}/subscription/v1/types/${id}/subscriptions`, {
             params,
             headers: { Authorization: `Bearer ${token}` },
           });
