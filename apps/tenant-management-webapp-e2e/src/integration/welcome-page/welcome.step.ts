@@ -14,13 +14,13 @@ When('the user goes to the tenant management welcome page', function () {
 });
 
 Then('the user views the tenant management welcome page title', function () {
-  welcomPageObj.welcomePageTitle().should('have.text', 'The Alberta Digital Service Platform');
+  welcomPageObj.welcomePageTitle().should('contain.text', 'The Alberta Digital Service Platform (ADSP)');
 });
 
 Given('the user is on the tenant management welcome page', function () {
   const urlToSkipSSO = Cypress.config().baseUrl + '?kc_idp_hint=';
   cy.visit(urlToSkipSSO);
-  welcomPageObj.welcomePageTitle().should('have.text', 'The Alberta Digital Service Platform');
+  welcomPageObj.welcomePageTitle().should('contain.text', 'The Alberta Digital Service Platform (ADSP)');
 });
 
 When('the user clicks the sign in button', function () {
@@ -36,8 +36,8 @@ Then('the user is logged in tenant management web app', function () {
 Then('the user views the page of {string} based on if the user created a tenant before or not', function (page) {
   switch (page) {
     case 'Tenant Login':
-      welcomPageObj.realmHeader().invoke('text').should('be.a', 'string');
-      commonObj.loginButton().invoke('val').should('eq', 'Log In');
+      // welcomPageObj.realmHeader().invoke('text').should('be.a', 'string');
+      commonObj.loginButton().invoke('val').should('eq', 'Sign In');
       break;
     case 'Tenant Creation':
       welcomPageObj.createTenantLinkButton().then((element) => {

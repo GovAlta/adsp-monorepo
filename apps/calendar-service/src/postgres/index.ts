@@ -12,6 +12,7 @@ interface PostgresRepositoryProps {
   DB_NAME: string;
   DB_USER: string;
   DB_PASSWORD: string;
+  DB_TLS: boolean;
 }
 
 interface Repositories {
@@ -26,6 +27,7 @@ export const createRepositories = async ({
   DB_NAME,
   DB_USER,
   DB_PASSWORD,
+  DB_TLS,
 }: PostgresRepositoryProps): Promise<Repositories> => {
   const knex = initKnex({
     client: 'postgresql',
@@ -35,6 +37,7 @@ export const createRepositories = async ({
       database: DB_NAME,
       user: DB_USER,
       password: DB_PASSWORD,
+      ssl: DB_TLS,
     },
     searchPath: ['public'],
     migrations: {

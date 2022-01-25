@@ -16,6 +16,10 @@ export const FIND_SUBSCRIBERS_SUCCESS = 'tenant/subscriber-service/find-subscrib
 export const FIND_SUBSCRIBERS = 'tenant/subscriber-service/find-subscribers';
 export const GET_TYPE_SUBSCRIPTION = 'tenant/subscriber-service/get-type-subscription';
 export const GET_TYPE_SUBSCRIPTION_SUCCESS = 'tenant/subscriber-service/get-type-subscription-success';
+export const GET_SUBSCRIBER_SUBSCRIPTIONS = 'tenant/subscriber-service/get-subscription-subscriber';
+export const GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS = 'tenant/subscriber-service/get-subscription-subscriber-success';
+export const TRIGGER_VISIBILITY_SUBSCRIBER = 'tenant/subscriber-service/make-visible';
+export const RESET_VISIBILITY_IN_SUBSCRIBERS = 'tenant/subscriber-service/reset-visibility';
 
 // =============
 // Actions Types
@@ -33,12 +37,41 @@ export type ActionTypes =
   | FindSubscribersAction
   | FindSubscribersSuccessAction
   | UpdateSubscriptionsSuccessAction
-  | GetTypeSubscriptionSuccessAction;
+  | GetTypeSubscriptionSuccessAction
+  | GetSubscriberSubscriptionsSuccessAction
+  | TriggerVisibilitySubscribersServiceAction
+  | ResetVisibilityInSubscribersServiceAction;
 
 export interface SubscribeSubscriberServiceAction {
   type: typeof SUBSCRIBE_SUBSCRIBER;
   payload: {
     notificationInfo: { data: { type: string } };
+  };
+}
+
+export interface TriggerVisibilitySubscribersServiceAction {
+  type: typeof TRIGGER_VISIBILITY_SUBSCRIBER;
+  payload: {
+    subscriber: Subscriber;
+  };
+}
+
+export interface ResetVisibilityInSubscribersServiceAction {
+  type: typeof RESET_VISIBILITY_IN_SUBSCRIBERS;
+}
+
+export interface GetSubscriberSubscriptionsSuccessAction {
+  type: typeof GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS;
+  payload: {
+    subscriptions: SubscriptionWrapper[];
+    subscriber: Subscriber;
+  };
+}
+
+export interface GetSubscriberSubscriptionsAction {
+  type: typeof GET_SUBSCRIBER_SUBSCRIPTIONS;
+  payload: {
+    subscriber: Subscriber;
   };
 }
 
@@ -181,6 +214,11 @@ export const getTypeSubscriptions = (type: string, criteria: SubscriberSearchCri
   payload: { type, criteria },
 });
 
+export const getSubscriberSubscriptions = (subscriber: Subscriber): GetSubscriberSubscriptionsAction => ({
+  type: GET_SUBSCRIBER_SUBSCRIPTIONS,
+  payload: { subscriber },
+});
+
 export const getSubscription = (subscriptionInfo: {
   data: { type: string; data: Subscriber };
 }): GetSubscriptionAction => ({
@@ -200,6 +238,30 @@ export const GetSubscriberSuccess = (subscriberInfo: Subscriber): GetSubscriberS
   payload: {
     subscriberInfo,
   },
+});
+
+export const GetSubscriberSubscriptionsSuccess = (
+  subscriptions: SubscriptionWrapper[],
+  subscriber: Subscriber
+): GetSubscriberSubscriptionsSuccessAction => ({
+  type: GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS,
+  payload: {
+    subscriptions,
+    subscriber,
+  },
+});
+
+export const TriggerVisibilitySubscribersService = (
+  subscriber: Subscriber
+): TriggerVisibilitySubscribersServiceAction => ({
+  type: TRIGGER_VISIBILITY_SUBSCRIBER,
+  payload: {
+    subscriber,
+  },
+});
+
+export const ResetVisibilityInSubscribersService = (): ResetVisibilityInSubscribersServiceAction => ({
+  type: RESET_VISIBILITY_IN_SUBSCRIBERS,
 });
 
 export const UpdateSubscriberSuccess = (subscriberInfo: Subscriber): UpdateSubscriptionsSuccessAction => ({

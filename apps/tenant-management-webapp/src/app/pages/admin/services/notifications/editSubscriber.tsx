@@ -63,7 +63,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
           <GoAForm>
             <ErrorWrapper>
               <GoAFormItem error={formErrors?.['name']}>
-                <label>User name</label>
+                <label>Address as</label>
                 <input
                   type="text"
                   name="name"

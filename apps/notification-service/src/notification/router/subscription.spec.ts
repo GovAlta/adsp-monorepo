@@ -326,6 +326,7 @@ describe('subscription router', () => {
       );
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
+      repositoryMock.getSubscriberByEmail.mockResolvedValueOnce(null);
 
       const handler = createTypeSubscription(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -371,6 +372,7 @@ describe('subscription router', () => {
       );
       repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
+      repositoryMock.getSubscriberByEmail.mockResolvedValueOnce(null);
 
       const handler = createTypeSubscription(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -732,6 +734,7 @@ describe('subscription router', () => {
         addressAs: 'tester',
         channels: [],
       });
+      repositoryMock.getSubscriberByEmail.mockResolvedValueOnce(null);
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
 
       const handler = createSubscriber(apiId, repositoryMock);
@@ -930,7 +933,7 @@ describe('subscription router', () => {
         },
         body: {
           addressAs: 'tester',
-          channels: [{ channel: Channel.email, address: 'bob@gmail.com', verified: false }],
+          channels: [],
           id: 'subscriber',
           urn: 'urn:ads:platform:notification-service:v1:/subscribers/subscriber',
           userId: undefined,

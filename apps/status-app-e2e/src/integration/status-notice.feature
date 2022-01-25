@@ -16,7 +16,7 @@ Feature: public site for service status and notice
     Given a user is on the public service status page for "Platform"
     Then no critical or serious accessibility issues on public service status page
 
-  @TEST_CS-889
+  @TEST_CS-889 @regression
   Scenario: As an interested stakeholder, I can see the time zone information on status app
     Given a user is on the public service status page for "Platform"
     Then the user views the status and outages page

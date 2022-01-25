@@ -31,6 +31,10 @@ class Common {
       `//h1[contains(text(),"${service}")]/following-sibling::div[1]//descendant::div[contains(text(), "${text}")]`
     );
   }
+
+  notificationMessage() {
+    return cy.xpath('//*[@role="notification"]//*[@class="message"]');
+  }
 }
 
 export default Common;

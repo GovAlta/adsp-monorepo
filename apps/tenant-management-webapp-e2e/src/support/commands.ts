@@ -34,10 +34,11 @@ Cypress.Commands.add('postToken', () => {
   const coreApiClientSecret = Cypress.env('core-api-client-secret');
   const coreApiUsername = Cypress.env('core-api-user');
   const coreApiPassword = Cypress.env('core-api-user-password');
+  const realm = Cypress.env('realm');
   // Get autotest realm admin token
   cy.request({
     method: 'POST',
-    url: Cypress.env('accessManagementApi') + '/realms/autotest' + Cypress.env('keycloakTokenUrlSuffix'),
+    url: Cypress.env('accessManagementApi') + `/realms/${realm}` + Cypress.env('keycloakTokenUrlSuffix'),
     body: {
       client_id: clientId,
       client_secret: clientSecret,

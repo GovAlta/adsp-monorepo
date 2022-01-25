@@ -94,8 +94,11 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
   }
 
   // service endpoints
-  bindEndpoints(app, { logger, tenantService, authenticate, eventService, ...repositories });
-
+  if (!environment.HA_MODEL || (environment.HA_MODEL && environment.POD_TYPE === POD_TYPES.api)) {
+    bindEndpoints(app, { logger, tenantService, authenticate, eventService, ...repositories });
+  } else {
+    logger.info(`Job instance, skip the api binding.`);
+  }
   // non-service endpoints
   app.get('/health', (_req, res) => {
     res.json({
@@ -107,10 +110,8 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
   app.use(errorHandler);
   // start service
   const port = environment.PORT || 3338;
-  if (!environment.HA_MODEL || (environment.HA_MODEL && environment.POD_TYPE === POD_TYPES.api)) {
-    const server = app.listen(port, () => {
-      logger.info(`Listening at http://localhost:${port}`);
-    });
-    server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
-  }
+  const server = app.listen(port, () => {
+    logger.info(`Listening at http://localhost:${port}`);
+  });
+  server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
 })();

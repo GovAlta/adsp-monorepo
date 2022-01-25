@@ -28,6 +28,9 @@ import {
   GET_TYPE_SUBSCRIPTION,
   GetTypeSubscriptionActions,
   GetTypeSubscriptionSuccess,
+  GET_SUBSCRIBER_SUBSCRIPTIONS,
+  GetSubscriberSubscriptionsSuccess,
+  GetSubscriberSubscriptionsAction,
 } from './actions';
 import { Subscription, Subscriber, SubscriptionWrapper } from './models';
 
@@ -296,7 +299,11 @@ export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
   }
 
   // Fetch one more to calculate hasNext
-  params.top = criteria?.next ? pageSize + top + 1 : top + 1;
+  if (criteria.top) {
+    params.top = criteria.top + 1;
+  } else {
+    params.top = criteria?.next ? pageSize + top + 1 : top + 1;
+  }
 
   if (configBaseUrl && token) {
     try {
@@ -312,6 +319,25 @@ export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
   }
 }
 
+export function* getSubscriberSubscriptions(action: GetSubscriberSubscriptionsAction): SagaIterator {
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const subscriber = action.payload.subscriber;
+  const findSubscriberPath = `subscription/v1/subscribers/${subscriber.id}/subscriptions`;
+
+  if (configBaseUrl && token) {
+    try {
+      const response = yield call(axios.get, `${configBaseUrl}/${findSubscriberPath}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const subscriptions: SubscriptionWrapper[] = response.data.results;
+      yield put(GetSubscriberSubscriptionsSuccess(subscriptions, subscriber));
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.message} - getSubscriberSubscriptions` }));
+    }
+  }
+}
+
 export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(CREATE_SUBSCRIBER, createSubscriber);
   yield takeEvery(SUBSCRIBE_SUBSCRIBER, addTypeSubscription);
@@ -321,5 +347,6 @@ export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(GET_SUBSCRIPTIONS, getAllSubscriptions);
   yield takeEvery(UPDATE_SUBSCRIBER, updateSubscriber);
   yield takeEvery(GET_TYPE_SUBSCRIPTION, getTypeSubscriptions);
+  yield takeEvery(GET_SUBSCRIBER_SUBSCRIPTIONS, getSubscriberSubscriptions);
   yield takeLatest(FIND_SUBSCRIBERS, findSubscribers);
 }

@@ -169,7 +169,7 @@ async function initializeApp() {
 
   app.get(
     '/slack/install',
-    passport.authenticate(['jwt'], { session: false }),
+    passport.authenticate(['core', 'tenant'], { session: false }),
     assertAuthenticatedHandler,
     getRootUrl,
     async (req, res, next) => {

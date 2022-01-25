@@ -22,6 +22,7 @@ export const formSchema = new Schema(
     created: {
       type: Date,
       required: true,
+      index: true,
     },
     createdBy: {
       id: { type: String, required: true },

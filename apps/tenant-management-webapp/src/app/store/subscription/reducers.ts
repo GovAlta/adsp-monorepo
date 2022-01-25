@@ -8,9 +8,12 @@ import {
   GET_SUBSCRIPTIONS_SUCCESS,
   UPDATE_SUBSCRIBER_SUCCESS,
   GET_TYPE_SUBSCRIPTION_SUCCESS,
+  GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS,
+  TRIGGER_VISIBILITY_SUBSCRIBER,
+  RESET_VISIBILITY_IN_SUBSCRIBERS,
 } from './actions';
 
-import { SUBSCRIBER_INIT, SubscriberService } from './models';
+import { SUBSCRIBER_INIT, SubscriberService, SubscriberAndSubscriptions } from './models';
 
 export default function (state = SUBSCRIBER_INIT, action: ActionTypes): SubscriberService {
   switch (action.type) {
@@ -129,6 +132,61 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
             top,
           },
         },
+      };
+    }
+    case GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS: {
+      const { subscriptions, subscriber } = action.payload;
+
+      const key = subscriber.id;
+
+      const SubscriberAndSubscriptions: SubscriberAndSubscriptions = {
+        subscriptions: subscriptions,
+        subscriber: subscriber,
+      };
+
+      SubscriberAndSubscriptions.subscriber.visibleSubscriptions = true;
+
+      return {
+        ...state,
+        subscriberSubscriptions: {
+          ...state.subscriberSubscriptions,
+          [key]: SubscriberAndSubscriptions,
+        },
+      };
+    }
+
+    case TRIGGER_VISIBILITY_SUBSCRIBER: {
+      const { subscriber } = action.payload;
+
+      const subscriberSubscriptions = state.subscriberSubscriptions;
+
+      const visible = subscriberSubscriptions[subscriber.id].subscriber.visibleSubscriptions;
+
+      subscriberSubscriptions[subscriber.id].subscriber.visibleSubscriptions = !visible;
+      const key = subscriber.id;
+      return {
+        ...state,
+        subscriberSubscriptions: {
+          ...state.subscriberSubscriptions,
+          [key]: subscriberSubscriptions[subscriber.id],
+        },
+      };
+    }
+
+    case RESET_VISIBILITY_IN_SUBSCRIBERS: {
+      const newState = Object.assign({}, state);
+
+      const subscriberSubscriptions = newState.subscriberSubscriptions;
+
+      const keys = Object.keys(subscriberSubscriptions);
+
+      keys.forEach((subs) => {
+        subscriberSubscriptions[subs].subscriber.visibleSubscriptions = false;
+      });
+
+      return {
+        ...state,
+        subscriberSubscriptions: subscriberSubscriptions,
       };
     }
 

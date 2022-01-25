@@ -59,7 +59,7 @@ export class MongoSlackInstallationStore implements InstallationStore {
         if (err) {
           reject(err);
         } else {
-          resolve(doc.installation as Installation);
+          resolve(doc?.installation as Installation);
         }
       });
     });

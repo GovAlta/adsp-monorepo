@@ -14,7 +14,7 @@ Feature: Tenant admin
     Then the "<Page Title>" landing page is displayed
     Examples:
       | Menu          | Page Title     |
-      | File services | File services  |
+      | File services | File service   |
       | Status        | Service status |
       | Event log     | Event log      |
 
@@ -27,6 +27,7 @@ Feature: Tenant admin
       | Service Options       | /api/configuration/v1/serviceOptions/ |
       | Tenant Configurations | /api/configuration/v1/tenantConfig/   |
 
+  # TEST DATA: the automation user needs to have realm management roles
   @TEST_CS-322 @regression
   Scenario: As a GoA service owner, I can access the realm administration from the Access section of the tenant admin portal to manage users
     Given a service owner user is on tenant admin page
@@ -83,6 +84,7 @@ Feature: Tenant admin
     And the user clicks "Events" link
     Then the user is directed to "Events" page
 
+  # TEST DATA: need a user without tenant admin role
   @TEST_CS-743 @regression
   Scenario: As a non-tenant admin, I cannot access the tenant admin application and am directed to the tenant creator for access, so that I know how to get access
     Given the user goes to tenant management login link
