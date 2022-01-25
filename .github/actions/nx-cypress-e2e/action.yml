@@ -58,9 +58,7 @@ runs:
         name: ${{ inputs.app }}-test-cypress-reports
         path: dist/cypress/apps/${{ inputs.app }}-e2e/
     - if: ${{ always() }}
-      name: Publish JUnit Test Results
-      uses: dorny/test-reporter@v1
+      name: Publish Test Report
+      uses: mikepenz/action-junit-report@v2
       with:
-        name: Cypress Test Results
-        path: dist/cypress/apps/${{ inputs.app }}-e2e/results/*.xml
-        reporter: java-junit
+        report_paths: 'dist/cypress/apps/${{ inputs.app }}-e2e/results/*.xml'
