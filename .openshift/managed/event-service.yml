@@ -108,7 +108,7 @@ objects:
         ## queue master locator
         queue_master_locator=min-masters
       enabled_plugins: |
-        [rabbitmq_management,rabbitmq_peer_discovery_k8s].
+        [rabbitmq_management,rabbitmq_peer_discovery_k8s,rabbitmq_shovel,rabbitmq_shovel_management].
   - apiVersion: v1
     kind: Service
     metadata:
@@ -378,6 +378,26 @@ objects:
                   cpu: 20m
                   memory: 50Mi
               terminationMessagePath: /dev/termination-log
+              readinessProbe:
+                httpGet:
+                  path: /
+                  port: 3333
+                  scheme: HTTP
+                initialDelaySeconds: 10
+                timeoutSeconds: 1
+                periodSeconds: 30
+                successThreshold: 1
+                failureThreshold: 3
+              livenessProbe:
+                httpGet:
+                  path: /
+                  port: 3333
+                  scheme: HTTP
+                initialDelaySeconds: 60
+                timeoutSeconds: 1
+                periodSeconds: 60
+                successThreshold: 1
+                failureThreshold: 3
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           schedulerName: default-scheduler

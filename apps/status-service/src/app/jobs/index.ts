@@ -36,8 +36,13 @@ export async function scheduleServiceStatusJobs(props: ServiceStatusJobProps): P
     });
   });
 
+<<<<<<< HEAD
   scheduleJob('* */5 * * *', watchApps(props));
   scheduleJob('* * */1 * *', deleteOldStatus(props));
+=======
+  scheduleJob('*/5 * * * *', watchApps(props));
+  scheduleJob('0 0 * * *', deleteOldStatus(props));
+>>>>>>> 549ee1c99b24a8b822792415eaf0836080fa097e
 }
 
 function deleteOldStatus(props: ServiceStatusJobProps) {

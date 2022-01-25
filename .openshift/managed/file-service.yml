@@ -76,7 +76,7 @@ objects:
       database-password: ${MONGODB_PASSWORD}
       database-user: ${MONGODB_USER}
       database-uri: mongodb://file-service-mongodb${NAME_SUFFIX}:27017
-      database-tls: 'false'
+      database-tls: "false"
   # PersistentVolumeClaim is only generated for branch deployment to avoid losing persistent data.
   - apiVersion: v1
     kind: PersistentVolumeClaim
@@ -229,6 +229,168 @@ objects:
               namespace: openshift
           type: ImageChange
 
+  # File AV Scanner Objects
+
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      labels:
+        app: file-service
+        component: av
+        apply-infra: "true"
+      name: file-av-scanner
+      namespace: ${INFRA_NAMESPACE}
+
+  - apiVersion: v1
+    kind: BuildConfig
+    labels:
+      app: file-service
+      component: av
+      apply-infra: "true"
+    metadata:
+      name: file-av-scanner
+      namespace: ${INFRA_NAMESPACE}
+    spec:
+      output:
+        to:
+          kind: ImageStreamTag
+          name: "file-av-scanner:latest"
+      resources:
+        limits:
+          cpu: 200m
+          memory: 200Mi
+        requests:
+          cpu: 20m
+          memory: 50Mi
+      successfulBuildsHistoryLimit: 5
+      failedBuildsHistoryLimit: 5
+      strategy:
+        type: Docker
+      source:
+        type: Git
+        git:
+          uri: "git@github.com:GovAlta/adsp-monorepo.git"
+          ref: main
+        contextDir: apps/file-service/av-scanner
+        sourceSecret:
+          name: adsp-monorepo-github-deploy-key
+      triggers:
+        - type: ConfigChange
+      runPolicy: Serial
+
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: file-service
+        component: av
+        apply-init: "true"
+      name: file-av-db
+    spec:
+      storageClassName: azure-disk
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 5Gi
+
+  - kind: Service
+    apiVersion: v1
+    metadata:
+      name: file-av-scanner
+      labels:
+        app: file-service
+        apply-dev: 'true'
+        apply-prod: 'true'
+        apply-staging: 'true'
+        apply-test: 'true'
+        component: av
+    spec:
+      ports:
+        - name: clam
+          protocol: TCP
+          port: 3310
+          targetPort: 3310
+      selector:
+        app: file-service
+        component: av
+      type: ClusterIP
+
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      name: file-av-scanner
+      labels:
+        app: file-service
+        component: av
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+    spec:
+      strategy:
+        type: Recreate
+        recreateParams:
+          timeoutSeconds: 600
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 20m
+            memory: 50Mi
+        activeDeadlineSeconds: 21600
+      triggers:
+        - type: ConfigChange
+        - type: ImageChange
+          imageChangeParams:
+            containerNames:
+              - file-av-scanner
+            from:
+              kind: ImageStreamTag
+              namespace: adsp-build
+              name: "file-av-scanner:latest"
+      replicas: 1
+      revisionHistoryLimit: 10
+      test: false
+      selector:
+        app: file-service
+        component: av
+      template:
+        metadata:
+          labels:
+            app: file-service
+            component: av
+        spec:
+          volumes:
+            - name: file-av-db-volume
+              persistentVolumeClaim:
+                claimName: file-av-db
+          containers:
+            - name: file-av-scanner
+              ports:
+                - name: tcp
+                  containerPort: 3310
+                  protocol: TCP
+              resources:
+                limits:
+                  cpu: 250m
+                  memory: 5Gi
+                requests:
+                  cpu: 20m
+                  memory: 50Mi
+              volumeMounts:
+                - name: file-av-db-volume
+                  mountPath: /var/lib/clamav
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              imagePullPolicy: IfNotPresent
+          restartPolicy: Always
+          terminationGracePeriodSeconds: 30
+          dnsPolicy: ClusterFirst
+          securityContext: {}
+          schedulerName: default-scheduler
+
   # File Service Objects
 
   # ImageStream is here for reference.
@@ -355,6 +517,26 @@ objects:
                   memory: 50Mi
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
+              readinessProbe:
+                httpGet:
+                  path: /
+                  port: 3333
+                  scheme: HTTP
+                initialDelaySeconds: 10
+                timeoutSeconds: 1
+                periodSeconds: 30
+                successThreshold: 1
+                failureThreshold: 3
+              livenessProbe:
+                httpGet:
+                  path: /
+                  port: 3333
+                  scheme: HTTP
+                initialDelaySeconds: 60
+                timeoutSeconds: 1
+                periodSeconds: 60
+                successThreshold: 1
+                failureThreshold: 3
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           schedulerName: default-scheduler
