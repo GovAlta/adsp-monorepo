@@ -1,4 +1,4 @@
-import { FunctionComponent, useEffect, useState } from 'react';
+import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import React from 'react';
 import { FetchFileTypeService } from '@store/file/actions';
@@ -21,7 +21,7 @@ export const FileTypes: FunctionComponent = () => {
   }, []);
 
   // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
+  useEffect(() => { }, [indicator]);
 
   return (
     <div>

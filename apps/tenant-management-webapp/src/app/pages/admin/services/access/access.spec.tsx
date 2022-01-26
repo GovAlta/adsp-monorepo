@@ -16,22 +16,22 @@ describe('Access Page', () => {
 
   const mockStore = configureStore([]);
 
+  const users = [
+    { id: '1', enabled: true, emailVerified: true },
+    { id: '2', enabled: true, emailVerified: true },
+    { id: '3', enabled: false, emailVerified: false },
+  ];
+
+  const roles = [
+    { id: '1', name: 'file-service-admin', userIds: ['1', '2', '3'] },
+    { id: '2', name: 'admin', userIds: ['1', '2'] },
+    { id: '3', name: 'create-realm', userIds: ['1', '3', '4', '5'] },
+    { id: '4', name: 'something important', userIds: ['1', '3', '4', '5', '7'] },
+    { id: '5', name: 'security', userIds: ['1'] },
+    { id: '6', name: 'networking', userIds: ['2'] },
+  ];
+
   it('binds the store user and role data', async () => {
-    const users = [
-      { id: '1', enabled: true, emailVerified: true },
-      { id: '2', enabled: true, emailVerified: true },
-      { id: '3', enabled: false, emailVerified: false },
-    ];
-
-    const roles = [
-      { id: '1', name: 'file-service-admin', userIds: ['1', '2', '3'] },
-      { id: '2', name: 'admin', userIds: ['1', '2'] },
-      { id: '3', name: 'create-realm', userIds: ['1', '3', '4', '5'] },
-      { id: '4', name: 'something important', userIds: ['1', '3', '4', '5', '7'] },
-      { id: '5', name: 'security', userIds: ['1'] },
-      { id: '6', name: 'networking', userIds: ['2'] },
-    ];
-
     const store = mockStore({
       config: {
         keycloakApi: mockKeycloak,
@@ -40,7 +40,13 @@ describe('Access Page', () => {
       },
       access: { users: users, roles: roles },
       user: { jwt: { token: '' } },
-      session: { realm: 'core' },
+      session: {
+        realm: 'core',
+        indicator: {
+          show: false,
+          message: 'loading'
+        }
+      },
     });
 
     render(
@@ -69,9 +75,14 @@ describe('Access Page', () => {
         tenantApi: { host: 'foo' },
         serviceUrls: { tenantManagementWebApp: 'http://localhost' },
       },
-      access: { users: [], roles: [] },
+      access: { users: users, roles: roles },
       user: { jwt: { token: '' } },
-      session: { realm: 'core' },
+      session: {
+        realm: 'core', indicator: {
+          show: false,
+          message: 'loading'
+        }
+      },
     });
 
     const { queryByTitle } = render(

@@ -22,7 +22,7 @@ interface SessionLogoutAction {
   type: typeof SESSION_LOGOUT;
 }
 
-interface UpdateIndicator {
+interface UpdateIndicatorAction {
   type: typeof UPDATE_INDICATOR;
   payload: Indicator;
 }
@@ -41,7 +41,7 @@ export const CredentialRefresh = (credentials: Credentials): CredentialRefreshAc
   payload: credentials,
 });
 
-export const UpdateIndicator = (indicator: Indicator): UpdateIndicator => ({
+export const UpdateIndicator = (indicator: Indicator): UpdateIndicatorAction => ({
   type: 'session/indicator',
   payload: indicator,
 });
