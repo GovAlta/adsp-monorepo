@@ -17,7 +17,8 @@ Feature: Events
     When the user clicks "hide" details button for the definition of "tenant-created" under "tenant-service"
     Then the user "should not view" the definition details of "tenant-created" under "tenant-service"
 
-  @regression
+  @regression @ignore
+  # Ignore this test until CS-1134 is fixed
   Scenario: As a service admin, I can see event service API docs
     Given a service owner user is on tenant admin page
     When the user selects the "Events" menu item
