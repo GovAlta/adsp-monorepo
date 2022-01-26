@@ -1,4 +1,4 @@
-import React, { useState, useRef, createRef, useEffect } from 'react';
+import React, { useState, createRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { GoAHeroBanner, GoAButton } from '@abgov/react-components';
 import { GoACard } from '@abgov/react-components/experimental';
