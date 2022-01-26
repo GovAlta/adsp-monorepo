@@ -42,7 +42,6 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
   return (
     <CheckSubscriberRoles>
       <div data-testid="subscribers-list-title">
-        <ActionIndicator />
         <SubscribersSearchForm onSearch={searchFn2} reset={resetState} />
         <SubscriberList />
         <NextLoader onSearch={searchFn} searchCriteria={criteriaState} />
