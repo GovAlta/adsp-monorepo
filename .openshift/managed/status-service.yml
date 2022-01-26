@@ -458,6 +458,7 @@ objects:
       test: false
       triggers:
         - imageChangeParams:
+            automatic: true
             containerNames:
               - ${APP_NAME}
             from:
@@ -465,6 +466,7 @@ objects:
               name: ${APP_NAME}:${DEPLOY_TAG}
               namespace: ${INFRA_NAMESPACE}
           type: ImageChange
+
   - apiVersion: v1
     kind: Service
     metadata:
