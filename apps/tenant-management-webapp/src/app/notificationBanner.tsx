@@ -9,17 +9,11 @@ export function NotificationBanner(): JSX.Element {
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
   const successMessages = useSelector((state: RootState) => state.subscription.successMessage);
 
-  const filteredNotification =
-    notifications[notifications.length - 1]?.message.includes('401') &&
-    notifications[notifications.length - 1]?.message.includes('Subscriptions')
-      ? []
-      : notifications;
-
   return (
     <div style={{ marginBottom: '10px' }}>
-      {filteredNotification.length > 0 && (
+      {notifications.length > 0 && !notifications[notifications.length - 1]?.disabled && (
         <GoANotification key={new Date().getTime()} type="emergency" isDismissable={true}>
-          {filteredNotification[filteredNotification.length - 1].message}
+          {notifications[notifications.length - 1].message}
         </GoANotification>
       )}
       {successMessages && (

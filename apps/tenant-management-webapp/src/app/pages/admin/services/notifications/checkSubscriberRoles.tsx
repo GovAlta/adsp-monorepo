@@ -9,7 +9,9 @@ interface privateAppProps {
 
 export function CheckSubscriberRoles({ children }: privateAppProps): JSX.Element {
   const adminEmail = useSelector((state: RootState) => state.tenant.adminEmail);
-  const notifications = useSelector((state: RootState) => state.notifications.notifications);
+  const hasNotificationAdminRole = useSelector((state: RootState) =>
+    state.session?.resourceAccess?.['urn:ads:platform:notification-service']?.roles?.includes('subscription-admin')
+  );
 
   const DefaultView = () => {
     return <>{children}</>;
@@ -21,12 +23,12 @@ export function CheckSubscriberRoles({ children }: privateAppProps): JSX.Element
         <GoACallout type="important" data-testid="delete-modal">
           <h3>Access to subscriptions requires admin roles</h3>
           <p>
-            You require the tenant-admin role or subscription-admin role to access notifications and will need to
-            contact the administrator of the tenant at <a href={`mailto: ${adminEmail}`}>{adminEmail}</a>
+            You require the subscription-admin role to access notifications and will need to contact the administrator
+            of the tenant at <a href={`mailto: ${adminEmail}`}>{adminEmail}</a>
           </p>
         </GoACallout>
       </>
     );
   };
-  return <>{notifications[notifications.length - 1]?.message.includes('401') ? <ErrorView /> : <DefaultView />}</>;
+  return <>{hasNotificationAdminRole ? <DefaultView /> : <ErrorView />}</>;
 }
