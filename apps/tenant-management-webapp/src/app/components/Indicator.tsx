@@ -35,6 +35,8 @@ export const PageIndicator = (): JSX.Element => {
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
-  useEffect(() => {}, [indicator]);
+
+  // eslint-disable-next-line
+  useEffect(() => { }, [indicator]);
   return <Center>{indicator.show && <IndicatorWithDelay {...indicator} />}</Center>;
 };
