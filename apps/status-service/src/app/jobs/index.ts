@@ -7,6 +7,7 @@ import { createCheckEndpointJob, CreateCheckEndpointProps } from './checkEndpoin
 import { EventService } from '@abgov/adsp-service-sdk';
 import { HealthCheckJobs } from './healthCheckJobs';
 const JOB_TIME_INTERVAL_MIN = 1;
+const REQUEST_TIMEOUT = 500;
 interface ServiceStatusJobProps {
   logger: Logger;
   serviceStatusRepository: ServiceStatusRepository;
@@ -16,7 +17,7 @@ interface ServiceStatusJobProps {
 
 function scheduleServiceStatusJob(props: CreateCheckEndpointProps): Job {
   const job = createCheckEndpointJob(props);
-  return scheduleJob(`* */${JOB_TIME_INTERVAL_MIN} * * *`, job);
+  return scheduleJob(`*/${JOB_TIME_INTERVAL_MIN} * * * *`, job);
 }
 
 export async function scheduleServiceStatusJobs(props: ServiceStatusJobProps): Promise<void> {
@@ -31,7 +32,7 @@ export async function scheduleServiceStatusJobs(props: ServiceStatusJobProps): P
       ...props,
       url,
       getter: async (url: string) => {
-        return await axios.get(url);
+        return await axios.get(url, { timeout: REQUEST_TIMEOUT });
       },
     });
   });
@@ -60,7 +61,7 @@ function watchApps(props: ServiceStatusJobProps) {
         ...props,
         url,
         getter: async (url: string) => {
-          return await axios.get(url);
+          return await axios.get(url, { timeout: REQUEST_TIMEOUT });
         },
       });
     });
