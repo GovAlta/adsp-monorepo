@@ -49,6 +49,9 @@ describe('Notification - Subscribers Tab', () => {
     notifications: {
       notifications: [],
     },
+    session: {
+      resourceAccess: { 'urn:ads:platform:notification-service': { roles: ['subscription-admin'] } },
+    },
   });
 
   it('renders', () => {
