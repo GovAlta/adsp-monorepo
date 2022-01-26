@@ -76,3 +76,26 @@ Feature: Notifications
     Then Preview an email template modal is closed
     # Verify the event is still there (had a bug of the event disappearing after preview)
     And the user "views" the event of "status-service:health-check-started" in "status-application-health-change"
+
+  @TEST_CS-1081 @REQ_CS-1029 @TEST_CS-1002 @REQ_CS-1027 @regression
+  Scenario: Test As a tenant admin, I can delete a subscription
+    # Autotest user should be already subscribed to application health change notifications. If not, set it to subscribed
+    Given a tenant admin user is on status applications page
+    When the user "selects" the subscribe checkbox for health check notification type
+    Then the user views the subscribe checkbox is "checked"
+    # Test subscription deletion
+    Given a tenant admin user is on notification subscriptions page
+    When the user types "Auto Test" in Search subuscriber address as field and "auto.test@gov.ab.ca" in Search subscriber email field
+    And the user clicks Search button on notifications page
+    Then the user "views" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Status-Application-Health-Change"
+    When the user clicks delete button of "Auto Test", "auto.test@gov.ab.ca" under "Status-Application-Health-Change"
+    Then the user views Delete subscription modal
+    And the user views the Delete subscription confirmation message of "auto.test@gov.ab.ca"
+    When the user clicks Confirm button on Delete subscription modal
+    Then the user views a callout message of "You are unsubscribed! You will no longer receive notifications on auto.test@gov.ab.ca for status-application-health-change"
+    Then the user "should not view" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Status-Application-Health-Change"
+    # Restore the subscription
+    Given a tenant admin user is on status applications page
+    Then the user views the subscribe checkbox is "unchecked"
+    When the user "selects" the subscribe checkbox for health check notification type
+    Then the user views a callout message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"

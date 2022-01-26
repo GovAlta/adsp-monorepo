@@ -254,3 +254,69 @@ When('the user clicks Close button in Preview an email template modal', function
 Then('Preview an email template modal is closed', function () {
   notificationsObj.eventTemplatePreviewModal().should('not.exist');
 });
+
+Given('a tenant admin user is on notification subscriptions page', function () {
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
+  commonObj
+    .adminMenuItem('/admin/services/notifications')
+    .click()
+    .then(function () {
+      cy.url().should('include', '/admin/services/notifications');
+      cy.wait(4000);
+    });
+  commonObj.serviceTab('Notifications', 'Subscriptions').click();
+  cy.wait(5000);
+});
+
+When(
+  'the user types {string} in Search subuscriber address as field and {string} in Search subscriber email field',
+  function (addressAs, email) {
+    notificationsObj.searchSubscriberAddressAs().clear().type(addressAs);
+    notificationsObj.searchSubscriberEmail().clear().type(email);
+  }
+);
+
+When('the user clicks Search button on notifications page', function () {
+  notificationsObj.notificationSearchBtn().click();
+});
+
+Then(
+  'the user {string} the subscription of {string}, {string} under {string}',
+  function (viewOrNot, addressAd, email, notificationType) {
+    switch (viewOrNot) {
+      case 'views':
+        notificationsObj.notificationRecord(notificationType.toLowerCase(), addressAd, email).should('exist');
+        break;
+      case 'should not view':
+        notificationsObj.notificationRecord(notificationType.toLowerCase(), addressAd, email).should('not.exist');
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
+  }
+);
+
+When(
+  'the user clicks delete button of {string}, {string} under {string}',
+  function (addressAd, email, notificationType) {
+    notificationsObj.deleteIconForNotificationRecord(notificationType.toLowerCase(), addressAd, email).click();
+  }
+);
+
+Then('the user views Delete subscription modal', function () {
+  notificationsObj.deleteConfirmationModal().should('exist');
+  notificationsObj.deleteConfirmationModalTitle().invoke('text').should('eq', 'Delete subscription');
+});
+
+Then('the user views the Delete subscription confirmation message of {string}', function (email) {
+  notificationsObj.deleteConfirmationModalContent().should('contain.text', email);
+});
+
+When('the user clicks Confirm button on Delete subscription modal', function () {
+  notificationsObj.deleteConfirmationModalConfirmBtn().click();
+});

@@ -123,3 +123,8 @@ When('the user selects {string} tab for {string}', function (tab, service) {
   commonObj.serviceTab(service, tab).click();
   cy.wait(2000);
 });
+
+Then('the user views a callout message of {string}', function (message) {
+  cy.wait(1000); // Wait for the message to show up
+  commonObj.notificationMessage().invoke('text').should('contain', message);
+});
