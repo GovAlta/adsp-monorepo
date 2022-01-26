@@ -291,7 +291,7 @@ export function* unsubscribe(action: UnsubscribeAction): SagaIterator {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      yield put(UnsubscribeSuccess(subscriber));
+      yield put(UnsubscribeSuccess(subscriber, type));
     } catch (e) {
       yield put(ErrorNotification({ message: `Subscriptions (unsubscribe): ${e.message}` }));
     }

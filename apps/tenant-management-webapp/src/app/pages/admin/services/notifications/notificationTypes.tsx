@@ -286,7 +286,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               }
               description={notificationType.description}
             >
-              {notificationType.customized && 'Override editing activated'}
+              {notificationType.customized && (
+                <div style={{ float: 'right', fontWeight: 'bold' }}>Override editing activated</div>
+              )}
               <h2>Events:</h2>
               {/* {JSON.stringify(notification?.notificationTypes)} */}
               <Grid>
