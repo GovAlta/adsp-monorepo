@@ -1,6 +1,7 @@
 export interface Notification {
   message: string;
   expiry?: number;
+  disabled?: boolean;
 }
 
 export interface NotificationState {

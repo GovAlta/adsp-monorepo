@@ -11,7 +11,7 @@ interface HealthCheckJob {
 
 type healthCheckJobType = (url: string) => Job;
 
-const Jobs = new NodeCache({ stdTTL: 3600, });
+const Jobs = new NodeCache();
 
 export class HealthCheckJobs {
   #logger: Logger
