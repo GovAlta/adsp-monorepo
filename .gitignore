@@ -50,6 +50,7 @@ Thumbs.db
 
 # Cypress.json for local dev only
 **/cypress.json
+**/cypress.*.local.json
 /tenant-management-webapp-e2e/cypress
 
 # Artillery csv for environments not to be checked in

@@ -11,9 +11,16 @@ describe('NotificationTypes Page', () => {
 
   const store = mockStore({
     user: { jwt: { token: '' } },
-    session: { realm: 'core' },
+    session: {
+      realm: 'core',
+      resourceAccess: { 'urn:ads:platform:notification-service': { roles: ['subscription-admin'] } },
+    },
     tenant: {
       realmRoles: ['uma_auth'],
+      adminEmail: 'agent.smith@matrix.com',
+    },
+    notifications: {
+      notifications: [],
     },
     subscription: {
       subscriptionsHasNext: [{ id: 'status-application-status-change', hasNext: false, top: 40 }],

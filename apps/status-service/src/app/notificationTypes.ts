@@ -49,8 +49,12 @@ export const StatusApplicationHealthChange: NotificationType = {
   </body>
 </html>`,
         },
+        slack: {
+          subject: 'Health check for {{ event.payload.application.name }} started',
+          body: 'Health check started for {{ event.payload.application.name }}: {{ event.payload.application.url }}',
+        },
       },
-      channels: ['email'],
+      channels: ['email', 'slack'],
     },
     {
       namespace: 'status-service',
@@ -70,8 +74,12 @@ export const StatusApplicationHealthChange: NotificationType = {
   </body>
 </html>`,
         },
+        slack: {
+          subject: 'Health check for {{ event.payload.application.name }} stopped',
+          body: 'Health check stopped for {{ event.payload.application.name }}: {{ event.payload.application.url }}',
+        },
       },
-      channels: ['email'],
+      channels: ['email', 'slack'],
     },
     {
       namespace: 'status-service',
@@ -91,8 +99,12 @@ export const StatusApplicationHealthChange: NotificationType = {
   </body>
 </html>`,
         },
+        slack: {
+          subject: '{{ event.payload.application.name }} is unhealthy',
+          body: 'Health check indicates {{ event.payload.application.name }} ({{ event.payload.application.url }}) is unhealthy.',
+        },
       },
-      channels: ['email'],
+      channels: ['email', 'slack'],
     },
     {
       namespace: 'status-service',
@@ -112,8 +124,12 @@ export const StatusApplicationHealthChange: NotificationType = {
   </body>
 </html>`,
         },
+        slack: {
+          subject: '{{ event.payload.application.name }} is healthy',
+          body: 'Health check indicates {{ event.payload.application.name }} ({{ event.payload.application.url }}) is healthy.',
+        },
       },
-      channels: ['email'],
+      channels: ['email', 'slack'],
     },
   ],
   publicSubscribe: false,
