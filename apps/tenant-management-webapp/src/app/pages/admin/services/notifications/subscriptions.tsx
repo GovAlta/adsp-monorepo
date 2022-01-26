@@ -7,6 +7,7 @@ import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { SubscribersSearchForm } from './subscribers/subscriberSearchForm';
 import type { SubscriberSearchCriteria } from '@store/subscription/models';
+import { CheckSubscriberRoles } from './checkSubscriberRoles';
 
 export const Subscriptions: FunctionComponent = () => {
   const criteriaInit = {
@@ -36,7 +37,7 @@ export const Subscriptions: FunctionComponent = () => {
   const emailIndex = selectedSubscription?.channels?.findIndex((channel) => channel.channel === 'email');
 
   return (
-    <>
+    <CheckSubscriberRoles>
       <SubscribersSearchForm onSearch={searchFn} reset={resetState} />
       <SubscriptionList
         onDelete={(sub: Subscriber, type: string) => {
@@ -66,7 +67,7 @@ export const Subscriptions: FunctionComponent = () => {
           </GoAButton>
         </GoAModalActions>
       </GoAModal>
-    </>
+    </CheckSubscriberRoles>
   );
 };
 

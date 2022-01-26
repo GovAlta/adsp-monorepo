@@ -6,6 +6,7 @@ import { FindSubscribers, ResetVisibilityInSubscribersService } from '@store/sub
 import { ActionIndicator } from '@components/Indicator';
 import { SubscriberList } from './subscriberList';
 import { NextLoader } from './nextLoader';
+import { CheckSubscriberRoles } from '../checkSubscriberRoles';
 
 interface SubscribersProps {
   subscribers?: Subscriber[];
@@ -40,12 +41,13 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
   }, []);
 
   return (
-    <div data-testid="subscribers-list-title">
-      <ActionIndicator />
-
-      <SubscribersSearchForm onSearch={searchFn2} reset={resetState} />
-      <SubscriberList />
-      <NextLoader onSearch={searchFn} searchCriteria={criteriaState} />
-    </div>
+    <CheckSubscriberRoles>
+      <div data-testid="subscribers-list-title">
+        <ActionIndicator />
+        <SubscribersSearchForm onSearch={searchFn2} reset={resetState} />
+        <SubscriberList />
+        <NextLoader onSearch={searchFn} searchCriteria={criteriaState} />
+      </div>
+    </CheckSubscriberRoles>
   );
 };

@@ -14,6 +14,7 @@ export default function (state: NotificationState = NOTIFICATION_INIT, action: A
           {
             message: action.payload.message,
             expiry: Date.now() + MessageExpiryTime,
+            disabled: action.payload.disabled,
           },
         ],
       };
