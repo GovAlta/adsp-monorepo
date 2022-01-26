@@ -1,6 +1,5 @@
-import React, { useState, useEffect, FunctionComponent } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { GoAPageLoader } from '@abgov/react-components';
+import React, { FunctionComponent } from 'react';
+import { useSelector } from 'react-redux';
 
 import FileOverview from './fileOverview';
 import { FileTypes } from './fileTypes';
@@ -37,33 +36,23 @@ const HelpLink = (): JSX.Element => {
 };
 
 export const File: FunctionComponent = () => {
-  const dispatch = useDispatch();
-  const [isLoaded, setIsLoaded] = useState(false);
-  useEffect(() => {
-    setIsLoaded(true);
-  }, [dispatch]);
-
   return (
     <Page>
       <Main>
-        {isLoaded ? (
-          <>
-            <h1>File service</h1>
-            <Tabs activeIndex={0}>
-              <Tab label="Overview">
-                <FileOverview />
-              </Tab>
-              <Tab label="File types">
-                <FileTypes />
-              </Tab>
-              <Tab label="Test files">
-                <FileList />
-              </Tab>
-            </Tabs>
-          </>
-        ) : (
-          <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
-        )}
+        <>
+          <h1>File service</h1>
+          <Tabs activeIndex={0}>
+            <Tab label="Overview">
+              <FileOverview />
+            </Tab>
+            <Tab label="File types">
+              <FileTypes />
+            </Tab>
+            <Tab label="Test files">
+              <FileList />
+            </Tab>
+          </Tabs>
+        </>
       </Main>
       <Aside>
         <HelpLink />

@@ -6,8 +6,7 @@ export const SESSION_LOGOUT = 'session/logout';
 export const CREDENTIAL_REFRESH = 'credential/refresh';
 export const UPDATE_INDICATOR = 'session/indicator';
 
-export type ActionType = SessionLoginSuccessAction | SessionLogoutAction | CredentialRefreshAction | UpdateIndicatorAction
-  ;
+export type ActionType = SessionLoginSuccessAction | SessionLogoutAction | CredentialRefreshAction | UpdateIndicatorAction;
 
 interface CredentialRefreshAction {
   type: typeof CREDENTIAL_REFRESH;
@@ -25,9 +24,8 @@ interface SessionLogoutAction {
 
 interface UpdateIndicatorAction {
   type: typeof UPDATE_INDICATOR;
-  payload: Indicator
+  payload: Indicator;
 }
-
 
 export const SessionLoginSuccess = (session: Session): SessionLoginSuccessAction => ({
   type: 'session/login/success',
@@ -43,7 +41,7 @@ export const CredentialRefresh = (credentials: Credentials): CredentialRefreshAc
   payload: credentials,
 });
 
-export const UpdateIndicator = (indicator: Indicator ): UpdateIndicatorAction => ({
+export const UpdateIndicator = (indicator: Indicator): UpdateIndicatorAction => ({
   type: 'session/indicator',
   payload: indicator,
 });
