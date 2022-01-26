@@ -6,7 +6,7 @@ export const SESSION_LOGOUT = 'session/logout';
 export const CREDENTIAL_REFRESH = 'credential/refresh';
 export const UPDATE_INDICATOR = 'session/indicator';
 
-export type ActionType = SessionLoginSuccessAction | SessionLogoutAction | CredentialRefreshAction | UpdateIndicator;
+export type ActionType = SessionLoginSuccessAction | SessionLogoutAction | CredentialRefreshAction | UpdateIndicatorAction;
 
 interface CredentialRefreshAction {
   type: typeof CREDENTIAL_REFRESH;
