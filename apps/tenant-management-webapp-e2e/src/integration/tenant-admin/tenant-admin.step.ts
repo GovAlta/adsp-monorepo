@@ -751,12 +751,17 @@ Then(
     //checking first, second and third element from the first row of the table
     tenantAdminObj
       .eventTableBody()
-      .find('tr:nth-child(1)')
-      .each(($elem) => {
-        const tableDateTime = $elem.text().split(' ')[0];
-        const tableLastSlash = tableDateTime.lastIndexOf('/');
-        const tableDate = tableDateTime.substring(0, tableLastSlash + 5);
-        const tableTime = tableDateTime.substring(tableLastSlash + 5, tableDateTime.length + 1);
+      .find('tr')
+      .each(($col) => {
+        const tableTimestamp = $col.find('td').eq(0).text();
+        const tableNamespace = $col.find('td').eq(1).text();
+        const tableName = $col.find('td').eq(2).text();
+        cy.log(tableTimestamp, tableNamespace, tableName);
+        cy.log(userMinTimestamp, userMaxTimestamp);
+
+        const tableLastSlash = tableTimestamp.lastIndexOf('/');
+        const tableDate = tableTimestamp.substring(0, tableLastSlash + 5);
+        const tableTime = tableTimestamp.substring(tableLastSlash + 5, tableTimestamp.length + 1);
         const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
         const tableMinTimestamp = dayjs(
           String(userMinTimestamp).split('T')[0] + ' ' + String(userMinTimestamp).split('T')[1],
@@ -766,20 +771,54 @@ Then(
           userMaxTimestamp.split('T')[0] + ' ' + userMaxTimestamp.split('T')[1],
           'YYYY-MM-DD hh:mm'
         );
-        cy.log(parseDateTime + '  Table parsedDateTime');
-        cy.log(tableMinTimestamp + '');
-        cy.log(tableMaxTimestamp + '');
-
+        // expect(parseInt(parseDateTime + '')).to.be.lt(parseInt(tableMinTimestamp + '')) ||
+        // expect(parseInt(parseDateTime + '')).to.be.gt(parseInt(tableMaxTimestamp + '')) ||
         if (
-          expect(parseInt(parseDateTime + '')).to.be.lt(parseInt(tableMinTimestamp + '')) ||
-          expect(parseInt(parseDateTime + '')).to.be.gt(parseInt(tableMaxTimestamp + '')) ||
-          cy.get('td').eq(1).should('not.contain.text', namespaceName.split(':')[0]) ||
-          cy.get('td').eq(2).should('not.contain.text', namespaceName.split(':')[1])
+          !tableNamespace.includes(namespaceName.split(':')[0]) ||
+          !tableName.includes(namespaceName.split(':')[1]) ||
+          expect(parseInt(parseDateTime + '')).to.be.gt(parseInt(tableMinTimestamp + '')) ||
+          expect(parseInt(parseDateTime + '')).to.be.lt(parseInt(tableMaxTimestamp + '')) ||
+          !minTimestamp.match(
+            /[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
+          ) ||
+          !maxTimestamp.match(
+            /[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
+          )
         ) {
-          cy.log('One of the conditions was not matched. Reset successful');
-        } else {
-          cy.log('FAILED: filter was not reset.');
+          cy.log('Filter reset successful');
         }
       });
+    // tenantAdminObj
+    //   .eventTableBody()
+    //   .find('tr:nth-child(1)')
+    //   .each(($elem) => {
+    //     const tableDateTime = $elem.text().split(' ')[0];
+    //     const tableLastSlash = tableDateTime.lastIndexOf('/');
+    //     const tableDate = tableDateTime.substring(0, tableLastSlash + 5);
+    //     const tableTime = tableDateTime.substring(tableLastSlash + 5, tableDateTime.length + 1);
+    //     const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
+    //     const tableMinTimestamp = dayjs(
+    //       String(userMinTimestamp).split('T')[0] + ' ' + String(userMinTimestamp).split('T')[1],
+    //       'YYYY-MM-DD hh:mm'
+    //     );
+    //     const tableMaxTimestamp = dayjs(
+    //       userMaxTimestamp.split('T')[0] + ' ' + userMaxTimestamp.split('T')[1],
+    //       'YYYY-MM-DD hh:mm'
+    //     );
+    //     cy.log(parseDateTime + '  Table parsedDateTime');
+    //     cy.log(tableMinTimestamp + '');
+    //     cy.log(tableMaxTimestamp + '');
+
+    //     if (
+    //       expect(parseInt(parseDateTime + '')).to.be.lt(parseInt(tableMinTimestamp + '')) ||
+    //       expect(parseInt(parseDateTime + '')).to.be.gt(parseInt(tableMaxTimestamp + '')) ||
+    //       cy.get('td').eq(1).should('not.contain.text', namespaceName.split(':')[0]) ||
+    //       cy.get('td').eq(2).should('not.contain.text', namespaceName.split(':')[1])
+    //     ) {
+    //       cy.log('One of the conditions was not matched. Reset successful');
+    //     } else {
+    //       cy.log('FAILED: filter was not reset.');
+    //     }
+    //   });
   }
 );
