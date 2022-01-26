@@ -1,4 +1,4 @@
-export const getFooterPreview = (serviceName: string) => {
+export const getFooterPreview = (serviceName?: string) => {
   return `
   <footer>
   <style>

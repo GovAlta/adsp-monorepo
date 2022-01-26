@@ -21,7 +21,7 @@ export const FormStatusNotificationType: NotificationType = {
             <head>
             </head>
             <body>
-            <p>Your draft {{ event.payload.form.definition.name }} form haas been created. We will use this email address to keep you updated</p>
+            <p>Your draft {{ event.payload.form.definition.name }} form has been created. We will use this email address to keep you updated</p>
             </body>
             </html>`,
         },

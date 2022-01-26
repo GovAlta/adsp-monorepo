@@ -31,18 +31,18 @@ export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
 }
 
 async function doRequest(getter: Getter, url: string, logger: Logger): Promise<EndpointStatusEntry> {
-
   const start = Date.now();
   try {
-    const res = await getter(url);
-    logger.info(`Send request to ${url} starting at ${start}`)
+    const { status } = await getter(url);
+    const duration = Date.now() - start;
+    logger.info(`Sent health check request to ${url} with response of ${status} and duration of ${duration} ms.`);
 
     return {
       ok: true,
       url,
-      status: res.status,
+      status,
       timestamp: start,
-      responseTime: Date.now() - start,
+      responseTime: duration,
     };
   } catch (err) {
     return {
@@ -58,9 +58,11 @@ async function doRequest(getter: Getter, url: string, logger: Logger): Promise<E
 const getNewEndpointStatus = (history: EndpointStatusEntry[], EntrySampleSize: number): EndpointStatusType => {
   let passCount = 0;
   let failedCount = 0;
-  const recentHistory =
-    history.sort((prev, next) => { return next.timestamp - prev.timestamp }).slice(0, EntrySampleSize);
-
+  const recentHistory = history
+    .sort((prev, next) => {
+      return next.timestamp - prev.timestamp;
+    })
+    .slice(0, EntrySampleSize);
 
   for (const h of recentHistory) {
     passCount += h.ok ? 1 : 0;
@@ -70,8 +72,8 @@ const getNewEndpointStatus = (history: EndpointStatusEntry[], EntrySampleSize: n
       return 'online';
     }
 
-    if (failedCount > (EntrySampleSize - MIN_PASS_COUNT)) {
-      return 'offline'
+    if (failedCount > EntrySampleSize - MIN_PASS_COUNT) {
+      return 'offline';
     }
   }
 
@@ -80,17 +82,20 @@ const getNewEndpointStatus = (history: EndpointStatusEntry[], EntrySampleSize: n
   }
 
   return 'offline';
-}
+};
 
 async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStatusEntry) {
   const { url, serviceStatusRepository, endpointStatusEntryRepository, eventService, logger } = props;
   // create endpoint status entry before determining if the state is changed
   await EndpointStatusEntryEntity.create(endpointStatusEntryRepository, statusEntry);
   // verify that in the last [ENTRY_SAMPLE_SIZE] minutes, at least [MIN_OK_COUNT] are ok
-  const recentHistory = (await endpointStatusEntryRepository.findRecentByUrl(url, ENTRY_SAMPLE_SIZE));
+  const recentHistory = await endpointStatusEntryRepository.findRecentByUrl(url, ENTRY_SAMPLE_SIZE);
   const newStatus = getNewEndpointStatus(recentHistory, ENTRY_SAMPLE_SIZE);
+  logger.debug(`Endpoint ${props.url} new status evaluated as: ${newStatus}`);
+
   const healCheckJob = new HealthCheckJobs(props.logger);
-  const applicationIds = healCheckJob.idsByUrl(url)
+  const applicationIds = healCheckJob.idsByUrl(url);
+
   applicationIds.forEach(async (id) => {
     const application = await serviceStatusRepository.get(id);
     // Make sure the application existed
@@ -98,28 +103,28 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
       return;
     }
 
-    logger.info(`${recentHistory.length} recent history for endpoint ${url} is collected.`);
-    logger.info(`Current status of application ${id} is ${newStatus}`);
-
     const oldStatus = application.endpoint.status;
+    logger.debug(
+      `Evaluating status for ${application.name} (ID: ${application._id} ) with previous status of ${oldStatus}`
+    );
+
     // set the application status based on the endpoints
     if (newStatus !== oldStatus) {
       application.endpoint.status = newStatus;
       application.internalStatus = EndpointToInternalStatusMapping[newStatus];
       if (newStatus === 'pending') {
-        logger.info(`Application: ${application.name} with id ${application._id} status changed to pending.`);
+        logger.info(`Application ${application.name} (ID: ${application._id}) status changed to pending.`);
       }
 
       if (newStatus === 'online') {
-        logger.info(`Application: ${application.name} with id ${application._id} status changed to healthy.`);
+        logger.info(`Application ${application.name} (ID: ${application._id}) status changed to healthy.`);
         eventService.send(applicationStatusToHealthy(application));
       }
 
       if (newStatus === 'offline') {
-        logger.info(`Application: ${application.name} with id ${application._id} status changed to unhealthy.`);
-        const errMessage = `The application ${application.name} with id ${application._id} becomes unhealthy.`;
-        eventService.send(applicationStatusToUnhealthy(
-          application, errMessage));
+        logger.info(`Application ${application.name} (ID: ${application._id}) status changed to unhealthy.`);
+        const errMessage = `The application ${application.name} (ID: ${application._id}) is unhealthy.`;
+        eventService.send(applicationStatusToUnhealthy(application, errMessage));
       }
 
       await serviceStatusRepository

@@ -11,7 +11,7 @@ export function NotificationBanner(): JSX.Element {
 
   return (
     <div style={{ marginBottom: '10px' }}>
-      {notifications.length > 0 && (
+      {notifications.length > 0 && !notifications[notifications.length - 1]?.disabled && (
         <GoANotification key={new Date().getTime()} type="emergency" isDismissable={true}>
           {notifications[notifications.length - 1].message}
         </GoANotification>

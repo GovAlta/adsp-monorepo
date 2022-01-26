@@ -1,6 +1,8 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { Subscriber } from '@store/subscription/models';
 import { GoAButton } from '@abgov/react-components';
+import { useSelector } from 'react-redux';
+import { RootState } from '@store/index';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
@@ -23,6 +25,8 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
   const x = JSON.stringify(initialValue);
   const [subscriber, setSubscriber] = useState(JSON.parse(x));
   const [formErrors, setFormErrors] = useState(null);
+
+  const updateError = useSelector((state: RootState) => state.subscription.updateError);
 
   useEffect(() => {
     const x = JSON.stringify(initialValue);
@@ -73,7 +77,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
                   onChange={(e) => setSubscriber({ ...subscriber, addressAs: e.target.value })}
                 />
               </GoAFormItem>
-              <GoAFormItem error={formErrors?.['email']}>
+              <GoAFormItem error={formErrors?.['email'] || updateError}>
                 <label>Email</label>
                 <textarea
                   name="email"
