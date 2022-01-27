@@ -53,7 +53,7 @@ export const EventLog: FunctionComponent = () => {
           <>
             <EventSearchForm onSearch={(criteria) => onSearch(criteria)} onCancel={onSearchCancel} />
             <br />
-            <EventLogEntries />
+            <EventLogEntries onSearch={onSearch} />
             {next && (
               <GoAButton disabled={isLoading} onClick={onNext}>
                 Load more...

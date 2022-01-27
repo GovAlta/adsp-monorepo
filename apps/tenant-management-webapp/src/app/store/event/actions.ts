@@ -123,6 +123,7 @@ export const getEventLogEntriesSucceeded = (
     namespace: context.namespace,
     name: context.name,
     timestamp: new Date(timestamp),
+    correlationId,
     details: value.payload,
   })),
   after,
