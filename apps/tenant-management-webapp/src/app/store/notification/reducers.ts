@@ -11,8 +11,6 @@ export const combineNotification = (
       .map((type) => type?.id)
       .includes(coreItem.id)
   ) {
-    //coreItem = tenantNotificationType[coreItem.id];
-
     const events = [];
     coreItem.events.forEach((coreEvent) => {
       const customEvent = tenantNotificationType[coreItem.id].events.find((ev) => ev.name === coreEvent.name);
