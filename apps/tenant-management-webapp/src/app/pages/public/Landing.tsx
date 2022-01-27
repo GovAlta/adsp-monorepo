@@ -78,8 +78,8 @@ const LandingPage = (): JSX.Element => {
         <GoAHeroBanner title="" backgroundUrl={bannerBackground}>
           <Container hs={1} vs={3}>
             <Grid>
-              <GridItem md={1.5} />
-              <GridItem md={9}>
+              <GridItem md={1} />
+              <GridItem md={10}>
                 <BoldTitle>The Alberta Digital Service Platform (ADSP)</BoldTitle>
                 <p>
                   Enabling your team to add, configure and manage a range of services that can integrate with your
@@ -92,7 +92,7 @@ const LandingPage = (): JSX.Element => {
                   </GoALinkButton>
                 </p>
               </GridItem>
-              <GridItem md={1.5} />
+              <GridItem md={1} />
             </Grid>
           </Container>
         </GoAHeroBanner>
@@ -100,10 +100,10 @@ const LandingPage = (): JSX.Element => {
         <Section>
           <Container vs={3} hs={1}>
             <Grid>
-              <GridItem md={1.5} />
-              <GridItem md={9}>
+              <GridItem md={1} />
+              <GridItem md={10}>
                 <Grid>
-                  <GridItem md={6.5}>
+                  <GridItem md={6}>
                     <h2>Why ADSP?</h2>
                     <p>
                       ADSP is a secure in-house cloud-based platform built to enable service teams of the DDI. Users can
@@ -114,13 +114,13 @@ const LandingPage = (): JSX.Element => {
                       <a href="https://glowing-parakeet-0563ab2e.pages.github.io">ADSP guide</a>
                     </p>
                   </GridItem>
-                  <GridItem md={1.5} />
-                  <GridItem md={4}>
-                    <img src={DashboardScreenIcon} alt="" />
+                  <GridItem md={0.5} />
+                  <GridItem md={5.5}>
+                    <DashBoardImg src={DashboardScreenIcon} alt="" />
                   </GridItem>
                 </Grid>
               </GridItem>
-              <GridItem md={1.5} />
+              <GridItem md={1} />
             </Grid>
           </Container>
         </Section>
@@ -137,9 +137,7 @@ const LandingPage = (): JSX.Element => {
                     <GridItem md={9}>
                       <h2>Built for teams to move faster</h2>
                       <p>
-                        Out of the box services available for your team with code examples and sandbox environments.
-                        Quick and secure way to grant access to your team. Super easy to integrate with projects, built
-                        to save time and effort and help your team deliver faster.
+                        The ADSP comes with services out of the box available for your team with code examples and sandbox environments. Grant your team access in a quick and secure way. Super easy to integrate with projects, built to save time and effort and help your team deliver faster.
                       </p>
                     </GridItem>
                   </Grid>
@@ -152,26 +150,26 @@ const LandingPage = (): JSX.Element => {
         </Section>
 
         <Section>
-          <Container vs={3} hs={1}>
+          <Container>
             <Grid>
-              <GridItem md={1.5} />
-              <GridItem md={9}>
+              <GridItem md={1} />
+              <GridItem md={10}>
                 <h2>Service we offer</h2>
                 <p>
                   The ADSP provides a huge catalog of services and existing capabilities for product teams to leverage
                   and deliver on time quality service to Albertans. Here are few of our offerings.
-                </p>
+                </p><br />
               </GridItem>
-              <GridItem md={1.5} />
+              <GridItem md={1} />
             </Grid>
           </Container>
 
-          <Container vs={3} hs={1}>
+          <Container>
             <Grid>
-              <GridItem md={1.5} />
-              <GridItem md={9}>
+              <GridItem md={1} />
+              <GridItem md={10}>
                 <Grid>
-                  <GridItem md={4} vSpacing={1} hSpacing={0.5}>
+                  <GridItem md={4} hSpacing={0.5}>
                     <GoACard type="primary">
                       <CardLayout>
                         <CardTitle>UI components library</CardTitle>
@@ -230,13 +228,13 @@ const LandingPage = (): JSX.Element => {
                 </Grid>
               </GridItem>
 
-              <GridItem md={1.5} />
+              <GridItem md={1} />
             </Grid>
           </Container>
           <Container vs={3} hs={1}>
             <Grid>
-              <GridItem md={1.5} />
-              <GridItem md={9}>
+              <GridItem md={1} />
+              <GridItem md={10}>
                 <Grid>
                   <GridItem md={4} vSpacing={1} hSpacing={0.5}>
                     <GoACard type="primary">
@@ -276,7 +274,7 @@ const LandingPage = (): JSX.Element => {
                   <GridItem md={4} vSpacing={1} hSpacing={0.5}></GridItem>
                 </Grid>
               </GridItem>
-              <GridItem md={1.5} />
+              <GridItem md={1} />
             </Grid>
           </Container>
         </Section>
@@ -339,6 +337,10 @@ const GrayBox = styled.div`
   padding-top: 2.5em;
   background-color: var(--color-gray-100);
   padding-bottom: 2.5em;
+`;
+
+const DashBoardImg = styled.img`
+  box-shadow: 1px 5px 28px 0px #00000033;
 `;
 
 const ClockImg = styled.img`
