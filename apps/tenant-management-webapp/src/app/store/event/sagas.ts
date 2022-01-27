@@ -170,6 +170,9 @@ export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaI
         const minDate = new Date(action.searchCriteria.timestampMin);
         eventUrl = `${eventUrl}&timestampMin=${minDate.toUTCString()}`;
       }
+      if (action.searchCriteria.correlationId) {
+        eventUrl = `${eventUrl}&correlationId=${action.searchCriteria.correlationId}`;
+      }
     }
 
     try {
