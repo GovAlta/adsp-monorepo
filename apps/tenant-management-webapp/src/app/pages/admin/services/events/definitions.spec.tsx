@@ -24,7 +24,12 @@ describe('Definitions Page', () => {
       results: ['foo:bar'],
     },
     user: { jwt: { token: '' } },
-    session: { realm: 'core' },
+    session: {
+      realm: 'core',
+      indicator: {
+        show: false
+      }
+    },
   });
 
   it('renders', () => {

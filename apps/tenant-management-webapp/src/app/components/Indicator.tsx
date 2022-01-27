@@ -7,11 +7,16 @@ import { useSelector } from 'react-redux';
 interface IndicatorProps {
   delay?: number;
   message?: string;
+  pageLock?: boolean;
 }
 export const IndicatorWithDelay = (props: IndicatorProps): JSX.Element => {
   const [showIndicator, setShowIndicator] = useState<boolean>(false);
   const delayInMS = props.delay || 500;
   const message = props.message || 'Loading';
+  let pageLock = true;
+  if (props?.pageLock === false) {
+    pageLock = false
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -22,7 +27,7 @@ export const IndicatorWithDelay = (props: IndicatorProps): JSX.Element => {
     };
   }, []);
 
-  return <>{showIndicator && <GoAPageLoader visible={true} type="infinite" message={message} />}</>;
+  return <>{showIndicator && <GoAPageLoader visible={true} type="infinite" message={message} pagelock={pageLock} />}</>;
 };
 
 const Center = styled.div`

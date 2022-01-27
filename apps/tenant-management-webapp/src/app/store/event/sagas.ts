@@ -16,8 +16,16 @@ import {
   UPDATE_EVENT_DEFINITION_ACTION,
 } from './actions';
 import { SagaIterator } from '@redux-saga/core';
+import { UpdateIndicator } from '@store/session/actions';
 
 export function* fetchEventDefinitions(action: FetchEventDefinitionsAction): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading...',
+    })
+  );
+
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
@@ -55,8 +63,18 @@ export function* fetchEventDefinitions(action: FetchEventDefinitionsAction): Sag
       }, []);
 
       yield put(getEventDefinitionsSuccess([...tenantDefinitions, ...serviceDefinitions]));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
     } catch (err) {
       yield put(ErrorNotification({ message: err.message }));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
     }
   }
 }

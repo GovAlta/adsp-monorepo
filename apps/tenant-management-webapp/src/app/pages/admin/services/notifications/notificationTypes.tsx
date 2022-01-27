@@ -1,9 +1,11 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton, GoACard, GoAPageLoader } from '@abgov/react-components';
+import { GoAButton, GoACard } from '@abgov/react-components';
 import { Grid, GridItem } from '@components/Grid';
 import { NotificationTypeModalForm } from './edit';
 import { EventModalForm } from './editEvent';
+import { IndicatorWithDelay } from '@components/Indicator';
+
 import {
   GoAModal,
   GoAModalActions,
@@ -303,7 +305,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           </div>
         ))}
       {notification.notificationTypes === undefined && (
-        <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
+        <IndicatorWithDelay message="Loading..." pageLock={false} />
       )}
       {/* Delete confirmation */}
       <GoAModal testId="delete-confirmation" isOpen={showDeleteConfirmation}>
