@@ -754,6 +754,7 @@ Then(
     );
     const userMinTimestamp = timestampUtil(minTimestamp);
     const userMaxTimestamp = timestampUtil(maxTimestamp);
+    let errormsg = 'Reset failed';
     //checking all rows in the following columns: 1, 2, 3 in the even log table
     tenantAdminObj
       .eventTableBody()
@@ -775,7 +776,6 @@ Then(
           String(userMaxTimestamp).split('T')[0] + ' ' + userMaxTimestamp.split('T')[1],
           'YYYY-MM-DD hh:mm'
         );
-        let errormsg = 'Reset failed';
         if (
           !tableNamespace.includes(namespaceName.split(':')[0]) ||
           !tableName.includes(namespaceName.split(':')[1]) ||
@@ -783,9 +783,15 @@ Then(
           !(parseInt(parseDateTime + '') <= parseInt(tableMaxTimestamp + ''))
         ) {
           errormsg = 'Reset succeeded';
-          expect(errormsg).to.equal('Reset succeeded');
+          cy.wrap(errormsg).as('errormsg');
           return false;
         }
+        //if erromsg remains in failed state, we need to wrap it outside of the if statement to pass outside our loop
+        cy.wrap(errormsg).as('errormsg');
       });
+    cy.get('@errormsg').then((errormsg) => {
+      cy.log(errormsg + '');
+      expect(String(errormsg)).to.be.equal('Reset succeeded');
+    });
   }
 );
