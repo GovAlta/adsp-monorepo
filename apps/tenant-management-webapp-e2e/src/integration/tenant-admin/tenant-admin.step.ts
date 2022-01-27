@@ -580,7 +580,7 @@ Then(
     //checking each element from the first column
     tenantAdminObj
       .eventTableBody()
-      .find('td:nth-child(1)')
+      .find('td:nth-child(2)')
       .each(($elem) => {
         const tableDateTime = $elem.text();
         const tableLastSlash = tableDateTime.lastIndexOf('/');
@@ -619,7 +619,7 @@ Then('the user views the events matching the search filter of {string} as min ti
   //checking each element from the first column
   tenantAdminObj
     .eventTableBody()
-    .find('td:nth-child(1)')
+    .find('td:nth-child(2)')
     .each(($elem) => {
       const tableDateTime = $elem.text();
       const tableLastSlash = tableDateTime.lastIndexOf('/');
@@ -651,7 +651,7 @@ Then('the user views the events matching the search filter of {string} as maximu
   //checking each element from the first column
   tenantAdminObj
     .eventTableBody()
-    .find('td:nth-child(1)')
+    .find('td:nth-child(2)')
     .each(($elem) => {
       const tableDateTime = $elem.text();
       const tableLastSlash = tableDateTime.lastIndexOf('/');
@@ -711,7 +711,7 @@ Then(
     //checking each element from the first column
     tenantAdminObj
       .eventTableBody()
-      .find('td:nth-child(1)')
+      .find('td:nth-child(2)')
       .each(($elem) => {
         const tableDateTime = $elem.text();
         const tableLastSlash = tableDateTime.lastIndexOf('/');
@@ -754,7 +754,7 @@ Then(
     );
     const userMinTimestamp = timestampUtil(minTimestamp);
     const userMaxTimestamp = timestampUtil(maxTimestamp);
-    let errormsg = 'Reset failed';
+
     //checking all rows in the following columns: 1, 2, 3 in the even log table
     tenantAdminObj
       .eventTableBody()
@@ -782,16 +782,13 @@ Then(
           !(parseInt(parseDateTime + '') >= parseInt(tableMinTimestamp + '')) ||
           !(parseInt(parseDateTime + '') <= parseInt(tableMaxTimestamp + ''))
         ) {
-          errormsg = 'Reset succeeded';
-          cy.wrap(errormsg).as('errormsg');
+          cy.wrap('Reset succeeded').as('errormsg');
           return false;
         }
-        //if erromsg remains in failed state, we need to wrap it outside of the if statement to pass outside our loop
-        cy.wrap(errormsg).as('errormsg');
+        cy.wrap('Reset failed').as('errormsg');
       });
-    cy.get('@errormsg').then((errormsg) => {
-      cy.log(errormsg + '');
-      expect(String(errormsg)).to.be.equal('Reset succeeded');
+    cy.get('@errormsg').then((logmsg) => {
+      expect(String(logmsg)).to.be.equal('Reset succeeded');
     });
   }
 );
