@@ -470,6 +470,7 @@ When('the user searches with {string}', function (namespaceName) {
   tenantAdminObj.eventLogSearchBox().type(namespaceName);
   tenantAdminObj.eventLogSearchBox().should('have.value', namespaceName);
   tenantAdminObj.eventLogSearchBtn().click();
+  cy.wait(2000);
 });
 
 Then('the user views the events matching the search filter of {string}', function (namespaceName) {
@@ -562,6 +563,7 @@ When('the user searches with {string} as minimum timestamp, {string} as maximum 
   tenantAdminObj.eventLogMinTimeStamp().type(timestampMin);
   tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
   tenantAdminObj.eventLogSearchBtn().click();
+  cy.wait(2000);
 });
 
 Then(
@@ -606,6 +608,7 @@ When('the user searches with {string} as minimum timestamp', function (submin) {
 
   tenantAdminObj.eventLogMinTimeStamp().type(timestampMin);
   tenantAdminObj.eventLogSearchBtn().click();
+  cy.wait(2000);
 });
 
 Then('the user views the events matching the search filter of {string} as min timestamp', function (minTimestamp) {
@@ -637,6 +640,7 @@ When('the user searches with {string} as maximum timestamp', function (addmin) {
 
   tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
   tenantAdminObj.eventLogSearchBtn().click();
+  cy.wait(2000);
 });
 
 Then('the user views the events matching the search filter of {string} as maximum timestamp', function (maxTimestamp) {
@@ -677,6 +681,7 @@ When(
     tenantAdminObj.eventLogMinTimeStamp().type(timestampMin);
     tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
     tenantAdminObj.eventLogSearchBtn().click();
+    cy.wait(2000);
   }
 );
 
