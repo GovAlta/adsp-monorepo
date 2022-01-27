@@ -729,7 +729,7 @@ Then(
 
 Then('the user resets event log views', function () {
   tenantAdminObj.eventLogResetBtn().click();
-  tenantAdminObj.eventLogSearchBtn().click();
+  cy.wait(2000);
 });
 
 Then('the user views that search fields are empty', function () {
@@ -757,8 +757,6 @@ Then(
         const tableTimestamp = $row.find('td').eq(0).text();
         const tableNamespace = $row.find('td').eq(1).text();
         const tableName = $row.find('td').eq(2).text();
-        cy.log(tableTimestamp, tableNamespace, tableName);
-        cy.log(userMinTimestamp, userMaxTimestamp);
 
         const tableLastSlash = tableTimestamp.lastIndexOf('/');
         const tableDate = tableTimestamp.substring(0, tableLastSlash + 5);
@@ -772,22 +770,17 @@ Then(
           String(userMaxTimestamp).split('T')[0] + ' ' + userMaxTimestamp.split('T')[1],
           'YYYY-MM-DD hh:mm'
         );
-        let errormsg = 'Reset Failed';
+        let errormsg = 'Reset failed';
         if (
           !tableNamespace.includes(namespaceName.split(':')[0]) ||
           !tableName.includes(namespaceName.split(':')[1]) ||
           !(parseInt(parseDateTime + '') >= parseInt(tableMinTimestamp + '')) ||
           !(parseInt(parseDateTime + '') <= parseInt(tableMaxTimestamp + ''))
         ) {
-          errormsg = 'Reset Success';
-        } else {
-          cy.log('Filter reset failed');
+          errormsg = 'Reset succeeded';
+          expect(errormsg).to.equal('Reset succeeded');
+          return false;
         }
-        cy.wrap(errormsg).as('errormsg');
       });
-    cy.get('@errormsg').then((errormsg) => {
-      cy.log(errormsg + '');
-      expect(String(errormsg) == 'Reset Success').to.be.true;
-    });
   }
 );
