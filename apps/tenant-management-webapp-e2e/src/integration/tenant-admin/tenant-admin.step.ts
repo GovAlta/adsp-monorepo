@@ -477,11 +477,11 @@ Then('the user views the events matching the search filter of {string}', functio
   tenantAdminObj.eventTableBody().each(($row) => {
     cy.wrap($row).within(() => {
       cy.get('td').each(($col) => {
-        if ($col.eq(1).text() == namespaceName.split(':')[0]) {
-          expect($col.eq(1).text()).to.equal(namespaceName.split(':')[0]);
+        if ($col.eq(2).text() == namespaceName.split(':')[0]) {
+          expect($col.eq(2).text()).to.equal(namespaceName.split(':')[0]);
         }
-        if ($col.eq(2).text() == namespaceName.split(':')[1]) {
-          expect($col.eq(1).text()).to.equal(namespaceName.split(':')[1]);
+        if ($col.eq(3).text() == namespaceName.split(':')[1]) {
+          expect($col.eq(3).text()).to.equal(namespaceName.split(':')[1]);
         }
       });
     });
@@ -507,11 +507,11 @@ Then('the user views more events matching the search filter of {string}', functi
   tenantAdminObj.eventTableBody().each(($row) => {
     cy.wrap($row).within(() => {
       cy.get('td').each(($col) => {
-        if ($col.eq(1).text() == namespaceName.split(':')[0]) {
-          expect($col.eq(1).text()).to.equal(namespaceName.split(':')[0]);
+        if ($col.eq(2).text() == namespaceName.split(':')[0]) {
+          expect($col.eq(2).text()).to.equal(namespaceName.split(':')[0]);
         }
-        if ($col.eq(2).text() == namespaceName.split(':')[1]) {
-          expect($col.eq(1).text()).to.equal(namespaceName.split(':')[1]);
+        if ($col.eq(3).text() == namespaceName.split(':')[1]) {
+          expect($col.eq(3).text()).to.equal(namespaceName.split(':')[1]);
         }
       });
     });
@@ -691,11 +691,11 @@ Then(
     tenantAdminObj.eventTableBody().each(($row) => {
       cy.wrap($row).within(() => {
         cy.get('td').each(($col) => {
-          if ($col.eq(1).text() == namespaceName.split(':')[0]) {
-            expect($col.eq(1).text()).to.equal(namespaceName.split(':')[0]);
+          if ($col.eq(2).text() == namespaceName.split(':')[0]) {
+            expect($col.eq(2).text()).to.equal(namespaceName.split(':')[0]);
           }
-          if ($col.eq(2).text() == namespaceName.split(':')[1]) {
-            expect($col.eq(1).text()).to.equal(namespaceName.split(':')[1]);
+          if ($col.eq(3).text() == namespaceName.split(':')[1]) {
+            expect($col.eq(3).text()).to.equal(namespaceName.split(':')[1]);
           }
         });
       });
@@ -760,9 +760,9 @@ Then(
       .eventTableBody()
       .find('tr')
       .each(($row) => {
-        const tableTimestamp = $row.find('td').eq(0).text();
-        const tableNamespace = $row.find('td').eq(1).text();
-        const tableName = $row.find('td').eq(2).text();
+        const tableTimestamp = $row.find('td').eq(1).text();
+        const tableNamespace = $row.find('td').eq(2).text();
+        const tableName = $row.find('td').eq(3).text();
 
         const tableLastSlash = tableTimestamp.lastIndexOf('/');
         const tableDate = tableTimestamp.substring(0, tableLastSlash + 5);
