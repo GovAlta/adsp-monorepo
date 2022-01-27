@@ -85,7 +85,7 @@ When(
 
 When('the user clicks Save button on Definition modal', function () {
   eventsObj.definitionModalSaveButton().click();
-  cy.wait(1000);
+  cy.wait(2000);
 });
 
 When(
