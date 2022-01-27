@@ -67,10 +67,10 @@ Feature: Tenant admin
     Then the user views the tenant name of "autotest"
     And the user views the release info and DIO contact info
     And the user views an instruction of role requirement indicating user needs tenant-admin
-    And the user views the autologin link with a copy button
+    And the user views the login link with a copy button
     # Getting content from clipboard doesn't work on build agent. Commented out this validation.
     # When the user clicks click to copy button
-    # Then the autologin link is copied to the clipboard
+    # Then the login link is copied to the clipboard
     And the user views introductions and links for "Access", "Directory", "File service", "Status", "Events" and "Notifications"
     When the user clicks "Access" link
     Then the user is directed to "Access" page

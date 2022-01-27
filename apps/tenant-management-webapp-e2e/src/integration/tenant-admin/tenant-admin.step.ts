@@ -5,7 +5,7 @@ const tenantAdminObj = new tenantAdminPage();
 let responseObj: Cypress.Response<any>;
 
 Given('the user goes to tenant management login link', function () {
-  const urlToTenantLogin = Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/autologin?kc_idp_hint=';
+  const urlToTenantLogin = Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/login?kc_idp_hint=';
   cy.visit(urlToTenantLogin);
   cy.wait(2000); // Wait all the redirects to settle down
 });
@@ -364,10 +364,10 @@ Then('the user views the release info and DIO contact info', function () {
     });
 });
 
-Then('the user views the autologin link with a copy button', function () {
+Then('the user views the login link with a copy button', function () {
   tenantAdminObj
     .tenantAutoLoginUrl()
-    .should('contain.text', Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/autologin');
+    .should('contain.text', Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/login');
   tenantAdminObj.clickToCopyButton().then((button) => {
     expect(button.length).to.be.gt(0); // button element exists
   });
@@ -378,8 +378,8 @@ When('the user clicks click to copy button', function () {
   cy.wait(2000);
 });
 
-Then('the autologin link is copied to the clipboard', function () {
-  cy.task('getClipboard').should('eq', Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/autologin');
+Then('the login link is copied to the clipboard', function () {
+  cy.task('getClipboard').should('eq', Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/login');
 });
 
 Then(
@@ -429,11 +429,11 @@ Then('the user views an instruction of role requirement indicating user needs te
     .then((href) => {
       expect(href).to.contain(
         Cypress.env('accessManagementApi') +
-          '/admin/' +
-          Cypress.env('realm') +
-          '/console/#/realms/' +
-          Cypress.env('realm') +
-          '/users'
+        '/admin/' +
+        Cypress.env('realm') +
+        '/console/#/realms/' +
+        Cypress.env('realm') +
+        '/users'
       );
     });
 });

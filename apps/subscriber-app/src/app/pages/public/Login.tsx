@@ -11,6 +11,7 @@ const LoginLanding = (): JSX.Element => {
   const keycloakConfig = useSelector((state: RootState) => state.config.keycloakApi);
 
   const dispatch = useDispatch();
+  alert('A')
 
   useEffect(() => {
     if (realm) {
