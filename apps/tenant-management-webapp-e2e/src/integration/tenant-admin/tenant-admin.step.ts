@@ -666,7 +666,7 @@ When(
   'the user searches with {string}, {string} as minimum timestamp, {string} as maximum timestamp',
   function (namespaceName, submin, addmin) {
     tenantAdminObj.eventLogSearchBox().click();
-    tenantAdminObj.eventLogSearchBox().type(namespaceName).click();
+    tenantAdminObj.eventLogSearchBox().type(namespaceName);
 
     const timestampMin = timestampUtil(submin);
     const timestampMax = timestampUtil(addmin);
@@ -753,10 +753,10 @@ Then(
     tenantAdminObj
       .eventTableBody()
       .find('tr')
-      .each(($col) => {
-        const tableTimestamp = $col.find('td').eq(0).text();
-        const tableNamespace = $col.find('td').eq(1).text();
-        const tableName = $col.find('td').eq(2).text();
+      .each(($row) => {
+        const tableTimestamp = $row.find('td').eq(0).text();
+        const tableNamespace = $row.find('td').eq(1).text();
+        const tableName = $row.find('td').eq(2).text();
         cy.log(tableTimestamp, tableNamespace, tableName);
         cy.log(userMinTimestamp, userMaxTimestamp);
 
