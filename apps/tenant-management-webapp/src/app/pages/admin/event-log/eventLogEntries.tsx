@@ -38,7 +38,7 @@ const EventLogEntryComponent: FunctionComponent<EventLogEntryComponentProps> = (
   return (
     <>
       <tr>
-        <td>
+        <td headers="correlation">
           <CorrelationIndicator
             color={
               entry.correlationId &&
@@ -73,7 +73,7 @@ const EventLogEntryComponent: FunctionComponent<EventLogEntryComponentProps> = (
       </tr>
       {showDetails && (
         <tr>
-          <td headers="timestamp namespace name details" colSpan={4} className="event-details">
+          <td headers="correlation timestamp namespace name details" colSpan={5} className="event-details">
             <div>{JSON.stringify(entry.details, null, 2)}</div>
           </td>
         </tr>
