@@ -108,6 +108,7 @@ export class NotificationTypeEntity implements NotificationType {
         event: {
           namespace: event.namespace,
           name: event.name,
+          timestamp: event.timestamp,
         },
         correlationId: event.correlationId,
         context: event.context,
