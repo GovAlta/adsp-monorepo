@@ -113,7 +113,7 @@ export const SubscriberList: FunctionComponent = () => {
           <tr>
             <th>Address as</th>
             <th>Email</th>
-            <th>Actions</th>
+            <th style={{ width: '0' }}>Actions</th>
           </tr>
         </thead>
         <tbody>
