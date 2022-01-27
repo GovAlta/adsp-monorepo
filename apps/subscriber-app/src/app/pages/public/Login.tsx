@@ -9,10 +9,7 @@ import { RootState } from '@store/index';
 const LoginLanding = (): JSX.Element => {
   const realm = useParams<{ realm: string }>().realm;
   const keycloakConfig = useSelector((state: RootState) => state.config.keycloakApi);
-
   const dispatch = useDispatch();
-  alert('A')
-
   useEffect(() => {
     if (realm) {
       dispatch(TenantLogin(realm));
