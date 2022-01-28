@@ -11,6 +11,8 @@ import {
   GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS,
   TRIGGER_VISIBILITY_SUBSCRIBER,
   RESET_VISIBILITY_IN_SUBSCRIBERS,
+  EMAIL_EXISTS,
+  RESET_UPDATE_ERRORS,
 } from './actions';
 
 import { SUBSCRIBER_INIT, SubscriberService, SubscriberAndSubscriptions } from './models';
@@ -187,6 +189,20 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       return {
         ...state,
         subscriberSubscriptions: subscriberSubscriptions,
+      };
+    }
+
+    case EMAIL_EXISTS: {
+      return {
+        ...state,
+        updateError: `Subscriber with email ${action.payload.email} already exists`,
+      };
+    }
+
+    case RESET_UPDATE_ERRORS: {
+      return {
+        ...state,
+        updateError: '',
       };
     }
 

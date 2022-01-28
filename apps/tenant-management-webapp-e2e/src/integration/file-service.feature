@@ -1,6 +1,7 @@
 @REQ_CS-224 @file-service
 Feature: File service
 
+  # TEST DATA: the core api user needs to have directory-admin role to be able to call POST requests for discovery service
   @TEST_CS-311 @REQ_CS-232 @regression @api
   Scenario Outline: As a developer of a GoA digital service, I can get a map of urns to urls for all available services
     Given a testing mapping of "<Name>", "<Service>" and "<Service URL>" is inserted with "<RequestURL>"
@@ -91,7 +92,8 @@ Feature: File service
     Then file service status is "Active"
     And "Overview , Test Files, File types, Documentation" file service tabs are "visible"
 
-  @TEST_CS-495 @REQ_CS-408 @regression
+  @TEST_CS-495 @REQ_CS-408 @regression @ignore
+  # Ignore this test until CS-1134 is fixed
   Scenario: Test As a service owner, I can see the API documentation for file service in the tenant admin, so I can understand how to use the API
     Given a service owner user is on file services overview page
     Then the user views the link for "File service" API docs

@@ -20,6 +20,8 @@ export const GET_SUBSCRIBER_SUBSCRIPTIONS = 'tenant/subscriber-service/get-subsc
 export const GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS = 'tenant/subscriber-service/get-subscription-subscriber-success';
 export const TRIGGER_VISIBILITY_SUBSCRIBER = 'tenant/subscriber-service/make-visible';
 export const RESET_VISIBILITY_IN_SUBSCRIBERS = 'tenant/subscriber-service/reset-visibility';
+export const EMAIL_EXISTS = 'tenant/subscriber-service/email-exists';
+export const RESET_UPDATE_ERRORS = 'tenant/subscriber-service/reset-update-errors';
 
 // =============
 // Actions Types
@@ -40,7 +42,9 @@ export type ActionTypes =
   | GetTypeSubscriptionSuccessAction
   | GetSubscriberSubscriptionsSuccessAction
   | TriggerVisibilitySubscribersServiceAction
-  | ResetVisibilityInSubscribersServiceAction;
+  | ResetVisibilityInSubscribersServiceAction
+  | EmailExistsAction
+  | ResetUpdateErrorsAction;
 
 export interface SubscribeSubscriberServiceAction {
   type: typeof SUBSCRIBE_SUBSCRIBER;
@@ -86,6 +90,17 @@ export interface GetSubscriptionSuccessAction {
   type: typeof GET_SUBSCRIPTION_SUCCESS;
   payload: {
     subscriberInfo: Subscription;
+  };
+}
+
+export interface ResetUpdateErrorsAction {
+  type: typeof RESET_UPDATE_ERRORS;
+}
+
+export interface EmailExistsAction {
+  type: typeof EMAIL_EXISTS;
+  payload: {
+    email: string;
   };
 }
 
@@ -276,6 +291,17 @@ export const GetSubscriptionSuccess = (subscriberInfo: Subscription): GetSubscri
   payload: {
     subscriberInfo,
   },
+});
+
+export const EmailExists = (email: string): EmailExistsAction => ({
+  type: EMAIL_EXISTS,
+  payload: {
+    email,
+  },
+});
+
+export const ResetUpdateErrors = (): ResetUpdateErrorsAction => ({
+  type: RESET_UPDATE_ERRORS,
 });
 
 export const GetSubscriptionsSuccess = (

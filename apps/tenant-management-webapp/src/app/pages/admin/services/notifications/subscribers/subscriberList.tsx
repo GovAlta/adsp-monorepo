@@ -2,12 +2,11 @@ import React, { FunctionComponent, useState, useEffect } from 'react';
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
-import { GoAIcon } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
 import { SubscriberModalForm } from '../editSubscriber';
-import { UpdateSubscriberService } from '@store/subscription/actions';
+import { ResetUpdateErrors, UpdateSubscriberService } from '@store/subscription/actions';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
-import { Subscriber, SubscriptionWrapper } from '@store/subscription/models';
+import { Subscriber } from '@store/subscription/models';
 import { getSubscriberSubscriptions, TriggerVisibilitySubscribersService } from '@store/subscription/actions';
 
 interface ActionComponentProps {
@@ -55,11 +54,12 @@ const ActionComponent: FunctionComponent<ActionComponentProps> = ({ subscriber, 
               />
             </Flex1>
             <Flex1>
-              <a data-testid={`edit-subscription-item-${subscriber.id}`} onClick={() => openModalFunction(subscriber)}>
-                <ButtonBorder>
-                  <GoAIcon type="create" />
-                </ButtonBorder>
-              </a>
+              <GoAContextMenuIcon
+                type="create"
+                title="Edit"
+                onClick={() => openModalFunction(subscriber)}
+                testId={`edit-subscription-item-${subscriber.id}`}
+              />
             </Flex1>
           </RowFlex>
         </td>
@@ -82,9 +82,15 @@ export const SubscriberList: FunctionComponent = () => {
   const dispatch = useDispatch();
   const [editSubscription, setEditSubscription] = useState(false);
   const [selectedSubscription, setSelectedSubscription] = useState(null);
+  const search = useSelector((state: RootState) => state.subscription.search);
 
   const subscription = useSelector((state: RootState) => state.subscription);
   const subscribers = subscription.search.subscribers.data;
+
+  useEffect(() => {
+    reset();
+  }, [search]);
+
   if (!subscribers || subscribers.length === 0) {
     return <></>;
   }
@@ -97,6 +103,7 @@ export const SubscriberList: FunctionComponent = () => {
   function reset() {
     setEditSubscription(false);
     setSelectedSubscription(null);
+    dispatch(ResetUpdateErrors());
   }
 
   return (
@@ -106,7 +113,7 @@ export const SubscriberList: FunctionComponent = () => {
           <tr>
             <th>Address as</th>
             <th>Email</th>
-            <th>Actions</th>
+            <th style={{ width: '0' }}>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -122,10 +129,8 @@ export const SubscriberList: FunctionComponent = () => {
       <SubscriberModalForm
         open={editSubscription}
         initialValue={selectedSubscription}
-        // errors={errors}
         onSave={(subscriber) => {
           dispatch(UpdateSubscriberService(subscriber));
-          reset();
         }}
         onCancel={() => {
           reset();
@@ -134,14 +139,6 @@ export const SubscriberList: FunctionComponent = () => {
     </div>
   );
 };
-
-const ButtonBorder = styled.div`
-  border: 1px solid #56a0d8;
-  margin: 3px;
-  border-radius: 3px;
-  width: fit-content;
-  padding: 3px;
-`;
 
 const RowFlex = styled.div`
   display: flex;

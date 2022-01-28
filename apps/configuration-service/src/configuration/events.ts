@@ -62,6 +62,7 @@ export const configurationUpdated = (
   name: 'configuration-updated',
   timestamp: new Date(),
   tenantId,
+  correlationId: `${namespace}:${name}`,
   context: {
     namespace,
     name,
@@ -87,6 +88,7 @@ export const revisionCreated = (
   name: 'revision-created',
   timestamp: new Date(),
   tenantId,
+  correlationId: `${namespace}:${name}`,
   context: {
     namespace,
     name,
