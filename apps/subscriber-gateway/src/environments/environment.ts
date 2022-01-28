@@ -11,7 +11,7 @@ export const environment = envalid.cleanEnv(
     DIRECTORY_URL: envalid.str({ default: 'http://localhost:3333' }),
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:subscriber-gateway' }),
     CLIENT_SECRET: envalid.str(),
-    RECAPTCHA_SECRET: envalid.str(),
+    RECAPTCHA_SECRET: envalid.str({ default: '' }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: 3344 }),
   },

@@ -1,4 +1,4 @@
-import { adspId, ServiceDirectory, TenantService, TokenProvider } from '@abgov/adsp-service-sdk';
+import { adspId, Channel, ServiceDirectory, TenantService, TokenProvider } from '@abgov/adsp-service-sdk';
 import { NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import axios from 'axios';
 import { RequestHandler, Router } from 'express';
@@ -49,19 +49,32 @@ export function subscribeStatus(
         data: { id },
       } = await axios.post<{ id: string }>(
         subscribersUrl.href,
-        { email: email },
+        {
+          userId: email,
+          addressAs: '',
+          channels: [
+            {
+              channel: Channel.email,
+              address: email,
+            },
+          ],
+        },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
       const subscriptionUrl = new URL(
-        `${this.baseUrl}/subscription/v1/types/status-application-status-change/subscriptions/${id}?tenantId=${tenant.id}`,
+        `/subscription/v1/types/status-application-status-change/subscriptions/${id}?tenantId=${tenant.id}`,
         notificationServiceUrl
       );
-      const { data: subscription } = await axios.post(subscriptionUrl.href, {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      });
+      const { data: subscription } = await axios.post(
+        subscriptionUrl.href,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       res.send(subscription);
     } catch (err) {

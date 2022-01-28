@@ -778,7 +778,8 @@
         "serve": {
           "builder": "@nrwl/node:execute",
           "options": {
-            "buildTarget": "subscriber-gateway:build"
+            "buildTarget": "subscriber-gateway:build",
+            "port": 7784
           }
         },
         "lint": {

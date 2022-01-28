@@ -1,12 +1,10 @@
 import axios, { AxiosInstance } from 'axios';
-import { ServiceStatusApplication } from './models';
+import { ServiceStatusApplication, Subscriber } from './models';
 
 export class ApplicationApi {
   private http: AxiosInstance;
-  private baseUrl: string;
 
   constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
     this.http = axios.create({ baseURL: baseUrl });
   }
 
@@ -18,5 +16,21 @@ export class ApplicationApi {
   async getNotices(name: string): Promise<ServiceStatusApplication[]> {
     const res = await this.http.get(`/notice/v1/notices`, { params: { name: name } });
     return res.data?.results;
+  }
+}
+
+export class SubscriberApi {
+  private http: AxiosInstance;
+
+  constructor(baseUrl: string) {
+    this.http = axios.create({ baseURL: baseUrl });
+  }
+
+  async subscribe(tenant: string, email: string): Promise<Subscriber> {
+    const { data } = await this.http.post<{ subscriber: Subscriber }>('application-status', {
+      tenant: tenant,
+      email: email,
+    });
+    return data.subscriber;
   }
 }
