@@ -3,11 +3,12 @@ import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { DirectoryOverview } from './overview';
 import SupportLinks from '@components/SupportLinks';
-
+import { DirectoryService } from './services';
 export const Directory: FunctionComponent = () => {
   return (
     <Page>
       <Main>
+
         {/* TODO: Add loading indicator after redux actions were added. */}
         <>
           <h1>Directory service</h1>
@@ -15,6 +16,9 @@ export const Directory: FunctionComponent = () => {
             <Tab label="Overview">
               <DirectoryOverview />
             </Tab>
+                <Tab label="Service">
+                <DirectoryService />
+              </Tab>
           </Tabs>
         </>
       </Main>
