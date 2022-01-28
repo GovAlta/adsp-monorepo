@@ -428,29 +428,3 @@ Then('the user views the subscribe checkbox is {string}', function (checkboxStat
       }
     });
 });
-
-Then('the user views a subscription confirmation message for {string}', function (subscriptionStatus) {
-  cy.wait(1000); // Wait for the message to show up
-  switch (subscriptionStatus) {
-    case 'subscribed':
-      commonObj
-        .notificationMessage()
-        .invoke('text')
-        .should(
-          'contain',
-          'You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change'
-        );
-      break;
-    case 'unsubscribed':
-      commonObj
-        .notificationMessage()
-        .invoke('text')
-        .should(
-          'contain',
-          'You are unsubscribed! You will no longer receive notifications on auto.test@gov.ab.ca for status-application-health-change'
-        );
-      break;
-    default:
-      expect(subscriptionStatus).to.be.oneOf(['subscribed', 'unsubscribed']);
-  }
-});

@@ -71,14 +71,14 @@ Feature: Service status
     Then the user views the subscribe checkbox is "checked"
     # Unsubscribe application health change notifications
     When the user "unselects" the subscribe checkbox for health check notification type
-    Then the user views a subscription confirmation message for "unsubscribed"
+    Then the user views a callout message of "You are unsubscribed! You will no longer receive notifications on auto.test@gov.ab.ca for status-application-health-change"
     When the user selects the "Dashboard" menu item
     And the user selects the "Status" menu item
     And the user selects "Applications" tab for "Service status"
     Then the user views the subscribe checkbox is "unchecked"
     # Subscribe application health change notifications
     When the user "selects" the subscribe checkbox for health check notification type
-    Then the user views a subscription confirmation message for "subscribed"
+    Then the user views a callout message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"
     When the user selects the "Dashboard" menu item
     And the user selects the "Status" menu item
     And the user selects "Applications" tab for "Service status"
