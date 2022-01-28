@@ -26,6 +26,7 @@ import {
 } from './status/sagas';
 import { watchEventSagas } from './event/sagas';
 import { watchFileSagas } from './file/sagas';
+import { fetchDirectory } from './directory/sagas';
 import { watchNotificationSagas } from './notification/sagas';
 import { watchSubscriptionSagas } from './subscription/sagas';
 
@@ -45,6 +46,7 @@ import {
   TENANT_LOGOUT,
   FETCH_REALM_ROLES,
 } from './tenant/actions';
+import { FETCH_DIRECTORY } from './directory/actions';
 import { FETCH_TENANT_CONFIG, CREATE_TENANT_CONFIG, UPDATE_TENANT_CONFIG } from './tenantConfig/actions';
 import { DELETE_APPLICATION_ACTION, FETCH_SERVICE_STATUS_APPS_ACTION, SAVE_APPLICATION_ACTION } from './status/actions';
 import { SAVE_NOTICE_ACTION, GET_NOTICES_ACTION, DELETE_NOTICE_ACTION } from './notice/actions';
@@ -77,6 +79,8 @@ export function* watchSagas() {
   yield takeEvery(TENANT_ADMIN_LOGIN, tenantAdminLogin);
   yield takeEvery(TENANT_CREATION_LOGIN_INIT, tenantCreationInitLogin);
 
+  //directory
+  yield takeEvery(FETCH_DIRECTORY, fetchDirectory);
   // service status
   yield takeEvery(FETCH_SERVICE_STATUS_APPS_ACTION, fetchServiceStatusApps);
   yield takeEvery(SAVE_APPLICATION_ACTION, saveApplication);

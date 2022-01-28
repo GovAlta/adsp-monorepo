@@ -5,7 +5,7 @@ import { Tab, Tabs } from '@components/Tabs';
 import { DirectoryOverview } from './overview';
 import { GoAPageLoader } from '@abgov/react-components';
 import SupportLinks from '@components/SupportLinks';
-
+import { DirectoryService } from './services';
 export const Directory: FunctionComponent = () => {
   const dispatch = useDispatch();
   const [isLoaded, setIsLoaded] = useState(false);
@@ -21,6 +21,9 @@ export const Directory: FunctionComponent = () => {
             <Tabs activeIndex={0}>
               <Tab label="Overview">
                 <DirectoryOverview />
+              </Tab>
+              <Tab label="Service">
+                <DirectoryService />
               </Tab>
             </Tabs>
           </>
