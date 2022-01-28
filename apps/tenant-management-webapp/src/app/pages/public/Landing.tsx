@@ -75,28 +75,29 @@ const LandingPage = (): JSX.Element => {
     <>
       <Header serviceName="" />
       <Main>
-        <GoAHeroBanner title="" backgroundUrl={bannerBackground}>
-          <Container hs={1} vs={3}>
-            <Grid>
-              <GridItem md={1} />
-              <GridItem md={10}>
-                <BoldTitle>The Alberta Digital Service Platform (ADSP)</BoldTitle>
-                <p>
-                  Enabling your team to add, configure and manage a range of services that can integrate with your
-                  projects.
+        <HeroBannerLayout>
+          <GoAHeroBanner title="" backgroundUrl={bannerBackground}>
+            <Container hs={1} vs={3}>
+              <Grid>
+                <GridItem md={1} />
+                <GridItem md={10}>
+                  <BoldTitle>The Alberta Digital Service Platform (ADSP)</BoldTitle>
+                  <p>
+                    Enabling your team to add, configure and manage a range of services that can integrate with your
+                    projects.
                 </p>
-                <br />
-                <p>
-                  <GoALinkButton buttonType="primary" to="/get-started">
-                    Request a tenant
+                  <br />
+                  <p>
+                    <GoALinkButton buttonType="primary" to="/get-started">
+                      Request a tenant
                   </GoALinkButton>
-                </p>
-              </GridItem>
-              <GridItem md={1} />
-            </Grid>
-          </Container>
-        </GoAHeroBanner>
-
+                  </p>
+                </GridItem>
+                <GridItem md={1} />
+              </Grid>
+            </Container>
+          </GoAHeroBanner>
+        </HeroBannerLayout>
         <Section>
           <Container vs={3} hs={1}>
             <Grid>
@@ -186,7 +187,7 @@ const LandingPage = (): JSX.Element => {
                     </GoACard>
                   </GridItem>
 
-                  <GridItem md={4} vSpacing={1} hSpacing={0.5}>
+                  <GridItem md={4} hSpacing={0.5}>
                     <GoACard type="primary">
                       <CardLayout>
                         <CardTitle>Keycloak access service</CardTitle>
@@ -205,7 +206,7 @@ const LandingPage = (): JSX.Element => {
                     </GoACard>
                   </GridItem>
 
-                  <GridItem md={4} vSpacing={1} hSpacing={0.5}>
+                  <GridItem md={4} hSpacing={0.5}>
                     <GoACard type="primary">
                       <CardLayout>
                         <CardTitle>File service</CardTitle>
@@ -231,12 +232,12 @@ const LandingPage = (): JSX.Element => {
               <GridItem md={1} />
             </Grid>
           </Container>
-          <Container vs={3} hs={1}>
+          <Container vs={3}>
             <Grid>
               <GridItem md={1} />
               <GridItem md={10}>
                 <Grid>
-                  <GridItem md={4} vSpacing={1} hSpacing={0.5}>
+                  <GridItem md={4} hSpacing={0.5}>
                     <GoACard type="primary">
                       <CardLayout>
                         <CardTitle>Event service</CardTitle>
@@ -254,7 +255,7 @@ const LandingPage = (): JSX.Element => {
                     </GoACard>
                   </GridItem>
 
-                  <GridItem md={4} vSpacing={1} hSpacing={0.5}>
+                  <GridItem md={4} hSpacing={0.5}>
                     <GoACard type="primary">
                       <CardLayout>
                         <CardTitle>Notification service</CardTitle>
@@ -271,7 +272,7 @@ const LandingPage = (): JSX.Element => {
                       </CardLayout>
                     </GoACard>
                   </GridItem>
-                  <GridItem md={4} vSpacing={1} hSpacing={0.5}></GridItem>
+                  <GridItem md={4} hSpacing={0.5}></GridItem>
                 </Grid>
               </GridItem>
               <GridItem md={1} />
@@ -342,6 +343,13 @@ const GrayBox = styled.div`
 const DashBoardImg = styled.img`
   box-shadow: 1px 5px 28px 0px #00000033;
 `;
+
+const HeroBannerLayout = styled.div`
+.goa-hero {
+  max-height: 20em !important;
+  background-size: 100% 100%;
+  padding: 0px !important;
+}`;
 
 const ClockImg = styled.img`
   margin-top: 1.5em;
