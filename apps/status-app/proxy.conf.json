@@ -1,7 +1,15 @@
 {
   "/config/*": {
-    "target": "https://status-app-core-services-dev.os99.gov.ab.ca",
+    "target": "https://status.adsp-dev.gov.ab.ca",
     "secure": true,
+    "changeOrigin": true
+  },
+  "/api/*": {
+    "target": "http://localhost:3344",
+    "pathRewrite": {
+      "^/api": ""
+    },
+    "secure": false,
     "changeOrigin": true
   }
 }

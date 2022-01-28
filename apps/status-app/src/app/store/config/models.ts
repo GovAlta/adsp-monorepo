@@ -9,8 +9,6 @@ export interface ConfigState {
   production?: boolean;
   envLoaded: boolean;
   platformTenantRealm?: string;
-  keycloakUrl?: string;
-  clientSecret?: string;
 }
 
 export const CONFIG_INIT: ConfigState = { envLoaded: false };
