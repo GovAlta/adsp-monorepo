@@ -8,6 +8,8 @@ import { deleteEventDefinition, getEventDefinitions } from '@store/event/actions
 import { defaultEventDefinition, EventDefinition } from '@store/event/models';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
+import { PageIndicator } from '@components/Indicator';
+
 
 export const EventDefinitions: FunctionComponent = () => {
   const [editDefinition, setEditDefinition] = useState(false);
@@ -16,6 +18,9 @@ export const EventDefinitions: FunctionComponent = () => {
   const definitions = useSelector((state: RootState) => state.event.definitions);
   const [coreNamespaces, setCoreNamespaces] = useState<string[]>([]);
   const [isEdit, setIsEdit] = useState(false);
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
 
   useEffect(() => {
     const namespaces = Object.values(definitions)
@@ -24,10 +29,13 @@ export const EventDefinitions: FunctionComponent = () => {
     setCoreNamespaces(namespaces);
   }, [definitions]);
 
+  // eslint-disable-next-line
+  useEffect(() => { }, [indicator]);
+
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(getEventDefinitions());
-  }, [dispatch]);
+  }, []);
 
   function reset() {
     setEditDefinition(false);
@@ -36,31 +44,33 @@ export const EventDefinitions: FunctionComponent = () => {
 
   return (
     <>
-      <Buttons>
-        <GoAButton
-          data-testid="add-definition"
-          onClick={() => {
-            setSelectedDefinition(defaultEventDefinition);
-            setIsEdit(false);
+      <PageIndicator />
+      {!indicator.show && definitions && <div>
+        <Buttons>
+          <GoAButton
+            data-testid="add-definition"
+            onClick={() => {
+              setSelectedDefinition(defaultEventDefinition);
+              setIsEdit(false);
+              setEditDefinition(true);
+            }}
+          >
+            Add definition
+        </GoAButton>
+        </Buttons>
+
+        <EventDefinitionsList
+          onEdit={(def: EventDefinition) => {
+            setSelectedDefinition(def);
+            setIsEdit(true);
             setEditDefinition(true);
           }}
-        >
-          Add definition
-        </GoAButton>
-      </Buttons>
-
-      <EventDefinitionsList
-        onEdit={(def: EventDefinition) => {
-          setSelectedDefinition(def);
-          setIsEdit(true);
-          setEditDefinition(true);
-        }}
-        onDelete={(def: EventDefinition) => {
-          setSelectedDefinition(def);
-          setIsEdit(false);
-          setShowDeleteConfirmation(true);
-        }}
-      />
+          onDelete={(def: EventDefinition) => {
+            setSelectedDefinition(def);
+            setIsEdit(false);
+            setShowDeleteConfirmation(true);
+          }}
+        /></div>}
 
       {/* Delete confirmation */}
       {showDeleteConfirmation && (

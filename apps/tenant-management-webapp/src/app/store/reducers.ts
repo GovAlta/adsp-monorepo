@@ -1,6 +1,7 @@
 import { combineReducers } from 'redux';
 import Access from './access/reducers';
 import Config from './config/reducers';
+import Directory from './directory/reducers';
 import File from './file/reducers';
 import Notification from './notification/reducers';
 import Session from './session/reducers';
@@ -17,6 +18,7 @@ export const rootReducer = combineReducers({
   session: Session,
   config: Config,
   access: Access,
+  directory: Directory,
   tenant: Tenant,
   notification: Notification,
   subscription: Subscription,

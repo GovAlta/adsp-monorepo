@@ -17,6 +17,7 @@ import {
   UnsubscribeAction,
   GetSubscriptionAction,
   GetSubscriptionSuccess,
+  EmailExists,
   FindSubscribersAction,
   FindSubscribersSuccess,
   GetSubscriptionsAction,
@@ -64,7 +65,7 @@ export function* getSubscription(action: GetSubscriptionAction): SagaIterator {
         yield put(GetSubscriptionSuccess(result));
       }
     } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+      yield put(ErrorNotification({ message: `Subscriptions (getSubscription): ${e.message}` }));
     }
   }
 }
@@ -72,10 +73,14 @@ export function* getSubscription(action: GetSubscriptionAction): SagaIterator {
 export function* getAllSubscriptions(action: GetSubscriptionsAction): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const hasNotificationAdminRole = yield select((state: RootState) =>
+    state.session?.resourceAccess?.['urn:ads:platform:notification-service']?.roles?.includes('subscription-admin')
+  );
 
   const criteria = action.payload;
 
   if (configBaseUrl && token) {
+    console.log(hasNotificationAdminRole !== true + '<hasNotificationAdminRole !== true');
     try {
       const typeResponse = yield call(axios.get, `${configBaseUrl}/subscription/v1/types`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -123,7 +128,12 @@ export function* getAllSubscriptions(action: GetSubscriptionsAction): SagaIterat
 
       yield put(GetSubscriptionsSuccess(subscriptionWrapper, 10));
     } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+      yield put(
+        ErrorNotification({
+          message: `Subscriptions (getAllSubscriptions): ${e.message}`,
+          disabled: hasNotificationAdminRole !== true,
+        })
+      );
     }
   }
 }
@@ -151,7 +161,7 @@ export function* getTypeSubscriptions(action: GetTypeSubscriptionActions): SagaI
 
       yield put(GetTypeSubscriptionSuccess(subscriptions, (topParam as number) - 1, type));
     } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+      yield put(ErrorNotification({ message: `Subscriptions (getTypeSubscriptions): ${e.message}` }));
     }
   }
 }
@@ -180,7 +190,7 @@ export function* getSubscriber(): SagaIterator {
         yield put(GetSubscriberSuccess(result));
       }
     } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+      yield put(ErrorNotification({ message: `Subscriptions (getSubscriber): ${e.message}` }));
     }
   }
 }
@@ -199,7 +209,12 @@ export function* updateSubscriber(action: UpdateSubscriberAction): SagaIterator 
       const result = response;
       yield put(UpdateSubscriberSuccess(result));
     } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message}` }));
+      const emailIndex = subscriber.channels?.findIndex((channel) => channel.channel === 'email');
+      if (e.message.includes('already exists')) {
+        yield put(EmailExists(subscriber.channels[emailIndex].address));
+      } else {
+        yield put(ErrorNotification({ message: `Subscriptions (updateSubscriber): ${e.message}` }));
+      }
     }
   }
 }
@@ -222,7 +237,7 @@ export function* createSubscriber(action: CreateSubscriberAction): SagaIterator 
 
       yield put(SubscribeSubscriberService({ data: { type: type } }));
     } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+      yield put(ErrorNotification({ message: `Subscriptions (createSubscriber): ${e.message}` }));
     }
   }
 }
@@ -255,7 +270,7 @@ export function* addTypeSubscription(action: SubscribeSubscriberServiceAction): 
 
       yield put(SubscribeSubscriberSuccess({ data: { type: type, data: subData, email: email } }));
     } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+      yield put(ErrorNotification({ message: `Subscriptions (addTypeSubscription): ${e.message}` }));
     }
   }
 }
@@ -276,7 +291,7 @@ export function* unsubscribe(action: UnsubscribeAction): SagaIterator {
 
       yield put(UnsubscribeSuccess(subscriber));
     } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+      yield put(ErrorNotification({ message: `Subscriptions (unsubscribe): ${e.message}` }));
     }
   }
 }
@@ -286,6 +301,9 @@ export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
   const pageSize = yield select((state: RootState) => state.subscription.search.subscribers.pageSize);
   const top = yield select((state: RootState) => state.subscription.search.subscribers.top);
+  const hasNotificationAdminRole = yield select((state: RootState) =>
+    state.session?.resourceAccess?.['urn:ads:platform:notification-service']?.roles?.includes('subscription-admin')
+  );
 
   const findSubscriberPath = 'subscription/v1/subscribers';
   const criteria = action.payload;
@@ -314,7 +332,12 @@ export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
       const subscribers = response.data.results;
       yield put(FindSubscribersSuccess(subscribers, (params.top as number) - 1));
     } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - find subscribers` }));
+      yield put(
+        ErrorNotification({
+          message: `Subscriptions (findSubscribers): ${e.message}`,
+          disabled: hasNotificationAdminRole !== true,
+        })
+      );
     }
   }
 }
@@ -333,7 +356,7 @@ export function* getSubscriberSubscriptions(action: GetSubscriberSubscriptionsAc
       const subscriptions: SubscriptionWrapper[] = response.data.results;
       yield put(GetSubscriberSubscriptionsSuccess(subscriptions, subscriber));
     } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - getSubscriberSubscriptions` }));
+      yield put(ErrorNotification({ message: `Subscriptions (getSubscriberSubscriptions): ${e.message}` }));
     }
   }
 }

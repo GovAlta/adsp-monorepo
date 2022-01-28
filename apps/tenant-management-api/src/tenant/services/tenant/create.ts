@@ -5,9 +5,9 @@ import { createkcAdminClient } from '../../../keycloak';
 import { logger } from '../../../middleware/logger';
 import { environment } from '../../../environments/environment';
 import { FLOW_ALIAS, createAuthenticationFlow } from './createAuthenticationFlow';
-import type ClientRepresentation from 'keycloak-admin/lib/defs/clientRepresentation';
-import type RealmRepresentation from 'keycloak-admin/lib/defs/realmRepresentation';
-import type RoleRepresentation from 'keycloak-admin/lib/defs/roleRepresentation';
+import type ClientRepresentation from '@keycloak/keycloak-admin-client/lib/defs/clientRepresentation';
+import type RealmRepresentation from '@keycloak/keycloak-admin-client/lib/defs/realmRepresentation';
+import type RoleRepresentation from '@keycloak/keycloak-admin-client/lib/defs/roleRepresentation';
 import { TenantEntity } from '../../models';
 import { TenantServiceRoles } from '../../../roles';
 import { ServiceClient } from '../../types';
@@ -298,7 +298,7 @@ export const validateRealmCreation = async (realm: string): Promise<void> => {
   // Re-init the keycloak client after realm creation
   logger.info(`Start to validate the tenant creation: ${realm}`);
   const kcClient = await createkcAdminClient();
-  const clientName = brokerClientName(realm)
+  const clientName = brokerClientName(realm);
   const brokerClient = await kcClient.clients.find({
     clientId: clientName,
     realm: tenantManagementRealm,
@@ -396,7 +396,6 @@ export const createRealm = async (
   await createAdminUser(realm, email, tenantServiceClient.id, tenantAdminRole);
 
   validateRealmCreation(realm);
-
 };
 
 export const createNewTenantInDB = async (

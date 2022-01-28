@@ -1,5 +1,5 @@
 import { environment } from '../environments/environment';
-import KcAdminClient from 'keycloak-admin';
+import KcAdminClient from '@keycloak/keycloak-admin-client';
 
 interface Options {
   baseUrl?: string;

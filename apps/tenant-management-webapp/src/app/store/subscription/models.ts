@@ -56,6 +56,7 @@ export interface SubscriberService {
       top: number;
     };
   };
+  updateError: string;
 }
 
 export const SUBSCRIBER_INIT: SubscriberService = {
@@ -73,6 +74,7 @@ export const SUBSCRIBER_INIT: SubscriberService = {
       top: DEFAULT_PAGE_SIZE,
     },
   },
+  updateError: '',
 };
 
 export interface SubscriberSearchCriteria {
