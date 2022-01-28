@@ -12,6 +12,7 @@ describe('createTenantHandler', () => {
   beforeEach(() => {
     serviceMock.getTenant.mockReset();
     serviceMock.getTenants.mockReset();
+    serviceMock.getTenantByName.mockReset();
   });
 
   it('can create handler', () => {
