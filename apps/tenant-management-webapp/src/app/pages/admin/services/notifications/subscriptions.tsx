@@ -25,7 +25,6 @@ export const Subscriptions: FunctionComponent = () => {
   }, []);
 
   const searchFn = (criteria: SubscriberSearchCriteria) => {
-    setCriteriaState(criteria);
     dispatch(getSubscriptions(criteria));
   };
 

@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-
 import { RootState } from '@store/index';
 import { fetchAccess } from '@store/access/actions';
 import { User } from '@store/access/models';
@@ -9,42 +8,39 @@ import DataTable from '@components/DataTable';
 import { Grid, GridItem } from '@components/Grid';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
-import { GoAPageLoader } from '@abgov/react-components';
-
+import { PageIndicator } from '@components/Indicator';
 export default function (): JSX.Element {
   const dispatch = useDispatch();
 
-  const { users, roles, keycloakConfig, session, status } = useSelector((state: RootState) => {
+  const { users, roles, keycloakConfig } = useSelector((state: RootState) => {
     return {
       users: state.access.users || [],
       roles: state.access.roles || [],
       keycloakConfig: state.config.keycloakApi,
-      session: state.session,
-      status: state.access.loadingState,
     };
   });
 
-  // fetch users
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
+
+  const realm = useSelector((state: RootState) => {
+    return state?.session?.realm;
+  });
+
   useEffect(() => {
     dispatch(fetchAccess());
-  }, [dispatch, session]);
+  }, []);
+
+  // eslint-disable-next-line
+  useEffect(() => {}, [indicator]);
 
   function activeUsers(): User[] {
     return users.filter((user) => user.enabled);
   }
 
   function getKeycloakAdminPortal() {
-    return session?.realm ? `${keycloakConfig.url}/admin/${session.realm}/console` : keycloakConfig.url;
-  }
-
-  if (status === 'loading') {
-    return (
-      <Page>
-        <Main>
-          <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
-        </Main>
-      </Page>
-    );
+    return realm ? `${keycloakConfig.url}/admin/${realm}/console` : keycloakConfig.url;
   }
 
   return (
@@ -55,69 +51,74 @@ export default function (): JSX.Element {
           Access allows you to add a secure sign in to you application and services with minimum effort and
           configuration. No need to deal with storing or authenticating users. It's all available out of the box.
         </p>
+        <PageIndicator />
 
-        <section id="keycloak-user-info">
-          <TitleLinkHeader>
-            <Title>Keycloak user information</Title>
-            <a
-              href={getKeycloakAdminPortal()}
-              rel="noopener noreferrer"
-              target="_blank"
-              className="link-button"
-              title="Keycloak Admin"
-            >
-              Keycloak admin portal
-            </a>
-          </TitleLinkHeader>
+        {!indicator.show && users && users.length > 1 && (
+          <div>
+            <section id="keycloak-user-info">
+              <TitleLinkHeader>
+                <Title>Keycloak user information</Title>
+                <a
+                  href={getKeycloakAdminPortal()}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  className="link-button"
+                  title="Keycloak Admin"
+                >
+                  Keycloak admin portal
+                </a>
+              </TitleLinkHeader>
 
-          <UserStats>
-            <UserStatsItem md={4}>
-              <Count id="user-count">{users.length}</Count>
-              Total number of users
-            </UserStatsItem>
-            <UserStatsItem md={4}>
-              <Count id="role-count">{roles?.length ?? '-'}</Count>
-              Types of user roles
-            </UserStatsItem>
-            <UserStatsItem md={4}>
-              <Count id="active-user-count">{activeUsers().length}</Count>
-              Active users
-            </UserStatsItem>
-          </UserStats>
-        </section>
+              <UserStats>
+                <UserStatsItem md={4}>
+                  <Count id="user-count">{users.length}</Count>
+                  Total number of users
+                </UserStatsItem>
+                <UserStatsItem md={4}>
+                  <Count id="role-count">{roles?.length ?? '-'}</Count>
+                  Types of user roles
+                </UserStatsItem>
+                <UserStatsItem md={4}>
+                  <Count id="active-user-count">{activeUsers().length}</Count>
+                  Active users
+                </UserStatsItem>
+              </UserStats>
+            </section>
 
-        <section id="keycloak-role-info">
-          <h3>Keycloak role information</h3>
-          <p>
-            Displayed below are the top 5 user roles based on their counts. To view all your available roles, please{' '}
-            <a href={getKeycloakAdminPortal()} rel="noopener noreferrer" target="_blank">
-              sign in
-            </a>{' '}
-            to your Keycloak admin portal.
-          </p>
+            <section id="keycloak-role-info">
+              <h3>Keycloak role information</h3>
+              <p>
+                Displayed below are the top 5 user roles based on their counts. To view all your available roles, please{' '}
+                <a href={getKeycloakAdminPortal()} rel="noopener noreferrer" target="_blank">
+                  sign in
+                </a>{' '}
+                to your Keycloak admin portal.
+              </p>
 
-          <DataTable id="role-information">
-            <thead>
-              <tr>
-                <th>User role</th>
-                <th>Role count</th>
-              </tr>
-            </thead>
-            <tbody>
-              {roles
-                .sort((a, b) => (a.userIds?.length > b.userIds?.length ? -1 : 1))
-                .slice(0, 5)
-                .map((role) => {
-                  return (
-                    <tr key={role.name}>
-                      <td>{role.name}</td>
-                      <td>{role.userIds?.length ?? 0}</td>
-                    </tr>
-                  );
-                })}
-            </tbody>
-          </DataTable>
-        </section>
+              <DataTable id="role-information">
+                <thead>
+                  <tr>
+                    <th>User role</th>
+                    <th>Role count</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {roles
+                    .sort((a, b) => (a.userIds?.length > b.userIds?.length ? -1 : 1))
+                    .slice(0, 5)
+                    .map((role) => {
+                      return (
+                        <tr key={role.name}>
+                          <td>{role.name}</td>
+                          <td>{role.userIds?.length ?? 0}</td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </DataTable>
+            </section>
+          </div>
+        )}
       </Main>
 
       <Aside>

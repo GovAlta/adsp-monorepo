@@ -1,5 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import type RoleRepresentation from 'keycloak-admin/lib/defs/roleRepresentation';
+import type RoleRepresentation from '@keycloak/keycloak-admin-client/lib/defs/roleRepresentation';
 import { TenantEntity } from '../../models';
 import { createkcAdminClient } from '../../../keycloak';
 import { TenantRepository } from '../..';

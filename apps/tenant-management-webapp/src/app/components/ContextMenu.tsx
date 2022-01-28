@@ -18,7 +18,7 @@ interface ContextMenuTextProps {
 
 export const GoAContextMenuIcon: FC<ContextMenuIconProps> = (props) => {
   return (
-    <GoAIconButton type={props.type} onClick={props.onClick} title={props.title} testId={props.testId} size="small" />
+    <GoAIconButton type={props.type} onClick={props.onClick} title={props.title} testId={props.testId} size="medium" />
   );
 };
 

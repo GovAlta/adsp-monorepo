@@ -22,11 +22,9 @@ export interface Role {
 export interface AccessState {
   users: User[];
   roles: Role[];
-  loadingState?: string;
 }
 
 export const ACCESS_INIT: AccessState = {
   users: [],
   roles: [],
-  loadingState: 'idle',
 };

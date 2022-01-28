@@ -15,6 +15,7 @@ export interface Notification extends NotificationContent {
   event: {
     namespace: string;
     name: string;
+    timestamp: Date;
   };
   correlationId?: string;
   context?: Record<string, boolean | number | string>;

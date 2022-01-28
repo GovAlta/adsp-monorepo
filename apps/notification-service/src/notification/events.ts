@@ -20,6 +20,7 @@ export const NotificationsGeneratedDefinition: DomainEventDefinition = {
         properties: {
           namespace: { type: 'string' },
           name: { type: 'string' },
+          timestamp: { type: 'string', format: 'date-time' },
         },
       },
       generatedCount: {
@@ -47,6 +48,7 @@ export const NotificationSentDefinition: DomainEventDefinition = {
         properties: {
           namespace: { type: 'string' },
           name: { type: 'string' },
+          timestamp: { type: 'string', format: 'date-time' },
         },
       },
       channel: { type: 'string' },
@@ -124,7 +126,7 @@ function mapNotification(notification: Omit<Notification, 'tenantId' | 'correlat
 }
 
 export const notificationsGenerated = (
-  { correlationId = null, tenantId, context = {}, namespace, name }: ProcessedEvent,
+  { correlationId = null, tenantId, context = {}, namespace, name, timestamp }: ProcessedEvent,
   type: NotificationType,
   count: number
 ): DomainEvent => ({
@@ -141,6 +143,7 @@ export const notificationsGenerated = (
     event: {
       namespace,
       name,
+      timestamp,
     },
     generatedCount: count,
   },

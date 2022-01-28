@@ -3,7 +3,6 @@ import type { Subscriber, SubscriberSearchCriteria } from '@store/subscription/m
 import { SubscribersSearchForm } from './subscriberSearchForm';
 import { useDispatch } from 'react-redux';
 import { FindSubscribers, ResetVisibilityInSubscribersService } from '@store/subscription/actions';
-import { ActionIndicator } from '@components/Indicator';
 import { SubscriberList } from './subscriberList';
 import { NextLoader } from './nextLoader';
 import { CheckSubscriberRoles } from '../checkSubscriberRoles';
@@ -27,7 +26,6 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
 
   const searchFn2 = (criteria: SubscriberSearchCriteria) => {
     dispatch(FindSubscribers(criteria));
-    setCriteriaState(criteria);
   };
 
   const resetState = (resetCriteria) => {
@@ -43,7 +41,6 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
   return (
     <CheckSubscriberRoles>
       <div data-testid="subscribers-list-title">
-        <ActionIndicator />
         <SubscribersSearchForm onSearch={searchFn2} reset={resetState} />
         <SubscriberList />
         <NextLoader onSearch={searchFn} searchCriteria={criteriaState} />

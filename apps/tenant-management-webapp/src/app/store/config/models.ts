@@ -7,6 +7,7 @@ export interface TenantApi {
     tenantByName: string;
     tenantByEmail: string;
     tenantConfig: string;
+    directory: string;
   };
 }
 
