@@ -486,7 +486,7 @@
               "apps/status-app/src/assets",
               {
                 "glob": "nginx.conf",
-                "input": "./",
+                "input": "apps/status-app/",
                 "output": "./"
               }
             ],
@@ -751,6 +751,54 @@
       "tags": [],
       "implicitDependencies": ["subscriber-app"]
     },
+    "subscriber-gateway": {
+      "root": "apps/subscriber-gateway",
+      "sourceRoot": "apps/subscriber-gateway/src",
+      "projectType": "application",
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/subscriber-gateway",
+            "main": "apps/subscriber-gateway/src/main.ts",
+            "tsConfig": "apps/subscriber-gateway/tsconfig.app.json",
+            "assets": [],
+            "webpackConfig": "apps/subscriber-gateway/webpack.config.js"
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "subscriber-gateway:build"
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/subscriber-gateway/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/subscriber-gateway"],
+          "options": {
+            "jestConfig": "apps/subscriber-gateway/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
     "task-service": {
       "root": "apps/task-service",
       "sourceRoot": "apps/task-service/src",
@@ -887,8 +935,8 @@
             "scripts": [],
             "stylePreprocessorOptions": {
               "includePaths": ["libs/stylesheets/scss/src/lib"]
-          },
-          "extractCss": true,
+            },
+            "extractCss": true,
             "styles": [],
             "webpackConfig": "@nrwl/react/plugins/webpack"
           },

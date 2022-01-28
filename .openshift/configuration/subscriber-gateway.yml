@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: subscriber-gateway
+        component: api
+      name: subscriber-gateway
+    data:
+      KEYCLOAK_ROOT_URL: https://access.adsp-dev.gov.ab.ca
+      DIRECTORY_URL: https://tenant-service.adsp-dev.gov.ab.ca
+      LOG_LEVEL: debug
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        app: subscriber-gateway
+        component: api
+      name: subscriber-gateway
+    stringData:
+      CLIENT_ID: urn:ads:platform:subscriber-gateway
+      CLIENT_SECRET:
+      RECAPTCHA_SECRET:

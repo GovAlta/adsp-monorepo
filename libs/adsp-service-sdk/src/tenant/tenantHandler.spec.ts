@@ -6,6 +6,7 @@ describe('createTenantHandler', () => {
   const serviceMock = {
     getTenant: jest.fn(),
     getTenants: jest.fn(),
+    getTenantByName: jest.fn(),
   };
 
   beforeEach(() => {
@@ -56,7 +57,10 @@ describe('createTenantHandler', () => {
     const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
     const tenant = { id: tenantId, name: 'test', realm: 'test' };
 
-    const req: Request = { user: { tenantId }, query: { tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/test2' } } as unknown as Request;
+    const req: Request = {
+      user: { tenantId },
+      query: { tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/test2' },
+    } as unknown as Request;
     const next = () => {
       expect(req.tenant).toBe(tenant);
       done();
