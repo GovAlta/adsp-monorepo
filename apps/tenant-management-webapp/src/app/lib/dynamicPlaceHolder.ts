@@ -157,10 +157,10 @@ export const dynamicGeneratePayload: any = (eventDef: EventDefinition) => {
             case 'string':
               switch (k) {
                 case 'name':
-                  payload['name'] = eventName;
+                  payload['name'] = `${eventName}-name`;
                   break;
                 case 'namespace':
-                  payload['namespace'] = eventNamespace;
+                  payload['namespace'] = `${eventNamespace}-namespace`;
                   break;
                 case 'id':
                   payload['id'] = '61d61d3cba517c0013b3a333';
