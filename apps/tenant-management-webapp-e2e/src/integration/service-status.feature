@@ -83,3 +83,36 @@ Feature: Service status
     And the user selects the "Status" menu item
     And the user selects "Applications" tab for "Service status"
     Then the user views the subscribe checkbox is "checked"
+
+  @TEST_CS-835 @REQ_CS-792
+  Scenario Outline: As a service owner, I can add, edit, publish, unpublish and delete a tenant level notice
+    Given a service owner user is on status notices page
+    When the user clicks Add notice button
+    # Add a notice for the tenant
+    Then the user views Add notice dialog
+    When the user enters "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>",  "<End Time>" on Add a Draft Notice dialog
+    And the user clicks Save as draft button
+    Then the user "views" the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
+    # Edit the notice from All to a service specific
+    When the user clicks "edit" menu for the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
+    Then the user views Edit notice dialog
+    When the user enters "<Description2>", "<Application2>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>",  "<End Time 2>"
+    Then the user "views" the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
+    # Change the notice back to All
+    When the user clicks "edit" menu for the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
+    Then the user views Edit notice dialog
+    When the user enters "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>",  "<End Time 2>"
+    Then the user "views" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
+    # Publish the notice
+    When the user clicks "publish" menu for the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
+    Then the user "views" the "published" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
+    # Unpublish the notice
+    When the user clicks "Unpublish" menu for the "published" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
+    Then the user "views" the "draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
+    # Delete the notice
+    When the user clicks "delete" menu for the "draft" notice of "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
+    Then the user "should not view" the "draft" notice of "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
+
+    Examples:
+      | Description           | Application | Start Date | Start Time | End Date | End Time | Description2               | Application2 | Start Date 2 | Start Time 2 | End Date 2 | End Time 2 |
+      | Autotest-NewAllNotice | All         | 1/1/2050   | 12:00 AM   | 1/2/2050 | 12:00 PM | Autotest-ModifiedAllNotice | Autotest     | 1/1/2060     | 12:30 AM     | 1/2/2060   | 12:30 PM   |
