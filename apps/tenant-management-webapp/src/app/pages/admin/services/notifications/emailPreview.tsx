@@ -50,18 +50,27 @@ export const EmailPreview: FunctionComponent<PreviewProps> = ({ onCancel, open, 
                 ></div>
               </h3>
             </GoAFormItem>
-
+            <hr />
             <GoAFormItem>
               <p
                 dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(generateMessage(getTemplateBody(body, serviceName), htmlPayload)),
+                  __html: DOMPurify.sanitize(
+                    generateMessage(
+                      getTemplateBody(
+                        DOMPurify.sanitize(body, {
+                          FORBID_TAGS: ['style'],
+                        }),
+                        serviceName
+                      ),
+                      htmlPayload
+                    )
+                  ),
                 }}
               ></p>
             </GoAFormItem>
           </GoAForm>
+          <hr />
         </EventContentWrapper>
-
-        <hr />
       </GoAModalContent>
       <GoAModalActions>
         <GoAButton data-testid="preview-cancel" buttonType="tertiary" type="button" onClick={onCancel}>
