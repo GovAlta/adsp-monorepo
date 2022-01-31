@@ -36,17 +36,17 @@ const LoginRedirect = (props: LoginProps): JSX.Element => {
       if (isTenantAdmin) {
         if (skipSSO && !idpFromUrl) {
           history.push({
-            pathname: `/${tenantRealm}/autologin`,
+            pathname: `/${tenantRealm}/login`,
             search: `?kc_idp_hint=`,
           });
         } else if (idpFromUrl) {
           history.push({
-            pathname: `/${tenantRealm}/autologin`,
+            pathname: `/${tenantRealm}/login`,
             search: `?kc_idp_hint=${idpFromUrl}`,
           });
         } else {
           history.push({
-            pathname: `/${tenantRealm}/autologin`,
+            pathname: `/${tenantRealm}/login`,
           });
         }
       }

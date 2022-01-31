@@ -249,8 +249,9 @@ export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
             dispatch(UpdateFileTypeService({ ...updateFileType, id }));
 
             setUpdateFileType(null);
-
             setEditableId('');
+            setUpdateFileType(null);
+            setIsEdit(false);
           }}
         >
           Confirm

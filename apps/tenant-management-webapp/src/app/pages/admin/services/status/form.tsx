@@ -2,7 +2,7 @@ import React, { useState, useEffect, FC } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useParams } from 'react-router-dom';
 import { RootState } from '@store/index';
-import { saveApplication } from '@store/status/actions';
+import { saveApplication, updateFormData } from '@store/status/actions';
 import { ServiceStatusApplication } from '@store/status/models';
 import { GoAButton } from '@abgov/react-components';
 import {
@@ -28,36 +28,43 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen, title }: Props) => {
 
   const [isModalOpen, setIsModalOpen] = useState(true);
 
-  const [application, setApplication] = useState<ServiceStatusApplication>({
-    name: '',
-    tenantId: '',
-    enabled: false,
-    description: '',
-    endpoint: { url: '', status: 'offline' },
-  });
+  const application = serviceStatus.currentFormData;
 
   useEffect(() => {
     if (applicationId) {
       const app = serviceStatus.applications.find((app) => applicationId === app._id);
-      setApplication(app);
+      const cloneApp = Object.assign({}, app);
+      dispatch(updateFormData(cloneApp));
+    } else {
+      const app: ServiceStatusApplication = {
+        name: '',
+        tenantId: '',
+        enabled: false,
+        description: '',
+        endpoint: { url: '', status: 'offline' },
+      };
+      dispatch(updateFormData(app));
     }
-  }, [applicationId, serviceStatus]);
+  }, []);
 
   function setValue(name: string, value: string) {
+    const formData = serviceStatus.currentFormData;
+
     switch (name) {
       case 'name':
       case 'description':
-        setApplication({ ...application, [name]: value });
+        formData[name] = value;
         break;
       case 'endpoint':
-        setApplication({ ...application, [name]: { url: value, status: 'offline' } });
+        formData[name] = { url: value, status: 'offline' };
         break;
     }
+    dispatch(updateFormData(formData));
   }
 
   function isFormValid(): boolean {
-    if (!application.name) return false;
-    if (!application.endpoint.url) return false;
+    if (!application?.name) return false;
+    if (!application?.endpoint.url) return false;
     return true;
   }
 

@@ -6,7 +6,14 @@ export type EndpointStatusType = 'offline' | 'online' | 'pending';
 
 export interface ServiceStatus {
   applications: ServiceStatusApplication[];
+  currentFormData: ServiceStatusApplication;
   endpointHealth: Record<string, { url: string; entries: EndpointStatusEntry[] }>;
+}
+
+export interface FormData {
+  name: string;
+  description: string;
+  endpoint: { url: string; status: string };
 }
 
 export interface ServiceStatusApplication {
