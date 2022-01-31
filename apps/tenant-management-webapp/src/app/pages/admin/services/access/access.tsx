@@ -20,6 +20,10 @@ export default function (): JSX.Element {
     };
   });
 
+  const isReady = (indicator, users) => {
+    return !indicator.show && users && users.length > 1
+  }
+
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -32,8 +36,13 @@ export default function (): JSX.Element {
     dispatch(fetchAccess());
   }, []);
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
+  useEffect(() => {
+    return function clean() {
+      if (isReady(indicator, users)) {
+        alert('a')
+      }
+    }
+  }, [indicator]);
 
   function activeUsers(): User[] {
     return users.filter((user) => user.enabled);
@@ -53,7 +62,7 @@ export default function (): JSX.Element {
         </p>
         <PageIndicator />
 
-        {!indicator.show && users && users.length > 1 && (
+        {isReady(indicator, users) && (
           <div>
             <section id="keycloak-user-info">
               <TitleLinkHeader>
