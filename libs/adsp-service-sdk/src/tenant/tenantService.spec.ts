@@ -70,4 +70,36 @@ describe('TenantService', () => {
     const tenant = await service.getTenant(id);
     expect(`${tenant.id}`).toBe(`${result.id}`);
   });
+
+  describe('getTenantByName', () => {
+    it('can get tenant by name', async () => {
+      const id = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const result = { id, name: 'Test' };
+      axiosMock.get.mockImplementation((url) => {
+        expect(url).toBe('http://totally-real-service/api/tenant/v2/tenants/test');
+        return Promise.resolve(url.includes('test') ? { data: { ...result, id: `${result.id}` } } : { data: [] });
+      });
+
+      const service = new TenantServiceImpl(logger, directoryMock, tokenProviderMock);
+
+      cacheMock.mockReturnValueOnce(null);
+      await service.getTenant(id);
+      const tenant = await service.getTenantByName('test');
+      expect(`${tenant.id}`).toBe(`${result.id}`);
+    });
+
+    it('can return null for never retrieved tenant', async () => {
+      const service = new TenantServiceImpl(logger, directoryMock, tokenProviderMock);
+
+      const tenant = await service.getTenantByName('test');
+      expect(tenant).toBeFalsy();
+    });
+
+    it('can return null for falsy name', async () => {
+      const service = new TenantServiceImpl(logger, directoryMock, tokenProviderMock);
+
+      const tenant = await service.getTenantByName('');
+      expect(tenant).toBeFalsy();
+    });
+  });
 });

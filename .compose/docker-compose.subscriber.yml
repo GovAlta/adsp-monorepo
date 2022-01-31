@@ -1,0 +1,20 @@
+version: '3.2'
+services:
+  subscriber-gateway:
+    build:
+      context: ../
+      dockerfile: .compose/service/Dockerfile
+      args:
+        - SERVICE=subscriber-gateway
+    ports:
+      - 3344:3344
+    expose:
+      - 3344
+    environment:
+      - KEYCLOAK_ROOT_URL=http://keycloak:8080
+      - DIRECTORY_URL=http://tenant-management-api:3333
+      - CLIENT_ID=urn:ads:platform:subscriber-gateway
+      - CLIENT_SECRET=0088f734-f307-482b-acda-891a064942d1
+      - RECAPTCHA_SECRET=
+      - PORT=3344
+      - LOG_LEVEL=debug

@@ -12,7 +12,7 @@ describe('HandlebarsTemplateService', () => {
 
   describe('generateMessage', () => {
     const templateService = createTemplateService();
-    it('can generate message', () => {
+    it('can generate message, with wrapper applied', () => {
       const message = templateService.generateMessage(
         {
           subject: '{{ subscriber.addressAs }} {{ event.payload.value }}',
@@ -25,10 +25,11 @@ describe('HandlebarsTemplateService', () => {
       );
 
       expect(message.subject).toBe('tester 123');
-      expect(message.body).toBe('123 tester');
+      expect(message.body).toContain('header');
+      expect(message.body).toContain('footer');
     });
 
-    it('can generate message with formatDate', () => {
+    it('can generate message with formatDate, with wrapper applied', () => {
       const timestamp = new Date('2020-03-12T13:00:00Z');
       const message = templateService.generateMessage(
         {
@@ -42,10 +43,12 @@ describe('HandlebarsTemplateService', () => {
       );
 
       expect(message.subject).toBe('tester 123');
-      expect(message.body).toBe(DateTime.fromJSDate(timestamp).setZone(zone).toFormat('ff ZZZZ'));
+      expect(message.body).toContain('header');
+      expect(message.body).toContain('footer');
+      expect(message.body).toContain(DateTime.fromJSDate(timestamp).setZone(zone).toFormat('ff ZZZZ'));
     });
 
-    it('can generate message with formatDate for string value', () => {
+    it('can generate message with formatDate for string value, with wrapper applied', () => {
       const timestamp = '2020-03-12T13:00:00Z';
       const message = templateService.generateMessage(
         {
@@ -58,10 +61,12 @@ describe('HandlebarsTemplateService', () => {
         }
       );
       expect(message.subject).toBe('tester 123');
-      expect(message.body).toBe(DateTime.fromISO(timestamp).setZone(zone).toFormat('ff ZZZZ'));
+      expect(message.body).toContain('header');
+      expect(message.body).toContain('footer');
+      expect(message.body).toContain(DateTime.fromISO(timestamp).setZone(zone).toFormat('ff ZZZZ'));
     });
 
-    it('can generate message with formatDate with format parameter', () => {
+    it('can generate message with formatDate with format parameter, with wrapper applied', () => {
       const timestamp = new Date('2020-03-12T13:00:00Z');
       const message = templateService.generateMessage(
         {
@@ -75,10 +80,12 @@ describe('HandlebarsTemplateService', () => {
       );
 
       expect(message.subject).toBe('tester 123');
-      expect(message.body).toBe(DateTime.fromJSDate(timestamp).setZone(zone).toFormat('fff ZZZZ'));
+      expect(message.body).toContain('header');
+      expect(message.body).toContain('footer');
+      expect(message.body).toContain(DateTime.fromJSDate(timestamp).setZone(zone).toFormat('fff ZZZZ'));
     });
 
-    it('Can generate body message for plain text, expect no wrapper apply', () => {
+    it('Can generate body message for plain text, with wrapper applied', () => {
       const message = templateService.generateMessage(
         {
           subject: 'Creating tenant ',
@@ -89,13 +96,14 @@ describe('HandlebarsTemplateService', () => {
           subscriber: { addressAs: 'tester' } as Subscriber,
         }
       );
-
-      expect(message.body).toBe('tenant was create');
+      expect(message.body).toContain('header');
+      expect(message.body).toContain('footer');
+      expect(message.body).toContain('tenant was create');
     });
 
-    it('Can generate body message for html snippet, wrapper applied', () => {
+    it('Can generate body message for html snippet, wrapper not applied', () => {
       const htmlSnippet = `
-     <!doctype html>
+     <!DOCTYPE html>
      <html>
      <head>
      </head>
