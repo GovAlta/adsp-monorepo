@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { fetchAccess } from '@store/access/actions';
+import { fetchAccess, accessReset } from '@store/access/actions';
 import { User } from '@store/access/models';
 import styled from 'styled-components';
 import DataTable from '@components/DataTable';
@@ -39,7 +39,7 @@ export default function (): JSX.Element {
   useEffect(() => {
     return function clean() {
       if (isReady(indicator, users)) {
-        alert('a')
+        dispatch(accessReset());
       }
     }
   }, [indicator]);
