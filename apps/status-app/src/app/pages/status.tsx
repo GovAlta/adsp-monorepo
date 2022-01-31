@@ -176,7 +176,7 @@ const ServiceStatusPage = (): JSX.Element => {
     <div>
       <GoAHeader
         serviceLevel="beta"
-        serviceName="Alberta Digital Service Platform -Status & Outages "
+        serviceName="Alberta Digital Service Platform - Status & Outages "
         serviceHome="/"
       />
       {/* TODO: re-visit this part when design and card or breadcrumb is ready.
