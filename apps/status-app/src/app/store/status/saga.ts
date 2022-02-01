@@ -55,7 +55,7 @@ export function* subscribeToTenant(action: SubscribeToTenantAction): SagaIterato
     const grecaptcha = configState.grecaptcha;
     if (grecaptcha) {
       token = yield call([grecaptcha, grecaptcha.execute], configState.recaptchaKey, {
-        action: 'subscribe-status',
+        action: 'subscribe_status',
       });
     }
 

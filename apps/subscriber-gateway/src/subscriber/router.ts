@@ -21,7 +21,7 @@ export function verifyCaptcha(logger: Logger, RECAPTCHA_SECRET: string, SCORE_TH
           `https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET}&response=${token}`
         );
 
-        if (!data.success || data.action !== 'subscribe-status' || data.score < SCORE_THRESHOLD) {
+        if (!data.success || data.action !== 'subscribe_status' || data.score < SCORE_THRESHOLD) {
           logger.warn(
             `Captcha verification failed for subscribe-status with result '${data.success}' on action '${data.action}' with score ${data.score}.`
           );
