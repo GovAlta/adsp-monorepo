@@ -7,7 +7,9 @@ const hasProperHtmlWrapper = (content: string): boolean => {
 
 export const getTemplateBody = (body: string, serviceName: string) => {
   if (!hasProperHtmlWrapper(body)) {
-    return `<!doctype html><html>${getHeaderPreview()}${body}${getFooterPreview(serviceName)}</html>`;
+    return `<!doctype html><html>${getHeaderPreview()}<style scoped>${body}</style>${getFooterPreview(
+      serviceName
+    )}</html>`;
   }
   return body;
 };
