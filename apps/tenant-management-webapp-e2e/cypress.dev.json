@@ -27,7 +27,7 @@
     "uiComponentUrl": "",
     "fileApi":""
   },
-  "baseUrl": "https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca",
+  "baseUrl": "https://adsp-dev.gov.ab.ca",
   "fileServerFolder": ".",
   "fixturesFolder": "./src/fixtures",
   "integrationFolder": "./src/integration",
