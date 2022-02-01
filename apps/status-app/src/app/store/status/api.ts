@@ -26,10 +26,11 @@ export class SubscriberApi {
     this.http = axios.create({ baseURL: baseUrl });
   }
 
-  async subscribe(tenant: string, email: string): Promise<Subscriber> {
+  async subscribe(tenant: string, email: string, token?: string): Promise<Subscriber> {
     const { data } = await this.http.post<{ subscriber: Subscriber }>('application-status', {
       tenant: tenant,
       email: email,
+      token,
     });
     return data.subscriber;
   }
