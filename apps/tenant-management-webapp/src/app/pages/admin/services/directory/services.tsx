@@ -13,57 +13,66 @@ export const DirectoryService: FunctionComponent = () => {
   useEffect(() => {
     dispatch(fetchDirectory());
   }, []);
-
+  const { directory } = useSelector((state: RootState) => state.directory);
+  const nameArray = [...new Map(directory.map((item) => [item['name'], item])).values()];
+  const healthEndpoint = (dir: Services) => {
+    if (dir.name === 'status-service' || dir.name.startsWith('tenant-service')) {
+      return dir.url;
+    }
+    const nameSplitter = dir.namespace.split(':');
+    if (nameSplitter.length > 1) {
+      const newDirectory = directory.find((item) => item.namespace === nameSplitter[0]);
+      return `${newDirectory.url}/health`;
+    }
+    return `${dir.url}/health`;
+  };
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
-  const { directory } = useSelector((state: RootState) => state.directory);
-  const nameArray = [...new Map(directory.map((item) => [item['name'], item])).values()];
+
   // eslint-disable-next-line
   useEffect(() => { }, [indicator]);
 
   return (
-    <div>
-      {indicator.show && <PageIndicator />}
-      {!indicator.show && directory &&
-        < div >
-          {
-            nameArray.map((item) => (
-              <TableDiv key={item['name']}>
-                <NameDiv>{item['name']}</NameDiv>
-
-                <DataTable data-testid="directory-table">
-                  <thead data-testid="directory-table-header">
-                    <tr>
-                      <th id="namespace" data-testid="directory-table-header-name">
-                        Namespace
+    <>
+      <PageIndicator />
+      {!indicator.show && nameArray && <div>
+        {nameArray.map((item) => (
+          <TableDiv key={item['name']}>
+            <NameDiv>{item['name']}</NameDiv>
+            <DataTable data-testid="directory-table">
+              <thead data-testid="directory-table-header">
+                <tr>
+                  <th id="name" data-testid="directory-table-header-name">
+                    Name
                 </th>
-                      <th id="directory">Directory</th>
-                    </tr>
-                  </thead>
+                  <th id="directory">Health Endpoint</th>
+                </tr>
+              </thead>
 
-                  <tbody key={item['name']}>
-                    {directory
-                      .filter((dir) => dir.name === item['name'])
-                      .map((dir: Services) => {
-                        return (
-                          <tr key={dir.namespace}>
-                            <td headers="namespace" data-testid="namespace">
-                              {dir.namespace}
-                            </td>
-                            <td headers="directory" data-testid="directory">
-                              {dir.url}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                  </tbody>
-                </DataTable>
-              </TableDiv>
-            ))
-          }
-        </div>}
-    </div >
+              <tbody key={item['name']}>
+                {directory
+                  .filter((dir) => dir.name === item['name'])
+                  .map((dir: Services) => {
+                    return (
+                      <tr key={dir.namespace}>
+                        <td headers="namespace" data-testid="namespace">
+                          {dir.namespace}
+                        </td>
+                        <td headers="directory" data-testid="directory">
+                          <a href={healthEndpoint(dir)} target="_blank" rel="noopener noreferrer">
+                            {healthEndpoint(dir)}
+                          </a>
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </DataTable>
+          </TableDiv>
+        ))}
+      </div>}
+    </>
   );
 };
 

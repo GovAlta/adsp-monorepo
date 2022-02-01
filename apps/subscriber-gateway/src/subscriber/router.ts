@@ -1,7 +1,8 @@
 import { adspId, Channel, ServiceDirectory, TenantService, TokenProvider } from '@abgov/adsp-service-sdk';
-import { NotFoundError, UnauthorizedError } from '@core-services/core-common';
+import { InvalidOperationError, NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import axios from 'axios';
 import { RequestHandler, Router } from 'express';
+import { Logger } from 'winston';
 
 interface SiteVerifyResponse {
   success: boolean;
@@ -9,21 +10,29 @@ interface SiteVerifyResponse {
   action: string;
 }
 
-export function verifyReCaptcha(RECAPTCHA_SECRET: string, SCORE_THRESHOLD = 0.5): RequestHandler {
-  return async (req, res, next) => {
-    try {
-      const { token } = req.body;
-      const { data } = await axios.post<SiteVerifyResponse>(
-        `https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET}&response=${token}`
-      );
-
-      if (!data.success || data.action !== 'subscribe-status' || data.score < SCORE_THRESHOLD) {
-        throw new UnauthorizedError('Request rejected because captacha verification not successful.');
-      }
-
+export function verifyCaptcha(logger: Logger, RECAPTCHA_SECRET: string, SCORE_THRESHOLD = 0.5): RequestHandler {
+  return async (req, _res, next) => {
+    if (!RECAPTCHA_SECRET) {
       next();
-    } catch (err) {
-      next(err);
+    } else {
+      try {
+        const { token } = req.body;
+        const { data } = await axios.post<SiteVerifyResponse>(
+          `https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET}&response=${token}`
+        );
+
+        if (!data.success || data.action !== 'subscribe-status' || data.score < SCORE_THRESHOLD) {
+          logger.warn(
+            `Captcha verification failed for subscribe-status with result '${data.success}' on action '${data.action}' with score ${data.score}.`
+          );
+
+          throw new UnauthorizedError('Request rejected because captcha verification not successful.');
+        }
+
+        next();
+      } catch (err) {
+        next(err);
+      }
     }
   };
 }
@@ -35,7 +44,11 @@ export function subscribeStatus(
 ): RequestHandler {
   return async (req, res, next) => {
     try {
-      const { tenant: tenantName, email } = req.body;
+      const { tenant: tenantName, email }: { tenant: string; email: string } = req.body;
+      if (!email) {
+        throw new InvalidOperationError('Email for subscription not provided.');
+      }
+
       const tenant = await tenantService.getTenantByName(tenantName);
       if (!tenant) {
         throw new NotFoundError('Tenant', tenantName);
@@ -50,7 +63,7 @@ export function subscribeStatus(
       } = await axios.post<{ id: string }>(
         subscribersUrl.href,
         {
-          userId: email,
+          userId: email.toLowerCase(),
           addressAs: '',
           channels: [
             {
@@ -84,6 +97,7 @@ export function subscribeStatus(
 }
 
 interface RouterProps {
+  logger: Logger;
   directory: ServiceDirectory;
   tenantService: TenantService;
   tokenProvider: TokenProvider;
@@ -91,6 +105,7 @@ interface RouterProps {
 }
 
 export const createSubscriberRouter = ({
+  logger,
   tenantService,
   tokenProvider,
   directory,
@@ -100,7 +115,7 @@ export const createSubscriberRouter = ({
 
   router.post(
     '/application-status',
-    RECAPTCHA_SECRET ? verifyReCaptcha(RECAPTCHA_SECRET) : (_req, _res, next) => next(),
+    verifyCaptcha(logger, RECAPTCHA_SECRET),
     subscribeStatus(tenantService, tokenProvider, directory)
   );
 
