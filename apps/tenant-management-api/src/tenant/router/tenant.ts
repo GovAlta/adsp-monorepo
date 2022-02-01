@@ -167,7 +167,7 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
       res.status(HttpStatusCodes.OK).json(data);
     } catch (err) {
       logger.error(`Error creating new tenant ${err.message}`);
-      next(err);
+      res.status(err.response?.status || err.errorCode || 400).json({ error: err.message });
     }
   }
 
