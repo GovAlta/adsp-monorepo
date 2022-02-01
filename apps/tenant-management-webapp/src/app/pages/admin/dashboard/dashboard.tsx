@@ -135,7 +135,7 @@ const Dashboard = (): JSX.Element => {
 
             <p>2. Share the following URL to complete the process.</p>
 
-            <div className="copy-url">{loginUrl}</div>
+            <div className="copy-url"><a target="_blank" href={loginUrl} rel="noreferrer">{loginUrl}</a></div>
             <GoAButton data-tip="Copied!" data-for="registerTipUrl">
               Click to copy
             </GoAButton>
