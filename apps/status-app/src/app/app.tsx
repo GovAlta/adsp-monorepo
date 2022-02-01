@@ -6,6 +6,7 @@ import { fetchConfig } from './store/config/actions';
 import { useDispatch, useSelector } from 'react-redux';
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 import ServiceStatusPage from './pages/status';
+import Recaptcha from './components/Recaptcha';
 import { RootState } from '@store/index';
 
 export function App(): JSX.Element {
@@ -33,6 +34,7 @@ export function App(): JSX.Element {
           </Switch>
         </Router>
       )}
+      <Recaptcha siteKey={config.recaptchaKey} />
     </div>
   );
 }

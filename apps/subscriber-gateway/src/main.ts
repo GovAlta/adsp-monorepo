@@ -1,5 +1,4 @@
 import * as express from 'express';
-import * as fs from 'fs';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
@@ -34,24 +33,8 @@ const initializeApp = async (): Promise<express.Application> => {
     { logger }
   );
 
-  const subscriberRouter = createSubscriberRouter({ ...environment, directory, tenantService, tokenProvider });
+  const subscriberRouter = createSubscriberRouter({ ...environment, logger, directory, tenantService, tokenProvider });
   app.use('/subscriber/v1', subscriberRouter);
-
-  // let swagger = null;
-  // app.use('/swagger/docs/v1', (_req, res) => {
-  //   if (swagger) {
-  //     res.json(swagger);
-  //   } else {
-  //     fs.readFile(`${__dirname}/swagger.json`, 'utf8', (err, data) => {
-  //       if (err) {
-  //         res.sendStatus(404);
-  //       } else {
-  //         swagger = JSON.parse(data);
-  //         res.json(swagger);
-  //       }
-  //     });
-  //   }
-  // });
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();
@@ -65,7 +48,6 @@ const initializeApp = async (): Promise<express.Application> => {
         self: new URL(req.originalUrl, rootUrl).href,
         health: new URL('/health', rootUrl).href,
         api: new URL('/subscriber/v1', rootUrl).href,
-        // doc: new URL('/swagger/docs/v1', rootUrl).href,
       },
     });
   });
