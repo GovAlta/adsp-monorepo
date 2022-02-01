@@ -13,6 +13,8 @@ export default function accessReducer(state: AccessState = ACCESS_INIT, action: 
       return {
         ...state,
       };
+    case 'tenant/access/RESET':
+      return { ...ACCESS_INIT };
     default:
       return state;
   }
