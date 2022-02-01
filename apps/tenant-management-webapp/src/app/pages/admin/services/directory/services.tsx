@@ -5,51 +5,65 @@ import { fetchDirectory } from '@store/directory/actions';
 import DataTable from '@components/DataTable';
 import { Services } from '@store/directory/models';
 import styled from 'styled-components';
+import { PageIndicator } from '@components/Indicator';
+
 export const DirectoryService: FunctionComponent = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(fetchDirectory());
   }, []);
+
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
   const { directory } = useSelector((state: RootState) => state.directory);
   const nameArray = [...new Map(directory.map((item) => [item['name'], item])).values()];
+  // eslint-disable-next-line
+  useEffect(() => { }, [indicator]);
 
   return (
     <div>
-      {nameArray.map((item) => (
-        <TableDiv key={item['name']}>
-          <NameDiv>{item['name']}</NameDiv>
+      {indicator.show && <PageIndicator />}
+      {!indicator.show && directory &&
+        < div >
+          {
+            nameArray.map((item) => (
+              <TableDiv key={item['name']}>
+                <NameDiv>{item['name']}</NameDiv>
 
-          <DataTable data-testid="directory-table">
-            <thead data-testid="directory-table-header">
-              <tr>
-                <th id="namespace" data-testid="directory-table-header-name">
-                  Namespace
+                <DataTable data-testid="directory-table">
+                  <thead data-testid="directory-table-header">
+                    <tr>
+                      <th id="namespace" data-testid="directory-table-header-name">
+                        Namespace
                 </th>
-                <th id="directory">Directory</th>
-              </tr>
-            </thead>
-
-            <tbody key={item['name']}>
-              {directory
-                .filter((dir) => dir.name === item['name'])
-                .map((dir: Services) => {
-                  return (
-                    <tr key={dir.namespace}>
-                      <td headers="namespace" data-testid="namespace">
-                        {dir.namespace}
-                      </td>
-                      <td headers="directory" data-testid="directory">
-                        {dir.url}
-                      </td>
+                      <th id="directory">Directory</th>
                     </tr>
-                  );
-                })}
-            </tbody>
-          </DataTable>
-        </TableDiv>
-      ))}
-    </div>
+                  </thead>
+
+                  <tbody key={item['name']}>
+                    {directory
+                      .filter((dir) => dir.name === item['name'])
+                      .map((dir: Services) => {
+                        return (
+                          <tr key={dir.namespace}>
+                            <td headers="namespace" data-testid="namespace">
+                              {dir.namespace}
+                            </td>
+                            <td headers="directory" data-testid="directory">
+                              {dir.url}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </DataTable>
+              </TableDiv>
+            ))
+          }
+        </div>}
+    </div >
   );
 };
 
