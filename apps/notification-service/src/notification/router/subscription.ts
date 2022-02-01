@@ -125,6 +125,11 @@ export function createTypeSubscription(apiId: AdspId, repository: SubscriptionRe
         subscriberEntity = await repository.getSubscriber(tenantId, subscriber.userId, true);
       }
 
+      if (subscriber.id) {
+        // Try to find an existing subscriber based on existing subscriber ID.
+        subscriberEntity = await repository.getSubscriber(tenantId, subscriber.id, false);
+      }
+
       if (!subscriberEntity) {
         subscriberEntity = await SubscriberEntity.create(user, repository, subscriber);
       }
@@ -524,11 +529,7 @@ export const createSubscriptionRouter = ({
   subscriptionRouter.get('/subscribers/:subscriber', getSubscriber(subscriptionRepository), (req, res) =>
     res.send(mapSubscriber(apiId, req[SUBSCRIBER_KEY]))
   );
-  subscriptionRouter.patch(
-    '/subscribers/:subscriber',
-    getSubscriber(subscriptionRepository),
-    updateSubscriber(apiId)
-  );
+  subscriptionRouter.patch('/subscribers/:subscriber', getSubscriber(subscriptionRepository), updateSubscriber(apiId));
   subscriptionRouter.post(
     '/subscribers/:subscriber',
     getSubscriber(subscriptionRepository),
