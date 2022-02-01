@@ -113,7 +113,7 @@ data:
         "fileApi": "https://file-service.adsp-dev.gov.ab.ca" ,
         "serviceStatusApiUrl": "https://status-service.adsp-dev.gov.ab.ca",
         "valueServiceApiUrl": "https://value-service.adsp-dev.gov.ab.ca",
-        "serviceStatusAppUrl": "https://status-app.adsp-dev.gov.ab.ca",
+        "serviceStatusAppUrl": "https://status.adsp-dev.gov.ab.ca",
         "docServiceApiUrl": "https://api.adsp-dev.gov.ab.ca",
         "configurationServiceApiUrl": "https://configuration-service.adsp-dev.gov.ab.ca"
       }
