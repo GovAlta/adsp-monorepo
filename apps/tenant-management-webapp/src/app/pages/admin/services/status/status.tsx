@@ -203,7 +203,7 @@ function Status(): JSX.Element {
 
         <p>Url of the current tenant's public status page:</p>
 
-        <div className="copy-url">{publicStatusUrl}</div>
+        <div className="copy-url"><a target="_blank" href={publicStatusUrl} rel="noreferrer">{publicStatusUrl}</a></div>
         <GoAButton data-tip="Copied!" data-for="registerTipUrl">
           Click to copy
         </GoAButton>
