@@ -27,6 +27,7 @@ export interface FileApi {
   };
 }
 export interface ServiceUrls {
+  subscriberWebApp: string;
   eventServiceApiUrl: string;
   notificationServiceUrl: string;
   keycloakUrl: string;

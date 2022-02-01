@@ -155,11 +155,13 @@ const LandingPage = (): JSX.Element => {
             <Grid>
               <GridItem md={1} />
               <GridItem md={10}>
-                <h2>Service we offer</h2>
-                <p>
-                  The ADSP provides a huge catalog of services and existing capabilities for product teams to leverage
-                  and deliver on time quality service to Albertans. Here are few of our offerings.
-                </p><br />
+                <ServiceLayout>
+                  <h2>Service we offer</h2>
+                  <p>
+                    The ADSP provides a huge catalog of services and existing capabilities for product teams to leverage
+                    and deliver on time quality service to Albertans. Here are few of our offerings.
+                </p>
+                </ServiceLayout>
               </GridItem>
               <GridItem md={1} />
             </Grid>
@@ -350,6 +352,11 @@ const HeroBannerLayout = styled.div`
   background-size: 100% 100%;
   padding: 0px !important;
 }`;
+
+const ServiceLayout = styled.div`
+  margin-top: 3.5em;
+  margin-bottom: 1.75em;
+`
 
 const ClockImg = styled.img`
   margin-top: 1.5em;

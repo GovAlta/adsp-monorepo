@@ -12,6 +12,7 @@ import { parseNotices, bindApplicationsWithNotices } from './models';
 import { addErrorMessage, updateIsReady, updateTenantName } from '@store/session/actions';
 import { SagaIterator } from '@redux-saga/core';
 import { toTenantName } from './models';
+import { ConfigState, RecaptchaService } from '@store/config/models';
 
 export function* fetchApplications(action: FetchApplicationsAction): SagaIterator {
   const rootState: RootState = yield select();
@@ -48,8 +49,18 @@ export function* subscribeToTenant(action: SubscribeToTenantAction): SagaIterato
   const { email, tenant } = action.payload;
 
   try {
+    const configState: ConfigState = yield select((state: RootState) => state.config);
+
+    let token = null;
+    const grecaptcha = configState.grecaptcha;
+    if (grecaptcha) {
+      token = yield call([grecaptcha, grecaptcha.execute], configState.recaptchaKey, {
+        action: 'subscribe_status',
+      });
+    }
+
     const subscriberApi = new SubscriberApi('/api/subscriber/v1');
-    const subscriber = yield call([subscriberApi, subscriberApi.subscribe], tenant, email);
+    const subscriber = yield call([subscriberApi, subscriberApi.subscribe], tenant, email, token);
 
     yield put(subscribeToTenantSuccess(subscriber));
   } catch (e) {

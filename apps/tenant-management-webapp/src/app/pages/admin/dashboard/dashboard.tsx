@@ -25,7 +25,7 @@ const Dashboard = (): JSX.Element => {
       };
     }
   );
-  const autoLoginUrl = `${tenantManagementWebApp}/${session.realm}/autologin`;
+  const loginUrl = `${tenantManagementWebApp}/${session.realm}/login`;
 
   const _afterShow = (copyText) => {
     navigator.clipboard.writeText(copyText);
@@ -135,7 +135,7 @@ const Dashboard = (): JSX.Element => {
 
             <p>2. Share the following URL to complete the process.</p>
 
-            <div className="copy-url">{autoLoginUrl}</div>
+            <div className="copy-url"><a target="_blank" href={loginUrl} rel="noreferrer">{loginUrl}</a></div>
             <GoAButton data-tip="Copied!" data-for="registerTipUrl">
               Click to copy
             </GoAButton>
@@ -145,7 +145,7 @@ const Dashboard = (): JSX.Element => {
               event="click"
               eventOff="blur"
               effect="solid"
-              afterShow={() => _afterShow(autoLoginUrl)}
+              afterShow={() => _afterShow(loginUrl)}
             />
           </DashboardAside>
         </Page>

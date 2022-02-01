@@ -24,6 +24,7 @@ const emptyNotificationType: NotificationItem = {
   subscriberRoles: [],
   id: null,
   publicSubscribe: false,
+  customized: false,
 };
 
 export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormProps> = ({

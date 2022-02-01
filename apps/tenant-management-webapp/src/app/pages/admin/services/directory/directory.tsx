@@ -8,7 +8,6 @@ export const Directory: FunctionComponent = () => {
   return (
     <Page>
       <Main>
-
         {/* TODO: Add loading indicator after redux actions were added. */}
         <>
           <h1>Directory service</h1>
@@ -16,9 +15,9 @@ export const Directory: FunctionComponent = () => {
             <Tab label="Overview">
               <DirectoryOverview />
             </Tab>
-                <Tab label="Service">
-                <DirectoryService />
-              </Tab>
+            <Tab label="Services">
+              <DirectoryService />
+            </Tab>
           </Tabs>
         </>
       </Main>

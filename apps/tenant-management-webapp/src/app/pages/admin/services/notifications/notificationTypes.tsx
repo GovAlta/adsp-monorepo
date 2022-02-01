@@ -15,6 +15,7 @@ import {
 } from '@abgov/react-components/experimental';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { isDuplicatedNotificationName } from './validation';
+import { NotificationType } from '@store/notification/models';
 
 import {
   UpdateNotificationTypeService,
@@ -36,6 +37,7 @@ const emptyNotificationType: NotificationItem = {
   subscriberRoles: [],
   id: null,
   publicSubscribe: false,
+  customized: false,
 };
 
 interface ParentCompProps {
@@ -60,9 +62,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(FetchNotificationTypeService());
-    dispatch(FetchCoreNotificationTypeService());
     dispatch(FetchRealmRoles());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (notification?.notificationTypes) {
+      dispatch(FetchCoreNotificationTypeService());
+    }
+  }, [notification?.notificationTypes]);
 
   function reset() {
     setShowTemplateForm(false);
@@ -84,9 +91,24 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   }, [activeEdit]);
 
   function manageEvents(notificationType) {
-    //Manage Events
     setSelectedType(notificationType);
     setEditEvent(notificationType);
+  }
+
+  const nonCoreCopiedNotifications: NotificationType = Object.assign({}, notification?.notificationTypes);
+
+  if (Object.keys(coreNotification).length > 0) {
+    const NotificationsIntersection = [];
+
+    Object.keys(notification?.notificationTypes).forEach((notificationType) => {
+      if (Object.keys(coreNotification).includes(notificationType)) {
+        NotificationsIntersection.push(notificationType);
+      }
+    });
+
+    NotificationsIntersection.forEach((notificationType) => {
+      delete nonCoreCopiedNotifications[notificationType];
+    });
   }
 
   return (
@@ -115,8 +137,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           Add notification type
         </GoAButton>
       </Buttons>
-      {notification.notificationTypes &&
-        Object.values(notification.notificationTypes).map((notificationType) => (
+      {nonCoreCopiedNotifications &&
+        Object.values(nonCoreCopiedNotifications).map((notificationType) => (
           <div className="topBottomMargin" key={`notification-list-${notificationType.id}`}>
             <GoACard
               title={
@@ -266,37 +288,74 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               }
               description={notificationType.description}
             >
+              {notificationType.customized && (
+                <div style={{ float: 'right', fontWeight: 'bold' }}>Override editing activated</div>
+              )}
               <h2>Events:</h2>
+              {/* {JSON.stringify(notification?.notificationTypes)} */}
               <Grid>
                 {notificationType?.events?.map((event, key) => (
                   <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
                     <EventBorder>
-                      <div className="height-100 columnFlex">
-                        <div className="flex1">
-                          {event.namespace}:{event.name}
-                        </div>
+                      <MaxHeight height={168}>
                         <div className="rowFlex">
-                          <NotificationBorder className="smallPadding">
-                            <a className="noCursor">
-                              <GoAIcon type="mail" style="filled" />
-                            </a>
-                          </NotificationBorder>
-
-                          <div className="rightAlignEdit">
-                            <a
-                              style={{ marginRight: '20px' }}
-                              data-testid="preview-event"
-                              onClick={() => {
-                                setSelectedEvent(event);
-                                setSelectedType(notificationType);
-                                setShowEmailPreview(true);
-                              }}
-                            >
-                              Preview
-                            </a>
+                          <div className="flex1">
+                            {event.namespace}:{event.name}
+                          </div>
+                          <div className="rowFlex">
+                            <MaxHeight height={34}>
+                              {event.customized && (
+                                <NotificationBorder className="smallPadding">
+                                  <a
+                                    className="flex1 flex"
+                                    onClick={() => {
+                                      setSelectedEvent(event);
+                                      setSelectedType(notificationType);
+                                      setShowEventDeleteConfirmation(true);
+                                    }}
+                                    data-testid="delete-event"
+                                  >
+                                    <GoAIcon type="trash" />
+                                  </a>
+                                </NotificationBorder>
+                              )}
+                            </MaxHeight>
                           </div>
                         </div>
-                      </div>
+                        <div className="columnFlex height-100">
+                          <div className="flex1 flex flexEndAlign">
+                            <NotificationBorder className="smallPadding">
+                              <a className="noCursor">
+                                <GoAIcon type="mail" style="filled" />
+                              </a>
+                            </NotificationBorder>
+
+                            <div className="rightAlignEdit">
+                              <a
+                                style={{ marginRight: '20px' }}
+                                data-testid="preview-event"
+                                onClick={() => {
+                                  setSelectedEvent(event);
+                                  setSelectedType(notificationType);
+                                  setShowEmailPreview(true);
+                                }}
+                              >
+                                Preview
+                              </a>
+                              <a
+                                data-testid="edit-event"
+                                onClick={() => {
+                                  setSelectedEvent(event);
+                                  setSelectedType(notificationType);
+                                  setShowTemplateForm(true);
+                                }}
+                              >
+                                Edit
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      </MaxHeight>
                     </EventBorder>
                   </GridItem>
                 ))}
@@ -322,6 +381,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           >
             Cancel
           </GoAButton>
+
           <GoAButton
             buttonType="primary"
             data-testid="delete-confirm"
@@ -360,8 +420,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               const updatedEvents = selectedType.events.filter(
                 (event) => `${event.namespace}:${event.name}` !== `${selectedEvent.namespace}:${selectedEvent.name}`
               );
-              selectedType.events = updatedEvents;
-              dispatch(UpdateNotificationTypeService(selectedType));
+
+              const newType = JSON.parse(JSON.stringify(selectedType));
+              newType.events = updatedEvents;
+              dispatch(UpdateNotificationTypeService(newType));
               setSelectedType(emptyNotificationType);
             }}
           >
