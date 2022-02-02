@@ -5,6 +5,7 @@ import { Grid, GridItem } from '@components/Grid';
 import { NotificationTypeModalForm } from './edit';
 import { EventModalForm } from './editEvent';
 import { IndicatorWithDelay } from '@components/Indicator';
+import { ReactComponent as Trash } from '@icons/trash-outline.svg';
 
 import {
   GoAModal,
@@ -288,11 +289,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               }
               description={notificationType.description}
             >
-              {notificationType.customized && (
-                <div style={{ float: 'right', fontWeight: 'bold' }}>Override editing activated</div>
-              )}
               <h2>Events:</h2>
-              {/* {JSON.stringify(notification?.notificationTypes)} */}
               <Grid>
                 {notificationType?.events?.map((event, key) => (
                   <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
@@ -304,7 +301,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           </div>
                           <div className="rowFlex">
                             <MaxHeight height={34}>
-                              {event.customized && (
+                              {event.customized ? (
                                 <NotificationBorder className="smallPadding">
                                   <a
                                     className="flex1 flex"
@@ -315,22 +312,32 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                     }}
                                     data-testid="delete-event"
                                   >
-                                    <GoAIcon type="trash" />
+                                    <GoAIcon type="trash" style="outline" />
                                   </a>
                                 </NotificationBorder>
+                              ) : (
+                                <div>
+                                  <ButtonWrap>
+                                    <Trash title="Core events cannot be deleted" />
+                                  </ButtonWrap>
+                                </div>
                               )}
                             </MaxHeight>
                           </div>
                         </div>
                         <div className="columnFlex height-100">
                           <div className="flex1 flex flexEndAlign">
-                            <NotificationBorder className="smallPadding">
-                              <a className="noCursor">
-                                <GoAIcon type="mail" style="filled" />
-                              </a>
-                            </NotificationBorder>
-
-                            <div className="rightAlignEdit">
+                            <div className="flex1">
+                              <MailButton>
+                                <NotificationBorder className="smallPadding">
+                                  <a className="noCursor">
+                                    <GoAIcon type="mail" style="filled" />
+                                  </a>
+                                </NotificationBorder>
+                              </MailButton>
+                              {event.customized && <SmallText>Edited Template</SmallText>}
+                            </div>
+                            <div className="rightAlignEdit flex1">
                               <a
                                 style={{ marginRight: '20px' }}
                                 data-testid="preview-event"
@@ -363,9 +370,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             </GoACard>
           </div>
         ))}
-      {notification.notificationTypes === undefined && (
-        <IndicatorWithDelay message="Loading..." pageLock={false} />
-      )}
+      {notification.notificationTypes === undefined && <IndicatorWithDelay message="Loading..." pageLock={false} />}
       {/* Delete confirmation */}
       <GoAModal testId="delete-confirmation" isOpen={showDeleteConfirmation}>
         <GoAModalTitle>Delete notification type</GoAModalTitle>
@@ -520,6 +525,14 @@ const NotificationBorder = styled.div`
   border-radius: 3px;
 `;
 
+const ButtonWrap = styled.div`
+  margin: 3px;
+  min-width: 21px;
+  svg {
+    color: grey !important;
+  }
+`;
+
 const EventBorder = styled.div`
   border: 1px solid #e6e6e6;
   margin: 3px;
@@ -527,9 +540,17 @@ const EventBorder = styled.div`
   padding: 20px;
 `;
 
+const SmallText = styled.div`
+  font-size: small;
+`;
+
 const EventButtonWrapper = styled.div`
   text-align: center;
   margin: 19px 0;
+`;
+
+const MailButton = styled.div`
+  max-width: 32px;
 `;
 
 const MaxHeight = styled.div`
