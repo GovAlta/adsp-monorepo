@@ -14,12 +14,9 @@ import { GoAButton } from '@abgov/react-components';
 export const Notifications: FunctionComponent = () => {
   const tenantId = useSelector((state: RootState) => state.tenant?.id);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
-  const { session, subscriberWebApp } = useSelector((state: RootState) => {
-    return {
-      subscriberWebApp: state.config.serviceUrls.subscriberWebApp,
-      session: state.session,
-    };
-  });
+  const session = useSelector((state: RootState) => state.session);
+  const subscriberWebApp = useSelector((state: RootState) => state.config.serviceUrls.subscriberWebApp);
+
   const loginUrl = `${subscriberWebApp}/${session.realm}/login`;
 
   const [activateEditState, setActivateEditState] = useState<boolean>(false);
@@ -77,18 +74,25 @@ export const Notifications: FunctionComponent = () => {
           See the code
         </a>
         <SupportLinks />
-        <div className="copy-url"><a target="_blank" href={loginUrl} rel="noreferrer">{loginUrl}</a></div>
+
+        <h3>Manage subscriptions</h3>
+        <p>Subscribers can manage their subscriptions here:</p>
+        <div className="copy-url">
+          <a target="_blank" href={loginUrl} rel="noreferrer">
+            {loginUrl}
+          </a>
+        </div>
         <GoAButton data-tip="Copied!" data-for="registerTipUrl">
           Click to copy
         </GoAButton>
         <ReactTooltip
-              id="registerTipUrl"
-              place="top"
-              event="click"
-              eventOff="blur"
-              effect="solid"
-              afterShow={() => _afterShow(loginUrl)}
-            />
+          id="registerTipUrl"
+          place="top"
+          event="click"
+          eventOff="blur"
+          effect="solid"
+          afterShow={() => _afterShow(loginUrl)}
+        />
       </Aside>
     </Page>
   );
