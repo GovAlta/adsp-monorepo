@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { PageIndicator } from '@components/Indicator';
-
+import { renderNoItem } from '@components/NoItem';
 interface CorrelationIndicatorProps {
   color: string;
 }
@@ -95,13 +95,13 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
     return state?.session?.indicator;
   });
   // eslint-disable-next-line
-  useEffect(() => {
-  }, [indicator, entries]);
+  useEffect(() => {}, [indicator, entries]);
 
   return (
     <>
       {indicator.show && <PageIndicator />}
-      {!indicator.show &&
+      {!indicator.show && entries.length === 0 && renderNoItem('event log')}
+      {!indicator.show && entries.length > 0 && (
         <div className={className}>
           <DataTable>
             <thead>
@@ -132,7 +132,9 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
               ))}
             </tbody>
           </DataTable>
-        </div>}</>
+        </div>
+      )}
+    </>
   );
 };
 
