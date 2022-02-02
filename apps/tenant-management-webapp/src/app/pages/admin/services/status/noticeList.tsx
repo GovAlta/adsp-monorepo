@@ -6,6 +6,7 @@ import FilterIcon from '@assets/icons/filter-filled.svg';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { GoARadio } from '@abgov/react-components';
+import { renderNoItem } from '@components/NoItem';
 
 type filterOptionOnSelect = (option: string) => void;
 
@@ -138,6 +139,7 @@ export const NoticeList = (): JSX.Element => {
       )}
       <Grid>
         <GridItem md={12} hSpacing={0.5}>
+          {notices.length === 0 && renderNoItem('notice')}
           {notices && notices.length !== 0 && (
             <NoticeListFilter
               data-testid="notice-list-filter"
