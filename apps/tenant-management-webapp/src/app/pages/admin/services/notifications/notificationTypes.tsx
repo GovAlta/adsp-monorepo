@@ -317,9 +317,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                 </NotificationBorder>
                               ) : (
                                 <div>
-                                  <ButtonWrap>
+                                  <GreyButtonWrap>
                                     <Trash title="Core events cannot be deleted" />
-                                  </ButtonWrap>
+                                  </GreyButtonWrap>
                                 </div>
                               )}
                             </MaxHeight>
@@ -525,9 +525,13 @@ const NotificationBorder = styled.div`
   border-radius: 3px;
 `;
 
-const ButtonWrap = styled.div`
+const GreyButtonWrap = styled.div`
   margin: 3px;
-  min-width: 21px;
+  padding: 1px 3px 0 3px;
+  width: 26px;
+  height: 26px;
+  border: 1px solid grey;
+  border-radius: 3px;
   svg {
     color: grey !important;
   }
