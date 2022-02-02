@@ -25,13 +25,15 @@ jobs:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
       - run: npm ci
+      # Using a fork of the action that allows events other than 'push'.
       - name: Get last successful commit
-        uses: nrwl/last-successful-commit-action@v1
+        uses: simondotm/last-successful-commit-action@v2
         id: last_successful_commit
         with:
           branch: main
           workflow_id: promote.yml
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow_event: workflow_dispatch
       - name: Get affected apps
         id: get-affected
         shell: bash
