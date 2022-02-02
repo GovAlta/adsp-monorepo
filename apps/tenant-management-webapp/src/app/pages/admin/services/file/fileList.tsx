@@ -12,7 +12,7 @@ import { GoAForm } from '@abgov/react-components/experimental';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
 import { GoAIconButton } from '@abgov/react-components/experimental';
-
+import { renderNoItem } from '@components/NoItem';
 const FileList = (): JSX.Element => {
   const [selectedFile, setSelectFile] = useState<string>();
   const [uploadFileType, setUploadFileType] = useState<string>();
@@ -55,17 +55,7 @@ const FileList = (): JSX.Element => {
     dispatch(FetchFilesService());
     dispatch(FetchFileTypeService());
   }, [dispatch]);
-  const renderNoFile = () => {
-    return (
-      <div>
-        <br />
-        <p>
-          {' '}
-          <b>No files found</b>{' '}
-        </p>
-      </div>
-    );
-  };
+
   const renderFileTable = () => {
     return (
       <DataTable id="files-information">
@@ -131,7 +121,7 @@ const FileList = (): JSX.Element => {
         </GoAButton>
       </GoAForm>
 
-      {fileList.length === 0 ? renderNoFile() : renderFileTable()}
+      {fileList.length === 0 ? renderNoItem('file') : renderFileTable()}
     </>
   );
 };

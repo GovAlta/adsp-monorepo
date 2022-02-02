@@ -5,6 +5,7 @@ import { RootState } from '@store/index';
 import type { EventDefinition } from '@store/event/models';
 import styled from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
+import { renderNoItem } from '@components/NoItem';
 
 interface EventDefinitionProps {
   definition: EventDefinition;
@@ -83,6 +84,7 @@ const EventDefinitionsListComponent: FunctionComponent<EventDefinitionsListCompo
 
   return (
     <div className={className}>
+      {orderedGroupNames.length === 0 && renderNoItem('event definition')}
       {orderedGroupNames.map((group) => (
         <div key={group}>
           <div className="group-name">{group}</div>

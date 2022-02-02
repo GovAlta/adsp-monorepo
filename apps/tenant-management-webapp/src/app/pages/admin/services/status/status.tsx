@@ -35,6 +35,7 @@ import { getNotices } from '@store/notice/actions';
 import { NoticeList } from './noticeList';
 import SupportLinks from '@components/SupportLinks';
 import { EditIconButton } from '@components/icons/EditIcon';
+import { renderNoItem } from '@components/NoItem';
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
@@ -138,6 +139,7 @@ function Status(): JSX.Element {
             >
               I want to subscribe and receive notifications
             </GoACheckbox>
+            {applications.length === 0 && renderNoItem('application')}
             <ApplicationList>
               {applications.map((app) => (
                 <Application key={app._id} {...app} />
@@ -203,7 +205,11 @@ function Status(): JSX.Element {
 
         <p>Url of the current tenant's public status page:</p>
 
-        <div className="copy-url"><a target="_blank" href={publicStatusUrl} rel="noreferrer">{publicStatusUrl}</a></div>
+        <div className="copy-url">
+          <a target="_blank" href={publicStatusUrl} rel="noreferrer">
+            {publicStatusUrl}
+          </a>
+        </div>
         <GoAButton data-tip="Copied!" data-for="registerTipUrl">
           Click to copy
         </GoAButton>

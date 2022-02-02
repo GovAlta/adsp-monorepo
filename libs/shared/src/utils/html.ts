@@ -7,7 +7,9 @@ const hasProperHtmlWrapper = (content: string): boolean => {
 
 export const getTemplateBody = (body: string, serviceName: string) => {
   if (!hasProperHtmlWrapper(body)) {
+    body = body.includes('<style') ? `<style scoped>${body}</style>` : body;
     return `<!doctype html><html>${getHeaderPreview()}${body}${getFooterPreview(serviceName)}</html>`;
   }
+
   return body;
 };
