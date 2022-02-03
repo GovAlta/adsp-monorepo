@@ -3,7 +3,6 @@ export const getFooterPreview = () => {
   <footer>
   <style>
     .goa-footer-event {
-      margin-top: 3rem;
       background-color: #F1F1F1;
       padding-top: 2.5rem;
       padding-top: 3rem;
