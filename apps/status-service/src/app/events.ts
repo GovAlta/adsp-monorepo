@@ -57,6 +57,11 @@ export const HealthCheckHealthyDefinition: DomainEventDefinition = {
       application: ApplicationDefinition,
     },
   },
+  interval: {
+    namespace: 'status-service',
+    name: 'application-unhealthy',
+    metric: ['status-service', 'applicationName', 'downtime'],
+  }
 };
 
 export const HealthCheckUnhealthyDefinition: DomainEventDefinition = {
@@ -69,6 +74,11 @@ export const HealthCheckUnhealthyDefinition: DomainEventDefinition = {
       error: { type: 'string' },
     },
   },
+  interval: {
+    namespace: 'status-service',
+    name: 'application-healthy',
+    metric: ['status-service', 'applicationName', 'uptime'],
+  }
 };
 
 export const ApplicationNoticePublishedDefinition: DomainEventDefinition = {
@@ -174,6 +184,10 @@ export const applicationStatusToStarted = (application: ServiceStatusApplication
   timestamp: new Date(),
   tenantId: AdspId.parse(application.tenantId),
   correlationId: `${application._id}`,
+  context: {
+    applicationId: `${application._id}`,
+    applicationName: application.name,
+  },
   payload: {
     application: mapApplication(application),
   },
@@ -184,6 +198,10 @@ export const applicationStatusToStopped = (application: ServiceStatusApplication
   timestamp: new Date(),
   tenantId: AdspId.parse(application.tenantId),
   correlationId: `${application._id}`,
+  context: {
+    applicationId: `${application._id}`,
+    applicationName: application.name,
+  },
   payload: {
     application: mapApplication(application),
   },
@@ -194,6 +212,10 @@ export const applicationStatusToUnhealthy = (application: ServiceStatusApplicati
   timestamp: new Date(),
   tenantId: AdspId.parse(application.tenantId),
   correlationId: `${application._id}`,
+  context: {
+    applicationId: `${application._id}`,
+    applicationName: application.name,
+  },
   payload: {
     application: mapApplication(application),
     error,
@@ -205,6 +227,10 @@ export const applicationStatusToHealthy = (application: ServiceStatusApplication
   timestamp: new Date(),
   tenantId: AdspId.parse(application.tenantId),
   correlationId: `${application._id}`,
+  context: {
+    applicationId: `${application._id}`,
+    applicationName: application.name,
+  },
   payload: {
     application: mapApplication(application),
   },
@@ -219,6 +245,10 @@ export const applicationStatusChange = (
   timestamp: new Date(),
   tenantId: AdspId.parse(application.tenantId),
   correlationId: `${application._id}`,
+  context: {
+    applicationId: `${application._id}`,
+    applicationName: application.name,
+  },
   payload: {
     application: {
       id: application._id,
