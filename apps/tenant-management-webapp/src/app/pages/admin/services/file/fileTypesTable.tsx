@@ -2,91 +2,30 @@ import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import DataTable from '@components/DataTable';
 import { GoADropdownOption, GoAButton, GoADropdown } from '@abgov/react-components';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoABadge } from '@abgov/react-components/experimental';
 import { FileTypeItem } from '@store/file/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { Role } from '@store/tenant/models';
-
 import {
   DeleteFileTypeService,
   CreateFileTypeService,
   UpdateFileTypeService,
   FetchFileTypeHasFileService,
 } from '@store/file/actions';
+import { GoAContextMenuIcon } from '@components/ContextMenu';
+import { FileTypeModal } from './fileTypeModal';
 
-const FileTypeTableContainer = styled.div`
-  table {
-    margin-top: 1rem;
-    /* TODO: remove the margin-bottom when the dropdown component is fixed */
-    margin-bottom: 6rem;
-  }
-
-  button {
-    /* TODO: GoA button with a top margin, which is unexpected. After the fix, we can remove this line */
-    margin-top: 0rem !important;
-  }
-
-  td.right {
-    text-align: right !important;
-  }
-
-  th.right {
-    text-align: right !important;
-  }
-
-  input {
-    padding-left: 0.5rem;
-    padding-top: 0rem !important;
-    padding-bottom: 0rem !important;
-    border-radius: 0.25rem;
-  }
-
-  i {
-    margin-top: 0.5rem !important;
-  }
-
-  td:nth-child(1) {
-    width: 10%;
-  }
-
-  td:nth-child(2) {
-    width: 15%;
-  }
-  td:nth-child(3) {
-    width: 30%;
-  }
-  td:nth-child(4) {
-    width: 30%;
-  }
-  td:nth-child(5) {
-    width: 15%;
-  }
-  padding-bottom: 10rem;
-  max-height: 40rem;
-`;
-
-const RolesCellContainer = styled.td`
-  div + div {
-    margin-left: 0.25rem;
-  }
-`;
-const NameInput = styled.input`
-  height: 2.43rem;
-`;
 interface FileTypeRowProps {
   name: string;
   readRoles: string[];
   updateRoles: string[];
   anonymousRead: boolean;
   id: string;
+  editId: string;
   editable?: boolean;
   roles?: Role[];
-  hasFile?: boolean;
-  callback?: (updatedFileType: FileTypeItem) => void;
-  cellType?: 'readRoles' | 'updateRoles';
-  rowType?: 'update' | 'new';
+  editFunc?: () => void;
 }
 
 interface FileTypeTableProps {
@@ -94,527 +33,78 @@ interface FileTypeTableProps {
   fileTypes;
 }
 
-export const FileTypeTable = (props: FileTypeTableProps): JSX.Element => {
-  const [editableId, setEditableId] = useState('');
-  const [startCreateFileType, setStartCreateFileType] = useState(false);
-  const [updateFileType, setUpdateFileType] = useState<FileTypeItem>(null);
-  const [newFileType, setNewFileType] = useState<FileTypeItem>(null);
-  const [disableCreate, setDisableCreate] = useState(true);
-  const [showDelete, setShowDelete] = useState<boolean>(false);
-  const [isEdit, setIsEdit] = useState<boolean>(false);
-  const newInputRef = useRef(null);
-
-  const { roles, fileTypes } = props;
-  if (roles === null || fileTypes === []) {
-    return <div />;
-  }
-
-  const NameCell = (props: FileTypeRowProps): JSX.Element => {
-    const [name, setName] = useState(props.name);
-    return (
-      <td data-testid="name">
-        {props.editable ? (
-          <NameInput
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-            }}
-            autoFocus
-            onBlur={(e) => {
-              updateFileType.name = e.target.value;
-            }}
-            aria-label="name"
-          />
-        ) : (
-          props.name
-        )}
-      </td>
-    );
-  };
-
-  const ActionCell = (props: FileTypeRowProps): JSX.Element => {
-    const { rowType } = props;
-
-    const Edit = () => {
-      return (
-        <GoAButton
-          data-testid="edit-file-type"
-          buttonSize="small"
-          disabled={newFileType}
-          buttonType="secondary"
-          onClick={() => {
-            if (editableId !== props.id) {
-              setEditableId(props.id);
-              // When we select a new line, we will lose unsaved information
-              setShowDelete(false);
-              setIsEdit(true);
-              setUpdateFileType({ ...props });
-            }
-          }}
-        >
-          Edit
-        </GoAButton>
-      );
-    };
-
-    const CancelNew = (): JSX.Element => {
-      return (
-        <GoAButton
-          buttonType="secondary"
-          buttonSize="small"
-          data-testid="cancel-new"
-          onClick={() => {
-            setStartCreateFileType(false);
-            setNewFileType(null);
-            setDisableCreate(true);
-            setIsEdit(false);
-          }}
-        >
-          Cancel
-        </GoAButton>
-      );
-    };
-
-    const CancelUpdate = (): JSX.Element => {
-      return (
-        <GoAButton
-          buttonType="secondary"
-          buttonSize="small"
-          data-testid="cancel-update"
-          onClick={() => {
-            setEditableId('');
-            setUpdateFileType(null);
-            setIsEdit(false);
-          }}
-        >
-          Cancel
-        </GoAButton>
-      );
-    };
-    return (
+const FileTypeTableRow = ({
+  id,
+  name,
+  readRoles,
+  updateRoles,
+  anonymousRead,
+  editId,
+  editFunc,
+}: FileTypeRowProps): JSX.Element => {
+  return (
+    <tr key={id}>
+      <td>{name}</td>
+      <td>{readRoles}</td>
+      <td>{updateRoles}</td>
+      <td>{anonymousRead}</td>
       <td>
-        {rowType === 'update' && props.id === editableId && <CancelUpdate />}
-        {rowType === 'update' && props.id !== editableId && <Edit />}
-        {props.rowType === 'new' && <CancelNew />}
+        <GoAContextMenuIcon
+          type={id === editId ? 'eye' : 'eye-off'}
+          onClick={() => {
+            editFunc();
+          }}
+          data-testid="file-types-edit-action"
+        />
       </td>
-    );
-  };
+    </tr>
+  );
+};
 
-  const DeleteCell = (props: FileTypeRowProps): JSX.Element => {
-    const { rowType, id } = props;
-
-    const dispatch = useDispatch();
-
-    const Create = () => {
-      return (
-        <GoAButton
-          buttonSize="small"
-          buttonType="secondary"
-          key={`${props.id}-confirm-button`}
-          onClick={() => {
-            if (newFileType.anonymousRead === true || newFileType.readRoles.includes('anonymousRead')) {
-              newFileType.anonymousRead = true;
-              newFileType.readRoles = newFileType.readRoles.filter((role) => {
-                return role !== 'anonymousRead';
-              });
-            }
-
-            dispatch(CreateFileTypeService({ ...newFileType, id }));
-
-            setNewFileType(null);
-          }}
-          data-testid="confirm-new"
-          disabled={disableCreate}
-        >
-          Confirm
-        </GoAButton>
-      );
-    };
-
-    const Update = (): JSX.Element => {
-      return (
-        <GoAButton
-          buttonSize="small"
-          buttonType="secondary"
-          data-testid="confirm-update"
-          disabled={newFileType}
-          onClick={() => {
-            if (updateFileType.anonymousRead === true || updateFileType.readRoles.includes('anonymousRead')) {
-              updateFileType.readRoles = updateFileType.readRoles.filter((role) => {
-                return role !== 'anonymousRead';
-              });
-              updateFileType.anonymousRead = true;
-            }
-
-            dispatch(UpdateFileTypeService({ ...updateFileType, id }));
-
-            setUpdateFileType(null);
-            setEditableId('');
-            setUpdateFileType(null);
-            setIsEdit(false);
-          }}
-        >
-          Confirm
-        </GoAButton>
-      );
-    };
-
-    const Delete = (): JSX.Element => {
-      return (
-        <GoAButton
-          buttonSize="small"
-          buttonType="secondary"
-          data-testid="delete-file-type"
-          disabled={newFileType || isEdit}
-          onClick={() => {
-            setUpdateFileType(props);
-            setShowDelete(true);
-          }}
-        >
-          Delete
-        </GoAButton>
-      );
-    };
-
-    return (
-      <td className="right">
-        {rowType === 'update' && props.id === editableId && <Update />}
-        {props.rowType === 'update' && props.id !== editableId && <Delete />}
-        {props.rowType === 'new' && <Create />}
-      </td>
-    );
-  };
-
-  const RolesCell = (props: FileTypeRowProps): JSX.Element => {
-    const { readRoles, updateRoles, cellType, rowType } = props;
-    let { anonymousRead } = props;
-    const realmRoles = props.roles;
-    const roles = cellType === 'readRoles' ? readRoles : updateRoles;
-    let display = '';
-
-    const fileType = { ...props };
-
-    if ((readRoles.includes('anonymousRead') || props.anonymousRead === true) && cellType === 'readRoles') {
-      anonymousRead = true;
-      fileType.anonymousRead = true;
-    } else {
-      anonymousRead = false;
-      fileType.anonymousRead = false;
-    }
-
-    if (anonymousRead && cellType === 'readRoles') {
-      display = 'Anonymous';
-    } else {
-      if (roles) {
-        display = roles.join(', ');
-      }
-    }
-
-    if (rowType === 'new' && display === '') {
-      display = 'Select group';
-    }
-
-    const displayOnly = !props.editable && rowType !== 'new';
-
-    if (displayOnly) {
-      return (
-        <RolesCellContainer data-testid={`${rowType}-${cellType}`}>
-          {anonymousRead && cellType === 'readRoles' && <GoABadge type="information" content="Anonymous" />}
-          {(!anonymousRead || cellType === 'updateRoles') &&
-            roles.map((role) => {
-              return <GoABadge type="information" key={`${role}-${props.id}`} data-testid="new-roles" content={role} />;
-            })}
-        </RolesCellContainer>
-      );
-    }
-
-    let dropDownOptions = [];
-    if (cellType === 'readRoles') {
-      dropDownOptions = [
-        {
-          value: 'anonymousRead',
-          label: anonymousRead ? 'Deselect anonymous' : 'Anyone (Anonymous)',
-          key: 'anonymous',
-          dataTestId: 'anonymous-option',
-        },
-      ];
-    }
-
-    if (!anonymousRead || cellType === 'updateRoles') {
-      const defaultDropDowns = realmRoles.map((realmRole) => {
-        return {
-          value: realmRole.name,
-          label: realmRole.name,
-          key: realmRole.id,
-          dataTestId: `${rowType}-update-roles-options`,
-        };
-      });
-      dropDownOptions = dropDownOptions.concat(defaultDropDowns);
-    }
-
-    const selectedRows = roles;
-    if (props.anonymousRead === true && !selectedRows.includes('anonymousRead') && cellType === 'readRoles') {
-      selectedRows.push('anonymousRead');
-    }
-
-    return (
-      <td data-testid={`${rowType}-${cellType}`}>
-        <GoADropdown
-          name="fileTypes"
-          selectedValues={selectedRows}
-          multiSelect={true}
-          onChange={(name, values) => {
-            if (values.includes('anonymousRead') && cellType === 'readRoles') {
-              fileType.anonymousRead = true;
-            } else {
-              fileType.anonymousRead = false;
-            }
-
-            if (cellType === 'updateRoles') {
-              fileType.updateRoles = values;
-            }
-
-            if (cellType === 'readRoles') {
-              fileType.readRoles = values;
-            }
-
-            if (rowType === 'update') {
-              fileType.name = updateFileType.name;
-              setUpdateFileType(fileType);
-            }
-
-            if (rowType === 'new') {
-              fileType.name = newFileType.name;
-              setNewFileType(fileType);
-            }
-          }}
-        >
-          {dropDownOptions.map((item) => (
-            <GoADropdownOption label={item.label} value={item.value} key={item.key} data-testid={item.dataTestId} />
-          ))}
-        </GoADropdown>
-      </td>
-    );
-  };
-
-  const FileTypeRow = (props: FileTypeRowProps) => {
-    const editable = props.editable === true;
-
-    return (
-      <tr className={editable ? 'selected' : ''}>
-        <ActionCell {...{ ...props, rowType: 'update' }} />
-        <NameCell editable={editable} {...props} />
-        <RolesCell key={`${props.id}-roles-read`} {...{ ...props, cellType: 'readRoles', rowType: 'update' }} />
-        <RolesCell key={`${props.id}-roles-edit`} {...{ ...props, cellType: 'updateRoles', rowType: 'update' }} />
-        <DeleteCell key={`${props.id}-delete`} {...{ ...props, rowType: 'update' }} />
-      </tr>
-    );
-  };
-
-  const DeleteModal = (props: FileTypeRowProps) => {
-    const dispatch = useDispatch();
-    const [hasFile, setHasFile] = useState<boolean>(null);
-    const fileType = useSelector((state: RootState) =>
-      state.fileService.fileTypes.filter((fileType) => {
-        return fileType.id === props.id;
-      })
-    )[0];
-
-    useEffect(() => {
-      dispatch(FetchFileTypeHasFileService(props.id));
-    }, []);
-
-    useEffect(() => {
-      if (fileType?.hasFile !== null) {
-        setHasFile(fileType?.hasFile);
-      } else {
-        dispatch(FetchFileTypeHasFileService(props.id));
-      }
-    }, [fileType?.hasFile]);
-
-    const CancelButton = () => {
-      return (
-        <GoAButton
-          data-testid="cancel-delete-modal-button"
-          buttonType="secondary"
-          onClick={() => {
-            setShowDelete(false);
-          }}
-        >
-          Cancel
-        </GoAButton>
-      );
-    };
-
-    const OkButton = () => {
-      return (
-        <GoAButton
-          buttonType="secondary"
-          data-testid="delete-modal-okay-button"
-          onClick={() => {
-            setShowDelete(false);
-          }}
-        >
-          Okay
-        </GoAButton>
-      );
-    };
-
-    return (
-      <>
-        {hasFile === true && (
-          <GoAModal isOpen={true} key={props.id} testId="file-delete-modal">
-            <GoAModalTitle>File type current in use</GoAModalTitle>
-            <GoAModalContent testId="file-delete-modal-content">
-              You are unable to delete the file type <b>{`${props.name}`}</b> because there are files within the file
-              type.
-            </GoAModalContent>
-            <GoAModalActions>
-              <OkButton />
-            </GoAModalActions>
-          </GoAModal>
-        )}
-
-        {hasFile === false && (
-          <GoAModal isOpen={true} key={props.id} testId="file-delete-modal">
-            <GoAModalTitle>Deleting file type </GoAModalTitle>
-            <GoAModalContent testId="file-delete-modal-content">
-              <p>
-                Deleting the file type <b>{`${props.name}`}</b> cannot be undone.
-              </p>
-              <p>
-                <b>Are you sure you want to continue?</b>
-              </p>
-            </GoAModalContent>
-            <GoAModalActions>
-              <CancelButton />
-              <GoAButton
-                data-testid="delete-modal-delete-button"
-                onClick={() => {
-                  dispatch(DeleteFileTypeService(props));
-                }}
-              >
-                Delete
-              </GoAButton>
-            </GoAModalActions>
-          </GoAModal>
-        )}
-      </>
-    );
-  };
-
-  const newEntryFn = () => {
-    setStartCreateFileType(true);
-    if (newFileType === null) {
-      setNewFileType({
-        anonymousRead: false,
-        readRoles: [],
-        updateRoles: [],
-        name: '',
-        id: null,
-      });
-    }
-  };
-
-  const NewFileTypeRow = (props: FileTypeRowProps) => {
-    const [name, setName] = useState(props.name);
-    const { id } = props;
-    useEffect(() => {
-      if (newInputRef.current) {
-        newInputRef.current.focus();
-      }
-    }, []);
-
-    return (
-      <>
-        {startCreateFileType && (
-          <tr className="selected" key={id}>
-            <ActionCell {...{ ...props, rowType: 'new' }} />
-            <td data-testid="new-name">
-              <NameInput
-                onBlur={(e) => {
-                  const name = e.target.value.trim();
-                  newFileType.name = name;
-                }}
-                ref={newInputRef}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  newFileType.name = e.target.value;
-                  setDisableCreate(e.target.value.length === 0);
-                }}
-                id="new-file-type-name"
-                aria-label="new-file-type-name"
-                data-testid="new-file-type-name"
-                value={name}
-              />
-            </td>
-            <RolesCell {...{ ...props, rowType: 'new', cellType: 'readRoles' }} data-testid="new-read-roles-cell" />
-            <RolesCell {...{ ...props, rowType: 'new', cellType: 'updateRoles' }} data-testid="new-update-roles-cell" />
-            <DeleteCell {...{ ...props, rowType: 'new' }} data-testid="cancel-new-cell" />
-          </tr>
-        )}
-      </>
-    );
+export const FileTypeTable = ({ roles, fileTypes }: FileTypeTableProps): JSX.Element => {
+  const [editId, setEditId] = useState<string | null>(null);
+  const editFileType = fileTypes.find((x) => x.id === editId);
+  const editModalProps = {
+    ...editFileType,
+    title: 'Edit file type',
+    cancelFunc: () => {
+      setEditId(null);
+    },
   };
 
   return (
-    <FileTypeTableContainer>
-      <GoAButton onClick={newEntryFn} data-testid="new-file-type-button-top" disabled={newFileType || isEdit}>
-        Add file type
-      </GoAButton>
-      {showDelete && <DeleteModal {...updateFileType} />}
-      <DataTable data-testid="file-type-table">
-        <thead>
+    <div>
+      <DataTable data-testid="file-types-table">
+        <thead data-testid="file-types-table-header">
           <tr>
-            <th id="actions">Actions</th>
-            <th id="name">Name</th>
+            <th id="name" data-testid="events-definitions-table-header-name">
+              Name
+            </th>
             <th id="read-roles">Who can read</th>
             <th id="write-roles">Who can edit</th>
-            <th id="cancel" className="right">
-              Settings
-            </th>
+            <th id="anonymous">Anonymous</th>
+            <th id="actions">Actions</th>
           </tr>
         </thead>
-
         <tbody>
-          {newFileType && <NewFileTypeRow {...{ ...newFileType, roles: props.roles }} />}
-          {props.fileTypes.map((fileType) => {
-            const rowId = `${fileType.id}`;
-            if (fileType.id === editableId) {
-              return (
-                <FileTypeRow
-                  key={rowId}
-                  name={updateFileType.name}
-                  readRoles={updateFileType.readRoles}
-                  updateRoles={updateFileType.updateRoles}
-                  anonymousRead={updateFileType.anonymousRead}
-                  id={updateFileType.id}
-                  roles={props.roles}
-                  data-testid="update-file-type-row"
-                  editable={true}
-                  callback={(fileType: FileTypeItem) => {
-                    setUpdateFileType(fileType);
-                  }}
-                />
-              );
-            }
-
+          {fileTypes.map((fileType) => {
+            const rowProps = {
+              ...fileType,
+              editId,
+            };
             return (
-              <FileTypeRow
-                key={rowId}
-                name={fileType.name}
-                readRoles={fileType.readRoles}
-                updateRoles={fileType.updateRoles}
-                anonymousRead={fileType.anonymousRead}
-                data-testid="update-file-type-row"
-                id={fileType.id}
-                roles={props.roles}
-                editable={false}
+              <FileTypeTableRow
+                key={fileType.id}
+                {...rowProps}
+                editFunc={() => {
+                  setEditId(fileType.id);
+                }}
               />
             );
           })}
         </tbody>
       </DataTable>
-    </FileTypeTableContainer>
+      {editId && <FileTypeModal {...editModalProps} />}
+    </div>
   );
 };
