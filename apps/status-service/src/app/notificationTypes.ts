@@ -28,7 +28,8 @@ export interface NotificationType {
 export const StatusApplicationHealthChange: NotificationType = {
   name: 'status-application-health-change',
   description:
-    'Default email templates for application health changes - includes the following events: health-check-started, health-check-stopped, application-unhealthy, application-unhealthy',
+    'Provides notifications of application health check changes including when: health check is started or stopped; health check detects application is healthy or unhealthy. ' +
+    'Teams can use this notification type to monitor and address application issues.',
   subscriberRoles: ['status-admin'],
   events: [
     {
@@ -37,21 +38,16 @@ export const StatusApplicationHealthChange: NotificationType = {
       templates: {
         email: {
           subject: 'Health Check for {{ event.payload.application.name }} has started',
-          body: `<!doctype html>
-<html>
-  <head>
-  </head>
-  <body>
-    <p>Health check has been activated for {{ event.payload.application.name }}</p>
-    <p>
-      {{ event.payload.application.name }} is available at <a href="{{ event.payload.application.url }}">{{ event.payload.application.url }}</a>
-    </p>
-  </body>
-</html>`,
+          body: `<div>
+  <p>Health check has been started for {{ event.payload.application.name }}</p>
+  <p>
+    Health check polling {{ event.payload.application.name }} on: <a href="{{ event.payload.application.url }}">{{ event.payload.application.url }}</a>
+  </p>
+</div>`,
         },
         slack: {
           subject: 'Health check for {{ event.payload.application.name }} started',
-          body: 'Health check started for {{ event.payload.application.name }}: {{ event.payload.application.url }}',
+          body: 'Health check started for {{ event.payload.application.name }} and polling on: {{ event.payload.application.url }}',
         },
       },
       channels: ['email', 'slack'],
@@ -62,21 +58,16 @@ export const StatusApplicationHealthChange: NotificationType = {
       templates: {
         email: {
           subject: 'Health Check for {{ event.payload.application.name }} has stopped',
-          body: `<!doctype html>
-<html>
-  <head>
-  </head>
-  <body>
-    <p>Health check has been disabled for {{ event.payload.application.name }}</p>
-    <p>
-      {{ event.payload.application.name }} is available at <a href="{{ event.payload.application.url }}">{{ event.payload.application.url }}</a>
-    </p>
-  </body>
-</html>`,
+          body: `<div>
+  <p>Health check has been stopped for {{ event.payload.application.name }}</p>
+  <p>
+    Health check no longer polling {{ event.payload.application.name }} on: <a href="{{ event.payload.application.url }}">{{ event.payload.application.url }}</a>
+  </p>
+</div>`,
         },
         slack: {
           subject: 'Health check for {{ event.payload.application.name }} stopped',
-          body: 'Health check stopped for {{ event.payload.application.name }}: {{ event.payload.application.url }}',
+          body: 'Health check stopped for {{ event.payload.application.name }} and no longer polling on: {{ event.payload.application.url }}',
         },
       },
       channels: ['email', 'slack'],
@@ -87,17 +78,12 @@ export const StatusApplicationHealthChange: NotificationType = {
       templates: {
         email: {
           subject: '{{ event.payload.application.name }} is unhealthy',
-          body: `<!doctype html>
-<html>
-  <head>
-  </head>
-  <body>
-    <p>The healthcheck for {{ event.payload.application.name }} has failed multiple times</p>
-    <p>
-      {{ event.payload.application.name }} is available at <a href="{{ event.payload.application.url }}">{{ event.payload.application.url }}</a>
-    </p>
-  </body>
-</html>`,
+          body: `<div>
+  <p>Health check indicates {{ event.payload.application.name }} is unhealthy</p>
+  <p>
+    Health check polling of {{ event.payload.application.name }} (<a href="{{ event.payload.application.url }}">{{ event.payload.application.url }}</a>) has received multiple non-200 responses.
+  </p>
+</div>`,
         },
         slack: {
           subject: '{{ event.payload.application.name }} is unhealthy',
@@ -112,17 +98,12 @@ export const StatusApplicationHealthChange: NotificationType = {
       templates: {
         email: {
           subject: '{{ event.payload.application.name }} is healthy',
-          body: `<!doctype html>
-<html>
-  <head>
-  </head>
-  <body>
-    <p>The healthcheck for {{ event.payload.application.name }} has succeeded multiple times</p>
-    <p>
-      {{ event.payload.application.name }} is available at <a href="{{ event.payload.application.url }}">{{ event.payload.application.url }}</a>
-    </p>
-  </body>
-</html>`,
+          body: `<div>
+  <p>Health check indicates {{ event.payload.application.name }} is healthy.</p>
+  <p>
+    Health check polling of {{ event.payload.application.name }} (<a href="{{ event.payload.application.url }}">{{ event.payload.application.url }}</a>) has received multiple 200 responses.
+  </p>
+</div>`,
         },
         slack: {
           subject: '{{ event.payload.application.name }} is healthy',
@@ -137,8 +118,9 @@ export const StatusApplicationHealthChange: NotificationType = {
 
 export const StatusApplicationStatusChange: NotificationType = {
   name: 'status-application-status-change',
-  description: 'Default email templates for application status changes',
-  subscriberRoles: ['status-admin'],
+  description:
+    'Provides notifications of application status updates and new published notices. Public users can subscribe to this notification type from the status application.',
+  subscriberRoles: [],
   events: [
     {
       namespace: 'status-service',
@@ -146,19 +128,14 @@ export const StatusApplicationStatusChange: NotificationType = {
       templates: {
         email: {
           subject: '{{ event.payload.application.name }} status has changed',
-          body: `<!doctype html>
-<html>
-  <head>
-  </head>
-  <body>
-    <p> {{ event.payload.application.name }} status has changed</p>
-    <p>
-      {{ event.payload.application.name }} is described as follows: {{ event.payload.application.description }}
-    </p>
-    <p>The original status was: {{ event.payload.application.originalStatus }}</p>
-    <p>The new status is now: {{ event.payload.application.newStatus }}</p>
-  </body>
-</html>`,
+          body: `<div>
+  <p> {{ event.payload.application.name }} status has changed</p>
+  <p>
+    {{ event.payload.application.name }} is described as follows: {{ event.payload.application.description }}
+  </p>
+  <p>The original status was: {{ event.payload.application.originalStatus }}</p>
+  <p>The new status is now: {{ event.payload.application.newStatus }}</p>
+</div>`,
         },
       },
       channels: ['email'],
@@ -168,21 +145,16 @@ export const StatusApplicationStatusChange: NotificationType = {
       name: 'application-notice-published',
       templates: {
         email: {
-          subject: 'A notice for {{ event.payload.application.name }} was published',
-          body: `<!doctype html>
-<html>
-  <head>
-  </head>
-  <body>
-    <p>A notice related to application {{ event.payload.application.name}} has been published by {{event.payload.postedBy.userName}}</p>
-    <p>
-      The notice is described as follows: {{ event.payload.notice.description }}
-    </p>
-    <p>
-      The notice is in effect between {{ formatDate event.payload.notice.startTimestamp }} and {{ formatDate event.payload.notice.endTimestamp }}
-    </p>
-  </body>
-</html>`,
+          subject: 'New notice for {{ event.payload.application.name }}',
+          body: `<div>
+  <p>A notice related to application {{ event.payload.application.name}} has been published by {{event.payload.postedBy.userName}}</p>
+  <p>
+    The notice is described as follows: {{ event.payload.notice.description }}
+  </p>
+  <p>
+    The notice is in effect between {{ formatDate event.payload.notice.startTimestamp }} and {{ formatDate event.payload.notice.endTimestamp }}
+  </p>
+</div>`,
         },
       },
       channels: ['email'],

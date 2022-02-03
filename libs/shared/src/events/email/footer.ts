@@ -1,4 +1,4 @@
-export const getFooterPreview = (serviceName?: string) => {
+export const getFooterPreview = () => {
   return `
   <footer>
   <style>
@@ -48,7 +48,7 @@ export const getFooterPreview = (serviceName?: string) => {
       </div>
     </div>
     <div class="footer-disclaimer">
-      This email was sent from the <b>${serviceName}</b> and any files transmitted
+      This email was sent from the government of alberta and any files transmitted
       with it are confidential and intended solely for the use of the individual
       For entity to whom they are addressed. If you have received this email in
       error please notify the system manager. This message contains confidential

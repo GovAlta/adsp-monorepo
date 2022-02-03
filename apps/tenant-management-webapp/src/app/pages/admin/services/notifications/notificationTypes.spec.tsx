@@ -42,6 +42,16 @@ describe('NotificationTypes Page', () => {
           publicSubscribe: false,
         },
       },
+      core: {
+        superCoreNotificationStuff: {
+          name: 'Some other subsidy application',
+          description: 'Lorem ipsum dolor sit amet',
+          events: [{ namespace: 'file-service', name: 'file-deleted', templates: {}, channels: [] }],
+          subscriberRoles: [],
+          id: 'superCoreNotificationStuff',
+          publicSubscribe: false,
+        },
+      },
     },
     event: {
       definitions: {

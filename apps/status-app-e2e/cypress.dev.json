@@ -3,8 +3,8 @@
     "env-name": "DEV",
     "TAGS": ""
   },
-  "baseUrl": "https://status-app-adsp-dev.apps.aro.gov.ab.ca/",
-  "tenantWebAppUrl": "https://tenant-management-webapp-adsp-dev.apps.aro.gov.ab.ca/",
+  "baseUrl": "https://status.adsp-dev.gov.ab.ca/",
+  "tenantWebAppUrl": "https://adsp-dev.gov.ab.ca/",
   "fileServerFolder": ".",
   "fixturesFolder": "./src/fixtures",
   "integrationFolder": "./src/integration",

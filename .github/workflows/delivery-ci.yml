@@ -119,40 +119,39 @@ jobs:
             oc rollout status dc/$app
           done
 
-  # TODO: Figure out smoke testing of dev environment.
-  # devSmokeTest:
-  #   runs-on: ubuntu-20.04
-  #   needs: [build, deployDev]
-  #   environment:
-  #     name: Dev-e2e
-  #   strategy:
-  #     matrix:
-  #       app: [tenant-management-webapp, status-app]
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - uses: actions/setup-node@v2
-  #       with:
-  #         node-version: "12"
-  #     - uses: actions/cache@v2
-  #       with:
-  #         path: ~/.npm
-  #         key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-  #     - name: E2E Test
-  #       uses: ./.github/actions/nx-cypress-e2e
-  #       with:
-  #         app: ${{ matrix.app }}
-  #         environment: dev
-  #         tags: "@smoke-test and not @ignore"
-  #         core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
-  #         core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
-  #         api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
-  #         cy-password: ${{ secrets.CY_PASSWORD }}
-  #         cy-password-2: ${{ secrets.CY_PASSWORD2 }}
-  #         cy-password-3: ${{ secrets.CY_PASSWORD3 }}
+  devSmokeTest:
+    runs-on: ubuntu-20.04
+    needs: [build, deployDev]
+    environment:
+      name: Dev-e2e
+    strategy:
+      matrix:
+        app: [tenant-management-webapp, status-app]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "12"
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      - name: E2E Test
+        uses: ./.github/actions/nx-cypress-e2e
+        with:
+          app: ${{ matrix.app }}
+          environment: dev
+          tags: "@smoke-test and not @ignore"
+          core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
+          core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
+          api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
+          cy-password: ${{ secrets.CY_PASSWORD }}
+          cy-password-2: ${{ secrets.CY_PASSWORD2 }}
+          cy-password-3: ${{ secrets.CY_PASSWORD3 }}
 
   deployStaging:
     runs-on: ubuntu-20.04
-    needs: [build, deployDev]
+    needs: [build, devSmokeTest]
     env:
       AFFECTED_APPS: ${{ needs.build.outputs.affected_apps }}
     environment:
