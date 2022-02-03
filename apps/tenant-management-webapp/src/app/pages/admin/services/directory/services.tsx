@@ -19,18 +19,6 @@ export const DirectoryService: FunctionComponent = () => {
 
   const nameArray = [...new Map(directory.map((item) => [item['name'], item])).values()];
 
-  const healthEndpoint = (dir: Services) => {
-    if (dir.name === 'status-service' || dir.name.startsWith('tenant-service')) {
-      return dir.url;
-    }
-    const nameSplitter = dir.namespace.split(':');
-    if (nameSplitter.length > 1) {
-      const newDirectory = directory.find((item) => item.namespace === nameSplitter[0]);
-      return `${newDirectory.url}/health`;
-    }
-    return `${dir.url}/health`;
-  };
-
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -41,7 +29,7 @@ export const DirectoryService: FunctionComponent = () => {
   return (
     <>
       <PageIndicator />
-      {!indicator.show && nameArray.length === 0 && renderNoItem('directory')}
+      {!indicator.show && !nameArray && renderNoItem('directory')}
       {!indicator.show && nameArray && (
         <div>
           {nameArray.map((item) => (
@@ -53,7 +41,7 @@ export const DirectoryService: FunctionComponent = () => {
                     <th id="name" data-testid="directory-table-header-name">
                       Name
                     </th>
-                    <th id="directory">Health Endpoint</th>
+                    <th id="directory">URL</th>
                   </tr>
                 </thead>
 
@@ -67,9 +55,7 @@ export const DirectoryService: FunctionComponent = () => {
                             {dir.namespace}
                           </td>
                           <td headers="directory" data-testid="directory">
-                            <a href={healthEndpoint(dir)} target="_blank" rel="noopener noreferrer">
-                              {healthEndpoint(dir)}
-                            </a>
+                            {dir.url}
                           </td>
                         </tr>
                       );
