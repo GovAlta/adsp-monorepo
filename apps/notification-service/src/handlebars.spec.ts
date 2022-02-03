@@ -151,8 +151,6 @@ describe('HandlebarsTemplateService', () => {
       );
       expect(message.body).toContain('<html>');
       expect(message.body).toContain('</html>');
-      expect(message.body).toContain('test-created');
-      expect(message.body).toContain('test-service');
     });
   });
 });
