@@ -1,8 +1,6 @@
 import * as handlebars from 'handlebars';
 import { DateTime } from 'luxon';
 import { Template, TemplateService } from './notification';
-import { getTemplateBody } from '@core-services/shared';
-import type { DomainEvent } from '@core-services/core-common';
 
 const TIME_ZONE = 'America/Edmonton';
 handlebars.registerHelper('formatDate', function (value: unknown, { hash = {} }: { hash: Record<string, string> }) {
@@ -23,23 +21,10 @@ handlebars.registerHelper('formatDate', function (value: unknown, { hash = {} }:
 });
 
 class HandlebarsTemplateService implements TemplateService {
-  getServiceName = (data: unknown) => {
-    let serviceName = '';
-
-    if ((data as DomainEvent) !== undefined) {
-      const dataItem = data as DomainEvent;
-
-      if (dataItem.name || dataItem.namespace) {
-        serviceName = `${dataItem?.namespace}:${dataItem?.name}`;
-      }
-    }
-    return serviceName;
-  };
-
   generateMessage(template: Template, data: unknown) {
     return {
       subject: handlebars.compile(template.subject)(data),
-      body: handlebars.compile(getTemplateBody(template.body.toString()))(data),
+      body: handlebars.compile(template.body)(data),
     };
   }
 }

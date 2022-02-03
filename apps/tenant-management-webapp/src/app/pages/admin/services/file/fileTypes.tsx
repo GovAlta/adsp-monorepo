@@ -27,7 +27,7 @@ export const FileTypes: FunctionComponent = () => {
   return (
     <div>
       <div>
-        {!indicator.show && fileTypes.length === 0 && renderNoItem('filetype')}
+        {!indicator.show && !fileTypes && renderNoItem('filetype')}
         {!indicator.show && fileTypes && (
           <FileTypeTable roles={realmRoles} fileTypes={fileTypes} data-testid="file-type-table" />
         )}

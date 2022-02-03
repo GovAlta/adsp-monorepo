@@ -1,8 +1,9 @@
-import { AdspId, isAllowedUser, User } from '@abgov/adsp-service-sdk';
+import { AdspId, Channel, isAllowedUser, User } from '@abgov/adsp-service-sdk';
 import type { DomainEvent } from '@core-services/core-common';
 import { UnauthorizedError } from '@core-services/core-common';
 import { SubscriptionRepository } from '../repository';
 import { TemplateService } from '../template';
+import { Template } from '../types';
 import {
   NotificationType,
   Notification,
@@ -13,6 +14,7 @@ import {
 } from '../types';
 import { SubscriberEntity } from './subscriber';
 import { SubscriptionEntity } from './subscription';
+import { getTemplateBody } from '@core-services/shared';
 
 export class NotificationTypeEntity implements NotificationType {
   tenantId?: AdspId;
@@ -114,10 +116,13 @@ export class NotificationTypeEntity implements NotificationType {
         context: event.context,
         to: address,
         channel,
-        message: templateService.generateMessage(eventNotification.templates[channel], {
-          event,
-          subscriber: subscription.subscriber,
-        }),
+        message: templateService.generateMessage(
+          this.getTemplate(channel, eventNotification.templates[channel], event),
+          {
+            event,
+            subscriber: subscription.subscriber,
+          }
+        ),
         subscriber: {
           id: subscription.subscriber.id,
           userId: subscription.subscriber.userId,
@@ -125,5 +130,16 @@ export class NotificationTypeEntity implements NotificationType {
         },
       };
     }
+  }
+
+  private getTemplate(channel: Channel, template: Template, event: DomainEvent): Template {
+    if (channel === Channel.email) {
+      let serviceName = '';
+      if (event.name || event.namespace) {
+        serviceName = `${event?.namespace}:${event?.name}`;
+      }
+      template['body'] = getTemplateBody(template.body.toString(), serviceName);
+    }
+    return template;
   }
 }
