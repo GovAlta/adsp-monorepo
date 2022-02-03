@@ -1,11 +1,12 @@
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
 import { EventLogEntry, EventSearchCriteria } from '@store/event/models';
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
-
+import { PageIndicator } from '@components/Indicator';
+import { renderNoItem } from '@components/NoItem';
 interface CorrelationIndicatorProps {
   color: string;
 }
@@ -90,39 +91,50 @@ interface EventLogEntriesComponentProps {
 const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps> = ({ className, onSearch }) => {
   const entries = useSelector((state: RootState) => state.event.entries);
   const [colors, setColors] = useState({});
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
+  // eslint-disable-next-line
+  useEffect(() => {}, [indicator, entries]);
 
   return (
-    <div className={className}>
-      <DataTable>
-        <thead>
-          <tr>
-            <th id="correlation"></th>
-            <th id="timestamp">Timestamp</th>
-            <th id="namespace">Namespace</th>
-            <th id="name">Name</th>
-            <th id="action">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {entries.map((entry) => (
-            <EventLogEntryComponent
-              key={`${entry.timestamp}${entry.namespace}${entry.name}`}
-              entry={entry}
-              correlationColors={colors}
-              addCorrelationColor={(id) => {
-                const randomColor = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
-                setColors({
-                  ...colors,
-                  [id]: randomColor,
-                });
-                return randomColor;
-              }}
-              onSearchRelated={(correlationId) => onSearch({ correlationId })}
-            />
-          ))}
-        </tbody>
-      </DataTable>
-    </div>
+    <>
+      {indicator.show && <PageIndicator />}
+      {!indicator.show && !entries.length && renderNoItem('event log')}
+      {!indicator.show && entries.length > 0 && (
+        <div className={className}>
+          <DataTable>
+            <thead>
+              <tr>
+                <th id="correlation"></th>
+                <th id="timestamp">Timestamp</th>
+                <th id="namespace">Namespace</th>
+                <th id="name">Name</th>
+                <th id="action">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((entry) => (
+                <EventLogEntryComponent
+                  key={`${entry.timestamp}${entry.namespace}${entry.name}`}
+                  entry={entry}
+                  correlationColors={colors}
+                  addCorrelationColor={(id) => {
+                    const randomColor = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+                    setColors({
+                      ...colors,
+                      [id]: randomColor,
+                    });
+                    return randomColor;
+                  }}
+                  onSearchRelated={(correlationId) => onSearch({ correlationId })}
+                />
+              ))}
+            </tbody>
+          </DataTable>
+        </div>
+      )}
+    </>
   );
 };
 

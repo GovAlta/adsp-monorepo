@@ -1,13 +1,15 @@
 import { getHeaderPreview, getFooterPreview } from '../events';
 const hasProperHtmlWrapper = (content: string): boolean => {
-  // remove spacing between html elements and line breaks to make the string in one line
-  const strippedContent = content.replace(/>\s+</g, '><').trim();
-  return strippedContent.startsWith('<!doctype html><html>') || strippedContent.startsWith('<!DOCTYPE html><html>');
+  const hasHtmlOpeningTag = /<html[^>]*>/g.test(content) || /<HTML[^>]*>/g.test(content);
+  const hasHtmlClosingTag = /<\/html[^>]*>/g.test(content) || /<\/HTML[^>]*>/g.test(content);
+  return hasHtmlOpeningTag && hasHtmlClosingTag;
 };
 
-export const getTemplateBody = (body: string, serviceName: string) => {
+export const getTemplateBody = (body: string) => {
   if (!hasProperHtmlWrapper(body)) {
-    return `<!doctype html><html>${getHeaderPreview()}${body}${getFooterPreview(serviceName)}</html>`;
+    body = body.includes('<style') ? `<style scoped>${body}</style>` : body;
+    return `<!doctype html><html>${getHeaderPreview()}<div style="padding: 3rem 11rem;">${body}</div>${getFooterPreview()}</html>`;
   }
+
   return body;
 };

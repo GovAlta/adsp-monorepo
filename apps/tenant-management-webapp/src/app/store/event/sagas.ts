@@ -194,13 +194,24 @@ export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaI
     }
 
     try {
+      yield put(UpdateIndicator({
+        show: true,
+        message: 'Loading'
+      }));
       const { data } = yield call(axios.get, eventUrl, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       yield put(getEventLogEntriesSucceeded(data['event-service']['event'], data.page.after, data.page.next));
+
+      yield put(UpdateIndicator({
+        show: false
+      }));
     } catch (err) {
       yield put(ErrorNotification({ message: err.message }));
+      yield put(UpdateIndicator({
+        show: false
+      }));
     }
   }
 }
