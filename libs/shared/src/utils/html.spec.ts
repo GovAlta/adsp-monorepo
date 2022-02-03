@@ -3,8 +3,7 @@ import { getTemplateBody } from './html';
 describe('Test email template', () => {
   it('Test PlainTest should have wrapper', () => {
     const plainText = ` Your draft form has been created.`;
-    const serviceName = '';
-    const message = getTemplateBody(plainText, serviceName);
+    const message = getTemplateBody(plainText);
     expect(message).toContain('<header>');
     expect(message).toContain('<footer>');
   });
@@ -16,8 +15,7 @@ describe('Test email template', () => {
     <body>
     <p>Your draft {{ event.payload.name }} form has been created. </p></body>
     </html>`;
-    const serviceName = '';
-    const message = getTemplateBody(completeHtml, serviceName);
+    const message = getTemplateBody(completeHtml);
     expect(message).not.toContain('<header>');
     expect(message).not.toContain('<footer>');
   });
@@ -25,8 +23,7 @@ describe('Test email template', () => {
     const htmlSnippet = `
     <body>
     <p>Your draft {{ event.payload.name }} form has been created. </p></body>`;
-    const serviceName = '';
-    const message = getTemplateBody(htmlSnippet, serviceName);
+    const message = getTemplateBody(htmlSnippet);
     expect(message).toContain('<header>');
     expect(message).toContain('<footer>');
   });
