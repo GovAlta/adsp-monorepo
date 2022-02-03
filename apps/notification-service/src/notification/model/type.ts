@@ -116,13 +116,10 @@ export class NotificationTypeEntity implements NotificationType {
         context: event.context,
         to: address,
         channel,
-        message: templateService.generateMessage(
-          this.getTemplate(channel, eventNotification.templates[channel], event),
-          {
-            event,
-            subscriber: subscription.subscriber,
-          }
-        ),
+        message: templateService.generateMessage(this.getTemplate(channel, eventNotification.templates[channel]), {
+          event,
+          subscriber: subscription.subscriber,
+        }),
         subscriber: {
           id: subscription.subscriber.id,
           userId: subscription.subscriber.userId,
@@ -132,13 +129,9 @@ export class NotificationTypeEntity implements NotificationType {
     }
   }
 
-  private getTemplate(channel: Channel, template: Template, event: DomainEvent): Template {
+  private getTemplate(channel: Channel, template: Template): Template {
     if (channel === Channel.email) {
-      let serviceName = '';
-      if (event.name || event.namespace) {
-        serviceName = `${event?.namespace}:${event?.name}`;
-      }
-      template['body'] = getTemplateBody(template.body.toString(), serviceName);
+      template['body'] = getTemplateBody(template.body.toString());
     }
     return template;
   }
