@@ -4,9 +4,10 @@ export const getHeaderPreview = () => {
   <style>
     .goa-header {
       padding-bottom: 0.875rem;
-    }
+x    }
     #goa-callout-custom {
       background-color: #0081a2 !important;
+      margin-bottom: 3rem;
       color: #ffffff;
       padding-left: 7.5rem;
       padding-top: 1.5rem;

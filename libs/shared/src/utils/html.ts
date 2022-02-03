@@ -5,10 +5,10 @@ const hasProperHtmlWrapper = (content: string): boolean => {
   return hasHtmlOpeningTag && hasHtmlClosingTag;
 };
 
-export const getTemplateBody = (body: string, serviceName: string) => {
+export const getTemplateBody = (body: string) => {
   if (!hasProperHtmlWrapper(body)) {
     body = body.includes('<style') ? `<style scoped>${body}</style>` : body;
-    return `<!doctype html><html>${getHeaderPreview()}${body}${getFooterPreview(serviceName)}</html>`;
+    return `<!doctype html><html>${getHeaderPreview()}${body}${getFooterPreview()}</html>`;
   }
 
   return body;

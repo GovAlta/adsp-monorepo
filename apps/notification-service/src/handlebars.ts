@@ -39,7 +39,7 @@ class HandlebarsTemplateService implements TemplateService {
   generateMessage(template: Template, data: unknown) {
     return {
       subject: handlebars.compile(template.subject)(data),
-      body: handlebars.compile(getTemplateBody(template.body.toString(), this.getServiceName(data)))(data),
+      body: handlebars.compile(getTemplateBody(template.body.toString()))(data),
     };
   }
 }
