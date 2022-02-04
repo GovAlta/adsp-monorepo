@@ -60,7 +60,7 @@ export function* fetchCoreNotificationTypes(): SagaIterator {
       const notificationTypeInfo = configuration.latest && configuration.latest.configuration;
       yield put(FetchCoreNotificationTypeSucceededService({ data: notificationTypeInfo }));
     } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+      yield put(ErrorNotification({ message: `${e.message} - fetchCoreNotificationTypes` }));
     }
   }
 }

@@ -50,10 +50,11 @@ export default function (state = NOTIFICATION_INIT, action: ActionTypes): Notifi
     }
     case FETCH_CORE_NOTIFICATION_TYPE_SUCCEEDED: {
       const coreNotificationType = action.payload.notificationInfo.data;
-
-      Object.values(coreNotificationType).forEach((coreItem) => {
-        coreNotificationType[coreItem.id] = combineNotification(coreItem, state.notificationTypes);
-      });
+      if (state.notificationTypes) {
+        Object.values(coreNotificationType).forEach((coreItem) => {
+          coreNotificationType[coreItem.id] = combineNotification(coreItem, state.notificationTypes);
+        });
+      }
 
       return {
         ...state,
