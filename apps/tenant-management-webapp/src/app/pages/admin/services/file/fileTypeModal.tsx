@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { Role } from '@store/tenant/models';
 import { GoAButton } from '@abgov/react-components';
-import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
+import { GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
+import { GoADropdown } from '@abgov/react-components';
 
 interface FileTypeModalProps {
   name: string;
@@ -44,7 +45,12 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
             aria-label="name"
           />
         </GoAFormItem>
+
+        <GoAFormItem>
+          <label>Read Roles</label>
+        </GoAFormItem>
       </GoAModalContent>
+
       <GoAModalActions>
         <GoAButton
           buttonType="tertiary"
