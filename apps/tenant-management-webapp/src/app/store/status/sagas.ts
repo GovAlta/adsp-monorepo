@@ -203,7 +203,7 @@ export function* fetchStatusMetrics(): SagaIterator {
           unhealthyCount: parseInt(unhealthyCount.values[0].sum || '0'),
           maxUnhealthyDuration: maxDuration / 60,
           totalUnhealthyDuration: totalDuration / 60,
-          leastHealthyApp: unhealthyApp
+          leastHealthyApp: unhealthyApp?.sum
             ? { name: unhealthyApp.app, totalUnhealthyDuration: unhealthyApp.sum / 60 }
             : null,
         })
