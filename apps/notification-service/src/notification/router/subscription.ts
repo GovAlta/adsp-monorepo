@@ -1,6 +1,5 @@
 import { RequestHandler, Router } from 'express';
 import { Logger } from 'winston';
-import axios from 'axios';
 import { adspId, AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { SubscriptionRepository } from '../repository';
@@ -8,7 +7,6 @@ import { NotificationTypeEntity, SubscriberEntity } from '../model';
 import { mapSubscriber, mapSubscription, mapType } from './mappers';
 import { NotificationConfiguration } from '../configuration';
 import { Channel, ServiceUserRoles, Subscriber } from '../types';
-import { environment } from '../../environments/environment';
 import {
   SubscriberOperationRequests,
   SUBSCRIBER_CHECK_CODE,
