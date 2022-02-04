@@ -215,6 +215,12 @@ class NotificationsPage {
   eventTemplatePreviewModalCloseBtn() {
     return cy.xpath('//*[@data-testid="email-preview" and @data-state="visible"]//*[@data-testid="preview-cancel"]');
   }
+  //LD
+  notificationsTab(text) {
+    return cy.xpath(
+      `//h1[contains(text(), "Notifications")]/following-sibling::div[1]//descendant::div[contains(text(), "${text}")]`
+    );
+  }
 }
 
 export default NotificationsPage;
