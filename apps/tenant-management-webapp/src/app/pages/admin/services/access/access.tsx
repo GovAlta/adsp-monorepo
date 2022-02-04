@@ -5,7 +5,7 @@ import { fetchAccess, accessReset } from '@store/access/actions';
 import { User } from '@store/access/models';
 import styled from 'styled-components';
 import DataTable from '@components/DataTable';
-import { Grid, GridItem } from '@components/Grid';
+import { Metrics } from '@components/Metrics';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import { PageIndicator } from '@components/Indicator';
@@ -21,8 +21,8 @@ export default function (): JSX.Element {
   });
 
   const isReady = (indicator, users) => {
-    return !indicator.show && users && users.length > 1
-  }
+    return !indicator.show && users && users.length > 1;
+  };
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -41,7 +41,7 @@ export default function (): JSX.Element {
       if (isReady(indicator, users)) {
         dispatch(accessReset());
       }
-    }
+    };
   }, [indicator]);
 
   function activeUsers(): User[] {
@@ -78,20 +78,13 @@ export default function (): JSX.Element {
                 </a>
               </TitleLinkHeader>
 
-              <UserStats>
-                <UserStatsItem md={4}>
-                  <Count id="user-count">{users.length}</Count>
-                  Total number of users
-                </UserStatsItem>
-                <UserStatsItem md={4}>
-                  <Count id="role-count">{roles?.length ?? '-'}</Count>
-                  Types of user roles
-                </UserStatsItem>
-                <UserStatsItem md={4}>
-                  <Count id="active-user-count">{activeUsers().length}</Count>
-                  Active users
-                </UserStatsItem>
-              </UserStats>
+              <Metrics
+                metrics={[
+                  { id: 'user-count', name: 'Total number of users', value: users.length },
+                  { id: 'role-count', name: 'Types of user roles', value: roles?.length },
+                  { id: 'active-user-count', name: 'Active users', value: activeUsers().length },
+                ]}
+              />
             </section>
 
             <section id="keycloak-role-info">
@@ -145,12 +138,6 @@ export default function (): JSX.Element {
 // Styled Components
 // *****************
 
-const Count = styled.div`
-  font-size: var(--fs-2xl);
-  font-weight: var(--fw-bold);
-  padding-bottom: 1rem;
-`;
-
 const TitleLinkHeader = styled.div`
   display: flex;
   justify-content: space-between;
@@ -161,23 +148,5 @@ const TitleLinkHeader = styled.div`
 const Title = styled.h2`
   && {
     margin: 0;
-  }
-`;
-
-const UserStats = styled(Grid)``;
-
-const UserStatsItem = styled(GridItem)`
-  border: 1px solid #ccc;
-  border-bottom-width: 0;
-  padding: 1rem;
-  &:last-child {
-    border-bottom-width: 1px;
-  }
-  @media (min-width: 768px) {
-    border: 1px solid #ccc;
-    border-right-width: 0;
-    &:last-child {
-      border-right-width: 1px;
-    }
   }
 `;
