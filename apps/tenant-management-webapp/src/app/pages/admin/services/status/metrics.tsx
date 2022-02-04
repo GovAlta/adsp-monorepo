@@ -33,8 +33,8 @@ export const StatusMetrics: FunctionComponent = () => {
       />
       {metrics.leastHealthyApp && (
         <p>
-          Least healthy application: {metrics.leastHealthyApp.name} ({metrics.leastHealthyApp.totalUnhealthyDuration}{' '}
-          mins unhealthy)
+          Least healthy application: {metrics.leastHealthyApp.name} (
+          {metrics.leastHealthyApp.totalUnhealthyDuration?.toFixed()} mins unhealthy)
         </p>
       )}
     </section>
