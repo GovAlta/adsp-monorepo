@@ -430,11 +430,11 @@ Then('the user views an instruction of role requirement indicating user needs te
     .then((href) => {
       expect(href).to.contain(
         Cypress.env('accessManagementApi') +
-        '/admin/' +
-        Cypress.env('realm') +
-        '/console/#/realms/' +
-        Cypress.env('realm') +
-        '/users'
+          '/admin/' +
+          Cypress.env('realm') +
+          '/console/#/realms/' +
+          Cypress.env('realm') +
+          '/users'
       );
     });
 });
@@ -492,7 +492,7 @@ When('the user clicks Load more button', function () {
   // count numbers of row in the table before clicking Load more...
   tenantAdminObj.eventTableBody().find('tr').as('tableRows');
   tenantAdminObj.eventLoadMoreBtn().click();
-  cy.wait(2000);
+  cy.wait(4000);
 });
 
 Then('the user views more events matching the search filter of {string}', function (namespaceName) {
@@ -501,7 +501,7 @@ Then('the user views more events matching the search filter of {string}', functi
     .eventTableBody()
     .find('tr')
     .then((tableRowsAfterLoadMore) => {
-      cy.get('@tableRows').should('have.length.lt', tableRowsAfterLoadMore.length);
+      cy.get('@tableRows').should('have.length.lte', tableRowsAfterLoadMore.length);
     });
 
   tenantAdminObj.eventTableBody().each(($row) => {
