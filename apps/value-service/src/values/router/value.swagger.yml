@@ -185,6 +185,7 @@ components:
           type: string
       - name: interval
         description: Interval to get metric aggregates for.
+        in: query
         required: false
         schema:
           type: string
