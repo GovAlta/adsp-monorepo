@@ -7,6 +7,7 @@ export interface TenantApi {
     tenantByName: string;
     tenantByEmail: string;
     tenantConfig: string;
+    directory: string;
   };
 }
 
@@ -26,6 +27,7 @@ export interface FileApi {
   };
 }
 export interface ServiceUrls {
+  subscriberWebApp: string;
   eventServiceApiUrl: string;
   notificationServiceUrl: string;
   keycloakUrl: string;

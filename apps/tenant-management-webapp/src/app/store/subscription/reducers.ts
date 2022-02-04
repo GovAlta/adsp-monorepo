@@ -96,7 +96,8 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
         subscriber: action.payload.subscriberInfo,
       };
     case UNSUBSCRIBE_SUCCESS: {
-      const channels = action.payload?.channels;
+      const { subscriber, type } = action.payload;
+      const channels = subscriber.channels;
       let addresses: string[] = [];
       if (channels) {
         addresses = channels.map((c): string => {
@@ -106,8 +107,7 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
 
       const newState = Object.assign({}, state);
       const subscriptions = newState.subscriptions;
-      const newSubs = subscriptions?.filter((subscription) => subscription.subscriber.id !== action.payload.id);
-      const type = state.subscription.typeId;
+      const newSubs = subscriptions?.filter((subscription) => subscription.subscriber.id !== subscriber.id);
 
       return {
         ...state,

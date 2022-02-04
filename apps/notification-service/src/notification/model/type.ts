@@ -1,8 +1,9 @@
-import { AdspId, isAllowedUser, User } from '@abgov/adsp-service-sdk';
+import { AdspId, Channel, isAllowedUser, User } from '@abgov/adsp-service-sdk';
 import type { DomainEvent } from '@core-services/core-common';
 import { UnauthorizedError } from '@core-services/core-common';
 import { SubscriptionRepository } from '../repository';
 import { TemplateService } from '../template';
+import { Template } from '../types';
 import {
   NotificationType,
   Notification,
@@ -13,6 +14,7 @@ import {
 } from '../types';
 import { SubscriberEntity } from './subscriber';
 import { SubscriptionEntity } from './subscription';
+import { getTemplateBody } from '@core-services/shared';
 
 export class NotificationTypeEntity implements NotificationType {
   tenantId?: AdspId;
@@ -114,7 +116,7 @@ export class NotificationTypeEntity implements NotificationType {
         context: event.context,
         to: address,
         channel,
-        message: templateService.generateMessage(eventNotification.templates[channel], {
+        message: templateService.generateMessage(this.getTemplate(channel, eventNotification.templates[channel]), {
           event,
           subscriber: subscription.subscriber,
         }),
@@ -125,5 +127,12 @@ export class NotificationTypeEntity implements NotificationType {
         },
       };
     }
+  }
+
+  private getTemplate(channel: Channel, template: Template): Template {
+    if (channel === Channel.email) {
+      template['body'] = getTemplateBody(template.body.toString());
+    }
+    return template;
   }
 }

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { fetchAccess } from '@store/access/actions';
+import { fetchAccess, accessReset } from '@store/access/actions';
 import { User } from '@store/access/models';
 import styled from 'styled-components';
 import DataTable from '@components/DataTable';
@@ -20,6 +20,10 @@ export default function (): JSX.Element {
     };
   });
 
+  const isReady = (indicator, users) => {
+    return !indicator.show && users && users.length > 1
+  }
+
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -32,8 +36,13 @@ export default function (): JSX.Element {
     dispatch(fetchAccess());
   }, []);
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
+  useEffect(() => {
+    return function clean() {
+      if (isReady(indicator, users)) {
+        dispatch(accessReset());
+      }
+    }
+  }, [indicator]);
 
   function activeUsers(): User[] {
     return users.filter((user) => user.enabled);
@@ -53,7 +62,7 @@ export default function (): JSX.Element {
         </p>
         <PageIndicator />
 
-        {!indicator.show && users && users.length > 1 && (
+        {isReady(indicator, users) && (
           <div>
             <section id="keycloak-user-info">
               <TitleLinkHeader>

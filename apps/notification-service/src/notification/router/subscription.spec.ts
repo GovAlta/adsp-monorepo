@@ -34,7 +34,6 @@ describe('subscription router', () => {
 
   const repositoryMock = {
     getSubscriber: jest.fn(),
-    getSubscriberByEmail: jest.fn(),
     getSubscriptions: jest.fn(),
     getSubscription: jest.fn(),
     findSubscribers: jest.fn(),
@@ -61,7 +60,6 @@ describe('subscription router', () => {
   beforeEach(() => {
     repositoryMock.findSubscribers.mockReset();
     repositoryMock.getSubscriber.mockReset();
-    repositoryMock.getSubscriberByEmail.mockReset();
     repositoryMock.getSubscriptions.mockReset();
     repositoryMock.saveSubscriber.mockClear();
     repositoryMock.saveSubscription.mockReset();
@@ -326,7 +324,6 @@ describe('subscription router', () => {
       );
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
-      repositoryMock.getSubscriberByEmail.mockResolvedValueOnce(null);
 
       const handler = createTypeSubscription(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -372,7 +369,6 @@ describe('subscription router', () => {
       );
       repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
-      repositoryMock.getSubscriberByEmail.mockResolvedValueOnce(null);
 
       const handler = createTypeSubscription(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -683,7 +679,7 @@ describe('subscription router', () => {
           roles: [ServiceUserRoles.SubscriptionAdmin],
         },
         query: {},
-        body: { addressAs: 'tester@test.com', email: 'tester@test.com' },
+        body: { addressAs: 'tester@test.com', userId: 'tester@test.com' },
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -734,7 +730,6 @@ describe('subscription router', () => {
         addressAs: 'tester',
         channels: [],
       });
-      repositoryMock.getSubscriberByEmail.mockResolvedValueOnce(null);
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
 
       const handler = createSubscriber(apiId, repositoryMock);
@@ -747,6 +742,45 @@ describe('subscription router', () => {
         })
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ addressAs: 'tester' }));
+    });
+
+    it('can update existing subscriber with userId', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          tenantId,
+          roles: [ServiceUserRoles.SubscriptionAdmin],
+        },
+        query: {},
+        body: { addressAs: 'new@test.com', userId: 'tester@test.com' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const subscriber = new SubscriberEntity(repositoryMock, {
+        id: 'subscriber',
+        userId: 'tester@test.com',
+        tenantId,
+        addressAs: 'tester@test.com',
+        channels: [],
+      });
+      repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
+      repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
+
+      const handler = createSubscriber(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'subscriber',
+        })
+      );
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          addressAs: 'new@test.com',
+        })
+      );
     });
   });
 
@@ -908,7 +942,7 @@ describe('subscription router', () => {
 
   describe('updateSubscriber', () => {
     it('can create handler', () => {
-      const handler = updateSubscriber(apiId, repositoryMock);
+      const handler = updateSubscriber(apiId);
       expect(handler).toBeTruthy();
     });
 
@@ -946,7 +980,7 @@ describe('subscription router', () => {
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.findSubscribers.mockResolvedValueOnce({ results: [] });
 
-      const handler = updateSubscriber(apiId, repositoryMock);
+      const handler = updateSubscriber(apiId);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining(req.body));
     });
@@ -984,7 +1018,7 @@ describe('subscription router', () => {
 
       repositoryMock.findSubscribers.mockResolvedValueOnce({ results: [] });
 
-      const handler = updateSubscriber(apiId, repositoryMock);
+      const handler = updateSubscriber(apiId);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
       expect(res.send).not.toHaveBeenCalled();

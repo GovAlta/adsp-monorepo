@@ -4,13 +4,20 @@ export interface ServiceUrls {
   notificationServiceUrl?: string;
 }
 
-export interface ConfigState {
+export interface ConfigValues {
   serviceUrls?: ServiceUrls;
   production?: boolean;
-  envLoaded: boolean;
   platformTenantRealm?: string;
-  keycloakUrl?: string;
-  clientSecret?: string;
+  recaptchaKey?: string;
 }
 
-export const CONFIG_INIT: ConfigState = { envLoaded: false };
+export interface RecaptchaService {
+  execute(siteKey: string, options: { action: string }): Promise<string>;
+}
+
+export interface ConfigState extends ConfigValues {
+  envLoaded: boolean;
+  grecaptcha: RecaptchaService;
+}
+
+export const CONFIG_INIT: ConfigState = { envLoaded: false, grecaptcha: null };

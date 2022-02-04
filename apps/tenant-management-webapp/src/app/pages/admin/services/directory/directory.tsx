@@ -3,7 +3,7 @@ import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { DirectoryOverview } from './overview';
 import SupportLinks from '@components/SupportLinks';
-
+import { DirectoryService } from './services';
 export const Directory: FunctionComponent = () => {
   return (
     <Page>
@@ -14,6 +14,9 @@ export const Directory: FunctionComponent = () => {
           <Tabs activeIndex={0}>
             <Tab label="Overview">
               <DirectoryOverview />
+            </Tab>
+            <Tab label="Services">
+              <DirectoryService />
             </Tab>
           </Tabs>
         </>

@@ -11,13 +11,11 @@ import { GoAButton, GoARadioGroup, GoARadio } from '@abgov/react-components';
 import { GoAForm } from '@abgov/react-components/experimental';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
-import DownloadIcon from '@icons/download-outline.svg';
-import DeleteIcon from '@icons/trash-outline.svg';
-
+import { GoAIconButton } from '@abgov/react-components/experimental';
+import { renderNoItem } from '@components/NoItem';
 const FileList = (): JSX.Element => {
   const [selectedFile, setSelectFile] = useState<string>();
   const [uploadFileType, setUploadFileType] = useState<string>();
-
   const dispatch = useDispatch();
   const { fileList, fileTypes } = useSelector((state: RootState) => {
     return {
@@ -27,8 +25,8 @@ const FileList = (): JSX.Element => {
   });
   const getFileTypesValues = () => {
     const typeValues = [];
-    // eslint-disable-next-line
-    fileTypes.map((fileType): void => {
+
+    fileTypes.forEach((fileType): void => {
       const type = {};
       type['text'] = fileType.name ? fileType.name : fileType.id;
       type['value'] = fileType.id;
@@ -58,6 +56,46 @@ const FileList = (): JSX.Element => {
     dispatch(FetchFileTypeService());
   }, [dispatch]);
 
+  const renderFileTable = () => {
+    return (
+      <DataTable id="files-information">
+        <thead>
+          <tr>
+            <th>File Name</th>
+            <th>Size (KB)</th>
+            <th>type</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {fileList.map((file) => {
+            return (
+              <tr key={file.id}>
+                <td>{file.filename}</td>
+                {/* Use ceil here to make sure people will allocate enough resouces */}
+                <td>{Math.ceil(file.size / 1024)}</td>
+                <td>{file.typeName}</td>
+                <td>
+                  <GoAIconButton
+                    data-testid="download-icon"
+                    size="medium"
+                    type="download"
+                    onClick={() => onDownloadFile(file)}
+                  />
+                  <GoAIconButton
+                    data-testid="delete-icon"
+                    size="medium"
+                    type="trash"
+                    onClick={() => onDeleteFile(file)}
+                  />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </DataTable>
+    );
+  };
   return (
     <>
       <GoAForm>
@@ -82,32 +120,8 @@ const FileList = (): JSX.Element => {
           Upload
         </GoAButton>
       </GoAForm>
-      <DataTable id="files-information">
-        <thead>
-          <tr>
-            <th>File Name</th>
-            <th>Size (KB)</th>
-            <th>type</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {fileList.map((file) => {
-            return (
-              <tr key={file.id}>
-                <td>{file.filename}</td>
-                {/* Use ceil here to make sure people will allocate enough resouces */}
-                <td>{Math.ceil(file.size / 1024)}</td>
-                <td>{file.typeName}</td>
-                <td>
-                  <img src={DownloadIcon} width="26" alt="download file" onClick={(e) => onDownloadFile(file)} />
-                  <img src={DeleteIcon} width="26" alt="delete file" onClick={(e) => onDeleteFile(file)} />
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </DataTable>
+
+      {fileList.length === 0 ? renderNoItem('file') : renderFileTable()}
     </>
   );
 };

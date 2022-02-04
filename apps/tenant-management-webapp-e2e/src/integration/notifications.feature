@@ -56,16 +56,16 @@ Feature: Notifications
     # Verify the events' email icons and preview links, and no edit buttons
     And the user "views" "email template indicator" for "status-service:health-check-started" in "status-application-health-change"
     And the user "views" "Preview link" for "status-service:health-check-started" in "status-application-health-change"
-    And the user "should not view" "Edit button" for "status-service:health-check-started" in "status-application-health-change"
+    And the user "views" "Edit button" for "status-service:health-check-started" in "status-application-health-change"
     And the user "views" "email template indicator" for "status-service:health-check-stopped" in "status-application-health-change"
     And the user "views" "Preview link" for "status-service:health-check-stopped" in "status-application-health-change"
-    And the user "should not view" "Edit button" for "status-service:health-check-stopped" in "status-application-health-change"
+    And the user "views" "Edit button" for "status-service:health-check-stopped" in "status-application-health-change"
     And the user "views" "email template indicator" for "status-service:application-unhealthy" in "status-application-health-change"
     And the user "views" "Preview link" for "status-service:application-unhealthy" in "status-application-health-change"
-    And the user "should not view" "Edit button" for "status-service:application-unhealthy" in "status-application-health-change"
+    And the user "views" "Edit button" for "status-service:application-unhealthy" in "status-application-health-change"
     And the user "views" "email template indicator" for "status-service:application-healthy" in "status-application-health-change"
     And the user "views" "Preview link" for "status-service:application-healthy" in "status-application-health-change"
-    And the user "should not view" "Edit button" for "status-service:application-healthy" in "status-application-health-change"
+    And the user "views" "Edit button" for "status-service:application-healthy" in "status-application-health-change"
     # Verify email template is read-only (pick one event)
     When the user clicks Preview button on "status-service:health-check-started" in "status-application-health-change"
     Then the user views Preview an email template modal

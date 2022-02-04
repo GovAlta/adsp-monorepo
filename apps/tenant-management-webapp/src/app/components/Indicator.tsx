@@ -35,13 +35,18 @@ const Center = styled.div`
   display: flex;
   justify-content: center;
 `;
+
 export const PageIndicator = (): JSX.Element => {
   // Using redux in component shall be limited.
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
 
+  const props = {
+    ...indicator, pageLock: false
+  }
+
   // eslint-disable-next-line
   useEffect(() => { }, [indicator]);
-  return <Center>{indicator.show && <IndicatorWithDelay {...indicator} />}</Center>;
+  return <Center>{indicator.show && <IndicatorWithDelay {...props} />}</Center>;
 };

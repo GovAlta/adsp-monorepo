@@ -82,7 +82,7 @@ export class MongoTenantRepository implements TenantRepository {
   }
 
   async findByName(name: string): Promise<Tenant> {
-    const tenant = await this.tenantModel.findOne({ name: { $regex: '^' + name + '\\b', $options: 'i' } });
+    const tenant = await this.tenantModel.findOne({ name: { $regex: '^' + name + '$', $options: 'i' } });
     return tenant;
   }
 

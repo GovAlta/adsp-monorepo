@@ -7,6 +7,7 @@ import { FetchRealmRoles } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 import { FileTypeTable } from './fileTypesTable';
 import { PageIndicator } from '@components/Indicator';
+import { renderNoItem } from '@components/NoItem';
 
 export const FileTypes: FunctionComponent = () => {
   const dispatch = useDispatch();
@@ -21,11 +22,12 @@ export const FileTypes: FunctionComponent = () => {
   }, []);
 
   // eslint-disable-next-line
-  useEffect(() => { }, [indicator]);
+  useEffect(() => {}, [indicator]);
 
   return (
     <div>
       <div>
+        {!indicator.show && !fileTypes && renderNoItem('filetype')}
         {!indicator.show && fileTypes && (
           <FileTypeTable roles={realmRoles} fileTypes={fileTypes} data-testid="file-type-table" />
         )}

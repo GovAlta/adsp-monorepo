@@ -4,10 +4,8 @@ import '@style/colors.scss';
 import React, { useEffect } from 'react';
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 import { Provider, useDispatch, useSelector } from 'react-redux';
-
 import LandingPage from '@pages/public/Landing';
 import { SignInError } from '@pages/public/SignInError';
-
 import Login from '@pages/public/Login';
 import LoginRedirect from '@pages/public/LoginRedirect';
 import LogoutRedirect from '@pages/public/LogoutRedirect';
@@ -40,7 +38,7 @@ const AppRouters = () => {
         </Route>
 
         <PublicApp>
-          <Route path="/:realm/autologin">
+          <Route path="/:realm/login">
             <Login />
           </Route>
           <Route path="/get-started">

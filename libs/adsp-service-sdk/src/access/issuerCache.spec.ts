@@ -11,20 +11,22 @@ jest.mock('node-cache', () => {
 });
 
 describe('IssuerCache', () => {
-  const logger: Logger = ({
+  const logger: Logger = {
     debug: jest.fn(),
     info: jest.fn(),
     error: jest.fn(),
-  } as unknown) as Logger;
+  } as unknown as Logger;
 
   const serviceMock = {
     getTenant: jest.fn(),
     getTenants: jest.fn(),
+    getTenantByName: jest.fn(),
   };
 
   beforeEach(() => {
     serviceMock.getTenant.mockReset();
     serviceMock.getTenants.mockReset();
+    serviceMock.getTenantByName.mockReset();
   });
   it('can be constructed', () => {
     const cache = new IssuerCache(logger, new URL('http://totally-access'), serviceMock);

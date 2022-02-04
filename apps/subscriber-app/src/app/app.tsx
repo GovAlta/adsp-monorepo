@@ -33,7 +33,7 @@ const AppRouters = () => {
         </Route>
 
         <PublicApp>
-          <Route path="/:realm/autologin">
+          <Route path="/:realm/login">
             <Login />
           </Route>
 
