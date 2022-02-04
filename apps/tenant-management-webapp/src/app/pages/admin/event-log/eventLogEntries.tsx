@@ -21,6 +21,14 @@ const CorrelationIndicator: FunctionComponent<CorrelationIndicatorProps> = ({ co
   return color && <IndicatorDiv color={color} />;
 };
 
+interface VisibleProps {
+  visible: boolean;
+}
+
+const Visible = styled.div<VisibleProps>`
+  visibility: ${(props) => `${props.visible ? 'visible' : 'hide'}`};
+`;
+
 interface EventLogEntryComponentProps {
   entry: EventLogEntry;
   correlationColors: Record<string, string>;
@@ -99,9 +107,8 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
 
   return (
     <>
-      {indicator.show && <PageIndicator />}
       {!indicator.show && !entries.length && renderNoItem('event log')}
-      {!indicator.show && entries.length > 0 && (
+      <Visible visible={!indicator.show && entries.length > 0}>
         <div className={className}>
           <DataTable>
             <thead>
@@ -133,7 +140,8 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
             </tbody>
           </DataTable>
         </div>
-      )}
+      </Visible>
+      {indicator.show && <PageIndicator />}
     </>
   );
 };

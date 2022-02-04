@@ -17,7 +17,6 @@ export const EventLog: FunctionComponent = () => {
   const [searchCriteria, setSearchCriteria] = useState(null);
   const next = useSelector((state: RootState) => state.event.nextEntries);
   const isLoading = useSelector((state: RootState) => state.event.isLoading.log);
-
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -25,6 +24,12 @@ export const EventLog: FunctionComponent = () => {
       dispatch(getEventLogEntries());
     }
   }, [dispatch, hasReaderRole]);
+
+  useEffect(() => {
+    return function clean() {
+      dispatch(clearEventLogEntries());
+    };
+  }, []);
 
   const onSearch = (criteria: EventSearchCriteria) => {
     if (hasReaderRole) {
