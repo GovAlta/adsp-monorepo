@@ -200,7 +200,7 @@ export function* fetchStatusMetrics(): SagaIterator {
 
       yield put(
         fetchStatusMetricsSucceeded({
-          unhealthyCount: parseInt(unhealthyCount.values[0].sum || '0'),
+          unhealthyCount: parseInt(unhealthyCount.values[0]?.sum || '0'),
           maxUnhealthyDuration: maxDuration / 60,
           totalUnhealthyDuration: totalDuration / 60,
           leastHealthyApp: unhealthyApp?.sum
@@ -209,7 +209,7 @@ export function* fetchStatusMetrics(): SagaIterator {
         })
       );
     } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationMetrics` }));
+      yield put(ErrorNotification({ message: `${e.message} - fetchStatusMetrics` }));
     }
   }
 }

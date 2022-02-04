@@ -251,7 +251,7 @@ export function* fetchEventMetrics(): SagaIterator {
       yield put(
         fetchEventMetricsSucceeded({
           totalEvents: sum,
-          avgPerDay: sum / data.values.length,
+          avgPerDay: data.values.length ? sum / data.values.length : 0,
         })
       );
     } catch (e) {
