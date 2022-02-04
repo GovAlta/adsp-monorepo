@@ -1,4 +1,4 @@
-import { put, select, call, fork } from 'redux-saga/effects';
+import { put, select, call, fork, take } from 'redux-saga/effects';
 import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
 import { StatusApi } from './api';
@@ -12,12 +12,16 @@ import {
   ToggleApplicationStatusAction,
   fetchServiceStatusAppHealthSuccess,
   fetchServiceStatusAppHealth,
+  fetchStatusMetricsSucceeded,
+  FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION,
 } from './actions';
 import { Session } from '@store/session/models';
 import { ConfigState } from '@store/config/models';
 import { SetApplicationStatusAction, setApplicationStatusSuccess } from './actions/setApplicationStatus';
 import { EndpointStatusEntry, ServiceStatusApplication } from './models';
 import { SagaIterator } from '@redux-saga/core';
+import moment from 'moment';
+import axios from 'axios';
 
 export function* fetchServiceStatusAppHealthEffect(
   api: StatusApi,
@@ -137,6 +141,76 @@ export function* toggleApplicationStatus(action: ToggleApplicationStatusAction) 
     yield put(setApplicationStatusSuccess(data));
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
+  }
+}
+
+interface MetricValue {
+  app: string;
+  sum: number;
+  max: number;
+}
+interface MetricResponse {
+  values: { sum: string; max: string }[];
+}
+
+export function* fetchStatusMetrics(): SagaIterator {
+  const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  yield take(FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION);
+  const apps: ServiceStatusApplication[] = yield select((state: RootState) => state.serviceStatus.applications);
+
+  if (baseUrl && token) {
+    try {
+      const criteria = JSON.stringify({
+        intervalMax: moment().toISOString(),
+        intervalMin: moment().subtract(7, 'day').toISOString(),
+      });
+
+      let metric = 'status-service:application-unhealthy:count';
+      const { data: unhealthyCount }: { data: MetricResponse } = yield call(
+        axios.get,
+        `${baseUrl}/value/v1/event-service/values/event/metrics/${metric}?interval=weekly&criteria=${criteria}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const downtimeDurations: MetricValue[] = [];
+      for (let i = 0; i < apps.length; i++) {
+        const app = apps[i];
+
+        metric = `status-service:${app.name}:downtime:duration`;
+        const { data: unhealthyDuration }: { data: MetricResponse } = yield call(
+          axios.get,
+          `${baseUrl}/value/v1/event-service/values/event/metrics/${metric}?interval=weekly&criteria=${criteria}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        downtimeDurations.push({
+          app: app.name,
+          sum: parseInt(unhealthyDuration.values[0]?.sum || '0'),
+          max: parseInt(unhealthyDuration.values[0]?.max || '0'),
+        });
+      }
+
+      const maxDuration = downtimeDurations.reduce((max, duration) => Math.max(duration.max, max), 0);
+
+      const totalDuration = downtimeDurations.reduce((total, duration) => total + duration.sum, 0);
+
+      const unhealthyApp = downtimeDurations.sort((a, b) => b.sum - a.sum)[0];
+
+      yield put(
+        fetchStatusMetricsSucceeded({
+          unhealthyCount: parseInt(unhealthyCount.values[0].sum || '0'),
+          maxUnhealthyDuration: maxDuration / 60,
+          totalUnhealthyDuration: totalDuration / 60,
+          leastHealthyApp: unhealthyApp?.sum
+            ? { name: unhealthyApp.app, totalUnhealthyDuration: unhealthyApp.sum / 60 }
+            : null,
+        })
+      );
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationMetrics` }));
+    }
   }
 }
 

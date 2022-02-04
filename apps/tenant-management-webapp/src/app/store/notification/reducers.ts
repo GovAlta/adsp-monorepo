@@ -1,5 +1,10 @@
-import { ActionTypes, FETCH_CORE_NOTIFICATION_TYPE_SUCCEEDED, FETCH_NOTIFICATION_TYPE_SUCCEEDED } from './actions';
-import { NOTIFICATION_INIT, NotificationService, NotificationItem, NotificationType } from './models';
+import {
+  ActionTypes,
+  FETCH_CORE_NOTIFICATION_TYPE_SUCCEEDED,
+  FETCH_NOTIFICATION_METRICS_SUCCEEDED,
+  FETCH_NOTIFICATION_TYPE_SUCCEEDED,
+} from './actions';
+import { NOTIFICATION_INIT, NotificationState, NotificationItem, NotificationType } from './models';
 
 export const combineNotification = (
   coreItem: NotificationItem,
@@ -38,7 +43,7 @@ export const combineNotification = (
   return coreItem;
 };
 
-export default function (state = NOTIFICATION_INIT, action: ActionTypes): NotificationService {
+export default function (state = NOTIFICATION_INIT, action: ActionTypes): NotificationState {
   switch (action.type) {
     case FETCH_NOTIFICATION_TYPE_SUCCEEDED: {
       const notificationTypes = action.payload.notificationInfo.data;
@@ -58,6 +63,12 @@ export default function (state = NOTIFICATION_INIT, action: ActionTypes): Notifi
       return {
         ...state,
         core: coreNotificationType,
+      };
+    }
+    case FETCH_NOTIFICATION_METRICS_SUCCEEDED: {
+      return {
+        ...state,
+        metrics: action.metrics,
       };
     }
     default:
