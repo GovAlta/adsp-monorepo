@@ -4,6 +4,7 @@ import dayjs = require('dayjs');
 
 const tenantAdminObj = new tenantAdminPage();
 let responseObj: Cypress.Response<any>;
+let numOfRows: number;
 
 Given('the user goes to tenant management login link', function () {
   const urlToTenantLogin = Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/login?kc_idp_hint=';
@@ -430,11 +431,11 @@ Then('the user views an instruction of role requirement indicating user needs te
     .then((href) => {
       expect(href).to.contain(
         Cypress.env('accessManagementApi') +
-        '/admin/' +
-        Cypress.env('realm') +
-        '/console/#/realms/' +
-        Cypress.env('realm') +
-        '/users'
+          '/admin/' +
+          Cypress.env('realm') +
+          '/console/#/realms/' +
+          Cypress.env('realm') +
+          '/users'
       );
     });
 });
@@ -490,9 +491,14 @@ Then('the user views the events matching the search filter of {string}', functio
 
 When('the user clicks Load more button', function () {
   // count numbers of row in the table before clicking Load more...
-  tenantAdminObj.eventTableBody().find('tr').as('tableRows');
+  tenantAdminObj
+    .eventTableBody()
+    .find('tr')
+    .then((elm) => {
+      numOfRows = Number(elm.length);
+    });
   tenantAdminObj.eventLoadMoreBtn().click();
-  cy.wait(2000);
+  cy.wait(4000);
 });
 
 Then('the user views more events matching the search filter of {string}', function (namespaceName) {
@@ -501,7 +507,7 @@ Then('the user views more events matching the search filter of {string}', functi
     .eventTableBody()
     .find('tr')
     .then((tableRowsAfterLoadMore) => {
-      cy.get('@tableRows').should('have.length.lt', tableRowsAfterLoadMore.length);
+      expect(tableRowsAfterLoadMore.length).to.be.gt(numOfRows);
     });
 
   tenantAdminObj.eventTableBody().each(($row) => {

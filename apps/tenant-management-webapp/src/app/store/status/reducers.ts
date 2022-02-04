@@ -3,6 +3,7 @@ import {
   DELETE_APPLICATION_SUCCESS_ACTION,
   FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION,
   FETCH_SERVICE_STATUS_APP_HEALTH_SUCCESS_ACTION,
+  FETCH_STATUS_METRICS_SUCCESS_ACTION,
   SAVE_APPLICATION_SUCCESS_ACTION,
   SET_APPLICATION_SUCCESS_STATUS_ACTION,
   TOGGLE_APPLICATION_SUCCESS_STATUS_ACTION,
@@ -20,6 +21,7 @@ const initialState: ServiceStatus = {
     description: '',
     endpoint: { url: '', status: 'offline' },
   },
+  metrics: {},
 };
 
 const compareIds = (a: { _id?: string }, b: { _id?: string }): number => (a._id <= b._id ? 1 : -1);
@@ -69,7 +71,11 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
         ...state,
         currentFormData: action.payload,
       };
-
+    case FETCH_STATUS_METRICS_SUCCESS_ACTION:
+      return {
+        ...state,
+        metrics: action.metrics,
+      };
     default:
       return state;
   }
