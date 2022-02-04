@@ -78,32 +78,32 @@ Feature: Notifications
     And the user "views" the event of "status-service:health-check-started" in "status-application-health-change"
   @TEST_CS-986 @REQ_CS-963 @REQ_CS-978 @regression
   Scenario: As a tenant admin, I can see notification type for application status change updates, so I am aware of this notification type
-    Given a tenant admin is on Notifications page
-    Then the user should see tabs "Overview"
-    And "Notifications types" tab
-    When the user clicks "Notifications types"
-    Then the user "views" "status-application-status-change" notification type for "status-application-status-change" notification type
-    And the user "views" registered events "status-service:application-status-changed" for "status-application-status-change" notification type
-    And the user "views" email template indicator for "status-service:application-status-changed" for "status-application-status-change" notification type
-    And the user "views" registered events "status-service:application-notice-published" for "status-application-status-change" notification type
-    And the user "views" email template indicator for "status-service:application-notice-published" for "status-application-status-change" notification type
-    When the user clicks "Preview" button on "status-service:application-status-changed" for "status-application-status-change" notification type
-    Then the user views "Preview an email template" modal
-    And the user views "{{ event.payload.applicationName }} status has changed" in Subject field
-    And the user views "The original status was: {{ event.payload.originalStatus }}" in Body field
-    And the user views "The new status is now: {{ event.payload.newStatus }}" in Body field
-    When the user attempts to edit the template
-    Then the user gets "Cannot edit in read-only editor"
-    When the user clicks "Close" button
-    Then "Preview an email template" template is closed
-    And "status-service:application-status-changed" should display under "status-application-status-change" notification
-    When the user clicks "Preview" button on "status-service:application-notice-published" for "status-application-status-change" notification type
-    Then the user views "Preview an email template" modal
-    And the user views "A notice for {{ event.payload.application.name }} was published" in Subject field
-    And the user views "The notice is described as follows: {{ event.payload.description }}" in Body field
-    And the user views "The notice is related to the following tenant: {{  event.payload.postBy.tenantName }}" in Body field
-    When the user attempts to edit the template
-    Then the user gets "Cannot edit in read-only editor"
-    When the user clicks "Close" button
-    Then "Preview an email template" template is closed
-    And "status-service:application-notice-published" should display under "status-application-status-change" notification
+    Given a service owner user is on notification overview page
+    Then the user should see tab "Overview"
+    When the user selects "Notification types" tab for "Notifications"
+    Then the user "views" the notification type card of "status-application-status-change"
+# Then the user "views" "status-application-status-change" notification type for "status-application-status-change" notification type
+# And the user "views" registered events "status-service:application-status-changed" for "status-application-status-change" notification type
+# And the user "views" email template indicator for "status-service:application-status-changed" for "status-application-status-change" notification type
+# And the user "views" registered events "status-service:application-notice-published" for "status-application-status-change" notification type
+# And the user "views" email template indicator for "status-service:application-notice-published" for "status-application-status-change" notification type
+# When the user clicks "Preview" button on "status-service:application-status-changed" for "status-application-status-change" notification type
+# Then the user views "Preview an email template" modal
+# And the user views "{{ event.payload.applicationName }} status has changed" in Subject field
+# And the user views "The original status was: {{ event.payload.originalStatus }}" in Body field
+# And the user views "The new status is now: {{ event.payload.newStatus }}" in Body field
+# When the user attempts to edit the template
+# Then the user gets "Cannot edit in read-only editor"
+# When the user clicks "Close" button
+# Then "Preview an email template" template is closed
+# And "status-service:application-status-changed" should display under "status-application-status-change" notification
+# When the user clicks "Preview" button on "status-service:application-notice-published" for "status-application-status-change" notification type
+# Then the user views "Preview an email template" modal
+# And the user views "A notice for {{ event.payload.application.name }} was published" in Subject field
+# And the user views "The notice is described as follows: {{ event.payload.description }}" in Body field
+# And the user views "The notice is related to the following tenant: {{  event.payload.postBy.tenantName }}" in Body field
+# When the user attempts to edit the template
+# Then the user gets "Cannot edit in read-only editor"
+# When the user clicks "Close" button
+# Then "Preview an email template" template is closed
+# And "status-service:application-notice-published" should display under "status-application-status-change" notification
