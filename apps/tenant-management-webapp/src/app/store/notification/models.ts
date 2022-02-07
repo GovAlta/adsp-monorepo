@@ -39,14 +39,21 @@ export interface RequestBodySchema {
   };
 }
 
-export interface NotificationService {
+export interface NotificationMetrics {
+  notificationsSent?: number;
+  notificationsFailed?: number;
+}
+
+export interface NotificationState {
   notificationList: NotificationType;
   notificationTypes: NotificationType | undefined;
   core: NotificationType;
+  metrics: NotificationMetrics;
 }
 
-export const NOTIFICATION_INIT: NotificationService = {
+export const NOTIFICATION_INIT: NotificationState = {
   notificationList: {},
   notificationTypes: undefined,
   core: {},
+  metrics: {},
 };
