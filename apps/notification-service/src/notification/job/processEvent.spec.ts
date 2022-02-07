@@ -36,6 +36,10 @@ describe('createProcessEventJob', () => {
     getSubscriptions: jest.fn(),
   };
 
+  const repositoryDoubleMock = {
+    getSubscriptions: jest.fn(),
+  };
+
   const queueServiceMock = {
     enqueue: jest.fn(),
   };
@@ -141,7 +145,7 @@ describe('createProcessEventJob', () => {
         configurationService: configurationServiceMock,
         eventService: eventServiceMock,
         templateService: templateServiceMock,
-        subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
+        subscriptionRepository: repositoryDoubleMock as unknown as SubscriptionRepository,
         queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
       });
 
@@ -177,7 +181,7 @@ describe('createProcessEventJob', () => {
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
       configurationServiceMock.getConfiguration.mockResolvedValueOnce([configuration]);
 
-      const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
+      const subscriber = new SubscriberEntity(repositoryDoubleMock as unknown as SubscriptionRepository, {
         tenantId,
         addressAs: 'Tester',
         channels: [
@@ -190,12 +194,12 @@ describe('createProcessEventJob', () => {
       });
 
       const subscription = new SubscriptionEntity(
-        repositoryMock as unknown as SubscriptionRepository,
+        repositoryDoubleMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test', subscriberId: 'test', criteria: {} },
         subscriber
       );
 
-      repositoryMock.getSubscriptions.mockResolvedValue({
+      repositoryDoubleMock.getSubscriptions.mockResolvedValue({
         results: [subscription],
         page: {},
       });
@@ -209,7 +213,7 @@ describe('createProcessEventJob', () => {
           payload: {},
         },
         (err) => {
-          expect(repositoryMock.getSubscriptions).toHaveBeenCalledTimes(1);
+          expect(repositoryDoubleMock.getSubscriptions).toHaveBeenCalledTimes(1);
           expect(err).toBeFalsy();
           done();
         }
