@@ -121,7 +121,7 @@ const FileList = (): JSX.Element => {
         </GoAButton>
       </GoAForm>
 
-      {fileList.length === 0 ? renderNoItem('file') : renderFileTable()}
+      {fileList && fileList.length === 0 ? renderNoItem('file') : renderFileTable()}
     </>
   );
 };
