@@ -3,65 +3,174 @@ import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgo
 import { Role } from '@store/tenant/models';
 import { GoAButton } from '@abgov/react-components';
 import { GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
-import { GoADropdown } from '@abgov/react-components';
+import { GoADropdown, GoADropdownOption, GoACheckbox } from '@abgov/react-components';
+import styled from 'styled-components';
+import { UpdateFileTypeService, CreateFileTypeService } from '@store/file/actions';
+import { FileTypeItem, FileTypeDefault } from '@store/file/models';
+
+import { useDispatch } from 'react-redux';
 
 interface FileTypeModalProps {
-  name: string;
-  readRoles: string[];
-  updateRoles: string[];
-  anonymousRead: boolean;
-  id: string;
-  editId: string;
-  editable?: boolean;
-  roles?: Role[];
-  title: string;
-  cancelFunc: () => void;
+  fileType?: FileTypeItem;
+  onCancel: () => void;
+  type: 'new' | 'edit';
+  roles: Role[];
+  onSwitch?: () => void;
 }
 
+const ModalOverwrite = styled.div`
+  .modal {
+    max-height: 200% !important;
+    min-width: 37.5em;
+  }
+`;
+
+const AnonymousContainer = styled.div`
+  display: inline-flex;
+  text-align: center;
+  line-height: 2.5em;
+  vertical-align: middle;
+`;
+
+interface FileTypeError {
+  attribute: string;
+  message: string;
+}
+
+const validateFileType = (fileType: FileTypeItem): FileTypeError[] => {
+  const errors: FileTypeError[] = [];
+  if (fileType?.name) {
+    errors.push({
+      attribute: 'name',
+      message: 'File type name missing',
+    });
+  }
+  return errors;
+};
+
 export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
-  const [fileType, setFileType] = useState({
-    name: props.name,
-    readRoles: props.readRoles,
-    updateRoles: props.updateRoles,
-    anonymousRead: props.anonymousRead,
-    id: props.id,
-  });
+  const [fileType, setFileType] = useState(props?.fileType?.id ? props.fileType : FileTypeDefault);
+  const title = props.type === 'new' ? 'Add file type' : 'Edit file type';
+  const [errors, setErrors] = useState<FileTypeError[]>(validateFileType(fileType));
+
+  const dispatch = useDispatch();
   return (
-    <GoAModal testId="delete-confirmation" isOpen={true}>
-      <GoAModalTitle>{props.title}</GoAModalTitle>
-      <GoAModalContent>
-        <GoAFormItem>
-          <label>Application name</label>
-          <GoAInput
-            type="text"
-            name="name"
-            value={fileType.name}
-            onChange={(name, value) => {
-              setFileType({
-                ...fileType,
-                name: value,
-              });
+    <ModalOverwrite>
+      <GoAModal testId="delete-confirmation" isOpen={true}>
+        <GoAModalTitle>{title}</GoAModalTitle>
+        <GoAModalContent>
+          <GoAFormItem>
+            <label>Application name</label>
+            <GoAInput
+              type="text"
+              name="name"
+              value={fileType.name}
+              onChange={(name, value) => {
+                const newFileType = {
+                  ...fileType,
+                  name: value,
+                };
+                setFileType(newFileType);
+                setErrors(validateFileType(newFileType));
+              }}
+              aria-label="name"
+            />
+          </GoAFormItem>
+
+          <GoAFormItem>
+            <label>Who can read</label>
+            <GoADropdown
+              name="fileTypesReadRoles"
+              selectedValues={fileType.readRoles}
+              multiSelect={true}
+              onChange={(name, values) => {
+                setFileType({
+                  ...fileType,
+                  readRoles: values,
+                });
+              }}
+            >
+              {props.roles.map((role: Role) => (
+                <GoADropdownOption
+                  label={role.name}
+                  value={role.name}
+                  key={`read-roles-${role.id}`}
+                  data-testid={`file-type-form-dropdown-read-riles-${role.name}`}
+                />
+              ))}
+            </GoADropdown>
+          </GoAFormItem>
+          <GoAFormItem>
+            <label>Who can edit</label>
+            <GoADropdown
+              name="fileTypesUpdateRoles"
+              selectedValues={fileType.updateRoles}
+              multiSelect={true}
+              onChange={(name, values) => {
+                setFileType({
+                  ...fileType,
+                  updateRoles: values,
+                });
+              }}
+            >
+              {props.roles.map((role: Role) => (
+                <GoADropdownOption
+                  label={role.name}
+                  value={role.name}
+                  key={`read-roles-${role.id}`}
+                  data-testid={`file-type-form-dropdown-read-riles-${role.name}`}
+                />
+              ))}
+            </GoADropdown>
+          </GoAFormItem>
+          <AnonymousContainer>
+            <GoACheckbox
+              name="file-type-anonymousRead"
+              checked={fileType.anonymousRead}
+              onChange={() => {
+                setFileType({
+                  ...fileType,
+                  anonymousRead: !fileType.anonymousRead,
+                });
+              }}
+              value="file-type-anonymousRead"
+            />{' '}
+            Allow Anonymous Read
+          </AnonymousContainer>
+        </GoAModalContent>
+
+        <GoAModalActions>
+          <GoAButton
+            buttonType="tertiary"
+            data-testid="file-type-modal-cancel"
+            onClick={() => {
+              props.onCancel();
             }}
-            aria-label="name"
-          />
-        </GoAFormItem>
+          >
+            Cancel
+          </GoAButton>
+          <GoAButton
+            buttonType="primary"
+            disabled={errors.length === 0}
+            data-testid="file-type-modal-save"
+            onClick={() => {
+              if (props.type === 'new') {
+                dispatch(CreateFileTypeService(fileType));
+              }
+              if (props.type === 'edit') {
+                dispatch(UpdateFileTypeService(fileType));
+              }
 
-        <GoAFormItem>
-          <label>Read Roles</label>
-        </GoAFormItem>
-      </GoAModalContent>
-
-      <GoAModalActions>
-        <GoAButton
-          buttonType="tertiary"
-          data-testid="file-type-modal-cancel"
-          onClick={() => {
-            props.cancelFunc();
-          }}
-        >
-          Cancel
-        </GoAButton>
-      </GoAModalActions>
-    </GoAModal>
+              if (props.onSwitch) {
+                props.onSwitch();
+              }
+              props.onCancel();
+            }}
+          >
+            Save
+          </GoAButton>
+        </GoAModalActions>
+      </GoAModal>
+    </ModalOverwrite>
   );
 };

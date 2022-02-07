@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import React from 'react';
 import { FetchFileTypeService } from '@store/file/actions';
 import { FetchRealmRoles } from '@store/tenant/actions';
-
 import { RootState } from '@store/index';
 import { FileTypeTable } from './fileTypesTable';
 import { PageIndicator } from '@components/Indicator';
@@ -16,6 +15,7 @@ export const FileTypes: FunctionComponent = () => {
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(FetchFileTypeService());

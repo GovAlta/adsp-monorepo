@@ -7,8 +7,17 @@ export interface FileTypeItem {
   tableData?: {
     id: string;
   };
-  id: string;
+  id?: string;
 }
+
+export const FileTypeDefault: FileTypeItem = {
+  name: '',
+  updateRoles: [],
+  readRoles: [],
+  anonymousRead: false,
+  hasFile: false,
+  id: null,
+};
 
 export interface FileItem {
   id: string;

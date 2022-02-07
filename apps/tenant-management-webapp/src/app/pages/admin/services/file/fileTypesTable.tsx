@@ -1,20 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import styled from 'styled-components';
+import React, { useState } from 'react';
 import DataTable from '@components/DataTable';
-import { GoADropdownOption, GoAButton, GoADropdown } from '@abgov/react-components';
-import { GoABadge } from '@abgov/react-components/experimental';
-import { FileTypeItem } from '@store/file/models';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@store/index';
 import { Role } from '@store/tenant/models';
-import {
-  DeleteFileTypeService,
-  CreateFileTypeService,
-  UpdateFileTypeService,
-  FetchFileTypeHasFileService,
-} from '@store/file/actions';
-import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { FileTypeModal } from './fileTypeModal';
+import { GoAIconButton } from '@abgov/react-components/experimental';
+import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
+import { AddFileType } from './fileTypeNew';
+import { FileTypeDeleteModal } from './fileTypeDeleteModal';
 
 interface FileTypeRowProps {
   name: string;
@@ -25,7 +16,8 @@ interface FileTypeRowProps {
   editId: string;
   editable?: boolean;
   roles?: Role[];
-  editFunc?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 interface FileTypeTableProps {
@@ -40,7 +32,8 @@ const FileTypeTableRow = ({
   updateRoles,
   anonymousRead,
   editId,
-  editFunc,
+  onEdit,
+  onDelete,
 }: FileTypeRowProps): JSX.Element => {
   return (
     <tr key={id}>
@@ -49,13 +42,25 @@ const FileTypeTableRow = ({
       <td>{updateRoles}</td>
       <td>{anonymousRead}</td>
       <td>
-        <GoAContextMenuIcon
-          type={id === editId ? 'eye' : 'eye-off'}
-          onClick={() => {
-            editFunc();
-          }}
-          data-testid="file-types-edit-action"
-        />
+        <GoAContextMenu>
+          <GoAContextMenuIcon
+            type={id === editId ? 'eye' : 'eye-off'}
+            title="Edit"
+            onClick={() => {
+              onEdit();
+            }}
+            testId="file-type-edit-action-icon-btn"
+          />
+          <GoAIconButton
+            testId="file-type-delete-action-icon-btn"
+            title="Delete"
+            size="medium"
+            type="trash"
+            onClick={() => {
+              onDelete();
+            }}
+          />
+        </GoAContextMenu>
       </td>
     </tr>
   );
@@ -63,17 +68,28 @@ const FileTypeTableRow = ({
 
 export const FileTypeTable = ({ roles, fileTypes }: FileTypeTableProps): JSX.Element => {
   const [editId, setEditId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
   const editFileType = fileTypes.find((x) => x.id === editId);
+  const deleteFileType = fileTypes.find((x) => x.id === deleteId);
+
   const editModalProps = {
-    ...editFileType,
-    title: 'Edit file type',
-    cancelFunc: () => {
+    fileType: editFileType,
+    onCancel: () => {
       setEditId(null);
+    },
+  };
+
+  const deleteModalProps = {
+    fileType: deleteFileType,
+    onCancel: () => {
+      setDeleteId(null);
     },
   };
 
   return (
     <div>
+      <AddFileType roles={roles} />
       <DataTable data-testid="file-types-table">
         <thead data-testid="file-types-table-header">
           <tr>
@@ -96,15 +112,19 @@ export const FileTypeTable = ({ roles, fileTypes }: FileTypeTableProps): JSX.Ele
               <FileTypeTableRow
                 key={fileType.id}
                 {...rowProps}
-                editFunc={() => {
+                onEdit={() => {
                   setEditId(fileType.id);
+                }}
+                onDelete={() => {
+                  setDeleteId(fileType.id);
                 }}
               />
             );
           })}
         </tbody>
       </DataTable>
-      {editId && <FileTypeModal {...editModalProps} />}
+      {editId && <FileTypeModal {...{ ...editModalProps, roles, type: 'edit' }} />}
+      {deleteId && <FileTypeDeleteModal {...deleteModalProps} />}
     </div>
   );
 };
