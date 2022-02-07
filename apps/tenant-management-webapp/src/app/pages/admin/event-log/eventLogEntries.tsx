@@ -100,7 +100,7 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
   return (
     <>
       {indicator.show && <PageIndicator />}
-      {!indicator.show && !entries.length && renderNoItem('event log')}
+      {!indicator.show && entries && entries.length === 0 && renderNoItem('event log')}
       {!indicator.show && entries.length > 0 && (
         <div className={className}>
           <DataTable>
