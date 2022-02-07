@@ -38,7 +38,7 @@ export class TenantApi {
         name: name,
       })
       .catch(function (error) {
-        throw new Error(error?.response?.data?.error);
+        throw new Error(error?.response?.data.errorMessage);
       });
     return res.data;
   }

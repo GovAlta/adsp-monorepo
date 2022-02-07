@@ -78,6 +78,45 @@ class TenantAdminPage {
   dashboardCalloutContentEmail() {
     return cy.xpath('//*[@data-testid="callout-content"]/p/a');
   }
-}
 
+  eventLogSearchBox() {
+    return cy.get('input[name="searchBox"]');
+  }
+
+  eventLogMinTimeStamp() {
+    return cy.get('input[name="timestampMin"]');
+  }
+
+  eventLogMaxTimesStamp() {
+    return cy.get('input[name="timestampMax"]');
+  }
+
+  eventLogSearchBtn() {
+    return cy.get('button:contains("Search")');
+  }
+
+  eventLogResetBtn() {
+    return cy.get('button:contains("Reset")');
+  }
+
+  eventTableBody() {
+    return cy.get('tbody');
+  }
+
+  eventTableShowDetailsBtn() {
+    return cy.get('button:contains("Show details")');
+  }
+
+  eventLoadMoreBtn() {
+    return cy.get('button:contains("Load more...")');
+  }
+
+  eventHideDetailsBtn() {
+    return cy.get('button:contains("Hide details")');
+  }
+
+  eventDetailsBody() {
+    return cy.get('.event-details');
+  }
+}
 export default TenantAdminPage;

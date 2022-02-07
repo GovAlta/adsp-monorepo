@@ -2,25 +2,22 @@ import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import { Tab, Tabs } from '@components/Tabs';
 import { RootState } from '@store/index';
-import { GoACallout } from '@abgov/react-components';
+import ReactTooltip from 'react-tooltip';
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { NotificationsOverview } from './overview';
 import { NotificationTypes } from './notificationTypes';
 import { Subscriptions } from './subscriptions';
 import { Subscribers } from './subscribers';
+import { GoAButton } from '@abgov/react-components';
 
 export const Notifications: FunctionComponent = () => {
   const tenantId = useSelector((state: RootState) => state.tenant?.id);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
-  const adminEmail = useSelector((state: RootState) => state.tenant.adminEmail);
-  const hasTenantAdminRole = useSelector((state: RootState) =>
-    state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes('tenant-admin')
-  );
+  const session = useSelector((state: RootState) => state.session);
+  const subscriberWebApp = useSelector((state: RootState) => state.config.serviceUrls.subscriberWebApp);
 
-  const hasNotificationAdminRole = useSelector((state: RootState) =>
-    state.session?.resourceAccess?.['urn:ads:platform:notification-service']?.roles?.includes('subscription-admin')
-  );
+  const loginUrl = `${subscriberWebApp}/${session.realm}/login`;
 
   const [activateEditState, setActivateEditState] = useState<boolean>(false);
   const [activeIndex, setActiveIndex] = useState<number>(0);
@@ -30,54 +27,34 @@ export const Notifications: FunctionComponent = () => {
     setActivateEditState(edit);
   };
 
+  const _afterShow = (copyText) => {
+    navigator.clipboard.writeText(copyText);
+  };
+
   useEffect(() => {
     if (activeIndex !== null) {
       setActiveIndex(null);
     }
   }, [activeIndex]);
 
-  const calloutMessage = () => {
-    return (
-      <Main>
-        <Tabs activeIndex={activeIndex}>
-          <Tab label="Overview">
-            <NotificationsOverview setActiveEdit={activateEdit} disabled />
-          </Tab>
-        </Tabs>
-
-        <GoACallout type="important" data-testid="delete-modal">
-          <h3>Access to notifications requires admin roles</h3>
-          <p>
-            You require the tenant-admin role or subscription-admin role to access notifications and will need to
-            contact the administrator of the tenant at <a href={`mailto: ${adminEmail}`}>{adminEmail}</a>
-          </p>
-        </GoACallout>
-      </Main>
-    );
-  };
-
   return (
     <Page>
       <Main>
         <h1>Notifications</h1>
-        {hasTenantAdminRole || hasNotificationAdminRole ? (
-          <Tabs activeIndex={activeIndex}>
-            <Tab label="Overview">
-              <NotificationsOverview setActiveEdit={activateEdit} />
-            </Tab>
-            <Tab label="Notification types">
-              <NotificationTypes activeEdit={activateEditState} activateEdit={activateEdit} />
-            </Tab>
-            <Tab label="Subscriptions">
-              <Subscriptions />
-            </Tab>
-            <Tab label="Subscribers">
-              <Subscribers />
-            </Tab>
-          </Tabs>
-        ) : (
-          calloutMessage()
-        )}
+        <Tabs activeIndex={activeIndex}>
+          <Tab label="Overview">
+            <NotificationsOverview setActiveEdit={activateEdit} />
+          </Tab>
+          <Tab label="Notification types">
+            <NotificationTypes activeEdit={activateEditState} activateEdit={activateEdit} />
+          </Tab>
+          <Tab label="Subscriptions">
+            <Subscriptions />
+          </Tab>
+          <Tab label="Subscribers">
+            <Subscribers />
+          </Tab>
+        </Tabs>
       </Main>
       <Aside>
         <h3>Helpful links</h3>
@@ -97,6 +74,25 @@ export const Notifications: FunctionComponent = () => {
           See the code
         </a>
         <SupportLinks />
+
+        <h3>Manage subscriptions</h3>
+        <p>Subscribers can manage their subscriptions here:</p>
+        <div className="copy-url">
+          <a target="_blank" href={loginUrl} rel="noreferrer">
+            {loginUrl}
+          </a>
+        </div>
+        <GoAButton data-tip="Copied!" data-for="registerTipUrl">
+          Click to copy
+        </GoAButton>
+        <ReactTooltip
+          id="registerTipUrl"
+          place="top"
+          event="click"
+          eventOff="blur"
+          effect="solid"
+          afterShow={() => _afterShow(loginUrl)}
+        />
       </Aside>
     </Page>
   );

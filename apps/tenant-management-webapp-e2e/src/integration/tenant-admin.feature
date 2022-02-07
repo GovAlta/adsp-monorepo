@@ -54,7 +54,6 @@ Feature: Tenant admin
     Given a service owner user is on tenant admin page
     Then no critical or serious accessibility issues on "tenant admin dashboard page"
 
-
   @accessibility @regression
   Scenario: As a service owner, I can use the tenant admin access page without any critical or serious accessibility issues
     Given a service owner user is on tenant admin page
@@ -67,10 +66,10 @@ Feature: Tenant admin
     Then the user views the tenant name of "autotest"
     And the user views the release info and DIO contact info
     And the user views an instruction of role requirement indicating user needs tenant-admin
-    And the user views the autologin link with a copy button
+    And the user views the login link with a copy button
     # Getting content from clipboard doesn't work on build agent. Commented out this validation.
     # When the user clicks click to copy button
-    # Then the autologin link is copied to the clipboard
+    # Then the login link is copied to the clipboard
     And the user views introductions and links for "Access", "Directory", "File service", "Status", "Events" and "Notifications"
     When the user clicks "Access" link
     Then the user is directed to "Access" page
@@ -92,5 +91,43 @@ Feature: Tenant admin
     Then the user views a message stating the user needs administrator role for the tenant to access the app and that they can contact the tenant creator of "env{realmOwner}"
     Then the user should not have regular admin view
 
-
-
+  @TEST_CS-715 @REQ_CS-254 @regression
+  Scenario: Test As a service owner, I can search the event log, so I can find events of interest
+    Given a service owner user is on tenant admin page
+    #//First create an event definition under events it will be used to verify the event log
+    When the user selects the "Events" menu item
+    And the user selects "Definitions" tab for "Events"
+    And the user clicks Add definition button
+    Then the user views Add definition dialog
+    When the user enters "Autotest" in Namespace, "Autotest-eventDefinition" in Name, "event log testing" in Description
+    And the user clicks Save button on Definition modal
+    Then the user "views" an event definition of "Autotest-eventDefinition" and "event log testing" under "Autotest"
+    #//Test event log
+    When the user selects the "Event log" menu item
+    Then the "Event log" landing page is displayed
+    When the user searches with "configuration-service:configuration-updated"
+    Then the user views the events matching the search filter of "configuration-service:configuration-updated"
+    When the user clicks Load more button
+    Then the user views more events matching the search filter of "configuration-service:configuration-updated"
+    When the user resets event log views
+    And the user searches with "now-5mins" as minimum timestamp, "now+5mins" as maximum timestamp
+    Then the user views the events matching the search filter of "now-5mins" as min and "now+5mins" as max timestamps
+    When the user resets event log views
+    And the user searches with "now-5mins" as minimum timestamp
+    Then the user views the events matching the search filter of "now-5mins" as min timestamp
+    When the user resets event log views
+    And the user searches with "now+5mins" as maximum timestamp
+    Then the user views the events matching the search filter of "now+5mins" as maximum timestamp
+    When the user resets event log views
+    And the user searches with "configuration-service:configuration-updated", "now-5mins" as minimum timestamp, "now+5mins" as maximum timestamp
+    Then the user views the events matching the search filter of "configuration-service:configuration-updated", and timestamp value between "now-5mins" as min and "now+5mins" as max timestamps
+    When the user resets event log views
+    Then the user views that search fields are empty
+    And the user views that the event log is no longer filtered by "configuration-service:configuration-updated", "now-5mins", "now+5mins"
+    #//Last the user deletes the event at the end of the test
+    When the user selects the "Events" menu item
+    And the user selects "Definitions" tab for "Events"
+    When the user clicks "Delete" button for the definition of "Autotest-eventDefinition" and "event log testing" under "Autotest"
+    Then the user views Delete definition dialog for the definition of "Autotest-eventDefinition"
+    And the user clicks Confirm button
+    Then the user "should not view" an event definition of "Autotest-eventDefinition" and "event log testing" under "Autotest"

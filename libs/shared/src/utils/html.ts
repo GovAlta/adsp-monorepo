@@ -1,3 +1,15 @@
-export const hasProperHtmlWrapper = (content: string): boolean => {
-  return content.startsWith('<!doctype html>') || content.startsWith('<html>');
+import { getHeaderPreview, getFooterPreview } from '../events';
+const hasProperHtmlWrapper = (content: string): boolean => {
+  const hasHtmlOpeningTag = /<html[^>]*>/g.test(content) || /<HTML[^>]*>/g.test(content);
+  const hasHtmlClosingTag = /<\/html[^>]*>/g.test(content) || /<\/HTML[^>]*>/g.test(content);
+  return hasHtmlOpeningTag && hasHtmlClosingTag;
+};
+
+export const getTemplateBody = (body: string) => {
+  if (!hasProperHtmlWrapper(body)) {
+    body = body.includes('<style') ? `<style scoped>${body}</style>` : body;
+    return `<!doctype html><html>${getHeaderPreview()}<div style="padding: 3rem 11rem;">${body}</div>${getFooterPreview()}</html>`;
+  }
+
+  return body;
 };

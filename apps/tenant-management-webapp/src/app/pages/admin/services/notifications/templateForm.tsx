@@ -30,6 +30,8 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
 }) => {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
+  const eventTemplateEditHintText =
+    "*GOA default header and footer wrapper is applied if the template doesn't include proper <html> opening and closing tags";
 
   useEffect(() => {
     if (selectedEvent) {
@@ -105,7 +107,7 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
             </MonacoDiv>
           </GoAFormItem>
 
-          <GoAFormItem>
+          <GoAFormItem helpText={eventTemplateEditHintText}>
             <MonacoDiv>
               <MonacoEditor
                 data-testid="templateForm-body"

@@ -34,35 +34,9 @@ export class MongoTenantRepository implements TenantRepository {
     );
   }
 
-  async issuers(): Promise<string[]> {
-    const issuers = await this.tenantModel.find().select('tokenIssuer');
-
-    if (issuers) {
-      return Promise.resolve(
-        issuers.map((issuerObj) => issuerObj.tokenIssuer).filter((tokenIssuer) => tokenIssuer !== undefined)
-      );
-    } else {
-      return Promise.resolve([]);
-    }
-  }
-
-  async validateIssuer(issuer: string): Promise<boolean> {
-    const isExisted = await this.tenantModel.exists({ tokenIssuer: issuer });
-    return Promise.resolve(isExisted);
-  }
-
   async isTenantAdmin(email: string): Promise<boolean> {
     const tenant = await this.tenantModel.findOne({ adminEmail: email }).populate('createdBy');
     return Promise.resolve(tenant !== null);
-  }
-
-  async fetchRealmToNameMapping(): Promise<Record<string, string>> {
-    const docs = await this.find();
-    const mapping = {};
-    for (const tenant of docs) {
-      mapping[tenant.realm] = tenant.name;
-    }
-    return Promise.resolve(mapping);
   }
 
   async findBy(filter: Record<string, string | { $regex: string; $options: 'i' }>): Promise<TenantEntity> {
@@ -82,7 +56,7 @@ export class MongoTenantRepository implements TenantRepository {
   }
 
   async findByName(name: string): Promise<Tenant> {
-    const tenant = await this.tenantModel.findOne({ name: { $regex: '^' + name + '\\b', $options: 'i' } });
+    const tenant = await this.tenantModel.findOne({ name: { $regex: '^' + name + '$', $options: 'i' } });
     return tenant;
   }
 

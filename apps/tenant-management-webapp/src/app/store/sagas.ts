@@ -1,4 +1,4 @@
-import { all, takeEvery } from 'redux-saga/effects';
+import { all, takeEvery, takeLatest } from 'redux-saga/effects';
 
 // Sagas
 import { fetchAccess } from './access/sagas';
@@ -20,12 +20,14 @@ import { fetchTenantConfig, createTenantConfig, updateTenantConfig } from './ten
 import {
   deleteApplication,
   fetchServiceStatusApps,
+  fetchStatusMetrics,
   saveApplication,
   setApplicationStatus,
   toggleApplicationStatus,
 } from './status/sagas';
 import { watchEventSagas } from './event/sagas';
 import { watchFileSagas } from './file/sagas';
+import { fetchDirectory } from './directory/sagas';
 import { watchNotificationSagas } from './notification/sagas';
 import { watchSubscriptionSagas } from './subscription/sagas';
 
@@ -45,8 +47,9 @@ import {
   TENANT_LOGOUT,
   FETCH_REALM_ROLES,
 } from './tenant/actions';
+import { FETCH_DIRECTORY } from './directory/actions';
 import { FETCH_TENANT_CONFIG, CREATE_TENANT_CONFIG, UPDATE_TENANT_CONFIG } from './tenantConfig/actions';
-import { DELETE_APPLICATION_ACTION, FETCH_SERVICE_STATUS_APPS_ACTION, SAVE_APPLICATION_ACTION } from './status/actions';
+import { DELETE_APPLICATION_ACTION, FETCH_SERVICE_STATUS_APPS_ACTION, FETCH_STATUS_METRICS_ACTION, SAVE_APPLICATION_ACTION } from './status/actions';
 import { SAVE_NOTICE_ACTION, GET_NOTICES_ACTION, DELETE_NOTICE_ACTION } from './notice/actions';
 import { saveNotice, getNotices, deleteNotice } from './notice/sagas';
 import { SET_APPLICATION_STATUS_ACTION } from './status/actions/setApplicationStatus';
@@ -77,12 +80,15 @@ export function* watchSagas() {
   yield takeEvery(TENANT_ADMIN_LOGIN, tenantAdminLogin);
   yield takeEvery(TENANT_CREATION_LOGIN_INIT, tenantCreationInitLogin);
 
+  //directory
+  yield takeEvery(FETCH_DIRECTORY, fetchDirectory);
   // service status
   yield takeEvery(FETCH_SERVICE_STATUS_APPS_ACTION, fetchServiceStatusApps);
   yield takeEvery(SAVE_APPLICATION_ACTION, saveApplication);
   yield takeEvery(DELETE_APPLICATION_ACTION, deleteApplication);
   yield takeEvery(SET_APPLICATION_STATUS_ACTION, setApplicationStatus);
   yield takeEvery(TOGGLE_APPLICATION_STATUS_ACTION, toggleApplicationStatus);
+  yield takeLatest(FETCH_STATUS_METRICS_ACTION, fetchStatusMetrics);
 
   // notices
   yield takeEvery(SAVE_NOTICE_ACTION, saveNotice);

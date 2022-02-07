@@ -26,6 +26,7 @@ interface TenantsResponse {
 export interface TenantService {
   getTenants(): Promise<Tenant[]>;
   getTenant(tenantId: AdspId): Promise<Tenant>;
+  getTenantByName(name: string): Promise<Tenant>;
 }
 
 export class TenantServiceImpl implements TenantService {
@@ -35,6 +36,8 @@ export class TenantServiceImpl implements TenantService {
     stdTTL: 36000,
     useClones: false,
   });
+
+  #tenantNames: Record<string, AdspId> = {};
 
   constructor(
     private readonly logger: Logger,
@@ -67,7 +70,7 @@ export class TenantServiceImpl implements TenantService {
     const tenantsUrl = new URL('v2/tenants', tenantServiceUrl);
 
     try {
-      const tenants = await retry(async (next, count) => {
+      const tenants: Tenant[] = await retry(async (next, count) => {
         try {
           return await this.#tryRetrieveTenants(tenantsUrl, count);
         } catch (err) {
@@ -80,6 +83,7 @@ export class TenantServiceImpl implements TenantService {
         tenants.forEach((t) => {
           const key = `${t.id}`;
           this.#tenants.set(key, t);
+          this.#tenantNames[t.name.toLowerCase()] = t.id;
           this.logger.debug(`Cached tenant '${key}' -> ${t.name} (${t.realm})`, this.LOG_CONTEXT);
         });
       }
@@ -117,6 +121,7 @@ export class TenantServiceImpl implements TenantService {
 
       if (tenant) {
         this.#tenants.set(`${tenant.id}`, tenant);
+        this.#tenantNames[tenant.name.toLowerCase()] = tenant.id;
         this.logger.debug(`Cached tenant '${tenant.id}' -> ${tenant.name} (${tenant.realm})`, this.LOG_CONTEXT);
       }
 
@@ -141,5 +146,11 @@ export class TenantServiceImpl implements TenantService {
     const tenant = this.#tenants.get<Tenant>(cacheKey) || (await this.#retrieveTenant(tenantId));
 
     return tenant;
+  };
+
+  getTenantByName = async (name: string): Promise<Tenant> => {
+    const tenantId = name && this.#tenantNames[name.toLowerCase()];
+
+    return tenantId ? this.getTenant(tenantId) : null;
   };
 }

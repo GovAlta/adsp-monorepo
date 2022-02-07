@@ -10,7 +10,13 @@ export interface EventLogEntry {
   namespace: string;
   name: string;
   timestamp: Date;
+  correlationId?: string;
   details: Record<string, unknown>;
+}
+
+export interface EventMetrics {
+  totalEvents?: number;
+  avgPerDay?: number;
 }
 
 export interface EventState {
@@ -22,13 +28,15 @@ export interface EventState {
     definitions: boolean;
     log: boolean;
   };
+  metrics: EventMetrics;
 }
 
 export interface EventSearchCriteria {
-  timestampMax: string;
-  timestampMin: string;
-  namespace: string;
-  name: string;
+  timestampMax?: string;
+  timestampMin?: string;
+  namespace?: string;
+  name?: string;
+  correlationId?: string;
 }
 
 export const defaultEventDefinition: EventDefinition = {

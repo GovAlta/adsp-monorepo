@@ -5,15 +5,17 @@ export interface NotificationItem {
   subscriberRoles: string[];
   id: string;
   publicSubscribe: boolean;
+  customized?: boolean;
 }
 
-export type NotificationType = Record<string, NotificationItem>
+export type NotificationType = Record<string, NotificationItem>;
 
 export interface EventItem {
   name: string;
   namespace?: string;
   templates?: Template;
   channels?: string[];
+  customized?: boolean;
 }
 
 export interface Template {
@@ -37,14 +39,21 @@ export interface RequestBodySchema {
   };
 }
 
-export interface NotificationService {
-  notificationList: NotificationType;
-  notificationTypes: NotificationType | undefined;
-  core: NotificationType
+export interface NotificationMetrics {
+  notificationsSent?: number;
+  notificationsFailed?: number;
 }
 
-export const NOTIFICATION_INIT: NotificationService = {
+export interface NotificationState {
+  notificationList: NotificationType;
+  notificationTypes: NotificationType | undefined;
+  core: NotificationType;
+  metrics: NotificationMetrics;
+}
+
+export const NOTIFICATION_INIT: NotificationState = {
   notificationList: {},
   notificationTypes: undefined,
   core: {},
+  metrics: {},
 };

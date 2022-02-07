@@ -10,33 +10,18 @@
     "importHelpers": true,
     "target": "es2015",
     "module": "esnext",
-    "typeRoots": [
-      "node_modules/@types"
-    ],
-    "lib": [
-      "es2017",
-      "dom"
-    ],
+    "typeRoots": ["node_modules/@types"],
+    "lib": ["es2017", "dom"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@abgov/adsp-service-sdk": [
-        "libs/adsp-service-sdk/src/index.ts"
-      ],
-      "@core-services/core-common": [
-        "libs/core-common/src/index.ts"
-      ],
-      "@core-services/core-common/mongo": [
-        "libs/core-common/src/mongo/index.ts"
-      ],
-      "@core-services/stylesheets": [
-        "libs/stylesheets/scss/src/index.ts"
-      ]
+      "@abgov/adsp-service-sdk": ["libs/adsp-service-sdk/src/index.ts"],
+      "@core-services/core-common": ["libs/core-common/src/index.ts"],
+      "@core-services/core-common/mongo": ["libs/core-common/src/mongo/index.ts"],
+      "@core-services/shared": ["libs/shared/src/index.ts"],
+      "@core-services/stylesheets": ["libs/stylesheets/scss/src/index.ts"]
     }
   },
-  "exclude": [
-    "node_modules",
-    "tmp"
-  ]
+  "exclude": ["node_modules", "tmp"]
 }

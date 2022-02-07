@@ -62,6 +62,8 @@ async function initializeApp(): Promise<express.Application> {
       tenantService: {
         getTenant: (tenantId) => tenantService.getTenant(repositories.tenantRepository, tenantId),
         getTenants: () => tenantService.getTenants(repositories.tenantRepository),
+        // Note: There is no need for an implementation of this capability in tenant admin service itself for now.
+        getTenantByName: () => null,
       },
     }
   );

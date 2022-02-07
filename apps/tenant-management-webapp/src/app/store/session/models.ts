@@ -1,3 +1,8 @@
+export interface Indicator {
+  show: boolean;
+  message?: string;
+}
+
 export interface Session {
   authenticated?: boolean;
   clientId?: string;
@@ -23,9 +28,9 @@ export interface Credentials {
   refreshTokenExp?: number;
 }
 
-export interface Indicator {
-  show: boolean;
-  message?: string
-}
-
-export const SESSION_INIT: Session = {};
+export const SESSION_INIT: Session = {
+  indicator: {
+    show: false,
+    message: '',
+  },
+};

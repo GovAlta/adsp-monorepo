@@ -1,7 +1,6 @@
 import { put, select, call } from 'redux-saga/effects';
 import { RootState } from '@store/index';
-import { ApplicationApi } from './api';
-import { ServiceTokenApi } from './serviceTokenApi';
+import { ApplicationApi, SubscriberApi } from './api';
 import {
   fetchApplicationsSuccess,
   FetchApplicationsAction,
@@ -13,6 +12,7 @@ import { parseNotices, bindApplicationsWithNotices } from './models';
 import { addErrorMessage, updateIsReady, updateTenantName } from '@store/session/actions';
 import { SagaIterator } from '@redux-saga/core';
 import { toTenantName } from './models';
+import { ConfigState, RecaptchaService } from '@store/config/models';
 
 export function* fetchApplications(action: FetchApplicationsAction): SagaIterator {
   const rootState: RootState = yield select();
@@ -46,37 +46,24 @@ export function* fetchApplications(action: FetchApplicationsAction): SagaIterato
 }
 
 export function* subscribeToTenant(action: SubscribeToTenantAction): SagaIterator {
-  const rootState: RootState = yield select();
-  const { email, tenant, type } = action.payload;
-
-  const baseUrl = rootState.config.keycloakUrl;
-  const clientSecret = rootState.config.clientSecret;
-  const notificationUrl = rootState.config.serviceUrls?.notificationServiceUrl;
+  const { email, tenant } = action.payload;
 
   try {
-    const keyCloak = new ServiceTokenApi(baseUrl, clientSecret);
+    const configState: ConfigState = yield select((state: RootState) => state.config);
 
-    const token = yield call([keyCloak, keyCloak.getToken]);
-
-    const subscriberApi = new ServiceTokenApi(notificationUrl, clientSecret);
-
-    subscriberApi.setToken(token.access_token);
-
-    const subscribeResponse = yield call([subscriberApi, subscriberApi.subscribe], tenant, email, type);
-
-    yield put(subscribeToTenantSuccess(subscribeResponse?.subscriber));
-  } catch (e) {
-    console.error(e.message);
-    if (JSON.parse(e.message).codeName === 'DuplicateKey') {
-      yield put(
-        subscribeToTenantSuccess({
-          addressAs: '',
-          tenantId: `urn:ads:platform:tenant-service:v2:/tenants/${tenant}`,
-          channels: [{ channel: 'email', address: email }],
-        })
-      );
-    } else {
-      yield put(addErrorMessage({ message: e.message }));
+    let token = null;
+    const grecaptcha = configState.grecaptcha;
+    if (grecaptcha) {
+      token = yield call([grecaptcha, grecaptcha.execute], configState.recaptchaKey, {
+        action: 'subscribe_status',
+      });
     }
+
+    const subscriberApi = new SubscriberApi('/api/subscriber/v1');
+    const subscriber = yield call([subscriberApi, subscriberApi.subscribe], tenant, email, token);
+
+    yield put(subscribeToTenantSuccess(subscriber));
+  } catch (e) {
+    yield put(addErrorMessage({ message: e.message }));
   }
 }

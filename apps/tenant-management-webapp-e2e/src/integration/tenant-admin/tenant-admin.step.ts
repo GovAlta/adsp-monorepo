@@ -1,11 +1,13 @@
 import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import tenantAdminPage from './tenant-admin.page';
+import dayjs = require('dayjs');
 
 const tenantAdminObj = new tenantAdminPage();
 let responseObj: Cypress.Response<any>;
+let numOfRows: number;
 
 Given('the user goes to tenant management login link', function () {
-  const urlToTenantLogin = Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/autologin?kc_idp_hint=';
+  const urlToTenantLogin = Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/login?kc_idp_hint=';
   cy.visit(urlToTenantLogin);
   cy.wait(2000); // Wait all the redirects to settle down
 });
@@ -364,10 +366,10 @@ Then('the user views the release info and DIO contact info', function () {
     });
 });
 
-Then('the user views the autologin link with a copy button', function () {
+Then('the user views the login link with a copy button', function () {
   tenantAdminObj
     .tenantAutoLoginUrl()
-    .should('contain.text', Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/autologin');
+    .should('contain.text', Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/login');
   tenantAdminObj.clickToCopyButton().then((button) => {
     expect(button.length).to.be.gt(0); // button element exists
   });
@@ -378,8 +380,8 @@ When('the user clicks click to copy button', function () {
   cy.wait(2000);
 });
 
-Then('the autologin link is copied to the clipboard', function () {
-  cy.task('getClipboard').should('eq', Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/autologin');
+Then('the login link is copied to the clipboard', function () {
+  cy.task('getClipboard').should('eq', Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/login');
 });
 
 Then(
@@ -463,3 +465,336 @@ Then(
 Then('the user should not have regular admin view', function () {
   tenantAdminObj.dashboardServicesMenuCategory().should('not.exist');
 });
+
+When('the user searches with {string}', function (namespaceName) {
+  tenantAdminObj.eventLogSearchBox().click();
+  tenantAdminObj.eventLogSearchBox().type(namespaceName);
+  tenantAdminObj.eventLogSearchBox().should('have.value', namespaceName);
+  tenantAdminObj.eventLogSearchBtn().click();
+  cy.wait(2000);
+});
+
+Then('the user views the events matching the search filter of {string}', function (namespaceName) {
+  tenantAdminObj.eventTableBody().each(($row) => {
+    cy.wrap($row).within(() => {
+      cy.get('td').each(($col) => {
+        if ($col.eq(2).text() == namespaceName.split(':')[0]) {
+          expect($col.eq(2).text()).to.equal(namespaceName.split(':')[0]);
+        }
+        if ($col.eq(3).text() == namespaceName.split(':')[1]) {
+          expect($col.eq(3).text()).to.equal(namespaceName.split(':')[1]);
+        }
+      });
+    });
+  });
+});
+
+When('the user clicks Load more button', function () {
+  // count numbers of row in the table before clicking Load more...
+  tenantAdminObj
+    .eventTableBody()
+    .find('tr')
+    .then((elm) => {
+      numOfRows = Number(elm.length);
+    });
+  tenantAdminObj.eventLoadMoreBtn().click();
+  cy.wait(4000);
+});
+
+Then('the user views more events matching the search filter of {string}', function (namespaceName) {
+  // count numbers of row in the table after clicking Load more... than compare the count
+  tenantAdminObj
+    .eventTableBody()
+    .find('tr')
+    .then((tableRowsAfterLoadMore) => {
+      expect(tableRowsAfterLoadMore.length).to.be.gt(numOfRows);
+    });
+
+  tenantAdminObj.eventTableBody().each(($row) => {
+    cy.wrap($row).within(() => {
+      cy.get('td').each(($col) => {
+        if ($col.eq(2).text() == namespaceName.split(':')[0]) {
+          expect($col.eq(2).text()).to.equal(namespaceName.split(':')[0]);
+        }
+        if ($col.eq(3).text() == namespaceName.split(':')[1]) {
+          expect($col.eq(3).text()).to.equal(namespaceName.split(':')[1]);
+        }
+      });
+    });
+  });
+});
+
+//dayjs is date time utility to format the date time
+//replace "now-5mins" with "2022-01-09T04:02" to input absolute timestamp as static date and time
+//checking and converting datetime into the string to check if it is static time or now-+mins format
+//in case if it is static
+function timestampUtil(dateTime) {
+  if (
+    String(dateTime).match(/[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/)
+  ) {
+    //if static datetime used as an input, use following format "2022-01-07T04:02"
+    return dateTime;
+  } else if (String(dateTime).match(/now([-+])([0-9]+)mins/)) {
+    //if it is not static datetime we need to parse to match input field +- mins, use following format "now+-5mins"
+    const addedMins = String(dateTime).substring(
+      String(dateTime).search(/([+-])([0-9])/),
+      String(dateTime).search(/mins/)
+    );
+    const minInput = addedMins.replace(/([a-zA-Z])/g, '');
+    const minChange = parseInt(minInput);
+    const finalTime = dayjs().add(minChange, 'minutes').format('YYYY-MM-DD HH:mm'); //it will add or subtract
+    const finalDate = finalTime.split(' ')[0] + 'T' + finalTime.split(' ')[1];
+    return finalDate;
+  } else {
+    expect(String(dateTime)).to.match(
+      /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
+    );
+  }
+}
+
+When('the user searches with {string} as minimum timestamp, {string} as maximum timestamp', function (submin, addmin) {
+  //for example replace "now-+5mins" with "2022-01-09T04:02" to input absolute timestamp as static date and time
+  expect(submin).to.match(
+    /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
+  );
+  expect(addmin).to.match(
+    /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
+  );
+  const timestampMin = timestampUtil(submin);
+  const timestampMax = timestampUtil(addmin);
+
+  cy.log(timestampMin);
+  cy.log(timestampMax);
+
+  tenantAdminObj.eventLogMinTimeStamp().type(timestampMin);
+  tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
+  tenantAdminObj.eventLogSearchBtn().click();
+  cy.wait(2000);
+});
+
+Then(
+  'the user views the events matching the search filter of {string} as min and {string} as max timestamps',
+  function (minTimestamp, maxTimestamp) {
+    expect(minTimestamp).to.match(
+      /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
+    );
+    expect(maxTimestamp).to.match(
+      /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
+    );
+    const userMinTimestamp = timestampUtil(minTimestamp);
+    const userMaxTimestamp = timestampUtil(maxTimestamp);
+    //checking each element from the first column
+    tenantAdminObj
+      .eventTableBody()
+      .find('td:nth-child(2)')
+      .each(($elem) => {
+        const tableDateTime = $elem.text();
+        const tableLastSlash = tableDateTime.lastIndexOf('/');
+        const tableDate = tableDateTime.substring(0, tableLastSlash + 5);
+        const tableTime = tableDateTime.substring(tableLastSlash + 5, tableDateTime.length + 1);
+        const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
+        const tableMinTimestamp = dayjs(
+          String(userMinTimestamp).split('T')[0] + ' ' + String(userMinTimestamp).split('T')[1],
+          'YYYY-MM-DD hh:mm'
+        );
+        const tableMaxTimestamp = dayjs(
+          userMaxTimestamp.split('T')[0] + ' ' + userMaxTimestamp.split('T')[1],
+          'YYYY-MM-DD hh:mm'
+        );
+        //comparing table timestamp with the min and max values
+        expect(parseInt(parseDateTime + '')).to.be.gt(parseInt(tableMinTimestamp + ''));
+        expect(parseInt(parseDateTime + '')).to.be.lt(parseInt(tableMaxTimestamp + ''));
+      });
+  }
+);
+
+When('the user searches with {string} as minimum timestamp', function (submin) {
+  const timestampMin = timestampUtil(submin);
+  cy.log(timestampMin);
+
+  tenantAdminObj.eventLogMinTimeStamp().type(timestampMin);
+  tenantAdminObj.eventLogSearchBtn().click();
+  cy.wait(2000);
+});
+
+Then('the user views the events matching the search filter of {string} as min timestamp', function (minTimestamp) {
+  expect(minTimestamp).to.match(
+    /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
+  );
+  const userTimestamp = timestampUtil(minTimestamp);
+  //checking each element from the first column
+  tenantAdminObj
+    .eventTableBody()
+    .find('td:nth-child(2)')
+    .each(($elem) => {
+      const tableDateTime = $elem.text();
+      const tableLastSlash = tableDateTime.lastIndexOf('/');
+      const tableDate = tableDateTime.substring(0, tableLastSlash + 5);
+      const tableTime = tableDateTime.substring(tableLastSlash + 5, tableDateTime.length + 1);
+      const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
+      const tableTimestamp = dayjs(
+        String(userTimestamp).split('T')[0] + ' ' + String(userTimestamp).split('T')[1],
+        'YYYY-MM-DD hh:mm'
+      );
+      expect(parseInt(parseDateTime + '')).to.be.gte(parseInt(tableTimestamp + ''));
+    });
+});
+
+When('the user searches with {string} as maximum timestamp', function (addmin) {
+  const timestampMax = timestampUtil(addmin);
+  cy.log(timestampMax);
+
+  tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
+  tenantAdminObj.eventLogSearchBtn().click();
+  cy.wait(2000);
+});
+
+Then('the user views the events matching the search filter of {string} as maximum timestamp', function (maxTimestamp) {
+  expect(maxTimestamp).to.match(
+    /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
+  );
+  const userTimestamp = timestampUtil(maxTimestamp);
+  //checking each element from the first column
+  tenantAdminObj
+    .eventTableBody()
+    .find('td:nth-child(2)')
+    .each(($elem) => {
+      const tableDateTime = $elem.text();
+      const tableLastSlash = tableDateTime.lastIndexOf('/');
+      const tableDate = tableDateTime.substring(0, tableLastSlash + 5);
+      const tableTime = tableDateTime.substring(tableLastSlash + 5, tableDateTime.length + 1);
+      const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
+      const tableTimestamp = dayjs(
+        String(userTimestamp).split('T')[0] + ' ' + String(userTimestamp).split('T')[1],
+        'YYYY-MM-DD hh:mm'
+      );
+      expect(parseInt(parseDateTime + '')).to.be.lte(parseInt(tableTimestamp + ''));
+    });
+});
+
+When(
+  'the user searches with {string}, {string} as minimum timestamp, {string} as maximum timestamp',
+  function (namespaceName, submin, addmin) {
+    tenantAdminObj.eventLogSearchBox().click();
+    tenantAdminObj.eventLogSearchBox().type(namespaceName);
+
+    const timestampMin = timestampUtil(submin);
+    const timestampMax = timestampUtil(addmin);
+
+    cy.log(timestampMin);
+    cy.log(timestampMax);
+
+    tenantAdminObj.eventLogMinTimeStamp().type(timestampMin);
+    tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
+    tenantAdminObj.eventLogSearchBtn().click();
+    cy.wait(2000);
+  }
+);
+
+Then(
+  'the user views the events matching the search filter of {string}, and timestamp value between {string} as min and {string} as max timestamps',
+  function (namespaceName, minTimestamp, maxTimestamp) {
+    tenantAdminObj.eventTableBody().each(($row) => {
+      cy.wrap($row).within(() => {
+        cy.get('td').each(($col) => {
+          if ($col.eq(2).text() == namespaceName.split(':')[0]) {
+            expect($col.eq(2).text()).to.equal(namespaceName.split(':')[0]);
+          }
+          if ($col.eq(3).text() == namespaceName.split(':')[1]) {
+            expect($col.eq(3).text()).to.equal(namespaceName.split(':')[1]);
+          }
+        });
+      });
+    });
+    expect(minTimestamp).to.match(
+      /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
+    );
+    expect(maxTimestamp).to.match(
+      /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
+    );
+    const userMinTimestamp = timestampUtil(minTimestamp);
+    const userMaxTimestamp = timestampUtil(maxTimestamp);
+    //checking each element from the first column
+    tenantAdminObj
+      .eventTableBody()
+      .find('td:nth-child(2)')
+      .each(($elem) => {
+        const tableDateTime = $elem.text();
+        const tableLastSlash = tableDateTime.lastIndexOf('/');
+        const tableDate = tableDateTime.substring(0, tableLastSlash + 5);
+        const tableTime = tableDateTime.substring(tableLastSlash + 5, tableDateTime.length + 1);
+        const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
+        const tableMinTimestamp = dayjs(
+          String(userMinTimestamp).split('T')[0] + ' ' + String(userMinTimestamp).split('T')[1],
+          'YYYY-MM-DD hh:mm'
+        );
+        const tableMaxTimestamp = dayjs(
+          userMaxTimestamp.split('T')[0] + ' ' + userMaxTimestamp.split('T')[1],
+          'YYYY-MM-DD hh:mm'
+        );
+        expect(parseInt(parseDateTime + '')).to.be.gt(parseInt(tableMinTimestamp + ''));
+        expect(parseInt(parseDateTime + '')).to.be.lt(parseInt(tableMaxTimestamp + ''));
+      });
+  }
+);
+
+Then('the user resets event log views', function () {
+  tenantAdminObj.eventLogResetBtn().click();
+  cy.wait(2000);
+});
+
+Then('the user views that search fields are empty', function () {
+  tenantAdminObj.eventLogSearchBox().should('have.value', '');
+  tenantAdminObj.eventLogMinTimeStamp().should('have.value', '');
+  tenantAdminObj.eventLogMaxTimesStamp().should('have.value', '');
+});
+
+Then(
+  'the user views that the event log is no longer filtered by {string}, {string}, {string}',
+  function (namespaceName, minTimestamp, maxTimestamp) {
+    expect(minTimestamp).to.match(
+      /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
+    );
+    expect(maxTimestamp).to.match(
+      /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
+    );
+    const userMinTimestamp = timestampUtil(minTimestamp);
+    const userMaxTimestamp = timestampUtil(maxTimestamp);
+
+    //checking all rows in the following columns: 1, 2, 3 in the even log table
+    tenantAdminObj
+      .eventTableBody()
+      .find('tr')
+      .each(($row) => {
+        const tableTimestamp = $row.find('td').eq(1).text();
+        const tableNamespace = $row.find('td').eq(2).text();
+        const tableName = $row.find('td').eq(3).text();
+
+        const tableLastSlash = tableTimestamp.lastIndexOf('/');
+        const tableDate = tableTimestamp.substring(0, tableLastSlash + 5);
+        const tableTime = tableTimestamp.substring(tableLastSlash + 5, tableTimestamp.length + 1);
+        const parseDateTime = dayjs(tableDate + ' ' + tableTime, 'MM/DD/YYYY HH:mm:ss A');
+        const tableMinTimestamp = dayjs(
+          String(userMinTimestamp).split('T')[0] + ' ' + String(userMinTimestamp).split('T')[1],
+          'YYYY-MM-DD hh:mm'
+        );
+        const tableMaxTimestamp = dayjs(
+          String(userMaxTimestamp).split('T')[0] + ' ' + userMaxTimestamp.split('T')[1],
+          'YYYY-MM-DD hh:mm'
+        );
+        if (
+          !tableNamespace.includes(namespaceName.split(':')[0]) ||
+          !tableName.includes(namespaceName.split(':')[1]) ||
+          !(parseInt(parseDateTime + '') >= parseInt(tableMinTimestamp + '')) ||
+          !(parseInt(parseDateTime + '') <= parseInt(tableMaxTimestamp + ''))
+        ) {
+          cy.wrap('Reset succeeded').as('errormsg');
+          return false;
+        }
+        cy.wrap('Reset failed').as('errormsg');
+      });
+    cy.get('@errormsg').then((logmsg) => {
+      expect(String(logmsg)).to.be.equal('Reset succeeded');
+    });
+  }
+);

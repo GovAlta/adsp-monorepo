@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { select, call, put, takeEvery } from 'redux-saga/effects';
+import { select, call, put, takeEvery, takeLatest } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { RootState } from '..';
 import {
@@ -7,8 +7,10 @@ import {
   DELETE_EVENT_DEFINITION_ACTION,
   FetchEventDefinitionsAction,
   FetchEventLogEntriesAction,
+  fetchEventMetricsSucceeded,
   FETCH_EVENT_DEFINITIONS_ACTION,
   FETCH_EVENT_LOG_ENTRIES_ACTION,
+  FETCH_EVENT_METRICS_ACTION,
   getEventDefinitionsSuccess,
   getEventLogEntriesSucceeded,
   UpdateEventDefinitionAction,
@@ -16,8 +18,17 @@ import {
   UPDATE_EVENT_DEFINITION_ACTION,
 } from './actions';
 import { SagaIterator } from '@redux-saga/core';
+import { UpdateIndicator } from '@store/session/actions';
+import moment from 'moment';
 
 export function* fetchEventDefinitions(action: FetchEventDefinitionsAction): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading...',
+    })
+  );
+
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
@@ -55,8 +66,18 @@ export function* fetchEventDefinitions(action: FetchEventDefinitionsAction): Sag
       }, []);
 
       yield put(getEventDefinitionsSuccess([...tenantDefinitions, ...serviceDefinitions]));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
     } catch (err) {
       yield put(ErrorNotification({ message: err.message }));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
     }
   }
 }
@@ -170,16 +191,71 @@ export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaI
         const minDate = new Date(action.searchCriteria.timestampMin);
         eventUrl = `${eventUrl}&timestampMin=${minDate.toUTCString()}`;
       }
+      if (action.searchCriteria.correlationId) {
+        eventUrl = `${eventUrl}&correlationId=${action.searchCriteria.correlationId}`;
+      }
     }
 
     try {
+      yield put(
+        UpdateIndicator({
+          show: true,
+          message: 'Loading',
+        })
+      );
       const { data } = yield call(axios.get, eventUrl, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       yield put(getEventLogEntriesSucceeded(data['event-service']['event'], data.page.after, data.page.next));
+
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
     } catch (err) {
       yield put(ErrorNotification({ message: err.message }));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    }
+  }
+}
+
+interface MetricResponse {
+  values: { sum: string }[];
+}
+
+export function* fetchEventMetrics(): SagaIterator {
+  const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  if (baseUrl && token) {
+    try {
+      const criteria = JSON.stringify({
+        intervalMax: moment().toISOString(),
+        intervalMin: moment().startOf('week').toISOString(),
+      });
+
+      const { data }: { data: MetricResponse } = yield call(
+        axios.get,
+        `${baseUrl}/value/v1/event-service/values/event/metrics/total:count?interval=daily&criteria=${criteria}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const sum = data.values.reduce((s, v) => parseInt(v.sum) + s, 0) || 0;
+
+      yield put(
+        fetchEventMetricsSucceeded({
+          totalEvents: sum,
+          avgPerDay: data.values.length ? sum / data.values.length : 0,
+        })
+      );
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationMetrics` }));
     }
   }
 }
@@ -189,4 +265,5 @@ export function* watchEventSagas(): Generator {
   yield takeEvery(FETCH_EVENT_LOG_ENTRIES_ACTION, fetchEventLogEntries);
   yield takeEvery(UPDATE_EVENT_DEFINITION_ACTION, updateEventDefinition);
   yield takeEvery(DELETE_EVENT_DEFINITION_ACTION, deleteEventDefinition);
+  yield takeLatest(FETCH_EVENT_METRICS_ACTION, fetchEventMetrics);
 }

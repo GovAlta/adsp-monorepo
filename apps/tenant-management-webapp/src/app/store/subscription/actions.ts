@@ -20,6 +20,8 @@ export const GET_SUBSCRIBER_SUBSCRIPTIONS = 'tenant/subscriber-service/get-subsc
 export const GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS = 'tenant/subscriber-service/get-subscription-subscriber-success';
 export const TRIGGER_VISIBILITY_SUBSCRIBER = 'tenant/subscriber-service/make-visible';
 export const RESET_VISIBILITY_IN_SUBSCRIBERS = 'tenant/subscriber-service/reset-visibility';
+export const EMAIL_EXISTS = 'tenant/subscriber-service/email-exists';
+export const RESET_UPDATE_ERRORS = 'tenant/subscriber-service/reset-update-errors';
 
 // =============
 // Actions Types
@@ -40,7 +42,9 @@ export type ActionTypes =
   | GetTypeSubscriptionSuccessAction
   | GetSubscriberSubscriptionsSuccessAction
   | TriggerVisibilitySubscribersServiceAction
-  | ResetVisibilityInSubscribersServiceAction;
+  | ResetVisibilityInSubscribersServiceAction
+  | EmailExistsAction
+  | ResetUpdateErrorsAction;
 
 export interface SubscribeSubscriberServiceAction {
   type: typeof SUBSCRIBE_SUBSCRIBER;
@@ -89,6 +93,17 @@ export interface GetSubscriptionSuccessAction {
   };
 }
 
+export interface ResetUpdateErrorsAction {
+  type: typeof RESET_UPDATE_ERRORS;
+}
+
+export interface EmailExistsAction {
+  type: typeof EMAIL_EXISTS;
+  payload: {
+    email: string;
+  };
+}
+
 export interface GetSubscriptionsSuccessAction {
   type: typeof GET_SUBSCRIPTIONS_SUCCESS;
   payload: {
@@ -113,7 +128,7 @@ export interface UnsubscribeAction {
 
 export interface UnsubscribeSuccessAction {
   type: typeof UNSUBSCRIBE_SUCCESS;
-  payload: Subscriber;
+  payload: { subscriber: Subscriber; type: string };
 }
 
 export interface CreateSubscriberAction {
@@ -278,6 +293,17 @@ export const GetSubscriptionSuccess = (subscriberInfo: Subscription): GetSubscri
   },
 });
 
+export const EmailExists = (email: string): EmailExistsAction => ({
+  type: EMAIL_EXISTS,
+  payload: {
+    email,
+  },
+});
+
+export const ResetUpdateErrors = (): ResetUpdateErrorsAction => ({
+  type: RESET_UPDATE_ERRORS,
+});
+
 export const GetSubscriptionsSuccess = (
   subscriberInfo: SubscriptionWrapper[],
   top: number
@@ -303,9 +329,9 @@ export const Unsubscribe = (subscriptionInfo: { data: { type: string; data: Subs
   },
 });
 
-export const UnsubscribeSuccess = (subscriber: Subscriber): UnsubscribeSuccessAction => ({
+export const UnsubscribeSuccess = (subscriber: Subscriber, type: string): UnsubscribeSuccessAction => ({
   type: UNSUBSCRIBE_SUCCESS,
-  payload: subscriber,
+  payload: { subscriber, type },
 });
 
 export const SubscribeSubscriberSuccess = (notificationInfo: {

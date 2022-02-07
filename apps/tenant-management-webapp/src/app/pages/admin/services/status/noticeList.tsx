@@ -6,7 +6,7 @@ import FilterIcon from '@assets/icons/filter-filled.svg';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { GoARadio } from '@abgov/react-components';
-import { ActionIndicator } from '@components/Indicator'
+import { renderNoItem } from '@components/NoItem';
 
 type filterOptionOnSelect = (option: string) => void;
 
@@ -27,62 +27,78 @@ const NoticeListFilterContainer = styled.div`
     padding-right: 1rem;
     font-size: var(--fs-base);
     text-align: center;
-    display:flex;
+    display: flex;
     margin: auto;
   }
   .filter-radio {
     display: inline-flex;
     .goa-radio-label {
-      padding-bottom: 0rem!important;
-      padding-top: 0rem!important;
+      padding-bottom: 0rem !important;
+      padding-top: 0rem !important;
     }
   }
   display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
+  justify-content: center;
+  flex-wrap: wrap;
 `;
 
 export const NoticeListFilter = (props: NoticeListFilterProps): JSX.Element => {
   const { option, onSelect } = props;
   return (
     <NoticeListFilterContainer>
-      <ActionIndicator />
-      <div className='filter-header'>
-        <img src={FilterIcon} width="20" alt="notice-filter" /><span>Filter by status</span>
+      <div className="filter-header">
+        <img src={FilterIcon} width="20" alt="notice-filter" />
+        <span>Filter by status</span>
       </div>
-      <div className='filter-radio' >
+      <div className="filter-radio">
         <GoARadio
           value={'all'}
           testId={'notice-filter-radio-draft'}
           checked={option === 'all'}
-          onChange={(option) => { onSelect(option) }}
-        >All</GoARadio>
+          onChange={(option) => {
+            onSelect(option);
+          }}
+        >
+          All
+        </GoARadio>
       </div>
-      <div className='filter-radio'>
+      <div className="filter-radio">
         <GoARadio
           testId="notice-filter-radio-draft"
           value={'draft'}
           checked={option === 'draft'}
-          onChange={(option) => { onSelect(option) }}
-        >Draft</GoARadio>
+          onChange={(option) => {
+            onSelect(option);
+          }}
+        >
+          Draft
+        </GoARadio>
       </div>
-      <div className='filter-radio'>
+      <div className="filter-radio">
         <GoARadio
           testId="notice-filter-radio-published"
           value={'active'}
           name={'Published'}
           checked={option === 'active'}
-          onChange={(option) => { onSelect(option) }}
-        >Published</GoARadio>
+          onChange={(option) => {
+            onSelect(option);
+          }}
+        >
+          Published
+        </GoARadio>
       </div>
-      <div className='filter-radio'>
+      <div className="filter-radio">
         <GoARadio
           testId="notice-filter-radio-archived"
           value={'archived'}
           name={'Archived'}
           checked={option === 'archived'}
-          onChange={(option) => { onSelect(option) }}
-        >Archived</GoARadio>
+          onChange={(option) => {
+            onSelect(option);
+          }}
+        >
+          Archived
+        </GoARadio>
       </div>
     </NoticeListFilterContainer>
   );
@@ -109,14 +125,21 @@ export const NoticeList = (): JSX.Element => {
         setOpenMenuId(id);
       }
     }
-  }
+  };
 
   return (
     <NoticeListContainer data-testid="notice-list">
-      {openMenuId !== null &&
-        <div className='dropdown-overlay' onClick={() => { setOpenMenuId(null) }} />}
+      {openMenuId !== null && (
+        <div
+          className="dropdown-overlay"
+          onClick={() => {
+            setOpenMenuId(null);
+          }}
+        />
+      )}
       <Grid>
         <GridItem md={12} hSpacing={0.5}>
+          {!notices && renderNoItem('notice')}
           {notices && notices.length !== 0 && (
             <NoticeListFilter
               data-testid="notice-list-filter"

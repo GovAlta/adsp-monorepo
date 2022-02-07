@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Page, Main, Aside } from '@components/Html';
-import { deleteApplication, fetchServiceStatusApps, toggleApplicationStatus } from '@store/status/actions';
+import {
+  deleteApplication,
+  fetchServiceStatusApps,
+  fetchStatusMetrics,
+  toggleApplicationStatus,
+} from '@store/status/actions';
 import { RootState } from '@store/index';
 import ReactTooltip from 'react-tooltip';
 import { useDispatch, useSelector } from 'react-redux';
@@ -35,6 +40,8 @@ import { getNotices } from '@store/notice/actions';
 import { NoticeList } from './noticeList';
 import SupportLinks from '@components/SupportLinks';
 import { EditIconButton } from '@components/icons/EditIcon';
+import { renderNoItem } from '@components/NoItem';
+import { StatusMetrics } from './metrics';
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
@@ -56,6 +63,7 @@ function Status(): JSX.Element {
 
   useEffect(() => {
     dispatch(fetchServiceStatusApps());
+    dispatch(fetchStatusMetrics());
   }, []);
 
   useEffect(() => {
@@ -101,14 +109,19 @@ function Status(): JSX.Element {
         <h1>Service status</h1>
         <Tabs activeIndex={activeIndex}>
           <Tab label="Overview">
-            This service allows for easy monitoring of application downtime.
-            <p>
-              Each application should represent a service that is useful to the end user by itself, such as child care
-              subsidy and child care certification
-            </p>
-            <GoAButton data-testid="add-application" onClick={() => addApplication()} buttonType="primary">
-              Add application
-            </GoAButton>
+            <div>
+              <section>
+                This service allows for easy monitoring of application downtime.
+                <p>
+                  Each application should represent a service that is useful to the end user by itself, such as child
+                  care subsidy and child care certification
+                </p>
+                <GoAButton data-testid="add-application" onClick={addApplication} buttonType="primary">
+                  Add application
+                </GoAButton>
+              </section>
+              <StatusMetrics />
+            </div>
           </Tab>
           <Tab label="Applications">
             <p>
@@ -138,6 +151,7 @@ function Status(): JSX.Element {
             >
               I want to subscribe and receive notifications
             </GoACheckbox>
+            {applications.length === 0 && renderNoItem('application')}
             <ApplicationList>
               {applications.map((app) => (
                 <Application key={app._id} {...app} />
@@ -203,7 +217,11 @@ function Status(): JSX.Element {
 
         <p>Url of the current tenant's public status page:</p>
 
-        <div className="copy-url">{publicStatusUrl}</div>
+        <div className="copy-url">
+          <a target="_blank" href={publicStatusUrl} rel="noreferrer">
+            {publicStatusUrl}
+          </a>
+        </div>
         <GoAButton data-tip="Copied!" data-for="registerTipUrl">
           Click to copy
         </GoAButton>

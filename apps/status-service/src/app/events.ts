@@ -57,6 +57,11 @@ export const HealthCheckHealthyDefinition: DomainEventDefinition = {
       application: ApplicationDefinition,
     },
   },
+  interval: {
+    namespace: 'status-service',
+    name: 'application-unhealthy',
+    metric: ['status-service', 'applicationName', 'downtime'],
+  }
 };
 
 export const HealthCheckUnhealthyDefinition: DomainEventDefinition = {
@@ -69,6 +74,11 @@ export const HealthCheckUnhealthyDefinition: DomainEventDefinition = {
       error: { type: 'string' },
     },
   },
+  interval: {
+    namespace: 'status-service',
+    name: 'application-healthy',
+    metric: ['status-service', 'applicationName', 'uptime'],
+  }
 };
 
 export const ApplicationNoticePublishedDefinition: DomainEventDefinition = {
@@ -173,6 +183,11 @@ export const applicationStatusToStarted = (application: ServiceStatusApplication
   name: 'health-check-started',
   timestamp: new Date(),
   tenantId: AdspId.parse(application.tenantId),
+  correlationId: `${application._id}`,
+  context: {
+    applicationId: `${application._id}`,
+    applicationName: application.name,
+  },
   payload: {
     application: mapApplication(application),
   },
@@ -182,6 +197,11 @@ export const applicationStatusToStopped = (application: ServiceStatusApplication
   name: 'health-check-stopped',
   timestamp: new Date(),
   tenantId: AdspId.parse(application.tenantId),
+  correlationId: `${application._id}`,
+  context: {
+    applicationId: `${application._id}`,
+    applicationName: application.name,
+  },
   payload: {
     application: mapApplication(application),
   },
@@ -191,6 +211,11 @@ export const applicationStatusToUnhealthy = (application: ServiceStatusApplicati
   name: 'application-unhealthy',
   timestamp: new Date(),
   tenantId: AdspId.parse(application.tenantId),
+  correlationId: `${application._id}`,
+  context: {
+    applicationId: `${application._id}`,
+    applicationName: application.name,
+  },
   payload: {
     application: mapApplication(application),
     error,
@@ -201,6 +226,11 @@ export const applicationStatusToHealthy = (application: ServiceStatusApplication
   name: 'application-healthy',
   timestamp: new Date(),
   tenantId: AdspId.parse(application.tenantId),
+  correlationId: `${application._id}`,
+  context: {
+    applicationId: `${application._id}`,
+    applicationName: application.name,
+  },
   payload: {
     application: mapApplication(application),
   },
@@ -214,6 +244,11 @@ export const applicationStatusChange = (
   name: 'application-status-changed',
   timestamp: new Date(),
   tenantId: AdspId.parse(application.tenantId),
+  correlationId: `${application._id}`,
+  context: {
+    applicationId: `${application._id}`,
+    applicationName: application.name,
+  },
   payload: {
     application: {
       id: application._id,
@@ -230,7 +265,7 @@ export const applicationStatusChange = (
 });
 
 export const applicationNoticePublished = (notice: NoticeApplicationEntity, user: Express.User): DomainEvent => {
-  const event = {
+  const event: DomainEvent = {
     name: 'application-notice-published',
     timestamp: new Date(),
     tenantId: AdspId.parse(notice.tenantId),
@@ -243,8 +278,10 @@ export const applicationNoticePublished = (notice: NoticeApplicationEntity, user
     },
   };
   if (!notice.isAllApplications) {
+    const appId = notice.tennantServRef && JSON.parse(notice.tennantServRef)[0]?.id;
+    event.correlationId = appId;
     event.payload['application'] = {
-      id: notice.tennantServRef && JSON.parse(notice.tennantServRef)[0]?.id,
+      id: appId,
       name: notice.tennantServRef && JSON.parse(notice.tennantServRef)[0]?.name,
       description: '',
     };

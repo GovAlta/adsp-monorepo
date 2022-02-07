@@ -3,19 +3,28 @@ import {
   DELETE_APPLICATION_SUCCESS_ACTION,
   FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION,
   FETCH_SERVICE_STATUS_APP_HEALTH_SUCCESS_ACTION,
+  FETCH_STATUS_METRICS_SUCCESS_ACTION,
   SAVE_APPLICATION_SUCCESS_ACTION,
   SET_APPLICATION_SUCCESS_STATUS_ACTION,
   TOGGLE_APPLICATION_SUCCESS_STATUS_ACTION,
+  UPDATE_FORM_DATA_ACTION,
 } from './actions';
 import { ServiceStatus } from './models';
 
 const initialState: ServiceStatus = {
   applications: [],
   endpointHealth: {},
+  currentFormData: {
+    name: '',
+    tenantId: '',
+    enabled: false,
+    description: '',
+    endpoint: { url: '', status: 'offline' },
+  },
+  metrics: {},
 };
 
 const compareIds = (a: { _id?: string }, b: { _id?: string }): number => (a._id <= b._id ? 1 : -1);
-
 
 export default function statusReducer(state: ServiceStatus = initialState, action: ActionTypes): ServiceStatus {
   switch (action.type) {
@@ -41,12 +50,13 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
     case SAVE_APPLICATION_SUCCESS_ACTION:
     case SET_APPLICATION_SUCCESS_STATUS_ACTION: {
       // After toggle set the application internalStatus to pending
-      const index = state.applications.findIndex((app) => { return app._id === action.payload._id });
+      const index = state.applications.findIndex((app) => {
+        return app._id === action.payload._id;
+      });
       if (index !== -1) {
-        console.log(action.payload)
         state.applications[index] = action.payload;
       }
-      return { ...state }
+      return { ...state };
     }
     case TOGGLE_APPLICATION_SUCCESS_STATUS_ACTION:
       return {
@@ -56,6 +66,16 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
         ),
       };
 
+    case UPDATE_FORM_DATA_ACTION:
+      return {
+        ...state,
+        currentFormData: action.payload,
+      };
+    case FETCH_STATUS_METRICS_SUCCESS_ACTION:
+      return {
+        ...state,
+        metrics: action.metrics,
+      };
     default:
       return state;
   }

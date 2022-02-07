@@ -4,9 +4,24 @@ export type ServiceStatusType = InternalServiceStatusType | PublicServiceStatusT
 export const PublicServiceStatusTypes = ['operational', 'maintenance', 'outage', 'reported-issues'];
 export type EndpointStatusType = 'offline' | 'online' | 'pending';
 
+export interface ServiceStatusMetrics {
+  unhealthyCount?: number;
+  totalUnhealthyDuration?: number;
+  maxUnhealthyDuration?: number;
+  leastHealthyApp?: { name: string; totalUnhealthyDuration: number };
+}
+
 export interface ServiceStatus {
   applications: ServiceStatusApplication[];
+  currentFormData: ServiceStatusApplication;
   endpointHealth: Record<string, { url: string; entries: EndpointStatusEntry[] }>;
+  metrics: ServiceStatusMetrics;
+}
+
+export interface FormData {
+  name: string;
+  description: string;
+  endpoint: { url: string; status: string };
 }
 
 export interface ServiceStatusApplication {

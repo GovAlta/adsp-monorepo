@@ -2,6 +2,7 @@ import { put, select, call, takeEvery } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { SagaIterator } from '@redux-saga/core';
 import FormData from 'form-data';
+import { UpdateIndicator } from '@store/session/actions';
 import {
   FetchFilesSuccessService,
   UploadFileSuccessService,
@@ -37,12 +38,9 @@ export function* uploadFile(file) {
   const token = state.session.credentials.token;
   const api = yield new FileApi(state.config, token);
 
-  const recordId = `${state.tenant.realm}-${file.payload.data.file.name}`;
-
   const formData = new FormData();
   formData.append('type', file.payload.data.type);
   formData.append('filename', file.payload.data.file.name);
-  formData.append('recordId', recordId);
   formData.append('file', file.payload.data.file);
 
   try {
@@ -111,9 +109,27 @@ export function* fetchFileTypes(): SagaIterator {
         }
       );
       const fileTypeInfo = Object.entries(configuration).map(([_k, type]) => type as FileTypeItem);
+      yield put(
+        UpdateIndicator({
+          show: true,
+          message: 'Loading...',
+        })
+      );
+
       yield put(FetchFileTypeSucceededService({ data: fileTypeInfo }));
+
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - fetchFileTypes` }));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
     }
   }
 }
@@ -136,6 +152,7 @@ export function* deleteFileTypes(action: DeleteFileTypeAction): SagaIterator {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
       yield put(FetchFileTypeService());
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.response.data} - deleteFileTypes` }));
