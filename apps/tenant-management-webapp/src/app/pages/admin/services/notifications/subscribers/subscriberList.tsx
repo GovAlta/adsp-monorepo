@@ -9,7 +9,6 @@ import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Subscriber } from '@store/subscription/models';
 import { getSubscriberSubscriptions, TriggerVisibilitySubscribersService } from '@store/subscription/actions';
 import { renderNoItem } from '@components/NoItem';
-import { PageIndicator } from '@components/Indicator';
 
 interface ActionComponentProps {
   subscriber: Subscriber;
@@ -88,18 +87,13 @@ export const SubscriberList: FunctionComponent = () => {
 
   const subscription = useSelector((state: RootState) => state.subscription);
   const subscribers = subscription.search.subscribers.data;
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
+
   useEffect(() => {
     reset();
   }, [search]);
 
-  // if (!subscribers || subscribers.length === 0) {
-  //   return renderNoItem('subscriber');
-  // }
   // eslint-disable-next-line
-  useEffect(() => {}, [indicator, subscription]);
+
   const openModalFunction = (subscription) => {
     setSelectedSubscription(subscription);
     setEditSubscription(true);
@@ -113,9 +107,8 @@ export const SubscriberList: FunctionComponent = () => {
 
   return (
     <div>
-      {indicator.show && <PageIndicator />}
-      {!indicator.show && subscribers && subscribers.length === 0 && renderNoItem('subscriber')}
-      {!indicator.show && subscribers && subscribers.length > 0 && (
+      {subscribers && subscribers.length === 0 && renderNoItem('subscriber')}
+      {subscribers && subscribers.length > 0 && (
         <DataTable>
           <thead>
             <tr>

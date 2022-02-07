@@ -14,6 +14,11 @@ export interface EventLogEntry {
   details: Record<string, unknown>;
 }
 
+export interface EventMetrics {
+  totalEvents?: number;
+  avgPerDay?: number;
+}
+
 export interface EventState {
   definitions: Record<string, EventDefinition>;
   results: string[];
@@ -23,6 +28,7 @@ export interface EventState {
     definitions: boolean;
     log: boolean;
   };
+  metrics: EventMetrics;
 }
 
 export interface EventSearchCriteria {
