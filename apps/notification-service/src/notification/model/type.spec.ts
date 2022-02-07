@@ -520,7 +520,7 @@ describe('NotificationTypeEntity', () => {
       expect(notification.message).toBe(message);
     });
 
-    it('can return notification for criteria match without tenantid', () => {
+    it('can return notification for criteria match without notification type tenant Id', () => {
       const tenantId = null;
 
       const entity = new NotificationTypeEntity(
@@ -572,7 +572,7 @@ describe('NotificationTypeEntity', () => {
       templateServiceMock.generateMessage.mockReturnValueOnce(message);
 
       const event: DomainEvent = {
-        tenantId,
+        tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
         namespace: 'test-service',
         name: 'test-started',
         timestamp: new Date(),

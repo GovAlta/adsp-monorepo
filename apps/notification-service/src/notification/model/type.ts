@@ -112,7 +112,7 @@ export class NotificationTypeEntity implements NotificationType {
       return null;
     } else {
       return {
-        tenantId: this.tenantId?.toString() || subscription.subscriber.tenantId?.toString(),
+        tenantId: event.tenantId.toString(),
         type: {
           id: this.id,
           name: this.name,
