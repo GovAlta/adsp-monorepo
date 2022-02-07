@@ -394,10 +394,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       </GoAModal>
       {/* Event delete confirmation */}
       <GoAModal testId="event-delete-confirmation" isOpen={showEventDeleteConfirmation}>
-        <GoAModalTitle>{coreEvent ? 'Reset Modifications' : 'Remove event'} </GoAModalTitle>
+        <GoAModalTitle>{coreEvent ? 'Reset email template' : 'Remove event'} </GoAModalTitle>
         <GoAModalContent>
           {coreEvent
-            ? 'Remove custom modifications and reset event back to default'
+            ? 'Remove custom email template modifications'
             : `Remove ${selectedEvent?.namespace}:${selectedEvent?.name}`}
         </GoAModalContent>
         <GoAModalActions>
