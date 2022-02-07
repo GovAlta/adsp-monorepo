@@ -7,6 +7,7 @@ import {
   FETCH_EVENT_LOG_ENTRIES_SUCCESS_ACTION,
   UPDATE_EVENT_DEFINITION_SUCCESS_ACTION,
   CLEAR_EVENT_LOG_ENTRIES_SUCCESS_ACTION,
+  FETCH_EVENT_METRICS_SUCCESS_ACTION,
 } from './actions';
 import { EventState } from './models';
 
@@ -15,6 +16,7 @@ const defaultState: EventState = {
   entries: [],
   results: [],
   nextEntries: null,
+  metrics: {},
   isLoading: { definitions: false, log: false },
 };
 
@@ -83,6 +85,11 @@ export default function (state: EventState = defaultState, action: EventActionTy
         entries: [],
         nextEntries: null,
         isLoading: { ...state.isLoading, log: true },
+      };
+    case FETCH_EVENT_METRICS_SUCCESS_ACTION:
+      return {
+        ...state,
+        metrics: action.metrics,
       };
     default:
       return state;

@@ -84,7 +84,7 @@ const EventDefinitionsListComponent: FunctionComponent<EventDefinitionsListCompo
 
   return (
     <div className={className}>
-      {orderedGroupNames.length === 0 && renderNoItem('event definition')}
+      {!orderedGroupNames && renderNoItem('event definition')}
       {orderedGroupNames.map((group) => (
         <div key={group}>
           <div className="group-name">{group}</div>

@@ -5,7 +5,6 @@ import { Grid, GridItem } from '@components/Grid';
 import { NotificationTypeModalForm } from './edit';
 import { EventModalForm } from './editEvent';
 import { IndicatorWithDelay } from '@components/Indicator';
-import { ReactComponent as Trash } from '@icons/trash-outline.svg';
 
 import {
   GoAModal,
@@ -53,6 +52,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [editEvent, setEditEvent] = useState(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showEventDeleteConfirmation, setShowEventDeleteConfirmation] = useState(false);
+  const [coreEvent, setCoreEvent] = useState(false);
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const [showEmailPreview, setShowEmailPreview] = useState(false);
   const notification = useSelector((state: RootState) => state.notification);
@@ -67,7 +67,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   }, [dispatch]);
 
   useEffect(() => {
-    if (notification?.notificationTypes) {
+    if (notification?.notificationTypes !== undefined) {
       dispatch(FetchCoreNotificationTypeService());
     }
   }, [notification?.notificationTypes]);
@@ -98,7 +98,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   const nonCoreCopiedNotifications: NotificationType = Object.assign({}, notification?.notificationTypes);
 
-  if (Object.keys(coreNotification).length > 0) {
+  if (Object.keys(coreNotification).length > 0 && notification?.notificationTypes) {
     const NotificationsIntersection = [];
 
     Object.keys(notification?.notificationTypes).forEach((notificationType) => {
@@ -209,6 +209,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                     setSelectedEvent(event);
                                     setSelectedType(notificationType);
                                     setShowEventDeleteConfirmation(true);
+                                    setCoreEvent(false);
                                   }}
                                   data-testid="delete-event"
                                 >
@@ -299,31 +300,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           <div className="flex1">
                             {event.namespace}:{event.name}
                           </div>
-                          <div className="rowFlex">
-                            <MaxHeight height={34}>
-                              {event.customized ? (
-                                <NotificationBorder className="smallPadding">
-                                  <a
-                                    className="flex1 flex"
-                                    onClick={() => {
-                                      setSelectedEvent(event);
-                                      setSelectedType(notificationType);
-                                      setShowEventDeleteConfirmation(true);
-                                    }}
-                                    data-testid="delete-event"
-                                  >
-                                    <GoAIcon type="trash" style="outline" />
-                                  </a>
-                                </NotificationBorder>
-                              ) : (
-                                <div>
-                                  <GreyButtonWrap>
-                                    <Trash title="Core events cannot be deleted" />
-                                  </GreyButtonWrap>
-                                </div>
-                              )}
-                            </MaxHeight>
-                          </div>
                         </div>
                         <div className="columnFlex height-100">
                           <div className="flex1 flex flexEndAlign">
@@ -335,11 +311,26 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                   </a>
                                 </NotificationBorder>
                               </MailButton>
-                              {event.customized && <SmallText>Edited Template</SmallText>}
+                              {event.customized && <SmallText>Edited</SmallText>}
                             </div>
                             <div className="rightAlignEdit flex1">
+                              {event.customized && (
+                                <a
+                                  style={{ marginRight: '10px', fontSize: '15px' }}
+                                  onClick={() => {
+                                    setSelectedEvent(event);
+                                    setSelectedType(notificationType);
+                                    setCoreEvent(true);
+                                    setShowEventDeleteConfirmation(true);
+                                  }}
+                                  data-testid="delete-event"
+                                >
+                                  Reset
+                                </a>
+                              )}
+
                               <a
-                                style={{ marginRight: '20px' }}
+                                style={{ marginRight: '10px', fontSize: '15px' }}
                                 data-testid="preview-event"
                                 onClick={() => {
                                   setSelectedEvent(event);
@@ -351,6 +342,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                               </a>
                               <a
                                 data-testid="edit-event"
+                                style={{ fontSize: '15px' }}
                                 onClick={() => {
                                   setSelectedEvent(event);
                                   setSelectedType(notificationType);
@@ -402,9 +394,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       </GoAModal>
       {/* Event delete confirmation */}
       <GoAModal testId="event-delete-confirmation" isOpen={showEventDeleteConfirmation}>
-        <GoAModalTitle>Remove event</GoAModalTitle>
+        <GoAModalTitle>{coreEvent ? 'Reset email template' : 'Remove event'} </GoAModalTitle>
         <GoAModalContent>
-          Remove {selectedEvent?.namespace}:{selectedEvent?.name}?
+          {coreEvent
+            ? 'Remove custom email template modifications'
+            : `Remove ${selectedEvent?.namespace}:${selectedEvent?.name}`}
         </GoAModalContent>
         <GoAModalActions>
           <GoAButton
@@ -413,6 +407,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             onClick={() => {
               setShowEventDeleteConfirmation(false);
               setSelectedType(emptyNotificationType);
+              setCoreEvent(false);
             }}
           >
             Cancel
@@ -430,6 +425,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               newType.events = updatedEvents;
               dispatch(UpdateNotificationTypeService(newType));
               setSelectedType(emptyNotificationType);
+              setCoreEvent(false);
             }}
           >
             Confirm

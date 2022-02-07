@@ -1,8 +1,11 @@
-import { AdspId, isAllowedUser, User } from '@abgov/adsp-service-sdk';
+import { AdspId, Channel, isAllowedUser, User } from '@abgov/adsp-service-sdk';
 import type { DomainEvent } from '@core-services/core-common';
 import { UnauthorizedError } from '@core-services/core-common';
+import { getTemplateBody } from '@core-services/shared';
+import { Logger } from 'winston';
 import { SubscriptionRepository } from '../repository';
 import { TemplateService } from '../template';
+import { Template } from '../types';
 import {
   NotificationType,
   Notification,
@@ -70,6 +73,7 @@ export class NotificationTypeEntity implements NotificationType {
   }
 
   generateNotifications(
+    logger: Logger,
     templateService: TemplateService,
     event: DomainEvent,
     subscriptions: SubscriptionEntity[]
@@ -77,7 +81,7 @@ export class NotificationTypeEntity implements NotificationType {
     const notifications: Notification[] = [];
     subscriptions.forEach((subscription) => {
       if (subscription.shouldSend(event)) {
-        const notification = this.generateNotification(templateService, event, subscription);
+        const notification = this.generateNotification(logger, templateService, event, subscription);
         if (notification) {
           notifications.push(notification);
         }
@@ -88,6 +92,7 @@ export class NotificationTypeEntity implements NotificationType {
   }
 
   private generateNotification(
+    logger: Logger,
     templateService: TemplateService,
     event: DomainEvent,
     subscription: SubscriptionEntity
@@ -96,7 +101,14 @@ export class NotificationTypeEntity implements NotificationType {
     const { address, channel } = (eventNotification && subscription.getSubscriberChannel(eventNotification)) || {};
 
     if (!address) {
-      // TODO: This should get logged;
+      logger.warn(
+        `No matching channel for subscriber '${subscription.subscriber?.addressAs}' (ID: ${subscription.subscriber?.id}) on type ${this.id} for event ${event.namespace}:${event.name}.`,
+        {
+          context: 'NotificationType',
+          tenant: event.tenantId?.toString(),
+        }
+      );
+
       return null;
     } else {
       return {
@@ -114,7 +126,7 @@ export class NotificationTypeEntity implements NotificationType {
         context: event.context,
         to: address,
         channel,
-        message: templateService.generateMessage(eventNotification.templates[channel], {
+        message: templateService.generateMessage(this.getTemplate(channel, eventNotification.templates[channel]), {
           event,
           subscriber: subscription.subscriber,
         }),
@@ -125,5 +137,12 @@ export class NotificationTypeEntity implements NotificationType {
         },
       };
     }
+  }
+
+  private getTemplate(channel: Channel, template: Template): Template {
+    if (channel === Channel.email) {
+      template['body'] = getTemplateBody(template.body.toString());
+    }
+    return template;
   }
 }
