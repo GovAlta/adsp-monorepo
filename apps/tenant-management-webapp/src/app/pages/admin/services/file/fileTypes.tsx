@@ -7,6 +7,8 @@ import { RootState } from '@store/index';
 import { FileTypeTable } from './fileTypesTable';
 import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
+import { AddFileType } from './fileTypeNew';
+import styled from 'styled-components';
 
 export const FileTypes: FunctionComponent = () => {
   const dispatch = useDispatch();
@@ -15,6 +17,10 @@ export const FileTypes: FunctionComponent = () => {
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+
+  const NoContentContainer = styled.div`
+    margin-bottom: 2em;
+  `;
 
   useEffect(() => {
     dispatch(FetchRealmRoles());
@@ -27,11 +33,14 @@ export const FileTypes: FunctionComponent = () => {
   return (
     <div>
       <div>
-        {!indicator.show && !fileTypes && renderNoItem('filetype')}
+        {indicator.show && realmRoles && <AddFileType roles={realmRoles} />}
+        {!indicator.show && fileTypes && fileTypes.length === 0 && (
+          <NoContentContainer>{renderNoItem('filetype')}</NoContentContainer>
+        )}
+        {indicator.show && <PageIndicator />}
         {!indicator.show && fileTypes && (
           <FileTypeTable roles={realmRoles} fileTypes={fileTypes} data-testid="file-type-table" />
         )}
-        <PageIndicator />
       </div>
     </div>
   );
