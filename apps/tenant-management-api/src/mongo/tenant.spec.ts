@@ -16,7 +16,6 @@ describe('Mongo: Tenant', () => {
   it('should create a tenant', async () => {
     const data = await createMockData<TenantEntity>(repo, [
       {
-        tokenIssuer: 'ti',
         adminEmail: 'ae',
         realm: 'r',
         name: 'n',

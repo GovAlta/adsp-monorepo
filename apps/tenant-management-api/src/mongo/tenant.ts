@@ -13,15 +13,11 @@ export class MongoTenantRepository implements TenantRepository {
   }
 
   async save(tenant: TenantEntity): Promise<TenantEntity> {
-    const doc = await this.tenantModel.findOneAndUpdate(
-      { _id: tenant.id },
-      this.toDoc(tenant),
-      {
-        upsert: true,
-        new: true,
-        lean: true,
-      }
-    );
+    const doc = await this.tenantModel.findOneAndUpdate({ _id: tenant.id }, this.toDoc(tenant), {
+      upsert: true,
+      new: true,
+      lean: true,
+    });
     return Promise.resolve(this.fromDoc(doc));
   }
 
@@ -65,7 +61,6 @@ export class MongoTenantRepository implements TenantRepository {
       name: doc.name,
       realm: doc.realm,
       adminEmail: doc.adminEmail,
-      tokenIssuer: doc.tokenIssuer,
     });
   }
 
@@ -74,7 +69,6 @@ export class MongoTenantRepository implements TenantRepository {
       name: entity.name,
       realm: entity.realm,
       adminEmail: entity.adminEmail,
-      tokenIssuer: entity.tokenIssuer,
     };
   }
 }

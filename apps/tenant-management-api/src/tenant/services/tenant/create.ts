@@ -402,14 +402,11 @@ export const createNewTenantInDB = async (
   email: string,
   realmName: string,
   tenantName: string,
-  tokenIssuer: string
 ): Promise<TenantEntity> => {
-  tokenIssuer = tokenIssuer.replace('core', tenantName);
   const tenantEntity = new TenantEntity(repository, {
     name: tenantName,
     realm: realmName,
     adminEmail: email,
-    tokenIssuer,
   });
   const tenant = await tenantEntity.save();
   return tenant;

@@ -7,7 +7,6 @@ export class TenantEntity implements Tenant {
   id: string;
   realm: string;
   adminEmail: string;
-  tokenIssuer: string;
   createdBy: string;
   name: string;
 
@@ -19,7 +18,6 @@ export class TenantEntity implements Tenant {
 
     this.realm = tenant.realm;
     this.adminEmail = tenant.adminEmail;
-    this.tokenIssuer = tenant.tokenIssuer;
     this.name = tenant.name;
   }
 
@@ -32,7 +30,6 @@ export class TenantEntity implements Tenant {
       id: this.id,
       realm: this.realm,
       adminEmail: this.adminEmail,
-      tokenIssuer: this.tokenIssuer,
       name: this.name,
     };
   }

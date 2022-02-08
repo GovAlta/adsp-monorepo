@@ -109,9 +109,6 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
     const tenantName = payload.name;
     const email = req.user.email;
 
-    let tokenIssuer = req.user.token.iss;
-    tokenIssuer = tokenIssuer.replace('core', tenantName);
-
     try {
       const tenantEmail = payload?.email;
       if (tenantEmail) {
@@ -133,12 +130,12 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
         }
 
         await TenantService.validateEmailInDB(tenantRepository, tenantEmail);
+        // TODO: This uses tenant name for both tenant realm and name, but it's not clear that this code is ever exercised.
         const { ...tenant } = await TenantService.createNewTenantInDB(
           tenantRepository,
           tenantEmail,
           tenantName,
-          tenantName,
-          tokenIssuer
+          tenantName
         );
 
         const response = { ...tenant, newTenant: false };
@@ -165,8 +162,7 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
         tenantRepository,
         email,
         generatedRealmName,
-        tenantName,
-        tokenIssuer
+        tenantName
       );
 
       const data = { status: 'ok', message: 'Create Realm Success!', realm: generatedRealmName };
