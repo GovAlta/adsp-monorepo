@@ -13,13 +13,7 @@ Given('a service owner user is on service status page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonObj
-    .adminMenuItem('/admin/services/status')
-    .click()
-    .then(function () {
-      cy.url().should('include', '/admin/services/status');
-      cy.wait(4000);
-    });
+  commonlib.tenantAdminMenuItem('Status', 4000);
 });
 
 Then('the user views the health check guidelines', function () {
@@ -36,13 +30,7 @@ Given('a service owner user is on status notices page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonObj
-    .adminMenuItem('/admin/services/status')
-    .click()
-    .then(function () {
-      cy.url().should('include', '/admin/services/status');
-      cy.wait(4000);
-    });
+  commonlib.tenantAdminMenuItem('Status', 4000);
   commonObj.serviceTab('Service status', 'Notices').click();
   cy.wait(10000);
 });
@@ -365,13 +353,7 @@ Given('a tenant admin user is on status applications page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonObj
-    .adminMenuItem('/admin/services/status')
-    .click()
-    .then(function () {
-      cy.url().should('include', '/admin/services/status');
-      cy.wait(4000);
-    });
+  commonlib.tenantAdminMenuItem('Status', 4000);
   commonObj.serviceTab('Service status', 'Applications').click();
   cy.wait(10000); // Applications page is slow to load applications and healt check info
 });
