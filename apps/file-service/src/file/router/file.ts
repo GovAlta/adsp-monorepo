@@ -188,7 +188,7 @@ export const downloadFile: RequestHandler = async (req, res, next) => {
     const stream = await fileEntity.readFile(user);
     res.status(200);
     res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeRFC5987(fileEntity.filename)}`);
-    res.setHeader('Cache-Control', fileEntity.type.anonymousRead ? 'public' : 'no-store');
+    res.setHeader('Cache-Control', fileEntity.type?.anonymousRead ? 'public' : 'no-store');
 
     stream.pipe(res);
   } catch (err) {
