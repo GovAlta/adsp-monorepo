@@ -187,7 +187,7 @@ When('the user clicks {string} button for {string} in {string}', function (butto
 });
 
 Then('the user views Remove event modal for {string}', function (event) {
-  notificationsObj.removeEventModalTitle().invoke('text').should('equal', 'Remove event');
+  notificationsObj.removeEventModalTitle().invoke('text').should('contain', 'Remove event');
   notificationsObj.removeEventModalContent().invoke('text').should('contain', event);
 });
 
