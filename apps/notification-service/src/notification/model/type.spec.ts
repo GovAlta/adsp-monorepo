@@ -1,12 +1,20 @@
 import { adspId, User } from '@abgov/adsp-service-sdk';
+import { DomainEvent } from '@core-services/core-common';
+import { Logger } from 'winston';
 import { SubscriptionRepository } from '../repository';
 import { Channel, ServiceUserRoles, Subscriber } from '../types';
 import { SubscriptionEntity } from './subscription';
 import { SubscriberEntity } from './subscriber';
 import { NotificationTypeEntity } from './type';
-import { DomainEvent } from '@core-services/core-common';
 
 describe('NotificationTypeEntity', () => {
+  const logger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  } as unknown as Logger;
+
   const repositoryMock = {
     saveSubscription: jest.fn((entity: SubscriptionEntity) => {
       return Promise.resolve(entity);
@@ -383,7 +391,7 @@ describe('NotificationTypeEntity', () => {
         timestamp: new Date(),
         payload: {},
       };
-      const [notification] = entity.generateNotifications(templateServiceMock, event, [subscription]);
+      const [notification] = entity.generateNotifications(logger, templateServiceMock, event, [subscription]);
       expect(templateServiceMock.generateMessage).toHaveBeenCalledTimes(1);
       expect(notification.to).toBe('test@testco.org');
       expect(notification.channel).toBe(Channel.email);
@@ -442,7 +450,7 @@ describe('NotificationTypeEntity', () => {
         payload: {},
       };
 
-      const notifications = entity.generateNotifications(templateServiceMock, event, [subscription]);
+      const notifications = entity.generateNotifications(logger, templateServiceMock, event, [subscription]);
       expect(notifications.length).toBe(0);
     });
 
@@ -506,13 +514,13 @@ describe('NotificationTypeEntity', () => {
         correlationId: '123',
       };
 
-      const [notification] = entity.generateNotifications(templateServiceMock, event, [subscription]);
+      const [notification] = entity.generateNotifications(logger, templateServiceMock, event, [subscription]);
       expect(notification.to).toBe('test@testco.org');
       expect(notification.channel).toBe(Channel.email);
       expect(notification.message).toBe(message);
     });
 
-    it('can return notification for criteria match without tenantid', () => {
+    it('can return notification for criteria match without notification type tenant Id', () => {
       const tenantId = null;
 
       const entity = new NotificationTypeEntity(
@@ -564,7 +572,7 @@ describe('NotificationTypeEntity', () => {
       templateServiceMock.generateMessage.mockReturnValueOnce(message);
 
       const event: DomainEvent = {
-        tenantId,
+        tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
         namespace: 'test-service',
         name: 'test-started',
         timestamp: new Date(),
@@ -572,7 +580,7 @@ describe('NotificationTypeEntity', () => {
         correlationId: '123',
       };
 
-      const [notification] = entity.generateNotifications(templateServiceMock, event, [subscription]);
+      const [notification] = entity.generateNotifications(logger, templateServiceMock, event, [subscription]);
       expect(notification.to).toBe('test@testco.org');
       expect(notification.channel).toBe(Channel.email);
       expect(notification.message).toBe(message);
@@ -631,7 +639,7 @@ describe('NotificationTypeEntity', () => {
         correlationId: '213',
       };
 
-      const notifications = entity.generateNotifications(templateServiceMock, event, [subscription]);
+      const notifications = entity.generateNotifications(logger, templateServiceMock, event, [subscription]);
       expect(notifications.length).toBe(0);
     });
   });

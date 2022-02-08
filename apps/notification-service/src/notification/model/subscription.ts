@@ -39,7 +39,9 @@ export class SubscriptionEntity implements Subscription {
   }
 
   getSubscriberChannel(notificationType: NotificationTypeEvent): SubscriberChannel {
-    const channel = this.subscriber?.channels.find(({ channel }) => notificationType.channels.includes(channel));
+    const channel = this.subscriber?.channels.find(
+      ({ channel }) => notificationType.channels.includes(channel) && notificationType.templates[channel]
+    );
     return channel;
   }
 }
