@@ -77,21 +77,31 @@ Feature: Notifications
     # Verify the event is still there (had a bug of the event disappearing after preview)
     And the user "views" the event of "status-service:health-check-started" in "status-application-health-change"
   @TEST_CS-986 @REQ_CS-963 @REQ_CS-978 @regression
-  Scenario: As a tenant admin, I can see notification type for application status change updates, so I am aware of this notification type
+  Scenario: As a tenant admin, I can see notification type for application status change updates
     Given a service owner user is on notification overview page
     Then the user should see tab "Overview"
     When the user selects "Notification types" tab for "Notifications"
     Then the user "views" the notification type card of "status-application-status-change"
-# Then the user "views" "status-application-status-change" notification type for "status-application-status-change" notification type
-# And the user "views" registered events "status-service:application-status-changed" for "status-application-status-change" notification type
-# And the user "views" email template indicator for "status-service:application-status-changed" for "status-application-status-change" notification type
-# And the user "views" registered events "status-service:application-notice-published" for "status-application-status-change" notification type
-# And the user "views" email template indicator for "status-service:application-notice-published" for "status-application-status-change" notification type
-# When the user clicks "Preview" button on "status-service:application-status-changed" for "status-application-status-change" notification type
-# Then the user views "Preview an email template" modal
+    And the user "views" the event of "status-service:application-status-changed" in "status-application-status-change"
+    And the user "views" "email template indicator" for "status-service:application-status-changed" in "status-application-status-change"
+    And the user "views" the event of "status-service:application-notice-published" in "status-application-status-change"
+    And the user "views" "email template indicator" for "status-service:application-notice-published" in "status-application-status-change"
+    And the user "views" "Preview link" for "status-service:application-status-changed" in "status-application-status-change"
+    When the user clicks Preview button on "status-service:application-status-changed" in "status-application-status-change"
+    Then the user views Preview an email template modal
+    When the user cannot edit the template
+
+    When the user clicks Close button in Preview an email template modal
+    Then Preview an email template modal is closed
+    And the user "views" the event of "status-service:application-status-changed" in "status-application-status-change"
+    And the user "views" "Edit button" for "status-service:application-status-changed" in "status-application-status-change"
+    When the user clicks Edit button on "status-service:application-status-changed" in "status-application-status-change"
+    And the user views status has changed in Subject field
+# //in progress
 # And the user views "{{ event.payload.applicationName }} status has changed" in Subject field
 # And the user views "The original status was: {{ event.payload.originalStatus }}" in Body field
 # And the user views "The new status is now: {{ event.payload.newStatus }}" in Body field
+# //need to develop
 # When the user attempts to edit the template
 # Then the user gets "Cannot edit in read-only editor"
 # When the user clicks "Close" button
