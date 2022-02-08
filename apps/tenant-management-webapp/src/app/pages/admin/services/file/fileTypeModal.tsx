@@ -60,7 +60,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
         <GoAModalTitle>{title}</GoAModalTitle>
         <GoAModalContent>
           <GoAFormItem>
-            <label>Application name</label>
+            <label>File type name</label>
             <GoAInput
               type="text"
               name="name"
