@@ -221,6 +221,19 @@ class NotificationsPage {
       `//h1[contains(text(), "Notifications")]/following-sibling::div[1]//descendant::div[contains(text(), "${text}")]`
     );
   }
+
+  eventTemplatePreviewModalAction() {
+    return cy.xpath('//*[@data-testid="email-preview" and @data-state="visible"]//*[@class="modal-actions"]');
+  }
+  eventTemplatePreviewModalSubjectEdit() {
+    return cy.xpath(
+      '(//*[@data-testid="template-form" and @data-state="visible"]//*[@class="goa-form-item"]//*[contains(@class, "monaco-editor no-user-select")][1]'
+    );
+  }
+
+  editAnEmailTemplateModalSaveBtn() {
+    return cy.get('[data-testid="template-form-save"]');
+  }
 }
 
 export default NotificationsPage;
