@@ -8,6 +8,7 @@ import { ResetUpdateErrors, UpdateSubscriberService } from '@store/subscription/
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Subscriber } from '@store/subscription/models';
 import { getSubscriberSubscriptions, TriggerVisibilitySubscribersService } from '@store/subscription/actions';
+import { renderNoItem } from '@components/NoItem';
 
 interface ActionComponentProps {
   subscriber: Subscriber;
@@ -91,9 +92,7 @@ export const SubscriberList: FunctionComponent = () => {
     reset();
   }, [search]);
 
-  if (!subscribers || subscribers.length === 0) {
-    return <></>;
-  }
+  // eslint-disable-next-line
 
   const openModalFunction = (subscription) => {
     setSelectedSubscription(subscription);
@@ -108,24 +107,27 @@ export const SubscriberList: FunctionComponent = () => {
 
   return (
     <div>
-      <DataTable>
-        <thead>
-          <tr>
-            <th>Address as</th>
-            <th>Email</th>
-            <th style={{ width: '0' }}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {subscribers.map((subscriber) => (
-            <ActionComponent
-              openModalFunction={openModalFunction}
-              subscriber={subscriber}
-              key={`${subscriber.urn}:${Math.random()}`}
-            />
-          ))}
-        </tbody>
-      </DataTable>
+      {subscribers && subscribers.length === 0 && renderNoItem('subscriber')}
+      {subscribers && subscribers.length > 0 && (
+        <DataTable>
+          <thead>
+            <tr>
+              <th>Address as</th>
+              <th>Email</th>
+              <th style={{ width: '0' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {subscribers.map((subscriber) => (
+              <ActionComponent
+                openModalFunction={openModalFunction}
+                subscriber={subscriber}
+                key={`${subscriber.urn}:${Math.random()}`}
+              />
+            ))}
+          </tbody>
+        </DataTable>
+      )}
       <SubscriberModalForm
         open={editSubscription}
         initialValue={selectedSubscription}

@@ -9,7 +9,7 @@ import { GoAPageLoader } from '@abgov/react-components';
 import { SubscriberModalForm } from './editSubscriber';
 import { GoAIcon } from '@abgov/react-components/experimental';
 import { SubscriptionNextLoader } from './subscriptionNextLoader';
-
+import { renderNoItem } from '@components/NoItem';
 interface SubscriptionProps {
   subscription: Subscriber;
   type: string;
@@ -120,6 +120,7 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
 
   return (
     <div className={className}>
+      {!orderedGroupNames?.length && renderNoItem('subscription')}
       {orderedGroupNames.map((group, index) => (
         <div key={group}>
           <div className="group-name">{group}</div>
