@@ -271,8 +271,8 @@ When('the user clicks Edit button on {string} in {string}', function (eventName,
 When('the user views status has changed in Subject field', function () {
   notificationsObj
     .eventTemplatePreviewModalSubjectEditor()
-    .contains('{{ event.payload.application.name }} status has changed');
-  // .should('contain', '{{ event.payload.application.name }} status has changed');
-  notificationsObj.eventTemplatePreviewModalSubjectEditor().first().type('{end} Edited');
+    .first()
+    .contains('{{ event.payload.application.name }} status has changed')
+    .type('{end} Edited');
   notificationsObj.editAnEmailTemplateModalSaveBtn().click();
 });
