@@ -1,7 +1,7 @@
 import { TenantRepository } from '../tenant/repository';
 import { TenantEntity, Tenant } from '../tenant/models';
 import { Doc, NotFoundError } from '@core-services/core-common';
-import { Document, Model, model, Types } from 'mongoose';
+import { Document, Model, model } from 'mongoose';
 import { tenantSchema } from './schema';
 import { TenantCriteria } from '../tenant/types';
 
