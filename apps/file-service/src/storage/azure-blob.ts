@@ -44,16 +44,20 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
     try {
       const containerClient = await this.getContainerClient(entity);
       const blobClient = containerClient.getBlockBlobClient(entity.id);
-      const { requestId } = await blobClient.uploadStream(content, BUFFER_SIZE, MAX_BUFFERS, {
-        tags: {
-          tenant: entity.tenantId.resource,
-          fileId: entity.id,
-          typeId: entity.type.id,
-          filename: hasha(entity.filename, { algorithm: 'sha1', encoding: 'base64' }),
-          recordId: hasha(entity.recordId, { algorithm: 'sha1', encoding: 'base64' }),
-          createdById: entity.createdBy.id,
-        },
-      });
+
+      const tags: Record<string, string> = {
+        tenant: entity.tenantId.resource,
+        fileId: entity.id,
+        typeId: entity.type.id,
+        filename: hasha(entity.filename, { algorithm: 'sha1', encoding: 'base64' }),
+        createdById: entity.createdBy.id,
+      };
+
+      if (entity.recordId) {
+        tags.recordId = hasha(entity.recordId, { algorithm: 'sha1', encoding: 'base64' });
+      }
+
+      const { requestId } = await blobClient.uploadStream(content, BUFFER_SIZE, MAX_BUFFERS, { tags });
 
       const properties = await blobClient.getProperties();
       await entity.setSize(properties.contentLength);

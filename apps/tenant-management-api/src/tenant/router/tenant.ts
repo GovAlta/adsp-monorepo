@@ -10,7 +10,7 @@ import {
 import * as TenantService from '../services/tenant';
 import { logger } from '../../middleware/logger';
 import { v4 as uuidv4 } from 'uuid';
-import { EventService } from '@abgov/adsp-service-sdk';
+import { adspId, EventService } from '@abgov/adsp-service-sdk';
 import { tenantCreated } from '../events';
 import { TenantRepository } from '../repository';
 import { ServiceClient } from '../types';
@@ -54,8 +54,8 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
   async function getTenantByEmail(req, res, next) {
     try {
       const { email } = req.payload;
-      const tenant = await tenantRepository.findBy({ adminEmail: email });
-      res.json(tenant.obj());
+      const tenant = (await tenantRepository.find({ adminEmailEquals: email }))[0];
+      res.json(tenant?.obj());
     } catch (err) {
       logger.error(`Failed fetching tenant info by email address: ${err.message}`);
       next(err);
@@ -66,8 +66,8 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
     try {
       const { name } = req.payload;
 
-      const tenant = await tenantRepository.findBy({ name: { $regex: '^' + name + '\\b', $options: 'i' } });
-      res.json(tenant.obj());
+      const tenant = (await tenantRepository.find({ nameEquals: name }))[0];
+      res.json(tenant?.obj());
     } catch (err) {
       logger.error(`Failed fetching tenant info by name: ${err.message}`);
       next(err);
@@ -78,10 +78,10 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
     const { realm } = req.payload;
 
     try {
-      const tenant = await tenantRepository.findBy({ realm });
+      const tenant = (await tenantRepository.find({ realmEquals: realm }))[0];
       res.json({
         success: true,
-        tenant: tenant.obj(),
+        tenant: tenant?.obj(),
       });
     } catch (err) {
       logger.error(`Failed fetching tenant info by realm: ${err.message}`);
@@ -93,10 +93,10 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
     const { id } = req.payload;
 
     try {
-      const tenant = await tenantRepository.findBy({ id });
+      const tenant = await tenantRepository.get(id);
       res.json({
         success: true,
-        tenant: tenant.obj(),
+        tenant: tenant?.obj(),
       });
     } catch (err) {
       logger.error(`Failed fetching tenant by id: ${err.message}`);
@@ -108,9 +108,6 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
     const payload = req['payload'];
     const tenantName = payload.name;
     const email = req.user.email;
-
-    let tokenIssuer = req.user.token.iss;
-    tokenIssuer = tokenIssuer.replace('core', tenantName);
 
     try {
       const tenantEmail = payload?.email;
@@ -124,6 +121,7 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
         const tenantRealm = tenantName;
         logger.info(`Found key realm with name ${tenantRealm}`);
         // For existed tenant, realm is same as tenant name
+        // TODO: This method implementation always returns 'true'... what is the purpose?
         const hasTenant = await TenantService.hasTenantOfRealm(tenantName);
 
         if (hasTenant) {
@@ -132,16 +130,22 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
         }
 
         await TenantService.validateEmailInDB(tenantRepository, tenantEmail);
+        // TODO: This uses tenant name for both tenant realm and name, but it's not clear that this code is ever exercised.
         const { ...tenant } = await TenantService.createNewTenantInDB(
           tenantRepository,
           tenantEmail,
           tenantName,
-          tenantName,
-          tokenIssuer
+          tenantName
         );
 
         const response = { ...tenant, newTenant: false };
-        eventService.send(tenantCreated(req.user, response, false));
+        eventService.send(
+          tenantCreated(
+            req.user,
+            { ...response, id: adspId`urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` },
+            false
+          )
+        );
         res.status(HttpStatusCodes.OK).json(response);
       }
 
@@ -158,12 +162,17 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
         tenantRepository,
         email,
         generatedRealmName,
-        tenantName,
-        tokenIssuer
+        tenantName
       );
 
       const data = { status: 'ok', message: 'Create Realm Success!', realm: generatedRealmName };
-      eventService.send(tenantCreated(req.user, { ...tenant }, true));
+      eventService.send(
+        tenantCreated(
+          req.user,
+          { ...tenant, id: adspId`urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` },
+          true
+        )
+      );
       res.status(HttpStatusCodes.OK).json(data);
     } catch (err) {
       logger.error(`Error creating new tenant ${err.message}`);

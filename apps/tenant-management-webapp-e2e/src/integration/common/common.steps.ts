@@ -67,35 +67,7 @@ Then('no critical or serious accessibility issues on {string}', function (pageNa
 });
 
 When('the user selects the {string} menu item', function (menuItem) {
-  let menuItemSelector = '';
-  switch (menuItem) {
-    case 'Dashboard':
-      menuItemSelector = '/admin';
-      break;
-    case 'Event log':
-      menuItemSelector = '/admin/event-log';
-      break;
-    case 'File services':
-      menuItemSelector = '/admin/services/files';
-      break;
-    case 'Access':
-      menuItemSelector = '/admin/access';
-      break;
-    case 'Status':
-      menuItemSelector = '/admin/services/status';
-      break;
-    case 'Events':
-      menuItemSelector = '/admin/services/events';
-      break;
-    case 'Notifications':
-      menuItemSelector = '/admin/services/notifications';
-      break;
-    default:
-      expect(menuItem).to.be.oneOf(['File services', 'Access', 'Status', 'Events', 'Notifications']);
-  }
-
-  commonObj.adminMenuItem(menuItemSelector).click();
-  cy.wait(2000); // wait for the page to load tenant data such as tenant user/role stats
+  commonlib.tenantAdminMenuItem(menuItem, 2000);
 });
 
 Then('the user views the link for {string} API docs', function (serviceName) {
@@ -118,8 +90,18 @@ Then('the user views {string} API documentation', function (serviceName) {
   });
 });
 
-// Service title on the page instead of service menu item text needs to be used
-When('the user selects {string} tab for {string}', function (tab, service) {
+When('the user selects {string} tab for {string}', function (tab, menuItem) {
+  let service;
+  // Convert menu item name to service title
+  if (menuItem == 'Files') {
+    service = 'File service';
+  } else if (menuItem == 'Status') {
+    service = 'Service status';
+  } else if (menuItem == 'directory') {
+    service = 'Directory service';
+  } else {
+    service = menuItem;
+  }
   commonObj.serviceTab(service, tab).click();
   cy.wait(3000);
 });

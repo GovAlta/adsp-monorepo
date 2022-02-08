@@ -1,12 +1,19 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request } from 'express';
+import { Logger } from 'winston';
 import { FileEntity, FileTypeEntity } from '../model';
 import { FileType } from '../types';
 import { FileStorageEngine } from './upload';
 
 describe('upload', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+  const loggerMock = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+  } as unknown as Logger;
+
   const storageProviderMock = {
     readFile: jest.fn(),
     saveFile: jest.fn(),
@@ -42,12 +49,12 @@ describe('upload', () => {
   });
 
   it('can be created', () => {
-    const engine = new FileStorageEngine(fileRepositoryMock, storageProviderMock);
+    const engine = new FileStorageEngine(loggerMock, fileRepositoryMock, storageProviderMock);
     expect(engine).toBeTruthy();
   });
 
   describe('handleFile', () => {
-    const engine = new FileStorageEngine(fileRepositoryMock, storageProviderMock);
+    const engine = new FileStorageEngine(loggerMock, fileRepositoryMock, storageProviderMock);
     it('can handle file.', async () => {
       const req = {
         getConfiguration: jest.fn(),
@@ -59,7 +66,7 @@ describe('upload', () => {
         query: {},
         body: { type: 'test' },
       };
-      const multerFile = {};
+      const multerFile = { stream: {} };
       const cb = jest.fn();
 
       const configuration = { test: new FileTypeEntity(fileType) };
@@ -131,7 +138,7 @@ describe('upload', () => {
   });
 
   describe('removeFile', () => {
-    const engine = new FileStorageEngine(fileRepositoryMock, storageProviderMock);
+    const engine = new FileStorageEngine(loggerMock, fileRepositoryMock, storageProviderMock);
     it('can remove file', async () => {
       const req = {
         fileEntity: file,

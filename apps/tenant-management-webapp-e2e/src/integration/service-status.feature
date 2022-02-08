@@ -74,14 +74,14 @@ Feature: Service status
     Then the user views a callout message of "You are unsubscribed! You will no longer receive notifications on auto.test@gov.ab.ca for status-application-health-change"
     When the user selects the "Dashboard" menu item
     And the user selects the "Status" menu item
-    And the user selects "Applications" tab for "Service status"
+    And the user selects "Applications" tab for "Status"
     Then the user views the subscribe checkbox is "unchecked"
     # Subscribe application health change notifications
     When the user "selects" the subscribe checkbox for health check notification type
     Then the user views a callout message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"
     When the user selects the "Dashboard" menu item
     And the user selects the "Status" menu item
-    And the user selects "Applications" tab for "Service status"
+    And the user selects "Applications" tab for "Status"
     Then the user views the subscribe checkbox is "checked"
 
   @TEST_CS-835 @REQ_CS-792
@@ -116,3 +116,4 @@ Feature: Service status
     Examples:
       | Description           | Application | Start Date | Start Time | End Date | End Time | Description2               | Application2 | Start Date 2 | Start Time 2 | End Date 2 | End Time 2 |
       | Autotest-NewAllNotice | All         | 1/1/2050   | 12:00 AM   | 1/2/2050 | 12:00 PM | Autotest-ModifiedAllNotice | Autotest     | 1/1/2060     | 12:30 AM     | 1/2/2060   | 12:30 PM   |
+

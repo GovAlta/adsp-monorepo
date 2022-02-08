@@ -13,13 +13,7 @@ Given('a service owner user is on notification overview page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonObj
-    .adminMenuItem('/admin/services/notifications')
-    .click()
-    .then(function () {
-      cy.url().should('include', '/admin/services/notifications');
-      cy.wait(4000);
-    });
+  commonlib.tenantAdminMenuItem('Notifications', 4000);
 });
 
 When('the user clicks Add notification type button', function () {
@@ -103,13 +97,7 @@ Given('a service owner user is on notification types page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonObj
-    .adminMenuItem('/admin/services/notifications')
-    .click()
-    .then(function () {
-      cy.url().should('include', '/admin/services/notifications');
-      cy.wait(4000);
-    });
+  commonlib.tenantAdminMenuItem('Notifications', 4000);
   commonObj.serviceTab('Notifications', 'Notification types').click();
   cy.wait(2000);
 });
@@ -262,13 +250,7 @@ Given('a tenant admin user is on notification subscriptions page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonObj
-    .adminMenuItem('/admin/services/notifications')
-    .click()
-    .then(function () {
-      cy.url().should('include', '/admin/services/notifications');
-      cy.wait(4000);
-    });
+  commonlib.tenantAdminMenuItem('Notifications', 4000);
   commonObj.serviceTab('Notifications', 'Subscriptions').click();
   cy.wait(5000);
 });

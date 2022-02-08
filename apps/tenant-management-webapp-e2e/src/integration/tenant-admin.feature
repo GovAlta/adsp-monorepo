@@ -13,10 +13,10 @@ Feature: Tenant admin
     When the user selects the "<Menu>" menu item
     Then the "<Page Title>" landing page is displayed
     Examples:
-      | Menu          | Page Title     |
-      | File services | File service   |
-      | Status        | Service status |
-      | Event log     | Event log      |
+      | Menu      | Page Title     |
+      | Files     | File service   |
+      | Status    | Service status |
+      | Event log | Event log      |
 
   @regression @smoke-test @api
   Scenario Outline: As a GoA service owner I can get a list of "<Options>"

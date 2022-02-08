@@ -1,28 +1,24 @@
+import { New } from '@core-services/core-common';
 import { TenantRepository } from '../repository';
 import { Tenant } from './types';
-import { AdspId, adspId } from '@abgov/adsp-service-sdk';
 
+// TODO: This may be a case of anemic entity anti-pattern; there are no behaviors encapsulated in the entity.
 export class TenantEntity implements Tenant {
-  id: AdspId;
+  id: string;
   realm: string;
   adminEmail: string;
-  tokenIssuer: string;
   createdBy: string;
   name: string;
 
-  constructor(
-    private repository: TenantRepository,
-    id: string,
-    realm: string,
-    adminEmail: string,
-    tokenIssuer: string,
-    name: string
-  ) {
-    this.id = adspId`urn:ads:platform:tenant-service:v2:/tenants/${id}`;
-    this.realm = realm;
-    this.adminEmail = adminEmail;
-    this.tokenIssuer = tokenIssuer;
-    this.name = name;
+  constructor(private repository: TenantRepository, tenant: Tenant | New<Tenant>) {
+    const record = tenant as Tenant;
+    if (record.id) {
+      this.id = record.id;
+    }
+
+    this.realm = tenant.realm;
+    this.adminEmail = tenant.adminEmail;
+    this.name = tenant.name;
   }
 
   save(): Promise<TenantEntity> {
@@ -31,12 +27,10 @@ export class TenantEntity implements Tenant {
 
   obj(): Tenant {
     return {
-      id: this.id.resource.split('/').pop(),
+      id: this.id,
       realm: this.realm,
       adminEmail: this.adminEmail,
-      tokenIssuer: this.tokenIssuer,
       name: this.name,
-      createdBy: this.createdBy,
     };
   }
 }
