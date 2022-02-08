@@ -170,10 +170,10 @@ export function getFile(repository: FileRepository): RequestHandler {
 
 // This is from mozilla example of RFC 5987 encode; not sure why it's not a standard function.
 function encodeRFC5987(value: string) {
-  return encodeURIComponent(value).
-    replace(/['()]/g, escape).
-    replace(/\*/g, '%2A').
-    replace(/%(?:7C|60|5E)/g, unescape);
+  return encodeURIComponent(value)
+    .replace(/['()]/g, escape)
+    .replace(/\*/g, '%2A')
+    .replace(/%(?:7C|60|5E)/g, unescape);
 }
 
 export const downloadFile: RequestHandler = async (req, res, next) => {
@@ -241,7 +241,7 @@ export const createFileRouter = ({
 }: FileRouterProps): Router => {
   const apiId = adspId`${serviceId}:v1`;
 
-  const upload = createUpload({ storageProvider, fileRepository });
+  const upload = createUpload({ logger, storageProvider, fileRepository });
   const fileRouter = Router();
 
   fileRouter.get('/types', assertAuthenticatedHandler, getTypes);
