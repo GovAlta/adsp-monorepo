@@ -29,6 +29,7 @@ describe('ServiceStatus Page', () => {
         },
       },
       serviceStatus: {
+        metrics: {},
         applications: [
           {
             _id: '99',
@@ -113,6 +114,7 @@ describe('ServiceStatus Page', () => {
         },
       },
       serviceStatus: {
+        metrics: {},
         applications: [
           {
             _id: '11',

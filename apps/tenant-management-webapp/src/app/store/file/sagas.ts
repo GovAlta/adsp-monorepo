@@ -99,6 +99,13 @@ export function* fetchFileTypes(): SagaIterator {
   );
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
 
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading...',
+    })
+  );
+
   if (configBaseUrl && token) {
     try {
       const { data: configuration } = yield call(
@@ -109,15 +116,8 @@ export function* fetchFileTypes(): SagaIterator {
         }
       );
       const fileTypeInfo = Object.entries(configuration).map(([_k, type]) => type as FileTypeItem);
-      yield put(
-        UpdateIndicator({
-          show: true,
-          message: 'Loading...',
-        })
-      );
 
       yield put(FetchFileTypeSucceededService({ data: fileTypeInfo }));
-
       yield put(
         UpdateIndicator({
           show: false,

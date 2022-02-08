@@ -107,7 +107,7 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
 
   return (
     <>
-      {indicator.show && <PageIndicator />}
+      {!indicator.show && !entries.length && renderNoItem('event log')}
       <Visible visible={!indicator.show && entries.length > 0}>
         <div className={className}>
           <DataTable>
@@ -127,9 +127,7 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
                   entry={entry}
                   correlationColors={colors}
                   addCorrelationColor={(id) => {
-                    const randomColor = `#${Math.floor(Math.random() * 16777215)
-                      .toString(16)
-                      .padStart(6, '0')}`;
+                    const randomColor = `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
                     setColors({
                       ...colors,
                       [id]: randomColor,
@@ -144,6 +142,8 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
         </div>
       </Visible>
       {!indicator.show && entries && entries.length === 0 && renderNoItem('event log')}
+      {indicator.show && <PageIndicator />}
+
     </>
   );
 };

@@ -1,6 +1,5 @@
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useState } from 'react';
 import { useSelector } from 'react-redux';
-
 import FileOverview from './fileOverview';
 import { FileTypes } from './fileTypes';
 import FileList from './fileList';
@@ -36,14 +35,20 @@ const HelpLink = (): JSX.Element => {
 };
 
 export const File: FunctionComponent = () => {
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+
   return (
     <Page>
       <Main>
         <>
           <h1>File service</h1>
-          <Tabs activeIndex={0}>
+          <Tabs activeIndex={activeIndex}>
             <Tab label="Overview">
-              <FileOverview />
+              <FileOverview
+                onSwitch={() => {
+                  setActiveIndex(1);
+                }}
+              />
             </Tab>
             <Tab label="File types">
               <FileTypes />

@@ -134,7 +134,10 @@ describe('SubscriptionEntity', () => {
         subscriber
       );
 
-      const result = entity.getSubscriberChannel({ channels: [Channel.email] } as NotificationTypeEvent);
+      const result = entity.getSubscriberChannel({
+        channels: [Channel.email],
+        templates: { [Channel.email]: { subject: 'test', body: 'test' } },
+      } as NotificationTypeEvent);
       expect(result).toBe(channel);
     });
 
@@ -162,7 +165,48 @@ describe('SubscriptionEntity', () => {
         subscriber
       );
 
-      const result = entity.getSubscriberChannel({ channels: [Channel.email] } as NotificationTypeEvent);
+      const result = entity.getSubscriberChannel({
+        channels: [Channel.email],
+        templates: { [Channel.email]: { subject: 'test', body: 'test' } },
+      } as NotificationTypeEvent);
+      expect(result).toBeFalsy();
+    });
+
+    it('can handle notification type missing channel template', () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const channel = {
+        channel: Channel.email,
+        address: 'test@test.co',
+        verified: false,
+      };
+      const subscriber = new SubscriberEntity(repositoryMock as SubscriptionRepository, {
+        tenantId,
+        addressAs: 'test',
+        channels: [
+          {
+            channel: Channel.sms,
+            address: '123',
+            verified: false,
+          },
+          channel,
+        ],
+      });
+      const entity = new SubscriptionEntity(
+        repositoryMock as SubscriptionRepository,
+        {
+          tenantId,
+          typeId: 'test',
+          subscriberId: 'test-subscriber',
+          criteria: {},
+        },
+        subscriber
+      );
+
+      const result = entity.getSubscriberChannel({
+        channels: [Channel.email],
+        templates: { [Channel.email]: null },
+      } as NotificationTypeEvent);
+
       expect(result).toBeFalsy();
     });
   });

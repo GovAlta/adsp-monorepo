@@ -3,10 +3,8 @@ import fd = require('form-data');
 import axios, { AxiosResponse } from 'axios';
 import commonlib from '../common/common-library';
 import fileServicePage from './file-service.page';
-import common from '../common/common.page';
 
 const fileServiceObj = new fileServicePage();
-const commonObj = new common();
 let responseObj: Cypress.Response<any>;
 let axiosResponse: AxiosResponse;
 let axiosError;
@@ -279,26 +277,20 @@ Then(
   }
 );
 
-Given('a service owner user is on file services overview page', function () {
+Given('a service owner user is on Files overview page', function () {
   commonlib.tenantAdminDirectURLLogin(
     Cypress.config().baseUrl,
     Cypress.env('realm'),
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonObj
-    .adminMenuItem('/admin/services/files')
-    .click()
-    .then(function () {
-      cy.url().should('include', '/admin/services/files');
-      cy.wait(4000);
-    });
+  commonlib.tenantAdminMenuItem('Files', 4000);
 });
 
 When('the user {string} file service', function (action) {
   // Verify action
   expect(action).to.be.oneOf(['enables', 'disables']);
-  // Check file services status
+  // Check file service status
   fileServiceObj
     .fileHeaderTag()
     .invoke('text')

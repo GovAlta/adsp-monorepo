@@ -1,4 +1,4 @@
-import { put, select, call, takeEvery } from 'redux-saga/effects';
+import { put, select, call, takeEvery, takeLatest } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { SagaIterator } from '@redux-saga/core';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,10 +12,13 @@ import {
   FETCH_NOTIFICATION_TYPE,
   FETCH_CORE_NOTIFICATION_TYPE,
   UPDATE_NOTIFICATION_TYPE,
+  FETCH_NOTIFICATION_METRICS,
+  fetchNotificationMetricsSucceeded,
 } from './actions';
 
 import { RootState } from '../index';
 import axios from 'axios';
+import moment from 'moment';
 
 export function* fetchNotificationTypes(): SagaIterator {
   const configBaseUrl: string = yield select(
@@ -60,7 +63,7 @@ export function* fetchCoreNotificationTypes(): SagaIterator {
       const notificationTypeInfo = configuration.latest && configuration.latest.configuration;
       yield put(FetchCoreNotificationTypeSucceededService({ data: notificationTypeInfo }));
     } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+      yield put(ErrorNotification({ message: `${e.message} - fetchCoreNotificationTypes` }));
     }
   }
 }
@@ -128,9 +131,51 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
   }
 }
 
+interface MetricResponse {
+  values: { sum: string }[];
+}
+
+export function* fetchNotificationMetrics(): SagaIterator {
+  const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  if (baseUrl && token) {
+    try {
+      const criteria = JSON.stringify({
+        intervalMax: moment().toISOString(),
+        intervalMin: moment().subtract(7, 'day').toISOString(),
+      });
+
+      let metric = 'notification-service:notification-sent:count';
+      const { data: sentMetric }: { data: MetricResponse } = yield call(
+        axios.get,
+        `${baseUrl}/value/v1/event-service/values/event/metrics/${metric}?interval=weekly&criteria=${criteria}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      metric = 'notification-service:notification-send-failed:count';
+      const { data: failedMetric }: { data: MetricResponse } = yield call(
+        axios.get,
+        `${baseUrl}/value/v1/event-service/values/event/metrics/${metric}?interval=weekly&criteria=${criteria}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      yield put(
+        fetchNotificationMetricsSucceeded({
+          notificationsSent: parseInt(sentMetric.values[0]?.sum || '0'),
+          notificationsFailed: parseInt(failedMetric.values[0]?.sum || '0'),
+        })
+      );
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationMetrics` }));
+    }
+  }
+}
+
 export function* watchNotificationSagas(): Generator {
   yield takeEvery(FETCH_NOTIFICATION_TYPE, fetchNotificationTypes);
   yield takeEvery(FETCH_CORE_NOTIFICATION_TYPE, fetchCoreNotificationTypes);
   yield takeEvery(DELETE_NOTIFICATION_TYPE, deleteNotificationTypes);
   yield takeEvery(UPDATE_NOTIFICATION_TYPE, updateNotificationType);
+  yield takeLatest(FETCH_NOTIFICATION_METRICS, fetchNotificationMetrics);
 }

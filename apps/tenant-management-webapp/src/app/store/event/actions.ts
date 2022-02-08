@@ -1,4 +1,4 @@
-import type { EventDefinition, EventLogEntry, EventSearchCriteria } from './models';
+import type { EventDefinition, EventLogEntry, EventMetrics, EventSearchCriteria } from './models';
 
 export const FETCH_EVENT_DEFINITIONS_ACTION = 'event/FETCH_EVENT_DEFINITIONS_ACTION';
 export const FETCH_EVENT_DEFINITIONS_SUCCESS_ACTION = 'event/FETCH_EVENT_DEFINITIONS_SUCCESS_ACTION';
@@ -12,6 +12,9 @@ export const FETCH_EVENT_LOG_ENTRIES_ACTION = 'eventLog/FETCH_EVENT_LOG_ENTRIES_
 export const FETCH_EVENT_LOG_ENTRIES_SUCCESS_ACTION = 'eventLog/FETCH_EVENT_LOG_ENTRIES_SUCCESS_ACTION';
 
 export const CLEAR_EVENT_LOG_ENTRIES_SUCCESS_ACTION = 'eventLog/CLEAR_EVENT_LOG_ENTRIES_SUCCESS_ACTION';
+
+export const FETCH_EVENT_METRICS_ACTION = 'event/FETCH_EVENT_METRICS_ACTION';
+export const FETCH_EVENT_METRICS_SUCCESS_ACTION = 'event/FETCH_EVENT_METRICS_SUCCESS_ACTION';
 
 export interface FetchEventDefinitionsAction {
   type: typeof FETCH_EVENT_DEFINITIONS_ACTION;
@@ -59,6 +62,15 @@ export interface ClearEventLogEntriesSuccessAction {
   type: typeof CLEAR_EVENT_LOG_ENTRIES_SUCCESS_ACTION;
 }
 
+export interface FetchEventMetricsAction {
+  type: typeof FETCH_EVENT_METRICS_ACTION;
+}
+
+export interface FetchEventMetricsSuccessAction {
+  type: typeof FETCH_EVENT_METRICS_SUCCESS_ACTION;
+  metrics: EventMetrics;
+}
+
 export type EventActionTypes =
   | FetchEventDefinitionsAction
   | FetchEventDefinitionsSuccessAction
@@ -68,7 +80,9 @@ export type EventActionTypes =
   | UpdateEventDefinitionSuccessAction
   | FetchEventLogEntriesAction
   | FetchEventLogEntriesSuccessAction
-  | ClearEventLogEntriesSuccessAction;
+  | ClearEventLogEntriesSuccessAction
+  | FetchEventMetricsAction
+  | FetchEventMetricsSuccessAction;
 
 export const getEventDefinitions = (): FetchEventDefinitionsAction => ({
   type: FETCH_EVENT_DEFINITIONS_ACTION,
@@ -132,4 +146,13 @@ export const getEventLogEntriesSucceeded = (
 
 export const clearEventLogEntries = (): ClearEventLogEntriesSuccessAction => ({
   type: CLEAR_EVENT_LOG_ENTRIES_SUCCESS_ACTION,
+});
+
+export const fetchEventMetrics = (): FetchEventMetricsAction => ({
+  type: FETCH_EVENT_METRICS_ACTION,
+});
+
+export const fetchEventMetricsSucceeded = (metrics: EventMetrics): FetchEventMetricsSuccessAction => ({
+  type: FETCH_EVENT_METRICS_SUCCESS_ACTION,
+  metrics,
 });

@@ -1,6 +1,21 @@
-import React, { FunctionComponent } from 'react';
+import React, { useEffect } from 'react';
+import { AddFileType } from './fileTypeNew';
+import { useDispatch, useSelector } from 'react-redux';
+import { FetchRealmRoles } from '@store/tenant/actions';
+import { RootState } from '@store/index';
 
-const FileOverview: FunctionComponent = () => {
+interface FileOverviewProps {
+  onSwitch: () => void;
+}
+
+const FileOverview = ({ onSwitch }: FileOverviewProps): JSX.Element => {
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(FetchRealmRoles());
+  }, []);
+
+  const realmRoles = useSelector((state: RootState) => state.tenant.realmRoles);
+
   return (
     <div>
       <div>
@@ -13,6 +28,8 @@ const FileOverview: FunctionComponent = () => {
         File types describe categories of files and include configuration of roles permitted to access and updated
         files.
       </div>
+      <br />
+      <div>{realmRoles && <AddFileType roles={realmRoles} onSwitch={onSwitch} />}</div>
     </div>
   );
 };

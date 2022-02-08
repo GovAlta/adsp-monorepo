@@ -123,8 +123,10 @@ const FileList = (): JSX.Element => {
         </GoAButton>
       </GoAForm>
 
+
       {fileList?.length === 0 && renderNoItem('file')}
       {fileList?.length > 0 && renderFileTable()}
+
     </>
   );
 };

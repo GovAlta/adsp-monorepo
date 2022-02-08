@@ -5,6 +5,7 @@ import * as destroy from './deleteApplication';
 import * as status from './setApplicationStatus';
 import * as toggle from './toggleApplication';
 import * as form from './updateFormData';
+import * as metrics from './metrics';
 
 export * from './fetchApplications';
 export * from './getApplication';
@@ -13,6 +14,7 @@ export * from './deleteApplication';
 export * from './setApplicationStatus';
 export * from './toggleApplication';
 export * from './updateFormData';
+export * from './metrics';
 
 export type ActionTypes =
   | toggle.ToggleApplicationStatusSuccessAction
@@ -23,4 +25,6 @@ export type ActionTypes =
   | get.GetApplicationSuccessAction
   | destroy.DeleteApplicationSuccessAction
   | status.SetApplicationStatusSuccessAction
-  | form.UpdateFormDataAction;
+  | form.UpdateFormDataAction
+  | metrics.FetchStatusMetricsAction
+  | metrics.FetchStatusMetricsSuccessAction;

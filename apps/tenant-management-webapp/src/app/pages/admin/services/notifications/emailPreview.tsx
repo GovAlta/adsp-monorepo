@@ -55,7 +55,7 @@ export const EmailPreview: FunctionComponent<PreviewProps> = ({ onCancel, open, 
               <div>
                 <p
                   dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(generateMessage(getTemplateBody(body, serviceName), htmlPayload)),
+                    __html: DOMPurify.sanitize(generateMessage(getTemplateBody(body), htmlPayload)),
                   }}
                 />
               </div>
