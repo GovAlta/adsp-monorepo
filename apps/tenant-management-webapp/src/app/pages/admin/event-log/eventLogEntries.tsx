@@ -109,7 +109,6 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
     <>
       {!indicator.show && !entries.length && renderNoItem('event log')}
       <Visible visible={!indicator.show && entries.length > 0}>
-
         <div className={className}>
           <DataTable>
             <thead>
@@ -142,7 +141,9 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
           </DataTable>
         </div>
       </Visible>
+      {!indicator.show && entries && entries.length === 0 && renderNoItem('event log')}
       {indicator.show && <PageIndicator />}
+
     </>
   );
 };
