@@ -279,375 +279,375 @@ Then(
   }
 );
 
-Given('a service owner user is on file services overview page', function () {
-  commonlib.tenantAdminDirectURLLogin(
-    Cypress.config().baseUrl,
-    Cypress.env('realm'),
-    Cypress.env('email'),
-    Cypress.env('password')
-  );
-  commonObj
-    .adminMenuItem('/admin/services/files')
-    .click()
-    .then(function () {
-      cy.url().should('include', '/admin/services/files');
-      cy.wait(4000);
-    });
-});
+// Given('a service owner user is on file services overview page', function () {
+//   commonlib.tenantAdminDirectURLLogin(
+//     Cypress.config().baseUrl,
+//     Cypress.env('realm'),
+//     Cypress.env('email'),
+//     Cypress.env('password')
+//   );
+//   commonObj
+//     .adminMenuItem('/admin/services/files')
+//     .click()
+//     .then(function () {
+//       cy.url().should('include', '/admin/services/files');
+//       cy.wait(4000);
+//     });
+// });
 
-When('the user {string} file service', function (action) {
-  // Verify action
-  expect(action).to.be.oneOf(['enables', 'disables']);
-  // Check file services status
-  fileServiceObj
-    .fileHeaderTag()
-    .invoke('text')
-    .then((text) => {
-      // Check if it's already in the desired status
-      switch (text) {
-        case 'Inactive':
-          if (action == 'enables') {
-            fileServiceObj.enableServiceButton().click();
-            cy.wait(1000);
-          } else if (action == 'disables') {
-            cy.log('The status is already Inactive');
-          }
-          break;
-        case 'Active':
-          if (action == 'disables') {
-            fileServiceObj.disableServiceButton().click();
-            cy.wait(1000);
-          } else if (action == 'enables') {
-            cy.log('The status is already Active');
-          }
-          break;
-        default:
-          expect(text).to.be.oneOf(['Inactive', 'Active']);
-      }
-    });
-});
+// When('the user {string} file service', function (action) {
+//   // Verify action
+//   expect(action).to.be.oneOf(['enables', 'disables']);
+//   // Check file services status
+//   fileServiceObj
+//     .fileHeaderTag()
+//     .invoke('text')
+//     .then((text) => {
+//       // Check if it's already in the desired status
+//       switch (text) {
+//         case 'Inactive':
+//           if (action == 'enables') {
+//             fileServiceObj.enableServiceButton().click();
+//             cy.wait(1000);
+//           } else if (action == 'disables') {
+//             cy.log('The status is already Inactive');
+//           }
+//           break;
+//         case 'Active':
+//           if (action == 'disables') {
+//             fileServiceObj.disableServiceButton().click();
+//             cy.wait(1000);
+//           } else if (action == 'enables') {
+//             cy.log('The status is already Active');
+//           }
+//           break;
+//         default:
+//           expect(text).to.be.oneOf(['Inactive', 'Active']);
+//       }
+//     });
+// });
 
-Then('file service status is {string}', function (expectedStatus) {
-  fileServiceObj.fileHeaderTag().invoke('text').should('eq', expectedStatus);
-});
+// Then('file service status is {string}', function (expectedStatus) {
+//   fileServiceObj.fileHeaderTag().invoke('text').should('eq', expectedStatus);
+// });
 
-When('the user disables file service', function () {
-  fileServiceObj.disableServiceButton().click();
-  cy.wait(1000);
-});
+// When('the user disables file service', function () {
+//   fileServiceObj.disableServiceButton().click();
+//   cy.wait(1000);
+// });
 
-Then('{string} file service tabs are {string}', function (tabStrings, visibility) {
-  const tabArray = tabStrings.split(',');
-  cy.log(tabArray);
-  switch (visibility) {
-    case 'visible':
-      fileServiceObj.fileServiceTabs().each((element, index) => {
-        cy.wrap(element).invoke('text').should('eq', tabArray[index].trim());
-      });
-      break;
-    case 'invisible':
-      fileServiceObj.fileServiceTabs().each((element) => {
-        for (let i = 0; i < tabArray.length; i++) {
-          cy.wrap(element).invoke('text').should('not.equal', tabArray[i].trim());
-        }
-      });
-      break;
-    default:
-      expect(visibility).to.be.oneOf(['visiable', 'invisible']);
-  }
-});
+// Then('{string} file service tabs are {string}', function (tabStrings, visibility) {
+//   const tabArray = tabStrings.split(',');
+//   cy.log(tabArray);
+//   switch (visibility) {
+//     case 'visible':
+//       fileServiceObj.fileServiceTabs().each((element, index) => {
+//         cy.wrap(element).invoke('text').should('eq', tabArray[index].trim());
+//       });
+//       break;
+//     case 'invisible':
+//       fileServiceObj.fileServiceTabs().each((element) => {
+//         for (let i = 0; i < tabArray.length; i++) {
+//           cy.wrap(element).invoke('text').should('not.equal', tabArray[i].trim());
+//         }
+//       });
+//       break;
+//     default:
+//       expect(visibility).to.be.oneOf(['visiable', 'invisible']);
+//   }
+// });
 
-When('user goes to {string} tab', function (tabText) {
-  fileServiceObj.fileServiceTab(tabText).click();
-  cy.wait(2000);
-});
+// When('user goes to {string} tab', function (tabText) {
+//   fileServiceObj.fileServiceTab(tabText).click();
+//   cy.wait(2000);
+// });
 
-Then('the user views file types page', function () {
-  // Check if the new file type button presents
-  fileServiceObj.newFileTypeButton().then((button) => {
-    expect(button.length).to.be.gt(0); //element exists
-  });
-});
+// Then('the user views file types page', function () {
+//   // Check if the new file type button presents
+//   fileServiceObj.newFileTypeButton().then((button) => {
+//     expect(button.length).to.be.gt(0); //element exists
+//   });
+// });
 
-When('the user adds a file type of {string}, {string}, {string}', function (name, readRole, updateRole) {
-  //Click the new file type button
-  fileServiceObj.newFileTypeButton().click();
-  cy.wait(1000);
+// When('the user adds a file type of {string}, {string}, {string}', function (name, readRole, updateRole) {
+//   //Click the new file type button
+//   fileServiceObj.newFileTypeButton().click();
+//   cy.wait(1000);
 
-  //Enter Name
-  fileServiceObj.newFileTypeNameField().type(name);
+//   //Enter Name
+//   fileServiceObj.newFileTypeNameField().type(name);
 
-  //Select Who can read
-  const readRoles = readRole.split(',');
-  for (let i = 0; i < readRoles.length; i++) {
-    fileServiceObj.newReadRolesDropdown().click();
-    fileServiceObj.newReadRolesDropdownItem(readRoles[i].trim()).trigger('mousemove').click();
-  }
+//   //Select Who can read
+//   const readRoles = readRole.split(',');
+//   for (let i = 0; i < readRoles.length; i++) {
+//     fileServiceObj.newReadRolesDropdown().click();
+//     fileServiceObj.newReadRolesDropdownItem(readRoles[i].trim()).trigger('mousemove').click();
+//   }
 
-  //Select Who can write
-  const updateRoles = updateRole.split(',');
-  for (let i = 0; i < updateRoles.length; i++) {
-    fileServiceObj.newUpdateRolesDropdown().click();
-    fileServiceObj.newUpdateRolesDropdownItem(updateRoles[i].trim()).trigger('mousemove').click();
-  }
+//   //Select Who can write
+//   const updateRoles = updateRole.split(',');
+//   for (let i = 0; i < updateRoles.length; i++) {
+//     fileServiceObj.newUpdateRolesDropdown().click();
+//     fileServiceObj.newUpdateRolesDropdownItem(updateRoles[i].trim()).trigger('mousemove').click();
+//   }
 
-  //Confirm
-  fileServiceObj.newFileTypeConfirmButton().click();
-  cy.wait(2000);
-});
+//   //Confirm
+//   fileServiceObj.newFileTypeConfirmButton().click();
+//   cy.wait(2000);
+// });
 
-Then('the user {string} the file type of {string}, {string}, {string}', function (action, name, readRole, updateRole) {
-  findFileType(name, readRole, updateRole).then((rowNumber) => {
-    switch (action) {
-      case 'views':
-        expect(rowNumber).to.be.greaterThan(
-          0,
-          'File type of ' + name + ', ' + readRole + ', ' + updateRole + ' has row #' + rowNumber
-        );
-        break;
-      case 'should not view':
-        expect(rowNumber).to.equal(
-          0,
-          'File type of ' + name + ', ' + readRole + ', ' + updateRole + ' has row #' + rowNumber
-        );
-        break;
-      default:
-        expect(action).to.be.oneOf(['views', 'should not view']);
-    }
-  });
-});
+// Then('the user {string} the file type of {string}, {string}, {string}', function (action, name, readRole, updateRole) {
+//   findFileType(name, readRole, updateRole).then((rowNumber) => {
+//     switch (action) {
+//       case 'views':
+//         expect(rowNumber).to.be.greaterThan(
+//           0,
+//           'File type of ' + name + ', ' + readRole + ', ' + updateRole + ' has row #' + rowNumber
+//         );
+//         break;
+//       case 'should not view':
+//         expect(rowNumber).to.equal(
+//           0,
+//           'File type of ' + name + ', ' + readRole + ', ' + updateRole + ' has row #' + rowNumber
+//         );
+//         break;
+//       default:
+//         expect(action).to.be.oneOf(['views', 'should not view']);
+//     }
+//   });
+// });
 
-//Find file type with name, read role(s) and update role(s)
-//Input: file name, file read role(s) in a string separated with comma, file update role(s) in a string separated with comma
-//Return: row number if the file type is found; zero if the file type isn't found
-function findFileType(name, readRole, updateRole) {
-  return new Cypress.Promise((resolve, reject) => {
-    try {
-      let rowNumber = 0;
-      const readRoles = readRole.split(',');
-      const updateRoles = updateRole.split(',');
-      const targetedNumber = readRoles.length + updateRoles.length + 1; // Name, read roles and update roles all need to match to find the file type
-      fileServiceObj
-        .fileTypeTableBody()
-        .find('tr')
-        .then((rows) => {
-          rows.toArray().forEach((rowElement) => {
-            let counter = 0;
-            // cy.log(rowElement.cells[1].innerHTML); // Print out the name cell innerHTML for debug purpose
-            if (rowElement.cells[1].innerHTML.includes(name)) {
-              counter = counter + 1;
-            }
-            // cy.log(rowElement.cells[2].innerHTML); // Print out the read role cell innerHTML for debug purpose
-            readRoles.forEach((rRole) => {
-              if (rRole.includes('Anonymous')) {
-                rRole = 'Anonymous'; // Replace Anyone (Anonymous) to Anonymous
-              }
-              if (rowElement.cells[2].innerHTML.includes(rRole.trim())) {
-                counter = counter + 1;
-              }
-            });
-            // cy.log(rowElement.cells[3].innerHTML); // Print out the update role cell innerHTML for debug purpose
-            updateRoles.forEach((uRole) => {
-              if (rowElement.cells[3].innerHTML.includes(uRole.trim())) {
-                counter = counter + 1;
-              }
-            });
-            Cypress.log({
-              name: 'Number of matched items for row# ' + rowElement.rowIndex + ': ',
-              message: String(String(counter)),
-            });
-            if (counter == targetedNumber) {
-              rowNumber = rowElement.rowIndex;
-            }
-          });
-          Cypress.log({
-            name: 'Row number for the found file type: ',
-            message: String(rowNumber),
-          });
-          resolve(rowNumber);
-        });
-    } catch (error) {
-      reject(error);
-    }
-  });
-}
+// //Find file type with name, read role(s) and update role(s)
+// //Input: file name, file read role(s) in a string separated with comma, file update role(s) in a string separated with comma
+// //Return: row number if the file type is found; zero if the file type isn't found
+// function findFileType(name, readRole, updateRole) {
+//   return new Cypress.Promise((resolve, reject) => {
+//     try {
+//       let rowNumber = 0;
+//       const readRoles = readRole.split(',');
+//       const updateRoles = updateRole.split(',');
+//       const targetedNumber = readRoles.length + updateRoles.length + 1; // Name, read roles and update roles all need to match to find the file type
+//       fileServiceObj
+//         .fileTypeTableBody()
+//         .find('tr')
+//         .then((rows) => {
+//           rows.toArray().forEach((rowElement) => {
+//             let counter = 0;
+//             // cy.log(rowElement.cells[1].innerHTML); // Print out the name cell innerHTML for debug purpose
+//             if (rowElement.cells[1].innerHTML.includes(name)) {
+//               counter = counter + 1;
+//             }
+//             // cy.log(rowElement.cells[2].innerHTML); // Print out the read role cell innerHTML for debug purpose
+//             readRoles.forEach((rRole) => {
+//               if (rRole.includes('Anonymous')) {
+//                 rRole = 'Anonymous'; // Replace Anyone (Anonymous) to Anonymous
+//               }
+//               if (rowElement.cells[2].innerHTML.includes(rRole.trim())) {
+//                 counter = counter + 1;
+//               }
+//             });
+//             // cy.log(rowElement.cells[3].innerHTML); // Print out the update role cell innerHTML for debug purpose
+//             updateRoles.forEach((uRole) => {
+//               if (rowElement.cells[3].innerHTML.includes(uRole.trim())) {
+//                 counter = counter + 1;
+//               }
+//             });
+//             Cypress.log({
+//               name: 'Number of matched items for row# ' + rowElement.rowIndex + ': ',
+//               message: String(String(counter)),
+//             });
+//             if (counter == targetedNumber) {
+//               rowNumber = rowElement.rowIndex;
+//             }
+//           });
+//           Cypress.log({
+//             name: 'Row number for the found file type: ',
+//             message: String(rowNumber),
+//           });
+//           resolve(rowNumber);
+//         });
+//     } catch (error) {
+//       reject(error);
+//     }
+//   });
+// }
 
-When(
-  'the user updates the file type of {string}, {string}, {string} to be of {string}, {string}, {string}',
-  function (name, readRole, updateRole, newName, newReadRole, newUpdateRole) {
-    findFileType(name, readRole, updateRole).then((rowNumber) => {
-      // Click Edit button
-      fileServiceObj.fileTypeEditButton(rowNumber).click();
-      cy.wait(1000);
+// When(
+//   'the user updates the file type of {string}, {string}, {string} to be of {string}, {string}, {string}',
+//   function (name, readRole, updateRole, newName, newReadRole, newUpdateRole) {
+//     findFileType(name, readRole, updateRole).then((rowNumber) => {
+//       // Click Edit button
+//       fileServiceObj.fileTypeEditButton(rowNumber).click();
+//       cy.wait(1000);
 
-      // Enter new name
-      fileServiceObj.fileTypeNameEditField(rowNumber).clear();
-      fileServiceObj.fileTypeNameEditField(rowNumber).type(newName);
+//       // Enter new name
+//       fileServiceObj.fileTypeNameEditField(rowNumber).clear();
+//       fileServiceObj.fileTypeNameEditField(rowNumber).type(newName);
 
-      // Enter new read roles
-      if (readRole.includes('Anyone (Anonymous)')) {
-        // Select "Deselect anonymous"
-        fileServiceObj.fileTypeReadRoles(rowNumber).click();
-        fileServiceObj.fileTypeReadRolesDropdownItem(rowNumber, 'Deselect anonymous').trigger('mousemove').click();
-        cy.wait(1000);
+//       // Enter new read roles
+//       if (readRole.includes('Anyone (Anonymous)')) {
+//         // Select "Deselect anonymous"
+//         fileServiceObj.fileTypeReadRoles(rowNumber).click();
+//         fileServiceObj.fileTypeReadRolesDropdownItem(rowNumber, 'Deselect anonymous').trigger('mousemove').click();
+//         cy.wait(1000);
 
-        // Deselect all selected roles if any
-        fileServiceObj.fileTypeReadRoles(rowNumber).click();
-        fileServiceObj
-          .fileTypeTable()
-          .parent()
-          .scrollTo('bottom')
-          .then(() => {
-            cy.wait(1000);
-            fileServiceObj.fileTypeReadRolesDropdownItems(rowNumber).then((items) => {
-              // If there are selected items, deselect them all
-              if (items.find('.option selected').length > 0) {
-                fileServiceObj.fileTypeReadRolesDropdownSelectedItems(rowNumber).then((elements) => {
-                  if (elements.length > 0) {
-                    for (let i = 0; i < elements.length; i++) {
-                      if (i !== 0) {
-                        fileServiceObj.fileTypeReadRoles(rowNumber).click();
-                        fileServiceObj
-                          .fileTypeTable()
-                          .parent()
-                          .scrollTo('bottom')
-                          .then(() => {
-                            cy.wait(1000);
-                            elements[i].click();
-                            cy.wait(1000);
-                          });
-                      } else {
-                        elements[i].click();
-                        cy.wait(1000);
-                      }
-                    }
-                  }
-                });
-              } else {
-                fileServiceObj.fileTypeReadRoles(rowNumber).click();
-              }
-            });
-          });
-      } else {
-        // Deselect the old read roles
-        const readRoles = readRole.split(',');
-        for (let i = 0; i < readRoles.length; i++) {
-          fileServiceObj.fileTypeReadRoles(rowNumber).click();
-          fileServiceObj
-            .fileTypeTable()
-            .parent()
-            .scrollTo('bottom')
-            .then(() => {
-              cy.wait(1000);
-              fileServiceObj.fileTypeReadRolesDropdownItem(rowNumber, readRoles[i].trim()).trigger('mousemove').click();
-              cy.wait(1000);
-            });
-        }
-      }
+//         // Deselect all selected roles if any
+//         fileServiceObj.fileTypeReadRoles(rowNumber).click();
+//         fileServiceObj
+//           .fileTypeTable()
+//           .parent()
+//           .scrollTo('bottom')
+//           .then(() => {
+//             cy.wait(1000);
+//             fileServiceObj.fileTypeReadRolesDropdownItems(rowNumber).then((items) => {
+//               // If there are selected items, deselect them all
+//               if (items.find('.option selected').length > 0) {
+//                 fileServiceObj.fileTypeReadRolesDropdownSelectedItems(rowNumber).then((elements) => {
+//                   if (elements.length > 0) {
+//                     for (let i = 0; i < elements.length; i++) {
+//                       if (i !== 0) {
+//                         fileServiceObj.fileTypeReadRoles(rowNumber).click();
+//                         fileServiceObj
+//                           .fileTypeTable()
+//                           .parent()
+//                           .scrollTo('bottom')
+//                           .then(() => {
+//                             cy.wait(1000);
+//                             elements[i].click();
+//                             cy.wait(1000);
+//                           });
+//                       } else {
+//                         elements[i].click();
+//                         cy.wait(1000);
+//                       }
+//                     }
+//                   }
+//                 });
+//               } else {
+//                 fileServiceObj.fileTypeReadRoles(rowNumber).click();
+//               }
+//             });
+//           });
+//       } else {
+//         // Deselect the old read roles
+//         const readRoles = readRole.split(',');
+//         for (let i = 0; i < readRoles.length; i++) {
+//           fileServiceObj.fileTypeReadRoles(rowNumber).click();
+//           fileServiceObj
+//             .fileTypeTable()
+//             .parent()
+//             .scrollTo('bottom')
+//             .then(() => {
+//               cy.wait(1000);
+//               fileServiceObj.fileTypeReadRolesDropdownItem(rowNumber, readRoles[i].trim()).trigger('mousemove').click();
+//               cy.wait(1000);
+//             });
+//         }
+//       }
 
-      // Select new read roles
-      const newReadRoles = newReadRole.split(',');
-      for (let i = 0; i < newReadRoles.length; i++) {
-        fileServiceObj.fileTypeReadRoles(rowNumber).click();
-        fileServiceObj
-          .fileTypeTable()
-          .parent()
-          .scrollTo('bottom')
-          .then(() => {
-            cy.wait(1000);
-            fileServiceObj
-              .fileTypeReadRolesDropdownItem(rowNumber, newReadRoles[i].trim())
-              .trigger('mousemove')
-              .click();
-            cy.wait(1000);
-          });
-      }
+//       // Select new read roles
+//       const newReadRoles = newReadRole.split(',');
+//       for (let i = 0; i < newReadRoles.length; i++) {
+//         fileServiceObj.fileTypeReadRoles(rowNumber).click();
+//         fileServiceObj
+//           .fileTypeTable()
+//           .parent()
+//           .scrollTo('bottom')
+//           .then(() => {
+//             cy.wait(1000);
+//             fileServiceObj
+//               .fileTypeReadRolesDropdownItem(rowNumber, newReadRoles[i].trim())
+//               .trigger('mousemove')
+//               .click();
+//             cy.wait(1000);
+//           });
+//       }
 
-      // Enter new update roles
-      // Deselect the old update roles
-      const updateRoles = updateRole.split(',');
-      for (let i = 0; i < updateRoles.length; i++) {
-        fileServiceObj.fileTypeUpdateRoles(rowNumber).click();
-        fileServiceObj
-          .fileTypeTable()
-          .parent()
-          .scrollTo('bottom')
-          .then(() => {
-            cy.wait(1000);
-            fileServiceObj
-              .fileTypeUpdateRolesDropdownItem(rowNumber, updateRoles[i].trim())
-              .trigger('mousemove')
-              .click();
-            cy.wait(1000);
-          });
-      }
+//       // Enter new update roles
+//       // Deselect the old update roles
+//       const updateRoles = updateRole.split(',');
+//       for (let i = 0; i < updateRoles.length; i++) {
+//         fileServiceObj.fileTypeUpdateRoles(rowNumber).click();
+//         fileServiceObj
+//           .fileTypeTable()
+//           .parent()
+//           .scrollTo('bottom')
+//           .then(() => {
+//             cy.wait(1000);
+//             fileServiceObj
+//               .fileTypeUpdateRolesDropdownItem(rowNumber, updateRoles[i].trim())
+//               .trigger('mousemove')
+//               .click();
+//             cy.wait(1000);
+//           });
+//       }
 
-      // Select new update roles
-      const newUpdateRoles = newUpdateRole.split(',');
-      for (let i = 0; i < newUpdateRoles.length; i++) {
-        fileServiceObj.fileTypeUpdateRoles(rowNumber).click();
-        fileServiceObj
-          .fileTypeTable()
-          .parent()
-          .scrollTo('bottom')
-          .then(() => {
-            cy.wait(1000);
-            fileServiceObj
-              .fileTypeUpdateRolesDropdownItem(rowNumber, newUpdateRoles[i].trim())
-              .trigger('mousemove')
-              .click();
-            cy.wait(1000);
-          });
-      }
+//       // Select new update roles
+//       const newUpdateRoles = newUpdateRole.split(',');
+//       for (let i = 0; i < newUpdateRoles.length; i++) {
+//         fileServiceObj.fileTypeUpdateRoles(rowNumber).click();
+//         fileServiceObj
+//           .fileTypeTable()
+//           .parent()
+//           .scrollTo('bottom')
+//           .then(() => {
+//             cy.wait(1000);
+//             fileServiceObj
+//               .fileTypeUpdateRolesDropdownItem(rowNumber, newUpdateRoles[i].trim())
+//               .trigger('mousemove')
+//               .click();
+//             cy.wait(1000);
+//           });
+//       }
 
-      // Confirm
-      fileServiceObj.fileTypeConfirmButton().click();
-      cy.wait(2000);
-    });
-  }
-);
+//       // Confirm
+//       fileServiceObj.fileTypeConfirmButton().click();
+//       cy.wait(2000);
+//     });
+//   }
+// );
 
-When('the user removes the file type of {string}, {string}, {string}', function (name, readRole, updateRole) {
-  findFileType(name, readRole, updateRole).then((rowNumber) => {
-    fileServiceObj.fileTypeDeleteButton(rowNumber).click();
-    cy.wait(1000);
-    fileServiceObj
-      .fileTypeDeleteModalFileTypeName()
-      .should('have.text', name)
-      .then(function () {
-        fileServiceObj.fileTypeDeleteModalDeleteButton().click();
-        cy.wait(2000);
-      });
-  });
-});
+// When('the user removes the file type of {string}, {string}, {string}', function (name, readRole, updateRole) {
+//   findFileType(name, readRole, updateRole).then((rowNumber) => {
+//     fileServiceObj.fileTypeDeleteButton(rowNumber).click();
+//     cy.wait(1000);
+//     fileServiceObj
+//       .fileTypeDeleteModalFileTypeName()
+//       .should('have.text', name)
+//       .then(function () {
+//         fileServiceObj.fileTypeDeleteModalDeleteButton().click();
+//         cy.wait(2000);
+//       });
+//   });
+// });
 
-Then('the user views an error message for duplicated file name', function () {
-  fileServiceObj.fileTypesErrorMessage().invoke('text').should('contain', 'status code 400');
-});
+// Then('the user views an error message for duplicated file name', function () {
+//   fileServiceObj.fileTypesErrorMessage().invoke('text').should('contain', 'status code 400');
+// });
 
-When('the user clicks Delete button for file type {string}, {string}, {string}', function (name, readRole, updateRole) {
-  findFileType(name, readRole, updateRole).then((rowNumber) => {
-    fileServiceObj.fileTypeDeleteButton(rowNumber).click();
-    cy.wait(1000);
-  });
-});
+// When('the user clicks Delete button for file type {string}, {string}, {string}', function (name, readRole, updateRole) {
+//   findFileType(name, readRole, updateRole).then((rowNumber) => {
+//     fileServiceObj.fileTypeDeleteButton(rowNumber).click();
+//     cy.wait(1000);
+//   });
+// });
 
-Then('the user views file type current in user modal for {string}', function (fileTypeName) {
-  fileServiceObj.fileTypeModalTitle().invoke('text').should('eq', 'File type current in use');
-  fileServiceObj
-    .fileTypeDeleteModalContent()
-    .invoke('text')
-    .should(
-      'contain',
-      'You are unable to delete the file type ' + fileTypeName + ' because there are files within the file type.'
-    );
-});
+// Then('the user views file type current in user modal for {string}', function (fileTypeName) {
+//   fileServiceObj.fileTypeModalTitle().invoke('text').should('eq', 'File type current in use');
+//   fileServiceObj
+//     .fileTypeDeleteModalContent()
+//     .invoke('text')
+//     .should(
+//       'contain',
+//       'You are unable to delete the file type ' + fileTypeName + ' because there are files within the file type.'
+//     );
+// });
 
-When('the user clicks Okay button', function () {
-  fileServiceObj.fileTypeDeleteModalOkayBtn().click();
-  cy.wait(1000);
-});
+// When('the user clicks Okay button', function () {
+//   fileServiceObj.fileTypeDeleteModalOkayBtn().click();
+//   cy.wait(1000);
+// });
 
-Then('the user views the file type {string}', function (fileTypeName) {
-  fileServiceObj.fileTypeTableBody().contains('tr', fileTypeName);
-});
+// Then('the user views the file type {string}', function (fileTypeName) {
+//   fileServiceObj.fileTypeTableBody().contains('tr', fileTypeName);
+// });
