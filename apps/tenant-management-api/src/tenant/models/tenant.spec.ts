@@ -13,7 +13,6 @@ describe('TenantEntity', () => {
       realm: 'mock',
       adminEmail: 'mock@gov.ab.ca',
       tokenIssuer: 'https://access-dev/mock',
-      createdBy: 'mock_user',
     });
     expect(entity).toBeTruthy();
     expect(entity.id).toBeTruthy();
@@ -30,7 +29,6 @@ describe('TenantEntity', () => {
       realm: 'mock',
       adminEmail: 'mock@gov.ab.ca',
       tokenIssuer: 'https://access-dev/mock',
-      createdBy: 'mock_user',
     });
 
     repositoryMock.setup((instance) => instance.save(It.IsAny())).returns(Promise.resolve(entity));
@@ -47,7 +45,6 @@ describe('TenantEntity', () => {
       realm: 'mock',
       adminEmail: 'mock@gov.ab.ca',
       tokenIssuer: 'https://access-dev/mock',
-      createdBy: 'mock_user',
     });
 
     const obj = entity.obj();
