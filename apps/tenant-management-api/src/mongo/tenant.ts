@@ -14,7 +14,7 @@ export class MongoTenantRepository implements TenantRepository {
 
   async save(tenant: TenantEntity): Promise<TenantEntity> {
     const doc = await this.tenantModel.findOneAndUpdate(
-      { _id: tenant.id || new Types.ObjectId() },
+      { _id: tenant.id },
       this.toDoc(tenant),
       {
         upsert: true,

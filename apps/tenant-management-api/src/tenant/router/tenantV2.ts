@@ -1,4 +1,4 @@
-import { adspId } from '@abgov/adsp-service-sdk';
+import { adspId, Tenant } from '@abgov/adsp-service-sdk';
 import { Router } from 'express';
 import { requirePlatformService } from '../../middleware/authentication';
 import * as tenantService from '../services/tenant';
@@ -8,6 +8,14 @@ import { TenantCriteria } from '../types';
 
 interface TenantRouterProps {
   tenantRepository: TenantRepository;
+}
+
+function mapTenant(tenant: Tenant) {
+  return {
+    id: `${tenant.id}`,
+    realm: tenant.realm,
+    name: tenant.name,
+  };
 }
 
 export const createTenantV2Router = ({ tenantRepository }: TenantRouterProps): Router => {
@@ -33,7 +41,7 @@ export const createTenantV2Router = ({ tenantRepository }: TenantRouterProps): R
       const tenants = await tenantService.getTenants(tenantRepository, criteria);
 
       res.json({
-        results: tenants,
+        results: tenants.map(mapTenant),
         page: {
           size: tenants.length,
         },
@@ -49,7 +57,7 @@ export const createTenantV2Router = ({ tenantRepository }: TenantRouterProps): R
 
     try {
       const tenant = await tenantService.getTenant(tenantRepository, adspId`urn:ads:platform:tenant-service:v2:${id}`);
-      res.json(tenant);
+      res.json(mapTenant(tenant));
     } catch (err) {
       logger.error(`Failed to get tenant with error: ${err.message}`);
       next(err);

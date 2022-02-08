@@ -239,7 +239,7 @@ const createBrokerClient = async (realm, secret, brokerClient) => {
 
 export const validateEmailInDB = async (repository: TenantRepository, email: string): Promise<void> => {
   logger.info(`Validate - has user created tenant realm before?`);
-  const isTenantAdmin = (await repository.find({ adminEmailEquals: email }))[0];
+  const isTenantAdmin = !!(await repository.find({ adminEmailEquals: email }))[0];
 
   if (isTenantAdmin) {
     const errorMessage = `${email} is the tenant admin in our record. One user can create only one realm.`;
