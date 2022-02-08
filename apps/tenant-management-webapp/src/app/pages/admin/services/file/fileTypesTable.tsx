@@ -96,6 +96,7 @@ export const FileTypeTable = ({ roles, fileTypes }: FileTypeTableProps): JSX.Ele
   };
 
   const TableLayout = styled.div`
+    margin-top: 1em;
     table,
     th,
     td {
