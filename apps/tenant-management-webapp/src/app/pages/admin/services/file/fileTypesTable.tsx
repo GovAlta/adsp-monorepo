@@ -53,7 +53,7 @@ const FileTypeTableRow = ({
       <td className="actionCol">
         <GoAContextMenu>
           <GoAContextMenuIcon
-            type={id === editId ? 'eye' : 'eye-off'}
+            type="create"
             title="Edit"
             onClick={() => {
               onEdit();
@@ -137,7 +137,7 @@ export const FileTypeTable = ({ roles, fileTypes }: FileTypeTableProps): JSX.Ele
                 };
                 return (
                   <FileTypeTableRow
-                    key={fileType.id}
+                    key={`file-type-row-${fileType.id}`}
                     {...rowProps}
                     onEdit={() => {
                       setEditId(fileType.id);

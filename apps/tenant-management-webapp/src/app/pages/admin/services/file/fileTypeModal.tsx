@@ -20,7 +20,7 @@ interface FileTypeModalProps {
 
 const ModalOverwrite = styled.div`
   .modal {
-    max-height: 200% !important;
+    max-height: 250% !important;
     min-width: 37.5em;
   }
 `;
@@ -60,7 +60,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
         <GoAModalTitle>{title}</GoAModalTitle>
         <GoAModalContent>
           <GoAFormItem>
-            <label>File type name</label>
+            <label>File name</label>
             <GoAInput
               type="text"
               name="name"
@@ -81,6 +81,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
             <label>Who can read</label>
             <GoADropdown
               name="fileTypesReadRoles"
+              disabled={fileType.anonymousRead}
               selectedValues={fileType.readRoles}
               multiSelect={true}
               onChange={(name, values) => {
@@ -122,21 +123,22 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
                 />
               ))}
             </GoADropdown>
+
+            <AnonymousContainer>
+              <GoACheckbox
+                name="file-type-anonymousRead"
+                checked={fileType.anonymousRead}
+                onChange={() => {
+                  setFileType({
+                    ...fileType,
+                    anonymousRead: !fileType.anonymousRead,
+                  });
+                }}
+                value="file-type-anonymousRead"
+              />{' '}
+              Allow anonymous read
+            </AnonymousContainer>
           </GoAFormItem>
-          <AnonymousContainer>
-            <GoACheckbox
-              name="file-type-anonymousRead"
-              checked={fileType.anonymousRead}
-              onChange={() => {
-                setFileType({
-                  ...fileType,
-                  anonymousRead: !fileType.anonymousRead,
-                });
-              }}
-              value="file-type-anonymousRead"
-            />{' '}
-            Allow Anonymous Read
-          </AnonymousContainer>
         </GoAModalContent>
 
         <GoAModalActions>
