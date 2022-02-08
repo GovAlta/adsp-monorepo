@@ -259,3 +259,20 @@ Then('Preview an email template modal is closed', function () {
 Then('the user should see tab {string}', function (tab) {
   notificationsObj.notificationsTab(tab).should('be.visible');
 });
+
+When('the user cannot edit the template', function () {
+  notificationsObj.eventTemplatePreviewModalAction().invoke('text').should('not.contain', 'Edit');
+});
+
+When('the user clicks Edit button on {string} in {string}', function (eventName, typeName) {
+  notificationsObj.internalNotificationTypeEventEditButton(typeName, eventName).click();
+  cy.wait(1000);
+});
+When('the user views status has changed in Subject field', function () {
+  notificationsObj
+    .eventTemplatePreviewModalSubjectEditor()
+    .contains('{{ event.payload.application.name }} status has changed');
+  // .should('contain', '{{ event.payload.application.name }} status has changed');
+  notificationsObj.eventTemplatePreviewModalSubjectEditor().first().type('{end} Edited');
+  notificationsObj.editAnEmailTemplateModalSaveBtn().click();
+});
