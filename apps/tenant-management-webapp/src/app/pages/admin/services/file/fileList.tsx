@@ -13,16 +13,18 @@ import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
 import { GoAIconButton } from '@abgov/react-components/experimental';
 import { renderNoItem } from '@components/NoItem';
+
 const FileList = (): JSX.Element => {
   const [selectedFile, setSelectFile] = useState<string>();
   const [uploadFileType, setUploadFileType] = useState<string>();
   const dispatch = useDispatch();
   const { fileList, fileTypes } = useSelector((state: RootState) => {
     return {
-      fileList: state.fileService.fileList || [],
-      fileTypes: state.fileService.fileTypes || [],
+      fileList: state.fileService.fileList,
+      fileTypes: state.fileService.fileTypes,
     };
   });
+
   const getFileTypesValues = () => {
     const typeValues = [];
 
@@ -121,7 +123,8 @@ const FileList = (): JSX.Element => {
         </GoAButton>
       </GoAForm>
 
-      {fileList.length === 0 ? renderNoItem('file') : renderFileTable()}
+      {fileList?.length === 0 && renderNoItem('file')}
+      {fileList?.length > 0 && renderFileTable()}
     </>
   );
 };
