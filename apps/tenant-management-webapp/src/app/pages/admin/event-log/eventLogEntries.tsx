@@ -109,10 +109,7 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
     <>
       {!indicator.show && !entries.length && renderNoItem('event log')}
       <Visible visible={!indicator.show && entries.length > 0}>
-<<<<<<< HEAD
-=======
 
->>>>>>> 94c80125aa09844b21ee824038be67a11e7b31fd
         <div className={className}>
           <DataTable>
             <thead>
