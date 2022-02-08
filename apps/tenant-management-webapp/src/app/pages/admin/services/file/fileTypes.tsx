@@ -33,9 +33,9 @@ export const FileTypes: FunctionComponent = () => {
   return (
     <div>
       <div>
-        {indicator.show && realmRoles && <AddFileType roles={realmRoles} />}
+        {!indicator.show && fileTypes !== null && <AddFileType roles={realmRoles} />}
         {!indicator.show && fileTypes && fileTypes.length === 0 && (
-          <NoContentContainer>{renderNoItem('filetype')}</NoContentContainer>
+          <NoContentContainer>{renderNoItem('file type')}</NoContentContainer>
         )}
         {indicator.show && <PageIndicator />}
         {!indicator.show && fileTypes && (
