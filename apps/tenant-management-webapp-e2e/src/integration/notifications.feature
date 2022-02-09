@@ -102,7 +102,7 @@ Feature: Notifications
 
   @TEST_CS-986 @REQ_CS-963 @REQ_CS-978 @regression
   Scenario: As a tenant admin, I can see notification type for application status change updates
-    Given a tenant admin user is on notification overview page
+    Given a service owner user is on notification overview page
     Then the user should see tab "Overview"
     When the user selects "Notification types" tab for "Notifications"
     Then the user "views" the notification type card of "status-application-status-change"
