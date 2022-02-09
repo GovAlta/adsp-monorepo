@@ -77,7 +77,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
           </GoAFormItem>
           <GoAFlexRow gap="small">
             <GoAFormItem>
-              <label>Who can read</label>
+              <label>Read roles</label>
               <GoADropdown
                 name="fileTypesReadRoles"
                 disabled={fileType.anonymousRead}
@@ -116,7 +116,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
             </GoAFormItem>
 
             <GoAFormItem>
-              <label>Who can edit</label>
+              <label>Edit roles</label>
               <GoADropdown
                 name="fileTypesUpdateRoles"
                 selectedValues={fileType.updateRoles}
