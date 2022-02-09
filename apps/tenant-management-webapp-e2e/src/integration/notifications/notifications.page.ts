@@ -234,6 +234,25 @@ class NotificationsPage {
   editAnEmailTemplateModalSaveBtn() {
     return cy.get('[data-testid="template-form-save"]');
   }
+
+  editAnEmailTemplateModalCancelBtn() {
+    return cy.get('[data-testid="template-form-cancel"]');
+  }
+
+  internalNotificationTypeEventEditedMailIcon(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="Edited"]`
+    );
+  }
+  internalNotificationTypeEventResetBtn(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="delete-event"]`
+    );
+  }
+
+  resetEmailTemplateModalConfirmBtn() {
+    return cy.get('[data-testid="event-delete-confirm"]');
+  }
 }
 
 export default NotificationsPage;
