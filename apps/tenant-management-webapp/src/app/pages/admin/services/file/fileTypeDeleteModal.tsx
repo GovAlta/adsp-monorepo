@@ -82,4 +82,5 @@ export const FileTypeDeleteModal = ({ onCancel, fileType }: FileTypeDeleteModalP
       </GoAModal>
     );
   }
+  return <div />;
 };

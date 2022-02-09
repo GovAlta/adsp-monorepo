@@ -41,12 +41,12 @@ const FileTypeTableRow = ({
       <td>{name}</td>
       <td>
         {readRoles.map((role): JSX.Element => {
-          return <GoABadge type="information" content={role} />;
+          return <GoABadge key={`read-roles-${role}`} type="information" content={role} />;
         })}
       </td>
       <td>
         {updateRoles.map((role): JSX.Element => {
-          return <GoABadge type="information" content={role} />;
+          return <GoABadge key={`update-roles-${role}`} type="information" content={role} />;
         })}
       </td>
       <td className="anonymousCol">{anonymousRead === true ? 'Yes' : 'No'}</td>
