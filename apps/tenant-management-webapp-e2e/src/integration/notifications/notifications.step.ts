@@ -261,7 +261,6 @@ Then('Preview an email template modal is closed', function () {
   notificationsObj.eventTemplatePreviewModal().should('not.exist');
 });
 
-//LD CS-986
 Then('the user should see tab {string}', function (tab) {
   notificationsObj.notificationsTab(tab).should('be.visible');
 });
