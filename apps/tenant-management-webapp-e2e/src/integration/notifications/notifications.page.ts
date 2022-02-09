@@ -286,6 +286,16 @@ class NotificationsPage {
   resetEmailTemplateModalConfirmBtn() {
     return cy.get('[data-testid="event-delete-confirm"]');
   }
+
+  notificationsTab(text) {
+    return cy.xpath(
+      `//h1[contains(text(), "Notifications")]/following-sibling::div[1]//descendant::div[contains(text(), "${text}")]`
+    );
+  }
+
+  eventTemplatePreviewModalAction() {
+    return cy.xpath('//*[@data-testid="email-preview" and @data-state="visible"]//*[@class="modal-actions"]');
+  }
 }
 
 export default NotificationsPage;
