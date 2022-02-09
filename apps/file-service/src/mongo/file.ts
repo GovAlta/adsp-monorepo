@@ -83,7 +83,7 @@ export class MongoFileRepository implements FileRepository {
       this.model.findOneAndUpdate(
         { _id: entity.id },
         this.toDoc(entity),
-        { upsert: true, new: true, lean: true },
+        { upsert: true, new: true, lean: true, omitUndefined: true },
         (err, doc) => {
           if (err) {
             reject(err);
@@ -122,7 +122,7 @@ export class MongoFileRepository implements FileRepository {
   toDoc(entity: FileEntity): any {
     return {
       spaceId: entity.tenantId.toString(),
-      typeId: entity.type.id,
+      typeId: entity.type?.id || undefined,
       recordId: entity.recordId,
       filename: entity.filename,
       size: entity.size,

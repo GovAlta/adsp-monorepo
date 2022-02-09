@@ -14,7 +14,7 @@ import { adspId, EventService } from '@abgov/adsp-service-sdk';
 import { tenantCreated } from '../events';
 import { TenantRepository } from '../repository';
 import { ServiceClient } from '../types';
-import { InvalidOperationError } from '@core-services/core-common';
+import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 
 class CreateTenantDto {
   @IsDefined()
@@ -55,7 +55,11 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
     try {
       const { email } = req.payload;
       const tenant = (await tenantRepository.find({ adminEmailEquals: email }))[0];
-      res.json(tenant?.obj());
+      if (!tenant) {
+        throw new NotFoundError('Tenant', email);
+      }
+
+      res.json(tenant.obj());
     } catch (err) {
       logger.error(`Failed fetching tenant info by email address: ${err.message}`);
       next(err);
@@ -67,7 +71,11 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
       const { name } = req.payload;
 
       const tenant = (await tenantRepository.find({ nameEquals: name }))[0];
-      res.json(tenant?.obj());
+      if (!tenant) {
+        throw new NotFoundError('Tenant', name);
+      }
+
+      res.json(tenant.obj());
     } catch (err) {
       logger.error(`Failed fetching tenant info by name: ${err.message}`);
       next(err);
@@ -79,9 +87,13 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
 
     try {
       const tenant = (await tenantRepository.find({ realmEquals: realm }))[0];
+      if (!tenant) {
+        throw new NotFoundError('Tenant', realm);
+      }
+
       res.json({
         success: true,
-        tenant: tenant?.obj(),
+        tenant: tenant.obj(),
       });
     } catch (err) {
       logger.error(`Failed fetching tenant info by realm: ${err.message}`);
@@ -94,9 +106,13 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
 
     try {
       const tenant = await tenantRepository.get(id);
+      if (!tenant) {
+        throw new NotFoundError('Tenant', id);
+      }
+
       res.json({
         success: true,
-        tenant: tenant?.obj(),
+        tenant: tenant.obj(),
       });
     } catch (err) {
       logger.error(`Failed fetching tenant by id: ${err.message}`);
