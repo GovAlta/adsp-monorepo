@@ -217,8 +217,11 @@ Then('the user {string} {string} for {string} in {string}', function (viewOrNot,
       case 'Edit button':
         notificationsObj.internalNotificationTypeEventEditButton(typeName, eventName).should('exist');
         break;
+      case 'Reset':
+        notificationsObj.internalNotificationTypeEventResetBtn(typeName, eventName).should('exist');
+        break;
       default:
-        expect(elementType).to.be.oneOf(['email template indicator', 'Preview link', 'Edit button']);
+        expect(elementType).to.be.oneOf(['email template indicator', 'Preview link', 'Edit button', 'Reset']);
     }
   } else if (viewOrNot == 'should not view') {
     switch (elementType) {
@@ -231,8 +234,11 @@ Then('the user {string} {string} for {string} in {string}', function (viewOrNot,
       case 'Edit button':
         notificationsObj.internalNotificationTypeEventEditButton(typeName, eventName).should('not.exist');
         break;
+      case 'Reset':
+        notificationsObj.internalNotificationTypeEventResetBtn(typeName, eventName).should('not.exist');
+        break;
       default:
-        expect(elementType).to.be.oneOf(['email template indicator', 'Preview link', 'Edit button']);
+        expect(elementType).to.be.oneOf(['email template indicator', 'Preview link', 'Edit button', 'Reset']);
     }
   } else {
     expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
@@ -260,7 +266,7 @@ Then('the user should see tab {string}', function (tab) {
   notificationsObj.notificationsTab(tab).should('be.visible');
 });
 
-When('the user cannot edit the template', function () {
+When('the user cannot edit the Preview template', function () {
   notificationsObj.eventTemplatePreviewModalAction().invoke('text').should('not.contain', 'Edit');
 });
 
@@ -268,11 +274,43 @@ When('the user clicks Edit button on {string} in {string}', function (eventName,
   notificationsObj.internalNotificationTypeEventEditButton(typeName, eventName).click();
   cy.wait(1000);
 });
-When('the user views status has changed in Subject field', function () {
-  notificationsObj
-    .eventTemplatePreviewModalSubjectEditor()
-    .first()
-    .contains('{{ event.payload.application.name }} status has changed')
-    .type('{end} Edited');
+
+When('the user views {string} in Subject field', function (subjectField) {
+  notificationsObj.eventTemplatePreviewModalSubjectEditor().first().contains(subjectField);
+});
+
+When('the user views {string} in Body field', function (bodyField) {
+  notificationsObj.eventTemplatePreviewModalBodyEditor().first().contains(bodyField);
+});
+
+When('the user clicks Cancel button in Edit an email template modal', function () {
+  notificationsObj.editAnEmailTemplateModalCancelBtn().click();
+});
+
+Then('Edit an email template modal is closed', function () {
+  notificationsObj.eventTemplatePreviewModal().should('not.exist');
+});
+
+Then('the user edits {string} template Subject field', function (subjectField) {
+  notificationsObj.eventTemplatePreviewModalSubjectEditor().first().contains(subjectField);
+  notificationsObj.eventTemplatePreviewModalSubjectEditor().type('{end} Edited');
+});
+
+When('the user clicks Save button in Edit an email template modal', function () {
   notificationsObj.editAnEmailTemplateModalSaveBtn().click();
+  cy.wait(1000);
+});
+
+Then('the user views Edited email template indicator for {string} in {string}', function () {
+  notificationsObj.editAnEmailTemplateModalSaveBtn().click();
+});
+
+When('the user clicks Reset button on {string} in {string}', function (eventName, typeName) {
+  notificationsObj.internalNotificationTypeEventResetBtn(typeName, eventName).click();
+  cy.wait(1000);
+});
+
+Then('the user clicks Confirm button on Reset email template', function () {
+  notificationsObj.resetEmailTemplateModalConfirmBtn().click();
+  cy.wait(2000);
 });
