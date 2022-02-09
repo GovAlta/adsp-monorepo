@@ -82,38 +82,48 @@ Feature: Notifications
     Then the user should see tab "Overview"
     When the user selects "Notification types" tab for "Notifications"
     Then the user "views" the notification type card of "status-application-status-change"
+    # Verify the events' icon preview and edit
     And the user "views" the event of "status-service:application-status-changed" in "status-application-status-change"
-    And the user "views" "email template indicator" for "status-service:application-status-changed" in "status-application-status-change"
     And the user "views" the event of "status-service:application-notice-published" in "status-application-status-change"
-    And the user "views" "email template indicator" for "status-service:application-notice-published" in "status-application-status-change"
+    And the user "views" "email template indicator" for "status-service:application-status-changed" in "status-application-status-change"
     And the user "views" "Preview link" for "status-service:application-status-changed" in "status-application-status-change"
+    And the user "views" "Edit button" for "status-service:application-status-changed" in "status-application-status-change"
+    And the user "views" "email template indicator" for "status-service:application-notice-published" in "status-application-status-change"
+    And the user "views" "Preview link" for "status-service:application-notice-published" in "status-application-status-change"
+    And the user "views" "Edit button" for "status-service:application-notice-published" in "status-application-status-change"
+    # Verify Preview an email template
     When the user clicks Preview button on "status-service:application-status-changed" in "status-application-status-change"
     Then the user views Preview an email template modal
-    When the user cannot edit the template
-
+    And the user cannot edit the Preview template
     When the user clicks Close button in Preview an email template modal
     Then Preview an email template modal is closed
-    And the user "views" the event of "status-service:application-status-changed" in "status-application-status-change"
-    And the user "views" "Edit button" for "status-service:application-status-changed" in "status-application-status-change"
+    When the user clicks Preview button on "status-service:application-notice-published" in "status-application-status-change"
+    Then the user views Preview an email template modal
+    And the user cannot edit the Preview template
+    When the user clicks Close button in Preview an email template modal
+    Then Preview an email template modal is closed
+    # Verify Edit an email template
     When the user clicks Edit button on "status-service:application-status-changed" in "status-application-status-change"
-    And the user views status has changed in Subject field
-# //in progress
-# And the user views "{{ event.payload.applicationName }} status has changed" in Subject field
-# And the user views "The original status was: {{ event.payload.originalStatus }}" in Body field
-# And the user views "The new status is now: {{ event.payload.newStatus }}" in Body field
-# //need to develop
-# When the user attempts to edit the template
-# Then the user gets "Cannot edit in read-only editor"
-# When the user clicks "Close" button
-# Then "Preview an email template" template is closed
-# And "status-service:application-status-changed" should display under "status-application-status-change" notification
-# When the user clicks "Preview" button on "status-service:application-notice-published" for "status-application-status-change" notification type
-# Then the user views "Preview an email template" modal
-# And the user views "A notice for {{ event.payload.application.name }} was published" in Subject field
-# And the user views "The notice is described as follows: {{ event.payload.description }}" in Body field
-# And the user views "The notice is related to the following tenant: {{  event.payload.postBy.tenantName }}" in Body field
-# When the user attempts to edit the template
-# Then the user gets "Cannot edit in read-only editor"
-# When the user clicks "Close" button
-# Then "Preview an email template" template is closed
-# And "status-service:application-notice-published" should display under "status-application-status-change" notification
+    Then the user views "{{ event.payload.application.name }} status has changed" in Subject field
+    And the user views "The original status was: {{ event.payload.application.originalStatus }}" in Body field
+    When the user clicks Cancel button in Edit an email template modal
+    Then Edit an email template modal is closed
+    When the user clicks Edit button on "status-service:application-status-changed" in "status-application-status-change"
+    Then the user edits "{{ event.payload.application.name }} status has changed" template Subject field
+    When the user clicks Save button in Edit an email template modal
+    Then the user "views" "Reset" for "status-service:application-status-changed" in "status-application-status-change"
+    When the user clicks Reset button on "status-service:application-status-changed" in "status-application-status-change"
+    Then the user clicks Confirm button on Reset email template
+    Then the user "should not view" "Reset" for "status-service:application-status-changed" in "status-application-status-change"
+    When the user clicks Edit button on "status-service:application-notice-published" in "status-application-status-change"
+    Then the user views "New notice for {{ event.payload.application.name }}" in Subject field
+    And the user views "A notice related to application {{ event.payload.application.name}} has been published by {{event.payload.postedBy.userName}}" in Body field
+    When the user clicks Cancel button in Edit an email template modal
+    Then Edit an email template modal is closed
+    When the user clicks Edit button on "status-service:application-notice-published" in "status-application-status-change"
+    Then the user edits "New notice for {{ event.payload.application.name }}" template Subject field
+    When the user clicks Save button in Edit an email template modal
+    Then the user "views" "Reset" for "status-service:application-notice-published" in "status-application-status-change"
+    When the user clicks Reset button on "status-service:application-notice-published" in "status-application-status-change"
+    Then the user clicks Confirm button on Reset email template
+    Then the user "should not view" "Reset" for "status-service:application-notice-published" in "status-application-status-change"
