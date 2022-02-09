@@ -216,43 +216,44 @@ class NotificationsPage {
     return cy.xpath('//*[@data-testid="email-preview" and @data-state="visible"]//*[@data-testid="preview-cancel"]');
   }
 
-  notificationsTab(text) {
+  searchSubscriberAddressAs() {
+    return cy.xpath('//input[@id="name"]');
+  }
+
+  searchSubscriberEmail() {
+    return cy.xpath('//input[@id="email"]');
+  }
+
+  notificationSearchBtn() {
+    return cy.xpath('//button[@title="Search"]');
+  }
+
+  notificationRecord(notificationType, addressAs, email) {
     return cy.xpath(
-      `//h1[contains(text(), "Notifications")]/following-sibling::div[1]//descendant::div[contains(text(), "${text}")]`
+      `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[@data-testid="addressAs" and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr`
     );
   }
 
-  eventTemplatePreviewModalAction() {
-    return cy.xpath('//*[@data-testid="email-preview" and @data-state="visible"]//*[@class="modal-actions"]');
-  }
-  eventTemplatePreviewModalSubjectEdit() {
+  deleteIconForNotificationRecord(notificationType, addressAs, email) {
     return cy.xpath(
-      '(//*[@data-testid="template-form" and @data-state="visible"]//*[@class="goa-form-item"]//*[contains(@class, "monaco-editor no-user-select")][1]'
+      `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[@data-testid="addressAs" and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr//*[@data-testid="icon-trash"]`
     );
   }
 
-  editAnEmailTemplateModalSaveBtn() {
-    return cy.get('[data-testid="template-form-save"]');
+  deleteConfirmationModal() {
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]');
   }
 
-  editAnEmailTemplateModalCancelBtn() {
-    return cy.get('[data-testid="template-form-cancel"]');
+  deleteConfirmationModalTitle() {
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//*[@class="modal-title"]');
   }
 
-  internalNotificationTypeEventEditedMailIcon(cardTitle, eventName) {
-    return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="Edited"]`
-    );
+  deleteConfirmationModalContent() {
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//*[@class="goa-scrollable"]');
   }
 
-  internalNotificationTypeEventResetBtn(cardTitle, eventName) {
-    return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="delete-event"]`
-    );
-  }
-
-  resetEmailTemplateModalConfirmBtn() {
-    return cy.get('[data-testid="event-delete-confirm"]');
+  deleteConfirmationModalConfirmBtn() {
+    return cy.get('[data-testid="delete-confirm"]');
   }
 }
 

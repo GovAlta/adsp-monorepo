@@ -239,7 +239,7 @@ const createBrokerClient = async (realm, secret, brokerClient) => {
 
 export const validateEmailInDB = async (repository: TenantRepository, email: string): Promise<void> => {
   logger.info(`Validate - has user created tenant realm before?`);
-  const isTenantAdmin = await repository.isTenantAdmin(email);
+  const isTenantAdmin = !!(await repository.find({ adminEmailEquals: email }))[0];
 
   if (isTenantAdmin) {
     const errorMessage = `${email} is the tenant admin in our record. One user can create only one realm.`;
@@ -286,8 +286,7 @@ export const validateName = async (repository: TenantRepository, name: string): 
     throw new InvalidValueError('Tenant name', errorMessage);
   }
 
-  const doesTenantWithNameExist = await repository.findByName(name);
-
+  const doesTenantWithNameExist = (await repository.find({ nameEquals: name }))[0];
   if (doesTenantWithNameExist) {
     const errorMessage = `This tenant name has already been used. Please enter a different tenant name.`;
     throw new InvalidValueError('Tenant name', errorMessage);
@@ -403,10 +402,12 @@ export const createNewTenantInDB = async (
   email: string,
   realmName: string,
   tenantName: string,
-  tokenIssuer: string
 ): Promise<TenantEntity> => {
-  tokenIssuer = tokenIssuer.replace('core', tenantName);
-  const tenantEntity = new TenantEntity(repository, uuidv4(), realmName, email, tokenIssuer, tenantName);
+  const tenantEntity = new TenantEntity(repository, {
+    name: tenantName,
+    realm: realmName,
+    adminEmail: email,
+  });
   const tenant = await tenantEntity.save();
   return tenant;
 };

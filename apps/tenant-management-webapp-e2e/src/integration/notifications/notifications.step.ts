@@ -13,13 +13,7 @@ Given('a service owner user is on notification overview page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonObj
-    .adminMenuItem('/admin/services/notifications')
-    .click()
-    .then(function () {
-      cy.url().should('include', '/admin/services/notifications');
-      cy.wait(4000);
-    });
+  commonlib.tenantAdminMenuItem('Notifications', 4000);
 });
 
 When('the user clicks Add notification type button', function () {
@@ -103,13 +97,7 @@ Given('a service owner user is on notification types page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonObj
-    .adminMenuItem('/admin/services/notifications')
-    .click()
-    .then(function () {
-      cy.url().should('include', '/admin/services/notifications');
-      cy.wait(4000);
-    });
+  commonlib.tenantAdminMenuItem('Notifications', 4000);
   commonObj.serviceTab('Notifications', 'Notification types').click();
   cy.wait(2000);
 });
@@ -261,55 +249,63 @@ Then('Preview an email template modal is closed', function () {
   notificationsObj.eventTemplatePreviewModal().should('not.exist');
 });
 
-Then('the user should see tab {string}', function (tab) {
-  notificationsObj.notificationsTab(tab).should('be.visible');
+
+Given('a tenant admin user is on notification subscriptions page', function () {
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
+  commonlib.tenantAdminMenuItem('Notifications', 4000);
+  commonObj.serviceTab('Notifications', 'Subscriptions').click();
+  cy.wait(5000);
 });
 
-When('the user cannot edit the Preview template', function () {
-  notificationsObj.eventTemplatePreviewModalAction().invoke('text').should('not.contain', 'Edit');
+When(
+  'the user types {string} in Search subuscriber address as field and {string} in Search subscriber email field',
+  function (addressAs, email) {
+    notificationsObj.searchSubscriberAddressAs().clear().type(addressAs);
+    notificationsObj.searchSubscriberEmail().clear().type(email);
+  }
+);
+
+When('the user clicks Search button on notifications page', function () {
+  notificationsObj.notificationSearchBtn().click();
 });
 
-When('the user clicks Edit button on {string} in {string}', function (eventName, typeName) {
-  notificationsObj.internalNotificationTypeEventEditButton(typeName, eventName).click();
-  cy.wait(1000);
+Then(
+  'the user {string} the subscription of {string}, {string} under {string}',
+  function (viewOrNot, addressAd, email, notificationType) {
+    switch (viewOrNot) {
+      case 'views':
+        notificationsObj.notificationRecord(notificationType.toLowerCase(), addressAd, email).should('exist');
+        break;
+      case 'should not view':
+        notificationsObj.notificationRecord(notificationType.toLowerCase(), addressAd, email).should('not.exist');
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
+  }
+);
+
+When(
+  'the user clicks delete button of {string}, {string} under {string}',
+  function (addressAd, email, notificationType) {
+    notificationsObj.deleteIconForNotificationRecord(notificationType.toLowerCase(), addressAd, email).click();
+  }
+);
+
+Then('the user views Delete subscription modal', function () {
+  notificationsObj.deleteConfirmationModal().should('exist');
+  notificationsObj.deleteConfirmationModalTitle().invoke('text').should('eq', 'Delete subscription');
 });
 
-When('the user views {string} in Subject field', function (subjectField) {
-  notificationsObj.eventTemplatePreviewModalSubjectEditor().first().contains(subjectField);
+Then('the user views the Delete subscription confirmation message of {string}', function (email) {
+  notificationsObj.deleteConfirmationModalContent().should('contain.text', email);
 });
 
-When('the user views {string} in Body field', function (bodyField) {
-  notificationsObj.eventTemplatePreviewModalBodyEditor().first().contains(bodyField);
-});
-
-When('the user clicks Cancel button in Edit an email template modal', function () {
-  notificationsObj.editAnEmailTemplateModalCancelBtn().click();
-});
-
-Then('Edit an email template modal is closed', function () {
-  notificationsObj.eventTemplatePreviewModal().should('not.exist');
-});
-
-Then('the user edits {string} template Subject field', function (subjectField) {
-  notificationsObj.eventTemplatePreviewModalSubjectEditor().first().contains(subjectField);
-  notificationsObj.eventTemplatePreviewModalSubjectEditor().type('{end} Edited');
-});
-
-When('the user clicks Save button in Edit an email template modal', function () {
-  notificationsObj.editAnEmailTemplateModalSaveBtn().click();
-  cy.wait(1000);
-});
-
-Then('the user views Edited email template indicator for {string} in {string}', function () {
-  notificationsObj.editAnEmailTemplateModalSaveBtn().click();
-});
-
-When('the user clicks Reset button on {string} in {string}', function (eventName, typeName) {
-  notificationsObj.internalNotificationTypeEventResetBtn(typeName, eventName).click();
-  cy.wait(1000);
-});
-
-Then('the user clicks Confirm button on Reset email template', function () {
-  notificationsObj.resetEmailTemplateModalConfirmBtn().click();
-  cy.wait(2000);
+When('the user clicks Confirm button on Delete subscription modal', function () {
+  notificationsObj.deleteConfirmationModalConfirmBtn().click();
 });

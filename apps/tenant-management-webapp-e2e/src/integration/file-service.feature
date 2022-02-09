@@ -83,7 +83,7 @@ Feature: File service
   # TODO: Test is no longer relevant with removal of file service enable/disable
   @TEST_CS-305 @REQ_CS-195 @regression @ignore
   Scenario: As a GoA service owner, I can enable and disable the file service to my tenant
-    Given a service owner user is on file services overview page
+    Given a service owner user is on Files overview page
     When the user "disables" file service
     Then file service status is "Inactive"
     And "Overview, Documentation" file service tabs are "visible"
@@ -95,20 +95,21 @@ Feature: File service
   @TEST_CS-495 @REQ_CS-408 @regression @ignore
   # Ignore this test until CS-1134 is fixed
   Scenario: Test As a service owner, I can see the API documentation for file service in the tenant admin, so I can understand how to use the API
-    Given a service owner user is on file services overview page
+    Given a service owner user is on Files overview page
     Then the user views the link for "File service" API docs
     When the user goes to the web link of the API docs
     Then the user views "File service" API documentation
 
   @accessibility @regression
-  Scenario: As a service owner, I can manage file services without any critical or serious accessibility issues
-    Given a service owner user is on file services overview page
+  Scenario: As a service owner, I can manage files without any critical or serious accessibility issues
+    Given a service owner user is on Files overview page
     Then no critical or serious accessibility issues on "file service overview page"
 
-  @TEST_CS-315 @REQ_CS-196 @FileTypes @regression
+  # Ignore file types UI tests due to the recent UI changes
+  @TEST_CS-315 @REQ_CS-196 @FileTypes @regression @ignore
   Scenario: As a GoA service admin, I can add, update and remove file types
-    Given a service owner user is on file services overview page
-    When the user selects "File types" tab for "File service"
+    Given a service owner user is on Files overview page
+    When the user selects "File types" tab for "Files"
     Then the user views file types page
     When the user adds a file type of "autotest-add", "Anyone (Anonymous)", "auto-test-role1, file-service-admin"
     Then the user "views" the file type of "autotest-add", "Anyone (Anonymous)", "auto-test-role1, file-service-admin"
@@ -120,22 +121,24 @@ Feature: File service
   # TODO: This is broken after removal of the file service specific 'feedback zone'; re-enable after feedback zone implementation.
   @FileTypes @regression @ignore
   Scenario: As a GoA service admin, I cannot add a file type with the same name as names of the existing file types
-    Given a service owner user is on file services overview page
-    When the user selects "File types" tab for "File services"
+    Given a service owner user is on Files overview page
+    When the user selects "File types" tab for "Files"
     Then the user views file types page
     When the user adds a file type of "autotest-type6", "auto-test-role1", "auto-test-role2"
     Then the user views an error message for duplicated file name
 
-  @FileTypes @accessibility @regression
+  # Ignore file types UI tests due to the recent UI changes
+  @FileTypes @accessibility @regression @ignore
   Scenario: As a service owner, I can manage file types without any critical or serious accessibility issues
-    Given a service owner user is on file services overview page
-    When the user selects "File types" tab for "File service"
+    Given a service owner user is on Files overview page
+    When the user selects "File types" tab for "Files"
     Then no critical or serious accessibility issues on "file types page"
 
-  @TEST_CS-316 @REQ_CS-196 @FileTypes @regression
+  # Ignore file types UI tests due to the recent UI changes
+  @TEST_CS-316 @REQ_CS-196 @FileTypes @regression @ignore
   Scenario: As a GoA service owner, I cannot remove an in-use file type
-    Given a service owner user is on file services overview page
-    When the user selects "File types" tab for "File service"
+    Given a service owner user is on Files overview page
+    When the user selects "File types" tab for "Files"
     Then the user views file types page
     When the user clicks Delete button for file type "autotest-type5", "Anonymous", "file-service-admin"
     Then the user views file type current in user modal for "autotest-type5"

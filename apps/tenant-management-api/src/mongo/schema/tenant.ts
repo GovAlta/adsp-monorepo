@@ -19,10 +19,6 @@ export const tenantSchema: Schema = new Schema(
       type: String,
       required: true,
     },
-    tokenIssuer: {
-      type: String,
-      required: true,
-    },
   },
   { timestamps: true }
 );

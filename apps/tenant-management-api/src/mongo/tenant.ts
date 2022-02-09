@@ -1,19 +1,23 @@
 import { TenantRepository } from '../tenant/repository';
 import { TenantEntity, Tenant } from '../tenant/models';
 import { Doc, NotFoundError } from '@core-services/core-common';
-import { adspId } from '@abgov/adsp-service-sdk';
-import { model } from 'mongoose';
+import { Document, Model, model } from 'mongoose';
 import { tenantSchema } from './schema';
+import { TenantCriteria } from '../tenant/types';
 
 export class MongoTenantRepository implements TenantRepository {
-  private tenantModel;
+  private tenantModel: Model<Doc<Tenant> & Document>;
 
   constructor() {
-    this.tenantModel = model('tenant', tenantSchema);
+    this.tenantModel = model<Doc<Tenant> & Document>('tenant', tenantSchema);
   }
 
   async save(tenant: TenantEntity): Promise<TenantEntity> {
-    const doc = await new this.tenantModel(this.toDoc(tenant)).save();
+    const doc = await this.tenantModel.findOneAndUpdate({ _id: tenant.id }, this.toDoc(tenant), {
+      upsert: true,
+      new: true,
+      lean: true,
+    });
     return Promise.resolve(this.fromDoc(doc));
   }
 
@@ -21,58 +25,50 @@ export class MongoTenantRepository implements TenantRepository {
     await this.tenantModel.deleteOne({ realm: realm });
   }
 
-  async find(): Promise<TenantEntity[]> {
-    const docs = await this.tenantModel.find({});
+  async get(id: string): Promise<TenantEntity> {
+    const doc = await this.tenantModel.findOne({ _id: id });
 
-    return Promise.resolve(
-      docs?.map((doc) => ({
-        id: adspId`urn:ads:platform:tenant-service:v2:/tenants/${doc._id}`,
-        name: doc.name,
-        realm: doc.realm,
-        createdBy: doc.adminEmail,
-      }))
-    );
+    return this.fromDoc(doc);
   }
 
-  async isTenantAdmin(email: string): Promise<boolean> {
-    const tenant = await this.tenantModel.findOne({ adminEmail: email }).populate('createdBy');
-    return Promise.resolve(tenant !== null);
-  }
+  async find(criteria?: TenantCriteria): Promise<TenantEntity[]> {
+    const query: Record<string, unknown> = {};
+    if (criteria) {
+      if (criteria.adminEmailEquals) {
+        query.adminEmail = criteria.adminEmailEquals;
+      }
 
-  async findBy(filter: Record<string, string | { $regex: string; $options: 'i' }>): Promise<TenantEntity> {
-    let currentFilter = filter;
+      if (criteria.realmEquals) {
+        query.realm = criteria.realmEquals;
+      }
 
-    if (currentFilter.id) {
-      currentFilter = { _id: currentFilter.id };
+      if (criteria.nameEquals) {
+        query.name = { $regex: `^${criteria.nameEquals}$`, $options: 'i' };
+      }
     }
 
-    const tenant = await this.tenantModel.findOne(currentFilter).populate('createdBy');
+    const docs = (await this.tenantModel.find(query)) || [];
 
-    if (tenant == null) {
-      throw new NotFoundError('Fetch tenant by filter', currentFilter.toString());
-    }
-
-    return Promise.resolve(this.fromDoc(tenant));
-  }
-
-  async findByName(name: string): Promise<Tenant> {
-    const tenant = await this.tenantModel.findOne({ name: { $regex: '^' + name + '$', $options: 'i' } });
-    return tenant;
+    return docs.map((doc) => this.fromDoc(doc));
   }
 
   private fromDoc(doc: Doc<Tenant>) {
     if (doc === null) {
       throw new NotFoundError('Tenant', null);
     }
-    return new TenantEntity(this, doc._id, doc.realm, doc.adminEmail, doc.tokenIssuer, doc.name);
+    return new TenantEntity(this, {
+      id: `${doc._id}`,
+      name: doc.name,
+      realm: doc.realm,
+      adminEmail: doc.adminEmail,
+    });
   }
 
-  private toDoc(tenant: TenantEntity) {
-    const id = tenant.id.toString().split('/').pop();
-
+  private toDoc(entity: TenantEntity): Doc<Tenant> {
     return {
-      ...tenant,
-      id,
+      name: entity.name,
+      realm: entity.realm,
+      adminEmail: entity.adminEmail,
     };
   }
 }

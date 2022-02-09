@@ -49,7 +49,7 @@ export function fileUploaded(user: User, file: File): DomainEvent {
     name: FILE_UPLOADED_EVENT,
     tenantId: user.tenantId,
     timestamp: new Date(),
-    correlationId: file.recordId,
+    correlationId: file.recordId || file.id,
     payload: {
       file,
       uploadedBy: {
@@ -65,7 +65,7 @@ export function fileDeleted(user: User, file: File): DomainEvent {
     name: FILE_DELETED_EVENT,
     tenantId: user.tenantId,
     timestamp: new Date(),
-    correlationId: file.recordId,
+    correlationId: file.recordId || file.id,
     payload: {
       file,
       deletedBy: {
