@@ -18,15 +18,16 @@ const FileList = (): JSX.Element => {
   const [selectedFile, setSelectFile] = useState<string>();
   const [uploadFileType, setUploadFileType] = useState<string>();
   const dispatch = useDispatch();
-  const { fileList, fileTypes } = useSelector((state: RootState) => {
-    return {
-      fileList: state.fileService.fileList,
-      fileTypes: state.fileService.fileTypes,
-    };
-  });
+
+  const fileList = useSelector((state: RootState) => state.fileService.fileList);
+  const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
 
   const getFileTypesValues = () => {
     const typeValues = [];
+
+    if (fileTypes === null) {
+      return typeValues;
+    }
 
     fileTypes.forEach((fileType): void => {
       const type = {};
@@ -36,6 +37,7 @@ const FileList = (): JSX.Element => {
     });
     return typeValues;
   };
+
   const onFormSubmit = (event) => {
     event.preventDefault();
     const fileInfo = { file: selectedFile, type: uploadFileType };
@@ -123,10 +125,8 @@ const FileList = (): JSX.Element => {
         </GoAButton>
       </GoAForm>
 
-
       {fileList?.length === 0 && renderNoItem('file')}
       {fileList?.length > 0 && renderFileTable()}
-
     </>
   );
 };
