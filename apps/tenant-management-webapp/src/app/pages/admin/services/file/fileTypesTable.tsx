@@ -41,7 +41,15 @@ const FileTypeTableRow = ({
       <td>{name}</td>
       <td>
         {readRoles.map((role): JSX.Element => {
-          return <GoABadge key={`read-roles-${role}`} type="information" content={role} />;
+          return (
+            <div>
+              {anonymousRead === true ? (
+                'public'
+              ) : (
+                <GoABadge key={`read-roles-${role}`} type="information" content={role} />
+              )}
+            </div>
+          );
         })}
       </td>
       <td>
@@ -49,7 +57,6 @@ const FileTypeTableRow = ({
           return <GoABadge key={`update-roles-${role}`} type="information" content={role} />;
         })}
       </td>
-      <td className="anonymousCol">{anonymousRead === true ? 'Yes' : 'No'}</td>
       <td className="actionCol">
         <GoAContextMenu>
           <GoAContextMenuIcon
@@ -119,11 +126,8 @@ export const FileTypeTable = ({ roles, fileTypes }: FileTypeTableProps): JSX.Ele
                 <th id="name" data-testid="events-definitions-table-header-name">
                   Name
                 </th>
-                <th id="read-roles">Who can read</th>
-                <th id="write-roles">Who can edit</th>
-                <th className="anonymousCol" id="anonymous">
-                  Anonymous
-                </th>
+                <th id="read-roles">Read roles</th>
+                <th id="write-roles">Edit roles</th>
                 <th className="actionsCol" id="actions">
                   Actions
                 </th>
