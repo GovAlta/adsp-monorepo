@@ -256,12 +256,6 @@ class NotificationsPage {
     return cy.get('[data-testid="delete-confirm"]');
   }
 
-  eventTemplatePreviewModalSubjectEdit() {
-    return cy.xpath(
-      '(//*[@data-testid="template-form" and @data-state="visible"]//*[@class="goa-form-item"]//*[contains(@class, "monaco-editor no-user-select")][1]'
-    );
-  }
-
   editAnEmailTemplateModalSaveBtn() {
     return cy.get('[data-testid="template-form-save"]');
   }
@@ -269,8 +263,7 @@ class NotificationsPage {
   editAnEmailTemplateModalCancelBtn() {
     return cy.get('[data-testid="template-form-cancel"]');
   }
-
-  internalNotificationTypeEventEditedMailIcon(cardTitle, eventName) {
+  EditedEmailTemplateIcon(cardTitle, eventName) {
     return cy.xpath(
       `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="Edited"]`
     );
