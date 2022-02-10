@@ -123,31 +123,16 @@ Feature: Notifications
     Then Preview an email template modal is closed
     When the user clicks Preview button on "status-service:application-notice-published" in "status-application-status-change"
     Then the user views Preview an email template modal
-    And the user cannot edit the Preview template
     When the user clicks Close button in Preview an email template modal
     Then Preview an email template modal is closed
-    # Verify Edit an email template
+    # Verify Edit fuctionality exits an email template
     When the user clicks Edit button on "status-service:application-status-changed" in "status-application-status-change"
     Then the user views "{{ event.payload.application.name }} status has changed" in Subject field
     And the user views "The original status was: {{ event.payload.application.originalStatus }}" in Body field
     When the user clicks Cancel button in Edit an email template modal
     Then Edit an email template modal is closed
-    When the user clicks Edit button on "status-service:application-status-changed" in "status-application-status-change"
-    Then the user edits "{{ event.payload.application.name }} status has changed" template Subject field
-    When the user clicks Save button in Edit an email template modal
-    Then the user "views" "Reset" for "status-service:application-status-changed" in "status-application-status-change"
-    When the user clicks Reset button on "status-service:application-status-changed" in "status-application-status-change"
-    Then the user clicks Confirm button on Reset email template
-    Then the user "should not view" "Reset" for "status-service:application-status-changed" in "status-application-status-change"
     When the user clicks Edit button on "status-service:application-notice-published" in "status-application-status-change"
     Then the user views "New notice for {{ event.payload.application.name }}" in Subject field
     And the user views "A notice related to application {{ event.payload.application.name}} has been published by {{event.payload.postedBy.userName}}" in Body field
     When the user clicks Cancel button in Edit an email template modal
     Then Edit an email template modal is closed
-    When the user clicks Edit button on "status-service:application-notice-published" in "status-application-status-change"
-    Then the user edits "New notice for {{ event.payload.application.name }}" template Subject field
-    When the user clicks Save button in Edit an email template modal
-    Then the user "views" "Reset" for "status-service:application-notice-published" in "status-application-status-change"
-    When the user clicks Reset button on "status-service:application-notice-published" in "status-application-status-change"
-    Then the user clicks Confirm button on Reset email template
-    Then the user "should not view" "Reset" for "status-service:application-notice-published" in "status-application-status-change"
