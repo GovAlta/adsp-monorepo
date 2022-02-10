@@ -6,7 +6,7 @@ import NotificationsPage from './notifications.page';
 const commonObj = new common();
 const notificationsObj = new NotificationsPage();
 
-Given('a service owner user is on notification overview page', function () {
+Given('a tenant admin user is on notification overview page', function () {
   commonlib.tenantAdminDirectURLLogin(
     Cypress.config().baseUrl,
     Cypress.env('realm'),
@@ -90,7 +90,7 @@ When('the user clicks Confirm button on delete confirmation modal', function () 
   notificationsObj.notificationTypeDeleteConfirmationModalConfirmBtn().click();
 });
 
-Given('a service owner user is on notification types page', function () {
+Given('a tenant admin user is on notification types page', function () {
   commonlib.tenantAdminDirectURLLogin(
     Cypress.config().baseUrl,
     Cypress.env('realm'),
