@@ -161,7 +161,7 @@ describe('createProcessEventJob', () => {
             namespace: 'test',
             name: 'test-run',
             templates: {
-              [Channel.email]: { subject: '', body: '' },
+              [Channel.email]: { subject: 'hello', body: 'regular body' },
               [Channel.sms]: null,
               [Channel.mail]: null,
             },
@@ -170,7 +170,12 @@ describe('createProcessEventJob', () => {
         ],
       };
       const customType = JSON.parse(JSON.stringify(type));
-      customType.events[0].customized = true;
+      customType.events[0].channels = [];
+      customType.events[0].templates = {
+        [Channel.email]: { subject: 'hello there', body: 'i customize body' },
+        [Channel.sms]: null,
+        [Channel.mail]: null,
+      };
       const configuration = new NotificationConfiguration(
         {
           test: customType,

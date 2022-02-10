@@ -91,6 +91,29 @@ export class NotificationTypeEntity implements NotificationType {
     return notifications;
   }
 
+  overrideWith(customType: NotificationTypeEntity): NotificationTypeEntity {
+    const mergedType = new NotificationTypeEntity(this, this.tenantId);
+
+    mergedType.events.map((event) => {
+      customType.events.forEach((ev) => {
+        if (`${ev.namespace}:${ev.name}` === `${event.namespace}:${event.name}`) {
+          event.templates = ev.templates;
+        }
+      });
+      return event;
+    });
+
+    return mergedType;
+  }
+
+  isCustomOverride(): boolean {
+    return this.events.filter((e) => e.channels.length === 0).length > 0;
+  }
+
+  findDuplicate(types: NotificationTypeEntity[], index: number): NotificationTypeEntity {
+    return types.find((tp, ix) => tp.name === this.name && index !== ix);
+  }
+
   private generateNotification(
     logger: Logger,
     templateService: TemplateService,

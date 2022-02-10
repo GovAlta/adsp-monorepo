@@ -57,24 +57,19 @@ export const createProcessEventJob =
         ...(options?.getEventNotificationTypes(event) || []),
       ];
 
-      const exclusionIndex = [];
+      const filteredTypes = [];
 
       types.forEach((type, index) => {
-        if (type.events.filter((e) => e.customized).length > 0) {
-          const typeIndex = types.findIndex((tp, ix) => {
-            return tp.name === type.name && index !== ix;
-          });
-          exclusionIndex.push(typeIndex);
+        if (type.isCustomOverride()) {
+          filteredTypes.push(type.findDuplicate(types, index)?.overrideWith(type));
+        } else if (!type.findDuplicate(types, index)) {
+          filteredTypes.push(type);
         }
       });
 
-      exclusionIndex.forEach((ix) => {
-        types.splice(ix);
-      });
-
       let count = 0;
-      for (let i = 0; i < types.length; i++) {
-        const type = types[i];
+      for (let i = 0; i < filteredTypes.length; i++) {
+        const type = filteredTypes[i];
 
         // Page through all subscriptions and generate notifications.
         const notifications = [];

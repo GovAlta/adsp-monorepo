@@ -43,7 +43,6 @@ export const configurationSchema = {
                 enum: ['email', 'sms', 'mail', 'slack'],
               },
             },
-            customized: { type: 'boolean' },
           },
           required: ['namespace', 'name', 'templates', 'channels'],
         },
