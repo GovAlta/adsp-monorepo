@@ -6,6 +6,7 @@ import type { SubscriptionRepository } from '../repository';
 import type { TemplateService } from '../template';
 import { NotificationConfiguration } from '../configuration';
 import { notificationsGenerated } from '../events';
+import { NotificationTypeEntity } from '../model';
 
 interface ProcessEventJobProps {
   logger: Logger;
@@ -52,25 +53,20 @@ export const createProcessEventJob =
         NotificationConfiguration
       >(serviceId, token, tenantId);
 
-      const types = [
-        ...(configuration?.getEventNotificationTypes(event) || []),
-        ...(options?.getEventNotificationTypes(event) || []),
-      ];
+      const CoreTypes = options?.getEventNotificationTypes(event) || [];
+      const TenantTypes = configuration?.getEventNotificationTypes(event) || [];
 
-      const filteredTypes = [];
+      const types: Record<string, NotificationTypeEntity> = CoreTypes.reduce((acc, type) => {
+        acc[type.name] = type;
+        return acc;
+      }, {});
 
-      types.forEach((type, index) => {
-        if (type.isCustomOverride()) {
-          filteredTypes.push(type.findDuplicate(types, index)?.overrideWith(type));
-        } else if (!type.findDuplicate(types, index)) {
-          filteredTypes.push(type);
-        }
+      TenantTypes.forEach((type) => {
+        types[type.name] = types[type.name] ? types[type.name].overrideWith(type) : type;
       });
 
       let count = 0;
-      for (let i = 0; i < filteredTypes.length; i++) {
-        const type = filteredTypes[i];
-
+      Object.values(types).forEach(async (type) => {
         // Page through all subscriptions and generate notifications.
         const notifications = [];
         let after: string = null;
@@ -96,7 +92,7 @@ export const createProcessEventJob =
             tenant: tenantId?.toString(),
           }
         );
-      }
+      });
 
       if (count > 0) {
         logger.info(`Generated ${count} notifications for event ${namespace}:${name} for tenant ${tenantId}.`, {

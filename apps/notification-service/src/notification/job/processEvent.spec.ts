@@ -179,12 +179,14 @@ describe('createProcessEventJob', () => {
       const configuration = new NotificationConfiguration(
         {
           test: customType,
-          test2: type,
         },
         tenantId
       );
+      const options = new NotificationConfiguration({
+        test2: type,
+      });
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
-      configurationServiceMock.getConfiguration.mockResolvedValueOnce([configuration]);
+      configurationServiceMock.getConfiguration.mockResolvedValueOnce([configuration, options]);
 
       const subscriber = new SubscriberEntity(repositoryDoubleMock as unknown as SubscriptionRepository, {
         tenantId,
