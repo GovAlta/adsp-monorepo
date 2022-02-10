@@ -83,3 +83,21 @@ Feature: Service status
     And the user selects the "Status" menu item
     And the user selects "Applications" tab for "Status"
     Then the user views the subscribe checkbox is "checked"
+
+  @TEST_CS-339 @REQ_CS-169 @regression
+  Scenario: As a service owner I can register my service/app so it can have health information published about it
+    Given a tenant admin user is on status applications page
+# When the user selects add application button
+# Then the user views name and description fields
+# When the user enters name and description
+# And the user clicks save application button
+# Then the user views the application in the application grid
+# When the user selects the added application and clicks edit button
+# Then the user views the name and description fields
+# When the user modifies name and description
+# And the user clicks save application button
+# Then the user views the modified application in the application grid
+# When the user selects the application and click delete button
+# Then the user views a delete confirmatino dialog
+# When the user clicks Ok button to confirm the deletion
+# Then the user doesn't view the application in the application grid
