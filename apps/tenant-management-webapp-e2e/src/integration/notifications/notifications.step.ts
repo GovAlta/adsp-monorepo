@@ -348,10 +348,6 @@ When('the user clicks Save button in Edit an email template modal', function () 
   cy.wait(1000);
 });
 
-Then('the user views Edited email template indicator for {string} in {string}', function () {
-  notificationsObj.editAnEmailTemplateModalSaveBtn().click();
-});
-
 When('the user clicks Reset button on {string} in {string}', function (eventName, typeName) {
   notificationsObj.internalNotificationTypeEventResetBtn(typeName, eventName).click();
   cy.wait(1000);
