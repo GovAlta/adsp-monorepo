@@ -256,7 +256,6 @@ class NotificationsPage {
     return cy.get('[data-testid="delete-confirm"]');
   }
 
-  //LD
   eventTemplatePreviewModalSubjectEdit() {
     return cy.xpath(
       '(//*[@data-testid="template-form" and @data-state="visible"]//*[@class="goa-form-item"]//*[contains(@class, "monaco-editor no-user-select")][1]'
