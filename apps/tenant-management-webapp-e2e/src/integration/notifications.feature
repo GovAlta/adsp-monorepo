@@ -106,7 +106,7 @@ Feature: Notifications
     Then the user the user views "Overview" tab for "Notifications"
     When the user selects "Notification types" tab for "Notifications"
     Then the user "views" the notification type card of "status-application-status-change"
-    # Verify the events' email template indicator, preview link and edit button
+    # Verify the events' icon preview and edit
     And the user "views" the event of "status-service:application-status-changed" in "status-application-status-change"
     And the user "views" the event of "status-service:application-notice-published" in "status-application-status-change"
     And the user "views" "email template indicator" for "status-service:application-status-changed" in "status-application-status-change"
@@ -115,17 +115,14 @@ Feature: Notifications
     And the user "views" "email template indicator" for "status-service:application-notice-published" in "status-application-status-change"
     And the user "views" "Preview link" for "status-service:application-notice-published" in "status-application-status-change"
     And the user "views" "Edit button" for "status-service:application-notice-published" in "status-application-status-change"
-    # Verify Preview an email template
     When the user clicks Preview button on "status-service:application-status-changed" in "status-application-status-change"
     Then the user views Preview an email template modal
-    And the user cannot edit the Preview template
     When the user clicks Close button in Preview an email template modal
     Then Preview an email template modal is closed
     When the user clicks Preview button on "status-service:application-notice-published" in "status-application-status-change"
     Then the user views Preview an email template modal
     When the user clicks Close button in Preview an email template modal
     Then Preview an email template modal is closed
-    # Verify Edit fuctionality exits an email template
     When the user clicks Edit button on "status-service:application-status-changed" in "status-application-status-change"
     Then the user views "{{ event.payload.application.name }} status has changed" in Subject field
     And the user views "The original status was: {{ event.payload.application.originalStatus }}" in Body field
