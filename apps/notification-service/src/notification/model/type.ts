@@ -92,12 +92,12 @@ export class NotificationTypeEntity implements NotificationType {
   }
 
   overrideWith(customType: NotificationTypeEntity): NotificationTypeEntity {
-    const mergedType = new NotificationTypeEntity(this, this.tenantId);
+    const mergedType = new NotificationTypeEntity(this);
 
     mergedType.events.map((event) => {
       customType.events.forEach((ev) => {
         if (`${ev.namespace}:${ev.name}` === `${event.namespace}:${event.name}`) {
-          event.templates = ev.templates;
+          event.templates = { ...event.templates, ...ev.templates };
         }
       });
       return event;

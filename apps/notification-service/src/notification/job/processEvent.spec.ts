@@ -183,7 +183,7 @@ describe('createProcessEventJob', () => {
         tenantId
       );
       const options = new NotificationConfiguration({
-        test2: type,
+        test: type,
       });
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
       configurationServiceMock.getConfiguration.mockResolvedValueOnce([configuration, options]);
