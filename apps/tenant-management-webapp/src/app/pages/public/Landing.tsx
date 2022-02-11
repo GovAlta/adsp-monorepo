@@ -1,594 +1,365 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import DOMPurify from 'dompurify';
-import { generateMessage } from '@lib/handlebarHelper';
-import { getTemplateBody } from '@shared/utils/html';
-import debounce from 'lodash.debounce';
-
-import {subjectEditorConfig,bodyEditorConfig} from './emailPreviewEditor/config'
-import {
-  PreviewTemplateContainer,
-  NotificationTemplateContainer,
-  Modal
-} from './emailPreviewEditor/styled-components';
-import {EditTemplate} from './emailPreviewEditor/EditTemplate';
-import {PreviewTemplate} from './emailPreviewEditor/PreviewTemplate'
-
-const LandingPage = (): JSX.Element => {
-  const [subject, setSubject] = useState('asd');
-  const [body, setBody] = useState(`
-  <!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-  <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
-  <head>
-  <!--[if gte mso 9]>
-  <xml>
-  <o:OfficeDocumentSettings>
-  <o:AllowPNG/>
-  <o:PixelsPerInch>96</o:PixelsPerInch>
-  </o:OfficeDocumentSettings>
-  </xml>
-  <![endif]-->
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="x-apple-disable-message-reformatting">
-  <!--[if !mso]><!--><meta http-equiv="X-UA-Compatible" content="IE=edge"><!--<![endif]-->
-  <title></title>
-  <style type="text/css">
-  table, td { color: #000000; } a { color: #cca250; text-decoration: none; } @media (max-width: 480px) { #u_content_image_4 .v-src-width { width: auto !important; } #u_content_image_4 .v-src-max-width { max-width: 57% !important; } #u_content_image_3 .v-container-padding-padding { padding: 46px 10px 10px !important; } #u_content_image_3 .v-src-width { width: auto !important; } #u_content_image_3 .v-src-max-width { max-width: 29% !important; } #u_content_heading_3 .v-container-padding-padding { padding: 10px 20px !important; } #u_content_heading_3 .v-font-size { font-size: 28px !important; } #u_content_text_3 .v-container-padding-padding { padding: 10px 22px 26px !important; } #u_content_heading_2 .v-container-padding-padding { padding: 22px 22px 10px !important; } #u_content_heading_2 .v-font-size { font-size: 24px !important; } }
-  @media only screen and (min-width: 620px) {
-  .u-row {
-  width: 600px !important;
-  }
-  .u-row .u-col {
-  vertical-align: top;
-  }
-
-  .u-row .u-col-18 {
-  width: 108px !important;
-  }
-
-  .u-row .u-col-18p34 {
-  width: 110.04px !important;
-  }
-
-  .u-row .u-col-63p66 {
-  width: 381.96px !important;
-  }
-
-  .u-row .u-col-100 {
-  width: 600px !important;
-  }
-
-  }
-
-  @media (max-width: 620px) {
-  .u-row-container {
-  max-width: 100% !important;
-  padding-left: 0px !important;
-  padding-right: 0px !important;
-  }
-  .u-row .u-col {
-  min-width: 320px !important;
-  max-width: 100% !important;
-  display: block !important;
-  }
-  .u-row {
-  width: calc(100% - 40px) !important;
-  }
-  .u-col {
-  width: 100% !important;
-  }
-  .u-col > div {
-  margin: 0 auto;
-  }
-  }
-  body {
-  margin: 0;
-  padding: 0;
-  }
-
-  table,
-  tr,
-  td {
-  vertical-align: top;
-  border-collapse: collapse;
-  }
-
-  p {
-  margin: 0;
-  }
-
-  .ie-container table,
-  .mso-container table {
-  table-layout: fixed;
-  }
-
-  * {
-  line-height: inherit;
-  }
-
-  a[x-apple-data-detectors='true'] {
-  color: inherit !important;
-  text-decoration: none !important;
-  }
-
-  </style>
-
-  <!--[if !mso]><!--><link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet" type="text/css"><!--<![endif]-->
-
-  </head>
-
-  <body class="clean-body u_body" style="margin: 0;padding: 0;-webkit-text-size-adjust: 100%;background-color: #f9f9f9;color: #000000">
-  <!--[if IE]><div class="ie-container"><![endif]-->
-  <!--[if mso]><div class="mso-container"><![endif]-->
-  <table style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;min-width: 320px;Margin: 0 auto;background-color: #f9f9f9;width:100%" cellpadding="0" cellspacing="0">
-  <tbody>
-  <tr style="vertical-align: top">
-  <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top">
-  <!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="background-color: #f9f9f9;"><![endif]-->
-
-  <div class="u-row-container" style="padding: 0px;background-color: transparent">
-  <div class="u-row" style="Margin: 0 auto;min-width: 320px;max-width: 600px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: #111114;">
-  <div style="border-collapse: collapse;display: table;width: 100%;background-color: transparent;">
-  <!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding: 0px;background-color: transparent;" align="center"><table cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr style="background-color: #111114;"><![endif]-->
-  <!--[if (mso)|(IE)]><td align="center" width="600" style="width: 600px;padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;" valign="top"><![endif]-->
-  <div class="u-col u-col-100" style="max-width: 320px;min-width: 600px;display: table-cell;vertical-align: top;">
-  <div style="width: 100% !important;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;">
-  <!--[if (!mso)&(!IE)]><!--><div style="padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;"><!--<![endif]-->
-  <table id="u_content_image_4" style="font-family:'Montserrat',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-  <tbody>
-  <tr>
-  <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:20px 10px;font-family:'Montserrat',sans-serif;" align="left">
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr>
-  <td style="padding-right: 0px;padding-left: 0px;" align="center">
-  <img align="center" border="0" src="images/image-6.png" alt="Logo" title="Logo" style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: inline-block !important;border: none;height: auto;float: none;width: 44%;max-width: 255.2px;" width="255.2" class="v-src-width v-src-max-width"/>
-  </td>
-  </tr>
-  </table>
-
-  </td>
-  </tr>
-  </tbody>
-  </table>
-
-  <!--[if (!mso)&(!IE)]><!--></div><!--<![endif]-->
-  </div>
-  </div>
-  <!--[if (mso)|(IE)]></td><![endif]-->
-  <!--[if (mso)|(IE)]></tr></table></td></tr></table><![endif]-->
-  </div>
-  </div>
-  </div>
-
-
-
-  <div class="u-row-container" style="padding: 0px;background-color: transparent">
-  <div class="u-row" style="Margin: 0 auto;min-width: 320px;max-width: 600px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;">
-  <div style="border-collapse: collapse;display: table;width: 100%;background-color: transparent;">
-  <!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding: 0px;background-color: transparent;" align="center"><table cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr style="background-color: transparent;"><![endif]-->
-  <!--[if (mso)|(IE)]><td align="center" width="600" style="background-color: #fffefe;width: 600px;padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;" valign="top"><![endif]-->
-  <div class="u-col u-col-100" style="max-width: 320px;min-width: 600px;display: table-cell;vertical-align: top;">
-  <div style="background-color: #fffefe;width: 100% !important;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;">
-  <!--[if (!mso)&(!IE)]><!--><div style="padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;"><!--<![endif]-->
-  <table id="u_content_image_3" style="font-family:'Montserrat',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-  <tbody>
-  <tr>
-  <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:55px 10px 10px;font-family:'Montserrat',sans-serif;" align="left">
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr>
-  <td style="padding-right: 0px;padding-left: 0px;" align="center">
-  <img align="center" border="0" src="images/image-5.png" alt="Tick Icon" title="Tick Icon" style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: inline-block !important;border: none;height: auto;float: none;width: 14%;max-width: 81.2px;" width="81.2" class="v-src-width v-src-max-width"/>
-  </td>
-  </tr>
-  </table>
-
-  </td>
-  </tr>
-  </tbody>
-  </table>
-
-  <table id="u_content_heading_3" style="font-family:'Montserrat',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-  <tbody>
-  <tr>
-  <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:10px 55px;font-family:'Montserrat',sans-serif;" align="left">
-  <h1 class="v-font-size" style="margin: 0px; line-height: 160%; text-align: center; word-wrap: break-word; font-weight: normal; font-family: 'Montserrat',sans-serif; font-size: 33px;">
-  <strong>Requested service is delivered successfully</strong>
-  </h1>
-
-  </td>
-  </tr>
-  </tbody>
-  </table>
-
-  <table id="u_content_text_3" style="font-family:'Montserrat',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-  <tbody>
-  <tr>
-  <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:10px 60px 50px;font-family:'Montserrat',sans-serif;" align="left">
-  <div style="color: #444444; line-height: 170%; text-align: center; word-wrap: break-word;">
-  <p style="font-size: 14px; line-height: 170%;"><span style="font-size: 16px; line-height: 27.2px;">Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. </span></p>
-  </div>
-
-  </td>
-  </tr>
-  </tbody>
-  </table>
-
-  <!--[if (!mso)&(!IE)]><!--></div><!--<![endif]-->
-  </div>
-  </div>
-  <!--[if (mso)|(IE)]></td><![endif]-->
-  <!--[if (mso)|(IE)]></tr></table></td></tr></table><![endif]-->
-  </div>
-  </div>
-  </div>
-
-
-
-  <div class="u-row-container" style="padding: 0px;background-color: transparent">
-  <div class="u-row" style="Margin: 0 auto;min-width: 320px;max-width: 600px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: #ffffff;">
-  <div style="border-collapse: collapse;display: table;width: 100%;background-color: transparent;">
-  <!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding: 0px;background-color: transparent;" align="center"><table cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr style="background-color: #ffffff;"><![endif]-->
-  <!--[if (mso)|(IE)]><td align="center" width="108" style="width: 108px;padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;" valign="top"><![endif]-->
-  <div class="u-col u-col-18" style="max-width: 320px;min-width: 108px;display: table-cell;vertical-align: top;">
-  <div style="width: 100% !important;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;">
-  <!--[if (!mso)&(!IE)]><!--><div style="padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;"><!--<![endif]-->
-  <table style="font-family:'Montserrat',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-  <tbody>
-  <tr>
-  <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:10px;font-family:'Montserrat',sans-serif;" align="left">
-  <table height="0px" align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;border-top: 0px solid #ffffff;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
-  <tbody>
-  <tr style="vertical-align: top">
-  <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;font-size: 0px;line-height: 0px;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
-  <span>&#160;</span>
-  </td>
-  </tr>
-  </tbody>
-  </table>
-
-  </td>
-  </tr>
-  </tbody>
-  </table>
-
-  <!--[if (!mso)&(!IE)]><!--></div><!--<![endif]-->
-  </div>
-  </div>
-  <!--[if (mso)|(IE)]></td><![endif]-->
-  <!--[if (mso)|(IE)]><td align="center" width="380" style="background-color: #cca250;width: 380px;padding: 20px;border-top: 1px solid #CCC;border-left: 1px solid #CCC;border-right: 1px solid #CCC;border-bottom: 1px solid #CCC;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;" valign="top"><![endif]-->
-  <div class="u-col u-col-63p66" style="max-width: 320px;min-width: 382px;display: table-cell;vertical-align: top;">
-  <div style="background-color: #cca250;width: 100% !important;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;">
-  <!--[if (!mso)&(!IE)]><!--><div style="padding: 20px;border-top: 1px solid #CCC;border-left: 1px solid #CCC;border-right: 1px solid #CCC;border-bottom: 1px solid #CCC;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;"><!--<![endif]-->
-  <table style="font-family:'Montserrat',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-  <tbody>
-  <tr>
-  <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:0px;font-family:'Montserrat',sans-serif;" align="left">
-  <h1 class="v-font-size" style="margin: 0px; color: #ffffff; line-height: 160%; text-align: center; word-wrap: break-word; font-weight: normal; font-family: 'Montserrat',sans-serif; font-size: 20px;">
-  <strong>Delivered Items:</strong>
-  </h1>
-
-  </td>
-  </tr>
-  </tbody>
-  </table>
-
-  <table style="font-family:'Montserrat',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-  <tbody>
-  <tr>
-  <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:10px;font-family:'Montserrat',sans-serif;" align="left">
-  <div style="color: #f1f8f5; line-height: 200%; text-align: left; word-wrap: break-word;">
-  <p style="font-size: 14px; line-height: 200%;"><span style="color: #f7e1b5; font-size: 14px; line-height: 28px;"><strong><span style="font-size: 14px; line-height: 28px;">✓</span></strong>&nbsp;</span> Mailchimp Setup &amp; Integration</p>
-  <p style="font-size: 14px; line-height: 200%;"><span style="color: #f7e1b5; font-size: 14px; line-height: 28px;"><strong>✓</strong></span> &nbsp;Contact upload &amp; Segmentation</p>
-  <p style="font-size: 14px; line-height: 200%;"><span style="color: #f7e1b5; font-size: 14px; line-height: 28px;">✓</span> &nbsp;Template Design, upload, and setup</p>
-  <p style="font-size: 14px; line-height: 200%;"><span style="color: #f7e1b5; font-size: 14px; line-height: 28px;">✓</span> &nbsp;Campaign setup &amp; schedule</p>
-  </div>
-
-  </td>
-  </tr>
-  </tbody>
-  </table>
-
-  <!--[if (!mso)&(!IE)]><!--></div><!--<![endif]-->
-  </div>
-  </div>
-  <!--[if (mso)|(IE)]></td><![endif]-->
-  <!--[if (mso)|(IE)]><td align="center" width="110" style="width: 110px;padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;" valign="top"><![endif]-->
-  <div class="u-col u-col-18p34" style="max-width: 320px;min-width: 110px;display: table-cell;vertical-align: top;">
-  <div style="width: 100% !important;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;">
-  <!--[if (!mso)&(!IE)]><!--><div style="padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;"><!--<![endif]-->
-  <table style="font-family:'Montserrat',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-  <tbody>
-  <tr>
-  <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:10px;font-family:'Montserrat',sans-serif;" align="left">
-  <table height="0px" align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;border-top: 0px solid #ffffff;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
-  <tbody>
-  <tr style="vertical-align: top">
-  <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;font-size: 0px;line-height: 0px;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
-  <span>&#160;</span>
-  </td>
-  </tr>
-  </tbody>
-  </table>
-
-  </td>
-  </tr>
-  </tbody>
-  </table>
-
-  <!--[if (!mso)&(!IE)]><!--></div><!--<![endif]-->
-  </div>
-  </div>
-  <!--[if (mso)|(IE)]></td><![endif]-->
-  <!--[if (mso)|(IE)]></tr></table></td></tr></table><![endif]-->
-  </div>
-  </div>
-  </div>
-
-
-
-  <div class="u-row-container" style="padding: 0px;background-color: transparent">
-  <div class="u-row" style="Margin: 0 auto;min-width: 320px;max-width: 600px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: #ffffff;">
-  <div style="border-collapse: collapse;display: table;width: 100%;background-color: transparent;">
-  <!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding: 0px;background-color: transparent;" align="center"><table cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr style="background-color: #ffffff;"><![endif]-->
-  <!--[if (mso)|(IE)]><td align="center" width="600" style="width: 600px;padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;" valign="top"><![endif]-->
-  <div class="u-col u-col-100" style="max-width: 320px;min-width: 600px;display: table-cell;vertical-align: top;">
-  <div style="width: 100% !important;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;">
-  <!--[if (!mso)&(!IE)]><!--><div style="padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;"><!--<![endif]-->
-  <table id="u_content_heading_2" style="font-family:'Montserrat',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-  <tbody>
-  <tr>
-  <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:40px 55px 10px;font-family:'Montserrat',sans-serif;" align="left">
-  <h1 class="v-font-size" style="margin: 0px; line-height: 160%; text-align: center; word-wrap: break-word; font-weight: normal; font-family: 'Montserrat',sans-serif; font-size: 26px;">
-  <strong>Need anything else?</strong>
-  </h1>
-
-  </td>
-  </tr>
-  </tbody>
-  </table>
-
-  <table style="font-family:'Montserrat',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-  <tbody>
-  <tr>
-  <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:0px 60px 20px;font-family:'Montserrat',sans-serif;" align="left">
-  <div style="color: #444444; line-height: 170%; text-align: center; word-wrap: break-word;">
-  <p style="font-size: 14px; line-height: 170%;"><span style="font-size: 16px; line-height: 27.2px;">Please feel free to contact us!</span></p>
-  </div>
-
-  </td>
-  </tr>
-  </tbody>
-  </table>
-
-  <table style="font-family:'Montserrat',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-  <tbody>
-  <tr>
-  <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:10px 10px 50px;font-family:'Montserrat',sans-serif;" align="left">
-  <div align="center">
-  <!--[if mso]><table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-spacing: 0; border-collapse: collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;font-family:'Montserrat',sans-serif;"><tr><td style="font-family:'Montserrat',sans-serif;" align="center"><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://unlayer.com/" style="height:47px; v-text-anchor:middle; width:172px;" arcsize="8.5%" stroke="f" fillcolor="#cca250"><w:anchorlock/><center style="color:#FFFFFF;font-family:'Montserrat',sans-serif;"><![endif]-->
-  <a href="https://unlayer.com/" target="_blank" style="box-sizing: border-box;display: inline-block;font-family:'Montserrat',sans-serif;text-decoration: none;-webkit-text-size-adjust: none;text-align: center;color: #FFFFFF; background-color: #cca250; border-radius: 4px;-webkit-border-radius: 4px; -moz-border-radius: 4px; width:auto; max-width:100%; overflow-wrap: break-word; word-break: break-word; word-wrap:break-word; mso-border-alt: none;">
-  <span style="display:block;padding:14px 33px;line-height:120%;"><strong><span style="font-size: 16px; line-height: 19.2px;">Click Here &rarr;</span></strong></span>
-  </a>
-  <!--[if mso]></center></v:roundrect></td></tr></table><![endif]-->
-  </div>
-
-  </td>
-  </tr>
-  </tbody>
-  </table>
-
-  <!--[if (!mso)&(!IE)]><!--></div><!--<![endif]-->
-  </div>
-  </div>
-  <!--[if (mso)|(IE)]></td><![endif]-->
-  <!--[if (mso)|(IE)]></tr></table></td></tr></table><![endif]-->
-  </div>
-  </div>
-  </div>
-
-
-
-  <div class="u-row-container" style="padding: 0px;background-color: transparent">
-  <div class="u-row" style="Margin: 0 auto;min-width: 320px;max-width: 600px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: #111114;">
-  <div style="border-collapse: collapse;display: table;width: 100%;background-color: transparent;">
-  <!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding: 0px;background-color: transparent;" align="center"><table cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr style="background-color: #111114;"><![endif]-->
-  <!--[if (mso)|(IE)]><td align="center" width="600" style="width: 600px;padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;" valign="top"><![endif]-->
-  <div class="u-col u-col-100" style="max-width: 320px;min-width: 600px;display: table-cell;vertical-align: top;">
-  <div style="width: 100% !important;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;">
-  <!--[if (!mso)&(!IE)]><!--><div style="padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;"><!--<![endif]-->
-  <table style="font-family:'Montserrat',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-  <tbody>
-  <tr>
-  <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:32px 10px 0px;font-family:'Montserrat',sans-serif;" align="left">
-  <div style="color: #ffffff; line-height: 140%; text-align: center; word-wrap: break-word;">
-  <p style="font-size: 14px; line-height: 140%;"><span style="font-size: 18px; line-height: 25.2px;"><strong>Company Name</strong></span></p>
-  </div>
-
-  </td>
-  </tr>
-  </tbody>
-  </table>
-
-  <table style="font-family:'Montserrat',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-  <tbody>
-  <tr>
-  <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:10px;font-family:'Montserrat',sans-serif;" align="left">
-  <div style="color: #b0b1b4; line-height: 180%; text-align: center; word-wrap: break-word;">
-  <p style="font-size: 14px; line-height: 180%;">123 San Francisco, CA. United States</p>
-  <p style="font-size: 14px; line-height: 180%;">123-456-7890</p>
-  </div>
-
-  </td>
-  </tr>
-  </tbody>
-  </table>
-
-  <table style="font-family:'Montserrat',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-  <tbody>
-  <tr>
-  <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:10px;font-family:'Montserrat',sans-serif;" align="left">
-  <div align="center">
-  <div style="display: table; max-width:211px;">
-  <!--[if (mso)|(IE)]><table width="211" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-collapse:collapse;" align="center"><table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; mso-table-lspace: 0pt;mso-table-rspace: 0pt; width:211px;"><tr><![endif]-->
-  <!--[if (mso)|(IE)]><td width="32" style="width:32px; padding-right: 21px;" valign="top"><![endif]-->
-  <table align="left" border="0" cellspacing="0" cellpadding="0" width="32" height="32" style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;margin-right: 21px">
-  <tbody><tr style="vertical-align: top"><td align="left" valign="middle" style="word-break: break-word;border-collapse: collapse !important;vertical-align: top">
-  <a href="https://facebook.com/" title="Facebook" target="_blank">
-  <img src="images/image-1.png" alt="Facebook" title="Facebook" width="32" style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: none;height: auto;float: none;max-width: 32px !important">
-  </a>
-  </td></tr>
-  </tbody></table>
-  <!--[if (mso)|(IE)]></td><![endif]-->
-  <!--[if (mso)|(IE)]><td width="32" style="width:32px; padding-right: 21px;" valign="top"><![endif]-->
-  <table align="left" border="0" cellspacing="0" cellpadding="0" width="32" height="32" style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;margin-right: 21px">
-  <tbody><tr style="vertical-align: top"><td align="left" valign="middle" style="word-break: break-word;border-collapse: collapse !important;vertical-align: top">
-  <a href="https://twitter.com/" title="Twitter" target="_blank">
-  <img src="images/image-2.png" alt="Twitter" title="Twitter" width="32" style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: none;height: auto;float: none;max-width: 32px !important">
-  </a>
-  </td></tr>
-  </tbody></table>
-  <!--[if (mso)|(IE)]></td><![endif]-->
-  <!--[if (mso)|(IE)]><td width="32" style="width:32px; padding-right: 21px;" valign="top"><![endif]-->
-  <table align="left" border="0" cellspacing="0" cellpadding="0" width="32" height="32" style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;margin-right: 21px">
-  <tbody><tr style="vertical-align: top"><td align="left" valign="middle" style="word-break: break-word;border-collapse: collapse !important;vertical-align: top">
-  <a href="https://instagram.com/" title="Instagram" target="_blank">
-  <img src="images/image-4.png" alt="Instagram" title="Instagram" width="32" style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: none;height: auto;float: none;max-width: 32px !important">
-  </a>
-  </td></tr>
-  </tbody></table>
-  <!--[if (mso)|(IE)]></td><![endif]-->
-  <!--[if (mso)|(IE)]><td width="32" style="width:32px; padding-right: 0px;" valign="top"><![endif]-->
-  <table align="left" border="0" cellspacing="0" cellpadding="0" width="32" height="32" style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;margin-right: 0px">
-  <tbody><tr style="vertical-align: top"><td align="left" valign="middle" style="word-break: break-word;border-collapse: collapse !important;vertical-align: top">
-  <a href="https://linkedin.com/" title="LinkedIn" target="_blank">
-  <img src="images/image-3.png" alt="LinkedIn" title="LinkedIn" width="32" style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: none;height: auto;float: none;max-width: 32px !important">
-  </a>
-  </td></tr>
-  </tbody></table>
-  <!--[if (mso)|(IE)]></td><![endif]-->
-  <!--[if (mso)|(IE)]></tr></table></td></tr></table><![endif]-->
-  </div>
-  </div>
-
-  </td>
-  </tr>
-  </tbody>
-  </table>
-
-  <table style="font-family:'Montserrat',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-  <tbody>
-  <tr>
-  <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:10px;font-family:'Montserrat',sans-serif;" align="left">
-  <table height="0px" align="center" border="0" cellpadding="0" cellspacing="0" width="82%" style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;border-top: 1px solid #9495a7;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
-  <tbody>
-  <tr style="vertical-align: top">
-  <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;font-size: 0px;line-height: 0px;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
-  <span>&#160;</span>
-  </td>
-  </tr>
-  </tbody>
-  </table>
-
-  </td>
-  </tr>
-  </tbody>
-  </table>
-
-  <table style="font-family:'Montserrat',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-  <tbody>
-  <tr>
-  <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:0px 10px 13px;font-family:'Montserrat',sans-serif;" align="left">
-  <div style="color: #b0b1b4; line-height: 180%; text-align: center; word-wrap: break-word;">
-  <p style="font-size: 14px; line-height: 180%;">&copy; 20XX All Rights Reserved</p>
-  </div>
-
-  </td>
-  </tr>
-  </tbody>
-  </table>
-
-  <!--[if (!mso)&(!IE)]><!--></div><!--<![endif]-->
-  </div>
-  </div>
-  <!--[if (mso)|(IE)]></td><![endif]-->
-  <!--[if (mso)|(IE)]></tr></table></td></tr></table><![endif]-->
-  </div>
-  </div>
-  </div>
-
-
-  <!--[if (mso)|(IE)]></td></tr></table><![endif]-->
-  </td>
-  </tr>
-  </tbody>
-  </table>
-  <!--[if mso]></div><![endif]-->
-  <!--[if IE]></div><![endif]-->
-  </body>
-
-  </html>
-  `);
-  const [subjectPreview, setSubjectPreview] = useState('');
-  const [bodyPreview, setBodyPreview] = useState('');
-
-  useEffect(() => {
-    if (subject) {
-      setSubjectPreview(subject);
+import React, { useState, createRef, useEffect } from 'react';
+import styled from 'styled-components';
+import { GoAHeroBanner, GoAButton } from '@abgov/react-components';
+import { GoACard } from '@abgov/react-components/experimental';
+import bannerBackground from '@assets/BannerBackground.jpg';
+import Header from '@components/AppHeader';
+import Footer from '@components/Footer';
+import Container from '@components/Container';
+import { Grid, GridItem } from '@components/Grid';
+import { Main } from '@components/Html';
+import GoALinkButton from '@components/LinkButton';
+import ClockIcon from '@assets/icons/clock.png';
+import DashboardScreenIcon from '@assets/icons/dashboard-screenshot.png';
+// TODO: replace with ui-components open icon after updated the ui-components
+import { ReactComponent as OpenIcon } from '@assets/icons/open.svg';
+
+interface RedirectButtonProps {
+  url: string;
+  name: string;
+  label: string;
+}
+
+const RedirectButton = ({ url, name, label }: RedirectButtonProps): JSX.Element => {
+  const Content = styled.div`
+    display: grid;
+    grid-template-columns: 4fr 1fr;
+    grid-gap: 4px;
+
+    svg {
+      width: 23px;
+      height: 24px;
+      position: relative;
+      top: -4px;
+      stroke: var(--color-primary);
     }
-    if (body) {
-      setBodyPreview(body);
+  `;
+  const ButtonContainer = styled.div`
+    :hover svg {
+      stroke: var(--color-primary-dark);
     }
-  }, []);
-  const eventTemplateEditHintText =
-    "*GOA default header and footer wrapper is applied if the template doesn't include proper <html> opening and closing tags";
-  const debouncedSave = useCallback(
-    debounce((value, callback) => callback(value), 1000),
-    []
-  );
-  const [open, setOpen] = useState(true);
-
+  `;
   return (
-    <Modal open={open}>
-      <NotificationTemplateContainer>
-        <EditTemplate
-          mainTitle="Edit an email template"
-          subjectTitle="Subject"
-          subject={subject}
-          onSubjectChange={(value) => {
-            setSubject(value);
-            debouncedSave(value, setSubjectPreview);
-          }}
-          subjectEditorConfig={subjectEditorConfig}
-          bodyTitle="Body"
-          onBodyChange={(value) => {
-            setBody(value);
-            debouncedSave(value, setBodyPreview);
-          }}
-          body={body}
-          bodyEditorConfig={bodyEditorConfig}
-          bodyEditorHintText={eventTemplateEditHintText}
-          onCancel={() => {
-            console.log('cancel');
-            setOpen(!open);
-          }}
-          onSave={() => {
-            console.log('save');
-            setOpen(!open);
-          }}
-        />
-        <PreviewTemplateContainer>
-          <PreviewTemplate
-            subjectTitle="Subject"
-            emailTitle="Email preview"
-            subjectPreviewContent={DOMPurify.sanitize(subjectPreview)}
-            emailPreviewContent={DOMPurify.sanitize(generateMessage(getTemplateBody(bodyPreview), {}))}
-          />
-        </PreviewTemplateContainer>
-      </NotificationTemplateContainer>
-    </Modal>
+    <ButtonContainer>
+      <GoAButton
+        buttonType="tertiary"
+        data-testid={`redirect-button-${name}`}
+        onClick={() => {
+          window.location.replace(url);
+        }}
+      >
+        <Content>
+          {label} <OpenIcon />
+        </Content>
+      </GoAButton>
+    </ButtonContainer>
   );
 };
 
+const LandingPage = (): JSX.Element => {
+  const [rowOneMaxHeight, setRowOneMaxHeight] = useState<number>(0);
+  const [rowTwoMaxHeight, setRowTwoMaxHeight] = useState<number>(0);
+  const maxRowOneDiv = createRef();
 
+  useEffect(() => {
+    // file-service-description has longest content in the first row. Need to update, if this is not validated.
+    const rowOneMaxHeight = document.getElementById('file-service-description').clientHeight;
+    const rowTwoMaxHeight = document.getElementById('event-service-description').clientHeight;
+    if (rowOneMaxHeight) {
+      setRowOneMaxHeight(rowOneMaxHeight);
+      setRowTwoMaxHeight(rowTwoMaxHeight);
+    }
+    // Due to grid update, have to use ref here
+  }, [maxRowOneDiv]);
+  return (
+    <>
+      <Header serviceName="" />
+      <Main>
+        <HeroBannerLayout>
+          <GoAHeroBanner title="" backgroundUrl={bannerBackground}>
+            <Container hs={1} vs={3}>
+              <Grid>
+                <GridItem md={1} />
+                <GridItem md={10}>
+                  <BoldTitle>The Alberta Digital Service Platform (ADSP)</BoldTitle>
+                  <p>
+                    Enabling your team to add, configure and manage a range of services that can integrate with your
+                    projects.
+                </p>
+                  <br />
+                  <p>
+                    <GoALinkButton buttonType="primary" to="/get-started">
+                      Request a tenant
+                  </GoALinkButton>
+                  </p>
+                </GridItem>
+                <GridItem md={1} />
+              </Grid>
+            </Container>
+          </GoAHeroBanner>
+        </HeroBannerLayout>
+        <Section>
+          <Container vs={3} hs={1}>
+            <Grid>
+              <GridItem md={1} />
+              <GridItem md={10}>
+                <Grid>
+                  <GridItem md={6}>
+                    <h2>Why ADSP?</h2>
+                    <p>
+                      ADSP is a secure in-house cloud-based platform built to enable service teams of the DDI. Users can
+                      sign up to take advantage of the platform and build applications to manage their projects.
+                    </p>
+                    <p>
+                      Check out the quick-start{' '}
+                      <a href="https://glowing-parakeet-0563ab2e.pages.github.io">ADSP guide</a>
+                    </p>
+                  </GridItem>
+                  <GridItem md={0.5} />
+                  <GridItem md={5.5}>
+                    <DashBoardImg src={DashboardScreenIcon} alt="" />
+                  </GridItem>
+                </Grid>
+              </GridItem>
+              <GridItem md={1} />
+            </Grid>
+          </Container>
+        </Section>
+        <Section>
+          <GrayBox>
+            <Container vs={3} hs={1}>
+              <Grid>
+                <GridItem md={2} />
+                <GridItem md={7}>
+                  <Grid>
+                    <GridItem md={3}>
+                      <ClockImg src={ClockIcon} alt="" data-testid="landing-page-clock-img" />{' '}
+                    </GridItem>
+                    <GridItem md={9}>
+                      <h2>Built for teams to move faster</h2>
+                      <p>
+                        The ADSP comes with services out of the box available for your team with code examples and sandbox environments. Grant your team access in a quick and secure way. Super easy to integrate with projects, built to save time and effort and help your team deliver faster.
+                      </p>
+                    </GridItem>
+                  </Grid>
+                </GridItem>
+
+                <GridItem md={3} />
+              </Grid>
+            </Container>
+          </GrayBox>
+        </Section>
+
+        <Section>
+          <Container>
+            <Grid>
+              <GridItem md={1} />
+              <GridItem md={10}>
+                <ServiceLayout>
+                  <h2>Service we offer</h2>
+                  <p>
+                    The ADSP provides a huge catalog of services and existing capabilities for product teams to leverage
+                    and deliver on time quality service to Albertans. Here are few of our offerings.
+                </p>
+                </ServiceLayout>
+              </GridItem>
+              <GridItem md={1} />
+            </Grid>
+          </Container>
+
+          <Container>
+            <Grid>
+              <GridItem md={1} />
+              <GridItem md={10}>
+                <Grid>
+                  <GridItem md={4} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <CardLayout>
+                        <CardTitle>UI components library</CardTitle>
+                        <CardContent maxHeight={rowOneMaxHeight}>
+                          We're encouraging companies to turn our oil and gas resources into more valuable products –
+                          creating good jobs for Albertans.
+                        </CardContent>
+                        <RedirectButton
+                          name="ui-components"
+                          url="https://ui-components.alpha.alberta.ca"
+                          label="Learn more"
+                        />
+                      </CardLayout>
+                    </GoACard>
+                  </GridItem>
+
+                  <GridItem md={4} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <CardLayout>
+                        <CardTitle>Keycloak access service</CardTitle>
+                        <CardContent maxHeight={rowOneMaxHeight}>
+                          Access allows you to add a secure sign in to you application and services with minimum effort
+                          and configuration. No need to deal with storing or authenticating users. It's all available
+                          out of the box.
+                        </CardContent>
+
+                        <RedirectButton
+                          name="keycloak-access-service"
+                          url="https://glowing-parakeet-0563ab2e.pages.github.io/services/access-service.html"
+                          label="Learn more"
+                        />
+                      </CardLayout>
+                    </GoACard>
+                  </GridItem>
+
+                  <GridItem md={4} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <CardLayout>
+                        <CardTitle>File service</CardTitle>
+                        <CardContent maxHeight={rowOneMaxHeight}>
+                          <div id="file-service-description" ref={maxRowOneDiv as React.RefObject<HTMLDivElement>}>
+                            File service provides the ability to upload and download files. Applications can upload
+                            files via multipart/form-data requests with the file and related metadata, then later allow
+                            users to access metadata of or download the file.
+                          </div>
+                        </CardContent>
+
+                        <RedirectButton
+                          name="file-service"
+                          url="https://glowing-parakeet-0563ab2e.pages.github.io/services/file-service.html"
+                          label="Learn more"
+                        />
+                      </CardLayout>
+                    </GoACard>
+                  </GridItem>
+                </Grid>
+              </GridItem>
+
+              <GridItem md={1} />
+            </Grid>
+          </Container>
+          <Container vs={3}>
+            <Grid>
+              <GridItem md={1} />
+              <GridItem md={10}>
+                <Grid>
+                  <GridItem md={4} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <CardLayout>
+                        <CardTitle>Event service</CardTitle>
+                        <CardContent id="event-service-description" maxHeight={rowTwoMaxHeight}>
+                          The event service provides tenant applications with the ability to send domain events.
+                          Applications are able to leverage additional capabilities as side effects through these
+                          events.
+                        </CardContent>
+                        <RedirectButton
+                          name="event-service"
+                          url="https://glowing-parakeet-0563ab2e.pages.github.io/services/event-service.html"
+                          label="Learn more"
+                        />
+                      </CardLayout>
+                    </GoACard>
+                  </GridItem>
+
+                  <GridItem md={4} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <CardLayout>
+                        <CardTitle>Notification service</CardTitle>
+                        <CardContent maxHeight={rowTwoMaxHeight}>
+                          The notifications service provides tenant applications with the ability to configure and
+                          manage notifications for your subscribers.
+                        </CardContent>
+
+                        <RedirectButton
+                          name="notification-service"
+                          url="https://glowing-parakeet-0563ab2e.pages.github.io/services/notification-service.html"
+                          label="Learn more"
+                        />
+                      </CardLayout>
+                    </GoACard>
+                  </GridItem>
+                  <GridItem md={4} hSpacing={0.5}></GridItem>
+                </Grid>
+              </GridItem>
+              <GridItem md={1} />
+            </Grid>
+          </Container>
+        </Section>
+        <Footer />
+      </Main>
+    </>
+  );
+};
 
 export default LandingPage;
+
+// *****************
+// Styled Components
+// *****************
+
+interface SectionProps {
+  backgroundColor?: string;
+}
+
+const Section = styled.div<SectionProps>`
+  background-color: ${(props: SectionProps) => props.backgroundColor ?? 'transparent'};
+`;
+
+//display: ${(props: PagePros) => (props.ready === true || props.ready === undefined ? 'flex' : 'none')};
+
+interface CardContentProps {
+  maxHeight: number;
+}
+const CardContent = styled.div`
+  line-height: 1.75em;
+  min-height: ${(props: CardContentProps) => {
+    const width = window.innerWidth;
+    if (width < 768) {
+      return 'initial';
+    }
+    return `${props.maxHeight}px`;
+  }};
+  margin-bottom: 1.75em;
+`;
+const CardLayout = styled.div`
+  padding-top: 0.75em;
+  padding-bottom: 1.5em;
+`;
+
+const CardTitle = styled.div`
+  font-size: 24px;
+  margin-bottom: 1.25em;
+  text-align: left;
+  color: var(--color-blue-500);
+  text-decoration: underline;
+`;
+
+const BoldTitle = styled.h1`
+  && {
+    font-weight: var(--fw-bold);
+  }
+`;
+
+const GrayBox = styled.div`
+  padding-top: 2.5em;
+  background-color: var(--color-gray-100);
+  padding-bottom: 2.5em;
+`;
+
+const DashBoardImg = styled.img`
+  box-shadow: 1px 5px 28px 0px #00000033;
+`;
+
+const HeroBannerLayout = styled.div`
+.goa-hero {
+  max-height: 20em !important;
+  background-size: 100% 100%;
+  padding: 0px !important;
+}`;
+
+const ServiceLayout = styled.div`
+  margin-top: 3.5em;
+  margin-bottom: 1.75em;
+`
+
+const ClockImg = styled.img`
+  margin-top: 1.5em;
+  height: 130px;
+  width: 130px !important;
+`;

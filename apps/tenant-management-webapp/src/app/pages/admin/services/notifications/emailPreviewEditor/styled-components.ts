@@ -1,6 +1,6 @@
 import styled, { createGlobalStyle } from 'styled-components';
 
-export const NotificationTemplateContainer = styled.div`
+export const NotificationTemplateEditorContainer = styled.div`
   display: flex;
   padding-left: 3rem;
   width: 100%;
@@ -9,7 +9,7 @@ export const NotificationTemplateContainer = styled.div`
   box-sizing: border-box;
 `;
 // Edit Template components
-export const EditTemplateContainer = styled.div`
+export const TemplateEditorContainer = styled.div`
   width: 40%;
   padding-right: 1rem;
   margin-top: 4rem;
@@ -24,7 +24,7 @@ export const Modal = styled.div<{ open: boolean }>`
   top: 0;
   left: 0;
   bottom: 0;
-  z-index:10000;
+  z-index: 10000;
   width: 100%;
 `;
 
@@ -32,8 +32,8 @@ export const BodyGlobalStyles = createGlobalStyle<{ hideOverflow: boolean }>`
   body {
     overflow:  ${(props) => (props.hideOverflow ? `hidden` : `auto`)};
   }
-`
-export const ModalInner = styled.div`
+`;
+export const ModalContent = styled.div`
   background: white;
 `;
 export const PreviewTemplateContainer = styled.div`
@@ -75,5 +75,5 @@ export const BodyPreview = styled.div`
     overflow: auto;
   }
   margin-right: 2rem;
-  height: 30rem;
+  height: 40rem;
 `;

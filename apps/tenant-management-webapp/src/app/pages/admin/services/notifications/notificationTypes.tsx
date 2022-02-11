@@ -6,6 +6,7 @@ import { NotificationTypeModalForm } from './edit';
 import { EventModalForm } from './editEvent';
 import { IndicatorWithDelay } from '@components/Indicator';
 import debounce from 'lodash.debounce';
+import * as handlebars from 'handlebars/dist/cjs/handlebars';
 
 import {
   GoAModal,
@@ -30,20 +31,18 @@ import {
 import { NotificationItem } from '@store/notification/models';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
-import { TemplateForm } from './templateForm';
 import { EmailPreview } from './emailPreview';
 import { EditIcon } from '@components/icons/EditIcon';
-import {subjectEditorConfig,bodyEditorConfig} from './emailPreviewEditor/config'
+import { subjectEditorConfig, bodyEditorConfig } from './emailPreviewEditor/config';
 import {
   PreviewTemplateContainer,
-  NotificationTemplateContainer,
+  NotificationTemplateEditorContainer,
   Modal,
   BodyGlobalStyles,
-  ModalInner
+  ModalContent,
 } from './emailPreviewEditor/styled-components';
-import {EditTemplate} from './emailPreviewEditor/EditTemplate';
-import {PreviewTemplate} from './emailPreviewEditor/PreviewTemplate'
-
+import { TemplateEditor } from './emailPreviewEditor/TemplateEditor';
+import { PreviewTemplate } from './emailPreviewEditor/PreviewTemplate';
 
 const emptyNotificationType: NotificationItem = {
   name: '',
@@ -80,18 +79,18 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [subjectPreview, setSubjectPreview] = useState('');
   const [bodyPreview, setBodyPreview] = useState('');
 
-
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
 
-  useEffect(() =>{
+  useEffect(() => {
+    // if an event is selected for editing
     if (selectedEvent) {
       setSubject(selectedEvent?.templates?.email?.subject);
       setBody(selectedEvent?.templates?.email?.body);
       setSubjectPreview(selectedEvent?.templates?.email?.subject);
       setBodyPreview(selectedEvent?.templates?.email?.body);
     }
-  },[selectedEvent]);
+  }, [selectedEvent]);
 
   useEffect(() => {
     dispatch(FetchNotificationTypeService());
@@ -127,11 +126,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     setSelectedType(notificationType);
     setEditEvent(notificationType);
   }
-  const debouncedSaveSubject = useCallback(
+  const debouncedSaveSubjectPreview = useCallback(
     debounce((value) => setSubjectPreview(value), 1000),
     []
   );
-  const debouncedSaveBody = useCallback(
+  const debouncedSaveBodyPreview = useCallback(
     debounce((value) => setBodyPreview(value), 1000),
     []
   );
@@ -167,21 +166,32 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     dispatch(UpdateNotificationTypeService(selectedType));
     reset();
   };
-  const editEventTemplateContent ={
-    saveOrAddActionText:"Save",
-    cancelOrBackActionText: "Cancel",
-    mainTitle: "Edit an email template"
-  }
-  const addNewEventTemplateContent ={
-    saveOrAddActionText:"Add",
-    cancelOrBackActionText: "Back",
-    mainTitle: "Add an email template"
-  }
-  const [eventTemplateFormState, setEventTemplateFormState] = useState(addNewEventTemplateContent)
+  const editEventTemplateContent = {
+    saveOrAddActionText: 'Save',
+    cancelOrBackActionText: 'Cancel',
+    mainTitle: 'Edit an email template',
+  };
+  const addNewEventTemplateContent = {
+    saveOrAddActionText: 'Add',
+    cancelOrBackActionText: 'Back',
+    mainTitle: 'Add an email template',
+  };
+  const [eventTemplateFormState, setEventTemplateFormState] = useState(addNewEventTemplateContent);
 
   const eventTemplateEditHintText =
     "*GOA default header and footer wrapper is applied if the template doesn't include proper <html> opening and closing tags";
-
+  const validateEventTemplateFields = () => {
+    if (subject.length === 0 || body.length === 0) {
+      return false;
+    }
+    try {
+      handlebars.parse(body);
+      handlebars.parse(subject);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
 
   return (
     <NotficationStyles>
@@ -546,40 +556,26 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           reset();
         }}
       />
-      {/* <TemplateForm
-        initialValue={editEvent}
-        selectedEvent={selectedEvent}
-        notifications={selectedType}
-        open={showTemplateForm}
-        errors={errors}
-        onSubmit={(type) => {
-          dispatch(UpdateNotificationTypeService(type));
-          reset();
-        }}
-        onCancel={() => {
-          setShowTemplateForm(false);
-        }}
-        onClickedOutside={() => {
-          reset();
-        }}
-      /> */}
+
+      {/* Edit/Add event template for a notification */}
       <Modal open={showTemplateForm}>
+        {/* Hides body overflow when the modal is up */}
         <BodyGlobalStyles hideOverflow={showTemplateForm} />
-        <ModalInner>
-          <NotificationTemplateContainer>
-            <EditTemplate
+        <ModalContent>
+          <NotificationTemplateEditorContainer>
+            <TemplateEditor
               mainTitle={eventTemplateFormState.mainTitle}
               subjectTitle="Subject"
               subject={subject}
               onSubjectChange={(value) => {
                 setSubject(value);
-                debouncedSaveSubject(value);
+                debouncedSaveSubjectPreview(value);
               }}
               subjectEditorConfig={subjectEditorConfig}
               bodyTitle="Body"
               onBodyChange={(value) => {
                 setBody(value);
-                debouncedSaveBody(value);
+                debouncedSaveBodyPreview(value);
               }}
               body={body}
               bodyEditorConfig={bodyEditorConfig}
@@ -602,6 +598,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                     buttonType="primary"
                     data-testid="template-form-save"
                     type="submit"
+                    disabled={!validateEventTemplateFields()}
                   >
                     {eventTemplateFormState.saveOrAddActionText}
                   </GoAButton>
@@ -616,8 +613,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 emailPreviewContent={DOMPurify.sanitize(generateMessage(getTemplateBody(bodyPreview), {}))}
               />
             </PreviewTemplateContainer>
-          </NotificationTemplateContainer>
-        </ModalInner>
+          </NotificationTemplateEditorContainer>
+        </ModalContent>
       </Modal>
 
       <EmailPreview
@@ -648,18 +645,6 @@ const NotificationBorder = styled.div`
   border: 1px solid #56a0d8;
   margin: 3px;
   border-radius: 3px;
-`;
-
-const GreyButtonWrap = styled.div`
-  margin: 3px;
-  padding: 1px 3px 0 3px;
-  width: 26px;
-  height: 26px;
-  border: 1px solid grey;
-  border-radius: 3px;
-  svg {
-    color: grey !important;
-  }
 `;
 
 const EventBorder = styled.div`

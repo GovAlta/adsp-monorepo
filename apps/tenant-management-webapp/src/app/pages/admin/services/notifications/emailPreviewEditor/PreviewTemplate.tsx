@@ -1,7 +1,14 @@
-import React, { FunctionComponent, useCallback, useEffect, useState } from 'react';
-
+import React, { FunctionComponent } from 'react';
 import { SubjectPreview, BodyPreview } from './styled-components';
-export const PreviewTemplate: FunctionComponent<any> = ({
+
+interface PreviewTemplateProps {
+  subjectTitle: string;
+  emailTitle: string;
+  subjectPreviewContent: string;
+  emailPreviewContent: string;
+}
+
+export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
   subjectTitle,
   emailTitle,
   subjectPreviewContent,
