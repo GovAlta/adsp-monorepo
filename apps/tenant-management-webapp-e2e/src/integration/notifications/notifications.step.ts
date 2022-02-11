@@ -24,7 +24,7 @@ Then('the user views Add notification modal', function () {
   notificationsObj.notificationTypeModal().should('exist');
 });
 
-When('the user enters {string}, {string}, {string}', function (name, description, role) {
+When('the user enters {string}, {string}, {string} on notification modal', function (name, description, role) {
   const roles = role.split(',');
   notificationsObj.notificationTypeModalNameField().clear().type(name);
   notificationsObj.notificationTypeModalDescriptionField().clear().type(description);

@@ -12,12 +12,12 @@ Feature: Service status
     Given a service owner user is on status notices page
     When the user clicks Add notice button
     Then the user views Add notice dialog
-    When the user enters "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
+    When the user enters "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>" on notice dialog
     And the user clicks Save as draft button
     Then the user "views" the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
     When the user clicks "edit" menu for the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
     Then the user views Edit notice dialog
-    When the user enters "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+    When the user enters "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>" on notice dialog
     And the user clicks Save as draft button
     Then the user "views" the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     When the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
@@ -42,7 +42,7 @@ Feature: Service status
     Given a service owner user is on status notices page
     When the user clicks Add notice button
     Then the user views Add notice dialog
-    When the user enters "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+    When the user enters "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm" on notice dialog
     And the user clicks Save as draft button
     Then the user "views" the "Draft" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
     When the user clicks "publish" menu for the "Draft" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
@@ -84,36 +84,42 @@ Feature: Service status
     And the user selects "Applications" tab for "Status"
     Then the user views the subscribe checkbox is "checked"
 
-  @TEST_CS-835 @REQ_CS-792
+  @TEST_CS-835 @REQ_CS-792 @regression
   Scenario Outline: As a service owner, I can add, edit, publish, unpublish and delete a tenant level notice
     Given a service owner user is on status notices page
     When the user clicks Add notice button
     # Add a notice for the tenant
     Then the user views Add notice dialog
-    When the user enters "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>",  "<End Time>" on Add a Draft Notice dialog
+    When the user enters "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>" on notice dialog
     And the user clicks Save as draft button
+    And the user selects "Draft" filter by status radio button
     Then the user "views" the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
     # Edit the notice from All to a service specific
     When the user clicks "edit" menu for the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
     Then the user views Edit notice dialog
-    When the user enters "<Description2>", "<Application2>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>",  "<End Time 2>"
-    Then the user "views" the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
+    When the user enters "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>" on notice dialog
+    And the user clicks Save as draft button
+    Then the user "views" the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     # Change the notice back to All
-    When the user clicks "edit" menu for the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
+    When the user clicks "edit" menu for the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     Then the user views Edit notice dialog
-    When the user enters "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>",  "<End Time 2>"
-    Then the user "views" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
+    When the user enters "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>" on notice dialog
+    And the user clicks Save as draft button
+    Then the user "views" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     # Publish the notice
-    When the user clicks "publish" menu for the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
-    Then the user "views" the "published" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
+    When the user clicks "publish" menu for the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+    And the user selects "Published" filter by status radio button
+    Then the user "views" the "Published" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     # Unpublish the notice
-    When the user clicks "Unpublish" menu for the "published" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
-    Then the user "views" the "draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
+    When the user clicks "unpublish" menu for the "Published" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+    And the user selects "Draft" filter by status radio button
+    Then the user "views" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     # Delete the notice
-    When the user clicks "delete" menu for the "draft" notice of "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
-    Then the user "should not view" the "draft" notice of "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
+    When the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
+    And the user selects "All" filter by status radio button
+    Then the user "should not view" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
 
     Examples:
       | Description           | Application | Start Date | Start Time | End Date | End Time | Description2               | Application2 | Start Date 2 | Start Time 2 | End Date 2 | End Time 2 |
-      | Autotest-NewAllNotice | All         | 1/1/2050   | 12:00 AM   | 1/2/2050 | 12:00 PM | Autotest-ModifiedAllNotice | Autotest     | 1/1/2060     | 12:30 AM     | 1/2/2060   | 12:30 PM   |
+      | Autotest-NewAllNotice | All         | Today      | 12:00 am   | Today    | 12:00 am | Autotest-ModifiedAllNotice | Autotest     | Today        | 10:00 am     | Today      | 02:00 pm   |
 
