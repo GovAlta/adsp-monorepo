@@ -55,7 +55,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   const dispatch = useDispatch();
   return (
     <ModalOverwrite>
-      <GoAModal testId="delete-confirmation" isOpen={true}>
+      <GoAModal testId="file-type-modal" isOpen={true}>
         <GoAModalTitle>{title}</GoAModalTitle>
         <GoAModalContent>
           <GoAFormItem>
@@ -64,6 +64,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
               type="text"
               name="name"
               value={fileType.name}
+              data-testid={`file-type-modal-name-input`}
               onChange={(name, value) => {
                 const newFileType = {
                   ...fileType,

@@ -11,6 +11,10 @@ import { AddFileType } from './fileTypeNew';
 import styled from 'styled-components';
 import { Role } from '@store/tenant/models';
 
+const NoContentContainer = styled.div`
+  margin-bottom: 2em;
+`;
+
 export const FileTypes = (): JSX.Element => {
   const dispatch = useDispatch();
   const roles = useSelector((state: RootState) => state.tenant.realmRoles);
@@ -37,10 +41,6 @@ const FileTypesTableContainer = ({ roles }: FileTypesTableContainerProps): JSX.E
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
-
-  const NoContentContainer = styled.div`
-    margin-bottom: 2em;
-  `;
 
   useEffect(() => {
     dispatch(FetchFileTypeService());

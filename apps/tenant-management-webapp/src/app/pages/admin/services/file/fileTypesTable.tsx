@@ -42,7 +42,7 @@ const FileTypeTableRow = ({
       <td>
         {readRoles.map((role): JSX.Element => {
           return (
-            <div>
+            <div key={`read-roles-${id}`}>
               {anonymousRead === true ? (
                 'public'
               ) : (
@@ -54,7 +54,7 @@ const FileTypeTableRow = ({
       </td>
       <td>
         {updateRoles.map((role): JSX.Element => {
-          return <GoABadge key={`update-roles-${role}`} type="information" content={role} />;
+          return <GoABadge key={`update-roles-${id}-${role}`} type="information" content={role} />;
         })}
       </td>
       <td className="actionCol">
@@ -62,13 +62,13 @@ const FileTypeTableRow = ({
           <GoAContextMenuIcon
             type="create"
             title="Edit"
+            testId={`file-type-row-edit-btn-${id}`}
             onClick={() => {
               onEdit();
             }}
-            testId="file-type-edit-action-icon-btn"
           />
           <GoAIconButton
-            testId="file-type-delete-action-icon-btn"
+            testId={`file-type-row-delete-btn-${id}`}
             title="Delete"
             size="medium"
             type="trash"
@@ -101,20 +101,6 @@ export const FileTypeTable = ({ roles, fileTypes }: FileTypeTableProps): JSX.Ele
       setDeleteId(null);
     },
   };
-
-  const TableLayout = styled.div`
-    margin-top: 1em;
-    table,
-    th,
-    td {
-      .anonymousCol {
-        width: 10%;
-      }
-      .actionsCol {
-        width: 15%;
-      }
-    }
-  `;
 
   return (
     <div>
@@ -161,3 +147,17 @@ export const FileTypeTable = ({ roles, fileTypes }: FileTypeTableProps): JSX.Ele
     </div>
   );
 };
+
+const TableLayout = styled.div`
+  margin-top: 1em;
+  table,
+  th,
+  td {
+    .anonymousCol {
+      width: 10%;
+    }
+    .actionsCol {
+      width: 15%;
+    }
+  }
+`;
