@@ -13,6 +13,7 @@ interface TemplateFormProps {
   onCancel?: () => void;
   onSubmit?: (NotificationItem) => void;
   onClickedOutside?: () => void;
+  modifyCoreEvent?: boolean;
   open: boolean;
   initialValue?: NotificationItem;
   selectedEvent: EventItem;
@@ -24,6 +25,7 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
   onCancel,
   onSubmit,
   onClickedOutside,
+  modifyCoreEvent,
   notifications,
   open,
   selectedEvent,
@@ -144,15 +146,37 @@ export const TemplateForm: FunctionComponent<TemplateFormProps> = ({
               (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`
             );
 
-            notifications.events[definitionEventIndex] = {
-              ...selectedEvent,
-              templates: {
-                email: {
-                  subject,
-                  body,
+            if (modifyCoreEvent) {
+              notifications.events = notifications.events.map((event, ix) => {
+                const parsedEvent = {
+                  name: event.name,
+                  namespace: event.namespace,
+                  channels: [],
+                  templates: event.templates,
+                };
+
+                if (ix === definitionEventIndex) {
+                  parsedEvent.templates = {
+                    email: {
+                      subject,
+                      body,
+                    },
+                  };
+                }
+
+                return parsedEvent;
+              });
+            } else {
+              notifications.events[definitionEventIndex] = {
+                ...selectedEvent,
+                templates: {
+                  email: {
+                    subject,
+                    body,
+                  },
                 },
-              },
-            };
+              };
+            }
             onSubmit(notifications);
           }}
         >

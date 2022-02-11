@@ -255,6 +255,12 @@ class NotificationsPage {
   deleteConfirmationModalConfirmBtn() {
     return cy.get('[data-testid="delete-confirm"]');
   }
+
+  internalNotificationTypeEventResetBtn(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="delete-event"]`
+    );
+  }
 }
 
 export default NotificationsPage;

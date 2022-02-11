@@ -24,17 +24,16 @@ export const combineNotification = (
         events.push(coreEvent);
       } else {
         delete customEvent.customized;
-        const customized = JSON.stringify(coreEvent) !== JSON.stringify(customEvent);
+        const customized =
+          JSON.stringify(coreEvent?.templates?.email) !== JSON.stringify(customEvent?.templates?.email);
+        if (customized) {
+          customEvent.channels = coreEvent.channels;
+        }
         const returnEvent = customized ? customEvent : coreEvent;
         returnEvent.customized = customized;
         events.push(returnEvent);
       }
     });
-    coreItem.customized = true;
-    if (events.filter((e) => e.customized === true).length === 0) {
-      coreItem.customized = false;
-    }
-
     coreItem.events = events;
   } else {
     coreItem.customized = false;

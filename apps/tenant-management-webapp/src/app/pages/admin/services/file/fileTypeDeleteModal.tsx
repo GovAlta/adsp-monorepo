@@ -30,7 +30,7 @@ const OkButton = ({ onCancel }: OkButtonProps) => {
 
 export const FileTypeDeleteModal = ({ onCancel, fileType }: FileTypeDeleteModalProps): JSX.Element => {
   const dispatch = useDispatch();
-  if (fileType.hasFile) {
+  if (fileType.hasFile === true) {
     return (
       <GoAModal testId="file-type-delete-modal" isOpen={true}>
         <GoAModalTitle testId="file-type-delete-modal-title">File type current in use</GoAModalTitle>
@@ -45,13 +45,15 @@ export const FileTypeDeleteModal = ({ onCancel, fileType }: FileTypeDeleteModalP
         </GoAModalActions>
       </GoAModal>
     );
-  } else {
+  }
+
+  if (fileType.hasFile === false) {
     return (
       <GoAModal testId="file-type-delete-modal" isOpen={true}>
-        <GoAModalTitle testId="file-type-delete-modal-title">File type current in use</GoAModalTitle>
+        <GoAModalTitle testId="file-type-delete-modal-title">Delete file type</GoAModalTitle>
         <GoAModalContent testId="file-type-delete-modal-content">
           <p>
-            Deleting the file type <b>{`${fileType.name}`}</b> cannot be undone.
+            Delete the file type <b>{`${fileType.name}`}</b> cannot be undone.
           </p>
           <p>
             <b>Are you sure you want to continue?</b>
@@ -80,4 +82,5 @@ export const FileTypeDeleteModal = ({ onCancel, fileType }: FileTypeDeleteModalP
       </GoAModal>
     );
   }
+  return <div />;
 };

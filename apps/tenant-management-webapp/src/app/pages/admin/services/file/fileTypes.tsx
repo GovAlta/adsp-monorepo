@@ -1,4 +1,4 @@
-import { FunctionComponent, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import React from 'react';
 import { FetchFileTypeService } from '@store/file/actions';
@@ -9,21 +9,40 @@ import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
 import { AddFileType } from './fileTypeNew';
 import styled from 'styled-components';
+import { Role } from '@store/tenant/models';
 
-export const FileTypes: FunctionComponent = () => {
+const NoContentContainer = styled.div`
+  margin-bottom: 2em;
+`;
+
+export const FileTypes = (): JSX.Element => {
   const dispatch = useDispatch();
-  const realmRoles = useSelector((state: RootState) => state.tenant.realmRoles);
+  const roles = useSelector((state: RootState) => state.tenant.realmRoles);
+
+  useEffect(() => {
+    dispatch(FetchRealmRoles());
+  }, []);
+
+  return (
+    <div>
+      {roles && <AddFileType roles={roles} />}
+      <FileTypesTableContainer roles={roles} />
+    </div>
+  );
+};
+
+interface FileTypesTableContainerProps {
+  roles: Role[];
+}
+
+const FileTypesTableContainer = ({ roles }: FileTypesTableContainerProps): JSX.Element => {
+  const dispatch = useDispatch();
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
 
-  const NoContentContainer = styled.div`
-    margin-bottom: 2em;
-  `;
-
   useEffect(() => {
-    dispatch(FetchRealmRoles());
     dispatch(FetchFileTypeService());
   }, []);
 
@@ -33,13 +52,12 @@ export const FileTypes: FunctionComponent = () => {
   return (
     <div>
       <div>
-        {!indicator.show && fileTypes !== null && <AddFileType roles={realmRoles} />}
         {!indicator.show && fileTypes && fileTypes.length === 0 && (
           <NoContentContainer>{renderNoItem('file type')}</NoContentContainer>
         )}
         {indicator.show && <PageIndicator />}
         {!indicator.show && fileTypes && (
-          <FileTypeTable roles={realmRoles} fileTypes={fileTypes} data-testid="file-type-table" />
+          <FileTypeTable roles={roles} fileTypes={fileTypes} data-testid="file-type-table" />
         )}
       </div>
     </div>

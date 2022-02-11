@@ -47,6 +47,7 @@ export interface FileService {
 }
 
 export const FILE_INIT: FileService = {
-  fileList: [],
+  fileList: null,
   fileTypes: null,
+
 };

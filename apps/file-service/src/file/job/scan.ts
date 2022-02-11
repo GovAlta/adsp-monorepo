@@ -19,19 +19,21 @@ export const createScanJob =
         tenant: tenantId?.toString(),
       });
       const result = await fileRepository.get(id);
-      const { scanned, infected } = await scanService.scan(result);
-      if (scanned) {
-        const updated = await result.updateScanResult(infected);
-        if (updated.infected) {
-          logger.warn(`File ${filename} (ID: ${id}) scanned as infected.`, {
-            context: 'FileScanJob',
-            tenant: tenantId?.toString(),
-          });
-        } else {
-          logger.debug(`Scanned file ${filename} (ID: ${id}).`, {
-            context: 'FileScanJob',
-            tenant: tenantId?.toString(),
-          });
+      if (result && !result.deleted) {
+        const { scanned, infected } = await scanService.scan(result);
+        if (scanned) {
+          const updated = await result.updateScanResult(infected);
+          if (updated.infected) {
+            logger.warn(`File ${filename} (ID: ${id}) scanned as infected.`, {
+              context: 'FileScanJob',
+              tenant: tenantId?.toString(),
+            });
+          } else {
+            logger.debug(`Scanned file ${filename} (ID: ${id}).`, {
+              context: 'FileScanJob',
+              tenant: tenantId?.toString(),
+            });
+          }
         }
       }
       done();

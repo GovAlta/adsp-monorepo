@@ -14,7 +14,7 @@ export const AddFileType = ({ roles, onSwitch }: AddFileTypeProps): JSX.Element 
   return (
     <div>
       <GoAButton
-        data-testid="add-file-type-button"
+        data-testid="add-file-type-btn"
         onClick={() => {
           setWillAddNew(true);
         }}

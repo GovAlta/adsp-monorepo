@@ -1,7 +1,7 @@
 import { TenantRepository } from '../tenant/repository';
 import { TenantEntity, Tenant } from '../tenant/models';
 import { Doc, NotFoundError } from '@core-services/core-common';
-import { Document, Model, model } from 'mongoose';
+import { Document, Model, model, Types } from 'mongoose';
 import { tenantSchema } from './schema';
 import { TenantCriteria } from '../tenant/types';
 
@@ -13,11 +13,15 @@ export class MongoTenantRepository implements TenantRepository {
   }
 
   async save(tenant: TenantEntity): Promise<TenantEntity> {
-    const doc = await this.tenantModel.findOneAndUpdate({ _id: tenant.id }, this.toDoc(tenant), {
-      upsert: true,
-      new: true,
-      lean: true,
-    });
+    const doc = await this.tenantModel.findOneAndUpdate(
+      { _id: tenant.id || new Types.ObjectId() },
+      this.toDoc(tenant),
+      {
+        upsert: true,
+        new: true,
+        lean: true,
+      }
+    );
     return Promise.resolve(this.fromDoc(doc));
   }
 
