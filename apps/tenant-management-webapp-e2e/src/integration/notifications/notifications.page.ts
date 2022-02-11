@@ -263,6 +263,7 @@ class NotificationsPage {
   editAnEmailTemplateModalCancelBtn() {
     return cy.get('[data-testid="template-form-cancel"]');
   }
+
   EditedEmailTemplateIcon(cardTitle, eventName) {
     return cy.xpath(
       `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="Edited"]`
