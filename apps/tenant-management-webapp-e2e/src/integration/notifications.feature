@@ -3,7 +3,7 @@ Feature: Notifications
 
   @TEST_CS-945 @REQ_CS-641 @REQ_CS-788 @REQ_CS-979 @regression
   Scenario: As a service owner, I can add/edit/delete Notification Types
-    Given a service owner user is on notification overview page
+    Given a tenant admin user is on notification overview page
     When the user clicks Add notification type button
     Then the user views Add notification modal
     When the user enters "autotest-addNotificationType", "autotest notification desc", "Anyone (Anonymous)"
@@ -24,7 +24,7 @@ Feature: Notifications
   # TEST DATA: a precreated notification type named "autotest-notificationType" with an event other than "tenant-service:tenant-created"
   @TEST_CS-949 @REQ_CS-277 @regression
   Scenario: As a service owner, I can add and delete events of a notification type
-    Given a service owner user is on notification types page
+    Given a tenant admin user is on notification types page
     # Add an event and verify the event can't be added again
     When the user clicks Select event button for "autotest-notificationType"
     Then the user views Select an event modal
@@ -46,7 +46,7 @@ Feature: Notifications
 
   @TEST_CS-976 @REQ_CS-906 @regression
   Scenario: Test the registration of notification type in status service for application health change
-    Given a service owner user is on notification types page
+    Given a tenant admin user is on notification types page
     # Verify the type and its events
     Then the user "views" the notification type card of "status-application-health-change"
     And the user "views" the event of "status-service:health-check-started" in "status-application-health-change"
@@ -99,3 +99,25 @@ Feature: Notifications
     Then the user views the subscribe checkbox is "unchecked"
     When the user "selects" the subscribe checkbox for health check notification type
     Then the user views a callout message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"
+
+  @TEST_CS-986 @REQ_CS-963 @REQ_CS-978 @regression
+  Scenario: As a tenant admin, I can see notification type for application status change updates
+    Given a tenant admin user is on notification types page
+    Then the user "views" the notification type card of "status-application-status-change"
+    # Verify the events' email template indicator, preview link and edit button
+    And the user "views" the event of "status-service:application-status-changed" in "status-application-status-change"
+    And the user "views" the event of "status-service:application-notice-published" in "status-application-status-change"
+    And the user "views" "email template indicator" for "status-service:application-status-changed" in "status-application-status-change"
+    And the user "views" "Preview link" for "status-service:application-status-changed" in "status-application-status-change"
+    And the user "views" "Edit button" for "status-service:application-status-changed" in "status-application-status-change"
+    And the user "views" "email template indicator" for "status-service:application-notice-published" in "status-application-status-change"
+    And the user "views" "Preview link" for "status-service:application-notice-published" in "status-application-status-change"
+    And the user "views" "Edit button" for "status-service:application-notice-published" in "status-application-status-change"
+    When the user clicks Preview button on "status-service:application-status-changed" in "status-application-status-change"
+    Then the user views Preview an email template modal
+    When the user clicks Close button in Preview an email template modal
+    Then Preview an email template modal is closed
+    When the user clicks Preview button on "status-service:application-notice-published" in "status-application-status-change"
+    Then the user views Preview an email template modal
+    When the user clicks Close button in Preview an email template modal
+    Then Preview an email template modal is closed

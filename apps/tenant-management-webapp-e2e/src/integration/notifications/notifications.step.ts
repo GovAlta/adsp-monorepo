@@ -6,7 +6,7 @@ import NotificationsPage from './notifications.page';
 const commonObj = new common();
 const notificationsObj = new NotificationsPage();
 
-Given('a service owner user is on notification overview page', function () {
+Given('a tenant admin user is on notification overview page', function () {
   commonlib.tenantAdminDirectURLLogin(
     Cypress.config().baseUrl,
     Cypress.env('realm'),
@@ -90,7 +90,7 @@ When('the user clicks Confirm button on delete confirmation modal', function () 
   notificationsObj.notificationTypeDeleteConfirmationModalConfirmBtn().click();
 });
 
-Given('a service owner user is on notification types page', function () {
+Given('a tenant admin user is on notification types page', function () {
   commonlib.tenantAdminDirectURLLogin(
     Cypress.config().baseUrl,
     Cypress.env('realm'),
@@ -205,8 +205,11 @@ Then('the user {string} {string} for {string} in {string}', function (viewOrNot,
       case 'Edit button':
         notificationsObj.internalNotificationTypeEventEditButton(typeName, eventName).should('exist');
         break;
+      case 'Reset':
+        notificationsObj.internalNotificationTypeEventResetBtn(typeName, eventName).should('exist');
+        break;
       default:
-        expect(elementType).to.be.oneOf(['email template indicator', 'Preview link', 'Edit button']);
+        expect(elementType).to.be.oneOf(['email template indicator', 'Preview link', 'Edit button', 'Reset']);
     }
   } else if (viewOrNot == 'should not view') {
     switch (elementType) {
@@ -219,8 +222,11 @@ Then('the user {string} {string} for {string} in {string}', function (viewOrNot,
       case 'Edit button':
         notificationsObj.internalNotificationTypeEventEditButton(typeName, eventName).should('not.exist');
         break;
+      case 'Reset':
+        notificationsObj.internalNotificationTypeEventResetBtn(typeName, eventName).should('not.exist');
+        break;
       default:
-        expect(elementType).to.be.oneOf(['email template indicator', 'Preview link', 'Edit button']);
+        expect(elementType).to.be.oneOf(['email template indicator', 'Preview link', 'Edit button', 'Reset']);
     }
   } else {
     expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
