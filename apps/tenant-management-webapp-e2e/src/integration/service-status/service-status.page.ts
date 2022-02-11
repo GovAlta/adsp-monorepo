@@ -136,6 +136,15 @@ class StatusServicePage {
   applicationHealthChangeNotificationSubscribeCheckbox() {
     return cy.xpath('//*[@class="goa-checkbox"]//*[@name="subscribe"]/parent::div');
   }
+  //LD
+  addApplicationButton() {
+    return cy.get('[data-testid="add-application"]');
+  }
+  addApplicationModalTitle() {
+    return cy.xpath(
+      '//div[@class="modal-root" and @data-state="visible"]/div[@class="modal"]/div[@class="modal-container"]/div[@class="modal-title"]'
+    );
+  }
 }
 
 export default StatusServicePage;
