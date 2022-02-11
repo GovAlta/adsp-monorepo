@@ -103,6 +103,64 @@ export class TimescaleValuesRepository implements ValuesRepository {
     };
   }
 
+  async readMetrics(
+    tenantId: AdspId,
+    namespace: string,
+    name: string,
+    criteria: MetricCriteria
+  ): Promise<Record<string, Metric>> {
+    let view = null;
+    switch (criteria.interval) {
+      case 'hourly':
+      case 'daily':
+      case 'weekly':
+        view = `metrics_${criteria.interval}`;
+        break;
+      default:
+        throw new InvalidOperationError('Interval value is not recognized.');
+    }
+
+    const queryCriteria = {
+      namespace,
+      name,
+    };
+
+    if (tenantId) {
+      queryCriteria['tenant'] = tenantId.toString();
+    }
+
+    let query = this.knex(view).select('metric', 'bucket', 'sum', 'avg', 'min', 'max').where(queryCriteria);
+
+    if (criteria.intervalMax) {
+      query = query.where('bucket', '<=', criteria.intervalMax);
+    }
+
+    if (criteria.intervalMin) {
+      query = query.where('bucket', '>=', criteria.intervalMin);
+    }
+
+    if (criteria.metricLike) {
+      query = query.where('metric', 'like', `%${criteria.metricLike}%`);
+    }
+
+    const rows = await query;
+    return rows.reduce((metrics, row) => {
+      const metric = metrics[row.metric] || { name: row.metric, values: [] };
+      metric.values.push({
+        interval: new Date(row.bucket),
+        sum: row.sum,
+        avg: row.avg,
+        min: row.min,
+        max: row.max,
+      });
+
+      return {
+        ...metrics,
+        [row.metric]: metric,
+      };
+    }, {});
+  }
+
   async readMetric(
     tenantId: AdspId,
     namespace: string,
@@ -141,7 +199,8 @@ export class TimescaleValuesRepository implements ValuesRepository {
       query = query.where('bucket', '>=', criteria.intervalMin);
     }
 
-    return query.then((rows) => ({
+    const rows = await query;
+    return {
       name: metric,
       values: rows.map((row) => ({
         interval: new Date(row.bucket),
@@ -150,7 +209,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
         min: row.min,
         max: row.max,
       })),
-    }));
+    };
   }
 
   async writeMetric(
