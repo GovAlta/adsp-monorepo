@@ -17,14 +17,6 @@ export const getTenant = async (repository: TenantRepository, id: AdspId): Promi
   }
 };
 
-export const hasTenantOfRealm = async (_realm: string): Promise<boolean> => {
-  try {
-    return Promise.resolve(true);
-  } catch (e) {
-    return Promise.resolve(false);
-  }
-};
-
 export const getTenants = async (repository: TenantRepository, criteria?: TenantCriteria): Promise<Tenant[]> => {
   try {
     const entities = await repository.find(criteria);
