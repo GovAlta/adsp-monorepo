@@ -309,12 +309,9 @@ When('the user clicks Confirm button on Delete subscription modal', function () 
   notificationsObj.deleteConfirmationModalConfirmBtn().click();
 });
 
-Then('the user should see tab {string}', function (tab) {
-  notificationsObj.notificationsTab(tab).should('be.visible');
-});
-
-When('the user cannot edit the Preview template', function () {
-  notificationsObj.eventTemplatePreviewModalAction().invoke('text').should('not.contain', 'Edit');
+Then('the user views {string} for {string} tab', function (service, tab) {
+  commonObj.serviceTab(service, tab).click();
+  // .should('be.visible');
 });
 
 When('the user clicks Edit button on {string} in {string}', function (eventName, typeName) {
