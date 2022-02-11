@@ -103,10 +103,10 @@ Feature: Notifications
   @TEST_CS-986 @REQ_CS-963 @REQ_CS-978 @regression
   Scenario: As a tenant admin, I can see notification type for application status change updates
     Given a tenant admin user is on notification overview page
-    Then the user should see tab "Overview"
+    Then the user the user views "Overview" tab for "Notifications"
     When the user selects "Notification types" tab for "Notifications"
     Then the user "views" the notification type card of "status-application-status-change"
-    # Verify the events' icon preview and edit
+    # Verify the events' email template indicator, preview link and edit button
     And the user "views" the event of "status-service:application-status-changed" in "status-application-status-change"
     And the user "views" the event of "status-service:application-notice-published" in "status-application-status-change"
     And the user "views" "email template indicator" for "status-service:application-status-changed" in "status-application-status-change"
