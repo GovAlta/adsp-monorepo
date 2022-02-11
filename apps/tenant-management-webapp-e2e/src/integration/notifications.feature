@@ -102,11 +102,9 @@ Feature: Notifications
 
   @TEST_CS-986 @REQ_CS-963 @REQ_CS-978 @regression
   Scenario: As a tenant admin, I can see notification type for application status change updates
-    Given a tenant admin user is on notification overview page
-    Then the user views "Notifications" for "Overview" tab
-    When the user selects "Notification types" tab for "Notifications"
+    Given a tenant admin user is on notification types page
     Then the user "views" the notification type card of "status-application-status-change"
-    # Verify the events' icon preview and edit
+    # Verify the events' email template indicator, preview link and edit button
     And the user "views" the event of "status-service:application-status-changed" in "status-application-status-change"
     And the user "views" the event of "status-service:application-notice-published" in "status-application-status-change"
     And the user "views" "email template indicator" for "status-service:application-status-changed" in "status-application-status-change"
@@ -123,13 +121,3 @@ Feature: Notifications
     Then the user views Preview an email template modal
     When the user clicks Close button in Preview an email template modal
     Then Preview an email template modal is closed
-    When the user clicks Edit button on "status-service:application-status-changed" in "status-application-status-change"
-    Then the user views "{{ event.payload.application.name }} status has changed" in Subject field
-    And the user views "The original status was: {{ event.payload.application.originalStatus }}" in Body field
-    When the user clicks Cancel button in Edit an email template modal
-    Then Edit an email template modal is closed
-    When the user clicks Edit button on "status-service:application-notice-published" in "status-application-status-change"
-    Then the user views "New notice for {{ event.payload.application.name }}" in Subject field
-    And the user views "A notice related to application {{ event.payload.application.name}} has been published by {{event.payload.postedBy.userName}}" in Body field
-    When the user clicks Cancel button in Edit an email template modal
-    Then Edit an email template modal is closed
