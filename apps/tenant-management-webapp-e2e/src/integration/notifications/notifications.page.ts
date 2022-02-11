@@ -255,40 +255,6 @@ class NotificationsPage {
   deleteConfirmationModalConfirmBtn() {
     return cy.get('[data-testid="delete-confirm"]');
   }
-
-  editAnEmailTemplateModalSaveBtn() {
-    return cy.get('[data-testid="template-form-save"]');
-  }
-
-  editAnEmailTemplateModalCancelBtn() {
-    return cy.get('[data-testid="template-form-cancel"]');
-  }
-
-  EditedEmailTemplateIcon(cardTitle, eventName) {
-    return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="Edited"]`
-    );
-  }
-
-  internalNotificationTypeEventResetBtn(cardTitle, eventName) {
-    return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="delete-event"]`
-    );
-  }
-
-  resetEmailTemplateModalConfirmBtn() {
-    return cy.get('[data-testid="event-delete-confirm"]');
-  }
-
-  notificationsTab(text) {
-    return cy.xpath(
-      `//h1[contains(text(), "Notifications")]/following-sibling::div[1]//descendant::div[contains(text(), "${text}")]`
-    );
-  }
-
-  eventTemplatePreviewModalAction() {
-    return cy.xpath('//*[@data-testid="email-preview" and @data-state="visible"]//*[@class="modal-actions"]');
-  }
 }
 
 export default NotificationsPage;
