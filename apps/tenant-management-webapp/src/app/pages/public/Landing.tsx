@@ -1,12 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import styled from 'styled-components';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
-import { GoAButton } from '@abgov/react-components';
-import MonacoEditor from '@monaco-editor/react';
 import DOMPurify from 'dompurify';
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@shared/utils/html';
 import debounce from 'lodash.debounce';
+
+import {subjectEditorConfig,bodyEditorConfig} from './emailPreviewEditor/config'
+import {
+  PreviewTemplateContainer,
+  NotificationTemplateContainer,
+  Modal
+} from './emailPreviewEditor/styled-components';
+import {EditTemplate} from './emailPreviewEditor/EditTemplate';
+import {PreviewTemplate} from './emailPreviewEditor/PreviewTemplate'
 
 const LandingPage = (): JSX.Element => {
   const [subject, setSubject] = useState('asd');
@@ -524,159 +529,66 @@ const LandingPage = (): JSX.Element => {
   </html>
   `);
   const [subjectPreview, setSubjectPreview] = useState('');
+  const [bodyPreview, setBodyPreview] = useState('');
 
   useEffect(() => {
     if (subject) {
       setSubjectPreview(subject);
     }
+    if (body) {
+      setBodyPreview(body);
+    }
   }, []);
   const eventTemplateEditHintText =
     "*GOA default header and footer wrapper is applied if the template doesn't include proper <html> opening and closing tags";
   const debouncedSave = useCallback(
-    debounce((value) => setSubjectPreview(value), 1000),
-    [] // will be created only once initially
+    debounce((value, callback) => callback(value), 1000),
+    []
   );
+  const [open, setOpen] = useState(true);
+
   return (
-    <NotificationTemplateContainer>
-      <EditTemplateContainer>
-        <Edit>
-          <h3>Edit an email template</h3>
-          <GoAForm>
-            <h4>Subject</h4>
-            <GoAFormItem>
-              <MonacoDiv>
-                <MonacoEditor
-                  data-testid="templateForm-subject"
-                  height={50}
-                  language="handlebars"
-                  value={subject}
-                  onChange={(value) => {
-                    setSubject(value);
-                    debouncedSave(value);
-                  }}
-                  options={{
-                    wordWrap: 'off',
-                    lineNumbers: 'off',
-                    scrollbar: { horizontal: 'hidden', vertical: 'hidden' },
-                    find: {
-                      addExtraSpaceOnTop: false,
-                      autoFindInSelection: 'never',
-                      seedSearchStringFromSelection: false,
-                      overviewRulerBorder: false,
-                    },
-                    minimap: { enabled: false },
-                    renderLineHighlight: 'none',
-                    overviewRulerLanes: 0,
-                    hideCursorInOverviewRuler: true,
-                    overviewRulerBorder: false,
-                  }}
-                />
-              </MonacoDiv>
-            </GoAFormItem>
-            <h4>Body</h4>
-            <GoAFormItem helpText={eventTemplateEditHintText}>
-              <MonacoDiv>
-                <MonacoEditor
-                  data-testid="templateForm-body"
-                  height={200}
-                  value={body}
-                  onChange={(value) => setBody(value)}
-                  language="handlebars"
-                  options={{
-                    tabSize: 2,
-                    lineNumbers: 'off',
-                    minimap: { enabled: false },
-                    overviewRulerBorder: false,
-                    lineHeight: 25,
-                    renderLineHighlight: 'none',
-                    overviewRulerLanes: 0,
-                    hideCursorInOverviewRuler: true,
-                  }}
-                />
-              </MonacoDiv>
-            </GoAFormItem>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'right',
-                gap: '1rem',
-              }}
-            >
-              <GoAButton data-testid="event-form-cancel" buttonType="tertiary" type="button">
-                Cancel
-              </GoAButton>
-              <GoAButton buttonType="primary" data-testid="template-form-save" type="submit">
-                Save
-              </GoAButton>
-            </div>
-          </GoAForm>
-        </Edit>
-      </EditTemplateContainer>
-      <PreviewTemplateContainer>
-        <Preview>
-          <h3>Subject</h3>
-          <div
-            style={{
-              backgroundColor: 'white',
-              paddingLeft: '1rem',
-              marginRight: '2rem',
-              overflow: 'scroll auto',
-              height: '100%',
-            }}
-            dangerouslySetInnerHTML={{
-              __html: DOMPurify.sanitize(subjectPreview),
-            }}
-          ></div>
-          <h3>Email Preview</h3>
-          <div
-            style={{
-              backgroundColor: 'white',
-              overflow: 'scroll auto',
-              marginRight: '2rem',
-              height: '30rem',
-            }}
-            dangerouslySetInnerHTML={{
-              __html: DOMPurify.sanitize(generateMessage(getTemplateBody(body), {})),
-            }}
-          ></div>
-        </Preview>
-      </PreviewTemplateContainer>
-    </NotificationTemplateContainer>
+    <Modal open={open}>
+      <NotificationTemplateContainer>
+        <EditTemplate
+          mainTitle="Edit an email template"
+          subjectTitle="Subject"
+          subject={subject}
+          onSubjectChange={(value) => {
+            setSubject(value);
+            debouncedSave(value, setSubjectPreview);
+          }}
+          subjectEditorConfig={subjectEditorConfig}
+          bodyTitle="Body"
+          onBodyChange={(value) => {
+            setBody(value);
+            debouncedSave(value, setBodyPreview);
+          }}
+          body={body}
+          bodyEditorConfig={bodyEditorConfig}
+          bodyEditorHintText={eventTemplateEditHintText}
+          onCancel={() => {
+            console.log('cancel');
+            setOpen(!open);
+          }}
+          onSave={() => {
+            console.log('save');
+            setOpen(!open);
+          }}
+        />
+        <PreviewTemplateContainer>
+          <PreviewTemplate
+            subjectTitle="Subject"
+            emailTitle="Email preview"
+            subjectPreviewContent={DOMPurify.sanitize(subjectPreview)}
+            emailPreviewContent={DOMPurify.sanitize(generateMessage(getTemplateBody(bodyPreview), {}))}
+          />
+        </PreviewTemplateContainer>
+      </NotificationTemplateContainer>
+    </Modal>
   );
 };
 
-const NotificationTemplateContainer = styled.div`
-  display: flex;
-  /* padding-right: 3rem; */
-  padding-left: 3rem;
-  /* flex-direction: row; */
-  width: 100%;
-  /* height: auto; */
-  height: 100vh;
-  overflow: hidden;
-  box-sizing: border-box;
-`;
-const MonacoDiv = styled.div`
-  display: flex;
-  border: 1px solid var(--color-gray-700);
-  border-radius: 3px;
-  padding: 0.15rem 0.15rem;
-`;
 
-const PreviewTemplateContainer = styled.div`
-  width: 60%;
-  margin-left: 2rem;
-  background-color: #00000075;
-`;
-const Preview = styled.div`
-  padding-top: 4rem;
-  padding-left: 2rem;
-`;
-const Edit = styled.div`
-  padding-top: 4rem;
-`;
-const EditTemplateContainer = styled.div`
-  width: 40%;
-  margin-right: 3rem;
-`;
+
 export default LandingPage;

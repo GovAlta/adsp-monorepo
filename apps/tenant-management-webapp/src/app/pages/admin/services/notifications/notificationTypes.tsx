@@ -1,10 +1,11 @@
-import React, { FunctionComponent, useState, useEffect } from 'react';
+import React, { FunctionComponent, useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton, GoACard } from '@abgov/react-components';
 import { Grid, GridItem } from '@components/Grid';
 import { NotificationTypeModalForm } from './edit';
 import { EventModalForm } from './editEvent';
 import { IndicatorWithDelay } from '@components/Indicator';
+import debounce from 'lodash.debounce';
 
 import {
   GoAModal,
@@ -16,6 +17,9 @@ import {
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { isDuplicatedNotificationName } from './validation';
 import { NotificationType } from '@store/notification/models';
+import DOMPurify from 'dompurify';
+import { generateMessage } from '@lib/handlebarHelper';
+import { getTemplateBody } from '@shared/utils/html';
 
 import {
   UpdateNotificationTypeService,
@@ -29,6 +33,17 @@ import styled from 'styled-components';
 import { TemplateForm } from './templateForm';
 import { EmailPreview } from './emailPreview';
 import { EditIcon } from '@components/icons/EditIcon';
+import {subjectEditorConfig,bodyEditorConfig} from './emailPreviewEditor/config'
+import {
+  PreviewTemplateContainer,
+  NotificationTemplateContainer,
+  Modal,
+  BodyGlobalStyles,
+  ModalInner
+} from './emailPreviewEditor/styled-components';
+import {EditTemplate} from './emailPreviewEditor/EditTemplate';
+import {PreviewTemplate} from './emailPreviewEditor/PreviewTemplate'
+
 
 const emptyNotificationType: NotificationItem = {
   name: '',
@@ -59,8 +74,25 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const coreNotification = useSelector((state: RootState) => state.notification.core);
   const [formTitle, setFormTitle] = useState<string>('');
 
+  const [subject, setSubject] = useState('asd');
+  const [body, setBody] = useState('asd');
+
+  const [subjectPreview, setSubjectPreview] = useState('');
+  const [bodyPreview, setBodyPreview] = useState('');
+
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
+
+  useEffect(() =>{
+    if (selectedEvent) {
+      setSubject(selectedEvent?.templates?.email?.subject);
+      setBody(selectedEvent?.templates?.email?.body);
+      setSubjectPreview(selectedEvent?.templates?.email?.subject);
+      setBodyPreview(selectedEvent?.templates?.email?.body);
+    }
+  },[selectedEvent]);
+
   useEffect(() => {
     dispatch(FetchNotificationTypeService());
     dispatch(FetchRealmRoles());
@@ -95,6 +127,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     setSelectedType(notificationType);
     setEditEvent(notificationType);
   }
+  const debouncedSaveSubject = useCallback(
+    debounce((value) => setSubjectPreview(value), 1000),
+    []
+  );
+  const debouncedSaveBody = useCallback(
+    debounce((value) => setBodyPreview(value), 1000),
+    []
+  );
 
   const nonCoreCopiedNotifications: NotificationType = Object.assign({}, notification?.notificationTypes);
 
@@ -111,6 +151,37 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       delete nonCoreCopiedNotifications[notificationType];
     });
   }
+  const saveOrAddEventTemplate = () => {
+    const definitionEventIndex = selectedType?.events?.findIndex(
+      (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`
+    );
+    selectedType.events[definitionEventIndex] = {
+      ...selectedEvent,
+      templates: {
+        email: {
+          subject,
+          body,
+        },
+      },
+    };
+    dispatch(UpdateNotificationTypeService(selectedType));
+    reset();
+  };
+  const editEventTemplateContent ={
+    saveOrAddActionText:"Save",
+    cancelOrBackActionText: "Cancel",
+    mainTitle: "Edit an email template"
+  }
+  const addNewEventTemplateContent ={
+    saveOrAddActionText:"Add",
+    cancelOrBackActionText: "Back",
+    mainTitle: "Add an email template"
+  }
+  const [eventTemplateFormState, setEventTemplateFormState] = useState(addNewEventTemplateContent)
+
+  const eventTemplateEditHintText =
+    "*GOA default header and footer wrapper is applied if the template doesn't include proper <html> opening and closing tags";
+
 
   return (
     <NotficationStyles>
@@ -245,6 +316,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                 onClick={() => {
                                   setSelectedEvent(event);
                                   setSelectedType(notificationType);
+                                  setEventTemplateFormState(editEventTemplateContent);
                                   setShowTemplateForm(true);
                                 }}
                               >
@@ -456,6 +528,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           reset();
         }}
       />
+      {/* add an event */}
       <EventModalForm
         open={editEvent}
         initialValue={editEvent}
@@ -473,7 +546,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           reset();
         }}
       />
-      <TemplateForm
+      {/* <TemplateForm
         initialValue={editEvent}
         selectedEvent={selectedEvent}
         notifications={selectedType}
@@ -489,7 +562,63 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         onClickedOutside={() => {
           reset();
         }}
-      />
+      /> */}
+      <Modal open={showTemplateForm}>
+        <BodyGlobalStyles hideOverflow={showTemplateForm} />
+        <ModalInner>
+          <NotificationTemplateContainer>
+            <EditTemplate
+              mainTitle={eventTemplateFormState.mainTitle}
+              subjectTitle="Subject"
+              subject={subject}
+              onSubjectChange={(value) => {
+                setSubject(value);
+                debouncedSaveSubject(value);
+              }}
+              subjectEditorConfig={subjectEditorConfig}
+              bodyTitle="Body"
+              onBodyChange={(value) => {
+                setBody(value);
+                debouncedSaveBody(value);
+              }}
+              body={body}
+              bodyEditorConfig={bodyEditorConfig}
+              bodyEditorHintText={eventTemplateEditHintText}
+              actionButtons={
+                <>
+                  <GoAButton
+                    onClick={() => {
+                      setShowTemplateForm(false);
+                      setEventTemplateFormState(addNewEventTemplateContent);
+                    }}
+                    data-testid="event-form-cancel"
+                    buttonType="tertiary"
+                    type="button"
+                  >
+                    {eventTemplateFormState.cancelOrBackActionText}
+                  </GoAButton>
+                  <GoAButton
+                    onClick={() => saveOrAddEventTemplate()}
+                    buttonType="primary"
+                    data-testid="template-form-save"
+                    type="submit"
+                  >
+                    {eventTemplateFormState.saveOrAddActionText}
+                  </GoAButton>
+                </>
+              }
+            />
+            <PreviewTemplateContainer>
+              <PreviewTemplate
+                subjectTitle="Subject"
+                emailTitle="Email preview"
+                subjectPreviewContent={DOMPurify.sanitize(subjectPreview)}
+                emailPreviewContent={DOMPurify.sanitize(generateMessage(getTemplateBody(bodyPreview), {}))}
+              />
+            </PreviewTemplateContainer>
+          </NotificationTemplateContainer>
+        </ModalInner>
+      </Modal>
 
       <EmailPreview
         initialValue={editEvent}

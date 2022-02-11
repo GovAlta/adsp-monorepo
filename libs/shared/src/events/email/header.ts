@@ -13,7 +13,7 @@ export const getHeaderPreview = () => {
       padding-bottom: 1.5rem;
     }
     #goa-callout-custom .title {
-      font-size: 2rem;
+      font-size: 1.5rem;
       font-weight: 700;
       letter-spacing: 0em;
       text-align: left;
