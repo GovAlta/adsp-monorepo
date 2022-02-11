@@ -237,7 +237,7 @@ const createBrokerClient = async (realm, secret, brokerClient) => {
   await client.clients.create(config);
 };
 
-export const validateEmailInDB = async (repository: TenantRepository, email: string): Promise<Boolean> => {
+export const validateEmailInDB = async (repository: TenantRepository, email: string): Promise<boolean> => {
   logger.info(`Validate - has user created tenant realm before?`);
   const isTenantAdmin = !!(await repository.find({ adminEmailEquals: email }))[0];
 
