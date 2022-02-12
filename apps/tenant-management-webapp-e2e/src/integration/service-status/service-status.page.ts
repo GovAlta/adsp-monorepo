@@ -147,16 +147,20 @@ class StatusServicePage {
     );
   }
 
-  applicationNameModalField() {
+  addApplicationNameModalField() {
     return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//input[@aria-label="name"]');
   }
 
-  applicationDescriptionModalField() {
+  addApplicationDescriptionModalField() {
     return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//textarea[@aria-label="description"]');
   }
 
-  applicationEndpointModalField() {
+  addApplicationEndpointModalField() {
     return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//input[@aria-label="endpoint"]');
+  }
+
+  addApplicationSaveBtn() {
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//button[2]');
   }
 }
 
