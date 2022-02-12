@@ -422,8 +422,12 @@ Then('the user views Add application modal', function () {
 When(
   'the user enters {string} as name and {string} as description and {string} as endpoint',
   function (name, description, endpoint) {
-    statusObj.applicationNameModalField().type(name);
-    statusObj.applicationDescriptionModalField().type(description);
-    statusObj.applicationEndpointModalField().type(endpoint);
+    statusObj.addApplicationNameModalField().type(name);
+    statusObj.addApplicationDescriptionModalField().type(description);
+    statusObj.addApplicationEndpointModalField().type(endpoint);
   }
 );
+
+Then('the user clicks save application button', function () {
+  statusObj.addApplicationSaveBtn().click();
+});
