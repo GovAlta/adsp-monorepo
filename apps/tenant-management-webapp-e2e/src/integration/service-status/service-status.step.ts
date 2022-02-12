@@ -418,3 +418,12 @@ When('the user clicks Add Application button', function () {
 Then('the user views Add application modal', function () {
   statusObj.addApplicationModalTitle().click();
 });
+
+When(
+  'the user enters {string} as name and {string} as description and {string} as endpoint',
+  function (name, description, endpoint) {
+    statusObj.applicationNameModalField().type(name);
+    statusObj.applicationDescriptionModalField().type(description);
+    statusObj.applicationEndpointModalField().type(endpoint);
+  }
+);
