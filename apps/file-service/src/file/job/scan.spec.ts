@@ -39,7 +39,7 @@ describe('Scan Job', () => {
     });
 
     const fileEntityMock = new Mock<FileEntity>();
-    fileEntityMock.setup((instance) => instance.deleted).returns(true);
+    fileEntityMock.setup((instance) => instance.deleted).returns(false);
     fileEntityMock
       .setup((instance) => instance.updateScanResult(true))
       .returns(Promise.resolve(fileEntityMock.object()));
@@ -54,6 +54,42 @@ describe('Scan Job', () => {
     await scanJob(tenantId, fileEntityMock.object(), done);
     expect(done).toHaveBeenCalledWith();
     fileEntityMock.verify((instance) => instance.updateScanResult(true));
+  });
+
+  it('can skip deleted', async () => {
+    const scanJob = createScanJob({
+      logger,
+      scanService: scanServiceMock.object(),
+      fileRepository: repositoryMock.object(),
+    });
+
+    const fileEntityMock = new Mock<FileEntity>();
+    fileEntityMock.setup((instance) => instance.deleted).returns(true);
+
+    repositoryMock.setup((instance) => instance.get(It.IsAny())).returns(Promise.resolve(fileEntityMock.object()));
+
+    const done = jest.fn();
+    await scanJob(tenantId, fileEntityMock.object(), done);
+    expect(done).toHaveBeenCalledWith();
+    fileEntityMock.verify((instance) => instance.updateScanResult(It.IsAny()), Times.Never());
+  });
+
+  it('can skip not found', async () => {
+    const scanJob = createScanJob({
+      logger,
+      scanService: scanServiceMock.object(),
+      fileRepository: repositoryMock.object(),
+    });
+
+    const fileEntityMock = new Mock<FileEntity>();
+    fileEntityMock.setup((instance) => instance.deleted).returns(true);
+
+    repositoryMock.setup((instance) => instance.get(It.IsAny())).returns(null);
+
+    const done = jest.fn();
+    await scanJob(tenantId, fileEntityMock.object(), done);
+    expect(done).toHaveBeenCalledWith();
+    fileEntityMock.verify((instance) => instance.updateScanResult(It.IsAny()), Times.Never());
   });
 
   it('can skip record result for not scanned', async () => {

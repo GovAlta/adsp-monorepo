@@ -328,6 +328,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                   setSelectedType(notificationType);
                                   setEventTemplateFormState(editEventTemplateContent);
                                   setShowTemplateForm(true);
+                                  setCoreEvent(false);
                                 }}
                               >
                                 Edit
@@ -429,6 +430,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                   setSelectedEvent(event);
                                   setSelectedType(notificationType);
                                   setShowTemplateForm(true);
+                                  setCoreEvent(true);
                                 }}
                               >
                                 Edit
@@ -476,10 +478,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       </GoAModal>
       {/* Event delete confirmation */}
       <GoAModal testId="event-delete-confirmation" isOpen={showEventDeleteConfirmation}>
-        <GoAModalTitle>{coreEvent ? 'Reset Modifications' : 'Remove event'} </GoAModalTitle>
+        <GoAModalTitle>{coreEvent ? 'Reset email template' : 'Remove event'} </GoAModalTitle>
         <GoAModalContent>
           {coreEvent
-            ? 'Remove custom modifications and reset event back to default'
+            ? 'Remove custom email template modifications'
             : `Remove ${selectedEvent?.namespace}:${selectedEvent?.name}`}
         </GoAModalContent>
         <GoAModalActions>
@@ -500,11 +502,18 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             onClick={() => {
               setShowEventDeleteConfirmation(false);
               const updatedEvents = selectedType.events.filter(
-                (event) => `${event.namespace}:${event.name}` !== `${selectedEvent.namespace}:${selectedEvent.name}`
+                (event) =>
+                  `${event.namespace}:${event.name}` !== `${selectedEvent.namespace}:${selectedEvent.name}` &&
+                  event.customized
               );
 
               const newType = JSON.parse(JSON.stringify(selectedType));
               newType.events = updatedEvents;
+
+              newType.events = newType.events.map((event) => {
+                event.channels = [];
+                return event;
+              });
               dispatch(UpdateNotificationTypeService(newType));
               setSelectedType(emptyNotificationType);
               setCoreEvent(false);

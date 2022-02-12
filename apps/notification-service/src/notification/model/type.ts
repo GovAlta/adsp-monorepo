@@ -91,6 +91,21 @@ export class NotificationTypeEntity implements NotificationType {
     return notifications;
   }
 
+  overrideWith(customType: NotificationTypeEntity): NotificationTypeEntity {
+    const mergedType = new NotificationTypeEntity(this);
+
+    mergedType.events.map((event) => {
+      customType.events.forEach((ev) => {
+        if (`${ev.namespace}:${ev.name}` === `${event.namespace}:${event.name}`) {
+          event.templates = { ...event.templates, ...ev.templates };
+        }
+      });
+      return event;
+    });
+
+    return mergedType;
+  }
+
   private generateNotification(
     logger: Logger,
     templateService: TemplateService,
@@ -112,7 +127,7 @@ export class NotificationTypeEntity implements NotificationType {
       return null;
     } else {
       return {
-        tenantId: this.tenantId?.toString() || subscription.subscriber.tenantId?.toString(),
+        tenantId: event.tenantId.toString(),
         type: {
           id: this.id,
           name: this.name,

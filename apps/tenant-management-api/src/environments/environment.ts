@@ -15,7 +15,7 @@ export const environment = envalid.cleanEnv(
     MONGO_DB: envalid.str({ default: 'tenantDb' }),
     MONGO_TLS: envalid.bool({ default: false }),
     PORT: envalid.num({ default: 3333 }),
-    KEYCLOAK_ROOT_URL: envalid.str({ default: 'https://access-dev.os99.gov.ab.ca' }),
+    KEYCLOAK_ROOT_URL: envalid.str({ default: 'https://access.adsp-dev.gov.ab.ca' }),
     KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_ID: envalid.str({ default: 'tenant-realm-admin' }),
     KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_SECRET: envalid.str({ default: '' }),
     TENANT_WEB_APP_CLIENT_ID: envalid.str({ default: 'urn:ads:platform:tenant-admin-app' }),

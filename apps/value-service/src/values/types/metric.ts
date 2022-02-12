@@ -20,6 +20,7 @@ export interface MetricCriteria {
   interval: MetricInterval;
   intervalMin?: Date;
   intervalMax?: Date;
+  metricLike?: string;
 }
 
 export interface Metric {

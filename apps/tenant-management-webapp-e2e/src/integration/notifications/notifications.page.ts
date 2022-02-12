@@ -215,6 +215,52 @@ class NotificationsPage {
   eventTemplatePreviewModalCloseBtn() {
     return cy.xpath('//*[@data-testid="email-preview" and @data-state="visible"]//*[@data-testid="preview-cancel"]');
   }
+
+  searchSubscriberAddressAs() {
+    return cy.xpath('//input[@id="name"]');
+  }
+
+  searchSubscriberEmail() {
+    return cy.xpath('//input[@id="email"]');
+  }
+
+  notificationSearchBtn() {
+    return cy.xpath('//button[@title="Search"]');
+  }
+
+  notificationRecord(notificationType, addressAs, email) {
+    return cy.xpath(
+      `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[@data-testid="addressAs" and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr`
+    );
+  }
+
+  deleteIconForNotificationRecord(notificationType, addressAs, email) {
+    return cy.xpath(
+      `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[@data-testid="addressAs" and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr//*[@data-testid="icon-trash"]`
+    );
+  }
+
+  deleteConfirmationModal() {
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]');
+  }
+
+  deleteConfirmationModalTitle() {
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//*[@class="modal-title"]');
+  }
+
+  deleteConfirmationModalContent() {
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//*[@class="goa-scrollable"]');
+  }
+
+  deleteConfirmationModalConfirmBtn() {
+    return cy.get('[data-testid="delete-confirm"]');
+  }
+
+  internalNotificationTypeEventResetBtn(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="delete-event"]`
+    );
+  }
 }
 
 export default NotificationsPage;

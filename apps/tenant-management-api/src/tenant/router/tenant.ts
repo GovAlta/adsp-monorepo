@@ -10,11 +10,11 @@ import {
 import * as TenantService from '../services/tenant';
 import { logger } from '../../middleware/logger';
 import { v4 as uuidv4 } from 'uuid';
-import { EventService } from '@abgov/adsp-service-sdk';
+import { adspId, EventService } from '@abgov/adsp-service-sdk';
 import { tenantCreated } from '../events';
 import { TenantRepository } from '../repository';
 import { ServiceClient } from '../types';
-import { InvalidOperationError } from '@core-services/core-common';
+import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 
 class CreateTenantDto {
   @IsDefined()
@@ -54,7 +54,11 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
   async function getTenantByEmail(req, res, next) {
     try {
       const { email } = req.payload;
-      const tenant = await tenantRepository.findBy({ adminEmail: email });
+      const tenant = (await tenantRepository.find({ adminEmailEquals: email }))[0];
+      if (!tenant) {
+        throw new NotFoundError('Tenant', email);
+      }
+
       res.json(tenant.obj());
     } catch (err) {
       logger.error(`Failed fetching tenant info by email address: ${err.message}`);
@@ -66,7 +70,11 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
     try {
       const { name } = req.payload;
 
-      const tenant = await tenantRepository.findBy({ name: { $regex: '^' + name + '\\b', $options: 'i' } });
+      const tenant = (await tenantRepository.find({ nameEquals: name }))[0];
+      if (!tenant) {
+        throw new NotFoundError('Tenant', name);
+      }
+
       res.json(tenant.obj());
     } catch (err) {
       logger.error(`Failed fetching tenant info by name: ${err.message}`);
@@ -78,7 +86,11 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
     const { realm } = req.payload;
 
     try {
-      const tenant = await tenantRepository.findBy({ realm });
+      const tenant = (await tenantRepository.find({ realmEquals: realm }))[0];
+      if (!tenant) {
+        throw new NotFoundError('Tenant', realm);
+      }
+
       res.json({
         success: true,
         tenant: tenant.obj(),
@@ -93,7 +105,11 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
     const { id } = req.payload;
 
     try {
-      const tenant = await tenantRepository.findBy({ id });
+      const tenant = await tenantRepository.get(id);
+      if (!tenant) {
+        throw new NotFoundError('Tenant', id);
+      }
+
       res.json({
         success: true,
         tenant: tenant.obj(),
@@ -107,63 +123,54 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
   async function createTenant(req: Request, res: Response, next) {
     const payload = req['payload'];
     const tenantName = payload.name;
+    let realm = payload.realm;
     const email = req.user.email;
-
-    let tokenIssuer = req.user.token.iss;
-    tokenIssuer = tokenIssuer.replace('core', tenantName);
+    let adminEmail;
 
     try {
-      const tenantEmail = payload?.email;
-      if (tenantEmail) {
-        const hasRealm = await TenantService.isRealmExisted(tenantName);
-        // To upgrade existing realm to support platform team service. Email is from the payload
-        if (!hasRealm) {
-          const message = `${tenantName} does not exit`;
-          throw new InvalidOperationError(message);
-        }
-        const tenantRealm = tenantName;
-        logger.info(`Found key realm with name ${tenantRealm}`);
-        // For existed tenant, realm is same as tenant name
-        const hasTenant = await TenantService.hasTenantOfRealm(tenantName);
-
-        if (hasTenant) {
-          const message = `Duplicated tenant.`;
-          throw new InvalidOperationError(message);
-        }
-
-        await TenantService.validateEmailInDB(tenantRepository, tenantEmail);
-        const { ...tenant } = await TenantService.createNewTenantInDB(
-          tenantRepository,
-          tenantEmail,
-          tenantName,
-          tenantName,
-          tokenIssuer
-        );
-
-        const response = { ...tenant, newTenant: false };
-        eventService.send(tenantCreated(req.user, response, false));
-        res.status(HttpStatusCodes.OK).json(response);
+      // check if tenant name exist in
+      const tenantInDB = (await tenantRepository.find({ nameEquals: tenantName }))[0];
+      if (tenantInDB) {
+        throw new InvalidOperationError('Tenant exist, please use another tenant name', tenantName);
       }
 
-      logger.info('Starting create realm....');
+      if (realm) {
+        logger.info('Realm exist in request....');
+        adminEmail = payload?.adminEmail;
+      } else {
+        //create new realm
 
-      await TenantService.validateName(tenantRepository, tenantName);
+        logger.info('Starting create realm on keycloak....');
+        await TenantService.validateName(tenantRepository, tenantName);
+        realm = uuidv4();
 
-      const generatedRealmName = uuidv4();
+        const [_, clients] = await req.getConfiguration<ServiceClient[], ServiceClient[]>();
 
-      const [_, clients] = await req.getConfiguration<ServiceClient[], ServiceClient[]>();
-      await TenantService.validateEmailInDB(tenantRepository, email);
-      await TenantService.createRealm(clients || [], generatedRealmName, email, tenantName);
+        const isValidEmail = await TenantService.validateEmailInDB(tenantRepository, email);
+        if (!isValidEmail) {
+          res
+            .status(404)
+            .json({ error: `${email} is the tenant admin in our record. One user can create only one realm.` });
+        }
+
+        await TenantService.createRealm(clients || [], realm, email, tenantName);
+      }
+
       const { ...tenant } = await TenantService.createNewTenantInDB(
         tenantRepository,
-        email,
-        generatedRealmName,
-        tenantName,
-        tokenIssuer
+        adminEmail ? adminEmail : email,
+        realm,
+        tenantName
       );
+      const data = { status: 'ok', message: 'Create tenant Success!', realm: realm };
 
-      const data = { status: 'ok', message: 'Create Realm Success!', realm: generatedRealmName };
-      eventService.send(tenantCreated(req.user, { ...tenant }, true));
+      eventService.send(
+        tenantCreated(
+          req.user,
+          { ...tenant, id: adspId`urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` },
+          false
+        )
+      );
       res.status(HttpStatusCodes.OK).json(data);
     } catch (err) {
       logger.error(`Error creating new tenant ${err.message}`);

@@ -8,12 +8,7 @@ describe('Service Option Router', () => {
     save: jest.fn(),
     delete: jest.fn(),
     find: jest.fn(),
-    issuers: jest.fn(),
-    findBy: jest.fn(),
-    findByName: jest.fn(),
-    isTenantAdmin: jest.fn(),
-    fetchRealmToNameMapping: jest.fn(),
-    validateIssuer: jest.fn(),
+    get: jest.fn(),
   };
   const app = express();
   app.use(createTenantV2Router({ tenantRepository: repositoryMock }));
