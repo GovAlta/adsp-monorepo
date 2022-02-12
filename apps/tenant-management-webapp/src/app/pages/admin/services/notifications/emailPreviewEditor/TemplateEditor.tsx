@@ -34,7 +34,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 }) => {
   return (
     <TemplateEditorContainer>
-      <h3>{mainTitle}</h3>
+      <h3 data-testid="modal-title">{mainTitle}</h3>
       <GoAForm>
         <h4>{subjectTitle}</h4>
         <GoAFormItem helpText={subjectEditorHintText}>

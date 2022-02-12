@@ -558,7 +558,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       />
 
       {/* Edit/Add event template for a notification */}
-      <Modal open={showTemplateForm}>
+      <Modal open={showTemplateForm} data-testid="template-form">
         {/* Hides body overflow when the modal is up */}
         <BodyGlobalStyles hideOverflow={showTemplateForm} />
         <ModalContent>
@@ -587,7 +587,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                       setShowTemplateForm(false);
                       setEventTemplateFormState(addNewEventTemplateContent);
                     }}
-                    data-testid="event-form-cancel"
+                    data-testid="template-form-cancel"
                     buttonType="tertiary"
                     type="button"
                   >
