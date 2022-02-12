@@ -140,10 +140,23 @@ class StatusServicePage {
   addApplicationButton() {
     return cy.get('[data-testid="add-application"]');
   }
+
   addApplicationModalTitle() {
     return cy.xpath(
       '//div[@class="modal-root" and @data-state="visible"]/div[@class="modal"]/div[@class="modal-container"]/div[@class="modal-title"]'
     );
+  }
+
+  applicationNameModalField() {
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//input[@aria-label="name"]');
+  }
+
+  applicationDescriptionModalField() {
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//textarea[@aria-label="description"]');
+  }
+
+  applicationEndpointModalField() {
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//input[@aria-label="endpoint"]');
   }
 }
 
