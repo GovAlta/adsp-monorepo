@@ -3,7 +3,7 @@ import { UnauthorizedError, InvalidOperationError } from '@core-services/core-co
 import { Mock, It } from 'moq.ts';
 import { Readable } from 'stream';
 import { FileRepository } from '../repository';
-import { FileRecord } from '../types';
+import { FileRecord, ServiceUserRoles } from '../types';
 import { FileEntity } from './file';
 import { FileTypeEntity } from './type';
 import { FileStorageProvider } from '../storage';
@@ -209,6 +209,77 @@ describe('File Entity', () => {
 
       const canAccess = entity.canAccess(user);
       expect(canAccess).toBeFalsy();
+    });
+
+    it('can check user update for user with updated on type', () => {
+      typeMock.setup((m) => m.canUpdateFile(user)).returns(true);
+
+      const canAccess = entity.canUpdate(user);
+      expect(canAccess).toBeTruthy();
+    });
+
+    it('can default user access to admin if type missing', () => {
+      entity = new FileEntity(storageProviderMock.object(), repositoryMock.object(), null, {
+        tenantId,
+        id: 'file-1',
+        filename: 'test.txt',
+        recordId: 'my-record-1',
+        size: 100,
+        created: new Date(),
+        createdBy: {
+          id: 'user-1',
+          name: 'testy',
+        },
+        scanned: false,
+        deleted: false,
+        infected: false,
+      });
+
+      const canAccess = entity.canAccess(user);
+      expect(canAccess).toBeFalsy();
+
+      const canAdminAccess = entity.canAccess({
+        id: 'user-2',
+        name: 'testy',
+        email: 'test@testco.org',
+        roles: [ServiceUserRoles.Admin],
+        tenantId,
+        isCore: false,
+        token: null,
+      });
+      expect(canAdminAccess).toBeTruthy();
+    });
+
+    it('can default user update to admin if type missing', () => {
+      entity = new FileEntity(storageProviderMock.object(), repositoryMock.object(), null, {
+        tenantId,
+        id: 'file-1',
+        filename: 'test.txt',
+        recordId: 'my-record-1',
+        size: 100,
+        created: new Date(),
+        createdBy: {
+          id: 'user-1',
+          name: 'testy',
+        },
+        scanned: false,
+        deleted: false,
+        infected: false,
+      });
+
+      const canUpdate = entity.canUpdate(user);
+      expect(canUpdate).toBeFalsy();
+
+      const canAdminUpdate = entity.canAccess({
+        id: 'user-2',
+        name: 'testy',
+        email: 'test@testco.org',
+        roles: [ServiceUserRoles.Admin],
+        tenantId,
+        isCore: false,
+        token: null,
+      });
+      expect(canAdminUpdate).toBeTruthy();
     });
 
     it('can read file', (done) => {

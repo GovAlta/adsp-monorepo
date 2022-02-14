@@ -21,6 +21,7 @@ import {
 import { RootState } from '../index';
 import axios from 'axios';
 import moment from 'moment';
+import { EventItem } from './models';
 
 export function* fetchNotificationTypes(): SagaIterator {
   const configBaseUrl: string = yield select(
@@ -104,6 +105,18 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
   if (configBaseUrl && token) {
     try {
       const payloadId = payload.id || uuidv4();
+
+      const sanitizedEvents = payload.events.map((eve) => {
+        const eventBuilder: EventItem = {
+          namespace: eve.namespace,
+          name: eve.name,
+          templates: eve.templates,
+          channels: eve.channels,
+        };
+        return eventBuilder;
+      });
+
+      payload.events = sanitizedEvents;
 
       yield call(
         axios.patch,

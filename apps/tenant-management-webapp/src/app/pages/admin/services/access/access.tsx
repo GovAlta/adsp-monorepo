@@ -21,7 +21,7 @@ export default function (): JSX.Element {
   });
 
   const isReady = (indicator, users) => {
-    return !indicator.show && users && users.length > 1;
+    return !indicator.show && users && users.length > 0;
   };
 
   const indicator = useSelector((state: RootState) => {

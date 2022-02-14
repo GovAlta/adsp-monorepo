@@ -94,6 +94,39 @@ export function readValue(repository: ValuesRepository): RequestHandler {
   };
 }
 
+export function readMetrics(repository: ValuesRepository): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenant = req.tenant;
+      const user = req.user as User;
+      const { namespace, name } = req.params;
+      const { interval: intervalValue, criteria: criteriaValue } = req.query;
+      const interval = (intervalValue as string) || 'daily';
+      const criteriaParam = criteriaValue ? JSON.parse(criteriaValue as string) : {};
+
+      const criteria: MetricCriteria = {
+        interval: interval as MetricInterval,
+        intervalMax: criteriaParam.intervalMax ? new Date(criteriaParam.intervalMax) : null,
+        intervalMin: criteriaParam.intervalMin ? new Date(criteriaParam.intervalMin) : null,
+        metricLike: criteriaParam.metricLike,
+      };
+
+      if (!tenant) {
+        throw new InvalidOperationError('Tenant context is required for operation.');
+      }
+
+      if (!isAllowedUser(user, tenant.id, ServiceUserRoles.Reader, true)) {
+        throw new UnauthorizedUserError('read values', user);
+      }
+
+      const result = await repository.readMetrics(tenant.id, namespace, name, criteria);
+      res.send(result);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function readMetric(repository: ValuesRepository): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -200,6 +233,7 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
 
   valueRouter.get('/:namespace/values', readValues);
   valueRouter.get('/:namespace/values/:name', readValue(repository));
+  valueRouter.get('/:namespace/values/:name/metrics', readMetrics(repository));
   valueRouter.get('/:namespace/values/:name/metrics/:metric', readMetric(repository));
 
   valueRouter.post('/:namespace/values/:name', assertUserCanWrite, writeValue(logger, eventService, repository));

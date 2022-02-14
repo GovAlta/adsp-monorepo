@@ -9,12 +9,12 @@ import { createProcessEventJob } from './processEvent';
 
 describe('createProcessEventJob', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
-  const logger = ({
+  const logger = {
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
-  } as unknown) as Logger;
+  } as unknown as Logger;
 
   const tokenProviderMock = {
     getAccessToken: jest.fn(),
@@ -36,6 +36,10 @@ describe('createProcessEventJob', () => {
     getSubscriptions: jest.fn(),
   };
 
+  const repositoryDoubleMock = {
+    getSubscriptions: jest.fn(),
+  };
+
   const queueServiceMock = {
     enqueue: jest.fn(),
   };
@@ -48,8 +52,8 @@ describe('createProcessEventJob', () => {
       configurationService: configurationServiceMock,
       eventService: eventServiceMock,
       templateService: templateServiceMock,
-      subscriptionRepository: (repositoryMock as unknown) as SubscriptionRepository,
-      queueService: (queueServiceMock as unknown) as WorkQueueService<Notification>,
+      subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
+      queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
     });
     expect(job).toBeTruthy();
   });
@@ -63,8 +67,8 @@ describe('createProcessEventJob', () => {
         configurationService: configurationServiceMock,
         eventService: eventServiceMock,
         templateService: templateServiceMock,
-        subscriptionRepository: (repositoryMock as unknown) as SubscriptionRepository,
-        queueService: (queueServiceMock as unknown) as WorkQueueService<Notification>,
+        subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
+        queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
       });
 
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -96,7 +100,7 @@ describe('createProcessEventJob', () => {
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
       configurationServiceMock.getConfiguration.mockResolvedValueOnce([configuration]);
 
-      const subscriber = new SubscriberEntity((repositoryMock as unknown) as SubscriptionRepository, {
+      const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
         tenantId,
         addressAs: 'Tester',
         channels: [
@@ -109,7 +113,7 @@ describe('createProcessEventJob', () => {
       });
 
       const subscription = new SubscriptionEntity(
-        (repositoryMock as unknown) as SubscriptionRepository,
+        repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test', subscriberId: 'test', criteria: {} },
         subscriber
       );
@@ -133,6 +137,96 @@ describe('createProcessEventJob', () => {
       );
     });
 
+    it('does not double process custom event', (done) => {
+      const job = createProcessEventJob({
+        logger,
+        serviceId: adspId`urn:ads:platform:notification-service`,
+        tokenProvider: tokenProviderMock,
+        configurationService: configurationServiceMock,
+        eventService: eventServiceMock,
+        templateService: templateServiceMock,
+        subscriptionRepository: repositoryDoubleMock as unknown as SubscriptionRepository,
+        queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
+      });
+
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const type = {
+        id: 'test',
+        name: 'Test Type',
+        description: '',
+        publicSubscribe: true,
+        subscriberRoles: [],
+        events: [
+          {
+            namespace: 'test',
+            name: 'test-run',
+            templates: {
+              [Channel.email]: { subject: 'hello', body: 'regular body' },
+              [Channel.sms]: null,
+              [Channel.mail]: null,
+            },
+            channels: [Channel.email],
+          },
+        ],
+      };
+      const customType = JSON.parse(JSON.stringify(type));
+      customType.events[0].channels = [];
+      customType.events[0].templates = {
+        [Channel.email]: { subject: 'hello there', body: 'i customize body' },
+        [Channel.sms]: null,
+        [Channel.mail]: null,
+      };
+      const configuration = new NotificationConfiguration(
+        {
+          test: customType,
+        },
+        tenantId
+      );
+      const options = new NotificationConfiguration({
+        test: type,
+      });
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
+      configurationServiceMock.getConfiguration.mockResolvedValueOnce([configuration, options]);
+
+      const subscriber = new SubscriberEntity(repositoryDoubleMock as unknown as SubscriptionRepository, {
+        tenantId,
+        addressAs: 'Tester',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'test@testco.org',
+            verified: false,
+          },
+        ],
+      });
+
+      const subscription = new SubscriptionEntity(
+        repositoryDoubleMock as unknown as SubscriptionRepository,
+        { tenantId, typeId: 'test', subscriberId: 'test', criteria: {} },
+        subscriber
+      );
+
+      repositoryDoubleMock.getSubscriptions.mockResolvedValue({
+        results: [subscription],
+        page: {},
+      });
+
+      job(
+        {
+          tenantId,
+          namespace: 'test',
+          name: 'test-run',
+          timestamp: new Date(),
+          payload: {},
+        },
+        (err) => {
+          expect(repositoryDoubleMock.getSubscriptions).toHaveBeenCalledTimes(1);
+          expect(err).toBeFalsy();
+          done();
+        }
+      );
+    });
+
     it('can handle error on processing', (done) => {
       const job = createProcessEventJob({
         logger,
@@ -141,8 +235,8 @@ describe('createProcessEventJob', () => {
         configurationService: configurationServiceMock,
         eventService: eventServiceMock,
         templateService: templateServiceMock,
-        subscriptionRepository: (repositoryMock as unknown) as SubscriptionRepository,
-        queueService: (queueServiceMock as unknown) as WorkQueueService<Notification>,
+        subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
+        queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
       });
       const error = new Error('Something is terribly wrong.');
       tokenProviderMock.getAccessToken.mockRejectedValueOnce(error);
@@ -170,8 +264,8 @@ describe('createProcessEventJob', () => {
         configurationService: configurationServiceMock,
         eventService: eventServiceMock,
         templateService: templateServiceMock,
-        subscriptionRepository: (repositoryMock as unknown) as SubscriptionRepository,
-        queueService: (queueServiceMock as unknown) as WorkQueueService<Notification>,
+        subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
+        queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
       });
 
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;

@@ -113,7 +113,7 @@ Then('the user views Delete definition dialog for the definition of {string}', f
   eventsObj.deleteDefinitionModalContent().invoke('text').should('contain', name);
 });
 
-Then('the user clicks Confirm button', function () {
+Then('the user clicks Confirm button on Delete definition modal', function () {
   eventsObj.deleteDefinitionConfirmButton().click();
 });
 
