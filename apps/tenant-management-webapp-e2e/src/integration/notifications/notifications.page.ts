@@ -262,5 +262,4 @@ class NotificationsPage {
     );
   }
 }
-
 export default NotificationsPage;
