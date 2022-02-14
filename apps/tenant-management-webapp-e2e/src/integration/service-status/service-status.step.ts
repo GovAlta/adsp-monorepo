@@ -431,3 +431,15 @@ When(
 Then('the user clicks save application button', function () {
   statusObj.addApplicationSaveBtn().click();
 });
+
+Then('the user views {string} in the application list', function (appName) {
+  statusObj.applicationList().contains(appName);
+});
+
+When('the user clicks edit button of', function () {
+  statusObj.applicationListEditBtn().click();
+});
+
+When('the user clicks delete button', function () {
+  statusObj.applicationListDeleteBtn().focus().click();
+});
