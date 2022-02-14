@@ -124,20 +124,18 @@ class NotificationsPage {
   }
 
   addAnEmailTemplateModalTitle() {
-    return cy.xpath(
-      '//*[@data-testid="template-form" and @data-state="visible"]/*[@class="modal"]//*[@class="modal-title"]'
-    );
+    return cy.xpath('//*[@data-testid="template-form"]//*[@data-testid="modal-title"]');
   }
 
   addAnEmailTemplateModalSubject() {
     return cy.xpath(
-      '(//*[@data-testid="template-form" and @data-state="visible"]//*[@class="monaco-scrollable-element editor-scrollable vs"])[1]'
+      '(//*[@data-testid="template-form"]//*[@class="monaco-scrollable-element editor-scrollable vs"])[1]'
     );
   }
 
   addAnEmailTemplateModalBody() {
     return cy.xpath(
-      '(//*[@data-testid="template-form" and @data-state="visible"]//*[@class="monaco-scrollable-element editor-scrollable vs"])[2]'
+      '(//*[@data-testid="template-form"]//*[@class="monaco-scrollable-element editor-scrollable vs"])[2]'
     );
   }
 

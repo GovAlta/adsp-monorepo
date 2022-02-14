@@ -123,70 +123,56 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
   async function createTenant(req: Request, res: Response, next) {
     const payload = req['payload'];
     const tenantName = payload.name;
+    let realm = payload.realm;
     const email = req.user.email;
+    let adminEmail;
 
     try {
-      const tenantEmail = payload?.email;
-      if (tenantEmail) {
-        const hasRealm = await TenantService.isRealmExisted(tenantName);
-        // To upgrade existing realm to support platform team service. Email is from the payload
-        if (!hasRealm) {
-          const message = `${tenantName} does not exit`;
-          throw new InvalidOperationError(message);
-        }
-        const tenantRealm = tenantName;
-        logger.info(`Found key realm with name ${tenantRealm}`);
-        // For existed tenant, realm is same as tenant name
-        // TODO: This method implementation always returns 'true'... what is the purpose?
-        const hasTenant = await TenantService.hasTenantOfRealm(tenantName);
-
-        if (hasTenant) {
-          const message = `Duplicated tenant.`;
-          throw new InvalidOperationError(message);
-        }
-
-        await TenantService.validateEmailInDB(tenantRepository, tenantEmail);
-        // TODO: This uses tenant name for both tenant realm and name, but it's not clear that this code is ever exercised.
-        const { ...tenant } = await TenantService.createNewTenantInDB(
-          tenantRepository,
-          tenantEmail,
-          tenantName,
-          tenantName
-        );
-
-        const response = { ...tenant, newTenant: false };
-        eventService.send(
-          tenantCreated(
-            req.user,
-            { ...response, id: adspId`urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` },
-            false
-          )
-        );
-        res.status(HttpStatusCodes.OK).json(response);
+      // check if tenant name exist in
+      const tenantInDB = (await tenantRepository.find({ nameEquals: tenantName }))[0];
+      if (tenantInDB) {
+        throw new InvalidOperationError('Tenant exist, please use another tenant name', tenantName);
       }
 
-      logger.info('Starting create realm....');
+      if (realm) {
+        logger.info('Realm exist in request....');
+        adminEmail = payload?.adminEmail;
 
-      await TenantService.validateName(tenantRepository, tenantName);
+        if (!adminEmail) {
+          throw new InvalidOperationError('Please put adminEmail in body');
+        }
+      } else {
+        //create new realm
 
-      const generatedRealmName = uuidv4();
+        logger.info('Starting create realm on keycloak....');
+        await TenantService.validateName(tenantRepository, tenantName);
+        realm = uuidv4();
 
-      const [_, clients] = await req.getConfiguration<ServiceClient[], ServiceClient[]>();
-      await TenantService.validateEmailInDB(tenantRepository, email);
-      await TenantService.createRealm(clients || [], generatedRealmName, email, tenantName);
+        const [_, clients] = await req.getConfiguration<ServiceClient[], ServiceClient[]>();
+
+        const isValidEmail = await TenantService.validateEmailInDB(tenantRepository, email);
+        if (!isValidEmail) {
+          res
+            .status(404)
+            .json({ error: `${email} is the tenant admin in our record. One user can create only one realm.` });
+        }
+
+        await TenantService.createRealm(clients || [], realm, email, tenantName);
+      }
+
       const { ...tenant } = await TenantService.createNewTenantInDB(
         tenantRepository,
-        email,
-        generatedRealmName,
+        adminEmail ? adminEmail : email,
+        realm,
         tenantName
       );
+      const data = { status: 'ok', message: 'Create tenant Success!', realm: realm };
 
-      const data = { status: 'ok', message: 'Create Realm Success!', realm: generatedRealmName };
       eventService.send(
         tenantCreated(
           req.user,
           { ...tenant, id: adspId`urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` },
-          true
+          false
         )
       );
       res.status(HttpStatusCodes.OK).json(data);

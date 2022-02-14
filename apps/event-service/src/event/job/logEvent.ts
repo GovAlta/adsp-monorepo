@@ -122,7 +122,6 @@ export const createLogEventJob =
       metrics: {
         [`total:count`]: 1,
         [`${namespace}:${name}:count`]: 1,
-        count: 1,
       },
     };
 

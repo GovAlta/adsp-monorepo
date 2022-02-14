@@ -15,6 +15,7 @@ export interface NotificationTypeEvent {
   name: string;
   templates: Partial<Record<Channel, Template>>;
   channels?: string[];
+  customized?: boolean;
 }
 
 export interface NotificationType {
