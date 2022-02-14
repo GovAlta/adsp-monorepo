@@ -149,6 +149,9 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
 };
 
 export const EventLogEntries = styled(EventLogEntriesComponent)`
+  & table {
+    table-layout: fixed;
+  }
   & .event-details {
     div {
       background: #f3f3f3;
