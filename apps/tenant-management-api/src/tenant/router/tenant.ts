@@ -137,6 +137,10 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
       if (realm) {
         logger.info('Realm exist in request....');
         adminEmail = payload?.adminEmail;
+
+        if (!adminEmail) {
+          throw new InvalidOperationError('Please put adminEmail in body');
+        }
       } else {
         //create new realm
 
