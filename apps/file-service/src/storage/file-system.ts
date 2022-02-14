@@ -74,7 +74,7 @@ export class FileSystemStorageProvider implements FileStorageProvider {
   }
 
   private getFilePath(entity: FileEntity): string {
-    const filePath = path.join(entity.type.tenantId.resource.substring(9), entity.type.id, entity.id);
+    const filePath = path.join(entity.tenantId.resource.substring(9), entity.id);
     return this.getPath(filePath);
   }
 }

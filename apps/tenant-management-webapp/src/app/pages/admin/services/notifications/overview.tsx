@@ -1,6 +1,7 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components';
 import { NotificationMetrics } from './metrics';
+import { ContactInformation } from './contactInformation';
 import { FetchNotificationMetrics } from '@store/notification/actions';
 import { useDispatch } from 'react-redux';
 
@@ -37,6 +38,7 @@ export const NotificationsOverview: FunctionComponent<ParentCompProps> = (props)
       </section>
 
       <NotificationMetrics />
+      <ContactInformation />
     </div>
   );
 };

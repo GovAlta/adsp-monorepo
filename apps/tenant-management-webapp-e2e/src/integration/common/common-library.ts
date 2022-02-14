@@ -17,4 +17,38 @@ export function tenantAdminDirectURLLogin(url, id, user, password) {
   cy.url().should('include', '/admin');
 }
 
-export default { tenantAdminDirectURLLogin };
+export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
+  let menuItemSelector = '';
+  switch (menuItem) {
+    case 'Dashboard':
+      menuItemSelector = '/admin';
+      break;
+    case 'Event log':
+      menuItemSelector = '/admin/event-log';
+      break;
+    case 'Files':
+      menuItemSelector = '/admin/services/files';
+      break;
+    case 'Access':
+      menuItemSelector = '/admin/access';
+      break;
+    case 'Status':
+      menuItemSelector = '/admin/services/status';
+      break;
+    case 'Events':
+      menuItemSelector = '/admin/services/events';
+      break;
+    case 'Notifications':
+      menuItemSelector = '/admin/services/notifications';
+      break;
+    case 'Directory':
+      menuItemSelector = '/admin/services/directory';
+      break;
+    default:
+      expect(menuItem).to.be.oneOf(['Files', 'Access', 'Status', 'Events', 'Notifications', 'Directory']);
+  }
+  commonObj.adminMenuItem(menuItemSelector).click();
+  cy.wait(waitMilliSecs);
+}
+
+export default { tenantAdminDirectURLLogin, tenantAdminMenuItem };

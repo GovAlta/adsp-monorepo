@@ -159,6 +159,60 @@ components:
           application/json:
             schema:
               $ref: "#/components/schemas/Value"
+/value/v1/{namespace}/values/{name}/metrics:
+  get:
+    tags:
+      - Value
+    description: Retrieves value metrics in a namespace
+    parameters:
+      - name: namespace
+        description: Namespace to read value metric from.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the value.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: interval
+        description: Interval to get metric aggregates for.
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+            - hourly
+            - daily
+            - weekly
+      - name: criteria
+        description: Criteria for the read.
+        in: query
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                metricLike:
+                  type: string
+                intervalMax:
+                  type: string
+                  format: date-time
+                intervalMin:
+                  type: string
+                  format: date-time
+    responses:
+      200:
+        description: Metrics successfully read.
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                $ref: "#/components/schemas/Metric"
 /value/v1/{namespace}/values/{name}/metrics/{metric}:
   get:
     tags:

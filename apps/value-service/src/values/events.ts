@@ -14,22 +14,30 @@ export const ValueWrittenDefinition: DomainEventDefinition = {
           name: { type: 'string' },
         },
       },
-      value: { type: 'object' },
+      timestamp: { type: 'string', format: 'date-time' },
+      value: {},
     },
   },
 };
 
-export function valueWritten(user: User, namespace: string, name: string, value: Value): DomainEvent {
+export function valueWritten(
+  user: User,
+  namespace: string,
+  name: string,
+  { context, correlationId, tenantId, timestamp, value }: Value
+): DomainEvent {
   return {
     name: 'value-written',
     timestamp: new Date(),
-    correlationId: value.correlationId,
-    tenantId: value.tenantId,
+    correlationId: correlationId,
+    tenantId: tenantId,
     context: {
+      ...(context || {}),
       namespace,
       name,
     },
     payload: {
+      timestamp,
       value,
       writtenBy: {
         id: user.id,

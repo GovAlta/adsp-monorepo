@@ -8,10 +8,12 @@ import {
   FetchNotificationTypeService,
   DeleteNotificationTypeAction,
   UpdateNotificationTypeAction,
+  UpdateContactInformationAction,
   DELETE_NOTIFICATION_TYPE,
   FETCH_NOTIFICATION_TYPE,
   FETCH_CORE_NOTIFICATION_TYPE,
   UPDATE_NOTIFICATION_TYPE,
+  UPDATE_CONTACT_INFORMATION,
   FETCH_NOTIFICATION_METRICS,
   fetchNotificationMetricsSucceeded,
 } from './actions';
@@ -19,6 +21,7 @@ import {
 import { RootState } from '../index';
 import axios from 'axios';
 import moment from 'moment';
+import { EventItem } from './models';
 
 export function* fetchNotificationTypes(): SagaIterator {
   const configBaseUrl: string = yield select(
@@ -103,6 +106,18 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
     try {
       const payloadId = payload.id || uuidv4();
 
+      const sanitizedEvents = payload.events.map((eve) => {
+        const eventBuilder: EventItem = {
+          namespace: eve.namespace,
+          name: eve.name,
+          templates: eve.templates,
+          channels: eve.channels,
+        };
+        return eventBuilder;
+      });
+
+      payload.events = sanitizedEvents;
+
       yield call(
         axios.patch,
         `${configBaseUrl}/configuration/v2/configuration/platform/notification-service`,
@@ -116,6 +131,39 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
               subscriberRoles: payload.subscriberRoles,
               events: payload.events,
               publicSubscribe: payload.publicSubscribe,
+            },
+          },
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      yield put(FetchNotificationTypeService());
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.message} - updateNotificationType` }));
+    }
+  }
+}
+
+export function* updateContactInformation({ payload }: UpdateContactInformationAction): SagaIterator {
+  const configBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  if (configBaseUrl && token) {
+    try {
+      yield call(
+        axios.patch,
+        `${configBaseUrl}/configuration/v2/configuration/platform/notification-service`,
+        {
+          operation: 'UPDATE',
+          update: {
+            contact: {
+              contactEmail: payload.contactEmail,
+              phoneNumber: payload.phoneNumber,
+              supportInstructions: payload.supportInstructions,
             },
           },
         },
@@ -177,5 +225,6 @@ export function* watchNotificationSagas(): Generator {
   yield takeEvery(FETCH_CORE_NOTIFICATION_TYPE, fetchCoreNotificationTypes);
   yield takeEvery(DELETE_NOTIFICATION_TYPE, deleteNotificationTypes);
   yield takeEvery(UPDATE_NOTIFICATION_TYPE, updateNotificationType);
+  yield takeEvery(UPDATE_CONTACT_INFORMATION, updateContactInformation);
   yield takeLatest(FETCH_NOTIFICATION_METRICS, fetchNotificationMetrics);
 }
