@@ -162,6 +162,18 @@ class StatusServicePage {
   addApplicationSaveBtn() {
     return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//button[2]');
   }
+
+  applicationList() {
+    return cy.get('[data-testid="application"]');
+  }
+
+  applicationListEditBtn() {
+    //return cy.get('[data-testid="application"]');
+    return cy.xpath(`//*[@id="root"]/div/div[3]/div/div/div/main/div[2]/section/div[1]/div[1]/div[2]/div/svg]`);
+  }
+  applicationListDeleteBtn() {
+    return cy.get('[data-testid="icon-trash"]');
+  }
 }
 
 export default StatusServicePage;
