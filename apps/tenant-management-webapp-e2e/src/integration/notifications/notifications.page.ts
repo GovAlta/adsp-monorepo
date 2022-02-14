@@ -149,6 +149,12 @@ class NotificationsPage {
     );
   }
 
+  notificationTypeCardFooterItems(notificationTypeTitle) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]//ancestor::*[@class="card-content"]//*[@data-testid="card-footer"]/div/div`
+    );
+  }
+
   eventDeleteIcon(cardTitle, eventName) {
     return cy.xpath(
       `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/following-sibling::*[@class="rowFlex"]//*[@data-testid="icon-trash"]`
