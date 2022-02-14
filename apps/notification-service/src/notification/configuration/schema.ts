@@ -9,6 +9,16 @@ const templateSchema = {
 
 export const configurationSchema = {
   type: 'object',
+  properties: {
+    contact: {
+      type: 'object',
+      properties: {
+        contactEmail: { type: 'string' },
+        phoneNumber: { type: 'string' },
+        supportInstructions: { type: 'string' },
+      },
+    },
+  },
   additionalProperties: {
     type: 'object',
     properties: {

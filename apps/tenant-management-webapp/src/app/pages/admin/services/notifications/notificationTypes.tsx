@@ -140,7 +140,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   if (Object.keys(coreNotification).length > 0 && notification?.notificationTypes) {
     const NotificationsIntersection = [];
 
-    Object.keys(notification?.notificationTypes).forEach((notificationType) => {
+    Object.keys(nonCoreCopiedNotifications).forEach((notificationType) => {
       if (Object.keys(coreNotification).includes(notificationType)) {
         NotificationsIntersection.push(notificationType);
       }
@@ -150,6 +150,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       delete nonCoreCopiedNotifications[notificationType];
     });
   }
+  delete nonCoreCopiedNotifications.contact;
+
   const saveOrAddEventTemplate = () => {
     const definitionEventIndex = selectedType?.events?.findIndex(
       (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`
@@ -255,19 +257,21 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                       </a>
                     </MaxHeight>
                   </div>
-                  <div className="rowFlex smallFont">
-                    <div className="flex1">
-                      Subscriber Roles:{' '}
-                      <b>
-                        {notificationType.subscriberRoles
-                          .filter((value) => value !== 'anonymousRead')
-                          .map(
-                            (roles, ix) => roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
-                          )}{' '}
-                      </b>
+                  {notificationType?.subscriberRoles && (
+                    <div className="rowFlex smallFont">
+                      <div className="flex1">
+                        Subscriber Roles:{' '}
+                        <b>
+                          {notificationType?.subscriberRoles
+                            .filter((value) => value !== 'anonymousRead')
+                            .map(
+                              (roles, ix) => roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
+                            )}{' '}
+                        </b>
+                      </div>
+                      <div>Public Subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}</div>
                     </div>
-                    <div>Public Subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}</div>
-                  </div>
+                  )}
                 </div>
               }
               description={`Description: ${notificationType.description}`}
