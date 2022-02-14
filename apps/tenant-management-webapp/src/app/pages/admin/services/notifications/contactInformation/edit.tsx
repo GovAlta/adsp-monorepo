@@ -1,11 +1,11 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { ContactInformation } from '@store/notification/models';
 import { GoAButton } from '@abgov/react-components';
-import { useSelector } from 'react-redux';
-import { RootState } from '@store/index';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
+
+import { GoAInputTel, GoAInputEmail } from '@abgov/react-components/experimental';
 
 interface NotificationTypeFormProps {
   initialValue?: ContactInformation;
@@ -74,27 +74,25 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
             <ErrorWrapper>
               <GoAFormItem error={formErrors?.['email']}>
                 <label>Email</label>
-                <input
-                  type="text"
+                <GoAInputEmail
                   name="email"
                   data-testid="form-email"
                   value={contactInformation?.contactEmail || ''}
                   aria-label="email"
-                  onChange={(e) => {
-                    setContactInformation({ ...contactInformation, contactEmail: e.target.value });
+                  onChange={(_, value) => {
+                    setContactInformation({ ...contactInformation, contactEmail: value });
                   }}
                 />
               </GoAFormItem>
               <GoAFormItem error={formErrors?.['phoneNumber']}>
                 <label>Phone Number</label>
-                <input
-                  type="text"
+                <GoAInputTel
                   name="phoneNumber"
                   value={contactInformation?.phoneNumber || ''}
                   placeholder="1 (780) 123-4567"
                   data-testid="form-name"
                   aria-label="name"
-                  onChange={(e) => setContactInformation({ ...contactInformation, phoneNumber: e.target.value })}
+                  onChange={(_, value) => setContactInformation({ ...contactInformation, phoneNumber: value })}
                 />
               </GoAFormItem>
               <GoAFormItem error={formErrors?.['supportInstructions']}>
