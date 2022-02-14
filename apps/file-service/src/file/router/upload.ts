@@ -2,6 +2,7 @@ import { InvalidOperationError, NotFoundError } from '@core-services/core-common
 import { Request } from 'express';
 import * as multer from 'multer';
 import * as validFilename from 'valid-filename';
+import { Logger } from 'winston';
 import { ServiceConfiguration } from '../configuration';
 import { FileEntity } from '../model';
 import { FileRepository } from '../repository';
@@ -17,12 +18,17 @@ declare global {
 }
 
 interface UploadProps {
+  logger: Logger;
   storageProvider: FileStorageProvider;
   fileRepository: FileRepository;
 }
 
 export class FileStorageEngine implements multer.StorageEngine {
-  constructor(private fileRepository: FileRepository, private storageProvider: FileStorageProvider) {}
+  constructor(
+    private logger: Logger,
+    private fileRepository: FileRepository,
+    private storageProvider: FileStorageProvider
+  ) {}
 
   async _handleFile(
     req: Request,
@@ -45,6 +51,14 @@ export class FileStorageEngine implements multer.StorageEngine {
       const fileType = configuration?.[type];
       if (!fileType) {
         throw new NotFoundError('File Type', type);
+      }
+
+      if (!file.stream) {
+        this.logger.warn(`Handling file ${filename || file.originalname} upload but stream is not set.`, {
+          context: 'FileStorageEngine',
+          tenant: fileType.tenantId?.toString(),
+        });
+        throw new Error('File.stream is not set for upload handler.');
       }
 
       const fileEntity = await FileEntity.create(
@@ -80,8 +94,8 @@ export class FileStorageEngine implements multer.StorageEngine {
   }
 }
 
-export const createUpload = ({ fileRepository, storageProvider }: UploadProps): multer.Multer => {
-  const storage = new FileStorageEngine(fileRepository, storageProvider);
+export const createUpload = ({ logger, fileRepository, storageProvider }: UploadProps): multer.Multer => {
+  const storage = new FileStorageEngine(logger, fileRepository, storageProvider);
 
   const limits = {
     fields: 10,

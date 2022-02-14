@@ -25,6 +25,7 @@ import {
   FETCH_FILE_TYPE_HAS_FILE,
   UPDATE_FILE_TYPE,
   UPLOAD_FILE,
+  FetchFileTypeHasFileService,
 } from './actions';
 
 import { FileApi } from './api';
@@ -99,6 +100,13 @@ export function* fetchFileTypes(): SagaIterator {
   );
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
 
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading...',
+    })
+  );
+
   if (configBaseUrl && token) {
     try {
       const { data: configuration } = yield call(
@@ -109,14 +117,16 @@ export function* fetchFileTypes(): SagaIterator {
         }
       );
       const fileTypeInfo = Object.entries(configuration).map(([_k, type]) => type as FileTypeItem);
-      yield put(
-        UpdateIndicator({
-          show: true,
-          message: 'Loading...',
-        })
-      );
 
       yield put(FetchFileTypeSucceededService({ data: fileTypeInfo }));
+
+      const fileTypes = yield select((state: RootState) => state.fileService.fileTypes);
+
+      if (fileTypes) {
+        for (const fileType of fileTypes) {
+          yield put(FetchFileTypeHasFileService(fileType.id));
+        }
+      }
 
       yield put(
         UpdateIndicator({

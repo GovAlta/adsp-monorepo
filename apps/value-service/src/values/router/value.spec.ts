@@ -4,7 +4,15 @@ import { Request, Response } from 'express';
 import { Logger } from 'winston';
 import { NamespaceEntity } from '../model';
 import { ServiceUserRoles } from '../types';
-import { assertUserCanWrite, createValueRouter, readMetric, readValue, readValues, writeValue } from './value';
+import {
+  assertUserCanWrite,
+  createValueRouter,
+  readMetric,
+  readMetrics,
+  readValue,
+  readValues,
+  writeValue,
+} from './value';
 
 describe('event router', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -23,6 +31,7 @@ describe('event router', () => {
   const repositoryMock = {
     readValues: jest.fn(),
     writeValue: jest.fn(),
+    readMetrics: jest.fn(),
     readMetric: jest.fn(),
     writeMetric: jest.fn(),
   };
@@ -33,6 +42,7 @@ describe('event router', () => {
 
   beforeEach(() => {
     repositoryMock.readValues.mockReset();
+    repositoryMock.readMetrics.mockReset();
     repositoryMock.readMetric.mockReset();
     repositoryMock.writeValue.mockReset();
     eventServiceMock.send.mockReset();
@@ -462,6 +472,126 @@ describe('event router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(eventServiceMock.send).toHaveBeenCalled();
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ value }));
+    });
+  });
+
+  describe('readMetrics', () => {
+    it('can create handler', () => {
+      const handler = readMetrics(repositoryMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can read metrics', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          tenantId,
+          id: 'test-reader',
+          roles: [ServiceUserRoles.Reader],
+        },
+        params: { namespace: 'test-service', name: 'test-value', metric: 'count' },
+        query: {},
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const metrics = { count: { name: 'count', values: [] } };
+      repositoryMock.readMetrics.mockResolvedValueOnce(metrics);
+      const handler = readMetrics(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(metrics);
+    });
+
+    it('can read metrics with criteria', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          tenantId,
+          id: 'test-reader',
+          roles: [ServiceUserRoles.Reader],
+        },
+        params: { namespace: 'test-service', name: 'test-value', metric: 'count' },
+        query: {
+          interval: 'weekly',
+          criteria: JSON.stringify({
+            metricLike: 'count',
+            intervalMin: new Date().toISOString(),
+            intervalMax: new Date().toISOString(),
+          }),
+        },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const metrics = { count: { name: 'count', values: [] } };
+      repositoryMock.readMetrics.mockResolvedValueOnce(metrics);
+      const handler = readMetrics(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.readMetrics).toHaveBeenCalledWith(
+        tenantId,
+        'test-service',
+        'test-value',
+        expect.objectContaining({
+          interval: 'weekly',
+          metricLike: 'count',
+          intervalMin: expect.any(Date),
+          intervalMax: expect.any(Date),
+        })
+      );
+      expect(res.send).toHaveBeenCalledWith(metrics);
+    });
+
+    it('can call next for no tenant context', async () => {
+      const req = {
+        user: {
+          tenantId,
+          id: 'test-reader',
+          roles: [ServiceUserRoles.Reader],
+        },
+        params: { namespace: 'test-service', name: 'test-value', metric: 'count' },
+        query: {},
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = readMetrics(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+
+    it('can call next for unauthorized user', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          tenantId,
+          id: 'test-reader',
+          roles: [],
+        },
+        params: { namespace: 'test-service', name: 'test-value', metric: 'count' },
+        query: {},
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = readMetrics(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
   });
 

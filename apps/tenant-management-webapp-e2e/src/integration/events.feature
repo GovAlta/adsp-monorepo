@@ -44,7 +44,7 @@ Feature: Events
     Then the user "views" an event definition of "autotest-eventname" and "autotest event desc2" under "Autotest-Service"
     When the user clicks "Delete" button for the definition of "autotest-eventname" and "autotest event desc2" under "Autotest-Service"
     Then the user views Delete definition dialog for the definition of "autotest-eventname"
-    And the user clicks Confirm button
+    And the user clicks Confirm button on Delete definition modal
     Then the user "should not view" an event definition of "autotest-eventname" and "autotest event desc2" under "Autotest-Service"
 
   @accessibility @regression
