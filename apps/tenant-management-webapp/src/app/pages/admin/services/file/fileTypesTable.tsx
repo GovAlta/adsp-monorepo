@@ -42,7 +42,7 @@ const FileTypeTableRow = ({
       <td>
         {readRoles.map((role): JSX.Element => {
           return (
-            <div key={`read-roles-${id}`}>
+            <div key={`read-roles-${role}`}>
               {anonymousRead === true ? (
                 'public'
               ) : (
@@ -113,7 +113,7 @@ export const FileTypeTable = ({ roles, fileTypes }: FileTypeTableProps): JSX.Ele
                   Name
                 </th>
                 <th id="read-roles">Read roles</th>
-                <th id="write-roles">Edit roles</th>
+                <th id="write-roles">Modify roles</th>
                 <th className="actionsCol" id="actions">
                   Actions
                 </th>
