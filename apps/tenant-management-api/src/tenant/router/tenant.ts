@@ -14,7 +14,8 @@ import { adspId, EventService } from '@abgov/adsp-service-sdk';
 import { tenantCreated } from '../events';
 import { TenantRepository } from '../repository';
 import { ServiceClient } from '../types';
-import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { InvalidOperationError, NotFoundError, UnauthorizedError } from '@core-services/core-common';
+import { TenantServiceRoles } from '../../roles';
 
 class CreateTenantDto {
   @IsDefined()
@@ -135,6 +136,9 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
       }
 
       if (realm) {
+        if (!req.user.roles.includes(TenantServiceRoles.TenantServiceAdmin)) {
+          throw new UnauthorizedError('tenant-service-admin role needed!');
+        }
         const testRealm = (await tenantRepository.find({ realmEquals: realm }))[0];
         if (testRealm) {
           throw new InvalidOperationError('Realm exist, please use another realm name', realm);
@@ -217,7 +221,7 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
         ...results,
       });
     } catch (err) {
-      // The tenant delete include rescure functions. Serious error occur when reach here.
+      // The tenant delete include rescue functions. Serious error occur when reach here.
       logger.error(`Error deleting tenant: ${err.message}`);
       next(err);
     }
