@@ -73,8 +73,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const coreNotification = useSelector((state: RootState) => state.notification.core);
   const [formTitle, setFormTitle] = useState<string>('');
 
-  const [subject, setSubject] = useState('asd');
-  const [body, setBody] = useState('asd');
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('');
 
   const [subjectPreview, setSubjectPreview] = useState('');
   const [bodyPreview, setBodyPreview] = useState('');
@@ -105,6 +105,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   function reset() {
     setShowTemplateForm(false);
+    setEventTemplateFormState(addNewEventTemplateContent);
     setEditType(false);
     setEditEvent(null);
     setSelectedType(emptyNotificationType);
@@ -213,7 +214,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         <GoAButton
           data-testid="add-notification"
           onClick={() => {
-            setSelectedType(null);
+            setSelectedType(emptyNotificationType);
             setEditType(true);
             setFormTitle('Add notification type');
           }}
