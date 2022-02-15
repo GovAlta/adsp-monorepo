@@ -35,7 +35,14 @@ export function createServiceStatusRouter({
 
     const applications = await serviceStatusRepository.find({ tenantId: tenantId.toString() });
 
-    res.json(applications);
+    res.json(
+      applications.map((app) => {
+        return {
+          ...app,
+          internalStatus: app.internalStatus,
+        };
+      })
+    );
   });
 
   // Enable the service
@@ -89,7 +96,6 @@ export function createServiceStatusRouter({
         metadata: '',
         statusTimestamp: 0,
         enabled: false,
-        internalStatus: 'stopped',
       });
 
       res.status(201).json(app);
@@ -184,7 +190,6 @@ export function createServiceStatusRouter({
   // TODO: create test
   router.get('/applications/:applicationId/endpoint-status-entries', async (req, res) => {
     logger.info(req.method, req.url);
-
     const { tenantId } = req.user;
     const { applicationId } = req.params;
     const { top: topValue } = req.query;

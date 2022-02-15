@@ -6,6 +6,7 @@ import {
   PublicServiceStatusType,
   ServiceStatusApplication,
   ServiceStatusEndpoint,
+  EndpointToInternalStatusMapping,
 } from '../types';
 
 export class ServiceStatusApplicationEntity implements ServiceStatusApplication {
@@ -13,7 +14,6 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
   description: string;
   endpoint: ServiceStatusEndpoint;
   status: PublicServiceStatusType;
-  internalStatus: InternalServiceStatusType;
   metadata: unknown;
   name: string;
   statusTimestamp: number;
@@ -45,8 +45,14 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     this.tenantName = application.tenantName;
     this.tenantRealm = application.tenantRealm;
     this.status = application.status;
-    this.internalStatus = application.internalStatus;
     this.enabled = application.enabled;
+  }
+
+  public get internalStatus(): InternalServiceStatusType {
+    if (!this.enabled) {
+      return 'stopped';
+    }
+    return EndpointToInternalStatusMapping[this.endpoint.status] as InternalServiceStatusType;
   }
 
   update(user: User, update: Update<ServiceStatusApplication>): Promise<ServiceStatusApplicationEntity> {
@@ -54,16 +60,18 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
       throw new UnauthorizedError('User not authorized to update service status.');
     }
 
-    if (update.endpoint !== this.endpoint) {
-      // If update the endpoint, set internal status to be pending
-      this.internalStatus = 'pending';
-    }
-
-    this.endpoint = update.endpoint ?? this.endpoint;
     this.metadata = update.metadata ?? this.metadata;
     this.name = update.name ?? this.name;
     this.description = update.description ?? this.description;
     this.statusTimestamp = update.statusTimestamp ?? this.statusTimestamp;
+    if (update?.endpoint?.url && this.endpoint?.url !== update.endpoint.url) {
+      this.endpoint = {
+        ...update.endpoint,
+        status: 'unknown',
+      };
+    } else {
+      this.endpoint = update.endpoint ?? this.endpoint;
+    }
     this.status = update.status ?? this.status;
     this.enabled = update.enabled ?? this.enabled;
 

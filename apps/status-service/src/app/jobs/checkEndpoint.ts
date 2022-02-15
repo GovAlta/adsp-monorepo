@@ -108,6 +108,7 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
     }
 
     const oldStatus = application.endpoint.status;
+
     logger.debug(
       `Evaluating status for ${application.name} (ID: ${application._id} ) with previous status of ${oldStatus}`
     );
@@ -115,7 +116,6 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
     // set the application status based on the endpoints
     if (newStatus !== oldStatus) {
       application.endpoint.status = newStatus;
-      application.internalStatus = EndpointToInternalStatusMapping[newStatus];
       if (newStatus === 'pending') {
         logger.info(`Application ${application.name} (ID: ${application._id}) status changed to pending.`);
       }
