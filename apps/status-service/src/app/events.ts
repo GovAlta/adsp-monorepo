@@ -60,7 +60,7 @@ export const HealthCheckHealthyDefinition: DomainEventDefinition = {
   interval: {
     namespace: 'status-service',
     name: 'application-unhealthy',
-    metric: ['status-service', 'applicationName', 'downtime'],
+    metric: ['status-service', 'applicationId', 'downtime'],
   }
 };
 
@@ -77,7 +77,7 @@ export const HealthCheckUnhealthyDefinition: DomainEventDefinition = {
   interval: {
     namespace: 'status-service',
     name: 'application-healthy',
-    metric: ['status-service', 'applicationName', 'uptime'],
+    metric: ['status-service', 'applicationId', 'uptime'],
   }
 };
 
