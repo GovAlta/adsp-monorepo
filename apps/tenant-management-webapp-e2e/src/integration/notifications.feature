@@ -121,3 +121,4 @@ Feature: Notifications
     Then the user views Preview an email template modal
     When the user clicks Close button in Preview an email template modal
     Then Preview an email template modal is closed
+

@@ -8,7 +8,15 @@ export interface NotificationItem {
   customized?: boolean;
 }
 
-export type NotificationType = Record<string, NotificationItem>;
+export interface ContactInformation {
+  contactEmail?: string;
+  phoneNumber?: string;
+  supportInstructions?: string;
+}
+
+//export type NotificationObject = ContactInformation | NotificationItem;
+
+export type NotificationType = Record<string, ContactInformation & NotificationItem>;
 
 export interface EventItem {
   name: string;

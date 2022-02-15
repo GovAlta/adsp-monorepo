@@ -153,11 +153,17 @@ Then('the user {string} the event of {string} in {string}', function (viewOrNot,
       expect(numOfMatch).equals(1);
     });
   } else if (viewOrNot == 'should not view') {
-    notificationsObj.notificationTypeEvents(cardTitle).then((elements) => {
-      for (let i = 0; i < elements.length; i++) {
-        if (elements[i].innerText == event) numOfMatch = numOfMatch + 1;
+    notificationsObj.notificationTypeCardFooterItems(cardTitle).then((footerItems) => {
+      if (footerItems.length == 1) {
+        cy.log('No event for the notification type');
+      } else {
+        notificationsObj.notificationTypeEvents(cardTitle).then((elements) => {
+          for (let i = 0; i < elements.length; i++) {
+            if (elements[i].innerText == event) numOfMatch = numOfMatch + 1;
+          }
+          expect(numOfMatch).equals(0);
+        });
       }
-      expect(numOfMatch).equals(0);
     });
   } else {
     expect(viewOrNot).to.be.oneOf(['views', 'should not view']);

@@ -124,20 +124,18 @@ class NotificationsPage {
   }
 
   addAnEmailTemplateModalTitle() {
-    return cy.xpath(
-      '//*[@data-testid="template-form" and @data-state="visible"]/*[@class="modal"]//*[@class="modal-title"]'
-    );
+    return cy.xpath('//*[@data-testid="template-form"]//*[@data-testid="modal-title"]');
   }
 
   addAnEmailTemplateModalSubject() {
     return cy.xpath(
-      '(//*[@data-testid="template-form" and @data-state="visible"]//*[@class="monaco-scrollable-element editor-scrollable vs"])[1]'
+      '(//*[@data-testid="template-form"]//*[@class="monaco-scrollable-element editor-scrollable vs"])[1]'
     );
   }
 
   addAnEmailTemplateModalBody() {
     return cy.xpath(
-      '(//*[@data-testid="template-form" and @data-state="visible"]//*[@class="monaco-scrollable-element editor-scrollable vs"])[2]'
+      '(//*[@data-testid="template-form"]//*[@class="monaco-scrollable-element editor-scrollable vs"])[2]'
     );
   }
 
@@ -148,6 +146,12 @@ class NotificationsPage {
   notificationTypeEvents(notificationTypeTitle) {
     return cy.xpath(
       `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]//ancestor::*[@class="card-content"]//*[@data-testid="card-footer"]//*[@class="flex1"]`
+    );
+  }
+
+  notificationTypeCardFooterItems(notificationTypeTitle) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]//ancestor::*[@class="card-content"]//*[@data-testid="card-footer"]/div/div`
     );
   }
 
@@ -262,5 +266,4 @@ class NotificationsPage {
     );
   }
 }
-
 export default NotificationsPage;

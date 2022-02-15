@@ -25,6 +25,14 @@ export const AddFileType = ({ roles, onSwitch }: AddFileTypeProps): JSX.Element 
         <FileTypeModal
           type="new"
           roles={roles}
+          fileType={{
+            name: '',
+            updateRoles: [],
+            readRoles: [],
+            anonymousRead: false,
+            hasFile: false,
+            id: null,
+          }}
           onCancel={() => {
             setWillAddNew(false);
           }}

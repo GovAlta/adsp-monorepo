@@ -94,12 +94,14 @@ export const patchConfigurationRevision =
       const entity: ConfigurationEntity = req[ENTITY_KEY];
 
       let update: Record<string, unknown> = null;
+      let updateData = null;
       switch (request.operation) {
         case OPERATION_REPLACE:
           if (!request.configuration) {
             throw new InvalidOperationError(`Replace request must include 'configuration' property.`);
           }
           update = request.configuration;
+          updateData = request.configuration;
           break;
         case OPERATION_UPDATE:
           if (!request.update) {
@@ -109,12 +111,14 @@ export const patchConfigurationRevision =
             ...(entity.latest?.configuration || {}),
             ...request.update,
           };
+          updateData = request.update;
           break;
         case OPERATION_DELETE:
           if (!request.property) {
             throw new InvalidOperationError(`Delete request must include 'property' property.`);
           }
           update = entity.latest?.configuration || {};
+          updateData = request.property;
           delete update[request.property];
           break;
         default:
@@ -125,7 +129,10 @@ export const patchConfigurationRevision =
       res.send(mapConfiguration(updated));
       if (updated.tenantId) {
         eventService.send(
-          configurationUpdated(user, updated.tenantId, updated.namespace, updated.name, updated.latest?.revision)
+          configurationUpdated(user, updated.tenantId, updated.namespace, updated.name, updated.latest?.revision, {
+            operation: request.operation,
+            data: updateData,
+          })
         );
       }
 
