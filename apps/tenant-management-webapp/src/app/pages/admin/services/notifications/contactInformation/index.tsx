@@ -15,6 +15,14 @@ interface SubscribersProps {
   readonly?: boolean;
 }
 
+const phoneWrapper = (phoneNumber) => {
+  if (phoneNumber) {
+    return (
+      '1 (' + phoneNumber.substring(0, 3) + ') ' + phoneNumber.substring(3, 6) + '-' + phoneNumber.substring(6, 10)
+    );
+  }
+};
+
 export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
   const dispatch = useDispatch();
   useEffect(() => {
@@ -45,7 +53,7 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
   return (
     <ContactInfoCss>
       <h2>
-        <div className="left-float">Contact Information </div>
+        <div className="left-float">Contact information </div>
         {hasConfigurationAdminRole ? (
           <div data-testid="edit-contact-info">
             <GoAContextMenuIcon
@@ -67,17 +75,17 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
 
       <Grid>
         <GridItem data-testid="email" className="word-break contact-border" md={8} vSpacing={1} hSpacing={0.5}>
-          <h3>Contact Email</h3>
+          <h4>Contact email</h4>
           {contact?.contactEmail}
         </GridItem>
         <GridItem data-testid="phone" className="contact-border" md={4} vSpacing={1} hSpacing={0.5}>
-          <h3>Phone Number</h3>
-          {contact?.phoneNumber}
+          <h4>Phone number</h4>
+          {phoneWrapper(contact?.phoneNumber)}
         </GridItem>
       </Grid>
       <Grid>
         <GridItem data-testid="support-instructions" className="contact-border" md={12} vSpacing={1} hSpacing={0}>
-          <h3>Support Instructions</h3>
+          <h4>Support instructions</h4>
           {contact?.supportInstructions}
         </GridItem>
       </Grid>
