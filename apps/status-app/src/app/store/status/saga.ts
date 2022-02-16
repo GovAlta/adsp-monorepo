@@ -12,7 +12,7 @@ import { parseNotices, bindApplicationsWithNotices } from './models';
 import { addErrorMessage, updateIsReady, updateTenantName } from '@store/session/actions';
 import { SagaIterator } from '@redux-saga/core';
 import { toTenantName } from './models';
-import { ConfigState, RecaptchaService } from '@store/config/models';
+import { ConfigState } from '@store/config/models';
 
 export function* fetchApplications(action: FetchApplicationsAction): SagaIterator {
   const rootState: RootState = yield select();

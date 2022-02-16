@@ -1,4 +1,4 @@
-import { NotificationItem, NotificationMetrics, NotificationType } from './models';
+import { ContactInformation, NotificationItem, NotificationMetrics, NotificationType } from './models';
 
 export const DELETE_NOTIFICATION = 'tenant/notification-service/notification/delete';
 export const DELETE_NOTIFICATION_FAILED = 'tenant/notification-service/notification/delete/fail';
@@ -18,6 +18,7 @@ export const FETCH_NOTIFICATION_TYPE_HAS_NOTIFICATION_SUCCEEDED =
 
 export const FETCH_NOTIFICATION_METRICS = 'tenant/notification-service/metrics/fetch';
 export const FETCH_NOTIFICATION_METRICS_SUCCEEDED = 'tenant/notification-service/metrics/fetch/succeeded';
+export const UPDATE_CONTACT_INFORMATION = 'tenant/notification-service/contact-information';
 
 // =============
 // Actions Types
@@ -64,6 +65,11 @@ interface FetchCoreNotificationTypeAction {
 export interface UpdateNotificationTypeAction {
   type: typeof UPDATE_NOTIFICATION_TYPE;
   payload: NotificationItem;
+}
+
+export interface UpdateContactInformationAction {
+  type: typeof UPDATE_CONTACT_INFORMATION;
+  payload: ContactInformation;
 }
 
 export interface DeleteNotificationTypeAction {
@@ -120,6 +126,13 @@ export const FetchCoreNotificationTypeService = (): FetchCoreNotificationTypeAct
 export const UpdateNotificationTypeService = (notificationType: NotificationItem): UpdateNotificationTypeAction => ({
   type: UPDATE_NOTIFICATION_TYPE,
   payload: notificationType,
+});
+
+export const UpdateContactInformationService = (
+  contactInformation: ContactInformation
+): UpdateContactInformationAction => ({
+  type: UPDATE_CONTACT_INFORMATION,
+  payload: contactInformation,
 });
 
 export const DeleteNotificationTypeService = (notificationType: NotificationItem): DeleteNotificationTypeAction => ({

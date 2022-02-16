@@ -73,8 +73,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const coreNotification = useSelector((state: RootState) => state.notification.core);
   const [formTitle, setFormTitle] = useState<string>('');
 
-  const [subject, setSubject] = useState('asd');
-  const [body, setBody] = useState('asd');
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('');
 
   const [subjectPreview, setSubjectPreview] = useState('');
   const [bodyPreview, setBodyPreview] = useState('');
@@ -105,6 +105,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   function reset() {
     setShowTemplateForm(false);
+    setEventTemplateFormState(addNewEventTemplateContent);
     setEditType(false);
     setEditEvent(null);
     setSelectedType(emptyNotificationType);
@@ -140,7 +141,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   if (Object.keys(coreNotification).length > 0 && notification?.notificationTypes) {
     const NotificationsIntersection = [];
 
-    Object.keys(notification?.notificationTypes).forEach((notificationType) => {
+    Object.keys(nonCoreCopiedNotifications).forEach((notificationType) => {
       if (Object.keys(coreNotification).includes(notificationType)) {
         NotificationsIntersection.push(notificationType);
       }
@@ -150,6 +151,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       delete nonCoreCopiedNotifications[notificationType];
     });
   }
+  delete nonCoreCopiedNotifications.contact;
+
   const saveOrAddEventTemplate = () => {
     const definitionEventIndex = selectedType?.events?.findIndex(
       (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`
@@ -211,7 +214,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         <GoAButton
           data-testid="add-notification"
           onClick={() => {
-            setSelectedType(null);
+            setSelectedType(emptyNotificationType);
             setEditType(true);
             setFormTitle('Add notification type');
           }}
@@ -255,19 +258,21 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                       </a>
                     </MaxHeight>
                   </div>
-                  <div className="rowFlex smallFont">
-                    <div className="flex1">
-                      Subscriber Roles:{' '}
-                      <b>
-                        {notificationType.subscriberRoles
-                          .filter((value) => value !== 'anonymousRead')
-                          .map(
-                            (roles, ix) => roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
-                          )}{' '}
-                      </b>
+                  {notificationType?.subscriberRoles && (
+                    <div className="rowFlex smallFont">
+                      <div className="flex1">
+                        Subscriber Roles:{' '}
+                        <b>
+                          {notificationType?.subscriberRoles
+                            .filter((value) => value !== 'anonymousRead')
+                            .map(
+                              (roles, ix) => roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
+                            )}{' '}
+                        </b>
+                      </div>
+                      <div>Public Subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}</div>
                     </div>
-                    <div>Public Subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}</div>
-                  </div>
+                  )}
                 </div>
               }
               description={`Description: ${notificationType.description}`}
