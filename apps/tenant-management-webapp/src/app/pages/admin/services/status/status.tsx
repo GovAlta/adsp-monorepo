@@ -484,7 +484,9 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
             key={entry.timestamp}
             style={{
               backgroundColor: entry.ok
-                ? 'var(--color-green)'
+                ? entry.responseTime > 1000
+                  ? 'var(--color-orange)'
+                  : 'var(--color-green)'
                 : entry.status === 'n/a'
                 ? 'var(--color-gray-300)'
                 : 'var(--color-red)',
