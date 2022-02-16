@@ -139,8 +139,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   }, [notification?.notificationTypes]);
 
   function resetEventEditorForm() {
-    setBody('');
-    setSubject('');
     setTemplateEditErrors({
       subject: '',
       body: '',
@@ -678,6 +676,12 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 <>
                   <GoAButton
                     onClick={() => {
+                      // while editing existing event, clear the event on cancel so the changes did are discarded and not saved in local state
+                      if (eventTemplateFormState.cancelOrBackActionText === 'Cancel') {
+                        setSelectedEvent(null);
+                      }
+                      setSubject('');
+                      setBody('');
                       setShowTemplateForm(false);
                       resetEventEditorForm();
                       setEventTemplateFormState(addNewEventTemplateContent);
