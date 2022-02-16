@@ -133,4 +133,8 @@ const ContactInfoCss = styled.div`
   .left-float {
     float: left;
   }
+
+  h4 {
+    margin-top: 0;
+  }
 `;
