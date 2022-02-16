@@ -127,7 +127,10 @@ export function createServiceStatusRouter({
       description,
       endpoint,
     });
-    res.status(200).json(updatedApplication);
+    res.status(200).json({
+      ...updatedApplication,
+      internalStatus: updatedApplication.internalStatus,
+    });
   });
 
   router.delete('/applications/:id', assertAuthenticatedHandler, async (req, res) => {

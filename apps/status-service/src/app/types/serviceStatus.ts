@@ -4,10 +4,10 @@ export type PublicServiceStatusType = 'operational' | 'reported-issues' | 'maint
 
 export type ServiceStatusType = InternalServiceStatusType | PublicServiceStatusType;
 
-export type EndpointStatusType = 'online' | 'offline' | 'unknown' | 'pending';
+export type EndpointStatusType = 'online' | 'offline' | 'n/a' | 'pending';
 
 export const EndpointToInternalStatusMapping = {
-  unknown: 'pending',
+  'n/a': 'pending',
   pending: 'pending',
   offline: 'unhealthy',
   online: 'healthy',

@@ -67,7 +67,7 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     if (update?.endpoint?.url && this.endpoint?.url !== update.endpoint.url) {
       this.endpoint = {
         ...update.endpoint,
-        status: 'unknown',
+        status: 'n/a',
       };
     } else {
       this.endpoint = update.endpoint ?? this.endpoint;

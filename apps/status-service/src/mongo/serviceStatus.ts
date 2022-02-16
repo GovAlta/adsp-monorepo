@@ -28,14 +28,14 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
   async enable(entity: ServiceStatusApplicationEntity): Promise<ServiceStatusApplicationEntity> {
     const application = await this.model.findById(entity._id);
     application.enabled = true;
-    application.endpoint.status = 'unknown';
+    application.endpoint.status = 'n/a';
     await application.save();
     return this.fromDoc(application);
   }
 
   async disable(entity: ServiceStatusApplicationEntity): Promise<ServiceStatusApplicationEntity> {
     const application = await this.model.findById(entity._id);
-    application.endpoint.status = 'unknown';
+    application.endpoint.status = 'n/a';
     application.enabled = false;
     await application.save();
     return this.fromDoc(application);

@@ -2,7 +2,7 @@ import axios from 'axios';
 import { Logger } from 'winston';
 
 import { ServiceStatusRepository } from '../repository/serviceStatus';
-import { EndpointStatusEntry, EndpointStatusType, EndpointToInternalStatusMapping } from '../types';
+import { EndpointStatusEntry, EndpointStatusType } from '../types';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
 import { EventService } from '@abgov/adsp-service-sdk';
