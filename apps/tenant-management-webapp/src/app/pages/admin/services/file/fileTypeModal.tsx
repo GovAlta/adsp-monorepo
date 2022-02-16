@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { Role } from '@store/tenant/models';
 import { GoAButton } from '@abgov/react-components';
-import { GoAFormItem, GoAInput, GoAFlexRow } from '@abgov/react-components/experimental';
+import { GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { GoACheckbox } from '@abgov/react-components';
 import styled from 'styled-components';
 import { UpdateFileTypeService, CreateFileTypeService } from '@store/file/actions';
 import { FileTypeItem } from '@store/file/models';
-import { SelectBox } from '@components/SelectBox';
 import { useDispatch } from 'react-redux';
+import DataTable from '@components/DataTable';
 
 interface FileTypeModalProps {
   fileType?: FileTypeItem;
@@ -25,29 +25,29 @@ const ModalOverwrite = styled.div`
   }
 `;
 
-const GoAScrollBarOverwrite = styled.div`
-  .goa-scrollable {
-    overflow: hidden !important;
-  }
+const AnonymousReadWrapper = styled.div`
+  line-height: 2.5em;
+  display: flex;
 `;
 
-const RollTitleContainer = styled.div`
-  display: flex;
-  text-align: center;
-  vertical-align: middle;
-  .public-option {
-    display: flex;
-    margin-left: 1em;
-    .goa-checkbox-container {
-      margin-bottom: 3px;
-    }
+const DataTableWrapper = styled.div`
+  height: 12em;
+  overflow: auto;
+  .goa-checkbox input[type='checkbox'] {
+    display: none !important;
   }
-  .public-test {
+
+  th {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: white;
   }
-`;
-const PublicText = styled.div`
-  line-height: 2em;
-  text-align: center;
+
+  table {
+    border-collapse: collapse !important;
+  }
 `;
 
 interface FileTypeError {
@@ -55,15 +55,6 @@ interface FileTypeError {
   message: string;
 }
 
-const FlexRowOverwrite = styled.div`
-  .goa-flex-row {
-    margin-bottom: -1em !important;
-  }
-
-  .goa-form-item {
-    flex: 1 1 !important;
-  }
-`;
 const validateFileType = (fileType: FileTypeItem): FileTypeError[] => {
   const errors: FileTypeError[] = [];
   if (fileType?.name) {
@@ -73,6 +64,85 @@ const validateFileType = (fileType: FileTypeItem): FileTypeError[] => {
     });
   }
   return errors;
+};
+
+interface FileRoleTableProps {
+  roles: string[];
+  roleSelectFunc: (roles: string[], type: string) => void;
+  readRoles: string[];
+  updateRoles: string[];
+  anonymousRead: boolean;
+}
+
+const FileRoleTable = (props: FileRoleTableProps): JSX.Element => {
+  const [readRoles, setReadRoles] = useState(props.readRoles);
+  const [updateRoles, setUpdateRoles] = useState(props.updateRoles);
+  return (
+    <DataTableWrapper>
+      <DataTable noScroll={true}>
+        <thead>
+          <tr>
+            <th id="file-type-roles">Roles</th>
+            <th id="read-role-action">Read</th>
+            <th id="write-role-action">Write</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {props.roles.map((role): JSX.Element => {
+            return (
+              <tr key={`file-type-row-${role}`}>
+                <td>{role}</td>
+                <td>
+                  <GoACheckbox
+                    name={`file-type-read-role-checkbox-${role}`}
+                    key={`file-type-read-role-checkbox-${role}`}
+                    checked={readRoles.includes(role)}
+                    data-testid={`file-type-read-role-checkbox-${role}`}
+                    disabled={props.anonymousRead}
+                    onChange={() => {
+                      if (readRoles.includes(role)) {
+                        const newRoles = readRoles.filter((readRole) => {
+                          return readRole !== role;
+                        });
+                        setReadRoles(newRoles);
+                        props.roleSelectFunc(newRoles, 'read');
+                      } else {
+                        const newRoles = [...readRoles, role];
+                        setReadRoles(newRoles);
+                        props.roleSelectFunc(newRoles, 'read');
+                      }
+                    }}
+                  />
+                </td>
+                <td>
+                  <GoACheckbox
+                    name={`file-type-update-role-checkbox-${role}`}
+                    key={`file-type-update-role-checkbox-${role}`}
+                    checked={updateRoles.includes(role)}
+                    data-testid={`file-type-update-role-checkbox-${role}`}
+                    onChange={() => {
+                      if (updateRoles.includes(role)) {
+                        const newRoles = updateRoles.filter((updateRole) => {
+                          return updateRole !== role;
+                        });
+                        setUpdateRoles(newRoles);
+                        props.roleSelectFunc(newRoles, 'write');
+                      } else {
+                        const newRoles = [...updateRoles, role];
+                        setUpdateRoles(newRoles);
+                        props.roleSelectFunc(newRoles, 'write');
+                      }
+                    }}
+                  />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </DataTable>
+    </DataTableWrapper>
+  );
 };
 
 export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
@@ -88,90 +158,59 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
     <ModalOverwrite>
       <GoAModal testId="file-type-modal" isOpen={true}>
         <GoAModalTitle>{title}</GoAModalTitle>
-        <GoAScrollBarOverwrite>
-          <GoAModalContent>
-            <GoAFormItem>
-              <label>File name</label>
-              <GoAInput
-                type="text"
-                name="name"
-                value={fileType.name}
-                data-testid={`file-type-modal-name-input`}
-                onChange={(name, value) => {
-                  const newFileType = {
-                    ...fileType,
-                    name: value,
-                  };
-                  setFileType(newFileType);
-                  setErrors(validateFileType(newFileType));
-                }}
-                aria-label="name"
-              />
-            </GoAFormItem>
-            <FlexRowOverwrite>
-              <GoAFlexRow>
-                <GoAFormItem>
-                  <RollTitleContainer>
-                    <label>Assign read roles</label>
-                    <div className="public-option">
-                      <GoACheckbox
-                        name="file-type-anonymousRead"
-                        checked={fileType.anonymousRead}
-                        onChange={() => {
-                          setFileType({
-                            ...fileType,
-                            anonymousRead: !fileType.anonymousRead,
-                          });
-                        }}
-                        value="file-type-anonymousRead"
-                      />{' '}
-                      <PublicText>Public</PublicText>
-                    </div>
-                  </RollTitleContainer>
-                </GoAFormItem>
-
-                <GoAFormItem>
-                  <RollTitleContainer>
-                    <label>Assign modify roles</label>
-                  </RollTitleContainer>
-                </GoAFormItem>
-              </GoAFlexRow>
-              <GoAFlexRow>
-                <GoAFormItem>
-                  <SelectBox
-                    data-testid="read-roles-selection-box"
-                    selectedValues={fileType.readRoles}
-                    values={roleNames}
-                    labels={roleNames}
-                    disabled={fileType.anonymousRead}
-                    onChange={(selectedValues: string[]) => {
-                      setFileType({
-                        ...fileType,
-                        readRoles: selectedValues,
-                      });
-                    }}
-                  />
-                </GoAFormItem>
-
-                <GoAFormItem>
-                  <SelectBox
-                    selectedValues={fileType.updateRoles}
-                    data-testid="update-roles-selection-box"
-                    values={roleNames}
-                    labels={roleNames}
-                    onChange={(selectedValues: string[]) => {
-                      setFileType({
-                        ...fileType,
-                        updateRoles: selectedValues,
-                      });
-                    }}
-                  />
-                </GoAFormItem>
-              </GoAFlexRow>
-            </FlexRowOverwrite>
-          </GoAModalContent>
-        </GoAScrollBarOverwrite>
-
+        <GoAModalContent>
+          <GoAFormItem>
+            <label>File type name</label>
+            <GoAInput
+              type="text"
+              name="name"
+              value={fileType.name}
+              data-testid={`file-type-modal-name-input`}
+              onChange={(name, value) => {
+                const newFileType = {
+                  ...fileType,
+                  name: value,
+                };
+                setFileType(newFileType);
+                setErrors(validateFileType(newFileType));
+              }}
+              aria-label="name"
+            />
+          </GoAFormItem>
+          <AnonymousReadWrapper>
+            <GoACheckbox
+              checked={fileType.anonymousRead}
+              name="file-type-anonymousRead-checkbox"
+              data-testid="file-type-anonymousRead-checkbox"
+              onChange={() => {
+                setFileType({
+                  ...fileType,
+                  anonymousRead: !fileType.anonymousRead,
+                });
+              }}
+            />
+            Make public (read only)
+          </AnonymousReadWrapper>
+          <FileRoleTable
+            roles={roleNames}
+            anonymousRead={fileType.anonymousRead}
+            roleSelectFunc={(roles, type) => {
+              if (type === 'read') {
+                setFileType({
+                  ...fileType,
+                  readRoles: roles,
+                });
+              } else {
+                setFileType({
+                  ...fileType,
+                  updateRoles: roles,
+                });
+              }
+            }}
+            readRoles={fileType.readRoles}
+            updateRoles={fileType.updateRoles}
+          />
+        </GoAModalContent>
         <GoAModalActions>
           <GoAButton
             buttonType="tertiary"

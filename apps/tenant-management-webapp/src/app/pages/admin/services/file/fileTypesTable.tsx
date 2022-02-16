@@ -32,27 +32,24 @@ const FileTypeTableRow = ({
   readRoles,
   updateRoles,
   anonymousRead,
-  editId,
   onEdit,
   onDelete,
 }: FileTypeRowProps): JSX.Element => {
   return (
     <tr key={id}>
       <td>{name}</td>
-      <td>
-        {readRoles.map((role): JSX.Element => {
-          return (
-            <div key={`read-roles-${role}`}>
-              {anonymousRead === true ? (
-                'public'
-              ) : (
+      <td className="readRolesCol">
+        {anonymousRead === false &&
+          readRoles.map((role): JSX.Element => {
+            return (
+              <div key={`read-roles-${role}`}>
                 <GoABadge key={`read-roles-${role}`} type="information" content={role} />
-              )}
-            </div>
-          );
-        })}
+              </div>
+            );
+          })}
+        {anonymousRead === true && 'public'}
       </td>
-      <td>
+      <td className="updateRolesCol">
         {updateRoles.map((role): JSX.Element => {
           return <GoABadge key={`update-roles-${id}-${role}`} type="information" content={role} />;
         })}
@@ -154,10 +151,16 @@ const TableLayout = styled.div`
   th,
   td {
     .anonymousCol {
-      width: 10%;
+      width: 15%;
     }
     .actionsCol {
       width: 15%;
+    }
+    .readRolesCol {
+      width: 35%;
+    }
+    .updateRolesCol {
+      width: 35%;
     }
   }
 `;
