@@ -236,7 +236,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       handlebars.parse(subject);
       return true;
     } catch (e) {
-      console.log(e);
+      console.error(e);
       return false;
     }
   };
@@ -640,7 +640,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                     });
                   }
                 } catch (e) {
-                  console.log('handlebar error', e);
+                  console.error('handlebar error', e);
                   setTemplateEditErrors({
                     ...templateEditErrors,
                     subject: syntaxErrorMessage,
@@ -661,7 +661,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                     });
                   }
                 } catch (e) {
-                  console.log('handlebar error', e);
+                  console.error('handlebar error', e);
                   setTemplateEditErrors({
                     ...templateEditErrors,
                     body: syntaxErrorMessage,
