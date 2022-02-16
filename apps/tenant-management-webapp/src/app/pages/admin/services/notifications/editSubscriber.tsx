@@ -119,9 +119,6 @@ const EditStyles = styled.div`
 
 export const ErrorWrapper = styled.div`
   .goa-state--error {
-    label {
-      color: var(--color-red);
-    }
     input,
     textarea {
       border-color: var(--color-red);
