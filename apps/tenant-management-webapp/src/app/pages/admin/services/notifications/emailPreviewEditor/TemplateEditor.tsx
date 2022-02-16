@@ -16,6 +16,8 @@ interface TemplateEditorProps {
   bodyEditorConfig?: EditorProps;
   bodyEditorHintText?: string;
   actionButtons?: JSX.Element;
+  errors?: any;
+  serviceName?: string;
 }
 
 export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
@@ -31,13 +33,15 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   bodyEditorConfig,
   bodyEditorHintText,
   actionButtons,
+  errors,
+  serviceName,
 }) => {
   return (
     <TemplateEditorContainer>
-      <h3 data-testid="modal-title">{mainTitle}</h3>
+      <h3 data-testid="modal-title">{`${mainTitle}--${serviceName}`}</h3>
       <GoAForm>
         <h4>{subjectTitle}</h4>
-        <GoAFormItem helpText={subjectEditorHintText}>
+        <GoAFormItem error={errors['subject'] ?? ''} helpText={subjectEditorHintText}>
           <MonacoDiv>
             <MonacoEditor
               onChange={(value) => {
@@ -49,7 +53,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           </MonacoDiv>
         </GoAFormItem>
         <h4>{bodyTitle}</h4>
-        <GoAFormItem helpText={bodyEditorHintText}>
+        <GoAFormItem error={errors['body'] ?? ''} helpText={bodyEditorHintText}>
           <MonacoDiv>
             <MonacoEditor
               value={body}
