@@ -2,7 +2,7 @@ import { ActionTypes } from './actions';
 import { Notices } from './models';
 
 const initialState: Notices = {
-  notices: [],
+  notices: null,
 };
 
 export default function noticeReducer(state: Notices = initialState, action: ActionTypes): Notices {
@@ -30,10 +30,9 @@ export default function noticeReducer(state: Notices = initialState, action: Act
       // TODO: remove the parsing of the Ref when API return of Ref is an object
       const notices = action.payload.map((n) => {
         if (typeof n.tennantServRef === 'string') {
-          n.tennantServRef = JSON.parse(n.tennantServRef)
-
+          n.tennantServRef = JSON.parse(n.tennantServRef);
         }
-        return n
+        return n;
       });
 
       return {
@@ -43,8 +42,7 @@ export default function noticeReducer(state: Notices = initialState, action: Act
     }
 
     case 'notice/DELETE_NOTICE_SUCCESS': {
-      const notices = state.notices
-        .filter((n) => n.id !== action.payload.id);
+      const notices = state.notices.filter((n) => n.id !== action.payload.id);
       return {
         notices,
       };

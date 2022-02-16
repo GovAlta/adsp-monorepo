@@ -141,7 +141,7 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
         }
         const testRealm = (await tenantRepository.find({ realmEquals: realm }))[0];
         if (testRealm) {
-          throw new InvalidOperationError('Realm exist, please use another realm name', realm);
+          throw new InvalidOperationError('Realm has been used, please use another realm name', realm);
         }
         logger.info('Realm exist in request....');
         adminEmail = payload?.adminEmail;
@@ -152,7 +152,7 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
 
         const testAdminReal = (await tenantRepository.find({ adminEmailEquals: adminEmail }))[0];
         if (testAdminReal) {
-          throw new InvalidOperationError('adminEmail exist, please use another adminEmail', adminEmail);
+          throw new InvalidOperationError('adminEmail has been used, please use another adminEmail', adminEmail);
         }
       } else {
         //create new realm
