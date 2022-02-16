@@ -43,6 +43,11 @@ const DataTableWrapper = styled.div`
     top: 0;
     z-index: 2;
     background-color: white;
+    padding-left: 0em !important;
+  }
+
+  td {
+    padding-left: 0em !important;
   }
 
   table {
