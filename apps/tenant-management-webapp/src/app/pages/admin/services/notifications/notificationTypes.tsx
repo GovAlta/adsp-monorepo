@@ -708,7 +708,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               <PreviewTemplate
                 subjectTitle="Subject"
                 emailTitle="Email preview"
-                subjectPreviewContent={DOMPurify.sanitize(generateMessage(subjectPreview, htmlPayload))}
+                subjectPreviewContent={DOMPurify.sanitize(subjectPreview)}
                 emailPreviewContent={DOMPurify.sanitize(bodyPreview)}
               />
             </PreviewTemplateContainer>
