@@ -34,6 +34,7 @@ const getUrlResponse = (services, component) => {
   let host = null;
   if (services) {
     for (const service of services) {
+      console.log(JSON.stringify(service) + '<service');
       if (service['service'] === component.service) {
         host = service['host'];
         break;
@@ -105,6 +106,7 @@ export const discovery = async (urn: string, { directoryRepository }: ServicePro
       const services = result.results[0]['services'];
       return getUrlResponse(services, component);
     } catch (err) {
+      console.log(JSON.stringify(err) + '<err');
       return new ApiError(
         HttpStatusCodes.BAD_REQUEST,
         'Empty in urn! urn format should looks like urn:ads:{tenant|core}:{service}'
@@ -126,6 +128,8 @@ export const getDirectories = async (
     const response = [];
     // FIXME: using this repository with dependency injection make this impossible to test
     const result = await directoryRepository.find(100, null, null);
+
+    console.log(JSON.stringify(result) + '<resultxxx');
     const directories = result.results;
     if (directories && directories.length > 0) {
       for (const directory of directories) {
@@ -147,9 +151,12 @@ export const getDirectories = async (
       }
     }
 
+    console.log(JSON.stringify(response) + '<responsexxx');
+
     logger.debug('Retrieved directory from mongo db.');
     return response;
   } catch (err) {
+    console.log(JSON.stringify(err) + '<err2');
     throw new ApiError(
       HttpStatusCodes.BAD_REQUEST,
       'Empty in urn! urn format should looks like urn:ads:{tenant|core}:{service}'

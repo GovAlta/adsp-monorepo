@@ -11,6 +11,7 @@ import { version } from '../../../package.json';
 import { environment } from './environments/environment';
 import { applyConfigMiddleware, ConfigurationUpdatedDefinition } from './configuration';
 import { applyDirectoryMiddleware, bootstrapDirectory, directoryService } from './directory';
+import { applyDirectoryV2Middleware } from './directoryV2';
 import { createRepositories, disconnect } from './mongo';
 import { logger } from './middleware/logger';
 import { TenantServiceRoles } from './roles';
@@ -26,6 +27,7 @@ async function initializeApp(): Promise<express.Application> {
   const repositories = await createRepositories({ ...environment, logger });
   if (environment.DIRECTORY_BOOTSTRAP) {
     await bootstrapDirectory(logger, environment.DIRECTORY_BOOTSTRAP, repositories.directoryRepository);
+    // await bootstrapV2Directory(logger, environment.DIRECTORY_BOOTSTRAP, repositories.directoryRepository);
   }
 
   const app = express();
@@ -58,6 +60,9 @@ async function initializeApp(): Promise<express.Application> {
       directory: {
         getServiceUrl: (serviceId) => directoryService.getServiceUrl(repositories.directoryRepository, serviceId),
         getResourceUrl: (resourceId) => directoryService.getResourceUrl(repositories.directoryRepository, resourceId),
+        // getService2Url: (serviceId) => directoryV2Service.getService2Url(repositories.directoryRepository, serviceId),
+        // getResource2Url: (resourceId) =>
+        //   directoryV2Service.getResource2Url(repositories.directoryRepository, resourceId),
       },
       tenantService: {
         getTenant: (tenantId) => tenantService.getTenant(repositories.tenantRepository, tenantId),
@@ -107,6 +112,7 @@ async function initializeApp(): Promise<express.Application> {
   applyTenantMiddleware(app, { ...repositories, logger, eventService, configurationHandler });
   applyConfigMiddleware(app, { ...repositories, logger, eventService });
   applyDirectoryMiddleware(app, { ...repositories, logger });
+  applyDirectoryV2Middleware(app, { ...repositories, logger });
 
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
