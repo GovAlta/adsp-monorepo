@@ -1,3 +1,4 @@
+import moment from 'moment';
 import React, { useEffect, useState } from 'react';
 import { Page, Main, Aside } from '@components/Html';
 import {
@@ -491,7 +492,9 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
                 ? 'var(--color-gray-300)'
                 : 'var(--color-red)',
             }}
-            title={entry.status + ': ' + new Date(entry.timestamp).toLocaleString()}
+            title={`${entry.status}${entry.responseTime > 1000 ? ' (> 1 sec)' : ''}: ${moment(entry.timestamp).format(
+              'HH:mm A'
+            )}`}
           />
         ))}
       </EndpointStatusEntries>
