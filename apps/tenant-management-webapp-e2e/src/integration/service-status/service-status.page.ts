@@ -136,7 +136,7 @@ class StatusServicePage {
   applicationHealthChangeNotificationSubscribeCheckbox() {
     return cy.xpath('//*[@class="goa-checkbox"]//*[@name="subscribe"]/parent::div');
   }
-  //LD
+
   addApplicationButton() {
     return cy.get('[data-testid="add-application"]');
   }
@@ -170,6 +170,7 @@ class StatusServicePage {
   applicationListEditBtn() {
     return cy.xpath(`(//*[@data-testid="application"]//*[name()='svg'])[3]`);
   }
+
   applicationListDeleteBtn() {
     return cy.xpath(`(//*[@data-testid="application"]//div[@data-testid='icon-trash'])[1]`);
   }
