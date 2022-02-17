@@ -3,6 +3,11 @@ import styled from 'styled-components';
 
 // eslint-disable-next-line
 function DataTable({ children, ...props }): JSX.Element {
+
+  if (props?.noScroll === true) {
+    return <Table {...props}>{children}</Table>
+  }
+
   return (
     <ScrollWrapper>
       <Table {...props}>{children}</Table>
