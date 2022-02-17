@@ -454,23 +454,35 @@ When(
 
 Then('the user clicks save application button', function () {
   statusObj.addApplicationSaveBtn().click();
-  cy.wait(2000);
+  cy.wait(4000);
 });
 
-Then('the user views {string} in the application list', function (appName) {
-  statusObj.applicationList().contains(appName);
+Then('the user {string} {string} in the application list', function (viewOrNot, appName) {
+  switch (viewOrNot) {
+    case 'views':
+      statusObj.applicationList(appName).should('exist');
+      break;
+    case 'should not view':
+      statusObj.applicationList(appName).should('not.exist');
+      break;
+    default:
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});
+
+Then('simple test {string}', function (appName) {
+  statusObj.applicationListEditBtn(appName).click();
+  cy.wait(2000);
 });
 
 When('the user clicks {string} button for {string}', function (buttonType, appName) {
   switch (buttonType) {
-    case 'edit':
-      statusObj.applicationList().contains(appName);
-      statusObj.applicationListEditBtn().click();
+    case 'Edit':
+      statusObj.applicationListEditBtn(appName).click();
       cy.wait(2000);
       break;
-    case 'delete':
-      statusObj.applicationList().contains(appName);
-      statusObj.applicationListDeleteBtn().click({ force: true });
+    case 'Delete':
+      statusObj.applicationListDeleteBtn(appName).click({ force: true });
       cy.wait(2000);
       break;
     default:
@@ -487,30 +499,25 @@ Then('the user clicks Yes to Confirm deletion', function () {
   statusObj.applicationDeleteConfirmationModalYesBtn().click({ force: true });
 });
 
-Then('the user views {string} as name and {string} as description fields', function (appName, description) {
-  statusObj
-    .addApplicationNameModalField()
-    .invoke('val')
-    .then((val) => {
-      expect(val).to.eq(appName);
-    });
-  statusObj
-    .addApplicationDescriptionModalField()
-    .invoke('val')
-    .then((val) => {
-      expect(val).to.eq(description);
-    });
-});
+Then(
+  'the user views {string} as name and {string} as description in the modal fields',
+  function (appName, description) {
+    statusObj
+      .addApplicationNameModalField()
+      .invoke('val')
+      .then((val) => {
+        expect(val).to.eq(appName);
+      });
+    statusObj
+      .addApplicationDescriptionModalField()
+      .invoke('val')
+      .then((val) => {
+        expect(val).to.eq(description);
+      });
+  }
+);
 
 Then('the user enters {string} as name and {string} as description fields', function (appName, description) {
   statusObj.addApplicationNameModalField().clear().type(appName);
   statusObj.addApplicationDescriptionModalField().clear().type(description);
-});
-
-Then('the user views modified {string} application name in the application list', function (appName) {
-  statusObj.applicationList().contains(appName);
-});
-
-Then('the user should not view {string} application in the application list', function (appName) {
-  statusObj.applicationList().contains(appName);
 });
