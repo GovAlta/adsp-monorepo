@@ -555,7 +555,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               const updatedEvents = selectedType.events.filter(
                 (event) =>
                   `${event.namespace}:${event.name}` !== `${selectedEvent.namespace}:${selectedEvent.name}` &&
-                  event.customized
+                  (!coreEvent || event.customized)
               );
 
               const newType = JSON.parse(JSON.stringify(selectedType));
