@@ -410,7 +410,7 @@ Then('the user views the subscribe checkbox is {string}', function (checkboxStat
       }
     });
 });
-//LD
+
 When('the user clicks Add Application button', function () {
   statusObj.addApplicationButton().click();
 });
