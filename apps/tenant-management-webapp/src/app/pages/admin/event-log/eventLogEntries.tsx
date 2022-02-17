@@ -110,6 +110,13 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
       <Visible visible={!indicator.show && entries.length > 0}>
         <div className={className}>
           <DataTable>
+            <colgroup>
+              <col className="correlation-col" />
+              <col className="data-col" />
+              <col className="data-col" />
+              <col className="data-col" />
+              <col className="action-col" />
+            </colgroup>
             <thead>
               <tr>
                 <th id="correlation"></th>
@@ -152,6 +159,15 @@ export const EventLogEntries = styled(EventLogEntriesComponent)`
   & table {
     table-layout: fixed;
   }
+  & .correlation-col {
+    width: 5%;
+  }
+  & .data-col {
+    width: 28%;
+  }
+  & .action-col {
+    width: 10%;
+  }
   & .event-details {
     div {
       background: #f3f3f3;
@@ -160,6 +176,7 @@ export const EventLogEntries = styled(EventLogEntriesComponent)`
       font-size: 12px;
       line-height: 16px;
       padding: 16px;
+      overflow-wrap: break-word;
     }
     padding: 0;
   }

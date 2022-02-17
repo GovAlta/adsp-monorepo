@@ -192,26 +192,21 @@ export function* fetchNotificationMetrics(): SagaIterator {
       const criteria = JSON.stringify({
         intervalMax: moment().toISOString(),
         intervalMin: moment().subtract(7, 'day').toISOString(),
+        metricLike: 'notification-service',
       });
 
-      let metric = 'notification-service:notification-sent:count';
-      const { data: sentMetric }: { data: MetricResponse } = yield call(
+      const { data: metrics }: { data: Record<string, MetricResponse> } = yield call(
         axios.get,
-        `${baseUrl}/value/v1/event-service/values/event/metrics/${metric}?interval=weekly&criteria=${criteria}`,
+        `${baseUrl}/value/v1/event-service/values/event/metrics?interval=weekly&criteria=${criteria}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      metric = 'notification-service:notification-send-failed:count';
-      const { data: failedMetric }: { data: MetricResponse } = yield call(
-        axios.get,
-        `${baseUrl}/value/v1/event-service/values/event/metrics/${metric}?interval=weekly&criteria=${criteria}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
+      const sentMetric = 'notification-service:notification-sent:count';
+      const failedMetric = 'notification-service:notification-send-failed:count';
       yield put(
         fetchNotificationMetricsSucceeded({
-          notificationsSent: parseInt(sentMetric.values[0]?.sum || '0'),
-          notificationsFailed: parseInt(failedMetric.values[0]?.sum || '0'),
+          notificationsSent: parseInt(metrics[sentMetric]?.values[0]?.sum || '0'),
+          notificationsFailed: parseInt(metrics[failedMetric]?.values[0]?.sum || '0'),
         })
       );
     } catch (e) {

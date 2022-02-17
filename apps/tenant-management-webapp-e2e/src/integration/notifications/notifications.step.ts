@@ -24,7 +24,7 @@ Then('the user views Add notification modal', function () {
   notificationsObj.notificationTypeModal().should('exist');
 });
 
-When('the user enters {string}, {string}, {string}', function (name, description, role) {
+When('the user enters {string}, {string}, {string} on notification modal', function (name, description, role) {
   const roles = role.split(',');
   notificationsObj.notificationTypeModalNameField().clear().type(name);
   notificationsObj.notificationTypeModalDescriptionField().clear().type(description);
@@ -153,11 +153,17 @@ Then('the user {string} the event of {string} in {string}', function (viewOrNot,
       expect(numOfMatch).equals(1);
     });
   } else if (viewOrNot == 'should not view') {
-    notificationsObj.notificationTypeEvents(cardTitle).then((elements) => {
-      for (let i = 0; i < elements.length; i++) {
-        if (elements[i].innerText == event) numOfMatch = numOfMatch + 1;
+    notificationsObj.notificationTypeCardFooterItems(cardTitle).then((footerItems) => {
+      if (footerItems.length == 1) {
+        cy.log('No event for the notification type');
+      } else {
+        notificationsObj.notificationTypeEvents(cardTitle).then((elements) => {
+          for (let i = 0; i < elements.length; i++) {
+            if (elements[i].innerText == event) numOfMatch = numOfMatch + 1;
+          }
+          expect(numOfMatch).equals(0);
+        });
       }
-      expect(numOfMatch).equals(0);
     });
   } else {
     expect(viewOrNot).to.be.oneOf(['views', 'should not view']);

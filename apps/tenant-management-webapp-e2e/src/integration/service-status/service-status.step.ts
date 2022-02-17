@@ -32,7 +32,7 @@ Given('a service owner user is on status notices page', function () {
   );
   commonlib.tenantAdminMenuItem('Status', 4000);
   commonObj.serviceTab('Service status', 'Notices').click();
-  cy.wait(10000);
+  cy.wait(4000);
 });
 
 When('the user clicks Add notice button', function () {
@@ -45,11 +45,25 @@ Then('the user views Add notice dialog', function () {
 
 //Date time picker UI isn't finalized and the step uses the default dates without entering any date data
 When(
-  'the user enters {string}, {string}, {string}, {string}, {string}, {string}',
+  'the user enters {string}, {string}, {string}, {string}, {string}, {string} on notice dialog',
   function (desc, app, startDate, startTime, endDate, endTime) {
     statusObj.noticeModalDescField().clear().type(desc);
-    statusObj.noticeModalApplicationDropdown().click();
-    statusObj.noticeModalApplicationDropdownItem(app).click();
+    // Select Application
+    if (app == 'All') {
+      statusObj.noticeModalAllApplicationsCheckbox().click();
+    } else {
+      // Uncheck All applications checkbox if checked
+      statusObj
+        .noticeModalAllApplicationsCheckbox()
+        .invoke('attr', 'class')
+        .then((classAttr) => {
+          if (classAttr?.includes('-selected')) {
+            statusObj.noticeModalAllApplicationsCheckbox().click();
+          }
+        });
+      statusObj.noticeModalApplicationDropdown().click();
+      statusObj.noticeModalApplicationDropdownItem(app).click();
+    }
     // Get hour, minute and am/pm for start time and end time
     const startHr = startTime.substring(0, 2);
     const startMin = startTime.substring(3, 5);
@@ -79,7 +93,7 @@ When(
 
 When('the user clicks Save as draft button', function () {
   statusObj.noticeModalSaveButton().click();
-  cy.wait(5000);
+  cy.wait(2000);
 });
 
 // Date time picker UI isn't finalized and dates are today only for now
@@ -277,6 +291,9 @@ function searchNoticeCards(mode, desc, app, startDateTime, endDateTime) {
     try {
       let count = 0;
       let cardIndex = 0;
+      if (app == 'All') {
+        app = 'All applications';
+      }
       statusObj
         .noticeList()
         .then((elements) => {
@@ -312,7 +329,11 @@ function searchNoticeCards(mode, desc, app, startDateTime, endDateTime) {
                                   .invoke('text')
                                   .then((startDateTimeText) => {
                                     cy.log('Start Date and Time: ' + startDateTimeText);
-                                    if (startDateTimeText.replace(/\s/g, '') == startDateTime.replace(/\s/g, '')) {
+                                    cy.log('Start Date and Time to compare: ' + startDateTime);
+                                    if (
+                                      startDateTimeText.replace(/\s/g, '').toLowerCase ==
+                                      startDateTime.replace(/\s/g, '').toLowerCase
+                                    ) {
                                       // Remove white spaces for comparison
                                       // Check end date and time
                                       statusObj
@@ -320,7 +341,10 @@ function searchNoticeCards(mode, desc, app, startDateTime, endDateTime) {
                                         .invoke('text')
                                         .then((endDateTimeText) => {
                                           cy.log('End Date and Time: ' + endDateTimeText);
-                                          if (endDateTimeText.replace(/\s/g, '') == endDateTime.replace(/\s/g, '')) {
+                                          if (
+                                            endDateTimeText.replace(/\s/g, '').toLowerCase ==
+                                            endDateTime.replace(/\s/g, '').toLowerCase
+                                          ) {
                                             // Remove white spaces for comparison
                                             count = count + 1;
                                             cardIndex = i + 1;

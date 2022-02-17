@@ -80,7 +80,6 @@ export function* getAllSubscriptions(action: GetSubscriptionsAction): SagaIterat
   const criteria = action.payload;
 
   if (configBaseUrl && token) {
-    console.log(hasNotificationAdminRole !== true + '<hasNotificationAdminRole !== true');
     try {
       const typeResponse = yield call(axios.get, `${configBaseUrl}/subscription/v1/types`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -91,7 +90,7 @@ export function* getAllSubscriptions(action: GetSubscriptionsAction): SagaIterat
         params = { topValue: 10000 };
       }
 
-      const typeList = [...new Set(typeResponse.data.map((type) => type.id))];
+      const typeList = [...new Set(typeResponse.data.map((type) => type.id))].filter(Boolean);
 
       const results = yield all(
         typeList.map((id) => {

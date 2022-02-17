@@ -127,6 +127,8 @@ export const NoticeList = (): JSX.Element => {
     }
   };
 
+  let count = 0;
+
   return (
     <NoticeListContainer data-testid="notice-list">
       {openMenuId !== null && (
@@ -139,8 +141,8 @@ export const NoticeList = (): JSX.Element => {
       )}
       <Grid>
         <GridItem md={12} hSpacing={0.5}>
-          {notices && notices.length === 0 && renderNoItem('notice')}
-          {notices && notices.length !== 0 && (
+          {notices && notices?.length === 0 && renderNoItem('notice')}
+          {notices && notices?.length !== 0 && (
             <NoticeListFilter
               data-testid="notice-list-filter"
               option={filerOption}
@@ -157,6 +159,9 @@ export const NoticeList = (): JSX.Element => {
               if (filerOption === 'all') {
                 return true;
               } else {
+                if (notice.mode === filerOption) {
+                  count++;
+                }
                 return notice.mode === filerOption;
               }
             })
@@ -172,6 +177,7 @@ export const NoticeList = (): JSX.Element => {
               </GridItem>
             ))}
       </Grid>
+      {count === 0 && notices.length > 0 && renderNoItem('notice')}
     </NoticeListContainer>
   );
 };

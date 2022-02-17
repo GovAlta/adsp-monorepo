@@ -158,49 +158,50 @@ export function* fetchStatusMetrics(): SagaIterator {
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
 
   yield take(FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION);
-  const apps: ServiceStatusApplication[] = yield select((state: RootState) => state.serviceStatus.applications);
+  const apps: Record<string, ServiceStatusApplication> = (yield select(
+    (state: RootState) => state.serviceStatus.applications
+  )).reduce(
+    (apps: Record<string, ServiceStatusApplication>, app: ServiceStatusApplication) => ({ ...apps, [app._id]: app }),
+    {}
+  );
 
   if (baseUrl && token) {
     try {
       const criteria = JSON.stringify({
         intervalMax: moment().toISOString(),
         intervalMin: moment().subtract(7, 'day').toISOString(),
+        metricLike: 'status-service',
       });
 
-      let metric = 'status-service:application-unhealthy:count';
-      const { data: unhealthyCount }: { data: MetricResponse } = yield call(
+      const unhealthyMetric = 'status-service:application-unhealthy:count';
+      const { data: metrics }: { data: Record<string, MetricResponse> } = yield call(
         axios.get,
-        `${baseUrl}/value/v1/event-service/values/event/metrics/${metric}?interval=weekly&criteria=${criteria}`,
+        `${baseUrl}/value/v1/event-service/values/event/metrics?interval=weekly&criteria=${criteria}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       const downtimeDurations: MetricValue[] = [];
-      for (let i = 0; i < apps.length; i++) {
-        const app = apps[i];
-
-        metric = `status-service:${app.name}:downtime:duration`;
-        const { data: unhealthyDuration }: { data: MetricResponse } = yield call(
-          axios.get,
-          `${baseUrl}/value/v1/event-service/values/event/metrics/${metric}?interval=weekly&criteria=${criteria}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        downtimeDurations.push({
-          app: app.name,
-          sum: parseInt(unhealthyDuration.values[0]?.sum || '0'),
-          max: parseInt(unhealthyDuration.values[0]?.max || '0'),
-        });
-      }
+      Object.entries(metrics).forEach(([metric, durationMetric]) => {
+        if (metric.endsWith('downtime:duration')) {
+          const appId = metric.split(':')[1];
+          const app = apps[appId]?.name;
+          if (app) {
+            downtimeDurations.push({
+              app,
+              sum: parseInt(durationMetric.values[0]?.sum || '0'),
+              max: parseInt(durationMetric.values[0]?.max || '0'),
+            });
+          }
+        }
+      });
 
       const maxDuration = downtimeDurations.reduce((max, duration) => Math.max(duration.max, max), 0);
-
       const totalDuration = downtimeDurations.reduce((total, duration) => total + duration.sum, 0);
-
       const unhealthyApp = downtimeDurations.sort((a, b) => b.sum - a.sum)[0];
 
       yield put(
         fetchStatusMetricsSucceeded({
-          unhealthyCount: parseInt(unhealthyCount.values[0]?.sum || '0'),
+          unhealthyCount: parseInt(metrics[unhealthyMetric]?.values[0]?.sum || '0'),
           maxUnhealthyDuration: maxDuration / 60,
           totalUnhealthyDuration: totalDuration / 60,
           leastHealthyApp: unhealthyApp?.sum

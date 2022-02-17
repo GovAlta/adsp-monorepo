@@ -294,9 +294,6 @@ export const ErrorWrapper = styled.div`
   }
 
   &.error {
-    label {
-      color: var(--color-red);
-    }
     input,
     textarea {
       border-color: var(--color-red);
