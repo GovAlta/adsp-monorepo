@@ -141,8 +141,8 @@ export const NoticeList = (): JSX.Element => {
       )}
       <Grid>
         <GridItem md={12} hSpacing={0.5}>
-          {notices && notices.length === 0 && renderNoItem('notice')}
-          {notices && notices.length !== 0 && (
+          {notices && notices?.length === 0 && renderNoItem('notice')}
+          {notices && notices?.length !== 0 && (
             <NoticeListFilter
               data-testid="notice-list-filter"
               option={filerOption}
