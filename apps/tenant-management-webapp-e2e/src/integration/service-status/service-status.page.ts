@@ -167,16 +167,18 @@ class StatusServicePage {
     return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//button[2]');
   }
 
-  applicationList() {
-    return cy.get('[data-testid="application"]');
+  applicationList(appName) {
+    return cy.xpath(`//*[@data-testid="application"]//div[contains(text(), "${appName}")]`);
   }
 
-  applicationListEditBtn() {
-    return cy.xpath(`(//*[@data-testid="application"]//*[name()='svg'])[3]`);
+  applicationListEditBtn(appName) {
+    return cy.xpath(`(//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//*[name()="svg"]`);
   }
 
-  applicationListDeleteBtn() {
-    return cy.xpath(`(//*[@data-testid="application"]//div[@data-testid='icon-trash'])[1]`);
+  applicationListDeleteBtn(appName) {
+    return cy.xpath(
+      `(//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//div[@data-testid='icon-trash']`
+    );
   }
 
   applicationDeleteConfirmationModalTitle() {
