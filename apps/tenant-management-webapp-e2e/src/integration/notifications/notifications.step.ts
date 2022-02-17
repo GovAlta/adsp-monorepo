@@ -130,7 +130,7 @@ When('the user clicks Cancel button in Select an event modal', function () {
 });
 
 Then('the user views Add an email template page', function () {
-  notificationsObj.addAnEmailTemplateModalTitle().invoke('text').should('equal', 'Add an email template');
+  notificationsObj.addAnEmailTemplateModalTitle().invoke('text').should('contain', 'Add an email template');
 });
 
 When('the user enters {string} as subject and {string} as body', function (subjectText, bodyText) {
@@ -143,7 +143,7 @@ When('the user clicks Add button in Add an email template page', function () {
 });
 
 Then('the user {string} the event of {string} in {string}', function (viewOrNot, event, cardTitle) {
-  cy.wait(1000); // To wait for the record to show up in the grid before validating the record existence
+  cy.wait(2000); // To wait for the record to show up in the grid before validating the record existence
   let numOfMatch = 0;
   if (viewOrNot == 'views') {
     notificationsObj.notificationTypeEvents(cardTitle).then((elements) => {
