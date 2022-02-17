@@ -437,20 +437,17 @@ Then('the user views {string} in the application list', function (appName) {
   statusObj.applicationList().contains(appName);
 });
 
-Then('simple delete {string}', function (appName) {
-  statusObj.applicationList().contains(appName);
-  statusObj.applicationListDeleteBtn().click();
-});
-
 When('the user clicks {string} button for {string}', function (buttonType, appName) {
   switch (buttonType) {
     case 'edit':
       statusObj.applicationList().contains(appName);
       statusObj.applicationListEditBtn().click();
+      cy.wait(2000);
       break;
     case 'delete':
       statusObj.applicationList().contains(appName);
       statusObj.applicationListDeleteBtn().click({ force: true });
+      cy.wait(2000);
       break;
     default:
       expect(buttonType).to.be.oneOf(['edit', 'delete']);
@@ -464,4 +461,32 @@ Then('the user views confirmation modal to delete {string}', function (appName) 
 
 Then('the user clicks Yes to Confirm deletion', function () {
   statusObj.applicationDeleteConfirmationModalYesBtn().click({ force: true });
+});
+
+Then('the user views {string} as name and {string} as description fields', function (appName, description) {
+  statusObj
+    .addApplicationNameModalField()
+    .invoke('val')
+    .then((val) => {
+      expect(val).to.eq(appName);
+    });
+  statusObj
+    .addApplicationDescriptionModalField()
+    .invoke('val')
+    .then((val) => {
+      expect(val).to.eq(description);
+    });
+});
+
+Then('the user enters {string} as name and {string} as description fields', function (appName, description) {
+  statusObj.addApplicationNameModalField().clear().type(appName);
+  statusObj.addApplicationDescriptionModalField().clear().type(description);
+});
+
+Then('the user views modified {string} application name in the application list', function (appName) {
+  statusObj.applicationList().contains(appName);
+});
+
+Then('the user should not view {string} application in the application list', function (appName) {
+  statusObj.applicationList().contains(appName);
 });
