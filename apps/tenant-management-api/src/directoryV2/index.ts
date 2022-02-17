@@ -1,7 +1,6 @@
 import { Logger } from 'winston';
 export * from '../directory/types';
 export * from '../directory/repository';
-//export * as directoryV2Service from './services';
 import * as passport from 'passport';
 import { Application } from 'express';
 import { Repositories } from '../directory/repository';

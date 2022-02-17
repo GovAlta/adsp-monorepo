@@ -27,7 +27,6 @@ async function initializeApp(): Promise<express.Application> {
   const repositories = await createRepositories({ ...environment, logger });
   if (environment.DIRECTORY_BOOTSTRAP) {
     await bootstrapDirectory(logger, environment.DIRECTORY_BOOTSTRAP, repositories.directoryRepository);
-    // await bootstrapV2Directory(logger, environment.DIRECTORY_BOOTSTRAP, repositories.directoryRepository);
   }
 
   const app = express();

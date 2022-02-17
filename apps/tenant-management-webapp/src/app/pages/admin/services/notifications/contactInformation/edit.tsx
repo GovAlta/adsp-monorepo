@@ -38,7 +38,6 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
   }
 
   function phoneError(phone) {
-    console.log(JSON.stringify(phone) + '<checking phone number');
     if (!/^(\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$/.test(phone)) {
       return { phoneNumber: 'Please enter a valid phone number ie. 1 (780) 123-4567' };
     }
