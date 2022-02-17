@@ -4,8 +4,9 @@ import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
+import InputMask from 'react-input-mask';
 
-import { GoAInputTel, GoAInputEmail } from '@abgov/react-components/experimental';
+import { GoAInputEmail } from '@abgov/react-components/experimental';
 
 interface NotificationTypeFormProps {
   initialValue?: ContactInformation;
@@ -38,8 +39,7 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
   }
 
   function phoneError(phone) {
-    console.log(JSON.stringify(phone) + '<checking phone number');
-    if (!/^(\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$/.test(phone)) {
+    if (!/^\d{10}$/.test(phone)) {
       return { phoneNumber: 'Please enter a valid phone number ie. 1 (780) 123-4567' };
     }
   }
@@ -85,18 +85,25 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
                 />
               </GoAFormItem>
               <GoAFormItem error={formErrors?.['phoneNumber']}>
-                <label>Phone Number</label>
-                <GoAInputTel
+                <label>Phone number</label>
+                <InputMask
                   name="phoneNumber"
                   value={contactInformation?.phoneNumber || ''}
                   placeholder="1 (780) 123-4567"
+                  mask="1\ (999) 999-9999"
+                  maskChar=" "
                   data-testid="form-name"
                   aria-label="name"
-                  onChange={(_, value) => setContactInformation({ ...contactInformation, phoneNumber: value })}
+                  onChange={(e) =>
+                    setContactInformation({
+                      ...contactInformation,
+                      phoneNumber: e.target.value.replace(/[- )(]/g, '').slice(1),
+                    })
+                  }
                 />
               </GoAFormItem>
               <GoAFormItem error={formErrors?.['supportInstructions']}>
-                <label>Support Instructions</label>
+                <label>Support instructions</label>
                 <textarea
                   rows={7}
                   name="supportInstruction"
@@ -141,9 +148,6 @@ const EditStyles = styled.div`
 
 export const ErrorWrapper = styled.div`
   .goa-state--error {
-    label {
-      color: var(--color-red);
-    }
     input,
     textarea {
       border-color: var(--color-red);

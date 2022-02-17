@@ -25,6 +25,10 @@ class StatusServicePage {
     return cy.get('[data-testid="notice-form-description"]');
   }
 
+  noticeModalAllApplicationsCheckbox() {
+    return cy.xpath('//label[@class="goa-checkbox"]/div[contains(@class, "goa-checkbox-container")]');
+  }
+
   noticeModalApplicationDropdown() {
     return cy.get('[id="multiselectContainerReact"]');
   }

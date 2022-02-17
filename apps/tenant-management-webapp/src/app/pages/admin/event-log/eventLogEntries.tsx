@@ -176,6 +176,7 @@ export const EventLogEntries = styled(EventLogEntriesComponent)`
       font-size: 12px;
       line-height: 16px;
       padding: 16px;
+      overflow-wrap: break-word;
     }
     padding: 0;
   }

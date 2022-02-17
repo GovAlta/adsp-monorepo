@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { Logger } from 'winston';
 
 import { ServiceStatusRepository } from '../repository/serviceStatus';
@@ -45,6 +46,9 @@ async function doRequest(getter: Getter, url: string, logger: Logger): Promise<E
       responseTime: duration,
     };
   } catch (err) {
+    const duration = Date.now() - start;
+    const details = axios.isAxiosError(err) && err.response ? `Status (${err.response.status}) - ${err.message}` : err;
+    logger.info(`Error on health check request to ${url} with duration ${duration} ms: ${details}`);
     return {
       ok: false,
       url,

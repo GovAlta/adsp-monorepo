@@ -11,6 +11,7 @@ import { version } from '../../../package.json';
 import { environment } from './environments/environment';
 import { applyConfigMiddleware, ConfigurationUpdatedDefinition } from './configuration';
 import { applyDirectoryMiddleware, bootstrapDirectory, directoryService } from './directory';
+import { applyDirectoryV2Middleware } from './directoryV2';
 import { createRepositories, disconnect } from './mongo';
 import { logger } from './middleware/logger';
 import { TenantServiceRoles } from './roles';
@@ -107,6 +108,7 @@ async function initializeApp(): Promise<express.Application> {
   applyTenantMiddleware(app, { ...repositories, logger, eventService, configurationHandler });
   applyConfigMiddleware(app, { ...repositories, logger, eventService });
   applyDirectoryMiddleware(app, { ...repositories, logger });
+  applyDirectoryV2Middleware(app, { ...repositories, logger });
 
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);

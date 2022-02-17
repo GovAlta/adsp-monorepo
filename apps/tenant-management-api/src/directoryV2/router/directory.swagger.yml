@@ -1,0 +1,27 @@
+Ok: &Ok
+  description: OK
+
+GoA401: &GoA401
+  description: |
+    Unauthorized. The allowed user groups are listed as follows:
+      | Group Name    | Keycloak Realm| Client  |
+      | ------------- |:-------------:| -------:|
+      | GoA  | any | any |
+
+# Define schema:
+Directory: &Directory
+  type: object
+  properties:
+    service:
+      type: string
+    host:
+      type: string
+
+'/api/directory/v2/namespace/{namespace}':
+  get:
+    tags:
+      - Directory
+    description: Fetch the directory entries (URN-service list) in the given namespace .
+    responses:
+      200: *Ok
+      401: *GoA401
