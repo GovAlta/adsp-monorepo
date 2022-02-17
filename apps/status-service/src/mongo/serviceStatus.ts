@@ -27,15 +27,15 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
 
   async enable(entity: ServiceStatusApplicationEntity): Promise<ServiceStatusApplicationEntity> {
     const application = await this.model.findById(entity._id);
-    application.internalStatus = 'pending';
     application.enabled = true;
+    application.endpoint.status = 'n/a';
     await application.save();
     return this.fromDoc(application);
   }
 
   async disable(entity: ServiceStatusApplicationEntity): Promise<ServiceStatusApplicationEntity> {
     const application = await this.model.findById(entity._id);
-    application.endpoint.status = 'disabled';
+    application.endpoint.status = 'n/a';
     application.enabled = false;
     await application.save();
     return this.fromDoc(application);
@@ -77,7 +77,6 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
       tenantName: application.tenantName,
       tenantRealm: application.tenantRealm,
       status: application.status,
-      internalStatus: application.internalStatus,
       enabled: application.enabled,
     };
   }
@@ -97,7 +96,6 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
       tenantName: doc.tenantName,
       tenantRealm: doc.tenantRealm,
       status: doc.status,
-      internalStatus: doc.internalStatus,
       enabled: doc.enabled,
     });
   }
