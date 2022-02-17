@@ -168,12 +168,22 @@ class StatusServicePage {
   }
 
   applicationListEditBtn() {
-    //return cy.get('[data-testid="application"]');
-    return cy.xpath(`//*[@id="root"]/div/div[3]/div/div/div/main/div[2]/section/div[1]/div[1]/div[2]/div/svg]`);
+    return cy.xpath(`(//*[@data-testid="application"]//*[name()='svg'])[3]`);
   }
   applicationListDeleteBtn() {
-    return cy.get('[data-testid="icon-trash"]');
+    return cy.xpath(`(//*[@data-testid="application"]//div[@data-testid='icon-trash'])[1]`);
+  }
+
+  applicationDeleteConfirmationModalTitle() {
+    return cy.xpath('//div[@class="modal-container"]/div[@class="modal-title"]');
+  }
+
+  applicationDeleteConfirmationModalContent() {
+    return cy.xpath('//div[@class="modal-container"]/div[@class="goa-scrollable"]');
+  }
+
+  applicationDeleteConfirmationModalYesBtn() {
+    return cy.xpath(`//div[contains(@data-state,'visible')]//button[contains(@class,'')][normalize-space()='Yes']`);
   }
 }
-
 export default StatusServicePage;
