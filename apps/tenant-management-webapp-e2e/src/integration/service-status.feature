@@ -92,14 +92,13 @@ Feature: Service status
     When the user enters "autotest-addApp" as name and "autotest-addApp" as description and "https://tenant-management-webapp-adsp-dev.apps.aro.gov.ab.ca/" as endpoint
     And the user clicks save application button
     Then the user views "autotest-addApp" in the application list
-    When the user clicks delete button
-# When the user clicks edit button of
-# When the user clicks edit button of "autotest-addApp"
-# Then the user views the name and description fields
-# When the user enters "autotest-EditApp" as name and "autotest-EditApp" as description
-# And the user clicks save application button
-# Then the user views the modified application in the application grid
-# When the user selects the application and click delete button
-# Then the user views a delete confirmatino dialog
-# When the user clicks Ok button to confirm the deletion
-# Then the user doesn't view the application in the application grid
+    When the user clicks "edit" button for "autotest-addApp"
+    Then the user views "autotest-addApp" as name and "autotest-addApp" as description fields
+    Then the user enters "autotest-addApp Edited" as name and "autotest-addApp Edited" as description fields
+    And the user clicks save application button
+    Then the user views modified "autotest-addApp Edited" application name in the application list
+    When the user clicks "delete" button for "autotest-addApp Edited"
+    Then the user views confirmation modal to delete "autotest-addApp Edited"
+    And the user clicks Yes to Confirm deletion
+    Then the user should not view "autotest-addApp Edited" application in the application list
+
