@@ -89,7 +89,7 @@ const FileRoleTable = (props: FileRoleTableProps): JSX.Element => {
           <tr>
             <th id="file-type-roles">Roles</th>
             <th id="read-role-action">Read</th>
-            <th id="write-role-action">Write</th>
+            <th id="write-role-action">Modify</th>
           </tr>
         </thead>
 
