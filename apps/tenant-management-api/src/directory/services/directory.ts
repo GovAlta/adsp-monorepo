@@ -126,6 +126,7 @@ export const getDirectories = async (
     const response = [];
     // FIXME: using this repository with dependency injection make this impossible to test
     const result = await directoryRepository.find(100, null, null);
+
     const directories = result.results;
     if (directories && directories.length > 0) {
       for (const directory of directories) {
