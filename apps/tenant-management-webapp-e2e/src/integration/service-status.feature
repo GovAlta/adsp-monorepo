@@ -122,5 +122,21 @@ Feature: Service status
     Examples:
       | Description           | Application | Start Date | Start Time | End Date | End Time | Description2               | Application2 | Start Date 2 | Start Time 2 | End Date 2 | End Time 2 |
       | Autotest-NewAllNotice | All         | Today      | 12:00 am   | Today    | 12:00 am | Autotest-ModifiedAllNotice | Autotest     | Today        | 10:00 am     | Today      | 02:00 pm   |
-      
 
+  @TEST_CS-339 @REQ_CS-169 @regression
+  Scenario: As a tenant admin user, I can add/edit/delete an application
+    Given a tenant admin user is on status applications page
+    When the user clicks Add Application button
+    Then the user views Add application modal
+    When the user enters "autotest-addApp" as name and "autotest-addApp" as description and "https://tenant-management-webapp-adsp-dev.apps.aro.gov.ab.ca/" as endpoint
+    And the user clicks save application button
+    Then the user views "autotest-addApp" in the application list
+    When the user clicks "edit" button for "autotest-addApp"
+    Then the user views "autotest-addApp" as name and "autotest-addApp" as description fields
+    Then the user enters "autotest-addApp Edited" as name and "autotest-addApp Edited" as description fields
+    And the user clicks save application button
+    Then the user views modified "autotest-addApp Edited" application name in the application list
+    When the user clicks "delete" button for "autotest-addApp Edited"
+    Then the user views confirmation modal to delete "autotest-addApp Edited"
+    And the user clicks Yes to Confirm deletion
+    Then the user should not view "autotest-addApp Edited" application in the application list
