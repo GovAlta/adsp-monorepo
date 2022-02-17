@@ -52,7 +52,11 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     if (!this.enabled) {
       return 'stopped';
     }
-    return EndpointToInternalStatusMapping[this.endpoint.status] as InternalServiceStatusType;
+    if (this.endpoint.status in EndpointToInternalStatusMapping) {
+      return EndpointToInternalStatusMapping[this.endpoint.status] as InternalServiceStatusType;
+    } else {
+      return 'pending';
+    }
   }
 
   update(user: User, update: Update<ServiceStatusApplication>): Promise<ServiceStatusApplicationEntity> {
