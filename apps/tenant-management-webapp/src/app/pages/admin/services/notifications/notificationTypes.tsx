@@ -43,6 +43,7 @@ import {
 } from './emailPreviewEditor/styled-components';
 import { TemplateEditor } from './emailPreviewEditor/TemplateEditor';
 import { PreviewTemplate } from './emailPreviewEditor/PreviewTemplate';
+import { dynamicGeneratePayload } from '@lib/dynamicPlaceHolder';
 
 const emptyNotificationType: NotificationItem = {
   name: '',
@@ -69,26 +70,60 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [coreEvent, setCoreEvent] = useState(false);
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const [showEmailPreview, setShowEmailPreview] = useState(false);
+  const [templateEditErrors, setTemplateEditErrors] = useState({
+    subject: '',
+    body: '',
+  });
+  const syntaxErrorMessage = 'Cannot render the code, please fix the syntax error in the input field';
   const notification = useSelector((state: RootState) => state.notification);
   const coreNotification = useSelector((state: RootState) => state.notification.core);
   const [formTitle, setFormTitle] = useState<string>('');
 
-  const [subject, setSubject] = useState('asd');
-  const [body, setBody] = useState('asd');
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('');
 
   const [subjectPreview, setSubjectPreview] = useState('');
   const [bodyPreview, setBodyPreview] = useState('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
+  const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
+  const eventDef = eventDefinitions[`${selectedEvent?.namespace}:${selectedEvent?.name}`];
+
+  const htmlPayload = dynamicGeneratePayload(eventDef);
+  const serviceName = `${selectedEvent?.namespace}:${selectedEvent?.name}`;
 
   useEffect(() => {
     // if an event is selected for editing
     if (selectedEvent) {
       setSubject(selectedEvent?.templates?.email?.subject);
       setBody(selectedEvent?.templates?.email?.body);
-      setSubjectPreview(selectedEvent?.templates?.email?.subject);
-      setBodyPreview(selectedEvent?.templates?.email?.body);
+      // try to render preview of subject and body.
+      // Will only load if the subject and body is a valid handlebar template
+      try {
+        setBodyPreview(generateMessage(getTemplateBody(selectedEvent?.templates?.email?.body), htmlPayload));
+        setTemplateEditErrors({
+          ...templateEditErrors,
+          body: '',
+        });
+      } catch (e) {
+        setTemplateEditErrors({
+          ...templateEditErrors,
+          body: syntaxErrorMessage,
+        });
+      }
+      try {
+        setSubjectPreview(generateMessage(selectedEvent?.templates?.email?.subject, htmlPayload));
+        setTemplateEditErrors({
+          ...templateEditErrors,
+          subject: '',
+        });
+      } catch (e) {
+        setTemplateEditErrors({
+          ...templateEditErrors,
+          subject: syntaxErrorMessage,
+        });
+      }
     }
   }, [selectedEvent]);
 
@@ -103,8 +138,15 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     }
   }, [notification?.notificationTypes]);
 
+  function resetEventEditorForm() {
+    setTemplateEditErrors({
+      subject: '',
+      body: '',
+    });
+  }
   function reset() {
     setShowTemplateForm(false);
+    setEventTemplateFormState(addNewEventTemplateContent);
     setEditType(false);
     setEditEvent(null);
     setSelectedType(emptyNotificationType);
@@ -186,11 +228,15 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     if (subject.length === 0 || body.length === 0) {
       return false;
     }
+    if (templateEditErrors.subject || templateEditErrors.body) {
+      return false;
+    }
     try {
       handlebars.parse(body);
       handlebars.parse(subject);
       return true;
     } catch (e) {
+      console.error(e);
       return false;
     }
   };
@@ -213,7 +259,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         <GoAButton
           data-testid="add-notification"
           onClick={() => {
-            setSelectedType(null);
+            setSelectedType(emptyNotificationType);
             setEditType(true);
             setFormTitle('Add notification type');
           }}
@@ -433,6 +479,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                 onClick={() => {
                                   setSelectedEvent(event);
                                   setSelectedType(notificationType);
+                                  setEventTemplateFormState(editEventTemplateContent);
                                   setShowTemplateForm(true);
                                   setCoreEvent(true);
                                 }}
@@ -508,7 +555,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               const updatedEvents = selectedType.events.filter(
                 (event) =>
                   `${event.namespace}:${event.name}` !== `${selectedEvent.namespace}:${selectedEvent.name}` &&
-                  event.customized
+                  (!coreEvent || event.customized)
               );
 
               const newType = JSON.parse(JSON.stringify(selectedType));
@@ -580,24 +627,63 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               mainTitle={eventTemplateFormState.mainTitle}
               subjectTitle="Subject"
               subject={subject}
+              serviceName={serviceName}
               onSubjectChange={(value) => {
                 setSubject(value);
-                debouncedSaveSubjectPreview(value);
+                try {
+                  const generatedSubjectPreview = generateMessage(value, htmlPayload);
+                  if (generatedSubjectPreview) {
+                    debouncedSaveSubjectPreview(generatedSubjectPreview);
+                    setTemplateEditErrors({
+                      ...templateEditErrors,
+                      subject: '',
+                    });
+                  }
+                } catch (e) {
+                  console.error('handlebar error', e);
+                  setTemplateEditErrors({
+                    ...templateEditErrors,
+                    subject: syntaxErrorMessage,
+                  });
+                }
               }}
               subjectEditorConfig={subjectEditorConfig}
               bodyTitle="Body"
               onBodyChange={(value) => {
                 setBody(value);
-                debouncedSaveBodyPreview(value);
+                try {
+                  const generatedBodyPreview = generateMessage(getTemplateBody(value), htmlPayload);
+                  if (generatedBodyPreview) {
+                    debouncedSaveBodyPreview(generatedBodyPreview);
+                    setTemplateEditErrors({
+                      ...templateEditErrors,
+                      body: '',
+                    });
+                  }
+                } catch (e) {
+                  console.error('handlebar error', e);
+                  setTemplateEditErrors({
+                    ...templateEditErrors,
+                    body: syntaxErrorMessage,
+                  });
+                }
               }}
               body={body}
               bodyEditorConfig={bodyEditorConfig}
+              errors={templateEditErrors}
               bodyEditorHintText={eventTemplateEditHintText}
               actionButtons={
                 <>
                   <GoAButton
                     onClick={() => {
+                      // while editing existing event, clear the event on cancel so the changes did are discarded and not saved in local state
+                      if (eventTemplateFormState.cancelOrBackActionText === 'Cancel') {
+                        setSelectedEvent(null);
+                      }
+                      setSubject('');
+                      setBody('');
                       setShowTemplateForm(false);
+                      resetEventEditorForm();
                       setEventTemplateFormState(addNewEventTemplateContent);
                     }}
                     data-testid="template-form-cancel"
@@ -623,7 +709,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 subjectTitle="Subject"
                 emailTitle="Email preview"
                 subjectPreviewContent={DOMPurify.sanitize(subjectPreview)}
-                emailPreviewContent={DOMPurify.sanitize(generateMessage(getTemplateBody(bodyPreview), {}))}
+                emailPreviewContent={DOMPurify.sanitize(bodyPreview)}
               />
             </PreviewTemplateContainer>
           </NotificationTemplateEditorContainer>

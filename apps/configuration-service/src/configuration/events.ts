@@ -15,6 +15,13 @@ export const ConfigurationUpdatedDefinition: DomainEventDefinition = {
       revision: {
         type: 'number',
       },
+      update: {
+        type: 'object',
+        properties: {
+          operation: { type: 'string' },
+          data: {},
+        },
+      },
       updatedBy: {
         type: 'object',
         properties: {
@@ -57,7 +64,8 @@ export const configurationUpdated = (
   tenantId: AdspId,
   namespace: string,
   name: string,
-  revision: number
+  revision: number,
+  update: { operation: string; data: unknown }
 ): DomainEvent => ({
   name: 'configuration-updated',
   timestamp: new Date(),
@@ -71,6 +79,7 @@ export const configurationUpdated = (
     namespace,
     name,
     revision,
+    update,
     updatedBy: {
       name: updatedBy.name,
       id: updatedBy.id,
