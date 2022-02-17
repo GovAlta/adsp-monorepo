@@ -355,7 +355,7 @@ Given('a tenant admin user is on status applications page', function () {
   );
   commonlib.tenantAdminMenuItem('Status', 4000);
   commonObj.serviceTab('Service status', 'Applications').click();
-  cy.wait(10000); // Applications page is slow to load applications and healt check info
+  cy.wait(2000); // Applications page is slow to load applications and healt check info
 });
 
 When('the user {string} the subscribe checkbox for health check notification type', function (checkboxOperation) {
@@ -430,16 +430,38 @@ When(
 
 Then('the user clicks save application button', function () {
   statusObj.addApplicationSaveBtn().click();
+  cy.wait(2000);
 });
 
 Then('the user views {string} in the application list', function (appName) {
   statusObj.applicationList().contains(appName);
 });
 
-When('the user clicks edit button of', function () {
-  statusObj.applicationListEditBtn().click();
+Then('simple delete {string}', function (appName) {
+  statusObj.applicationList().contains(appName);
+  statusObj.applicationListDeleteBtn().click();
 });
 
-When('the user clicks delete button', function () {
-  statusObj.applicationListDeleteBtn().focus().click();
+When('the user clicks {string} button for {string}', function (buttonType, appName) {
+  switch (buttonType) {
+    case 'edit':
+      statusObj.applicationList().contains(appName);
+      statusObj.applicationListEditBtn().click();
+      break;
+    case 'delete':
+      statusObj.applicationList().contains(appName);
+      statusObj.applicationListDeleteBtn().click({ force: true });
+      break;
+    default:
+      expect(buttonType).to.be.oneOf(['edit', 'delete']);
+  }
+});
+
+Then('the user views confirmation modal to delete {string}', function (appName) {
+  statusObj.applicationDeleteConfirmationModalTitle().contains('Confirmation');
+  statusObj.applicationDeleteConfirmationModalContent().contains(appName);
+});
+
+Then('the user clicks Yes to Confirm deletion', function () {
+  statusObj.applicationDeleteConfirmationModalYesBtn().click({ force: true });
 });
