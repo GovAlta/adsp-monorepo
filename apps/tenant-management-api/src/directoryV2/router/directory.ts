@@ -40,7 +40,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
    */
   directoryRouter.get('/namespace/:namespace', async (req: Request, res: Response, _next) => {
     const { namespace } = req.params;
-    let results = directoryCache.get(`directory-${namespace}`);
+    const results = directoryCache.get(`directory-${namespace}`);
     if (results) {
       res.json(results);
     } else {
