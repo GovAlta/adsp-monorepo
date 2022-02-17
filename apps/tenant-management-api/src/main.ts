@@ -60,9 +60,6 @@ async function initializeApp(): Promise<express.Application> {
       directory: {
         getServiceUrl: (serviceId) => directoryService.getServiceUrl(repositories.directoryRepository, serviceId),
         getResourceUrl: (resourceId) => directoryService.getResourceUrl(repositories.directoryRepository, resourceId),
-        // getService2Url: (serviceId) => directoryV2Service.getService2Url(repositories.directoryRepository, serviceId),
-        // getResource2Url: (resourceId) =>
-        //   directoryV2Service.getResource2Url(repositories.directoryRepository, resourceId),
       },
       tenantService: {
         getTenant: (tenantId) => tenantService.getTenant(repositories.tenantRepository, tenantId),

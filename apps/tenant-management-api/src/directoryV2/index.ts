@@ -1,5 +1,3 @@
-export { bootstrapV2Directory } from './bootstrap';
-
 import { Logger } from 'winston';
 export * from '../directory/types';
 export * from '../directory/repository';
@@ -25,7 +23,7 @@ export const applyDirectoryV2Middleware = (
 
   const directoryRouter = createDirectoryRouter(directoryRouterProps);
 
-  app.use('/api/directory/v2', passportMiddleware, directoryRouter);
+  app.use('/api/directory/v2', directoryRouter);
 
   return app;
 };
