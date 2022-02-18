@@ -446,3 +446,10 @@ Then('the user views the subscribe checkbox is {string}', function (checkboxStat
       }
     });
 });
+
+Then(
+  'the user views the Directory service overview content {string}, {string}, {string}, {string}',
+  function (overviewText, helptext, support, link) {
+    statusObj.directoryOverviewContent(overviewText, helptext, support, link);
+  }
+);
