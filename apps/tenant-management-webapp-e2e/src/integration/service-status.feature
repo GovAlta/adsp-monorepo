@@ -126,10 +126,9 @@ Feature: Service status
       | Autotest-NewAllNotice | All         | Today      | 12:00 am   | Today    | 12:00 am | Autotest-ModifiedAllNotice | Autotest     | Today        | 10:00 am     | Today      | 02:00 pm   |
 
   @TEST_CS-1104 @REQ_CS-1091 @regression
-  Scenario: As a tenant admin, I can subscribe to health check notification type
+  Scenario: As a tenant admin, I can see the Directory service overview
     Given a service owner user is on tenant admin page
     When the user selects the "Directory" menu item
     Then the user views the Directory service overview content "The directory service is a registry of services and their APIs", "Helpful links", "Support", "Get support"
-
     When the user selects "Services" tab for "Directory"
 # Then the user views the services with their health endpoints for the Platform namespace
