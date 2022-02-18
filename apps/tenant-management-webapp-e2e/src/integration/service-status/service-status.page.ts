@@ -172,12 +172,12 @@ class StatusServicePage {
   }
 
   applicationListEditBtn(appName) {
-    return cy.xpath(`(//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//*[name()="svg"]`);
+    return cy.xpath(`//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//*[name()="svg"]`);
   }
 
   applicationListDeleteBtn(appName) {
     return cy.xpath(
-      `(//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//div[@data-testid='icon-trash']`
+      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//div[@data-testid="icon-trash"]`
     );
   }
 
