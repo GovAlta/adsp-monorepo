@@ -128,15 +128,16 @@ Feature: Service status
     Given a tenant admin user is on status applications page
     When the user clicks Add Application button
     Then the user views Add application modal
-    When the user enters "autotest-addApp" as name and "autotest-addApp" as description and "https://tenant-management-webapp-adsp-dev.apps.aro.gov.ab.ca/" as endpoint
+    When the user enters "Autotest-addApp" as name and "Autotest-addApp" as description and "https://tenant-management-webapp-adsp-dev.apps.aro.gov.ab.ca/" as endpoint
     And the user clicks save application button
-    Then the user views "autotest-addApp" in the application list
-    When the user clicks "edit" button for "autotest-addApp"
-    Then the user views "autotest-addApp" as name and "autotest-addApp" as description fields
-    Then the user enters "autotest-addApp Edited" as name and "autotest-addApp Edited" as description fields
+    Then the user "views" "Autotest-addApp" in the application list
+    When the user clicks "Edit" button for "Autotest-addApp"
+    Then the user views "Autotest-addApp" as name and "Autotest-addApp" as description in the modal fields
+    Then the user enters "Autotest-addApp Edited" as name and "Autotest-addApp Edited" as description fields
     And the user clicks save application button
-    Then the user views modified "autotest-addApp Edited" application name in the application list
-    When the user clicks "delete" button for "autotest-addApp Edited"
-    Then the user views confirmation modal to delete "autotest-addApp Edited"
+    Then the user "views" "Autotest-addApp Edited" in the application list
+    When the user clicks "Delete" button for "Autotest-addApp"
+    Then the user views confirmation modal to delete "Autotest-addApp"
     And the user clicks Yes to Confirm deletion
-    Then the user should not view "autotest-addApp Edited" application in the application list
+    Then the user "should not view" "Autotest-addApp Edited" in the application list
+
