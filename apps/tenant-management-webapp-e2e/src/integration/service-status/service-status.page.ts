@@ -141,5 +141,4 @@ class StatusServicePage {
     return cy.xpath('//*[@class="goa-checkbox"]//*[@name="subscribe"]/parent::div');
   }
 }
-
 export default StatusServicePage;
