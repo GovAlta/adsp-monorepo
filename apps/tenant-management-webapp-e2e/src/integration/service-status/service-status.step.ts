@@ -470,11 +470,6 @@ Then('the user {string} {string} in the application list', function (viewOrNot, 
   }
 });
 
-Then('simple test {string}', function (appName) {
-  statusObj.applicationListEditBtn(appName).click();
-  cy.wait(2000);
-});
-
 When('the user clicks {string} button for {string}', function (buttonType, appName) {
   switch (buttonType) {
     case 'Edit':
@@ -482,7 +477,7 @@ When('the user clicks {string} button for {string}', function (buttonType, appNa
       cy.wait(2000);
       break;
     case 'Delete':
-      statusObj.applicationListDeleteBtn(appName).click({ force: true });
+      statusObj.applicationListDeleteBtn(appName).first().click({ force: true });
       cy.wait(2000);
       break;
     default:
