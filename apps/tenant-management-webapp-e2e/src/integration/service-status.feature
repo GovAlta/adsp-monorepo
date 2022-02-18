@@ -125,3 +125,10 @@ Feature: Service status
       | Description           | Application | Start Date | Start Time | End Date | End Time | Description2               | Application2 | Start Date 2 | Start Time 2 | End Date 2 | End Time 2 |
       | Autotest-NewAllNotice | All         | Today      | 12:00 am   | Today    | 12:00 am | Autotest-ModifiedAllNotice | Autotest     | Today        | 10:00 am     | Today      | 02:00 pm   |
 
+  @TEST_CS-1104 @REQ_CS-1091 @regression
+  Scenario: As a tenant admin, I can subscribe to health check notification type
+    Given a service owner user is on tenant admin page
+    When the user selects the "Directory" menu item
+    Then the user views the Directory service overview content
+    When the user selects "Services" tab for "Directory"
+    Then the user views the services with their health endpoints for the Platform namespace
