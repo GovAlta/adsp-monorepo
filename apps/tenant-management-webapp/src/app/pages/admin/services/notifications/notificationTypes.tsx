@@ -44,6 +44,7 @@ import {
 import { TemplateEditor } from './emailPreviewEditor/TemplateEditor';
 import { PreviewTemplate } from './emailPreviewEditor/PreviewTemplate';
 import { dynamicGeneratePayload } from '@lib/dynamicPlaceHolder';
+import { convertEventToSuggestion } from '@lib/autoComplete';
 
 const emptyNotificationType: NotificationItem = {
   name: '',
@@ -92,6 +93,12 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   const htmlPayload = dynamicGeneratePayload(eventDef);
   const serviceName = `${selectedEvent?.namespace}:${selectedEvent?.name}`;
+  const getEventSuggestion = () => {
+    if (eventDef) {
+      return convertEventToSuggestion(eventDef);
+    }
+    return [];
+  };
 
   useEffect(() => {
     // if an event is selected for editing
@@ -672,6 +679,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               bodyEditorConfig={bodyEditorConfig}
               errors={templateEditErrors}
               bodyEditorHintText={eventTemplateEditHintText}
+              eventSuggestion={getEventSuggestion()}
               actionButtons={
                 <>
                   <GoAButton
