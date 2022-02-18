@@ -4,13 +4,14 @@ export type PublicServiceStatusType = 'operational' | 'reported-issues' | 'maint
 
 export type ServiceStatusType = InternalServiceStatusType | PublicServiceStatusType;
 
-export type EndpointStatusType = 'online' | 'offline' | 'pending' | 'disabled';
+export type EndpointStatusType = 'online' | 'offline' | 'n/a' | 'pending';
 
 export const EndpointToInternalStatusMapping = {
+  'n/a': 'pending',
   pending: 'pending',
   offline: 'unhealthy',
-  online: 'healthy'
-}
+  online: 'healthy',
+};
 export interface ServiceStatusApplication {
   _id?: string;
   description: string;

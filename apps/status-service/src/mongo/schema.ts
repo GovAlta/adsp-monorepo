@@ -66,10 +66,6 @@ export const serviceStatusApplicationSchema = new Schema(
     status: {
       type: String,
     },
-    internalStatus: {
-      type: String,
-      default: 'disabled',
-    },
     enabled: {
       type: Boolean,
     },

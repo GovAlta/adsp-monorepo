@@ -58,6 +58,7 @@ const CreateRealm = (): JSX.Element => {
     return (
       <div>
         <GoANotification type="information" title="Notification Title" message={message} />
+        <br />
         <GoAButton
           onClick={() => {
             dispatch(TenantLogout());
