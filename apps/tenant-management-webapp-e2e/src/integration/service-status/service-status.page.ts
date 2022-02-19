@@ -164,33 +164,33 @@ class StatusServicePage {
   }
 
   addApplicationSaveBtn() {
-    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//button[2]');
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//button[text()="Save"');
   }
 
-  applicationList(appName) {
+  applicationCardTitle(appName) {
     return cy.xpath(`//*[@data-testid="application"]//div[contains(text(), "${appName}")]`);
   }
 
-  applicationListEditBtn(appName) {
+  applicationCardEditBtn(appName) {
     return cy.xpath(`//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//*[name()="svg"]`);
   }
 
-  applicationListDeleteBtn(appName) {
+  applicationCardDeleteBtn(appName) {
     return cy.xpath(
       `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//div[@data-testid="icon-trash"]`
     );
   }
 
   applicationDeleteConfirmationModalTitle() {
-    return cy.xpath('//div[@class="modal-container"]/div[@class="modal-title"]');
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//div[@class="modal-title"]');
   }
 
   applicationDeleteConfirmationModalContent() {
-    return cy.xpath('//div[@class="modal-container"]/div[@class="goa-scrollable"]');
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]/div[@class="goa-scrollable"]');
   }
 
   applicationDeleteConfirmationModalYesBtn() {
-    return cy.xpath(`//div[contains(@data-state,'visible')]//button[contains(@class,'')][normalize-space()='Yes']`);
+    return cy.xpath('//div[@Class="modal-root" and @data-state="visible"]//button[text()="Yes"]');
   }
 }
 export default StatusServicePage;

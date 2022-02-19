@@ -440,7 +440,7 @@ When('the user clicks Add Application button', function () {
 });
 
 Then('the user views Add application modal', function () {
-  statusObj.addApplicationModalTitle().click();
+  statusObj.addApplicationModalTitle().invoke('text').should('eq', 'Add application');
 });
 
 When(
@@ -460,10 +460,10 @@ Then('the user clicks save application button', function () {
 Then('the user {string} {string} in the application list', function (viewOrNot, appName) {
   switch (viewOrNot) {
     case 'views':
-      statusObj.applicationList(appName).should('exist');
+      statusObj.applicationCardTitle(appName).should('exist');
       break;
     case 'should not view':
-      statusObj.applicationList(appName).should('not.exist');
+      statusObj.applicationCardTitle(appName).should('not.exist');
       break;
     default:
       expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
@@ -473,12 +473,10 @@ Then('the user {string} {string} in the application list', function (viewOrNot, 
 When('the user clicks {string} button for {string}', function (buttonType, appName) {
   switch (buttonType) {
     case 'Edit':
-      statusObj.applicationListEditBtn(appName).click();
-      cy.wait(2000);
+      statusObj.applicationCardEditBtn(appName).click();
       break;
     case 'Delete':
-      statusObj.applicationListDeleteBtn(appName).first().click({ force: true });
-      cy.wait(2000);
+      statusObj.applicationCardDeleteBtn(appName).first().click();
       break;
     default:
       expect(buttonType).to.be.oneOf(['edit', 'delete']);
@@ -491,7 +489,7 @@ Then('the user views confirmation modal to delete {string}', function (appName) 
 });
 
 Then('the user clicks Yes to Confirm deletion', function () {
-  statusObj.applicationDeleteConfirmationModalYesBtn().click({ force: true });
+  statusObj.applicationDeleteConfirmationModalYesBtn().click();
 });
 
 Then(
@@ -512,7 +510,7 @@ Then(
   }
 );
 
-Then('the user enters {string} as name and {string} as description fields', function (appName, description) {
+When('the user enters {string} as name and {string} as description fields', function (appName, description) {
   statusObj.addApplicationNameModalField().clear().type(appName);
   statusObj.addApplicationDescriptionModalField().clear().type(description);
 });
