@@ -186,7 +186,7 @@ class StatusServicePage {
   }
 
   applicationDeleteConfirmationModalContent() {
-    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]/div[@class="goa-scrollable"]');
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//div[@class="goa-scrollable"]');
   }
 
   applicationDeleteConfirmationModalYesBtn() {
