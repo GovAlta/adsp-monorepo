@@ -446,10 +446,15 @@ Then('the user views the subscribe checkbox is {string}', function (checkboxStat
       }
     });
 });
-
+//LD
 Then(
   'the user views the Directory service overview content {string}, {string}, {string}, {string}',
   function (overviewText, helptext, support, link) {
     statusObj.directoryOverviewContent(overviewText, helptext, support, link);
   }
 );
+
+Then('the user views the services with their health endpoints for the Platform namespace', function () {
+  statusObj.directoryTable().should('exist');
+  cy.get('[data-testid="directory-table-header"]');
+});
