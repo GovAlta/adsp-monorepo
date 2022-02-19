@@ -243,8 +243,8 @@ Then('the user views {string} notices', function (filterType) {
 });
 
 Then(
-  'the user {string} the gear icon for the {string} notice of {string}, {string}, {string}, {string}, {string}, {string}',
-  function (viewOrNot, mode, desc, app, startDate, startTime, endDate, endTime) {
+  'the user should not view {string} for the {string} notice of {string}, {string}, {string}, {string}, {string}, {string}',
+  function (menu, mode, desc, app, startDate, startTime, endDate, endTime) {
     let startDateTime;
     let endDateTime;
     if (startDate == 'Today' && endDate == 'Today') {
@@ -277,7 +277,19 @@ Then(
     }
     searchNoticeCards(mode, desc, app, startDateTime, endDateTime).then((index) => {
       expect(index).to.not.equal(0);
-      statusObj.noticeCardGearButton(index).should('not.exist');
+      switch (menu) {
+        case 'gear icon':
+          statusObj.noticeCardGearButton(index).should('not.exist');
+          break;
+        case 'edit menu':
+          statusObj.noticeCardEditMenu(index).should('not.exist');
+          break;
+        case 'delete menu':
+          statusObj.noticeCardDeleteMenu(index).should('not.exist');
+          break;
+        default:
+          expect(menu).to.be.oneOf(['gear icon', 'edit menu', 'delete menu']);
+      }
     });
   }
 );
