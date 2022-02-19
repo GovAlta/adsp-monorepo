@@ -435,7 +435,7 @@ Then('the user views the subscribe checkbox is {string}', function (checkboxStat
     });
 });
 
-When('the user clicks Add Application button', function () {
+When('the user clicks Add application button', function () {
   statusObj.addApplicationButton().click();
 });
 
@@ -452,7 +452,7 @@ When(
   }
 );
 
-Then('the user clicks save application button', function () {
+Then('the user clicks Save application button', function () {
   statusObj.addApplicationSaveBtn().click();
   cy.wait(4000);
 });
