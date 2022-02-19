@@ -164,7 +164,7 @@ class StatusServicePage {
   }
 
   addApplicationSaveBtn() {
-    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//button[text()="Save"');
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//button[text()="Save"]');
   }
 
   applicationCardTitle(appName) {
