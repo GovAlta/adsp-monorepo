@@ -90,7 +90,7 @@ data:
           "tenantByName": "/api/tenant/v1/name",
           "tenantByEmail": "/api/tenant/v1/email",
           "tenantConfig": "/api/configuration/v1/tenantConfig",
-          "directory": "/api/discovery/v1"
+          "directory": "/api/directory/v2/namespace/platform"
         }
       },
       "fileApi": {
