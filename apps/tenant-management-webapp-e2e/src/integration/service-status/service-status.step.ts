@@ -488,7 +488,7 @@ When('the user clicks {string} button for {string}', function (buttonType, appNa
       statusObj.applicationCardEditBtn(appName).click();
       break;
     case 'Delete':
-      statusObj.applicationCardDeleteBtn(appName).first().click();
+      statusObj.applicationCardDeleteBtn(appName).click();
       break;
     default:
       expect(buttonType).to.be.oneOf(['edit', 'delete']);
@@ -500,7 +500,7 @@ Then('the user views confirmation modal to delete {string}', function (appName) 
   statusObj.applicationDeleteConfirmationModalContent().contains(appName);
 });
 
-Then('the user clicks Yes to Confirm deletion', function () {
+When('the user clicks Yes to Confirm deletion', function () {
   statusObj.applicationDeleteConfirmationModalYesBtn().click();
 });
 
@@ -525,4 +525,8 @@ Then(
 When('the user append both name description with Edited', function () {
   statusObj.addApplicationNameModalField().type('{end} Edited');
   statusObj.addApplicationDescriptionModalField().type('{end} Edited');
+});
+When('the user enters {string} as name and {string} as description fields', function (appName, description) {
+  statusObj.addApplicationNameModalField().clear().type(appName);
+  statusObj.addApplicationDescriptionModalField().clear().type(description);
 });
