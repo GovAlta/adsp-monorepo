@@ -134,4 +134,4 @@ Feature: Service status
     And the user views the Overview list item "Support"
     And the user views the Overview list item "Get support"
     When the user selects "Services" tab for "Directory"
-    Then the user views the services with their health endpoints for the Platform namespace
+    Then the user views "file-service" and "https://file-service.adsp-dev.gov.ab.ca"
