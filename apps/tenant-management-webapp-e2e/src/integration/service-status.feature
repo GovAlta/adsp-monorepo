@@ -135,7 +135,6 @@ Feature: Service status
     Then the user "views" "Autotest-addApp" in the application list
     When the user clicks "Edit" button for "Autotest-addApp"
     Then the user views "Autotest-addApp" as name and "Autotest-addApp" as description in the modal fields
-    # When the user append both name description with Edited
     When the user enters "Autotest-addApp Edited" as name and "Autotest-addApp Edited" as description fields
     And the user clicks Save application button
     Then the user "views" "Autotest-addApp Edited" in the application list

@@ -522,10 +522,6 @@ Then(
   }
 );
 
-When('the user append both name description with Edited', function () {
-  statusObj.addApplicationNameModalField().type('{end} Edited');
-  statusObj.addApplicationDescriptionModalField().type('{end} Edited');
-});
 When('the user enters {string} as name and {string} as description fields', function (appName, description) {
   statusObj.addApplicationNameModalField().clear().type(appName);
   statusObj.addApplicationDescriptionModalField().clear().type(description);
