@@ -129,6 +129,9 @@ Feature: Service status
   Scenario: As a tenant admin, I can see the Directory service overview
     Given a service owner user is on tenant admin page
     When the user selects the "Directory" menu item
-    Then the user views the Directory service overview content "The directory service is a registry of services and their APIs", "Helpful links", "Support", "Get support"
+    Then the user views the Directory service overview content "The directory service is a registry of services and their APIs"
+    And the user views the Overview list item "Helpful links"
+    And the user views the Overview list item "Support"
+    And the user views the Overview list item "Get support"
     When the user selects "Services" tab for "Directory"
-# Then the user views the services with their health endpoints for the Platform namespace
+    Then the user views the services with their health endpoints for the Platform namespace

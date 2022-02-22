@@ -140,12 +140,15 @@ class StatusServicePage {
   applicationHealthChangeNotificationSubscribeCheckbox() {
     return cy.xpath('//*[@class="goa-checkbox"]//*[@name="subscribe"]/parent::div');
   }
-  //LD break it down to single line
-  directoryOverviewContent(text1, text2, link, text3) {
-    cy.xpath(`//*[contains(text(), "${text1}")]`);
-    cy.xpath(`//*[contains(text(), "${text2}")]/following-sibling::a[contains(text(), ${link})]`);
-    cy.xpath(`//*[contains(text(), "${text3}")]`);
+  //LD
+  directoryOverviewContent(text) {
+    cy.xpath(`//*[contains(text(), "${text}")]`);
   }
+
+  directoryOverviewList(text) {
+    cy.xpath(`//*[contains(text(), "${text}")]`);
+  }
+
   directoryTable() {
     return cy.get('[data-testid="directory-table"]');
   }

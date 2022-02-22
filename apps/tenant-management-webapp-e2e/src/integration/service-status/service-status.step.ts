@@ -447,12 +447,13 @@ Then('the user views the subscribe checkbox is {string}', function (checkboxStat
     });
 });
 //LD
-Then(
-  'the user views the Directory service overview content {string}, {string}, {string}, {string}',
-  function (overviewText, helptext, support, link) {
-    statusObj.directoryOverviewContent(overviewText, helptext, support, link);
-  }
-);
+Then('the user views the Directory service overview content {string}', function (overviewText) {
+  statusObj.directoryOverviewContent(overviewText);
+});
+
+Then('the user views the Overview list item {string}', function (listitem) {
+  statusObj.directoryOverviewList(listitem);
+});
 
 Then('the user views the services with their health endpoints for the Platform namespace', function () {
   statusObj.directoryTable().should('exist');
