@@ -446,7 +446,7 @@ Then('the user views the subscribe checkbox is {string}', function (checkboxStat
       }
     });
 });
-//LD
+
 Then('the user views the Directory service overview content {string}', function (overviewText) {
   statusObj.directoryOverviewContent(overviewText);
 });
