@@ -455,7 +455,6 @@ Then('the user views the Overview list item {string}', function (listitem) {
   statusObj.directoryOverviewList(listitem);
 });
 
-Then('the user views the services with their health endpoints for the Platform namespace', function () {
-  statusObj.directoryTable().should('exist');
-  cy.get('[data-testid="directory-table-header"]');
+Then('the user views {string} and {string}', function (name, url) {
+  statusObj.directoryTable().contains('td', name).should('be.visible').siblings().contains(url).should('be.visible');
 });
