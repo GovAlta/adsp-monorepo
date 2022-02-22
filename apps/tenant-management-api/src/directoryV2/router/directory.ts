@@ -38,7 +38,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
   /**
    * Get all of directories
    */
-  directoryRouter.get('/namespace/:namespace', async (req: Request, res: Response, _next) => {
+  directoryRouter.get('/namespaces/:namespace', async (req: Request, res: Response, _next) => {
     const { namespace } = req.params;
     const results = directoryCache.get(`directory-${namespace}`);
     if (results) {
