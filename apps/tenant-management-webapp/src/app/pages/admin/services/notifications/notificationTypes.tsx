@@ -7,14 +7,9 @@ import { EventModalForm } from './editEvent';
 import { IndicatorWithDelay } from '@components/Indicator';
 import debounce from 'lodash.debounce';
 import * as handlebars from 'handlebars/dist/cjs/handlebars';
+import { DeleteModal } from '@components/DeleteModal';
 
-import {
-  GoAModal,
-  GoAModalActions,
-  GoAModalContent,
-  GoAModalTitle,
-  GoAIcon,
-} from '@abgov/react-components/experimental';
+import { GoAIcon } from '@abgov/react-components/experimental';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { isDuplicatedNotificationName } from './validation';
 import { NotificationType } from '@store/notification/models';
@@ -506,81 +501,60 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         ))}
       {notification.notificationTypes === undefined && <IndicatorWithDelay message="Loading..." pageLock={false} />}
       {/* Delete confirmation */}
-      <GoAModal testId="delete-confirmation" isOpen={showDeleteConfirmation}>
-        <GoAModalTitle>Delete notification type</GoAModalTitle>
-        <GoAModalContent>Delete {selectedType?.name}?</GoAModalContent>
-        <GoAModalActions>
-          <GoAButton
-            buttonType="tertiary"
-            data-testid="delete-cancel"
-            onClick={() => {
-              setShowDeleteConfirmation(false);
-              setSelectedType(emptyNotificationType);
-            }}
-          >
-            Cancel
-          </GoAButton>
 
-          <GoAButton
-            buttonType="primary"
-            data-testid="delete-confirm"
-            onClick={() => {
-              setShowDeleteConfirmation(false);
-              dispatch(DeleteNotificationTypeService(selectedType));
-              setSelectedType(emptyNotificationType);
-            }}
-          >
-            Confirm
-          </GoAButton>
-        </GoAModalActions>
-      </GoAModal>
+      {showDeleteConfirmation && (
+        <DeleteModal
+          isOpen={showDeleteConfirmation}
+          title="Delete a notification"
+          content={`Delete ${selectedType?.name}?`}
+          onCancel={() => {
+            setShowDeleteConfirmation(false);
+            setSelectedType(emptyNotificationType);
+          }}
+          onDelete={() => {
+            setShowDeleteConfirmation(false);
+            dispatch(DeleteNotificationTypeService(selectedType));
+            setSelectedType(emptyNotificationType);
+          }}
+        />
+      )}
       {/* Event delete confirmation */}
-      <GoAModal testId="event-delete-confirmation" isOpen={showEventDeleteConfirmation}>
-        <GoAModalTitle>{coreEvent ? 'Reset email template' : 'Remove event'} </GoAModalTitle>
-        <GoAModalContent>
-          {coreEvent
-            ? 'Remove custom email template modifications'
-            : `Remove ${selectedEvent?.namespace}:${selectedEvent?.name}`}
-        </GoAModalContent>
-        <GoAModalActions>
-          <GoAButton
-            buttonType="tertiary"
-            data-testid="event-delete-cancel"
-            onClick={() => {
-              setShowEventDeleteConfirmation(false);
-              setSelectedType(emptyNotificationType);
-              setCoreEvent(false);
-            }}
-          >
-            Cancel
-          </GoAButton>
-          <GoAButton
-            buttonType="primary"
-            data-testid="event-delete-confirm"
-            onClick={() => {
-              setShowEventDeleteConfirmation(false);
-              const updatedEvents = selectedType.events.filter(
-                (event) =>
-                  `${event.namespace}:${event.name}` !== `${selectedEvent.namespace}:${selectedEvent.name}` &&
-                  (!coreEvent || event.customized)
-              );
+      {showEventDeleteConfirmation && (
+        <DeleteModal
+          isOpen={showEventDeleteConfirmation}
+          title={coreEvent ? 'Reset email template' : 'Delete an event'}
+          content={
+            coreEvent
+              ? 'Delete custom email template modifications'
+              : `Delete ${selectedEvent?.namespace}:${selectedEvent?.name}`
+          }
+          onCancel={() => {
+            setShowEventDeleteConfirmation(false);
+            setSelectedType(emptyNotificationType);
+            setCoreEvent(false);
+          }}
+          onDelete={() => {
+            setShowEventDeleteConfirmation(false);
+            const updatedEvents = selectedType.events.filter(
+              (event) =>
+                `${event.namespace}:${event.name}` !== `${selectedEvent.namespace}:${selectedEvent.name}` &&
+                (!coreEvent || event.customized)
+            );
 
-              const newType = JSON.parse(JSON.stringify(selectedType));
-              newType.events = updatedEvents;
+            const newType = JSON.parse(JSON.stringify(selectedType));
+            newType.events = updatedEvents;
 
-              newType.events = newType.events.map((event) => {
-                event.channels = [];
-                return event;
-              });
-              dispatch(UpdateNotificationTypeService(newType));
-              setSelectedType(emptyNotificationType);
-              setCoreEvent(false);
-            }}
-          >
-            Confirm
-          </GoAButton>
-        </GoAModalActions>
-      </GoAModal>
+            newType.events = newType.events.map((event) => {
+              event.channels = [];
+              return event;
+            });
+            dispatch(UpdateNotificationTypeService(newType));
+            setSelectedType(emptyNotificationType);
+            setCoreEvent(false);
+          }}
+        />
+      )}
+
       {/* Form */}
       <NotificationTypeModalForm
         open={editType}
