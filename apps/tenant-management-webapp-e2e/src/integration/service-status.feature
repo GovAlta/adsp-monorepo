@@ -126,7 +126,7 @@ Feature: Service status
       | Autotest-NewAllNotice | All         | Today      | 12:00 am   | Today    | 12:00 am | Autotest-ModifiedAllNotice | Autotest     | Today        | 10:00 am     | Today      | 02:00 pm   |
 
   @TEST_CS-1104 @REQ_CS-1091 @regression
-  Scenario: As a tenant admin, I can see the Directory service overview
+  Scenario Outline: As a tenant admin, I can see the Directory service overview
     Given a service owner user is on tenant admin page
     When the user selects the "Directory" menu item
     Then the user views the Directory service overview content "The directory service is a registry of services and their APIs"
@@ -135,3 +135,7 @@ Feature: Service status
     And the user views the Overview list item "Get support"
     When the user selects "Services" tab for "Directory"
     Then the user views "file-service" and "https://file-service.adsp-dev.gov.ab.ca"
+    Then the user views "<Name>" and "<URL>"
+    Examples:
+      | Name              | URL      |
+      | env{file-service} | env{url} |
