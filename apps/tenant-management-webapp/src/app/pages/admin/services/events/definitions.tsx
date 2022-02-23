@@ -78,7 +78,7 @@ export const EventDefinitions: FunctionComponent = () => {
       {showDeleteConfirmation && (
         <DeleteModal
           isOpen={showDeleteConfirmation}
-          title="Delete an event definition"
+          title="Delete event definition"
           content={`Delete ${selectedDefinition?.name}?`}
           onCancel={() => setShowDeleteConfirmation(false)}
           onDelete={() => {

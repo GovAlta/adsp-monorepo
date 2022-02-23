@@ -346,7 +346,7 @@ function Application(app: ServiceStatusApplication) {
       {showDeleteConfirmation && (
         <DeleteModal
           isOpen={showDeleteConfirmation}
-          title="Delete an application"
+          title="Delete application"
           content={`Delete the ${app.name} service status checks?`}
           onCancel={cancelDelete}
           onDelete={doDelete}

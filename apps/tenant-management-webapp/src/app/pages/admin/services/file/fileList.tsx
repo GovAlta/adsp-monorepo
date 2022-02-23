@@ -13,14 +13,17 @@ import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
 import { GoAIconButton } from '@abgov/react-components/experimental';
 import { renderNoItem } from '@components/NoItem';
+import { DeleteModal } from '@components/DeleteModal';
+import { FileItem } from '@store/file/models';
 
 const FileList = (): JSX.Element => {
-  const [selectedFile, setSelectFile] = useState<string>();
+  const [selectedFile, setSelectFile] = useState<FileItem>();
   const [uploadFileType, setUploadFileType] = useState<string>();
   const dispatch = useDispatch();
 
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   const getFileTypesValues = () => {
     const typeValues = [];
@@ -52,7 +55,8 @@ const FileList = (): JSX.Element => {
     dispatch(DownloadFileService(file));
   };
   const onDeleteFile = (file) => {
-    dispatch(DeleteFileService(file.id));
+    setSelectFile(file);
+    setShowDeleteConfirmation(true);
   };
 
   useEffect(() => {
@@ -62,42 +66,56 @@ const FileList = (): JSX.Element => {
 
   const renderFileTable = () => {
     return (
-      <DataTable id="files-information">
-        <thead>
-          <tr>
-            <th>File Name</th>
-            <th>Size (KB)</th>
-            <th>type</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {fileList.map((file) => {
-            return (
-              <tr key={file.id}>
-                <td>{file.filename}</td>
-                {/* Use ceil here to make sure people will allocate enough resouces */}
-                <td>{Math.ceil(file.size / 1024)}</td>
-                <td>{file.typeName}</td>
-                <td>
-                  <GoAIconButton
-                    data-testid="download-icon"
-                    size="medium"
-                    type="download"
-                    onClick={() => onDownloadFile(file)}
-                  />
-                  <GoAIconButton
-                    data-testid="delete-icon"
-                    size="medium"
-                    type="trash"
-                    onClick={() => onDeleteFile(file)}
-                  />
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </DataTable>
+      <div>
+        <DataTable id="files-information">
+          <thead>
+            <tr>
+              <th>File Name</th>
+              <th>Size (KB)</th>
+              <th>type</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {fileList.map((file) => {
+              return (
+                <tr key={file.id}>
+                  <td>{file.filename}</td>
+                  {/* Use ceil here to make sure people will allocate enough resouces */}
+                  <td>{Math.ceil(file.size / 1024)}</td>
+                  <td>{file.typeName}</td>
+                  <td>
+                    <GoAIconButton
+                      data-testid="download-icon"
+                      size="medium"
+                      type="download"
+                      onClick={() => onDownloadFile(file)}
+                    />
+                    <GoAIconButton
+                      data-testid="delete-icon"
+                      size="medium"
+                      type="trash"
+                      onClick={() => onDeleteFile(file)}
+                    />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </DataTable>
+        {showDeleteConfirmation && (
+          <DeleteModal
+            isOpen={showDeleteConfirmation}
+            title="Delete file"
+            content={`Delete file ${selectedFile?.filename} ?`}
+            onCancel={() => setShowDeleteConfirmation(false)}
+            onDelete={() => {
+              setShowDeleteConfirmation(false);
+              dispatch(DeleteFileService(selectedFile?.id));
+            }}
+          />
+        )}
+      </div>
     );
   };
   return (
