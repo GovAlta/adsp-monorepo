@@ -1,3 +1,4 @@
+import { clear } from 'console';
 import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import commonlib from '../common/common-library';
 import common from '../common/common.page';
@@ -458,9 +459,9 @@ Then('the user views Add application modal', function () {
 When(
   'the user enters {string} as name and {string} as description and {string} as endpoint',
   function (name, description, endpoint) {
-    statusObj.addApplicationNameModalField().type(name);
-    statusObj.addApplicationDescriptionModalField().type(description);
-    statusObj.addApplicationEndpointModalField().type(endpoint);
+    statusObj.addApplicationNameModalField().clear().type(name);
+    statusObj.addApplicationDescriptionModalField().clear().type(description);
+    statusObj.addApplicationEndpointModalField().clear().type(endpoint);
   }
 );
 
