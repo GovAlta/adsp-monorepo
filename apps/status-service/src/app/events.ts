@@ -1,4 +1,4 @@
-import { AdspId, DomainEvent, DomainEventDefinition } from '@abgov/adsp-service-sdk';
+import { AdspId, DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
 import { ServiceStatusApplication } from './types';
 import { NoticeApplicationEntity } from './model/notice';
 
@@ -9,6 +9,18 @@ const ApplicationDefinition = {
     name: { type: ['string', 'null'] },
     description: { type: ['string', 'null'] },
     url: { type: ['string', 'null'] },
+  },
+};
+
+const userSchema = {
+  type: 'object',
+  properties: {
+    id: {
+      type: 'string',
+    },
+    name: {
+      type: 'string',
+    },
   },
 };
 
@@ -33,6 +45,7 @@ export const HealthCheckStartedDefinition: DomainEventDefinition = {
     type: 'object',
     properties: {
       application: ApplicationDefinition,
+      startedBy: userSchema,
     },
   },
 };
@@ -44,6 +57,7 @@ export const HealthCheckStoppedDefinition: DomainEventDefinition = {
     type: 'object',
     properties: {
       application: ApplicationDefinition,
+      stoppedBy: userSchema,
     },
   },
 };
@@ -61,7 +75,7 @@ export const HealthCheckHealthyDefinition: DomainEventDefinition = {
     namespace: 'status-service',
     name: 'application-unhealthy',
     metric: ['status-service', 'applicationId', 'downtime'],
-  }
+  },
 };
 
 export const HealthCheckUnhealthyDefinition: DomainEventDefinition = {
@@ -78,7 +92,7 @@ export const HealthCheckUnhealthyDefinition: DomainEventDefinition = {
     namespace: 'status-service',
     name: 'application-healthy',
     metric: ['status-service', 'applicationId', 'uptime'],
-  }
+  },
 };
 
 export const ApplicationNoticePublishedDefinition: DomainEventDefinition = {
@@ -179,7 +193,7 @@ const mapNotice = (notice: NoticeApplicationEntity): ApplicationNotificationEven
   };
 };
 
-export const applicationStatusToStarted = (application: ServiceStatusApplication): DomainEvent => ({
+export const applicationStatusToStarted = (application: ServiceStatusApplication, user: User): DomainEvent => ({
   name: 'health-check-started',
   timestamp: new Date(),
   tenantId: AdspId.parse(application.tenantId),
@@ -190,10 +204,14 @@ export const applicationStatusToStarted = (application: ServiceStatusApplication
   },
   payload: {
     application: mapApplication(application),
+    startedBy: {
+      id: user.id,
+      name: user.name,
+    },
   },
 });
 
-export const applicationStatusToStopped = (application: ServiceStatusApplication): DomainEvent => ({
+export const applicationStatusToStopped = (application: ServiceStatusApplication, user: User): DomainEvent => ({
   name: 'health-check-stopped',
   timestamp: new Date(),
   tenantId: AdspId.parse(application.tenantId),
@@ -204,6 +222,10 @@ export const applicationStatusToStopped = (application: ServiceStatusApplication
   },
   payload: {
     application: mapApplication(application),
+    stoppedBy: {
+      id: user.id,
+      name: user.name,
+    },
   },
 });
 
@@ -239,7 +261,7 @@ export const applicationStatusToHealthy = (application: ServiceStatusApplication
 export const applicationStatusChange = (
   application: ServiceStatusApplication,
   originalStatus: string,
-  user: Express.User
+  user: User
 ): DomainEvent => ({
   name: 'application-status-changed',
   timestamp: new Date(),
@@ -264,7 +286,7 @@ export const applicationStatusChange = (
   },
 });
 
-export const applicationNoticePublished = (notice: NoticeApplicationEntity, user: Express.User): DomainEvent => {
+export const applicationNoticePublished = (notice: NoticeApplicationEntity, user: User): DomainEvent => {
   const event: DomainEvent = {
     name: 'application-notice-published',
     timestamp: new Date(),
