@@ -3,13 +3,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton } from '@abgov/react-components';
 import { EventDefinitionsList } from './definitionsList';
 import { EventDefinitionModalForm } from './edit';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { deleteEventDefinition, getEventDefinitions } from '@store/event/actions';
 import { defaultEventDefinition, EventDefinition } from '@store/event/models';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 import { PageIndicator } from '@components/Indicator';
-
+import { DeleteModal } from '@components/DeleteModal';
 
 export const EventDefinitions: FunctionComponent = () => {
   const [editDefinition, setEditDefinition] = useState(false);
@@ -30,7 +29,7 @@ export const EventDefinitions: FunctionComponent = () => {
   }, [definitions]);
 
   // eslint-disable-next-line
-  useEffect(() => { }, [indicator]);
+  useEffect(() => {}, [indicator]);
 
   const dispatch = useDispatch();
   useEffect(() => {
@@ -45,60 +44,49 @@ export const EventDefinitions: FunctionComponent = () => {
   return (
     <>
       <PageIndicator />
-      {!indicator.show && definitions && <div>
-        <Buttons>
-          <GoAButton
-            data-testid="add-definition"
-            onClick={() => {
-              setSelectedDefinition(defaultEventDefinition);
-              setIsEdit(false);
+      {!indicator.show && definitions && (
+        <div>
+          <Buttons>
+            <GoAButton
+              data-testid="add-definition"
+              onClick={() => {
+                setSelectedDefinition(defaultEventDefinition);
+                setIsEdit(false);
+                setEditDefinition(true);
+              }}
+            >
+              Add definition
+            </GoAButton>
+          </Buttons>
+
+          <EventDefinitionsList
+            onEdit={(def: EventDefinition) => {
+              setSelectedDefinition(def);
+              setIsEdit(true);
               setEditDefinition(true);
             }}
-          >
-            Add definition
-        </GoAButton>
-        </Buttons>
-
-        <EventDefinitionsList
-          onEdit={(def: EventDefinition) => {
-            setSelectedDefinition(def);
-            setIsEdit(true);
-            setEditDefinition(true);
-          }}
-          onDelete={(def: EventDefinition) => {
-            setSelectedDefinition(def);
-            setIsEdit(false);
-            setShowDeleteConfirmation(true);
-          }}
-        /></div>}
+            onDelete={(def: EventDefinition) => {
+              setSelectedDefinition(def);
+              setIsEdit(false);
+              setShowDeleteConfirmation(true);
+            }}
+          />
+        </div>
+      )}
 
       {/* Delete confirmation */}
       {showDeleteConfirmation && (
-        <GoAModal testId="delete-confirmation" isOpen={true}>
-          <GoAModalTitle>Delete definition</GoAModalTitle>
-          <GoAModalContent>Delete {selectedDefinition?.name}?</GoAModalContent>
-          <GoAModalActions>
-            <GoAButton
-              buttonType="tertiary"
-              data-testid="delete-cancel"
-              onClick={() => setShowDeleteConfirmation(false)}
-            >
-              Cancel
-            </GoAButton>
-            <GoAButton
-              buttonType="primary"
-              data-testid="delete-confirm"
-              onClick={() => {
-                setShowDeleteConfirmation(false);
-                dispatch(deleteEventDefinition(selectedDefinition));
-              }}
-            >
-              Confirm
-            </GoAButton>
-          </GoAModalActions>
-        </GoAModal>
+        <DeleteModal
+          isOpen={showDeleteConfirmation}
+          title="Delete an event definition"
+          content={`Delete ${selectedDefinition?.name}?`}
+          onCancel={() => setShowDeleteConfirmation(false)}
+          onDelete={() => {
+            setShowDeleteConfirmation(false);
+            dispatch(deleteEventDefinition(selectedDefinition));
+          }}
+        />
       )}
-
       {editDefinition && (
         <EventDefinitionModalForm
           open={true}

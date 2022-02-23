@@ -127,9 +127,6 @@ describe('NotificationTypes Page', () => {
     const deleteBtn = getAllByTestId('delete-notification-type')[0];
     fireEvent.click(deleteBtn);
 
-    const deleteCancel = queryByTestId('delete-cancel');
-    fireEvent.click(deleteCancel);
-
     await waitFor(() => {
       expect(queryByTestId('delete-cancel')).toBeVisible();
     });
@@ -263,10 +260,10 @@ describe('NotificationTypes Page', () => {
 
     fireEvent.click(deleteBtn);
 
-    const confirmation = queryByTestId('event-delete-confirmation');
+    const confirmation = queryByTestId('delete-confirmation');
     expect(confirmation).not.toBeNull();
 
-    const deleteConfirm = queryByTestId('event-delete-confirm');
+    const deleteConfirm = queryByTestId('delete-confirm');
     fireEvent.click(deleteConfirm);
 
     const actions = store.getActions();

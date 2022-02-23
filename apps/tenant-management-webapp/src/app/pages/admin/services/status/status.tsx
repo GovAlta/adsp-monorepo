@@ -43,6 +43,7 @@ import SupportLinks from '@components/SupportLinks';
 import { EditIconButton } from '@components/icons/EditIcon';
 import { renderNoItem } from '@components/NoItem';
 import { StatusMetrics } from './metrics';
+import { DeleteModal } from '@components/DeleteModal';
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
@@ -342,18 +343,15 @@ function Application(app: ServiceStatusApplication) {
       {/* GoAModals */}
 
       {/* Delete confirmation dialog */}
-      <GoAModal isOpen={showDeleteConfirmation}>
-        <GoAModalTitle>Confirmation</GoAModalTitle>
-        <GoAModalContent>Delete the {app.name} service status checks?</GoAModalContent>
-        <GoAModalActions>
-          <GoAButton buttonType="tertiary" onClick={cancelDelete}>
-            Cancel
-          </GoAButton>
-          <GoAButton buttonType="primary" onClick={doDelete}>
-            Yes
-          </GoAButton>
-        </GoAModalActions>
-      </GoAModal>
+      {showDeleteConfirmation && (
+        <DeleteModal
+          isOpen={showDeleteConfirmation}
+          title="Delete an application"
+          content={`Delete the ${app.name} service status checks?`}
+          onCancel={cancelDelete}
+          onDelete={doDelete}
+        />
+      )}
 
       {/* Manual status change dialog */}
       <GoAModal isOpen={showStatusForm}>
