@@ -193,6 +193,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     });
   }
   delete nonCoreCopiedNotifications.contact;
+  delete nonCoreCopiedNotifications.manageSubscribe;
 
   const saveOrAddEventTemplate = () => {
     const definitionEventIndex = selectedType?.events?.findIndex(

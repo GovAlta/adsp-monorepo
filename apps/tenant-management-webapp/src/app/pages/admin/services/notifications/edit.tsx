@@ -6,7 +6,9 @@ import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgo
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { GoADropdown } from '@abgov/react-components';
 import { RootState } from '@store/index';
+import { GoACallout } from '@abgov/react-components';
 import styled from 'styled-components';
+import { GoACheckbox } from '@abgov/react-components';
 
 interface NotificationTypeFormProps {
   initialValue?: NotificationItem;
@@ -35,6 +37,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   title,
   open,
 }) => {
+  //const dispatch = useDispatch();
   const isEdit = !!initialValue;
   const [type, setType] = useState(emptyNotificationType);
 
@@ -43,6 +46,9 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   }, [initialValue]);
 
   const realmRoles = useSelector((state: RootState) => state.tenant.realmRoles);
+  // const manageSubscribe = useSelector(
+  //   (state: RootState) => state.notification.notificationTypes?.manageSubscribe?.allow
+  // );
 
   let dropDownOptions = [];
 
@@ -129,6 +135,24 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                     />
                   ))}
                 </GoADropdown>
+              </GoAFormItem>
+              <GoAFormItem>
+                <GoACheckbox
+                  name="subscribe"
+                  checked={!!type.manageSubscribe}
+                  onChange={() => {
+                    setType({ ...type, manageSubscribe: !type.manageSubscribe });
+                  }}
+                  value="manageSubscribe"
+                >
+                  My subscribers are allowed to manage their own subscription for this notification type
+                </GoACheckbox>
+                {type.manageSubscribe && (
+                  <GoACallout type="important">
+                    This checkbox enables your subscribers to manage subscriptions on a self serve basis. Subscribers
+                    can unsubscribe from the notification type without contacting the program area.
+                  </GoACallout>
+                )}
               </GoAFormItem>
             </DropdownContainer>
           </GoAForm>

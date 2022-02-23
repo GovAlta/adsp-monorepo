@@ -26,6 +26,7 @@ export const configurationSchema = {
       name: { type: 'string' },
       description: { type: ['string', 'null'] },
       publicSubscribe: { type: 'boolean' },
+      manageSubscribe: { type: 'boolean' },
       subscriberRoles: {
         type: 'array',
         items: { type: 'string' },
