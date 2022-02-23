@@ -140,6 +140,57 @@ class StatusServicePage {
   applicationHealthChangeNotificationSubscribeCheckbox() {
     return cy.xpath('//*[@class="goa-checkbox"]//*[@name="subscribe"]/parent::div');
   }
-}
 
+  addApplicationButton() {
+    return cy.get('[data-testid="add-application"]');
+  }
+
+  addApplicationModalTitle() {
+    return cy.xpath(
+      '//div[@class="modal-root" and @data-state="visible"]/div[@class="modal"]/div[@class="modal-container"]/div[@class="modal-title"]'
+    );
+  }
+
+  addApplicationNameModalField() {
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//input[@aria-label="name"]');
+  }
+
+  addApplicationDescriptionModalField() {
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//textarea[@aria-label="description"]');
+  }
+
+  addApplicationEndpointModalField() {
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//input[@aria-label="endpoint"]');
+  }
+
+  addApplicationSaveBtn() {
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//button[text()="Save"]');
+  }
+
+  applicationCardTitle(appName) {
+    return cy.xpath(`//*[@data-testid="application"]//div[contains(text(), "${appName}")]`);
+  }
+
+  applicationCardEditBtn(appName) {
+    return cy.xpath(`//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//*[name()="svg"]`);
+  }
+
+  applicationCardDeleteBtn(appName) {
+    return cy.xpath(
+      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//div[@data-testid="icon-trash"]`
+    );
+  }
+
+  applicationDeleteConfirmationModalTitle() {
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//div[@class="modal-title"]');
+  }
+
+  applicationDeleteConfirmationModalContent() {
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//div[@class="goa-scrollable"]');
+  }
+
+  applicationDeleteConfirmationModalYesBtn() {
+    return cy.xpath('//div[@Class="modal-root" and @data-state="visible"]//button[text()="Yes"]');
+  }
+}
 export default StatusServicePage;
