@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect } from 'react';
-import { TemplateEditorContainer, MonacoDiv, EditTemplateActions } from './styled-components';
+import { TemplateEditorContainer, MonacoDiv, EditTemplateActions, MonacoDivBody } from './styled-components';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
@@ -78,7 +78,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
         </GoAFormItem>
         <h4>{bodyTitle}</h4>
         <GoAFormItem error={errors['body'] ?? ''} helpText={bodyEditorHintText}>
-          <MonacoDiv>
+          <MonacoDivBody>
             <MonacoEditor
               value={body}
               onChange={(value) => {
@@ -86,7 +86,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               }}
               {...bodyEditorConfig}
             />
-          </MonacoDiv>
+          </MonacoDivBody>
         </GoAFormItem>
         <EditTemplateActions>{actionButtons}</EditTemplateActions>
       </GoAForm>
