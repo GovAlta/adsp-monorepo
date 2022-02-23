@@ -40,7 +40,7 @@ interface ApplicationNotificationEvent {
 
 export const HealthCheckStartedDefinition: DomainEventDefinition = {
   name: 'health-check-started',
-  description: 'Signalled when healthcheck started for an event.',
+  description: 'Signalled when an application health check is started.',
   payloadSchema: {
     type: 'object',
     properties: {
