@@ -1,12 +1,12 @@
 import React from 'react';
 import styled from 'styled-components';
 import { GoAHeroBanner } from '@abgov/react-components';
+import { Band } from '@components/Band';
 import Header from '@components/AppHeader';
 import Footer from '@components/Footer';
 import Container from '@components/Container';
 import { Grid, GridItem } from '@components/Grid';
 import { Main } from '@components/Html';
-import Blue from '@assets/icons/blue.png';
 import AddNotificationType from '@assets/icons/AddNotificationType.png';
 import AddNotificationType2 from '@assets/icons/AddNotificationType2.png';
 import ContactInformation from '@assets/icons/ContactInformation.png';
@@ -18,21 +18,10 @@ const LandingPage = (): JSX.Element => {
       <Main>
         <CenterText>
           <HeroBannerLayout>
-            <GoAHeroBanner title="" backgroundUrl={Blue}>
-              <Container hs={1} vs={3}>
-                <Grid>
-                  <GridItem md={1} />
-                  <GridItem md={10}>
-                    <BoldTitle>Subscription management</BoldTitle>
-                    <p>
-                      The subscription management app allows subscribers to manage their subscription preferences and
-                      decide how they want to receive notifications regarding the services they are subscribed to.
-                    </p>
-                  </GridItem>
-                  <GridItem md={1} />
-                </Grid>
-              </Container>
-            </GoAHeroBanner>
+            <Band title="Subscription management">
+              The subscription management app allows subscribers to manage their subscription preferences and decide how
+              they want to receive notifications regarding the services they are subscribed to.
+            </Band>
           </HeroBannerLayout>
           <Section>
             <Container vs={3} hs={1}>
