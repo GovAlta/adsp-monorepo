@@ -36,9 +36,8 @@ export const NotificationsOverview: FunctionComponent<ParentCompProps> = (props)
           Add notification type
         </GoAButton>
       </section>
-
-      <NotificationMetrics />
       <ContactInformation />
+      <NotificationMetrics />
     </div>
   );
 };
