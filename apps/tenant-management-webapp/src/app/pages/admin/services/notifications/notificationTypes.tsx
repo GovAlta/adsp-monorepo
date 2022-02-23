@@ -88,6 +88,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   const htmlPayload = dynamicGeneratePayload(eventDef);
   const serviceName = `${selectedEvent?.namespace}:${selectedEvent?.name}`;
+  const TEMPALTE_RENDER_DEBOUNCE_TIMER = 500; // ms
+
   const getEventSuggestion = () => {
     if (eventDef) {
       return convertEventToSuggestion(eventDef);
@@ -170,14 +172,38 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     setSelectedType(notificationType);
     setEditEvent(notificationType);
   }
-  const debouncedSaveSubjectPreview = useCallback(
-    debounce((value) => setSubjectPreview(value), 1000),
-    []
-  );
-  const debouncedSaveBodyPreview = useCallback(
-    debounce((value) => setBodyPreview(value), 1000),
-    []
-  );
+  const debouncedSaveSubjectPreview = debounce((value) => {
+    try {
+      const msg = generateMessage(value, htmlPayload);
+      setSubjectPreview(msg);
+      setTemplateEditErrors({
+        ...templateEditErrors,
+        subject: '',
+      });
+    } catch (e) {
+      console.error('handlebar error', e);
+      setTemplateEditErrors({
+        ...templateEditErrors,
+        subject: syntaxErrorMessage,
+      });
+    }
+  }, TEMPALTE_RENDER_DEBOUNCE_TIMER);
+  const debouncedSaveBodyPreview = debounce((value) => {
+    try {
+      const msg = generateMessage(getTemplateBody(value), htmlPayload);
+      setBodyPreview(msg);
+      setTemplateEditErrors({
+        ...templateEditErrors,
+        body: '',
+      });
+    } catch (e) {
+      console.error('handlebar error', e);
+      setTemplateEditErrors({
+        ...templateEditErrors,
+        body: syntaxErrorMessage,
+      });
+    }
+  }, TEMPALTE_RENDER_DEBOUNCE_TIMER);
 
   const nonCoreCopiedNotifications: NotificationType = Object.assign({}, notification?.notificationTypes);
 
@@ -611,43 +637,13 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               serviceName={serviceName}
               onSubjectChange={(value) => {
                 setSubject(value);
-                try {
-                  const generatedSubjectPreview = generateMessage(value, htmlPayload);
-                  if (generatedSubjectPreview) {
-                    debouncedSaveSubjectPreview(generatedSubjectPreview);
-                    setTemplateEditErrors({
-                      ...templateEditErrors,
-                      subject: '',
-                    });
-                  }
-                } catch (e) {
-                  console.error('handlebar error', e);
-                  setTemplateEditErrors({
-                    ...templateEditErrors,
-                    subject: syntaxErrorMessage,
-                  });
-                }
+                debouncedSaveSubjectPreview(value);
               }}
               subjectEditorConfig={subjectEditorConfig}
               bodyTitle="Body"
               onBodyChange={(value) => {
                 setBody(value);
-                try {
-                  const generatedBodyPreview = generateMessage(getTemplateBody(value), htmlPayload);
-                  if (generatedBodyPreview) {
-                    debouncedSaveBodyPreview(generatedBodyPreview);
-                    setTemplateEditErrors({
-                      ...templateEditErrors,
-                      body: '',
-                    });
-                  }
-                } catch (e) {
-                  console.error('handlebar error', e);
-                  setTemplateEditErrors({
-                    ...templateEditErrors,
-                    body: syntaxErrorMessage,
-                  });
-                }
+                debouncedSaveBodyPreview(value);
               }}
               body={body}
               bodyEditorConfig={bodyEditorConfig}
