@@ -8,10 +8,12 @@ export class NotificationConfiguration {
   private eventTypes: Record<string, NotificationTypeEntity[]>;
   constructor(types: Record<string, NotificationType>, tenantId?: AdspId) {
     types = types || {};
-    this.types = Object.keys(types).reduce((entities, key) => {
-      entities[key] = new NotificationTypeEntity(types[key], tenantId);
-      return entities;
-    }, {});
+    this.types = Object.keys(types)
+      .filter((type) => type !== 'contact')
+      .reduce((entities, key) => {
+        entities[key] = new NotificationTypeEntity(types[key], tenantId);
+        return entities;
+      }, {});
 
     this.eventTypes = Object.keys(this.types).reduce((eventEntities, key) => {
       const type = this.types[key];
