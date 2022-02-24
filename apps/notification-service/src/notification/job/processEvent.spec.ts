@@ -32,6 +32,12 @@ describe('createProcessEventJob', () => {
     generateMessage: jest.fn(),
   };
 
+  const tenantServiceMock = {
+    getTenants: jest.fn(),
+    getTenant: jest.fn((id) => Promise.resolve({ id, name: 'Test', realm: 'test' })),
+    getTenantByName: jest.fn(),
+  };
+
   const repositoryMock = {
     getSubscriptions: jest.fn(),
   };
@@ -52,6 +58,7 @@ describe('createProcessEventJob', () => {
       configurationService: configurationServiceMock,
       eventService: eventServiceMock,
       templateService: templateServiceMock,
+      tenantService: tenantServiceMock,
       subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
       queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
     });
@@ -67,6 +74,7 @@ describe('createProcessEventJob', () => {
         configurationService: configurationServiceMock,
         eventService: eventServiceMock,
         templateService: templateServiceMock,
+        tenantService: tenantServiceMock,
         subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
         queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
       });
@@ -145,6 +153,7 @@ describe('createProcessEventJob', () => {
         configurationService: configurationServiceMock,
         eventService: eventServiceMock,
         templateService: templateServiceMock,
+        tenantService: tenantServiceMock,
         subscriptionRepository: repositoryDoubleMock as unknown as SubscriptionRepository,
         queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
       });
@@ -235,6 +244,7 @@ describe('createProcessEventJob', () => {
         configurationService: configurationServiceMock,
         eventService: eventServiceMock,
         templateService: templateServiceMock,
+        tenantService: tenantServiceMock,
         subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
         queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
       });
@@ -264,6 +274,7 @@ describe('createProcessEventJob', () => {
         configurationService: configurationServiceMock,
         eventService: eventServiceMock,
         templateService: templateServiceMock,
+        tenantService: tenantServiceMock,
         subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
         queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
       });

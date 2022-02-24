@@ -1,3 +1,5 @@
+import { NotificationType } from '../types';
+
 const templateSchema = {
   type: 'object',
   properties: {
@@ -61,3 +63,13 @@ export const configurationSchema = {
     required: ['id', 'name', 'publicSubscribe', 'subscriberRoles', 'events'],
   },
 };
+
+export interface SupportContact {
+  contactEmail: string;
+  phoneNumber: string;
+  supportInstructions: string;
+}
+
+export type Configuration = {
+  contact?: SupportContact;
+} & Record<string, NotificationType>;
