@@ -1,4 +1,4 @@
-import { AdspId, Channel, isAllowedUser, User } from '@abgov/adsp-service-sdk';
+import { AdspId, Channel, isAllowedUser, hasRequiredRole, User } from '@abgov/adsp-service-sdk';
 import type { DomainEvent } from '@core-services/core-common';
 import { UnauthorizedError } from '@core-services/core-common';
 import { getTemplateBody } from '@core-services/shared';
@@ -23,6 +23,8 @@ export class NotificationTypeEntity implements NotificationType {
   name: string;
   description: string;
   publicSubscribe = false;
+  manageSubscribe = false;
+  Subscribe = false;
   subscriberRoles: string[] = [];
   events: NotificationTypeEvent[] = [];
 
@@ -33,16 +35,18 @@ export class NotificationTypeEntity implements NotificationType {
 
   canSubscribe(user: User, subscriber: Subscriber): boolean {
     // User is an subscription admin, or user has subscriber role and is creating subscription for self.
+    // Also manageSubscribe is turned on for this notification type, user is admin user
     return (
-      isAllowedUser(
+      (this.manageSubscribe || hasRequiredRole(user, ServiceUserRoles.SubscriptionAdmin)) &&
+      (isAllowedUser(
         user,
         this.tenantId,
         [ServiceUserRoles.SubscriptionAdmin, ServiceUserRoles.SubscriptionApp],
         true
       ) ||
-      (!!user &&
-        user?.id === subscriber.userId &&
-        (this.publicSubscribe || isAllowedUser(user, this.tenantId, [...this.subscriberRoles])))
+        (!!user &&
+          user?.id === subscriber.userId &&
+          (this.publicSubscribe || isAllowedUser(user, this.tenantId, [...this.subscriberRoles]))))
     );
   }
 
