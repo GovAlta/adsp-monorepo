@@ -4,9 +4,8 @@ export const DirectoryOverview: FunctionComponent = () => {
   return (
     <div>
       <p>
-        The directory service is a registry of services and their APIs. Applications can use the directory to lookup
-        URLs for service from a common directory API. Add entries for your own services so they can be found using the
-        directory for service discovery.
+        The directory service is a registry of services and their APIs. Applications can use the directory API to lookup
+        URLs for services. Add your own services so they can be found using the directory.
       </p>
     </div>
   );

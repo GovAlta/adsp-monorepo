@@ -126,6 +126,12 @@ export class NotificationTypeEntity implements NotificationType {
 
       return null;
     } else {
+      const subscriber = {
+        id: subscription.subscriber.id,
+        userId: subscription.subscriber.userId,
+        addressAs: subscription.subscriber.addressAs,
+      };
+
       return {
         tenantId: event.tenantId.toString(),
         type: {
@@ -143,13 +149,9 @@ export class NotificationTypeEntity implements NotificationType {
         channel,
         message: templateService.generateMessage(this.getTemplate(channel, eventNotification.templates[channel]), {
           event,
-          subscriber: subscription.subscriber,
+          subscriber,
         }),
-        subscriber: {
-          id: subscription.subscriber.id,
-          userId: subscription.subscriber.userId,
-          addressAs: subscription.subscriber.addressAs,
-        },
+        subscriber,
       };
     }
   }
