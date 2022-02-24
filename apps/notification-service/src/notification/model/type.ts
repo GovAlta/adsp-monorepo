@@ -1,4 +1,4 @@
-import { AdspId, Channel, isAllowedUser, User } from '@abgov/adsp-service-sdk';
+import { AdspId, Channel, isAllowedUser, Tenant, User } from '@abgov/adsp-service-sdk';
 import type { DomainEvent } from '@core-services/core-common';
 import { UnauthorizedError } from '@core-services/core-common';
 import { getTemplateBody } from '@core-services/shared';
@@ -75,13 +75,14 @@ export class NotificationTypeEntity implements NotificationType {
   generateNotifications(
     logger: Logger,
     templateService: TemplateService,
+    tenant: Tenant,
     event: DomainEvent,
     subscriptions: SubscriptionEntity[]
   ): Notification[] {
     const notifications: Notification[] = [];
     subscriptions.forEach((subscription) => {
       if (subscription.shouldSend(event)) {
-        const notification = this.generateNotification(logger, templateService, event, subscription);
+        const notification = this.generateNotification(logger, templateService, tenant, event, subscription);
         if (notification) {
           notifications.push(notification);
         }
@@ -109,6 +110,7 @@ export class NotificationTypeEntity implements NotificationType {
   private generateNotification(
     logger: Logger,
     templateService: TemplateService,
+    tenant: Tenant,
     event: DomainEvent,
     subscription: SubscriptionEntity
   ): Notification {
@@ -150,6 +152,7 @@ export class NotificationTypeEntity implements NotificationType {
         message: templateService.generateMessage(this.getTemplate(channel, eventNotification.templates[channel]), {
           event,
           subscriber,
+          tenant,
         }),
         subscriber,
       };
