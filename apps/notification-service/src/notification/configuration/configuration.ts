@@ -1,19 +1,20 @@
 import type { AdspId } from '@abgov/adsp-service-sdk';
 import type { DomainEvent } from '@core-services/core-common';
-import { NotificationType } from '../types';
 import { NotificationTypeEntity } from '../model';
+import { Configuration, SupportContact } from './schema';
 
 export class NotificationConfiguration {
   private types: Record<string, NotificationTypeEntity>;
   private eventTypes: Record<string, NotificationTypeEntity[]>;
-  constructor(types: Record<string, NotificationType>, tenantId?: AdspId) {
-    types = types || {};
-    this.types = Object.keys(types)
-      .filter((type) => type !== 'contact')
-      .reduce((entities, key) => {
-        entities[key] = new NotificationTypeEntity(types[key], tenantId);
-        return entities;
-      }, {});
+  public contact: SupportContact;
+  constructor({ contact, ...types }: Configuration, tenantId?: AdspId) {
+    this.contact = contact;
+
+    types = types || { contact: null };
+    this.types = Object.keys(types).reduce((entities, key) => {
+      entities[key] = new NotificationTypeEntity(types[key], tenantId);
+      return entities;
+    }, {});
 
     this.eventTypes = Object.keys(this.types).reduce((eventEntities, key) => {
       const type = this.types[key];
