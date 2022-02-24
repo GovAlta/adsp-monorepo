@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Notice } from '@store/notice/models';
-import { saveNotice, deleteNotice } from '@store/notice/actions';
+import { saveNotice } from '@store/notice/actions';
 import { useDispatch } from 'react-redux';
 
 const DropdownMenuContainer = styled.div`
@@ -27,6 +27,7 @@ interface DropdownMenuProps {
   notice: Notice;
   closeActionFn?: () => void;
   openEditModalFn?: () => void;
+  deleteActionFn?: () => void;
 }
 
 export const DraftDropdownMenu = (props: DropdownMenuProps): JSX.Element => {
@@ -38,12 +39,6 @@ export const DraftDropdownMenu = (props: DropdownMenuProps): JSX.Element => {
     dispatch(saveNotice(changedNotice));
     props.closeActionFn();
   }
-
-  function delNotice() {
-    dispatch(deleteNotice(props.notice.id));
-    props.closeActionFn();
-  }
-
   return (
     <DropdownMenuContainer>
       <div className="item" onClick={() => changeMode('active')} data-testid="notice-card-menu-publish">
@@ -58,7 +53,7 @@ export const DraftDropdownMenu = (props: DropdownMenuProps): JSX.Element => {
       >
         Edit
       </div>
-      <div className="item" onClick={() => delNotice()} data-testid="notice-card-menu-delete">
+      <div className="item" onClick={() => props.deleteActionFn()} data-testid="notice-card-menu-delete">
         Delete
       </div>
     </DropdownMenuContainer>
