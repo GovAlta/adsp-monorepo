@@ -74,12 +74,40 @@ Cypress.Commands.add('getConfig', () => {
     url: 'config/config.json',
   }).then((response) => {
     Cypress.env('eventServiceApiUrl', response.body.serviceUrls.eventServiceApiUrl);
+    Cypress.log({
+      name: 'eventServiceApiUrl: ',
+      message: response.body.serviceUrls.eventServiceApiUrl,
+    });
     Cypress.env('notificationServiceUrl', response.body.serviceUrls.notificationServiceUrl);
+    Cypress.log({
+      name: 'notificationServiceUrl: ',
+      message: response.body.serviceUrls.notificationServiceUrl,
+    });
     Cypress.env('keycloakUrl', response.body.serviceUrls.keycloakUrl);
+    Cypress.log({
+      name: 'keycloakUrl: ',
+      message: response.body.serviceUrls.keycloakUrl,
+    });
     Cypress.env('tenantManagementApi', response.body.serviceUrls.tenantManagementApi);
+    Cypress.log({
+      name: 'tenantManagementApi: ',
+      message: response.body.serviceUrls.tenantManagementApi,
+    });
     Cypress.env('accessManagementApi', response.body.serviceUrls.accessManagementApi);
+    Cypress.log({
+      name: 'accessManagementApi: ',
+      message: response.body.serviceUrls.accessManagementApi,
+    });
     Cypress.env('uiComponentUrl', response.body.serviceUrls.uiComponentUrl);
+    Cypress.log({
+      name: 'uiComponentUrl: ',
+      message: response.body.serviceUrls.uiComponentUrl,
+    });
     Cypress.env('fileApi', response.body.serviceUrls.fileApi);
+    Cypress.log({
+      name: 'fileApi: ',
+      message: response.body.serviceUrls.fileApi,
+    });
   });
 });
 //
