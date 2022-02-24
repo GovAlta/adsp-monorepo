@@ -196,7 +196,7 @@ export const NoticeList = (): JSX.Element => {
               </GridItem>
             ))}
       </Grid>
-      {count === 0 && notices.length > 0 && renderNoItem('notice')}
+      {count === 0 && filerOption !== 'all' && notices.length > 0 && renderNoItem('notice')}
     </NoticeListContainer>
   );
 };
