@@ -7,6 +7,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { GoARadio } from '@abgov/react-components';
 import { renderNoItem } from '@components/NoItem';
+import NoticeModal from './noticeModal';
 
 type filterOptionOnSelect = (option: string) => void;
 
@@ -106,6 +107,8 @@ export const NoticeListFilter = (props: NoticeListFilterProps): JSX.Element => {
 
 export const NoticeList = (): JSX.Element => {
   const [filerOption, setFilterOption] = useState('all');
+  const [showEditModalId, setShowEditModalId] = useState<string>(null);
+
   const { notices } = useSelector((state: RootState) => ({
     notices: state.notice?.notices,
   }));
@@ -137,6 +140,19 @@ export const NoticeList = (): JSX.Element => {
           onClick={() => {
             setOpenMenuId(null);
           }}
+        />
+      )}
+      {showEditModalId !== null && (
+        <NoticeModal
+          isOpen={true}
+          title="Edit notice"
+          onCancel={() => {
+            setShowEditModalId(null);
+          }}
+          onSave={() => {
+            setShowEditModalId(null);
+          }}
+          noticeId={showEditModalId}
         />
       )}
       <Grid>
@@ -172,6 +188,9 @@ export const NoticeList = (): JSX.Element => {
                   notice={notice}
                   data-testid="notice-card"
                   clickMenuFn={clickCardMenuFn}
+                  openEditModalFn={() => {
+                    setShowEditModalId(notice.id);
+                  }}
                   isMenuOpen={openMenuId === notice.id}
                 />
               </GridItem>

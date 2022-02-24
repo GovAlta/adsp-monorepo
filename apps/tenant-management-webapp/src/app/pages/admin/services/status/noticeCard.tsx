@@ -51,6 +51,7 @@ interface NoticeCardProps {
   notice: Notice;
   isMenuOpen: boolean;
   clickMenuFn: (id: string, isMenuAction?: boolean) => void;
+  openEditModalFn?: () => void;
 }
 
 export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
@@ -171,6 +172,9 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
             data-testid="notice-card-draft-menu"
             closeActionFn={() => {
               clickMenuFn(notice.id, true);
+            }}
+            openEditModalFn={() => {
+              props.openEditModalFn();
             }}
           />
         )}

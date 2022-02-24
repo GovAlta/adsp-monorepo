@@ -2,7 +2,6 @@ import { RootState } from '@store/index';
 import { saveNotice } from '@store/notice/actions';
 import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useParams } from 'react-router-dom';
 import { GoAButton, GoACheckbox } from '@abgov/react-components';
 import {
   GoAForm,
@@ -29,12 +28,13 @@ const dateTime = (date, time) => {
 interface NoticeModalProps {
   title: string;
   isOpen: boolean;
+  onCancel?: () => void;
+  onSave?: () => void;
+  noticeId?: string;
 }
 
 function NoticeModal(props: NoticeModalProps): JSX.Element {
   const dispatch = useDispatch();
-  const history = useHistory();
-  const { noticeId } = useParams<{ noticeId: string }>();
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [startTime, setStartTime] = useState('10:00');
@@ -49,8 +49,8 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
   }));
 
   useEffect(() => {
-    if (noticeId) {
-      const notice = notices.find((nt) => noticeId === nt.id);
+    if (props.noticeId) {
+      const notice = notices.find((nt) => props.noticeId === nt.id);
       const currentStartDate = new Date(notice.startDate);
       const currentEndDate = new Date(notice.endDate);
 
@@ -118,7 +118,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
     if (Object.keys(formErrorList).length === 0) {
       dispatch(
         saveNotice({
-          id: noticeId,
+          id: props?.noticeId,
           message,
           tennantServRef: selectedApplications,
           startDate: dateTime(startDate, startTime),
@@ -127,14 +127,14 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
         })
       );
 
-      history.push('/admin/services/status');
+      if (props.onSave) props.onSave();
     } else {
       setErrors(formErrorList);
     }
   }
 
   function cancel() {
-    history.push('/admin/services/status');
+    if (props.onCancel) props.onCancel();
   }
 
   function onSelect(selected) {

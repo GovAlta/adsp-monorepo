@@ -1,6 +1,5 @@
 import React from 'react';
 import styled from 'styled-components';
-import { useLocation, useHistory } from 'react-router-dom';
 import { Notice } from '@store/notice/models';
 import { saveNotice, deleteNotice } from '@store/notice/actions';
 import { useDispatch } from 'react-redux';
@@ -27,46 +26,39 @@ interface DropdownMenuProps {
   id: string;
   notice: Notice;
   closeActionFn?: () => void;
+  openEditModalFn?: () => void;
 }
 
 export const DraftDropdownMenu = (props: DropdownMenuProps): JSX.Element => {
-  const location = useLocation();
-  const history = useHistory();
   const dispatch = useDispatch();
-
-  function redirect(route: string) {
-    history.push(route);
-  }
 
   function changeMode(mode) {
     const changedNotice = props.notice;
     changedNotice.mode = mode;
     dispatch(saveNotice(changedNotice));
-    props.closeActionFn()
+    props.closeActionFn();
   }
 
   function delNotice() {
     dispatch(deleteNotice(props.notice.id));
-    props.closeActionFn()
+    props.closeActionFn();
   }
 
   return (
     <DropdownMenuContainer>
-      <div
-        className="item"
-        onClick={() => changeMode('active')}
-        data-testid='notice-card-menu-publish'>
+      <div className="item" onClick={() => changeMode('active')} data-testid="notice-card-menu-publish">
         Publish
       </div>
-      <div className="item"
+      <div
+        className="item"
         onClick={() => {
-          props.closeActionFn()
-          redirect(`${location.pathname}/notice/${props.id}`)
+          props.openEditModalFn();
         }}
-        data-testid='notice-card-menu-edit'>
+        data-testid="notice-card-menu-edit"
+      >
         Edit
       </div>
-      <div className="item" onClick={() => delNotice()} data-testid='notice-card-menu-delete'>
+      <div className="item" onClick={() => delNotice()} data-testid="notice-card-menu-delete">
         Delete
       </div>
     </DropdownMenuContainer>
@@ -80,19 +72,15 @@ export const PublishedDropdownMenu = (props: DropdownMenuProps): JSX.Element => 
     const changedNotice = props.notice;
     changedNotice.mode = mode;
     dispatch(saveNotice(changedNotice));
-    props.closeActionFn()
+    props.closeActionFn();
   }
 
   return (
     <DropdownMenuContainer>
-      <div className="item"
-        onClick={() => changeMode('draft')}
-        data-testid='notice-card-menu-unpublish'>
+      <div className="item" onClick={() => changeMode('draft')} data-testid="notice-card-menu-unpublish">
         Unpublish
       </div>
-      <div className="item"
-        onClick={() => changeMode('archived')}
-        data-testid='notice-card-menu-archive'>
+      <div className="item" onClick={() => changeMode('archived')} data-testid="notice-card-menu-archive">
         Archive
       </div>
     </DropdownMenuContainer>
