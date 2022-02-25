@@ -37,15 +37,17 @@ class Common {
   }
 
   deleteConfirmationModalTitle() {
-    return cy.xpath('//*[@data-testid="delete-confirmation"]//*[@class="modal-title"]');
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//*[@class="modal-title"]');
   }
 
   deleteConfirmationModalContent() {
-    return cy.xpath('//*[@data-testid="delete-confirmation"]//*[@class="goa-scrollable"]');
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//*[@class="goa-scrollable"]');
   }
 
   deleteConfirmationModalDeleteBtn() {
-    return cy.get('[data-testid="delete-confirm"]');
+    return cy.xpath(
+      '//*[@data-testid="delete-confirmation" and @data-state="visible"]//*[@data-testid="delete-confirm"]'
+    );
   }
 }
 
