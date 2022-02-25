@@ -22,14 +22,14 @@ describe('Access Page', () => {
     { id: '3', enabled: false, emailVerified: false },
   ];
 
-  const roles = [
-    { id: '1', name: 'file-service-admin', userIds: ['1', '2', '3'] },
-    { id: '2', name: 'admin', userIds: ['1', '2'] },
-    { id: '3', name: 'create-realm', userIds: ['1', '3', '4', '5'] },
-    { id: '4', name: 'something important', userIds: ['1', '3', '4', '5', '7'] },
-    { id: '5', name: 'security', userIds: ['1'] },
-    { id: '6', name: 'networking', userIds: ['2'] },
-  ];
+  const roles = {
+    '1': { id: '1', name: 'file-service-admin', userIds: ['1', '2', '3'] },
+    '2': { id: '2', name: 'admin', userIds: ['1', '2'] },
+    '3': { id: '3', name: 'create-realm', userIds: ['1', '3', '4', '5'] },
+    '4': { id: '4', name: 'something important', userIds: ['1', '3', '4', '5', '7'] },
+    '5': { id: '5', name: 'security', userIds: ['1'] },
+    '6': { id: '6', name: 'networking', userIds: ['2'] },
+  };
 
   it('binds the store user and role data', async () => {
     const store = mockStore({
@@ -38,14 +38,14 @@ describe('Access Page', () => {
         tenantApi: { host: 'foo' },
         serviceUrls: { tenantManagementWebApp: 'http://localhost' },
       },
-      access: { users: users, roles: roles },
+      access: { users: {}, metrics: { users: 3, activeUsers: 2 }, roles },
       user: { jwt: { token: '' } },
       session: {
         realm: 'core',
         indicator: {
           show: false,
-          message: 'loading'
-        }
+          message: 'loading',
+        },
       },
     });
 
@@ -59,7 +59,7 @@ describe('Access Page', () => {
       const userCount = document.getElementById('user-count').innerHTML;
       expect(userCount).toBe(`${users.length}`);
       const roleCount = document.getElementById('role-count').innerHTML;
-      expect(roleCount).toBe(`${roles.length}`);
+      expect(roleCount).toBe(`${Object.values(roles).length}`);
       const activeUserCount = document.getElementById('active-user-count').innerHTML;
       expect(activeUserCount).toBe('2');
 
@@ -75,13 +75,14 @@ describe('Access Page', () => {
         tenantApi: { host: 'foo' },
         serviceUrls: { tenantManagementWebApp: 'http://localhost' },
       },
-      access: { users: users, roles: roles },
+      access: { users: {}, metrics: { users: 3, activeUsers: 2 }, roles },
       user: { jwt: { token: '' } },
       session: {
-        realm: 'core', indicator: {
+        realm: 'core',
+        indicator: {
           show: false,
-          message: 'loading'
-        }
+          message: 'loading',
+        },
       },
     });
 
