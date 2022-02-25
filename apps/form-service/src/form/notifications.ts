@@ -15,15 +15,7 @@ export const FormStatusNotificationType: NotificationType = {
       templates: {
         email: {
           subject: '{{ event.payload.form.definition.name }} draft created',
-          body: `
-            <!doctype html>
-            <html>
-            <head>
-            </head>
-            <body>
-            <p>Your draft {{ event.payload.form.definition.name }} form has been created. We will use this email address to keep you updated</p>
-            </body>
-            </html>`,
+          body: '<p>Your draft {{ event.payload.form.definition.name }} form has been created. We will use this email address to keep you updated.</p>',
         },
       },
     },
@@ -34,18 +26,8 @@ export const FormStatusNotificationType: NotificationType = {
         email: {
           subject: '{{ event.payload.form.definition.name }} locked',
           body: `
-            <!doctype html>
-            <html>
-            <head>
-            </head>
-            <body>
-            <p>Your draft {{ event.payload.form.definition.name }} form has been locked and will be deleted on {{ formatDate event.payload.deleteOn }}.</p>
-            <p>
-              No action is required if you do not intend to complete the submission.
-              If you do wish to continue, please contact {{ event.payload.definition.supportEmail }} to unlock the draft.
-            </p>
-            </body>
-            </html>`,
+<p>Your draft {{ event.payload.form.definition.name }} form has been locked due to inactivity. It will be deleted on {{ formatDate event.payload.deleteOn }}.</p>
+<p>No action is required if you do not intend to complete the submission. If you do wish to continue, please contact {{ event.payload.definition.supportEmail }} to unlock the draft.</p>`,
         },
       },
     },
@@ -55,15 +37,7 @@ export const FormStatusNotificationType: NotificationType = {
       templates: {
         email: {
           subject: '{{ event.payload.form.definition.name }} unlocked',
-          body: `
-          <!doctype html>
-          <html>
-          <head>
-          </head>
-          <body>
-          <p>Your draft {{ event.payload.form.definition.name }} form has been unlocked.</p>
-          </body>
-          </html>`,
+          body: '<p>Your draft {{ event.payload.form.definition.name }} form has been unlocked.</p>',
         },
       },
     },
@@ -73,15 +47,7 @@ export const FormStatusNotificationType: NotificationType = {
       templates: {
         email: {
           subject: '{{ event.payload.form.definition.name }} received',
-          body: `
-          <!doctype html>
-          <html>
-          <head>
-          </head>
-          <body>
-          <p>Your {{ event.payload.form.definition.name }} submission has been received.</p>
-          </body>
-          </html>`,
+          body: '<p>Your {{ event.payload.form.definition.name }} submission has been received.</p>',
         },
       },
     },

@@ -1,4 +1,4 @@
-import { AdspId, Channel, isAllowedUser, hasRequiredRole, User } from '@abgov/adsp-service-sdk';
+import { AdspId, Channel, isAllowedUser, hasRequiredRole, Tenant,  User } from '@abgov/adsp-service-sdk';
 import type { DomainEvent } from '@core-services/core-common';
 import { UnauthorizedError } from '@core-services/core-common';
 import { getTemplateBody } from '@core-services/shared';
@@ -79,13 +79,14 @@ export class NotificationTypeEntity implements NotificationType {
   generateNotifications(
     logger: Logger,
     templateService: TemplateService,
+    tenant: Tenant,
     event: DomainEvent,
     subscriptions: SubscriptionEntity[]
   ): Notification[] {
     const notifications: Notification[] = [];
     subscriptions.forEach((subscription) => {
       if (subscription.shouldSend(event)) {
-        const notification = this.generateNotification(logger, templateService, event, subscription);
+        const notification = this.generateNotification(logger, templateService, tenant, event, subscription);
         if (notification) {
           notifications.push(notification);
         }
@@ -113,6 +114,7 @@ export class NotificationTypeEntity implements NotificationType {
   private generateNotification(
     logger: Logger,
     templateService: TemplateService,
+    tenant: Tenant,
     event: DomainEvent,
     subscription: SubscriptionEntity
   ): Notification {
@@ -130,6 +132,12 @@ export class NotificationTypeEntity implements NotificationType {
 
       return null;
     } else {
+      const subscriber = {
+        id: subscription.subscriber.id,
+        userId: subscription.subscriber.userId,
+        addressAs: subscription.subscriber.addressAs,
+      };
+
       return {
         tenantId: event.tenantId.toString(),
         type: {
@@ -147,13 +155,10 @@ export class NotificationTypeEntity implements NotificationType {
         channel,
         message: templateService.generateMessage(this.getTemplate(channel, eventNotification.templates[channel]), {
           event,
-          subscriber: subscription.subscriber,
+          subscriber,
+          tenant,
         }),
-        subscriber: {
-          id: subscription.subscriber.id,
-          userId: subscription.subscriber.userId,
-          addressAs: subscription.subscriber.addressAs,
-        },
+        subscriber,
       };
     }
   }

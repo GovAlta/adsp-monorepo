@@ -256,6 +256,12 @@ components:
         required: true
         schema:
           type: string
+      - name: embed
+        description: Flag indicating whether to inline the file.
+        in: query
+        required: false
+        schema:
+          type: boolean
       - name: unsafe
         description: Flag indicating whether to download file not yet virus scanned.
         in: query
