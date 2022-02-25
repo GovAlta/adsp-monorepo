@@ -3,7 +3,7 @@ import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
 import { FetchAccessSuccessAction } from './actions';
 import { KeycloakApi } from './api';
-import { Role, User } from './models';
+import { Role } from './models';
 import { UpdateIndicator } from '@store/session/actions';
 
 // eslint-disable-next-line
@@ -17,7 +17,9 @@ export function* fetchAccess() {
   const keycloakApi = new KeycloakApi(baseUrl, realm, token);
 
   try {
-    const [users, roles] = [yield keycloakApi.getUsers(), yield keycloakApi.getRoles()];
+    const userCount = yield keycloakApi.getUserCount();
+    const activeUserCount = yield keycloakApi.getUserCount(true);
+    const roles = yield keycloakApi.getRoles();
 
     // add userId[] attribute to roles
 
@@ -28,9 +30,8 @@ export function* fetchAccess() {
       })
     );
     const rolesWithUsers = yield (async () => {
-      const userIds = users.map((user: User) => user.id);
       const userRoles = roles.map(async (role: Role) => {
-        const usersWithRole = (await keycloakApi.getUsersByRole(role.name)).filter((user) => userIds.includes(user.id));
+        const usersWithRole = await keycloakApi.getUsersByRole(role.name);
         return { roleId: role.id, users: usersWithRole.map((user) => user.id) };
       });
 
@@ -49,7 +50,7 @@ export function* fetchAccess() {
 
     const action: FetchAccessSuccessAction = {
       type: 'tenant/access/FETCH_ACCESS_SUCCESS',
-      payload: { users, roles: rolesWithUsers },
+      payload: { userCount, activeUserCount, roles: rolesWithUsers },
     };
 
     yield put(action);

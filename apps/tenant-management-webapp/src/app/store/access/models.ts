@@ -20,11 +20,19 @@ export interface Role {
 }
 
 export interface AccessState {
-  users: User[];
-  roles: Role[];
+  metrics: {
+    users: number;
+    activeUsers: number;
+  };
+  users: Record<string, User>;
+  roles: Record<string, Role>;
 }
 
 export const ACCESS_INIT: AccessState = {
-  users: [],
-  roles: [],
+  metrics: {
+    users: 0,
+    activeUsers: 0,
+  },
+  users: {},
+  roles: {},
 };
