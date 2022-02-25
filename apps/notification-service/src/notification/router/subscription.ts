@@ -48,8 +48,8 @@ export const getNotificationType: RequestHandler = async (req, _res, next) => {
     const [configuration, options] = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
 
     const typeEntity =
-      (Object.keys(configuration).length > 0 && configuration?.getNotificationType(type)) ||
-      options?.getNotificationType(type);
+      options?.getNotificationType(type) ||
+      (Object.keys(configuration).length > 0 && configuration?.getNotificationType(type));
 
     if (!typeEntity) {
       throw new NotFoundError('Notification Type', type);

@@ -1,6 +1,6 @@
 import { Application } from 'express';
 import { Logger } from 'winston';
-import { AdspId, ConfigurationService, EventService, TokenProvider } from '@abgov/adsp-service-sdk';
+import { AdspId, ConfigurationService, EventService, TenantService, TokenProvider } from '@abgov/adsp-service-sdk';
 import { assertAuthenticatedHandler, DomainEventSubscriberService, WorkQueueService } from '@core-services/core-common';
 import { Repositories } from './repository';
 import { createJobs } from './job';
@@ -22,6 +22,7 @@ interface NotificationMiddlewareProps extends Repositories {
   logger: Logger;
   tokenProvider: TokenProvider;
   configurationService: ConfigurationService;
+  tenantService: TenantService;
   eventService: EventService;
   templateService: TemplateService;
   eventSubscriber: DomainEventSubscriberService;
@@ -40,6 +41,7 @@ export const applyNotificationMiddleware = (
     eventService,
     subscriptionRepository,
     templateService,
+    tenantService,
     eventSubscriber,
     queueService,
     verifyService,
@@ -53,6 +55,7 @@ export const applyNotificationMiddleware = (
     configurationService,
     eventService,
     templateService,
+    tenantService,
     events: eventSubscriber.getItems(),
     queueService,
     subscriptionRepository,

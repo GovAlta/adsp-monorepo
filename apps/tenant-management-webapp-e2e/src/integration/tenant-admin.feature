@@ -128,6 +128,6 @@ Feature: Tenant admin
     When the user selects the "Events" menu item
     And the user selects "Definitions" tab for "Events"
     When the user clicks "Delete" button for the definition of "Autotest-eventDefinition" and "event log testing" under "Autotest"
-    Then the user views Delete definition dialog for the definition of "Autotest-eventDefinition"
-    And the user clicks Confirm button on Delete definition modal
+    Then the user views delete "event definition" confirmation modal for "Autotest-eventDefinition"
+    And the user clicks Delete button in delete confirmation modal
     Then the user "should not view" an event definition of "Autotest-eventDefinition" and "event log testing" under "Autotest"

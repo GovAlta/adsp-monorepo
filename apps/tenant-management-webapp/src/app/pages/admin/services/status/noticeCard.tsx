@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Notice } from '@store/notice/models';
 import styled from 'styled-components';
 import { GoABadge } from '@abgov/react-components/experimental';
@@ -7,6 +7,9 @@ import { DraftDropdownMenu, PublishedDropdownMenu } from './noticeCardMenu';
 import { IconContext } from '@components/icons/IconContext';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
+import { deleteNotice } from '@store/notice/actions';
+import { useDispatch } from 'react-redux';
+import { DeleteModal } from '@components/DeleteModal';
 
 const NoticeCardContainer = styled.div`
   border-radius: 0.25rem;
@@ -51,9 +54,12 @@ interface NoticeCardProps {
   notice: Notice;
   isMenuOpen: boolean;
   clickMenuFn: (id: string, isMenuAction?: boolean) => void;
+  openEditModalFn?: () => void;
 }
 
 export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
+  const dispatch = useDispatch();
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const { applications } = useSelector((state: RootState) => ({
     applications: state.serviceStatus.applications,
   }));
@@ -126,73 +132,89 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
   };
 
   return (
-    <NoticeCardContainer key={`notice-card-container-${notice.id}`}>
-      {isMenuOpen && (
-        <div
-          className="dropdown-overlay"
+    <div>
+      <NoticeCardContainer key={`notice-card-container-${notice.id}`}>
+        {isMenuOpen && (
+          <div
+            className="dropdown-overlay"
+            onClick={() => {
+              clickMenuFn(notice.id, true);
+            }}
+          />
+        )}
+        <CardHeader mode={notice.mode} key={`notice-card-header-${notice.id}`} data-testid="notice-card-header" />
+        <CardContent
+          key={`notice-content-${notice.id}`}
           onClick={() => {
             clickMenuFn(notice.id, true);
           }}
-        />
-      )}
-      <CardHeader mode={notice.mode} key={`notice-card-header-${notice.id}`} data-testid="notice-card-header" />
-      <CardContent
-        key={`notice-content-${notice.id}`}
-        onClick={() => {
-          clickMenuFn(notice.id, true);
+          data-testid="notice-card-content"
+        >
+          <MessageContainer key={`notice-card-message-${notice.id}`} data-testid={`notice-card-message`}>
+            {notice.message}
+          </MessageContainer>
+          {notice.isAllApplications && (
+            <ServiceHref data-testid="notice-card-application" key={`notice-service-Href-${notice.id}`}>
+              All applications
+            </ServiceHref>
+          )}
+          {notice.tennantServRef &&
+            notice.isAllApplications === false &&
+            notice.tennantServRef.map((application) => {
+              const currentApplication = applications.find((app) => application.id === app._id);
+              return (
+                <ServiceHref
+                  data-testid="notice-card-application"
+                  key={`notice-service-Href-${notice.id}-${application.id}`}
+                >
+                  {currentApplication?.name}
+                </ServiceHref>
+              );
+            })}
+          {isMenuOpen && notice.mode === 'draft' && (
+            <DraftDropdownMenu
+              notice={notice}
+              id={`${notice.id}`}
+              data-testid="notice-card-draft-menu"
+              closeActionFn={() => {
+                clickMenuFn(notice.id, true);
+              }}
+              openEditModalFn={() => {
+                props.openEditModalFn();
+              }}
+              deleteActionFn={() => setShowDeleteConfirmation(true)}
+            />
+          )}
+          {isMenuOpen && notice.mode === 'active' && (
+            <PublishedDropdownMenu
+              notice={notice}
+              id={`${notice.id}`}
+              data-testid="notice-card-published-menu"
+              closeActionFn={() => {
+                clickMenuFn(notice.id, true);
+              }}
+            />
+          )}
+        </CardContent>
+        <div data-testid="notice-card-start-date">
+          <span className="time-title">Start date: </span>
+          <span className="time">{FormatNoticeDate(notice.startDate)}</span>
+        </div>
+        <div data-testid="notice-card-end-date">
+          <span className="time-title">End date: </span>
+          <span className="time">{FormatNoticeDate(notice.endDate)}</span>
+        </div>
+      </NoticeCardContainer>
+      <DeleteModal
+        isOpen={showDeleteConfirmation}
+        title="Delete notice"
+        content={`Delete ${props.notice.message} ?`}
+        onCancel={() => setShowDeleteConfirmation(false)}
+        onDelete={() => {
+          setShowDeleteConfirmation(false);
+          dispatch(deleteNotice(props.notice.id));
         }}
-        data-testid="notice-card-content"
-      >
-        <MessageContainer key={`notice-card-message-${notice.id}`} data-testid={`notice-card-message`}>
-          {notice.message}
-        </MessageContainer>
-        {notice.isAllApplications && (
-          <ServiceHref data-testid="notice-card-application" key={`notice-service-Href-${notice.id}`}>
-            All applications
-          </ServiceHref>
-        )}
-        {notice.tennantServRef &&
-          notice.isAllApplications === false &&
-          notice.tennantServRef.map((application) => {
-            const currentApplication = applications.find((app) => application.id === app._id);
-            return (
-              <ServiceHref
-                data-testid="notice-card-application"
-                key={`notice-service-Href-${notice.id}-${application.id}`}
-              >
-                {currentApplication?.name}
-              </ServiceHref>
-            );
-          })}
-        {isMenuOpen && notice.mode === 'draft' && (
-          <DraftDropdownMenu
-            notice={notice}
-            id={`${notice.id}`}
-            data-testid="notice-card-draft-menu"
-            closeActionFn={() => {
-              clickMenuFn(notice.id, true);
-            }}
-          />
-        )}
-        {isMenuOpen && notice.mode === 'active' && (
-          <PublishedDropdownMenu
-            notice={notice}
-            id={`${notice.id}`}
-            data-testid="notice-card-published-menu"
-            closeActionFn={() => {
-              clickMenuFn(notice.id, true);
-            }}
-          />
-        )}
-      </CardContent>
-      <div data-testid="notice-card-start-date">
-        <span className="time-title">Start date: </span>
-        <span className="time">{FormatNoticeDate(notice.startDate)}</span>
-      </div>
-      <div data-testid="notice-card-end-date">
-        <span className="time-title">End date: </span>
-        <span className="time">{FormatNoticeDate(notice.endDate)}</span>
-      </div>
-    </NoticeCardContainer>
+      />
+    </div>
   );
 };

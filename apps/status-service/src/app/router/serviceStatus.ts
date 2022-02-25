@@ -35,7 +35,14 @@ export function createServiceStatusRouter({
 
     const applications = await serviceStatusRepository.find({ tenantId: tenantId.toString() });
 
-    res.json(applications);
+    res.json(
+      applications.map((app) => {
+        return {
+          ...app,
+          internalStatus: app.internalStatus,
+        };
+      })
+    );
   });
 
   // Enable the service
@@ -89,7 +96,6 @@ export function createServiceStatusRouter({
         metadata: '',
         statusTimestamp: 0,
         enabled: false,
-        internalStatus: 'stopped',
       });
 
       res.status(201).json(app);
@@ -121,7 +127,10 @@ export function createServiceStatusRouter({
       description,
       endpoint,
     });
-    res.status(200).json(updatedApplication);
+    res.status(200).json({
+      ...updatedApplication,
+      internalStatus: updatedApplication.internalStatus,
+    });
   });
 
   router.delete('/applications/:id', assertAuthenticatedHandler, async (req, res) => {
@@ -168,9 +177,9 @@ export function createServiceStatusRouter({
     const application = await serviceStatusRepository.get(id);
 
     if (!application.enabled) {
-      eventService.send(applicationStatusToStarted(application));
+      eventService.send(applicationStatusToStarted(application, user));
     } else {
-      eventService.send(applicationStatusToStopped(application));
+      eventService.send(applicationStatusToStopped(application, user));
     }
 
     if (user.tenantId?.toString() !== application.tenantId) {
@@ -184,7 +193,6 @@ export function createServiceStatusRouter({
   // TODO: create test
   router.get('/applications/:applicationId/endpoint-status-entries', async (req, res) => {
     logger.info(req.method, req.url);
-
     const { tenantId } = req.user;
     const { applicationId } = req.params;
     const { top: topValue } = req.query;

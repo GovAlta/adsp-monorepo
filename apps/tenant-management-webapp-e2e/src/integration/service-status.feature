@@ -14,6 +14,7 @@ Feature: Service status
     Then the user views Add notice dialog
     When the user enters "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>" on notice dialog
     And the user clicks Save as draft button
+    And the user selects "Draft" filter by status radio button
     Then the user "views" the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
     When the user clicks "edit" menu for the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
     Then the user views Edit notice dialog
@@ -21,6 +22,9 @@ Feature: Service status
     And the user clicks Save as draft button
     Then the user "views" the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     When the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+    Then the user views delete "notice" confirmation modal for "<Description2>"
+    When the user clicks Delete button in delete confirmation modal
+    And the user selects "All" filter by status radio button
     Then the user "should not view" the "draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
 
     Examples:
@@ -32,8 +36,10 @@ Feature: Service status
   Scenario: As a service owner, I can publish and un-publish a notice
     Given a service owner user is on status notices page
     When the user clicks "publish" menu for the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
+    And the user selects "Published" filter by status radio button
     Then the user "views" the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
     When the user clicks "unpublish" menu for the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
+    And the user selects "Draft" filter by status radio button
     Then the user "views" the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
 
   # TEST DATA: an application named "Autotest"
@@ -44,12 +50,17 @@ Feature: Service status
     Then the user views Add notice dialog
     When the user enters "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm" on notice dialog
     And the user clicks Save as draft button
+    And the user selects "Draft" filter by status radio button
     Then the user "views" the "Draft" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
     When the user clicks "publish" menu for the "Draft" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+    And the user selects "Published" filter by status radio button
     Then the user "views" the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+    And the user should not view "edit menu" for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+    And the user should not view "delete menu" for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
     When the user clicks "archive" menu for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+    And the user selects "Archived" filter by status radio button
     Then the user "views" the "Archived" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
-    And the user "should not view" the gear icon for the "Archived" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+    And the user should not view "gear icon" for the "Archived" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
 
   @TEST_CS-784 @REQ_CS-667 @regression
   Scenario: As a service owner, I can filter notices by status
@@ -116,10 +127,30 @@ Feature: Service status
     Then the user "views" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     # Delete the notice
     When the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
+    Then the user views delete "notice" confirmation modal for "<Description2>"
+    When the user clicks Delete button in delete confirmation modal
     And the user selects "All" filter by status radio button
     Then the user "should not view" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
 
     Examples:
       | Description           | Application | Start Date | Start Time | End Date | End Time | Description2               | Application2 | Start Date 2 | Start Time 2 | End Date 2 | End Time 2 |
       | Autotest-NewAllNotice | All         | Today      | 12:00 am   | Today    | 12:00 am | Autotest-ModifiedAllNotice | Autotest     | Today        | 10:00 am     | Today      | 02:00 pm   |
+
+  @TEST_CS-339 @REQ_CS-169 @regression
+  Scenario: As a tenant admin user, I can add/edit/delete an application
+    Given a tenant admin user is on status applications page
+    When the user clicks Add application button
+    Then the user views Add application modal
+    When the user enters "Autotest-addApp" as name and "Autotest-addApp" as description and "https://tenant-management-webapp-adsp-dev.apps.aro.gov.ab.ca/" as endpoint
+    And the user clicks Save application button
+    Then the user "views" "Autotest-addApp" in the application list
+    When the user clicks "Edit" button for "Autotest-addApp"
+    Then the user views "Autotest-addApp" as name and "Autotest-addApp" as description in the modal fields
+    When the user enters "Autotest-addApp Edited" as name and "Autotest-addApp Edited" as description fields
+    And the user clicks Save application button
+    Then the user "views" "Autotest-addApp Edited" in the application list
+    When the user clicks "Delete" button for "Autotest-addApp Edited"
+    Then the user views delete "application" confirmation modal for "Autotest-addApp Edited"
+    When the user clicks Delete button in delete confirmation modal
+    Then the user "should not view" "Autotest-addApp Edited" in the application list
 

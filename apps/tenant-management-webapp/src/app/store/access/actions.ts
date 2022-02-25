@@ -1,4 +1,4 @@
-import { AccessState } from './models';
+import { Role } from './models';
 
 /**
  * Types
@@ -16,7 +16,11 @@ export interface FetchAccessAction {
 
 export interface FetchAccessSuccessAction {
   type: typeof FETCH_ACCESS_SUCCESS_ACTION;
-  payload: AccessState;
+  payload: {
+    userCount: number;
+    activeUserCount: number;
+    roles: Role[];
+  };
 }
 
 export interface AccessResetAction {
@@ -32,11 +36,19 @@ export const fetchAccess = (): FetchAccessAction => ({
   type: 'tenant/access/FETCH_ACCESS',
 });
 
-export const fetchAccessSuccess = (payload: AccessState): FetchAccessSuccessAction => ({
+export const fetchAccessSuccess = (
+  userCount: number,
+  activeUserCount: number,
+  roles: Role[]
+): FetchAccessSuccessAction => ({
   type: 'tenant/access/FETCH_ACCESS_SUCCESS',
-  payload,
+  payload: {
+    userCount,
+    activeUserCount,
+    roles,
+  },
 });
 
 export const accessReset = (): AccessResetAction => ({
-  type: 'tenant/access/RESET'
+  type: 'tenant/access/RESET',
 });

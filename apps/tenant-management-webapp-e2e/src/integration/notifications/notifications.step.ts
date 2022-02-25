@@ -78,18 +78,6 @@ Then('the user views Edit notification type modal for {string}', function (cardT
   notificationsObj.notificationTypeModalNameField().invoke('attr', 'value').should('eq', cardTitle);
 });
 
-Then('the user views delete confirmation modal for {string}', function (cardTitle) {
-  notificationsObj
-    .notificationTypeDeleteConfirmationModalTitle()
-    .invoke('text')
-    .should('eq', 'Delete notification type');
-  notificationsObj.notificationTypeDeleteConfirmationModal().invoke('text').should('contains', cardTitle);
-});
-
-When('the user clicks Confirm button on delete confirmation modal', function () {
-  notificationsObj.notificationTypeDeleteConfirmationModalConfirmBtn().click();
-});
-
 Given('a tenant admin user is on notification types page', function () {
   commonlib.tenantAdminDirectURLLogin(
     Cypress.config().baseUrl,
@@ -178,15 +166,6 @@ When('the user clicks {string} button for {string} in {string}', function (butto
     default:
       expect(buttonName).to.be.oneOf(['delete']);
   }
-});
-
-Then('the user views Remove event modal for {string}', function (event) {
-  notificationsObj.removeEventModalTitle().invoke('text').should('contain', 'Remove event');
-  notificationsObj.removeEventModalContent().invoke('text').should('contain', event);
-});
-
-When('the user clicks Confirm button in Remove event modal', function () {
-  notificationsObj.removeEventModalConfirmBtn().click();
 });
 
 Then('the user {string} the notification type card of {string}', function (viewOrNot, name) {

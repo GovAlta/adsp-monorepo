@@ -110,3 +110,15 @@ Then('the user views a callout message of {string}', function (message) {
   cy.wait(1000); // Wait for the message to show up
   commonObj.notificationMessage().invoke('text').should('contain', message);
 });
+
+Then('the user views delete {string} confirmation modal for {string}', function (deleteItemType, deleteItemName) {
+  commonObj
+    .deleteConfirmationModalTitle()
+    .invoke('text')
+    .should('eq', 'Delete ' + deleteItemType);
+  commonObj.deleteConfirmationModalContent().invoke('text').should('contains', deleteItemName);
+});
+
+When('the user clicks Delete button in delete confirmation modal', function () {
+  commonObj.deleteConfirmationModalDeleteBtn().click();
+});

@@ -31,8 +31,6 @@ const AnonymousReadWrapper = styled.div`
 `;
 
 const DataTableWrapper = styled.div`
-  height: 12em;
-  overflow: auto;
   .goa-checkbox input[type='checkbox'] {
     display: none !important;
   }
@@ -45,6 +43,24 @@ const DataTableWrapper = styled.div`
     background-color: white;
     padding-left: 0em !important;
   }
+  thead,
+  tbody {
+    display: block;
+  }
+
+  tbody {
+    height: 10em;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .role-name {
+    width: 30em;
+  }
+
+  .role {
+    width: 3em;
+  }
 
   td {
     padding-left: 0em !important;
@@ -52,6 +68,7 @@ const DataTableWrapper = styled.div`
 
   table {
     border-collapse: collapse !important;
+    width: 100%;
   }
 `;
 
@@ -87,9 +104,15 @@ const FileRoleTable = (props: FileRoleTableProps): JSX.Element => {
       <DataTable noScroll={true}>
         <thead>
           <tr>
-            <th id="file-type-roles">Roles</th>
-            <th id="read-role-action">Read</th>
-            <th id="write-role-action">Modify</th>
+            <th id="file-type-roles" className="role-name">
+              Roles
+            </th>
+            <th id="read-role-action" className="role">
+              Read
+            </th>
+            <th id="write-role-action" className="role">
+              Modify
+            </th>
           </tr>
         </thead>
 
@@ -97,8 +120,8 @@ const FileRoleTable = (props: FileRoleTableProps): JSX.Element => {
           {props.roles.map((role): JSX.Element => {
             return (
               <tr key={`file-type-row-${role}`}>
-                <td>{role}</td>
-                <td>
+                <td className="role-name">{role}</td>
+                <td className="role">
                   <GoACheckbox
                     name={`file-type-read-role-checkbox-${role}`}
                     key={`file-type-read-role-checkbox-${role}`}
@@ -120,7 +143,7 @@ const FileRoleTable = (props: FileRoleTableProps): JSX.Element => {
                     }}
                   />
                 </td>
-                <td>
+                <td className="role">
                   <GoACheckbox
                     name={`file-type-update-role-checkbox-${role}`}
                     key={`file-type-update-role-checkbox-${role}`}

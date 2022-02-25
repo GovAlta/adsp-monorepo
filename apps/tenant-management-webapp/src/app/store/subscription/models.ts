@@ -27,6 +27,7 @@ export interface Subscriber {
   addressAs?: string;
   channels?: Channels[];
   userId?: string;
+  accountLink?: string;
   visibleSubscriptions?: boolean;
 }
 
@@ -48,13 +49,10 @@ export interface SubscriberService {
   subscriber: Subscriber;
   subscriberSubscriptions: Record<string, SubscriberAndSubscriptions>;
   successMessage: string;
+  subscribers: Record<string, Subscriber>;
   search: {
-    subscribers: {
-      data: Subscriber[] | undefined;
-      hasNext: boolean;
-      pageSize: number;
-      top: number;
-    };
+    results: string[];
+    next: string;
   };
   updateError: string;
 }
@@ -66,18 +64,21 @@ export const SUBSCRIBER_INIT: SubscriberService = {
   subscriber: undefined,
   subscriberSubscriptions: {},
   successMessage: null,
+  subscribers: {},
   search: {
-    subscribers: {
-      data: undefined,
-      hasNext: false,
-      pageSize: DEFAULT_PAGE_SIZE,
-      top: DEFAULT_PAGE_SIZE,
-    },
+    results: [],
+    next: null,
   },
   updateError: '',
 };
 
 export interface SubscriberSearchCriteria {
+  email?: string;
+  name?: string;
+  next?: string;
+}
+
+export interface SubscriptionSearchCriteria {
   email?: string;
   name?: string;
   next?: boolean;

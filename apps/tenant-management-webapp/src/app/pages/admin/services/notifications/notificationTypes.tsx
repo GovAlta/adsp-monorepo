@@ -1,20 +1,16 @@
-import React, { FunctionComponent, useState, useEffect, useCallback } from 'react';
+import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton, GoACard } from '@abgov/react-components';
 import { Grid, GridItem } from '@components/Grid';
 import { NotificationTypeModalForm } from './edit';
+import { CoreNotificationTypeModalForm } from './editCore';
 import { EventModalForm } from './editEvent';
 import { IndicatorWithDelay } from '@components/Indicator';
 import debounce from 'lodash.debounce';
 import * as handlebars from 'handlebars/dist/cjs/handlebars';
+import { DeleteModal } from '@components/DeleteModal';
 
-import {
-  GoAModal,
-  GoAModalActions,
-  GoAModalContent,
-  GoAModalTitle,
-  GoAIcon,
-} from '@abgov/react-components/experimental';
+import { GoAIcon } from '@abgov/react-components/experimental';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { isDuplicatedNotificationName } from './validation';
 import { NotificationType } from '@store/notification/models';
@@ -44,6 +40,7 @@ import {
 import { TemplateEditor } from './emailPreviewEditor/TemplateEditor';
 import { PreviewTemplate } from './emailPreviewEditor/PreviewTemplate';
 import { dynamicGeneratePayload } from '@lib/dynamicPlaceHolder';
+import { convertEventToSuggestion } from '@lib/autoComplete';
 
 const emptyNotificationType: NotificationItem = {
   name: '',
@@ -62,6 +59,7 @@ interface ParentCompProps {
 
 export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEdit, activateEdit }) => {
   const [editType, setEditType] = useState(false);
+  const [editCoreType, setEditCoreType] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [editEvent, setEditEvent] = useState(null);
@@ -92,6 +90,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   const htmlPayload = dynamicGeneratePayload(eventDef);
   const serviceName = `${selectedEvent?.namespace}:${selectedEvent?.name}`;
+  const TEMPALTE_RENDER_DEBOUNCE_TIMER = 500; // ms
+
+  const getEventSuggestion = () => {
+    if (eventDef) {
+      return convertEventToSuggestion(eventDef);
+    }
+    return [];
+  };
 
   useEffect(() => {
     // if an event is selected for editing
@@ -148,6 +154,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     setShowTemplateForm(false);
     setEventTemplateFormState(addNewEventTemplateContent);
     setEditType(false);
+    setEditCoreType(false);
     setEditEvent(null);
     setSelectedType(emptyNotificationType);
     setShowEmailPreview(false);
@@ -168,14 +175,38 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     setSelectedType(notificationType);
     setEditEvent(notificationType);
   }
-  const debouncedSaveSubjectPreview = useCallback(
-    debounce((value) => setSubjectPreview(value), 1000),
-    []
-  );
-  const debouncedSaveBodyPreview = useCallback(
-    debounce((value) => setBodyPreview(value), 1000),
-    []
-  );
+  const debouncedSaveSubjectPreview = debounce((value) => {
+    try {
+      const msg = generateMessage(value, htmlPayload);
+      setSubjectPreview(msg);
+      setTemplateEditErrors({
+        ...templateEditErrors,
+        subject: '',
+      });
+    } catch (e) {
+      console.error('handlebar error', e);
+      setTemplateEditErrors({
+        ...templateEditErrors,
+        subject: syntaxErrorMessage,
+      });
+    }
+  }, TEMPALTE_RENDER_DEBOUNCE_TIMER);
+  const debouncedSaveBodyPreview = debounce((value) => {
+    try {
+      const msg = generateMessage(getTemplateBody(value), htmlPayload);
+      setBodyPreview(msg);
+      setTemplateEditErrors({
+        ...templateEditErrors,
+        body: '',
+      });
+    } catch (e) {
+      console.error('handlebar error', e);
+      setTemplateEditErrors({
+        ...templateEditErrors,
+        body: syntaxErrorMessage,
+      });
+    }
+  }, TEMPALTE_RENDER_DEBOUNCE_TIMER);
 
   const nonCoreCopiedNotifications: NotificationType = Object.assign({}, notification?.notificationTypes);
 
@@ -193,6 +224,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     });
   }
   delete nonCoreCopiedNotifications.contact;
+  delete nonCoreCopiedNotifications.manageSubscribe;
 
   const saveOrAddEventTemplate = () => {
     const definitionEventIndex = selectedType?.events?.findIndex(
@@ -315,7 +347,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                             )}{' '}
                         </b>
                       </div>
-                      <div>Public Subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}</div>
+                      <div>
+                        <div className="minimumLineHeight">
+                          Public Subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
+                        </div>
+                        <div className="minimumLineHeight">
+                          Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -423,7 +462,31 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               }
               description={notificationType.description}
             >
+              <div className="rowFlex">
+                <div className="flex1">
+                  <div style={{ lineHeight: '20px' }}>
+                    Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
+                  </div>
+                </div>
+                <div>
+                  <a
+                    className="flex1"
+                    data-testid="edit-notification-type"
+                    onClick={() => {
+                      setSelectedType(notificationType);
+                      setEditCoreType(true);
+                      setFormTitle('Edit notification type');
+                    }}
+                  >
+                    <NotificationBorder className="smallPadding" style={{ height: '26px', display: 'flex' }}>
+                      <EditIcon size="small" />
+                    </NotificationBorder>
+                  </a>
+                </div>
+              </div>
+
               <h2>Events:</h2>
+
               <Grid>
                 {notificationType?.events?.map((event, key) => (
                   <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
@@ -499,81 +562,60 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         ))}
       {notification.notificationTypes === undefined && <IndicatorWithDelay message="Loading..." pageLock={false} />}
       {/* Delete confirmation */}
-      <GoAModal testId="delete-confirmation" isOpen={showDeleteConfirmation}>
-        <GoAModalTitle>Delete notification type</GoAModalTitle>
-        <GoAModalContent>Delete {selectedType?.name}?</GoAModalContent>
-        <GoAModalActions>
-          <GoAButton
-            buttonType="tertiary"
-            data-testid="delete-cancel"
-            onClick={() => {
-              setShowDeleteConfirmation(false);
-              setSelectedType(emptyNotificationType);
-            }}
-          >
-            Cancel
-          </GoAButton>
 
-          <GoAButton
-            buttonType="primary"
-            data-testid="delete-confirm"
-            onClick={() => {
-              setShowDeleteConfirmation(false);
-              dispatch(DeleteNotificationTypeService(selectedType));
-              setSelectedType(emptyNotificationType);
-            }}
-          >
-            Confirm
-          </GoAButton>
-        </GoAModalActions>
-      </GoAModal>
+      {showDeleteConfirmation && (
+        <DeleteModal
+          isOpen={showDeleteConfirmation}
+          title="Delete notification type"
+          content={`Delete ${selectedType?.name}?`}
+          onCancel={() => {
+            setShowDeleteConfirmation(false);
+            setSelectedType(emptyNotificationType);
+          }}
+          onDelete={() => {
+            setShowDeleteConfirmation(false);
+            dispatch(DeleteNotificationTypeService(selectedType));
+            setSelectedType(emptyNotificationType);
+          }}
+        />
+      )}
       {/* Event delete confirmation */}
-      <GoAModal testId="event-delete-confirmation" isOpen={showEventDeleteConfirmation}>
-        <GoAModalTitle>{coreEvent ? 'Reset email template' : 'Remove event'} </GoAModalTitle>
-        <GoAModalContent>
-          {coreEvent
-            ? 'Remove custom email template modifications'
-            : `Remove ${selectedEvent?.namespace}:${selectedEvent?.name}`}
-        </GoAModalContent>
-        <GoAModalActions>
-          <GoAButton
-            buttonType="tertiary"
-            data-testid="event-delete-cancel"
-            onClick={() => {
-              setShowEventDeleteConfirmation(false);
-              setSelectedType(emptyNotificationType);
-              setCoreEvent(false);
-            }}
-          >
-            Cancel
-          </GoAButton>
-          <GoAButton
-            buttonType="primary"
-            data-testid="event-delete-confirm"
-            onClick={() => {
-              setShowEventDeleteConfirmation(false);
-              const updatedEvents = selectedType.events.filter(
-                (event) =>
-                  `${event.namespace}:${event.name}` !== `${selectedEvent.namespace}:${selectedEvent.name}` &&
-                  (!coreEvent || event.customized)
-              );
+      {showEventDeleteConfirmation && (
+        <DeleteModal
+          isOpen={showEventDeleteConfirmation}
+          title={coreEvent ? 'Reset email template' : 'Delete event'}
+          content={
+            coreEvent
+              ? 'Delete custom email template modifications'
+              : `Delete ${selectedEvent?.namespace}:${selectedEvent?.name}`
+          }
+          onCancel={() => {
+            setShowEventDeleteConfirmation(false);
+            setSelectedType(emptyNotificationType);
+            setCoreEvent(false);
+          }}
+          onDelete={() => {
+            setShowEventDeleteConfirmation(false);
+            const updatedEvents = selectedType.events.filter(
+              (event) =>
+                `${event.namespace}:${event.name}` !== `${selectedEvent.namespace}:${selectedEvent.name}` &&
+                (!coreEvent || event.customized)
+            );
 
-              const newType = JSON.parse(JSON.stringify(selectedType));
-              newType.events = updatedEvents;
+            const newType = JSON.parse(JSON.stringify(selectedType));
+            newType.events = updatedEvents;
 
-              newType.events = newType.events.map((event) => {
-                event.channels = [];
-                return event;
-              });
-              dispatch(UpdateNotificationTypeService(newType));
-              setSelectedType(emptyNotificationType);
-              setCoreEvent(false);
-            }}
-          >
-            Confirm
-          </GoAButton>
-        </GoAModalActions>
-      </GoAModal>
+            newType.events = newType.events.map((event) => {
+              event.channels = [];
+              return event;
+            });
+            dispatch(UpdateNotificationTypeService(newType));
+            setSelectedType(emptyNotificationType);
+            setCoreEvent(false);
+          }}
+        />
+      )}
+
       {/* Form */}
       <NotificationTypeModalForm
         open={editType}
@@ -593,6 +635,19 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             dispatch(UpdateNotificationTypeService(type));
             reset();
           }
+        }}
+        onCancel={() => {
+          reset();
+        }}
+      />
+      <CoreNotificationTypeModalForm
+        open={editCoreType}
+        initialValue={selectedType}
+        errors={errors}
+        title={formTitle}
+        onSave={(type) => {
+          dispatch(UpdateNotificationTypeService(type));
+          reset();
         }}
         onCancel={() => {
           reset();
@@ -630,48 +685,19 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               serviceName={serviceName}
               onSubjectChange={(value) => {
                 setSubject(value);
-                try {
-                  const generatedSubjectPreview = generateMessage(value, htmlPayload);
-                  if (generatedSubjectPreview) {
-                    debouncedSaveSubjectPreview(generatedSubjectPreview);
-                    setTemplateEditErrors({
-                      ...templateEditErrors,
-                      subject: '',
-                    });
-                  }
-                } catch (e) {
-                  console.error('handlebar error', e);
-                  setTemplateEditErrors({
-                    ...templateEditErrors,
-                    subject: syntaxErrorMessage,
-                  });
-                }
+                debouncedSaveSubjectPreview(value);
               }}
               subjectEditorConfig={subjectEditorConfig}
               bodyTitle="Body"
               onBodyChange={(value) => {
                 setBody(value);
-                try {
-                  const generatedBodyPreview = generateMessage(getTemplateBody(value), htmlPayload);
-                  if (generatedBodyPreview) {
-                    debouncedSaveBodyPreview(generatedBodyPreview);
-                    setTemplateEditErrors({
-                      ...templateEditErrors,
-                      body: '',
-                    });
-                  }
-                } catch (e) {
-                  console.error('handlebar error', e);
-                  setTemplateEditErrors({
-                    ...templateEditErrors,
-                    body: syntaxErrorMessage,
-                  });
-                }
+                debouncedSaveBodyPreview(value);
               }}
               body={body}
               bodyEditorConfig={bodyEditorConfig}
               errors={templateEditErrors}
               bodyEditorHintText={eventTemplateEditHintText}
+              eventSuggestion={getEventSuggestion()}
               actionButtons={
                 <>
                   <GoAButton
@@ -828,5 +854,9 @@ const NotficationStyles = styled.div`
   }
   .noCursor {
     cursor: default;
+  }
+
+  .minimumLineHeight {
+    line-height: 1.25rem;
   }
 `;

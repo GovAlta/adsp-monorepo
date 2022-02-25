@@ -1,4 +1,10 @@
-import { Subscription, Subscriber, SubscriptionWrapper, SubscriberSearchCriteria } from './models';
+import {
+  Subscription,
+  Subscriber,
+  SubscriptionWrapper,
+  SubscriberSearchCriteria,
+  SubscriptionSearchCriteria,
+} from './models';
 export const CREATE_SUBSCRIBER = 'tenant/subscriber-service/create-subscriber';
 export const UPDATE_SUBSCRIBER = 'tenant/subscriber-service/update-subscriber';
 export const GET_SUBSCRIBER_SUCCESS = 'tenant/subscriber-service/get-subscriber-success';
@@ -18,6 +24,8 @@ export const GET_TYPE_SUBSCRIPTION = 'tenant/subscriber-service/get-type-subscri
 export const GET_TYPE_SUBSCRIPTION_SUCCESS = 'tenant/subscriber-service/get-type-subscription-success';
 export const GET_SUBSCRIBER_SUBSCRIPTIONS = 'tenant/subscriber-service/get-subscription-subscriber';
 export const GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS = 'tenant/subscriber-service/get-subscription-subscriber-success';
+export const RESOLVE_SUBSCRIBER_USER = 'tenant/subscriber-service/resolve-subscriber-user';
+export const RESOLVE_SUBSCRIBER_USER_SUCCESS = 'tenant/subscriber-service/resolve-subscriber-user-success';
 export const TRIGGER_VISIBILITY_SUBSCRIBER = 'tenant/subscriber-service/make-visible';
 export const RESET_VISIBILITY_IN_SUBSCRIBERS = 'tenant/subscriber-service/reset-visibility';
 export const EMAIL_EXISTS = 'tenant/subscriber-service/email-exists';
@@ -41,6 +49,8 @@ export type ActionTypes =
   | UpdateSubscriptionsSuccessAction
   | GetTypeSubscriptionSuccessAction
   | GetSubscriberSubscriptionsSuccessAction
+  | ResolveSubscriberUserAction
+  | ResolveSubscriberUserSuccessAction
   | TriggerVisibilitySubscribersServiceAction
   | ResetVisibilityInSubscribersServiceAction
   | EmailExistsAction
@@ -76,6 +86,22 @@ export interface GetSubscriberSubscriptionsAction {
   type: typeof GET_SUBSCRIBER_SUBSCRIPTIONS;
   payload: {
     subscriber: Subscriber;
+  };
+}
+
+export interface ResolveSubscriberUserSuccessAction {
+  type: typeof RESOLVE_SUBSCRIBER_USER_SUCCESS;
+  payload: {
+    subscriberId: string;
+    accountLink: string;
+  };
+}
+
+export interface ResolveSubscriberUserAction {
+  type: typeof RESOLVE_SUBSCRIBER_USER;
+  payload: {
+    subscriberId: string;
+    userId: string;
   };
 }
 
@@ -154,7 +180,7 @@ export interface GetSubscriptionAction {
 
 export interface GetSubscriptionsAction {
   type: typeof GET_SUBSCRIPTIONS;
-  payload: SubscriberSearchCriteria;
+  payload: SubscriptionSearchCriteria;
 }
 
 export interface GetSubscriberAction {
@@ -182,7 +208,8 @@ export interface FindSubscribersSuccessAction {
   type: typeof FIND_SUBSCRIBERS_SUCCESS;
   payload: {
     subscribers: Subscriber[];
-    top: number;
+    after: string;
+    next: string;
   };
 }
 
@@ -243,7 +270,7 @@ export const getSubscription = (subscriptionInfo: {
   },
 });
 
-export const getSubscriptions = (criteria: SubscriberSearchCriteria): GetSubscriptionsAction => ({
+export const getSubscriptions = (criteria: SubscriptionSearchCriteria): GetSubscriptionsAction => ({
   type: GET_SUBSCRIPTIONS,
   payload: criteria,
 });
@@ -264,6 +291,19 @@ export const GetSubscriberSubscriptionsSuccess = (
     subscriptions,
     subscriber,
   },
+});
+
+export const ResolveSubscriberUser = (subscriberId: string, userId: string): ResolveSubscriberUserAction => ({
+  type: RESOLVE_SUBSCRIBER_USER,
+  payload: { subscriberId, userId },
+});
+
+export const ResolveSubscriberUserSuccess = (
+  subscriberId: string,
+  accountLink: string
+): ResolveSubscriberUserSuccessAction => ({
+  type: RESOLVE_SUBSCRIBER_USER_SUCCESS,
+  payload: { subscriberId, accountLink },
 });
 
 export const TriggerVisibilitySubscribersService = (
@@ -348,11 +388,16 @@ export const FindSubscribers = (criteria: SubscriberSearchCriteria): FindSubscri
   payload: criteria,
 });
 
-export const FindSubscribersSuccess = (subscribers: Subscriber[], top: number): FindSubscribersSuccessAction => ({
+export const FindSubscribersSuccess = (
+  subscribers: Subscriber[],
+  next: string,
+  after?: string
+): FindSubscribersSuccessAction => ({
   type: FIND_SUBSCRIBERS_SUCCESS,
   payload: {
     subscribers,
-    top,
+    after,
+    next,
   },
 });
 

@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { fetchAccess, accessReset } from '@store/access/actions';
-import { User } from '@store/access/models';
 import styled from 'styled-components';
 import DataTable from '@components/DataTable';
 import { Metrics } from '@components/Metrics';
@@ -12,16 +11,17 @@ import { PageIndicator } from '@components/Indicator';
 export default function (): JSX.Element {
   const dispatch = useDispatch();
 
-  const { users, roles, keycloakConfig } = useSelector((state: RootState) => {
+  const { userCount, activeUserCount, roles, keycloakConfig } = useSelector((state: RootState) => {
     return {
-      users: state.access.users || [],
-      roles: state.access.roles || [],
+      userCount: state.access.metrics.users,
+      activeUserCount: state.access.metrics.activeUsers,
+      roles: Object.values(state.access.roles),
       keycloakConfig: state.config.keycloakApi,
     };
   });
 
   const isReady = (indicator, users) => {
-    return !indicator.show && users && users.length > 0;
+    return !indicator.show && !!users;
   };
 
   const indicator = useSelector((state: RootState) => {
@@ -38,15 +38,11 @@ export default function (): JSX.Element {
 
   useEffect(() => {
     return function clean() {
-      if (isReady(indicator, users)) {
+      if (isReady(indicator, userCount)) {
         dispatch(accessReset());
       }
     };
   }, [indicator]);
-
-  function activeUsers(): User[] {
-    return users.filter((user) => user.enabled);
-  }
 
   function getKeycloakAdminPortal() {
     return realm ? `${keycloakConfig.url}/admin/${realm}/console` : keycloakConfig.url;
@@ -62,7 +58,7 @@ export default function (): JSX.Element {
         </p>
         <PageIndicator />
 
-        {isReady(indicator, users) && (
+        {isReady(indicator, userCount) && (
           <div>
             <section id="keycloak-user-info">
               <TitleLinkHeader>
@@ -80,9 +76,9 @@ export default function (): JSX.Element {
 
               <Metrics
                 metrics={[
-                  { id: 'user-count', name: 'Total number of users', value: users.length },
+                  { id: 'user-count', name: 'Total number of users', value: userCount },
                   { id: 'role-count', name: 'Types of user roles', value: roles?.length },
-                  { id: 'active-user-count', name: 'Active users', value: activeUsers().length },
+                  { id: 'active-user-count', name: 'Active users', value: activeUserCount },
                 ]}
               />
             </section>

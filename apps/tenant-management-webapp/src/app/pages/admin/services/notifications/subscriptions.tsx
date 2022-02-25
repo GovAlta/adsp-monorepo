@@ -2,12 +2,10 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { SubscriptionList } from './subscriptionList';
 import { getSubscriptions, Unsubscribe } from '@store/subscription/actions';
-import type { Subscriber } from '@store/subscription/models';
-import { GoAButton } from '@abgov/react-components';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
+import type { Subscriber, SubscriberSearchCriteria, SubscriptionSearchCriteria } from '@store/subscription/models';
 import { SubscribersSearchForm } from './subscribers/subscriberSearchForm';
-import type { SubscriberSearchCriteria } from '@store/subscription/models';
 import { CheckSubscriberRoles } from './checkSubscriberRoles';
+import { DeleteModal } from '@components/DeleteModal';
 
 export const Subscriptions: FunctionComponent = () => {
   const criteriaInit = {
@@ -19,13 +17,13 @@ export const Subscriptions: FunctionComponent = () => {
   const [selectedType, setSelectedType] = useState<string>(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
-  const [criteriaState, setCriteriaState] = useState<SubscriberSearchCriteria>(criteriaInit);
+  const [criteriaState, setCriteriaState] = useState<SubscriptionSearchCriteria>(criteriaInit);
   useEffect(() => {
     dispatch(getSubscriptions({}));
   }, []);
 
-  const searchFn = (criteria: SubscriberSearchCriteria) => {
-    dispatch(getSubscriptions(criteria));
+  const searchFn = ({ email, name }: SubscriberSearchCriteria) => {
+    dispatch(getSubscriptions({ email, name }));
   };
 
   const resetState = () => {
@@ -47,25 +45,19 @@ export const Subscriptions: FunctionComponent = () => {
         searchCriteria={criteriaState}
       />
       {/* Delete confirmation */}
-      <GoAModal testId="delete-confirmation" isOpen={showDeleteConfirmation}>
-        <GoAModalTitle>Delete subscription</GoAModalTitle>
-        <GoAModalContent>Delete subscription {selectedSubscription?.channels[emailIndex]?.address}?</GoAModalContent>
-        <GoAModalActions>
-          <GoAButton buttonType="tertiary" data-testid="delete-cancel" onClick={() => setShowDeleteConfirmation(false)}>
-            Cancel
-          </GoAButton>
-          <GoAButton
-            buttonType="primary"
-            data-testid="delete-confirm"
-            onClick={() => {
-              setShowDeleteConfirmation(false);
-              dispatch(Unsubscribe({ data: { type: selectedType, data: selectedSubscription } }));
-            }}
-          >
-            Confirm
-          </GoAButton>
-        </GoAModalActions>
-      </GoAModal>
+
+      {showDeleteConfirmation && (
+        <DeleteModal
+          isOpen={showDeleteConfirmation}
+          title="Delete subscription"
+          content={`Delete subscription ${selectedSubscription?.channels[emailIndex]?.address}?`}
+          onCancel={() => setShowDeleteConfirmation(false)}
+          onDelete={() => {
+            setShowDeleteConfirmation(false);
+            dispatch(Unsubscribe({ data: { type: selectedType, data: selectedSubscription } }));
+          }}
+        />
+      )}
     </CheckSubscriberRoles>
   );
 };

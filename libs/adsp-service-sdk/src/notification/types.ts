@@ -22,6 +22,7 @@ export interface NotificationType {
   name: string;
   description: string;
   publicSubscribe: boolean;
+  manageSubscribe?: boolean;
   subscriberRoles: string[];
   events: NotificationTypeEvent[];
 }

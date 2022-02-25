@@ -243,8 +243,8 @@ Then('the user views {string} notices', function (filterType) {
 });
 
 Then(
-  'the user {string} the gear icon for the {string} notice of {string}, {string}, {string}, {string}, {string}, {string}',
-  function (viewOrNot, mode, desc, app, startDate, startTime, endDate, endTime) {
+  'the user should not view {string} for the {string} notice of {string}, {string}, {string}, {string}, {string}, {string}',
+  function (menu, mode, desc, app, startDate, startTime, endDate, endTime) {
     let startDateTime;
     let endDateTime;
     if (startDate == 'Today' && endDate == 'Today') {
@@ -277,7 +277,19 @@ Then(
     }
     searchNoticeCards(mode, desc, app, startDateTime, endDateTime).then((index) => {
       expect(index).to.not.equal(0);
-      statusObj.noticeCardGearButton(index).should('not.exist');
+      switch (menu) {
+        case 'gear icon':
+          statusObj.noticeCardGearButton(index).should('not.exist');
+          break;
+        case 'edit menu':
+          statusObj.noticeCardEditMenu(index).should('not.exist');
+          break;
+        case 'delete menu':
+          statusObj.noticeCardDeleteMenu(index).should('not.exist');
+          break;
+        default:
+          expect(menu).to.be.oneOf(['gear icon', 'edit menu', 'delete menu']);
+      }
     });
   }
 );
@@ -379,7 +391,7 @@ Given('a tenant admin user is on status applications page', function () {
   );
   commonlib.tenantAdminMenuItem('Status', 4000);
   commonObj.serviceTab('Service status', 'Applications').click();
-  cy.wait(10000); // Applications page is slow to load applications and healt check info
+  cy.wait(2000); // Applications page is slow to load applications and healt check info
 });
 
 When('the user {string} the subscribe checkbox for health check notification type', function (checkboxOperation) {
@@ -433,4 +445,75 @@ Then('the user views the subscribe checkbox is {string}', function (checkboxStat
         }
       }
     });
+});
+
+When('the user clicks Add application button', function () {
+  statusObj.addApplicationButton().click();
+});
+
+Then('the user views Add application modal', function () {
+  statusObj.addApplicationModalTitle().invoke('text').should('eq', 'Add application');
+});
+
+When(
+  'the user enters {string} as name and {string} as description and {string} as endpoint',
+  function (name, description, endpoint) {
+    statusObj.addApplicationNameModalField().clear().type(name);
+    statusObj.addApplicationDescriptionModalField().clear().type(description);
+    statusObj.addApplicationEndpointModalField().clear().type(endpoint);
+  }
+);
+
+Then('the user clicks Save application button', function () {
+  statusObj.addApplicationSaveBtn().click();
+  cy.wait(4000);
+});
+
+Then('the user {string} {string} in the application list', function (viewOrNot, appName) {
+  switch (viewOrNot) {
+    case 'views':
+      statusObj.applicationCardTitle(appName).should('exist');
+      break;
+    case 'should not view':
+      statusObj.applicationCardTitle(appName).should('not.exist');
+      break;
+    default:
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});
+
+When('the user clicks {string} button for {string}', function (buttonType, appName) {
+  switch (buttonType) {
+    case 'Edit':
+      statusObj.applicationCardEditBtn(appName).click();
+      break;
+    case 'Delete':
+      statusObj.applicationCardDeleteBtn(appName).click();
+      break;
+    default:
+      expect(buttonType).to.be.oneOf(['edit', 'delete']);
+  }
+});
+
+Then(
+  'the user views {string} as name and {string} as description in the modal fields',
+  function (appName, description) {
+    statusObj
+      .addApplicationNameModalField()
+      .invoke('val')
+      .then((val) => {
+        expect(val).to.eq(appName);
+      });
+    statusObj
+      .addApplicationDescriptionModalField()
+      .invoke('val')
+      .then((val) => {
+        expect(val).to.eq(description);
+      });
+  }
+);
+
+When('the user enters {string} as name and {string} as description fields', function (appName, description) {
+  statusObj.addApplicationNameModalField().clear().type(appName);
+  statusObj.addApplicationDescriptionModalField().clear().type(description);
 });

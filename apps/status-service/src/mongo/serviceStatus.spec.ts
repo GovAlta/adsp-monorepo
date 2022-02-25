@@ -68,7 +68,10 @@ describe('Service status mongo repository', () => {
         tenantId: '99',
         tenantName: 'Child Services',
         tenantRealm: '123123-123123-123123-123123',
-        endpoint: null,
+        endpoint: {
+          url: 'http://mock-a.com',
+          status: null,
+        },
       },
       {
         name: 'app 2',
@@ -76,7 +79,10 @@ describe('Service status mongo repository', () => {
         tenantId: '99',
         tenantName: 'Child Services',
         tenantRealm: '123123-123123-123123-123123',
-        endpoint: null,
+        endpoint: {
+          url: 'http://mock-b.com',
+          status: null,
+        },
       },
     ]);
     await repo.enable(applications[0]);
@@ -109,7 +115,6 @@ describe('Service status mongo repository', () => {
 
     const disabledApplications = await repo.find({ enabled: false });
     expect(disabledApplications.length).toEqual(1);
-    expect(disabledApplications[0].endpoint.status).toEqual('disabled');
   });
 
   it('deletes the application', async () => {
