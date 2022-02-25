@@ -1,10 +1,8 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { NotificationItem } from '@store/notification/models';
 import { GoAButton } from '@abgov/react-components';
-import { useSelector } from 'react-redux';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
-import { RootState } from '@store/index';
 import { GoACallout } from '@abgov/react-components';
 import styled from 'styled-components';
 import { GoACheckbox } from '@abgov/react-components';
@@ -37,7 +35,6 @@ export const CoreNotificationTypeModalForm: FunctionComponent<NotificationTypeFo
   title,
   open,
 }) => {
-  //const dispatch = useDispatch();
   const isEdit = !!initialValue;
   const [type, setType] = useState(emptyNotificationType);
 
@@ -62,12 +59,14 @@ export const CoreNotificationTypeModalForm: FunctionComponent<NotificationTypeFo
               >
                 My subscribers are allowed to manage their own subscription for this notification type
               </GoACheckbox>
-              {type.manageSubscribe && (
-                <GoACallout type="important">
-                  This checkbox enables your subscribers to manage subscriptions on a self serve basis. Subscribers can
-                  unsubscribe from the notification type without contacting the program area.
-                </GoACallout>
-              )}
+              <div className="fitContent">
+                {type.manageSubscribe && (
+                  <GoACallout type="important">
+                    This checkbox enables your subscribers to manage subscriptions on a self serve basis. Subscribers
+                    can unsubscribe from the notification type without contacting the program area.
+                  </GoACallout>
+                )}
+              </div>
             </GoAFormItem>
           </GoAForm>
         </GoAModalContent>
@@ -97,5 +96,10 @@ const EditStyles = styled.div`
 
   li {
     border: 1px solid #f1f1f1;
+  }
+
+  .fitContent {
+    max-width: fit-content;
+    min-height: 163px;
   }
 `;

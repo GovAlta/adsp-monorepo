@@ -348,10 +348,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                         </b>
                       </div>
                       <div>
-                        <div style={{ lineHeight: '20px' }}>
+                        <div className="minimumLineHeight">
                           Public Subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
                         </div>
-                        <div style={{ lineHeight: '20px' }}>
+                        <div className="minimumLineHeight">
                           Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
                         </div>
                       </div>
@@ -854,5 +854,9 @@ const NotficationStyles = styled.div`
   }
   .noCursor {
     cursor: default;
+  }
+
+  .minimumLineHeight {
+    line-height: 1.25rem;
   }
 `;
