@@ -26,7 +26,7 @@ type AssertRole = (
   descriptor: TypedPropertyDescriptor<T>
 ) => TypedPropertyDescriptor<T>;
 
-function hasRequiredRole(user: User, roles: string | string[]): boolean {
+export function hasRequiredRole(user: User, roles: string | string[]): boolean {
   if (!(roles instanceof Array)) {
     roles = [roles];
   }
@@ -39,7 +39,8 @@ function hasRequiredRole(user: User, roles: string | string[]): boolean {
 
 export function isAllowedUser(user: User, tenantId: AdspId, roles: string | string[], allowCore = false): boolean {
   const isAllowedTenant =
-    (allowCore && user?.isCore) || (!!user?.tenantId && (!tenantId || tenantId.toString() === user.tenantId.toString()));
+    (allowCore && user?.isCore) ||
+    (!!user?.tenantId && (!tenantId || tenantId.toString() === user.tenantId.toString()));
 
   return isAllowedTenant && hasRequiredRole(user, roles);
 }

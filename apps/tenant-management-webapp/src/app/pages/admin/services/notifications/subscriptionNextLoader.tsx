@@ -1,19 +1,19 @@
 import { GoAButton } from '@abgov/react-components';
 import React, { FunctionComponent } from 'react';
-import type { SubscriberSearchCriteria } from '@store/subscription/models';
+import type { SubscriptionSearchCriteria } from '@store/subscription/models';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 
 interface EventSearchNextProps {
   onSearch?: (searchInfo: SearchInfo) => void;
-  searchCriteria: SubscriberSearchCriteria;
+  searchCriteria: SubscriptionSearchCriteria;
   type?: string;
   length: number;
 }
 
 interface SearchInfo {
   type?: string | null;
-  searchCriteria: SubscriberSearchCriteria;
+  searchCriteria: SubscriptionSearchCriteria;
 }
 
 export const SubscriptionNextLoader: FunctionComponent<EventSearchNextProps> = ({

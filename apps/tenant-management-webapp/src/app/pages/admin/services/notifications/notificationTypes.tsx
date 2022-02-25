@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton, GoACard } from '@abgov/react-components';
 import { Grid, GridItem } from '@components/Grid';
 import { NotificationTypeModalForm } from './edit';
+import { CoreNotificationTypeModalForm } from './editCore';
 import { EventModalForm } from './editEvent';
 import { IndicatorWithDelay } from '@components/Indicator';
 import debounce from 'lodash.debounce';
@@ -58,6 +59,7 @@ interface ParentCompProps {
 
 export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEdit, activateEdit }) => {
   const [editType, setEditType] = useState(false);
+  const [editCoreType, setEditCoreType] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [editEvent, setEditEvent] = useState(null);
@@ -152,6 +154,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     setShowTemplateForm(false);
     setEventTemplateFormState(addNewEventTemplateContent);
     setEditType(false);
+    setEditCoreType(false);
     setEditEvent(null);
     setSelectedType(emptyNotificationType);
     setShowEmailPreview(false);
@@ -221,6 +224,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     });
   }
   delete nonCoreCopiedNotifications.contact;
+  delete nonCoreCopiedNotifications.manageSubscribe;
 
   const saveOrAddEventTemplate = () => {
     const definitionEventIndex = selectedType?.events?.findIndex(
@@ -343,7 +347,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                             )}{' '}
                         </b>
                       </div>
-                      <div>Public Subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}</div>
+                      <div>
+                        <div className="minimumLineHeight">
+                          Public Subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
+                        </div>
+                        <div className="minimumLineHeight">
+                          Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -451,7 +462,31 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               }
               description={notificationType.description}
             >
+              <div className="rowFlex">
+                <div className="flex1">
+                  <div style={{ lineHeight: '20px' }}>
+                    Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
+                  </div>
+                </div>
+                <div>
+                  <a
+                    className="flex1"
+                    data-testid="edit-notification-type"
+                    onClick={() => {
+                      setSelectedType(notificationType);
+                      setEditCoreType(true);
+                      setFormTitle('Edit notification type');
+                    }}
+                  >
+                    <NotificationBorder className="smallPadding" style={{ height: '26px', display: 'flex' }}>
+                      <EditIcon size="small" />
+                    </NotificationBorder>
+                  </a>
+                </div>
+              </div>
+
               <h2>Events:</h2>
+
               <Grid>
                 {notificationType?.events?.map((event, key) => (
                   <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
@@ -600,6 +635,19 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             dispatch(UpdateNotificationTypeService(type));
             reset();
           }
+        }}
+        onCancel={() => {
+          reset();
+        }}
+      />
+      <CoreNotificationTypeModalForm
+        open={editCoreType}
+        initialValue={selectedType}
+        errors={errors}
+        title={formTitle}
+        onSave={(type) => {
+          dispatch(UpdateNotificationTypeService(type));
+          reset();
         }}
         onCancel={() => {
           reset();
@@ -806,5 +854,9 @@ const NotficationStyles = styled.div`
   }
   .noCursor {
     cursor: default;
+  }
+
+  .minimumLineHeight {
+    line-height: 1.25rem;
   }
 `;

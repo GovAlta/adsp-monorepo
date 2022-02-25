@@ -49,6 +49,7 @@ describe('subscription router', () => {
     description: 'testing 1 2 3',
     events: [],
     publicSubscribe: false,
+    manageSubscribe: false,
     subscriberRoles: ['test-subscriber'],
   };
 
