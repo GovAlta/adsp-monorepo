@@ -47,7 +47,7 @@ export const CoreNotificationTypeModalForm: FunctionComponent<NotificationTypeFo
 
   return (
     <EditStyles>
-      <GoAModal testId="notification-types-form" isOpen={open}>
+      <GoAModal testId="notification-types-form-core" isOpen={open}>
         <GoAModalTitle>{title}</GoAModalTitle>
         <GoAModalContent>
           <GoAForm>
@@ -72,13 +72,13 @@ export const CoreNotificationTypeModalForm: FunctionComponent<NotificationTypeFo
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
-          <GoAButton data-testid="form-cancel" buttonType="tertiary" type="button" onClick={onCancel}>
+          <GoAButton data-testid="form-cancel-core" buttonType="tertiary" type="button" onClick={onCancel}>
             Cancel
           </GoAButton>
           <GoAButton
             disabled={!type.name}
             buttonType="primary"
-            data-testid="form-save"
+            data-testid="form-save-core"
             type="submit"
             onClick={(e) => onSave(type)}
           >

@@ -40,6 +40,7 @@ describe('NotificationTypes Page', () => {
           subscriberRoles: [],
           id: 'anotherNotificationId',
           publicSubscribe: false,
+          manageSubscribe: true,
         },
       },
       core: {
@@ -50,6 +51,7 @@ describe('NotificationTypes Page', () => {
           subscriberRoles: [],
           id: 'superCoreNotificationStuff',
           publicSubscribe: false,
+          manageSubscribe: true,
         },
       },
     },
