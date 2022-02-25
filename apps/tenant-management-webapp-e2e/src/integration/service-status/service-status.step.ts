@@ -1,4 +1,3 @@
-import { clear } from 'console';
 import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import commonlib from '../common/common-library';
 import common from '../common/common.page';
@@ -494,15 +493,6 @@ When('the user clicks {string} button for {string}', function (buttonType, appNa
     default:
       expect(buttonType).to.be.oneOf(['edit', 'delete']);
   }
-});
-
-Then('the user views confirmation modal to delete {string}', function (appName) {
-  statusObj.applicationDeleteConfirmationModalTitle().contains('Confirmation');
-  statusObj.applicationDeleteConfirmationModalContent().contains(appName);
-});
-
-When('the user clicks Yes to Confirm deletion', function () {
-  statusObj.applicationDeleteConfirmationModalYesBtn().click();
 });
 
 Then(

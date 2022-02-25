@@ -21,6 +21,8 @@ Feature: Service status
     And the user clicks Save as draft button
     Then the user "views" the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     When the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
+    Then the user views delete "notice" confirmation modal for "<Description2>"
+    When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the "draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
 
     Examples:
@@ -139,7 +141,7 @@ Feature: Service status
     And the user clicks Save application button
     Then the user "views" "Autotest-addApp Edited" in the application list
     When the user clicks "Delete" button for "Autotest-addApp Edited"
-    Then the user views confirmation modal to delete "Autotest-addApp Edited"
-    When the user clicks Yes to Confirm deletion
+    Then the user views delete "application" confirmation modal for "Autotest-addApp Edited"
+    When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" "Autotest-addApp Edited" in the application list
 
