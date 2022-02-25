@@ -77,20 +77,6 @@ class NotificationsPage {
     );
   }
 
-  notificationTypeDeleteConfirmationModalTitle() {
-    return cy.xpath(
-      '//*[@data-testid="delete-confirmation" and @data-state="visible"]/*[@class="modal"]//*[@class="modal-title"]'
-    );
-  }
-
-  notificationTypeDeleteConfirmationModal() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]/*[@class="modal"]');
-  }
-
-  notificationTypeDeleteConfirmationModalConfirmBtn() {
-    return cy.get('[data-testid="delete-confirm"]');
-  }
-
   notificationTypeSelectAnEventBtn(cardTitle) {
     return cy.xpath(
       `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]//button[contains(text(), "Select an event")]`
@@ -159,22 +145,6 @@ class NotificationsPage {
     return cy.xpath(
       `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/following-sibling::*[@class="rowFlex"]//*[@data-testid="icon-trash"]`
     );
-  }
-
-  removeEventModalTitle() {
-    return cy.xpath(
-      '//*[@data-testid="event-delete-confirmation" and @data-state="visible"]/*[@class="modal"]//*[@class="modal-title"]'
-    );
-  }
-
-  removeEventModalContent() {
-    return cy.xpath(
-      '//*[@data-testid="event-delete-confirmation" and @data-state="visible"]/*[@class="modal"]//*[@class="goa-scrollable"]'
-    );
-  }
-
-  removeEventModalConfirmBtn() {
-    return cy.get('[data-testid="event-delete-confirm"]');
   }
 
   // Internal notification type card elements have different xpath than those from custom created notification type cards, so use "Internal" prefix for the following several UI page object names

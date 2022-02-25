@@ -116,20 +116,6 @@ class eventsPage {
       `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td[@data-testid="description"]/following-sibling::td//*[@data-testid="delete-details"]`
     );
   }
-
-  deleteDefinitionModalTitle() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//div[@class="modal-title"]');
-  }
-
-  deleteDefinitionModalContent() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//div[@class="goa-scrollable"]');
-  }
-
-  deleteDefinitionConfirmButton() {
-    return cy.xpath(
-      '//*[@data-testid="delete-confirmation" and @data-state="visible"]//button[@data-testid="delete-confirm"]'
-    );
-  }
 }
 
 export default eventsPage;

@@ -17,8 +17,8 @@ Feature: Notifications
     And the user clicks save button
     Then the user "views" the notification type card of "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, file-service-admin", "no"
     When the user clicks "delete" button for the notification type card of "autotest-editNotificationType"
-    Then the user views delete confirmation modal for "autotest-editNotificationType"
-    When the user clicks Confirm button on delete confirmation modal
+    Then the user views delete "notification type" confirmation modal for "autotest-editNotificationType"
+    When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the notification type card of "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, file-service-admin", "no"
 
   # TEST DATA: a precreated notification type named "autotest-notificationType"
@@ -40,8 +40,8 @@ Feature: Notifications
     And the user clicks Cancel button in Select an event modal
     # Delete an event
     When the user clicks "delete" button for "tenant-service:tenant-created" in "autotest-notificationType"
-    Then the user views Remove event modal for "tenant-service:tenant-created"
-    When the user clicks Confirm button in Remove event modal
+    Then the user views delete "event" confirmation modal for "tenant-service:tenant-created"
+    When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the event of "tenant-service:tenant-created" in "autotest-notificationType"
 
   @TEST_CS-976 @REQ_CS-906 @regression
