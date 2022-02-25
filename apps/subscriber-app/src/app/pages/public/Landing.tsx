@@ -1,6 +1,5 @@
 import React from 'react';
 import styled from 'styled-components';
-import { GoAHeroBanner } from '@abgov/react-components';
 import { Band } from '@components/Band';
 import Header from '@components/AppHeader';
 import Footer from '@components/Footer';
@@ -17,12 +16,11 @@ const LandingPage = (): JSX.Element => {
       <Header serviceName="Alberta Digital Service Platform - Subscription management " />
       <Main>
         <CenterText>
-          <HeroBannerLayout>
-            <Band title="Subscription management">
-              The subscription management app allows subscribers to manage their subscription preferences and decide how
-              they want to receive notifications regarding the services they are subscribed to.
-            </Band>
-          </HeroBannerLayout>
+          <Band title="Subscription management">
+            The subscription management app allows subscribers to manage their subscription preferences and decide how
+            they want to receive notifications regarding the services they are subscribed to.
+          </Band>
+
           <Section>
             <Container vs={3} hs={1}>
               <Grid>
@@ -109,6 +107,7 @@ const LandingPage = (): JSX.Element => {
               </Grid>
             </Container>
           </Section>
+          <div></div>
           <Footer />
         </CenterText>
       </Main>
@@ -130,22 +129,8 @@ const Section = styled.div<SectionProps>`
   background-color: ${(props: SectionProps) => props.backgroundColor ?? 'transparent'};
 `;
 
-const BoldTitle = styled.h1`
-  && {
-    font-weight: var(--fw-bold);
-  }
-`;
-
 const DashBoardImg = styled.img`
   box-shadow: 1px 5px 28px 0px #00000033;
-`;
-
-const HeroBannerLayout = styled.div`
-  .goa-hero {
-    max-height: 15em !important;
-    background-size: 100% 100%;
-    padding: 0px !important;
-  }
 `;
 
 const CenterText = styled.div`
