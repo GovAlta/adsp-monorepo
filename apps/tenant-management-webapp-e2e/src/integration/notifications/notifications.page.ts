@@ -73,7 +73,7 @@ class NotificationsPage {
 
   notificationTypePublicSubscription(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*/div[contains(text(), "Public Subscription")]`
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//div[contains(text(), "Public Subscription")]`
     );
   }
 
