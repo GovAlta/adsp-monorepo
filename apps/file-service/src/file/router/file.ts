@@ -179,7 +179,7 @@ function encodeRFC5987(value: string) {
 export const downloadFile: RequestHandler = async (req, res, next) => {
   try {
     const user = req.user;
-    const { unsafe } = req.query;
+    const { unsafe, embed } = req.query;
     const fileEntity = req.fileEntity;
     if (unsafe !== 'true' && !fileEntity.scanned) {
       throw new InvalidOperationError('File scan pending.');
@@ -187,8 +187,14 @@ export const downloadFile: RequestHandler = async (req, res, next) => {
 
     const stream = await fileEntity.readFile(user);
     res.status(200);
-    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeRFC5987(fileEntity.filename)}`);
-    res.setHeader('Cache-Control', fileEntity.type?.anonymousRead ? 'public' : 'no-store');
+    res.setHeader('Content-Type', 'application/octet-stream');
+    if (embed === 'true') {
+      res.setHeader('Cache-Control', fileEntity.type?.anonymousRead ? 'public' : 'no-store');
+      res.setHeader('Content-Disposition', 'inline');
+    } else {
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeRFC5987(fileEntity.filename)}`);
+    }
 
     stream.pipe(res);
   } catch (err) {

@@ -310,7 +310,36 @@ describe('file router', () => {
 
       await downloadFile(req as unknown as Request, res as unknown as Response, next);
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.setHeader).toHaveBeenCalled();
+      expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
+      expect(stream.pipe).toHaveBeenCalled();
+    });
+
+    it('can embed file', async () => {
+      const req = {
+        user: {
+          tenantId,
+          id: 'test',
+          roles: ['test-reader'],
+        },
+        getConfiguration: jest.fn(),
+        query: {
+          embed: 'true',
+        },
+        fileEntity: file,
+      };
+      const res = {
+        setHeader: jest.fn(),
+        status: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const stream = { pipe: jest.fn() };
+      storageProviderMock.readFile.mockResolvedValueOnce(stream);
+      fileRepositoryMock.get.mockResolvedValueOnce(file);
+
+      await downloadFile(req as unknown as Request, res as unknown as Response, next);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.setHeader).toHaveBeenCalledWith('Content-Disposition', 'inline');
       expect(stream.pipe).toHaveBeenCalled();
     });
 

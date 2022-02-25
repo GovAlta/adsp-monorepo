@@ -341,6 +341,7 @@ describe('NotificationTypeEntity', () => {
   describe('generateNotifications', () => {
     it('can generate notifications', () => {
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const tenant = { id: tenantId, name: 'test', realm: 'test' };
       const entity = new NotificationTypeEntity(
         {
           id: 'test-type',
@@ -396,7 +397,7 @@ describe('NotificationTypeEntity', () => {
         timestamp: new Date(),
         payload: {},
       };
-      const [notification] = entity.generateNotifications(logger, templateServiceMock, event, [subscription]);
+      const [notification] = entity.generateNotifications(logger, templateServiceMock, tenant, event, [subscription]);
       expect(templateServiceMock.generateMessage).toHaveBeenCalledTimes(1);
       expect(notification.to).toBe('test@testco.org');
       expect(notification.channel).toBe(Channel.email);
@@ -405,6 +406,7 @@ describe('NotificationTypeEntity', () => {
 
     it('can return no notification for no channel match', () => {
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const tenant = { id: tenantId, name: 'test', realm: 'test' };
       const entity = new NotificationTypeEntity(
         {
           id: 'test-type',
@@ -455,12 +457,13 @@ describe('NotificationTypeEntity', () => {
         payload: {},
       };
 
-      const notifications = entity.generateNotifications(logger, templateServiceMock, event, [subscription]);
+      const notifications = entity.generateNotifications(logger, templateServiceMock, tenant, event, [subscription]);
       expect(notifications.length).toBe(0);
     });
 
     it('can return notification for criteria match', () => {
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const tenant = { id: tenantId, name: 'test', realm: 'test' };
 
       const entity = new NotificationTypeEntity(
         {
@@ -519,7 +522,7 @@ describe('NotificationTypeEntity', () => {
         correlationId: '123',
       };
 
-      const [notification] = entity.generateNotifications(logger, templateServiceMock, event, [subscription]);
+      const [notification] = entity.generateNotifications(logger, templateServiceMock, tenant, event, [subscription]);
       expect(notification.to).toBe('test@testco.org');
       expect(notification.channel).toBe(Channel.email);
       expect(notification.message).toBe(message);
@@ -585,7 +588,7 @@ describe('NotificationTypeEntity', () => {
         correlationId: '123',
       };
 
-      const [notification] = entity.generateNotifications(logger, templateServiceMock, event, [subscription]);
+      const [notification] = entity.generateNotifications(logger, templateServiceMock, null, event, [subscription]);
       expect(notification.to).toBe('test@testco.org');
       expect(notification.channel).toBe(Channel.email);
       expect(notification.message).toBe(message);
@@ -593,6 +596,7 @@ describe('NotificationTypeEntity', () => {
 
     it('can return no notification for criteria mismatch', () => {
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const tenant = { id: tenantId, name: 'test', realm: 'test' };
       const entity = new NotificationTypeEntity(
         {
           id: 'test-type',
@@ -644,7 +648,7 @@ describe('NotificationTypeEntity', () => {
         correlationId: '213',
       };
 
-      const notifications = entity.generateNotifications(logger, templateServiceMock, event, [subscription]);
+      const notifications = entity.generateNotifications(logger, templateServiceMock, tenant, event, [subscription]);
       expect(notifications.length).toBe(0);
     });
   });

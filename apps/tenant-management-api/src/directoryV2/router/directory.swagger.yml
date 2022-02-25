@@ -17,7 +17,7 @@ Directory: &Directory
     host:
       type: string
 
-'/api/directory/v2/namespace/{namespace}':
+'/api/directory/v2/namespaces/{namespace}':
   get:
     tags:
       - Directory

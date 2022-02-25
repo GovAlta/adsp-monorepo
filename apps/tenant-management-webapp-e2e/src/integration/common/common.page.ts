@@ -35,6 +35,18 @@ class Common {
   notificationMessage() {
     return cy.xpath('//*[@role="notification"]//*[@class="message"]');
   }
+
+  deleteConfirmationModalTitle() {
+    return cy.xpath('//*[@data-testid="delete-confirmation"]//*[@class="modal-title"]');
+  }
+
+  deleteConfirmationModalContent() {
+    return cy.xpath('//*[@data-testid="delete-confirmation"]//*[@class="goa-scrollable"]');
+  }
+
+  deleteConfirmationModalDeleteBtn() {
+    return cy.get('[data-testid="delete-confirm"]');
+  }
 }
 
 export default Common;

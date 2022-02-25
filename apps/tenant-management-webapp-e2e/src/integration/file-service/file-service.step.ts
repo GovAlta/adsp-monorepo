@@ -356,36 +356,86 @@ When('user goes to {string} tab', function (tabText) {
 
 Then('the user views file types page', function () {
   // Check if the new file type button presents
-  fileServiceObj.newFileTypeButton().then((button) => {
+  fileServiceObj.addFileTypeButton().then((button) => {
     expect(button.length).to.be.gt(0); //element exists
   });
 });
 
-When('the user adds a file type of {string}, {string}, {string}', function (name, readRole, updateRole) {
-  //Click the new file type button
-  fileServiceObj.newFileTypeButton().click();
-  cy.wait(1000);
+When('the user clicks Add file type button on file types page', function () {
+  fileServiceObj.addFileTypeButton().click();
+});
 
+Then('the user views {string} file type modal', function (addOrEdit) {
+  expect(addOrEdit).to.be.oneOf(['Add', 'Edit', 'Delete']);
+  fileServiceObj
+    .fileTypeModalTitle()
+    .invoke('text')
+    .should('contains', addOrEdit + ' file type');
+});
+
+When('the user enters {string}, {string}, {string} on file type modal', function (name, readRole, updateRole) {
   //Enter Name
-  fileServiceObj.newFileTypeNameField().type(name);
+  fileServiceObj.fileTypeModalNameField().clear().type(name);
 
   //Select Who can read
-  const readRoles = readRole.split(',');
-  for (let i = 0; i < readRoles.length; i++) {
-    fileServiceObj.newReadRolesDropdown().click();
-    fileServiceObj.newReadRolesDropdownItem(readRoles[i].trim()).trigger('mousemove').click();
+  if (readRole == 'public') {
+    fileServiceObj
+      .fileTypeModalPublicCheckbox()
+      .invoke('attr', 'class')
+      .then((classAttr) => {
+        if (classAttr?.includes('-selected')) {
+          cy.log('Make public checkbox is already checked off. ');
+        } else {
+          fileServiceObj.fileTypeModalPublicCheckbox().click();
+        }
+      });
+  } else {
+    //Unselect Make public checkbox if not already unchecked
+    fileServiceObj
+      .fileTypeModalPublicCheckbox()
+      .invoke('attr', 'class')
+      .then((classAttr) => {
+        if (classAttr?.includes('-selected')) {
+          fileServiceObj.fileTypeModalPublicCheckbox().click();
+          cy.log('Make public checkbox is already checked off. ');
+        } else {
+          cy.log('Make public checkbox is already unchecked. ');
+        }
+      });
+    //Unselect all read checkboxes
+    fileServiceObj.fileTypeModalReadCheckboxes().then((elements) => {
+      for (let i = 0; i < elements.length; i++) {
+        if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
+          elements[i].click();
+        }
+      }
+    });
+    //Select read roles
+    const readRoles = readRole.split(',');
+    for (let i = 0; i < readRoles.length; i++) {
+      fileServiceObj.fileTypeModalReadCheckbox(readRoles[i].trim()).click();
+    }
   }
 
-  //Select Who can write
+  //Unselect all modify checkboxes
+  fileServiceObj.fileTypeModalModifyCheckboxes().then((elements) => {
+    for (let i = 0; i < elements.length; i++) {
+      if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
+        elements[i].click();
+      }
+    }
+  });
+
+  //Select modify roles
   const updateRoles = updateRole.split(',');
   for (let i = 0; i < updateRoles.length; i++) {
-    fileServiceObj.newUpdateRolesDropdown().click();
-    fileServiceObj.newUpdateRolesDropdownItem(updateRoles[i].trim()).trigger('mousemove').click();
+    fileServiceObj.fileTypeModalModifyCheckbox(updateRoles[i].trim()).click();
   }
+});
 
-  //Confirm
-  fileServiceObj.newFileTypeConfirmButton().click();
-  cy.wait(2000);
+When('the user clicks Save button on file type modal', function () {
+  fileServiceObj.fileTypeModalSaveButton().click();
+  cy.wait(2000); // Wait the file type list to refresh
 });
 
 Then('the user {string} the file type of {string}, {string}, {string}', function (action, name, readRole, updateRole) {
@@ -409,6 +459,34 @@ Then('the user {string} the file type of {string}, {string}, {string}', function
   });
 });
 
+When(
+  'the user clicks {string} button for the file type of {string}, {string}, {string}',
+  function (button, name, readRole, updateRole) {
+    findFileType(name, readRole, updateRole).then((rowNumber) => {
+      switch (button) {
+        case 'Edit':
+          fileServiceObj.fileTypeEditButton(rowNumber).click();
+          break;
+        case 'Delete':
+          fileServiceObj.fileTypeDeleteButton(rowNumber).click();
+          break;
+        default:
+          expect(button).to.be.oneOf(['Edit', 'Delete']);
+      }
+    });
+  }
+);
+
+Then('the user views Delete file type modal for {string}', function (fileTypeName) {
+  fileServiceObj.fileTypeDeleteModalTitle().invoke('text').should('contains', 'Delete file type');
+  fileServiceObj.fileTypeDeleteModalContent().invoke('text').should('contains', fileTypeName);
+});
+
+When('the user clicks Delete button on file type modal', function () {
+  fileServiceObj.fileTypeDeleteModalDeleteButton().click();
+  cy.wait(2000); //Wait the file type list to refresh
+});
+
 //Find file type with name, read role(s) and update role(s)
 //Input: file name, file read role(s) in a string separated with comma, file update role(s) in a string separated with comma
 //Return: row number if the file type is found; zero if the file type isn't found
@@ -425,22 +503,19 @@ function findFileType(name, readRole, updateRole) {
         .then((rows) => {
           rows.toArray().forEach((rowElement) => {
             let counter = 0;
-            // cy.log(rowElement.cells[1].innerHTML); // Print out the name cell innerHTML for debug purpose
-            if (rowElement.cells[1].innerHTML.includes(name)) {
+            // cy.log(rowElement.cells[0].innerHTML); // Print out the name cell innerHTML for debug purpose
+            if (rowElement.cells[0].innerHTML.includes(name)) {
               counter = counter + 1;
             }
-            // cy.log(rowElement.cells[2].innerHTML); // Print out the read role cell innerHTML for debug purpose
+            // cy.log(rowElement.cells[1].innerHTML); // Print out the read role cell innerHTML for debug purpose
             readRoles.forEach((rRole) => {
-              if (rRole.includes('Anonymous')) {
-                rRole = 'Anonymous'; // Replace Anyone (Anonymous) to Anonymous
-              }
-              if (rowElement.cells[2].innerHTML.includes(rRole.trim())) {
+              if (rowElement.cells[1].innerHTML.includes(rRole.trim())) {
                 counter = counter + 1;
               }
             });
-            // cy.log(rowElement.cells[3].innerHTML); // Print out the update role cell innerHTML for debug purpose
+            // cy.log(rowElement.cells[2].innerHTML); // Print out the update role cell innerHTML for debug purpose
             updateRoles.forEach((uRole) => {
-              if (rowElement.cells[3].innerHTML.includes(uRole.trim())) {
+              if (rowElement.cells[2].innerHTML.includes(uRole.trim())) {
                 counter = counter + 1;
               }
             });
@@ -464,182 +539,22 @@ function findFileType(name, readRole, updateRole) {
   });
 }
 
-When(
-  'the user updates the file type of {string}, {string}, {string} to be of {string}, {string}, {string}',
-  function (name, readRole, updateRole, newName, newReadRole, newUpdateRole) {
-    findFileType(name, readRole, updateRole).then((rowNumber) => {
-      // Click Edit button
-      fileServiceObj.fileTypeEditButton(rowNumber).click();
-      cy.wait(1000);
-
-      // Enter new name
-      fileServiceObj.fileTypeNameEditField(rowNumber).clear();
-      fileServiceObj.fileTypeNameEditField(rowNumber).type(newName);
-
-      // Enter new read roles
-      if (readRole.includes('Anyone (Anonymous)')) {
-        // Select "Deselect anonymous"
-        fileServiceObj.fileTypeReadRoles(rowNumber).click();
-        fileServiceObj.fileTypeReadRolesDropdownItem(rowNumber, 'Deselect anonymous').trigger('mousemove').click();
-        cy.wait(1000);
-
-        // Deselect all selected roles if any
-        fileServiceObj.fileTypeReadRoles(rowNumber).click();
-        fileServiceObj
-          .fileTypeTable()
-          .parent()
-          .scrollTo('bottom')
-          .then(() => {
-            cy.wait(1000);
-            fileServiceObj.fileTypeReadRolesDropdownItems(rowNumber).then((items) => {
-              // If there are selected items, deselect them all
-              if (items.find('.option selected').length > 0) {
-                fileServiceObj.fileTypeReadRolesDropdownSelectedItems(rowNumber).then((elements) => {
-                  if (elements.length > 0) {
-                    for (let i = 0; i < elements.length; i++) {
-                      if (i !== 0) {
-                        fileServiceObj.fileTypeReadRoles(rowNumber).click();
-                        fileServiceObj
-                          .fileTypeTable()
-                          .parent()
-                          .scrollTo('bottom')
-                          .then(() => {
-                            cy.wait(1000);
-                            elements[i].click();
-                            cy.wait(1000);
-                          });
-                      } else {
-                        elements[i].click();
-                        cy.wait(1000);
-                      }
-                    }
-                  }
-                });
-              } else {
-                fileServiceObj.fileTypeReadRoles(rowNumber).click();
-              }
-            });
-          });
-      } else {
-        // Deselect the old read roles
-        const readRoles = readRole.split(',');
-        for (let i = 0; i < readRoles.length; i++) {
-          fileServiceObj.fileTypeReadRoles(rowNumber).click();
-          fileServiceObj
-            .fileTypeTable()
-            .parent()
-            .scrollTo('bottom')
-            .then(() => {
-              cy.wait(1000);
-              fileServiceObj.fileTypeReadRolesDropdownItem(rowNumber, readRoles[i].trim()).trigger('mousemove').click();
-              cy.wait(1000);
-            });
-        }
-      }
-
-      // Select new read roles
-      const newReadRoles = newReadRole.split(',');
-      for (let i = 0; i < newReadRoles.length; i++) {
-        fileServiceObj.fileTypeReadRoles(rowNumber).click();
-        fileServiceObj
-          .fileTypeTable()
-          .parent()
-          .scrollTo('bottom')
-          .then(() => {
-            cy.wait(1000);
-            fileServiceObj
-              .fileTypeReadRolesDropdownItem(rowNumber, newReadRoles[i].trim())
-              .trigger('mousemove')
-              .click();
-            cy.wait(1000);
-          });
-      }
-
-      // Enter new update roles
-      // Deselect the old update roles
-      const updateRoles = updateRole.split(',');
-      for (let i = 0; i < updateRoles.length; i++) {
-        fileServiceObj.fileTypeUpdateRoles(rowNumber).click();
-        fileServiceObj
-          .fileTypeTable()
-          .parent()
-          .scrollTo('bottom')
-          .then(() => {
-            cy.wait(1000);
-            fileServiceObj
-              .fileTypeUpdateRolesDropdownItem(rowNumber, updateRoles[i].trim())
-              .trigger('mousemove')
-              .click();
-            cy.wait(1000);
-          });
-      }
-
-      // Select new update roles
-      const newUpdateRoles = newUpdateRole.split(',');
-      for (let i = 0; i < newUpdateRoles.length; i++) {
-        fileServiceObj.fileTypeUpdateRoles(rowNumber).click();
-        fileServiceObj
-          .fileTypeTable()
-          .parent()
-          .scrollTo('bottom')
-          .then(() => {
-            cy.wait(1000);
-            fileServiceObj
-              .fileTypeUpdateRolesDropdownItem(rowNumber, newUpdateRoles[i].trim())
-              .trigger('mousemove')
-              .click();
-            cy.wait(1000);
-          });
-      }
-
-      // Confirm
-      fileServiceObj.fileTypeConfirmButton().click();
-      cy.wait(2000);
-    });
-  }
-);
-
-When('the user removes the file type of {string}, {string}, {string}', function (name, readRole, updateRole) {
-  findFileType(name, readRole, updateRole).then((rowNumber) => {
-    fileServiceObj.fileTypeDeleteButton(rowNumber).click();
-    cy.wait(1000);
-    fileServiceObj
-      .fileTypeDeleteModalFileTypeName()
-      .should('have.text', name)
-      .then(function () {
-        fileServiceObj.fileTypeDeleteModalDeleteButton().click();
-        cy.wait(2000);
-      });
-  });
-});
-
 Then('the user views an error message for duplicated file name', function () {
   fileServiceObj.fileTypesErrorMessage().invoke('text').should('contain', 'status code 400');
 });
 
-When('the user clicks Delete button for file type {string}, {string}, {string}', function (name, readRole, updateRole) {
-  findFileType(name, readRole, updateRole).then((rowNumber) => {
-    fileServiceObj.fileTypeDeleteButton(rowNumber).click();
-    cy.wait(1000);
-  });
-});
-
 Then('the user views file type current in user modal for {string}', function (fileTypeName) {
-  fileServiceObj.fileTypeModalTitle().invoke('text').should('eq', 'File type current in use');
+  fileServiceObj.fileTypeDeleteModalTitle().invoke('text').should('eq', 'File type current in use');
   fileServiceObj
     .fileTypeDeleteModalContent()
     .invoke('text')
     .should(
       'contain',
-      'You are unable to delete the file type ' + fileTypeName + ' because there are files within the file type.'
+      'You are unable to delete the file type ' + fileTypeName + ' because there are files within the file type'
     );
 });
 
 When('the user clicks Okay button', function () {
   fileServiceObj.fileTypeDeleteModalOkayBtn().click();
   cy.wait(1000);
-});
-
-Then('the user views the file type {string}', function (fileTypeName) {
-  fileServiceObj.fileTypeTableBody().contains('tr', fileTypeName);
 });

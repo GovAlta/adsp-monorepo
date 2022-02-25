@@ -1,8 +1,9 @@
-import React, { FunctionComponent } from 'react';
-import { TemplateEditorContainer, MonacoDiv, EditTemplateActions } from './styled-components';
+import React, { FunctionComponent, useEffect } from 'react';
+import { TemplateEditorContainer, MonacoDiv, EditTemplateActions, MonacoDivBody } from './styled-components';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
-import MonacoEditor, { EditorProps } from '@monaco-editor/react';
-
+import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
+import { languages } from 'monaco-editor';
+import { buildSuggestions } from '@lib/autoComplete';
 interface TemplateEditorProps {
   mainTitle: string;
   onSubjectChange: (value: string) => void;
@@ -16,8 +17,11 @@ interface TemplateEditorProps {
   bodyEditorConfig?: EditorProps;
   bodyEditorHintText?: string;
   actionButtons?: JSX.Element;
+  // eslint-disable-next-line
   errors?: any;
   serviceName?: string;
+  // eslint-disable-next-line
+  eventSuggestion?: any;
 }
 
 export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
@@ -35,7 +39,27 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   actionButtons,
   errors,
   serviceName,
+  eventSuggestion,
 }) => {
+  const monaco = useMonaco();
+
+  useEffect(() => {
+    if (monaco) {
+      const provider = monaco.languages.registerCompletionItemProvider('handlebars', {
+        triggerCharacters: ['{{', '.'],
+        provideCompletionItems: (model, position) => {
+          const suggestions = buildSuggestions(monaco, eventSuggestion, model, position);
+          return {
+            suggestions,
+          } as languages.ProviderResult<languages.CompletionList>;
+        },
+      });
+      return function cleanup() {
+        provider.dispose();
+      };
+    }
+  }, [monaco, eventSuggestion]);
+
   return (
     <TemplateEditorContainer>
       <h3 data-testid="modal-title">{`${mainTitle}--${serviceName}`}</h3>
@@ -54,7 +78,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
         </GoAFormItem>
         <h4>{bodyTitle}</h4>
         <GoAFormItem error={errors['body'] ?? ''} helpText={bodyEditorHintText}>
-          <MonacoDiv>
+          <MonacoDivBody>
             <MonacoEditor
               value={body}
               onChange={(value) => {
@@ -62,7 +86,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               }}
               {...bodyEditorConfig}
             />
-          </MonacoDiv>
+          </MonacoDivBody>
         </GoAFormItem>
         <EditTemplateActions>{actionButtons}</EditTemplateActions>
       </GoAForm>
