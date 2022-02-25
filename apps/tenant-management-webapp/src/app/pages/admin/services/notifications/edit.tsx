@@ -46,9 +46,6 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   }, [initialValue]);
 
   const realmRoles = useSelector((state: RootState) => state.tenant.realmRoles);
-  // const manageSubscribe = useSelector(
-  //   (state: RootState) => state.notification.notificationTypes?.manageSubscribe?.allow
-  // );
 
   let dropDownOptions = [];
 

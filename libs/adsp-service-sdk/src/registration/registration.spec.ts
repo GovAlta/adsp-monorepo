@@ -109,6 +109,7 @@ describe('ServiceRegistrar', () => {
           publicSubscribe: true,
           subscriberRoles: [],
           events: [],
+          manageSubscribe: false,
         },
       ],
     });
