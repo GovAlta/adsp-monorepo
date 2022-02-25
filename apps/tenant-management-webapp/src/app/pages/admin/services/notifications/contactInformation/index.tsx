@@ -1,9 +1,8 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import type { Subscriber, SubscriberSearchCriteria } from '@store/subscription/models';
+import type { Subscriber } from '@store/subscription/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Grid, GridItem } from '@components/Grid';
-import type { ContactInformation as ContactInformationType } from '@store/notification/models';
 import { UpdateContactInformationService, FetchNotificationTypeService } from '@store/notification/actions';
 import { RootState } from '@store/index';
 import styled from 'styled-components';

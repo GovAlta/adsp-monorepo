@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState, useEffect, useCallback } from 'react';
+import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton, GoACard } from '@abgov/react-components';
 import { Grid, GridItem } from '@components/Grid';
@@ -531,7 +531,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       {showDeleteConfirmation && (
         <DeleteModal
           isOpen={showDeleteConfirmation}
-          title="Delete notification"
+          title="Delete notification type"
           content={`Delete ${selectedType?.name}?`}
           onCancel={() => {
             setShowDeleteConfirmation(false);

@@ -8,7 +8,7 @@ const hasProperHtmlWrapper = (content: string): boolean => {
 export const getTemplateBody = (body: string) => {
   if (!hasProperHtmlWrapper(body)) {
     body = body.includes('<style') ? `<style scoped>${body}</style>` : body;
-    return `<!doctype html><html>${getHeaderPreview()}<div style="padding: 3rem 11rem;">${body}</div>${getFooterPreview()}</html>`;
+    return `<!doctype html><html>${getHeaderPreview()}<div style="padding: 3rem 11rem;background-color:white;">${body}</div>${getFooterPreview()}</html>`;
   }
 
   return body;
