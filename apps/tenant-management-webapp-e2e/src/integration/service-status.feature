@@ -14,6 +14,7 @@ Feature: Service status
     Then the user views Add notice dialog
     When the user enters "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>" on notice dialog
     And the user clicks Save as draft button
+    And the user selects "Draft" filter by status radio button
     Then the user "views" the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
     When the user clicks "edit" menu for the "Draft" notice of "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>"
     Then the user views Edit notice dialog
@@ -23,6 +24,7 @@ Feature: Service status
     When the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     Then the user views delete "notice" confirmation modal for "<Description2>"
     When the user clicks Delete button in delete confirmation modal
+    And the user selects "All" filter by status radio button
     Then the user "should not view" the "draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
 
     Examples:
@@ -34,8 +36,10 @@ Feature: Service status
   Scenario: As a service owner, I can publish and un-publish a notice
     Given a service owner user is on status notices page
     When the user clicks "publish" menu for the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
+    And the user selects "Published" filter by status radio button
     Then the user "views" the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
     When the user clicks "unpublish" menu for the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
+    And the user selects "Draft" filter by status radio button
     Then the user "views" the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
 
   # TEST DATA: an application named "Autotest"
@@ -46,12 +50,15 @@ Feature: Service status
     Then the user views Add notice dialog
     When the user enters "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm" on notice dialog
     And the user clicks Save as draft button
+    And the user selects "Draft" filter by status radio button
     Then the user "views" the "Draft" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
     When the user clicks "publish" menu for the "Draft" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+    And the user selects "Published" filter by status radio button
     Then the user "views" the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
     And the user should not view "edit menu" for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
     And the user should not view "delete menu" for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
     When the user clicks "archive" menu for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+    And the user selects "Archived" filter by status radio button
     Then the user "views" the "Archived" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
     And the user should not view "gear icon" for the "Archived" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
 
@@ -120,6 +127,8 @@ Feature: Service status
     Then the user "views" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     # Delete the notice
     When the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
+    Then the user views delete "notice" confirmation modal for "<Description2>"
+    When the user clicks Delete button in delete confirmation modal
     And the user selects "All" filter by status radio button
     Then the user "should not view" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
 
