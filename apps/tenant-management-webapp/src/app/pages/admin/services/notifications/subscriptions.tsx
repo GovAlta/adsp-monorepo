@@ -2,7 +2,7 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { SubscriptionList } from './subscriptionList';
 import { getSubscriptions, Unsubscribe } from '@store/subscription/actions';
-import type { Subscriber, SubscriptionSearchCriteria } from '@store/subscription/models';
+import type { Subscriber, SubscriberSearchCriteria, SubscriptionSearchCriteria } from '@store/subscription/models';
 import { SubscribersSearchForm } from './subscribers/subscriberSearchForm';
 import { CheckSubscriberRoles } from './checkSubscriberRoles';
 import { DeleteModal } from '@components/DeleteModal';
@@ -22,8 +22,8 @@ export const Subscriptions: FunctionComponent = () => {
     dispatch(getSubscriptions({}));
   }, []);
 
-  const searchFn = (criteria: SubscriptionSearchCriteria) => {
-    dispatch(getSubscriptions(criteria));
+  const searchFn = ({ email, name }: SubscriberSearchCriteria) => {
+    dispatch(getSubscriptions({ email, name }));
   };
 
   const resetState = () => {
