@@ -25,7 +25,10 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
         ...state,
         subscribers: {
           ...state.subscribers,
-          [action.payload.subscriberInfo.id]: action.payload.subscriberInfo,
+          [action.payload.subscriberInfo.id]: {
+            ...(state.subscribers[action.payload.subscriberInfo.id] || {}),
+            ...action.payload.subscriberInfo,
+          },
         },
       };
     }
