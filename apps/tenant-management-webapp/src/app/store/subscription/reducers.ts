@@ -20,22 +20,11 @@ import { SUBSCRIBER_INIT, SubscriberService, SubscriberAndSubscriptions } from '
 export default function (state = SUBSCRIBER_INIT, action: ActionTypes): SubscriberService {
   switch (action.type) {
     case UPDATE_SUBSCRIBER_SUCCESS: {
-      const existingSubscribers = state.search.subscribers;
-      const subscriberIndex = existingSubscribers.data.findIndex(
-        (subs) => subs.id === action.payload.subscriberInfo.id
-      );
-
-      existingSubscribers.data[subscriberIndex] = action.payload.subscriberInfo;
-
       return {
         ...state,
-        search: {
-          subscribers: {
-            data: existingSubscribers.data,
-            hasNext: existingSubscribers.hasNext,
-            top: existingSubscribers.top,
-            pageSize: existingSubscribers.pageSize,
-          },
+        subscribers: {
+          ...state.subscribers,
+          [action.payload.subscriberInfo.id]: action.payload.subscriberInfo,
         },
       };
     }
@@ -119,20 +108,14 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       };
     }
     case FIND_SUBSCRIBERS_SUCCESS: {
-      const { subscribers, top } = action.payload;
-      let hasNext = false;
-      if (subscribers.length > top) {
-        hasNext = true;
-      }
+      const { subscribers, after, next } = action.payload;
       return {
         ...state,
+        subscribers: subscribers.reduce((subs, sub) => ({ ...subs, [sub.id]: sub }), state.subscribers),
         search: {
-          subscribers: {
-            ...state.search.subscribers,
-            data: subscribers.slice(0, top),
-            hasNext,
-            top,
-          },
+          ...state.search,
+          results: [...(after ? state.search.results : []), ...subscribers.map((subscriber) => subscriber.id)],
+          next,
         },
       };
     }

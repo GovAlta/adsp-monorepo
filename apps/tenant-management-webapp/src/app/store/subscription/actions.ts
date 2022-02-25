@@ -1,4 +1,4 @@
-import { Subscription, Subscriber, SubscriptionWrapper, SubscriberSearchCriteria } from './models';
+import { Subscription, Subscriber, SubscriptionWrapper, SubscriberSearchCriteria, SubscriptionSearchCriteria } from './models';
 export const CREATE_SUBSCRIBER = 'tenant/subscriber-service/create-subscriber';
 export const UPDATE_SUBSCRIBER = 'tenant/subscriber-service/update-subscriber';
 export const GET_SUBSCRIBER_SUCCESS = 'tenant/subscriber-service/get-subscriber-success';
@@ -154,7 +154,7 @@ export interface GetSubscriptionAction {
 
 export interface GetSubscriptionsAction {
   type: typeof GET_SUBSCRIPTIONS;
-  payload: SubscriberSearchCriteria;
+  payload: SubscriptionSearchCriteria;
 }
 
 export interface GetSubscriberAction {
@@ -182,7 +182,8 @@ export interface FindSubscribersSuccessAction {
   type: typeof FIND_SUBSCRIBERS_SUCCESS;
   payload: {
     subscribers: Subscriber[];
-    top: number;
+    after: string;
+    next: string;
   };
 }
 
@@ -243,7 +244,7 @@ export const getSubscription = (subscriptionInfo: {
   },
 });
 
-export const getSubscriptions = (criteria: SubscriberSearchCriteria): GetSubscriptionsAction => ({
+export const getSubscriptions = (criteria: SubscriptionSearchCriteria): GetSubscriptionsAction => ({
   type: GET_SUBSCRIPTIONS,
   payload: criteria,
 });
@@ -348,11 +349,16 @@ export const FindSubscribers = (criteria: SubscriberSearchCriteria): FindSubscri
   payload: criteria,
 });
 
-export const FindSubscribersSuccess = (subscribers: Subscriber[], top: number): FindSubscribersSuccessAction => ({
+export const FindSubscribersSuccess = (
+  subscribers: Subscriber[],
+  next: string,
+  after?: string
+): FindSubscribersSuccessAction => ({
   type: FIND_SUBSCRIBERS_SUCCESS,
   payload: {
     subscribers,
-    top,
+    after,
+    next,
   },
 });
 

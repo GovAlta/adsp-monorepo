@@ -2,9 +2,8 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { SubscriptionList } from './subscriptionList';
 import { getSubscriptions, Unsubscribe } from '@store/subscription/actions';
-import type { Subscriber } from '@store/subscription/models';
+import type { Subscriber, SubscriptionSearchCriteria } from '@store/subscription/models';
 import { SubscribersSearchForm } from './subscribers/subscriberSearchForm';
-import type { SubscriberSearchCriteria } from '@store/subscription/models';
 import { CheckSubscriberRoles } from './checkSubscriberRoles';
 import { DeleteModal } from '@components/DeleteModal';
 
@@ -18,12 +17,12 @@ export const Subscriptions: FunctionComponent = () => {
   const [selectedType, setSelectedType] = useState<string>(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
-  const [criteriaState, setCriteriaState] = useState<SubscriberSearchCriteria>(criteriaInit);
+  const [criteriaState, setCriteriaState] = useState<SubscriptionSearchCriteria>(criteriaInit);
   useEffect(() => {
     dispatch(getSubscriptions({}));
   }, []);
 
-  const searchFn = (criteria: SubscriberSearchCriteria) => {
+  const searchFn = (criteria: SubscriptionSearchCriteria) => {
     dispatch(getSubscriptions(criteria));
   };
 

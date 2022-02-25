@@ -2,7 +2,7 @@ import React, { FunctionComponent, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
-import type { Subscriber, Subscription, SubscriberSearchCriteria } from '@store/subscription/models';
+import type { Subscriber, Subscription, SubscriptionSearchCriteria } from '@store/subscription/models';
 import { UpdateSubscriberService, getTypeSubscriptions } from '@store/subscription/actions';
 import styled from 'styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
@@ -71,7 +71,7 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscript
 interface SubscriptionsListComponentProps {
   className?: string;
   onDelete: (subscription: Subscriber, type: string) => void;
-  searchCriteria: SubscriberSearchCriteria;
+  searchCriteria: SubscriptionSearchCriteria;
 }
 
 const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentProps> = ({

@@ -85,8 +85,9 @@ export const SubscriberList: FunctionComponent = () => {
   const [selectedSubscription, setSelectedSubscription] = useState(null);
   const search = useSelector((state: RootState) => state.subscription.search);
 
-  const subscription = useSelector((state: RootState) => state.subscription);
-  const subscribers = subscription.search.subscribers.data;
+  const subscribers = useSelector((state: RootState) =>
+    state.subscription.search.results.map((id) => state.subscription.subscribers[id])
+  );
 
   useEffect(() => {
     reset();
@@ -133,6 +134,7 @@ export const SubscriberList: FunctionComponent = () => {
         initialValue={selectedSubscription}
         onSave={(subscriber) => {
           dispatch(UpdateSubscriberService(subscriber));
+          setEditSubscription(false);
         }}
         onCancel={() => {
           reset();

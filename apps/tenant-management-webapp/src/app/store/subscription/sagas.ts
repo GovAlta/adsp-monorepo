@@ -300,15 +300,13 @@ export function* unsubscribe(action: UnsubscribeAction): SagaIterator {
 export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
-  const pageSize = yield select((state: RootState) => state.subscription.search.subscribers.pageSize);
-  const top = yield select((state: RootState) => state.subscription.search.subscribers.top);
   const hasNotificationAdminRole = yield select((state: RootState) =>
     state.session?.resourceAccess?.['urn:ads:platform:notification-service']?.roles?.includes('subscription-admin')
   );
 
   const findSubscriberPath = 'subscription/v1/subscribers';
   const criteria = action.payload;
-  const params: Record<string, string | number> = {};
+  const params: Record<string, string | number> = { top: 10 };
   if (criteria.email) {
     params.email = criteria.email;
   }
@@ -317,11 +315,8 @@ export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
     params.name = criteria.name;
   }
 
-  // Fetch one more to calculate hasNext
-  if (criteria.top) {
-    params.top = criteria.top + 1;
-  } else {
-    params.top = criteria?.next ? pageSize + top + 1 : top + 1;
+  if (criteria.next) {
+    params.after = criteria.next;
   }
 
   if (configBaseUrl && token) {
@@ -331,7 +326,7 @@ export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
         params,
       });
       const subscribers = response.data.results;
-      yield put(FindSubscribersSuccess(subscribers, (params.top as number) - 1));
+      yield put(FindSubscribersSuccess(subscribers, response.data.page?.next, response.data.page?.after));
     } catch (e) {
       yield put(
         ErrorNotification({
