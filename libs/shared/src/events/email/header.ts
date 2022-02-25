@@ -4,6 +4,7 @@ export const getHeaderPreview = () => {
   <style>
     .goa-header-event-template {
       padding-bottom: 0.875rem;
+      padding-top: 0.875rem;
     }
     #goa-callout-custom {
       background-color: #0081a2 !important;
