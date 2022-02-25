@@ -27,6 +27,7 @@ export interface Subscriber {
   addressAs?: string;
   channels?: Channels[];
   userId?: string;
+  accountLink?: string;
   visibleSubscriptions?: boolean;
 }
 

@@ -11,18 +11,27 @@ export class KeycloakApi {
     });
   }
 
-  async getUsers(): Promise<User[]> {
-    const res = await this.http.get(`/${this.realm}/users`);
-    return res.data;
+  async getUserCount(enabled?: boolean): Promise<User[]> {
+    const params: Record<string, unknown> = {};
+    if (enabled) {
+      params.enabled = true;
+    }
+    const { data } = await this.http.get(`/${this.realm}/users/count`, { params });
+    return data;
+  }
+
+  async getUser(id: string): Promise<User> {
+    const { data } = await this.http.get(`/${this.realm}/users/${id}`);
+    return data;
   }
 
   async getRoles(): Promise<Role[]> {
-    const res = await this.http.get(`/${this.realm}/roles`);
-    return res.data;
+    const { data } = await this.http.get(`/${this.realm}/roles`);
+    return data;
   }
 
   async getUsersByRole(roleName: string): Promise<User[]> {
-    const res = await this.http.get(`/${this.realm}/roles/${roleName}/users`);
-    return res.data;
+    const { data } = await this.http.get(`/${this.realm}/roles/${roleName}/users`);
+    return data;
   }
 }

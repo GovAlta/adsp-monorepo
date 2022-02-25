@@ -13,6 +13,7 @@ import {
   RESET_VISIBILITY_IN_SUBSCRIBERS,
   EMAIL_EXISTS,
   RESET_UPDATE_ERRORS,
+  RESOLVE_SUBSCRIBER_USER_SUCCESS,
 } from './actions';
 
 import { SUBSCRIBER_INIT, SubscriberService, SubscriberAndSubscriptions } from './models';
@@ -136,6 +137,19 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
         subscriberSubscriptions: {
           ...state.subscriberSubscriptions,
           [key]: SubscriberAndSubscriptions,
+        },
+      };
+    }
+
+    case RESOLVE_SUBSCRIBER_USER_SUCCESS: {
+      return {
+        ...state,
+        subscribers: {
+          ...state.subscribers,
+          [action.payload.subscriberId]: {
+            ...state.subscribers[action.payload.subscriberId],
+            accountLink: action.payload.accountLink,
+          },
         },
       };
     }

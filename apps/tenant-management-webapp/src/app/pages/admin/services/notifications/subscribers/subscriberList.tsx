@@ -47,27 +47,32 @@ const ActionComponent: FunctionComponent<ActionComponentProps> = ({ subscriber, 
         <td>{characterLimit(subscriber?.channels[emailIndex]?.address, 30)}</td>
         <td>
           <RowFlex>
-            <Flex1>
+            <div data-account-link={subscriber.accountLink}>
               <GoAContextMenuIcon
-                type={currentSubscriberAndSubscription?.subscriber?.visibleSubscriptions ? 'eye-off' : 'eye'}
-                onClick={() => getSubscriptions()}
-                testId="toggle-details-visibility"
+                type={'person'}
+                onClick={() => {
+                  window.open(subscriber.accountLink, '_blank');
+                }}
+                testId="subscriber-account-link"
               />
-            </Flex1>
-            <Flex1>
-              <GoAContextMenuIcon
-                type="create"
-                title="Edit"
-                onClick={() => openModalFunction(subscriber)}
-                testId={`edit-subscription-item-${subscriber.id}`}
-              />
-            </Flex1>
+            </div>
+            <GoAContextMenuIcon
+              type={currentSubscriberAndSubscription?.subscriber?.visibleSubscriptions ? 'eye-off' : 'eye'}
+              onClick={() => getSubscriptions()}
+              testId="toggle-details-visibility"
+            />
+            <GoAContextMenuIcon
+              type="create"
+              title="Edit"
+              onClick={() => openModalFunction(subscriber)}
+              testId={`edit-subscription-item-${subscriber.id}`}
+            />
           </RowFlex>
         </td>
       </tr>
       {currentSubscriberAndSubscription?.subscriber?.visibleSubscriptions && (
         <tr>
-          <td>
+          <td colSpan={3}>
             <h2>Subscriptions</h2>
             {currentSubscriberAndSubscription?.subscriptions.map((subscription, i) => {
               return <div data-testid={`subscriptions-${i}`}>{subscription.typeId}</div>;
@@ -147,9 +152,7 @@ export const SubscriberList: FunctionComponent = () => {
 const RowFlex = styled.div`
   display: flex;
   flex-direction: row;
-`;
-
-const Flex1 = styled.div`
-  display: flex;
-  flex-direction: row;
+  & > :not([data-account-link]):first-child {
+    visibility: hidden;
+  }
 `;
