@@ -6,6 +6,7 @@ export interface NotificationItem {
   id: string;
   publicSubscribe: boolean;
   customized?: boolean;
+  manageSubscribe?: boolean;
 }
 
 export interface ContactInformation {
@@ -13,8 +14,6 @@ export interface ContactInformation {
   phoneNumber?: string;
   supportInstructions?: string;
 }
-
-//export type NotificationObject = ContactInformation | NotificationItem;
 
 export type NotificationType = Record<string, ContactInformation & NotificationItem>;
 
