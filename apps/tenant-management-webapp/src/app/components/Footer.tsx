@@ -33,7 +33,7 @@ const FooterContainer = styled.footer`
   padding-bottom: 2rem;
   padding-right: 10rem;
   padding-left: 10rem;
-  border-bottom: 1rem solid var(--color-blue-border);
+  border-bottom: 16px solid #0081a2;
 `;
 const LinksLogoContainer = styled.div`
   display: flex;
