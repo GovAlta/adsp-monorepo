@@ -40,7 +40,7 @@ import {
 import { TemplateEditor } from './emailPreviewEditor/TemplateEditor';
 import { PreviewTemplate } from './emailPreviewEditor/PreviewTemplate';
 import { dynamicGeneratePayload } from '@lib/dynamicPlaceHolder';
-import { convertEventToSuggestion } from '@lib/autoComplete';
+import { convertToSuggestion } from '@lib/autoComplete';
 
 const emptyNotificationType: NotificationItem = {
   name: '',
@@ -87,14 +87,13 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const dispatch = useDispatch();
   const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
   const eventDef = eventDefinitions[`${selectedEvent?.namespace}:${selectedEvent?.name}`];
-
   const htmlPayload = dynamicGeneratePayload(eventDef);
   const serviceName = `${selectedEvent?.namespace}:${selectedEvent?.name}`;
   const TEMPALTE_RENDER_DEBOUNCE_TIMER = 500; // ms
 
   const getEventSuggestion = () => {
     if (eventDef) {
-      return convertEventToSuggestion(eventDef);
+      return convertToSuggestion(eventDef);
     }
     return [];
   };

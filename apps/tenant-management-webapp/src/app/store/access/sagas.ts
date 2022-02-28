@@ -19,7 +19,7 @@ export function* fetchAccess() {
   try {
     const userCount = yield keycloakApi.getUserCount();
     const activeUserCount = yield keycloakApi.getUserCount(true);
-    const roles = yield keycloakApi.getRoles();
+    const roles = (yield keycloakApi.getRoles()).filter((role) => role.name !== `default-roles-${realm}`);
 
     // add userId[] attribute to roles
 
