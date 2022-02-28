@@ -77,7 +77,7 @@ export default function (): JSX.Element {
               <Metrics
                 metrics={[
                   { id: 'user-count', name: 'Total number of users', value: userCount },
-                  { id: 'role-count', name: 'Types of user roles', value: roles?.length },
+                  { id: 'role-count', name: 'Total number of roles', value: roles?.length },
                   { id: 'active-user-count', name: 'Active users', value: activeUserCount },
                 ]}
               />
@@ -96,8 +96,8 @@ export default function (): JSX.Element {
               <DataTable id="role-information">
                 <thead>
                   <tr>
-                    <th>User role</th>
-                    <th>Role count</th>
+                    <th>Role</th>
+                    <th>User count</th>
                   </tr>
                 </thead>
                 <tbody>
