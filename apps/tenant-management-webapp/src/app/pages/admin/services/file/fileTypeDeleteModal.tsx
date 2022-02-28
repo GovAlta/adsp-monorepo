@@ -50,7 +50,7 @@ export const FileTypeDeleteModal = ({ onCancel, fileType }: FileTypeDeleteModalP
   if (fileType.hasFile === false) {
     return (
       <GoAModal testId="file-type-delete-modal" isOpen={true}>
-        <GoAModalTitle testId="file-type-delete-modal-title">Delete file type</GoAModalTitle>
+        <GoAModalTitle testId="file-type-delete-modal-title">Delete a file type</GoAModalTitle>
         <GoAModalContent testId="file-type-delete-modal-content">
           <p>
             Delete the file type <b>{`${fileType.name}`}</b> cannot be undone.

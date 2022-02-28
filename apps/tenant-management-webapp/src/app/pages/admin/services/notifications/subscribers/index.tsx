@@ -1,11 +1,13 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { Subscriber, SubscriberSearchCriteria } from '@store/subscription/models';
 import { SubscribersSearchForm } from './subscriberSearchForm';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { FindSubscribers, ResetVisibilityInSubscribersService } from '@store/subscription/actions';
 import { SubscriberList } from './subscriberList';
 import { NextLoader } from './nextLoader';
 import { CheckSubscriberRoles } from '../checkSubscriberRoles';
+import { PageIndicator } from '@components/Indicator';
+import { RootState } from '@store/index';
 
 interface SubscribersProps {
   subscribers?: Subscriber[];
@@ -17,6 +19,11 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
     email: '',
     name: '',
   };
+
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
+
   const dispatch = useDispatch();
   const [criteriaState, setCriteriaState] = useState<SubscriberSearchCriteria>(criteriaInit);
   const searchFn = ({ searchCriteria }) => {
@@ -42,8 +49,9 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
     <CheckSubscriberRoles>
       <div data-testid="subscribers-list-title">
         <SubscribersSearchForm onSearch={searchFn2} reset={resetState} />
-        <SubscriberList />
-        <NextLoader onSearch={searchFn} searchCriteria={criteriaState} />
+        {indicator.show && <PageIndicator />}
+        {indicator.show === false && <SubscriberList searchCriteria={criteriaState} />}
+        {indicator.show === false && <NextLoader onSearch={searchFn} searchCriteria={criteriaState} />}
       </div>
     </CheckSubscriberRoles>
   );

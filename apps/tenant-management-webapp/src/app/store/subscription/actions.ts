@@ -30,6 +30,7 @@ export const TRIGGER_VISIBILITY_SUBSCRIBER = 'tenant/subscriber-service/make-vis
 export const RESET_VISIBILITY_IN_SUBSCRIBERS = 'tenant/subscriber-service/reset-visibility';
 export const EMAIL_EXISTS = 'tenant/subscriber-service/email-exists';
 export const RESET_UPDATE_ERRORS = 'tenant/subscriber-service/reset-update-errors';
+export const DELETE_SUBSCRIBER = 'tenant/subscriber-service/delete-subscriber';
 
 // =============
 // Actions Types
@@ -222,6 +223,13 @@ export interface GetTypeSubscriptionSuccessAction {
   };
 }
 
+export interface DeleteSubscriberAction {
+  type: typeof DELETE_SUBSCRIBER;
+  payload: {
+    subscriberId: string;
+  };
+}
+
 // ==============
 // Action Methods
 // ==============
@@ -411,5 +419,12 @@ export const GetTypeSubscriptionSuccess = (
     subscriberInfo,
     top,
     type,
+  },
+});
+
+export const DeleteSubscriberService = (subscriberId: string): DeleteSubscriberAction => ({
+  type: DELETE_SUBSCRIBER,
+  payload: {
+    subscriberId,
   },
 });
