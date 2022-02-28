@@ -20,12 +20,17 @@ export const mapSubscription = (apiId: AdspId, subscription: SubscriptionEntity)
   criteria: subscription.criteria,
 });
 
-export const mapType = (type: NotificationTypeEntity, lean?: boolean): Record<string, unknown> =>
+export const mapType = (
+  type: NotificationTypeEntity,
+  lean?: boolean,
+  canSubscribe?: boolean
+): Record<string, unknown> =>
   lean
     ? {
         id: type.id,
         name: type.name,
         description: type.description,
+        canSubscribe: canSubscribe,
       }
     : {
         id: type.id,
@@ -35,4 +40,5 @@ export const mapType = (type: NotificationTypeEntity, lean?: boolean): Record<st
         manageSubscribe: type.manageSubscribe,
         subscriberRoles: type.subscriberRoles,
         events: type.events,
+        canSubscribe: canSubscribe,
       };
