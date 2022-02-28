@@ -153,12 +153,12 @@ export const convertToSuggestion = (event: EventDefinition) => {
           insertText: 'addressAs',
         },
         {
-          label: 'channel',
-          insertText: 'channel',
+          label: 'id',
+          insertText: 'id',
         },
         {
-          label: 'address',
-          insertText: 'address',
+          label: 'userId ',
+          insertText: 'userId ',
         },
       ],
     },
