@@ -36,7 +36,7 @@ Feature: Tenant admin
     And the keycloak admin link can open tenant admin portal in a new tab
 
   @TEST_CS-318 @REQ_CS-261 @regression
-  Scenario: As a service owner, I can see the number of existing users in my Access service tenant
+  Scenario: As a service owner, I can see the number of existing users and roles in my Access service tenant
     Given a service owner user is on tenant admin page
     When the user selects the "Access" menu item
     Then the user views the number of users in its tenant realm
