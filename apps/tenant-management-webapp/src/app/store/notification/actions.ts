@@ -1,4 +1,10 @@
-import { ContactInformation, NotificationItem, NotificationMetrics, NotificationType } from './models';
+import {
+  ContactInformation,
+  InstalledSlackTeam,
+  NotificationItem,
+  NotificationMetrics,
+  NotificationType,
+} from './models';
 
 export const DELETE_NOTIFICATION = 'tenant/notification-service/notification/delete';
 export const DELETE_NOTIFICATION_FAILED = 'tenant/notification-service/notification/delete/fail';
@@ -20,6 +26,10 @@ export const FETCH_NOTIFICATION_METRICS = 'tenant/notification-service/metrics/f
 export const FETCH_NOTIFICATION_METRICS_SUCCEEDED = 'tenant/notification-service/metrics/fetch/succeeded';
 export const UPDATE_CONTACT_INFORMATION = 'tenant/notification-service/contact-information';
 
+export const FETCH_NOTIFICATION_SLACK_INSTALLATION = 'tenant/notification-service/slack-install/fetch';
+export const FETCH_NOTIFICATION_SLACK_INSTALLATION_SUCCEEDED =
+  'tenant/notification-service/slack-install/fetch/succeeded';
+
 // =============
 // Actions Types
 // =============
@@ -33,7 +43,9 @@ export type ActionTypes =
   | UpdateNotificationTypeAction
   | DeleteNotificationTypeAction
   | FetchNotificationMetricsAction
-  | FetchNotificationMetricsSucceededAction;
+  | FetchNotificationMetricsSucceededAction
+  | FetchNotificationSlackInstallationAction
+  | FetchNotificationSlackInstallationSucceededAction;
 
 interface DeleteNotificationFailedAction {
   type: typeof DELETE_NOTIFICATION_FAILED;
@@ -84,6 +96,16 @@ interface FetchNotificationMetricsAction {
 interface FetchNotificationMetricsSucceededAction {
   type: typeof FETCH_NOTIFICATION_METRICS_SUCCEEDED;
   metrics: NotificationMetrics;
+}
+
+interface FetchNotificationSlackInstallationAction {
+  type: typeof FETCH_NOTIFICATION_SLACK_INSTALLATION;
+}
+
+interface FetchNotificationSlackInstallationSucceededAction {
+  type: typeof FETCH_NOTIFICATION_SLACK_INSTALLATION_SUCCEEDED;
+  teams: InstalledSlackTeam[];
+  authorizationUrl: string;
 }
 
 // ==============
@@ -144,9 +166,22 @@ export const FetchNotificationMetrics = (): FetchNotificationMetricsAction => ({
   type: FETCH_NOTIFICATION_METRICS,
 });
 
-export const fetchNotificationMetricsSucceeded = (
+export const FetchNotificationMetricsSucceeded = (
   metrics: NotificationMetrics
 ): FetchNotificationMetricsSucceededAction => ({
   type: FETCH_NOTIFICATION_METRICS_SUCCEEDED,
   metrics,
+});
+
+export const FetchNotificationSlackInstallation = (): FetchNotificationSlackInstallationAction => ({
+  type: FETCH_NOTIFICATION_SLACK_INSTALLATION,
+});
+
+export const FetchNotificationSlackInstallationSucceeded = (
+  teams: InstalledSlackTeam[],
+  authorizationUrl: string
+): FetchNotificationSlackInstallationSucceededAction => ({
+  type: FETCH_NOTIFICATION_SLACK_INSTALLATION_SUCCEEDED,
+  teams,
+  authorizationUrl,
 });
