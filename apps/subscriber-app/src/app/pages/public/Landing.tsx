@@ -16,10 +16,7 @@ const LandingPage = (): JSX.Element => {
       <Header serviceName="Alberta Digital Service Platform - Subscription management " />
       <Main>
         <CenterText>
-          <Band title="Subscription management">
-            The subscription management app allows subscribers to manage their subscription preferences and decide how
-            they want to receive notifications regarding the services they are subscribed to.
-          </Band>
+          <Band title="Subscription management">Manage your subscription preferences</Band>
 
           <Section>
             <Container vs={3} hs={1}>
@@ -47,7 +44,7 @@ const LandingPage = (): JSX.Element => {
                   <Grid>
                     <GridItem md={6.5} className="center">
                       <h2>Notification channel preferences</h2>
-                      <p>As a subscriber, your users can have a preferred channel to receive notifications.</p>
+                      <p>As a subscriber, your users can opt for a preferred channel to receive notifications.</p>
                     </GridItem>
                     <GridItem md={1} />
                     <GridItem md={4.5}>

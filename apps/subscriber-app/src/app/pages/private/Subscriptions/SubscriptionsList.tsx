@@ -19,17 +19,21 @@ const SubscriptionsList = (props: SubscriptionsListProps): JSX.Element => {
               <GoAIcon data-testid="mail-icon" size="medium" type="mail" />
             </IconsCell>
             <ButtonsCell>
-              <GoAButton
-                buttonSize="small"
-                buttonType="tertiary"
-                key={`${subscription.typeId}`}
-                onClick={() => {
-                  props.onUnsubscribe(subscription.typeId);
-                }}
-                data-testid="unsubscribe-button"
-              >
-                Unsubscribe
-              </GoAButton>
+              {subscription.type?.canSubscribe ? (
+                <GoAButton
+                  buttonSize="small"
+                  buttonType="tertiary"
+                  key={`${subscription.typeId}`}
+                  onClick={() => {
+                    props.onUnsubscribe(subscription.typeId);
+                  }}
+                  data-testid="unsubscribe-button"
+                >
+                  Unsubscribe
+                </GoAButton>
+              ) : (
+                <a href={`${window.location.pathname}#contactSupport`}>Contact support to unsubscribe</a>
+              )}
             </ButtonsCell>
           </tr>
         );
