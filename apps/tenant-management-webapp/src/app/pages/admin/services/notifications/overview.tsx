@@ -1,9 +1,10 @@
 import React, { FunctionComponent, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { GoAButton } from '@abgov/react-components';
+import { FetchNotificationMetrics, FetchNotificationSlackInstallation } from '@store/notification/actions';
 import { NotificationMetrics } from './metrics';
 import { ContactInformation } from './contactInformation';
-import { FetchNotificationMetrics } from '@store/notification/actions';
-import { useDispatch } from 'react-redux';
+import { SlackInstall } from './slackInstall';
 
 interface ParentCompProps {
   setActiveEdit?: (boolean) => void;
@@ -16,6 +17,7 @@ export const NotificationsOverview: FunctionComponent<ParentCompProps> = (props)
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(FetchNotificationMetrics());
+    dispatch(FetchNotificationSlackInstallation());
   }, []);
 
   return (
@@ -23,8 +25,8 @@ export const NotificationsOverview: FunctionComponent<ParentCompProps> = (props)
       <section>
         <p>
           Notification service provides the ability to generate and send notifications based on domain events sent via
-          the event service. This service also includes a concept of subscriptions and subscribers to support management
-          of subscriber preferences and unsubscribe.
+          the event service. This service also includes concepts of subscriptions and subscribers to support management
+          of subscriptions.
         </p>
         <GoAButton
           data-testid="add-notification-overview"
@@ -36,9 +38,9 @@ export const NotificationsOverview: FunctionComponent<ParentCompProps> = (props)
           Add notification type
         </GoAButton>
       </section>
-
-      <NotificationMetrics />
       <ContactInformation />
+      <SlackInstall />
+      <NotificationMetrics />
     </div>
   );
 };

@@ -177,9 +177,9 @@ export function createServiceStatusRouter({
     const application = await serviceStatusRepository.get(id);
 
     if (!application.enabled) {
-      eventService.send(applicationStatusToStarted(application));
+      eventService.send(applicationStatusToStarted(application, user));
     } else {
-      eventService.send(applicationStatusToStopped(application));
+      eventService.send(applicationStatusToStopped(application, user));
     }
 
     if (user.tenantId?.toString() !== application.tenantId) {

@@ -6,6 +6,7 @@ export interface NotificationItem {
   id: string;
   publicSubscribe: boolean;
   customized?: boolean;
+  manageSubscribe?: boolean;
 }
 
 export interface ContactInformation {
@@ -13,8 +14,6 @@ export interface ContactInformation {
   phoneNumber?: string;
   supportInstructions?: string;
 }
-
-//export type NotificationObject = ContactInformation | NotificationItem;
 
 export type NotificationType = Record<string, ContactInformation & NotificationItem>;
 
@@ -52,10 +51,25 @@ export interface NotificationMetrics {
   notificationsFailed?: number;
 }
 
+export interface InstalledSlackTeam {
+  id: string;
+  name: string;
+  url: string;
+  icon: string;
+}
+
+export interface Providers {
+  slack: {
+    installedTeams: InstalledSlackTeam[];
+    authorizationUrl: string;
+  };
+}
+
 export interface NotificationState {
   notificationList: NotificationType;
   notificationTypes: NotificationType | undefined;
   core: NotificationType;
+  providers: Providers;
   metrics: NotificationMetrics;
 }
 
@@ -63,5 +77,11 @@ export const NOTIFICATION_INIT: NotificationState = {
   notificationList: {},
   notificationTypes: undefined,
   core: {},
+  providers: {
+    slack: {
+      installedTeams: [],
+      authorizationUrl: null,
+    },
+  },
   metrics: {},
 };

@@ -16,13 +16,13 @@ interface SearchInfo {
 }
 
 export const NextLoader: FunctionComponent<EventSearchNextProps> = ({ onSearch, searchCriteria, type }) => {
-  const hasNext = useSelector((state: RootState) => state.subscription.search.subscribers.hasNext);
+  const next = useSelector((state: RootState) => state.subscription.search.next);
 
-  if (hasNext) {
+  if (next) {
     return (
       <GoAButton
         onClick={() => {
-          searchCriteria.next = true;
+          searchCriteria.next = next;
           const searchInfo: SearchInfo = {
             searchCriteria,
           };

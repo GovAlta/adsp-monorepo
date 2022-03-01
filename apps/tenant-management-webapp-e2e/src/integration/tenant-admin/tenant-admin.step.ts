@@ -120,7 +120,7 @@ Then('the user views the number of users in its tenant realm', function () {
     .parent()
     .invoke('text')
     .then((roleCountText) => {
-      expect(roleCountText).includes('Types of user roles');
+      expect(roleCountText).includes('Total number of roles');
     });
   // Verify active user count is present
   tenantAdminObj
@@ -190,7 +190,13 @@ Then('the number of users from admin page should equal to the number of users fr
       bearer: Cypress.env('autotest-admin-token'),
     },
   }).then(function (response) {
-    expect(response.body.length).equals(numOfRoles);
+    count = 0;
+    for (let arrayIndex = 0; arrayIndex < response.body.length; arrayIndex++) {
+      if (!response.body[arrayIndex].name.includes('default-roles')) {
+        count = count + 1;
+      }
+    }
+    expect(count).equals(numOfRoles);
   });
 });
 
@@ -203,7 +209,7 @@ Then('the user views the number of users in top 5 roles in its tenant realm', fu
     .eq(0)
     .invoke('text')
     .then(function (header1) {
-      expect(header1).to.equal('User role');
+      expect(header1).to.equal('Role');
     });
   tenantAdminObj
     .roleTableHead()
@@ -211,7 +217,7 @@ Then('the user views the number of users in top 5 roles in its tenant realm', fu
     .eq(1)
     .invoke('text')
     .then(function (header2) {
-      expect(header2).to.equal('Role count');
+      expect(header2).to.equal('User count');
     });
 
   // Verify <= 5 rows in the table and roles with descending numbers
@@ -316,30 +322,32 @@ Then(
         numOfRolesApi = response.body.length;
         expect(numOfRolesApi).to.be.not.lessThan(numOfRolesUI);
         for (let arrayIndex = 0; arrayIndex < numOfRolesApi; arrayIndex++) {
-          requestURLRoleUsers =
-            Cypress.env('accessManagementApi') +
-            '/admin/realms/' +
-            Cypress.env('realm') +
-            '/roles/' +
-            response.body[arrayIndex].name +
-            '/users';
-          cy.request({
-            method: 'GET',
-            url: requestURLRoleUsers,
-            auth: {
-              bearer: Cypress.env('autotest-admin-token'),
-            },
-          }).then(function (response2) {
-            // Only count non-service users
-            let counter = 0;
-            for (let i = 0; i < response2.body.length; i++) {
-              const userData = response2.body[i];
-              if (!userData.username.includes('service-account')) {
-                counter = counter + 1;
+          if (!response.body[arrayIndex].name.includes('default-roles')) {
+            requestURLRoleUsers =
+              Cypress.env('accessManagementApi') +
+              '/admin/realms/' +
+              Cypress.env('realm') +
+              '/roles/' +
+              response.body[arrayIndex].name +
+              '/users';
+            cy.request({
+              method: 'GET',
+              url: requestURLRoleUsers,
+              auth: {
+                bearer: Cypress.env('autotest-admin-token'),
+              },
+            }).then(function (response2) {
+              // Only count non-service users
+              let counter = 0;
+              for (let i = 0; i < response2.body.length; i++) {
+                const userData = response2.body[i];
+                if (!userData.username.includes('service-account')) {
+                  counter = counter + 1;
+                }
               }
-            }
-            roleUserNumApi[response.body[arrayIndex].name] = counter;
-          });
+              roleUserNumApi[response.body[arrayIndex].name] = counter;
+            });
+          }
         }
       })
       .then(function () {

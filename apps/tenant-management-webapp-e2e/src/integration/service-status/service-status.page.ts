@@ -145,12 +145,49 @@ class StatusServicePage {
     cy.xpath(`//*[contains(text(), "${text}")]`);
   }
 
+<<<<<<< HEAD
   directoryOverviewList(text) {
     cy.xpath(`//*[contains(text(), "${text}")]`);
   }
 
   directoryTable() {
     return cy.get('[data-testid="directory-table"]');
+=======
+  addApplicationModalTitle() {
+    return cy.xpath(
+      '//div[@class="modal-root" and @data-state="visible"]/div[@class="modal"]/div[@class="modal-container"]/div[@class="modal-title"]'
+    );
+  }
+
+  addApplicationNameModalField() {
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//input[@aria-label="name"]');
+  }
+
+  addApplicationDescriptionModalField() {
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//textarea[@aria-label="description"]');
+  }
+
+  addApplicationEndpointModalField() {
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//input[@aria-label="endpoint"]');
+  }
+
+  addApplicationSaveBtn() {
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//button[text()="Save"]');
+  }
+
+  applicationCardTitle(appName) {
+    return cy.xpath(`//*[@data-testid="application"]//div[contains(text(), "${appName}")]`);
+  }
+
+  applicationCardEditBtn(appName) {
+    return cy.xpath(`//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//*[name()="svg"]`);
+  }
+
+  applicationCardDeleteBtn(appName) {
+    return cy.xpath(
+      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//div[@data-testid="icon-trash"]`
+    );
+>>>>>>> cc6fa8e8f47335d5e8ab6c5d259e53c6c9acf661
   }
 }
 export default StatusServicePage;

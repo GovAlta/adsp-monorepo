@@ -1,9 +1,8 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import type { Subscriber, SubscriberSearchCriteria } from '@store/subscription/models';
+import type { Subscriber } from '@store/subscription/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Grid, GridItem } from '@components/Grid';
-import type { ContactInformation as ContactInformationType } from '@store/notification/models';
 import { UpdateContactInformationService, FetchNotificationTypeService } from '@store/notification/actions';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
@@ -51,56 +50,62 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
   };
 
   return (
-    <ContactInfoCss>
-      <h2>
-        <div className="left-float">Contact information </div>
-        {hasConfigurationAdminRole ? (
-          <div data-testid="edit-contact-info">
-            <GoAContextMenuIcon
-              type="create"
-              title="Edit"
-              onClick={() => {
-                openModalFunction();
-              }}
+    <section>
+      <ContactInfoCss>
+        <h2>
+          <div className="left-float">Contact information </div>
+          {hasConfigurationAdminRole ? (
+            <div data-testid="edit-contact-info">
+              <GoAContextMenuIcon
+                type="create"
+                title="Edit"
+                onClick={() => {
+                  openModalFunction();
+                }}
+              />
+            </div>
+          ) : (
+            <Edit
+              className="disabled"
+              title="You require a configuration-admin role to edit this contact information"
+              width={'18px'}
             />
-          </div>
-        ) : (
-          <Edit
-            className="disabled"
-            title="You require a configuration-admin role to edit this contact information"
-            width={'18px'}
-          />
-        )}
-      </h2>
+          )}
+        </h2>
+        <p>
+          The following contact information and instructions are provided to your subscribers in the subscription
+          management application so they know how to get support for notification related issues.
+        </p>
 
-      <Grid>
-        <GridItem data-testid="email" className="word-break contact-border" md={8} vSpacing={1} hSpacing={0.5}>
-          <h4>Contact email</h4>
-          {contact?.contactEmail}
-        </GridItem>
-        <GridItem data-testid="phone" className="contact-border" md={4} vSpacing={1} hSpacing={0.5}>
-          <h4>Phone number</h4>
-          {phoneWrapper(contact?.phoneNumber)}
-        </GridItem>
-      </Grid>
-      <Grid>
-        <GridItem data-testid="support-instructions" className="contact-border" md={12} vSpacing={1} hSpacing={0}>
-          <h4>Support instructions</h4>
-          {contact?.supportInstructions}
-        </GridItem>
-      </Grid>
-      <ContactInformationModalForm
-        open={editContactInformation}
-        initialValue={initialValue}
-        onSave={(contactInfo) => {
-          dispatch(UpdateContactInformationService(contactInfo));
-          setEditContactInformation(false);
-        }}
-        onCancel={() => {
-          reset();
-        }}
-      />
-    </ContactInfoCss>
+        <Grid>
+          <GridItem data-testid="email" className="word-break contact-border" md={8} vSpacing={1} hSpacing={0.5}>
+            <h4>Contact email</h4>
+            {contact?.contactEmail}
+          </GridItem>
+          <GridItem data-testid="phone" className="contact-border" md={4} vSpacing={1} hSpacing={0.5}>
+            <h4>Phone number</h4>
+            {phoneWrapper(contact?.phoneNumber)}
+          </GridItem>
+        </Grid>
+        <Grid>
+          <GridItem data-testid="support-instructions" className="contact-border" md={12} vSpacing={1} hSpacing={0}>
+            <h4>Support instructions</h4>
+            {contact?.supportInstructions}
+          </GridItem>
+        </Grid>
+        <ContactInformationModalForm
+          open={editContactInformation}
+          initialValue={initialValue}
+          onSave={(contactInfo) => {
+            dispatch(UpdateContactInformationService(contactInfo));
+            setEditContactInformation(false);
+          }}
+          onCancel={() => {
+            reset();
+          }}
+        />
+      </ContactInfoCss>
+    </section>
   );
 };
 

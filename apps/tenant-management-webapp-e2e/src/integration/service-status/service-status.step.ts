@@ -455,6 +455,70 @@ Then('the user views the Overview list item {string}', function (listitem) {
   statusObj.directoryOverviewList(listitem);
 });
 
+<<<<<<< HEAD
 Then('the user views {string} and {string}', function (name, url) {
   statusObj.directoryTable().contains('td', name).should('be.visible').siblings().contains(url).should('be.visible');
+=======
+When(
+  'the user enters {string} as name and {string} as description and {string} as endpoint',
+  function (name, description, endpoint) {
+    statusObj.addApplicationNameModalField().clear().type(name);
+    statusObj.addApplicationDescriptionModalField().clear().type(description);
+    statusObj.addApplicationEndpointModalField().clear().type(endpoint);
+  }
+);
+
+Then('the user clicks Save application button', function () {
+  statusObj.addApplicationSaveBtn().click();
+  cy.wait(4000);
+});
+
+Then('the user {string} {string} in the application list', function (viewOrNot, appName) {
+  switch (viewOrNot) {
+    case 'views':
+      statusObj.applicationCardTitle(appName).should('exist');
+      break;
+    case 'should not view':
+      statusObj.applicationCardTitle(appName).should('not.exist');
+      break;
+    default:
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});
+
+When('the user clicks {string} button for {string}', function (buttonType, appName) {
+  switch (buttonType) {
+    case 'Edit':
+      statusObj.applicationCardEditBtn(appName).click();
+      break;
+    case 'Delete':
+      statusObj.applicationCardDeleteBtn(appName).click();
+      break;
+    default:
+      expect(buttonType).to.be.oneOf(['edit', 'delete']);
+  }
+});
+
+Then(
+  'the user views {string} as name and {string} as description in the modal fields',
+  function (appName, description) {
+    statusObj
+      .addApplicationNameModalField()
+      .invoke('val')
+      .then((val) => {
+        expect(val).to.eq(appName);
+      });
+    statusObj
+      .addApplicationDescriptionModalField()
+      .invoke('val')
+      .then((val) => {
+        expect(val).to.eq(description);
+      });
+  }
+);
+
+When('the user enters {string} as name and {string} as description fields', function (appName, description) {
+  statusObj.addApplicationNameModalField().clear().type(appName);
+  statusObj.addApplicationDescriptionModalField().clear().type(description);
+>>>>>>> cc6fa8e8f47335d5e8ab6c5d259e53c6c9acf661
 });

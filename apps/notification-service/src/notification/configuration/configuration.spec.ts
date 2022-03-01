@@ -30,12 +30,18 @@ describe('NotificationConfiguration', () => {
         },
       ],
     };
-    const configuration = new NotificationConfiguration({ test: type }, tenantId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const configuration = new NotificationConfiguration({ contact: {} as any, test: type }, tenantId);
 
     it('can return type', () => {
       const entity = configuration.getNotificationType('test');
       expect(entity).toBeTruthy();
       expect(entity.name).toBe('Test Type');
+    });
+
+    it('can return falsy for contact', () => {
+      const entity = configuration.getNotificationType('contact');
+      expect(entity).toBeFalsy();
     });
 
     it('can return falsy for unknown', () => {

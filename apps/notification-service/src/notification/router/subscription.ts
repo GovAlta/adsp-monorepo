@@ -48,8 +48,8 @@ export const getNotificationType: RequestHandler = async (req, _res, next) => {
     const [configuration, options] = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
 
     const typeEntity =
-      (Object.keys(configuration).length > 0 && configuration?.getNotificationType(type)) ||
-      options?.getNotificationType(type);
+      options?.getNotificationType(type) ||
+      (Object.keys(configuration).length > 0 && configuration?.getNotificationType(type));
 
     if (!typeEntity) {
       throw new NotFoundError('Notification Type', type);
@@ -441,6 +441,7 @@ export function getMySubscriberDetails(apiId: AdspId, repository: SubscriptionRe
   return async (req, res, next) => {
     try {
       const tenantId = req.tenant?.id;
+      const user = req.user;
       const subscriberDetails = mapSubscriber(apiId, req[SUBSCRIBER_KEY]) as SubscriberEntity;
       const { includeSubscriptions } = req.query;
 
@@ -454,14 +455,17 @@ export function getMySubscriberDetails(apiId: AdspId, repository: SubscriptionRe
           NotificationConfiguration
         >();
         subscriberSubscriptions = result.results.map((r) => {
-          const { subscriber: _subscriber, ...subscription } = mapSubscription(apiId, r);
+          const { subscriber: subscriber, ...subscription } = mapSubscription(apiId, r);
+          const castSubscriber = subscriber as Subscriber;
           const typeEntity = configuration?.getNotificationType(r.typeId) || options?.getNotificationType(r.typeId);
+          const canSubscribe = typeEntity.canSubscribe(user, castSubscriber);
 
           return {
             ...subscription,
-            type: typeEntity ? mapType(typeEntity, true) : null,
+            type: typeEntity ? mapType(typeEntity, true, canSubscribe) : null,
           };
         });
+
         return res.send({
           ...subscriberDetails,
           subscriptions: subscriberSubscriptions,

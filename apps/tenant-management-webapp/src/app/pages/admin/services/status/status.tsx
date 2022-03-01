@@ -17,10 +17,8 @@ import {
   ServiceStatusEndpoint,
   EndpointStatusEntry,
 } from '@store/status/models';
-import { Route, Switch, useHistory, useLocation } from 'react-router-dom';
 import styled, { CSSProperties } from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
-import GoALinkButton from '@components/LinkButton';
 import { GoAButton, GoARadio, GoARadioGroup, GoACheckbox } from '@abgov/react-components';
 import {
   GoABadge,
@@ -46,8 +44,6 @@ import { StatusMetrics } from './metrics';
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
-  const history = useHistory();
-
   const { applications, serviceStatusAppUrl, tenantName, subscriber, subscription } = useSelector(
     (state: RootState) => ({
       applications: state.serviceStatus.applications,
@@ -58,9 +54,9 @@ function Status(): JSX.Element {
     })
   );
 
-  const location = useLocation();
-
   const [activeIndex, setActiveIndex] = useState<number>(0);
+  const [showAddApplicationModal, setShowAddApplicationModal] = useState<boolean>(false);
+  const [showAddNoticeModal, setShowAddNoticeModal] = useState<boolean>(false);
 
   useEffect(() => {
     dispatch(fetchServiceStatusApps());
@@ -100,13 +96,34 @@ function Status(): JSX.Element {
   };
 
   const addApplication = () => {
-    setActiveIndex(1);
-    history.push(`${location.pathname}/new`);
+    setShowAddApplicationModal(true);
   };
 
   return (
     <Page>
       <Main>
+        {showAddApplicationModal && (
+          <ApplicationFormModal
+            isOpen={true}
+            title="Add application"
+            onCancel={() => {
+              setShowAddApplicationModal(false);
+            }}
+            onSave={() => {
+              if (activeIndex !== 1) {
+                setActiveIndex(1);
+              }
+              setShowAddApplicationModal(false);
+            }}
+            defaultApplication={{
+              name: '',
+              tenantId: '',
+              enabled: false,
+              description: '',
+              endpoint: { url: '', status: 'offline' },
+            }}
+          />
+        )}
         <h1>Service status</h1>
         <Tabs activeIndex={activeIndex}>
           <Tab label="Overview">
@@ -135,9 +152,9 @@ function Status(): JSX.Element {
               subsidy and child care certification
             </p>
             <p>
-              <GoALinkButton data-testid="add-application" to={`${location.pathname}/new`} buttonType="primary">
+              <GoAButton data-testid="add-application" onClick={addApplication} buttonType="primary">
                 Add application
-              </GoALinkButton>
+              </GoAButton>
             </p>
             <p>
               <b>Do you want to subscribe and receive notifications for application health changes?</b>
@@ -160,13 +177,31 @@ function Status(): JSX.Element {
             </ApplicationList>
           </Tab>
           <Tab label="Notices">
+            {showAddNoticeModal && (
+              <NoticeModal
+                isOpen={true}
+                title="Add notice"
+                onCancel={() => {
+                  setShowAddNoticeModal(false);
+                }}
+                onSave={() => {
+                  setShowAddNoticeModal(false);
+                }}
+              />
+            )}
             <p>
               This service allows for posting of application notices. This allows you to communicate with your customers
               about upcoming maintenance windows or other events
             </p>
-            <GoALinkButton data-testid="add-notice" to={`${location.pathname}/notice/new`} buttonType="primary">
+            <GoAButton
+              data-testid="add-notice"
+              onClick={() => {
+                setShowAddNoticeModal(true);
+              }}
+              buttonType="primary"
+            >
               Add notice
-            </GoALinkButton>
+            </GoAButton>
             <NoticeList />
           </Tab>
           <Tab label="Guidelines">
@@ -187,20 +222,6 @@ function Status(): JSX.Element {
             </ol>
           </Tab>
         </Tabs>
-        <Switch>
-          <Route path="/admin/services/status/new">
-            <ApplicationFormModal isOpen={true} title="Add application" />
-          </Route>
-          <Route path="/admin/services/status/notice/new">
-            <NoticeModal isOpen={true} title="Add notice" />
-          </Route>
-          <Route path="/admin/services/status/notice/:noticeId">
-            <NoticeModal isOpen={true} title="Edit notice" />
-          </Route>
-          <Route path="/admin/services/status/:applicationId/edit">
-            <ApplicationFormModal isOpen={true} title="Edit application" />
-          </Route>
-        </Switch>
       </Main>
 
       <Aside>
@@ -240,10 +261,7 @@ function Status(): JSX.Element {
 }
 
 function Application(app: ServiceStatusApplication) {
-  const location = useLocation();
-  const history = useHistory();
   const dispatch = useDispatch();
-
   const entries = useSelector((state: RootState) =>
     state.serviceStatus.endpointHealth[app._id] && state.serviceStatus.endpointHealth[app._id].url === app.endpoint?.url
       ? state.serviceStatus.endpointHealth[app._id].entries
@@ -256,6 +274,7 @@ function Application(app: ServiceStatusApplication) {
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false);
   const [showStatusForm, setShowStatusForm] = useState<boolean>(false);
+  const [showEditModal, setShowEditModal] = useState<boolean>(false);
   const [status, setStatus] = useState<ServiceStatusType>(app.status);
 
   function doDelete() {
@@ -308,11 +327,7 @@ function Application(app: ServiceStatusApplication) {
         </div>
 
         <GoAContextMenu>
-          <EditIconButton
-            iconSize="tiny"
-            onClick={() => history.push(`${location.pathname}/${app._id}/edit`)}
-            data-testid="status-edit-button"
-          />
+          <EditIconButton iconSize="tiny" onClick={() => setShowEditModal(true)} data-testid="status-edit-button" />
           <GoAContextMenuIcon type="trash" onClick={() => setShowDeleteConfirmation(true)} />
         </GoAContextMenu>
       </AppHeader>
@@ -342,6 +357,7 @@ function Application(app: ServiceStatusApplication) {
       {/* GoAModals */}
 
       {/* Delete confirmation dialog */}
+<<<<<<< HEAD
       <GoAModal isOpen={showDeleteConfirmation}>
         <GoAModalTitle>Confirmation</GoAModalTitle>
         <GoAModalContent>Delete the {app.name} service status checks?</GoAModalContent>
@@ -354,6 +370,17 @@ function Application(app: ServiceStatusApplication) {
           </GoAButton>
         </GoAModalActions>
       </GoAModal>
+=======
+      {showDeleteConfirmation && (
+        <DeleteModal
+          isOpen={showDeleteConfirmation}
+          title="Delete application"
+          content={`Delete the ${app.name} service status checks?`}
+          onCancel={cancelDelete}
+          onDelete={doDelete}
+        />
+      )}
+>>>>>>> cc6fa8e8f47335d5e8ab6c5d259e53c6c9acf661
 
       {/* Manual status change dialog */}
       <GoAModal isOpen={showStatusForm}>
@@ -386,6 +413,18 @@ function Application(app: ServiceStatusApplication) {
           </GoAButton>
         </GoAModalActions>
       </GoAModal>
+
+      <ApplicationFormModal
+        isOpen={showEditModal}
+        title="Edit application"
+        onCancel={() => {
+          setShowEditModal(false);
+        }}
+        onSave={() => {
+          setShowEditModal(false);
+        }}
+        defaultApplication={{ ...app }}
+      />
     </App>
   );
 }

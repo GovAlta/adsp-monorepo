@@ -1,6 +1,6 @@
 import { Subscribable } from 'rxjs';
 import { Logger } from 'winston';
-import { AdspId, ConfigurationService, EventService, TokenProvider } from '@abgov/adsp-service-sdk';
+import { AdspId, ConfigurationService, EventService, TenantService, TokenProvider } from '@abgov/adsp-service-sdk';
 import { DomainEventWorkItem, WorkQueueService } from '@core-services/core-common';
 import { createProcessEventJob } from './processEvent';
 import { SubscriptionRepository } from '../repository';
@@ -12,6 +12,7 @@ interface JobProps {
   serviceId: AdspId;
   logger: Logger;
   tokenProvider: TokenProvider;
+  tenantService: TenantService;
   configurationService: ConfigurationService;
   eventService: EventService;
   templateService: TemplateService;
@@ -25,6 +26,7 @@ export const createJobs = ({
   serviceId,
   logger,
   tokenProvider,
+  tenantService,
   configurationService,
   eventService,
   templateService,
@@ -43,6 +45,7 @@ export const createJobs = ({
     serviceId,
     logger,
     tokenProvider,
+    tenantService,
     configurationService,
     eventService,
     templateService,

@@ -35,6 +35,20 @@ class Common {
   notificationMessage() {
     return cy.xpath('//*[@role="notification"]//*[@class="message"]');
   }
+
+  deleteConfirmationModalTitle() {
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//*[@class="modal-title"]');
+  }
+
+  deleteConfirmationModalContent() {
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//*[@class="goa-scrollable"]');
+  }
+
+  deleteConfirmationModalDeleteBtn() {
+    return cy.xpath(
+      '//*[@data-testid="delete-confirmation" and @data-state="visible"]//*[@data-testid="delete-confirm"]'
+    );
+  }
 }
 
 export default Common;

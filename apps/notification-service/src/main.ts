@@ -1,10 +1,9 @@
-import { AdspId, initializePlatform, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
 import {
   createLogger,
   createAmqpEventService,
   createAmqpQueueService,
   createErrorHandler,
-  assertAuthenticatedHandler,
   createAmqpConfigUpdateService,
 } from '@core-services/core-common';
 import { InstallProvider } from '@slack/oauth';
@@ -28,7 +27,7 @@ import {
   ServiceUserRoles,
 } from './notification';
 import { createRepositories } from './mongo';
-import { createABNotifySmsProvider, createEmailProvider, createSlackProvider } from './provider';
+import { createABNotifySmsProvider, createEmailProvider, createProviderRouter, createSlackProvider } from './provider';
 import { createTemplateService } from './handlebars';
 import { createVerifyService } from './verify';
 
@@ -48,6 +47,7 @@ async function initializeApp() {
     tenantStrategy,
     tenantHandler,
     tokenProvider,
+    tenantService,
     configurationHandler,
     configurationService,
     clearCached,
@@ -153,6 +153,7 @@ async function initializeApp() {
     configurationService,
     eventService,
     templateService,
+    tenantService,
     eventSubscriber,
     queueService,
     verifyService,
@@ -167,52 +168,8 @@ async function initializeApp() {
     next();
   }
 
-  app.get(
-    '/slack/install',
-    passport.authenticate(['core', 'tenant'], { session: false }),
-    assertAuthenticatedHandler,
-    getRootUrl,
-    async (req, res, next) => {
-      try {
-        const user = req.user;
-        if (!user.roles?.includes(ServiceUserRoles.SubscriptionAdmin)) {
-          throw new UnauthorizedUserError('install Slack app', user);
-        }
-
-        const { from } = req.query;
-        const slackInstall = await slackInstaller.generateInstallUrl({
-          scopes: ['chat:write'],
-          metadata: from as string,
-          redirectUri: new URL('/slack/oauth_redirect', req[ROOT_URL]).href,
-        });
-
-        res.send(slackInstall);
-      } catch (err) {
-        next(err);
-      }
-    }
-  );
-
-  app.get('/slack/oauth_redirect', async (req, res) => {
-    await slackInstaller.handleCallback(req, res, {
-      success: (_installation, options) => {
-        let redirectUrl: URL;
-        if (options.metadata) {
-          try {
-            redirectUrl = new URL(options.metadata);
-          } catch (err) {
-            // not a url?
-          }
-        }
-
-        if (redirectUrl) {
-          res.redirect(redirectUrl.href);
-        } else {
-          res.sendStatus(200);
-        }
-      },
-    });
-  });
+  const providerRouter = createProviderRouter({ getRootUrl, slackInstaller, slackRepository: installationStore });
+  app.use('/provider/v1', providerRouter);
 
   let swagger = null;
   app.use('/swagger/docs/v1', (_req, res) => {

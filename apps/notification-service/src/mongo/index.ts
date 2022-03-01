@@ -1,7 +1,7 @@
-import { InstallationStore } from '@slack/oauth';
 import { connect, connection, ConnectionStates } from 'mongoose';
 import { Logger } from 'winston';
 import { Repositories } from '../notification';
+import { SlackRepository } from '../provider';
 import { MongoSlackInstallationStore } from './slack';
 import { MongoSubscriptionRepository } from './subscription';
 
@@ -21,7 +21,7 @@ export const createRepositories = ({
   MONGO_USER,
   MONGO_PASSWORD,
   MONGO_TLS,
-}: MongoRepositoryProps): Promise<Repositories & { installationStore: InstallationStore }> =>
+}: MongoRepositoryProps): Promise<Repositories & { installationStore: SlackRepository }> =>
   new Promise((resolve, reject) => {
     const mongoConnectionString = `${MONGO_URI}/${MONGO_DB}?retryWrites=false&ssl=${MONGO_TLS}`;
     connect(

@@ -15,13 +15,15 @@ import {
   UPDATE_NOTIFICATION_TYPE,
   UPDATE_CONTACT_INFORMATION,
   FETCH_NOTIFICATION_METRICS,
-  fetchNotificationMetricsSucceeded,
+  FetchNotificationMetricsSucceeded,
+  FetchNotificationSlackInstallationSucceeded,
+  FETCH_NOTIFICATION_SLACK_INSTALLATION,
 } from './actions';
 
 import { RootState } from '../index';
 import axios from 'axios';
 import moment from 'moment';
-import { EventItem } from './models';
+import { EventItem, InstalledSlackTeam } from './models';
 
 export function* fetchNotificationTypes(): SagaIterator {
   const configBaseUrl: string = yield select(
@@ -118,6 +120,8 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
 
       payload.events = sanitizedEvents;
 
+      console.log(JSON.stringify(payload) + '<payload');
+
       yield call(
         axios.patch,
         `${configBaseUrl}/configuration/v2/configuration/platform/notification-service`,
@@ -131,6 +135,7 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
               subscriberRoles: payload.subscriberRoles,
               events: payload.events,
               publicSubscribe: payload.publicSubscribe,
+              manageSubscribe: payload.manageSubscribe,
             },
           },
         },
@@ -204,13 +209,59 @@ export function* fetchNotificationMetrics(): SagaIterator {
       const sentMetric = 'notification-service:notification-sent:count';
       const failedMetric = 'notification-service:notification-send-failed:count';
       yield put(
-        fetchNotificationMetricsSucceeded({
+        FetchNotificationMetricsSucceeded({
           notificationsSent: parseInt(metrics[sentMetric]?.values[0]?.sum || '0'),
           notificationsFailed: parseInt(metrics[failedMetric]?.values[0]?.sum || '0'),
         })
       );
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - fetchNotificationMetrics` }));
+    }
+  }
+}
+
+export function* fetchNotificationSlackInstallation(): SagaIterator {
+  const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  if (baseUrl && token) {
+    try {
+      const { data: authorizationUrl }: { data: string } = yield call(
+        axios.get,
+        `${baseUrl}/provider/v1/slack/install?from=${window.location}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      yield put(FetchNotificationSlackInstallationSucceeded([], authorizationUrl));
+
+      const { data: teams }: { data: { id: string }[] } = yield call(axios.get, `${baseUrl}/provider/v1/slack/teams`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const installedTeams: InstalledSlackTeam[] = [];
+      for (const team of teams) {
+        const {
+          data: { team: teamInfo },
+        }: { data: { team: { id: string; name: string; url: string; icon: { image_44: string } } } } = yield call(
+          axios.get,
+          `${baseUrl}/provider/v1/slack/teams/${team.id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        installedTeams.push({
+          id: teamInfo.id,
+          name: teamInfo.name,
+          url: teamInfo.url,
+          icon: teamInfo.icon.image_44,
+        });
+      }
+
+      yield put(FetchNotificationSlackInstallationSucceeded(installedTeams, authorizationUrl));
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.message} - Slack installations` }));
     }
   }
 }
@@ -222,4 +273,5 @@ export function* watchNotificationSagas(): Generator {
   yield takeEvery(UPDATE_NOTIFICATION_TYPE, updateNotificationType);
   yield takeEvery(UPDATE_CONTACT_INFORMATION, updateContactInformation);
   yield takeLatest(FETCH_NOTIFICATION_METRICS, fetchNotificationMetrics);
+  yield takeLatest(FETCH_NOTIFICATION_SLACK_INSTALLATION, fetchNotificationSlackInstallation);
 }

@@ -99,6 +99,22 @@ export const EventDefinitions: FunctionComponent = () => {
         </GoAModal>
       )}
 
+<<<<<<< HEAD
+=======
+      {/* Delete confirmation */}
+      {showDeleteConfirmation && (
+        <DeleteModal
+          isOpen={showDeleteConfirmation}
+          title="Delete event definition"
+          content={`Delete ${selectedDefinition?.name}?`}
+          onCancel={() => setShowDeleteConfirmation(false)}
+          onDelete={() => {
+            setShowDeleteConfirmation(false);
+            dispatch(deleteEventDefinition(selectedDefinition));
+          }}
+        />
+      )}
+>>>>>>> cc6fa8e8f47335d5e8ab6c5d259e53c6c9acf661
       {editDefinition && (
         <EventDefinitionModalForm
           open={true}
