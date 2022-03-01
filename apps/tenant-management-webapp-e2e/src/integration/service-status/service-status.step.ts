@@ -455,10 +455,8 @@ Then('the user views the Overview list item {string}', function (listitem) {
   statusObj.directoryOverviewList(listitem);
 });
 
-<<<<<<< HEAD
 Then('the user views {string} and {string}', function (name, url) {
   statusObj.directoryTable().contains('td', name).should('be.visible').siblings().contains(url).should('be.visible');
-=======
 When(
   'the user enters {string} as name and {string} as description and {string} as endpoint',
   function (name, description, endpoint) {
@@ -520,5 +518,4 @@ Then(
 When('the user enters {string} as name and {string} as description fields', function (appName, description) {
   statusObj.addApplicationNameModalField().clear().type(appName);
   statusObj.addApplicationDescriptionModalField().clear().type(description);
->>>>>>> cc6fa8e8f47335d5e8ab6c5d259e53c6c9acf661
 });
