@@ -30,6 +30,10 @@ export const environment = envalid.cleanEnv(
     NOTIFY_URL: envalid.str({ default: '' }),
     NOTIFY_API_KEY: envalid.str({ default: '' }),
     NOTIFY_TEMPLATE_ID: envalid.str({ default: '' }),
+    TEAMS_TENANT_ID: envalid.str({ default: '' }),
+    TEAMS_APP_TYPE: envalid.str({ default: 'SingleTenant' }),
+    TEAMS_APP_ID: envalid.str({ default: '' }),
+    TEAMS_APP_SECRET: envalid.str({ default: '' }),
     PORT: envalid.num({ default: 3335 }),
   },
   {
