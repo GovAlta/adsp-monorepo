@@ -4,8 +4,8 @@ import { InstallProvider } from '@slack/oauth';
 import { WebClient } from '@slack/web-api';
 import { RequestHandler, Router } from 'express';
 import * as passport from 'passport';
-import { ServiceUserRoles } from '../notification';
-import { SlackRepository } from './types';
+import { ServiceUserRoles } from '../../notification';
+import { SlackRepository } from './../types';
 
 interface RouterProps {
   slackInstaller: InstallProvider;
@@ -13,11 +13,11 @@ interface RouterProps {
   getRootUrl: RequestHandler;
 }
 
-export const createProviderRouter = ({ slackInstaller, slackRepository, getRootUrl }: RouterProps): Router => {
+export const createSlackProviderRouter = ({ slackInstaller, slackRepository, getRootUrl }: RouterProps): Router => {
   const router = Router();
 
   router.get(
-    '/slack/install',
+    '/install',
     passport.authenticate(['core', 'tenant'], { session: false }),
     assertAuthenticatedHandler,
     getRootUrl,
@@ -42,7 +42,7 @@ export const createProviderRouter = ({ slackInstaller, slackRepository, getRootU
     }
   );
 
-  router.get('/slack/oauth_redirect', async (req, res) => {
+  router.get('/oauth_redirect', async (req, res) => {
     await slackInstaller.handleCallback(req, res, {
       success: (_installation, options) => {
         let redirectUrl: URL;
@@ -64,7 +64,7 @@ export const createProviderRouter = ({ slackInstaller, slackRepository, getRootU
   });
 
   router.get(
-    '/slack/teams',
+    '/teams',
     passport.authenticate(['core', 'tenant'], { session: false }),
     assertAuthenticatedHandler,
     async (req, res, next) => {
@@ -83,7 +83,7 @@ export const createProviderRouter = ({ slackInstaller, slackRepository, getRootU
   );
 
   router.get(
-    '/slack/teams/:teamId',
+    '/teams/:teamId',
     passport.authenticate(['core', 'tenant'], { session: false }),
     assertAuthenticatedHandler,
     async (req, res, next) => {

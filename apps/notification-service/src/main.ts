@@ -16,7 +16,6 @@ import * as helmet from 'helmet';
 import { environment } from './environments/environment';
 import {
   applyNotificationMiddleware,
-  Channel,
   configurationSchema,
   Notification,
   NotificationConfiguration,
@@ -27,7 +26,7 @@ import {
   ServiceUserRoles,
 } from './notification';
 import { createRepositories } from './mongo';
-import { createABNotifySmsProvider, createEmailProvider, createProviderRouter, createSlackProvider } from './provider';
+import { initializeProviders } from './provider';
 import { createTemplateService } from './handlebars';
 import { createVerifyService } from './verify';
 
@@ -128,6 +127,14 @@ async function initializeApp() {
     done();
   });
 
+  // This should be done with 'trust proxy', but that depends on the proxies using the x-forward headers.
+  const ROOT_URL = 'rootUrl';
+  function getRootUrl(req: express.Request, _res: express.Response, next: express.NextFunction) {
+    const host = req.get('host');
+    req[ROOT_URL] = new URL(`${host === 'localhost' ? 'http' : 'https'}://${host}`);
+    next();
+  }
+
   const slackInstaller = new InstallProvider({
     clientId: environment.SLACK_CLIENT_ID,
     clientSecret: environment.SLACK_CLIENT_SECRET,
@@ -137,11 +144,13 @@ async function initializeApp() {
 
   const templateService = createTemplateService();
 
-  const providers = {
-    [Channel.email]: environment.SMTP_HOST ? createEmailProvider(environment) : null,
-    [Channel.sms]: environment.NOTIFY_API_KEY ? createABNotifySmsProvider(environment) : null,
-    [Channel.slack]: environment.SLACK_CLIENT_ID ? createSlackProvider(logger, slackInstaller) : null,
-  };
+  const providers = initializeProviders(app, {
+    getRootUrl,
+    logger,
+    slackInstaller,
+    slackRepository: installationStore,
+    ...environment,
+  });
 
   const verifyService = createVerifyService({ providers, templateService, directory, tokenProvider });
 
@@ -159,17 +168,6 @@ async function initializeApp() {
     verifyService,
     providers,
   });
-
-  // This should be done with 'trust proxy', but that depends on the proxies using the x-forward headers.
-  const ROOT_URL = 'rootUrl';
-  function getRootUrl(req: express.Request, _res: express.Response, next: express.NextFunction) {
-    const host = req.get('host');
-    req[ROOT_URL] = new URL(`${host === 'localhost' ? 'http' : 'https'}://${host}`);
-    next();
-  }
-
-  const providerRouter = createProviderRouter({ getRootUrl, slackInstaller, slackRepository: installationStore });
-  app.use('/provider/v1', providerRouter);
 
   let swagger = null;
   app.use('/swagger/docs/v1', (_req, res) => {
