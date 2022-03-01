@@ -281,7 +281,7 @@ export function getSubscriber(repository: SubscriptionRepository): RequestHandle
   return async (req, _res, next) => {
     try {
       const user = req.user;
-      const tenantId = req.tenant.id;
+      const tenantId = req.tenant?.id; //|| (req.params.tenantId as unknown as AdspId);
       const { subscriber } = req.params;
 
       const entity = await repository.getSubscriber(tenantId, subscriber);

@@ -3,6 +3,9 @@ import { Subscriber, SubscriberChannel } from './models';
 export const GET_MY_SUBSCRIBER_DETAILS_SUCCESS = 'tenant/notification-service/get-mySubscriber-success';
 export const GET_MY_SUBSCRIBER_DETAILS = 'tenant/notification-service/get-mySubscriber';
 
+export const GET_SUBSCRIBER_DETAILS_SUCCESS = 'tenant/notification-service/get-mySubscriber-success';
+export const GET_SUBSCRIBER_DETAILS = 'tenant/notification-service/get-mySubscriber';
+
 export const UNSUBSCRIBE_SUCCESS = 'tenant/notification-service/unsubscribe-success';
 export const UNSUBSCRIBE_FAILED = 'tenant/notification-service/unsubscribe-failed';
 export const UNSUBSCRIBE = 'tenant/notification-service/unsubscribe';
@@ -29,6 +32,9 @@ export interface UnsubscribeActionSuccess {
 }
 export interface GetMySubscriberAction {
   type: typeof GET_MY_SUBSCRIBER_DETAILS;
+}
+export interface GetSubscriberAction {
+  type: typeof GET_SUBSCRIBER_DETAILS;
 }
 export interface UnsubscribeAction {
   type: typeof UNSUBSCRIBE;
@@ -86,4 +92,8 @@ export const GetMySubscriberDetailsSuccess = (subscriber: Subscriber): GetMySubs
 });
 export const getMySubscriberDetails = (): GetMySubscriberAction => ({
   type: GET_MY_SUBSCRIBER_DETAILS,
+});
+
+export const getSubscriberDetails = (subscriberId: string): GetSubscriberAction => ({
+  type: GET_SUBSCRIBER_DETAILS,
 });
