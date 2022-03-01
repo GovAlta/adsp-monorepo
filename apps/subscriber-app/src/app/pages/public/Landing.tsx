@@ -16,10 +16,7 @@ const LandingPage = (): JSX.Element => {
       <Header serviceName="Alberta Digital Service Platform - Subscription management " />
       <Main>
         <CenterText>
-          <Band title="Subscription management">
-            The subscription management app allows subscribers to manage their subscription preferences and decide how
-            they want to receive notifications regarding the services they are subscribed to.
-          </Band>
+          <Band title="Subscription management">Manage your subscription preferences</Band>
 
           <Section>
             <Container vs={3} hs={1}>
