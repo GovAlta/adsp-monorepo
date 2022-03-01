@@ -18,7 +18,6 @@ export const combineNotification = (
       .includes(coreItem.id)
   ) {
     const events = [];
-    coreItem.manageSubscribe = tenantNotificationType[coreItem.id].manageSubscribe;
     coreItem.events.forEach((coreEvent) => {
       const customEvent = tenantNotificationType[coreItem.id].events.find((ev) => ev.name === coreEvent.name);
       if (!customEvent) {
@@ -41,10 +40,6 @@ export const combineNotification = (
     coreItem.customized = false;
   }
 
-  // console.log(JSON.stringify(coreItem) + '<coreItem1');
-
-  // console.log(JSON.stringify(coreItem) + '<coreItem2');
-
   return coreItem;
 };
 
@@ -65,8 +60,6 @@ export default function (state = NOTIFICATION_INIT, action: ActionTypes): Notifi
           coreNotificationType[coreItem.id] = combineNotification(coreItem, state.notificationTypes);
         });
       }
-
-      console.log(JSON.stringify(coreNotificationType) + '<coreNotificationType');
 
       return {
         ...state,
