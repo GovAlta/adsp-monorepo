@@ -44,7 +44,7 @@ const LandingPage = (): JSX.Element => {
                   <Grid>
                     <GridItem md={6.5} className="center">
                       <h2>Notification channel preferences</h2>
-                      <p>As a subscriber, your users can have a preferred channel to receive notifications.</p>
+                      <p>As a subscriber, your users can opt for a preferred channel to receive notifications.</p>
                     </GridItem>
                     <GridItem md={1} />
                     <GridItem md={4.5}>
