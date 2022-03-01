@@ -234,6 +234,8 @@ export function* fetchNotificationSlackInstallation(): SagaIterator {
         }
       );
 
+      yield put(FetchNotificationSlackInstallationSucceeded([], authorizationUrl));
+
       const { data: teams }: { data: { id: string }[] } = yield call(axios.get, `${baseUrl}/provider/v1/slack/teams`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -259,7 +261,7 @@ export function* fetchNotificationSlackInstallation(): SagaIterator {
 
       yield put(FetchNotificationSlackInstallationSucceeded(installedTeams, authorizationUrl));
     } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationMetrics` }));
+      yield put(ErrorNotification({ message: `${e.message} - Slack installations` }));
     }
   }
 }
