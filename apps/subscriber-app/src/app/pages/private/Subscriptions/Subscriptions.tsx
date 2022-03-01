@@ -4,6 +4,8 @@ import Container from '@components/Container';
 import styled from 'styled-components';
 import DataTable from '@components/DataTable';
 import { GoAButton, GoACard, GoAPageLoader } from '@abgov/react-components';
+import { GoACallout } from '@abgov/react-components';
+import { FetchNotificationTypeService } from '@store/notification/actions';
 import {
   GoAInputEmail,
   GoAForm,
@@ -26,6 +28,7 @@ const Subscriptions = (): JSX.Element => {
   const { subscriber } = useSelector((state: RootState) => ({
     subscriber: state.subscription.subscriber,
   }));
+  const contact = useSelector((state: RootState) => state.notification.notificationTypes?.contact);
   const [formErrors, setFormErrors] = useState({});
   const subscriberEmail = subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === EMAIL)[0]?.address;
   const [emailContactInformation, setEmailContactInformation] = useState(subscriberEmail);
@@ -33,8 +36,19 @@ const Subscriptions = (): JSX.Element => {
   const [showUnSubscribeModal, setShowUnSubscribeModal] = useState(false);
   const [selectedUnsubscribeSub, setSelectedUnsubscribeSub] = useState<Subscription>();
 
+  const phoneWrapper = (phoneNumber) => {
+    if (phoneNumber) {
+      return (
+        '1 (' + phoneNumber.substring(0, 3) + ') ' + phoneNumber.substring(3, 6) + '-' + phoneNumber.substring(6, 10)
+      );
+    }
+  };
   useEffect(() => {
     dispatch(getMySubscriberDetails());
+  }, []);
+
+  useEffect(() => {
+    dispatch(FetchNotificationTypeService());
   }, []);
 
   const unSubscribe = (typeId: string) => {
@@ -199,6 +213,19 @@ const Subscriptions = (): JSX.Element => {
               </tbody>
             </DataTable>
           </SubscriptionListContainer>
+          <div id="contactSupport">
+            <GoACallout title="Need help? Contact your service admin" type="information">
+              <div>{contact?.supportInstructions}</div>
+              <div>
+                Email:{' '}
+                <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
+                  {contact?.contactEmail}
+                </a>
+              </div>
+              <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>
+              <div data-testid="service-notice-date-range"></div>
+            </GoACallout>
+          </div>
         </Container>
       </Container>
     </Main>

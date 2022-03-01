@@ -14,6 +14,7 @@ export interface SubscriptionType {
   description: string;
   id: string;
   name: string;
+  canSubscribe: boolean;
 }
 export interface SubscriberChannel {
   address: string;
