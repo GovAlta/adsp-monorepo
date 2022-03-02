@@ -458,9 +458,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               }
               description={notificationType.description}
             >
-              <div className="rowFlex">
-                <div className="flex1">
-                  <div style={{ lineHeight: '20px' }}>
+              <div className="rowFlex smallFont">
+                <div className="flex1"></div>
+                <div>
+                  <div className="minimumLineHeight">
                     Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
                   </div>
                 </div>
@@ -770,7 +771,6 @@ const NotficationStyles = styled.div`
   }
 
   svg {
-    fill: #56a0d8;
     color: #56a0d8;
   }
 

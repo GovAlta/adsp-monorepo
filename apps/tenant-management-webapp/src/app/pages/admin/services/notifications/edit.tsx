@@ -184,6 +184,14 @@ const EditStyles = styled.div`
 
   .fitContent {
     max-width: fit-content;
-    min-height: 163px;
+    min-height: 146px;
+  }
+
+  .messages {
+    margin-top: 0;
+  }
+
+  h3 {
+    margin-bottom: 0;
   }
 `;
