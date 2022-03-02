@@ -1,6 +1,6 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { decodeAfter, encodeNext, Results } from '@core-services/core-common';
-import { model, Types } from 'mongoose';
+import { model, Types, ObjectId } from 'mongoose';
 import {
   NotificationTypeEntity,
   SubscriberCriteria,
@@ -22,15 +22,17 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
   }
 
   getSubscriber(tenantId: AdspId, subscriberId: string, byUserId = false): Promise<SubscriberEntity> {
-    const criteria: Record<string, string> = {
+    const criteria: Record<symbol, unknown> = {
       tenantId: tenantId?.toString(),
     };
 
     if (!byUserId) {
-      criteria._id = subscriberId;
-    } else {
-      criteria.userId = subscriberId;
+      criteria._id = new Types.ObjectId(subscriberId);
+      // } else {
+      //   criteria.userId = subscriberId;
+      // }
     }
+    console.log(JSON.stringify(criteria) + '<criteria');
 
     return new Promise<SubscriberEntity>((resolve, reject) =>
       this.subscriberModel.findOne(criteria, null, { lean: true }, (err, doc) =>

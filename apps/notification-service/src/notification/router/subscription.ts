@@ -276,6 +276,19 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
   };
 }
 
+const getCircularReplacer = () => {
+  const seen = new WeakSet();
+  return (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return;
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+};
+
 const SUBSCRIBER_KEY = 'subscriber';
 export function getSubscriber(repository: SubscriptionRepository): RequestHandler {
   return async (req, _res, next) => {
@@ -285,6 +298,7 @@ export function getSubscriber(repository: SubscriptionRepository): RequestHandle
       const { subscriber } = req.params;
 
       const entity = await repository.getSubscriber(tenantId, subscriber);
+      console.log(JSON.stringify(entity, getCircularReplacer()) + '<entity');
       if (!entity) {
         throw new NotFoundError('Subscriber', subscriber);
       }
@@ -294,6 +308,8 @@ export function getSubscriber(repository: SubscriptionRepository): RequestHandle
       }
 
       req[SUBSCRIBER_KEY] = entity;
+
+      console.log(JSON.stringify(req, getCircularReplacer()) + '<req');
       next();
     } catch (err) {
       next(err);

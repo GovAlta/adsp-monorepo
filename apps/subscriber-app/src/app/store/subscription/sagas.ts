@@ -5,10 +5,12 @@ import {
   GET_MY_SUBSCRIBER_DETAILS,
   GET_SUBSCRIBER_DETAILS,
   GetMySubscriberDetailsSuccess,
+  GetSubscriberDetailsSuccess,
   UNSUBSCRIBE,
   UnsubscribeAction,
   UnsubscribeSuccess,
   PatchSubscriberAction,
+  GetSubscriberAction,
   PatchSubscriberSuccess,
   PATCH_SUBSCRIBER,
 } from './actions';
@@ -42,28 +44,23 @@ export function* getMySubscriberDetails(): SagaIterator {
   }
 }
 
-export function* getSubscriberDetails(): SagaIterator {
-  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+export function* getSubscriberDetails(action: GetSubscriberAction): SagaIterator {
+  console.log(JSON.stringify('here'));
 
-  if (configBaseUrl && token) {
-    try {
-      const response = yield call(
-        axios.get,
-        `${configBaseUrl}/subscription/v1/subscribers/my-subscriber?includeSubscriptions=true`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+  try {
+    const subscriberId = action.payload.subscriberId;
 
-      const result: Subscriber = response.data;
+    console.log(JSON.stringify(subscriberId) + '<subscriberIdxxx');
 
-      if (result) {
-        yield put(GetMySubscriberDetailsSuccess(result));
-      }
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+    const { data } = yield call(axios.get, `/api/subscriber/v1/get-subscriber/${subscriberId}`);
+
+    const subscriber: Subscriber = data.subscriber;
+
+    if (subscriber) {
+      yield put(GetSubscriberDetailsSuccess(subscriber));
     }
+  } catch (e) {
+    yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
   }
 }
 

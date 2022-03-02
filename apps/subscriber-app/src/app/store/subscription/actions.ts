@@ -17,8 +17,18 @@ export const PATCH_SUBSCRIBER_SUCCESS = 'tenant/notification-service/patch-subsc
 // Actions Types
 // =============
 
-export type ActionTypes = PatchSubscriberActionSuccess | GetMySubscriberActionSuccess | UnsubscribeActionSuccess;
+export type ActionTypes =
+  | PatchSubscriberActionSuccess
+  | GetMySubscriberActionSuccess
+  | UnsubscribeActionSuccess
+  | GetSubscriberActionSuccess;
 export interface GetMySubscriberActionSuccess {
+  type: typeof GET_MY_SUBSCRIBER_DETAILS_SUCCESS;
+  payload: {
+    subscriber: Subscriber;
+  };
+}
+export interface GetSubscriberActionSuccess {
   type: typeof GET_MY_SUBSCRIBER_DETAILS_SUCCESS;
   payload: {
     subscriber: Subscriber;
@@ -35,11 +45,13 @@ export interface GetMySubscriberAction {
 }
 export interface GetSubscriberAction {
   type: typeof GET_SUBSCRIBER_DETAILS;
+  payload: { subscriberId: string };
 }
 export interface UnsubscribeAction {
   type: typeof UNSUBSCRIBE;
   payload: { type: string; subscriberId: string };
 }
+
 export interface PatchSubscriberAction {
   type: typeof PATCH_SUBSCRIBER;
   payload: { channels: SubscriberChannel[]; subscriberId: string };
@@ -84,6 +96,13 @@ export const patchSubscriber = (channels: SubscriberChannel[], subscriberId: str
   },
 });
 
+export const GetSubscriberDetailsSuccess = (subscriber: Subscriber): GetSubscriberActionSuccess => ({
+  type: GET_SUBSCRIBER_DETAILS_SUCCESS,
+  payload: {
+    subscriber,
+  },
+});
+
 export const GetMySubscriberDetailsSuccess = (subscriber: Subscriber): GetMySubscriberActionSuccess => ({
   type: GET_MY_SUBSCRIBER_DETAILS_SUCCESS,
   payload: {
@@ -96,4 +115,7 @@ export const getMySubscriberDetails = (): GetMySubscriberAction => ({
 
 export const getSubscriberDetails = (subscriberId: string): GetSubscriberAction => ({
   type: GET_SUBSCRIBER_DETAILS,
+  payload: {
+    subscriberId,
+  },
 });
