@@ -101,6 +101,10 @@ export const createSlackProviderRouter = ({ slackInstaller, slackRepository, get
           teamId,
         });
 
+        if (!botToken) {
+          throw new Error('Failed to get Slack API bot token.');
+        }
+
         const client = new WebClient(botToken);
         const teamInfo = await client.team.info({ team: teamId });
 
