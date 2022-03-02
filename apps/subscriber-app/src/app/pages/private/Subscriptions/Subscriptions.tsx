@@ -1,7 +1,6 @@
 import React, { FormEvent, useEffect, useState } from 'react';
 import { Main } from '@components/Html';
 import Container from '@components/Container';
-import styled from 'styled-components';
 import DataTable from '@components/DataTable';
 import { GoAButton, GoACard, GoAPageLoader } from '@abgov/react-components';
 import { GoACallout } from '@abgov/react-components';
@@ -21,6 +20,13 @@ import { getMySubscriberDetails, patchSubscriber, unsubscribe } from '@store/sub
 import { RootState } from '@store/index';
 import SubscriptionsList from './SubscriptionsList';
 import { SubscriberChannel, Subscription } from '@store/subscription/models';
+import {
+  NoSubscriberCallout,
+  Label,
+  ContactInformationContainer,
+  SubscriptionListContainer,
+  TableHeaders,
+} from './styled-components';
 
 const Subscriptions = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -247,25 +253,3 @@ const Subscriptions = (): JSX.Element => {
   );
 };
 export default Subscriptions;
-
-const Label = styled.label`
-  font-weight: bold;
-`;
-const NoSubscriberCallout = styled.div`
-  width: 55%;
-`;
-const ContactInformationContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  padding-top: 1.5rem;
-`;
-const SubscriptionListContainer = styled.div`
-  padding-top: 5rem;
-`;
-
-const TableHeaders = styled.thead`
-  #action {
-    text-align: right;
-  }
-`;
