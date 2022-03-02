@@ -4,7 +4,7 @@ import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgo
 
 interface deleteModalProps {
   title: string;
-  content?: string;
+  content?: string | JSX.Element;
   isOpen: boolean;
   onDelete: () => void;
   onCancel: () => void;

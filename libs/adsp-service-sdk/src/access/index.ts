@@ -17,7 +17,7 @@ declare global {
 
 export type { User } from './user';
 
-export { isAllowedUser, AssertRole, AssertCoreRole, UnauthorizedUserError } from './assert';
+export { isAllowedUser, AssertRole, AssertCoreRole, UnauthorizedUserError, hasRequiredRole } from './assert';
 export { createCoreStrategy } from './createCoreStrategy';
 export { createTenantStrategy } from './createTenantStrategy';
 export type { TokenProvider } from './tokenProvider';

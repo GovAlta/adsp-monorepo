@@ -1,6 +1,7 @@
 import {
   ActionTypes,
   GET_MY_SUBSCRIBER_DETAILS_SUCCESS,
+  NO_SUBSCRIBER,
   PATCH_SUBSCRIBER_SUCCESS,
   UNSUBSCRIBE_SUCCESS,
 } from './actions';
@@ -9,6 +10,11 @@ import { SUBSCRIBER_INIT, SubscriberService } from './models';
 export default function (state = SUBSCRIBER_INIT, action: ActionTypes): SubscriberService {
   const prevStateSubscriptions = state.subscriber?.subscriptions;
   switch (action.type) {
+    case NO_SUBSCRIBER:
+      return {
+        ...state,
+        hasSubscriberId: false,
+      };
     case GET_MY_SUBSCRIBER_DETAILS_SUCCESS:
       return {
         ...state,

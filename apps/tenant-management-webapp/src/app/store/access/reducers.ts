@@ -6,12 +6,11 @@ export default function accessReducer(state: AccessState = ACCESS_INIT, action: 
     case 'tenant/access/FETCH_ACCESS_SUCCESS':
       return {
         ...state,
-        users: action.payload.users,
-        roles: action.payload.roles,
-      };
-    case 'tenant/access/FETCH_ACCESS':
-      return {
-        ...state,
+        metrics: {
+          users: action.payload.userCount,
+          activeUsers: action.payload.activeUserCount,
+        },
+        roles: action.payload.roles.reduce((rs, r) => ({ ...rs, [r.id]: r }), state.roles),
       };
     case 'tenant/access/RESET':
       return { ...ACCESS_INIT };

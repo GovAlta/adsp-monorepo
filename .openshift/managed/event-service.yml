@@ -106,7 +106,9 @@ objects:
         cluster_formation.node_cleanup.only_log_warning = true
         cluster_partition_handling = autoheal
         ## queue master locator
-        queue_master_locator=min-masters
+        queue_master_locator = min-masters
+        ## Disk space
+        disk_free_limit.relative = 1.5
       enabled_plugins: |
         [rabbitmq_management,rabbitmq_peer_discovery_k8s,rabbitmq_shovel,rabbitmq_shovel_management].
   - apiVersion: v1
@@ -273,7 +275,7 @@ objects:
             accessModes: ["ReadWriteOnce"]
             resources:
               requests:
-                storage: 1Gi
+                storage: 5Gi
   - apiVersion: route.openshift.io/v1
     kind: Route
     metadata:

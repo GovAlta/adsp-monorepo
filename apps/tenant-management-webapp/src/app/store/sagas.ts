@@ -58,7 +58,7 @@ import { TOGGLE_APPLICATION_STATUS_ACTION } from './status/actions/toggleApplica
 // eslint-disable-next-line  @typescript-eslint/explicit-module-boundary-types
 export function* watchSagas() {
   yield takeEvery(FETCH_CONFIG_ACTION, fetchConfig);
-  yield takeEvery(FETCH_ACCESS_ACTION, fetchAccess);
+  yield takeLatest(FETCH_ACCESS_ACTION, fetchAccess);
 
   // tenant and keycloak
   yield takeEvery(CHECK_IS_TENANT_ADMIN, isTenantAdmin);

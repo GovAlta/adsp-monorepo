@@ -1,7 +1,6 @@
 import type { EventDefinition } from '@store/event/models';
 import { languages, editor, Position } from 'monaco-editor';
 import { Monaco } from '@monaco-editor/react';
-
 export interface EditorSuggestion {
   label: string;
   insertText: string;
@@ -131,7 +130,7 @@ export const buildSuggestions = (
   return results.map((s) => createSuggestion(instance, s, hasBracket, hasParent)) as languages.CompletionItem[];
 };
 // eslint-disable-next-line
-export const convertEventToSuggestion = (event: EventDefinition) => {
+export const convertToSuggestion = (event: EventDefinition) => {
   const eventPayload = getElementSuggestion(event.payloadSchema);
   const eventSuggestion = [
     {
@@ -142,6 +141,24 @@ export const convertEventToSuggestion = (event: EventDefinition) => {
           label: 'payload',
           insertText: 'payload',
           children: eventPayload,
+        },
+      ],
+    },
+    {
+      label: 'subscriber',
+      insertText: 'subscriber',
+      children: [
+        {
+          label: 'addressAs',
+          insertText: 'addressAs',
+        },
+        {
+          label: 'id',
+          insertText: 'id',
+        },
+        {
+          label: 'userId ',
+          insertText: 'userId ',
         },
       ],
     },

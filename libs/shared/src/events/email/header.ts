@@ -2,8 +2,9 @@ export const getHeaderPreview = () => {
   return `
 <header>
   <style>
-    .goa-header {
+    .goa-header-event-template {
       padding-bottom: 0.875rem;
+      padding-top: 0.875rem;
     }
     #goa-callout-custom {
       background-color: #0081a2 !important;
@@ -20,7 +21,7 @@ export const getHeaderPreview = () => {
       line-height: 3rem;
     }
   </style>
-  <div class="goa-header">
+  <div class="goa-header-event-template">
     <div class="goa-logo">
       <img
         alt="Government of Alberta"

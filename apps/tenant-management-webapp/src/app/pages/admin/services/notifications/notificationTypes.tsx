@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState, useEffect, useCallback } from 'react';
+import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton, GoACard } from '@abgov/react-components';
 import { Grid, GridItem } from '@components/Grid';
@@ -39,7 +39,7 @@ import {
 import { TemplateEditor } from './emailPreviewEditor/TemplateEditor';
 import { PreviewTemplate } from './emailPreviewEditor/PreviewTemplate';
 import { dynamicGeneratePayload } from '@lib/dynamicPlaceHolder';
-import { convertEventToSuggestion } from '@lib/autoComplete';
+import { convertToSuggestion } from '@lib/autoComplete';
 
 const emptyNotificationType: NotificationItem = {
   name: '',
@@ -85,14 +85,13 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const dispatch = useDispatch();
   const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
   const eventDef = eventDefinitions[`${selectedEvent?.namespace}:${selectedEvent?.name}`];
-
   const htmlPayload = dynamicGeneratePayload(eventDef);
   const serviceName = `${selectedEvent?.namespace}:${selectedEvent?.name}`;
   const TEMPALTE_RENDER_DEBOUNCE_TIMER = 500; // ms
 
   const getEventSuggestion = () => {
     if (eventDef) {
-      return convertEventToSuggestion(eventDef);
+      return convertToSuggestion(eventDef);
     }
     return [];
   };
@@ -221,6 +220,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     });
   }
   delete nonCoreCopiedNotifications.contact;
+  delete nonCoreCopiedNotifications.manageSubscribe;
 
   const saveOrAddEventTemplate = () => {
     const definitionEventIndex = selectedType?.events?.findIndex(
@@ -343,13 +343,22 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                             )}{' '}
                         </b>
                       </div>
-                      <div>Public Subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}</div>
+                      <div>
+                        <div className="minimumLineHeight">
+                          Public Subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
+                        </div>
+                        <div className="minimumLineHeight">
+                          Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
               }
               description={`Description: ${notificationType.description}`}
             >
+              <h2>Events:</h2>
+
               <Grid>
                 {notificationType.events.map((event, key) => (
                   <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
@@ -445,13 +454,38 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           <div className="topBottomMargin" key={`notification-list-${notificationType.id}`}>
             <GoACard
               title={
-                <div className="rowFlex">
-                  <h2 className="flex1">{notificationType.name}</h2>
+                <div>
+                  <div className="rowFlex">
+                    <h2 className="flex1">{notificationType.name}</h2>
+                  </div>
+                  {notificationType?.subscriberRoles && (
+                    <div className="rowFlex smallFont">
+                      <div className="flex1">
+                        Subscriber Roles:{' '}
+                        <b>
+                          {notificationType?.subscriberRoles
+                            .filter((value) => value !== 'anonymousRead')
+                            .map(
+                              (roles, ix) => roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
+                            )}{' '}
+                        </b>
+                      </div>
+                      <div>
+                        <div className="minimumLineHeight">
+                          Public Subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
+                        </div>
+                        <div className="minimumLineHeight">
+                          Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               }
-              description={notificationType.description}
+              description={`Description: ${notificationType.description}`}
             >
               <h2>Events:</h2>
+
               <Grid>
                 {notificationType?.events?.map((event, key) => (
                   <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
@@ -531,7 +565,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       {showDeleteConfirmation && (
         <DeleteModal
           isOpen={showDeleteConfirmation}
-          title="Delete a notification"
+          title="Delete notification type"
           content={`Delete ${selectedType?.name}?`}
           onCancel={() => {
             setShowDeleteConfirmation(false);
@@ -548,7 +582,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       {showEventDeleteConfirmation && (
         <DeleteModal
           isOpen={showEventDeleteConfirmation}
-          title={coreEvent ? 'Reset email template' : 'Delete an event'}
+          title={coreEvent ? 'Reset email template' : 'Delete event'}
           content={
             coreEvent
               ? 'Delete custom email template modifications'
@@ -754,7 +788,6 @@ const NotficationStyles = styled.div`
   }
 
   svg {
-    fill: #56a0d8;
     color: #56a0d8;
   }
 
@@ -806,5 +839,9 @@ const NotficationStyles = styled.div`
   }
   .noCursor {
     cursor: default;
+  }
+
+  .minimumLineHeight {
+    line-height: 1.25rem;
   }
 `;

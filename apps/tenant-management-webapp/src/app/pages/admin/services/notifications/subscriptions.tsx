@@ -2,9 +2,8 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { SubscriptionList } from './subscriptionList';
 import { getSubscriptions, Unsubscribe } from '@store/subscription/actions';
-import type { Subscriber } from '@store/subscription/models';
+import type { Subscriber, SubscriberSearchCriteria, SubscriptionSearchCriteria } from '@store/subscription/models';
 import { SubscribersSearchForm } from './subscribers/subscriberSearchForm';
-import type { SubscriberSearchCriteria } from '@store/subscription/models';
 import { CheckSubscriberRoles } from './checkSubscriberRoles';
 import { DeleteModal } from '@components/DeleteModal';
 
@@ -18,13 +17,13 @@ export const Subscriptions: FunctionComponent = () => {
   const [selectedType, setSelectedType] = useState<string>(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
-  const [criteriaState, setCriteriaState] = useState<SubscriberSearchCriteria>(criteriaInit);
+  const [criteriaState, setCriteriaState] = useState<SubscriptionSearchCriteria>(criteriaInit);
   useEffect(() => {
     dispatch(getSubscriptions({}));
   }, []);
 
-  const searchFn = (criteria: SubscriberSearchCriteria) => {
-    dispatch(getSubscriptions(criteria));
+  const searchFn = ({ email, name }: SubscriberSearchCriteria) => {
+    dispatch(getSubscriptions({ email, name }));
   };
 
   const resetState = () => {
@@ -50,7 +49,7 @@ export const Subscriptions: FunctionComponent = () => {
       {showDeleteConfirmation && (
         <DeleteModal
           isOpen={showDeleteConfirmation}
-          title="Delete a subscription"
+          title="Delete subscription"
           content={`Delete subscription ${selectedSubscription?.channels[emailIndex]?.address}?`}
           onCancel={() => setShowDeleteConfirmation(false)}
           onDelete={() => {

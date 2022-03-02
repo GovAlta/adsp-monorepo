@@ -14,6 +14,7 @@ export interface SubscriptionType {
   description: string;
   id: string;
   name: string;
+  canSubscribe: boolean;
 }
 export interface SubscriberChannel {
   address: string;
@@ -30,8 +31,10 @@ export interface Subscriber {
 }
 export interface SubscriberService {
   subscriber: Subscriber;
+  hasSubscriberId: boolean;
 }
 
 export const SUBSCRIBER_INIT: SubscriberService = {
   subscriber: undefined,
+  hasSubscriberId: true,
 };

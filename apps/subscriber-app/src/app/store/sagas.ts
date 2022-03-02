@@ -9,6 +9,7 @@ import {
   keycloakRefreshToken,
   tenantLogout,
 } from './tenant/sagas';
+import { watchNotificationSagas } from './notification/sagas';
 import { watchSubscriptionSagas } from './subscription/sagas';
 
 // Actions
@@ -35,5 +36,6 @@ export function* watchSagas() {
   yield all([
     // subscription
     watchSubscriptionSagas(),
+    watchNotificationSagas(),
   ]);
 }

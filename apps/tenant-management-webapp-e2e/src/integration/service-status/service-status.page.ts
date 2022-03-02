@@ -180,17 +180,5 @@ class StatusServicePage {
       `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//div[@data-testid="icon-trash"]`
     );
   }
-
-  applicationDeleteConfirmationModalTitle() {
-    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//div[@class="modal-title"]');
-  }
-
-  applicationDeleteConfirmationModalContent() {
-    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//div[@class="goa-scrollable"]');
-  }
-
-  applicationDeleteConfirmationModalYesBtn() {
-    return cy.xpath('//div[@Class="modal-root" and @data-state="visible"]//button[text()="Yes"]');
-  }
 }
 export default StatusServicePage;

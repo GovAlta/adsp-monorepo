@@ -9,30 +9,26 @@ import { UPDATE_SUBSCRIBER } from '@store/subscription/actions';
 
 describe('Notification - Subscribers Tab', () => {
   const mockStore = configureStore([]);
-  const search = {
-    subscribers: {
-      data: [
+  const subscribers = {
+    '61bd151b6d95d24f4cf632cf': {
+      id: '61bd151b6d95d24f4cf632cf',
+      addressAs: 'user-a',
+      channels: [
         {
-          id: '61bd151b6d95d24f4cf632cf',
-          addressAs: 'user-a',
-          channels: [
-            {
-              channel: 'email',
-              address: 'jonathan.weyermann@gov.ab.ca',
-              verified: false,
-            },
-          ],
+          channel: 'email',
+          address: 'jonathan.weyermann@gov.ab.ca',
+          verified: false,
         },
+      ],
+    },
+    '61bd151b6d95d24f4cf632cc': {
+      id: '61bd151b6d95d24f4cf632cc',
+      addressAs: 'user-b',
+      channels: [
         {
-          id: '61bd151b6d95d24f4cf632cc',
-          addressAs: 'user-b',
-          channels: [
-            {
-              channel: 'email',
-              address: 'weyermannx@gmail.com',
-              verified: false,
-            },
-          ],
+          channel: 'email',
+          address: 'weyermannx@gmail.com',
+          verified: false,
         },
       ],
     },
@@ -41,7 +37,11 @@ describe('Notification - Subscribers Tab', () => {
   const store = mockStore({
     subscription: {
       ...SUBSCRIBER_INIT,
-      search,
+      subscribers,
+      search: {
+        results: ['61bd151b6d95d24f4cf632cf', '61bd151b6d95d24f4cf632cc'],
+        next: null,
+      },
     },
     tenant: {
       adminEmail: 'agent.smith@matrix.com',
@@ -51,6 +51,9 @@ describe('Notification - Subscribers Tab', () => {
     },
     session: {
       resourceAccess: { 'urn:ads:platform:notification-service': { roles: ['subscription-admin'] } },
+      indicator: {
+        show: false,
+      },
     },
   });
 

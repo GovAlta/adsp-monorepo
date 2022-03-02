@@ -6,7 +6,9 @@ import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgo
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { GoADropdown } from '@abgov/react-components';
 import { RootState } from '@store/index';
+import { GoACallout } from '@abgov/react-components';
 import styled from 'styled-components';
+import { GoACheckbox } from '@abgov/react-components';
 
 interface NotificationTypeFormProps {
   initialValue?: NotificationItem;
@@ -35,6 +37,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   title,
   open,
 }) => {
+  //const dispatch = useDispatch();
   const isEdit = !!initialValue;
   const [type, setType] = useState(emptyNotificationType);
 
@@ -96,41 +99,59 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 onChange={(e) => setType({ ...type, description: e.target.value })}
               />
             </GoAFormItem>
-            <DropdownContainer>
-              <GoAFormItem>
-                <label>Select subscriber roles</label>
-                <GoADropdown
-                  name="subscriberRoles"
-                  selectedValues={type?.subscriberRoles}
-                  multiSelect={true}
-                  onChange={(name, values) => {
-                    if (values[values.length - 1] === 'anonymousRead') {
-                      values = values.filter((value) => !realmRoles.map((realmRole) => realmRole.name).includes(value));
-                    }
-                    if (values.includes('anonymousRead') && values[values.length - 1] !== 'anonymousRead') {
-                      values = values.filter((value) => value !== 'anonymousRead');
-                    }
+            <GoAFormItem>
+              <label>Select subscriber roles</label>
+              <GoADropdown
+                name="subscriberRoles"
+                selectedValues={type?.subscriberRoles}
+                multiSelect={true}
+                onChange={(name, values) => {
+                  if (values[values.length - 1] === 'anonymousRead') {
+                    values = values.filter((value) => !realmRoles.map((realmRole) => realmRole.name).includes(value));
+                  }
+                  if (values.includes('anonymousRead') && values[values.length - 1] !== 'anonymousRead') {
+                    values = values.filter((value) => value !== 'anonymousRead');
+                  }
 
-                    let publicSubscribe = false;
+                  let publicSubscribe = false;
 
-                    if (values.includes('anonymousRead')) {
-                      publicSubscribe = true;
-                    }
+                  if (values.includes('anonymousRead')) {
+                    publicSubscribe = true;
+                  }
 
-                    setType({ ...type, subscriberRoles: values, publicSubscribe });
-                  }}
-                >
-                  {dropDownOptions.map((item) => (
-                    <GoADropdownOption
-                      label={item.label}
-                      value={item.value}
-                      key={item.key}
-                      data-testid={item.dataTestId}
-                    />
-                  ))}
-                </GoADropdown>
-              </GoAFormItem>
-            </DropdownContainer>
+                  setType({ ...type, subscriberRoles: values, publicSubscribe });
+                }}
+              >
+                {dropDownOptions.map((item) => (
+                  <GoADropdownOption
+                    label={item.label}
+                    value={item.value}
+                    key={item.key}
+                    data-testid={item.dataTestId}
+                  />
+                ))}
+              </GoADropdown>
+            </GoAFormItem>
+            <GoAFormItem>
+              <GoACheckbox
+                name="subscribe"
+                checked={!!type.manageSubscribe}
+                onChange={() => {
+                  setType({ ...type, manageSubscribe: !type.manageSubscribe });
+                }}
+                value="manageSubscribe"
+              >
+                My subscribers are allowed to manage their own subscription for this notification type
+              </GoACheckbox>
+              <div className="fitContent">
+                {type.manageSubscribe && (
+                  <GoACallout type="important">
+                    This checkbox enables your subscribers to manage subscriptions on a self serve basis. Subscribers
+                    can unsubscribe from the notification type without contacting the program area.
+                  </GoACallout>
+                )}
+              </div>
+            </GoAFormItem>
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
@@ -160,8 +181,17 @@ const EditStyles = styled.div`
   li {
     border: 1px solid #f1f1f1;
   }
-`;
 
-const DropdownContainer = styled.div`
-  margin: 0 0 200px 0;
+  .fitContent {
+    max-width: fit-content;
+    min-height: 146px;
+  }
+
+  .messages {
+    margin-top: 0;
+  }
+
+  h3 {
+    margin-bottom: 0;
+  }
 `;

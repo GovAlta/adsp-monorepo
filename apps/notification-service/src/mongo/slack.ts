@@ -1,7 +1,8 @@
 import { InvalidOperationError } from '@core-services/core-common';
-import { Installation, InstallationQuery, InstallationStore } from '@slack/oauth';
+import { Installation, InstallationQuery } from '@slack/oauth';
 import { Document, model, Model } from 'mongoose';
 import { Logger } from 'winston';
+import { SlackRepository } from '../provider';
 import { slackSchema } from './schema';
 
 interface InstallationDoc {
@@ -10,11 +11,17 @@ interface InstallationDoc {
   installation: Omit<Installation, 'enterprise'>;
 }
 
-export class MongoSlackInstallationStore implements InstallationStore {
+export class MongoSlackInstallationStore implements SlackRepository {
   private slackModel: Model<Document & InstallationDoc>;
 
   constructor(private logger: Logger) {
     this.slackModel = model<Document & InstallationDoc>('slack', slackSchema);
+  }
+
+  async getInstalledTeams(): Promise<{ id: string; name: string }[]> {
+    const docs = await this.slackModel.find({});
+
+    return docs?.map((doc) => ({ id: doc.id, name: doc.workspace })) || [];
   }
 
   async storeInstallation(installation: Installation): Promise<void> {

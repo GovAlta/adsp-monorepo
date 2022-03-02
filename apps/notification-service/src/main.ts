@@ -1,10 +1,9 @@
-import { AdspId, initializePlatform, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
 import {
   createLogger,
   createAmqpEventService,
   createAmqpQueueService,
   createErrorHandler,
-  assertAuthenticatedHandler,
   createAmqpConfigUpdateService,
 } from '@core-services/core-common';
 import { InstallProvider } from '@slack/oauth';
@@ -17,7 +16,6 @@ import * as helmet from 'helmet';
 import { environment } from './environments/environment';
 import {
   applyNotificationMiddleware,
-  Channel,
   configurationSchema,
   Notification,
   NotificationConfiguration,
@@ -28,7 +26,7 @@ import {
   ServiceUserRoles,
 } from './notification';
 import { createRepositories } from './mongo';
-import { createABNotifySmsProvider, createEmailProvider, createSlackProvider } from './provider';
+import { initializeProviders } from './provider';
 import { createTemplateService } from './handlebars';
 import { createVerifyService } from './verify';
 
@@ -48,6 +46,7 @@ async function initializeApp() {
     tenantStrategy,
     tenantHandler,
     tokenProvider,
+    tenantService,
     configurationHandler,
     configurationService,
     clearCached,
@@ -128,6 +127,14 @@ async function initializeApp() {
     done();
   });
 
+  // This should be done with 'trust proxy', but that depends on the proxies using the x-forward headers.
+  const ROOT_URL = 'rootUrl';
+  function getRootUrl(req: express.Request, _res: express.Response, next: express.NextFunction) {
+    const host = req.get('host');
+    req[ROOT_URL] = new URL(`${host === 'localhost' ? 'http' : 'https'}://${host}`);
+    next();
+  }
+
   const slackInstaller = new InstallProvider({
     clientId: environment.SLACK_CLIENT_ID,
     clientSecret: environment.SLACK_CLIENT_SECRET,
@@ -137,11 +144,13 @@ async function initializeApp() {
 
   const templateService = createTemplateService();
 
-  const providers = {
-    [Channel.email]: environment.SMTP_HOST ? createEmailProvider(environment) : null,
-    [Channel.sms]: environment.NOTIFY_API_KEY ? createABNotifySmsProvider(environment) : null,
-    [Channel.slack]: environment.SLACK_CLIENT_ID ? createSlackProvider(logger, slackInstaller) : null,
-  };
+  const providers = initializeProviders(app, {
+    getRootUrl,
+    logger,
+    slackInstaller,
+    slackRepository: installationStore,
+    ...environment,
+  });
 
   const verifyService = createVerifyService({ providers, templateService, directory, tokenProvider });
 
@@ -153,65 +162,11 @@ async function initializeApp() {
     configurationService,
     eventService,
     templateService,
+    tenantService,
     eventSubscriber,
     queueService,
     verifyService,
     providers,
-  });
-
-  // This should be done with 'trust proxy', but that depends on the proxies using the x-forward headers.
-  const ROOT_URL = 'rootUrl';
-  function getRootUrl(req: express.Request, _res: express.Response, next: express.NextFunction) {
-    const host = req.get('host');
-    req[ROOT_URL] = new URL(`${host === 'localhost' ? 'http' : 'https'}://${host}`);
-    next();
-  }
-
-  app.get(
-    '/slack/install',
-    passport.authenticate(['core', 'tenant'], { session: false }),
-    assertAuthenticatedHandler,
-    getRootUrl,
-    async (req, res, next) => {
-      try {
-        const user = req.user;
-        if (!user.roles?.includes(ServiceUserRoles.SubscriptionAdmin)) {
-          throw new UnauthorizedUserError('install Slack app', user);
-        }
-
-        const { from } = req.query;
-        const slackInstall = await slackInstaller.generateInstallUrl({
-          scopes: ['chat:write'],
-          metadata: from as string,
-          redirectUri: new URL('/slack/oauth_redirect', req[ROOT_URL]).href,
-        });
-
-        res.send(slackInstall);
-      } catch (err) {
-        next(err);
-      }
-    }
-  );
-
-  app.get('/slack/oauth_redirect', async (req, res) => {
-    await slackInstaller.handleCallback(req, res, {
-      success: (_installation, options) => {
-        let redirectUrl: URL;
-        if (options.metadata) {
-          try {
-            redirectUrl = new URL(options.metadata);
-          } catch (err) {
-            // not a url?
-          }
-        }
-
-        if (redirectUrl) {
-          res.redirect(redirectUrl.href);
-        } else {
-          res.sendStatus(200);
-        }
-      },
-    });
   });
 
   let swagger = null;

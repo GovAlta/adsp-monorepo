@@ -1,6 +1,7 @@
 import { put, select, call, takeEvery, takeLatest, all } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { SagaIterator } from '@redux-saga/core';
+import { validate as validateUuid } from 'uuid';
 import {
   CREATE_SUBSCRIBER,
   SUBSCRIBE_SUBSCRIBER,
@@ -32,12 +33,21 @@ import {
   GET_SUBSCRIBER_SUBSCRIPTIONS,
   GetSubscriberSubscriptionsSuccess,
   GetSubscriberSubscriptionsAction,
+  ResolveSubscriberUserAction,
+  ResolveSubscriberUserSuccess,
+  FindSubscribersSuccessAction,
+  ResolveSubscriberUser,
+  FIND_SUBSCRIBERS_SUCCESS,
+  RESOLVE_SUBSCRIBER_USER,
+  DeleteSubscriberAction,
+  DELETE_SUBSCRIBER,
 } from './actions';
 import { Subscription, Subscriber, SubscriptionWrapper } from './models';
-
 import { RootState } from '../index';
 import axios from 'axios';
 import { Api } from './api';
+import { KeycloakApi } from '@store/access/api';
+import { UpdateIndicator } from '@store/session/actions';
 
 export function* getSubscription(action: GetSubscriptionAction): SagaIterator {
   const type = action.payload.subscriptionInfo.data.type;
@@ -300,15 +310,20 @@ export function* unsubscribe(action: UnsubscribeAction): SagaIterator {
 export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
-  const pageSize = yield select((state: RootState) => state.subscription.search.subscribers.pageSize);
-  const top = yield select((state: RootState) => state.subscription.search.subscribers.top);
   const hasNotificationAdminRole = yield select((state: RootState) =>
     state.session?.resourceAccess?.['urn:ads:platform:notification-service']?.roles?.includes('subscription-admin')
   );
-
   const findSubscriberPath = 'subscription/v1/subscribers';
   const criteria = action.payload;
-  const params: Record<string, string | number> = {};
+  const params: Record<string, string | number> = { top: 10 };
+
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading...',
+    })
+  );
+
   if (criteria.email) {
     params.email = criteria.email;
   }
@@ -317,11 +332,8 @@ export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
     params.name = criteria.name;
   }
 
-  // Fetch one more to calculate hasNext
-  if (criteria.top) {
-    params.top = criteria.top + 1;
-  } else {
-    params.top = criteria?.next ? pageSize + top + 1 : top + 1;
+  if (criteria.next) {
+    params.after = criteria.next;
   }
 
   if (configBaseUrl && token) {
@@ -331,7 +343,12 @@ export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
         params,
       });
       const subscribers = response.data.results;
-      yield put(FindSubscribersSuccess(subscribers, (params.top as number) - 1));
+      yield put(FindSubscribersSuccess(subscribers, response.data.page?.next, response.data.page?.after));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
     } catch (e) {
       yield put(
         ErrorNotification({
@@ -339,7 +356,43 @@ export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
           disabled: hasNotificationAdminRole !== true,
         })
       );
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
     }
+  }
+}
+
+export function* resolveSubscriberUsers(action: FindSubscribersSuccessAction): SagaIterator {
+  for (const subscriber of action.payload.subscribers) {
+    if (subscriber.userId && validateUuid(subscriber.userId)) {
+      yield put(ResolveSubscriberUser(subscriber.id, subscriber.userId));
+    }
+  }
+}
+
+export function* resolveSubscriberUser(action: ResolveSubscriberUserAction): SagaIterator {
+  try {
+    const currentState: RootState = yield select();
+
+    const baseUrl = currentState.config.keycloakApi.url;
+    const token = currentState.session.credentials.token;
+    const realm = currentState.session.realm;
+
+    const keycloakApi = new KeycloakApi(baseUrl, realm, token);
+    const user = yield call([keycloakApi, keycloakApi.getUser], action.payload.userId);
+    if (user?.id) {
+      yield put(
+        ResolveSubscriberUserSuccess(
+          action.payload.subscriberId,
+          `${baseUrl}/admin/${realm}/console/#/realms/${realm}/users/${user.id}`
+        )
+      );
+    }
+  } catch (e) {
+    // This is best effort, so ok if not resolved.
   }
 }
 
@@ -362,6 +415,21 @@ export function* getSubscriberSubscriptions(action: GetSubscriberSubscriptionsAc
   }
 }
 
+export function* deleteSubscriber(action: DeleteSubscriberAction): SagaIterator {
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const subscriberId = action.payload.subscriberId;
+  const deleteSubscriberPath = `subscription/v1/subscribers/${subscriberId}`;
+
+  try {
+    yield call(axios.delete, `${configBaseUrl}/${deleteSubscriberPath}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (e) {
+    yield put(ErrorNotification({ message: `Subscriptions (getSubscriberSubscriptions): ${e.message}` }));
+  }
+}
+
 export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(CREATE_SUBSCRIBER, createSubscriber);
   yield takeEvery(SUBSCRIBE_SUBSCRIBER, addTypeSubscription);
@@ -372,5 +440,8 @@ export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(UPDATE_SUBSCRIBER, updateSubscriber);
   yield takeEvery(GET_TYPE_SUBSCRIPTION, getTypeSubscriptions);
   yield takeEvery(GET_SUBSCRIBER_SUBSCRIPTIONS, getSubscriberSubscriptions);
-  yield takeLatest(FIND_SUBSCRIBERS, findSubscribers);
+  yield takeEvery(DELETE_SUBSCRIBER, deleteSubscriber);
+  yield takeEvery(FIND_SUBSCRIBERS, findSubscribers);
+  yield takeEvery(FIND_SUBSCRIBERS_SUCCESS, resolveSubscriberUsers);
+  yield takeEvery(RESOLVE_SUBSCRIBER_USER, resolveSubscriberUser);
 }

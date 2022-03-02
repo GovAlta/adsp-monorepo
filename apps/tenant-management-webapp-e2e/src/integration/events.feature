@@ -34,18 +34,18 @@ Feature: Events
     And the user selects "Definitions" tab for "Events"
     And the user clicks Add definition button
     Then the user views Add definition dialog
-    When the user enters "Autotest-Service" in Namespace, "autotest-eventname" in Name, "autotest event desc" in Description
+    When the user enters "Autotest" in Namespace, "autotest-addEditDeleteEvent" in Name, "autotest event desc" in Description
     And the user clicks Save button on Definition modal
-    Then the user "views" an event definition of "autotest-eventname" and "autotest event desc" under "Autotest-Service"
-    When the user clicks "Edit" button for the definition of "autotest-eventname" and "autotest event desc" under "Autotest-Service"
+    Then the user "views" an event definition of "autotest-addEditDeleteEvent" and "autotest event desc" under "Autotest"
+    When the user clicks "Edit" button for the definition of "autotest-addEditDeleteEvent" and "autotest event desc" under "Autotest"
     Then the user views Edit definition dialog
     When the user enters "autotest event desc2" in Description
     And the user clicks Save button on Definition modal
-    Then the user "views" an event definition of "autotest-eventname" and "autotest event desc2" under "Autotest-Service"
-    When the user clicks "Delete" button for the definition of "autotest-eventname" and "autotest event desc2" under "Autotest-Service"
-    Then the user views Delete definition dialog for the definition of "autotest-eventname"
-    And the user clicks Confirm button on Delete definition modal
-    Then the user "should not view" an event definition of "autotest-eventname" and "autotest event desc2" under "Autotest-Service"
+    Then the user "views" an event definition of "autotest-addEditDeleteEvent" and "autotest event desc2" under "Autotest"
+    When the user clicks "Delete" button for the definition of "autotest-addEditDeleteEvent" and "autotest event desc2" under "Autotest"
+    Then the user views delete "event definition" confirmation modal for "autotest-addEditDeleteEvent"
+    And the user clicks Delete button in delete confirmation modal
+    Then the user "should not view" an event definition of "autotest-addEditDeleteEvent" and "autotest event desc2" under "Autotest"
 
   @accessibility @regression
   Scenario: As a service admin, I can use event definitions page without any critical or serious accessibility issues
@@ -82,7 +82,7 @@ Feature: Events
   @TEST_CS-930 @REQ_CS-897 @regression
   Scenario: As a tenant admin, I can see health check event definitions for the status service, so that I know what events are available.
     Given a service owner user is on event definitions page
-    Then the user "views" an event definition of "health-check-started" and "Signalled when healthcheck started for an event" under "status-service"
+    Then the user "views" an event definition of "health-check-started" and "Signalled when an application health check is started." under "status-service"
     And the user "views" an event definition of "health-check-stopped" and "Signalled when an application health check is stopped." under "status-service"
     And the user "views" an event definition of "application-unhealthy" and "Signalled when an application is determined to be unhealthy by the health check." under "status-service"
     And the user "views" an event definition of "application-healthy" and "Signalled when an application is determined to be healthy by the health check." under "status-service"

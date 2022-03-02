@@ -22,6 +22,7 @@ export interface NotificationType {
   name: string;
   description: string;
   publicSubscribe: boolean;
+  manageSubscribe?: boolean;
   subscriberRoles: string[];
   events: NotificationTypeEvent[];
 }
@@ -146,14 +147,20 @@ export const StatusApplicationStatusChange: NotificationType = {
       name: 'application-notice-published',
       templates: {
         email: {
-          subject: 'New notice for {{ event.payload.application.name }}',
+          subject:
+            'New notice for ' +
+            '{{#if event.payload.application}}{{ event.payload.application.name }}' +
+            '{{else}}{{ tenant.name }}{{/if}}',
           body: `<div>
-  <p>A notice related to application {{ event.payload.application.name}} has been published by {{event.payload.postedBy.userName}}</p>
+  {{#if event.payload.application}}
+    <p>Notice regarding application {{ event.payload.application.name }}: </p>
+  {{else}}
+    <p>Notice regarding {{ tenant.name }}: </p>
+  {{/if}}
+
+  <p>{{ event.payload.notice.description }}</p>
   <p>
-    The notice is described as follows: {{ event.payload.notice.description }}
-  </p>
-  <p>
-    The notice is in effect between {{ formatDate event.payload.notice.startTimestamp }} and {{ formatDate event.payload.notice.endTimestamp }}
+    The affected period is between {{ formatDate event.payload.notice.startTimestamp }} and {{ formatDate event.payload.notice.endTimestamp }}.
   </p>
 </div>`,
         },
@@ -162,4 +169,5 @@ export const StatusApplicationStatusChange: NotificationType = {
     },
   ],
   publicSubscribe: true,
+  manageSubscribe: true,
 };

@@ -11,6 +11,10 @@ module.exports = {
       name: 'Subscription',
       description: 'API to managed subscribers and subscriptions.',
     },
+    {
+      name: 'Provider',
+      description: 'API to managed notification providers.',
+    },
   ],
   components: {
     securitySchemes: {

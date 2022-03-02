@@ -27,7 +27,7 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
     email: '',
     name: '',
     top: 10,
-    next: false,
+    next: null,
   };
 
   const [criteriaState, setCriteriaState] = useState<SubscriberSearchCriteria>(criteriaInit);
