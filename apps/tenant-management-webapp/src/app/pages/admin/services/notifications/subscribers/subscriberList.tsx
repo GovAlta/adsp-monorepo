@@ -126,7 +126,6 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
   }, [search]);
 
   // eslint-disable-next-line
-
   const openModalFunction = (subscription) => {
     setSelectedSubscription(subscription);
     setEditSubscription(true);
@@ -178,7 +177,7 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
         }}
       />
       <DeleteModal
-        title="Delete a subscriber"
+        title="Delete subscriber"
         isOpen={selectedDeleteSubscriberId !== null}
         onCancel={() => {
           setSelectedDeleteSubscriberId(null);

@@ -441,7 +441,7 @@ export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(GET_TYPE_SUBSCRIPTION, getTypeSubscriptions);
   yield takeEvery(GET_SUBSCRIBER_SUBSCRIPTIONS, getSubscriberSubscriptions);
   yield takeEvery(DELETE_SUBSCRIBER, deleteSubscriber);
-  yield takeLatest(FIND_SUBSCRIBERS, findSubscribers);
+  yield takeEvery(FIND_SUBSCRIBERS, findSubscribers);
   yield takeEvery(FIND_SUBSCRIBERS_SUCCESS, resolveSubscriberUsers);
   yield takeEvery(RESOLVE_SUBSCRIBER_USER, resolveSubscriberUser);
 }
