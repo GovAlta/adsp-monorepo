@@ -4,6 +4,11 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
+      SKIP_REGRESSION:
+        description: Flag indicating if regression should be skipped.
+        type: boolean
+        required: false
+        default: false
       APPS:
         description: APPS to promote.
         required: false
@@ -12,7 +17,7 @@ jobs:
   affected:
     runs-on: ubuntu-20.04
     outputs:
-      affected_apps: ${{ github.event.inputs.APPs || steps.get-affected.outputs.affected_apps }}
+      affected_apps: ${{ github.event.inputs.APPS || steps.get-affected.outputs.affected_apps }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -59,6 +64,7 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
       - name: E2E Test
         uses: ./.github/actions/nx-cypress-e2e
+        if: github.event.inputs.SKIP_REGRESSION != 'true'
         with:
           app: ${{ matrix.app }}
           environment: staging
