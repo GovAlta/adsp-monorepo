@@ -357,6 +357,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               }
               description={`Description: ${notificationType.description}`}
             >
+              <h2>Events:</h2>
+
               <Grid>
                 {notificationType.events.map((event, key) => (
                   <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
@@ -452,21 +454,36 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           <div className="topBottomMargin" key={`notification-list-${notificationType.id}`}>
             <GoACard
               title={
-                <div className="rowFlex">
-                  <h2 className="flex1">{notificationType.name}</h2>
+                <div>
+                  <div className="rowFlex">
+                    <h2 className="flex1">{notificationType.name}</h2>
+                  </div>
+                  {notificationType?.subscriberRoles && (
+                    <div className="rowFlex smallFont">
+                      <div className="flex1">
+                        Subscriber Roles:{' '}
+                        <b>
+                          {notificationType?.subscriberRoles
+                            .filter((value) => value !== 'anonymousRead')
+                            .map(
+                              (roles, ix) => roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
+                            )}{' '}
+                        </b>
+                      </div>
+                      <div>
+                        <div className="minimumLineHeight">
+                          Public Subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
+                        </div>
+                        <div className="minimumLineHeight">
+                          Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               }
-              description={notificationType.description}
+              description={`Description: ${notificationType.description}`}
             >
-              <div className="rowFlex smallFont">
-                <div className="flex1"></div>
-                <div>
-                  <div className="minimumLineHeight">
-                    Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
-                  </div>
-                </div>
-              </div>
-
               <h2>Events:</h2>
 
               <Grid>
