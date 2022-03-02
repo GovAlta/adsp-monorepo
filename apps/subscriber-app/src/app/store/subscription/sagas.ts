@@ -10,6 +10,7 @@ import {
   PatchSubscriberAction,
   PatchSubscriberSuccess,
   PATCH_SUBSCRIBER,
+  NoSubscriberAction,
 } from './actions';
 import { Subscriber } from './models';
 
@@ -36,7 +37,11 @@ export function* getMySubscriberDetails(): SagaIterator {
         yield put(GetMySubscriberDetailsSuccess(result));
       }
     } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+      if (e.response.status === 404) {
+        yield put(NoSubscriberAction());
+      } else {
+        yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+      }
     }
   }
 }
