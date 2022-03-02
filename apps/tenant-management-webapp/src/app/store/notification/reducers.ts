@@ -78,7 +78,7 @@ export default function (state = NOTIFICATION_INIT, action: ActionTypes): Notifi
         providers: {
           ...state.providers,
           slack: {
-            installedTeams: action.teams,
+            installedTeams: action.teams || state.providers.slack.installedTeams,
             authorizationUrl: action.authorizationUrl,
           },
         },
