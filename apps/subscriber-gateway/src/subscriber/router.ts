@@ -40,7 +40,8 @@ export function verifyCaptcha(logger: Logger, RECAPTCHA_SECRET: string, SCORE_TH
 export function subscribeStatus(
   tenantService: TenantService,
   tokenProvider: TokenProvider,
-  directory: ServiceDirectory
+  directory: ServiceDirectory,
+  logger: Logger
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -56,7 +57,7 @@ export function subscribeStatus(
 
       const notificationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:notification-service`);
       const token = await tokenProvider.getAccessToken();
-
+      logger.info(`Add new subscribers to tenant with Id ${tenant.id}`);
       const subscribersUrl = new URL(`/subscription/v1/subscribers?tenantId=${tenant.id}`, notificationServiceUrl);
       const {
         data: { id },
@@ -76,7 +77,7 @@ export function subscribeStatus(
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
+      logger.info(`Change subscriptions with Id ${id}`);
       const subscriptionUrl = new URL(
         `/subscription/v1/types/status-application-status-change/subscriptions/${id}?tenantId=${tenant.id}`,
         notificationServiceUrl
@@ -91,6 +92,7 @@ export function subscribeStatus(
 
       res.send(subscription);
     } catch (err) {
+      logger.error(`Create subscriber with error: ${err.message}`);
       next(err);
     }
   };
@@ -116,7 +118,7 @@ export const createSubscriberRouter = ({
   router.post(
     '/application-status',
     verifyCaptcha(logger, RECAPTCHA_SECRET),
-    subscribeStatus(tenantService, tokenProvider, directory)
+    subscribeStatus(tenantService, tokenProvider, directory, logger)
   );
 
   return router;
