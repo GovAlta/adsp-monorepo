@@ -42,7 +42,7 @@ jobs:
       - name: Get affected apps
         id: get-affected
         shell: bash
-        run: echo "::set-output name=affected-apps::$(npx nx affected:apps --plain --base=${{ steps.last_successful_commit.outputs.commit_hash }})"
+        run: echo "::set-output name=affected_apps::$(npx nx affected:apps --plain --base=${{ steps.last_successful_commit.outputs.commit_hash }})"
 
   stagingRegression:
     runs-on: ubuntu-20.04
