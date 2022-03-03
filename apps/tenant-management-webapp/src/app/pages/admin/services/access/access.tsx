@@ -57,7 +57,7 @@ export default function (): JSX.Element {
       <Main>
         <h1>Access</h1>
         <p>
-          Access allows you to add a secure sign in to you application and services with minimum effort and
+          Access allows you to add a secure sign in to your application and services with minimum effort and
           configuration. No need to deal with storing or authenticating users. It's all available out of the box.
         </p>
         <PageIndicator />

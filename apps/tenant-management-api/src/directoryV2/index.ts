@@ -22,7 +22,7 @@ export const applyDirectoryV2Middleware = (
 
   const directoryRouter = createDirectoryRouter(directoryRouterProps);
 
-  app.use('/api/directory/v2', directoryRouter);
+  app.use('/api/directory/v2', passportMiddleware, directoryRouter);
 
   return app;
 };
