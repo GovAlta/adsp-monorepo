@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton, GoACard } from '@abgov/react-components';
 import { Grid, GridItem } from '@components/Grid';
 import { NotificationTypeModalForm } from './edit';
-import { CoreNotificationTypeModalForm } from './editCore';
 import { EventModalForm } from './editEvent';
 import { IndicatorWithDelay } from '@components/Indicator';
 import debounce from 'lodash.debounce';
@@ -59,7 +58,6 @@ interface ParentCompProps {
 
 export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEdit, activateEdit }) => {
   const [editType, setEditType] = useState(false);
-  const [editCoreType, setEditCoreType] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [editEvent, setEditEvent] = useState(null);
@@ -153,7 +151,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     setShowTemplateForm(false);
     setEventTemplateFormState(addNewEventTemplateContent);
     setEditType(false);
-    setEditCoreType(false);
     setEditEvent(null);
     setSelectedType(emptyNotificationType);
     setShowEmailPreview(false);
@@ -360,6 +357,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               }
               description={`Description: ${notificationType.description}`}
             >
+              <h2>Events:</h2>
+
               <Grid>
                 {notificationType.events.map((event, key) => (
                   <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
@@ -455,35 +454,36 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           <div className="topBottomMargin" key={`notification-list-${notificationType.id}`}>
             <GoACard
               title={
-                <div className="rowFlex">
-                  <h2 className="flex1">{notificationType.name}</h2>
+                <div>
+                  <div className="rowFlex">
+                    <h2 className="flex1">{notificationType.name}</h2>
+                  </div>
+                  {notificationType?.subscriberRoles && (
+                    <div className="rowFlex smallFont">
+                      <div className="flex1">
+                        Subscriber Roles:{' '}
+                        <b>
+                          {notificationType?.subscriberRoles
+                            .filter((value) => value !== 'anonymousRead')
+                            .map(
+                              (roles, ix) => roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
+                            )}{' '}
+                        </b>
+                      </div>
+                      <div>
+                        <div className="minimumLineHeight">
+                          Public Subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
+                        </div>
+                        <div className="minimumLineHeight">
+                          Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               }
-              description={notificationType.description}
+              description={`Description: ${notificationType.description}`}
             >
-              <div className="rowFlex">
-                <div className="flex1">
-                  <div style={{ lineHeight: '20px' }}>
-                    Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
-                  </div>
-                </div>
-                <div>
-                  <a
-                    className="flex1"
-                    data-testid="edit-notification-type"
-                    onClick={() => {
-                      setSelectedType(notificationType);
-                      setEditCoreType(true);
-                      setFormTitle('Edit notification type');
-                    }}
-                  >
-                    <NotificationBorder className="smallPadding" style={{ height: '26px', display: 'flex' }}>
-                      <EditIcon size="small" />
-                    </NotificationBorder>
-                  </a>
-                </div>
-              </div>
-
               <h2>Events:</h2>
 
               <Grid>
@@ -639,19 +639,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           reset();
         }}
       />
-      <CoreNotificationTypeModalForm
-        open={editCoreType}
-        initialValue={selectedType}
-        errors={errors}
-        title={formTitle}
-        onSave={(type) => {
-          dispatch(UpdateNotificationTypeService(type));
-          reset();
-        }}
-        onCancel={() => {
-          reset();
-        }}
-      />
       {/* add an event */}
       <EventModalForm
         open={editEvent}
@@ -801,7 +788,6 @@ const NotficationStyles = styled.div`
   }
 
   svg {
-    fill: #56a0d8;
     color: #56a0d8;
   }
 

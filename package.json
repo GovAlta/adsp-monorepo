@@ -53,6 +53,7 @@
     "app-root-path": "^3.0.0",
     "async-es": "^3.2.0",
     "axios": "^0.21.4",
+    "botbuilder": "^4.15.0",
     "clamscan": "^2.0.1",
     "class-transformer": "^0.3.1",
     "class-validator": "0.13.1",

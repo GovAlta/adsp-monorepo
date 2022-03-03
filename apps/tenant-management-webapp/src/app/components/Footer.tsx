@@ -10,10 +10,10 @@ function Footer({ logoSrc }: FooterProps): JSX.Element {
     <FooterContainer>
       <LinksLogoContainer>
         <FooterLinks>
-          <a href="https://www.alberta.ca">Feedback</a>
-          <a href="https://www.alberta.ca/disclaimer.aspx">FQAs</a>
-          <a href="https://www.alberta.ca/privacystatement.aspx">Help</a>
-          <a href="https://www.alberta.ca/accessibility.aspx">Terms of use</a>
+          <a href="https://www.alberta.ca">Go to Alberta.ca</a>
+          <a href="https://www.alberta.ca/disclaimer.aspx">Disclaimer</a>
+          <a href="https://www.alberta.ca/privacystatement.aspx">Privacy</a>
+          <a href="https://www.alberta.ca/accessibility.aspx">Accessibility</a>
         </FooterLinks>
         <img src={logoSrc ?? GoaLogo} alt="Government of alberta logo" />
       </LinksLogoContainer>

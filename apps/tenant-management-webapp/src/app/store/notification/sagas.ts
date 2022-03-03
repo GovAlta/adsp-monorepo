@@ -234,7 +234,7 @@ export function* fetchNotificationSlackInstallation(): SagaIterator {
         }
       );
 
-      yield put(FetchNotificationSlackInstallationSucceeded([], authorizationUrl));
+      yield put(FetchNotificationSlackInstallationSucceeded(null, authorizationUrl));
 
       const { data: teams }: { data: { id: string }[] } = yield call(axios.get, `${baseUrl}/provider/v1/slack/teams`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -242,21 +242,25 @@ export function* fetchNotificationSlackInstallation(): SagaIterator {
 
       const installedTeams: InstalledSlackTeam[] = [];
       for (const team of teams) {
-        const {
-          data: { team: teamInfo },
-        }: { data: { team: { id: string; name: string; url: string; icon: { image_44: string } } } } = yield call(
-          axios.get,
-          `${baseUrl}/provider/v1/slack/teams/${team.id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        installedTeams.push({
-          id: teamInfo.id,
-          name: teamInfo.name,
-          url: teamInfo.url,
-          icon: teamInfo.icon.image_44,
-        });
+        try {
+          const {
+            data: { team: teamInfo },
+          }: { data: { team: { id: string; name: string; url: string; icon: { image_44: string } } } } = yield call(
+            axios.get,
+            `${baseUrl}/provider/v1/slack/teams/${team.id}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          installedTeams.push({
+            id: teamInfo.id,
+            name: teamInfo.name,
+            url: teamInfo.url,
+            icon: teamInfo.icon.image_44,
+          });
+        } catch (err) {
+          // Unfortunately some teams might have revoked tokens in which case they de facto are no longer installed.
+        }
       }
 
       yield put(FetchNotificationSlackInstallationSucceeded(installedTeams, authorizationUrl));
