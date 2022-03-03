@@ -550,7 +550,8 @@ function timestampUtil(dateTime) {
     );
     const minInput = addedMins.replace(/([a-zA-Z])/g, '');
     const minChange = parseInt(minInput);
-    const finalTime = dayjs().add(minChange, 'minutes').format('YYYY-MM-DD HH:mm'); //it will add or subtract
+    const finalTime = dayjs().add(minChange, 'minutes').second(0).format('YYYY-MM-DD HH:mm'); //it will add or subtract, force the seconds to be 00.
+
     const finalDate = finalTime.split(' ')[0] + 'T' + finalTime.split(' ')[1];
     return finalDate;
   } else {
