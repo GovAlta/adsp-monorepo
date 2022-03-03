@@ -103,7 +103,7 @@ async function initializeApp() {
     configurationHandler
   );
 
-  const { installationStore, ...repositories } = await createRepositories({ ...environment, logger });
+  const { slackRepository, ...repositories } = await createRepositories({ ...environment, logger });
 
   const eventSubscriber = await createAmqpEventService({
     ...environment,
@@ -139,7 +139,7 @@ async function initializeApp() {
     clientId: environment.SLACK_CLIENT_ID,
     clientSecret: environment.SLACK_CLIENT_SECRET,
     stateSecret: environment.SLACK_STATE_SECRET,
-    installationStore,
+    installationStore: slackRepository,
   });
 
   const templateService = createTemplateService();
@@ -148,7 +148,8 @@ async function initializeApp() {
     getRootUrl,
     logger,
     slackInstaller,
-    slackRepository: installationStore,
+    slackRepository,
+    botRepository: repositories.botRepository,
     ...environment,
   });
 
