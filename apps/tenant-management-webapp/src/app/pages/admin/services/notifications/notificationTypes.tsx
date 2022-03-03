@@ -333,7 +333,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                   </div>
                   {notificationType?.subscriberRoles && (
                     <div className="rowFlex smallFont">
-                      <div className="flex1">
+                      <div className="flex1" data-testid={`tenant-subscriber-roles-${notificationType?.id}`}>
                         Subscriber Roles:{' '}
                         <b>
                           {notificationType?.subscriberRoles
@@ -344,10 +344,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                         </b>
                       </div>
                       <div>
-                        <div className="minimumLineHeight">
+                        <div data-testid={`tenant-public-subscription-${notificationType?.id}`}>
                           Public Subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
                         </div>
-                        <div className="minimumLineHeight">
+                        <div className="minimumLineHeight" data-testid={`tenant-self-service-${notificationType?.id}`}>
                           Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
                         </div>
                       </div>
@@ -460,7 +460,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                   </div>
                   {notificationType?.subscriberRoles && (
                     <div className="rowFlex smallFont">
-                      <div className="flex1">
+                      <div className="flex1" data-testid={`core-subscriber-roles-${notificationType?.id}`}>
                         Subscriber Roles:{' '}
                         <b>
                           {notificationType?.subscriberRoles
@@ -471,10 +471,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                         </b>
                       </div>
                       <div>
-                        <div className="minimumLineHeight">
+                        <div data-testid={`core-public-subscription-${notificationType?.id}`}>
                           Public Subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
                         </div>
-                        <div className="minimumLineHeight">
+                        <div className="minimumLineHeight" data-testid={`core-self-service-${notificationType?.id}`}>
                           Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
                         </div>
                       </div>
@@ -842,6 +842,6 @@ const NotficationStyles = styled.div`
   }
 
   .minimumLineHeight {
-    line-height: 1.25rem;
+    line-height: 0.75rem;
   }
 `;
