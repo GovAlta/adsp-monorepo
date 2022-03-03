@@ -6,20 +6,27 @@ import {
   createBotFrameworkAuthenticationFromConfiguration,
   TeamsActivityHandler,
   TurnContext,
+  Channels,
 } from 'botbuilder';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
+import { BotRepository } from '.';
 import { NotificationContent, NotificationProvider } from '../notification';
 
 class TeamsNotificationActivityHandler extends TeamsActivityHandler {
-  constructor(private logger: Logger, public references: Record<string, Partial<ConversationReference>>) {
+  constructor(private logger: Logger, private repository: BotRepository) {
     super();
 
     this.onConversationUpdate(async (context, next) => {
       const reference = TurnContext.getConversationReference(context.activity);
-      this.references[reference.conversation.id] = reference;
+      await this.repository.save({
+        channelId: reference.channelId as Channels,
+        tenantId: reference.conversation.tenantId,
+        conversationId: reference.conversation.id,
+        serviceUrl: reference.serviceUrl,
+      });
       this.logger.info(
-        `Stored conversation reference for ${reference.conversation.name} (ID: ${reference.conversation.id})`
+        `Stored conversation reference for ${reference.conversation.name} on channel ${reference.channelId} (ID: ${reference.conversation.tenantId}:${reference.conversation.id}).`
       );
 
       await next();
@@ -40,17 +47,19 @@ interface ProviderProps {
 }
 
 export class TeamsNotificationProvider implements NotificationProvider {
+  private teamsTenantId: string;
   private appId: string;
   private handler: TeamsNotificationActivityHandler;
   private adapter: CloudAdapter;
-  private references: Record<string, Partial<ConversationReference>>;
 
   constructor(
     private logger: Logger,
+    private repository: BotRepository,
     { TEAMS_TENANT_ID: TEAMS_APP_TENANT_ID, TEAMS_APP_TYPE, TEAMS_APP_ID, TEAMS_APP_SECRET }: ProviderProps
   ) {
+    this.teamsTenantId = TEAMS_APP_TENANT_ID;
     this.appId = TEAMS_APP_ID;
-    this.handler = new TeamsNotificationActivityHandler(logger, this.references);
+    this.handler = new TeamsNotificationActivityHandler(logger, this.repository);
 
     const credentialsFactory = new ConfigurationServiceClientCredentialFactory({
       MicrosoftAppId: TEAMS_APP_ID,
@@ -84,14 +93,20 @@ export class TeamsNotificationProvider implements NotificationProvider {
   }
 
   async send({ to, message }: NotificationContent): Promise<void> {
-    const serviceUrl = this.references[to]?.conversation?.id;
-    if (!serviceUrl) {
+    const conversation = await this.repository.get({
+      channelId: Channels.Msteams,
+      tenantId: this.teamsTenantId,
+      conversationId: to,
+    });
+
+    if (!conversation) {
       throw new InvalidOperationError(`No conversation reference found for address: ${to}`);
     }
 
-    const conversationReference = {
-      conversation: { id: to, isGroup: false, name: null, conversationType: null },
-      serviceUrl,
+    const conversationReference: Partial<ConversationReference> = {
+      channelId: conversation.channelId,
+      conversation: { tenantId: conversation.tenantId, id: to, isGroup: false, name: null, conversationType: null },
+      serviceUrl: conversation.serviceUrl,
     };
 
     this.adapter.continueConversationAsync(this.appId, conversationReference, async (turnContext) => {
@@ -100,6 +115,10 @@ export class TeamsNotificationProvider implements NotificationProvider {
   }
 }
 
-export function createTeamsProvider(logger: Logger, props: ProviderProps): TeamsNotificationProvider {
-  return new TeamsNotificationProvider(logger, props);
+export function createTeamsProvider(
+  logger: Logger,
+  repository: BotRepository,
+  props: ProviderProps
+): TeamsNotificationProvider {
+  return new TeamsNotificationProvider(logger, repository, props);
 }

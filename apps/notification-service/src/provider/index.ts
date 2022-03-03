@@ -7,13 +7,14 @@ import { createTeamsProviderRouter, createSlackProviderRouter } from './router';
 import { createSlackProvider } from './slack';
 import { createABNotifySmsProvider } from './sms';
 import { createTeamsProvider, TeamsNotificationProvider } from './teams';
-import { SlackRepository } from './types';
+import { BotRepository, SlackRepository } from './types';
 
 export * from './types';
 
 interface ProviderMiddlewareProps {
   slackInstaller: InstallProvider;
   slackRepository: SlackRepository;
+  botRepository: BotRepository;
   getRootUrl: RequestHandler;
 }
 
@@ -55,7 +56,7 @@ export function initializeProviders(app: Application, props: ProviderProps & Pro
     [Channel.email]: props.SMTP_HOST ? createEmailProvider(props) : null,
     [Channel.sms]: props.NOTIFY_API_KEY ? createABNotifySmsProvider(props) : null,
     [Channel.slack]: props.SLACK_CLIENT_ID ? createSlackProvider(props.logger, props.slackInstaller) : null,
-    [Channel.teams]: props.TEAMS_APP_ID ? createTeamsProvider(props.logger, props) : null,
+    [Channel.teams]: props.TEAMS_APP_ID ? createTeamsProvider(props.logger, props.botRepository, props) : null,
   };
 
   applyProviderMiddleware(app, providers.teams, props);

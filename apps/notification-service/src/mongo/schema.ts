@@ -74,3 +74,17 @@ export const slackSchema = new Schema(
     _id: false,
   }
 );
+
+export const botSchema = new Schema(
+  {
+    channelId: { type: String, required: true },
+    tenantId: { type: String, required: false },
+    conversationId: { type: String, required: true },
+    serviceUrl: { type: String, required: true },
+  },
+  {
+    _id: false,
+  }
+);
+
+botSchema.index({ channelId: 1, tenantId: 1, conversationId: 1 }, { unique: true });
