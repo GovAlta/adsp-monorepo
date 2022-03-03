@@ -238,11 +238,12 @@ export function getSubscribers(apiId: AdspId, repository: SubscriptionRepository
   };
 }
 
-export function createSubscriber(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
+export function createSubscriber(apiId: AdspId, repository: SubscriptionRepository, logger: Logger): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
       const tenantId = req.tenant.id;
+      logger.info(`Create subscriber for tenant with id: ${tenantId}`);
 
       const subscriber: Subscriber =
         req.query.userSub === 'true'
@@ -261,6 +262,8 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
               ...req.body,
               tenantId,
             };
+      logger.info(`Create subscriber for tenant with id: ${tenantId}`);
+      logger.info(`New subscriber object: ${JSON.stringify(subscriber)}`);
 
       let entity = subscriber.userId ? await repository.getSubscriber(tenantId, subscriber.userId, true) : null;
       if (entity) {
@@ -271,7 +274,7 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
 
       res.send(mapSubscriber(apiId, entity));
     } catch (err) {
-      this.logger.error(`Failed :${err.message}`);
+      logger.error(`Failed :${err.message}`);
       next(err);
     }
   };
@@ -484,6 +487,7 @@ export const createSubscriptionRouter = ({
   serviceId,
   subscriptionRepository,
   verifyService,
+  logger,
 }: SubscriptionRouterProps): Router => {
   const apiId = adspId`${serviceId}:v1`;
   const subscriptionRouter = Router();
@@ -521,7 +525,7 @@ export const createSubscriptionRouter = ({
   );
 
   subscriptionRouter.get('/subscribers', getSubscribers(apiId, subscriptionRepository));
-  subscriptionRouter.post('/subscribers', createSubscriber(apiId, subscriptionRepository));
+  subscriptionRouter.post('/subscribers', createSubscriber(apiId, subscriptionRepository, logger));
 
   subscriptionRouter.get(
     '/subscribers/my-subscriber',
