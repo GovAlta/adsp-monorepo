@@ -132,26 +132,29 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 ))}
               </GoADropdown>
             </GoAFormItem>
-            <GoAFormItem>
-              <GoACheckbox
-                name="subscribe"
-                checked={!!type.manageSubscribe}
-                onChange={() => {
-                  setType({ ...type, manageSubscribe: !type.manageSubscribe });
-                }}
-                value="manageSubscribe"
-              >
-                My subscribers are allowed to manage their own subscription for this notification type
-              </GoACheckbox>
-              <div className="fitContent">
-                {type.manageSubscribe && (
-                  <GoACallout type="important">
-                    This checkbox enables your subscribers to manage subscriptions on a self serve basis. Subscribers
-                    can unsubscribe from the notification type without contacting the program area.
-                  </GoACallout>
-                )}
-              </div>
-            </GoAFormItem>
+            <div data-testid={`manage-subscriptions-checkbox-${type?.id}-0`}>
+              <GoAFormItem>
+                <GoACheckbox
+                  name="subscribe"
+                  checked={!!type.manageSubscribe}
+                  onChange={() => {
+                    setType({ ...type, manageSubscribe: !type.manageSubscribe });
+                  }}
+                  data-testid={`manage-subscriptions-checkbox-${type?.id}-1`}
+                  value="manageSubscribe"
+                >
+                  My subscribers are allowed to manage their own subscription for this notification type
+                </GoACheckbox>
+                <div className="fitContent">
+                  {type.manageSubscribe && (
+                    <GoACallout type="important">
+                      This checkbox enables your subscribers to manage subscriptions on a self serve basis. Subscribers
+                      can unsubscribe from the notification type without contacting the program area.
+                    </GoACallout>
+                  )}
+                </div>
+              </GoAFormItem>
+            </div>
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
