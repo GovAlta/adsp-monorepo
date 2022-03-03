@@ -77,20 +77,22 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
                   onChange={(e) => setSubscriber({ ...subscriber, addressAs: e.target.value })}
                 />
               </GoAFormItem>
-              <GoAFormItem error={formErrors?.['email'] || updateError}>
-                <label>Email</label>
-                <textarea
-                  name="email"
-                  data-testid="form-email"
-                  value={subscriber?.channels[emailIndex].address || ''}
-                  aria-label="email"
-                  onChange={(e) => {
-                    const channel = subscriber.channels;
-                    channel[emailIndex].address = e.target.value;
-                    setSubscriber({ ...subscriber, channels: channel });
-                  }}
-                />
-              </GoAFormItem>
+              {emailIndex && (
+                <GoAFormItem error={formErrors?.['email'] || updateError}>
+                  <label>Email</label>
+                  <textarea
+                    name="email"
+                    data-testid="form-email"
+                    value={subscriber?.channels[emailIndex].address || ''}
+                    aria-label="email"
+                    onChange={(e) => {
+                      const channel = subscriber.channels;
+                      channel[emailIndex].address = e.target.value;
+                      setSubscriber({ ...subscriber, channels: channel });
+                    }}
+                  />
+                </GoAFormItem>
+              )}
             </ErrorWrapper>
           </GoAForm>
         </GoAModalContent>
