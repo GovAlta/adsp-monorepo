@@ -666,7 +666,7 @@ describe('subscription router', () => {
 
   describe('createSubscriber', () => {
     it('can create handler', () => {
-      const handler = createSubscriber(apiId, repositoryMock);
+      const handler = createSubscriber(apiId, repositoryMock, loggerMock);
       expect(handler).toBeTruthy();
     });
 
@@ -693,7 +693,7 @@ describe('subscription router', () => {
       });
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
 
-      const handler = createSubscriber(apiId, repositoryMock);
+      const handler = createSubscriber(apiId, repositoryMock, loggerMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -733,7 +733,7 @@ describe('subscription router', () => {
       });
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
 
-      const handler = createSubscriber(apiId, repositoryMock);
+      const handler = createSubscriber(apiId, repositoryMock, loggerMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -770,7 +770,7 @@ describe('subscription router', () => {
       repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
 
-      const handler = createSubscriber(apiId, repositoryMock);
+      const handler = createSubscriber(apiId, repositoryMock, loggerMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(
         expect.objectContaining({
