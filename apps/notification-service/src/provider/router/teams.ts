@@ -7,7 +7,13 @@ interface RouterProps {
 
 export const createTeamsProviderRouter = ({ provider }: RouterProps): Router => {
   const router = Router();
-  router.post('/messages', (req, res) => provider.processMessage(req, res));
+  router.post('/messages', async (req, res, next) => {
+    try {
+      await provider.processMessage(req, res);
+    } catch (err) {
+      next(err);
+    }
+  });
 
   return router;
 };
