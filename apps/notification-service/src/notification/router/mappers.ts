@@ -26,7 +26,7 @@ export const mapType = (type: NotificationTypeEntity, lean?: boolean): Record<st
         id: type.id,
         name: type.name,
         description: type.description,
-        canSubscribe: type.manageSubscribe,
+        manageSubscribe: type.manageSubscribe,
       }
     : {
         id: type.id,
@@ -36,5 +36,4 @@ export const mapType = (type: NotificationTypeEntity, lean?: boolean): Record<st
         manageSubscribe: type.manageSubscribe,
         subscriberRoles: type.subscriberRoles,
         events: type.events,
-        canSubscribe: type.manageSubscribe,
       };
