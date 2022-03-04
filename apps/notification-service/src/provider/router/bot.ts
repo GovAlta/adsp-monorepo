@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { TeamsNotificationProvider } from '../teams';
+import { BotNotificationProvider } from '../bot';
 
 interface RouterProps {
-  provider: TeamsNotificationProvider;
+  provider: BotNotificationProvider;
 }
 
-export const createTeamsProviderRouter = ({ provider }: RouterProps): Router => {
+export const createBotProviderRouter = ({ provider }: RouterProps): Router => {
   const router = Router();
   router.post('/messages', async (req, res, next) => {
     try {

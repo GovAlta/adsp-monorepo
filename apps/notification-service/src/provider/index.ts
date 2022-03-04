@@ -3,10 +3,10 @@ import { Application, RequestHandler } from 'express';
 import { Logger } from 'winston';
 import { Channel, Providers } from '../notification';
 import { createEmailProvider } from './email';
-import { createTeamsProviderRouter, createSlackProviderRouter } from './router';
+import { createBotProviderRouter, createSlackProviderRouter } from './router';
 import { createSlackProvider } from './slack';
 import { createABNotifySmsProvider } from './sms';
-import { createTeamsProvider, TeamsNotificationProvider } from './teams';
+import { createBotProvider, BotNotificationProvider } from './bot';
 import { BotRepository, SlackRepository } from './types';
 
 export * from './types';
@@ -20,14 +20,14 @@ interface ProviderMiddlewareProps {
 
 function applyProviderMiddleware(
   app: Application,
-  provider: TeamsNotificationProvider,
+  provider: BotNotificationProvider,
   props: ProviderMiddlewareProps
 ): Application {
   const slackRouter = createSlackProviderRouter(props);
   app.use('/provider/v1/slack', slackRouter);
 
-  const teamsRouter = createTeamsProviderRouter({ provider });
-  app.use('/provider/v1/teams', teamsRouter);
+  const botRouter = createBotProviderRouter({ provider });
+  app.use('/provider/v1/bot', botRouter);
 
   return app;
 }
@@ -45,10 +45,10 @@ interface ProviderProps {
   NOTIFY_URL: string;
   NOTIFY_API_KEY: string;
   NOTIFY_TEMPLATE_ID: string;
-  TEAMS_TENANT_ID: string;
-  TEAMS_APP_ID: string;
-  TEAMS_APP_SECRET: string;
-  TEAMS_APP_TYPE: string;
+  BOT_TENANT_ID: string;
+  BOT_APP_ID: string;
+  BOT_APP_SECRET: string;
+  BOT_APP_TYPE: string;
 }
 
 export function initializeProviders(app: Application, props: ProviderProps & ProviderMiddlewareProps): Providers {
@@ -56,7 +56,7 @@ export function initializeProviders(app: Application, props: ProviderProps & Pro
     [Channel.email]: props.SMTP_HOST ? createEmailProvider(props) : null,
     [Channel.sms]: props.NOTIFY_API_KEY ? createABNotifySmsProvider(props) : null,
     [Channel.slack]: props.SLACK_CLIENT_ID ? createSlackProvider(props.logger, props.slackInstaller) : null,
-    [Channel.teams]: props.TEAMS_APP_ID ? createTeamsProvider(props.logger, props.botRepository, props) : null,
+    [Channel.teams]: props.BOT_APP_ID ? createBotProvider(props.logger, props.botRepository, props) : null,
   };
 
   applyProviderMiddleware(app, providers.teams, props);

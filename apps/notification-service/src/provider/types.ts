@@ -12,10 +12,14 @@ export interface ConversationIdentity {
 }
 
 export interface ConversationRecord extends ConversationIdentity {
+  name: string;
   serviceUrl: string;
+  botId: string;
+  botName: string;
 }
 
 export interface BotRepository {
   get(conversation: ConversationIdentity): Promise<ConversationRecord>;
   save(record: ConversationRecord): Promise<ConversationRecord>;
+  delete(conversation: ConversationIdentity): Promise<boolean>;
 }

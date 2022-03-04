@@ -1,2 +1,2 @@
 export * from './slack';
-export * from './teams';
+export * from './bot';

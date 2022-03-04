@@ -1,4 +1,4 @@
-import { NotificationType } from '../types';
+import { Channel, NotificationType } from '../types';
 
 const templateSchema = {
   type: 'object',
@@ -46,6 +46,7 @@ export const configurationSchema = {
                 email: templateSchema,
                 sms: templateSchema,
                 mail: templateSchema,
+                teams: templateSchema,
                 slack: templateSchema,
               },
             },
@@ -53,7 +54,7 @@ export const configurationSchema = {
               type: 'array',
               items: {
                 type: 'string',
-                enum: ['email', 'sms', 'mail', 'slack'],
+                enum: Object.values(Channel),
               },
             },
           },

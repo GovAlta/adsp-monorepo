@@ -203,7 +203,6 @@ async function initializeApp() {
         health: new URL('/health', rootUrl).href,
         api: new URL('/subscription/v1', rootUrl).href,
         doc: new URL('/swagger/docs/v1', rootUrl).href,
-        slack: new URL('/slack/install', rootUrl).href,
       },
     });
   });
