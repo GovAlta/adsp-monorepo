@@ -42,84 +42,87 @@ const Dashboard = (): JSX.Element => {
       <DashboardDiv>
         <Page>
           <Main>
-            {tenantName && <>
-              <h1>{tenantName} dashboard</h1>
-              <Grid>
-                <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                  <GoACard type="primary">
-                    <h2>
-                      <Link to="/admin/access">Access</Link>
-                    </h2>
-                    <div>
-                      Access allows you to add a secure sign in to you application and services with minimum effort and
-                      configuration. No need to deal with storing or authenticating users. It's all available out of the
-                      box.
-                    <div>&nbsp;</div>
-                    </div>
-                  </GoACard>
-                </GridItem>
-                <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                  <GoACard type="primary">
-                    <h2>
-                      <Link to="/admin/services/directory">Directory</Link>
-                    </h2>
-                    <div>
-                      The directory service is a registry of services and their APIs. Applications can use the directory
-                      to lookup URLs for service from a common directory API. Add entries for your own services so they
-                      can be found using the directory for service discovery.
-                  </div>
-                  </GoACard>
-                </GridItem>
-                <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                  <GoACard type="primary">
-                    <h2>
-                      <Link to="/admin/services/files">File service</Link>
-                    </h2>
-                    <div>
-                      The file service provides the capability to upload and download files. Consumers are registered with
-                      their own space (tenant) containing file types that include role based access policy, and can
-                      associate files to domain records.
-                  </div>
-                  </GoACard>
-                </GridItem>
-                <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                  <GoACard type="primary">
-                    <h2>
-                      <Link to="/admin/services/status">Status</Link>
-                    </h2>
-                    <div>
-                      The status service allows for easy monitoring of application downtime. Each application should
-                      represent a service that is useful to the end user by itself, such as child care subsidy and child
-                      care certification.
-                    <div>&nbsp;</div>
-                    </div>
-                  </GoACard>
-                </GridItem>
-                <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                  <GoACard type="primary">
-                    <h2>
-                      <Link to="/admin/services/events">Events</Link>
-                    </h2>
-                    <div>
-                      The event service provides tenant applications with the ability to send domain events. Applications
-                      are able to leverage additional capabilities as side effects through these events.
-                  </div>
-                  </GoACard>
-                </GridItem>
-                <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                  <GoACard type="primary">
-                    <h2>
-                      <Link to="/admin/services/notifications">Notifications</Link>
-                    </h2>
-                    <div>
-                      The notifications service provides tenant applications with the ability to configure notifications.
-                  </div>
-                    <div>&nbsp;</div>
-                    <div>&nbsp;</div>
-                  </GoACard>
-                </GridItem>
-              </Grid>
-            </>}
+            {tenantName && (
+              <>
+                <h1>{tenantName} dashboard</h1>
+                <Grid>
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <h2>
+                        <Link to="/admin/access">Access</Link>
+                      </h2>
+                      <div>
+                        Access allows you to add a secure sign in to your application and services with minimum effort
+                        and configuration. No need to deal with storing or authenticating users. It's all available out
+                        of the box.
+                        <div>&nbsp;</div>
+                      </div>
+                    </GoACard>
+                  </GridItem>
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <h2>
+                        <Link to="/admin/services/directory">Directory</Link>
+                      </h2>
+                      <div>
+                        The directory service is a registry of services and their APIs. Applications can use the
+                        directory to lookup URLs for service from a common directory API. Add entries for your own
+                        services so they can be found using the directory for service discovery.
+                      </div>
+                    </GoACard>
+                  </GridItem>
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <h2>
+                        <Link to="/admin/services/files">File service</Link>
+                      </h2>
+                      <div>
+                        The file service provides the capability to upload and download files. Consumers are registered
+                        with their own space (tenant) containing file types that include role based access policy, and
+                        can associate files to domain records.
+                      </div>
+                    </GoACard>
+                  </GridItem>
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <h2>
+                        <Link to="/admin/services/status">Status</Link>
+                      </h2>
+                      <div>
+                        The status service allows for easy monitoring of application downtime. Each application should
+                        represent a service that is useful to the end user by itself, such as child care subsidy and
+                        child care certification.
+                        <div>&nbsp;</div>
+                      </div>
+                    </GoACard>
+                  </GridItem>
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <h2>
+                        <Link to="/admin/services/events">Events</Link>
+                      </h2>
+                      <div>
+                        The event service provides tenant applications with the ability to send domain events.
+                        Applications are able to leverage additional capabilities as side effects through these events.
+                      </div>
+                    </GoACard>
+                  </GridItem>
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <h2>
+                        <Link to="/admin/services/notifications">Notifications</Link>
+                      </h2>
+                      <div>
+                        The notifications service provides tenant applications with the ability to configure
+                        notifications.
+                      </div>
+                      <div>&nbsp;</div>
+                      <div>&nbsp;</div>
+                    </GoACard>
+                  </GridItem>
+                </Grid>
+              </>
+            )}
           </Main>
           <DashboardAside>
             <h3>Sharing tenant access</h3>
@@ -137,7 +140,11 @@ const Dashboard = (): JSX.Element => {
 
             <p>2. Share the following URL to complete the process.</p>
 
-            <div className="copy-url"><a target="_blank" href={loginUrl} rel="noreferrer">{loginUrl}</a></div>
+            <div className="copy-url">
+              <a target="_blank" href={loginUrl} rel="noreferrer">
+                {loginUrl}
+              </a>
+            </div>
             <GoAButton data-tip="Copied!" data-for="registerTipUrl">
               Click to copy
             </GoAButton>
@@ -217,7 +224,7 @@ const DashboardAside = styled(Aside)`
 const DashboardDiv = styled.div`
   a {
     &:visited {
-            color: var(--color-primary);
+      color: var(--color-primary);
     }
   }
 `;
