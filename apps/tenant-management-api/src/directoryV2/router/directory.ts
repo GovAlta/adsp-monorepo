@@ -39,7 +39,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
   /**
    * Get all of directories
    */
-  directoryRouter.get('/namespaces/:namespace', requireDirectoryAdmin, async (req: Request, res: Response, _next) => {
+  directoryRouter.get('/namespaces/:namespace', async (req: Request, res: Response, _next) => {
     const { namespace } = req.params;
     const results = directoryCache.get(`directory-${namespace}`);
     if (results) {
@@ -80,7 +80,6 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
    */
   directoryRouter.post(
     '/namespaces/:namespace',
-    requireDirectoryAdmin,
     validationMiddleware(ServiceV2),
     async (req: Request, res: Response, _next) => {
       if (req.body) {
@@ -131,7 +130,6 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
    */
   directoryRouter.put(
     '/namespaces/:namespace',
-    requireDirectoryAdmin,
     validationMiddleware(ServiceV2),
     async (req: Request, res: Response, _next) => {
       if (req.body) {
