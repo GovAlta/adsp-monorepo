@@ -83,6 +83,8 @@ export const botSchema = new Schema(
     conversationId: { type: String, required: true },
     name: { type: String, required: false },
     serviceUrl: { type: String, required: true },
+    botId: { type: String, required: false },
+    botName: { type: String, required: false },
   },
   {
     _id: false,

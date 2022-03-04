@@ -2,11 +2,13 @@ import { InvalidOperationError } from '@core-services/core-common';
 import {
   Channels,
   CloudAdapter,
-  ConversationReference,
   ConfigurationServiceClientCredentialFactory,
   createBotFrameworkAuthenticationFromConfiguration,
   ActivityHandler,
+  TeamsChannelData,
   TurnContext,
+  ConversationParameters,
+  ConversationReference,
 } from 'botbuilder';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
@@ -14,21 +16,65 @@ import { NotificationContent, NotificationProvider } from '../notification';
 import { BotRepository } from './types';
 
 class BotNotificationActivityHandler extends ActivityHandler {
+  private LOG_CONTEXT = {
+    context: 'BotNotificationActivityHandler',
+  };
+
   constructor(private logger: Logger, private repository: BotRepository) {
     super();
 
-    this.onConversationUpdate(async (context, next) => {
-      const reference = TurnContext.getConversationReference(context.activity);
-      await this.repository.save({
-        channelId: reference.channelId as Channels,
-        tenantId: reference.conversation.tenantId,
-        conversationId: reference.conversation.id,
-        name: reference.conversation.name,
-        serviceUrl: reference.serviceUrl,
-      });
-      this.logger.info(
-        `Stored conversation reference for ${reference.conversation.name} on channel ${reference.channelId} (ID: ${reference.conversation.id}).`
-      );
+    this.onMembersAdded(async (context, next) => {
+      const botAdded = context.activity.membersAdded.find(({ id }) => id === context.activity.recipient.id);
+      if (botAdded) {
+        this.logger.info(`Bot added to conversation, resolving teams information...`, this.LOG_CONTEXT);
+        this.logger.debug(
+          `Channel data: ${JSON.stringify(context.activity.channelData || {}, null, 2)}`,
+          this.LOG_CONTEXT
+        );
+
+        const { channel, tenant } = context.activity.channelData as TeamsChannelData;
+        const record = {
+          channelId: context.activity.channelId as Channels,
+          tenantId: tenant?.id || context.activity.conversation?.tenantId,
+          conversationId: channel?.id || context.activity.conversation?.id,
+          name: channel?.name || context.activity.conversation?.name,
+          serviceUrl: context.activity.serviceUrl,
+          botId: context.activity.recipient.id,
+          botName: context.activity.name,
+        };
+
+        await this.repository.save(record);
+        this.logger.info(
+          `Stored ${record.channelId} reference for ${record.name} (ID: ${record.tenantId}:${record.conversationId}) ` +
+            `with bot ${record.botName} (ID: ${record.botId}) and service URL: ${context.activity.serviceUrl}.`,
+          this.LOG_CONTEXT
+        );
+      }
+
+      await next();
+    });
+
+    this.onMembersRemoved(async (context, next) => {
+      const botRemoved = context.activity.membersRemoved.find(({ id }) => id === context.activity.recipient.id);
+      if (botRemoved) {
+        this.logger.info(`Bot removed from conversation, resolving teams information...`, this.LOG_CONTEXT);
+
+        const { channel, tenant } = context.activity.channelData as TeamsChannelData;
+        const recordId = {
+          channelId: context.activity.channelId as Channels,
+          tenantId: tenant?.id || context.activity.conversation?.tenantId,
+          conversationId: channel?.id || context.activity.conversation?.id,
+        };
+        const deleted = await this.repository.delete(recordId);
+
+        if (deleted) {
+          this.logger.info(
+            `Deleted ${recordId.channelId}  reference for ${channel?.name || context.activity.conversation?.name} ` +
+              `(ID: ${recordId.tenantId}:${recordId.conversationId}).`,
+            this.LOG_CONTEXT
+          );
+        }
+      }
 
       await next();
     });
@@ -48,7 +94,11 @@ interface ProviderProps {
 }
 
 export class BotNotificationProvider implements NotificationProvider {
+  private LOG_CONTEXT = {
+    context: 'BotNotificationProvider',
+  };
   private appId: string;
+  private appTenantId: string;
   private handler: BotNotificationActivityHandler;
   private adapter: CloudAdapter;
 
@@ -58,6 +108,7 @@ export class BotNotificationProvider implements NotificationProvider {
     { BOT_TENANT_ID: BOT_APP_TENANT_ID, BOT_APP_TYPE, BOT_APP_ID, BOT_APP_SECRET }: ProviderProps
   ) {
     this.appId = BOT_APP_ID;
+    this.appTenantId = BOT_APP_TENANT_ID;
     this.handler = new BotNotificationActivityHandler(logger, this.repository);
 
     const credentialsFactory = new ConfigurationServiceClientCredentialFactory({
@@ -75,7 +126,7 @@ export class BotNotificationProvider implements NotificationProvider {
       // This check writes out errors to console log .vs. app insights.
       // NOTE: In production environment, you should consider logging this to Azure
       //       application insights.
-      this.logger.error(`[onTurnError] unhandled error: ${error}`);
+      this.logger.error(`[onTurnError] unhandled error: ${error}`, this.LOG_CONTEXT);
 
       // Send a trace activity, which will be displayed in Bot Framework Emulator
       await context.sendTraceActivity(
@@ -92,10 +143,13 @@ export class BotNotificationProvider implements NotificationProvider {
   }
 
   async send({ to, message }: NotificationContent): Promise<void> {
-    const [channelId, tenantId, conversationId] = to?.split('/') || [];
+    const ids = to?.split('/') || [];
+    const channelId = ids[0] as Channels;
+    const tenantId = ids.length > 2 ? ids[1] : this.appTenantId;
+    const conversationId = ids.length > 2 ? ids[2] : ids[1];
 
     const conversation = await this.repository.get({
-      channelId: channelId as Channels,
+      channelId,
       tenantId,
       conversationId,
     });
@@ -104,13 +158,40 @@ export class BotNotificationProvider implements NotificationProvider {
       throw new InvalidOperationError(`No conversation reference found for address: ${to}`);
     }
 
-    const conversationReference: Partial<ConversationReference> = {
-      channelId: conversation.channelId,
-      conversation: { tenantId: conversation.tenantId, id: to, isGroup: false, name: null, conversationType: null },
-      serviceUrl: conversation.serviceUrl,
-    };
+    let conversationReference: Partial<ConversationReference>;
+    if (channelId === Channels.Msteams) {
+      conversationReference = await new Promise((resolve) =>
+        this.adapter.createConversationAsync(
+          this.appId,
+          Channels.Msteams,
+          conversation.serviceUrl,
+          null,
+          {
+            isGroup: true,
+            channelData: {
+              channel: {
+                id: conversationId,
+              },
+            },
+          } as ConversationParameters,
+          async (context) => {
+            const conversationReference = TurnContext.getConversationReference(context.activity);
+            resolve(conversationReference);
+          }
+        )
+      );
+    } else {
+      conversationReference = {
+        conversation: {
+          id: conversationId,
+          conversationType: null,
+          name: null,
+          isGroup: true,
+        },
+      };
+    }
 
-    this.adapter.continueConversationAsync(this.appId, conversationReference, async (turnContext) => {
+    await this.adapter.continueConversationAsync(this.appId, conversationReference, async (turnContext) => {
       await turnContext.sendActivity({ text: `${message.subject}\n\n${message.body}`, textFormat: 'markdown' });
     });
   }

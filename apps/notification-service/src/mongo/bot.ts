@@ -16,6 +16,12 @@ export class MongoBotRepository implements BotRepository {
     return this.fromDoc(doc);
   }
 
+  async delete({ channelId, tenantId, conversationId }: ConversationIdentity): Promise<boolean> {
+    const { deletedCount } = await this.botModel.deleteOne({ channelId, tenantId, conversationId });
+
+    return deletedCount > 0;
+  }
+
   async save(record: ConversationRecord): Promise<ConversationRecord> {
     try {
       const doc = await this.botModel.findOneAndUpdate(
@@ -33,9 +39,17 @@ export class MongoBotRepository implements BotRepository {
     }
   }
 
-  private toDoc({ channelId, tenantId, conversationId, name, serviceUrl }: ConversationRecord): ConversationRecord {
+  private toDoc({
+    channelId,
+    tenantId,
+    conversationId,
+    name,
+    serviceUrl,
+    botId,
+    botName,
+  }: ConversationRecord): ConversationRecord {
     // This is a straight copy for now, but in theory the input object could have extraneous properties.
-    return { channelId, tenantId, conversationId, name, serviceUrl };
+    return { channelId, tenantId, conversationId, name, serviceUrl, botId, botName };
   }
 
   private fromDoc(doc: ConversationRecord): ConversationRecord {
@@ -46,6 +60,8 @@ export class MongoBotRepository implements BotRepository {
           conversationId: doc.conversationId,
           name: doc.name,
           serviceUrl: doc.serviceUrl,
+          botId: doc.botId,
+          botName: doc.botName,
         }
       : null;
   }
