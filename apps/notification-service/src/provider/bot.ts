@@ -212,6 +212,10 @@ export class BotNotificationProvider implements NotificationProvider {
       );
     } else if (channelId === Channels.Slack) {
       conversationReference = {
+        bot: {
+          id: conversation.botId,
+          name: conversation.botName,
+        },
         channelId,
         serviceUrl: conversation.serviceUrl,
         conversation: {
@@ -223,6 +227,10 @@ export class BotNotificationProvider implements NotificationProvider {
       };
     } else {
       conversationReference = {
+        bot: {
+          id: conversation.botId,
+          name: conversation.botName,
+        },
         channelId,
         serviceUrl: conversation.serviceUrl,
         conversation: {
