@@ -47,13 +47,13 @@ class BotNotificationActivityHandler extends ActivityHandler {
           case Channels.Slack: {
             const {
               SlackMessage: {
-                event: { team, channel },
+                event: { team, channel, user },
               },
             } = context.activity.channelData as SlackChannelData;
 
             tenantId = team;
             conversationId = channel;
-            botId = context.activity.recipient.id.split(':')[0];
+            botId = `${user}:${context.activity.recipient.id.split(':')[0]}`;
             break;
           }
           default: {
@@ -211,15 +211,16 @@ export class BotNotificationProvider implements NotificationProvider {
         )
       );
     } else if (channelId === Channels.Slack) {
+      const [botUserId, botId] = conversation.botId.split(':');
       conversationReference = {
         bot: {
-          id: conversation.botId,
+          id: botUserId,
           name: conversation.botName,
         },
         channelId,
         serviceUrl: conversation.serviceUrl,
         conversation: {
-          id: [conversation.botId, conversation.tenantId, conversation.channelId].join(':'),
+          id: [botId, conversation.tenantId, conversation.channelId].join(':'),
           conversationType: null,
           name: null,
           isGroup: true,

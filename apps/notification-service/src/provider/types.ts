@@ -28,6 +28,7 @@ export interface SlackChannelData {
   SlackMessage: {
     team_id: string;
     event: {
+      user: string;
       channel: string;
       team: string;
     };
