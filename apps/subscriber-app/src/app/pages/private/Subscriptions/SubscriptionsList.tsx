@@ -19,7 +19,7 @@ const SubscriptionsList = (props: SubscriptionsListProps): JSX.Element => {
               <GoAIcon data-testid="mail-icon" size="medium" type="mail" />
             </IconsCell>
             <ButtonsCell>
-              {subscription.type?.canSubscribe ? (
+              {subscription.type?.manageSubscribe ? (
                 <GoAButton
                   buttonSize="small"
                   buttonType="tertiary"
