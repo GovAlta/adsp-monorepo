@@ -23,7 +23,7 @@ class SlackNotificationProvider implements NotificationProvider {
           type: 'section',
           text: {
             type: 'mrkdwn',
-            text: `*${message.subject}*\n\n${message.body}`,
+            text: `${message.subject}\n\n${message.body}`,
           },
         },
       ],
