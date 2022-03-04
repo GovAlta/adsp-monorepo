@@ -1,4 +1,5 @@
 import { Schema } from 'mongoose';
+import { Channel } from '../notification';
 
 export const subscriberSchema = new Schema({
   tenantId: {
@@ -16,7 +17,7 @@ export const subscriberSchema = new Schema({
         _id: false,
         channel: {
           type: String,
-          enum: ['email', 'mail', 'sms'],
+          enum: Object.values(Channel),
           required: true,
         },
         address: {
@@ -80,6 +81,7 @@ export const botSchema = new Schema(
     channelId: { type: String, required: true },
     tenantId: { type: String, required: false },
     conversationId: { type: String, required: true },
+    name: { type: String, required: false },
     serviceUrl: { type: String, required: true },
   },
   {
