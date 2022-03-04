@@ -33,9 +33,9 @@ export class MongoBotRepository implements BotRepository {
     }
   }
 
-  private toDoc({ channelId, tenantId, conversationId, serviceUrl }: ConversationRecord): ConversationRecord {
+  private toDoc({ channelId, tenantId, conversationId, name, serviceUrl }: ConversationRecord): ConversationRecord {
     // This is a straight copy for now, but in theory the input object could have extraneous properties.
-    return { channelId, tenantId, conversationId, serviceUrl };
+    return { channelId, tenantId, conversationId, name, serviceUrl };
   }
 
   private fromDoc(doc: ConversationRecord): ConversationRecord {
@@ -44,6 +44,7 @@ export class MongoBotRepository implements BotRepository {
           channelId: doc.channelId,
           tenantId: doc.tenantId,
           conversationId: doc.conversationId,
+          name: doc.name,
           serviceUrl: doc.serviceUrl,
         }
       : null;

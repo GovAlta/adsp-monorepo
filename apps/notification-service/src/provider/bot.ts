@@ -1,19 +1,19 @@
 import { InvalidOperationError } from '@core-services/core-common';
 import {
+  Channels,
+  CloudAdapter,
   ConversationReference,
   ConfigurationServiceClientCredentialFactory,
-  CloudAdapter,
   createBotFrameworkAuthenticationFromConfiguration,
-  TeamsActivityHandler,
+  ActivityHandler,
   TurnContext,
-  Channels,
 } from 'botbuilder';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
-import { BotRepository } from '.';
 import { NotificationContent, NotificationProvider } from '../notification';
+import { BotRepository } from './types';
 
-class TeamsNotificationActivityHandler extends TeamsActivityHandler {
+class BotNotificationActivityHandler extends ActivityHandler {
   constructor(private logger: Logger, private repository: BotRepository) {
     super();
 
@@ -23,10 +23,11 @@ class TeamsNotificationActivityHandler extends TeamsActivityHandler {
         channelId: reference.channelId as Channels,
         tenantId: reference.conversation.tenantId,
         conversationId: reference.conversation.id,
+        name: reference.conversation.name,
         serviceUrl: reference.serviceUrl,
       });
       this.logger.info(
-        `Stored conversation reference for ${reference.conversation.name} on channel ${reference.channelId} (ID: ${reference.conversation.tenantId}:${reference.conversation.id}).`
+        `Stored conversation reference for ${reference.conversation.name} on channel ${reference.channelId} (ID: ${reference.conversation.id}).`
       );
 
       await next();
@@ -40,32 +41,30 @@ class TeamsNotificationActivityHandler extends TeamsActivityHandler {
 }
 
 interface ProviderProps {
-  TEAMS_TENANT_ID: string;
-  TEAMS_APP_ID: string;
-  TEAMS_APP_SECRET: string;
-  TEAMS_APP_TYPE: string;
+  BOT_TENANT_ID: string;
+  BOT_APP_ID: string;
+  BOT_APP_SECRET: string;
+  BOT_APP_TYPE: string;
 }
 
-export class TeamsNotificationProvider implements NotificationProvider {
-  private teamsTenantId: string;
+export class BotNotificationProvider implements NotificationProvider {
   private appId: string;
-  private handler: TeamsNotificationActivityHandler;
+  private handler: BotNotificationActivityHandler;
   private adapter: CloudAdapter;
 
   constructor(
     private logger: Logger,
     private repository: BotRepository,
-    { TEAMS_TENANT_ID: TEAMS_APP_TENANT_ID, TEAMS_APP_TYPE, TEAMS_APP_ID, TEAMS_APP_SECRET }: ProviderProps
+    { BOT_TENANT_ID: BOT_APP_TENANT_ID, BOT_APP_TYPE, BOT_APP_ID, BOT_APP_SECRET }: ProviderProps
   ) {
-    this.teamsTenantId = TEAMS_APP_TENANT_ID;
-    this.appId = TEAMS_APP_ID;
-    this.handler = new TeamsNotificationActivityHandler(logger, this.repository);
+    this.appId = BOT_APP_ID;
+    this.handler = new BotNotificationActivityHandler(logger, this.repository);
 
     const credentialsFactory = new ConfigurationServiceClientCredentialFactory({
-      MicrosoftAppId: TEAMS_APP_ID,
-      MicrosoftAppPassword: TEAMS_APP_SECRET,
-      MicrosoftAppType: TEAMS_APP_TYPE,
-      MicrosoftAppTenantId: TEAMS_APP_TENANT_ID,
+      MicrosoftAppId: BOT_APP_ID,
+      MicrosoftAppPassword: BOT_APP_SECRET,
+      MicrosoftAppType: BOT_APP_TYPE,
+      MicrosoftAppTenantId: BOT_APP_TENANT_ID,
     });
 
     const botFrameworkAuthentication = createBotFrameworkAuthenticationFromConfiguration(null, credentialsFactory);
@@ -93,10 +92,12 @@ export class TeamsNotificationProvider implements NotificationProvider {
   }
 
   async send({ to, message }: NotificationContent): Promise<void> {
+    const [channelId, tenantId, conversationId] = to?.split('/') || [];
+
     const conversation = await this.repository.get({
-      channelId: Channels.Msteams,
-      tenantId: this.teamsTenantId,
-      conversationId: to,
+      channelId: channelId as Channels,
+      tenantId,
+      conversationId,
     });
 
     if (!conversation) {
@@ -115,10 +116,10 @@ export class TeamsNotificationProvider implements NotificationProvider {
   }
 }
 
-export function createTeamsProvider(
+export function createBotProvider(
   logger: Logger,
   repository: BotRepository,
   props: ProviderProps
-): TeamsNotificationProvider {
-  return new TeamsNotificationProvider(logger, repository, props);
+): BotNotificationProvider {
+  return new BotNotificationProvider(logger, repository, props);
 }

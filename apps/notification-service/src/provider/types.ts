@@ -12,6 +12,7 @@ export interface ConversationIdentity {
 }
 
 export interface ConversationRecord extends ConversationIdentity {
+  name: string;
   serviceUrl: string;
 }
 
