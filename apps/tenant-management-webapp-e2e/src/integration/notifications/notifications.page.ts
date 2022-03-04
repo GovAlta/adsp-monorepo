@@ -35,6 +35,14 @@ class NotificationsPage {
     return cy.get('[data-testid="subscriberRoles-dropdown-background"]');
   }
 
+  notificationTypeModalSelfServiceCheckbox() {
+    return cy.xpath('//label[@class="goa-checkbox"]/div[contains(@class, "goa-checkbox-container")]');
+  }
+
+  notificationTypeModalSelfServiceCalloutContent() {
+    return cy.xpath('//*[@data-testid="callout-content"]');
+  }
+
   notificationTypeModalSaveBtn() {
     return cy.get('[data-testid="form-save"]');
   }
@@ -74,6 +82,12 @@ class NotificationsPage {
   notificationTypePublicSubscription(notificationTypeTitle) {
     return cy.xpath(
       `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//div[contains(text(), "Public Subscription")]`
+    );
+  }
+
+  notificationTypeSelfService(notificationTypeTitle) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//div[contains(text(), "Self-service")]`
     );
   }
 

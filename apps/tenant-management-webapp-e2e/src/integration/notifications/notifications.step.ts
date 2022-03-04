@@ -20,34 +20,70 @@ When('the user clicks Add notification type button', function () {
   notificationsObj.addANotificationTypeButtonOnOverview().click();
 });
 
-Then('the user views Add notification modal', function () {
+Then('the user views Add notification type modal', function () {
   notificationsObj.notificationTypeModal().should('exist');
 });
 
-When('the user enters {string}, {string}, {string} on notification modal', function (name, description, role) {
-  const roles = role.split(',');
-  notificationsObj.notificationTypeModalNameField().clear().type(name);
-  notificationsObj.notificationTypeModalDescriptionField().clear().type(description);
-  notificationsObj.notificationTypeModalSubscriberRolesDropdown().click();
-  for (let i = 0; i < roles.length; i++) {
-    notificationsObj.notificationTypeModalSubscriberRolesDropdownItem(roles[i].trim()).click();
+When(
+  'the user enters {string}, {string}, {string}, {string} on notification type modal',
+  function (name, description, role, selfService) {
+    const roles = role.split(',');
+    notificationsObj.notificationTypeModalNameField().clear().type(name);
+    notificationsObj.notificationTypeModalDescriptionField().clear().type(description);
+    notificationsObj.notificationTypeModalSubscriberRolesDropdown().click();
+    for (let i = 0; i < roles.length; i++) {
+      notificationsObj.notificationTypeModalSubscriberRolesDropdownItem(roles[i].trim()).click();
+    }
+    notificationsObj.notificationTypeModalSubscriberRolesDropdownBackground().click({ force: true }); // To collapse the dropdown after selection
+    //Self-service checkbox
+    notificationsObj
+      .notificationTypeModalSelfServiceCheckbox()
+      .invoke('attr', 'class')
+      .then((classAttVal) => {
+        if (classAttVal == undefined) {
+          expect.fail('Failed to get subscribe checkbox class attribute value.');
+        } else {
+          switch (selfService) {
+            case 'yes':
+              if (classAttVal.includes('selected')) {
+                cy.log('Self service check box is already selected. ');
+              } else {
+                notificationsObj.notificationTypeModalSelfServiceCheckbox().click();
+                notificationsObj.notificationTypeModalSelfServiceCalloutContent().should('be.visible');
+              }
+              break;
+            case 'no':
+              {
+                if (!classAttVal.includes('selected')) {
+                  cy.log('Self service check box is already not selected. ');
+                } else {
+                  notificationsObj.notificationTypeModalSelfServiceCheckbox().click();
+                  notificationsObj.notificationTypeModalSelfServiceCalloutContent().should('not.exist');
+                }
+              }
+              break;
+            default:
+              expect(selfService).to.be.oneOf(['yes', 'no']);
+          }
+        }
+      });
   }
-  notificationsObj.notificationTypeModalSubscriberRolesDropdownBackground().click({ force: true }); // To collapse the dropdown after selection
-});
+);
 
 Then('the user clicks save button', function () {
   notificationsObj.notificationTypeModalSaveBtn().click();
 });
 
 Then(
-  'the user {string} the notification type card of {string}, {string}, {string}, {string}',
-  function (viewOrNot, name, desc, roles, publicOrNot) {
+  'the user {string} the notification type card of {string}, {string}, {string}, {string}, {string}',
+  function (viewOrNot, name, desc, roles, publicOrNot, selfService) {
     roles = roles.replace('Anyone (Anonymous)', '');
     if (viewOrNot == 'views') {
       notificationsObj.notificationTypeCardTitle(name).should('exist');
       notificationsObj.notificationTypeCardDesc(name).invoke('text').should('contain', desc);
       notificationsObj.notificationTypeSubscriberRoles(name).invoke('text').should('contain', roles);
       notificationsObj.notificationTypePublicSubscription(name).invoke('text').should('contain', publicOrNot);
+      notificationsObj.notificationTypeSelfService(name).invoke('text').should('contain', selfService);
     } else if (viewOrNot == 'should not view') {
       notificationsObj.notificationTypeCardTitle(name).should('not.exist');
     } else {
