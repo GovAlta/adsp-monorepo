@@ -47,13 +47,14 @@ class BotNotificationActivityHandler extends ActivityHandler {
           case Channels.Slack: {
             const {
               SlackMessage: {
-                event: { team, channel, user },
+                api_app_id,
+                event: { team, channel },
               },
             } = context.activity.channelData as SlackChannelData;
 
             tenantId = team;
             conversationId = channel;
-            botId = `${user}:${context.activity.recipient.id.split(':')[0]}`;
+            botId = `${api_app_id}:${context.activity.recipient.id.split(':')[0]}`;
             break;
           }
           default: {

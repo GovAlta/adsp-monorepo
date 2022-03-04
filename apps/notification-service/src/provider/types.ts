@@ -27,6 +27,7 @@ export interface BotRepository {
 export interface SlackChannelData {
   SlackMessage: {
     team_id: string;
+    api_app_id: string;
     event: {
       user: string;
       channel: string;
