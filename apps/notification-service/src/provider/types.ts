@@ -23,3 +23,13 @@ export interface BotRepository {
   save(record: ConversationRecord): Promise<ConversationRecord>;
   delete(conversation: ConversationIdentity): Promise<boolean>;
 }
+
+export interface SlackChannelData {
+  SlackMessage: {
+    team_id: string;
+    event: {
+      channel: string;
+      team: string;
+    };
+  };
+}
