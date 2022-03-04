@@ -39,16 +39,35 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
     }
   }
 
-  const emailIndex = subscriber?.channels?.findIndex((channel) => channel.channel === 'email');
+  function getChannelIndex(subscriber, type) {
+    const channels = subscriber?.channels;
+    if (channels) {
+      for (let i = channels.length - 1; i >= 0; i--) {
+        // Fetch the index of the last email
+        if (channels[i].channel === type) {
+          return i;
+        }
+      }
+    }
+    return -1;
+  }
+
+  const emailIndex = getChannelIndex(subscriber, 'email');
+  const slackIndex = getChannelIndex(subscriber, 'slack');
 
   const trySave = (subscriber) => {
-    const emailIndex = subscriber?.channels?.findIndex((channel) => channel.channel === 'email');
+    const emailIndex = getChannelIndex(subscriber, 'email');
 
-    const formErrorList = emailErrors(subscriber.channels[emailIndex].address);
-    if (!formErrorList) {
-      onSave(subscriber);
+    if (emailIndex !== -1) {
+      const formErrorList = emailErrors(subscriber.channels[emailIndex].address);
+      if (!formErrorList) {
+        onSave(subscriber);
+      } else {
+        setFormErrors(formErrorList);
+      }
     } else {
-      setFormErrors(formErrorList);
+      // TODO: need to add validation for slack and sms channels.
+      onSave(subscriber);
     }
   };
 
@@ -77,7 +96,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
                   onChange={(e) => setSubscriber({ ...subscriber, addressAs: e.target.value })}
                 />
               </GoAFormItem>
-              {emailIndex && (
+              {emailIndex !== -1 && (
                 <GoAFormItem error={formErrors?.['email'] || updateError}>
                   <label>Email</label>
                   <textarea
@@ -88,6 +107,23 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
                     onChange={(e) => {
                       const channel = subscriber.channels;
                       channel[emailIndex].address = e.target.value;
+                      setSubscriber({ ...subscriber, channels: channel });
+                    }}
+                  />
+                </GoAFormItem>
+              )}
+
+              {slackIndex !== -1 && (
+                <GoAFormItem error={formErrors?.['slack'] || updateError}>
+                  <label>Slack</label>
+                  <textarea
+                    name="slack"
+                    data-testid="form-slack"
+                    value={subscriber?.channels[slackIndex].address || ''}
+                    aria-label="slack"
+                    onChange={(e) => {
+                      const channel = subscriber.channels;
+                      channel[slackIndex].address = e.target.value;
                       setSubscriber({ ...subscriber, channels: channel });
                     }}
                   />
