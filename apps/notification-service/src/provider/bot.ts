@@ -247,7 +247,7 @@ export class BotNotificationProvider implements NotificationProvider {
       };
     }
 
-    await this.adapter.continueConversationAsync(this.appId, conversationReference, async (turnContext) => {
+    await this.adapter.continueConversationAsync(this.appId, conversationReference, null, async (turnContext) => {
       await turnContext.sendActivity({ text: `${message.subject}\n\n${message.body}`, textFormat: 'markdown' });
     });
   }
