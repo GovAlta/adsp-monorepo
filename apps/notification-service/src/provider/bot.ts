@@ -10,6 +10,7 @@ import {
   ConversationParameters,
   ConversationReference,
   ChannelAccount,
+  ActivityTypes,
 } from 'botbuilder';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
@@ -247,8 +248,12 @@ export class BotNotificationProvider implements NotificationProvider {
       };
     }
 
-    await this.adapter.continueConversationAsync(this.appId, conversationReference, null, async (turnContext) => {
-      await turnContext.sendActivity({ text: `${message.subject}\n\n${message.body}`, textFormat: 'markdown' });
+    await this.adapter.continueConversationAsync(this.appId, conversationReference, async (turnContext) => {
+      await turnContext.sendActivity({
+        type: ActivityTypes.Message,
+        text: `${message.subject}\n\n${message.body}`,
+        textFormat: 'markdown',
+      });
     });
   }
 }
