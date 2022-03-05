@@ -9,7 +9,6 @@ import {
   TurnContext,
   ConversationParameters,
   ConversationReference,
-  ChannelAccount,
 } from 'botbuilder';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
@@ -26,6 +25,12 @@ class BotNotificationActivityHandler extends ActivityHandler {
 
     this.onMembersAdded(async (context, next) => {
       const botAdded = context.activity.membersAdded.find(({ id }) => id === context.activity.recipient.id);
+      this.logger.debug(
+        `Received member added activity for members: ${context.activity.membersAdded
+          .map(({ id, name }) => `${name} (ID ${id})`)
+          .join(', ')}`,
+        this.LOG_CONTEXT
+      );
       if (botAdded) {
         this.logger.info(`Bot added to conversation, resolving teams information...`, this.LOG_CONTEXT);
         this.logger.debug(
@@ -87,6 +92,12 @@ class BotNotificationActivityHandler extends ActivityHandler {
 
     this.onMembersRemoved(async (context, next) => {
       const botRemoved = context.activity.membersRemoved.find(({ id }) => id === context.activity.recipient.id);
+      this.logger.debug(
+        `Received member removed activity for members: ${context.activity.membersRemoved
+          .map(({ id, name }) => `${name} (ID ${id})`)
+          .join(', ')}`,
+        this.LOG_CONTEXT
+      );
       if (botRemoved) {
         this.logger.info(`Bot removed from conversation, resolving teams information...`, this.LOG_CONTEXT);
 
@@ -96,8 +107,8 @@ class BotNotificationActivityHandler extends ActivityHandler {
           tenantId: tenant?.id || context.activity.conversation?.tenantId,
           conversationId: channel?.id || context.activity.conversation?.id,
         };
-        const deleted = await this.repository.delete(recordId);
 
+        const deleted = await this.repository.delete(recordId);
         if (deleted) {
           this.logger.info(
             `Deleted ${recordId.channelId}  reference for ${channel?.name || context.activity.conversation?.name} ` +
@@ -204,16 +215,15 @@ export class BotNotificationProvider implements NotificationProvider {
           id: `${conversation.botId}:${conversation.tenantId}`,
           name: conversation.botName,
         },
-        user: {} as ChannelAccount,
+        user: { id: '', name: '' },
         channelId,
         serviceUrl: conversation.serviceUrl,
         conversation: {
           id: `${conversation.botId}:${conversation.tenantId}:${conversation.channelId}`,
-          conversationType: null,
           name: conversation.name,
           isGroup: true,
         },
-      };
+      } as ConversationReference;
     } else {
       conversationReference = {
         bot: {
@@ -232,12 +242,19 @@ export class BotNotificationProvider implements NotificationProvider {
     }
 
     await this.adapter.continueConversationAsync(this.appId, conversationReference, async (turnContext) => {
-      this.logger.debug(`Sending activity to channel ${channelId}: ${conversationId}...`, this.LOG_CONTEXT);
+      this.logger.debug(
+        `Sending activity to channel ${channelId}: ${
+          conversationReference.conversation.id
+        } with conversation reference: ${JSON.stringify(conversationReference, null, 2)}`,
+        this.LOG_CONTEXT
+      );
       try {
         await turnContext.sendActivity(`${message.subject}\n\n${message.body}`);
       } catch (err) {
         this.logger.error(
-          `Failed sending activity to channel ${channelId}: ${conversationId}. ${err}`,
+          `Failed sending activity to channel ${channelId}: ${conversationReference.conversation.id}. ${JSON.stringify(
+            err
+          )}`,
           this.LOG_CONTEXT
         );
 
