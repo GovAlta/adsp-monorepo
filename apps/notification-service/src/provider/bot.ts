@@ -10,7 +10,6 @@ import {
   ConversationParameters,
   ConversationReference,
   ChannelAccount,
-  ActivityTypes,
 } from 'botbuilder';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
@@ -155,22 +154,6 @@ export class BotNotificationProvider implements NotificationProvider {
 
     const botFrameworkAuthentication = createBotFrameworkAuthenticationFromConfiguration(null, credentialsFactory);
     this.adapter = new CloudAdapter(botFrameworkAuthentication);
-
-    // Catch-all for errors.
-    this.adapter.onTurnError = async (context, error) => {
-      // This check writes out errors to console log .vs. app insights.
-      // NOTE: In production environment, you should consider logging this to Azure
-      //       application insights.
-      this.logger.error(`[onTurnError] unhandled error: ${error}`, this.LOG_CONTEXT);
-
-      // Send a trace activity, which will be displayed in Bot Framework Emulator
-      await context.sendTraceActivity(
-        'OnTurnError Trace',
-        `${error}`,
-        'https://www.botframework.com/schemas/error',
-        'TurnError'
-      );
-    };
   }
 
   async processMessage(req: Request, res: Response): Promise<void> {
@@ -249,11 +232,17 @@ export class BotNotificationProvider implements NotificationProvider {
     }
 
     await this.adapter.continueConversationAsync(this.appId, conversationReference, async (turnContext) => {
-      await turnContext.sendActivity({
-        type: ActivityTypes.Message,
-        text: `${message.subject}\n\n${message.body}`,
-        textFormat: 'markdown',
-      });
+      this.logger.debug(`Sending activity to channel ${channelId}: ${conversationId}...`, this.LOG_CONTEXT);
+      try {
+        await turnContext.sendActivity(`${message.subject}\n\n${message.body}`);
+      } catch (err) {
+        this.logger.error(
+          `Failed sending activity to channel ${channelId}: ${conversationId}. ${err}`,
+          this.LOG_CONTEXT
+        );
+
+        throw err;
+      }
     });
   }
 }
