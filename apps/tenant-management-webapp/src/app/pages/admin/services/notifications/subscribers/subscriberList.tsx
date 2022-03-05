@@ -7,6 +7,7 @@ import { SubscriberModalForm } from '../editSubscriber';
 import { ResetUpdateErrors, UpdateSubscriberService } from '@store/subscription/actions';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Subscriber } from '@store/subscription/models';
+import { GoACallout } from '@abgov/react-components';
 import {
   getSubscriberSubscriptions,
   TriggerVisibilitySubscribersService,
@@ -96,6 +97,11 @@ const ActionComponent: FunctionComponent<ActionComponentProps> = ({
         <tr>
           <td colSpan={3}>
             <h2>Subscriptions</h2>
+            {currentSubscriberAndSubscription?.subscriptions?.length < 1 ? (
+              <GoACallout title="No subscriptions" type="important"></GoACallout>
+            ) : (
+              ''
+            )}
             {currentSubscriberAndSubscription?.subscriptions.map((subscription, i) => {
               return <div data-testid={`subscriptions-${i}`}>{subscription.typeId}</div>;
             })}
