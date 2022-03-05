@@ -9,6 +9,7 @@ import {
   TurnContext,
   ConversationParameters,
   ConversationReference,
+  ChannelAccount,
 } from 'botbuilder';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
@@ -219,12 +220,13 @@ export class BotNotificationProvider implements NotificationProvider {
           id: `${conversation.botId}:${conversation.tenantId}`,
           name: conversation.botName,
         },
+        user: {} as ChannelAccount,
         channelId,
         serviceUrl: conversation.serviceUrl,
         conversation: {
           id: `${conversation.botId}:${conversation.tenantId}:${conversation.channelId}`,
           conversationType: null,
-          name: null,
+          name: conversation.name,
           isGroup: true,
         },
       };
