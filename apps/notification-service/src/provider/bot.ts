@@ -13,7 +13,7 @@ import {
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
 import { NotificationContent, NotificationProvider } from '../notification';
-import { BotRepository } from './types';
+import { BotRepository, SlackChannelData } from './types';
 
 class BotNotificationActivityHandler extends ActivityHandler {
   private LOG_CONTEXT = {
@@ -32,14 +32,45 @@ class BotNotificationActivityHandler extends ActivityHandler {
           this.LOG_CONTEXT
         );
 
-        const { channel, tenant } = context.activity.channelData as TeamsChannelData;
+        let tenantId: string;
+        let conversationId: string;
+        let botId: string;
+        switch (context.activity.channelId) {
+          case Channels.Msteams: {
+            const { channel, tenant } = context.activity.channelData as TeamsChannelData;
+
+            tenantId = tenant.id;
+            conversationId = channel.id;
+            botId = context.activity.recipient.id;
+            break;
+          }
+          case Channels.Slack: {
+            const {
+              SlackMessage: {
+                api_app_id,
+                event: { team, channel },
+              },
+            } = context.activity.channelData as SlackChannelData;
+
+            tenantId = team;
+            conversationId = channel;
+            botId = `${api_app_id}:${context.activity.recipient.id.split(':')[0]}`;
+            break;
+          }
+          default: {
+            tenantId = context.activity.conversation?.tenantId;
+            conversationId = context.activity.conversation?.id;
+            botId = context.activity.recipient.id;
+            break;
+          }
+        }
         const record = {
           channelId: context.activity.channelId as Channels,
-          tenantId: tenant?.id || context.activity.conversation?.tenantId,
-          conversationId: channel?.id || context.activity.conversation?.id,
-          name: channel?.name || context.activity.conversation?.name,
+          tenantId,
+          conversationId,
+          name: context.activity.conversation?.name,
           serviceUrl: context.activity.serviceUrl,
-          botId: context.activity.recipient.id,
+          botId,
           botName: context.activity.name,
         };
 
@@ -180,8 +211,30 @@ export class BotNotificationProvider implements NotificationProvider {
           }
         )
       );
+    } else if (channelId === Channels.Slack) {
+      const [botUserId, botId] = conversation.botId.split(':');
+      conversationReference = {
+        bot: {
+          id: botUserId,
+          name: conversation.botName,
+        },
+        channelId,
+        serviceUrl: conversation.serviceUrl,
+        conversation: {
+          id: [botId, conversation.tenantId, conversation.channelId].join(':'),
+          conversationType: null,
+          name: null,
+          isGroup: true,
+        },
+      };
     } else {
       conversationReference = {
+        bot: {
+          id: conversation.botId,
+          name: conversation.botName,
+        },
+        channelId,
+        serviceUrl: conversation.serviceUrl,
         conversation: {
           id: conversationId,
           conversationType: null,
