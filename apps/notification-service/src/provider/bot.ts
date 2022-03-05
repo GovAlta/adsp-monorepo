@@ -122,9 +122,6 @@ class BotNotificationActivityHandler extends ActivityHandler {
     });
 
     this.onMessage(async (context, next) => {
-      const reference = TurnContext.getConversationReference(context.activity);
-      this.logger.debug(`Conversation reference: ${JSON.stringify(reference, null, 2)}`, this.LOG_CONTEXT);
-
       await context.sendActivity({ text: '*bee boop*', textFormat: 'markdown' });
       await next();
     });
@@ -215,11 +212,10 @@ export class BotNotificationProvider implements NotificationProvider {
           id: `${conversation.botId}:${conversation.tenantId}`,
           name: conversation.botName,
         },
-        user: { id: '', name: '' },
         channelId,
         serviceUrl: conversation.serviceUrl,
         conversation: {
-          id: `${conversation.botId}:${conversation.tenantId}:${conversation.channelId}`,
+          id: `${conversation.botId}:${tenantId}:${conversationId}`,
           name: conversation.name,
           isGroup: true,
         },
@@ -235,7 +231,7 @@ export class BotNotificationProvider implements NotificationProvider {
         conversation: {
           id: conversationId,
           conversationType: null,
-          name: null,
+          name: conversation.name,
           isGroup: true,
         },
       };
@@ -249,7 +245,7 @@ export class BotNotificationProvider implements NotificationProvider {
         this.LOG_CONTEXT
       );
       try {
-        await turnContext.sendActivity(`${message.subject}\n\n${message.body}`);
+        await turnContext.sendActivity({ text: `${message.subject}\n\n${message.body}`, textFormat: 'markdown' });
       } catch (err) {
         this.logger.error(
           `Failed sending activity to channel ${channelId}: ${conversationReference.conversation.id}. ${JSON.stringify(
