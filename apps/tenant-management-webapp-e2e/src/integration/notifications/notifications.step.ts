@@ -214,6 +214,14 @@ Then('the user {string} the notification type card of {string}', function (viewO
   }
 });
 
+Then(
+  'the user views {string} has self-service-allowed attribute is {string}',
+  function (notificationTypeName, selfService) {
+    expect(selfService).to.be.oneOf(['yes', 'no']);
+    notificationsObj.notificationTypeSelfService(notificationTypeName).invoke('text').should('contain', selfService);
+  }
+);
+
 Then('the user {string} {string} for {string} in {string}', function (viewOrNot, elementType, eventName, typeName) {
   if (viewOrNot == 'views') {
     switch (elementType) {

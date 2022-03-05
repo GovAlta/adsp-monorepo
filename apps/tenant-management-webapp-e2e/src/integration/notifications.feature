@@ -100,10 +100,11 @@ Feature: Notifications
     When the user "selects" the subscribe checkbox for health check notification type
     Then the user views a callout message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"
 
-  @TEST_CS-986 @REQ_CS-963 @REQ_CS-978 @regression
+  @TEST_CS-986 @TEST_CS-443 @REQ_CS-1068 @REQ_CS-963 @REQ_CS-978 @regression
   Scenario: As a tenant admin, I can see notification type for application status change updates
     Given a tenant admin user is on notification types page
     Then the user "views" the notification type card of "status-application-status-change"
+    And  the user views "status-application-status-change" has self-service-allowed attribute is "yes"
     # Verify the events' email template indicator, preview link and edit button
     And the user "views" the event of "status-service:application-status-changed" in "status-application-status-change"
     And the user "views" the event of "status-service:application-notice-published" in "status-application-status-change"
