@@ -1,10 +1,10 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { GoAButton } from '@abgov/react-components';
-import { FetchNotificationMetrics, FetchNotificationSlackInstallation } from '@store/notification/actions';
+import { FetchNotificationMetrics } from '@store/notification/actions';
 import { NotificationMetrics } from './metrics';
 import { ContactInformation } from './contactInformation';
-import { SlackInstall } from './slackInstall';
+import { BotNotifications } from './botNotifications';
 
 interface ParentCompProps {
   setActiveEdit?: (boolean) => void;
@@ -17,7 +17,6 @@ export const NotificationsOverview: FunctionComponent<ParentCompProps> = (props)
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(FetchNotificationMetrics());
-    dispatch(FetchNotificationSlackInstallation());
   }, []);
 
   return (
@@ -39,7 +38,7 @@ export const NotificationsOverview: FunctionComponent<ParentCompProps> = (props)
         </GoAButton>
       </section>
       <ContactInformation />
-      <SlackInstall />
+      <BotNotifications />
       <NotificationMetrics />
     </div>
   );

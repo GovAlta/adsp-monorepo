@@ -9,6 +9,7 @@ import {
   TurnContext,
   ConversationParameters,
   ConversationReference,
+  Activity,
 } from 'botbuilder';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
@@ -122,7 +123,35 @@ class BotNotificationActivityHandler extends ActivityHandler {
     });
 
     this.onMessage(async (context, next) => {
-      await context.sendActivity({ text: '*bee boop*', textFormat: 'markdown' });
+      const reference = TurnContext.getConversationReference(context.activity);
+
+      let address: string;
+      let thread_ts: string;
+      if (reference.channelId === Channels.Slack) {
+        address = reference.conversation?.id.split(':').slice(1).join('/');
+        const slackChannelData = context.activity.channelData as SlackChannelData;
+        thread_ts =
+          slackChannelData.SlackMessage?.thread_ts ||
+          slackChannelData.SlackMessage?.ts ||
+          slackChannelData.SlackMessage?.event?.thread_ts ||
+          slackChannelData.SlackMessage?.event?.ts;
+      } else {
+        address = reference.conversation?.id;
+      }
+
+      let reply: Partial<Activity> = {
+        text: `*Bee boop* Ready to send notification to this channel at address: **${reference.channelId}/${address}**`,
+        textFormat: 'markdown',
+      };
+
+      if (thread_ts) {
+        reply = {
+          ...reply,
+          thread_ts,
+        } as Partial<Activity>;
+      }
+
+      await context.sendActivity(reply);
       await next();
     });
   }
