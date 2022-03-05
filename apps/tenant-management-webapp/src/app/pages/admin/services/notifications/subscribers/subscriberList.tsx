@@ -189,8 +189,7 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
           </div>
         }
         onDelete={() => {
-          dispatch(DeleteSubscriberService(selectedDeleteSubscriberId));
-          dispatch(FindSubscribers(props.searchCriteria));
+          dispatch(DeleteSubscriberService(selectedDeleteSubscriberId, props.searchCriteria));
           setSelectedDeleteSubscriberId(null);
         }}
       />
