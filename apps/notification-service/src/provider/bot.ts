@@ -110,6 +110,9 @@ class BotNotificationActivityHandler extends ActivityHandler {
     });
 
     this.onMessage(async (context, next) => {
+      const reference = TurnContext.getConversationReference(context.activity);
+      this.logger.debug(`Conversation reference: ${JSON.stringify(reference, null, 2)}`, this.LOG_CONTEXT);
+
       await context.sendActivity({ text: '*bee boop*', textFormat: 'markdown' });
       await next();
     });
@@ -213,7 +216,7 @@ export class BotNotificationProvider implements NotificationProvider {
     } else if (channelId === Channels.Slack) {
       conversationReference = {
         bot: {
-          id:  `${conversation.botId}:${conversation.tenantId}`,
+          id: `${conversation.botId}:${conversation.tenantId}`,
           name: conversation.botName,
         },
         channelId,
