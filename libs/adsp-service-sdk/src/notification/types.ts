@@ -2,8 +2,7 @@ export enum Channel {
   email = 'email',
   mail = 'mail',
   sms = 'sms',
-  slack = 'slack',
-  teams = 'teams',
+  bot = 'bot',
 }
 
 export interface Template {

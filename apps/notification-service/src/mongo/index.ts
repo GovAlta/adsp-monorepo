@@ -1,9 +1,8 @@
 import { connect, connection, ConnectionStates } from 'mongoose';
 import { Logger } from 'winston';
 import { Repositories } from '../notification';
-import { BotRepository, SlackRepository } from '../provider';
+import { BotRepository } from '../provider';
 import { MongoBotRepository } from './bot';
-import { MongoSlackInstallationStore } from './slack';
 import { MongoSubscriptionRepository } from './subscription';
 
 interface MongoRepositoryProps {
@@ -22,9 +21,7 @@ export const createRepositories = ({
   MONGO_USER,
   MONGO_PASSWORD,
   MONGO_TLS,
-}: MongoRepositoryProps): Promise<
-  Repositories & { slackRepository: SlackRepository; botRepository: BotRepository }
-> =>
+}: MongoRepositoryProps): Promise<Repositories & { botRepository: BotRepository }> =>
   new Promise((resolve, reject) => {
     const mongoConnectionString = `${MONGO_URI}/${MONGO_DB}?retryWrites=false&ssl=${MONGO_TLS}`;
     connect(
@@ -42,7 +39,6 @@ export const createRepositories = ({
         } else {
           resolve({
             subscriptionRepository: new MongoSubscriptionRepository(),
-            slackRepository: new MongoSlackInstallationStore(logger),
             botRepository: new MongoBotRepository(logger),
             // NOTE: Typescript seems to have issues with exported enums where enum is null at runtime.
             // Possible that express js module doesn't actually export anything for ConnectionStates and

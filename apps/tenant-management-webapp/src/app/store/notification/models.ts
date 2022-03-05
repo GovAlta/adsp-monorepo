@@ -51,25 +51,10 @@ export interface NotificationMetrics {
   notificationsFailed?: number;
 }
 
-export interface InstalledSlackTeam {
-  id: string;
-  name: string;
-  url: string;
-  icon: string;
-}
-
-export interface Providers {
-  slack: {
-    installedTeams: InstalledSlackTeam[];
-    authorizationUrl: string;
-  };
-}
-
 export interface NotificationState {
   notificationList: NotificationType;
   notificationTypes: NotificationType | undefined;
   core: NotificationType;
-  providers: Providers;
   metrics: NotificationMetrics;
 }
 
@@ -77,11 +62,5 @@ export const NOTIFICATION_INIT: NotificationState = {
   notificationList: {},
   notificationTypes: undefined,
   core: {},
-  providers: {
-    slack: {
-      installedTeams: [],
-      authorizationUrl: null,
-    },
-  },
   metrics: {},
 };

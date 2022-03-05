@@ -42,12 +42,8 @@ export const StatusApplicationHealthChange: NotificationType = {
   </p>
 </div>`,
         },
-        slack: {
-          subject: '*Health check for {{ event.payload.application.name }} started.*',
-          body: 'Health check started for {{ event.payload.application.name }} and polling on: {{ event.payload.application.url }}',
-        },
-        teams: {
-          subject: '*Health check for {{ event.payload.application.name }} started.*',
+        bot: {
+          subject: '**Health check for {{ event.payload.application.name }} started.**',
           body: 'Health check started for {{ event.payload.application.name }} and polling on: {{ event.payload.application.url }}',
         },
         sms: {
@@ -55,7 +51,7 @@ export const StatusApplicationHealthChange: NotificationType = {
           body: 'Health check started for {{ event.payload.application.name }} and polling on: {{ event.payload.application.url }}',
         },
       },
-      channels: ['email', 'slack', 'teams', 'sms'],
+      channels: ['email', 'bot', 'sms'],
     },
     {
       namespace: 'status-service',
@@ -70,12 +66,8 @@ export const StatusApplicationHealthChange: NotificationType = {
   </p>
 </div>`,
         },
-        slack: {
-          subject: '*Health check for {{ event.payload.application.name }} stopped.*',
-          body: 'Health check stopped for {{ event.payload.application.name }} and no longer polling on: {{ event.payload.application.url }}',
-        },
-        teams: {
-          subject: '*Health check for {{ event.payload.application.name }} stopped.*',
+        bot: {
+          subject: '**Health check for {{ event.payload.application.name }} stopped.**',
           body: 'Health check stopped for {{ event.payload.application.name }} and no longer polling on: {{ event.payload.application.url }}',
         },
         sms: {
@@ -83,7 +75,7 @@ export const StatusApplicationHealthChange: NotificationType = {
           body: 'Health check stopped for {{ event.payload.application.name }} and no longer polling on: {{ event.payload.application.url }}',
         },
       },
-      channels: ['email', 'slack', 'teams', 'sms'],
+      channels: ['email', 'bot', 'sms'],
     },
     {
       namespace: 'status-service',
@@ -98,12 +90,8 @@ export const StatusApplicationHealthChange: NotificationType = {
   </p>
 </div>`,
         },
-        slack: {
-          subject: '*{{ event.payload.application.name }} is unhealthy.*',
-          body: 'Health check indicates {{ event.payload.application.name }} ({{ event.payload.application.url }}) is unhealthy.',
-        },
-        teams: {
-          subject: '*{{ event.payload.application.name }} is unhealthy.*',
+        bot: {
+          subject: '**{{ event.payload.application.name }} is unhealthy.**',
           body: 'Health check indicates {{ event.payload.application.name }} ({{ event.payload.application.url }}) is unhealthy.',
         },
         sms: {
@@ -111,7 +99,7 @@ export const StatusApplicationHealthChange: NotificationType = {
           body: 'Health check indicates {{ event.payload.application.name }} ({{ event.payload.application.url }}) is unhealthy.',
         },
       },
-      channels: ['email', 'slack', 'teams', 'sms'],
+      channels: ['email', 'bot', 'sms'],
     },
     {
       namespace: 'status-service',
@@ -126,12 +114,8 @@ export const StatusApplicationHealthChange: NotificationType = {
   </p>
 </div>`,
         },
-        slack: {
-          subject: '*{{ event.payload.application.name }} is healthy.*',
-          body: 'Health check indicates {{ event.payload.application.name }} ({{ event.payload.application.url }}) is healthy.',
-        },
-        teams: {
-          subject: '*{{ event.payload.application.name }} is healthy.*',
+        bot: {
+          subject: '**{{ event.payload.application.name }} is healthy.**',
           body: 'Health check indicates {{ event.payload.application.name }} ({{ event.payload.application.url }}) is healthy.',
         },
         sms: {
@@ -139,7 +123,7 @@ export const StatusApplicationHealthChange: NotificationType = {
           body: 'Health check indicates {{ event.payload.application.name }} ({{ event.payload.application.url }}) is healthy.',
         },
       },
-      channels: ['email', 'slack', 'teams', 'sms'],
+      channels: ['email', 'bot', 'sms'],
     },
   ],
   publicSubscribe: false,
