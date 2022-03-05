@@ -1,6 +1,5 @@
 import React, { FunctionComponent, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { createSelector } from 'reselect';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
 import type { Subscriber, Subscription, SubscriptionSearchCriteria } from '@store/subscription/models';
@@ -75,34 +74,13 @@ interface SubscriptionsListComponentProps {
   searchCriteria: SubscriptionSearchCriteria;
 }
 
-const typeSubscriptionsSelector = createSelector(
-  (state: RootState) => state.subscription.subscriptions || [],
-  (state: RootState) => state.subscription.subscribers,
-  (subscriptions, subscribers) => {
-    const typeSubscriptions = subscriptions.reduce((acc, def) => {
-      acc[def.typeId] = acc[def.typeId] || [];
-      acc[def.typeId].push({ ...def, subscriber: subscribers[def.subscriberId] });
-      return acc;
-    }, {});
-
-    const typeIds = Object.keys(typeSubscriptions).sort((prev, next): number => {
-      if (prev > next) {
-        return 1;
-      }
-      return -1;
-    });
-
-    return { typeIds, typeSubscriptions };
-  }
-);
-
 const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentProps> = ({
   className,
   onDelete,
   searchCriteria,
 }) => {
   const dispatch = useDispatch();
-  const { typeIds, typeSubscriptions } = useSelector(typeSubscriptionsSelector);
+  const subscription = useSelector((state: RootState) => state.subscription);
   const [editSubscription, setEditSubscription] = useState(false);
   const [selectedSubscription, setSelectedSubscription] = useState(null);
 
@@ -115,7 +93,7 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
     setEditSubscription(false);
   }
 
-  if (!typeIds) {
+  if (!subscription?.subscriptions) {
     return (
       <div>
         {' '}
@@ -124,14 +102,26 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
     );
   }
 
+  const groupedSubscriptions = subscription?.subscriptions.reduce((acc, def) => {
+    acc[def.typeId] = acc[def.typeId] || [];
+    acc[def.typeId].push(def);
+    return acc;
+  }, {});
+  const orderedGroupNames = Object.keys(groupedSubscriptions).sort((prev, next): number => {
+    if (prev > next) {
+      return 1;
+    }
+    return -1;
+  });
+
   const searchFn = ({ type, searchCriteria }) => {
     dispatch(getTypeSubscriptions(type, searchCriteria));
   };
 
   return (
     <div className={className}>
-      {!typeIds?.length && renderNoItem('subscription')}
-      {typeIds.map((group, index) => (
+      {!orderedGroupNames?.length && renderNoItem('subscription')}
+      {orderedGroupNames.map((group, index) => (
         <div key={group}>
           <div className="group-name">{group}</div>
           <DataTable data-testid={`subscription-table-${index}`}>
@@ -145,7 +135,7 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
               </tr>
             </thead>
             <tbody>
-              {typeSubscriptions[group].map((subscription) => (
+              {groupedSubscriptions[group].map((subscription) => (
                 <SubscriptionComponent
                   key={`${subscription?.subscriber?.id}:${subscription?.subscriber?.urn}:${Math.random()}`}
                   subscription={subscription?.subscriber}
@@ -158,7 +148,7 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
           </DataTable>
           <SubscriptionNextLoader
             onSearch={searchFn}
-            length={typeSubscriptions[group].length}
+            length={groupedSubscriptions[group].length}
             type={group}
             searchCriteria={searchCriteria}
           />

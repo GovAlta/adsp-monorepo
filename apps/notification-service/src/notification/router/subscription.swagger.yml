@@ -44,7 +44,7 @@ components:
                 type: array
                 items:
                   type: string
-                  enum: [email, sms, slack, teams]
+                  enum: [email, sms, bot]
     Subscriber:
       type: object
       properties:
@@ -63,7 +63,7 @@ components:
             properties:
               channel:
                 type: string
-                enum: [email, sms, slack, teams]
+                enum: [email, sms, bot]
               address:
                 type: string
     SubscriptionCriteria:
@@ -91,7 +91,7 @@ components:
           enum: [send-code]
         channel:
           type: string
-          enum: [email, sms, slack, teams]
+          enum: [email, sms, bot]
         address:
           type: string
         reason:
@@ -124,7 +124,7 @@ components:
             properties:
               channel:
                 type: string
-                enum: [email, sms, slack, teams]
+                enum: [email, sms, bot]
               address:
                 type: string
         subscriptions:
@@ -139,7 +139,7 @@ components:
           enum: [check-code]
         channel:
           type: string
-          enum: [email, sms, slack, teams]
+          enum: [email, sms, bot]
         address:
           type: string
         code:
@@ -153,7 +153,7 @@ components:
           enum: [verify-channel]
         channel:
           type: string
-          enum: [email, sms, slack, teams]
+          enum: [email, sms, bot]
         address:
           type: string
         code:
@@ -257,7 +257,7 @@ components:
                   properties:
                     channel:
                       type: string
-                      enum: [email, sms, slack, teams]
+                      enum: [email, sms, bot]
                     address:
                       type: string
 
@@ -364,7 +364,7 @@ components:
                   properties:
                     channel:
                       type: string
-                      enum: [email, sms, slack, teams]
+                      enum: [email, sms, bot]
                     address:
                       type: string
     responses:
@@ -428,7 +428,7 @@ components:
                   properties:
                     channel:
                       type: string
-                      enum: [email, sms, slack, teams]
+                      enum: [email, sms, bot]
                     address:
                       type: string
     responses:

@@ -46,8 +46,7 @@ export const configurationSchema = {
                 email: templateSchema,
                 sms: templateSchema,
                 mail: templateSchema,
-                teams: templateSchema,
-                slack: templateSchema,
+                bot: templateSchema,
               },
             },
             channels: {
