@@ -1,4 +1,4 @@
-import { put, select, call, takeEvery, takeLatest, all } from 'redux-saga/effects';
+import { put, select, call, takeEvery, all } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { SagaIterator } from '@redux-saga/core';
 import { validate as validateUuid } from 'uuid';
