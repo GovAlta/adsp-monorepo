@@ -26,8 +26,8 @@ export class NotificationTypeEntity implements NotificationType {
   manageSubscribe = false;
   Subscribe = false;
   subscriberRoles: string[] = [];
-  events: NotificationTypeEvent[] = [];
   channels: Channel[] = [];
+  events: NotificationTypeEvent[] = [];
 
   constructor(type: NotificationType, tenantId?: AdspId) {
     this.tenantId = tenantId;

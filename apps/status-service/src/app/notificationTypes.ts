@@ -2,11 +2,11 @@ import { Channel, NotificationType } from '@abgov/adsp-service-sdk';
 
 export const StatusApplicationHealthChange: NotificationType = {
   name: 'status-application-health-change',
-  channels: [Channel.email, Channel.bot, Channel.sms],
   description:
     'Provides notifications of application health check changes including when: health check is started or stopped; health check detects application is healthy or unhealthy. ' +
     'Teams can use this notification type to monitor and address application issues.',
   subscriberRoles: ['status-admin'],
+  channels: [Channel.email, Channel.bot, Channel.sms],
   events: [
     {
       namespace: 'status-service',
@@ -108,8 +108,8 @@ export const StatusApplicationStatusChange: NotificationType = {
   name: 'status-application-status-change',
   description:
     'Provides notifications of application status updates and new published notices. Public users can subscribe to this notification type from the status application.',
-  channels: [Channel.email],
   subscriberRoles: [],
+  channels: [Channel.email],
   events: [
     {
       namespace: 'status-service',
