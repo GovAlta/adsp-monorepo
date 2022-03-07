@@ -333,8 +333,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                   </div>
                   {notificationType?.subscriberRoles && (
                     <div className="rowFlex smallFont">
-                      <div className="flex1" data-testid={`tenant-subscriber-roles-${notificationType?.id}`}>
-                        Subscriber Roles:{' '}
+                      <div className="flex1" data-testid="tenant-subscriber-roles">
+                        Subscriber roles:{' '}
                         <b>
                           {notificationType?.subscriberRoles
                             .filter((value) => value !== 'anonymousRead')
@@ -344,10 +344,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                         </b>
                       </div>
                       <div>
-                        <div data-testid={`tenant-public-subscription-${notificationType?.id}`}>
-                          Public Subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
+                        <div data-testid="tenant-public-subscription">
+                          Public subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
                         </div>
-                        <div className="minimumLineHeight" data-testid={`tenant-self-service-${notificationType?.id}`}>
+                        <div className="minimumLineHeight" data-testid="tenant-self-service">
                           Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
                         </div>
                       </div>
@@ -460,8 +460,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                   </div>
                   {notificationType?.subscriberRoles && (
                     <div className="rowFlex smallFont">
-                      <div className="flex1" data-testid={`core-subscriber-roles-${notificationType?.id}`}>
-                        Subscriber Roles:{' '}
+                      <div className="flex1" data-testid="core-subscriber-roles">
+                        Subscriber roles:{' '}
                         <b>
                           {notificationType?.subscriberRoles
                             .filter((value) => value !== 'anonymousRead')
@@ -471,10 +471,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                         </b>
                       </div>
                       <div>
-                        <div data-testid={`core-public-subscription-${notificationType?.id}`}>
-                          Public Subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
+                        <div data-testid="core-public-subscription">
+                          Public subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
                         </div>
-                        <div className="minimumLineHeight" data-testid={`core-self-service-${notificationType?.id}`}>
+                        <div className="minimumLineHeight" data-testid="core-self-service">
                           Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
                         </div>
                       </div>
