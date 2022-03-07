@@ -139,16 +139,13 @@ class BotNotificationActivityHandler extends ActivityHandler {
         address = reference.conversation?.id;
       }
 
-      let reply: Partial<Activity> = {
-        text: `*Bee boop* Ready to send notification to this channel at address: **${reference.channelId}/${address}**`,
+      const reply: Partial<Activity> = {
+        text: `*Bee boop...* Ready to send notification to this channel at address: **${reference.channelId}/${address}**`,
         textFormat: 'markdown',
       };
 
-      if (thread_ts) {
-        reply = {
-          ...reply,
-          thread_ts,
-        } as Partial<Activity>;
+      if (thread_ts && reference.conversation?.properties) {
+        reference.conversation.properties['thread_ts'] = thread_ts;
       }
 
       await context.sendActivity(reply);
