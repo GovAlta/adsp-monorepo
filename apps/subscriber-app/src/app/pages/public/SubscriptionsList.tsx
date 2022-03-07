@@ -14,7 +14,7 @@ const SubscriptionsList = (props: SubscriptionsListProps): JSX.Element => {
       {props.subscriptions.map((subscription: Subscription) => {
         return (
           <tr key={`${subscription.typeId}`}>
-            <td data-testid="subscription-name">{subscription.type.name}</td>
+            <td data-testid="subscription-name">{subscription?.type?.name}</td>
             <IconsCell>
               <GoAIcon data-testid="mail-icon" size="medium" type="mail" />
             </IconsCell>

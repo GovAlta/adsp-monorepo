@@ -27,7 +27,7 @@ const AppRouters = () => {
           <LandingPage />
         </Route>
 
-        <Route path="/:subscriberId">
+        <Route exact path="/:subscriberId">
           <Route path="/:subscriberId" component={PublicSubscriptions} />
         </Route>
 

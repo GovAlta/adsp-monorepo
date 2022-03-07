@@ -11,6 +11,20 @@ import {
 } from '../notification';
 import { subscriberSchema, subscriptionSchema } from './schema';
 import { SubscriberDoc, SubscriptionDoc } from './types';
+import { Subscriber } from '../notification/types/subscriber';
+
+const getCircularReplacer = () => {
+  const seen = new WeakSet();
+  return (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return;
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+};
 
 export class MongoSubscriptionRepository implements SubscriptionRepository {
   private subscriberModel;
@@ -21,18 +35,56 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     this.subscriptionModel = model('subscription', subscriptionSchema);
   }
 
+  async getSubscriberById(id: string, top: number, after: string): Promise<Results<SubscriptionEntity>> {
+    console.log(JSON.stringify(id, getCircularReplacer()) + '<id----');
+    const subscribers = await this.subscriberModel.find({ _id: id }).populate('subscriberId');
+    const subscriptions = await this.subscriptionModel.find({ subscriberId: id }).populate('subscriberId');
+    const subscriber = subscribers[0];
+
+    const docs = subscriptions.map((subscription) => this.fromSubscriptionDoc(subscription));
+    // subscriptions = subscriptions.map((subscriptions) = > {
+
+    //   return subscriptions;
+    // })
+    console.log(JSON.stringify(subscriber, getCircularReplacer()) + '<subscriber----');
+    console.log(JSON.stringify(subscriptions, getCircularReplacer()) + '<subscriptions----');
+    const x = this.fromDoc(subscriber);
+    console.log(JSON.stringify(docs, getCircularReplacer()) + '<docs----');
+    //return docs;
+
+    const skip = parseInt(after);
+
+    return new Promise<Results<SubscriptionEntity>>((resolve, reject) => {
+      this.subscriptionModel
+        .find({ subscriberId: id })
+        .populate('subscriberId')
+        .skip(skip)
+        .limit(top)
+        .exec((err, docs) =>
+          err
+            ? reject(err)
+            : resolve({
+                results: docs.map((doc) => this.fromSubscriptionDoc(doc)),
+                page: {
+                  after,
+                  next: encodeNext(docs.length, top, skip),
+                  size: docs.length,
+                },
+              })
+        );
+    });
+  }
+
   getSubscriber(tenantId: AdspId, subscriberId: string, byUserId = false): Promise<SubscriberEntity> {
-    const criteria: Record<symbol, unknown> = {
+    const criteria: Record<string, string> = {
       tenantId: tenantId?.toString(),
     };
 
     if (!byUserId) {
-      criteria._id = new Types.ObjectId(subscriberId);
-      // } else {
-      //   criteria.userId = subscriberId;
-      // }
+      criteria._id = subscriberId;
+    } else {
+      criteria.userId = subscriberId;
     }
-    console.log(JSON.stringify(criteria) + '<criteria');
 
     return new Promise<SubscriberEntity>((resolve, reject) =>
       this.subscriberModel.findOne(criteria, null, { lean: true }, (err, doc) =>
@@ -77,6 +129,8 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     if (criteria?.subscriberIdEquals) {
       query.subscriberId = criteria.subscriberIdEquals;
     }
+
+    console.log(JSON.stringify(query) + '<querxxy');
 
     return new Promise<Results<SubscriptionEntity>>((resolve, reject) => {
       this.subscriptionModel
@@ -216,6 +270,7 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
   }
 
   private fromSubscriptionDoc(doc: SubscriptionDoc, subscriber?: SubscriberEntity) {
+    console.log(JSON.stringify(doc) + '<docs');
     return doc
       ? new SubscriptionEntity(
           this,

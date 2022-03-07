@@ -54,10 +54,11 @@ export function* getSubscriberDetails(action: GetSubscriberAction): SagaIterator
 
     const { data } = yield call(axios.get, `/api/subscriber/v1/get-subscriber/${subscriberId}`);
 
-    const subscriber: Subscriber = data.subscriber;
+    //const subscriber: Subscriber = data;
 
-    if (subscriber) {
-      yield put(GetSubscriberDetailsSuccess(subscriber));
+    console.log(JSON.stringify(data) + '<subscribersubscriber');
+    if (data) {
+      yield put(GetSubscriberDetailsSuccess(data));
     }
   } catch (e) {
     yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));

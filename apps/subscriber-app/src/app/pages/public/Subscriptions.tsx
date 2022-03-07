@@ -27,12 +27,15 @@ import { SubscriberChannel, Subscription } from '@store/subscription/models';
 const Subscriptions = (): JSX.Element => {
   const dispatch = useDispatch();
   const EMAIL = 'email';
-  const { subscriber } = useSelector((state: RootState) => ({
-    subscriber: state.subscription.subscriber,
+  const { subscriptions } = useSelector((state: RootState) => ({
+    //subscriber: state.subscription.subscriber,
+    subscriptions: state.subscription.subscriptions,
   }));
   const contact = useSelector((state: RootState) => state.notification.notificationTypes?.contact);
   const [formErrors, setFormErrors] = useState({});
-  const subscriberEmail = subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === EMAIL)[0]?.address;
+  const subscriberEmail =
+    subscriptions?.length > 0 &&
+    subscriptions[0]?.subscriber.channels?.filter((chn: SubscriberChannel) => chn.channel === EMAIL)[0]?.address;
   const [emailContactInformation, setEmailContactInformation] = useState(subscriberEmail);
   const [editContactInformation, setEditContactInformation] = useState(false);
   const [showUnSubscribeModal, setShowUnSubscribeModal] = useState(false);
@@ -56,26 +59,20 @@ const Subscriptions = (): JSX.Element => {
 
   const unSubscribe = (typeId: string) => {
     setShowUnSubscribeModal(true);
-    setSelectedUnsubscribeSub(subscriber?.subscriptions.filter((item) => item.typeId === typeId)[0]);
+    setSelectedUnsubscribeSub(subscriptions?.filter((item) => item.typeId === typeId)[0]);
   };
   const resetSelectedUnsubscribe = () => {
     setShowUnSubscribeModal(false);
     setSelectedUnsubscribeSub(undefined);
   };
-  const setValue = (name: string, value: string) => {
-    switch (name) {
-      case EMAIL:
-        setEmailContactInformation(value);
-        break;
-    }
-  };
+
   const unSubscribeModal = () => {
     return (
       <GoAModal isOpen={true} key={1} data-testId="unsubscribe-modal">
         <GoAModalTitle>Are you sure you want unsubscribe?</GoAModalTitle>
         <GoAModalContent data-testId="unsubscribe-modal-content">
-          If you decide to unsubscribe from “{selectedUnsubscribeSub.type.name}” you won’t receive any updates from the
-          service in the future.{' '}
+          If you decide to unsubscribe from “{selectedUnsubscribeSub?.type?.name}” you won’t receive any updates from
+          the service in the future.{' '}
         </GoAModalContent>
         <GoAModalActions>
           <GoAButton
@@ -109,53 +106,13 @@ const Subscriptions = (): JSX.Element => {
   const isValidEmail = (email: string): boolean => {
     return /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email);
   };
-  const saveContactInformation = async (e: FormEvent) => {
-    e.preventDefault();
-    if (isValidEmail(emailContactInformation)) {
-      setFormErrors({});
-      if (subscriberEmail !== emailContactInformation) {
-        dispatch(
-          patchSubscriber(
-            [
-              {
-                channel: EMAIL,
-                address: emailContactInformation,
-              },
-            ],
-            subscriber.id
-          )
-        );
-      }
-      setEditContactInformation(!editContactInformation);
-    } else {
-      setFormErrors({ email: 'You must enter a valid email' });
-    }
-  };
-  const updateContactInfoButtons = () => {
-    return (
-      <div>
-        <GoAButton
-          buttonSize="small"
-          buttonType="secondary"
-          data-testid="edit-contact-cancel-button"
-          onClick={() => {
-            setEditContactInformation(!editContactInformation);
-            setFormErrors({});
-          }}
-        >
-          Cancel
-        </GoAButton>
-        <GoAButton buttonSize="small" data-testid="edit-contact-save-button" onClick={saveContactInformation}>
-          Save
-        </GoAButton>
-      </div>
-    );
-  };
-  return subscriber?.subscriptions ? (
+
+  return subscriptions ? (
     <Main>
       <Container hs={2} vs={4} xlHSpacing={12}>
         <h1 data-testid="service-name">Subscription management</h1>
         <p data-testid="service-description">Manage your subscription preferences</p>
+        <p>{JSON.stringify(subscriptions)}</p>
         <br />
         <br />
         {showUnSubscribeModal ? unSubscribeModal() : ''}
@@ -163,55 +120,29 @@ const Subscriptions = (): JSX.Element => {
           <Label>Email</Label>
           <ContactInformationContainer>
             <div>
-              {editContactInformation ? (
-                <GoAForm>
-                  <GoAFormItem error={formErrors?.['email']}>
-                    <GoAInputEmail
-                      aria-label="email"
-                      name="email"
-                      value={emailContactInformation}
-                      onChange={setValue}
-                      data-testid="edit-contact-input-text"
-                    />
-                  </GoAFormItem>
-                </GoAForm>
-              ) : (
-                <p>{subscriberEmail}</p>
-              )}
-            </div>
-            <div>
-              {editContactInformation ? (
-                updateContactInfoButtons()
-              ) : (
-                <GoAButton
-                  buttonSize="small"
-                  data-testid="edit-contact-button"
-                  onClick={() => {
-                    setEmailContactInformation(subscriberEmail);
-                    setEditContactInformation(!editContactInformation);
-                  }}
-                >
-                  Edit contact information
-                </GoAButton>
-              )}
+              <p>{subscriberEmail}</p>
             </div>
           </ContactInformationContainer>
         </GoACard>
         <GoAModal></GoAModal>
         <Container hs={1} vs={5}>
           <SubscriptionListContainer>
-            <DataTable data-testid="subscriptions-table">
-              <TableHeaders>
-                <tr>
-                  <th id="subscriptions">Subscriptions</th>
-                  <th id="available-channels">Available channels</th>
-                  <th id="action">Action</th>
-                </tr>
-              </TableHeaders>
-              <tbody>
-                <SubscriptionsList onUnsubscribe={unSubscribe} subscriptions={subscriber.subscriptions} />
-              </tbody>
-            </DataTable>
+            {subscriptions?.length > 0 ? (
+              <DataTable data-testid="subscriptions-table">
+                <TableHeaders>
+                  <tr>
+                    <th id="subscriptions">Subscriptions</th>
+                    <th id="available-channels">Available channels</th>
+                    <th id="action">Action</th>
+                  </tr>
+                </TableHeaders>
+                <tbody>
+                  <SubscriptionsList onUnsubscribe={unSubscribe} subscriptions={subscriptions} />
+                </tbody>
+              </DataTable>
+            ) : (
+              <GoACallout title="You have no subscriptions" type="important"></GoACallout>
+            )}
           </SubscriptionListContainer>
           <div id="contactSupport">
             <GoACallout title="Need help? Contact your service admin" type="information">

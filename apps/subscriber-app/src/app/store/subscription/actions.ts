@@ -1,10 +1,9 @@
-import { Subscriber, SubscriberChannel } from './models';
+import { Subscriber, Subscription, SubscriberChannel } from './models';
 
 export const GET_MY_SUBSCRIBER_DETAILS_SUCCESS = 'tenant/notification-service/get-mySubscriber-success';
+export const GET_SUBSCRIBER_DETAILS_SUCCESS = 'tenant/notification-service/get-Subscriber-success';
 export const GET_MY_SUBSCRIBER_DETAILS = 'tenant/notification-service/get-mySubscriber';
-
-export const GET_SUBSCRIBER_DETAILS_SUCCESS = 'tenant/notification-service/get-mySubscriber-success';
-export const GET_SUBSCRIBER_DETAILS = 'tenant/notification-service/get-mySubscriber';
+export const GET_SUBSCRIBER_DETAILS = 'tenant/notification-service/get-Subscriber';
 
 export const UNSUBSCRIBE_SUCCESS = 'tenant/notification-service/unsubscribe-success';
 export const UNSUBSCRIBE_FAILED = 'tenant/notification-service/unsubscribe-failed';
@@ -29,9 +28,9 @@ export interface GetMySubscriberActionSuccess {
   };
 }
 export interface GetSubscriberActionSuccess {
-  type: typeof GET_MY_SUBSCRIBER_DETAILS_SUCCESS;
+  type: typeof GET_SUBSCRIBER_DETAILS_SUCCESS;
   payload: {
-    subscriber: Subscriber;
+    subscriptions: Subscription[];
   };
 }
 export interface UnsubscribeActionSuccess {
@@ -40,6 +39,7 @@ export interface UnsubscribeActionSuccess {
     typeId: string;
   };
 }
+
 export interface GetMySubscriberAction {
   type: typeof GET_MY_SUBSCRIBER_DETAILS;
 }
@@ -96,10 +96,10 @@ export const patchSubscriber = (channels: SubscriberChannel[], subscriberId: str
   },
 });
 
-export const GetSubscriberDetailsSuccess = (subscriber: Subscriber): GetSubscriberActionSuccess => ({
+export const GetSubscriberDetailsSuccess = (subscriptions: Subscription[]): GetSubscriberActionSuccess => ({
   type: GET_SUBSCRIBER_DETAILS_SUCCESS,
   payload: {
-    subscriber,
+    subscriptions,
   },
 });
 

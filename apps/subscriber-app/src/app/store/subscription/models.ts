@@ -3,7 +3,9 @@ export interface Subscription {
   typeId: string;
   criteria: SubscriptionCriteria;
   type: SubscriptionType;
+  subscriber?: Subscriber;
 }
+
 export interface SubscriptionCriteria {
   correlationId?: string;
   context?: {
@@ -31,8 +33,10 @@ export interface Subscriber {
 }
 export interface SubscriberService {
   subscriber: Subscriber;
+  subscriptions: Subscription[];
 }
 
 export const SUBSCRIBER_INIT: SubscriberService = {
   subscriber: undefined,
+  subscriptions: undefined,
 };
