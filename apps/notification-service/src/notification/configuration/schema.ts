@@ -61,7 +61,7 @@ export const configurationSchema = {
         },
       },
     },
-    required: ['id', 'name', 'publicSubscribe', 'channels', 'subscriberRoles', 'events'],
+    required: ['id', 'name', 'publicSubscribe', 'subscriberRoles', 'events'],
   },
 };
 

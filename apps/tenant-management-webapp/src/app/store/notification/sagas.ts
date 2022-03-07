@@ -130,7 +130,7 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
               name: payload.name,
               description: payload.description,
               subscriberRoles: payload.subscriberRoles,
-              channels: payload.channels,
+              channels: payload.channels || ['email'], //TODO: This is for 'migration' of pre-existing types.
               events: payload.events,
               publicSubscribe: payload.publicSubscribe,
               manageSubscribe: payload.manageSubscribe,
