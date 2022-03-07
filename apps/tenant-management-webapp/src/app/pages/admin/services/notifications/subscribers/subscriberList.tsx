@@ -7,7 +7,6 @@ import { SubscriberModalForm } from '../editSubscriber';
 import { ResetUpdateErrors, UpdateSubscriberService } from '@store/subscription/actions';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Subscriber } from '@store/subscription/models';
-import { GoACallout } from '@abgov/react-components';
 import {
   getSubscriberSubscriptions,
   TriggerVisibilitySubscribersService,
