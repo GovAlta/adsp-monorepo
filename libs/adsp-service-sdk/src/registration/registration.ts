@@ -68,7 +68,8 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
           [type.name]: {
             ...type,
             id: type.name,
-            events: type.events.map((e) => ({ ...e, channels: Object.keys(e.templates) })),
+            name: type.displayName || type.name,
+            events: type.events,
           },
         }),
         {}
