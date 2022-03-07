@@ -1,6 +1,7 @@
 import {
   ActionTypes,
   GET_MY_SUBSCRIBER_DETAILS_SUCCESS,
+  GET_SUBSCRIBER_DETAILS_SUCCESS,
   PATCH_SUBSCRIBER_SUCCESS,
   UNSUBSCRIBE_SUCCESS,
 } from './actions';
@@ -13,6 +14,13 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       return {
         ...state,
         subscriber: action.payload.subscriber,
+      };
+    case GET_SUBSCRIBER_DETAILS_SUCCESS:
+      console.log('we made it here');
+      console.log(JSON.stringify(action.payload));
+      return {
+        ...state,
+        subscriptions: action.payload.subscriptions,
       };
     case UNSUBSCRIBE_SUCCESS:
       return {

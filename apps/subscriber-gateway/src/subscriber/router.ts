@@ -12,14 +12,18 @@ interface SiteVerifyResponse {
 
 export function verifyCaptcha(logger: Logger, RECAPTCHA_SECRET: string, SCORE_THRESHOLD = 0.5): RequestHandler {
   return async (req, _res, next) => {
+    //console.log(JSON.stringify(RECAPTCHA_SECRET) + '<RECAPTCHA_SECRET');
     if (!RECAPTCHA_SECRET) {
       next();
     } else {
       try {
         const { token } = req.body;
+        //console.log(JSON.stringify(token) + '<token');
         const { data } = await axios.post<SiteVerifyResponse>(
           `https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET}&response=${token}`
         );
+
+        //console.log(JSON.stringify(data) + '<data');
 
         if (!data.success || data.action !== 'subscribe_status' || data.score < SCORE_THRESHOLD) {
           logger.warn(
@@ -96,6 +100,54 @@ export function subscribeStatus(
   };
 }
 
+const getCircularReplacer = () => {
+  const seen = new WeakSet();
+  return (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return;
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+};
+
+export function getSubscriber(
+  tenantService: TenantService,
+  tokenProvider: TokenProvider,
+  directory: ServiceDirectory
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      console.log('wtfbbq');
+      const { subscriberId } = req.params;
+
+      //console.log(JSON.stringify(subscriberId) + '<subscriberId');
+
+      const notificationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:notification-service`);
+      //console.log(JSON.stringify(notificationServiceUrl) + '<notificationServiceUrl');
+      const token = await tokenProvider.getAccessToken();
+      //console.log(JSON.stringify(token) + '<token');
+
+      const subscribersUrl = new URL(
+        `/subscription/v1/subscribers/subscriberDetails/${subscriberId}?includeSubscriptions=true`,
+        notificationServiceUrl
+      );
+      //console.log(JSON.stringify(subscribersUrl) + '<subscribersUrl');
+      const { data } = await axios.get(subscribersUrl.href, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log(JSON.stringify(data, getCircularReplacer()) + '<subscriber');
+      console.log('wtfbbq2');
+      res.send(data);
+    } catch (err) {
+      //console.log(JSON.stringify(err.message, getCircularReplacer()) + '<err.message');
+      next(err);
+    }
+  };
+}
+
 interface RouterProps {
   logger: Logger;
   directory: ServiceDirectory;
@@ -118,6 +170,8 @@ export const createSubscriberRouter = ({
     verifyCaptcha(logger, RECAPTCHA_SECRET),
     subscribeStatus(tenantService, tokenProvider, directory)
   );
+
+  router.get('/get-subscriber/:subscriberId', getSubscriber(tenantService, tokenProvider, directory));
 
   return router;
 };
