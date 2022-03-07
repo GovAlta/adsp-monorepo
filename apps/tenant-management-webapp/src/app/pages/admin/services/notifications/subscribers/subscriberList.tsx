@@ -96,8 +96,19 @@ const ActionComponent: FunctionComponent<ActionComponentProps> = ({
         <tr>
           <td colSpan={3}>
             <h2>Subscriptions</h2>
+            {currentSubscriberAndSubscription?.subscriptions?.length < 1 ? (
+              <span>
+                <b>No subscriptions</b>
+              </span>
+            ) : (
+              ''
+            )}
             {currentSubscriberAndSubscription?.subscriptions.map((subscription, i) => {
-              return <div data-testid={`subscriptions-${i}`}>{subscription.typeId}</div>;
+              return (
+                <div data-testid={`subscriptions-${i}`}>
+                  <b>{subscription.typeId}</b>
+                </div>
+              );
             })}
           </td>
         </tr>
