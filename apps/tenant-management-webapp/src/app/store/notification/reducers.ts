@@ -26,9 +26,6 @@ export const combineNotification = (
         delete customEvent.customized;
         const customized =
           JSON.stringify(coreEvent?.templates?.email) !== JSON.stringify(customEvent?.templates?.email);
-        if (customized) {
-          customEvent.channels = coreEvent.channels;
-        }
         const returnEvent = customized ? customEvent : coreEvent;
         returnEvent.customized = customized;
         events.push(returnEvent);

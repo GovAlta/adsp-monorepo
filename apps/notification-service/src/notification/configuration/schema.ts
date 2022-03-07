@@ -29,6 +29,13 @@ export const configurationSchema = {
       description: { type: ['string', 'null'] },
       publicSubscribe: { type: 'boolean' },
       manageSubscribe: { type: 'boolean' },
+      channels: {
+        type: 'array',
+        items: {
+          type: 'string',
+          enum: Object.values(Channel),
+        },
+      },
       subscriberRoles: {
         type: 'array',
         items: { type: 'string' },
@@ -49,19 +56,12 @@ export const configurationSchema = {
                 bot: templateSchema,
               },
             },
-            channels: {
-              type: 'array',
-              items: {
-                type: 'string',
-                enum: Object.values(Channel),
-              },
-            },
           },
-          required: ['namespace', 'name', 'templates', 'channels'],
+          required: ['namespace', 'name', 'templates'],
         },
       },
     },
-    required: ['id', 'name', 'publicSubscribe', 'subscriberRoles', 'events'],
+    required: ['id', 'name', 'publicSubscribe', 'channels', 'subscriberRoles', 'events'],
   },
 };
 

@@ -24,6 +24,11 @@ components:
           type: array
           items:
             type: string
+        channels:
+          type: array
+          items:
+            type: string
+            enum: [email, sms, bot]
         events:
           type: array
           items:
@@ -38,13 +43,10 @@ components:
                 properties:
                   email:
                     $ref: '#/components/schemas/Template'
+                  bot:
+                    $ref: '#/components/schemas/Template'
                   sms:
                     $ref: '#/components/schemas/Template'
-              channels:
-                type: array
-                items:
-                  type: string
-                  enum: [email, sms, bot]
     Subscriber:
       type: object
       properties:

@@ -111,7 +111,6 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
           namespace: eve.namespace,
           name: eve.name,
           templates: eve.templates,
-          channels: eve.channels,
         };
         return eventBuilder;
       });
@@ -131,6 +130,7 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
               name: payload.name,
               description: payload.description,
               subscriberRoles: payload.subscriberRoles,
+              channels: payload.channels,
               events: payload.events,
               publicSubscribe: payload.publicSubscribe,
               manageSubscribe: payload.manageSubscribe,

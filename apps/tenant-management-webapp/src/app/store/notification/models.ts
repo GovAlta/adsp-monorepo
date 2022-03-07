@@ -3,6 +3,7 @@ export interface NotificationItem {
   description?: string;
   events: Array<EventItem>;
   subscriberRoles: string[];
+  channels: string[];
   id: string;
   publicSubscribe: boolean;
   customized?: boolean;
@@ -21,7 +22,6 @@ export interface EventItem {
   name: string;
   namespace?: string;
   templates?: Template;
-  channels?: string[];
   customized?: boolean;
 }
 

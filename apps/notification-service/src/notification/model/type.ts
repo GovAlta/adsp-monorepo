@@ -26,6 +26,7 @@ export class NotificationTypeEntity implements NotificationType {
   manageSubscribe = false;
   Subscribe = false;
   subscriberRoles: string[] = [];
+  channels: Channel[] = [];
   events: NotificationTypeEvent[] = [];
 
   constructor(type: NotificationType, tenantId?: AdspId) {
@@ -119,7 +120,7 @@ export class NotificationTypeEntity implements NotificationType {
     subscription: SubscriptionEntity
   ): Notification {
     const eventNotification = this.events.find((e) => e.namespace === event.namespace && e.name === event.name);
-    const { address, channel } = (eventNotification && subscription.getSubscriberChannel(eventNotification)) || {};
+    const { address, channel } = (eventNotification && subscription.getSubscriberChannel(this, eventNotification)) || {};
 
     if (!address) {
       logger.warn(

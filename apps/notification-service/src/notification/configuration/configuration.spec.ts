@@ -17,6 +17,7 @@ describe('NotificationConfiguration', () => {
       description: '',
       publicSubscribe: true,
       subscriberRoles: [],
+      channels: [Channel.email],
       events: [
         {
           namespace: 'test',
@@ -26,7 +27,6 @@ describe('NotificationConfiguration', () => {
             [Channel.sms]: null,
             [Channel.mail]: null,
           },
-          channels: [Channel.email],
         },
       ],
     };
@@ -57,6 +57,7 @@ describe('NotificationConfiguration', () => {
       description: '',
       publicSubscribe: true,
       subscriberRoles: [],
+      channels: [Channel.email],
       events: [
         {
           namespace: 'test',
@@ -66,7 +67,6 @@ describe('NotificationConfiguration', () => {
             [Channel.sms]: null,
             [Channel.mail]: null,
           },
-          channels: [Channel.email],
         },
       ],
     };
@@ -87,6 +87,7 @@ describe('NotificationConfiguration', () => {
       description: '',
       publicSubscribe: true,
       subscriberRoles: [],
+      channels: [Channel.email],
       events: [
         {
           namespace: 'test',
@@ -96,7 +97,6 @@ describe('NotificationConfiguration', () => {
             [Channel.sms]: null,
             [Channel.mail]: null,
           },
-          channels: [Channel.email],
         },
       ],
     };
