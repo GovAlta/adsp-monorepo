@@ -90,15 +90,7 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
         subscriber: action.payload.subscriberInfo,
       };
     case UNSUBSCRIBE_SUCCESS: {
-      const { subscriber, type } = action.payload;
-      const channels = subscriber.channels;
-      let addresses: string[] = [];
-      if (channels) {
-        addresses = channels.map((c): string => {
-          return c.address;
-        });
-      }
-
+      const { subscriber } = action.payload;
       const newState = Object.assign({}, state);
       const subscriptions = newState.subscriptions;
       const newSubs = subscriptions?.filter((subscription) => subscription.subscriber.id !== subscriber.id);
@@ -107,9 +99,6 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
         ...state,
         subscription: null,
         subscriptions: newSubs,
-        successMessage: `You are unsubscribed! You will no longer receive notifications on ${addresses.join(
-          '; '
-        )} for ${type}`,
       };
     }
     case FIND_SUBSCRIBERS_SUCCESS: {
