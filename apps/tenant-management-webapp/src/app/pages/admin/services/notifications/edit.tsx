@@ -132,7 +132,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 ))}
               </GoADropdown>
             </GoAFormItem>
-            <div data-testid={`manage-subscriptions-checkbox-${type?.id}-0`}>
+            <div data-testid="manage-subscriptions-checkbox-wrapper">
               <GoAFormItem>
                 <GoACheckbox
                   name="subscribe"
@@ -140,7 +140,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                   onChange={() => {
                     setType({ ...type, manageSubscribe: !type.manageSubscribe });
                   }}
-                  data-testid={`manage-subscriptions-checkbox-${type?.id}-1`}
+                  data-testid="manage-subscriptions-checkbox"
                   value="manageSubscribe"
                 >
                   My subscribers are allowed to manage their own subscription for this notification type
