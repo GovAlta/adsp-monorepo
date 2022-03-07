@@ -16,7 +16,6 @@ import { renderNoItem } from '@components/NoItem';
 import { GoAIconButton } from '@abgov/react-components/experimental';
 import { DeleteModal } from '@components/DeleteModal';
 import type { SubscriberSearchCriteria } from '@store/subscription/models';
-import { FindSubscribers } from '@store/subscription/actions';
 
 interface ActionComponentProps {
   subscriber: Subscriber;
@@ -200,8 +199,7 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
           </div>
         }
         onDelete={() => {
-          dispatch(DeleteSubscriberService(selectedDeleteSubscriberId));
-          dispatch(FindSubscribers(props.searchCriteria));
+          dispatch(DeleteSubscriberService(selectedDeleteSubscriberId, props.searchCriteria));
           setSelectedDeleteSubscriberId(null);
         }}
       />
