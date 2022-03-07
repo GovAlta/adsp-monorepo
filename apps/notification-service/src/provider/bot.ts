@@ -126,15 +126,8 @@ class BotNotificationActivityHandler extends ActivityHandler {
       const reference = TurnContext.getConversationReference(context.activity);
 
       let address: string;
-      let thread_ts: string;
       if (reference.channelId === Channels.Slack) {
         address = reference.conversation?.id.split(':').slice(1).join('/');
-        const slackChannelData = context.activity.channelData as SlackChannelData;
-        thread_ts =
-          slackChannelData.SlackMessage?.thread_ts ||
-          slackChannelData.SlackMessage?.ts ||
-          slackChannelData.SlackMessage?.event?.thread_ts ||
-          slackChannelData.SlackMessage?.event?.ts;
       } else {
         address = reference.conversation?.id;
       }
@@ -143,10 +136,6 @@ class BotNotificationActivityHandler extends ActivityHandler {
         text: `*Bee boop...* Ready to send notification to this channel at address: **${reference.channelId}/${address}**`,
         textFormat: 'markdown',
       };
-
-      if (thread_ts && reference.conversation?.properties) {
-        reference.conversation.properties['thread_ts'] = thread_ts;
-      }
 
       await context.sendActivity(reply);
       await next();
