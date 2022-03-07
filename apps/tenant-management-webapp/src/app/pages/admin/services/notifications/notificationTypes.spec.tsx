@@ -16,6 +16,7 @@ describe('NotificationTypes Page', () => {
         notificationId: {
           name: 'Child care subsidy application',
           description: 'Lorem ipsum dolor sit amet',
+          channels: ['email'],
           events: [
             {
               namespace: 'file-service',
@@ -26,7 +27,6 @@ describe('NotificationTypes Page', () => {
                   body: 'sdfsdf',
                 },
               },
-              channels: [],
             },
           ],
           subscriberRoles: [],
@@ -38,6 +38,7 @@ describe('NotificationTypes Page', () => {
           description: 'Lorem ipsum dolor sit amet',
           events: [{ namespace: 'file-service', name: 'file-deleted', templates: {}, channels: [] }],
           subscriberRoles: [],
+          channels: ['email'],
           id: 'anotherNotificationId',
           publicSubscribe: false,
           manageSubscribe: true,
@@ -49,6 +50,7 @@ describe('NotificationTypes Page', () => {
           description: 'Lorem ipsum dolor sit amet',
           events: [{ namespace: 'file-service', name: 'file-deleted', templates: {}, channels: [] }],
           subscriberRoles: [],
+          channels: ['email'],
           id: 'superCoreNotificationStuff',
           publicSubscribe: false,
           manageSubscribe: true,
