@@ -14,7 +14,7 @@ export const ContactInformationContainer = styled.div`
   padding-top: 1.5rem;
 `;
 export const SubscriptionListContainer = styled.div`
-  padding-top: 5rem;
+  padding-top: 0rem;
 `;
 
 export const TableHeaders = styled.thead`

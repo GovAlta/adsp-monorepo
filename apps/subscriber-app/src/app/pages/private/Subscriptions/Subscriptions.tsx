@@ -16,6 +16,7 @@ import {
   GoAModalTitle,
 } from '@abgov/react-components/experimental';
 
+import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { getMySubscriberDetails, patchSubscriber, unsubscribe } from '@store/subscription/actions';
 import { RootState } from '@store/index';
@@ -158,100 +159,120 @@ const Subscriptions = (): JSX.Element => {
     );
   };
   return (
-    <Main>
-      <Container hs={2} vs={4} xlHSpacing={12}>
-        <h1 data-testid="service-name">Subscription management</h1>
-        <p data-testid="service-description">
-          Use this page to manage notifications from the services of Government of Alberta. Please note, unsubscribing
-          from some notifications might require additional verification from the government authorities.
-        </p>
-        <br />
-        <br />
-        {showUnSubscribeModal ? unSubscribeModal() : ''}
-        {subscriber?.subscriptions ? (
-          <>
-            <GoACard title="Contact information" data-testid="contact-information-card">
-              <Label>Email</Label>
-              <ContactInformationContainer>
-                <div>
-                  {editContactInformation ? (
-                    <GoAForm>
-                      <GoAFormItem error={formErrors?.['email']}>
-                        <GoAInputEmail
-                          aria-label="email"
-                          name="email"
-                          value={emailContactInformation}
-                          onChange={setValue}
-                          data-testid="edit-contact-input-text"
-                        />
-                      </GoAFormItem>
-                    </GoAForm>
-                  ) : (
-                    <p>{subscriberEmail}</p>
-                  )}
-                </div>
-                <div>
-                  {editContactInformation ? (
-                    updateContactInfoButtons()
-                  ) : (
-                    <GoAButton
-                      buttonSize="small"
-                      data-testid="edit-contact-button"
-                      onClick={() => {
-                        setEmailContactInformation(subscriberEmail);
-                        setEditContactInformation(!editContactInformation);
-                      }}
-                    >
-                      Edit contact information
-                    </GoAButton>
-                  )}
-                </div>
-              </ContactInformationContainer>
-            </GoACard>
-            <GoAModal></GoAModal>
-            <Container hs={1} vs={5}>
-              <SubscriptionListContainer>
-                {subscriber.subscriptions?.length > 0 ? (
-                  <DataTable data-testid="subscriptions-table">
-                    <TableHeaders>
-                      <tr>
-                        <th id="subscriptions">Subscriptions</th>
-                        <th id="available-channels">Available channels</th>
-                        <th id="action">Action</th>
-                      </tr>
-                    </TableHeaders>
-                    <tbody>
-                      <SubscriptionsList onUnsubscribe={unSubscribe} subscriptions={subscriber.subscriptions} />
-                    </tbody>
-                  </DataTable>
-                ) : (
-                  <GoACallout title="You have no subscriptions" type="important"></GoACallout>
-                )}
-              </SubscriptionListContainer>
-              <div id="contactSupport">
-                <GoACallout title="Need help? Contact your service admin" type="information">
-                  <div>{contact?.supportInstructions}</div>
-                  <div>
-                    Email:{' '}
-                    <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
-                      {contact?.contactEmail}
-                    </a>
-                  </div>
-                  <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>
-                  <div data-testid="service-notice-date-range"></div>
-                </GoACallout>
+    <SubscriptionManagement>
+      <Main>
+        <Container hs={2} vs={4.5} xlHSpacing={12}>
+          <h1 data-testid="service-name">Subscription management</h1>
+          <p data-testid="service-description" className="pb25">
+            Use this page to manage notifications from the services of Government of Alberta. Please note, unsubscribing
+            from some notifications might require additional verification from the government authorities.
+          </p>
+          {showUnSubscribeModal ? unSubscribeModal() : ''}
+          {subscriber?.subscriptions ? (
+            <>
+              <div className="pb35">
+                <GoACard title="Contact information" data-testid="contact-information-card">
+                  <Label>Email</Label>
+                  <ContactInformationContainer>
+                    <div>
+                      {editContactInformation ? (
+                        <GoAForm>
+                          <GoAFormItem error={formErrors?.['email']}>
+                            <GoAInputEmail
+                              aria-label="email"
+                              name="email"
+                              value={emailContactInformation}
+                              onChange={setValue}
+                              data-testid="edit-contact-input-text"
+                            />
+                          </GoAFormItem>
+                        </GoAForm>
+                      ) : (
+                        <p>{subscriberEmail}</p>
+                      )}
+                    </div>
+                    <div>
+                      {editContactInformation ? (
+                        updateContactInfoButtons()
+                      ) : (
+                        <GoAButton
+                          buttonSize="small"
+                          data-testid="edit-contact-button"
+                          onClick={() => {
+                            setEmailContactInformation(subscriberEmail);
+                            setEditContactInformation(!editContactInformation);
+                          }}
+                        >
+                          Edit contact information
+                        </GoAButton>
+                      )}
+                    </div>
+                  </ContactInformationContainer>
+                </GoACard>
               </div>
-            </Container>
-          </>
-        ) : hasSubscriberId === false ? (
-          <NoSubscriberCallout>
-            <GoACallout title="You have no subscriptions" type="important"></GoACallout>
-          </NoSubscriberCallout>
-        ) : (
-          <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
-        )}
-      </Container>
-    </Main>
+              <GoAModal></GoAModal>
+              <Container hs={0} vs={0}>
+                <SubscriptionListContainer>
+                  {subscriber.subscriptions?.length > 0 ? (
+                    <DataTable data-testid="subscriptions-table">
+                      <TableHeaders>
+                        <tr>
+                          <th id="subscriptions">Subscriptions</th>
+                          <th id="available-channels">Available channels</th>
+                          <th id="action">Action</th>
+                        </tr>
+                      </TableHeaders>
+                      <tbody>
+                        <SubscriptionsList onUnsubscribe={unSubscribe} subscriptions={subscriber.subscriptions} />
+                      </tbody>
+                    </DataTable>
+                  ) : (
+                    <GoACallout title="You have no subscriptions" type="important"></GoACallout>
+                  )}
+                </SubscriptionListContainer>
+                <div id="contactSupport" className="pt2">
+                  <GoACallout title="Need help? Contact your service admin" type="information">
+                    <div>{contact?.supportInstructions}</div>
+                    <div>
+                      Email:{' '}
+                      <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
+                        {contact?.contactEmail}
+                      </a>
+                    </div>
+                    <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>
+                    <div data-testid="service-notice-date-range"></div>
+                  </GoACallout>
+                </div>
+              </Container>
+            </>
+          ) : hasSubscriberId === false ? (
+            <NoSubscriberCallout>
+              <GoACallout title="You have no subscriptions" type="important"></GoACallout>
+            </NoSubscriberCallout>
+          ) : (
+            <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
+          )}
+        </Container>
+      </Main>
+    </SubscriptionManagement>
   );
 };
 export default Subscriptions;
+
+const SubscriptionManagement = styled.div`
+  .pt2 {
+    padding-top: 2rem;
+  }
+
+  .pb25 {
+    padding-bottom: 2.5rem;
+  }
+
+  .pb35 {
+    padding-bottom: 3.5rem;
+  }
+
+  tr > th {
+    padding-bottom: 0.5rem;
+  }
+`;
