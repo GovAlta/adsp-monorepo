@@ -7,12 +7,14 @@ describe('createTenantHandler', () => {
     getTenant: jest.fn(),
     getTenants: jest.fn(),
     getTenantByName: jest.fn(),
+    getTenantByRealm: jest.fn(),
   };
 
   beforeEach(() => {
     serviceMock.getTenant.mockReset();
     serviceMock.getTenants.mockReset();
     serviceMock.getTenantByName.mockReset();
+    serviceMock.getTenantByRealm.mockReset();
   });
 
   it('can create handler', () => {
