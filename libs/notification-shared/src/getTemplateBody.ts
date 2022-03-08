@@ -1,14 +1,17 @@
-import { getHeaderPreview, getFooterPreview } from '../events';
+import * as handlebars from 'handlebars';
+import emailWrapper from './templates/email-wrapper.hbs';
+
+const emailWrapperTemplate = handlebars.compile(emailWrapper, { noEscape: true });
+
 const hasProperHtmlWrapper = (content: string): boolean => {
   const hasHtmlOpeningTag = /<html[^>]*>/g.test(content) || /<HTML[^>]*>/g.test(content);
   const hasHtmlClosingTag = /<\/html[^>]*>/g.test(content) || /<\/HTML[^>]*>/g.test(content);
   return hasHtmlOpeningTag && hasHtmlClosingTag;
 };
 
-export const getTemplateBody = (body: string) => {
+export const getTemplateBody = (body: string, context?: Record<string, unknown>): string => {
   if (!hasProperHtmlWrapper(body)) {
-    body = body.includes('<style') ? `<style scoped>${body}</style>` : body;
-    return `<!doctype html><html>${getHeaderPreview()}<div style="padding: 3rem 11rem;background-color:white;">${body}</div>${getFooterPreview()}</html>`;
+    return emailWrapperTemplate({ content: body, ...context });
   }
 
   return body;

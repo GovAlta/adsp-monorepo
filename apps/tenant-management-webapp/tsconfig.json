@@ -28,9 +28,9 @@
       "@style/*": [
         "../../../libs/stylesheets/scss/src/lib/*"
       ],
-      "@shared/*": [
-        "../../../libs/shared/src/*"
-      ]
+      "@core-services/notification-shared": [
+        "../../../libs/notification-shared/src/index.ts"
+      ],
     }
   },
   "files": [],

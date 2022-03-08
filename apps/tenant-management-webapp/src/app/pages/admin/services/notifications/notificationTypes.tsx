@@ -6,16 +6,15 @@ import { NotificationTypeModalForm } from './edit';
 import { EventModalForm } from './editEvent';
 import { IndicatorWithDelay } from '@components/Indicator';
 import debounce from 'lodash.debounce';
-import * as handlebars from 'handlebars/dist/cjs/handlebars';
+import * as handlebars from 'handlebars';
 import { DeleteModal } from '@components/DeleteModal';
 
 import { GoAIcon } from '@abgov/react-components/experimental';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { isDuplicatedNotificationName } from './validation';
 import { NotificationType } from '@store/notification/models';
-import DOMPurify from 'dompurify';
 import { generateMessage } from '@lib/handlebarHelper';
-import { getTemplateBody } from '@shared/utils/html';
+import { getTemplateBody } from '@core-services/notification-shared';
 
 import {
   UpdateNotificationTypeService,
@@ -106,7 +105,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       // try to render preview of subject and body.
       // Will only load if the subject and body is a valid handlebar template
       try {
-        setBodyPreview(generateMessage(getTemplateBody(selectedEvent?.templates?.email?.body), htmlPayload));
+        setBodyPreview(
+          generateMessage(getTemplateBody(selectedEvent?.templates?.email?.body, htmlPayload), htmlPayload)
+        );
         setTemplateEditErrors({
           ...templateEditErrors,
           body: '',
@@ -189,9 +190,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       });
     }
   }, TEMPALTE_RENDER_DEBOUNCE_TIMER);
+
   const debouncedSaveBodyPreview = debounce((value) => {
     try {
-      const msg = generateMessage(getTemplateBody(value), htmlPayload);
+      const msg = generateMessage(getTemplateBody(value, htmlPayload), htmlPayload);
       setBodyPreview(msg);
       setTemplateEditErrors({
         ...templateEditErrors,
@@ -722,8 +724,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               <PreviewTemplate
                 subjectTitle="Subject"
                 emailTitle="Email preview"
-                subjectPreviewContent={DOMPurify.sanitize(subjectPreview)}
-                emailPreviewContent={DOMPurify.sanitize(bodyPreview)}
+                subjectPreviewContent={subjectPreview}
+                emailPreviewContent={bodyPreview}
               />
             </PreviewTemplateContainer>
           </NotificationTemplateEditorContainer>

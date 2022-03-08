@@ -1,7 +1,7 @@
 import { AdspId, Channel, isAllowedUser, Tenant, User } from '@abgov/adsp-service-sdk';
 import type { DomainEvent } from '@core-services/core-common';
 import { UnauthorizedError } from '@core-services/core-common';
-import { getTemplateBody } from '@core-services/shared';
+import { getTemplateBody } from '@core-services/notification-shared';
 import { Logger } from 'winston';
 import { SubscriptionRepository } from '../repository';
 import { TemplateService } from '../template';
@@ -120,7 +120,8 @@ export class NotificationTypeEntity implements NotificationType {
     subscription: SubscriptionEntity
   ): Notification {
     const eventNotification = this.events.find((e) => e.namespace === event.namespace && e.name === event.name);
-    const { address, channel } = (eventNotification && subscription.getSubscriberChannel(this, eventNotification)) || {};
+    const { address, channel } =
+      (eventNotification && subscription.getSubscriberChannel(this, eventNotification)) || {};
 
     if (!address) {
       logger.warn(
@@ -139,6 +140,12 @@ export class NotificationTypeEntity implements NotificationType {
         addressAs: subscription.subscriber.addressAs,
       };
 
+      const messageContext = {
+        event,
+        subscriber,
+        tenant,
+      };
+
       return {
         tenantId: event.tenantId.toString(),
         type: {
@@ -154,19 +161,18 @@ export class NotificationTypeEntity implements NotificationType {
         context: event.context,
         to: address,
         channel,
-        message: templateService.generateMessage(this.getTemplate(channel, eventNotification.templates[channel]), {
-          event,
-          subscriber,
-          tenant,
-        }),
+        message: templateService.generateMessage(
+          this.getTemplate(channel, eventNotification.templates[channel], messageContext),
+          messageContext
+        ),
         subscriber,
       };
     }
   }
 
-  private getTemplate(channel: Channel, template: Template): Template {
+  private getTemplate(channel: Channel, template: Template, context: unknown): Template {
     if (channel === Channel.email) {
-      template['body'] = getTemplateBody(template.body.toString());
+      template['body'] = getTemplateBody(template.body.toString(), context);
     }
     return template;
   }
