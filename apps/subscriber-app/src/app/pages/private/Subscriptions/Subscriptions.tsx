@@ -4,7 +4,8 @@ import Container from '@components/Container';
 import DataTable from '@components/DataTable';
 import { GoAButton, GoACard, GoAPageLoader } from '@abgov/react-components';
 import { GoACallout } from '@abgov/react-components';
-import { FetchNotificationTypeService } from '@store/notification/actions';
+import { FetchContactInfoService } from '@store/notification/actions';
+import { useParams } from 'react-router-dom';
 import {
   GoAInputEmail,
   GoAForm,
@@ -35,13 +36,14 @@ const Subscriptions = (): JSX.Element => {
     subscriber: state.subscription.subscriber,
     hasSubscriberId: state.subscription.hasSubscriberId,
   }));
-  const contact = useSelector((state: RootState) => state.notification.notificationTypes?.contact);
+  const contact = useSelector((state: RootState) => state.notification?.contactInfo);
   const [formErrors, setFormErrors] = useState({});
   const subscriberEmail = subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === EMAIL)[0]?.address;
   const [emailContactInformation, setEmailContactInformation] = useState(subscriberEmail);
   const [editContactInformation, setEditContactInformation] = useState(false);
   const [showUnSubscribeModal, setShowUnSubscribeModal] = useState(false);
   const [selectedUnsubscribeSub, setSelectedUnsubscribeSub] = useState<Subscription>();
+  const { realm } = useParams<{ realm: string }>();
 
   const phoneWrapper = (phoneNumber) => {
     if (phoneNumber) {
@@ -55,7 +57,7 @@ const Subscriptions = (): JSX.Element => {
   }, []);
 
   useEffect(() => {
-    dispatch(FetchNotificationTypeService());
+    dispatch(FetchContactInfoService(realm));
   }, []);
 
   const unSubscribe = (typeId: string) => {

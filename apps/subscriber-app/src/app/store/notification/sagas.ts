@@ -1,34 +1,23 @@
-import { put, select, call, takeEvery } from 'redux-saga/effects';
+import { put, call, takeEvery } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { SagaIterator } from '@redux-saga/core';
-import { FetchNotificationTypeSucceededService, FETCH_NOTIFICATION_TYPE } from './actions';
-import { RootState } from '../index';
+import { FetchContactInfoSucceededService, FETCH_CONTACT_INFO, FetchContactInfoAction } from './actions';
 import axios from 'axios';
 
-export function* fetchNotificationTypes(): SagaIterator {
-  const configBaseUrl: string = yield select(
-    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
-  );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+export function* fetchNotificationTypes(action: FetchContactInfoAction): SagaIterator {
+  const { realm } = action.payload;
 
-  if (configBaseUrl && token) {
+  if (realm) {
     try {
-      const { data: configuration } = yield call(
-        axios.get,
-        `${configBaseUrl}/configuration/v2/configuration/platform/notification-service`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const { data: contactInfo } = yield call(axios.get, `/api/configuration/v1/support-info/${realm}`);
 
-      const notificationTypeInfo = configuration.latest && configuration.latest.configuration;
-      yield put(FetchNotificationTypeSucceededService({ data: notificationTypeInfo }));
+      yield put(FetchContactInfoSucceededService({ data: contactInfo }));
     } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypesInfo` }));
     }
   }
 }
 
 export function* watchNotificationSagas(): Generator {
-  yield takeEvery(FETCH_NOTIFICATION_TYPE, fetchNotificationTypes);
+  yield takeEvery(FETCH_CONTACT_INFO, fetchNotificationTypes);
 }

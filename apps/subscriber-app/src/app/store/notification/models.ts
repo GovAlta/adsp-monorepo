@@ -53,14 +53,14 @@ export interface NotificationMetrics {
 
 export interface NotificationState {
   notificationList: NotificationType;
-  notificationTypes: NotificationType | undefined;
+  contactInfo: ContactInformation | undefined;
   core: NotificationType;
   metrics: NotificationMetrics;
 }
 
 export const NOTIFICATION_INIT: NotificationState = {
   notificationList: {},
-  notificationTypes: undefined,
+  contactInfo: undefined,
   core: {},
   metrics: {},
 };

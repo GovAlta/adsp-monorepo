@@ -118,8 +118,6 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
 
       payload.events = sanitizedEvents;
 
-      console.log(JSON.stringify(payload) + '<payload');
-
       yield call(
         axios.patch,
         `${configBaseUrl}/configuration/v2/configuration/platform/notification-service`,
