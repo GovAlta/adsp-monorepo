@@ -14,6 +14,7 @@ import {
   EMAIL_EXISTS,
   RESET_UPDATE_ERRORS,
   RESOLVE_SUBSCRIBER_USER_SUCCESS,
+  RESET_SUBSCRIBER_SUBSCRIPTIONS,
 } from './actions';
 
 import { SUBSCRIBER_INIT, SubscriberService, SubscriberAndSubscriptions } from './models';
@@ -203,6 +204,13 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       return {
         ...state,
         updateError: '',
+      };
+    }
+
+    case RESET_SUBSCRIBER_SUBSCRIPTIONS: {
+      return {
+        ...state,
+        subscriberSubscriptions: {},
       };
     }
 

@@ -2,7 +2,7 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { Subscriber, SubscriberSearchCriteria } from '@store/subscription/models';
 import { SubscribersSearchForm } from './subscriberSearchForm';
 import { useDispatch, useSelector } from 'react-redux';
-import { FindSubscribers, ResetVisibilityInSubscribersService } from '@store/subscription/actions';
+import { FindSubscribers, ResetSubscriberSubscriptionsService } from '@store/subscription/actions';
 import { SubscriberList } from './subscriberList';
 import { NextLoader } from './nextLoader';
 import { CheckSubscriberRoles } from '../checkSubscriberRoles';
@@ -38,7 +38,7 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
   const resetState = (resetCriteria) => {
     dispatch(FindSubscribers(resetCriteria));
     setCriteriaState(criteriaInit);
-    dispatch(ResetVisibilityInSubscribersService());
+    dispatch(ResetSubscriberSubscriptionsService());
   };
 
   useEffect(() => {
