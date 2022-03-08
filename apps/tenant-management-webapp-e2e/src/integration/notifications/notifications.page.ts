@@ -75,19 +75,19 @@ class NotificationsPage {
 
   notificationTypeSubscriberRoles(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*/div[contains(text(),  "Subscriber Roles")]`
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//*[@data-testid="tenant-subscriber-roles"]`
     );
   }
 
   notificationTypePublicSubscription(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//div[contains(text(), "Public Subscription")]`
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//*[@data-testid="tenant-public-subscription"]`
     );
   }
 
   notificationTypeSelfService(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//div[contains(text(), "Self-service")]`
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//*[@data-testid="tenant-self-service"]`
     );
   }
 
