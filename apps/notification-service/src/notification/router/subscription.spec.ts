@@ -51,6 +51,7 @@ describe('subscription router', () => {
     publicSubscribe: false,
     manageSubscribe: false,
     subscriberRoles: ['test-subscriber'],
+    channels: [],
   };
 
   const verifyServiceMock = {

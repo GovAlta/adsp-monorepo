@@ -86,6 +86,7 @@ describe('createProcessEventJob', () => {
         description: '',
         publicSubscribe: true,
         subscriberRoles: [],
+        channels: [Channel.email],
         events: [
           {
             namespace: 'test',
@@ -95,7 +96,6 @@ describe('createProcessEventJob', () => {
               [Channel.sms]: null,
               [Channel.mail]: null,
             },
-            channels: [Channel.email],
           },
         ],
       };
@@ -165,6 +165,7 @@ describe('createProcessEventJob', () => {
         description: '',
         publicSubscribe: true,
         subscriberRoles: [],
+        channels: [Channel.email],
         events: [
           {
             namespace: 'test',
@@ -174,12 +175,10 @@ describe('createProcessEventJob', () => {
               [Channel.sms]: null,
               [Channel.mail]: null,
             },
-            channels: [Channel.email],
           },
         ],
       };
       const customType = JSON.parse(JSON.stringify(type));
-      customType.events[0].channels = [];
       customType.events[0].templates = {
         [Channel.email]: { subject: 'hello there', body: 'i customize body' },
         [Channel.sms]: null,

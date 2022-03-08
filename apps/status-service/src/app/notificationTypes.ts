@@ -1,26 +1,4 @@
-import { Channel } from '@abgov/adsp-service-sdk';
-
-export interface Template {
-  subject: unknown;
-  body: unknown;
-}
-
-export interface NotificationTypeEvent {
-  namespace: string;
-  name: string;
-  templates: Partial<Record<Channel, Template>>;
-  channels?: string[];
-  customized?: boolean;
-}
-
-export interface NotificationType {
-  name: string;
-  description: string;
-  publicSubscribe: boolean;
-  manageSubscribe?: boolean;
-  subscriberRoles: string[];
-  events: NotificationTypeEvent[];
-}
+import { Channel, NotificationType } from '@abgov/adsp-service-sdk';
 
 export const StatusApplicationHealthChange: NotificationType = {
   name: 'status-application-health-change',
@@ -28,6 +6,7 @@ export const StatusApplicationHealthChange: NotificationType = {
     'Provides notifications of application health check changes including when: health check is started or stopped; health check detects application is healthy or unhealthy. ' +
     'Teams can use this notification type to monitor and address application issues.',
   subscriberRoles: ['status-admin'],
+  channels: [Channel.email, Channel.bot, Channel.sms],
   events: [
     {
       namespace: 'status-service',
@@ -42,12 +21,8 @@ export const StatusApplicationHealthChange: NotificationType = {
   </p>
 </div>`,
         },
-        slack: {
-          subject: '*Health check for {{ event.payload.application.name }} started.*',
-          body: 'Health check started for {{ event.payload.application.name }} and polling on: {{ event.payload.application.url }}',
-        },
-        teams: {
-          subject: '*Health check for {{ event.payload.application.name }} started.*',
+        bot: {
+          subject: '**Health check for {{ event.payload.application.name }} started.**',
           body: 'Health check started for {{ event.payload.application.name }} and polling on: {{ event.payload.application.url }}',
         },
         sms: {
@@ -55,7 +30,6 @@ export const StatusApplicationHealthChange: NotificationType = {
           body: 'Health check started for {{ event.payload.application.name }} and polling on: {{ event.payload.application.url }}',
         },
       },
-      channels: ['email', 'slack', 'teams', 'sms'],
     },
     {
       namespace: 'status-service',
@@ -70,12 +44,8 @@ export const StatusApplicationHealthChange: NotificationType = {
   </p>
 </div>`,
         },
-        slack: {
-          subject: '*Health check for {{ event.payload.application.name }} stopped.*',
-          body: 'Health check stopped for {{ event.payload.application.name }} and no longer polling on: {{ event.payload.application.url }}',
-        },
-        teams: {
-          subject: '*Health check for {{ event.payload.application.name }} stopped.*',
+        bot: {
+          subject: '**Health check for {{ event.payload.application.name }} stopped.**',
           body: 'Health check stopped for {{ event.payload.application.name }} and no longer polling on: {{ event.payload.application.url }}',
         },
         sms: {
@@ -83,7 +53,6 @@ export const StatusApplicationHealthChange: NotificationType = {
           body: 'Health check stopped for {{ event.payload.application.name }} and no longer polling on: {{ event.payload.application.url }}',
         },
       },
-      channels: ['email', 'slack', 'teams', 'sms'],
     },
     {
       namespace: 'status-service',
@@ -98,12 +67,8 @@ export const StatusApplicationHealthChange: NotificationType = {
   </p>
 </div>`,
         },
-        slack: {
-          subject: '*{{ event.payload.application.name }} is unhealthy.*',
-          body: 'Health check indicates {{ event.payload.application.name }} ({{ event.payload.application.url }}) is unhealthy.',
-        },
-        teams: {
-          subject: '*{{ event.payload.application.name }} is unhealthy.*',
+        bot: {
+          subject: '**{{ event.payload.application.name }} is unhealthy.**',
           body: 'Health check indicates {{ event.payload.application.name }} ({{ event.payload.application.url }}) is unhealthy.',
         },
         sms: {
@@ -111,7 +76,6 @@ export const StatusApplicationHealthChange: NotificationType = {
           body: 'Health check indicates {{ event.payload.application.name }} ({{ event.payload.application.url }}) is unhealthy.',
         },
       },
-      channels: ['email', 'slack', 'teams', 'sms'],
     },
     {
       namespace: 'status-service',
@@ -126,12 +90,8 @@ export const StatusApplicationHealthChange: NotificationType = {
   </p>
 </div>`,
         },
-        slack: {
-          subject: '*{{ event.payload.application.name }} is healthy.*',
-          body: 'Health check indicates {{ event.payload.application.name }} ({{ event.payload.application.url }}) is healthy.',
-        },
-        teams: {
-          subject: '*{{ event.payload.application.name }} is healthy.*',
+        bot: {
+          subject: '**{{ event.payload.application.name }} is healthy.**',
           body: 'Health check indicates {{ event.payload.application.name }} ({{ event.payload.application.url }}) is healthy.',
         },
         sms: {
@@ -139,7 +99,6 @@ export const StatusApplicationHealthChange: NotificationType = {
           body: 'Health check indicates {{ event.payload.application.name }} ({{ event.payload.application.url }}) is healthy.',
         },
       },
-      channels: ['email', 'slack', 'teams', 'sms'],
     },
   ],
   publicSubscribe: false,
@@ -150,6 +109,7 @@ export const StatusApplicationStatusChange: NotificationType = {
   description:
     'Provides notifications of application status updates and new published notices. Public users can subscribe to this notification type from the status application.',
   subscriberRoles: [],
+  channels: [Channel.email],
   events: [
     {
       namespace: 'status-service',
@@ -167,7 +127,6 @@ export const StatusApplicationStatusChange: NotificationType = {
 </div>`,
         },
       },
-      channels: ['email'],
     },
     {
       namespace: 'status-service',
@@ -192,7 +151,6 @@ export const StatusApplicationStatusChange: NotificationType = {
 </div>`,
         },
       },
-      channels: ['email'],
     },
   ],
   publicSubscribe: true,

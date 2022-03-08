@@ -1,0 +1,100 @@
+<html>
+  <head>
+    <style>
+      .goa-header-event-template {
+        padding-bottom: 0.875rem;
+        padding-top: 0.875rem;
+      }
+      #goa-callout-custom {
+        background-color: #0081a2 !important;
+        color: #ffffff;
+        padding-left: 7.5rem;
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+      }
+      #goa-callout-custom .title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: 0em;
+        text-align: left;
+        line-height: 3rem;
+      }
+      .goa-footer-event {
+        background-color: #F1F1F1;
+        padding-top: 2.5rem;
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+      }
+      .goa-footer-event .link {
+        padding-left: 4.5rem;
+        flex: 5;
+        padding-bottom: 1.5rem;
+        }
+      .goa-footer-event .logo {
+        padding-right: 6.75rem;
+        flex: 1;
+      }
+      .goa-footer-event .footer-disclaimer {
+        padding-left: 4.5rem;
+        padding-right: 5.5rem;
+        color: #666666;
+        padding-top: 1.75rem;
+        font-size: 14px;
+        text-align: justify;
+      }
+      .container {
+        display: flex;
+      }
+      .footer-link-border {
+        border-bottom: 1px solid #DCDCDC;
+      }
+      .email-content {
+        padding: 3rem 11rem;
+        background-color: white;
+      }
+    </style>
+  </head>
+  <header>
+    <div class='goa-header-event-template'>
+      <div class='goa-logo'>
+        <img
+          alt='Government of Alberta'
+          src='https://file-service.adsp.alberta.ca/file/v1/files/4b95b597-395f-4f4a-90ba-1d6cf2be0756/download?embed=true'
+        />
+      </div>
+    </div>
+    <div id='goa-callout-custom'>
+      <div class='title'>
+        {{#if tenant.name}}{{tenant.name}}{{else}}Alberta Digital Service Platform{{/if}}
+      </div>
+    </div>
+  </header>
+  <div class="email-content">
+    {{content}}
+  </div>
+  <footer>
+    <div class='goa-footer-event'>
+      <div class='container footer-link-border'>
+        <div class='link'>
+          <span>
+            Please do not reply to this email.
+          </span>
+          <br />
+        </div>
+        <div class='logo'>
+          <img
+            alt='Government of Alberta'
+            src='https://file-service.adsp.alberta.ca/file/v1/files/4b95b597-395f-4f4a-90ba-1d6cf2be0756/download?embed=true'
+          />
+        </div>
+      </div>
+      <div class='footer-disclaimer'>
+        This email was sent from the Government of Alberta and any files transmitted with it are confidential and
+        intended solely for the use of the individual For entity to whom they are addressed. If you have received this
+        email in error please notify the system manager. This message contains confidential information and is intended
+        only for the individual named. If you are not the named addressee you should not disseminate, distribute or copy
+        this e-mail.
+      </div>
+    </div>
+  </footer>
+</html>

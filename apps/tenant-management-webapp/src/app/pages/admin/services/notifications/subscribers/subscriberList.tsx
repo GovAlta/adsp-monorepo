@@ -16,7 +16,6 @@ import { renderNoItem } from '@components/NoItem';
 import { GoAIconButton } from '@abgov/react-components/experimental';
 import { DeleteModal } from '@components/DeleteModal';
 import type { SubscriberSearchCriteria } from '@store/subscription/models';
-import { FindSubscribers } from '@store/subscription/actions';
 
 interface ActionComponentProps {
   subscriber: Subscriber;
@@ -96,8 +95,19 @@ const ActionComponent: FunctionComponent<ActionComponentProps> = ({
         <tr>
           <td colSpan={3}>
             <h2>Subscriptions</h2>
+            {currentSubscriberAndSubscription?.subscriptions?.length < 1 ? (
+              <span>
+                <b>No subscriptions</b>
+              </span>
+            ) : (
+              ''
+            )}
             {currentSubscriberAndSubscription?.subscriptions.map((subscription, i) => {
-              return <div data-testid={`subscriptions-${i}`}>{subscription.typeId}</div>;
+              return (
+                <div data-testid={`subscriptions-${i}`}>
+                  <b>{subscription.typeId}</b>
+                </div>
+              );
             })}
           </td>
         </tr>
@@ -189,8 +199,7 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
           </div>
         }
         onDelete={() => {
-          dispatch(DeleteSubscriberService(selectedDeleteSubscriberId));
-          dispatch(FindSubscribers(props.searchCriteria));
+          dispatch(DeleteSubscriberService(selectedDeleteSubscriberId, props.searchCriteria));
           setSelectedDeleteSubscriberId(null);
         }}
       />

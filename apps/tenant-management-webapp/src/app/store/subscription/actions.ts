@@ -227,6 +227,7 @@ export interface DeleteSubscriberAction {
   type: typeof DELETE_SUBSCRIBER;
   payload: {
     subscriberId: string;
+    criteria: SubscriberSearchCriteria;
   };
 }
 
@@ -422,9 +423,13 @@ export const GetTypeSubscriptionSuccess = (
   },
 });
 
-export const DeleteSubscriberService = (subscriberId: string): DeleteSubscriberAction => ({
+export const DeleteSubscriberService = (
+  subscriberId: string,
+  criteria: SubscriberSearchCriteria
+): DeleteSubscriberAction => ({
   type: DELETE_SUBSCRIBER,
   payload: {
     subscriberId,
+    criteria,
   },
 });

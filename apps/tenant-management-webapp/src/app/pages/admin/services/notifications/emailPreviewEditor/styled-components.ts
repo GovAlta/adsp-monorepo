@@ -1,4 +1,5 @@
 import styled, { createGlobalStyle } from 'styled-components';
+import { PreviewPortal } from '../previewPortal';
 
 export const NotificationTemplateEditorContainer = styled.div`
   display: flex;
@@ -67,20 +68,24 @@ export const EditTemplateActions = styled.div`
 `;
 
 // preview template components
+export const PreviewContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  margin-right: 2rem;
+`;
 
 export const SubjectPreview = styled.div`
   background-color: white;
   padding-left: 1rem;
-  margin-right: 2rem;
-  height: 100%;
 `;
 
-export const BodyPreview = styled.div`
+export const BodyPreview = styled(PreviewPortal)`
   background-color: white;
   overflow: hidden;
   &:hover {
     overflow: auto;
   }
-  margin-right: 2rem;
-  height: 40rem;
+  flex-grow: 1;
+  margin-bottom: 2rem;
 `;

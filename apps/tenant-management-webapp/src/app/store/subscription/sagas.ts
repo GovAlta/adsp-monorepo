@@ -1,4 +1,4 @@
-import { put, select, call, takeEvery, takeLatest, all } from 'redux-saga/effects';
+import { put, select, call, takeEvery, all } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { SagaIterator } from '@redux-saga/core';
 import { validate as validateUuid } from 'uuid';
@@ -41,6 +41,7 @@ import {
   RESOLVE_SUBSCRIBER_USER,
   DeleteSubscriberAction,
   DELETE_SUBSCRIBER,
+  FindSubscribers,
 } from './actions';
 import { Subscription, Subscriber, SubscriptionWrapper } from './models';
 import { RootState } from '../index';
@@ -425,6 +426,7 @@ export function* deleteSubscriber(action: DeleteSubscriberAction): SagaIterator 
     yield call(axios.delete, `${configBaseUrl}/${deleteSubscriberPath}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    yield put(FindSubscribers(action.payload.criteria));
   } catch (e) {
     yield put(ErrorNotification({ message: `Subscriptions (getSubscriberSubscriptions): ${e.message}` }));
   }

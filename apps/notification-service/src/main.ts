@@ -6,7 +6,6 @@ import {
   createErrorHandler,
   createAmqpConfigUpdateService,
 } from '@core-services/core-common';
-import { InstallProvider } from '@slack/oauth';
 import * as express from 'express';
 import * as fs from 'fs';
 import * as passport from 'passport';
@@ -103,7 +102,7 @@ async function initializeApp() {
     configurationHandler
   );
 
-  const { slackRepository, ...repositories } = await createRepositories({ ...environment, logger });
+  const { botRepository, ...repositories } = await createRepositories({ ...environment, logger });
 
   const eventSubscriber = await createAmqpEventService({
     ...environment,
@@ -135,23 +134,9 @@ async function initializeApp() {
     next();
   }
 
-  const slackInstaller = new InstallProvider({
-    clientId: environment.SLACK_CLIENT_ID,
-    clientSecret: environment.SLACK_CLIENT_SECRET,
-    stateSecret: environment.SLACK_STATE_SECRET,
-    installationStore: slackRepository,
-  });
-
   const templateService = createTemplateService();
 
-  const providers = initializeProviders(app, {
-    getRootUrl,
-    logger,
-    slackInstaller,
-    slackRepository,
-    botRepository: repositories.botRepository,
-    ...environment,
-  });
+  const providers = initializeProviders(logger, app, botRepository, environment);
 
   const verifyService = createVerifyService({ providers, templateService, directory, tokenProvider });
 

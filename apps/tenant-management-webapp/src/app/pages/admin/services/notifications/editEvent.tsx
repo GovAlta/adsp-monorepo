@@ -113,7 +113,6 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
               namespace: dropdownObject.nameSpace,
               name: dropdownObject.name,
               templates: emptyTemplate,
-              channels: [],
             };
             // deep cloning props to avoid unwanted side effects
             // note: do not mutate props directly, it will cause unnecessary side effects

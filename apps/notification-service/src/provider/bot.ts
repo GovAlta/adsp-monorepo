@@ -9,6 +9,7 @@ import {
   TurnContext,
   ConversationParameters,
   ConversationReference,
+  Activity,
 } from 'botbuilder';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
@@ -25,6 +26,12 @@ class BotNotificationActivityHandler extends ActivityHandler {
 
     this.onMembersAdded(async (context, next) => {
       const botAdded = context.activity.membersAdded.find(({ id }) => id === context.activity.recipient.id);
+      this.logger.debug(
+        `Received member added activity for members: ${context.activity.membersAdded
+          .map(({ id, name }) => `${name} (ID ${id})`)
+          .join(', ')}`,
+        this.LOG_CONTEXT
+      );
       if (botAdded) {
         this.logger.info(`Bot added to conversation, resolving teams information...`, this.LOG_CONTEXT);
         this.logger.debug(
@@ -47,14 +54,13 @@ class BotNotificationActivityHandler extends ActivityHandler {
           case Channels.Slack: {
             const {
               SlackMessage: {
-                api_app_id,
                 event: { team, channel },
               },
             } = context.activity.channelData as SlackChannelData;
 
             tenantId = team;
             conversationId = channel;
-            botId = `${api_app_id}:${context.activity.recipient.id.split(':')[0]}`;
+            botId = context.activity.recipient.id.split(':')[0];
             break;
           }
           default: {
@@ -87,6 +93,12 @@ class BotNotificationActivityHandler extends ActivityHandler {
 
     this.onMembersRemoved(async (context, next) => {
       const botRemoved = context.activity.membersRemoved.find(({ id }) => id === context.activity.recipient.id);
+      this.logger.debug(
+        `Received member removed activity for members: ${context.activity.membersRemoved
+          .map(({ id, name }) => `${name} (ID ${id})`)
+          .join(', ')}`,
+        this.LOG_CONTEXT
+      );
       if (botRemoved) {
         this.logger.info(`Bot removed from conversation, resolving teams information...`, this.LOG_CONTEXT);
 
@@ -96,8 +108,8 @@ class BotNotificationActivityHandler extends ActivityHandler {
           tenantId: tenant?.id || context.activity.conversation?.tenantId,
           conversationId: channel?.id || context.activity.conversation?.id,
         };
-        const deleted = await this.repository.delete(recordId);
 
+        const deleted = await this.repository.delete(recordId);
         if (deleted) {
           this.logger.info(
             `Deleted ${recordId.channelId}  reference for ${channel?.name || context.activity.conversation?.name} ` +
@@ -111,7 +123,21 @@ class BotNotificationActivityHandler extends ActivityHandler {
     });
 
     this.onMessage(async (context, next) => {
-      await context.sendActivity({ text: '*bee boop*', textFormat: 'markdown' });
+      const reference = TurnContext.getConversationReference(context.activity);
+
+      let address: string;
+      if (reference.channelId === Channels.Slack) {
+        address = reference.conversation?.id.split(':').slice(1).join('/');
+      } else {
+        address = reference.conversation?.id;
+      }
+
+      const reply: Partial<Activity> = {
+        text: `*Bee boop...* Ready to send notification to this channel at address: **${reference.channelId}/${address}**`,
+        textFormat: 'markdown',
+      };
+
+      await context.sendActivity(reply);
       await next();
     });
   }
@@ -151,22 +177,6 @@ export class BotNotificationProvider implements NotificationProvider {
 
     const botFrameworkAuthentication = createBotFrameworkAuthenticationFromConfiguration(null, credentialsFactory);
     this.adapter = new CloudAdapter(botFrameworkAuthentication);
-
-    // Catch-all for errors.
-    this.adapter.onTurnError = async (context, error) => {
-      // This check writes out errors to console log .vs. app insights.
-      // NOTE: In production environment, you should consider logging this to Azure
-      //       application insights.
-      this.logger.error(`[onTurnError] unhandled error: ${error}`, this.LOG_CONTEXT);
-
-      // Send a trace activity, which will be displayed in Bot Framework Emulator
-      await context.sendTraceActivity(
-        'OnTurnError Trace',
-        `${error}`,
-        'https://www.botframework.com/schemas/error',
-        'TurnError'
-      );
-    };
   }
 
   async processMessage(req: Request, res: Response): Promise<void> {
@@ -212,21 +222,19 @@ export class BotNotificationProvider implements NotificationProvider {
         )
       );
     } else if (channelId === Channels.Slack) {
-      const [botUserId, botId] = conversation.botId.split(':');
       conversationReference = {
         bot: {
-          id: botUserId,
+          id: `${conversation.botId}:${conversation.tenantId}`,
           name: conversation.botName,
         },
         channelId,
         serviceUrl: conversation.serviceUrl,
         conversation: {
-          id: [botId, conversation.tenantId, conversation.channelId].join(':'),
-          conversationType: null,
-          name: null,
+          id: `${conversation.botId}:${tenantId}:${conversationId}`,
+          name: conversation.name,
           isGroup: true,
         },
-      };
+      } as ConversationReference;
     } else {
       conversationReference = {
         bot: {
@@ -238,14 +246,31 @@ export class BotNotificationProvider implements NotificationProvider {
         conversation: {
           id: conversationId,
           conversationType: null,
-          name: null,
+          name: conversation.name,
           isGroup: true,
         },
       };
     }
 
     await this.adapter.continueConversationAsync(this.appId, conversationReference, async (turnContext) => {
-      await turnContext.sendActivity({ text: `${message.subject}\n\n${message.body}`, textFormat: 'markdown' });
+      this.logger.debug(
+        `Sending activity to channel ${channelId}: ${
+          conversationReference.conversation.id
+        } with conversation reference: ${JSON.stringify(conversationReference, null, 2)}`,
+        this.LOG_CONTEXT
+      );
+      try {
+        await turnContext.sendActivity({ text: `${message.subject}\n\n${message.body}`, textFormat: 'markdown' });
+      } catch (err) {
+        this.logger.error(
+          `Failed sending activity to channel ${channelId}: ${conversationReference.conversation.id}. ${JSON.stringify(
+            err
+          )}`,
+          this.LOG_CONTEXT
+        );
+
+        throw err;
+      }
     });
   }
 }

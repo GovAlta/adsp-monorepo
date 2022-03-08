@@ -1,4 +1,4 @@
-import { NotificationType } from '@abgov/adsp-service-sdk';
+import { Channel, NotificationType } from '@abgov/adsp-service-sdk';
 import { FORM_CREATED, FORM_LOCKED, FORM_SUBMITTED, FORM_UNLOCKED } from './events';
 
 const FORM_EVENT_NAMESPACE = 'form-service';
@@ -8,6 +8,7 @@ export const FormStatusNotificationType: NotificationType = {
   description: 'Provides notification of updates to the status of a form.',
   publicSubscribe: false,
   subscriberRoles: [],
+  channels: [Channel.email],
   events: [
     {
       namespace: FORM_EVENT_NAMESPACE,

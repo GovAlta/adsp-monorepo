@@ -326,6 +326,6 @@
     "../../.eslintrc.json"
   ],
   "ignorePatterns": [
-    "!**/*"
+    "!**/src/*"
   ]
 }

@@ -29,6 +29,13 @@ export const configurationSchema = {
       description: { type: ['string', 'null'] },
       publicSubscribe: { type: 'boolean' },
       manageSubscribe: { type: 'boolean' },
+      channels: {
+        type: 'array',
+        items: {
+          type: 'string',
+          enum: Object.values(Channel),
+        },
+      },
       subscriberRoles: {
         type: 'array',
         items: { type: 'string' },
@@ -46,19 +53,11 @@ export const configurationSchema = {
                 email: templateSchema,
                 sms: templateSchema,
                 mail: templateSchema,
-                teams: templateSchema,
-                slack: templateSchema,
-              },
-            },
-            channels: {
-              type: 'array',
-              items: {
-                type: 'string',
-                enum: Object.values(Channel),
+                bot: templateSchema,
               },
             },
           },
-          required: ['namespace', 'name', 'templates', 'channels'],
+          required: ['namespace', 'name', 'templates'],
         },
       },
     },
