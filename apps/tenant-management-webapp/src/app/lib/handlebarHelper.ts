@@ -1,4 +1,4 @@
-import * as handlebars from 'handlebars/dist/cjs/handlebars';
+import * as handlebars from 'handlebars';
 import { DateTime } from 'luxon';
 const TIME_ZONE = 'America/Edmonton';
 

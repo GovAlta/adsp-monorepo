@@ -5,7 +5,7 @@ import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { EventItem } from '@store/notification/models';
-import { getTemplateBody } from '@shared/utils/';
+import { getTemplateBody } from '@core-services/notification-shared';
 
 import DOMPurify from 'dompurify';
 import styled from 'styled-components';
