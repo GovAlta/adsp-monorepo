@@ -1,9 +1,5 @@
 import { getTemplateBody } from './getTemplateBody';
 
-jest.mock('./templates/email-wrapper.hbs', () => {
-  return { default: '<html><header></header>{{ content }}<footer></footer></html>' };
-});
-
 describe('Test email template', () => {
   it('Test PlainTest should have wrapper', () => {
     const plainText = ` Your draft form has been created.`;

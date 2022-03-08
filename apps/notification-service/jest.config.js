@@ -6,4 +6,7 @@ module.exports = {
   },
   coverageDirectory: '../../coverage/apps/notification-service',
   testEnvironment: 'node',
+  transform: {
+    '^.+\\.hbs$': '../../hbs-raw-loader.js',
+  }
 };

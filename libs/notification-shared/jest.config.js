@@ -8,6 +8,7 @@ module.exports = {
   },
   testEnvironment: 'node',
   transform: {
+    '^.+\\.hbs$': '../../hbs-raw-loader.js',
     '^.+\\.[tj]sx?$': 'ts-jest',
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
