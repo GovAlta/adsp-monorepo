@@ -62,7 +62,6 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
-      ignoreServiceAud: true,
     },
     { logger }
   );
