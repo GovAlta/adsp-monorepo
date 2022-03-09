@@ -1,4 +1,4 @@
-import { adspId } from '@abgov/adsp-service-sdk';
+import { adspId, NotificationType } from '@abgov/adsp-service-sdk';
 import { SubscriptionRepository } from '../repository';
 import { Channel, NotificationTypeEvent } from '../types';
 import { SubscriberEntity } from './subscriber';
@@ -134,10 +134,12 @@ describe('SubscriptionEntity', () => {
         subscriber
       );
 
-      const result = entity.getSubscriberChannel({
-        channels: [Channel.email],
-        templates: { [Channel.email]: { subject: 'test', body: 'test' } },
-      } as NotificationTypeEvent);
+      const result = entity.getSubscriberChannel(
+        { channels: [Channel.email] } as NotificationType,
+        {
+          templates: { [Channel.email]: { subject: 'test', body: 'test' } },
+        } as NotificationTypeEvent
+      );
       expect(result).toBe(channel);
     });
 
@@ -165,10 +167,12 @@ describe('SubscriptionEntity', () => {
         subscriber
       );
 
-      const result = entity.getSubscriberChannel({
-        channels: [Channel.email],
-        templates: { [Channel.email]: { subject: 'test', body: 'test' } },
-      } as NotificationTypeEvent);
+      const result = entity.getSubscriberChannel(
+        { channels: [Channel.email] } as NotificationType,
+        {
+          templates: { [Channel.email]: { subject: 'test', body: 'test' } },
+        } as NotificationTypeEvent
+      );
       expect(result).toBeFalsy();
     });
 
@@ -202,10 +206,12 @@ describe('SubscriptionEntity', () => {
         subscriber
       );
 
-      const result = entity.getSubscriberChannel({
-        channels: [Channel.email],
-        templates: { [Channel.email]: null },
-      } as NotificationTypeEvent);
+      const result = entity.getSubscriberChannel(
+        { channels: [Channel.email] } as NotificationType,
+        {
+          templates: { [Channel.email]: null },
+        } as NotificationTypeEvent
+      );
 
       expect(result).toBeFalsy();
     });

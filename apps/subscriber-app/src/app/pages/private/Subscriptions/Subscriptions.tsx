@@ -4,7 +4,8 @@ import Container from '@components/Container';
 import DataTable from '@components/DataTable';
 import { GoAButton, GoACard, GoAPageLoader } from '@abgov/react-components';
 import { GoACallout } from '@abgov/react-components';
-import { FetchNotificationTypeService } from '@store/notification/actions';
+import { FetchContactInfoService } from '@store/notification/actions';
+import { useParams } from 'react-router-dom';
 import {
   GoAInputEmail,
   GoAForm,
@@ -15,6 +16,7 @@ import {
   GoAModalTitle,
 } from '@abgov/react-components/experimental';
 
+import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { getMySubscriberDetails, patchSubscriber, unsubscribe } from '@store/subscription/actions';
 import { RootState } from '@store/index';
@@ -24,8 +26,11 @@ import {
   NoSubscriberCallout,
   Label,
   ContactInformationContainer,
+  ContactInformationWrapper,
+  CalloutWrapper,
   SubscriptionListContainer,
   TableHeaders,
+  DescriptionWrapper,
 } from './styled-components';
 
 const Subscriptions = (): JSX.Element => {
@@ -35,13 +40,14 @@ const Subscriptions = (): JSX.Element => {
     subscriber: state.subscription.subscriber,
     hasSubscriberId: state.subscription.hasSubscriberId,
   }));
-  const contact = useSelector((state: RootState) => state.notification.notificationTypes?.contact);
+  const contact = useSelector((state: RootState) => state.notification?.contactInfo);
   const [formErrors, setFormErrors] = useState({});
   const subscriberEmail = subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === EMAIL)[0]?.address;
   const [emailContactInformation, setEmailContactInformation] = useState(subscriberEmail);
   const [editContactInformation, setEditContactInformation] = useState(false);
   const [showUnSubscribeModal, setShowUnSubscribeModal] = useState(false);
   const [selectedUnsubscribeSub, setSelectedUnsubscribeSub] = useState<Subscription>();
+  const { realm } = useParams<{ realm: string }>();
 
   const phoneWrapper = (phoneNumber) => {
     if (phoneNumber) {
@@ -55,7 +61,7 @@ const Subscriptions = (): JSX.Element => {
   }, []);
 
   useEffect(() => {
-    dispatch(FetchNotificationTypeService());
+    dispatch(FetchContactInfoService(realm));
   }, []);
 
   const unSubscribe = (typeId: string) => {
@@ -156,100 +162,110 @@ const Subscriptions = (): JSX.Element => {
     );
   };
   return (
-    <Main>
-      <Container hs={2} vs={4} xlHSpacing={12}>
-        <h1 data-testid="service-name">Subscription management</h1>
-        <p data-testid="service-description">
-          Use this page to manage notifications from the services of Government of Alberta. Please note, unsubscribing
-          from some notifications might require additional verification from the government authorities.
-        </p>
-        <br />
-        <br />
-        {showUnSubscribeModal ? unSubscribeModal() : ''}
-        {subscriber?.subscriptions ? (
-          <>
-            <GoACard title="Contact information" data-testid="contact-information-card">
-              <Label>Email</Label>
-              <ContactInformationContainer>
-                <div>
-                  {editContactInformation ? (
-                    <GoAForm>
-                      <GoAFormItem error={formErrors?.['email']}>
-                        <GoAInputEmail
-                          aria-label="email"
-                          name="email"
-                          value={emailContactInformation}
-                          onChange={setValue}
-                          data-testid="edit-contact-input-text"
-                        />
-                      </GoAFormItem>
-                    </GoAForm>
+    <SubscriptionManagement>
+      <Main>
+        <Container hs={2} vs={4.5} xlHSpacing={12}>
+          <h1 data-testid="service-name">Subscription management</h1>
+          <DescriptionWrapper>
+            <p data-testid="service-description">
+              Use this page to manage notifications from the services of Government of Alberta. Please note, unsubscribing
+              from some notifications might require additional verification from the government authorities.
+            </p>
+          </DescriptionWrapper>
+          {showUnSubscribeModal ? unSubscribeModal() : ''}
+          {subscriber?.subscriptions ? (
+            <>
+              <ContactInformationWrapper>
+                <GoACard title="Contact information" data-testid="contact-information-card">
+                  <Label>Email</Label>
+                  <ContactInformationContainer>
+                    <div>
+                      {editContactInformation ? (
+                        <GoAForm>
+                          <GoAFormItem error={formErrors?.['email']}>
+                            <GoAInputEmail
+                              aria-label="email"
+                              name="email"
+                              value={emailContactInformation}
+                              onChange={setValue}
+                              data-testid="edit-contact-input-text"
+                            />
+                          </GoAFormItem>
+                        </GoAForm>
+                      ) : (
+                        <p>{subscriberEmail}</p>
+                      )}
+                    </div>
+                    <div>
+                      {editContactInformation ? (
+                        updateContactInfoButtons()
+                      ) : (
+                        <GoAButton
+                          buttonSize="small"
+                          data-testid="edit-contact-button"
+                          onClick={() => {
+                            setEmailContactInformation(subscriberEmail);
+                            setEditContactInformation(!editContactInformation);
+                          }}
+                        >
+                          Edit contact information
+                        </GoAButton>
+                      )}
+                    </div>
+                  </ContactInformationContainer>
+                </GoACard>
+              </ContactInformationWrapper>
+              <GoAModal></GoAModal>
+              <Container hs={0} vs={0}>
+                <SubscriptionListContainer>
+                  {subscriber.subscriptions?.length > 0 ? (
+                    <DataTable data-testid="subscriptions-table">
+                      <TableHeaders>
+                        <tr>
+                          <th id="subscriptions">Subscriptions</th>
+                          <th id="available-channels">Available channels</th>
+                          <th id="action">Action</th>
+                        </tr>
+                      </TableHeaders>
+                      <tbody>
+                        <SubscriptionsList onUnsubscribe={unSubscribe} subscriptions={subscriber.subscriptions} />
+                      </tbody>
+                    </DataTable>
                   ) : (
-                    <p>{subscriberEmail}</p>
+                    <GoACallout title="You have no subscriptions" type="important"></GoACallout>
                   )}
-                </div>
-                <div>
-                  {editContactInformation ? (
-                    updateContactInfoButtons()
-                  ) : (
-                    <GoAButton
-                      buttonSize="small"
-                      data-testid="edit-contact-button"
-                      onClick={() => {
-                        setEmailContactInformation(subscriberEmail);
-                        setEditContactInformation(!editContactInformation);
-                      }}
-                    >
-                      Edit contact information
-                    </GoAButton>
-                  )}
-                </div>
-              </ContactInformationContainer>
-            </GoACard>
-            <GoAModal></GoAModal>
-            <Container hs={1} vs={5}>
-              <SubscriptionListContainer>
-                {subscriber.subscriptions?.length > 0 ? (
-                  <DataTable data-testid="subscriptions-table">
-                    <TableHeaders>
-                      <tr>
-                        <th id="subscriptions">Subscriptions</th>
-                        <th id="available-channels">Available channels</th>
-                        <th id="action">Action</th>
-                      </tr>
-                    </TableHeaders>
-                    <tbody>
-                      <SubscriptionsList onUnsubscribe={unSubscribe} subscriptions={subscriber.subscriptions} />
-                    </tbody>
-                  </DataTable>
-                ) : (
-                  <GoACallout title="You have no subscriptions" type="important"></GoACallout>
-                )}
-              </SubscriptionListContainer>
-              <div id="contactSupport">
-                <GoACallout title="Need help? Contact your service admin" type="information">
-                  <div>{contact?.supportInstructions}</div>
-                  <div>
-                    Email:{' '}
-                    <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
-                      {contact?.contactEmail}
-                    </a>
-                  </div>
-                  <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>
-                  <div data-testid="service-notice-date-range"></div>
-                </GoACallout>
-              </div>
-            </Container>
-          </>
-        ) : hasSubscriberId === false ? (
-          <NoSubscriberCallout>
-            <GoACallout title="You have no subscriptions" type="important"></GoACallout>
-          </NoSubscriberCallout>
-        ) : (
-          <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
-        )}
-      </Container>
-    </Main>
+                </SubscriptionListContainer>
+                <CalloutWrapper id="contactSupport">
+                  <GoACallout title="Need help? Contact your service admin" type="information">
+                    <div>{contact?.supportInstructions}</div>
+                    <div>
+                      Email:{' '}
+                      <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
+                        {contact?.contactEmail}
+                      </a>
+                    </div>
+                    <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>
+                    <div data-testid="service-notice-date-range"></div>
+                  </GoACallout>
+                </CalloutWrapper>
+              </Container>
+            </>
+          ) : hasSubscriberId === false ? (
+            <NoSubscriberCallout>
+              <GoACallout title="You have no subscriptions" type="important"></GoACallout>
+            </NoSubscriberCallout>
+          ) : (
+            <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
+          )}
+        </Container>
+      </Main>
+    </SubscriptionManagement>
   );
 };
 export default Subscriptions;
+
+const SubscriptionManagement = styled.div`
+  tr > th {
+    padding-bottom: 0.5rem;
+  }
+`;

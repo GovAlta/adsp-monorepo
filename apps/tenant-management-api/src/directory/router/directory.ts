@@ -24,12 +24,11 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
     try {
       // FIXME: this endpoint is not testable since the `getDirectories()` function
       // uses a non-injected mongo repo that cannot be stubbed out
-      const {name, urn} =  req.query
-      let result = {}
+      const { name, urn } = req.query;
+      let result = {};
       if (urn) {
-        result = await discovery(urn as string, { directoryRepository })
-      }
-      else if (name) {
+        result = await discovery(urn as string, { directoryRepository });
+      } else if (name) {
         result = await directoryRepository.getDirectories(name as string);
       } else {
         result = await getDirectories(directoryRepository);
@@ -96,7 +95,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
       const { name } = req.params;
       const directoryEntity = await directoryRepository.getDirectories(name);
       if (!directoryEntity) {
-        throw new NotFoundError('File', name);
+        throw new NotFoundError('directory', name);
       }
       try {
         const results = await directoryRepository.delete(directoryEntity);

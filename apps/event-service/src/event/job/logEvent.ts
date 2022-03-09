@@ -63,18 +63,39 @@ async function calculateIntervalMetric(
 
       // Calculate the duration from the current event timestamp to the start event timestamp.
       if (value?.timestamp) {
-        const intervalStart = new Date(value.timestamp);
-        const intervalDuration = Math.round((timestamp.getTime() - intervalStart.getTime()) / 1000);
-        metrics[`${metricNameElements.map((m) => eventContext[m] || m).join(':')}:duration`] = intervalDuration;
-
-        logger.debug(
-          `Computed interval metric for event ${intervalNamespace}:${intervalName} to ` +
-            `${namespace}:${name} (correlation ID: ${correlationId}): ${intervalDuration} seconds`,
-          {
-            context: 'EventLog',
-            tenantId: tenantId.toString(),
-          }
+        // Check for a previous event of the same event definition 'breaking' the interval.
+        token = await tokenProvider.getAccessToken();
+        const { data } = await axios.get<{ page: { size: number } }>(
+          logUrl.href +
+            `?top=1&tenantId=${tenantId}&correlationId=${correlationId}&context=${JSON.stringify({
+              namespace,
+              name,
+            })}&timestampMin=${value.timestamp}`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
+
+        if (data.page?.size) {
+          logger.debug(
+            `Skipped interval calculation for ${namespace}:${name} due to previous occurrence with matching correlation ID.`,
+            {
+              context: 'EventLog',
+              tenantId: tenantId.toString(),
+            }
+          );
+        } else {
+          const intervalStart = new Date(value.timestamp);
+          const intervalDuration = Math.round((timestamp.getTime() - intervalStart.getTime()) / 1000);
+          metrics[`${metricNameElements.map((m) => eventContext[m] || m).join(':')}:duration`] = intervalDuration;
+
+          logger.debug(
+            `Computed interval metric for event ${intervalNamespace}:${intervalName} to ` +
+              `${namespace}:${name} (correlation ID: ${correlationId}): ${intervalDuration} seconds`,
+            {
+              context: 'EventLog',
+              tenantId: tenantId.toString(),
+            }
+          );
+        }
       }
     }
   } catch (err) {

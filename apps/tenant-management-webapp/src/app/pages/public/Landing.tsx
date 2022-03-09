@@ -85,12 +85,12 @@ const LandingPage = (): JSX.Element => {
                   <p>
                     Enabling your team to add, configure and manage a range of services that can integrate with your
                     projects.
-                </p>
+                  </p>
                   <br />
                   <p>
                     <GoALinkButton buttonType="primary" to="/get-started">
                       Request a tenant
-                  </GoALinkButton>
+                    </GoALinkButton>
                   </p>
                 </GridItem>
                 <GridItem md={1} />
@@ -138,7 +138,9 @@ const LandingPage = (): JSX.Element => {
                     <GridItem md={9}>
                       <h2>Built for teams to move faster</h2>
                       <p>
-                        The ADSP comes with services out of the box available for your team with code examples and sandbox environments. Grant your team access in a quick and secure way. Super easy to integrate with projects, built to save time and effort and help your team deliver faster.
+                        The ADSP comes with services out of the box available for your team with code examples and
+                        sandbox environments. Grant your team access in a quick and secure way. Super easy to integrate
+                        with projects, built to save time and effort and help your team deliver faster.
                       </p>
                     </GridItem>
                   </Grid>
@@ -160,7 +162,7 @@ const LandingPage = (): JSX.Element => {
                   <p>
                     The ADSP provides a huge catalog of services and existing capabilities for product teams to leverage
                     and deliver on time quality service to Albertans. Here are few of our offerings.
-                </p>
+                  </p>
                 </ServiceLayout>
               </GridItem>
               <GridItem md={1} />
@@ -194,7 +196,7 @@ const LandingPage = (): JSX.Element => {
                       <CardLayout>
                         <CardTitle>Keycloak access service</CardTitle>
                         <CardContent maxHeight={rowOneMaxHeight}>
-                          Access allows you to add a secure sign in to you application and services with minimum effort
+                          Access allows you to add a secure sign in to your application and services with minimum effort
                           and configuration. No need to deal with storing or authenticating users. It's all available
                           out of the box.
                         </CardContent>
@@ -347,16 +349,17 @@ const DashBoardImg = styled.img`
 `;
 
 const HeroBannerLayout = styled.div`
-.goa-hero {
-  max-height: 20em !important;
-  background-size: 100% 100%;
-  padding: 0px !important;
-}`;
+  .goa-hero {
+    max-height: 20em !important;
+    background-size: 100% 100%;
+    padding: 0px !important;
+  }
+`;
 
 const ServiceLayout = styled.div`
   margin-top: 3.5em;
   margin-bottom: 1.75em;
-`
+`;
 
 const ClockImg = styled.img`
   margin-top: 1.5em;

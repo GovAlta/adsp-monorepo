@@ -425,7 +425,7 @@ When('the user {string} the subscribe checkbox for health check notification typ
 });
 
 Then('the user views the subscribe checkbox is {string}', function (checkboxStatus) {
-  cy.wait(1000); // Wait for the checkbox status to show
+  cy.wait(2000); // Wait for the checkbox status to show
   statusObj
     .applicationHealthChangeNotificationSubscribeCheckbox()
     .invoke('attr', 'class')

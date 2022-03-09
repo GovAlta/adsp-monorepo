@@ -1,5 +1,6 @@
 import React, { FunctionComponent } from 'react';
-import { SubjectPreview, BodyPreview } from './styled-components';
+import DOMPurify from 'dompurify';
+import { PreviewContainer, SubjectPreview, BodyPreview } from './styled-components';
 
 interface PreviewTemplateProps {
   subjectTitle: string;
@@ -15,19 +16,15 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
   emailPreviewContent,
 }) => {
   return (
-    <div>
+    <PreviewContainer>
       <h3>{subjectTitle}</h3>
       <SubjectPreview
         dangerouslySetInnerHTML={{
-          __html: subjectPreviewContent,
+          __html: DOMPurify.sanitize(subjectPreviewContent),
         }}
       ></SubjectPreview>
       <h3>{emailTitle}</h3>
-      <BodyPreview
-        dangerouslySetInnerHTML={{
-          __html: emailPreviewContent,
-        }}
-      ></BodyPreview>
-    </div>
+      <BodyPreview title="Email preview" html={emailPreviewContent}></BodyPreview>
+    </PreviewContainer>
   );
 };

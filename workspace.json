@@ -415,6 +415,29 @@
       },
       "tags": []
     },
+    "notification-shared": {
+      "root": "libs/notification-shared",
+      "sourceRoot": "libs/notification-shared/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/notification-shared/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/notification-shared"],
+          "options": {
+            "jestConfig": "libs/notification-shared/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
     "push-service": {
       "root": "apps/push-service",
       "sourceRoot": "apps/push-service/src",
@@ -939,7 +962,7 @@
             },
             "extractCss": true,
             "styles": [],
-            "webpackConfig": "@nrwl/react/plugins/webpack"
+            "webpackConfig": "apps/tenant-management-webapp/webpack.config.js"
           },
           "configurations": {
             "production": {

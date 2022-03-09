@@ -1,4 +1,4 @@
-import { AdspId, DomainEvent } from '@abgov/adsp-service-sdk';
+import { AdspId, DomainEvent, NotificationType } from '@abgov/adsp-service-sdk';
 import { SubscriptionRepository } from '../repository';
 import { NotificationTypeEvent, SubscriberChannel, Subscription, SubscriptionCriteria } from '../types';
 import { SubscriberEntity } from './subscriber';
@@ -38,9 +38,9 @@ export class SubscriptionEntity implements Subscription {
     );
   }
 
-  getSubscriberChannel(notificationType: NotificationTypeEvent): SubscriberChannel {
+  getSubscriberChannel(type: NotificationType, event: NotificationTypeEvent): SubscriberChannel {
     const channel = this.subscriber?.channels.find(
-      ({ channel }) => notificationType.channels.includes(channel) && notificationType.templates[channel]
+      ({ channel }) => type.channels?.includes(channel) && event.templates[channel]
     );
     return channel;
   }

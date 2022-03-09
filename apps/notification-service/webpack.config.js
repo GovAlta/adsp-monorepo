@@ -11,5 +11,15 @@ module.exports = (config) => {
         apis: ['apps/notification-service/src/**/*.ts', 'apps/notification-service/src/**/*.swagger.yml'],
       }),
     ],
+    module: {
+      ...config.module,
+      rules: [
+        ...config.module.rules,
+        {
+          test: /\.hbs/,
+          type: 'asset/source',
+        },
+      ],
+    },
   };
 };

@@ -68,6 +68,10 @@ async function initializeApp(): Promise<express.Application> {
           const tenants = await tenantService.getTenants(repositories.tenantRepository, { nameEquals: name });
           return tenants[0];
         },
+        getTenantByRealm: async (realm: string) => {
+          const tenants = await tenantService.getTenants(repositories.tenantRepository, { realmEquals: realm });
+          return tenants[0];
+        },
       },
     }
   );

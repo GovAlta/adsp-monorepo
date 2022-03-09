@@ -6,6 +6,7 @@ import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { createSubscriberRouter } from './subscriber/router';
+import { createConfigurationRouter } from './configuration/router';
 
 const logger = createLogger('subscriber-gateway', environment.LOG_LEVEL);
 
@@ -34,7 +35,14 @@ const initializeApp = async (): Promise<express.Application> => {
   );
 
   const subscriberRouter = createSubscriberRouter({ ...environment, logger, directory, tenantService, tokenProvider });
+  const configurationRouter = createConfigurationRouter({
+    ...environment,
+    directory,
+    tenantService,
+    tokenProvider,
+  });
   app.use('/subscriber/v1', subscriberRouter);
+  app.use('/configuration/v1', configurationRouter);
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();
@@ -47,7 +55,8 @@ const initializeApp = async (): Promise<express.Application> => {
       _links: {
         self: new URL(req.originalUrl, rootUrl).href,
         health: new URL('/health', rootUrl).href,
-        api: new URL('/subscriber/v1', rootUrl).href,
+        subscriber: new URL('/subscriber/v1', rootUrl).href,
+        configuration: new URL('/configuration/v1', rootUrl).href,
       },
     });
   });

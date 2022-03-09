@@ -30,6 +30,7 @@ export const TRIGGER_VISIBILITY_SUBSCRIBER = 'tenant/subscriber-service/make-vis
 export const RESET_VISIBILITY_IN_SUBSCRIBERS = 'tenant/subscriber-service/reset-visibility';
 export const EMAIL_EXISTS = 'tenant/subscriber-service/email-exists';
 export const RESET_UPDATE_ERRORS = 'tenant/subscriber-service/reset-update-errors';
+export const RESET_SUBSCRIBER_SUBSCRIPTIONS = 'tenant/subscriber-service/reset-subscriber-subscriptions';
 export const DELETE_SUBSCRIBER = 'tenant/subscriber-service/delete-subscriber';
 
 // =============
@@ -55,6 +56,7 @@ export type ActionTypes =
   | TriggerVisibilitySubscribersServiceAction
   | ResetVisibilityInSubscribersServiceAction
   | EmailExistsAction
+  | ResetSubscriberSubscriptionsAction
   | ResetUpdateErrorsAction;
 
 export interface SubscribeSubscriberServiceAction {
@@ -227,7 +229,12 @@ export interface DeleteSubscriberAction {
   type: typeof DELETE_SUBSCRIBER;
   payload: {
     subscriberId: string;
+    criteria: SubscriberSearchCriteria;
   };
+}
+
+export interface ResetSubscriberSubscriptionsAction {
+  type: typeof RESET_SUBSCRIBER_SUBSCRIPTIONS;
 }
 
 // ==============
@@ -422,9 +429,17 @@ export const GetTypeSubscriptionSuccess = (
   },
 });
 
-export const DeleteSubscriberService = (subscriberId: string): DeleteSubscriberAction => ({
+export const DeleteSubscriberService = (
+  subscriberId: string,
+  criteria: SubscriberSearchCriteria
+): DeleteSubscriberAction => ({
   type: DELETE_SUBSCRIBER,
   payload: {
     subscriberId,
+    criteria,
   },
+});
+
+export const ResetSubscriberSubscriptionsService = (): ResetSubscriberSubscriptionsAction => ({
+  type: RESET_SUBSCRIBER_SUBSCRIPTIONS,
 });
