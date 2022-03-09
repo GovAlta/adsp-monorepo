@@ -5,7 +5,6 @@ import { Grid, GridItem } from '@components/Grid';
 import { NotificationTypeModalForm } from './edit';
 import { EventModalForm } from './editEvent';
 import { IndicatorWithDelay } from '@components/Indicator';
-import debounce from 'lodash.debounce';
 import * as handlebars from 'handlebars';
 import { DeleteModal } from '@components/DeleteModal';
 
@@ -39,6 +38,7 @@ import { TemplateEditor } from './emailPreviewEditor/TemplateEditor';
 import { PreviewTemplate } from './emailPreviewEditor/PreviewTemplate';
 import { dynamicGeneratePayload } from '@lib/dynamicPlaceHolder';
 import { convertToSuggestion } from '@lib/autoComplete';
+import { useDebounce } from '@lib/useDebounce';
 
 const emptyNotificationType: NotificationItem = {
   name: '',
@@ -71,13 +71,16 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     subject: '',
     body: '',
   });
+  const TEMPALTE_RENDER_DEBOUNCE_TIMER = 500; // ms
   const syntaxErrorMessage = 'Cannot render the code, please fix the syntax error in the input field';
   const notification = useSelector((state: RootState) => state.notification);
   const coreNotification = useSelector((state: RootState) => state.notification.core);
   const [formTitle, setFormTitle] = useState<string>('');
 
   const [subject, setSubject] = useState('');
+  const debouncedSubjectRender = useDebounce(subject, TEMPALTE_RENDER_DEBOUNCE_TIMER);
   const [body, setBody] = useState('');
+  const debouncedBodyRender = useDebounce(body, TEMPALTE_RENDER_DEBOUNCE_TIMER);
 
   const [subjectPreview, setSubjectPreview] = useState('');
   const [bodyPreview, setBodyPreview] = useState('');
@@ -88,7 +91,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const eventDef = eventDefinitions[`${selectedEvent?.namespace}:${selectedEvent?.name}`];
   const htmlPayload = dynamicGeneratePayload(eventDef);
   const serviceName = `${selectedEvent?.namespace}:${selectedEvent?.name}`;
-  const TEMPALTE_RENDER_DEBOUNCE_TIMER = 500; // ms
 
   const getEventSuggestion = () => {
     if (eventDef) {
@@ -174,7 +176,15 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     setSelectedType(notificationType);
     setEditEvent(notificationType);
   }
-  const debouncedSaveSubjectPreview = debounce((value) => {
+
+  useEffect(() => {
+    renderSubjectPreview(debouncedSubjectRender);
+  }, [debouncedSubjectRender]);
+  useEffect(() => {
+    renderBodyPreview(debouncedBodyRender);
+  }, [debouncedBodyRender]);
+
+  const renderSubjectPreview = (value) => {
     try {
       const msg = generateMessage(value, htmlPayload);
       setSubjectPreview(msg);
@@ -189,9 +199,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         subject: syntaxErrorMessage,
       });
     }
-  }, TEMPALTE_RENDER_DEBOUNCE_TIMER);
+  };
 
-  const debouncedSaveBodyPreview = debounce((value) => {
+  const renderBodyPreview = (value) => {
     try {
       const msg = generateMessage(getTemplateBody(value, htmlPayload), htmlPayload);
       setBodyPreview(msg);
@@ -206,7 +216,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         body: syntaxErrorMessage,
       });
     }
-  }, TEMPALTE_RENDER_DEBOUNCE_TIMER);
+  };
 
   const nonCoreCopiedNotifications: NotificationType = Object.assign({}, notification?.notificationTypes);
 
@@ -675,13 +685,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               serviceName={serviceName}
               onSubjectChange={(value) => {
                 setSubject(value);
-                debouncedSaveSubjectPreview(value);
               }}
               subjectEditorConfig={subjectEditorConfig}
               bodyTitle="Body"
               onBodyChange={(value) => {
                 setBody(value);
-                debouncedSaveBodyPreview(value);
               }}
               body={body}
               bodyEditorConfig={bodyEditorConfig}
