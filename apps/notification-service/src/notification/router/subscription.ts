@@ -332,29 +332,36 @@ export function getSubscriberById(repository: SubscriptionRepository, apiId: Ads
 
       // req[SUBSCRIBER_KEY] = data.results;
 
+      //req.user.tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/61fc147d7ef03c7fa4a5cc26`;
+
       const [configuration, options] = await req.getConfiguration<
         NotificationConfiguration,
         NotificationConfiguration
       >();
 
       console.log(JSON.stringify(req, getCircularReplacer()) + '<req');
-      res.send(result.results);
+      //res.send(result.results);
 
-      // res.send({
-      //   results: result.results.map((r) => {
-      //     const { subscriber: _subscriber, ...subscription } = mapSubscription(apiId, r);
-      //     console.log(JSON.stringify(r) + '<rcccc');
-      //     const typeEntity = configuration?.getNotificationType(r.typeId) || options?.getNotificationType(r.typeId);
+      res.send(
+        result.results.map((r) => {
+          //const default = mapSubscription(apiId, r);
+          console.log(JSON.stringify(r) + '<rcccc');
+          console.log(JSON.stringify(r.typeId) + '<r.typeId');
 
-      //     return {
-      //       ...subscription,
-      //       type: typeEntity ? mapType(typeEntity, true) : null,
-      //     };
-      //   }),
-      //   page: result.page,
-      // });
+          console.log(JSON.stringify(configuration, getCircularReplacer()) + 'configuration');
+          console.log(JSON.stringify(options, getCircularReplacer()) + 'options');
+
+          const typeEntity = options?.getNotificationType(r.typeId); //|| configuration?.getNotificationType(r.typeId);
+          console.log(JSON.stringify(typeEntity) + '<typeEntity');
+          console.log(JSON.stringify(mapType(typeEntity, true)) + '<mapType(typeEntity, true)');
+          return {
+            ...r,
+            type: typeEntity ? mapType(typeEntity, true) : null,
+          };
+        })
+      );
     } catch (err) {
-      console.log(JSON.stringify(err.message) + '<err.messagex');
+      console.log(JSON.stringify(err.message) + '<err.messagexxx');
       next(err);
     }
   };
@@ -475,6 +482,8 @@ export function getSubscriberSubscriptions(apiId: AdspId, repository: Subscripti
         NotificationConfiguration
       >();
 
+      console.log(JSON.stringify(configuration, getCircularReplacer()) + 'configurationx');
+
       const result = await repository.getSubscriptions(tenantId, top, after as string, {
         subscriberIdEquals: subscriber.id,
       });
@@ -559,14 +568,16 @@ export function getMySubscriberDetails(apiId: AdspId, repository: SubscriptionRe
         const result = await repository.getSubscriptions(tenantId, 0, undefined, {
           subscriberIdEquals: subscriberDetails.id,
         });
-
+        console.log(JSON.stringify(req, getCircularReplacer()), '<reqqq');
         console.log(JSON.stringify(result) + '<result');
         const [configuration, options] = await req.getConfiguration<
           NotificationConfiguration,
           NotificationConfiguration
         >();
+
+        console.log(JSON.stringify(configuration, getCircularReplacer()) + 'configurationx');
         subscriberSubscriptions = result.results.map((r) => {
-          console.log(JSON.stringify(r) + '<r');
+          console.log(JSON.stringify(r) + '<rxx');
           const { subscriber: subscriber, ...subscription } = mapSubscription(apiId, r);
           const castSubscriber = subscriber as Subscriber;
           const typeEntity = configuration?.getNotificationType(r.typeId) || options?.getNotificationType(r.typeId);
@@ -578,7 +589,7 @@ export function getMySubscriberDetails(apiId: AdspId, repository: SubscriptionRe
           };
         });
 
-        console.log(JSON.stringify(subscriberSubscriptions) + '<subscriberSubscriptions');
+        console.log(JSON.stringify(subscriberSubscriptions) + '<subscriberSubscriptionsxx');
 
         return res.send({
           ...subscriberDetails,
