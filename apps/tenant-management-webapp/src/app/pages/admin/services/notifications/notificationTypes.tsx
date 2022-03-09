@@ -5,7 +5,6 @@ import { Grid, GridItem } from '@components/Grid';
 import { NotificationTypeModalForm } from './edit';
 import { EventModalForm } from './editEvent';
 import { IndicatorWithDelay } from '@components/Indicator';
-import debounce from 'lodash.debounce';
 import * as handlebars from 'handlebars';
 import { DeleteModal } from '@components/DeleteModal';
 
