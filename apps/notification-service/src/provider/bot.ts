@@ -133,7 +133,7 @@ class BotNotificationActivityHandler extends ActivityHandler {
       }
 
       const reply: Partial<Activity> = {
-        text: `*Bee boop...* Ready to send notification to this channel at address: **${reference.channelId}/${address}**`,
+        text: `*Bee boop...* Ready to send notifications to this channel at address: **${reference.channelId}/${address}**`,
         textFormat: 'markdown',
       };
 
