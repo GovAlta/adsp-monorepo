@@ -517,3 +517,33 @@ When('the user enters {string} as name and {string} as description fields', func
   statusObj.addApplicationNameModalField().clear().type(appName);
   statusObj.addApplicationDescriptionModalField().clear().type(description);
 });
+
+Then('the user views the Directory service overview content {string}', function (overviewText) {
+  statusObj.directoryOverviewContent(overviewText);
+});
+
+Then('the user views the Overview list item {string}', function (listitem) {
+  statusObj.directoryOverviewList(listitem);
+});
+
+// Then('the user views {string} and {string}', function (name, url) {
+//   statusObj.directoryTable().contains('td', name).should('be.visible').siblings().contains(url).should('be.visible');
+// });
+
+Then('the user views from evn file {string} and {string}', function (directoryName, fileUrl) {
+  let name = '';
+  let url = '';
+  const dirName = directoryName.match(/.*([A-z])-([A-z]).*/g);
+  if (dirName == '') {
+    name = directoryName;
+  } else {
+    name = String(dirName);
+  }
+  const envFileApi = fileUrl.match(/(?<={).+(?=})/g);
+  if (envFileApi == '') {
+    url = fileUrl;
+  } else {
+    url = Cypress.env(String(envFileApi));
+  }
+  statusObj.directoryTable().contains('td', name).siblings().contains(url);
+});
