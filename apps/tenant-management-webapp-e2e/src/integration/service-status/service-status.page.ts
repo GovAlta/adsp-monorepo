@@ -180,5 +180,17 @@ class StatusServicePage {
       `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//div[@data-testid="icon-trash"]`
     );
   }
+
+  directoryOverviewContent(text) {
+    cy.xpath(`//*[contains(text(), "${text}")]`);
+  }
+
+  directoryOverviewList(text) {
+    cy.xpath(`//*[contains(text(), "${text}")]`);
+  }
+
+  directoryTable() {
+    return cy.get('[data-testid="directory-table"]');
+  }
 }
 export default StatusServicePage;
