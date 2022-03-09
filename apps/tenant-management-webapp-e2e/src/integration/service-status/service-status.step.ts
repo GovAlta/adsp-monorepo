@@ -526,10 +526,6 @@ Then('the user views the Overview list item {string}', function (listitem) {
   statusObj.directoryOverviewList(listitem);
 });
 
-// Then('the user views {string} and {string}', function (name, url) {
-//   statusObj.directoryTable().contains('td', name).should('be.visible').siblings().contains(url).should('be.visible');
-// });
-
 Then('the user views from evn file {string} and {string}', function (directoryName, fileUrl) {
   let name = '';
   let url = '';
