@@ -91,6 +91,12 @@ class NotificationsPage {
     );
   }
 
+  notificationTypeCoreSelfService(notificationTypeTitle) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//*[@data-testid="core-self-service"]`
+    );
+  }
+
   notificationTypeSelectAnEventBtn(cardTitle) {
     return cy.xpath(
       `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]//button[contains(text(), "Select an event")]`
