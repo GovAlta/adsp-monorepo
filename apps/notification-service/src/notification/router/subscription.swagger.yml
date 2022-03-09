@@ -248,6 +248,8 @@ components:
             properties:
               criteria:
                 $ref: '#/components/schemas/SubscriptionCriteria'
+              id:
+                type: string
               userId:
                 type: string
               addressAs:

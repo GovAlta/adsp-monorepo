@@ -218,7 +218,10 @@ Then(
   'the user views {string} has self-service-allowed attribute is {string}',
   function (notificationTypeName, selfService) {
     expect(selfService).to.be.oneOf(['yes', 'no']);
-    notificationsObj.notificationTypeSelfService(notificationTypeName).invoke('text').should('contain', selfService);
+    notificationsObj
+      .notificationTypeCoreSelfService(notificationTypeName)
+      .invoke('text')
+      .should('contain', selfService);
   }
 );
 
