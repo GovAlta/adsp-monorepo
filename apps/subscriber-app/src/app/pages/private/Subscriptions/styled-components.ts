@@ -7,6 +7,15 @@ export const Label = styled.label`
 export const NoSubscriberCallout = styled.div`
   width: 55%;
 `;
+export const ContactInformationWrapper = styled.div`
+  padding-bottom: 3.5rem;
+`;
+export const CalloutWrapper = styled.div`
+  padding-top: 2rem;
+`;
+export const DescriptionWrapper = styled.div`
+   padding-bottom: 2.5rem;
+`;
 export const ContactInformationContainer = styled.div`
   display: flex;
   justify-content: space-between;

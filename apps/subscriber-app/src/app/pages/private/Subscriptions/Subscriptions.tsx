@@ -26,8 +26,11 @@ import {
   NoSubscriberCallout,
   Label,
   ContactInformationContainer,
+  ContactInformationWrapper,
+  CalloutWrapper,
   SubscriptionListContainer,
   TableHeaders,
+  DescriptionWrapper,
 } from './styled-components';
 
 const Subscriptions = (): JSX.Element => {
@@ -163,14 +166,16 @@ const Subscriptions = (): JSX.Element => {
       <Main>
         <Container hs={2} vs={4.5} xlHSpacing={12}>
           <h1 data-testid="service-name">Subscription management</h1>
-          <p data-testid="service-description" className="pb25">
-            Use this page to manage notifications from the services of Government of Alberta. Please note, unsubscribing
-            from some notifications might require additional verification from the government authorities.
-          </p>
+          <DescriptionWrapper>
+            <p data-testid="service-description">
+              Use this page to manage notifications from the services of Government of Alberta. Please note, unsubscribing
+              from some notifications might require additional verification from the government authorities.
+            </p>
+          </DescriptionWrapper>
           {showUnSubscribeModal ? unSubscribeModal() : ''}
           {subscriber?.subscriptions ? (
             <>
-              <div className="pb35">
+              <ContactInformationWrapper>
                 <GoACard title="Contact information" data-testid="contact-information-card">
                   <Label>Email</Label>
                   <ContactInformationContainer>
@@ -209,7 +214,7 @@ const Subscriptions = (): JSX.Element => {
                     </div>
                   </ContactInformationContainer>
                 </GoACard>
-              </div>
+              </ContactInformationWrapper>
               <GoAModal></GoAModal>
               <Container hs={0} vs={0}>
                 <SubscriptionListContainer>
@@ -230,7 +235,7 @@ const Subscriptions = (): JSX.Element => {
                     <GoACallout title="You have no subscriptions" type="important"></GoACallout>
                   )}
                 </SubscriptionListContainer>
-                <div id="contactSupport" className="pt2">
+                <CalloutWrapper id="contactSupport">
                   <GoACallout title="Need help? Contact your service admin" type="information">
                     <div>{contact?.supportInstructions}</div>
                     <div>
@@ -242,7 +247,7 @@ const Subscriptions = (): JSX.Element => {
                     <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>
                     <div data-testid="service-notice-date-range"></div>
                   </GoACallout>
-                </div>
+                </CalloutWrapper>
               </Container>
             </>
           ) : hasSubscriberId === false ? (
@@ -260,18 +265,6 @@ const Subscriptions = (): JSX.Element => {
 export default Subscriptions;
 
 const SubscriptionManagement = styled.div`
-  .pt2 {
-    padding-top: 2rem;
-  }
-
-  .pb25 {
-    padding-bottom: 2.5rem;
-  }
-
-  .pb35 {
-    padding-bottom: 3.5rem;
-  }
-
   tr > th {
     padding-bottom: 0.5rem;
   }

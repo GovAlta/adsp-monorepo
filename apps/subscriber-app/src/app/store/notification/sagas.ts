@@ -4,7 +4,7 @@ import { SagaIterator } from '@redux-saga/core';
 import { FetchContactInfoSucceededService, FETCH_CONTACT_INFO, FetchContactInfoAction } from './actions';
 import axios from 'axios';
 
-export function* fetchNotificationTypes(action: FetchContactInfoAction): SagaIterator {
+export function* fetchContactInfo(action: FetchContactInfoAction): SagaIterator {
   const { realm } = action.payload;
 
   if (realm) {
@@ -13,11 +13,11 @@ export function* fetchNotificationTypes(action: FetchContactInfoAction): SagaIte
 
       yield put(FetchContactInfoSucceededService({ data: contactInfo }));
     } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypesInfo` }));
+      yield put(ErrorNotification({ message: `${e.message} - fetchContactInfo` }));
     }
   }
 }
 
 export function* watchNotificationSagas(): Generator {
-  yield takeEvery(FETCH_CONTACT_INFO, fetchNotificationTypes);
+  yield takeEvery(FETCH_CONTACT_INFO, fetchContactInfo);
 }

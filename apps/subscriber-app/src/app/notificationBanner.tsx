@@ -10,18 +10,20 @@ export function NotificationBanner(): JSX.Element {
   const notification = useSelector((state: RootState) => state.notifications.notification);
   const dispatch = useDispatch();
   return (
-    <div style={{ marginBottom: '10px' }}>
+    <div>
       {notification ? (
-        <GoANotification
-          key={new Date().getMilliseconds()}
-          onDismiss={() => {
-            dispatch(clearNotification());
-          }}
-          type={notification.type}
-          isDismissable={true}
-        >
-          {notification.message}
-        </GoANotification>
+        <div style={{ marginBottom: '10px' }}>
+          <GoANotification
+            key={new Date().getMilliseconds()}
+            onDismiss={() => {
+              dispatch(clearNotification());
+            }}
+            type={notification.type}
+            isDismissable={true}
+          >
+            {notification.message}
+          </GoANotification>
+        </div>
       ) : (
         ''
       )}
