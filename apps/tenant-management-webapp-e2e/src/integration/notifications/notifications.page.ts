@@ -249,5 +249,41 @@ class NotificationsPage {
       `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="delete-event"]`
     );
   }
+
+  subscribersAddressAsSearchField() {
+    return cy.xpath('//input[@id="name"]');
+  }
+
+  subscribersEmailSearchField() {
+    return cy.xpath('//input[@id="email"]');
+  }
+
+  subscribersSearchBtn() {
+    return cy.xpath('//button[@title="Search"]');
+  }
+
+  subscribersResetBtn() {
+    return cy.xpath('//button[@title="Reset"]');
+  }
+
+  subscriberTableHeader() {
+    return cy.xpath('//*[@data-testid="subscribers-list-title"]//thead');
+  }
+
+  subscriberTableBody() {
+    return cy.xpath('//*[@data-testid="subscribers-list-title"]//tbody');
+  }
+
+  subscriberIconEye(addressAs, email) {
+    return cy.xpath(
+      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//*[@data-testid="icon-eye"]`
+    );
+  }
+
+  subscriberSubscriptions(addressAs, email) {
+    return cy.xpath(
+      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//following-sibling::tr[1]`
+    );
+  }
 }
 export default NotificationsPage;

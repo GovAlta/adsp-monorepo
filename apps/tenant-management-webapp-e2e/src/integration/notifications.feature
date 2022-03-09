@@ -123,3 +123,14 @@ Feature: Notifications
     When the user clicks Close button in Preview an email template modal
     Then Preview an email template modal is closed
 
+  @TEST_CS-1097 @REQ_CS-1031 @regression
+  Scenario: As a tenant admin, I can find subscriptions for a particular subscriber
+    Given a tenant admin user is on notification subscribers page
+    When the user searches subscribers with "address as" containing "auto"
+    Then the user views all the subscribers with "address as" containing "auto"
+    When the user searches subscribers with "email" containing "auto.Test"
+    Then the user views all the subscribers with "email" containing "auto.Test"
+    When the user searches subscribers with address as containing "auto test" and email containing "auto.test"
+    Then the user views subscribers with "address as" containing "auto test" and "email" containing "auto.test"
+    When the user expands the subscription list for the subscriber of "Auto Test" and "auto.test@gov.ab.ca"
+    Then the user views the subscription of "status-application-health-change" for the subscriber of "Auto Test" and "auto.test@gov.ab.ca"
