@@ -40,7 +40,7 @@ export function* getMySubscriberDetails(): SagaIterator {
       if (e.response.status === 404) {
         yield put(NoSubscriberAction());
       } else {
-        yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+        yield put(ErrorNotification({ message: `${e.message} - getMySubscriberDetails` }));
       }
     }
   }

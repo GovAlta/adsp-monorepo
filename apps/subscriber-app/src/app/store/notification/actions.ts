@@ -1,38 +1,44 @@
 import { NotificationType } from './models';
 
-export const FETCH_NOTIFICATION_TYPE = 'tenant/notification-service/notificationType/fetch';
-export const FETCH_NOTIFICATION_TYPE_SUCCEEDED = 'notification-service/space/notificationType/succeeded';
+export const FETCH_CONTACT_INFO = 'tenant/notification-service/notificationType/fetch';
+export const FETCH_CONTACT_INFO_SUCCEEDED = 'notification-service/space/notificationType/succeeded';
 
 // =============
 // Actions Types
 // =============
 
-export type ActionTypes = FetchNotificationTypeSucceededAction | FetchNotificationTypeAction;
+export type ActionTypes = FetchContactInfoSucceededAction | FetchContactInfoAction;
 
-interface FetchNotificationTypeSucceededAction {
-  type: typeof FETCH_NOTIFICATION_TYPE_SUCCEEDED;
+interface FetchContactInfoSucceededAction {
+  type: typeof FETCH_CONTACT_INFO_SUCCEEDED;
   payload: {
     notificationInfo: { data: NotificationType };
   };
 }
 
-interface FetchNotificationTypeAction {
-  type: typeof FETCH_NOTIFICATION_TYPE;
+export interface FetchContactInfoAction {
+  type: typeof FETCH_CONTACT_INFO;
+  payload: {
+    realm: string;
+  };
 }
 
 // ==============
 // Action Methods
 // ==============
 
-export const FetchNotificationTypeSucceededService = (notificationInfo: {
+export const FetchContactInfoSucceededService = (notificationInfo: {
   data: NotificationType;
-}): FetchNotificationTypeSucceededAction => ({
-  type: FETCH_NOTIFICATION_TYPE_SUCCEEDED,
+}): FetchContactInfoSucceededAction => ({
+  type: FETCH_CONTACT_INFO_SUCCEEDED,
   payload: {
     notificationInfo,
   },
 });
 
-export const FetchNotificationTypeService = (): FetchNotificationTypeAction => ({
-  type: FETCH_NOTIFICATION_TYPE,
+export const FetchContactInfoService = (realm: string): FetchContactInfoAction => ({
+  type: FETCH_CONTACT_INFO,
+  payload: {
+    realm,
+  },
 });
