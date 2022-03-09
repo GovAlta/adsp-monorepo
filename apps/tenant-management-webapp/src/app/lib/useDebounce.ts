@@ -1,7 +1,14 @@
 import { useState, useEffect } from 'react';
 
-// function to return the value after a certain delay
-export function useDebounce(value, delay) {
+type DebounceValueType = string | boolean | number | Record<string, any>;
+
+/**
+ * A helper util to return a value at a certain delay. The delay is reset if the value arg changes
+ * @param value value to be returned after a period of delay
+ * @param delay time in ms to apply the delay
+ * @returns value after the delay timer
+ */
+export function useDebounce(value: DebounceValueType, delay: number): DebounceValueType {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
     // Update debounced value after delay
