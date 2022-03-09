@@ -154,3 +154,21 @@ Feature: Service status
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" "Autotest-addApp Edited" in the application list
 
+  @TEST_CS-1104 @REQ_CS-1091 @regression
+  Scenario Outline: As a tenant admin, I can see the Directory service overview
+    Given a service owner user is on tenant admin page
+    When the user selects the "Directory" menu item
+    Then the user views the Directory service overview content "The directory service is a registry of services and their APIs"
+    And the user views the Overview list item "Helpful links"
+    And the user views the Overview list item "Support"
+    And the user views the Overview list item "Get support"
+    When the user selects "Services" tab for "Directory"
+    # Then the user views "file-service" and "https://file-service.adsp-dev.gov.ab.ca"
+    Then the user views from evn file "<Directory Name>" and "<URL>"
+    Examples:
+      | Directory Name | URL          |
+      | file-service   | env{fileApi} |
+
+
+
+
