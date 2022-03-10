@@ -1,11 +1,19 @@
 export interface Directory {
-  directory: Services[];
+  directory: Service[];
 }
-export interface Services {
+export interface Service {
   name: string;
   namespace: string;
+  api?: string;
   url: string;
 }
+export const defaultService: Service = {
+  name: '',
+  namespace: '',
+  api: '',
+  url: '',
+};
+
 export const DIRECTORY_INIT: Directory = {
   directory: [],
 };
