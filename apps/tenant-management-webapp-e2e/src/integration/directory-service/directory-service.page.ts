@@ -3,9 +3,9 @@ class DirectoryServicePage {
     return cy.xpath('//h1[text()="Directory service"]/parent::main//p');
   }
 
-  directoryAsideItem(text) {
+  directoryAsideItems(text, link) {
     return cy.xpath(
-      `//h1[text()="Directory service"]/parent::main/following-sibling::aside//*[contains(text(), "${text}")]`
+      `//h1[text()="Directory service"]/parent::main/following-sibling::aside//h3[text()="${text}"]/following-sibling::*[contains(text(), "${link}")]`
     );
   }
 

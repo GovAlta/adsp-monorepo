@@ -1,18 +1,14 @@
 import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import DirectoryServicePage from './directory-service.page';
 
-const statusObj = new DirectoryServicePage();
+const directoryObj = new DirectoryServicePage();
 
 Then('the user views the Directory service overview content {string}', function (paragraphText) {
-  statusObj.directoryOverviewContent().invoke('text').should('contain', paragraphText);
+  directoryObj.directoryOverviewContent().invoke('text').should('contain', paragraphText);
 });
 
-Then('the user views the Overview aside item {string}', function (listitem) {
-  statusObj.directoryAsideItem(listitem).should('exist');
-});
-
-Then('the user views the Overview aside item with link {string}', function (listitem) {
-  statusObj.directoryAsideItem(listitem).should('have.attr', 'href');
+Then('the user views the aside item {string} and with item link {string}', function (asideItem, asideLink) {
+  directoryObj.directoryAsideItems(asideItem, asideLink).should('have.attr', 'href');
 });
 
 Then('the user views the service entry of {string} and {string}', function (directoryName, fileUrl) {
@@ -23,5 +19,5 @@ Then('the user views the service entry of {string} and {string}', function (dire
   } else {
     url = Cypress.env(String(envFileApi));
   }
-  statusObj.directoryTable().contains('td', directoryName).siblings().contains(url);
+  directoryObj.directoryTable().contains('td', directoryName).siblings().contains(url);
 });
