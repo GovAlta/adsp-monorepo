@@ -518,8 +518,8 @@ When('the user enters {string} as name and {string} as description fields', func
   statusObj.addApplicationDescriptionModalField().clear().type(description);
 });
 
-Then('the user views the Directory service overview content {string}', function (overviewText) {
-  statusObj.directoryOverviewContent(overviewText);
+Then('the user views the Directory service overview content {string}', function (paragraphText) {
+  statusObj.directoryOverviewContent().invoke('text').should('contain', paragraphText);
 });
 
 Then('the user views the Overview aside item {string}', function (listitem) {
