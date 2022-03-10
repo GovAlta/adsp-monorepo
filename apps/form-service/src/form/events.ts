@@ -39,8 +39,11 @@ export const FormCreatedDefinition: DomainEventDefinition = {
   name: FORM_CREATED,
   description: 'Signalled when a form is created.',
   payloadSchema: {
-    form: formSchema,
-    createdBy: userInfoSchema,
+    type: 'object',
+    properties: {
+      form: formSchema,
+      createdBy: userInfoSchema,
+    },
   },
 };
 
@@ -48,8 +51,11 @@ export const FormDeletedDefinition: DomainEventDefinition = {
   name: FORM_DELETED,
   description: 'Signalled when a form is deleted.',
   payloadSchema: {
-    id: { type: 'string' },
-    deletedBy: userInfoSchema,
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      deletedBy: userInfoSchema,
+    },
   },
 };
 
@@ -57,8 +63,11 @@ export const FormStatusLockedDefinition: DomainEventDefinition = {
   name: FORM_LOCKED,
   description: 'Signalled when a draft form is locked because it has not been accessed.',
   payloadSchema: {
-    form: formSchema,
-    lockedBy: userInfoSchema,
+    type: 'object',
+    properties: {
+      form: formSchema,
+      lockedBy: userInfoSchema,
+    },
   },
 };
 
@@ -66,8 +75,11 @@ export const FormStatusUnlockedDefinition: DomainEventDefinition = {
   name: FORM_UNLOCKED,
   description: 'Signalled when a draft form is unlocked by an administrator.',
   payloadSchema: {
-    form: formSchema,
-    unlockedBy: userInfoSchema,
+    type: 'object',
+    properties: {
+      form: formSchema,
+      unlockedBy: userInfoSchema,
+    },
   },
 };
 
@@ -75,8 +87,11 @@ export const FormStatusSubmittedDefinition: DomainEventDefinition = {
   name: FORM_SUBMITTED,
   description: 'Signalled when a form is submitted.',
   payloadSchema: {
-    form: formSchema,
-    submittedBy: userInfoSchema,
+    type: 'object',
+    properties: {
+      form: formSchema,
+      submittedBy: userInfoSchema,
+    },
   },
 };
 
