@@ -686,7 +686,7 @@
               "apps/subscriber-app/src/assets",
               {
                 "glob": "nginx.conf",
-                "input": "./",
+                "input": "apps/subscriber-app/",
                 "output": "./"
               }
             ],
