@@ -16,8 +16,6 @@ export interface ContactInformation {
   supportInstructions?: string;
 }
 
-export type NotificationType = Record<string, ContactInformation & NotificationItem>;
-
 export interface EventItem {
   name: string;
   namespace?: string;
@@ -52,14 +50,14 @@ export interface NotificationMetrics {
 }
 
 export interface NotificationState {
-  notificationList: NotificationType;
-  notificationTypes: NotificationType | undefined;
-  core: NotificationType;
+  supportContact: ContactInformation;
+  notificationTypes: Record<string, NotificationItem> | undefined;
+  core: Record<string, NotificationItem>;
   metrics: NotificationMetrics;
 }
 
 export const NOTIFICATION_INIT: NotificationState = {
-  notificationList: {},
+  supportContact: {},
   notificationTypes: undefined,
   core: {},
   metrics: {},

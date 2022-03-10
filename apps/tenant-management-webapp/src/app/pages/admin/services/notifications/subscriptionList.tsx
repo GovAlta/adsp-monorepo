@@ -1,24 +1,25 @@
 import React, { FunctionComponent, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { createSelector } from 'reselect';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
 import type { Subscriber, Subscription, SubscriptionSearchCriteria } from '@store/subscription/models';
-import { UpdateSubscriberService, getTypeSubscriptions } from '@store/subscription/actions';
+import { UpdateSubscriber, GetTypeSubscriptions } from '@store/subscription/actions';
 import styled from 'styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
 import { SubscriberModalForm } from './editSubscriber';
 import { GoAIcon } from '@abgov/react-components/experimental';
 import { SubscriptionNextLoader } from './subscriptionNextLoader';
-import { renderNoItem } from '@components/NoItem';
+
 interface SubscriptionProps {
-  subscription: Subscriber;
-  type: string;
+  subscriber: Subscriber;
+  typeId: string;
   readonly?: boolean;
   openModal?: (subscription: Subscription) => void;
   onDelete: (subscription: Subscriber, type: string) => void;
 }
 
-const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscription, openModal, onDelete, type }) => {
+const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscriber, onDelete, typeId }) => {
   function characterLimit(string, limit) {
     if (string?.length > limit) {
       const slicedString = string.slice(0, limit);
@@ -31,10 +32,10 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscript
   return (
     <tr>
       <td headers="userName" data-testid="addressAs">
-        {characterLimit(subscription?.addressAs, 30)}
+        {characterLimit(subscriber?.addressAs, 30)}
       </td>
       <td headers="channels" data-testid="channels">
-        {subscription?.channels.map((channel, i) => (
+        {subscriber?.channels.map((channel, i) => (
           <div key={`channels-id-${i}`} style={{ display: 'flex' }}>
             <div>
               <div>
@@ -55,8 +56,8 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscript
         <div style={{ display: 'flex', flexDirection: 'row' }}>
           <a
             className="flex1"
-            data-testid={`delete-subscription-${subscription.id}`}
-            onClick={() => onDelete(subscription, type)}
+            data-testid={`delete-subscription-${subscriber.id}`}
+            onClick={() => onDelete(subscriber, typeId)}
           >
             <ButtonBorder>
               <GoAIcon type="trash" />
@@ -74,13 +75,49 @@ interface SubscriptionsListComponentProps {
   searchCriteria: SubscriptionSearchCriteria;
 }
 
+const typeSubscriptionsSelector = createSelector(
+  (state: RootState) => state.subscription.typeSubscriptionSearch,
+  (state: RootState) => state.notification.notificationTypes,
+  (state: RootState) => state.notification.core,
+  (state: RootState) => state.subscription.subscriptions,
+  (state: RootState) => state.subscription.subscribers,
+  (typeSearch, types, coreTypes, subscriptions, subscribers) => {
+    const typeSubscriptions = Object.entries(typeSearch)
+      .filter(([_typeId, { results }]) => !!results.length)
+      .reduce(
+        (typeSubs, [typeId, { results }]) => ({
+          ...typeSubs,
+          [typeId]: results.map((result) => ({
+            ...subscriptions[`${typeId}:${result}`],
+            subscriber: subscribers[result],
+          })),
+        }),
+        {}
+      );
+
+    const groups = Object.keys(typeSubscriptions)
+      .map((typeId) => coreTypes[typeId] || types[typeId])
+      .sort((a, b) => {
+        if (a.name < b.name) {
+          return -1;
+        }
+        if (a.name > b.name) {
+          return 1;
+        }
+        return 0;
+      });
+
+    return { groups, typeSubscriptions };
+  }
+);
+
 const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentProps> = ({
   className,
   onDelete,
   searchCriteria,
 }) => {
   const dispatch = useDispatch();
-  const subscription = useSelector((state: RootState) => state.subscription);
+  const { groups, typeSubscriptions } = useSelector(typeSubscriptionsSelector);
   const [editSubscription, setEditSubscription] = useState(false);
   const [selectedSubscription, setSelectedSubscription] = useState(null);
 
@@ -93,7 +130,7 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
     setEditSubscription(false);
   }
 
-  if (!subscription?.subscriptions) {
+  if (!groups) {
     return (
       <div>
         {' '}
@@ -102,28 +139,15 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
     );
   }
 
-  const groupedSubscriptions = subscription?.subscriptions.reduce((acc, def) => {
-    acc[def.typeId] = acc[def.typeId] || [];
-    acc[def.typeId].push(def);
-    return acc;
-  }, {});
-  const orderedGroupNames = Object.keys(groupedSubscriptions).sort((prev, next): number => {
-    if (prev > next) {
-      return 1;
-    }
-    return -1;
-  });
-
   const searchFn = ({ type, searchCriteria }) => {
-    dispatch(getTypeSubscriptions(type, searchCriteria));
+    dispatch(GetTypeSubscriptions(type, searchCriteria, searchCriteria.next));
   };
 
   return (
     <div className={className}>
-      {!orderedGroupNames?.length && renderNoItem('subscription')}
-      {orderedGroupNames.map((group, index) => (
-        <div key={group}>
-          <div className="group-name">{group}</div>
+      {groups.map((type, index) => (
+        <div key={type.id}>
+          <div className="group-name">{type.name}</div>
           <DataTable data-testid={`subscription-table-${index}`}>
             <thead>
               <tr>
@@ -135,23 +159,18 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
               </tr>
             </thead>
             <tbody>
-              {groupedSubscriptions[group].map((subscription) => (
+              {typeSubscriptions[type.id].map((subscription) => (
                 <SubscriptionComponent
-                  key={`${subscription?.subscriber?.id}:${subscription?.subscriber?.urn}:${Math.random()}`}
-                  subscription={subscription?.subscriber}
+                  key={`${subscription.subscriber.id}`}
+                  subscriber={subscription.subscriber}
                   openModal={openModalFunction}
-                  type={subscription?.typeId}
+                  typeId={subscription.typeId}
                   onDelete={onDelete}
                 />
               ))}
             </tbody>
           </DataTable>
-          <SubscriptionNextLoader
-            onSearch={searchFn}
-            length={groupedSubscriptions[group].length}
-            type={group}
-            searchCriteria={searchCriteria}
-          />
+          <SubscriptionNextLoader onSearch={searchFn} type={type.id} searchCriteria={searchCriteria} />
         </div>
       ))}
       {/* Form */}
@@ -160,7 +179,7 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
         initialValue={selectedSubscription}
         // errors={errors}
         onSave={(subscriber) => {
-          dispatch(UpdateSubscriberService(subscriber));
+          dispatch(UpdateSubscriber(subscriber));
           reset();
         }}
         onCancel={() => {
