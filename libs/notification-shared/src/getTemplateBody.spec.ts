@@ -1,4 +1,4 @@
-import { getTemplateBody } from './html';
+import { getTemplateBody } from './getTemplateBody';
 
 describe('Test email template', () => {
   it('Test PlainTest should have wrapper', () => {

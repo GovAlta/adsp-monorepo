@@ -1,4 +1,4 @@
-import { put, select, call, takeEvery, takeLatest, all } from 'redux-saga/effects';
+import { put, select, call, takeEvery, all } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { SagaIterator } from '@redux-saga/core';
 import { validate as validateUuid } from 'uuid';
@@ -39,13 +39,16 @@ import {
   ResolveSubscriberUser,
   FIND_SUBSCRIBERS_SUCCESS,
   RESOLVE_SUBSCRIBER_USER,
+  DeleteSubscriberAction,
+  DELETE_SUBSCRIBER,
+  FindSubscribers,
 } from './actions';
 import { Subscription, Subscriber, SubscriptionWrapper } from './models';
-
 import { RootState } from '../index';
 import axios from 'axios';
 import { Api } from './api';
 import { KeycloakApi } from '@store/access/api';
+import { UpdateIndicator } from '@store/session/actions';
 
 export function* getSubscription(action: GetSubscriptionAction): SagaIterator {
   const type = action.payload.subscriptionInfo.data.type;
@@ -311,10 +314,17 @@ export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
   const hasNotificationAdminRole = yield select((state: RootState) =>
     state.session?.resourceAccess?.['urn:ads:platform:notification-service']?.roles?.includes('subscription-admin')
   );
-
   const findSubscriberPath = 'subscription/v1/subscribers';
   const criteria = action.payload;
   const params: Record<string, string | number> = { top: 10 };
+
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading...',
+    })
+  );
+
   if (criteria.email) {
     params.email = criteria.email;
   }
@@ -335,11 +345,21 @@ export function* findSubscribers(action: FindSubscribersAction): SagaIterator {
       });
       const subscribers = response.data.results;
       yield put(FindSubscribersSuccess(subscribers, response.data.page?.next, response.data.page?.after));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
     } catch (e) {
       yield put(
         ErrorNotification({
           message: `Subscriptions (findSubscribers): ${e.message}`,
           disabled: hasNotificationAdminRole !== true,
+        })
+      );
+      yield put(
+        UpdateIndicator({
+          show: false,
         })
       );
     }
@@ -396,6 +416,22 @@ export function* getSubscriberSubscriptions(action: GetSubscriberSubscriptionsAc
   }
 }
 
+export function* deleteSubscriber(action: DeleteSubscriberAction): SagaIterator {
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const subscriberId = action.payload.subscriberId;
+  const deleteSubscriberPath = `subscription/v1/subscribers/${subscriberId}`;
+
+  try {
+    yield call(axios.delete, `${configBaseUrl}/${deleteSubscriberPath}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    yield put(FindSubscribers(action.payload.criteria));
+  } catch (e) {
+    yield put(ErrorNotification({ message: `Subscriptions (getSubscriberSubscriptions): ${e.message}` }));
+  }
+}
+
 export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(CREATE_SUBSCRIBER, createSubscriber);
   yield takeEvery(SUBSCRIBE_SUBSCRIBER, addTypeSubscription);
@@ -406,7 +442,8 @@ export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(UPDATE_SUBSCRIBER, updateSubscriber);
   yield takeEvery(GET_TYPE_SUBSCRIPTION, getTypeSubscriptions);
   yield takeEvery(GET_SUBSCRIBER_SUBSCRIPTIONS, getSubscriberSubscriptions);
-  yield takeLatest(FIND_SUBSCRIBERS, findSubscribers);
+  yield takeEvery(DELETE_SUBSCRIBER, deleteSubscriber);
+  yield takeEvery(FIND_SUBSCRIBERS, findSubscribers);
   yield takeEvery(FIND_SUBSCRIBERS_SUCCESS, resolveSubscriberUsers);
   yield takeEvery(RESOLVE_SUBSCRIBER_USER, resolveSubscriberUser);
 }

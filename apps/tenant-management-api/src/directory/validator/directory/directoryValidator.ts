@@ -1,4 +1,4 @@
-import { IsFQDN, ValidateNested, IsDefined, MinLength } from 'class-validator';
+import { IsFQDN, ValidateNested, IsDefined, MinLength, MaxLength, Matches, IsOptional } from 'class-validator';
 
 export class Directory {
   @IsDefined()
@@ -9,12 +9,34 @@ export class Directory {
   services: Service[];
 }
 export class Service {
+  @MaxLength(50)
   @IsDefined()
-  @MinLength(4)
+  @MinLength(3)
   service: string;
 
+  @MaxLength(50)
+  api: string;
+
+  @MaxLength(1024)
   @IsFQDN()
   @IsDefined()
-  @MinLength(4)
+  @MinLength(3)
   host: string;
+}
+
+export class ServiceV2 {
+  @IsDefined()
+  @Matches(/^[a-z0-9_.]/gs)
+  @MaxLength(50)
+  service: string;
+
+  @Matches(/^[a-z0-9_.]/gs)
+  @MaxLength(50)
+  @IsOptional()
+  api: string;
+
+  @IsDefined()
+  @MaxLength(1024)
+  @IsFQDN()
+  url: string;
 }

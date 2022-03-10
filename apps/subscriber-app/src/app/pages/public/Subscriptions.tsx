@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import DataTable from '@components/DataTable';
 import { GoAButton, GoACard, GoAPageLoader } from '@abgov/react-components';
 import { GoACallout } from '@abgov/react-components';
-import { FetchNotificationTypeService } from '@store/notification/actions';
+import { FetchContactInfoService } from '@store/notification/actions';
 import {
   GoAInputEmail,
   GoAForm,
@@ -31,7 +31,7 @@ const Subscriptions = (): JSX.Element => {
     //subscriber: state.subscription.subscriber,
     subscriptions: state.subscription.subscriptions,
   }));
-  const contact = useSelector((state: RootState) => state.notification.notificationTypes?.contact);
+  //const contact = useSelector((state: RootState) => state.notification.notificationTypes?.contact);
   const [formErrors, setFormErrors] = useState({});
   const subscriberEmail =
     subscriptions?.length > 0 &&
@@ -53,9 +53,9 @@ const Subscriptions = (): JSX.Element => {
     dispatch(getSubscriberDetails(subscriberId));
   }, []);
 
-  useEffect(() => {
-    dispatch(FetchNotificationTypeService());
-  }, []);
+  // useEffect(() => {
+  //   dispatch(FetchContactInfoService());
+  // }, []);
 
   const unSubscribe = (typeId: string) => {
     setShowUnSubscribeModal(true);
@@ -146,14 +146,14 @@ const Subscriptions = (): JSX.Element => {
           </SubscriptionListContainer>
           <div id="contactSupport">
             <GoACallout title="Need help? Contact your service admin" type="information">
-              <div>{contact?.supportInstructions}</div>
+              {/* <div>{contact?.supportInstructions}</div>
               <div>
                 Email:{' '}
                 <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
                   {contact?.contactEmail}
                 </a>
               </div>
-              <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>
+              <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div> */}
               <div data-testid="service-notice-date-range"></div>
             </GoACallout>
           </div>

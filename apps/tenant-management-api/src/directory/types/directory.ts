@@ -1,9 +1,10 @@
 export interface Service {
   service: string;
+  api?: string;
   host: string;
 }
 export interface Directory {
-  id: string;
+  id?: string;
   name: string;
   services: Service[];
 }

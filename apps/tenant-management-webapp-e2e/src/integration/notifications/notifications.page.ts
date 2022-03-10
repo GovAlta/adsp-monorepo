@@ -35,6 +35,14 @@ class NotificationsPage {
     return cy.get('[data-testid="subscriberRoles-dropdown-background"]');
   }
 
+  notificationTypeModalSelfServiceCheckbox() {
+    return cy.xpath('//label[@class="goa-checkbox"]/div[contains(@class, "goa-checkbox-container")]');
+  }
+
+  notificationTypeModalSelfServiceCalloutContent() {
+    return cy.xpath('//*[@data-testid="callout-content"]');
+  }
+
   notificationTypeModalSaveBtn() {
     return cy.get('[data-testid="form-save"]');
   }
@@ -67,13 +75,25 @@ class NotificationsPage {
 
   notificationTypeSubscriberRoles(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*/div[contains(text(),  "Subscriber Roles")]`
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//*[@data-testid="tenant-subscriber-roles"]`
     );
   }
 
   notificationTypePublicSubscription(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//div[contains(text(), "Public Subscription")]`
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//*[@data-testid="tenant-public-subscription"]`
+    );
+  }
+
+  notificationTypeSelfService(notificationTypeTitle) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//*[@data-testid="tenant-self-service"]`
+    );
+  }
+
+  notificationTypeCoreSelfService(notificationTypeTitle) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//*[@data-testid="core-self-service"]`
     );
   }
 

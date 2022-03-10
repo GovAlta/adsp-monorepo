@@ -16,10 +16,19 @@ components:
           type: string
         description:
           type: string
+        manageSubscribe:
+          type: boolean
+        publicSubscribe:
+          type: boolean
         subscriberRoles:
           type: array
           items:
             type: string
+        channels:
+          type: array
+          items:
+            type: string
+            enum: [email, sms, bot]
         events:
           type: array
           items:
@@ -33,14 +42,11 @@ components:
                 type: object
                 properties:
                   email:
-                    $ref: "#/components/schemas/Template"
+                    $ref: '#/components/schemas/Template'
+                  bot:
+                    $ref: '#/components/schemas/Template'
                   sms:
-                    $ref: "#/components/schemas/Template"
-              channels:
-                type: array
-                items:
-                  type: string
-                  enum: [email, sms, slack]
+                    $ref: '#/components/schemas/Template'
     Subscriber:
       type: object
       properties:
@@ -59,7 +65,7 @@ components:
             properties:
               channel:
                 type: string
-                enum: [email, sms, slack]
+                enum: [email, sms, bot]
               address:
                 type: string
     SubscriptionCriteria:
@@ -76,9 +82,9 @@ components:
         typeId:
           type: string
         subscriber:
-          $ref: "#/components/schemas/Subscriber"
+          $ref: '#/components/schemas/Subscriber'
         criteria:
-          $ref: "#/components/schemas/SubscriptionCriteria"
+          $ref: '#/components/schemas/SubscriptionCriteria'
     SendVerifyCodeOperation:
       type: object
       properties:
@@ -87,7 +93,7 @@ components:
           enum: [send-code]
         channel:
           type: string
-          enum: [email, sms, slack]
+          enum: [email, sms, bot]
         address:
           type: string
         reason:
@@ -99,9 +105,9 @@ components:
         typeId:
           type: string
         subscriber:
-          $ref: "#/components/schemas/Subscriber"
+          $ref: '#/components/schemas/Subscriber'
         criteria:
-          $ref: "#/components/schemas/SubscriptionCriteria"
+          $ref: '#/components/schemas/SubscriptionCriteria'
     MySubscriberDetails:
       type: object
       properties:
@@ -120,13 +126,13 @@ components:
             properties:
               channel:
                 type: string
-                enum: [email, sms, slack]
+                enum: [email, sms, bot]
               address:
                 type: string
         subscriptions:
           type: array
           items:
-            $ref: "#/components/schemas/MySubscriberSubscriptions"
+            $ref: '#/components/schemas/MySubscriberSubscriptions'
     CheckCodeOperation:
       type: object
       properties:
@@ -135,7 +141,7 @@ components:
           enum: [check-code]
         channel:
           type: string
-          enum: [email, sms, slack]
+          enum: [email, sms, bot]
         address:
           type: string
         code:
@@ -149,7 +155,7 @@ components:
           enum: [verify-channel]
         channel:
           type: string
-          enum: [email, sms, slack]
+          enum: [email, sms, bot]
         address:
           type: string
         code:
@@ -169,7 +175,7 @@ components:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/NotificationType"
+                $ref: '#/components/schemas/NotificationType'
 /subscription/v1/types/{type}:
   get:
     tags:
@@ -188,7 +194,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NotificationType"
+              $ref: '#/components/schemas/NotificationType'
 /subscription/v1/types/{type}/subscriptions:
   parameters:
     - name: type
@@ -212,7 +218,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Subscription"
+                    $ref: '#/components/schemas/Subscription'
                 page:
                   type: object
                   properties:
@@ -241,7 +247,9 @@ components:
             type: object
             properties:
               criteria:
-                $ref: "#/components/schemas/SubscriptionCriteria"
+                $ref: '#/components/schemas/SubscriptionCriteria'
+              id:
+                type: string
               userId:
                 type: string
               addressAs:
@@ -253,7 +261,7 @@ components:
                   properties:
                     channel:
                       type: string
-                      enum: [email, sms, slack]
+                      enum: [email, sms, bot]
                     address:
                       type: string
 
@@ -263,7 +271,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Subscription"
+              $ref: '#/components/schemas/Subscription'
 
 /subscription/v1/types/{type}/subscriptions/{subscriber}:
   parameters:
@@ -289,7 +297,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Subscription"
+              $ref: '#/components/schemas/Subscription'
   delete:
     tags:
       - Subscription
@@ -321,7 +329,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Subscriber"
+                    $ref: '#/components/schemas/Subscriber'
                 page:
                   type: object
                   properties:
@@ -360,7 +368,7 @@ components:
                   properties:
                     channel:
                       type: string
-                      enum: [email, sms, slack]
+                      enum: [email, sms, bot]
                     address:
                       type: string
     responses:
@@ -374,7 +382,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Subscriber"
+                    $ref: '#/components/schemas/Subscriber'
                 page:
                   type: object
                   properties:
@@ -403,7 +411,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Subscriber"
+              $ref: '#/components/schemas/Subscriber'
   patch:
     tags:
       - Subscription
@@ -424,7 +432,7 @@ components:
                   properties:
                     channel:
                       type: string
-                      enum: [email, sms, slack]
+                      enum: [email, sms, bot]
                     address:
                       type: string
     responses:
@@ -433,7 +441,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Subscriber"
+              $ref: '#/components/schemas/Subscriber'
   post:
     tags:
       - Subscription
@@ -444,15 +452,15 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: "#/components/schemas/SendVerifyCodeOperation"
-              - $ref: "#/components/schemas/VerifyChannelOperation"
-              - $ref: "#/components/schemas/CheckCodeOperation"
+              - $ref: '#/components/schemas/SendVerifyCodeOperation'
+              - $ref: '#/components/schemas/VerifyChannelOperation'
+              - $ref: '#/components/schemas/CheckCodeOperation'
             discriminator:
               propertyName: operation
               mapping:
-                send-code: "#/components/schemas/SendVerifyCodeOperation"
-                check-code: "#/components/schemas/CheckCodeOperation"
-                verify-channel: "#/components/schemas/VerifyChannelOperation"
+                send-code: '#/components/schemas/SendVerifyCodeOperation'
+                check-code: '#/components/schemas/CheckCodeOperation'
+                verify-channel: '#/components/schemas/VerifyChannelOperation'
     responses:
       200:
         description: Subscriber successfully updated.
@@ -506,7 +514,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Subscription"
+                    $ref: '#/components/schemas/Subscription'
                 page:
                   type: object
                   properties:
@@ -535,4 +543,4 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/MySubscriberDetails"
+              $ref: '#/components/schemas/MySubscriberDetails'

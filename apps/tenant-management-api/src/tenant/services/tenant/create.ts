@@ -1,18 +1,19 @@
+import { AdspId, ServiceRole } from '@abgov/adsp-service-sdk';
+import { InvalidOperationError, InvalidValueError } from '@core-services/core-common';
+import type ClientRepresentation from '@keycloak/keycloak-admin-client/lib/defs/clientRepresentation';
+import type RealmRepresentation from '@keycloak/keycloak-admin-client/lib/defs/realmRepresentation';
+import type RoleRepresentation from '@keycloak/keycloak-admin-client/lib/defs/roleRepresentation';
+import type IdentityProviderRepresentation from '@keycloak/keycloak-admin-client/lib/defs/identityProviderRepresentation';
 import { v4 as uuidv4 } from 'uuid';
 import * as util from 'util';
-import { AdspId, ServiceRole } from '@abgov/adsp-service-sdk';
 import { createkcAdminClient } from '../../../keycloak';
 import { logger } from '../../../middleware/logger';
 import { environment } from '../../../environments/environment';
 import { FLOW_ALIAS, createAuthenticationFlow } from './createAuthenticationFlow';
-import type ClientRepresentation from '@keycloak/keycloak-admin-client/lib/defs/clientRepresentation';
-import type RealmRepresentation from '@keycloak/keycloak-admin-client/lib/defs/realmRepresentation';
-import type RoleRepresentation from '@keycloak/keycloak-admin-client/lib/defs/roleRepresentation';
 import { TenantEntity } from '../../models';
 import { TenantServiceRoles } from '../../../roles';
 import { ServiceClient } from '../../types';
 import { TenantRepository } from '../../repository';
-import { InvalidOperationError, InvalidValueError } from '@core-services/core-common';
 
 export const tenantManagementRealm = 'core';
 
@@ -177,11 +178,20 @@ const createAdminUser = async (
   logger.info('Created admin user');
 };
 
-const createIdpConfig = (secret, client, firstFlowAlias, realm) => {
+const createIdpConfig = (
+  clientSecret: string,
+  clientId: string,
+  firstFlowAlias: string,
+  realm: string
+): IdentityProviderRepresentation => {
+  const issuer = `${environment.KEYCLOAK_ROOT_URL}/auth/realms/core`;
   const authorizationUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/realms/core/protocol/openid-connect/auth`;
   const tokenUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/realms/core/protocol/openid-connect/token`;
+  const logoutUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/realms/core/protocol/openid-connect/logout`;
+  const userInfoUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/realms/core/protocol/openid-connect/userinfo`;
+  const jwksUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/realms/core/protocol/openid-connect/certs`;
 
-  const config = {
+  const config: IdentityProviderRepresentation & { realm: string } = {
     alias: 'core',
     providerId: 'keycloak-oidc',
     enabled: true,
@@ -191,17 +201,24 @@ const createIdpConfig = (secret, client, firstFlowAlias, realm) => {
     storeToken: false,
     linkOnly: false,
     addReadTokenRoleOnCreate: false,
-    realm: realm,
+    realm,
     config: {
       loginHint: 'true',
-      clientId: client,
-      tokenUrl: tokenUrl,
-      authorizationUrl: authorizationUrl,
+      clientId,
+      clientSecret,
+      issuer,
+      tokenUrl,
+      userInfoUrl,
+      authorizationUrl,
+      logoutUrl,
       clientAuthMethod: 'client_secret_basic',
       syncMode: 'IMPORT',
-      clientSecret: secret,
-      prompt: 'login',
+      backchannelSupported: 'true',
+      validateSignature: 'true',
       useJwksUrl: 'true',
+      jwksUrl,
+      pkceEnabled: 'true',
+      pkceMethod: 'S256',
     },
   };
 

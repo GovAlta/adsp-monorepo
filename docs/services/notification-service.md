@@ -46,6 +46,7 @@ Notification types are configured using the [configuration service](configuratio
         description: 'Provides notification of changes on application health checks.',
         publicSubscribe: true,
         subscriberRoles: [],
+        channels: ['email'],
         events: [
           {
             namespace: 'status-service',
@@ -56,7 +57,6 @@ Notification types are configured using the [configuration service](configuratio
                 body: 'Application health check started for {{ event.payload.application.name }}.',
               }
             },
-            channels: ['email'],
           }
         ],
       }

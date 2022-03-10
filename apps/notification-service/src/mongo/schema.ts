@@ -1,4 +1,5 @@
 import { Schema } from 'mongoose';
+import { Channel } from '../notification';
 
 export const subscriberSchema = new Schema({
   tenantId: {
@@ -16,7 +17,7 @@ export const subscriberSchema = new Schema({
         _id: false,
         channel: {
           type: String,
-          enum: ['email', 'mail', 'sms'],
+          enum: Object.values(Channel),
           required: true,
         },
         address: {
@@ -64,13 +65,19 @@ export const subscriptionSchema = new Schema(
 
 subscriptionSchema.index({ tenantId: 1, typeId: 1, subscriberId: 1 }, { unique: true });
 
-export const slackSchema = new Schema(
+export const botSchema = new Schema(
   {
-    id: { type: String, required: true, unique: true, index: true },
-    workspace: { type: String, required: true, index: true },
-    installation: { type: Schema.Types.Mixed, required: true },
+    channelId: { type: String, required: true },
+    tenantId: { type: String, required: false },
+    conversationId: { type: String, required: true },
+    name: { type: String, required: false },
+    serviceUrl: { type: String, required: true },
+    botId: { type: String, required: false },
+    botName: { type: String, required: false },
   },
   {
     _id: false,
   }
 );
+
+botSchema.index({ channelId: 1, tenantId: 1, conversationId: 1 }, { unique: true });

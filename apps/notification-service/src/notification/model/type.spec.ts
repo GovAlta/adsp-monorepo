@@ -41,6 +41,7 @@ describe('NotificationTypeEntity', () => {
         description: null,
         publicSubscribe: false,
         subscriberRoles: [],
+        channels: [],
         events: [],
       },
       adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
@@ -59,6 +60,7 @@ describe('NotificationTypeEntity', () => {
           description: null,
           publicSubscribe: false,
           subscriberRoles: [],
+          channels: [],
           events: [],
         },
         tenantId
@@ -76,6 +78,7 @@ describe('NotificationTypeEntity', () => {
           description: null,
           publicSubscribe: false,
           subscriberRoles: [],
+          channels: [],
           events: [],
         },
         tenantId
@@ -102,6 +105,7 @@ describe('NotificationTypeEntity', () => {
           description: null,
           publicSubscribe: false,
           subscriberRoles: ['staff'],
+          channels: [],
           events: [],
         },
         tenantId
@@ -122,6 +126,7 @@ describe('NotificationTypeEntity', () => {
           publicSubscribe: false,
           manageSubscribe: true,
           subscriberRoles: ['staff'],
+          channels: [],
           events: [],
         },
         tenantId
@@ -141,6 +146,7 @@ describe('NotificationTypeEntity', () => {
           description: null,
           publicSubscribe: false,
           subscriberRoles: [],
+          channels: [],
           events: [],
         },
         tenantId
@@ -161,6 +167,7 @@ describe('NotificationTypeEntity', () => {
           publicSubscribe: true,
           manageSubscribe: true,
           subscriberRoles: [],
+          channels: [],
           events: [],
         },
         tenantId
@@ -180,6 +187,7 @@ describe('NotificationTypeEntity', () => {
           description: null,
           publicSubscribe: false,
           subscriberRoles: ['staff'],
+          channels: [],
           events: [],
         },
         tenantId
@@ -199,6 +207,7 @@ describe('NotificationTypeEntity', () => {
           description: null,
           publicSubscribe: false,
           subscriberRoles: [],
+          channels: [],
           events: [],
         },
         tenantId
@@ -224,6 +233,7 @@ describe('NotificationTypeEntity', () => {
           publicSubscribe: true,
           manageSubscribe: true,
           subscriberRoles: [],
+          channels: [],
           events: [],
         },
         tenantId
@@ -255,6 +265,7 @@ describe('NotificationTypeEntity', () => {
           description: null,
           publicSubscribe: false,
           subscriberRoles: [],
+          channels: [],
           events: [],
         },
         tenantId
@@ -286,6 +297,7 @@ describe('NotificationTypeEntity', () => {
           publicSubscribe: true,
           manageSubscribe: true,
           subscriberRoles: [],
+          channels: [],
           events: [],
         },
         tenantId
@@ -316,6 +328,7 @@ describe('NotificationTypeEntity', () => {
           publicSubscribe: true,
           manageSubscribe: true,
           subscriberRoles: [],
+          channels: [],
           events: [],
         },
         tenantId
@@ -349,6 +362,7 @@ describe('NotificationTypeEntity', () => {
           description: null,
           publicSubscribe: false,
           subscriberRoles: [],
+          channels: [Channel.email],
           events: [
             {
               namespace: 'test-service',
@@ -359,7 +373,6 @@ describe('NotificationTypeEntity', () => {
                   body: '',
                 },
               },
-              channels: [Channel.email],
             },
           ],
         },
@@ -414,6 +427,7 @@ describe('NotificationTypeEntity', () => {
           description: null,
           publicSubscribe: false,
           subscriberRoles: [],
+          channels: [Channel.email],
           events: [
             {
               namespace: 'test-service',
@@ -424,7 +438,6 @@ describe('NotificationTypeEntity', () => {
                   body: '',
                 },
               },
-              channels: [Channel.email],
             },
           ],
         },
@@ -472,6 +485,7 @@ describe('NotificationTypeEntity', () => {
           description: null,
           publicSubscribe: false,
           subscriberRoles: [],
+          channels: [Channel.email],
           events: [
             {
               namespace: 'test-service',
@@ -482,7 +496,6 @@ describe('NotificationTypeEntity', () => {
                   body: '',
                 },
               },
-              channels: [Channel.email],
             },
           ],
         },
@@ -538,6 +551,7 @@ describe('NotificationTypeEntity', () => {
           description: null,
           publicSubscribe: false,
           subscriberRoles: [],
+          channels: [Channel.email],
           events: [
             {
               namespace: 'test-service',
@@ -548,7 +562,6 @@ describe('NotificationTypeEntity', () => {
                   body: '',
                 },
               },
-              channels: [Channel.email],
             },
           ],
         },
@@ -604,6 +617,7 @@ describe('NotificationTypeEntity', () => {
           description: null,
           publicSubscribe: false,
           subscriberRoles: [],
+          channels: [Channel.email],
           events: [
             {
               namespace: 'test-service',
@@ -614,7 +628,6 @@ describe('NotificationTypeEntity', () => {
                   body: '',
                 },
               },
-              channels: [Channel.email],
             },
           ],
         },

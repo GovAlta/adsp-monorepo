@@ -1,6 +1,5 @@
 import {
   ContactInformation,
-  InstalledSlackTeam,
   NotificationItem,
   NotificationMetrics,
   NotificationType,
@@ -26,10 +25,6 @@ export const FETCH_NOTIFICATION_METRICS = 'tenant/notification-service/metrics/f
 export const FETCH_NOTIFICATION_METRICS_SUCCEEDED = 'tenant/notification-service/metrics/fetch/succeeded';
 export const UPDATE_CONTACT_INFORMATION = 'tenant/notification-service/contact-information';
 
-export const FETCH_NOTIFICATION_SLACK_INSTALLATION = 'tenant/notification-service/slack-install/fetch';
-export const FETCH_NOTIFICATION_SLACK_INSTALLATION_SUCCEEDED =
-  'tenant/notification-service/slack-install/fetch/succeeded';
-
 // =============
 // Actions Types
 // =============
@@ -43,9 +38,7 @@ export type ActionTypes =
   | UpdateNotificationTypeAction
   | DeleteNotificationTypeAction
   | FetchNotificationMetricsAction
-  | FetchNotificationMetricsSucceededAction
-  | FetchNotificationSlackInstallationAction
-  | FetchNotificationSlackInstallationSucceededAction;
+  | FetchNotificationMetricsSucceededAction;
 
 interface DeleteNotificationFailedAction {
   type: typeof DELETE_NOTIFICATION_FAILED;
@@ -96,16 +89,6 @@ interface FetchNotificationMetricsAction {
 interface FetchNotificationMetricsSucceededAction {
   type: typeof FETCH_NOTIFICATION_METRICS_SUCCEEDED;
   metrics: NotificationMetrics;
-}
-
-interface FetchNotificationSlackInstallationAction {
-  type: typeof FETCH_NOTIFICATION_SLACK_INSTALLATION;
-}
-
-interface FetchNotificationSlackInstallationSucceededAction {
-  type: typeof FETCH_NOTIFICATION_SLACK_INSTALLATION_SUCCEEDED;
-  teams: InstalledSlackTeam[];
-  authorizationUrl: string;
 }
 
 // ==============
@@ -171,17 +154,4 @@ export const FetchNotificationMetricsSucceeded = (
 ): FetchNotificationMetricsSucceededAction => ({
   type: FETCH_NOTIFICATION_METRICS_SUCCEEDED,
   metrics,
-});
-
-export const FetchNotificationSlackInstallation = (): FetchNotificationSlackInstallationAction => ({
-  type: FETCH_NOTIFICATION_SLACK_INSTALLATION,
-});
-
-export const FetchNotificationSlackInstallationSucceeded = (
-  teams: InstalledSlackTeam[],
-  authorizationUrl: string
-): FetchNotificationSlackInstallationSucceededAction => ({
-  type: FETCH_NOTIFICATION_SLACK_INSTALLATION_SUCCEEDED,
-  teams,
-  authorizationUrl,
 });

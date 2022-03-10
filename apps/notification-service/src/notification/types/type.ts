@@ -1,17 +1,9 @@
-import {
-  Channel,
-  NotificationType as BaseNotificationType,
-  NotificationTypeEvent as BaseNotificationTypeEvent,
-} from '@abgov/adsp-service-sdk';
+import { NotificationType as BaseNotificationType, NotificationTypeEvent } from '@abgov/adsp-service-sdk';
 
-export type { Template } from '@abgov/adsp-service-sdk';
+export type { NotificationTypeEvent, Template } from '@abgov/adsp-service-sdk';
 export { Channel } from '@abgov/adsp-service-sdk';
 
-export interface NotificationTypeEvent extends BaseNotificationTypeEvent {
-  channels: Channel[];
-}
-
-export interface NotificationType extends BaseNotificationType {
+export interface NotificationType extends Exclude<BaseNotificationType, 'displayName'> {
   id: string;
   events: NotificationTypeEvent[];
 }

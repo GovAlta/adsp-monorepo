@@ -16,6 +16,7 @@ export interface SubscriptionType {
   description: string;
   id: string;
   name: string;
+  manageSubscribe: boolean;
   canSubscribe: boolean;
 }
 export interface SubscriberChannel {
@@ -34,9 +35,11 @@ export interface Subscriber {
 export interface SubscriberService {
   subscriber: Subscriber;
   subscriptions: Subscription[];
+  hasSubscriberId: boolean;
 }
 
 export const SUBSCRIBER_INIT: SubscriberService = {
   subscriber: undefined,
   subscriptions: undefined,
+  hasSubscriberId: true,
 };

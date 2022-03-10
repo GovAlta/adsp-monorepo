@@ -21,11 +21,9 @@ export const subjectEditorConfig = {
 
 export const bodyEditorConfig = {
   'data-testid': 'templateForm-body',
-  height: 250,
   language: 'handlebars',
   options: {
     tabSize: 2,
-
     minimap: { enabled: false },
     overviewRulerBorder: false,
     lineHeight: 25,

@@ -7,15 +7,27 @@ import { SubscriberModalForm } from '../editSubscriber';
 import { ResetUpdateErrors, UpdateSubscriberService } from '@store/subscription/actions';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Subscriber } from '@store/subscription/models';
-import { getSubscriberSubscriptions, TriggerVisibilitySubscribersService } from '@store/subscription/actions';
+import {
+  getSubscriberSubscriptions,
+  TriggerVisibilitySubscribersService,
+  DeleteSubscriberService,
+} from '@store/subscription/actions';
 import { renderNoItem } from '@components/NoItem';
+import { GoAIconButton } from '@abgov/react-components/experimental';
+import { DeleteModal } from '@components/DeleteModal';
+import type { SubscriberSearchCriteria } from '@store/subscription/models';
 
 interface ActionComponentProps {
   subscriber: Subscriber;
   openModalFunction: (subscriber: Subscriber) => void;
+  openDeleteModalFunction: (subscriber: string) => void;
 }
 
-const ActionComponent: FunctionComponent<ActionComponentProps> = ({ subscriber, openModalFunction }) => {
+const ActionComponent: FunctionComponent<ActionComponentProps> = ({
+  subscriber,
+  openModalFunction,
+  openDeleteModalFunction,
+}) => {
   function characterLimit(string, limit) {
     if (string?.length > limit) {
       const slicedString = string.slice(0, limit);
@@ -67,6 +79,15 @@ const ActionComponent: FunctionComponent<ActionComponentProps> = ({ subscriber, 
               onClick={() => openModalFunction(subscriber)}
               testId={`edit-subscription-item-${subscriber.id}`}
             />
+
+            <GoAIconButton
+              data-testid="delete-icon"
+              size="medium"
+              type="trash"
+              onClick={() => {
+                openDeleteModalFunction(subscriber.id);
+              }}
+            />
           </RowFlex>
         </td>
       </tr>
@@ -74,8 +95,19 @@ const ActionComponent: FunctionComponent<ActionComponentProps> = ({ subscriber, 
         <tr>
           <td colSpan={3}>
             <h2>Subscriptions</h2>
+            {currentSubscriberAndSubscription?.subscriptions?.length < 1 ? (
+              <span>
+                <b>No subscriptions</b>
+              </span>
+            ) : (
+              ''
+            )}
             {currentSubscriberAndSubscription?.subscriptions.map((subscription, i) => {
-              return <div data-testid={`subscriptions-${i}`}>{subscription.typeId}</div>;
+              return (
+                <div data-testid={`subscriptions-${i}`}>
+                  <b>{subscription.typeId}</b>
+                </div>
+              );
             })}
           </td>
         </tr>
@@ -84,10 +116,15 @@ const ActionComponent: FunctionComponent<ActionComponentProps> = ({ subscriber, 
   );
 };
 
-export const SubscriberList: FunctionComponent = () => {
+interface SubscriberListProps {
+  searchCriteria: SubscriberSearchCriteria;
+}
+export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
   const dispatch = useDispatch();
   const [editSubscription, setEditSubscription] = useState(false);
   const [selectedSubscription, setSelectedSubscription] = useState(null);
+  const [selectedDeleteSubscriberId, setSelectedDeleteSubscriberId] = useState(null);
+
   const search = useSelector((state: RootState) => state.subscription.search);
 
   const subscribers = useSelector((state: RootState) =>
@@ -99,10 +136,13 @@ export const SubscriberList: FunctionComponent = () => {
   }, [search]);
 
   // eslint-disable-next-line
-
   const openModalFunction = (subscription) => {
     setSelectedSubscription(subscription);
     setEditSubscription(true);
+  };
+
+  const openDeleteModalFunction = (subscriberId) => {
+    setSelectedDeleteSubscriberId(subscriberId);
   };
 
   function reset() {
@@ -128,6 +168,7 @@ export const SubscriberList: FunctionComponent = () => {
               <ActionComponent
                 openModalFunction={openModalFunction}
                 subscriber={subscriber}
+                openDeleteModalFunction={openDeleteModalFunction}
                 key={`${subscriber.urn}:${Math.random()}`}
               />
             ))}
@@ -143,6 +184,23 @@ export const SubscriberList: FunctionComponent = () => {
         }}
         onCancel={() => {
           reset();
+        }}
+      />
+      <DeleteModal
+        title="Delete subscriber"
+        isOpen={selectedDeleteSubscriberId !== null}
+        onCancel={() => {
+          setSelectedDeleteSubscriberId(null);
+        }}
+        content={
+          <div>
+            <div>Deletion of a subscriber will remove all of its related subscriptions.</div>
+            <div>Do you still want to continue?</div>
+          </div>
+        }
+        onDelete={() => {
+          dispatch(DeleteSubscriberService(selectedDeleteSubscriberId, props.searchCriteria));
+          setSelectedDeleteSubscriberId(null);
         }}
       />
     </div>

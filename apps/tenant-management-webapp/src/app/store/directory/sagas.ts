@@ -32,7 +32,7 @@ export function* fetchDirectory(action: FetchDirectoryAction): SagaIterator {
       newDirectory.push({
         name: urn[2],
         namespace: urn.length === 5 ? `${urn[3]}:${urn[4]}` : urn[3],
-        url: directory[dir].url ? directory[dir].url : Object.keys(directory)[index],
+        url: directory[dir].url ? directory[dir].url : directory[Object.keys(directory)[index]],
       });
     });
 

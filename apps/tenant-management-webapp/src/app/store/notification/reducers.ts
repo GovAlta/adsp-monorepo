@@ -2,7 +2,6 @@ import {
   ActionTypes,
   FETCH_CORE_NOTIFICATION_TYPE_SUCCEEDED,
   FETCH_NOTIFICATION_METRICS_SUCCEEDED,
-  FETCH_NOTIFICATION_SLACK_INSTALLATION_SUCCEEDED,
   FETCH_NOTIFICATION_TYPE_SUCCEEDED,
 } from './actions';
 import { NOTIFICATION_INIT, NotificationState, NotificationItem, NotificationType } from './models';
@@ -18,7 +17,6 @@ export const combineNotification = (
       .includes(coreItem.id)
   ) {
     const events = [];
-    coreItem.manageSubscribe = tenantNotificationType[coreItem.id].manageSubscribe;
     coreItem.events.forEach((coreEvent) => {
       const customEvent = tenantNotificationType[coreItem.id].events.find((ev) => ev.name === coreEvent.name);
       if (!customEvent) {
@@ -28,9 +26,6 @@ export const combineNotification = (
         delete customEvent.customized;
         const customized =
           JSON.stringify(coreEvent?.templates?.email) !== JSON.stringify(customEvent?.templates?.email);
-        if (customized) {
-          customEvent.channels = coreEvent.channels;
-        }
         const returnEvent = customized ? customEvent : coreEvent;
         returnEvent.customized = customized;
         events.push(returnEvent);
@@ -40,10 +35,6 @@ export const combineNotification = (
   } else {
     coreItem.customized = false;
   }
-
-  // console.log(JSON.stringify(coreItem) + '<coreItem1');
-
-  // console.log(JSON.stringify(coreItem) + '<coreItem2');
 
   return coreItem;
 };
@@ -66,8 +57,6 @@ export default function (state = NOTIFICATION_INIT, action: ActionTypes): Notifi
         });
       }
 
-      console.log(JSON.stringify(coreNotificationType) + '<coreNotificationType');
-
       return {
         ...state,
         core: coreNotificationType,
@@ -77,18 +66,6 @@ export default function (state = NOTIFICATION_INIT, action: ActionTypes): Notifi
       return {
         ...state,
         metrics: action.metrics,
-      };
-    }
-    case FETCH_NOTIFICATION_SLACK_INSTALLATION_SUCCEEDED: {
-      return {
-        ...state,
-        providers: {
-          ...state.providers,
-          slack: {
-            installedTeams: action.teams,
-            authorizationUrl: action.authorizationUrl,
-          },
-        },
       };
     }
     default:

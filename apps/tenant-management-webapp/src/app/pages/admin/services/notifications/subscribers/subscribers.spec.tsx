@@ -32,6 +32,17 @@ describe('Notification - Subscribers Tab', () => {
         },
       ],
     },
+    '61bd151b6d95d24f4cf632c1': {
+      id: '61bd151b6d95d24f4cf632c1',
+      addressAs: 'user-c',
+      channels: [
+        {
+          channel: 'slack',
+          address: 'slack-only@gmail.com',
+          verified: false,
+        },
+      ],
+    },
   };
 
   const store = mockStore({
@@ -39,7 +50,7 @@ describe('Notification - Subscribers Tab', () => {
       ...SUBSCRIBER_INIT,
       subscribers,
       search: {
-        results: ['61bd151b6d95d24f4cf632cf', '61bd151b6d95d24f4cf632cc'],
+        results: ['61bd151b6d95d24f4cf632cf', '61bd151b6d95d24f4cf632cc', '61bd151b6d95d24f4cf632c1'],
         next: null,
       },
     },
@@ -51,6 +62,9 @@ describe('Notification - Subscribers Tab', () => {
     },
     session: {
       resourceAccess: { 'urn:ads:platform:notification-service': { roles: ['subscription-admin'] } },
+      indicator: {
+        show: false,
+      },
     },
   });
 
@@ -93,5 +107,23 @@ describe('Notification - Subscribers Tab', () => {
 
     const saveAction = actions.find((action) => action.type === UPDATE_SUBSCRIBER);
     expect(saveAction).toBeTruthy();
+  });
+
+  it('edits the subscriber', async () => {
+    const { queryByTestId } = render(
+      <Provider store={store}>
+        <Subscribers />
+      </Provider>
+    );
+    const editBtn = queryByTestId('edit-subscription-item-61bd151b6d95d24f4cf632c1');
+    await waitFor(() => {
+      fireEvent.click(editBtn);
+    });
+
+    const name = queryByTestId('form-name');
+    const email = queryByTestId('form-slack');
+
+    expect(name).not.toBeNull();
+    expect(email).not.toBeNull();
   });
 });

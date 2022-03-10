@@ -24,6 +24,8 @@ const emptyNotificationType: NotificationItem = {
   description: '',
   events: [],
   subscriberRoles: [],
+  // TODO: This is hardcoded to email for now. Needs to be updated after additional channels are supported in the UI.
+  channels: ['email'],
   id: null,
   publicSubscribe: false,
   customized: false,
@@ -132,26 +134,29 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 ))}
               </GoADropdown>
             </GoAFormItem>
-            <GoAFormItem>
-              <GoACheckbox
-                name="subscribe"
-                checked={!!type.manageSubscribe}
-                onChange={() => {
-                  setType({ ...type, manageSubscribe: !type.manageSubscribe });
-                }}
-                value="manageSubscribe"
-              >
-                My subscribers are allowed to manage their own subscription for this notification type
-              </GoACheckbox>
-              <div className="fitContent">
-                {type.manageSubscribe && (
-                  <GoACallout type="important">
-                    This checkbox enables your subscribers to manage subscriptions on a self serve basis. Subscribers
-                    can unsubscribe from the notification type without contacting the program area.
-                  </GoACallout>
-                )}
-              </div>
-            </GoAFormItem>
+            <div data-testid="manage-subscriptions-checkbox-wrapper">
+              <GoAFormItem>
+                <GoACheckbox
+                  name="subscribe"
+                  checked={!!type.manageSubscribe}
+                  onChange={() => {
+                    setType({ ...type, manageSubscribe: !type.manageSubscribe });
+                  }}
+                  data-testid="manage-subscriptions-checkbox"
+                  value="manageSubscribe"
+                >
+                  My subscribers are allowed to manage their own subscription for this notification type
+                </GoACheckbox>
+                <div className="fitContent">
+                  {type.manageSubscribe && (
+                    <GoACallout type="important">
+                      This checkbox enables your subscribers to manage subscriptions on a self serve basis. Subscribers
+                      can unsubscribe from the notification type without contacting the program area.
+                    </GoACallout>
+                  )}
+                </div>
+              </GoAFormItem>
+            </div>
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
@@ -184,6 +189,14 @@ const EditStyles = styled.div`
 
   .fitContent {
     max-width: fit-content;
-    min-height: 163px;
+    min-height: 146px;
+  }
+
+  .messages {
+    margin-top: 0;
+  }
+
+  h3 {
+    margin-bottom: 0;
   }
 `;

@@ -48,8 +48,8 @@ export const getNotificationType: RequestHandler = async (req, _res, next) => {
     const [configuration, options] = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
 
     const typeEntity =
-      options?.getNotificationType(type) ||
-      (Object.keys(configuration).length > 0 && configuration?.getNotificationType(type));
+      (Object.keys(configuration).length > 0 && configuration?.getNotificationType(type)) ||
+      options?.getNotificationType(type);
 
     if (!typeEntity) {
       throw new NotFoundError('Notification Type', type);
@@ -271,6 +271,7 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
 
       res.send(mapSubscriber(apiId, entity));
     } catch (err) {
+      this.logger.error(`Failed :${err.message}`);
       next(err);
     }
   };
@@ -557,7 +558,6 @@ export function getMySubscriberDetails(apiId: AdspId, repository: SubscriptionRe
   return async (req, res, next) => {
     try {
       const tenantId = req.tenant?.id;
-      const user = req.user;
       const subscriberDetails = mapSubscriber(apiId, req[SUBSCRIBER_KEY]) as SubscriberEntity;
       const { includeSubscriptions } = req.query;
       console.log(JSON.stringify(subscriberDetails) + '<subscriberDetails');
@@ -577,15 +577,12 @@ export function getMySubscriberDetails(apiId: AdspId, repository: SubscriptionRe
 
         console.log(JSON.stringify(configuration, getCircularReplacer()) + 'configurationx');
         subscriberSubscriptions = result.results.map((r) => {
-          console.log(JSON.stringify(r) + '<rxx');
-          const { subscriber: subscriber, ...subscription } = mapSubscription(apiId, r);
-          const castSubscriber = subscriber as Subscriber;
+          const { subscriber: _subscriber, ...subscription } = mapSubscription(apiId, r);
           const typeEntity = configuration?.getNotificationType(r.typeId) || options?.getNotificationType(r.typeId);
-          const canSubscribe = typeEntity.canSubscribe(user, castSubscriber);
 
           return {
             ...subscription,
-            type: typeEntity ? mapType(typeEntity, true, canSubscribe) : null,
+            type: typeEntity ? mapType(typeEntity, true) : null,
           };
         });
 

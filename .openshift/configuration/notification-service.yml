@@ -30,6 +30,6 @@ items:
       AMQP_USER: notification-service
       AMQP_PASSWORD:
       NOTIFY_API_KEY:
-      SLACK_CLIENT_ID:
-      SLACK_CLIENT_SECRET:
-      SLACK_STATE_SECRET:
+      BOT_TENANT_ID:
+      BOT_CLIENT_ID:
+      BOT_CLIENT_SECRET:

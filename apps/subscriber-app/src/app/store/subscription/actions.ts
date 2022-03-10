@@ -12,11 +12,14 @@ export const UNSUBSCRIBE = 'tenant/notification-service/unsubscribe';
 export const PATCH_SUBSCRIBER = 'tenant/notification-service/patch-subscriber';
 export const PATCH_SUBSCRIBER_SUCCESS = 'tenant/notification-service/patch-subscriber-success';
 
+export const NO_SUBSCRIBER = 'tenant/notification-service/no-subscriber';
+
 // =============
 // Actions Types
 // =============
 
 export type ActionTypes =
+  | NoSubscriber
   | PatchSubscriberActionSuccess
   | GetMySubscriberActionSuccess
   | UnsubscribeActionSuccess
@@ -62,10 +65,17 @@ export interface PatchSubscriberActionSuccess {
     subscriber: Subscriber;
   };
 }
+export interface NoSubscriber {
+  type: typeof NO_SUBSCRIBER;
+}
 
 // ==============
 // Action Methods
 // ==============
+
+export const NoSubscriberAction = (): NoSubscriber => ({
+  type: NO_SUBSCRIBER,
+});
 
 export const unsubscribe = (subscriptionInfo: { type: string; subscriberId: string }): UnsubscribeAction => ({
   type: UNSUBSCRIBE,
