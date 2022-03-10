@@ -527,12 +527,7 @@ Then('the user views the Overview aside item {string}', function (listitem) {
 });
 
 Then('the user views the Overview aside item with link {string}', function (listitem) {
-  statusObj
-    .directoryAsideItem(listitem)
-    .invoke('attr', 'href')
-    .then((href) => {
-      expect(href);
-    });
+  statusObj.directoryAsideItem(listitem).should('have.attr', 'href');
 });
 
 Then('the user views the service entry of {string} and {string}', function (directoryName, fileUrl) {
