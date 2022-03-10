@@ -62,7 +62,7 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     after: string,
     criteria: SubscriptionSearchCriteria
   ): Promise<Results<SubscriptionEntity>> {
-    const skip = parseInt(after);
+    const skip = decodeAfter(after);
 
     const query: Record<string, unknown> = {
       tenantId: tenantId?.toString(),
