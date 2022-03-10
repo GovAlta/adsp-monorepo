@@ -11,15 +11,14 @@ import { DeleteModal } from '@components/DeleteModal';
 import { GoAIcon } from '@abgov/react-components/experimental';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { isDuplicatedNotificationName } from './validation';
-import { NotificationType } from '@store/notification/models';
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
 
 import {
   UpdateNotificationTypeService,
   DeleteNotificationTypeService,
-  FetchNotificationTypeService,
-  FetchCoreNotificationTypeService,
+  FetchNotificationConfigurationService,
+  FetchCoreNotificationTypesService,
 } from '@store/notification/actions';
 import { NotificationItem } from '@store/notification/models';
 import { RootState } from '@store/index';
@@ -136,13 +135,13 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   }, [selectedEvent]);
 
   useEffect(() => {
-    dispatch(FetchNotificationTypeService());
+    dispatch(FetchNotificationConfigurationService());
     dispatch(FetchRealmRoles());
   }, [dispatch]);
 
   useEffect(() => {
     if (notification?.notificationTypes !== undefined) {
-      dispatch(FetchCoreNotificationTypeService());
+      dispatch(FetchCoreNotificationTypesService());
     }
   }, [notification?.notificationTypes]);
 
@@ -218,7 +217,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     }
   };
 
-  const nonCoreCopiedNotifications: NotificationType = Object.assign({}, notification?.notificationTypes);
+  const nonCoreCopiedNotifications: Record<string, NotificationItem>= Object.assign({}, notification?.notificationTypes);
 
   if (Object.keys(coreNotification).length > 0 && notification?.notificationTypes) {
     const NotificationsIntersection = [];
