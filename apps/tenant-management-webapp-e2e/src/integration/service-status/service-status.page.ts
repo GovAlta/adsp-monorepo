@@ -182,11 +182,13 @@ class StatusServicePage {
   }
 
   directoryOverviewContent(text) {
-    cy.xpath(`//*[contains(text(), "${text}")]`);
+    return cy.xpath(`//h1[text()="Directory service"]/parent::main//p[contains(text(), "${text}")]`);
   }
 
-  directoryOverviewList(text) {
-    cy.xpath(`//*[contains(text(), "${text}")]`);
+  directoryAsideItem(text) {
+    return cy.xpath(
+      `//h1[text()="Directory service"]/parent::main/following-sibling::aside//*[contains(text(), "${text}")]`
+    );
   }
 
   directoryTable() {

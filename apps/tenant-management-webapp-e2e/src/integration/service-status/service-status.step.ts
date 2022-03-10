@@ -522,24 +522,26 @@ Then('the user views the Directory service overview content {string}', function 
   statusObj.directoryOverviewContent(overviewText);
 });
 
-Then('the user views the Overview list item {string}', function (listitem) {
-  statusObj.directoryOverviewList(listitem);
+Then('the user views the Overview aside item {string}', function (listitem) {
+  statusObj.directoryAsideItem(listitem).should('exist');
 });
 
-Then('the user views from evn file {string} and {string}', function (directoryName, fileUrl) {
-  let name = '';
+Then('the user views the Overview aside item with link {string}', function (listitem) {
+  statusObj
+    .directoryAsideItem(listitem)
+    .invoke('attr', 'href')
+    .then((href) => {
+      expect(href);
+    });
+});
+
+Then('the user views the service entry of {string} and {string}', function (directoryName, fileUrl) {
   let url = '';
-  const dirName = directoryName.match(/.*([A-z])-([A-z]).*/g);
-  if (dirName == '') {
-    name = directoryName;
-  } else {
-    name = String(dirName);
-  }
   const envFileApi = fileUrl.match(/(?<={).+(?=})/g);
   if (envFileApi == '') {
     url = fileUrl;
   } else {
     url = Cypress.env(String(envFileApi));
   }
-  statusObj.directoryTable().contains('td', name).siblings().contains(url);
+  statusObj.directoryTable().contains('td', directoryName).siblings().contains(url);
 });
