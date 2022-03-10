@@ -28,7 +28,6 @@ export interface Subscriber {
   channels?: Channels[];
   userId?: string;
   accountLink?: string;
-  visibleSubscriptions?: boolean;
 }
 
 export interface HasNext {
@@ -37,38 +36,41 @@ export interface HasNext {
   top: number;
 }
 
-export interface SubscriberAndSubscriptions {
-  subscriber: Subscriber;
-  subscriptions: SubscriptionWrapper[];
-}
-
 export interface SubscriberService {
-  subscription: Subscription;
-  subscriptionsHasNext: HasNext[];
-  subscriptions: SubscriptionWrapper[];
-  subscriber: Subscriber;
-  subscriberSubscriptions: Record<string, SubscriberAndSubscriptions>;
-  successMessage: string;
   subscribers: Record<string, Subscriber>;
-  search: {
+  subscriptions: Record<string, SubscriptionWrapper>;
+  subscriberSearch: {
     results: string[];
     next: string;
   };
+  typeSubscriptionSearch: Record<
+    string,
+    {
+      results: string[];
+      next: string;
+    }
+  >;
+  subscriberSubscriptionSearch: Record<
+    string,
+    {
+      results: string[];
+      next: string;
+    }
+  >;
+  successMessage: string;
   updateError: string;
 }
 
 export const SUBSCRIBER_INIT: SubscriberService = {
-  subscription: undefined,
-  subscriptionsHasNext: [],
-  subscriptions: undefined,
-  subscriber: undefined,
-  subscriberSubscriptions: {},
-  successMessage: null,
   subscribers: {},
-  search: {
+  subscriptions: {},
+  subscriberSearch: {
     results: [],
     next: null,
   },
+  typeSubscriptionSearch: {},
+  subscriberSubscriptionSearch: {},
+  successMessage: null,
   updateError: '',
 };
 
@@ -81,6 +83,5 @@ export interface SubscriberSearchCriteria {
 export interface SubscriptionSearchCriteria {
   email?: string;
   name?: string;
-  next?: boolean;
-  top?: number;
+  next?: string;
 }
