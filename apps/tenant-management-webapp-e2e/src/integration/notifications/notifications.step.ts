@@ -354,17 +354,15 @@ Given('a tenant admin user is on notification subscribers page', function () {
 });
 
 When('the user searches subscribers with {string} containing {string}', function (searchField, searchText) {
-  //Reset
-  notificationsObj.subscribersResetBtn().click();
-  cy.wait(2000);
-
   //Enter search text
   switch (searchField) {
     case 'address as':
-      notificationsObj.subscribersAddressAsSearchField().type(searchText);
+      notificationsObj.subscribersAddressAsSearchField().clear().type(searchText);
+      notificationsObj.subscribersEmailSearchField().clear();
       break;
     case 'email':
-      notificationsObj.subscribersEmailSearchField().type(searchText);
+      notificationsObj.subscribersEmailSearchField().clear().type(searchText);
+      notificationsObj.subscribersAddressAsSearchField().clear();
       break;
     default:
       expect(searchField).to.be.oneOf(['address as', 'email']);
@@ -378,13 +376,9 @@ When('the user searches subscribers with {string} containing {string}', function
 When(
   'the user searches subscribers with address as containing {string} and email containing {string}',
   function (addressAsSearchText, emailSearchText) {
-    //Reset
-    notificationsObj.subscribersResetBtn().click();
-    cy.wait(2000);
-
     //Enter search text
-    notificationsObj.subscribersAddressAsSearchField().type(addressAsSearchText);
-    notificationsObj.subscribersEmailSearchField().type(emailSearchText);
+    notificationsObj.subscribersAddressAsSearchField().clear().type(addressAsSearchText);
+    notificationsObj.subscribersEmailSearchField().clear().type(emailSearchText);
 
     //Click Search button
     notificationsObj.subscribersSearchBtn().click();
