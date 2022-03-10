@@ -156,7 +156,7 @@ Feature: Service status
 
   @TEST_CS-1104 @REQ_CS-1091, @regression
   Scenario Outline: As a tenant admin, I can see the Directory service overview and service entries
-    Given a service owner user is on tenant admin page
+    Given a tenant admin user is on tenant admin page
     When the user selects the "Directory" menu item
     Then the user views the Directory service overview content "The directory service is a registry of services and their APIs"
     And the user views the Overview aside item "Support"
