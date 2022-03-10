@@ -8,12 +8,12 @@ const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('createLogEventJob', () => {
   const serviceId = adspId`urn:ads:platform:event-service`;
-  const logger: Logger = ({
+  const logger: Logger = {
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
-  } as unknown) as Logger;
+  } as unknown as Logger;
 
   const tokenProvider: TokenProvider = {
     getAccessToken: jest.fn(),
@@ -34,7 +34,7 @@ describe('createLogEventJob', () => {
       serviceId,
       logger,
       tokenProvider,
-      configurationService: (configurationService as unknown) as ConfigurationService,
+      configurationService: configurationService as unknown as ConfigurationService,
       valueServiceUrl: new URL('http://totally-real-value-service'),
     });
     expect(job).toBeTruthy();
@@ -58,7 +58,7 @@ describe('createLogEventJob', () => {
         serviceId,
         logger,
         tokenProvider,
-        configurationService: (configurationService as unknown) as ConfigurationService,
+        configurationService: configurationService as unknown as ConfigurationService,
         valueServiceUrl: new URL('http://totally-real-value-service'),
       });
 
@@ -74,7 +74,7 @@ describe('createLogEventJob', () => {
         serviceId,
         logger,
         tokenProvider,
-        configurationService: (configurationService as unknown) as ConfigurationService,
+        configurationService: configurationService as unknown as ConfigurationService,
         valueServiceUrl: new URL('http://totally-real-value-service'),
       });
 
@@ -90,7 +90,7 @@ describe('createLogEventJob', () => {
         serviceId,
         logger,
         tokenProvider,
-        configurationService: (configurationService as unknown) as ConfigurationService,
+        configurationService: configurationService as unknown as ConfigurationService,
         valueServiceUrl: new URL('http://totally-real-value-service'),
       });
 
@@ -114,6 +114,9 @@ describe('createLogEventJob', () => {
       axiosMock.get.mockResolvedValueOnce({
         data: { 'event-service': { event: [{ timestamp: start.toISOString() }] } },
       });
+      axiosMock.get.mockResolvedValueOnce({
+        data: { page: { size: 0 } },
+      });
       axiosMock.post.mockResolvedValueOnce({});
       job(event, (err) => {
         expect(axiosMock.post).toHaveBeenCalledTimes(1);
@@ -126,12 +129,57 @@ describe('createLogEventJob', () => {
       });
     });
 
+    it('can skip compute interval duration metric with previous occurrence event', (done) => {
+      const job = createLogEventJob({
+        serviceId,
+        logger,
+        tokenProvider,
+        configurationService: configurationService as unknown as ConfigurationService,
+        valueServiceUrl: new URL('http://totally-real-value-service'),
+      });
+
+      configurationService.getConfiguration.mockResolvedValueOnce([
+        {
+          test: {
+            definitions: {
+              'test-started': {
+                interval: {
+                  metric: 'test',
+                  namespace: 'test',
+                  name: 'test-prepared',
+                },
+              },
+            },
+          },
+        },
+      ]);
+
+      const start = new Date(event.timestamp.getTime() - 30000);
+      axiosMock.get.mockResolvedValueOnce({
+        data: { 'event-service': { event: [{ timestamp: start.toISOString() }] } },
+      });
+      // Previous occurrence result.
+      axiosMock.get.mockResolvedValueOnce({
+        data: { page: { size: 1 } },
+      });
+      axiosMock.post.mockResolvedValueOnce({});
+      job(event, (err) => {
+        expect(axiosMock.post).toHaveBeenCalledTimes(1);
+        expect(axios.post).toHaveBeenLastCalledWith(
+          expect.any(String),
+          expect.objectContaining({ metrics: expect.not.objectContaining({ 'test:duration': 30 }) }),
+          expect.any(Object)
+        );
+        done(err);
+      });
+    });
+
     it('can skip duration metric for no event definition', (done) => {
       const job = createLogEventJob({
         serviceId,
         logger,
         tokenProvider,
-        configurationService: (configurationService as unknown) as ConfigurationService,
+        configurationService: configurationService as unknown as ConfigurationService,
         valueServiceUrl: new URL('http://totally-real-value-service'),
       });
 
@@ -154,7 +202,7 @@ describe('createLogEventJob', () => {
         serviceId,
         logger,
         tokenProvider,
-        configurationService: (configurationService as unknown) as ConfigurationService,
+        configurationService: configurationService as unknown as ConfigurationService,
         valueServiceUrl: new URL('http://totally-real-value-service'),
       });
 
@@ -181,7 +229,7 @@ describe('createLogEventJob', () => {
         serviceId,
         logger,
         tokenProvider,
-        configurationService: (configurationService as unknown) as ConfigurationService,
+        configurationService: configurationService as unknown as ConfigurationService,
         valueServiceUrl: new URL('http://totally-real-value-service'),
       });
 

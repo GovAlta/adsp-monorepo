@@ -36,6 +36,7 @@ describe('createProcessEventJob', () => {
     getTenants: jest.fn(),
     getTenant: jest.fn((id) => Promise.resolve({ id, name: 'Test', realm: 'test' })),
     getTenantByName: jest.fn(),
+    getTenantByRealm: jest.fn(),
   };
 
   const repositoryMock = {
