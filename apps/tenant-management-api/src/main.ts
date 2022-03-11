@@ -15,13 +15,7 @@ import { applyDirectoryV2Middleware } from './directoryV2';
 import { createRepositories, disconnect } from './mongo';
 import { logger } from './middleware/logger';
 import { TenantServiceRoles } from './roles';
-import {
-  tenantService,
-  TenantCreatedDefinition,
-  TenantDeletedDefinition,
-  configurationSchema,
-  applyTenantMiddleware,
-} from './tenant';
+import { TenantCreatedDefinition, TenantDeletedDefinition, configurationSchema, applyTenantMiddleware } from './tenant';
 
 async function initializeApp(): Promise<express.Application> {
   const repositories = await createRepositories({ ...environment, logger });
