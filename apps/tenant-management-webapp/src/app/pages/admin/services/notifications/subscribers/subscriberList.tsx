@@ -7,7 +7,7 @@ import { SubscriberModalForm } from '../editSubscriber';
 import { UpdateSubscriber } from '@store/subscription/actions';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Subscriber } from '@store/subscription/models';
-import { GetSubscriberSubscriptions, DeleteSubscriberService } from '@store/subscription/actions';
+import { GetSubscriberSubscriptions, DeleteSubscriber } from '@store/subscription/actions';
 import { renderNoItem } from '@components/NoItem';
 import { GoAIconButton } from '@abgov/react-components/experimental';
 import { DeleteModal } from '@components/DeleteModal';
@@ -122,7 +122,7 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
   const search = useSelector((state: RootState) => state.subscription.subscriberSearch);
 
   const subscribers = useSelector((state: RootState) =>
-    state.subscription.subscriberSearch.results.map((id) => state.subscription.subscribers[id])
+    state.subscription.subscriberSearch.results.map((id) => state.subscription.subscribers[id]).filter((subs) => !!subs)
   );
 
   useEffect(() => {
@@ -192,7 +192,7 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
           </div>
         }
         onDelete={() => {
-          dispatch(DeleteSubscriberService(selectedDeleteSubscriberId, props.searchCriteria));
+          dispatch(DeleteSubscriber(selectedDeleteSubscriberId));
           setSelectedDeleteSubscriberId(null);
         }}
       />

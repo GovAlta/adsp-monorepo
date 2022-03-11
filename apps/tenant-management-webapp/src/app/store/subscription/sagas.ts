@@ -29,11 +29,11 @@ import {
   RESOLVE_SUBSCRIBER_USER,
   DeleteSubscriberAction,
   DELETE_SUBSCRIBER,
-  FindSubscribers,
   GetAllTypeSubscriptionsAction,
   GetTypeSubscriptions as getTypeSubscriptionsAction,
   GET_ALL_TYPE_SUBSCRIPTIONS,
   SUBSCRIBE,
+  DeleteSubscriberSuccess,
 } from './actions';
 import { Subscriber, SubscriptionWrapper } from './models';
 import { RootState } from '../index';
@@ -329,7 +329,7 @@ function* deleteSubscriber(action: DeleteSubscriberAction): SagaIterator {
     yield call(axios.delete, `${configBaseUrl}/${deleteSubscriberPath}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    yield put(FindSubscribers(action.payload.criteria));
+    yield put(DeleteSubscriberSuccess(action.payload.subscriberId));
   } catch (e) {
     yield put(ErrorNotification({ message: `Subscriptions (getSubscriberSubscriptions): ${e.message}` }));
   }
