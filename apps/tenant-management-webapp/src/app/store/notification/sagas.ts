@@ -3,15 +3,15 @@ import { ErrorNotification } from '@store/notifications/actions';
 import { SagaIterator } from '@redux-saga/core';
 import { v4 as uuidv4 } from 'uuid';
 import {
-  FetchNotificationTypeSucceededService,
+  FetchNotificationConfigurationSucceededService,
   FetchCoreNotificationTypeSucceededService,
-  FetchNotificationTypeService,
+  FetchNotificationConfigurationService,
   DeleteNotificationTypeAction,
   UpdateNotificationTypeAction,
   UpdateContactInformationAction,
   DELETE_NOTIFICATION_TYPE,
-  FETCH_NOTIFICATION_TYPE,
-  FETCH_CORE_NOTIFICATION_TYPE,
+  FETCH_NOTIFICATION_CONFIGURATION,
+  FETCH_CORE_NOTIFICATION_TYPES,
   UPDATE_NOTIFICATION_TYPE,
   UPDATE_CONTACT_INFORMATION,
   FETCH_NOTIFICATION_METRICS,
@@ -39,8 +39,8 @@ export function* fetchNotificationTypes(): SagaIterator {
         }
       );
 
-      const notificationTypeInfo = configuration.latest && configuration.latest.configuration;
-      yield put(FetchNotificationTypeSucceededService({ data: notificationTypeInfo }));
+      const { contact, ...notificationTypeInfo } = configuration.latest.configuration;
+      yield put(FetchNotificationConfigurationSucceededService({ data: notificationTypeInfo }, contact));
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
     }
@@ -89,7 +89,7 @@ export function* deleteNotificationTypes(action: DeleteNotificationTypeAction): 
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      yield put(FetchNotificationTypeService());
+      yield put(FetchNotificationConfigurationService());
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.response.data} - deleteNotificationTypes` }));
     }
@@ -140,7 +140,7 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
         }
       );
 
-      yield put(FetchNotificationTypeService());
+      yield put(FetchNotificationConfigurationService());
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - updateNotificationType` }));
     }
@@ -173,7 +173,7 @@ export function* updateContactInformation({ payload }: UpdateContactInformationA
         }
       );
 
-      yield put(FetchNotificationTypeService());
+      yield put(FetchNotificationConfigurationService());
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - updateNotificationType` }));
     }
@@ -217,8 +217,8 @@ export function* fetchNotificationMetrics(): SagaIterator {
 }
 
 export function* watchNotificationSagas(): Generator {
-  yield takeEvery(FETCH_NOTIFICATION_TYPE, fetchNotificationTypes);
-  yield takeEvery(FETCH_CORE_NOTIFICATION_TYPE, fetchCoreNotificationTypes);
+  yield takeEvery(FETCH_NOTIFICATION_CONFIGURATION, fetchNotificationTypes);
+  yield takeEvery(FETCH_CORE_NOTIFICATION_TYPES, fetchCoreNotificationTypes);
   yield takeEvery(DELETE_NOTIFICATION_TYPE, deleteNotificationTypes);
   yield takeEvery(UPDATE_NOTIFICATION_TYPE, updateNotificationType);
   yield takeEvery(UPDATE_CONTACT_INFORMATION, updateContactInformation);

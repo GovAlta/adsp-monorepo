@@ -1,7 +1,16 @@
 import { put, select, call } from 'redux-saga/effects';
 import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
-import { FetchDirectoryAction, fetchDirectorySuccess } from './actions';
+import {
+  FetchDirectoryAction,
+  fetchDirectorySuccess,
+  createEntrySuccess,
+  updateEntrySuccess,
+  deleteEntrySuccess,
+  CreateEntryAction,
+  UpdateEntryAction,
+  DeleteEntryAction,
+} from './actions';
 import { DirectoryApi } from './api';
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
@@ -49,5 +58,50 @@ export function* fetchDirectory(action: FetchDirectoryAction): SagaIterator {
         show: false,
       })
     );
+  }
+}
+
+export function* createEntryDirectory(action: CreateEntryAction): SagaIterator {
+  const state: RootState = yield select();
+  const token = state.session.credentials.token;
+  const api = new DirectoryApi(state.config.tenantApi, token);
+
+  try {
+    const result = yield call([api, api.createEntry], action.data);
+    if (result) {
+      yield put(createEntrySuccess(action.data));
+    }
+  } catch (err) {
+    yield put(ErrorNotification({ message: 'failed to create directory' }));
+  }
+}
+
+export function* updateEntryDirectory(action: UpdateEntryAction): SagaIterator {
+  const state: RootState = yield select();
+  const token = state.session.credentials.token;
+  const api = new DirectoryApi(state.config.tenantApi, token);
+
+  try {
+    const result = yield call([api, api.updateEntry], action.data);
+    if (result) {
+      yield put(updateEntrySuccess(action.data));
+    }
+  } catch (err) {
+    yield put(ErrorNotification({ message: 'failed to create directory' }));
+  }
+}
+
+export function* deleteEntryDirectory(action: DeleteEntryAction): SagaIterator {
+  const state: RootState = yield select();
+  const token = state.session.credentials.token;
+  const api = new DirectoryApi(state.config.tenantApi, token);
+
+  try {
+    const result = yield call([api, api.deleteEntry], action.data);
+    if (result) {
+      yield put(deleteEntrySuccess(action.data));
+    }
+  } catch (err) {
+    yield put(ErrorNotification({ message: 'failed to delete directory' }));
   }
 }

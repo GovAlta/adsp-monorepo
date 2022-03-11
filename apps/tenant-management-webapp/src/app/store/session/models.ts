@@ -8,6 +8,7 @@ export interface Session {
   clientId?: string;
   realm?: string;
   userInfo?: {
+    sub?: string;
     name?: string;
     preferredUsername?: string;
     email?: string;

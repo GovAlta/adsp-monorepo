@@ -2,13 +2,13 @@ Feature: Events
 
   @regression
   Scenario: As a service admin, I can see events overview
-    Given a service owner user is on tenant admin page
+    Given a tenant admin user is on tenant admin page
     When the user selects the "Events" menu item
     Then the user views events overview page
 
   @regression
   Scenario: As a service admin, I can see details of event definitions
-    Given a service owner user is on tenant admin page
+    Given a tenant admin user is on tenant admin page
     When the user selects the "Events" menu item
     And the user selects "Definitions" tab for "Events"
     Then the user views an event definition of "tenant-created" under "tenant-service"
@@ -20,7 +20,7 @@ Feature: Events
   @regression @ignore
   # Ignore this test until CS-1134 is fixed
   Scenario: As a service admin, I can see event service API docs
-    Given a service owner user is on tenant admin page
+    Given a tenant admin user is on tenant admin page
     When the user selects the "Events" menu item
     Then the user views the link for "Event service" API docs
     When the user goes to the web link of the API docs
@@ -29,7 +29,7 @@ Feature: Events
   # Test on Monaco editor for payload schema isn't included and will need to be tested in future
   @TEST_CS-735 @REQ_CS-250 @regression
   Scenario: As a service admin, I can see add, edit and delete an event definition
-    Given a service owner user is on tenant admin page
+    Given a tenant admin user is on tenant admin page
     When the user selects the "Events" menu item
     And the user selects "Definitions" tab for "Events"
     And the user clicks Add definition button
@@ -49,7 +49,7 @@ Feature: Events
 
   @accessibility @regression
   Scenario: As a service admin, I can use event definitions page without any critical or serious accessibility issues
-    Given a service owner user is on tenant admin page
+    Given a tenant admin user is on tenant admin page
     When the user selects the "Events" menu item
     And the user selects "Definitions" tab for "Events"
     Then no critical or serious accessibility issues on "event definitions page"

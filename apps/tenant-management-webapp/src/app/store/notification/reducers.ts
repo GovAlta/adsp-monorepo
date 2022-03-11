@@ -1,14 +1,14 @@
 import {
   ActionTypes,
-  FETCH_CORE_NOTIFICATION_TYPE_SUCCEEDED,
+  FETCH_CORE_NOTIFICATION_TYPES_SUCCEEDED,
   FETCH_NOTIFICATION_METRICS_SUCCEEDED,
-  FETCH_NOTIFICATION_TYPE_SUCCEEDED,
+  FETCH_NOTIFICATION_CONFIGURATION_SUCCEEDED,
 } from './actions';
-import { NOTIFICATION_INIT, NotificationState, NotificationItem, NotificationType } from './models';
+import { NOTIFICATION_INIT, NotificationState, NotificationItem } from './models';
 
 export const combineNotification = (
   coreItem: NotificationItem,
-  tenantNotificationType: NotificationType
+  tenantNotificationType: Record<string, NotificationItem>
 ): NotificationItem => {
   //if there is a modified version of the core item in the tenant specific notifications
   if (
@@ -41,15 +41,14 @@ export const combineNotification = (
 
 export default function (state = NOTIFICATION_INIT, action: ActionTypes): NotificationState {
   switch (action.type) {
-    case FETCH_NOTIFICATION_TYPE_SUCCEEDED: {
-      const notificationTypes = action.payload.notificationInfo.data;
-
+    case FETCH_NOTIFICATION_CONFIGURATION_SUCCEEDED: {
       return {
         ...state,
-        notificationTypes: notificationTypes,
+        supportContact: action.payload.contact,
+        notificationTypes: action.payload.notificationInfo.data,
       };
     }
-    case FETCH_CORE_NOTIFICATION_TYPE_SUCCEEDED: {
+    case FETCH_CORE_NOTIFICATION_TYPES_SUCCEEDED: {
       const coreNotificationType = action.payload.notificationInfo.data;
       if (state.notificationTypes) {
         Object.values(coreNotificationType).forEach((coreItem) => {
