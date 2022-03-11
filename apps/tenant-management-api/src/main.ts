@@ -53,6 +53,11 @@ async function initializeApp(): Promise<express.Application> {
             role: TenantServiceRoles.TenantAdmin,
             description: 'Administrator role for accessing the ADSP tenant admin.',
           },
+          {
+            role: TenantServiceRoles.DirectoryAdmin,
+            description: 'Administrator role for accessing the directory (discovery) service.',
+            inTenantAdmin: true,
+          },
         ],
       },
       { logger },
@@ -113,7 +118,7 @@ async function initializeApp(): Promise<express.Application> {
   applyTenantMiddleware(app, { ...repositories, logger, eventService, configurationHandler });
   applyConfigMiddleware(app, { ...repositories, logger, eventService });
   applyDirectoryMiddleware(app, { ...repositories, logger });
-  applyDirectoryV2Middleware(app, { ...repositories, logger });
+  applyDirectoryV2Middleware(app, { ...repositories, logger, tenantService });
 
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
