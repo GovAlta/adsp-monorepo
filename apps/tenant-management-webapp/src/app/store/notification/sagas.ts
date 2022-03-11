@@ -104,7 +104,7 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
 
   if (configBaseUrl && token) {
     try {
-      const payloadId = payload.id || uuidv4();
+      const payloadId = payload.id;
 
       const sanitizedEvents = payload.events.map((eve) => {
         const eventBuilder: EventItem = {

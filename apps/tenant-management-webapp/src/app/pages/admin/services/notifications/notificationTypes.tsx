@@ -58,7 +58,7 @@ interface ParentCompProps {
 
 export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEdit, activateEdit }) => {
   const [editType, setEditType] = useState(false);
-  const [selectedType, setSelectedType] = useState(null);
+  const [selectedType, setSelectedType] = useState(emptyNotificationType);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [editEvent, setEditEvent] = useState(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -163,7 +163,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   useEffect(() => {
     if (activeEdit) {
-      setSelectedType(null);
+      setSelectedType(emptyNotificationType);
       setEditType(true);
       activateEdit(false);
       setShowTemplateForm(false);
@@ -217,7 +217,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     }
   };
 
-  const nonCoreCopiedNotifications: Record<string, NotificationItem>= Object.assign({}, notification?.notificationTypes);
+  const nonCoreCopiedNotifications: Record<string, NotificationItem> = Object.assign(
+    {},
+    notification?.notificationTypes
+  );
 
   if (Object.keys(coreNotification).length > 0 && notification?.notificationTypes) {
     const NotificationsIntersection = [];
@@ -239,15 +242,17 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     const definitionEventIndex = selectedType?.events?.findIndex(
       (def) => `${def.namespace}:${def.name}` === `${selectedEvent.namespace}:${selectedEvent.name}`
     );
-    selectedType.events[definitionEventIndex] = {
-      ...selectedEvent,
-      templates: {
-        email: {
-          subject,
-          body,
+    if (definitionEventIndex > -1) {
+      selectedType.events[definitionEventIndex] = {
+        ...selectedEvent,
+        templates: {
+          email: {
+            subject,
+            body,
+          },
         },
-      },
-    };
+      };
+    }
     dispatch(UpdateNotificationTypeService(selectedType));
     reset();
   };
@@ -283,7 +288,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   };
 
   return (
-    <NotficationStyles>
+    <NotificationStyles>
       <div>
         <p>
           Notification types represent a bundled set of notifications that can be subscribed to and provides the access
@@ -344,28 +349,33 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                       </a>
                     </MaxHeight>
                   </div>
-                  {notificationType?.subscriberRoles && (
-                    <div className="rowFlex smallFont">
-                      <div className="flex1" data-testid="tenant-subscriber-roles">
-                        Subscriber roles:{' '}
-                        <b>
-                          {notificationType?.subscriberRoles
-                            .filter((value) => value !== 'anonymousRead')
-                            .map(
-                              (roles, ix) => roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
-                            )}{' '}
-                        </b>
+                  <div className="rowFlex smallFont">
+                    <div className="flex1">
+                      <div data-testid="type-id" className="minimumLineHeight">
+                        Type ID: {notificationType.id}
                       </div>
-                      <div>
-                        <div data-testid="tenant-public-subscription">
-                          Public subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
+                      {notificationType?.subscriberRoles && (
+                        <div data-testid="tenant-subscriber-roles">
+                          Subscriber roles:{' '}
+                          <b>
+                            {notificationType?.subscriberRoles
+                              .filter((value) => value !== 'anonymousRead')
+                              .map(
+                                (roles, ix) => roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
+                              )}{' '}
+                          </b>
                         </div>
-                        <div className="minimumLineHeight" data-testid="tenant-self-service">
-                          Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
-                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div data-testid="tenant-public-subscription" className="minimumLineHeight">
+                        Public subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
+                      </div>
+                      <div data-testid="tenant-self-service">
+                        Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               }
               description={`Description: ${notificationType.description}`}
@@ -471,28 +481,33 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                   <div className="rowFlex">
                     <h2 className="flex1">{notificationType.name}</h2>
                   </div>
-                  {notificationType?.subscriberRoles && (
-                    <div className="rowFlex smallFont">
-                      <div className="flex1" data-testid="core-subscriber-roles">
-                        Subscriber roles:{' '}
-                        <b>
-                          {notificationType?.subscriberRoles
-                            .filter((value) => value !== 'anonymousRead')
-                            .map(
-                              (roles, ix) => roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
-                            )}{' '}
-                        </b>
+                  <div className="rowFlex smallFont">
+                    <div className="flex1">
+                      <div data-testid="type-id" className="minimumLineHeight">
+                        Type ID: {notificationType.id}
                       </div>
-                      <div>
-                        <div data-testid="core-public-subscription">
-                          Public subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
+                      {notificationType?.subscriberRoles && (
+                        <div data-testid="core-subscriber-roles">
+                          Subscriber roles:{' '}
+                          <b>
+                            {notificationType?.subscriberRoles
+                              .filter((value) => value !== 'anonymousRead')
+                              .map(
+                                (roles, ix) => roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
+                              )}{' '}
+                          </b>
                         </div>
-                        <div className="minimumLineHeight" data-testid="core-self-service">
-                          Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
-                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div data-testid="core-public-subscription" className="minimumLineHeight">
+                        Public subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
+                      </div>
+                      <div data-testid="core-self-service">
+                        Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               }
               description={`Description: ${notificationType.description}`}
@@ -748,7 +763,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           setShowEmailPreview(false);
         }}
       />
-    </NotficationStyles>
+    </NotificationStyles>
   );
 };
 
@@ -793,7 +808,7 @@ const MaxHeight = styled.div`
   max-height: ${(p: HeightProps) => p.height + 'px'};
 `;
 
-const NotficationStyles = styled.div`
+const NotificationStyles = styled.div`
   .smallFont {
     font-size: 12px;
   }
