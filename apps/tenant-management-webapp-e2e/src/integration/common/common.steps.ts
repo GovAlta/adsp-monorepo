@@ -40,7 +40,7 @@ When('the user enters {string} and {string}, and clicks login button', function 
   cy.wait(10000); // Wait all the redirects to settle down
 });
 
-Given('a service owner user is on tenant admin page', function () {
+Given('a tenant admin user is on tenant admin page', function () {
   commonlib.tenantAdminDirectURLLogin(
     Cypress.config().baseUrl,
     Cypress.env('realm'),

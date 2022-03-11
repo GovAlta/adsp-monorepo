@@ -29,11 +29,11 @@ import {
   RESOLVE_SUBSCRIBER_USER,
   DeleteSubscriberAction,
   DELETE_SUBSCRIBER,
-  FindSubscribers,
   GetAllTypeSubscriptionsAction,
   GetTypeSubscriptions as getTypeSubscriptionsAction,
   GET_ALL_TYPE_SUBSCRIPTIONS,
   SUBSCRIBE,
+  DeleteSubscriberSuccess,
 } from './actions';
 import { Subscriber, SubscriptionWrapper } from './models';
 import { RootState } from '../index';
@@ -115,7 +115,6 @@ function* unsubscribe(action: UnsubscribeAction): SagaIterator {
 
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
-  const userId: string = yield select((state: RootState) => state.session.userInfo?.sub);
 
   if (configBaseUrl && token) {
     try {
@@ -124,13 +123,6 @@ function* unsubscribe(action: UnsubscribeAction): SagaIterator {
       });
 
       yield put(UnsubscribeSuccess(subscriber, type));
-      if (subscriber.userId === userId) {
-        yield put(
-          SuccessNotification({
-            message: `You are unsubscribed! You will no longer receive notifications for ${type}.`,
-          })
-        );
-      }
     } catch (e) {
       yield put(ErrorNotification({ message: `Subscriptions (unsubscribe): ${e.message}` }));
     }
@@ -329,7 +321,7 @@ function* deleteSubscriber(action: DeleteSubscriberAction): SagaIterator {
     yield call(axios.delete, `${configBaseUrl}/${deleteSubscriberPath}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    yield put(FindSubscribers(action.payload.criteria));
+    yield put(DeleteSubscriberSuccess(action.payload.subscriberId));
   } catch (e) {
     yield put(ErrorNotification({ message: `Subscriptions (getSubscriberSubscriptions): ${e.message}` }));
   }
