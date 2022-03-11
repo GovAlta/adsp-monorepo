@@ -3,7 +3,6 @@ import * as HttpStatusCodes from 'http-status-codes';
 import { DirectoryRepository } from '../../directory/repository';
 import * as NodeCache from 'node-cache';
 import { Logger } from 'winston';
-import { requireDirectoryAdmin } from '../../middleware/authentication';
 import validationMiddleware from '../../middleware/requestValidator';
 import { ServiceV2 } from '../../directory/validator/directory/directoryValidator';
 interface DirectoryRouterProps {
@@ -143,12 +142,9 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
         }
 
         const services = result['services'];
-        let isExist;
-        try {
-          isExist = services.find((x) => x.service === service);
-        } catch (err) {
-          _next(err);
-        }
+
+        const isExist = services.find((x) => x.service === service);
+
         if (isExist) {
           if (api) {
             isExist.api = api;

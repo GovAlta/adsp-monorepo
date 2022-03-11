@@ -92,7 +92,6 @@ Feature: Notifications
     Then the user views Delete subscription modal
     And the user views the Delete subscription confirmation message of "auto.test@gov.ab.ca"
     When the user clicks Confirm button on Delete subscription modal
-    Then the user views a callout message of "You are unsubscribed! You will no longer receive notifications on auto.test@gov.ab.ca for status-application-health-change"
     Then the user "should not view" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Status-Application-Health-Change"
     # Restore the subscription
     Given a tenant admin user is on status applications page

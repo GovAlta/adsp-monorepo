@@ -49,7 +49,7 @@ describe('Notification - Subscribers Tab', () => {
     subscription: {
       ...SUBSCRIBER_INIT,
       subscribers,
-      search: {
+      subscriberSearch: {
         results: ['61bd151b6d95d24f4cf632cf', '61bd151b6d95d24f4cf632cc', '61bd151b6d95d24f4cf632c1'],
         next: null,
       },

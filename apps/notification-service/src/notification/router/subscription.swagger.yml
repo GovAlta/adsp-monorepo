@@ -42,11 +42,11 @@ components:
                 type: object
                 properties:
                   email:
-                    $ref: '#/components/schemas/Template'
+                    $ref: "#/components/schemas/Template"
                   bot:
-                    $ref: '#/components/schemas/Template'
+                    $ref: "#/components/schemas/Template"
                   sms:
-                    $ref: '#/components/schemas/Template'
+                    $ref: "#/components/schemas/Template"
     Subscriber:
       type: object
       properties:
@@ -68,6 +68,10 @@ components:
                 enum: [email, sms, bot]
               address:
                 type: string
+        subscriptions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Subscription"
     SubscriptionCriteria:
       type: object
       properties:
@@ -207,6 +211,19 @@ components:
     tags:
       - Subscription
     description: Retrieves subscriptions for a notification type.
+    parameters:
+      - name: top
+        description: Number of results to retrieve.
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: after
+        description: Cursor for page of results to retrieve.
+        in: query
+        required: false
+        schema:
+          type: string
     responses:
       200:
         description: Subscriptions successfully retrieved.
@@ -247,7 +264,7 @@ components:
             type: object
             properties:
               criteria:
-                $ref: '#/components/schemas/SubscriptionCriteria'
+                $ref: "#/components/schemas/SubscriptionCriteria"
               id:
                 type: string
               userId:
@@ -497,6 +514,18 @@ components:
       description: ID of the subscriber.
       in: path
       required: true
+      schema:
+        type: string
+    - name: top
+      description: Number of results to retrieve.
+      in: query
+      required: false
+      schema:
+        type: number
+    - name: after
+      description: Cursor for page of results to retrieve.
+      in: query
+      required: false
       schema:
         type: string
   get:
