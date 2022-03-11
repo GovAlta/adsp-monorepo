@@ -8,9 +8,9 @@ export const createConfigurationHandler =
   async (req, _res, next) => {
     const contextTenantId = req.tenant?.id || req.user?.tenantId;
 
-    req['getConfiguration'] = async <C, O = undefined>(tenantId?: AdspId) => {
+    req['getConfiguration'] = async <C, R = [C, C]>(tenantId?: AdspId) => {
       const token = await tokenProvider.getAccessToken();
-      const config = await service.getConfiguration<C, O>(serviceId, token, tenantId || contextTenantId);
+      const config = await service.getConfiguration<C, R>(serviceId, token, tenantId || contextTenantId);
       return config;
     };
 

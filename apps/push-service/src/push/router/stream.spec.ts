@@ -81,7 +81,7 @@ describe('stream router', () => {
       };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce([{ test: stream }, {}]);
+      req.getConfiguration.mockResolvedValueOnce({ test: stream });
       await getStream(req as unknown as Request, req.query.tenant, req.params.stream, next);
       expect(req['stream']).toBe(stream);
     });
@@ -96,7 +96,7 @@ describe('stream router', () => {
       };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce([{ test: stream }, {}]);
+      req.getConfiguration.mockResolvedValueOnce({ test: stream });
       await getStream(req as unknown as Request, req.query.tenant, req.params.stream, next);
       expect(req['stream']).toBe(stream);
       expect(req.getConfiguration.mock.calls[0][0].toString()).toMatch(
@@ -135,7 +135,7 @@ describe('stream router', () => {
       };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce([{}, {}]);
+      req.getConfiguration.mockResolvedValueOnce({});
       await getStream(req as unknown as Request, req.query.tenant, req.params.stream, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
@@ -156,7 +156,7 @@ describe('stream router', () => {
       };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce([{ test: stream }, {}]);
+      req.getConfiguration.mockResolvedValueOnce({ test: stream });
       await getStreams(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ test: expect.objectContaining({ id: 'test' }) }));
     });
@@ -174,7 +174,7 @@ describe('stream router', () => {
       };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce([{ test: stream }, {}]);
+      req.getConfiguration.mockResolvedValueOnce({ test: stream });
       await getStreams(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ test: expect.objectContaining({ id: 'test' }) }));
       expect(req.getConfiguration.mock.calls[0][0].toString()).toMatch(
