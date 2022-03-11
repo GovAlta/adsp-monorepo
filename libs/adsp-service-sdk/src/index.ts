@@ -8,6 +8,7 @@ import {
   createConfigurationHandler,
   createConfigurationService,
 } from './configuration';
+import { CombineConfiguration } from './configuration/configuration';
 import { createDirectory, ServiceDirectory } from './directory';
 import { createEventService, EventService } from './event';
 import { createHealthCheck, PlatformHealthCheck } from './healthCheck';
@@ -28,6 +29,8 @@ interface AdspOptions extends ServiceRegistration {
   accessTokenInQuery?: boolean;
   /** Configuration Converter: Converter function for configuration; converted value is cached. */
   configurationConverter?: ConfigurationConverter;
+  /** Combine Configuration: Combine function for merging tenant and core configuration. */
+  combineConfiguration?: CombineConfiguration;
 }
 
 interface PlatformServices {
@@ -71,6 +74,7 @@ export async function initializePlatform(
     accessServiceUrl,
     ignoreServiceAud,
     configurationConverter,
+    combineConfiguration,
     ...registration
   }: AdspOptions,
   logOptions: Logger | LogOptions,
@@ -100,7 +104,12 @@ export async function initializePlatform(
     // no-op implementation for when configuration is externally provided.
   };
   if (!configurationService) {
-    const configServiceImpl = createConfigurationService({ logger, directory, converter: configurationConverter });
+    const configServiceImpl = createConfigurationService({
+      logger,
+      directory,
+      converter: configurationConverter,
+      combine: combineConfiguration,
+    });
     configurationService = configServiceImpl;
 
     clearCached = function (tenantId: AdspId, serviceId: AdspId) {

@@ -20,7 +20,7 @@ describe('createLogEventJob', () => {
   };
 
   const configurationService = {
-    getConfiguration: jest.fn(() => Promise.resolve([{}, {}])),
+    getConfiguration: jest.fn(() => Promise.resolve({})),
   };
 
   beforeEach(() => {
@@ -94,21 +94,19 @@ describe('createLogEventJob', () => {
         valueServiceUrl: new URL('http://totally-real-value-service'),
       });
 
-      configurationService.getConfiguration.mockResolvedValueOnce([
-        {
-          test: {
-            definitions: {
-              'test-started': {
-                interval: {
-                  metric: 'test',
-                  namespace: 'test',
-                  name: 'test-prepared',
-                },
+      configurationService.getConfiguration.mockResolvedValueOnce({
+        test: {
+          definitions: {
+            'test-started': {
+              interval: {
+                metric: 'test',
+                namespace: 'test',
+                name: 'test-prepared',
               },
             },
           },
         },
-      ]);
+      });
 
       const start = new Date(event.timestamp.getTime() - 30000);
       axiosMock.get.mockResolvedValueOnce({

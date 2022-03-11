@@ -61,8 +61,11 @@ async function initializeApp() {
       clientSecret: environment.CLIENT_SECRET,
       directoryUrl: new URL(environment.DIRECTORY_URL),
       configurationSchema,
-      configurationConverter: (config: Record<string, NotificationType>, tenantId?: AdspId) =>
-        new NotificationConfiguration(config, tenantId),
+      combineConfiguration: (
+        tenantConfig: Record<string, NotificationType>,
+        coreConfig: Record<string, NotificationType>,
+        tenantId: AdspId
+      ) => new NotificationConfiguration(tenantConfig, coreConfig, tenantId),
       events: [NotificationsGeneratedDefinition, NotificationSentDefinition, NotificationSendFailedDefinition],
       roles: [
         {
