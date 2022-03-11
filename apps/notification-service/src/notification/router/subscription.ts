@@ -299,7 +299,6 @@ export function getSubscriber(repository: SubscriptionRepository): RequestHandle
       const { subscriber } = req.params;
 
       const entity = await repository.getSubscriber(tenantId, subscriber);
-      console.log(JSON.stringify(entity, getCircularReplacer()) + '<entity');
       if (!entity) {
         throw new NotFoundError('Subscriber', subscriber);
       }
@@ -310,10 +309,8 @@ export function getSubscriber(repository: SubscriptionRepository): RequestHandle
 
       req[SUBSCRIBER_KEY] = entity;
 
-      console.log(JSON.stringify(req, getCircularReplacer()) + '<req');
       next();
     } catch (err) {
-      console.log(JSON.stringify(err.message) + '<err.messagex');
       next(err);
     }
   };
@@ -324,37 +321,19 @@ export function getSubscriberById(repository: SubscriptionRepository, apiId: Ads
     try {
       const { subscriberId } = req.params;
 
-      console.log(JSON.stringify(subscriberId, getCircularReplacer()) + '<subscriberIdsubscriberId');
       const result = await repository.getSubscriberById(subscriberId, 1000, null);
-      console.log(JSON.stringify(result, getCircularReplacer()) + '<result');
       if (!result) {
         throw new NotFoundError('Subscriber', subscriberId);
       }
 
-      // req[SUBSCRIBER_KEY] = data.results;
-
-      //req.user.tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/61fc147d7ef03c7fa4a5cc26`;
-
-      const [configuration, options] = await req.getConfiguration<
+      const [_configuration, options] = await req.getConfiguration<
         NotificationConfiguration,
         NotificationConfiguration
       >();
 
-      console.log(JSON.stringify(req, getCircularReplacer()) + '<req');
-      //res.send(result.results);
-
       res.send(
         result.results.map((r) => {
-          //const default = mapSubscription(apiId, r);
-          console.log(JSON.stringify(r) + '<rcccc');
-          console.log(JSON.stringify(r.typeId) + '<r.typeId');
-
-          console.log(JSON.stringify(configuration, getCircularReplacer()) + 'configuration');
-          console.log(JSON.stringify(options, getCircularReplacer()) + 'options');
-
           const typeEntity = options?.getNotificationType(r.typeId); //|| configuration?.getNotificationType(r.typeId);
-          console.log(JSON.stringify(typeEntity) + '<typeEntity');
-          console.log(JSON.stringify(mapType(typeEntity, true)) + '<mapType(typeEntity, true)');
           return {
             ...r,
             type: typeEntity ? mapType(typeEntity, true) : null,
@@ -362,7 +341,6 @@ export function getSubscriberById(repository: SubscriptionRepository, apiId: Ads
         })
       );
     } catch (err) {
-      console.log(JSON.stringify(err.message) + '<err.messagexxx');
       next(err);
     }
   };
@@ -483,8 +461,6 @@ export function getSubscriberSubscriptions(apiId: AdspId, repository: Subscripti
         NotificationConfiguration
       >();
 
-      console.log(JSON.stringify(configuration, getCircularReplacer()) + 'configurationx');
-
       const result = await repository.getSubscriptions(tenantId, top, after as string, {
         subscriberIdEquals: subscriber.id,
       });
@@ -509,12 +485,8 @@ export function getSubscriberSubscriptions(apiId: AdspId, repository: Subscripti
 export function getSubscriberDetails(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
   return async (req, res, next) => {
     try {
-      //const tenantId = req.tenant?.id;
-      const user = req.user;
       const subscriberDetails = mapSubscriber(apiId, req[SUBSCRIBER_KEY]) as SubscriberEntity;
       const { includeSubscriptions } = req.query;
-      console.log(JSON.stringify(subscriberDetails) + '<subscriberDetails');
-      console.log(JSON.stringify(includeSubscriptions) + '<includeSubscriptions');
 
       if (includeSubscriptions && includeSubscriptions === 'true') {
         let subscriberSubscriptions = [];
@@ -522,24 +494,19 @@ export function getSubscriberDetails(apiId: AdspId, repository: SubscriptionRepo
           subscriberIdEquals: subscriberDetails.id,
         });
 
-        console.log(JSON.stringify(result) + '<result2');
         const [configuration, options] = await req.getConfiguration<
           NotificationConfiguration,
           NotificationConfiguration
         >();
         subscriberSubscriptions = result.results.map((r) => {
-          const { subscriber: subscriber, ...subscription } = mapSubscription(apiId, r);
-          const castSubscriber = subscriber as Subscriber;
+          const { subscriber: _subscriber, ...subscription } = mapSubscription(apiId, r);
           const typeEntity = configuration?.getNotificationType(r.typeId) || options?.getNotificationType(r.typeId);
-          const canSubscribe = typeEntity.canSubscribe(user, castSubscriber);
 
           return {
             ...subscription,
-            type: typeEntity ? mapType(typeEntity, true, canSubscribe) : null,
+            type: typeEntity ? mapType(typeEntity, true) : null,
           };
         });
-
-        console.log(JSON.stringify(subscriberSubscriptions) + '<subscriberSubscriptions2');
 
         return res.send({
           ...subscriberDetails,
@@ -560,22 +527,17 @@ export function getMySubscriberDetails(apiId: AdspId, repository: SubscriptionRe
       const tenantId = req.tenant?.id;
       const subscriberDetails = mapSubscriber(apiId, req[SUBSCRIBER_KEY]) as SubscriberEntity;
       const { includeSubscriptions } = req.query;
-      console.log(JSON.stringify(subscriberDetails) + '<subscriberDetails');
-      console.log(JSON.stringify(includeSubscriptions) + '<includeSubscriptions');
 
       if (includeSubscriptions && includeSubscriptions === 'true') {
         let subscriberSubscriptions = [];
         const result = await repository.getSubscriptions(tenantId, 0, undefined, {
           subscriberIdEquals: subscriberDetails.id,
         });
-        console.log(JSON.stringify(req, getCircularReplacer()), '<reqqq');
-        console.log(JSON.stringify(result) + '<result');
         const [configuration, options] = await req.getConfiguration<
           NotificationConfiguration,
           NotificationConfiguration
         >();
 
-        console.log(JSON.stringify(configuration, getCircularReplacer()) + 'configurationx');
         subscriberSubscriptions = result.results.map((r) => {
           const { subscriber: _subscriber, ...subscription } = mapSubscription(apiId, r);
           const typeEntity = configuration?.getNotificationType(r.typeId) || options?.getNotificationType(r.typeId);
@@ -585,8 +547,6 @@ export function getMySubscriberDetails(apiId: AdspId, repository: SubscriptionRe
             type: typeEntity ? mapType(typeEntity, true) : null,
           };
         });
-
-        console.log(JSON.stringify(subscriberSubscriptions) + '<subscriberSubscriptionsxx');
 
         return res.send({
           ...subscriberDetails,

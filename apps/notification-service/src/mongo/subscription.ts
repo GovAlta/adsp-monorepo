@@ -1,6 +1,6 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { decodeAfter, encodeNext, Results } from '@core-services/core-common';
-import { model, Types, ObjectId } from 'mongoose';
+import { model, Types } from 'mongoose';
 import {
   NotificationTypeEntity,
   SubscriberCriteria,
@@ -11,20 +11,6 @@ import {
 } from '../notification';
 import { subscriberSchema, subscriptionSchema } from './schema';
 import { SubscriberDoc, SubscriptionDoc } from './types';
-import { Subscriber } from '../notification/types/subscriber';
-
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-};
 
 export class MongoSubscriptionRepository implements SubscriptionRepository {
   private subscriberModel;
@@ -36,22 +22,6 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
   }
 
   async getSubscriberById(id: string, top: number, after: string): Promise<Results<SubscriptionEntity>> {
-    console.log(JSON.stringify(id, getCircularReplacer()) + '<id----');
-    const subscribers = await this.subscriberModel.find({ _id: id }).populate('subscriberId');
-    const subscriptions = await this.subscriptionModel.find({ subscriberId: id }).populate('subscriberId');
-    const subscriber = subscribers[0];
-
-    const docs = subscriptions.map((subscription) => this.fromSubscriptionDoc(subscription));
-    // subscriptions = subscriptions.map((subscriptions) = > {
-
-    //   return subscriptions;
-    // })
-    console.log(JSON.stringify(subscriber, getCircularReplacer()) + '<subscriber----');
-    console.log(JSON.stringify(subscriptions, getCircularReplacer()) + '<subscriptions----');
-    const x = this.fromDoc(subscriber);
-    console.log(JSON.stringify(docs, getCircularReplacer()) + '<docs----');
-    //return docs;
-
     const skip = parseInt(after);
 
     return new Promise<Results<SubscriptionEntity>>((resolve, reject) => {
@@ -129,8 +99,6 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     if (criteria?.subscriberIdEquals) {
       query.subscriberId = criteria.subscriberIdEquals;
     }
-
-    console.log(JSON.stringify(query) + '<querxxy');
 
     return new Promise<Results<SubscriptionEntity>>((resolve, reject) => {
       this.subscriptionModel
@@ -270,7 +238,6 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
   }
 
   private fromSubscriptionDoc(doc: SubscriptionDoc, subscriber?: SubscriberEntity) {
-    console.log(JSON.stringify(doc) + '<docs');
     return doc
       ? new SubscriptionEntity(
           this,

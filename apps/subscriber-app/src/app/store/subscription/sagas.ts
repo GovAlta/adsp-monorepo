@@ -50,18 +50,10 @@ export function* getMySubscriberDetails(): SagaIterator {
 }
 
 export function* getSubscriberDetails(action: GetSubscriberAction): SagaIterator {
-  console.log(JSON.stringify('here'));
-
   try {
     const subscriberId = action.payload.subscriberId;
-
-    console.log(JSON.stringify(subscriberId) + '<subscriberIdxxx');
-
     const { data } = yield call(axios.get, `/api/subscriber/v1/get-subscriber/${subscriberId}`);
 
-    //const subscriber: Subscriber = data;
-
-    console.log(JSON.stringify(data) + '<subscribersubscriber');
     if (data) {
       yield put(GetSubscriberDetailsSuccess(data));
     }

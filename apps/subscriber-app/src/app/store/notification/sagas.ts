@@ -5,16 +5,20 @@ import { FetchContactInfoSucceededService, FETCH_CONTACT_INFO, FetchContactInfoA
 import axios from 'axios';
 
 export function* fetchContactInfo(action: FetchContactInfoAction): SagaIterator {
-  const { realm } = action.payload;
+  const { realm, tenantId } = action.payload.tenant;
 
-  if (realm) {
-    try {
-      const { data: contactInfo } = yield call(axios.get, `/api/configuration/v1/support-info/${realm}`);
-
-      yield put(FetchContactInfoSucceededService({ data: contactInfo }));
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchContactInfo` }));
+  try {
+    let contactInfo = null;
+    if (realm) {
+      contactInfo = (yield call(axios.get, `/api/configuration/v1/support-info/${realm}`)).data;
+    } else if (tenantId) {
+      console.log('tenanting');
+      contactInfo = (yield call(axios.get, `/api/configuration/v1/support-info-tenant-id/${tenantId}`)).data;
     }
+
+    yield put(FetchContactInfoSucceededService({ data: contactInfo }));
+  } catch (e) {
+    yield put(ErrorNotification({ message: `${e.message} - fetchContactInfo` }));
   }
 }
 

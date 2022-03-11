@@ -1,25 +1,29 @@
-import React, { FormEvent, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Main } from '@components/Html';
 import Container from '@components/Container';
-import styled from 'styled-components';
 import DataTable from '@components/DataTable';
 import { GoAButton, GoACard, GoAPageLoader } from '@abgov/react-components';
 import { GoACallout } from '@abgov/react-components';
 import { FetchContactInfoService } from '@store/notification/actions';
+import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
+import Header from '@components/AppHeader';
+import Footer from '@components/Footer';
+import GoaLogo from '../../../assets/goa-logo.svg';
+import styled from 'styled-components';
 import {
-  GoAInputEmail,
-  GoAForm,
-  GoAFormItem,
-  GoAModal,
-  GoAModalActions,
-  GoAModalContent,
-  GoAModalTitle,
-} from '@abgov/react-components/experimental';
+  Label,
+  ContactInformationContainer,
+  ContactInformationWrapper,
+  CalloutWrapper,
+  SubscriptionListContainer,
+  TableHeaders,
+  DescriptionWrapper,
+} from '../private/Subscriptions/styled-components';
 
 import { useParams } from 'react-router-dom';
 
 import { useDispatch, useSelector } from 'react-redux';
-import { getSubscriberDetails, patchSubscriber, unsubscribe } from '@store/subscription/actions';
+import { getSubscriberDetails, unsubscribe } from '@store/subscription/actions';
 import { RootState } from '@store/index';
 import SubscriptionsList from './SubscriptionsList';
 import { SubscriberChannel, Subscription } from '@store/subscription/models';
@@ -27,17 +31,16 @@ import { SubscriberChannel, Subscription } from '@store/subscription/models';
 const Subscriptions = (): JSX.Element => {
   const dispatch = useDispatch();
   const EMAIL = 'email';
-  const { subscriptions } = useSelector((state: RootState) => ({
-    //subscriber: state.subscription.subscriber,
+  const { subscriptions, notifications } = useSelector((state: RootState) => ({
     subscriptions: state.subscription.subscriptions,
+    notifications: state.notifications.notification,
   }));
-  //const contact = useSelector((state: RootState) => state.notification.notificationTypes?.contact);
-  const [formErrors, setFormErrors] = useState({});
+
+  const contact = useSelector((state: RootState) => state.notification?.contactInfo);
+
   const subscriberEmail =
     subscriptions?.length > 0 &&
     subscriptions[0]?.subscriber.channels?.filter((chn: SubscriberChannel) => chn.channel === EMAIL)[0]?.address;
-  const [emailContactInformation, setEmailContactInformation] = useState(subscriberEmail);
-  const [editContactInformation, setEditContactInformation] = useState(false);
   const [showUnSubscribeModal, setShowUnSubscribeModal] = useState(false);
   const [selectedUnsubscribeSub, setSelectedUnsubscribeSub] = useState<Subscription>();
   const subscriberId = useParams<{ subscriberId: string }>().subscriberId;
@@ -53,9 +56,12 @@ const Subscriptions = (): JSX.Element => {
     dispatch(getSubscriberDetails(subscriberId));
   }, []);
 
-  // useEffect(() => {
-  //   dispatch(FetchContactInfoService());
-  // }, []);
+  useEffect(() => {
+    const resource = subscriptions?.length > 0 && subscriptions[0]?.tenantId?.resource;
+    const resourcePieces = resource && resource.split('/');
+    const tenantId = resourcePieces && resourcePieces[resourcePieces.length - 1];
+    if (tenantId) dispatch(FetchContactInfoService({ tenantId: tenantId }));
+  }, [subscriptions]);
 
   const unSubscribe = (typeId: string) => {
     setShowUnSubscribeModal(true);
@@ -103,84 +109,83 @@ const Subscriptions = (): JSX.Element => {
       </GoAModal>
     );
   };
-  const isValidEmail = (email: string): boolean => {
-    return /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email);
-  };
 
-  return subscriptions ? (
-    <Main>
-      <Container hs={2} vs={4} xlHSpacing={12}>
-        <h1 data-testid="service-name">Subscription management</h1>
-        <p data-testid="service-description">Manage your subscription preferences</p>
-        <p>{JSON.stringify(subscriptions)}</p>
-        <br />
-        <br />
-        {showUnSubscribeModal ? unSubscribeModal() : ''}
-        <GoACard title="Contact information" data-testid="contact-information-card">
-          <Label>Email</Label>
-          <ContactInformationContainer>
-            <div>
-              <p>{subscriberEmail}</p>
-            </div>
-          </ContactInformationContainer>
-        </GoACard>
-        <GoAModal></GoAModal>
-        <Container hs={1} vs={5}>
-          <SubscriptionListContainer>
-            {subscriptions?.length > 0 ? (
-              <DataTable data-testid="subscriptions-table">
-                <TableHeaders>
-                  <tr>
-                    <th id="subscriptions">Subscriptions</th>
-                    <th id="available-channels">Available channels</th>
-                    <th id="action">Action</th>
-                  </tr>
-                </TableHeaders>
-                <tbody>
-                  <SubscriptionsList onUnsubscribe={unSubscribe} subscriptions={subscriptions} />
-                </tbody>
-              </DataTable>
+  return (
+    <>
+      <Header serviceName="Alberta Digital Service Platform - Subscription management " />
+      <SubscriptionManagement>
+        <Main>
+          <Container hs={2} vs={4.5} xlHSpacing={12}>
+            <h1 data-testid="service-name">Subscription management</h1>
+            <DescriptionWrapper>
+              <p data-testid="service-description">
+                Use this page to manage notifications from the services of Government of Alberta. Please note,
+                unsubscribing from some notifications might require additional verification from the government
+                authorities.
+              </p>
+            </DescriptionWrapper>
+            {showUnSubscribeModal ? unSubscribeModal() : ''}
+            {subscriptions ? (
+              <>
+                <ContactInformationWrapper>
+                  <GoACard title="Contact information" data-testid="contact-information-card">
+                    <Label>Email</Label>
+                    <ContactInformationContainer>
+                      <div>
+                        <p>{subscriberEmail}</p>
+                      </div>
+                    </ContactInformationContainer>
+                  </GoACard>
+                </ContactInformationWrapper>
+                <GoAModal></GoAModal>
+                <SubscriptionListContainer>
+                  {subscriptions?.length > 0 ? (
+                    <DataTable data-testid="subscriptions-table">
+                      <TableHeaders>
+                        <tr>
+                          <th id="subscriptions">Subscriptions</th>
+                          <th id="available-channels">Available channels</th>
+                          <th id="action">Action</th>
+                        </tr>
+                      </TableHeaders>
+                      <tbody>
+                        <SubscriptionsList onUnsubscribe={unSubscribe} subscriptions={subscriptions} />
+                      </tbody>
+                    </DataTable>
+                  ) : (
+                    <GoACallout title="You have no subscriptions" type="important"></GoACallout>
+                  )}
+                </SubscriptionListContainer>
+                <CalloutWrapper id="contactSupport">
+                  <GoACallout title="Need help? Contact your service admin" type="information">
+                    <div>{contact?.supportInstructions}</div>
+                    <div>
+                      Email:{' '}
+                      <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
+                        {contact?.contactEmail}
+                      </a>
+                    </div>
+                    <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>
+                    <div data-testid="service-notice-date-range"></div>
+                  </GoACallout>
+                </CalloutWrapper>
+              </>
+            ) : notifications ? (
+              <GoACallout title={`${notifications.message}`} type="important"></GoACallout>
             ) : (
-              <GoACallout title="You have no subscriptions" type="important"></GoACallout>
+              <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
             )}
-          </SubscriptionListContainer>
-          <div id="contactSupport">
-            <GoACallout title="Need help? Contact your service admin" type="information">
-              {/* <div>{contact?.supportInstructions}</div>
-              <div>
-                Email:{' '}
-                <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
-                  {contact?.contactEmail}
-                </a>
-              </div>
-              <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div> */}
-              <div data-testid="service-notice-date-range"></div>
-            </GoACallout>
-          </div>
-        </Container>
-      </Container>
-    </Main>
-  ) : (
-    <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
+          </Container>
+        </Main>
+      </SubscriptionManagement>
+      <Footer logoSrc={GoaLogo} />
+    </>
   );
 };
 export default Subscriptions;
 
-const Label = styled.label`
-  font-weight: bold;
-`;
-const ContactInformationContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  padding-top: 1.5rem;
-`;
-const SubscriptionListContainer = styled.div`
-  padding-top: 5rem;
-`;
-
-const TableHeaders = styled.thead`
-  #action {
-    text-align: right;
+const SubscriptionManagement = styled.div`
+  tr > th {
+    padding-bottom: 0.5rem;
   }
 `;

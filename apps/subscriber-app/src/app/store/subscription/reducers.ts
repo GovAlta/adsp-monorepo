@@ -22,8 +22,6 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
         subscriber: action.payload.subscriber,
       };
     case GET_SUBSCRIBER_DETAILS_SUCCESS:
-      console.log('we made it here');
-      console.log(JSON.stringify(action.payload));
       return {
         ...state,
         subscriptions: action.payload.subscriptions,
