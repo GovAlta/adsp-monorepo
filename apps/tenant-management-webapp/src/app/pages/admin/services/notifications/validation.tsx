@@ -1,12 +1,18 @@
-import { NotificationItem, NotificationType } from '@store/notification/models';
+import { NotificationItem } from '@store/notification/models';
 
-
-export const isDuplicatedNotificationName = (coreNotification: NotificationType, notifications: NotificationType, init: NotificationItem, name: string): boolean => {
+export const isDuplicatedNotificationName = (
+  coreNotification: Record<string, NotificationItem>,
+  notifications: Record<string, NotificationItem>,
+  init: NotificationItem,
+  name: string
+): boolean => {
   if (!notifications) {
     return false;
   }
   const allNames = Object.values({ ...notifications, ...coreNotification })
-    .map((notification: NotificationItem): string => { return notification?.name })
+    .map((notification: NotificationItem): string => {
+      return notification?.name;
+    })
     .filter((name): string => {
       if (init) {
         // For edit, remove the original name in the name list
@@ -22,4 +28,4 @@ export const isDuplicatedNotificationName = (coreNotification: NotificationType,
     });
 
   return allNames.includes(name);
-}
+};

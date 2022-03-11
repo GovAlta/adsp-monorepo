@@ -42,73 +42,12 @@ components:
                 type: object
                 properties:
                   email:
-                    $ref: '#/components/schemas/Template'
+                    $ref: "#/components/schemas/Template"
                   bot:
-                    $ref: '#/components/schemas/Template'
+                    $ref: "#/components/schemas/Template"
                   sms:
-                    $ref: '#/components/schemas/Template'
+                    $ref: "#/components/schemas/Template"
     Subscriber:
-      type: object
-      properties:
-        urn:
-          type: string
-        id:
-          type: string
-        userId:
-          type: string
-        addressAs:
-          type: string
-        channels:
-          type: array
-          items:
-            type: object
-            properties:
-              channel:
-                type: string
-                enum: [email, sms, bot]
-              address:
-                type: string
-    SubscriptionCriteria:
-      type: object
-      properties:
-        correlationId:
-          type: string
-        context:
-          type: object
-          additionalProperties: true
-    Subscription:
-      type: object
-      properties:
-        typeId:
-          type: string
-        subscriber:
-          $ref: '#/components/schemas/Subscriber'
-        criteria:
-          $ref: '#/components/schemas/SubscriptionCriteria'
-    SendVerifyCodeOperation:
-      type: object
-      properties:
-        operation:
-          type: string
-          enum: [send-code]
-        channel:
-          type: string
-          enum: [email, sms, bot]
-        address:
-          type: string
-        reason:
-          type: string
-      required: [operation, channel, address]
-    MySubscriberSubscriptions:
-      type: object
-      properties:
-        typeId:
-          type: string
-        subscriber:
-          $ref: '#/components/schemas/Subscriber'
-        criteria:
-          $ref: '#/components/schemas/SubscriptionCriteria'
-    MySubscriberDetails:
       type: object
       properties:
         urn:
@@ -132,7 +71,38 @@ components:
         subscriptions:
           type: array
           items:
-            $ref: '#/components/schemas/MySubscriberSubscriptions'
+            $ref: "#/components/schemas/Subscription"
+    SubscriptionCriteria:
+      type: object
+      properties:
+        correlationId:
+          type: string
+        context:
+          type: object
+          additionalProperties: true
+    Subscription:
+      type: object
+      properties:
+        typeId:
+          type: string
+        subscriber:
+          $ref: "#/components/schemas/Subscriber"
+        criteria:
+          $ref: "#/components/schemas/SubscriptionCriteria"
+    SendVerifyCodeOperation:
+      type: object
+      properties:
+        operation:
+          type: string
+          enum: [send-code]
+        channel:
+          type: string
+          enum: [email, sms, bot]
+        address:
+          type: string
+        reason:
+          type: string
+      required: [operation, channel, address]
     CheckCodeOperation:
       type: object
       properties:
@@ -175,7 +145,7 @@ components:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/NotificationType'
+                $ref: "#/components/schemas/NotificationType"
 /subscription/v1/types/{type}:
   get:
     tags:
@@ -194,7 +164,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NotificationType'
+              $ref: "#/components/schemas/NotificationType"
 /subscription/v1/types/{type}/subscriptions:
   parameters:
     - name: type
@@ -207,6 +177,19 @@ components:
     tags:
       - Subscription
     description: Retrieves subscriptions for a notification type.
+    parameters:
+      - name: top
+        description: Number of results to retrieve.
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: after
+        description: Cursor for page of results to retrieve.
+        in: query
+        required: false
+        schema:
+          type: string
     responses:
       200:
         description: Subscriptions successfully retrieved.
@@ -218,7 +201,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Subscription'
+                    $ref: "#/components/schemas/Subscription"
                 page:
                   type: object
                   properties:
@@ -247,7 +230,7 @@ components:
             type: object
             properties:
               criteria:
-                $ref: '#/components/schemas/SubscriptionCriteria'
+                $ref: "#/components/schemas/SubscriptionCriteria"
               id:
                 type: string
               userId:
@@ -271,7 +254,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Subscription'
+              $ref: "#/components/schemas/Subscription"
 
 /subscription/v1/types/{type}/subscriptions/{subscriber}:
   parameters:
@@ -297,7 +280,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Subscription'
+              $ref: "#/components/schemas/Subscription"
   delete:
     tags:
       - Subscription
@@ -329,7 +312,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Subscriber'
+                    $ref: "#/components/schemas/Subscriber"
                 page:
                   type: object
                   properties:
@@ -382,7 +365,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Subscriber'
+                    $ref: "#/components/schemas/Subscriber"
                 page:
                   type: object
                   properties:
@@ -411,7 +394,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Subscriber'
+              $ref: "#/components/schemas/Subscriber"
   patch:
     tags:
       - Subscription
@@ -441,7 +424,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Subscriber'
+              $ref: "#/components/schemas/Subscriber"
   post:
     tags:
       - Subscription
@@ -452,15 +435,15 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: '#/components/schemas/SendVerifyCodeOperation'
-              - $ref: '#/components/schemas/VerifyChannelOperation'
-              - $ref: '#/components/schemas/CheckCodeOperation'
+              - $ref: "#/components/schemas/SendVerifyCodeOperation"
+              - $ref: "#/components/schemas/VerifyChannelOperation"
+              - $ref: "#/components/schemas/CheckCodeOperation"
             discriminator:
               propertyName: operation
               mapping:
-                send-code: '#/components/schemas/SendVerifyCodeOperation'
-                check-code: '#/components/schemas/CheckCodeOperation'
-                verify-channel: '#/components/schemas/VerifyChannelOperation'
+                send-code: "#/components/schemas/SendVerifyCodeOperation"
+                check-code: "#/components/schemas/CheckCodeOperation"
+                verify-channel: "#/components/schemas/VerifyChannelOperation"
     responses:
       200:
         description: Subscriber successfully updated.
@@ -499,6 +482,18 @@ components:
       required: true
       schema:
         type: string
+    - name: top
+      description: Number of results to retrieve.
+      in: query
+      required: false
+      schema:
+        type: number
+    - name: after
+      description: Cursor for page of results to retrieve.
+      in: query
+      required: false
+      schema:
+        type: string
   get:
     tags:
       - Subscription
@@ -514,7 +509,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Subscription'
+                    $ref: "#/components/schemas/Subscription"
                 page:
                   type: object
                   properties:
@@ -543,4 +538,4 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MySubscriberDetails'
+              $ref: "#/components/schemas/Subscriber"

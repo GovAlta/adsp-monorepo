@@ -16,7 +16,7 @@ interface SearchInfo {
 }
 
 export const NextLoader: FunctionComponent<EventSearchNextProps> = ({ onSearch, searchCriteria, type }) => {
-  const next = useSelector((state: RootState) => state.subscription.search.next);
+  const next = useSelector((state: RootState) => state.subscription.subscriberSearch.next);
 
   if (next) {
     return (

@@ -116,7 +116,7 @@ export function* setApplicationStatus(action: SetApplicationStatusAction): SagaI
   }
 }
 
-export function* toggleApplicationStatus(action: ToggleApplicationStatusAction) {
+export function* toggleApplicationStatus(action: ToggleApplicationStatusAction): SagaIterator {
   const currentState: RootState = yield select();
 
   const baseUrl = getServiceStatusUrl(currentState.config);
@@ -124,7 +124,8 @@ export function* toggleApplicationStatus(action: ToggleApplicationStatusAction) 
 
   try {
     const api = new StatusApi(baseUrl, token);
-    const data: ServiceStatusApplication = yield api.toggleApplication(
+    const data: ServiceStatusApplication = yield call(
+      [api, api.toggleApplication],
       action.payload.applicationId,
       action.payload.enabled
     );

@@ -1,4 +1,10 @@
+export enum MessageType {
+  error = 'emergency',
+  success = 'information',
+}
+
 export interface Notification {
+  type?: MessageType;
   message: string;
   expiry?: number;
   disabled?: boolean;

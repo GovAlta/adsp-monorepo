@@ -67,7 +67,7 @@ export function getTypeSubscriptions(apiId: AdspId, repository: SubscriptionRepo
       const user = req.user;
       const tenantId = req.tenant.id;
       const type: NotificationTypeEntity = req[TYPE_KEY];
-      const { topValue, after, email, name } = req.query;
+      const { top: topValue, after, email, name } = req.query;
       const top = topValue ? parseInt(topValue as string, 10) : 10;
 
       if (!isAllowedUser(user, tenantId, ServiceUserRoles.SubscriptionAdmin, true)) {
@@ -445,7 +445,7 @@ export function getMySubscriberDetails(apiId: AdspId, repository: SubscriptionRe
       const subscriberDetails = mapSubscriber(apiId, req[SUBSCRIBER_KEY]) as SubscriberEntity;
       const { includeSubscriptions } = req.query;
 
-      if (includeSubscriptions && includeSubscriptions === 'true') {
+      if (includeSubscriptions === 'true') {
         let subscriberSubscriptions = [];
         const result = await repository.getSubscriptions(tenantId, 0, undefined, {
           subscriberIdEquals: subscriberDetails.id,

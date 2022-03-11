@@ -23,6 +23,11 @@ describe('ServiceStatus Page', () => {
   it('renders the main page', async () => {
     const store = mockStore({
       tenant: { name: 'Child Services' },
+      session: {
+        userInfo: {
+          sub: 'test-user-123',
+        },
+      },
       config: {
         serviceUrls: {
           serviceStatusAppUrl: 'http://www.somefakesite.com',
@@ -55,14 +60,19 @@ describe('ServiceStatus Page', () => {
         ],
       },
       subscription: {
-        subscriber: {
-          id: '1234',
-          urn: '123:456:789',
+        subscribers: {
+          '1234': {
+            userId: 'test-user-123',
+            id: '1234',
+            urn: '123:456:789',
+          },
         },
-        subscription: {
-          id: '1234',
-          urn: '123:456:789',
-          channels: null,
+        subscriptions: {
+          'status-application-health-change:1234': {
+            id: '1234',
+            urn: '123:456:789',
+            channels: null,
+          },
         },
       },
     });
@@ -108,6 +118,11 @@ describe('ServiceStatus Page', () => {
   it('toggles an application status', async () => {
     const store = mockStore({
       tenant: { name: 'Child Services' },
+      session: {
+        userInfo: {
+          sub: 'test-user-123',
+        },
+      },
       config: {
         serviceUrls: {
           serviceStatusAppUrl: 'http://www.somefakesite.com',
@@ -126,14 +141,19 @@ describe('ServiceStatus Page', () => {
         ],
       },
       subscription: {
-        subscriber: {
-          id: '1234',
-          urn: '123:456:789',
+        subscribers: {
+          '1234': {
+            userId: 'test-user-123',
+            id: '1234',
+            urn: '123:456:789',
+          },
         },
-        subscription: {
-          id: '1234',
-          urn: '123:456:789',
-          channels: null,
+        subscriptions: {
+          'status-application-health-change:1234': {
+            id: '1234',
+            urn: '123:456:789',
+            channels: null,
+          },
         },
       },
     });
