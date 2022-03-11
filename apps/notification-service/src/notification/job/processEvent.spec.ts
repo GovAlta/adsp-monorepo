@@ -104,10 +104,11 @@ describe('createProcessEventJob', () => {
         {
           test: type,
         },
+        {},
         tenantId
       );
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
-      configurationServiceMock.getConfiguration.mockResolvedValueOnce([configuration]);
+      configurationServiceMock.getConfiguration.mockResolvedValueOnce(configuration);
 
       const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
         tenantId,
@@ -189,13 +190,13 @@ describe('createProcessEventJob', () => {
         {
           test: customType,
         },
+        {
+          test: type,
+        },
         tenantId
       );
-      const options = new NotificationConfiguration({
-        test: type,
-      });
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
-      configurationServiceMock.getConfiguration.mockResolvedValueOnce([configuration, options]);
+      configurationServiceMock.getConfiguration.mockResolvedValueOnce(configuration);
 
       const subscriber = new SubscriberEntity(repositoryDoubleMock as unknown as SubscriptionRepository, {
         tenantId,

@@ -32,9 +32,9 @@ export const assertHasTenant: RequestHandler = (req, _res, next) => {
 
 export const getNotificationTypes: RequestHandler = async (req, res, next) => {
   try {
-    const [configuration, options] = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
+    const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
 
-    const types = [...(configuration?.getNotificationTypes() || []), ...(options?.getNotificationTypes() || [])];
+    const types = configuration.getNotificationTypes();
     res.send(types.map((t) => mapType(t)));
   } catch (err) {
     next(err);
@@ -45,11 +45,9 @@ const TYPE_KEY = 'notificationType';
 export const getNotificationType: RequestHandler = async (req, _res, next) => {
   try {
     const { type } = req.params;
-    const [configuration, options] = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
+    const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
 
-    const typeEntity =
-      (Object.keys(configuration).length > 0 && configuration?.getNotificationType(type)) ||
-      options?.getNotificationType(type);
+    const typeEntity = configuration.getNotificationType(type);
 
     if (!typeEntity) {
       throw new NotFoundError('Notification Type', type);
@@ -443,10 +441,7 @@ export function getSubscriberSubscriptions(apiId: AdspId, repository: Subscripti
         throw new UnauthorizedUserError('access subscribers subscriptions', user);
       }
 
-      const [configuration, options] = await req.getConfiguration<
-        NotificationConfiguration,
-        NotificationConfiguration
-      >();
+      const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
 
       const result = await repository.getSubscriptions(tenantId, top, after as string, {
         subscriberIdEquals: subscriber.id,
@@ -454,7 +449,7 @@ export function getSubscriberSubscriptions(apiId: AdspId, repository: Subscripti
       res.send({
         results: result.results.map((r) => {
           const { subscriber: _subscriber, ...subscription } = mapSubscription(apiId, r);
-          const typeEntity = configuration?.getNotificationType(r.typeId) || options?.getNotificationType(r.typeId);
+          const typeEntity = configuration.getNotificationType(r.typeId);
 
           return {
             ...subscription,
@@ -520,14 +515,10 @@ export function getMySubscriberDetails(apiId: AdspId, repository: SubscriptionRe
         const result = await repository.getSubscriptions(tenantId, 0, undefined, {
           subscriberIdEquals: subscriberDetails.id,
         });
-        const [configuration, options] = await req.getConfiguration<
-          NotificationConfiguration,
-          NotificationConfiguration
-        >();
-
+        const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
         subscriberSubscriptions = result.results.map((r) => {
           const { subscriber: _subscriber, ...subscription } = mapSubscription(apiId, r);
-          const typeEntity = configuration?.getNotificationType(r.typeId) || options?.getNotificationType(r.typeId);
+          const typeEntity = configuration.getNotificationType(r.typeId);
 
           return {
             ...subscription,

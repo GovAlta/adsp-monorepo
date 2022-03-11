@@ -7,14 +7,24 @@ export class NotificationConfiguration {
   private types: Record<string, NotificationTypeEntity>;
   private eventTypes: Record<string, NotificationTypeEntity[]>;
   public contact: SupportContact;
-  constructor({ contact, ...types }: Configuration, tenantId?: AdspId) {
+  constructor(
+    { contact, ...tenantTypes }: Configuration,
+    { contact: _contact, ...coreTypes }: Configuration,
+    tenantId?: AdspId
+  ) {
     this.contact = contact;
 
-    types = types || { contact: null };
-    this.types = Object.keys(types).reduce((entities, key) => {
-      entities[key] = new NotificationTypeEntity(types[key], tenantId);
+    const types = Object.entries(coreTypes).reduce((entities, [typeId, type]) => {
+      entities[typeId] = new NotificationTypeEntity(type, tenantId);
       return entities;
     }, {});
+
+    // Override core types with tenant configuration.
+    this.types = Object.entries(tenantTypes).reduce((entities, [typeId, type]) => {
+      const typeEntity = new NotificationTypeEntity(type, tenantId);
+      entities[typeId] = entities[typeId] ? entities[typeId].overrideWith(typeEntity) : typeEntity;
+      return entities;
+    }, types);
 
     this.eventTypes = Object.keys(this.types).reduce((eventEntities, key) => {
       const type = this.types[key];

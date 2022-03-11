@@ -42,11 +42,8 @@ export const getStream = async (req: Request, tenant: string, stream: string, ne
       throw new InvalidOperationError('No tenant specified for request.');
     }
 
-    const [entities, coreEntities] = await req.getConfiguration<
-      Record<string, StreamEntity>,
-      Record<string, StreamEntity>
-    >(tenantId);
-    const entity = { ...coreEntities, ...entities }[stream];
+    const entities = await req.getConfiguration<Record<string, StreamEntity>, Record<string, StreamEntity>>(tenantId);
+    const entity = entities[stream];
     if (!entity) {
       throw new NotFoundError('stream', stream);
     }
@@ -69,16 +66,8 @@ export const getStreams: RequestHandler = async (req, res, next) => {
     return;
   }
 
-  const [entities, coreEntities] = await req.getConfiguration<
-    Record<string, StreamEntity>,
-    Record<string, StreamEntity>
-  >(tenantId);
-  res.send(
-    [...Object.values(coreEntities), ...Object.values(entities)].reduce(
-      (streams, stream) => ({ ...streams, [stream.id]: mapStream(stream) }),
-      {}
-    )
-  );
+  const entities = await req.getConfiguration<Record<string, StreamEntity>, Record<string, StreamEntity>>(tenantId);
+  res.send(Object.values(entities).reduce((streams, stream) => ({ ...streams, [stream.id]: mapStream(stream) }), {}));
 };
 
 export function subscribeBySse(logger: Logger, events: Observable<DomainEvent>): RequestHandler {

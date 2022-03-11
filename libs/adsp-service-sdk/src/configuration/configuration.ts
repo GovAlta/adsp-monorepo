@@ -1,5 +1,5 @@
 import { AdspId } from '../utils';
 
-export type Configuration<C, O = void> = O extends void ? [C] : [C, O];
-
 export type ConfigurationConverter = (config: unknown, tenantId?: AdspId) => unknown;
+
+export type CombineConfiguration = (tenant: unknown, core: unknown, tenantId?: AdspId) => unknown;
