@@ -512,3 +512,8 @@ Then(
       });
   }
 );
+
+When('the user enters {string} as name and {string} as description fields', function (appName, description) {
+  statusObj.addApplicationNameModalField().clear().type(appName);
+  statusObj.addApplicationDescriptionModalField().clear().type(description);
+});
