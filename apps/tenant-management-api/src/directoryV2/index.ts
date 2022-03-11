@@ -6,7 +6,7 @@ import { Application } from 'express';
 import { Repositories } from '../directory/repository';
 import { createDirectoryRouter } from './router';
 
-const passportMiddleware = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
+const passportMiddleware = passport.authenticate(['core', 'tenant'], { session: false });
 interface DirectoryMiddlewareProps extends Repositories {
   logger: Logger;
 }
