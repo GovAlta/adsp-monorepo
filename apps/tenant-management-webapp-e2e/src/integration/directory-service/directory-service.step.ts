@@ -1,4 +1,4 @@
-import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Then } from 'cypress-cucumber-preprocessor/steps';
 import DirectoryServicePage from './directory-service.page';
 
 const directoryObj = new DirectoryServicePage();
@@ -7,7 +7,7 @@ Then('the user views the Directory service overview content {string}', function 
   directoryObj.directoryOverviewContent().invoke('text').should('contain', paragraphText);
 });
 
-Then('the user views the aside item {string} and with item link {string}', function (asideItem, asideLink) {
+Then('Then the user views the aside item {string} with the aside item link {string}', function (asideItem, asideLink) {
   directoryObj.directoryAsideItems(asideItem, asideLink).should('have.attr', 'href');
 });
 
