@@ -13,6 +13,7 @@ import { FetchRealmRoles } from '@store/tenant/actions';
 import { isDuplicatedNotificationName } from './validation';
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
+import MailIcon from '@assets/icons/mail-outline.svg';
 
 import {
   UpdateNotificationTypeService,
@@ -217,7 +218,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     }
   };
 
-  const nonCoreCopiedNotifications: Record<string, NotificationItem>= Object.assign({}, notification?.notificationTypes);
+  const nonCoreCopiedNotifications: Record<string, NotificationItem> = Object.assign(
+    {},
+    notification?.notificationTypes
+  );
 
   if (Object.keys(coreNotification).length > 0 && notification?.notificationTypes) {
     const NotificationsIntersection = [];
@@ -402,12 +406,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                         </div>
                         <div className="columnFlex height-100">
                           <div className="flex1 flex flexEndAlign">
-                            <NotificationBorder className="smallPadding">
-                              <a className="noCursor">
-                                <GoAIcon type="mail" style="filled" />
-                              </a>
-                            </NotificationBorder>
-
+                            <img src={MailIcon} alt="non-interactive email icon" />
                             <div className="rightAlignEdit">
                               <a
                                 style={{ marginRight: '20px' }}
@@ -513,11 +512,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           <div className="flex1 flex flexEndAlign">
                             <div className="flex1">
                               <MailButton>
-                                <NotificationBorder className="smallPadding">
-                                  <a className="noCursor">
-                                    <GoAIcon type="mail" style="filled" />
-                                  </a>
-                                </NotificationBorder>
+                                <img src={MailIcon} alt="non-interactive email icon" />
                               </MailButton>
                               {event.customized && <SmallText>Edited</SmallText>}
                             </div>
@@ -764,7 +759,7 @@ const Buttons = styled.div`
 `;
 
 const NotificationBorder = styled.div`
-  border: 1px solid #56a0d8;
+  border: 1px solid #666666;
   margin: 3px;
   border-radius: 3px;
 `;
@@ -838,6 +833,10 @@ const NotficationStyles = styled.div`
 
   .smallPadding {
     padding: 3px;
+  }
+
+  .mail-outline {
+    padding: 0px 3px;
   }
 
   .flexEndAlign {
