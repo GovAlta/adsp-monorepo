@@ -115,7 +115,6 @@ function* unsubscribe(action: UnsubscribeAction): SagaIterator {
 
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
-  const userId: string = yield select((state: RootState) => state.session.userInfo?.sub);
 
   if (configBaseUrl && token) {
     try {
@@ -124,13 +123,6 @@ function* unsubscribe(action: UnsubscribeAction): SagaIterator {
       });
 
       yield put(UnsubscribeSuccess(subscriber, type));
-      if (subscriber.userId === userId) {
-        yield put(
-          SuccessNotification({
-            message: `You are unsubscribed! You will no longer receive notifications for ${type}.`,
-          })
-        );
-      }
     } catch (e) {
       yield put(ErrorNotification({ message: `Subscriptions (unsubscribe): ${e.message}` }));
     }
