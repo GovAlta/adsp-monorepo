@@ -87,10 +87,12 @@ const typeSubscriptionsSelector = createSelector(
       .reduce(
         (typeSubs, [typeId, { results }]) => ({
           ...typeSubs,
-          [typeId]: results.map((result) => ({
-            ...subscriptions[`${typeId}:${result}`],
-            subscriber: subscribers[result],
-          })),
+          [typeId]: results
+            .filter((result) => subscriptions[`${typeId}:${result}`])
+            .map((result) => ({
+              ...subscriptions[`${typeId}:${result}`],
+              subscriber: subscribers[result],
+            })),
         }),
         {}
       );

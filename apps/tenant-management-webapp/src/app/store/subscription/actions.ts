@@ -1,9 +1,4 @@
-import {
-  Subscriber,
-  SubscriptionWrapper,
-  SubscriberSearchCriteria,
-  SubscriptionSearchCriteria,
-} from './models';
+import { Subscriber, SubscriptionWrapper, SubscriberSearchCriteria, SubscriptionSearchCriteria } from './models';
 
 export const GET_MY_SUBSCRIBER = 'tenant/subscriber-service/get-my-subscriber';
 export const GET_MY_SUBSCRIBER_SUCCESS = 'tenant/subscriber-service/get-my-subscriber-success';
@@ -46,7 +41,8 @@ export type ActionTypes =
   | GetTypeSubscriptionsSuccessAction
   | GetSubscriberSubscriptionsSuccessAction
   | ResolveSubscriberUserAction
-  | ResolveSubscriberUserSuccessAction;
+  | ResolveSubscriberUserSuccessAction
+  | DeleteSubscriberSuccessAction;
 
 export interface GetMySubscriberAction {
   type: typeof GET_MY_SUBSCRIBER;
@@ -157,7 +153,13 @@ export interface DeleteSubscriberAction {
   type: typeof DELETE_SUBSCRIBER;
   payload: {
     subscriberId: string;
-    criteria: SubscriberSearchCriteria;
+  };
+}
+
+export interface DeleteSubscriberSuccessAction {
+  type: typeof DELETE_SUBSCRIBER_SUCCESS;
+  payload: {
+    subscriberId: string;
   };
 }
 
@@ -315,13 +317,16 @@ export const UpdateSubscriberSuccess = (subscriberInfo: Subscriber): UpdateSubsc
   },
 });
 
-export const DeleteSubscriberService = (
-  subscriberId: string,
-  criteria: SubscriberSearchCriteria
-): DeleteSubscriberAction => ({
+export const DeleteSubscriber = (subscriberId: string): DeleteSubscriberAction => ({
   type: DELETE_SUBSCRIBER,
   payload: {
     subscriberId,
-    criteria,
+  },
+});
+
+export const DeleteSubscriberSuccess = (subscriberId: string): DeleteSubscriberSuccessAction => ({
+  type: DELETE_SUBSCRIBER_SUCCESS,
+  payload: {
+    subscriberId,
   },
 });

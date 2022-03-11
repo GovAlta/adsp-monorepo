@@ -8,6 +8,7 @@ import {
   UNSUBSCRIBE_SUCCESS,
   GET_MY_SUBSCRIBER_SUCCESS,
   SUBSCRIBE_SUCCESS,
+  DELETE_SUBSCRIBER_SUCCESS,
 } from './actions';
 
 import { SUBSCRIBER_INIT, SubscriberService, SubscriptionWrapper } from './models';
@@ -180,6 +181,23 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
             ...action.payload.subscriberInfo,
           },
         },
+      };
+    }
+    case DELETE_SUBSCRIBER_SUCCESS: {
+      delete state.subscribers[action.payload.subscriberId];
+      delete state.subscriberSubscriptionSearch[action.payload.subscriberId];
+      Object.keys(state.subscriptions)
+        .filter((key) => key.endsWith(action.payload.subscriberId))
+        .forEach((key) => {
+          delete state.subscriptions[key];
+        });
+      return {
+        ...state,
+        subscribers: { ...state.subscribers },
+        subscriberSubscriptionSearch: {
+          ...state.subscriberSubscriptionSearch,
+        },
+        subscriptions: { ...state.subscriptions },
       };
     }
     default:
