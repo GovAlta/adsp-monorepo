@@ -1,4 +1,5 @@
 export interface FileTypeItem {
+  id: string;
   name: string;
   updateRoles: string[];
   readRoles: string[];
@@ -7,16 +8,15 @@ export interface FileTypeItem {
   tableData?: {
     id: string;
   };
-  id?: string;
 }
 
 export const FileTypeDefault: FileTypeItem = {
+  id: null,
   name: '',
   updateRoles: [],
   readRoles: [],
   anonymousRead: false,
   hasFile: false,
-  id: null,
 };
 
 export interface FileItem {
@@ -49,5 +49,4 @@ export interface FileService {
 export const FILE_INIT: FileService = {
   fileList: null,
   fileTypes: null,
-
 };

@@ -184,8 +184,8 @@ export function* createFileType({ payload }: CreateFileTypeAction): SagaIterator
         {
           operation: 'UPDATE',
           update: {
-            [payload.name]: {
-              id: payload.name,
+            [payload.id]: {
+              id: payload.id,
               name: payload.name,
               anonymousRead: payload.anonymousRead,
               readRoles: payload.readRoles,
