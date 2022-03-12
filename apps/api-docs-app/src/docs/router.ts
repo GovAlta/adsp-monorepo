@@ -47,7 +47,7 @@ export const createDocsRouter = async ({
     res.send(serviceDoc.docs);
   });
 
-  router.use('/', swaggerUi.serve, async (req: Request, res: Response, next: NextFunction) => {
+  router.use('/swagger', swaggerUi.serve, async (req: Request, res: Response, next: NextFunction) => {
     const { tenant } = req.query;
     if (tenant) {
       let tenantInfo = null;
@@ -79,6 +79,15 @@ export const createDocsRouter = async ({
       },
     })(req, res, next);
   });
+
+  router.get('/:tenant?', async (req: Request, res: Response, next: NextFunction) => {
+    const {tenant} = req.params
+    if (tenant) {
+      res.redirect(`/swagger?tenant=${tenant}`)
+    } else {
+      res.redirect(`/swagger`)
+    }
+  })
 
   return router;
 };
