@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import {
   ActionTypes,
   BASIC_NOTIFICATION,
@@ -29,6 +30,7 @@ export default function (state: NotificationState = NOTIFICATION_INIT, action: A
         notifications: [
           ...state.notifications,
           {
+            id: uuidv4(),
             type: action.payload.type,
             message: action.payload.message,
             expiry: Date.now() + MessageExpiryTime,

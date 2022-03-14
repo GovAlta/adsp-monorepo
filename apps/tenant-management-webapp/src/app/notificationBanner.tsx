@@ -15,6 +15,7 @@ export function NotificationBanner(): JSX.Element {
     <div style={{ marginBottom: '10px' }}>
       {latestNotification && !latestNotification.disabled && (
         <GoANotification
+          key={latestNotification.id}
           type={latestNotification.type || 'emergency'}
           isDismissable={true}
           onDismiss={() => dispatch(DismissNotification(latestNotification))}

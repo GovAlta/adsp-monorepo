@@ -88,9 +88,6 @@ async function initializeApp(): Promise<express.Application> {
 
   app.use(passport.initialize());
 
-  app.get('/welcome', (_req, res) => {
-    res.send({ message: 'Welcome to tenant-management-api!' });
-  });
   app.get('/version', (_req, res) => {
     res.send(`Version: ${version}`);
   });
