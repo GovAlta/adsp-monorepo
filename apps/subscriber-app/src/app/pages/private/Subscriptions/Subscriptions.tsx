@@ -16,11 +16,12 @@ import {
   GoAModalTitle,
 } from '@abgov/react-components/experimental';
 
+import SubscriptionsList from '@components/SubscriptionsList';
+
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { getMySubscriberDetails, patchSubscriber, unsubscribe } from '@store/subscription/actions';
 import { RootState } from '@store/index';
-import SubscriptionsList from './SubscriptionsList';
 import { SubscriberChannel, Subscription } from '@store/subscription/models';
 import {
   NoSubscriberCallout,

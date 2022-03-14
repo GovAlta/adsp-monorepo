@@ -25,7 +25,7 @@ import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { getSubscriberDetails, unsubscribe } from '@store/subscription/actions';
 import { RootState } from '@store/index';
-import SubscriptionsList from './SubscriptionsList';
+import SubscriptionsList from '@components/SubscriptionsList';
 import { SubscriberChannel, Subscription } from '@store/subscription/models';
 
 const Subscriptions = (): JSX.Element => {
