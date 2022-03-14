@@ -86,7 +86,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
    */
   directoryRouter.post(
     '/namespaces/:namespace',
-    [passportMiddleware, validateNamespaceEndpointsPermission(tenantService), validationMiddleware(ServiceV2)],
+    [validationMiddleware(ServiceV2)],
     async (req: Request, res: Response, _next) => {
       const { namespace } = req.params;
       try {
@@ -125,7 +125,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
    */
   directoryRouter.put(
     '/namespaces/:namespace',
-    [passportMiddleware, validateNamespaceEndpointsPermission(tenantService), validationMiddleware(ServiceV2)],
+    [validationMiddleware(ServiceV2)],
     async (req: Request, res: Response, _next) => {
       const { namespace } = req.params;
       try {
