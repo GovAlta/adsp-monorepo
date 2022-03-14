@@ -20,18 +20,6 @@ interface NotificationTypeFormProps {
   errors?: Record<string, string>;
 }
 
-const emptyNotificationType: NotificationItem = {
-  name: '',
-  description: '',
-  events: [],
-  subscriberRoles: [],
-  // TODO: This is hardcoded to email for now. Needs to be updated after additional channels are supported in the UI.
-  channels: ['email'],
-  id: null,
-  publicSubscribe: false,
-  customized: false,
-};
-
 const IdField = styled.div`
   min-height: 1.6rem;
 `;

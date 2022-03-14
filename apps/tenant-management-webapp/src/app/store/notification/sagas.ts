@@ -1,7 +1,6 @@
 import { put, select, call, takeEvery, takeLatest } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { SagaIterator } from '@redux-saga/core';
-import { v4 as uuidv4 } from 'uuid';
 import {
   FetchNotificationConfigurationSucceededService,
   FetchCoreNotificationTypeSucceededService,
