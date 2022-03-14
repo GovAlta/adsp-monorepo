@@ -6,6 +6,7 @@ export const GET_MY_SUBSCRIBER_SUCCESS = 'tenant/subscriber-service/get-my-subsc
 export const SUBSCRIBE = 'tenant/subscriber-service/subscribe';
 export const SUBSCRIBE_SUCCESS = 'tenant/subscriber-service/subscribe-success';
 export const UNSUBSCRIBE = 'tenant/subscriber-service/unsubscribe';
+export const UNSUBSCRIBE_USER_SUBSCRIPTION = 'tenant/subscriber-service/unsubscribe-user-subscription';
 export const UNSUBSCRIBE_SUCCESS = 'tenant/subscriber-service/unsubscribe-success';
 
 export const UPDATE_SUBSCRIBER = 'tenant/subscriber-service/update-subscriber';
@@ -42,7 +43,8 @@ export type ActionTypes =
   | GetSubscriberSubscriptionsSuccessAction
   | ResolveSubscriberUserAction
   | ResolveSubscriberUserSuccessAction
-  | DeleteSubscriberSuccessAction;
+  | DeleteSubscriberSuccessAction
+  | UnsubscribeUserSubscriptionAction;
 
 export interface GetMySubscriberAction {
   type: typeof GET_MY_SUBSCRIBER;
@@ -71,6 +73,12 @@ export interface SubscribeSuccessAction {
 
 export interface UnsubscribeAction {
   type: typeof UNSUBSCRIBE;
+  payload: {
+    subscriptionInfo: { data: { type: string; data: Subscriber } };
+  };
+}
+export interface UnsubscribeUserSubscriptionAction {
+  type: typeof UNSUBSCRIBE_USER_SUBSCRIPTION;
   payload: {
     subscriptionInfo: { data: { type: string; data: Subscriber } };
   };
@@ -212,6 +220,15 @@ export const SubscribeSuccess = (notificationInfo: {
 
 export const Unsubscribe = (subscriptionInfo: { data: { type: string; data: Subscriber } }): UnsubscribeAction => ({
   type: UNSUBSCRIBE,
+  payload: {
+    subscriptionInfo,
+  },
+});
+
+export const UnsubscribeUserSubscription = (subscriptionInfo: {
+  data: { type: string; data: Subscriber };
+}): UnsubscribeUserSubscriptionAction => ({
+  type: UNSUBSCRIBE_USER_SUBSCRIPTION,
   payload: {
     subscriptionInfo,
   },
