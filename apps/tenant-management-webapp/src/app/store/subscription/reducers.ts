@@ -39,6 +39,10 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
           ...state.subscriptions,
           [`${type}:${subscriber.id}`]: {},
         },
+        subscribers: {
+          ...state.subscribers,
+          [subscriber.id]: { ...state.subscribers[subscriber.id], ...subscriber },
+        },
       };
     }
     case UNSUBSCRIBE_SUCCESS: {
