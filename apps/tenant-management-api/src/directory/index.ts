@@ -10,15 +10,12 @@ import { Application } from 'express';
 import { Repositories } from './repository';
 import { createDirectoryRouter } from './router';
 
-const passportMiddleware = passport.authenticate(['core', 'tenant'], { session: false });
+const passportMiddleware = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
 interface DirectoryMiddlewareProps extends Repositories {
   logger: Logger;
 }
 
-export const applyDirectoryMiddleware = (
-  app: Application,
-  { logger, directoryRepository }: DirectoryMiddlewareProps
-): Application => {
+export const applyDirectoryMiddleware = (app: Application, { logger, directoryRepository }: DirectoryMiddlewareProps): Application => {
   const directoryRouterProps = {
     logger,
     directoryRepository,

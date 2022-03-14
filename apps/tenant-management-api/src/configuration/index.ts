@@ -10,7 +10,8 @@ export * from './events';
 export * from './model';
 export * from './repository';
 
-const passportMiddleware = passport.authenticate(['core', 'tenant'], { session: false });
+
+const passportMiddleware = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
 
 interface ConfigMiddlewareProps extends Repositories {
   logger: Logger;
