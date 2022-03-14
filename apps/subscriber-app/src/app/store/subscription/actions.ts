@@ -1,7 +1,9 @@
-import { Subscriber, SubscriberChannel } from './models';
+import { Subscriber, Subscription, SubscriberChannel } from './models';
 
 export const GET_MY_SUBSCRIBER_DETAILS_SUCCESS = 'tenant/notification-service/get-mySubscriber-success';
+export const GET_SUBSCRIBER_DETAILS_SUCCESS = 'tenant/notification-service/get-Subscriber-success';
 export const GET_MY_SUBSCRIBER_DETAILS = 'tenant/notification-service/get-mySubscriber';
+export const GET_SUBSCRIBER_DETAILS = 'tenant/notification-service/get-Subscriber';
 
 export const UNSUBSCRIBE_SUCCESS = 'tenant/notification-service/unsubscribe-success';
 export const UNSUBSCRIBE_FAILED = 'tenant/notification-service/unsubscribe-failed';
@@ -20,11 +22,18 @@ export type ActionTypes =
   | NoSubscriber
   | PatchSubscriberActionSuccess
   | GetMySubscriberActionSuccess
-  | UnsubscribeActionSuccess;
+  | UnsubscribeActionSuccess
+  | GetSubscriberActionSuccess;
 export interface GetMySubscriberActionSuccess {
   type: typeof GET_MY_SUBSCRIBER_DETAILS_SUCCESS;
   payload: {
     subscriber: Subscriber;
+  };
+}
+export interface GetSubscriberActionSuccess {
+  type: typeof GET_SUBSCRIBER_DETAILS_SUCCESS;
+  payload: {
+    subscriptions: Subscription[];
   };
 }
 export interface UnsubscribeActionSuccess {
@@ -33,13 +42,19 @@ export interface UnsubscribeActionSuccess {
     typeId: string;
   };
 }
+
 export interface GetMySubscriberAction {
   type: typeof GET_MY_SUBSCRIBER_DETAILS;
+}
+export interface GetSubscriberAction {
+  type: typeof GET_SUBSCRIBER_DETAILS;
+  payload: { subscriberId: string };
 }
 export interface UnsubscribeAction {
   type: typeof UNSUBSCRIBE;
   payload: { type: string; subscriberId: string };
 }
+
 export interface PatchSubscriberAction {
   type: typeof PATCH_SUBSCRIBER;
   payload: { channels: SubscriberChannel[]; subscriberId: string };
@@ -91,6 +106,13 @@ export const patchSubscriber = (channels: SubscriberChannel[], subscriberId: str
   },
 });
 
+export const GetSubscriberDetailsSuccess = (subscriptions: Subscription[]): GetSubscriberActionSuccess => ({
+  type: GET_SUBSCRIBER_DETAILS_SUCCESS,
+  payload: {
+    subscriptions,
+  },
+});
+
 export const GetMySubscriberDetailsSuccess = (subscriber: Subscriber): GetMySubscriberActionSuccess => ({
   type: GET_MY_SUBSCRIBER_DETAILS_SUCCESS,
   payload: {
@@ -99,4 +121,11 @@ export const GetMySubscriberDetailsSuccess = (subscriber: Subscriber): GetMySubs
 });
 export const getMySubscriberDetails = (): GetMySubscriberAction => ({
   type: GET_MY_SUBSCRIBER_DETAILS,
+});
+
+export const getSubscriberDetails = (subscriberId: string): GetSubscriberAction => ({
+  type: GET_SUBSCRIBER_DETAILS,
+  payload: {
+    subscriberId,
+  },
 });

@@ -16,6 +16,7 @@ import { ThemeProvider } from 'styled-components';
 import { theme } from 'theme';
 import PublicApp from './publicApp';
 import Subscriptions from '@pages/private/Subscriptions/Subscriptions';
+import PublicSubscriptions from '@pages/public/Subscriptions';
 
 const AppRouters = () => {
   return (
@@ -24,6 +25,10 @@ const AppRouters = () => {
         <Route exact path="/" render={() => <Redirect to="/overview" />} />
         <Route path="/overview">
           <LandingPage />
+        </Route>
+
+        <Route exact path="/:subscriberId">
+          <Route path="/:subscriberId" component={PublicSubscriptions} />
         </Route>
 
         <Route path="/subscriptions/:realm">

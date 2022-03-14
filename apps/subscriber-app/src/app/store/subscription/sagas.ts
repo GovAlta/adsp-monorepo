@@ -3,11 +3,14 @@ import { ErrorNotification, SuccessNotification } from '@store/notifications/act
 import { SagaIterator } from '@redux-saga/core';
 import {
   GET_MY_SUBSCRIBER_DETAILS,
+  GET_SUBSCRIBER_DETAILS,
   GetMySubscriberDetailsSuccess,
+  GetSubscriberDetailsSuccess,
   UNSUBSCRIBE,
   UnsubscribeAction,
   UnsubscribeSuccess,
   PatchSubscriberAction,
+  GetSubscriberAction,
   PatchSubscriberSuccess,
   PATCH_SUBSCRIBER,
   NoSubscriberAction,
@@ -43,6 +46,19 @@ export function* getMySubscriberDetails(): SagaIterator {
         yield put(ErrorNotification({ message: `${e.message} - getMySubscriberDetails` }));
       }
     }
+  }
+}
+
+export function* getSubscriberDetails(action: GetSubscriberAction): SagaIterator {
+  try {
+    const subscriberId = action.payload.subscriberId;
+    const { data } = yield call(axios.get, `/api/subscriber/v1/get-subscriber/${subscriberId}`);
+
+    if (data) {
+      yield put(GetSubscriberDetailsSuccess(data));
+    }
+  } catch (e) {
+    yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
   }
 }
 
@@ -102,6 +118,7 @@ export function* unsubscribe(action: UnsubscribeAction): SagaIterator {
 }
 export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(GET_MY_SUBSCRIBER_DETAILS, getMySubscriberDetails);
+  yield takeEvery(GET_SUBSCRIBER_DETAILS, getSubscriberDetails);
   yield takeEvery(UNSUBSCRIBE, unsubscribe);
   yield takeEvery(PATCH_SUBSCRIBER, patchSubscriber);
 }
