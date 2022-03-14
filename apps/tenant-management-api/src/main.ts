@@ -7,7 +7,6 @@ import * as healthCheck from 'express-healthcheck';
 import * as fs from 'fs';
 import * as passport from 'passport';
 import * as swaggerUi from 'swagger-ui-express';
-import { version } from '../../../package.json';
 import { environment } from './environments/environment';
 import { applyConfigMiddleware, ConfigurationUpdatedDefinition } from './configuration';
 import { applyDirectoryMiddleware, bootstrapDirectory, directoryService } from './directory';
@@ -88,9 +87,6 @@ async function initializeApp(): Promise<express.Application> {
 
   app.use(passport.initialize());
 
-  app.get('/version', (_req, res) => {
-    res.send(`Version: ${version}`);
-  });
   app.use('/health', healthCheck());
 
   // Q: log info should include user info?
