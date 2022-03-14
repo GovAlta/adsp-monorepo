@@ -111,7 +111,7 @@ async function initializeApp(): Promise<express.Application> {
   applyTenantMiddleware(app, { ...repositories, logger, eventService, configurationHandler });
   applyConfigMiddleware(app, { ...repositories, logger, eventService });
   applyDirectoryMiddleware(app, { ...repositories, logger });
-  applyDirectoryV2Middleware(app, { ...repositories, logger, tenantService });
+  applyDirectoryV2Middleware(app, { ...repositories, logger });
 
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
