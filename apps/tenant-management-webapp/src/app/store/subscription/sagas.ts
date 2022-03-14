@@ -34,7 +34,8 @@ import {
   GET_ALL_TYPE_SUBSCRIPTIONS,
   SUBSCRIBE,
   DeleteSubscriberSuccess,
-  UNSUBSCRIBE_USER_SUBSCRIPTION,
+  DELETE_SUBSCRIPTION,
+  DeleteSubscriptionSuccess,
 } from './actions';
 import { Subscriber, SubscriptionWrapper } from './models';
 import { RootState } from '../index';
@@ -138,7 +139,8 @@ function* unsubscribe(action: UnsubscribeAction): SagaIterator {
   }
 }
 
-function* unsubscribeUserSubscription(action: UnsubscribeAction): SagaIterator {
+// deletes a subscription for a given subscriberId
+function* deleteSubscription(action: UnsubscribeAction): SagaIterator {
   const type = action.payload.subscriptionInfo.data.type;
   const id = action.payload.subscriptionInfo.data.data.id;
   const subscriber = action.payload.subscriptionInfo.data.data;
@@ -152,7 +154,7 @@ function* unsubscribeUserSubscription(action: UnsubscribeAction): SagaIterator {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      yield put(UnsubscribeSuccess(subscriber, type));
+      yield put(DeleteSubscriptionSuccess(subscriber, type));
     } catch (e) {
       yield put(ErrorNotification({ message: `Subscriptions (unsubscribe): ${e.message}` }));
     }
@@ -361,7 +363,7 @@ export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(GET_MY_SUBSCRIBER, getMySubscriber);
   yield takeEvery(SUBSCRIBE, subscribe);
   yield takeEvery(UNSUBSCRIBE, unsubscribe);
-  yield takeEvery(UNSUBSCRIBE_USER_SUBSCRIPTION, unsubscribeUserSubscription);
+  yield takeEvery(DELETE_SUBSCRIPTION, deleteSubscription);
   yield takeEvery(GET_ALL_TYPE_SUBSCRIPTIONS, getAllTypeSubscriptions);
   yield takeEvery(GET_TYPE_SUBSCRIPTIONS, getTypeSubscriptions);
   yield takeEvery(GET_SUBSCRIBER_SUBSCRIPTIONS, getSubscriberSubscriptions);
