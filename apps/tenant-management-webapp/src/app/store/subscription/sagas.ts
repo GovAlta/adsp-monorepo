@@ -63,7 +63,10 @@ export function* getMySubscriber(): SagaIterator {
 
       yield put(GetMySubscriberSuccess(result));
     } catch (e) {
-      yield put(ErrorNotification({ message: `Subscriptions (getSubscriber): ${e.message}` }));
+      // Don't show error for 404 since that is expected when user has never subscribed before.
+      if (!axios.isAxiosError(e) || e.response.status !== 404) {
+        yield put(ErrorNotification({ message: `Subscriptions (getSubscriber): ${e.message}` }));
+      }
     }
   }
 }
@@ -87,11 +90,8 @@ function* subscribe(action: SubscribeAction): SagaIterator {
       );
 
       const result = response.data.subscriber;
-
       const subData: Subscriber = {
-        id: result.id,
-        urn: result.urn,
-        channels: result.channels,
+        ...result,
       };
 
       yield put(SubscribeSuccess({ data: { type: type, data: subData, email: email } }));
