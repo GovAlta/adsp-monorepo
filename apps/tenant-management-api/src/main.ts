@@ -14,7 +14,13 @@ import { applyDirectoryV2Middleware } from './directoryV2';
 import { createRepositories, disconnect } from './mongo';
 import { logger } from './middleware/logger';
 import { TenantServiceRoles } from './roles';
-import { TenantCreatedDefinition, TenantDeletedDefinition, configurationSchema, applyTenantMiddleware } from './tenant';
+import {
+  tenantService,
+  TenantCreatedDefinition,
+  TenantDeletedDefinition,
+  configurationSchema,
+  applyTenantMiddleware,
+} from './tenant';
 
 async function initializeApp(): Promise<express.Application> {
   const repositories = await createRepositories({ ...environment, logger });
@@ -27,53 +33,52 @@ async function initializeApp(): Promise<express.Application> {
   app.use(cors());
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
-  const { coreStrategy, tenantStrategy, directory, tenantService, eventService, configurationHandler } =
-    await initializePlatform(
-      {
-        serviceId,
-        displayName: 'Tenant service',
-        description: 'Service for management of ADSP tenants.',
-        clientSecret: environment.CLIENT_SECRET,
-        directoryUrl: null,
-        accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
-        ignoreServiceAud: true,
-        configurationSchema,
-        configurationConverter: (c) => Object.entries(c).map(([k, v]) => ({ serviceId: AdspId.parse(k), ...v })),
-        events: [TenantCreatedDefinition, TenantDeletedDefinition, ConfigurationUpdatedDefinition],
-        roles: [
-          // Note: Tenant Admin role is a special composite role.
-          {
-            role: TenantServiceRoles.TenantAdmin,
-            description: 'Administrator role for accessing the ADSP tenant admin.',
-          },
-          {
-            role: TenantServiceRoles.DirectoryAdmin,
-            description: 'Administrator role for accessing the directory (discovery) service.',
-            inTenantAdmin: true,
-          },
-        ],
+  const { coreStrategy, tenantStrategy, directory, eventService, configurationHandler } = await initializePlatform(
+    {
+      serviceId,
+      displayName: 'Tenant service',
+      description: 'Service for management of ADSP tenants.',
+      clientSecret: environment.CLIENT_SECRET,
+      directoryUrl: null,
+      accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
+      ignoreServiceAud: true,
+      configurationSchema,
+      configurationConverter: (c) => Object.entries(c).map(([k, v]) => ({ serviceId: AdspId.parse(k), ...v })),
+      events: [TenantCreatedDefinition, TenantDeletedDefinition, ConfigurationUpdatedDefinition],
+      roles: [
+        // Note: Tenant Admin role is a special composite role.
+        {
+          role: TenantServiceRoles.TenantAdmin,
+          description: 'Administrator role for accessing the ADSP tenant admin.',
+        },
+        {
+          role: TenantServiceRoles.DirectoryAdmin,
+          description: 'Administrator role for accessing the directory (discovery) service.',
+          inTenantAdmin: true,
+        },
+      ],
+    },
+    { logger },
+    {
+      directory: {
+        getServiceUrl: (serviceId) => directoryService.getServiceUrl(repositories.directoryRepository, serviceId),
+        getResourceUrl: (resourceId) => directoryService.getResourceUrl(repositories.directoryRepository, resourceId),
       },
-      { logger },
-      {
-        directory: {
-          getServiceUrl: (serviceId) => directoryService.getServiceUrl(repositories.directoryRepository, serviceId),
-          getResourceUrl: (resourceId) => directoryService.getResourceUrl(repositories.directoryRepository, resourceId),
+      tenantService: {
+        getTenant: (tenantId) => tenantService.getTenant(repositories.tenantRepository, tenantId),
+        getTenants: () => tenantService.getTenants(repositories.tenantRepository),
+        // Note: There is no need for an implementation of this capability in tenant admin service itself for now.
+        getTenantByName: async (name: string) => {
+          const tenants = await tenantService.getTenants(repositories.tenantRepository, { nameEquals: name });
+          return tenants[0];
         },
-        tenantService: {
-          getTenant: (tenantId) => tenantService.getTenant(repositories.tenantRepository, tenantId),
-          getTenants: () => tenantService.getTenants(repositories.tenantRepository),
-          // Note: There is no need for an implementation of this capability in tenant admin service itself for now.
-          getTenantByName: async (name: string) => {
-            const tenants = await tenantService.getTenants(repositories.tenantRepository, { nameEquals: name });
-            return tenants[0];
-          },
-          getTenantByRealm: async (realm: string) => {
-            const tenants = await tenantService.getTenants(repositories.tenantRepository, { realmEquals: realm });
-            return tenants[0];
-          },
+        getTenantByRealm: async (realm: string) => {
+          const tenants = await tenantService.getTenants(repositories.tenantRepository, { realmEquals: realm });
+          return tenants[0];
         },
-      }
-    );
+      },
+    }
+  );
 
   passport.use('jwt', coreStrategy);
   passport.use('jwt-tenant', tenantStrategy);
