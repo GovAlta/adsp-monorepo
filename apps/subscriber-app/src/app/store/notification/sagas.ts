@@ -12,7 +12,6 @@ export function* fetchContactInfo(action: FetchContactInfoAction): SagaIterator 
     if (realm) {
       contactInfo = (yield call(axios.get, `/api/configuration/v1/support-info/${realm}`)).data;
     } else if (tenantId) {
-      console.log('tenanting');
       contactInfo = (yield call(axios.get, `/api/configuration/v1/support-info-tenant-id/${tenantId}`)).data;
     }
 

@@ -40,7 +40,7 @@ const Subscriptions = (): JSX.Element => {
 
   const subscriberEmail =
     subscriptions?.length > 0 &&
-    subscriptions[0]?.subscriber.channels?.filter((chn: SubscriberChannel) => chn.channel === EMAIL)[0]?.address;
+    subscriptions[0]?.subscriber.channels?.find((chn: SubscriberChannel) => chn.channel === EMAIL)?.address;
   const [showUnSubscribeModal, setShowUnSubscribeModal] = useState(false);
   const [selectedUnsubscribeSub, setSelectedUnsubscribeSub] = useState<Subscription>();
   const subscriberId = useParams<{ subscriberId: string }>().subscriberId;
