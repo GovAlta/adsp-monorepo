@@ -311,14 +311,11 @@ export function getSubscriberById(repository: SubscriptionRepository): RequestHa
         throw new NotFoundError('Subscriber', subscriberId);
       }
 
-      const [_configuration, options] = await req.getConfiguration<
-        NotificationConfiguration,
-        NotificationConfiguration
-      >();
+      const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
 
       res.send(
         result.results.map((r) => {
-          const typeEntity = options?.getNotificationType(r.typeId);
+          const typeEntity = configuration.getNotificationType(r.typeId);
           return {
             ...r,
             type: typeEntity ? mapType(typeEntity, true) : null,
@@ -476,13 +473,10 @@ export function getSubscriberDetails(apiId: AdspId, repository: SubscriptionRepo
           subscriberIdEquals: subscriberDetails.id,
         });
 
-        const [configuration, options] = await req.getConfiguration<
-          NotificationConfiguration,
-          NotificationConfiguration
-        >();
+        const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
         subscriberSubscriptions = result.results.map((r) => {
           const { subscriber: _subscriber, ...subscription } = mapSubscription(apiId, r);
-          const typeEntity = configuration?.getNotificationType(r.typeId) || options?.getNotificationType(r.typeId);
+          const typeEntity = configuration.getNotificationType(r.typeId);
 
           return {
             ...subscription,
