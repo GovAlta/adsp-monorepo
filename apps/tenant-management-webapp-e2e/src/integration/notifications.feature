@@ -87,12 +87,12 @@ Feature: Notifications
     Given a tenant admin user is on notification subscriptions page
     When the user types "Auto Test" in Search subuscriber address as field and "auto.test@gov.ab.ca" in Search subscriber email field
     And the user clicks Search button on notifications page
-    Then the user "views" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Application Health Check Change"
-    When the user clicks delete button of "Auto Test", "auto.test@gov.ab.ca" under "Application Health Check Change"
+    Then the user "views" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Application health check change"
+    When the user clicks delete button of "Auto Test", "auto.test@gov.ab.ca" under "Application health check change"
     Then the user views Delete subscription modal
     And the user views the Delete subscription confirmation message of "auto.test@gov.ab.ca"
     When the user clicks Confirm button on Delete subscription modal
-    Then the user "should not view" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Application Health Check Change"
+    Then the user "should not view" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Application health check change"
     # Restore the subscription
     Given a tenant admin user is on status applications page
     Then the user views the subscribe checkbox is "unchecked"
