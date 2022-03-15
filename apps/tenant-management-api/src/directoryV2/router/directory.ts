@@ -6,10 +6,16 @@ import { Logger } from 'winston';
 import validationMiddleware from '../../middleware/requestValidator';
 import { ServiceV2 } from '../../directory/validator/directory/directoryValidator';
 import { InvalidValueError } from '@core-services/core-common';
+import { TenantService } from '@abgov/adsp-service-sdk';
+import * as passport from 'passport';
+import { validateNamespaceEndpointsPermission } from '../../middleware/authentication';
+
+const passportMiddleware = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
 
 interface DirectoryRouterProps {
   logger?: Logger;
   directoryRepository: DirectoryRepository;
+  tenantService: TenantService;
 }
 
 export interface URNComponent {
@@ -35,7 +41,7 @@ const getUrn = (component: URNComponent) => {
 
 const directoryCache = new NodeCache({ stdTTL: 300 });
 
-export const createDirectoryRouter = ({ logger, directoryRepository }: DirectoryRouterProps): Router => {
+export const createDirectoryRouter = ({ logger, directoryRepository, tenantService }: DirectoryRouterProps): Router => {
   const directoryRouter = Router();
   /**
    * Get all of directories
@@ -81,7 +87,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
    */
   directoryRouter.post(
     '/namespaces/:namespace',
-    [validationMiddleware(ServiceV2)],
+    [passportMiddleware, validateNamespaceEndpointsPermission(tenantService), validationMiddleware(ServiceV2)],
     async (req: Request, res: Response, _next) => {
       const { namespace } = req.params;
       try {
@@ -120,7 +126,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
    */
   directoryRouter.put(
     '/namespaces/:namespace',
-    [validationMiddleware(ServiceV2)],
+    [passportMiddleware, validateNamespaceEndpointsPermission(tenantService), validationMiddleware(ServiceV2)],
     async (req: Request, res: Response, _next) => {
       const { namespace } = req.params;
       try {
@@ -151,31 +157,35 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
   /**
    * Delete one service by namespace
    */
-  directoryRouter.delete('/namespaces/:namespace/service/:service', async (req: Request, res: Response, _next) => {
-    const { namespace, service } = req.params;
-    try {
-      const directoryEntity = await directoryRepository.getDirectories(namespace);
-      if (!directoryEntity) {
-        throw new InvalidValueError('Delete namespace service', `Cannot found namespace: ${namespace}`);
-      }
-      const services = directoryEntity['services'];
-      const isExist = services.find((x) => x.service === service);
-      if (!isExist) {
-        throw new InvalidValueError('Delete namespace service', `${service} could not find`);
-      }
-      services.splice(
-        services.findIndex((item) => item.service === service),
-        1
-      );
-      const directory = { name: namespace, services: services };
-      await directoryRepository.update(directory);
+  directoryRouter.delete(
+    '/namespaces/:namespace/service/:service',
+    [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
+    async (req: Request, res: Response, _next) => {
+      const { namespace, service } = req.params;
+      try {
+        const directoryEntity = await directoryRepository.getDirectories(namespace);
+        if (!directoryEntity) {
+          throw new InvalidValueError('Delete namespace service', `Cannot found namespace: ${namespace}`);
+        }
+        const services = directoryEntity['services'];
+        const isExist = services.find((x) => x.service === service);
+        if (!isExist) {
+          throw new InvalidValueError('Delete namespace service', `${service} could not find`);
+        }
+        services.splice(
+          services.findIndex((item) => item.service === service),
+          1
+        );
+        const directory = { name: namespace, services: services };
+        await directoryRepository.update(directory);
 
-      directoryCache.del(`directory-${namespace}`);
-      return res.sendStatus(HttpStatusCodes.OK);
-    } catch (err) {
-      logger.error(`Failed deleting directory for namespace: ${namespace} with error ${err.message}`);
-      _next(err);
+        directoryCache.del(`directory-${namespace}`);
+        return res.sendStatus(HttpStatusCodes.OK);
+      } catch (err) {
+        logger.error(`Failed deleting directory for namespace: ${namespace} with error ${err.message}`);
+        _next(err);
+      }
     }
-  });
+  );
   return directoryRouter;
 };
