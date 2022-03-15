@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { SubscriptionList } from './subscriptionList';
-import { getSubscriptions, Unsubscribe } from '@store/subscription/actions';
+import { GetAllTypeSubscriptions, DeleteSubscription } from '@store/subscription/actions';
 import type { Subscriber, SubscriberSearchCriteria, SubscriptionSearchCriteria } from '@store/subscription/models';
 import { SubscribersSearchForm } from './subscribers/subscriberSearchForm';
 import { CheckSubscriberRoles } from './checkSubscriberRoles';
@@ -19,16 +19,16 @@ export const Subscriptions: FunctionComponent = () => {
 
   const [criteriaState, setCriteriaState] = useState<SubscriptionSearchCriteria>(criteriaInit);
   useEffect(() => {
-    dispatch(getSubscriptions({}));
+    dispatch(GetAllTypeSubscriptions({}));
   }, []);
 
   const searchFn = ({ email, name }: SubscriberSearchCriteria) => {
-    dispatch(getSubscriptions({ email, name }));
+    dispatch(GetAllTypeSubscriptions({ email, name }));
   };
 
   const resetState = () => {
     setCriteriaState(criteriaInit);
-    dispatch(getSubscriptions({}));
+    dispatch(GetAllTypeSubscriptions({}));
   };
 
   const emailIndex = selectedSubscription?.channels?.findIndex((channel) => channel.channel === 'email');
@@ -54,7 +54,7 @@ export const Subscriptions: FunctionComponent = () => {
           onCancel={() => setShowDeleteConfirmation(false)}
           onDelete={() => {
             setShowDeleteConfirmation(false);
-            dispatch(Unsubscribe({ data: { type: selectedType, data: selectedSubscription } }));
+            dispatch(DeleteSubscription({ data: { type: selectedType, data: selectedSubscription } }));
           }}
         />
       )}

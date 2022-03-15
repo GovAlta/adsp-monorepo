@@ -4,11 +4,10 @@ import type { SubscriptionSearchCriteria } from '@store/subscription/models';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 
-interface EventSearchNextProps {
+interface SubscriptionSearchNextProps {
   onSearch?: (searchInfo: SearchInfo) => void;
   searchCriteria: SubscriptionSearchCriteria;
-  type?: string;
-  length: number;
+  type: string;
 }
 
 interface SearchInfo {
@@ -16,21 +15,14 @@ interface SearchInfo {
   searchCriteria: SubscriptionSearchCriteria;
 }
 
-export const SubscriptionNextLoader: FunctionComponent<EventSearchNextProps> = ({
-  onSearch,
-  searchCriteria,
-  type,
-  length,
-}) => {
-  const hasNext = useSelector((state: RootState) =>
-    state.subscription.subscriptionsHasNext.find((sub) => sub.id === type)
-  );
+export const SubscriptionNextLoader: FunctionComponent<SubscriptionSearchNextProps> = ({ onSearch, searchCriteria, type }) => {
+  const next = useSelector((state: RootState) => state.subscription.typeSubscriptionSearch[type]?.next);
 
-  if (hasNext?.hasNext || length === 10) {
+  if (next) {
     return (
       <GoAButton
         onClick={() => {
-          searchCriteria.next = true;
+          searchCriteria.next = next;
           const searchInfo: SearchInfo = {
             searchCriteria,
           };

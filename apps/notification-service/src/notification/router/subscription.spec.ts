@@ -40,6 +40,7 @@ describe('subscription router', () => {
     deleteSubscriber: jest.fn(),
     saveSubscription: jest.fn(),
     deleteSubscriptions: jest.fn(),
+    getSubscriberById: jest.fn(),
     saveSubscriber: jest.fn((entity) => Promise.resolve(entity)),
   };
 
@@ -67,6 +68,7 @@ describe('subscription router', () => {
     repositoryMock.saveSubscription.mockReset();
     repositoryMock.deleteSubscriptions.mockReset();
     repositoryMock.deleteSubscriber.mockReset();
+    repositoryMock.getSubscriberById.mockReset();
     verifyServiceMock.sendCode.mockReset();
     verifyServiceMock.verifyCode.mockReset();
   });
@@ -121,7 +123,9 @@ describe('subscription router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce([new NotificationConfiguration({ test: notificationType }, tenantId)]);
+      req.getConfiguration.mockResolvedValueOnce(
+        new NotificationConfiguration({ test: notificationType }, {}, tenantId)
+      );
       await getNotificationTypes(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining(notificationType)]));
     });
@@ -139,7 +143,9 @@ describe('subscription router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce([new NotificationConfiguration({ test: notificationType }, tenantId)]);
+      req.getConfiguration.mockResolvedValueOnce(
+        new NotificationConfiguration({ test: notificationType }, {}, tenantId)
+      );
       await getNotificationType(req as unknown as Request, res as unknown as Response, next);
       expect(req['notificationType']).toMatchObject(notificationType);
       expect(res.send).not.toHaveBeenCalled();
@@ -157,7 +163,9 @@ describe('subscription router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce([new NotificationConfiguration({ test: notificationType }, tenantId)]);
+      req.getConfiguration.mockResolvedValueOnce(
+        new NotificationConfiguration({ test: notificationType }, {}, tenantId)
+      );
       await getNotificationType(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
     });
@@ -207,7 +215,7 @@ describe('subscription router', () => {
         tenant: {
           id: tenantId,
         },
-        query: { topValue: '11', after: '123' },
+        query: { top: '11', after: '123' },
         notificationType: new NotificationTypeEntity(notificationType, tenantId),
       };
       const res = { send: jest.fn() };
@@ -1254,7 +1262,9 @@ describe('subscription router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce([new NotificationConfiguration({ test: notificationType }, tenantId)]);
+      req.getConfiguration.mockResolvedValueOnce(
+        new NotificationConfiguration({ test: notificationType }, {}, tenantId)
+      );
 
       const result = { results: [], page: {} };
       repositoryMock.getSubscriptions.mockResolvedValueOnce(result);
@@ -1283,7 +1293,9 @@ describe('subscription router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce([new NotificationConfiguration({ test: notificationType }, tenantId)]);
+      req.getConfiguration.mockResolvedValueOnce(
+        new NotificationConfiguration({ test: notificationType }, {}, tenantId)
+      );
 
       const subscription = new SubscriptionEntity(
         repositoryMock,

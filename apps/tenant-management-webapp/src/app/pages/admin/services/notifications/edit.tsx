@@ -9,6 +9,7 @@ import { RootState } from '@store/index';
 import { GoACallout } from '@abgov/react-components';
 import styled from 'styled-components';
 import { GoACheckbox } from '@abgov/react-components';
+import { toKebabName } from '@lib/kebabName';
 
 interface NotificationTypeFormProps {
   initialValue?: NotificationItem;
@@ -19,17 +20,9 @@ interface NotificationTypeFormProps {
   errors?: Record<string, string>;
 }
 
-const emptyNotificationType: NotificationItem = {
-  name: '',
-  description: '',
-  events: [],
-  subscriberRoles: [],
-  // TODO: This is hardcoded to email for now. Needs to be updated after additional channels are supported in the UI.
-  channels: ['email'],
-  id: null,
-  publicSubscribe: false,
-  customized: false,
-};
+const IdField = styled.div`
+  min-height: 1.6rem;
+`;
 
 export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormProps> = ({
   initialValue,
@@ -40,11 +33,11 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   open,
 }) => {
   //const dispatch = useDispatch();
-  const isEdit = !!initialValue;
-  const [type, setType] = useState(emptyNotificationType);
+  const isEdit = !!initialValue?.id;
+  const [type, setType] = useState(initialValue);
 
   useEffect(() => {
-    isEdit && setType(initialValue);
+    setType(initialValue);
   }, [initialValue]);
 
   const realmRoles = useSelector((state: RootState) => state.tenant.realmRoles);
@@ -88,8 +81,12 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 value={type.name}
                 data-testid="form-name"
                 aria-label="name"
-                onChange={(e) => setType({ ...type, name: e.target.value })}
+                onChange={(e) => setType({ ...type, name: e.target.value, id: isEdit ? type.id : toKebabName(e.target.value) })}
               />
+            </GoAFormItem>
+            <GoAFormItem>
+              <label>Type ID</label>
+              <IdField data-testid={`form-id`}>{type.id || ''}</IdField>
             </GoAFormItem>
             <GoAFormItem>
               <label>Description</label>

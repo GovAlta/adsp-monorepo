@@ -5,9 +5,17 @@ import * as NodeCache from 'node-cache';
 import { Logger } from 'winston';
 import validationMiddleware from '../../middleware/requestValidator';
 import { ServiceV2 } from '../../directory/validator/directory/directoryValidator';
+import { InvalidValueError } from '@core-services/core-common';
+import { TenantService } from '@abgov/adsp-service-sdk';
+import * as passport from 'passport';
+import { validateNamespaceEndpointsPermission } from '../../middleware/authentication';
+
+const passportMiddleware = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
+
 interface DirectoryRouterProps {
   logger?: Logger;
   directoryRepository: DirectoryRepository;
+  tenantService: TenantService;
 }
 
 export interface URNComponent {
@@ -33,7 +41,7 @@ const getUrn = (component: URNComponent) => {
 
 const directoryCache = new NodeCache({ stdTTL: 300 });
 
-export const createDirectoryRouter = ({ logger, directoryRepository }: DirectoryRouterProps): Router => {
+export const createDirectoryRouter = ({ logger, directoryRepository, tenantService }: DirectoryRouterProps): Router => {
   const directoryRouter = Router();
   /**
    * Get all of directories
@@ -79,11 +87,11 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
    */
   directoryRouter.post(
     '/namespaces/:namespace',
-    validationMiddleware(ServiceV2),
+    [passportMiddleware, validateNamespaceEndpointsPermission(tenantService), validationMiddleware(ServiceV2)],
     async (req: Request, res: Response, _next) => {
-      if (req.body) {
+      const { namespace } = req.params;
+      try {
         const { service, api, url } = req.body;
-        const { namespace } = req.params;
         let result;
         try {
           result = await directoryRepository.getDirectories(namespace);
@@ -97,31 +105,20 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
           host: url,
         };
         const services = result['services'];
-        let isExist;
-        try {
-          isExist = services.find((x) => x.service === service);
-        } catch (err) {
-          _next(err);
-        }
+        const isExist = services.find((x) => x.service === service);
         if (isExist) {
-          logger?.error(`${service} is exist in ${namespace}`);
-          return res.sendStatus(HttpStatusCodes.BAD_REQUEST).json({ errors: `${service} is exist in ${namespace}` });
+          throw new InvalidValueError('Create new service', `${service} is exist in ${namespace}`);
         } else {
           services.push(mappingService);
           const directory = { name: namespace, services: services };
-          try {
-            await directoryRepository.update(directory);
-          } catch (err) {
-            _next(err);
-          }
-
+          await directoryRepository.update(directory);
           directoryCache.del(`directory-${namespace}`);
-
           return res.sendStatus(HttpStatusCodes.CREATED);
         }
+      } catch (err) {
+        logger.error(`Failed creating directory for namespace: ${namespace} with error ${err.message}`);
+        _next(err);
       }
-      logger?.error('There is no context in post request body');
-      return res.sendStatus(HttpStatusCodes.BAD_REQUEST).json({ errors: 'There is no context in post request body' });
     }
   );
   /**
@@ -129,20 +126,13 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
    */
   directoryRouter.put(
     '/namespaces/:namespace',
-    validationMiddleware(ServiceV2),
+    [passportMiddleware, validateNamespaceEndpointsPermission(tenantService), validationMiddleware(ServiceV2)],
     async (req: Request, res: Response, _next) => {
-      if (req.body) {
+      const { namespace } = req.params;
+      try {
         const { service, api, url } = req.body;
-        const { namespace } = req.params;
-        let result;
-        try {
-          result = await directoryRepository.getDirectories(namespace);
-        } catch (err) {
-          _next(err);
-        }
-
+        const result = await directoryRepository.getDirectories(namespace);
         const services = result['services'];
-
         const isExist = services.find((x) => x.service === service);
 
         if (isExist) {
@@ -151,50 +141,51 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
           }
           isExist.host = url;
           const directory = { name: namespace, services: services };
-          try {
-            await directoryRepository.update(directory);
-          } catch (err) {
-            _next(err);
-          }
+          await directoryRepository.update(directory);
           directoryCache.del(`directory-${namespace}`);
           return res.sendStatus(HttpStatusCodes.CREATED);
         } else {
-          logger?.error('modify service has error');
+          logger.error('modify service has error');
           return res.sendStatus(HttpStatusCodes.BAD_REQUEST).json({ errors: `${service} not exist in ${namespace}` });
         }
+      } catch (err) {
+        logger.error(`Failed updating directory for namespace: ${namespace} with error ${err.message}`);
+        _next(err);
       }
-
-      logger?.error('There is no context in put request body');
-      return res.sendStatus(HttpStatusCodes.BAD_REQUEST).json({ errors: 'There is no context in put request body' });
     }
   );
   /**
    * Delete one service by namespace
    */
-  directoryRouter.delete('/namespaces/:namespace/service/:service', async (req: Request, res: Response, _next) => {
-    const { namespace, service } = req.params;
-    const directoryEntity = await directoryRepository.getDirectories(namespace);
-    if (!directoryEntity) {
-      return res.sendStatus(HttpStatusCodes.BAD_REQUEST).json({ error: `${namespace} could not find` });
-    }
-    const services = directoryEntity['services'];
-    const isExist = services.find((x) => x.service === service);
-    if (isExist) {
-      services.splice(
-        services.findIndex((item) => item.service === service),
-        1
-      );
-      const directory = { name: namespace, services: services };
+  directoryRouter.delete(
+    '/namespaces/:namespace/service/:service',
+    [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
+    async (req: Request, res: Response, _next) => {
+      const { namespace, service } = req.params;
       try {
+        const directoryEntity = await directoryRepository.getDirectories(namespace);
+        if (!directoryEntity) {
+          throw new InvalidValueError('Delete namespace service', `Cannot found namespace: ${namespace}`);
+        }
+        const services = directoryEntity['services'];
+        const isExist = services.find((x) => x.service === service);
+        if (!isExist) {
+          throw new InvalidValueError('Delete namespace service', `${service} could not find`);
+        }
+        services.splice(
+          services.findIndex((item) => item.service === service),
+          1
+        );
+        const directory = { name: namespace, services: services };
         await directoryRepository.update(directory);
+
+        directoryCache.del(`directory-${namespace}`);
+        return res.sendStatus(HttpStatusCodes.OK);
       } catch (err) {
+        logger.error(`Failed deleting directory for namespace: ${namespace} with error ${err.message}`);
         _next(err);
       }
-      directoryCache.del(`directory-${namespace}`);
-      return res.sendStatus(HttpStatusCodes.OK);
-    } else {
-      return res.sendStatus(HttpStatusCodes.BAD_REQUEST).json({ error: `${service} could not find` });
     }
-  });
+  );
   return directoryRouter;
 };

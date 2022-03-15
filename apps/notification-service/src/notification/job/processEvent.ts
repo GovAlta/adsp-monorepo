@@ -52,25 +52,15 @@ export const createProcessEventJob =
       const tenant = await tenantService.getTenant(tenantId);
 
       const token = await tokenProvider.getAccessToken();
-      const [configuration, options] = await configurationService.getConfiguration<
+      const configuration = await configurationService.getConfiguration<
         NotificationConfiguration,
         NotificationConfiguration
       >(serviceId, token, tenantId);
 
-      const CoreTypes = options?.getEventNotificationTypes(event) || [];
-      const TenantTypes = configuration?.getEventNotificationTypes(event) || [];
-
-      const types: Record<string, NotificationTypeEntity> = CoreTypes.reduce((acc, type) => {
-        acc[type.name] = type;
-        return acc;
-      }, {});
-
-      TenantTypes.forEach((type) => {
-        types[type.name] = types[type.name] ? types[type.name].overrideWith(type) : type;
-      });
+      const types = configuration?.getEventNotificationTypes(event) || [];
 
       let count = 0;
-      Object.values(types).forEach(async (type) => {
+      types.forEach(async (type) => {
         // Page through all subscriptions and generate notifications.
         const notifications = [];
         let after: string = null;

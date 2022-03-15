@@ -3,7 +3,7 @@ import type { Subscriber } from '@store/subscription/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Grid, GridItem } from '@components/Grid';
-import { UpdateContactInformationService, FetchNotificationTypeService } from '@store/notification/actions';
+import { UpdateContactInformationService, FetchNotificationConfigurationService } from '@store/notification/actions';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 import { ContactInformationModalForm } from './edit';
@@ -25,10 +25,10 @@ const phoneWrapper = (phoneNumber) => {
 export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
   const dispatch = useDispatch();
   useEffect(() => {
-    dispatch(FetchNotificationTypeService());
+    dispatch(FetchNotificationConfigurationService());
   }, [dispatch]);
 
-  const contact = useSelector((state: RootState) => state.notification.notificationTypes?.contact);
+  const contact = useSelector((state: RootState) => state.notification.supportContact);
   const hasConfigurationAdminRole = useSelector((state: RootState) =>
     state.session?.resourceAccess?.['urn:ads:platform:configuration-service']?.roles?.includes('configuration-admin')
   );

@@ -161,7 +161,7 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
         await TenantService.validateName(tenantRepository, tenantName);
         realm = uuidv4();
 
-        const [_, clients] = await req.getConfiguration<ServiceClient[], ServiceClient[]>();
+        const [_, clients] = await req.getConfiguration<ServiceClient[]>();
 
         const isValidEmail = await TenantService.validateEmailInDB(tenantRepository, email);
         if (!isValidEmail) {

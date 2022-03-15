@@ -3,7 +3,18 @@ export interface Subscription {
   typeId: string;
   criteria: SubscriptionCriteria;
   type: SubscriptionType;
+  subscriber?: Subscriber;
+  tenantId?: TenantId;
 }
+
+export interface TenantId {
+  type: string;
+  namespace: string;
+  service: string;
+  api: string;
+  resource: string;
+}
+
 export interface SubscriptionCriteria {
   correlationId?: string;
   context?: {
@@ -15,6 +26,7 @@ export interface SubscriptionType {
   id: string;
   name: string;
   manageSubscribe: boolean;
+  canSubscribe: boolean;
 }
 export interface SubscriberChannel {
   address: string;
@@ -31,10 +43,12 @@ export interface Subscriber {
 }
 export interface SubscriberService {
   subscriber: Subscriber;
+  subscriptions: Subscription[];
   hasSubscriberId: boolean;
 }
 
 export const SUBSCRIBER_INIT: SubscriberService = {
   subscriber: undefined,
+  subscriptions: undefined,
   hasSubscriberId: true,
 };
