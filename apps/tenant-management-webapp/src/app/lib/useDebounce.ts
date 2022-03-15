@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-type DebounceValueType = string | boolean | number | Record<string, any>;
+type DebounceValueType = string | boolean | number | Record<string, unknown>;
 
 /**
  * A helper util to return a value at a certain delay. The delay is reset if the value arg changes

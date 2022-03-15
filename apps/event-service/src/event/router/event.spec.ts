@@ -142,7 +142,7 @@ describe('event router', () => {
       const res = { sendStatus: jest.fn() };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce([{}, {}]);
+      req.getConfiguration.mockResolvedValueOnce({});
       const handler = sendEvent(loggerMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(req.getConfiguration).toHaveBeenCalled();
@@ -167,16 +167,13 @@ describe('event router', () => {
       const res = { sendStatus: jest.fn() };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce([
-        {
-          test: new NamespaceEntity(
-            validationServiceMock,
-            { name: 'test', definitions: { test: { name: 'test', description: null, payloadSchema: {} } } },
-            tenantId
-          ),
-        },
-        {},
-      ]);
+      req.getConfiguration.mockResolvedValueOnce({
+        test: new NamespaceEntity(
+          validationServiceMock,
+          { name: 'test', definitions: { test: { name: 'test', description: null, payloadSchema: {} } } },
+          tenantId
+        ),
+      });
       const handler = sendEvent(loggerMock, eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(req.getConfiguration).toHaveBeenCalled();

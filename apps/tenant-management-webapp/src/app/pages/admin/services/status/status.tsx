@@ -33,7 +33,7 @@ import type { GoABadgeType } from '@abgov/react-components/experimental';
 import ApplicationFormModal from './form';
 import NoticeModal from './noticeModal';
 import { setApplicationStatus } from '@store/status/actions/setApplicationStatus';
-import { SubscribeSubscriberService, getSubscriber, getSubscription, Unsubscribe } from '@store/subscription/actions';
+import { GetMySubscriber, Subscribe, Unsubscribe } from '@store/subscription/actions';
 import { Tab, Tabs } from '@components/Tabs';
 import { getNotices } from '@store/notice/actions';
 import { NoticeList } from './noticeList';
@@ -42,18 +42,33 @@ import { EditIconButton } from '@components/icons/EditIcon';
 import { renderNoItem } from '@components/NoItem';
 import { StatusMetrics } from './metrics';
 import { DeleteModal } from '@components/DeleteModal';
+import { createSelector } from 'reselect';
+
+const userHealthSubscriptionSelector = createSelector(
+  (state: RootState) => state.session.userInfo?.sub,
+  (state: RootState) => state.subscription.subscribers,
+  (state: RootState) => state.subscription.subscriptions,
+  (userId, subscribers, subscriptions) => {
+    const userSubscriber = userId && Object.values(subscribers).find(({ userId: subUserId }) => subUserId === userId);
+    const userSubscription = subscriptions[`status-application-health-change:${userSubscriber?.id}`];
+
+    return userSubscription
+      ? {
+          ...userSubscription,
+          subscriber: userSubscriber,
+        }
+      : null;
+  }
+);
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
-  const { applications, serviceStatusAppUrl, tenantName, subscriber, subscription } = useSelector(
-    (state: RootState) => ({
-      applications: state.serviceStatus.applications,
-      serviceStatusAppUrl: state.config.serviceUrls.serviceStatusAppUrl,
-      tenantName: state.tenant.name,
-      subscriber: state.subscription.subscriber,
-      subscription: state.subscription.subscription,
-    })
-  );
+  const { applications, serviceStatusAppUrl, tenantName } = useSelector((state: RootState) => ({
+    applications: state.serviceStatus.applications,
+    serviceStatusAppUrl: state.config.serviceUrls.serviceStatusAppUrl,
+    tenantName: state.tenant.name,
+  }));
+  const subscription = useSelector(userHealthSubscriptionSelector);
 
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [showAddApplicationModal, setShowAddApplicationModal] = useState<boolean>(false);
@@ -79,20 +94,14 @@ function Status(): JSX.Element {
 
   useEffect(() => {
     dispatch(getNotices());
-    dispatch(getSubscriber());
+    dispatch(GetMySubscriber());
   }, []);
-
-  useEffect(() => {
-    if (subscriber) {
-      dispatch(getSubscription({ data: { type: 'status-application-health-change', data: subscriber } }));
-    }
-  }, [subscriber]);
 
   const subscribeToggle = () => {
     if (subscription) {
-      dispatch(Unsubscribe({ data: { type: 'status-application-health-change', data: subscriber } }));
+      dispatch(Unsubscribe({ data: { type: 'status-application-health-change', data: subscription.subscriber } }));
     } else {
-      dispatch(SubscribeSubscriberService({ data: { type: 'status-application-health-change' } }));
+      dispatch(Subscribe({ data: { type: 'status-application-health-change' } }));
     }
   };
 
@@ -328,7 +337,7 @@ function Application(app: ServiceStatusApplication) {
         </div>
 
         <GoAContextMenu>
-          <EditIconButton iconSize="tiny" onClick={() => setShowEditModal(true)} data-testid="status-edit-button" />
+          <EditIconButton iconSize="small" onClick={() => setShowEditModal(true)} data-testid="status-edit-button" />
           <GoAContextMenuIcon type="trash" onClick={() => setShowDeleteConfirmation(true)} />
         </GoAContextMenu>
       </AppHeader>

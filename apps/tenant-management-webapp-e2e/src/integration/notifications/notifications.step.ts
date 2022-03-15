@@ -310,10 +310,10 @@ Then(
   function (viewOrNot, addressAd, email, notificationType) {
     switch (viewOrNot) {
       case 'views':
-        notificationsObj.notificationRecord(notificationType.toLowerCase(), addressAd, email).should('exist');
+        notificationsObj.notificationRecord(notificationType, addressAd, email).should('exist');
         break;
       case 'should not view':
-        notificationsObj.notificationRecord(notificationType.toLowerCase(), addressAd, email).should('not.exist');
+        notificationsObj.notificationRecord(notificationType, addressAd, email).should('not.exist');
         break;
       default:
         expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
@@ -324,7 +324,7 @@ Then(
 When(
   'the user clicks delete button of {string}, {string} under {string}',
   function (addressAd, email, notificationType) {
-    notificationsObj.deleteIconForNotificationRecord(notificationType.toLowerCase(), addressAd, email).click();
+    notificationsObj.deleteIconForNotificationRecord(notificationType, addressAd, email).click();
   }
 );
 

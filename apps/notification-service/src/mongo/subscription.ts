@@ -21,6 +21,30 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     this.subscriptionModel = model('subscription', subscriptionSchema);
   }
 
+  async getSubscriberById(id: string, top: number, after: string): Promise<Results<SubscriptionEntity>> {
+    const skip = parseInt(after);
+
+    return new Promise<Results<SubscriptionEntity>>((resolve, reject) => {
+      this.subscriptionModel
+        .find({ subscriberId: id })
+        .populate('subscriberId')
+        .skip(skip)
+        .limit(top)
+        .exec((err, docs) =>
+          err
+            ? reject(err)
+            : resolve({
+                results: docs.map((doc) => this.fromSubscriptionDoc(doc)),
+                page: {
+                  after,
+                  next: encodeNext(docs.length, top, skip),
+                  size: docs.length,
+                },
+              })
+        );
+    });
+  }
+
   getSubscriber(tenantId: AdspId, subscriberId: string, byUserId = false): Promise<SubscriberEntity> {
     const criteria: Record<string, string> = {
       tenantId: tenantId?.toString(),
@@ -62,7 +86,7 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     after: string,
     criteria: SubscriptionSearchCriteria
   ): Promise<Results<SubscriptionEntity>> {
-    const skip = parseInt(after);
+    const skip = decodeAfter(after);
 
     const query: Record<string, unknown> = {
       tenantId: tenantId?.toString(),

@@ -83,29 +83,32 @@ export const CalendarEventUpdatedDefinition: DomainEventDefinition = {
   name: 'calendar-event-updated',
   description: 'Signalled when a calendar event is updated.',
   payloadSchema: {
-    calendar: calendarSchema,
-    update: {
-      oneOf: [
-        eventSchema,
-        {
-          type: 'object',
-          properties: {
-            operation: { type: 'string' },
-            attendeeId: { type: 'number' },
-            attendee: {
-              type: 'object',
-              properties: {
-                id: { type: 'number' },
-                name: { type: ['string', 'null'] },
-                email: { type: ['string', 'null'] },
+    type: 'object',
+    properties: {
+      calendar: calendarSchema,
+      update: {
+        oneOf: [
+          eventSchema,
+          {
+            type: 'object',
+            properties: {
+              operation: { type: 'string' },
+              attendeeId: { type: 'number' },
+              attendee: {
+                type: 'object',
+                properties: {
+                  id: { type: 'number' },
+                  name: { type: ['string', 'null'] },
+                  email: { type: ['string', 'null'] },
+                },
               },
             },
           },
-        },
-      ],
+        ],
+      },
+      event: eventSchema,
+      updatedBy: userSchema,
     },
-    event: eventSchema,
-    updatedBy: userSchema,
   },
 };
 
@@ -113,9 +116,12 @@ export const CalendarEventDeletedDefinition: DomainEventDefinition = {
   name: 'calendar-event-deleted',
   description: 'Signalled when a calendar event is deleted.',
   payloadSchema: {
-    calendar: calendarSchema,
-    event: eventSchema,
-    deletedBy: userSchema,
+    type: 'object',
+    properties: {
+      calendar: calendarSchema,
+      event: eventSchema,
+      deletedBy: userSchema,
+    },
   },
 };
 

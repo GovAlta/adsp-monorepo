@@ -9,6 +9,7 @@ import { UpdateFileTypeService, CreateFileTypeService } from '@store/file/action
 import { FileTypeItem } from '@store/file/models';
 import { useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
+import { toKebabName } from '@lib/kebabName';
 
 interface FileTypeModalProps {
   fileType?: FileTypeItem;
@@ -173,6 +174,10 @@ const FileRoleTable = (props: FileRoleTableProps): JSX.Element => {
   );
 };
 
+const IdField = styled.div`
+  min-height: 1.6rem;
+`;
+
 export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   const isNew = props.type === 'new';
   const [fileType, setFileType] = useState(props.fileType);
@@ -188,7 +193,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
         <GoAModalTitle>{title}</GoAModalTitle>
         <GoAModalContent>
           <GoAFormItem>
-            <label>File type name</label>
+            <label>Name</label>
             <GoAInput
               type="text"
               name="name"
@@ -198,12 +203,17 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
                 const newFileType = {
                   ...fileType,
                   name: value,
+                  id: isNew ? toKebabName(value) : fileType.id,
                 };
                 setFileType(newFileType);
                 setErrors(validateFileType(newFileType));
               }}
               aria-label="name"
             />
+          </GoAFormItem>
+          <GoAFormItem>
+            <label>Type ID</label>
+            <IdField data-testid={`file-type-modal-id`}>{fileType.id || ''}</IdField>
           </GoAFormItem>
           <AnonymousReadWrapper>
             <GoACheckbox

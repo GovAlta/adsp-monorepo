@@ -40,10 +40,11 @@ const initializeApp = async (): Promise<Server> => {
         },
       ],
       configurationSchema,
-      configurationConverter: (config: Record<string, Stream>, tenantId): Record<string, StreamEntity> =>
-        config
-          ? Object.entries(config).reduce((c, [k, s]) => ({ ...c, [k]: new StreamEntity(tenantId, s) }), {})
-          : null,
+      combineConfiguration: (tenant: Record<string, Stream>, core: Record<string, Stream>, tenantId) =>
+        Object.entries({ ...tenant, ...core }).reduce(
+          (c, [k, s]) => ({ ...c, [k]: new StreamEntity(tenantId, s) }),
+          {}
+        ),
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       accessTokenInQuery: true,

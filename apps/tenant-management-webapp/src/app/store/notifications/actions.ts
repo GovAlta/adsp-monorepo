@@ -1,11 +1,16 @@
-import { Notification } from './models';
+import { Notification, MessageType } from './models';
 
 export const ERROR_NOTIFICATION = 'notifications/error';
 export const SUCCESS_NOTIFICATION = 'notifications/success';
 
 export const BASIC_NOTIFICATION = 'notifications/basic';
+export const DISMISS_NOTIFICATION = 'notifications/dismiss';
 
-export type ActionTypes = ErrorNotificationAction | SuccessNotificationAction | BasicNotificationAction;
+export type ActionTypes =
+  | ErrorNotificationAction
+  | SuccessNotificationAction
+  | BasicNotificationAction
+  | DismissNotificationAction;
 
 interface ErrorNotificationAction {
   type: typeof ERROR_NOTIFICATION;
@@ -22,17 +27,33 @@ interface BasicNotificationAction {
   payload: Notification;
 }
 
+interface DismissNotificationAction {
+  type: typeof DISMISS_NOTIFICATION;
+  payload: Notification;
+}
+
 export const ErrorNotification = (payload: Notification): ErrorNotificationAction => ({
-  type: 'notifications/error',
-  payload,
+  type: ERROR_NOTIFICATION,
+  payload: {
+    ...payload,
+    type: MessageType.error,
+  },
 });
 
 export const SuccessNotification = (payload: Notification): SuccessNotificationAction => ({
-  type: 'notifications/success',
-  payload,
+  type: SUCCESS_NOTIFICATION,
+  payload: {
+    ...payload,
+    type: MessageType.success,
+  },
 });
 
 export const BasicNotification = (payload: Notification): BasicNotificationAction => ({
-  type: 'notifications/basic',
+  type: BASIC_NOTIFICATION,
+  payload,
+});
+
+export const DismissNotification = (payload: Notification): DismissNotificationAction => ({
+  type: DISMISS_NOTIFICATION,
   payload,
 });

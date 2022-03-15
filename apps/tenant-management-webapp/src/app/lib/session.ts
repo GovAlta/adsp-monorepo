@@ -7,6 +7,7 @@ export function convertToSession(kc: KeycloakInstance): Session {
     clientId: kc.clientId,
     realm: kc.realm,
     userInfo: {
+      sub: kc.userInfo?.['sub'],
       email: kc.userInfo?.['email'],
       name: kc.userInfo?.['name'],
       preferredUsername: kc.userInfo?.['preferred_username'],

@@ -4,14 +4,10 @@ import { useSelector, useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
 import styled from 'styled-components';
 import { SubscriberModalForm } from '../editSubscriber';
-import { ResetUpdateErrors, UpdateSubscriberService } from '@store/subscription/actions';
+import { UpdateSubscriber } from '@store/subscription/actions';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Subscriber } from '@store/subscription/models';
-import {
-  getSubscriberSubscriptions,
-  TriggerVisibilitySubscribersService,
-  DeleteSubscriberService,
-} from '@store/subscription/actions';
+import { GetSubscriberSubscriptions, DeleteSubscriber } from '@store/subscription/actions';
 import { renderNoItem } from '@components/NoItem';
 import { GoAIconButton } from '@abgov/react-components/experimental';
 import { DeleteModal } from '@components/DeleteModal';
@@ -23,11 +19,12 @@ interface ActionComponentProps {
   openDeleteModalFunction: (subscriber: string) => void;
 }
 
-const ActionComponent: FunctionComponent<ActionComponentProps> = ({
+const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
   subscriber,
   openModalFunction,
   openDeleteModalFunction,
 }) => {
+  // TODO: this should be overflow ellipse as a css style instead of modifying value in DOM?
   function characterLimit(string, limit) {
     if (string?.length > limit) {
       const slicedString = string.slice(0, limit);
@@ -36,27 +33,19 @@ const ActionComponent: FunctionComponent<ActionComponentProps> = ({
       return string;
     }
   }
-  const currentSubscriberAndSubscription = useSelector(
-    (state: RootState) => state.subscription.subscriberSubscriptions[subscriber.id]
+  const subscriberSubscriptions = useSelector(
+    (state: RootState) => state.subscription.subscriberSubscriptionSearch[subscriber.id]
   );
 
   const dispatch = useDispatch();
-
-  const emailIndex = subscriber?.channels?.findIndex((channel) => channel.channel === 'email');
-
-  const getSubscriptions = () => {
-    if (!currentSubscriberAndSubscription) {
-      dispatch(getSubscriberSubscriptions(subscriber));
-    } else {
-      dispatch(TriggerVisibilitySubscribersService(subscriber));
-    }
-  };
+  const [showSubscriptions, setShowSubscriptions] = useState(false);
+  const email = subscriber?.channels?.find(({ channel }) => channel === 'email')?.address;
 
   return (
     <>
       <tr key={subscriber.id}>
         <td>{characterLimit(subscriber?.addressAs, 30)}</td>
-        <td>{characterLimit(subscriber?.channels[emailIndex]?.address, 30)}</td>
+        <td>{characterLimit(email, 30)}</td>
         <td>
           <RowFlex>
             <div data-account-link={subscriber.accountLink}>
@@ -69,8 +58,13 @@ const ActionComponent: FunctionComponent<ActionComponentProps> = ({
               />
             </div>
             <GoAContextMenuIcon
-              type={currentSubscriberAndSubscription?.subscriber?.visibleSubscriptions ? 'eye-off' : 'eye'}
-              onClick={() => getSubscriptions()}
+              type={showSubscriptions ? 'eye-off' : 'eye'}
+              onClick={() => {
+                setShowSubscriptions(!showSubscriptions);
+                if (!showSubscriptions) {
+                  dispatch(GetSubscriberSubscriptions(subscriber, null));
+                }
+              }}
               testId="toggle-details-visibility"
             />
             <GoAContextMenuIcon
@@ -91,21 +85,21 @@ const ActionComponent: FunctionComponent<ActionComponentProps> = ({
           </RowFlex>
         </td>
       </tr>
-      {currentSubscriberAndSubscription?.subscriber?.visibleSubscriptions && (
+      {showSubscriptions && (
         <tr>
           <td colSpan={3}>
             <h2>Subscriptions</h2>
-            {currentSubscriberAndSubscription?.subscriptions?.length < 1 ? (
+            {subscriberSubscriptions?.results?.length < 1 ? (
               <span>
                 <b>No subscriptions</b>
               </span>
             ) : (
               ''
             )}
-            {currentSubscriberAndSubscription?.subscriptions.map((subscription, i) => {
+            {subscriberSubscriptions?.results.map((typeId, i) => {
               return (
                 <div data-testid={`subscriptions-${i}`}>
-                  <b>{subscription.typeId}</b>
+                  <b>{typeId}</b>
                 </div>
               );
             })}
@@ -125,10 +119,10 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
   const [selectedSubscription, setSelectedSubscription] = useState(null);
   const [selectedDeleteSubscriberId, setSelectedDeleteSubscriberId] = useState(null);
 
-  const search = useSelector((state: RootState) => state.subscription.search);
+  const search = useSelector((state: RootState) => state.subscription.subscriberSearch);
 
   const subscribers = useSelector((state: RootState) =>
-    state.subscription.search.results.map((id) => state.subscription.subscribers[id])
+    state.subscription.subscriberSearch.results.map((id) => state.subscription.subscribers[id]).filter((subs) => !!subs)
   );
 
   useEffect(() => {
@@ -148,7 +142,6 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
   function reset() {
     setEditSubscription(false);
     setSelectedSubscription(null);
-    dispatch(ResetUpdateErrors());
   }
 
   return (
@@ -165,11 +158,11 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
           </thead>
           <tbody>
             {subscribers.map((subscriber) => (
-              <ActionComponent
+              <SubscriberListItem
                 openModalFunction={openModalFunction}
                 subscriber={subscriber}
                 openDeleteModalFunction={openDeleteModalFunction}
-                key={`${subscriber.urn}:${Math.random()}`}
+                key={subscriber.id}
               />
             ))}
           </tbody>
@@ -179,7 +172,7 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
         open={editSubscription}
         initialValue={selectedSubscription}
         onSave={(subscriber) => {
-          dispatch(UpdateSubscriberService(subscriber));
+          dispatch(UpdateSubscriber(subscriber));
           setEditSubscription(false);
         }}
         onCancel={() => {
@@ -199,7 +192,7 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
           </div>
         }
         onDelete={() => {
-          dispatch(DeleteSubscriberService(selectedDeleteSubscriberId, props.searchCriteria));
+          dispatch(DeleteSubscriber(selectedDeleteSubscriberId));
           setSelectedDeleteSubscriberId(null);
         }}
       />

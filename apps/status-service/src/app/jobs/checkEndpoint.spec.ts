@@ -1,276 +1,280 @@
-import { ServiceStatusApplicationEntity, PublicServiceStatusType } from '..';
-import MongoServiceStatusRepository from '../../mongo/serviceStatus';
-import MongoEndpointStatusEntryRepository from '../../mongo/endpointStatusEntry';
-import { createCheckEndpointJob } from '../jobs/checkEndpoint';
+import { createCheckEndpointJob, getNewEndpointStatus } from '../jobs/checkEndpoint';
 import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
-import { User } from '@abgov/adsp-service-sdk';
-import { connect, connection, model } from 'mongoose';
+import { Logger } from 'winston';
+import { ServiceStatusApplicationEntity } from '../model';
+import { ServiceStatusApplication } from '../types';
+import { adspId } from '@abgov/adsp-service-sdk';
 
-describe.skip('Validate endpoint checking', () => {
-  let serviceStatusRepository: MongoServiceStatusRepository;
-  let endpointStatusEntryRepository: MongoEndpointStatusEntryRepository;
-  let mongoose: typeof import('mongoose');
+jest.mock('./healthCheckJobs', () => {
+  class HealthCheckJobsSub {
+    idsByUrl(): string[] {
+      return ['test-app'];
+    }
+  }
+  return {
+    HealthCheckJobs: HealthCheckJobsSub,
+  };
+});
 
-  const user: User = {
-    id: '',
-    name: '',
-    email: '',
-    roles: [],
-    isCore: false,
-    token: null,
+describe('checkEndpoint', () => {
+  const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+  const loggerMock: Logger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    error: jest.fn(),
+  } as unknown as Logger;
+
+  const statusRepositoryMock = {
+    findEnabledApplications: jest.fn(),
+    enable: jest.fn(),
+    disable: jest.fn(),
+    get: jest.fn(),
+    find: jest.fn(),
+    save: jest.fn((entity) => Promise.resolve(entity)),
+    delete: jest.fn(),
+  };
+
+  const endpointRepositoryMock = {
+    findRecentByUrl: jest.fn(),
+    deleteOldUrlStatus: jest.fn(),
+    get: jest.fn(),
+    find: jest.fn(),
+    save: jest.fn((entity) => Promise.resolve(entity)),
+    delete: jest.fn(),
   };
 
   const eventServiceMock = {
     send: jest.fn(),
   };
 
-  beforeEach(async () => {
-    mongoose = await connect(process.env.MONGO_URL);
-    await model('ServiceStatus').deleteMany({});
-    serviceStatusRepository = new MongoServiceStatusRepository();
-    endpointStatusEntryRepository = new MongoEndpointStatusEntryRepository({
-      everyMilliseconds: 1,
-      limit: 1000,
+  describe('createCheckEndpointJob', () => {
+    it('can create job', () => {
+      const job = createCheckEndpointJob({
+        url: 'https//test.co',
+        getter: jest.fn(),
+        logger: loggerMock,
+        serviceStatusRepository: statusRepositoryMock,
+        endpointStatusEntryRepository: endpointRepositoryMock,
+        eventService: eventServiceMock,
+      });
+
+      expect(job).toBeTruthy();
+    });
+
+    describe('checkEndpointJob', () => {
+      const getter = jest.fn();
+      const job = createCheckEndpointJob({
+        url: 'https//test.co',
+        getter: jest.fn(),
+        logger: loggerMock,
+        serviceStatusRepository: statusRepositoryMock,
+        endpointStatusEntryRepository: endpointRepositoryMock,
+        eventService: eventServiceMock,
+      });
+
+      beforeEach(() => {
+        eventServiceMock.send.mockReset();
+        endpointRepositoryMock.save.mockReset();
+        endpointRepositoryMock.findRecentByUrl.mockReset();
+        statusRepositoryMock.get.mockReset();
+        statusRepositoryMock.save.mockReset();
+      });
+
+      it('can updated application healthy', async () => {
+        getter.mockResolvedValueOnce({ status: 200 });
+        endpointRepositoryMock.save.mockImplementationOnce((entity) => entity);
+        endpointRepositoryMock.findRecentByUrl.mockReturnValueOnce([
+          {
+            ok: true,
+            url: 'https//test.co',
+            status: 200,
+            timestamp: new Date(),
+            responseTime: 250,
+          },
+          {
+            ok: true,
+            url: 'https//test.co',
+            status: 200,
+            timestamp: new Date(),
+            responseTime: 250,
+          },
+          {
+            ok: true,
+            url: 'https//test.co',
+            status: 200,
+            timestamp: new Date(),
+            responseTime: 250,
+          },
+        ]);
+        statusRepositoryMock.get.mockResolvedValueOnce(
+          new ServiceStatusApplicationEntity(statusRepositoryMock, {
+            tenantId: tenantId.toString(),
+            _id: 'test-app',
+            name: 'test-app',
+            endpoint: { url: 'https://test.co', status: 'n/a' },
+          } as ServiceStatusApplication)
+        );
+        statusRepositoryMock.save.mockImplementationOnce((entity) => entity);
+        await job();
+        expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'application-healthy' }));
+        expect(statusRepositoryMock.save).toHaveBeenCalledWith(
+          expect.objectContaining({ endpoint: expect.objectContaining({ status: 'online' }) })
+        );
+      });
+
+      it('can updated application unhealthy', async () => {
+        getter.mockResolvedValueOnce({ status: 200 });
+        endpointRepositoryMock.save.mockImplementationOnce((entity) => entity);
+        endpointRepositoryMock.findRecentByUrl.mockReturnValueOnce([
+          {
+            ok: false,
+            url: 'https//test.co',
+            status: 500,
+            timestamp: new Date(),
+            responseTime: 250,
+          },
+          {
+            ok: false,
+            url: 'https//test.co',
+            status: 500,
+            timestamp: new Date(),
+            responseTime: 250,
+          },
+          {
+            ok: false,
+            url: 'https//test.co',
+            status: 500,
+            timestamp: new Date(),
+            responseTime: 250,
+          },
+        ]);
+        statusRepositoryMock.get.mockResolvedValueOnce(
+          new ServiceStatusApplicationEntity(statusRepositoryMock, {
+            tenantId: tenantId.toString(),
+            _id: 'test-app',
+            name: 'test-app',
+            endpoint: { url: 'https://test.co', status: 'online' },
+          } as ServiceStatusApplication)
+        );
+        statusRepositoryMock.save.mockImplementationOnce((entity) => entity);
+        await job();
+        expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'application-unhealthy' }));
+        expect(statusRepositoryMock.save).toHaveBeenCalledWith(
+          expect.objectContaining({ endpoint: expect.objectContaining({ status: 'offline' }) })
+        );
+      });
+
+      it('can not update when status unchanged', async () => {
+        getter.mockResolvedValueOnce({ status: 200 });
+        endpointRepositoryMock.save.mockImplementationOnce((entity) => entity);
+        endpointRepositoryMock.findRecentByUrl.mockReturnValueOnce([
+          {
+            ok: false,
+            url: 'https//test.co',
+            status: 500,
+            timestamp: new Date(),
+            responseTime: 250,
+          },
+          {
+            ok: false,
+            url: 'https//test.co',
+            status: 500,
+            timestamp: new Date(),
+            responseTime: 250,
+          },
+          {
+            ok: false,
+            url: 'https//test.co',
+            status: 500,
+            timestamp: new Date(),
+            responseTime: 250,
+          },
+        ]);
+        statusRepositoryMock.get.mockResolvedValueOnce(
+          new ServiceStatusApplicationEntity(statusRepositoryMock, {
+            tenantId: tenantId.toString(),
+            _id: 'test-app',
+            name: 'test-app',
+            endpoint: { url: 'https://test.co', status: 'offline' },
+          } as ServiceStatusApplication)
+        );
+        statusRepositoryMock.save.mockImplementationOnce((entity) => entity);
+        await job();
+        expect(eventServiceMock.send).not.toHaveBeenCalled();
+        expect(statusRepositoryMock.save).not.toHaveBeenCalled();
+      });
     });
   });
 
-  afterEach(async () => {
-    await connection.close();
-  });
-
-  function generateId(): string {
-    return new mongoose.Types.ObjectId().toHexString();
-  }
-
-  async function createMockApplication(initStatus: PublicServiceStatusType): Promise<ServiceStatusApplicationEntity> {
-    const appData: Partial<ServiceStatusApplicationEntity> = {
-      _id: generateId(),
-      endpoint: { url: 'http://foo.bar', status: initStatus === 'operational' ? 'online' : 'offline' },
-      name: 'app 1',
-      status: initStatus,
-      internalStatus: initStatus === 'operational' ? 'healthy' : 'unhealthy',
-      tenantId: '99',
-      enabled: true,
-    };
-    return await serviceStatusRepository.save(appData as ServiceStatusApplicationEntity);
-  }
-
-  async function checkServiceStatus(url: string, res: { status: number }) {
-    const job = createCheckEndpointJob({
-      url,
-      serviceStatusRepository,
-      eventService: eventServiceMock,
-      endpointStatusEntryRepository,
-      getter: (_url: string) => {
-        if (res.status > 400) {
-          return Promise.reject({
-            status: res.status,
-          });
-        }
-        return Promise.resolve({
-          status: res.status,
-        });
-      },
+  describe('getNewEndpointStatus', () => {
+    it('can set online status from n/a', () => {
+      const result = getNewEndpointStatus('n/a', [{ ok: true } as EndpointStatusEntryEntity]);
+      expect(result).toBe('online');
     });
 
-    await job();
-  }
+    it('can set offline status from n/a', () => {
+      const result = getNewEndpointStatus('n/a', [{ ok: false } as EndpointStatusEntryEntity]);
+      expect(result).toBe('offline');
+    });
 
-  it('should mock api request', async (done) => {
-    const application = await createMockApplication('operational');
-    const url = application.endpoint.url;
+    it('can set online status from pending', () => {
+      const result = getNewEndpointStatus('pending', [{ ok: true } as EndpointStatusEntryEntity]);
+      expect(result).toBe('online');
+    });
 
-    await checkServiceStatus(url, { status: 200 });
+    it('can set offline status from pending', () => {
+      const result = getNewEndpointStatus('pending', [{ ok: false } as EndpointStatusEntryEntity]);
+      expect(result).toBe('offline');
+    });
 
-    const entries = await endpointStatusEntryRepository.findRecentByUrl(url);
-    expect(entries.length).toEqual(1);
-    expect(entries[0].ok).toEqual(true);
-    done();
-  });
+    it('can set offline status from online', () => {
+      const result = getNewEndpointStatus('online', [
+        { ok: true } as EndpointStatusEntryEntity,
+        { ok: false } as EndpointStatusEntryEntity,
+        { ok: false } as EndpointStatusEntryEntity,
+        { ok: true } as EndpointStatusEntryEntity,
+        { ok: false } as EndpointStatusEntryEntity,
+      ]);
 
-  it('should update the internal service state to `operational` after 3 successful requests', async () => {
-    const application = await createMockApplication('reported-issues');
-    const url = application.endpoint.url;
+      expect(result).toBe('offline');
+    });
 
-    let service: ServiceStatusApplicationEntity;
-    let entries: EndpointStatusEntryEntity[];
+    // Online is maintained if bad responses don't exceed limit.
+    it('can maintain online status', () => {
+      const result = getNewEndpointStatus('online', [
+        { ok: true } as EndpointStatusEntryEntity,
+        { ok: false } as EndpointStatusEntryEntity,
+        { ok: true } as EndpointStatusEntryEntity,
+        { ok: true } as EndpointStatusEntryEntity,
+        { ok: false } as EndpointStatusEntryEntity,
+      ]);
 
-    // init state check
-    service = await serviceStatusRepository.get(application._id);
-    expect(service.internalStatus).toBe('unhealthy');
+      expect(result).toBe('online');
+    });
 
-    // pass 1 - should be `unhealthy`
-    {
-      await checkServiceStatus(url, { status: 200 });
+    it('can set online status from offline', () => {
+      const result = getNewEndpointStatus('offline', [
+        { ok: true } as EndpointStatusEntryEntity,
+        { ok: true } as EndpointStatusEntryEntity,
+        { ok: true } as EndpointStatusEntryEntity,
+        { ok: true } as EndpointStatusEntryEntity,
+        { ok: true } as EndpointStatusEntryEntity,
+      ]);
 
-      entries = await endpointStatusEntryRepository.findRecentByUrl(url);
-      expect(entries.length).toEqual(1);
-      expect(entries[0].ok).toBe(true);
+      expect(result).toBe('online');
+    });
 
-      service = await serviceStatusRepository.get(application._id);
-      expect(service.internalStatus).toBe('unhealthy');
-      expect(service.endpoint.status).toBe('offline');
-    }
+    // Offline is maintained if bad responses don't go below limit.
+    it('can maintain offline status', () => {
+      const result = getNewEndpointStatus('offline', [
+        { ok: true } as EndpointStatusEntryEntity,
+        { ok: true } as EndpointStatusEntryEntity,
+        { ok: false } as EndpointStatusEntryEntity,
+        { ok: true } as EndpointStatusEntryEntity,
+        { ok: true } as EndpointStatusEntryEntity,
+      ]);
 
-    // pass 2 - should still be `unhealthy`
-    {
-      await checkServiceStatus(url, { status: 200 });
-
-      entries = await endpointStatusEntryRepository.findRecentByUrl(url);
-      expect(entries.length).toEqual(2);
-      expect(entries[0].ok).toBe(true);
-      expect(entries[1].ok).toBe(true);
-
-      service = await serviceStatusRepository.get(application._id);
-      expect(service.internalStatus).toBe('unhealthy');
-      expect(service.endpoint.status).toBe('offline');
-    }
-
-    // pass 3 - should now be `healthy`
-    {
-      await checkServiceStatus(url, { status: 200 });
-
-      entries = await endpointStatusEntryRepository.findRecentByUrl(url);
-      expect(entries.length).toEqual(3);
-      expect(entries[0].ok).toBe(true);
-      expect(entries[1].ok).toBe(true);
-      expect(entries[2].ok).toBe(true);
-
-      service = await serviceStatusRepository.get(application._id);
-      expect(service.internalStatus).toBe('healthy');
-      expect(service.endpoint.status).toBe('online');
-    }
-  });
-
-  it('should update the service state to `reported-issues` after 3 failed requests', async () => {
-    const application = await createMockApplication('operational');
-    const url = application.endpoint.url;
-
-    let service: ServiceStatusApplicationEntity;
-    let entries: EndpointStatusEntryEntity[];
-
-    // init state check
-    service = await serviceStatusRepository.get(application._id);
-    expect(service.internalStatus).toBe('healthy');
-
-    // pass 1 - should be `operational`
-    {
-      await checkServiceStatus(url, { status: 500 });
-
-      entries = await endpointStatusEntryRepository.findRecentByUrl(url);
-      expect(entries.length).toEqual(1);
-      expect(entries[0].ok).toBe(false);
-
-      service = await serviceStatusRepository.get(application._id);
-      expect(service.internalStatus).toBe('healthy');
-      expect(service.endpoint.status).toBe('online');
-    }
-
-    // pass 2 - should still be `operational`
-    {
-      await checkServiceStatus(url, { status: 500 });
-
-      entries = await endpointStatusEntryRepository.findRecentByUrl(url);
-      expect(entries.length).toEqual(2);
-      expect(entries[0].ok).toBe(false);
-      expect(entries[1].ok).toBe(false);
-
-      service = await serviceStatusRepository.get(application._id);
-      expect(service.internalStatus).toBe('healthy');
-      expect(service.endpoint.status).toBe('online');
-    }
-
-    // pass 3 - should now be `reported-issues`
-    {
-      await checkServiceStatus(url, { status: 500 });
-
-      entries = await endpointStatusEntryRepository.findRecentByUrl(url);
-      expect(entries.length).toEqual(3);
-      expect(entries[0].ok).toBe(false);
-      expect(entries[1].ok).toBe(false);
-      expect(entries[2].ok).toBe(false);
-
-      service = await serviceStatusRepository.get(application._id);
-      expect(service.internalStatus).toBe('unhealthy');
-      expect(service.endpoint.status).toBe('offline');
-    }
-  });
-
-  it('should go up, then back down', async () => {
-    const application = await createMockApplication('operational');
-    const url = application.endpoint.url;
-
-    // init state check
-    {
-      await checkServiceStatus(url, { status: 500 });
-      await checkServiceStatus(url, { status: 500 });
-      await checkServiceStatus(url, { status: 500 });
-
-      const service = await serviceStatusRepository.get(application._id);
-      expect(service.internalStatus).toBe('unhealthy');
-      expect(service.endpoint.status).toBe('offline');
-    }
-
-    // now up
-    {
-      await checkServiceStatus(url, { status: 200 });
-      await checkServiceStatus(url, { status: 200 });
-      await checkServiceStatus(url, { status: 200 });
-      const service = await serviceStatusRepository.get(application._id);
-      expect(service.internalStatus).toBe('healthy');
-      expect(service.endpoint.status).toBe('online');
-    }
-
-    // still up
-    {
-      await checkServiceStatus(url, { status: 500 });
-
-      const service = await serviceStatusRepository.get(application._id);
-      expect(service.internalStatus).toBe('healthy');
-      expect(service.endpoint.status).toBe('online');
-    }
-
-    // back down
-    {
-      await checkServiceStatus(url, { status: 500 });
-      await checkServiceStatus(url, { status: 500 });
-
-      const service = await serviceStatusRepository.get(application._id);
-      expect(service.internalStatus).toBe('unhealthy');
-      expect(service.endpoint.status).toBe('offline');
-    }
-  });
-
-  it('should set the statusTimestamp when the status is manually changed', async () => {
-    let application = await createMockApplication('operational');
-
-    application.status = 'maintenance';
-    application.statusTimestamp = 0;
-    application = await serviceStatusRepository.save(application);
-
-    application.setStatus(user, 'operational');
-    application = await serviceStatusRepository.get(application._id);
-
-    expect(application.statusTimestamp).not.toBeNull();
-    expect(application.statusTimestamp).toBeGreaterThan(0);
-  });
-
-  it('should not set the statusTimestamp when the internal status changes', async () => {
-    let application = await createMockApplication('operational');
-
-    // init
-    application.status = 'maintenance';
-    application.statusTimestamp = 0
-    application = await serviceStatusRepository.save(application);
-    const url = application.endpoint.url;
-
-    // status checks
-    await checkServiceStatus(url, { status: 200 });
-    await checkServiceStatus(url, { status: 200 });
-    await checkServiceStatus(url, { status: 200 });
-
-    application = await serviceStatusRepository.get(application._id);
-
-    expect(application.statusTimestamp).toBe(0);
+      expect(result).toBe('offline');
+    });
   });
 });
