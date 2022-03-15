@@ -2,7 +2,7 @@ import { AuthenticationConfig, authenticateToken } from '@core-services/core-com
 import type { RequestHandler } from 'express';
 import * as HttpStatusCodes from 'http-status-codes';
 import { TenantServiceRoles } from '../roles';
-import { TenantService } from '@abgov/adsp-service-sdk';
+import { TenantService, toKebabName } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError } from '@core-services/core-common';
 
 export const requireTenantServiceAdmin: RequestHandler = async (req, res, next: () => void) => {
@@ -55,11 +55,6 @@ export const requireDirectoryAdmin: RequestHandler = async (req, res, next: () =
   } else {
     res.sendStatus(HttpStatusCodes.UNAUTHORIZED);
   }
-};
-
-// Copied toKebabName from frontend. Might need to move to lib if necessary
-const toKebabName = (tenantName: string): string => {
-  return tenantName.toLowerCase().replace(/ /g, '-');
 };
 
 export const requirePlatformService: RequestHandler = (req, res, next) => {

@@ -1,8 +1,9 @@
-import { adspId, TenantService } from '@abgov/adsp-service-sdk';
+import { TenantService } from '@abgov/adsp-service-sdk';
 import { NotFoundError } from '@core-services/core-common';
 import { NextFunction, Request, Response, Router } from 'express';
 import * as swaggerUi from 'swagger-ui-express';
 import { ServiceDocs } from './serviceDocs';
+import { toKebabName } from '@abgov/adsp-service-sdk';
 
 interface RouterProps {
   accessServiceUrl: URL;
@@ -48,7 +49,7 @@ export const createDocsRouter = async ({
   });
 
   router.use('/swagger', swaggerUi.serve, async (req: Request, res: Response, next: NextFunction) => {
-    const { tenant } = req.query;
+    const tenant = req.query?.tenant ? toKebabName(req.query?.tenant as string) : null;
     if (tenant) {
       let tenantInfo = null;
       try {
@@ -81,13 +82,13 @@ export const createDocsRouter = async ({
   });
 
   router.get('/:tenant?', async (req: Request, res: Response, next: NextFunction) => {
-    const {tenant} = req.params
+    const tenant = req.params?.tenant ? toKebabName(req.params?.tenant as string) : null;
     if (tenant) {
-      res.redirect(`/swagger?tenant=${tenant}`)
+      res.redirect(`/swagger?tenant=${tenant}`);
     } else {
-      res.redirect(`/swagger`)
+      res.redirect(`/swagger`);
     }
-  })
+  });
 
   return router;
 };
