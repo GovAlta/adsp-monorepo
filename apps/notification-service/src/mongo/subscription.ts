@@ -110,21 +110,26 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     if (criteria.subscriberCriteria) {
       const subscriberQuery: Record<string, unknown> = {};
       if (criteria.subscriberCriteria.name) {
-        subscriberQuery.addressAs = { $regex: criteria.subscriberCriteria.name, $options: 'i' };
+        subscriberQuery['subscriberId.addressAs'] = { $regex: criteria.subscriberCriteria.name, $options: 'i' };
       }
 
       if (criteria.subscriberCriteria.email) {
-        subscriberQuery.channels = { $elemMatch: { address: { $regex: criteria.subscriberCriteria.email.toLocaleLowerCase() } } };
+        subscriberQuery['subscriberId.channels'] = {
+          $elemMatch: { address: { $regex: criteria.subscriberCriteria.email.toLocaleLowerCase() } },
+        };
       }
 
       pipeline.push({
-        $match: {
-          subscriberId: subscriberQuery,
-        },
+        $match: subscriberQuery,
       });
     }
 
-    const docs = await this.subscriptionModel.aggregate(pipeline).skip(skip).limit(top).exec();
+    const mongoQuery = this.subscriptionModel.aggregate(pipeline).skip(skip);
+    if (top > 0) {
+      mongoQuery.limit(top);
+    }
+
+    const docs = await mongoQuery.exec();
 
     return {
       results: docs.map((doc) => this.fromSubscriptionDoc(doc)),
