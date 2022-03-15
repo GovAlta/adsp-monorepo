@@ -167,10 +167,8 @@ function* getAllTypeSubscriptions(action: GetAllTypeSubscriptionsAction): SagaIt
     ...state.notification.core,
   }));
 
-  if (!Object.keys(notificationTypes).length) {
-    yield call(fetchCoreNotificationTypes);
-    yield call(fetchNotificationTypes);
-  }
+  yield call(fetchCoreNotificationTypes);
+  yield call(fetchNotificationTypes);
 
   notificationTypes = yield select((state: RootState) => ({
     ...state.notification.core,
