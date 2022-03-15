@@ -413,7 +413,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                         </div>
                         <div className="columnFlex height-100">
                           <div className="flex1 flex flexEndAlign">
-                            <img src={MailIcon} alt="non-interactive email icon" />
+                            <img src={MailIcon} alt="non-interactive email icon" data-testid="icon-mail" />
                             <div className="rightAlignEdit">
                               <a
                                 style={{ marginRight: '20px' }}
@@ -524,7 +524,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           <div className="flex1 flex flexEndAlign">
                             <div className="flex1">
                               <MailButton>
-                                <img src={MailIcon} alt="non-interactive email icon" />
+                                <img src={MailIcon} alt="non-interactive email icon" data-testid="icon-mail" />
                               </MailButton>
                               {event.customized && <SmallText>Edited</SmallText>}
                             </div>
