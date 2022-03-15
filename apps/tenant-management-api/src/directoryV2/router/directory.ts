@@ -6,7 +6,7 @@ import { Logger } from 'winston';
 import validationMiddleware from '../../middleware/requestValidator';
 import { ServiceV2 } from '../../directory/validator/directory/directoryValidator';
 import { InvalidValueError } from '@core-services/core-common';
-import { TenantService } from '@abgov/adsp-service-sdk';
+import { TenantService, toKebabName } from '@abgov/adsp-service-sdk';
 import * as passport from 'passport';
 import { validateNamespaceEndpointsPermission } from '../../middleware/authentication';
 
@@ -82,6 +82,27 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
     }
   });
 
+  /*
+   * Create new namespace.
+   */
+  directoryRouter.post('/namespaces', passportMiddleware, async (req: Request, res: Response, _next) => {
+    try {
+      const tenant = await tenantService.getTenant(req.user?.tenantId);
+      const namespace = toKebabName(tenant.name);
+      const result = await directoryRepository.getDirectories(namespace);
+      if (result) {
+        throw new InvalidValueError('Create new namespace', `namespace ${namespace} exists`);
+      } else {
+        const directory = { name: namespace, services: [] };
+        await directoryRepository.update(directory);
+        return res.sendStatus(HttpStatusCodes.CREATED);
+      }
+    } catch (err) {
+      logger.error(`Failed creating new directory namespace`);
+      _next(err);
+    }
+  });
+
   /**
    * Add one services to namespace
    */
@@ -92,13 +113,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
       const { namespace } = req.params;
       try {
         const { service, api, url } = req.body;
-        let result;
-        try {
-          result = await directoryRepository.getDirectories(namespace);
-        } catch (err) {
-          _next(err);
-        }
-
+        const result = await directoryRepository.getDirectories(namespace);
         const mappingService = {
           service: service,
           api: api,
