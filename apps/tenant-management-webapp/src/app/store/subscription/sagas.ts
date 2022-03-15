@@ -197,7 +197,7 @@ function* getTypeSubscriptions(action: GetTypeSubscriptionsActions): SagaIterato
       const response = yield call(
         axios.get,
         `${configBaseUrl}/subscription/v1/types/${type}/subscriptions?${
-          subscriberCriteria ? `subscriberCriteria=${JSON.stringify(subscriberCriteria)}` : ''
+          subscriberCriteria ? `subscriberCriteria=${subscriberCriteria}` : ''
         }&top=10${after ? `&after=${after}` : ''}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
