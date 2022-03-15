@@ -93,10 +93,13 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
       try {
         const { service, api, url } = req.body;
         let result;
-        try {
+        result = await directoryRepository.getDirectories(namespace);
+
+        if (!result) {
+          // create new namespace if not exists
+          const directory = { name: namespace, services: [] };
+          await directoryRepository.update(directory);
           result = await directoryRepository.getDirectories(namespace);
-        } catch (err) {
-          _next(err);
         }
 
         const mappingService = {
