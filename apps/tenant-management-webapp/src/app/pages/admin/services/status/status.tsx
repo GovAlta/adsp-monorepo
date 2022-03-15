@@ -337,7 +337,7 @@ function Application(app: ServiceStatusApplication) {
         </div>
 
         <GoAContextMenu>
-          <EditIconButton iconSize="tiny" onClick={() => setShowEditModal(true)} data-testid="status-edit-button" />
+          <EditIconButton iconSize="small" onClick={() => setShowEditModal(true)} data-testid="status-edit-button" />
           <GoAContextMenuIcon type="trash" onClick={() => setShowDeleteConfirmation(true)} />
         </GoAContextMenu>
       </AppHeader>
