@@ -13,7 +13,6 @@ import ContactInformation from '@assets/icons/ContactInformation.png';
 const LandingPage = (): JSX.Element => {
   return (
     <>
-      <Header serviceName="Alberta Digital Service Platform - Subscription management " />
       <Main>
         <CenterText>
           <Band title="Subscription management">Manage your subscription preferences</Band>
@@ -104,8 +103,6 @@ const LandingPage = (): JSX.Element => {
               </Grid>
             </Container>
           </Section>
-          <div></div>
-          <Footer />
         </CenterText>
       </Main>
     </>

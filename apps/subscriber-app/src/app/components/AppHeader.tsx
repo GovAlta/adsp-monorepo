@@ -19,13 +19,17 @@ interface HeaderProps {
   admin?: boolean;
 }
 const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
-  const authenticated = useSelector((state: RootState) => state.session.authenticated);
   const dispatch = useDispatch();
   const [menuState, setMenuState] = useState<MenuState>({ state: 'closed' });
 
   function toggleMenu() {
     setMenuState({ state: menuState.state === 'closed' ? 'open' : 'closed' });
   }
+
+  const { tenant, authenticated } = useSelector((state: RootState) => ({
+    tenant: state.tenant,
+    authenticated: state.session.authenticated,
+  }));
 
   return (
     <Actions>
@@ -57,6 +61,10 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
                 Sign out
               </Link>
             </UserIconBox>
+          )}
+
+          {!authenticated && tenant?.realm && (
+            <a href={`/subscriptions/${tenant?.realm}`}>Login as current subscriber</a>
           )}
         </div>
       ) : null}

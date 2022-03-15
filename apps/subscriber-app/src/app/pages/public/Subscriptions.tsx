@@ -5,10 +5,8 @@ import DataTable from '@components/DataTable';
 import { GoAButton, GoACard, GoAPageLoader } from '@abgov/react-components';
 import { GoACallout } from '@abgov/react-components';
 import { FetchContactInfoService } from '@store/notification/actions';
+import { FetchTenantService } from '@store/tenant/actions';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import Header from '@components/AppHeader';
-import Footer from '@components/Footer';
-import GoaLogo from '../../../assets/goa-logo.svg';
 import styled from 'styled-components';
 import {
   Label,
@@ -31,9 +29,10 @@ import { SubscriberChannel, Subscription } from '@store/subscription/models';
 const Subscriptions = (): JSX.Element => {
   const dispatch = useDispatch();
   const EMAIL = 'email';
-  const { subscriptions, notifications } = useSelector((state: RootState) => ({
+  const { subscriptions, notifications, tenant } = useSelector((state: RootState) => ({
     subscriptions: state.subscription.subscriptions,
     notifications: state.notifications.notification,
+    tenant: state.tenant,
   }));
 
   const contact = useSelector((state: RootState) => state.notification?.contactInfo);
@@ -60,7 +59,10 @@ const Subscriptions = (): JSX.Element => {
     const resource = subscriptions?.length > 0 && subscriptions[0]?.tenantId?.resource;
     const resourcePieces = resource && resource.split('/');
     const tenantId = resourcePieces && resourcePieces[resourcePieces.length - 1];
-    if (tenantId) dispatch(FetchContactInfoService({ tenantId: tenantId }));
+    if (tenantId) {
+      dispatch(FetchContactInfoService({ tenantId: tenantId }));
+      dispatch(FetchTenantService({ tenantId: tenantId }));
+    }
   }, [subscriptions]);
 
   const unSubscribe = (typeId: string) => {
@@ -112,7 +114,6 @@ const Subscriptions = (): JSX.Element => {
 
   return (
     <>
-      <Header serviceName="Alberta Digital Service Platform - Subscription management " />
       <SubscriptionManagement>
         <Main>
           <Container hs={2} vs={4.5} xlHSpacing={12}>
@@ -178,7 +179,6 @@ const Subscriptions = (): JSX.Element => {
           </Container>
         </Main>
       </SubscriptionManagement>
-      <Footer logoSrc={GoaLogo} />
     </>
   );
 };
