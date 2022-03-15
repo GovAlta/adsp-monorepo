@@ -34,6 +34,8 @@ import {
   GET_ALL_TYPE_SUBSCRIPTIONS,
   SUBSCRIBE,
   DeleteSubscriberSuccess,
+  DELETE_SUBSCRIPTION,
+  DeleteSubscriptionSuccess,
 } from './actions';
 import { Subscriber, SubscriptionWrapper } from './models';
 import { RootState } from '../index';
@@ -63,7 +65,10 @@ export function* getMySubscriber(): SagaIterator {
 
       yield put(GetMySubscriberSuccess(result));
     } catch (e) {
-      yield put(ErrorNotification({ message: `Subscriptions (getSubscriber): ${e.message}` }));
+      // Don't show error for 404 since that is expected when user has never subscribed before.
+      if (!axios.isAxiosError(e) || e.response.status !== 404) {
+        yield put(ErrorNotification({ message: `Subscriptions (getSubscriber): ${e.message}` }));
+      }
     }
   }
 }
@@ -87,11 +92,8 @@ function* subscribe(action: SubscribeAction): SagaIterator {
       );
 
       const result = response.data.subscriber;
-
       const subData: Subscriber = {
-        id: result.id,
-        urn: result.urn,
-        channels: result.channels,
+        ...result,
       };
 
       yield put(SubscribeSuccess({ data: { type: type, data: subData, email: email } }));
@@ -137,16 +139,36 @@ function* unsubscribe(action: UnsubscribeAction): SagaIterator {
   }
 }
 
+// deletes a subscription for a given subscriberId
+function* deleteSubscription(action: UnsubscribeAction): SagaIterator {
+  const type = action.payload.subscriptionInfo.data.type;
+  const id = action.payload.subscriptionInfo.data.data.id;
+  const subscriber = action.payload.subscriptionInfo.data.data;
+
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  if (configBaseUrl && token) {
+    try {
+      yield call(axios.delete, `${configBaseUrl}/subscription/v1/types/${type}/subscriptions/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      yield put(DeleteSubscriptionSuccess(subscriber, type));
+    } catch (e) {
+      yield put(ErrorNotification({ message: `Subscriptions (unsubscribe): ${e.message}` }));
+    }
+  }
+}
+
 function* getAllTypeSubscriptions(action: GetAllTypeSubscriptionsAction): SagaIterator {
   let notificationTypes: Record<string, NotificationItem> = yield select((state: RootState) => ({
     ...state.notification.notificationTypes,
     ...state.notification.core,
   }));
 
-  if (!Object.keys(notificationTypes).length) {
-    yield call(fetchCoreNotificationTypes);
-    yield call(fetchNotificationTypes);
-  }
+  yield call(fetchCoreNotificationTypes);
+  yield call(fetchNotificationTypes);
 
   notificationTypes = yield select((state: RootState) => ({
     ...state.notification.core,
@@ -339,6 +361,7 @@ export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(GET_MY_SUBSCRIBER, getMySubscriber);
   yield takeEvery(SUBSCRIBE, subscribe);
   yield takeEvery(UNSUBSCRIBE, unsubscribe);
+  yield takeEvery(DELETE_SUBSCRIPTION, deleteSubscription);
   yield takeEvery(GET_ALL_TYPE_SUBSCRIPTIONS, getAllTypeSubscriptions);
   yield takeEvery(GET_TYPE_SUBSCRIPTIONS, getTypeSubscriptions);
   yield takeEvery(GET_SUBSCRIBER_SUBSCRIPTIONS, getSubscriberSubscriptions);

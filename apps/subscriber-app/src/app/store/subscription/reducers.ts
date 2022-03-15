@@ -1,6 +1,7 @@
 import {
   ActionTypes,
   GET_MY_SUBSCRIBER_DETAILS_SUCCESS,
+  GET_SUBSCRIBER_DETAILS_SUCCESS,
   NO_SUBSCRIBER,
   PATCH_SUBSCRIBER_SUCCESS,
   UNSUBSCRIBE_SUCCESS,
@@ -19,6 +20,11 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       return {
         ...state,
         subscriber: action.payload.subscriber,
+      };
+    case GET_SUBSCRIBER_DETAILS_SUCCESS:
+      return {
+        ...state,
+        subscriptions: action.payload.subscriptions,
       };
     case UNSUBSCRIBE_SUCCESS:
       return {

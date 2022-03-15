@@ -25,15 +25,10 @@ async function calculateIntervalMetric(
   try {
     // If there is a correlation ID, try to find the associated event definition.
     let token = await tokenProvider.getAccessToken();
-    const [configuration, options] = await configurationService.getConfiguration<
+    const namespaces = await configurationService.getConfiguration<
       Record<string, NamespaceEntity>,
       Record<string, NamespaceEntity>
     >(serviceId, token, tenantId);
-
-    const namespaces: Record<string, NamespaceEntity> = {
-      ...(configuration || {}),
-      ...(options || {}),
-    };
 
     // Get the interval configuration of the event definition.
     const interval = namespaces?.[namespace]?.definitions?.[name]?.interval;

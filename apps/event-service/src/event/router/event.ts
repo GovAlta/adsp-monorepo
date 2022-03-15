@@ -54,15 +54,9 @@ export const sendEvent =
       }
       const timestamp = new Date(timeValue);
 
-      const [configuration, options] = await req.getConfiguration<
-        Record<string, NamespaceEntity>,
-        Record<string, NamespaceEntity>
-      >(tenantId);
-
-      const namespaces: Record<string, NamespaceEntity> = {
-        ...(configuration || {}),
-        ...(options || {}),
-      };
+      const namespaces = await req.getConfiguration<Record<string, NamespaceEntity>, Record<string, NamespaceEntity>>(
+        tenantId
+      );
 
       // If the namespace or definition doesn't exist, then we treat it as an ad hoc event and skip validation.
       const entity: NamespaceEntity = namespaces[namespace];

@@ -1,10 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { Directory, Service } from './models';
 import { TenantApi as TenantApiConfig } from '@store/config/models';
-
-const toKebabName = (tenantName: string): string => {
-  return tenantName.toLowerCase().replace(/ /g, '-');
-};
+import { toKebabName } from '@lib/kebabName';
 
 export class DirectoryApi {
   private http: AxiosInstance;

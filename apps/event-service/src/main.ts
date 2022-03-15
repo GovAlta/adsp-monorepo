@@ -62,6 +62,10 @@ const initializeApp = async (): Promise<express.Application> => {
             )
           : null;
       },
+      combineConfiguration: (tenantConfig: Record<string, Namespace>, coreConfig: Record<string, Namespace>) => ({
+        ...tenantConfig,
+        ...coreConfig,
+      }),
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),

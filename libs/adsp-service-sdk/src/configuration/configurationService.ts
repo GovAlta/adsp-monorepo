@@ -1,12 +1,13 @@
 import axios from 'axios';
+import moize from 'moize';
 import * as NodeCache from 'node-cache';
 import type { Logger } from 'winston';
 import { ServiceDirectory } from '../directory';
 import { adspId, AdspId, assertAdspId } from '../utils';
-import type { Configuration, ConfigurationConverter } from './configuration';
+import type { CombineConfiguration, ConfigurationConverter } from './configuration';
 
 export interface ConfigurationService {
-  getConfiguration<C, O = void>(serviceId: AdspId, token: string, tenantId: AdspId): Promise<Configuration<C, O>>;
+  getConfiguration<C, R = [C, C]>(serviceId: AdspId, token: string, tenantId: AdspId): Promise<R>;
 }
 
 export class ConfigurationServiceImpl implements ConfigurationService {
@@ -19,13 +20,32 @@ export class ConfigurationServiceImpl implements ConfigurationService {
 
   #converter: ConfigurationConverter = (value: unknown) => value;
 
+  #combine: CombineConfiguration = (tenantConfig: unknown, coreConfig: unknown) => [tenantConfig, coreConfig];
+
   constructor(
     private readonly logger: Logger,
     private readonly directory: ServiceDirectory,
-    converter: ConfigurationConverter = null
+    converter: ConfigurationConverter = null,
+    combine: CombineConfiguration = null
   ) {
     if (converter) {
       this.#converter = converter;
+    }
+
+    if (combine) {
+      // Memoize the combine function in case it is expensive.
+      // Note: we might be better served by just caching the combined result in node cache, but for now the tenant
+      // and core configuration retrievals are independent requests.
+      this.#combine = moize(combine, {
+        maxSize: 50,
+        matchesArg: (a, b) => {
+          if (a instanceof AdspId && b instanceof AdspId) {
+            return a.toString() === b.toString();
+          } else {
+            return a === b;
+          }
+        },
+      });
     }
   }
 
@@ -80,12 +100,8 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     }
   };
 
-  getConfiguration = async <C, O = void>(
-    serviceId: AdspId,
-    token: string,
-    tenantId?: AdspId
-  ): Promise<Configuration<C, O>> => {
-    let configuration = {};
+  getConfiguration = async <C, R = [C, C]>(serviceId: AdspId, token: string, tenantId?: AdspId): Promise<R> => {
+    let configuration = null;
     if (tenantId) {
       assertAdspId(tenantId, 'Provided ID is not for a tenant', 'resource');
 
@@ -96,9 +112,9 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     }
 
     const options =
-      this.#configuration.get<O>(`${serviceId}`) || (await this.#retrieveConfiguration<O>(serviceId, token)) || null;
+      this.#configuration.get<C>(`${serviceId}`) || (await this.#retrieveConfiguration<C>(serviceId, token)) || null;
 
-    return [configuration, options] as Configuration<C, O>;
+    return this.#combine(configuration, options, tenantId) as R;
   };
 
   clearCached(tenantId: AdspId, serviceId: AdspId): void {
