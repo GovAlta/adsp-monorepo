@@ -34,6 +34,8 @@ import {
   GET_ALL_TYPE_SUBSCRIPTIONS,
   SUBSCRIBE,
   DeleteSubscriberSuccess,
+  DELETE_SUBSCRIPTION,
+  DeleteSubscriptionSuccess,
 } from './actions';
 import { Subscriber, SubscriptionWrapper } from './models';
 import { RootState } from '../index';
@@ -115,6 +117,7 @@ function* unsubscribe(action: UnsubscribeAction): SagaIterator {
 
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const userId: string = yield select((state: RootState) => state.session.userInfo?.sub);
 
   if (configBaseUrl && token) {
     try {
@@ -123,6 +126,35 @@ function* unsubscribe(action: UnsubscribeAction): SagaIterator {
       });
 
       yield put(UnsubscribeSuccess(subscriber, type));
+      if (subscriber.userId === userId) {
+        yield put(
+          SuccessNotification({
+            message: `You are unsubscribed! You will no longer receive notifications for ${type}.`,
+          })
+        );
+      }
+    } catch (e) {
+      yield put(ErrorNotification({ message: `Subscriptions (unsubscribe): ${e.message}` }));
+    }
+  }
+}
+
+// deletes a subscription for a given subscriberId
+function* deleteSubscription(action: UnsubscribeAction): SagaIterator {
+  const type = action.payload.subscriptionInfo.data.type;
+  const id = action.payload.subscriptionInfo.data.data.id;
+  const subscriber = action.payload.subscriptionInfo.data.data;
+
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  if (configBaseUrl && token) {
+    try {
+      yield call(axios.delete, `${configBaseUrl}/subscription/v1/types/${type}/subscriptions/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      yield put(DeleteSubscriptionSuccess(subscriber, type));
     } catch (e) {
       yield put(ErrorNotification({ message: `Subscriptions (unsubscribe): ${e.message}` }));
     }
@@ -331,6 +363,7 @@ export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(GET_MY_SUBSCRIBER, getMySubscriber);
   yield takeEvery(SUBSCRIBE, subscribe);
   yield takeEvery(UNSUBSCRIBE, unsubscribe);
+  yield takeEvery(DELETE_SUBSCRIPTION, deleteSubscription);
   yield takeEvery(GET_ALL_TYPE_SUBSCRIPTIONS, getAllTypeSubscriptions);
   yield takeEvery(GET_TYPE_SUBSCRIPTIONS, getTypeSubscriptions);
   yield takeEvery(GET_SUBSCRIBER_SUBSCRIPTIONS, getSubscriberSubscriptions);

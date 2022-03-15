@@ -9,6 +9,7 @@ import {
   GET_MY_SUBSCRIBER_SUCCESS,
   SUBSCRIBE_SUCCESS,
   DELETE_SUBSCRIBER_SUCCESS,
+  DELETE_SUBSCRIPTION_SUCCESS,
 } from './actions';
 
 import { SUBSCRIBER_INIT, SubscriberService, SubscriptionWrapper } from './models';
@@ -45,7 +46,8 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
         },
       };
     }
-    case UNSUBSCRIBE_SUCCESS: {
+    case UNSUBSCRIBE_SUCCESS:
+    case DELETE_SUBSCRIPTION_SUCCESS: {
       const { subscriber, type } = action.payload;
       const newState = {
         ...state,
