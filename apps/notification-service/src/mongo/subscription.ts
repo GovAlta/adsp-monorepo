@@ -21,26 +21,6 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     this.subscriptionModel = model<Document & SubscriptionDoc>('subscription', subscriptionSchema);
   }
 
-  async getSubscriberById(id: string, top: number, after: string): Promise<Results<SubscriptionEntity>> {
-    const skip = parseInt(after);
-
-    const docs = await this.subscriptionModel
-      .find({ subscriberId: id })
-      .populate('subscriberId')
-      .skip(skip)
-      .limit(top)
-      .exec();
-
-    return {
-      results: docs.map((doc) => this.fromSubscriptionDoc(doc)),
-      page: {
-        after,
-        next: encodeNext(docs.length, top, skip),
-        size: docs.length,
-      },
-    };
-  }
-
   async getSubscriber(tenantId: AdspId, subscriberId: string, byUserId = false): Promise<SubscriberEntity> {
     const criteria: Record<string, string> = {
       tenantId: tenantId?.toString(),
