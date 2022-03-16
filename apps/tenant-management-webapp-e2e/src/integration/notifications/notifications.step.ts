@@ -340,3 +340,23 @@ Then('the user views the Delete subscription confirmation message of {string}', 
 When('the user clicks Confirm button on Delete subscription modal', function () {
   notificationsObj.deleteConfirmationModalConfirmBtn().click();
 });
+
+// LD
+
+When('the user clicks edit button for contact information', function () {
+  const rand_str = String(Math.floor(Math.random() * 9999 + 10));
+  const newEmail = 'abc' + rand_str + '@gov.ab.ca';
+  const newPhone = '1 (780) 123-' + rand_str;
+  const newInstructions = rand_str + 'autotest';
+  notificationsObj.contactInformationEdit().click();
+  //notificationsObj.editContactModalEmail().should('exist');
+  notificationsObj.editContactModalEmail().clear().type(newEmail);
+  notificationsObj.editContactModalPhone().clear().type(newPhone);
+  notificationsObj.editContactModalInstructions().clear().type(newInstructions);
+
+  // notificationsObj.editContactModalCancelBtn().should('exist');
+  // notificationsObj.editContactModalCancelBtn().click();
+  // notificationsObj.contactInformationEmail().invoke('text').should('contain', 'test@test.ca');
+  //notificationsObj.contactInformationPhone().invoke('text').should('contain', '1 (647) 333-8965');
+  //notificationsObj.contactInformationInstructions().invoke('text').should('contain', 'test');
+});

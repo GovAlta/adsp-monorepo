@@ -255,5 +255,45 @@ class NotificationsPage {
       `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="delete-event"]`
     );
   }
+
+  //LD
+  contactInformationEdit() {
+    return cy.get('[data-testid="icon-create"]');
+  }
+
+  editContactModalEmail() {
+    return cy.xpath('//*[@data-testid="form-email" and @data-state="visible"]//*[@class="input"]');
+    // return cy.get('[data-testid="form-email"]');
+  }
+
+  editContactModalPhone() {
+    return cy.xpath('//*[@data-testid="form-name" and @data-state="visible"]//*[@class="input"]');
+    // return cy.get('[data-testid="form-name"]');
+  }
+
+  editContactModalInstructions() {
+    return cy.xpath('//*[@data-testid="form-name" and @data-state="visible"]//*[@class="input"]');
+    // return cy.get('[data-testid="form-name"]');
+  }
+
+  editContactModalSaveBtn() {
+    return cy.get('[data-testid="form-save"]');
+  }
+
+  editContactModalCancelBtn() {
+    return cy.get('[data-testid="form-cancel"]');
+  }
+
+  contactInformationEmail() {
+    return cy.get('[data-testid="email"]');
+  }
+
+  contactInformationPhone() {
+    return cy.get('[data-testid="phone"]');
+  }
+
+  contactInformationInstructions() {
+    return cy.get('[data-testid="support-instructions"]');
+  }
 }
 export default NotificationsPage;
