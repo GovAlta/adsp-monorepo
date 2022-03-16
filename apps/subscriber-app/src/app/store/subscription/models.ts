@@ -39,7 +39,6 @@ export interface Subscriber {
   addressAs: string;
   urn?: string;
   userId?: string;
-  subscriptions?: Subscription[];
 }
 export interface SubscriberService {
   subscriber: Subscriber;
@@ -49,6 +48,6 @@ export interface SubscriberService {
 
 export const SUBSCRIBER_INIT: SubscriberService = {
   subscriber: undefined,
-  subscriptions: undefined,
+  subscriptions: [],
   hasSubscriberId: true,
 };

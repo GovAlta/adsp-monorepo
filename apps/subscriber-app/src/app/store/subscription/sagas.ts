@@ -4,7 +4,6 @@ import { SagaIterator } from '@redux-saga/core';
 import {
   GET_MY_SUBSCRIBER_DETAILS,
   GET_SUBSCRIBER_DETAILS,
-  GetMySubscriberDetailsSuccess,
   GetSubscriberDetailsSuccess,
   UNSUBSCRIBE,
   UnsubscribeAction,
@@ -15,7 +14,6 @@ import {
   PATCH_SUBSCRIBER,
   NoSubscriberAction,
 } from './actions';
-import { Subscriber } from './models';
 
 import { RootState } from '../index';
 import axios from 'axios';
@@ -26,7 +24,7 @@ export function* getMySubscriberDetails(): SagaIterator {
 
   if (configBaseUrl && token) {
     try {
-      const response = yield call(
+      const { data } = yield call(
         axios.get,
         `${configBaseUrl}/subscription/v1/subscribers/my-subscriber?includeSubscriptions=true`,
         {
@@ -34,10 +32,8 @@ export function* getMySubscriberDetails(): SagaIterator {
         }
       );
 
-      const result: Subscriber = response.data;
-
-      if (result) {
-        yield put(GetMySubscriberDetailsSuccess(result));
+      if (data) {
+        yield put(GetSubscriberDetailsSuccess(data));
       }
     } catch (e) {
       if (e.response.status === 404) {
