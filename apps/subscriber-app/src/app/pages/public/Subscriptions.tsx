@@ -55,7 +55,7 @@ const Subscriptions = (): JSX.Element => {
   }, []);
 
   useEffect(() => {
-    const resource = subscriptions?.length > 0 && subscriptions[0]?.tenantId?.resource;
+    const resource = subscriber?.tenantId?.resource;
     const resourcePieces = resource && resource.split('/');
     const tenantId = resourcePieces && resourcePieces[resourcePieces.length - 1];
     if (tenantId) {

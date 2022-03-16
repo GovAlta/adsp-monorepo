@@ -4,7 +4,6 @@ export interface Subscription {
   criteria: SubscriptionCriteria;
   type: SubscriptionType;
   subscriber?: Subscriber;
-  tenantId?: TenantId;
 }
 
 export interface TenantId {
@@ -34,6 +33,7 @@ export interface SubscriberChannel {
   verified?: boolean;
 }
 export interface Subscriber {
+  tenantId?: TenantId;
   id: string;
   channels: SubscriberChannel[];
   addressAs: string;
