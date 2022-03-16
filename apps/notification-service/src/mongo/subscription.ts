@@ -22,9 +22,11 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
   }
 
   async getSubscriber(tenantId: AdspId, subscriberId: string, byUserId = false): Promise<SubscriberEntity> {
-    const criteria: Record<string, string> = {
-      tenantId: tenantId?.toString(),
-    };
+    const criteria: Record<string, string> = {};
+
+    if (tenantId) {
+      criteria.tenantId = tenantId.toString();
+    }
 
     if (!byUserId) {
       criteria._id = subscriberId;

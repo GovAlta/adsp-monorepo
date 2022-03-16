@@ -436,8 +436,8 @@ export function getSubscriberSubscriptions(apiId: AdspId, repository: Subscripti
 export function getSubscriberDetails(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
   return async (req, res, next) => {
     try {
-      const tenantId = req.tenant?.id;
       const subscriber: SubscriberEntity = req[SUBSCRIBER_KEY];
+      const tenantId = req.tenant?.id || subscriber.tenantId;
       const { includeSubscriptions } = req.query;
 
       let subscriberDetails = mapSubscriber(apiId, subscriber);
