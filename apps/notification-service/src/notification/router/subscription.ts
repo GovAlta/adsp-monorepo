@@ -300,33 +300,6 @@ export function getSubscriber(repository: SubscriptionRepository): RequestHandle
   };
 }
 
-export function getSubscriberById(repository: SubscriptionRepository): RequestHandler {
-  return async (req, res, next) => {
-    try {
-      const { subscriberId } = req.params;
-
-      const result = await repository.getSubscriberById(subscriberId, 1000, null);
-      if (!result) {
-        throw new NotFoundError('Subscriber', subscriberId);
-      }
-
-      const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
-
-      res.send(
-        result.results.map((r) => {
-          const typeEntity = configuration.getNotificationType(r.typeId);
-          return {
-            ...r,
-            type: typeEntity ? mapType(typeEntity, true) : null,
-          };
-        })
-      );
-    } catch (err) {
-      next(err);
-    }
-  };
-}
-
 export function getSubscriberByUserId(repository: SubscriptionRepository): RequestHandler {
   return async (req, _res, next) => {
     try {
@@ -463,53 +436,18 @@ export function getSubscriberSubscriptions(apiId: AdspId, repository: Subscripti
 export function getSubscriberDetails(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
   return async (req, res, next) => {
     try {
-      const subscriberDetails = mapSubscriber(apiId, req[SUBSCRIBER_KEY]) as SubscriberEntity;
-      const { includeSubscriptions } = req.query;
-
-      if (includeSubscriptions && includeSubscriptions === 'true') {
-        let subscriberSubscriptions = [];
-        const result = await repository.getSubscriptions(null, 0, undefined, {
-          subscriberIdEquals: subscriberDetails.id,
-        });
-
-        const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
-        subscriberSubscriptions = result.results.map((r) => {
-          const { subscriber: _subscriber, ...subscription } = mapSubscription(apiId, r);
-          const typeEntity = configuration.getNotificationType(r.typeId);
-
-          return {
-            ...subscription,
-            type: typeEntity ? mapType(typeEntity, true) : null,
-          };
-        });
-
-        return res.send({
-          ...subscriberDetails,
-          subscriptions: subscriberSubscriptions,
-        });
-      }
-
-      res.send(subscriberDetails);
-    } catch (err) {
-      next(err);
-    }
-  };
-}
-
-export function getMySubscriberDetails(apiId: AdspId, repository: SubscriptionRepository): RequestHandler {
-  return async (req, res, next) => {
-    try {
       const tenantId = req.tenant?.id;
-      const subscriberDetails = mapSubscriber(apiId, req[SUBSCRIBER_KEY]) as SubscriberEntity;
+      const subscriber: SubscriberEntity = req[SUBSCRIBER_KEY];
       const { includeSubscriptions } = req.query;
 
+      let subscriberDetails = mapSubscriber(apiId, subscriber);
       if (includeSubscriptions === 'true') {
         let subscriberSubscriptions = [];
-        const result = await repository.getSubscriptions(tenantId, 0, undefined, {
-          subscriberIdEquals: subscriberDetails.id,
+        const { results } = await repository.getSubscriptions(tenantId, 0, undefined, {
+          subscriberIdEquals: subscriber.id,
         });
         const configuration = await req.getConfiguration<NotificationConfiguration, NotificationConfiguration>();
-        subscriberSubscriptions = result.results.map((r) => {
+        subscriberSubscriptions = results.map((r) => {
           const { subscriber: _subscriber, ...subscription } = mapSubscription(apiId, r);
           const typeEntity = configuration.getNotificationType(r.typeId);
 
@@ -519,10 +457,10 @@ export function getMySubscriberDetails(apiId: AdspId, repository: SubscriptionRe
           };
         });
 
-        return res.send({
+        subscriberDetails = {
           ...subscriberDetails,
           subscriptions: subscriberSubscriptions,
-        });
+        };
       }
 
       res.send(subscriberDetails);
@@ -578,14 +516,15 @@ export const createSubscriptionRouter = ({
   subscriptionRouter.get(
     '/subscribers/my-subscriber',
     getSubscriberByUserId(subscriptionRepository),
-    getMySubscriberDetails(apiId, subscriptionRepository)
+    getSubscriberDetails(apiId, subscriptionRepository)
   );
 
-  subscriptionRouter.get('/subscribers/:subscriber', getSubscriber(subscriptionRepository), (req, res) =>
-    res.send(mapSubscriber(apiId, req[SUBSCRIBER_KEY]))
+  subscriptionRouter.get(
+    '/subscribers/:subscriber',
+    getSubscriber(subscriptionRepository),
+    getSubscriberDetails(apiId, subscriptionRepository)
   );
 
-  subscriptionRouter.get('/subscribers/subscriberDetails/:subscriberId', getSubscriberById(subscriptionRepository));
   subscriptionRouter.patch('/subscribers/:subscriber', getSubscriber(subscriptionRepository), updateSubscriber(apiId));
   subscriptionRouter.post(
     '/subscribers/:subscriber',
