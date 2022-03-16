@@ -38,7 +38,7 @@ const Subscriptions = (): JSX.Element => {
 
   const contact = useSelector((state: RootState) => state.notification?.contactInfo);
 
-  const subscriberEmail = subscriber.channels?.find((chn: SubscriberChannel) => chn.channel === EMAIL)?.address;
+  const subscriberEmail = subscriber?.channels.find((chn: SubscriberChannel) => chn.channel === EMAIL)?.address;
   const [showUnSubscribeModal, setShowUnSubscribeModal] = useState(false);
   const [selectedUnsubscribeSub, setSelectedUnsubscribeSub] = useState<Subscription>();
   const subscriberId = useParams<{ subscriberId: string }>().subscriberId;
