@@ -6,7 +6,6 @@ import type { SubscriptionRepository } from '../repository';
 import type { TemplateService } from '../template';
 import { NotificationConfiguration } from '../configuration';
 import { notificationsGenerated } from '../events';
-import { NotificationTypeEntity } from '../model';
 
 interface ProcessEventJobProps {
   logger: Logger;

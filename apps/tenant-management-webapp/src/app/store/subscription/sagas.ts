@@ -187,25 +187,22 @@ function* getTypeSubscriptions(action: GetTypeSubscriptionsActions): SagaIterato
 
   if (configBaseUrl && token) {
     try {
+      const subscriberCriteria =
+        criteria.name || criteria.email
+          ? JSON.stringify({
+              name: criteria.name || undefined,
+              email: criteria.email || undefined,
+            })
+          : null;
       const response = yield call(
         axios.get,
-        `${configBaseUrl}/subscription/v1/types/${type}/subscriptions/?name=${criteria.name}&email=${
-          criteria.email
+        `${configBaseUrl}/subscription/v1/types/${type}/subscriptions?${
+          subscriberCriteria ? `subscriberCriteria=${subscriberCriteria}` : ''
         }&top=10${after ? `&after=${after}` : ''}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // TODO: The subscriber criteria are not implemented on the API... should be handled server side.
-      const subscriptions = response.data.results.filter((result: SubscriptionWrapper) => {
-        return (
-          (!criteria.name || result.subscriber?.addressAs?.toLowerCase().includes(criteria.name.toLowerCase())) &&
-          (!criteria.email ||
-            result.subscriber?.channels?.find(
-              ({ channel, address }) =>
-                channel === 'email' && address?.toLowerCase().includes(criteria.email.toLowerCase())
-            ))
-        );
-      });
+      const subscriptions = response.data.results;
 
       yield put(GetTypeSubscriptionSuccess(type, subscriptions, after, response.data.page.next));
     } catch (e) {

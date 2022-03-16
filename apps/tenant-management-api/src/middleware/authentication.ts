@@ -58,7 +58,7 @@ export const requireDirectoryAdmin: RequestHandler = async (req, res, next: () =
 };
 
 // Copied toKebabName from frontend. Might need to move to lib if necessary
-const toKebabName = (tenantName: string): string => {
+export const toKebabName = (tenantName: string): string => {
   return tenantName.toLowerCase().replace(/ /g, '-');
 };
 
