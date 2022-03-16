@@ -89,7 +89,7 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     }
 
     if (criteria?.subscriberIdEquals) {
-      query.subscriberId = criteria.subscriberIdEquals;
+      query.subscriberId = new Types.ObjectId(criteria.subscriberIdEquals);
     }
 
     const pipeline: Record<string, unknown>[] = [
