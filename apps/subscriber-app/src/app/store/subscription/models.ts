@@ -6,14 +6,6 @@ export interface Subscription {
   subscriber?: Subscriber;
 }
 
-export interface TenantId {
-  type: string;
-  namespace: string;
-  service: string;
-  api: string;
-  resource: string;
-}
-
 export interface SubscriptionCriteria {
   correlationId?: string;
   context?: {
@@ -33,7 +25,7 @@ export interface SubscriberChannel {
   verified?: boolean;
 }
 export interface Subscriber {
-  tenantId?: TenantId;
+  tenantId?: string;
   id: string;
   channels: SubscriberChannel[];
   addressAs: string;
