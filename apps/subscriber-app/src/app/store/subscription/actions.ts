@@ -33,7 +33,7 @@ export interface GetMySubscriberActionSuccess {
 export interface GetSubscriberActionSuccess {
   type: typeof GET_SUBSCRIBER_DETAILS_SUCCESS;
   payload: {
-    subscriptions: Subscription[];
+    subscriber: Subscriber & { subscriptions: Subscription[] };
   };
 }
 export interface UnsubscribeActionSuccess {
@@ -106,19 +106,15 @@ export const patchSubscriber = (channels: SubscriberChannel[], subscriberId: str
   },
 });
 
-export const GetSubscriberDetailsSuccess = (subscriptions: Subscription[]): GetSubscriberActionSuccess => ({
+export const GetSubscriberDetailsSuccess = (
+  subscriber: Subscriber & { subscriptions: Subscription[] }
+): GetSubscriberActionSuccess => ({
   type: GET_SUBSCRIBER_DETAILS_SUCCESS,
-  payload: {
-    subscriptions,
-  },
-});
-
-export const GetMySubscriberDetailsSuccess = (subscriber: Subscriber): GetMySubscriberActionSuccess => ({
-  type: GET_MY_SUBSCRIBER_DETAILS_SUCCESS,
   payload: {
     subscriber,
   },
 });
+
 export const getMySubscriberDetails = (): GetMySubscriberAction => ({
   type: GET_MY_SUBSCRIBER_DETAILS,
 });

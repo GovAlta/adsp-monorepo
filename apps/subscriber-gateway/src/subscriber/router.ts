@@ -114,7 +114,7 @@ export function getSubscriber(tokenProvider: TokenProvider, directory: ServiceDi
       const { data } = await axios.get(subscribersUrl.href, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      res.send(data.subscriptions);
+      res.send(data);
     } catch (err) {
       next(err);
     }

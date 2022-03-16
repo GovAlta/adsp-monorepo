@@ -29,7 +29,8 @@ import { SubscriberChannel, Subscription } from '@store/subscription/models';
 const Subscriptions = (): JSX.Element => {
   const dispatch = useDispatch();
   const EMAIL = 'email';
-  const { subscriptions, notifications, tenant } = useSelector((state: RootState) => ({
+  const { subscriber, subscriptions, notifications } = useSelector((state: RootState) => ({
+    subscriber: state.subscription.subscriber,
     subscriptions: state.subscription.subscriptions,
     notifications: state.notifications.notification,
     tenant: state.tenant,
@@ -37,9 +38,7 @@ const Subscriptions = (): JSX.Element => {
 
   const contact = useSelector((state: RootState) => state.notification?.contactInfo);
 
-  const subscriberEmail =
-    subscriptions?.length > 0 &&
-    subscriptions[0]?.subscriber.channels?.find((chn: SubscriberChannel) => chn.channel === EMAIL)?.address;
+  const subscriberEmail = subscriber.channels?.find((chn: SubscriberChannel) => chn.channel === EMAIL)?.address;
   const [showUnSubscribeModal, setShowUnSubscribeModal] = useState(false);
   const [selectedUnsubscribeSub, setSelectedUnsubscribeSub] = useState<Subscription>();
   const subscriberId = useParams<{ subscriberId: string }>().subscriberId;

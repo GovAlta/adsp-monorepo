@@ -1,8 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Band } from '@components/Band';
-import Header from '@components/AppHeader';
-import Footer from '@components/Footer';
 import Container from '@components/Container';
 import { Grid, GridItem } from '@components/Grid';
 import { Main } from '@components/Html';
