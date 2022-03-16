@@ -92,7 +92,7 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
                   placeholder="1 (780) 123-4567"
                   mask="1\ (999) 999-9999"
                   maskChar=" "
-                  data-testid="form-name"
+                  data-testid="form-phone-number"
                   aria-label="name"
                   onChange={(e) =>
                     setContactInformation({
@@ -108,7 +108,7 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
                   rows={7}
                   name="supportInstruction"
                   value={contactInformation?.supportInstructions || ''}
-                  data-testid="form-name"
+                  data-testid="form-support-instructions"
                   aria-label="name"
                   onChange={(e) =>
                     setContactInformation({ ...contactInformation, supportInstructions: e.target.value })
