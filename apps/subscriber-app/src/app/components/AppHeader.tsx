@@ -48,6 +48,7 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
                 </Link>
               </UserIconBox>
             )}
+            {!authenticated && tenant?.realm && <a href={`/subscriptions/${tenant?.realm}`}>Login</a>}
           </SidebarWrapper>
         </SidebarController>
       </div>
@@ -63,9 +64,7 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
             </UserIconBox>
           )}
 
-          {!authenticated && tenant?.realm && (
-            <a href={`/subscriptions/${tenant?.realm}`}>Login as current subscriber</a>
-          )}
+          {!authenticated && tenant?.realm && <a href={`/subscriptions/${tenant?.realm}`}>Login</a>}
         </div>
       ) : null}
     </Actions>
