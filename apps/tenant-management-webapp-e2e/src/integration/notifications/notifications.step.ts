@@ -344,12 +344,16 @@ When('the user clicks Confirm button on Delete subscription modal', function () 
 // LD
 
 When('the user clicks edit button for contact information', function () {
-  const rand_str = String(Math.floor(Math.random() * 9999 + 10));
+  notificationsObj.contactInformationEdit().click();
+  cy.wait(2000);
+  notificationsObj.editContactModal().should('exist');
+});
+Then('the user edited email, phone, and support instructions', function () {
+  const rand_str = String(Math.floor(Math.random() * 10000 + 1));
   const newEmail = 'abc' + rand_str + '@gov.ab.ca';
   const newPhone = '1 (780) 123-' + rand_str;
   const newInstructions = rand_str + 'autotest';
-  notificationsObj.contactInformationEdit().click();
-  //notificationsObj.editContactModalEmail().should('exist');
+
   notificationsObj.editContactModalEmail().clear().type(newEmail);
   notificationsObj.editContactModalPhone().clear().type(newPhone);
   notificationsObj.editContactModalInstructions().clear().type(newInstructions);
