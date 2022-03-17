@@ -24,8 +24,6 @@ class BotNotificationActivityHandler extends ActivityHandler {
   };
 
   private async storeConversationRecord(activity: Activity): Promise<void> {
-    this.logger.debug(`Channel data: ${JSON.stringify(activity.channelData || {}, null, 2)}`, this.LOG_CONTEXT);
-
     let tenantId: string;
     let conversationId: string;
     let botId: string;
@@ -135,7 +133,6 @@ class BotNotificationActivityHandler extends ActivityHandler {
     this.onMessage(async (context, next) => {
       await this.storeConversationRecord(context.activity);
       const reference = TurnContext.getConversationReference(context.activity);
-      this.logger.debug(`Conversation reference: ${JSON.stringify(reference || {}, null, 2)}`, this.LOG_CONTEXT);
 
       let address: string;
       if (reference.channelId === Channels.Slack) {
@@ -245,57 +242,57 @@ export class BotNotificationProvider implements NotificationProvider {
           conversationReference = TurnContext.getConversationReference(context.activity);
         }
       );
-    } else if (channelId === Channels.Slack) {
-      conversationReference = {
-        bot: {
-          id: `${conversation.botId}:${conversation.tenantId}`,
-          name: conversation.botName,
-        },
-        channelId,
-        serviceUrl: conversation.serviceUrl,
-        conversation: {
-          id: `${conversation.botId}:${tenantId}:${conversationId}`,
-          name: conversation.name,
-          isGroup: true,
-        },
-      } as ConversationReference;
     } else {
-      conversationReference = {
-        bot: {
-          id: conversation.botId,
-          name: conversation.botName,
-        },
-        channelId,
-        serviceUrl: conversation.serviceUrl,
-        conversation: {
-          id: conversationId,
-          conversationType: null,
-          name: conversation.name,
-          isGroup: true,
-        },
-      };
-    }
+      if (channelId === Channels.Slack) {
+        conversationReference = {
+          bot: {
+            id: `${conversation.botId}:${conversation.tenantId}`,
+            name: conversation.botName,
+          },
+          channelId,
+          serviceUrl: conversation.serviceUrl,
+          conversation: {
+            id: `${conversation.botId}:${tenantId}:${conversationId}`,
+            name: conversation.name,
+            isGroup: true,
+          },
+        } as ConversationReference;
+      } else {
+        conversationReference = {
+          bot: {
+            id: conversation.botId,
+            name: conversation.botName,
+          },
+          channelId,
+          serviceUrl: conversation.serviceUrl,
+          conversation: {
+            id: conversationId,
+            conversationType: null,
+            name: conversation.name,
+            isGroup: true,
+          },
+        };
+      }
 
-    await this.adapter.continueConversationAsync(this.appId, conversationReference, async (turnContext) => {
-      this.logger.debug(
-        `Sending activity to channel ${channelId}: ${
-          conversationReference.conversation.id
-        } with conversation reference: ${JSON.stringify(conversationReference, null, 2)}`,
-        this.LOG_CONTEXT
-      );
-      try {
-        await turnContext.sendActivity({ text: `${message.subject}\n\n${message.body}`, textFormat: 'markdown' });
-      } catch (err) {
-        this.logger.error(
-          `Failed sending activity to channel ${channelId}: ${conversationReference.conversation.id}. ${JSON.stringify(
-            err
-          )}`,
+      await this.adapter.continueConversationAsync(this.appId, conversationReference, async (turnContext) => {
+        this.logger.debug(
+          `Sending activity to channel ${channelId}: ${
+            conversationReference.conversation.id
+          } with conversation reference: ${JSON.stringify(conversationReference, null, 2)}`,
           this.LOG_CONTEXT
         );
+        try {
+          await turnContext.sendActivity({ text: `${message.subject}\n\n${message.body}`, textFormat: 'markdown' });
+        } catch (err) {
+          this.logger.error(
+            `Failed sending activity to channel ${channelId}: ${conversationReference.conversation.id}. ${err}`,
+            this.LOG_CONTEXT
+          );
 
-        throw err;
-      }
-    });
+          throw err;
+        }
+      });
+    }
   }
 }
 
