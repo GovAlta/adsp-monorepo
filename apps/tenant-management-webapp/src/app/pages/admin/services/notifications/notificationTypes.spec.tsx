@@ -73,6 +73,11 @@ describe('NotificationTypes Page', () => {
     tenant: {
       realmRoles: ['uma_auth'],
     },
+    config: {
+      serviceUrls: {
+        subscriberWebApp: 'https://subscription',
+      },
+    },
   });
 
   it('renders', () => {

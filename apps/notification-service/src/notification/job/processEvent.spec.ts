@@ -39,6 +39,11 @@ describe('createProcessEventJob', () => {
     getTenantByRealm: jest.fn(),
   };
 
+  const directoryMock = {
+    getServiceUrl: jest.fn(() => Promise.resolve(new URL('http://totally-real-service'))),
+    getResourceUrl: jest.fn(),
+  };
+
   const repositoryMock = {
     getSubscriptions: jest.fn(),
   };
@@ -60,6 +65,7 @@ describe('createProcessEventJob', () => {
       eventService: eventServiceMock,
       templateService: templateServiceMock,
       tenantService: tenantServiceMock,
+      directory: directoryMock,
       subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
       queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
     });
@@ -76,6 +82,7 @@ describe('createProcessEventJob', () => {
         eventService: eventServiceMock,
         templateService: templateServiceMock,
         tenantService: tenantServiceMock,
+        directory: directoryMock,
         subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
         queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
       });
@@ -156,6 +163,7 @@ describe('createProcessEventJob', () => {
         eventService: eventServiceMock,
         templateService: templateServiceMock,
         tenantService: tenantServiceMock,
+        directory: directoryMock,
         subscriptionRepository: repositoryDoubleMock as unknown as SubscriptionRepository,
         queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
       });
@@ -246,6 +254,7 @@ describe('createProcessEventJob', () => {
         eventService: eventServiceMock,
         templateService: templateServiceMock,
         tenantService: tenantServiceMock,
+        directory: directoryMock,
         subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
         queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
       });
@@ -276,6 +285,7 @@ describe('createProcessEventJob', () => {
         eventService: eventServiceMock,
         templateService: templateServiceMock,
         tenantService: tenantServiceMock,
+        directory: directoryMock,
         subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
         queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
       });

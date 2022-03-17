@@ -80,14 +80,22 @@ export class NotificationTypeEntity implements NotificationType {
   generateNotifications(
     logger: Logger,
     templateService: TemplateService,
-    tenant: Tenant,
+    subscriberAppUrl: URL,
     event: DomainEvent,
-    subscriptions: SubscriptionEntity[]
+    subscriptions: SubscriptionEntity[],
+    messageContext: Record<string, unknown>
   ): Notification[] {
     const notifications: Notification[] = [];
     subscriptions.forEach((subscription) => {
       if (subscription.shouldSend(event)) {
-        const notification = this.generateNotification(logger, templateService, tenant, event, subscription);
+        const notification = this.generateNotification(
+          logger,
+          templateService,
+          subscriberAppUrl,
+          event,
+          subscription,
+          messageContext
+        );
         if (notification) {
           notifications.push(notification);
         }
@@ -115,9 +123,10 @@ export class NotificationTypeEntity implements NotificationType {
   private generateNotification(
     logger: Logger,
     templateService: TemplateService,
-    tenant: Tenant,
+    subscriberAppUrl: URL,
     event: DomainEvent,
-    subscription: SubscriptionEntity
+    subscription: SubscriptionEntity,
+    messageContext: Record<string, unknown>
   ): Notification {
     const eventNotification = this.events.find((e) => e.namespace === event.namespace && e.name === event.name);
     const { address, channel } =
@@ -140,12 +149,6 @@ export class NotificationTypeEntity implements NotificationType {
         addressAs: subscription.subscriber.addressAs,
       };
 
-      const messageContext = {
-        event,
-        subscriber,
-        tenant,
-      };
-
       return {
         tenantId: event.tenantId.toString(),
         type: {
@@ -163,7 +166,12 @@ export class NotificationTypeEntity implements NotificationType {
         channel,
         message: templateService.generateMessage(
           this.getTemplate(channel, eventNotification.templates[channel], messageContext),
-          messageContext
+          {
+            ...messageContext,
+            event,
+            subscriber,
+            managementUrl: subscriberAppUrl ? new URL(`/${subscriber.id}`, subscriberAppUrl).href : null,
+          }
         ),
         subscriber,
       };
