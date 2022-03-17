@@ -12,6 +12,7 @@ import styled from 'styled-components';
 import { generateMessage } from '@lib/handlebarHelper';
 import { RootState } from '@store/index';
 import { dynamicGeneratePayload } from '@lib/dynamicPlaceHolder';
+import { subscriberAppUrlSelector } from './selectors';
 interface PreviewProps {
   onCancel?: () => void;
   open: boolean;
@@ -29,10 +30,12 @@ export const EmailPreview: FunctionComponent<PreviewProps> = ({ onCancel, open, 
       setBody(selectedEvent?.templates?.email?.body);
     }
   }, [selectedEvent, open]);
+  const tenant = useSelector((state: RootState) => ({ name: state.tenant?.name, realm: state.tenant?.realm }));
   const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
   const eventDef = eventDefinitions[`${selectedEvent?.namespace}:${selectedEvent?.name}`];
 
-  const htmlPayload = dynamicGeneratePayload(eventDef);
+  const subscriberAppUrl = useSelector(subscriberAppUrlSelector);
+  const htmlPayload = dynamicGeneratePayload(tenant, eventDef, subscriberAppUrl);
   const serviceName = `${selectedEvent?.namespace}:${selectedEvent?.name}`;
 
   return (

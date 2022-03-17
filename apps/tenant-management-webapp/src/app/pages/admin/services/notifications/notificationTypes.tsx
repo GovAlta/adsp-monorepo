@@ -39,6 +39,7 @@ import { PreviewTemplate } from './emailPreviewEditor/PreviewTemplate';
 import { dynamicGeneratePayload } from '@lib/dynamicPlaceHolder';
 import { convertToSuggestion } from '@lib/autoComplete';
 import { useDebounce } from '@lib/useDebounce';
+import { subscriberAppUrlSelector } from './selectors';
 
 const emptyNotificationType: NotificationItem = {
   name: '',
@@ -87,9 +88,12 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
+  const tenant = useSelector((state: RootState) => ({ name: state.tenant?.name, realm: state.tenant?.realm }));
   const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
   const eventDef = eventDefinitions[`${selectedEvent?.namespace}:${selectedEvent?.name}`];
-  const htmlPayload = dynamicGeneratePayload(eventDef);
+
+  const subscriberAppUrl = useSelector(subscriberAppUrlSelector);
+  const htmlPayload = dynamicGeneratePayload(tenant, eventDef, subscriberAppUrl);
   const serviceName = `${selectedEvent?.namespace}:${selectedEvent?.name}`;
 
   const getEventSuggestion = () => {
