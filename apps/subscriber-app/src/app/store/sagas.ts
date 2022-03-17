@@ -8,6 +8,7 @@ import {
   keycloakCheckSSOWithLogout,
   keycloakRefreshToken,
   tenantLogout,
+  watchTenantSagas,
 } from './tenant/sagas';
 import { watchNotificationSagas } from './notification/sagas';
 import { watchSubscriptionSagas } from './subscription/sagas';
@@ -37,5 +38,6 @@ export function* watchSagas() {
     // subscription
     watchSubscriptionSagas(),
     watchNotificationSagas(),
+    watchTenantSagas(),
   ]);
 }

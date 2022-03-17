@@ -11,7 +11,7 @@ export interface Notification {
 }
 
 export interface NotificationState {
-  notifications: Notification[];
+  notifications: (Notification & { id: string })[];
 }
 
 export const NOTIFICATION_INIT: NotificationState = {

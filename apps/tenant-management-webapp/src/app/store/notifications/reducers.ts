@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import {
   ActionTypes,
   BASIC_NOTIFICATION,
@@ -12,13 +13,15 @@ const MessageExpiryTime = 5000;
 export default function (state: NotificationState = NOTIFICATION_INIT, action: ActionTypes): NotificationState {
   switch (action.type) {
     case DISMISS_NOTIFICATION: {
-      const newState = { ...state };
-      const index = newState.notifications.findIndex((notification) => notification === action.payload);
+      const index = state.notifications.findIndex((notification) => notification === action.payload);
       if (index > -1) {
-        newState.notifications.splice(index, 1);
+        state.notifications.splice(index, 1);
       }
 
-      return newState;
+      return {
+        ...state,
+        notifications: [...state.notifications],
+      };
     }
     case BASIC_NOTIFICATION:
     case ERROR_NOTIFICATION:
@@ -27,6 +30,7 @@ export default function (state: NotificationState = NOTIFICATION_INIT, action: A
         notifications: [
           ...state.notifications,
           {
+            id: uuidv4(),
             type: action.payload.type,
             message: action.payload.message,
             expiry: Date.now() + MessageExpiryTime,

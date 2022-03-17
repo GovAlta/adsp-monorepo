@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from 'react';
-import DOMPurify from 'dompurify';
+import { sanitizeHtml } from './utils';
 
 interface PreviewPortalProps {
   title: string;
@@ -12,7 +12,7 @@ export const PreviewPortal: FunctionComponent<PreviewPortalProps> = ({ className
     <iframe
       className={className}
       title={title}
-      srcDoc={DOMPurify.sanitize(html, { WHOLE_DOCUMENT: true, ADD_TAGS: ['style'] })}
+      srcDoc={sanitizeHtml(html, { WHOLE_DOCUMENT: true, ADD_TAGS: ['style'] })}
     />
   );
 };

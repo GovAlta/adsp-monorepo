@@ -16,11 +16,12 @@ import {
   GoAModalTitle,
 } from '@abgov/react-components/experimental';
 
+import SubscriptionsList from '@components/SubscriptionsList';
+
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { getMySubscriberDetails, patchSubscriber, unsubscribe } from '@store/subscription/actions';
 import { RootState } from '@store/index';
-import SubscriptionsList from './SubscriptionsList';
 import { SubscriberChannel, Subscription } from '@store/subscription/models';
 import {
   NoSubscriberCallout,
@@ -36,8 +37,9 @@ import {
 const Subscriptions = (): JSX.Element => {
   const dispatch = useDispatch();
   const EMAIL = 'email';
-  const { subscriber, hasSubscriberId } = useSelector((state: RootState) => ({
+  const { subscriber, subscriptions, hasSubscriberId } = useSelector((state: RootState) => ({
     subscriber: state.subscription.subscriber,
+    subscriptions: state.subscription.subscriptions,
     hasSubscriberId: state.subscription.hasSubscriberId,
   }));
   const contact = useSelector((state: RootState) => state.notification?.contactInfo);
@@ -61,12 +63,12 @@ const Subscriptions = (): JSX.Element => {
   }, []);
 
   useEffect(() => {
-    dispatch(FetchContactInfoService(realm));
+    dispatch(FetchContactInfoService({ realm }));
   }, []);
 
   const unSubscribe = (typeId: string) => {
     setShowUnSubscribeModal(true);
-    setSelectedUnsubscribeSub(subscriber?.subscriptions.filter((item) => item.typeId === typeId)[0]);
+    setSelectedUnsubscribeSub(subscriptions.filter((item) => item.typeId === typeId)[0]);
   };
   const resetSelectedUnsubscribe = () => {
     setShowUnSubscribeModal(false);
@@ -168,12 +170,13 @@ const Subscriptions = (): JSX.Element => {
           <h1 data-testid="service-name">Subscription management</h1>
           <DescriptionWrapper>
             <p data-testid="service-description">
-              Use this page to manage notifications from the services of Government of Alberta. Please note, unsubscribing
-              from some notifications might require additional verification from the government authorities.
+              Use this page to manage notifications from the services of Government of Alberta. Please note,
+              unsubscribing from some notifications might require additional verification from the government
+              authorities.
             </p>
           </DescriptionWrapper>
           {showUnSubscribeModal ? unSubscribeModal() : ''}
-          {subscriber?.subscriptions ? (
+          {subscriber ? (
             <>
               <ContactInformationWrapper>
                 <GoACard title="Contact information" data-testid="contact-information-card">
@@ -216,39 +219,37 @@ const Subscriptions = (): JSX.Element => {
                 </GoACard>
               </ContactInformationWrapper>
               <GoAModal></GoAModal>
-              <Container hs={0} vs={0}>
-                <SubscriptionListContainer>
-                  {subscriber.subscriptions?.length > 0 ? (
-                    <DataTable data-testid="subscriptions-table">
-                      <TableHeaders>
-                        <tr>
-                          <th id="subscriptions">Subscriptions</th>
-                          <th id="available-channels">Available channels</th>
-                          <th id="action">Action</th>
-                        </tr>
-                      </TableHeaders>
-                      <tbody>
-                        <SubscriptionsList onUnsubscribe={unSubscribe} subscriptions={subscriber.subscriptions} />
-                      </tbody>
-                    </DataTable>
-                  ) : (
-                    <GoACallout title="You have no subscriptions" type="important"></GoACallout>
-                  )}
-                </SubscriptionListContainer>
-                <CalloutWrapper id="contactSupport">
-                  <GoACallout title="Need help? Contact your service admin" type="information">
-                    <div>{contact?.supportInstructions}</div>
-                    <div>
-                      Email:{' '}
-                      <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
-                        {contact?.contactEmail}
-                      </a>
-                    </div>
-                    <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>
-                    <div data-testid="service-notice-date-range"></div>
-                  </GoACallout>
-                </CalloutWrapper>
-              </Container>
+              <SubscriptionListContainer>
+                {subscriptions?.length > 0 ? (
+                  <DataTable data-testid="subscriptions-table">
+                    <TableHeaders>
+                      <tr>
+                        <th id="subscriptions">Subscriptions</th>
+                        <th id="available-channels">Available channels</th>
+                        <th id="action">Action</th>
+                      </tr>
+                    </TableHeaders>
+                    <tbody>
+                      <SubscriptionsList onUnsubscribe={unSubscribe} subscriptions={subscriptions} />
+                    </tbody>
+                  </DataTable>
+                ) : (
+                  <GoACallout title="You have no subscriptions" type="important"></GoACallout>
+                )}
+              </SubscriptionListContainer>
+              <CalloutWrapper id="contactSupport">
+                <GoACallout title="Need help? Contact your service admin" type="information">
+                  <div>{contact?.supportInstructions}</div>
+                  <div>
+                    Email:{' '}
+                    <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
+                      {contact?.contactEmail}
+                    </a>
+                  </div>
+                  <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>
+                  <div data-testid="service-notice-date-range"></div>
+                </GoACallout>
+              </CalloutWrapper>
             </>
           ) : hasSubscriberId === false ? (
             <NoSubscriberCallout>

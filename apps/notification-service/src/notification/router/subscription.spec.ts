@@ -17,8 +17,9 @@ import {
   getTypeSubscription,
   subscriberOperations,
   getSubscriberSubscriptions,
+  getSubscriberDetails,
 } from './subscription';
-import { NotificationType, ServiceUserRoles } from '../types';
+import { NotificationType, ServiceUserRoles, Subscription } from '../types';
 import { assertHasTenant, createSubscriber, deleteSubscriber, updateSubscriber } from '.';
 
 describe('subscription router', () => {
@@ -40,6 +41,7 @@ describe('subscription router', () => {
     deleteSubscriber: jest.fn(),
     saveSubscription: jest.fn(),
     deleteSubscriptions: jest.fn(),
+    getSubscriberById: jest.fn(),
     saveSubscriber: jest.fn((entity) => Promise.resolve(entity)),
   };
 
@@ -67,6 +69,7 @@ describe('subscription router', () => {
     repositoryMock.saveSubscription.mockReset();
     repositoryMock.deleteSubscriptions.mockReset();
     repositoryMock.deleteSubscriber.mockReset();
+    repositoryMock.getSubscriberById.mockReset();
     verifyServiceMock.sendCode.mockReset();
     verifyServiceMock.verifyCode.mockReset();
   });
@@ -882,6 +885,104 @@ describe('subscription router', () => {
       const handler = getSubscriber(repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+  });
+
+  describe('getSubscriberDetails', () => {
+    it('can create handler', () => {
+      const handler = getSubscriberDetails(apiId, repositoryMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can get subscriber subscriptions', async () => {
+      const subscriber = new SubscriberEntity(repositoryMock, {
+        id: 'subscriber',
+        tenantId,
+        addressAs: 'tester',
+        channels: [],
+      });
+
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [],
+        },
+        query: {
+          includeSubscriptions: 'true',
+        },
+        subscriber,
+        getConfiguration: jest.fn(),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce(
+        new NotificationConfiguration({ test: notificationType }, {}, tenantId)
+      );
+
+      const subscription: Subscription = {
+        tenantId,
+        subscriberId: subscriber.id,
+        typeId: 'test',
+        criteria: {},
+      };
+      repositoryMock.getSubscriptions.mockResolvedValueOnce({
+        results: [new SubscriptionEntity(repositoryMock, subscription, subscriber)],
+      });
+
+      const handler = getSubscriberDetails(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'subscriber',
+          addressAs: 'tester',
+          subscriptions: expect.arrayContaining([
+            expect.objectContaining({ subscriberId: subscriber.id, typeId: 'test' }),
+          ]),
+        })
+      );
+    });
+
+    it('can get subscriber without subscriptions', async () => {
+      const subscriber = new SubscriberEntity(repositoryMock, {
+        id: 'subscriber',
+        tenantId,
+        addressAs: 'tester',
+        channels: [],
+      });
+
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [],
+        },
+        query: {},
+        subscriber,
+        getConfiguration: jest.fn(),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = getSubscriberDetails(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'subscriber',
+          addressAs: 'tester',
+        })
+      );
     });
   });
 

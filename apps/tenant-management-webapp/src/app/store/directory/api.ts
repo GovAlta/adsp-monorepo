@@ -1,10 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { Directory, Service } from './models';
 import { TenantApi as TenantApiConfig } from '@store/config/models';
-
-const toKebabName = (tenantName: string): string => {
-  return tenantName.toLowerCase().replace(/ /g, '-');
-};
+import { toKebabName } from '@lib/kebabName';
 
 export class DirectoryApi {
   private http: AxiosInstance;
@@ -24,20 +21,20 @@ export class DirectoryApi {
   }
 
   async fetchDirectory(): Promise<Directory> {
-    const url = `${this.config.host}${this.config.endpoints.directory}`;
+    const url = `${this.config.host}/api/directory/v2/namespaces/platform`;
     const res = await this.http.get(url);
     return res?.data;
   }
 
   async fetchDirectoryTenant(tenantName: string): Promise<Directory> {
-    const url = `${this.config.host}${this.config.endpoints.directory}`;
+    const url = `${this.config.host}/api/directory/v2/namespaces/platform`;
     const tenantUrl = url.substr(0, url.lastIndexOf('/') + 1) + toKebabName(tenantName);
     const res = await this.http.get(tenantUrl);
     return res?.data;
   }
 
   async createEntry(service: Service): Promise<boolean> {
-    const url = `${this.config.host}${this.config.endpoints.directory}`;
+    const url = `${this.config.host}/api/directory/v2/namespaces/platform`;
     const tenantUrl = url.substr(0, url.lastIndexOf('/') + 1) + toKebabName(service.name);
     const payload = {};
     payload['service'] = service.namespace;
@@ -49,7 +46,7 @@ export class DirectoryApi {
     return res?.data === 'Created';
   }
   async updateEntry(service: Service): Promise<boolean> {
-    const url = `${this.config.host}${this.config.endpoints.directory}`;
+    const url = `${this.config.host}/api/directory/v2/namespaces/platform`;
     const tenantUrl = url.substr(0, url.lastIndexOf('/') + 1) + toKebabName(service.name);
     const payload = {};
     payload['service'] = service.namespace;
@@ -62,10 +59,24 @@ export class DirectoryApi {
   }
 
   async deleteEntry(service: Service): Promise<boolean> {
-    const url = `${this.config.host}${this.config.endpoints.directory}`;
+    const url = `${this.config.host}/api/directory/v2/namespaces/platform`;
     const tenantUrl =
-      url.substr(0, url.lastIndexOf('/') + 1) + toKebabName(service.name) + '/service/' + service.namespace;
+      url.substr(0, url.lastIndexOf('/') + 1) + toKebabName(service.name) + '/services/' + service.namespace;
     const res = await this.http.delete(tenantUrl);
     return res?.data === 'OK';
+  }
+
+  async fetchEntryDetail(service: Service): Promise<boolean> {
+    const url = `${this.config.host}/api/directory/v2/namespaces/platform`;
+    const tenantUrl =
+      url.substr(0, url.lastIndexOf('/') + 1) + toKebabName(service.name) + '/services/' + service.namespace;
+    const res = await this.http.get(tenantUrl);
+    return res?.data;
+  }
+
+  async createDirectory(directory: Directory): Promise<boolean> {
+    const url = `${this.config.host}/api/directory/v2/`;
+    const res = await this.http.post(url, directory);
+    return res?.data;
   }
 }

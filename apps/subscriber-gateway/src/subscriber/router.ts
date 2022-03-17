@@ -17,6 +17,7 @@ export function verifyCaptcha(logger: Logger, RECAPTCHA_SECRET: string, SCORE_TH
     } else {
       try {
         const { token } = req.body;
+
         const { data } = await axios.post<SiteVerifyResponse>(
           `https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET}&response=${token}`
         );
@@ -98,6 +99,28 @@ export function subscribeStatus(
   };
 }
 
+export function getSubscriber(tokenProvider: TokenProvider, directory: ServiceDirectory): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const { subscriberId } = req.params;
+
+      const notificationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:notification-service`);
+      const token = await tokenProvider.getAccessToken();
+
+      const subscribersUrl = new URL(
+        `/subscription/v1/subscribers/${subscriberId}?includeSubscriptions=true`,
+        notificationServiceUrl
+      );
+      const { data } = await axios.get(subscribersUrl.href, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      res.send(data);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 interface RouterProps {
   logger: Logger;
   directory: ServiceDirectory;
@@ -120,6 +143,8 @@ export const createSubscriberRouter = ({
     verifyCaptcha(logger, RECAPTCHA_SECRET),
     subscribeStatus(tenantService, tokenProvider, directory, logger)
   );
+
+  router.get('/get-subscriber/:subscriberId', getSubscriber(tokenProvider, directory));
 
   return router;
 };
