@@ -6,10 +6,18 @@ import { Logger } from 'winston';
 import validationMiddleware from '../../middleware/requestValidator';
 import { ServiceV2 } from '../../directory/validator/directory/directoryValidator';
 import { InvalidValueError } from '@core-services/core-common';
+import { TenantService } from '@abgov/adsp-service-sdk';
+import * as passport from 'passport';
+import { validateNamespaceEndpointsPermission, toKebabName } from '../../middleware/authentication';
 
+const passportMiddleware = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
+
+import axios from 'axios';
+import { Service } from '../../directory/types/directory';
 interface DirectoryRouterProps {
   logger?: Logger;
   directoryRepository: DirectoryRepository;
+  tenantService: TenantService;
 }
 
 export interface URNComponent {
@@ -35,7 +43,7 @@ const getUrn = (component: URNComponent) => {
 
 const directoryCache = new NodeCache({ stdTTL: 300 });
 
-export const createDirectoryRouter = ({ logger, directoryRepository }: DirectoryRouterProps): Router => {
+export const createDirectoryRouter = ({ logger, directoryRepository, tenantService }: DirectoryRouterProps): Router => {
   const directoryRouter = Router();
   /**
    * Get all of directories
@@ -76,23 +84,38 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
     }
   });
 
+  /*
+   * Create new namespace.
+   */
+  directoryRouter.post('/namespaces', passportMiddleware, async (req: Request, res: Response, _next) => {
+    try {
+      const tenant = await tenantService.getTenant(req.user?.tenantId);
+      const namespace = toKebabName(tenant.name);
+      const result = await directoryRepository.getDirectories(namespace);
+      if (result) {
+        throw new InvalidValueError('Create new namespace', `namespace ${namespace} exists`);
+      } else {
+        const directory = { name: namespace, services: [] };
+        await directoryRepository.update(directory);
+        return res.sendStatus(HttpStatusCodes.CREATED);
+      }
+    } catch (err) {
+      logger.error(`Failed creating new directory namespace`);
+      _next(err);
+    }
+  });
+
   /**
    * Add one services to namespace
    */
   directoryRouter.post(
     '/namespaces/:namespace',
-    [validationMiddleware(ServiceV2)],
+    [passportMiddleware, validateNamespaceEndpointsPermission(tenantService), validationMiddleware(ServiceV2)],
     async (req: Request, res: Response, _next) => {
       const { namespace } = req.params;
       try {
         const { service, api, url } = req.body;
-        let result;
-        try {
-          result = await directoryRepository.getDirectories(namespace);
-        } catch (err) {
-          _next(err);
-        }
-
+        const result = await directoryRepository.getDirectories(namespace);
         const mappingService = {
           service: service,
           api: api,
@@ -120,7 +143,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
    */
   directoryRouter.put(
     '/namespaces/:namespace',
-    [validationMiddleware(ServiceV2)],
+    [passportMiddleware, validateNamespaceEndpointsPermission(tenantService), validationMiddleware(ServiceV2)],
     async (req: Request, res: Response, _next) => {
       const { namespace } = req.params;
       try {
@@ -151,29 +174,65 @@ export const createDirectoryRouter = ({ logger, directoryRepository }: Directory
   /**
    * Delete one service by namespace
    */
-  directoryRouter.delete('/namespaces/:namespace/service/:service', async (req: Request, res: Response, _next) => {
+  directoryRouter.delete(
+    '/namespaces/:namespace/service/:service',
+    [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
+    async (req: Request, res: Response, _next) => {
+      const { namespace, service } = req.params;
+      try {
+        const directoryEntity = await directoryRepository.getDirectories(namespace);
+        if (!directoryEntity) {
+          throw new InvalidValueError('Delete namespace service', `Cannot found namespace: ${namespace}`);
+        }
+        const services = directoryEntity['services'];
+        const isExist = services.find((x) => x.service === service);
+        if (!isExist) {
+          throw new InvalidValueError('Delete namespace service', `${service} could not find`);
+        }
+        services.splice(
+          services.findIndex((item) => item.service === service),
+          1
+        );
+        const directory = { name: namespace, services: services };
+        await directoryRepository.update(directory);
+
+        directoryCache.del(`directory-${namespace}`);
+        return res.sendStatus(HttpStatusCodes.OK);
+      } catch (err) {
+        logger.error(`Failed deleting directory for namespace: ${namespace} with error ${err.message}`);
+        _next(err);
+      }
+    }
+  );
+
+  /**
+   * Get all of services in one directory
+   */
+  directoryRouter.get('/namespaces/:namespace/services/:service', async (req: Request, res: Response, _next) => {
     const { namespace, service } = req.params;
     try {
       const directoryEntity = await directoryRepository.getDirectories(namespace);
       if (!directoryEntity) {
-        throw new InvalidValueError('Delete namespace service', `Cannot found namespace: ${namespace}`);
+        return res.sendStatus(HttpStatusCodes.BAD_REQUEST).json({ error: `${namespace} could not find` });
       }
       const services = directoryEntity['services'];
-      const isExist = services.find((x) => x.service === service);
-      if (!isExist) {
-        throw new InvalidValueError('Delete namespace service', `${service} could not find`);
-      }
-      services.splice(
-        services.findIndex((item) => item.service === service),
-        1
-      );
-      const directory = { name: namespace, services: services };
-      await directoryRepository.update(directory);
+      const filteredService = services.filter((x) => x.service.indexOf(service) > -1);
 
-      directoryCache.del(`directory-${namespace}`);
-      return res.sendStatus(HttpStatusCodes.OK);
+      // will return service information and HAL link information
+
+      if (filteredService) {
+        const base: Service = filteredService[0];
+
+        const { data } = await axios.get(base.host);
+        if (data._links) {
+          base._links = data._links;
+        }
+        return res.status(HttpStatusCodes.OK).json(base);
+      } else {
+        return res.sendStatus(HttpStatusCodes.BAD_REQUEST).json({ error: `${service} could not find` });
+      }
     } catch (err) {
-      logger.error(`Failed deleting directory for namespace: ${namespace} with error ${err.message}`);
+      logger.error(`Failed get service for namespace: ${namespace} with error ${err.message}`);
       _next(err);
     }
   });

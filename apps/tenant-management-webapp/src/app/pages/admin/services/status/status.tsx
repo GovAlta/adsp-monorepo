@@ -38,7 +38,6 @@ import { Tab, Tabs } from '@components/Tabs';
 import { getNotices } from '@store/notice/actions';
 import { NoticeList } from './noticeList';
 import SupportLinks from '@components/SupportLinks';
-import { EditIconButton } from '@components/icons/EditIcon';
 import { renderNoItem } from '@components/NoItem';
 import { StatusMetrics } from './metrics';
 import { DeleteModal } from '@components/DeleteModal';
@@ -337,7 +336,7 @@ function Application(app: ServiceStatusApplication) {
         </div>
 
         <GoAContextMenu>
-          <EditIconButton iconSize="tiny" onClick={() => setShowEditModal(true)} data-testid="status-edit-button" />
+          <GoAContextMenuIcon type="create" onClick={() => setShowEditModal(true)} data-testid="status-edit-button" />
           <GoAContextMenuIcon type="trash" onClick={() => setShowDeleteConfirmation(true)} />
         </GoAContextMenu>
       </AppHeader>

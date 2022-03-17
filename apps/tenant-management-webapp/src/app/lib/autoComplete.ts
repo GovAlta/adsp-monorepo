@@ -145,6 +145,10 @@ export const convertToSuggestion = (event: EventDefinition) => {
       ],
     },
     {
+      label: 'managementUrl',
+      insertText: 'managementUrl',
+    },
+    {
       label: 'subscriber',
       insertText: 'subscriber',
       children: [
@@ -159,6 +163,20 @@ export const convertToSuggestion = (event: EventDefinition) => {
         {
           label: 'userId ',
           insertText: 'userId ',
+        },
+      ],
+    },
+    {
+      label: 'tenant',
+      insertText: 'tenant',
+      children: [
+        {
+          label: 'name',
+          insertText: 'name',
+        },
+        {
+          label: 'realm',
+          insertText: 'realm',
         },
       ],
     },

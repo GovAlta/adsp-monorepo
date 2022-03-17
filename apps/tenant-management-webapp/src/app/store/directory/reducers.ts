@@ -1,6 +1,12 @@
 import { ActionType } from './actions';
 import { DIRECTORY_INIT, Directory } from './models';
-import { FETCH_DIRECTORY_SUCCESS, CREATE_ENTRY_SUCCESS, UPDATE_ENTRY_SUCCESS, DELETE_ENTRY_SUCCESS } from './actions';
+import {
+  FETCH_DIRECTORY_SUCCESS,
+  CREATE_ENTRY_SUCCESS,
+  UPDATE_ENTRY_SUCCESS,
+  DELETE_ENTRY_SUCCESS,
+  FETCH_ENTRY_DETAIL_SUCCESS,
+} from './actions';
 
 export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
   switch (action.type) {
@@ -35,6 +41,14 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
       }
 
       return { ...state, directory: directoryDelList };
+    }
+    case FETCH_ENTRY_DETAIL_SUCCESS: {
+      const directoryUpdateList = state.directory;
+      const isExist = directoryUpdateList.find((x) => x.namespace === action.payload.namespace);
+      if (isExist) {
+        isExist._links = action.payload._links;
+      }
+      return { ...state, directory: directoryUpdateList };
     }
     default:
       return state;

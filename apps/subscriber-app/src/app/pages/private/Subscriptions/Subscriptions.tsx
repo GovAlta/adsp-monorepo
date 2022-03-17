@@ -37,8 +37,9 @@ import {
 const Subscriptions = (): JSX.Element => {
   const dispatch = useDispatch();
   const EMAIL = 'email';
-  const { subscriber, hasSubscriberId } = useSelector((state: RootState) => ({
+  const { subscriber, subscriptions, hasSubscriberId } = useSelector((state: RootState) => ({
     subscriber: state.subscription.subscriber,
+    subscriptions: state.subscription.subscriptions,
     hasSubscriberId: state.subscription.hasSubscriberId,
   }));
   const contact = useSelector((state: RootState) => state.notification?.contactInfo);
@@ -67,7 +68,7 @@ const Subscriptions = (): JSX.Element => {
 
   const unSubscribe = (typeId: string) => {
     setShowUnSubscribeModal(true);
-    setSelectedUnsubscribeSub(subscriber?.subscriptions.filter((item) => item.typeId === typeId)[0]);
+    setSelectedUnsubscribeSub(subscriptions.filter((item) => item.typeId === typeId)[0]);
   };
   const resetSelectedUnsubscribe = () => {
     setShowUnSubscribeModal(false);
@@ -175,7 +176,7 @@ const Subscriptions = (): JSX.Element => {
             </p>
           </DescriptionWrapper>
           {showUnSubscribeModal ? unSubscribeModal() : ''}
-          {subscriber?.subscriptions ? (
+          {subscriber ? (
             <>
               <ContactInformationWrapper>
                 <GoACard title="Contact information" data-testid="contact-information-card">
@@ -219,7 +220,7 @@ const Subscriptions = (): JSX.Element => {
               </ContactInformationWrapper>
               <GoAModal></GoAModal>
               <SubscriptionListContainer>
-                {subscriber.subscriptions?.length > 0 ? (
+                {subscriptions?.length > 0 ? (
                   <DataTable data-testid="subscriptions-table">
                     <TableHeaders>
                       <tr>
@@ -229,7 +230,7 @@ const Subscriptions = (): JSX.Element => {
                       </tr>
                     </TableHeaders>
                     <tbody>
-                      <SubscriptionsList onUnsubscribe={unSubscribe} subscriptions={subscriber.subscriptions} />
+                      <SubscriptionsList onUnsubscribe={unSubscribe} subscriptions={subscriptions} />
                     </tbody>
                   </DataTable>
                 ) : (

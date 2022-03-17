@@ -1,10 +1,8 @@
 import React, { ReactNode } from 'react';
-
-import Container from '@components/Container';
-import { GoAHeader } from '@abgov/react-components';
 import styled from 'styled-components';
 import GoaLogo from '../assets/goa-logo.svg';
 import Footer from '@components/Footer';
+import Header from '@components/AppHeader';
 
 interface publicAppProps {
   children: ReactNode;
@@ -12,11 +10,8 @@ interface publicAppProps {
 export function PublicApp({ children }: publicAppProps): JSX.Element {
   return (
     <PublicCss>
-      <GoAHeader serviceHome="/" serviceLevel="beta" serviceName="" />
-      <hr />
-      <Container hs={4} vs={2}>
-        {children}
-      </Container>
+      <Header serviceName="Alberta Digital Service Platform - Subscription management" />
+      {children}
       <Footer logoSrc={GoaLogo} />
     </PublicCss>
   );
@@ -25,10 +20,6 @@ export function PublicApp({ children }: publicAppProps): JSX.Element {
 export default PublicApp;
 
 const PublicCss = styled.div`
-  h1 {
-    font-weight: var(--fw-bold);
-  }
-
   hr {
     margin: 0;
   }
