@@ -7,7 +7,7 @@ import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { EventItem } from '@store/notification/models';
 import { getTemplateBody } from '@core-services/notification-shared';
 
-import DOMPurify from 'dompurify';
+import { sanitizeHtml } from './utils';
 import styled from 'styled-components';
 import { generateMessage } from '@lib/handlebarHelper';
 import { RootState } from '@store/index';
@@ -30,7 +30,7 @@ export const EmailPreview: FunctionComponent<PreviewProps> = ({ onCancel, open, 
       setBody(selectedEvent?.templates?.email?.body);
     }
   }, [selectedEvent, open]);
-  const tenant = useSelector((state: RootState) => ({ name: state.tenant?.name, realm: state.tenant?.realm }));
+  const tenant = useSelector((state: RootState) => ({ name: state.tenant?.name, realm: state.session.realm }));
   const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
   const eventDef = eventDefinitions[`${selectedEvent?.namespace}:${selectedEvent?.name}`];
 
@@ -48,7 +48,7 @@ export const EmailPreview: FunctionComponent<PreviewProps> = ({ onCancel, open, 
               <h3>
                 <div
                   dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(generateMessage(subject, htmlPayload)),
+                    __html: sanitizeHtml(generateMessage(subject, htmlPayload)),
                   }}
                 ></div>
               </h3>
@@ -58,7 +58,7 @@ export const EmailPreview: FunctionComponent<PreviewProps> = ({ onCancel, open, 
               <div>
                 <p
                   dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(generateMessage(getTemplateBody(body), htmlPayload)),
+                    __html: sanitizeHtml(generateMessage(getTemplateBody(body), htmlPayload)),
                   }}
                 />
               </div>

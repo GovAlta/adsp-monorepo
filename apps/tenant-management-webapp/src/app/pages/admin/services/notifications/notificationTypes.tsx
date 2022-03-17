@@ -88,7 +88,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
-  const tenant = useSelector((state: RootState) => ({ name: state.tenant?.name, realm: state.tenant?.realm }));
+  const tenant = useSelector((state: RootState) => ({ name: state.tenant?.name, realm: state.session.realm }));
   const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
   const eventDef = eventDefinitions[`${selectedEvent?.namespace}:${selectedEvent?.name}`];
 

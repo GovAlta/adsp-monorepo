@@ -8,7 +8,6 @@ export default (state = TENANT_INIT, action: ActionType): Tenant => {
         ...state,
         id: action.payload.id,
         name: action.payload.name,
-        realm: action.payload.realm,
         adminEmail: action.payload.adminEmail,
       };
 
