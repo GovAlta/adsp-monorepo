@@ -10,6 +10,8 @@ import {
   CreateEntryAction,
   UpdateEntryAction,
   DeleteEntryAction,
+  FetchEntryDetailAction,
+  fetchEntryDetailSuccess,
 } from './actions';
 import { DirectoryApi } from './api';
 import { SagaIterator } from '@redux-saga/core';
@@ -103,5 +105,27 @@ export function* deleteEntryDirectory(action: DeleteEntryAction): SagaIterator {
     }
   } catch (err) {
     yield put(ErrorNotification({ message: 'failed to delete directory' }));
+  }
+}
+
+export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator {
+  const state: RootState = yield select();
+  const token = state.session.credentials.token;
+  const api = new DirectoryApi(state.config.tenantApi, token);
+
+  try {
+    const result = yield call([api, api.fetchEntryDetail], action.data);
+    if (result) {
+      const service = action.data;
+      if (result._links) {
+        service._links = result._links;
+      } else {
+        service._links = null;
+      }
+
+      yield put(fetchEntryDetailSuccess(service));
+    }
+  } catch (err) {
+    yield put(ErrorNotification({ message: 'failed to get entry detail' }));
   }
 }

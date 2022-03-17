@@ -99,11 +99,7 @@ export function subscribeStatus(
   };
 }
 
-export function getSubscriber(
-  tenantService: TenantService,
-  tokenProvider: TokenProvider,
-  directory: ServiceDirectory
-): RequestHandler {
+export function getSubscriber(tokenProvider: TokenProvider, directory: ServiceDirectory): RequestHandler {
   return async (req, res, next) => {
     try {
       const { subscriberId } = req.params;
@@ -112,7 +108,7 @@ export function getSubscriber(
       const token = await tokenProvider.getAccessToken();
 
       const subscribersUrl = new URL(
-        `/subscription/v1/subscribers/subscriberDetails/${subscriberId}?includeSubscriptions=true`,
+        `/subscription/v1/subscribers/${subscriberId}?includeSubscriptions=true`,
         notificationServiceUrl
       );
       const { data } = await axios.get(subscribersUrl.href, {
@@ -148,7 +144,7 @@ export const createSubscriberRouter = ({
     subscribeStatus(tenantService, tokenProvider, directory, logger)
   );
 
-  router.get('/get-subscriber/:subscriberId', getSubscriber(tenantService, tokenProvider, directory));
+  router.get('/get-subscriber/:subscriberId', getSubscriber(tokenProvider, directory));
 
   return router;
 };

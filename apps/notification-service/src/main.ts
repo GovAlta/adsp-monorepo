@@ -149,6 +149,7 @@ async function initializeApp() {
     logger,
     tokenProvider,
     configurationService,
+    directory,
     eventService,
     templateService,
     tenantService,

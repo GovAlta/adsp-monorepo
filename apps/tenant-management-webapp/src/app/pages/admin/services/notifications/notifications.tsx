@@ -10,14 +10,13 @@ import { NotificationTypes } from './notificationTypes';
 import { Subscriptions } from './subscriptions';
 import { Subscribers } from './subscribers';
 import { GoAButton } from '@abgov/react-components';
+import { subscriberAppUrlSelector } from './selectors';
 
 export const Notifications: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
-  const session = useSelector((state: RootState) => state.session);
-  const subscriberWebApp = useSelector((state: RootState) => state.config.serviceUrls.subscriberWebApp);
 
-  const loginUrl = `${subscriberWebApp}/${session.realm}/login`;
+  const loginUrl = useSelector(subscriberAppUrlSelector);
 
   const [activateEditState, setActivateEditState] = useState<boolean>(false);
   const [activeIndex, setActiveIndex] = useState<number>(0);

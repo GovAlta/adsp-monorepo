@@ -1,6 +1,6 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { decodeAfter, encodeNext, Results } from '@core-services/core-common';
-import { model, Types } from 'mongoose';
+import { Document, model, Model, Types } from 'mongoose';
 import {
   NotificationTypeEntity,
   SubscriberCriteria,
@@ -13,42 +13,20 @@ import { subscriberSchema, subscriptionSchema } from './schema';
 import { SubscriberDoc, SubscriptionDoc } from './types';
 
 export class MongoSubscriptionRepository implements SubscriptionRepository {
-  private subscriberModel;
-  private subscriptionModel;
+  private subscriberModel: Model<Document & SubscriberDoc>;
+  private subscriptionModel: Model<Document & SubscriptionDoc>;
 
   constructor() {
-    this.subscriberModel = model('subscriber', subscriberSchema);
-    this.subscriptionModel = model('subscription', subscriptionSchema);
+    this.subscriberModel = model<Document & SubscriberDoc>('subscriber', subscriberSchema);
+    this.subscriptionModel = model<Document & SubscriptionDoc>('subscription', subscriptionSchema);
   }
 
-  async getSubscriberById(id: string, top: number, after: string): Promise<Results<SubscriptionEntity>> {
-    const skip = parseInt(after);
+  async getSubscriber(tenantId: AdspId, subscriberId: string, byUserId = false): Promise<SubscriberEntity> {
+    const criteria: Record<string, string> = {};
 
-    return new Promise<Results<SubscriptionEntity>>((resolve, reject) => {
-      this.subscriptionModel
-        .find({ subscriberId: id })
-        .populate('subscriberId')
-        .skip(skip)
-        .limit(top)
-        .exec((err, docs) =>
-          err
-            ? reject(err)
-            : resolve({
-                results: docs.map((doc) => this.fromSubscriptionDoc(doc)),
-                page: {
-                  after,
-                  next: encodeNext(docs.length, top, skip),
-                  size: docs.length,
-                },
-              })
-        );
-    });
-  }
-
-  getSubscriber(tenantId: AdspId, subscriberId: string, byUserId = false): Promise<SubscriberEntity> {
-    const criteria: Record<string, string> = {
-      tenantId: tenantId?.toString(),
-    };
+    if (tenantId) {
+      criteria.tenantId = tenantId.toString();
+    }
 
     if (!byUserId) {
       criteria._id = subscriberId;
@@ -56,31 +34,27 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
       criteria.userId = subscriberId;
     }
 
-    return new Promise<SubscriberEntity>((resolve, reject) =>
-      this.subscriberModel.findOne(criteria, null, { lean: true }, (err, doc) =>
-        err ? reject(err) : resolve(this.fromDoc(doc))
+    const doc = await this.subscriberModel.findOne(criteria, null, { lean: true });
+    return this.fromDoc(doc);
+  }
+
+  async getSubscription(type: NotificationTypeEntity, subscriberId: string): Promise<SubscriptionEntity> {
+    const doc = await this.subscriptionModel
+      .findOne(
+        {
+          tenantId: type.tenantId?.toString(),
+          typeId: type.id,
+          subscriberId,
+        },
+        null,
+        { lean: true }
       )
-    );
+      .populate('subscriberId');
+
+    return this.fromSubscriptionDoc(doc);
   }
 
-  getSubscription(type: NotificationTypeEntity, subscriberId: string): Promise<SubscriptionEntity> {
-    return new Promise<SubscriptionEntity>((resolve, reject) =>
-      this.subscriptionModel
-        .findOne(
-          {
-            tenantId: type.tenantId?.toString(),
-            typeId: type.id,
-            subscriberId,
-          },
-          null,
-          { lean: true }
-        )
-        .populate('subscriberId')
-        .exec((err, doc) => (err ? reject(err) : resolve(this.fromSubscriptionDoc(doc))))
-    );
-  }
-
-  getSubscriptions(
+  async getSubscriptions(
     tenantId: AdspId,
     top: number,
     after: string,
@@ -97,31 +71,64 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     }
 
     if (criteria?.subscriberIdEquals) {
-      query.subscriberId = criteria.subscriberIdEquals;
+      query.subscriberId = new Types.ObjectId(criteria.subscriberIdEquals);
     }
 
-    return new Promise<Results<SubscriptionEntity>>((resolve, reject) => {
-      this.subscriptionModel
-        .find(query, null, { lean: true })
-        .populate('subscriberId')
-        .skip(skip)
-        .limit(top)
-        .exec((err, docs) =>
-          err
-            ? reject(err)
-            : resolve({
-                results: docs.map((doc) => this.fromSubscriptionDoc(doc)),
-                page: {
-                  after,
-                  next: encodeNext(docs.length, top, skip),
-                  size: docs.length,
-                },
-              })
-        );
+    const pipeline: Record<string, unknown>[] = [
+      { $match: query },
+      {
+        $lookup: {
+          from: 'subscribers',
+          localField: 'subscriberId',
+          foreignField: '_id',
+          as: 'subscriberId',
+        },
+      },
+    ];
+
+    if (criteria.subscriberCriteria) {
+      const subscriberQuery: Record<string, unknown> = {};
+      if (criteria.subscriberCriteria.name) {
+        subscriberQuery.addressAs = { $regex: criteria.subscriberCriteria.name, $options: 'i' };
+      }
+
+      if (criteria.subscriberCriteria.email) {
+        subscriberQuery.channels = {
+          $elemMatch: { address: { $regex: criteria.subscriberCriteria.email.toLocaleLowerCase() } },
+        };
+      }
+
+      pipeline.push({
+        $match: {
+          subscriberId: {
+            $elemMatch: subscriberQuery,
+          },
+        },
+      });
+    }
+
+    pipeline.push({
+      $unwind: '$subscriberId',
     });
+
+    const mongoQuery = this.subscriptionModel.aggregate(pipeline).skip(skip);
+    if (top > 0) {
+      mongoQuery.limit(top);
+    }
+
+    const docs = await mongoQuery.exec();
+
+    return {
+      results: docs.map((doc) => this.fromSubscriptionDoc(doc)),
+      page: {
+        after,
+        next: encodeNext(docs.length, top, skip),
+        size: docs.length,
+      },
+    };
   }
 
-  findSubscribers(top: number, after: string, criteria: SubscriberCriteria): Promise<Results<SubscriberEntity>> {
+  async findSubscribers(top: number, after: string, criteria: SubscriberCriteria): Promise<Results<SubscriberEntity>> {
     const skip = decodeAfter(after);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -138,65 +145,42 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
       query.channels = { $elemMatch: { address: { $regex: criteria.email.toLocaleLowerCase() } } };
     }
 
-    return new Promise<Results<SubscriberEntity>>((resolve, reject) => {
-      this.subscriberModel
-        .find(query, null, { lean: true })
-        .skip(skip)
-        .limit(top)
-        .exec((err, docs) => {
-          err
-            ? reject(err)
-            : resolve({
-                results: docs.map((doc) => this.fromDoc(doc)),
-                page: {
-                  after,
-                  next: encodeNext(docs.length, top, skip),
-                  size: docs.length,
-                },
-              });
-        });
-    });
+    const docs = await this.subscriberModel.find(query, null, { lean: true }).skip(skip).limit(top).exec();
+    return {
+      results: docs.map((doc) => this.fromDoc(doc)),
+      page: {
+        after,
+        next: encodeNext(docs.length, top, skip),
+        size: docs.length,
+      },
+    };
   }
 
-  saveSubscriber(subscriber: SubscriberEntity): Promise<SubscriberEntity> {
-    return new Promise<SubscriberEntity>((resolve, reject) =>
-      this.subscriberModel.findOneAndUpdate(
-        { _id: subscriber.id || new Types.ObjectId() },
-        this.toDoc(subscriber),
-        { upsert: true, new: true, lean: true },
-        (err, doc) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(this.fromDoc(doc));
-          }
-        }
-      )
+  async saveSubscriber(subscriber: SubscriberEntity): Promise<SubscriberEntity> {
+    const doc = await this.subscriberModel.findOneAndUpdate(
+      { _id: subscriber.id || new Types.ObjectId() },
+      this.toDoc(subscriber),
+      { upsert: true, new: true, lean: true }
     );
+
+    return this.fromDoc(doc);
   }
 
-  saveSubscription(subscription: SubscriptionEntity): Promise<SubscriptionEntity> {
-    return new Promise<SubscriptionEntity>((resolve, reject) =>
-      this.subscriptionModel.findOneAndUpdate(
-        {
-          tenantId: subscription.tenantId.toString(),
-          typeId: subscription.typeId,
-          subscriberId: subscription.subscriberId,
-        },
-        this.toSubscriptionDoc(subscription),
-        { upsert: true, new: true, lean: true },
-        (err, doc) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(this.fromSubscriptionDoc(doc, subscription.subscriber));
-          }
-        }
-      )
+  async saveSubscription(subscription: SubscriptionEntity): Promise<SubscriptionEntity> {
+    const doc = await this.subscriptionModel.findOneAndUpdate(
+      {
+        tenantId: subscription.tenantId.toString(),
+        typeId: subscription.typeId,
+        subscriberId: subscription.subscriberId,
+      },
+      this.toSubscriptionDoc(subscription),
+      { upsert: true, new: true, lean: true }
     );
+
+    return this.fromSubscriptionDoc(doc, subscription.subscriber);
   }
 
-  deleteSubscriptions(tenantId: AdspId, typeId: string, subscriberId: string): Promise<boolean> {
+  async deleteSubscriptions(tenantId: AdspId, typeId: string, subscriberId: string): Promise<boolean> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query: any = {};
     if (tenantId && typeId) {
@@ -208,15 +192,17 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
       query.subscriberId = subscriberId;
     }
 
-    return this.subscriptionModel.deleteMany(query).then(({ deletedCount }) => deletedCount > 0);
+    const { deletedCount } = await this.subscriptionModel.deleteMany(query);
+    return deletedCount > 0;
   }
 
-  deleteSubscriber(subscriber: SubscriberEntity): Promise<boolean> {
-    return new Promise<boolean>((resolve, reject) =>
-      this.subscriberModel.findOneAndDelete({ _id: subscriber.id }, (err, doc) => (err ? reject(err) : resolve(!!doc)))
-    ).then((deleted) =>
-      deleted ? this.deleteSubscriptions(null, null, subscriber.id).then(() => deleted) : Promise.resolve(deleted)
-    );
+  async deleteSubscriber(subscriber: SubscriberEntity): Promise<boolean> {
+    const deleted = !!(await this.subscriberModel.findOneAndDelete({ _id: subscriber.id }));
+    if (deleted) {
+      await this.deleteSubscriptions(null, null, subscriber.id);
+    }
+
+    return deleted;
   }
 
   private fromDoc(doc: SubscriberDoc) {

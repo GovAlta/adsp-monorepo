@@ -1,6 +1,124 @@
 <html>
   <head>
     <style>
+      @font-face {
+        font-family: 'acumin-pro-semi-condensed';
+        src: url('https://use.typekit.net/af/3f7b4d/00000000000000003b9acb2d/27/l?subset_id=1&fvd=n4&v=3')
+            format('woff2'),
+          url('https://use.typekit.net/af/3f7b4d/00000000000000003b9acb2d/27/d?subset_id=1&fvd=n4&v=3') format('woff'),
+          url('https://use.typekit.net/af/3f7b4d/00000000000000003b9acb2d/27/a?subset_id=1&fvd=n4&v=3')
+            format('opentype');
+        font-style: normal;
+        font-weight: 400;
+      }
+
+      @font-face {
+        font-family: 'acumin-pro-semi-condensed';
+        src: url('https://use.typekit.net/af/761912/00000000000000003b9acb2e/27/l?subset_id=1&fvd=i4&v=3')
+            format('woff2'),
+          url('https://use.typekit.net/af/761912/00000000000000003b9acb2e/27/d?subset_id=1&fvd=i4&v=3') format('woff'),
+          url('https://use.typekit.net/af/761912/00000000000000003b9acb2e/27/a?subset_id=1&fvd=i4&v=3')
+            format('opentype');
+        font-style: italic;
+        font-weight: 400;
+      }
+
+      @font-face {
+        font-family: 'acumin-pro-semi-condensed';
+        src: url('https://use.typekit.net/af/ee7f3d/00000000000000003b9acb33/27/l?subset_id=1&fvd=n7&v=3')
+            format('woff2'),
+          url('https://use.typekit.net/af/ee7f3d/00000000000000003b9acb33/27/d?subset_id=1&fvd=n7&v=3') format('woff'),
+          url('https://use.typekit.net/af/ee7f3d/00000000000000003b9acb33/27/a?subset_id=1&fvd=n7&v=3')
+            format('opentype');
+        font-style: normal;
+        font-weight: 700;
+      }
+
+      @font-face {
+        font-family: 'acumin-pro-semi-condensed';
+        src: url('https://use.typekit.net/af/503f80/00000000000000003b9acb34/27/l?subset_id=1&fvd=i7&v=3')
+            format('woff2'),
+          url('https://use.typekit.net/af/503f80/00000000000000003b9acb34/27/d?subset_id=1&fvd=i7&v=3') format('woff'),
+          url('https://use.typekit.net/af/503f80/00000000000000003b9acb34/27/a?subset_id=1&fvd=i7&v=3')
+            format('opentype');
+        font-style: italic;
+        font-weight: 700;
+      }
+
+      @font-face {
+        font-family: 'acumin-pro-semi-condensed';
+        src: url('https://use.typekit.net/af/e60e87/00000000000000003b9acb31/27/l?subset_id=1&fvd=n6&v=3')
+            format('woff2'),
+          url('https://use.typekit.net/af/e60e87/00000000000000003b9acb31/27/d?subset_id=1&fvd=n6&v=3') format('woff'),
+          url('https://use.typekit.net/af/e60e87/00000000000000003b9acb31/27/a?subset_id=1&fvd=n6&v=3')
+            format('opentype');
+        font-style: normal;
+        font-weight: 600;
+      }
+      body {
+        font-family: 'acumin-pro-semi-condensed';
+        --light-grey: #f1f1f1;
+        --grey: #dcdcdc;
+        --dark-grey: #666666;
+        --black: #333333;
+        color: #333333;
+        background-color: white;
+        margin: auto;
+      }
+
+      h1 {
+        margin: 0;
+        padding: 0;
+        line-height: 56px;
+        font-size: 48px;
+        font-weight: 700;
+        color: #333333;
+      }
+
+      h2 {
+        margin: 24px 0 0;
+        padding: 0;
+        line-height: 44px;
+        color: #333333;
+        font-size: 36px;
+        font-weight: 400;
+      }
+
+      h3 {
+        margin: 24px 0 0;
+        padding: 0;
+        line-height: 32px;
+        color: #333333;
+        font-size: 24px;
+        font-weight: 400;
+      }
+
+      h4 {
+        margin: 23px 0 0;
+        padding: 0;
+        line-height: 28px;
+        color: #333333;
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      h5 {
+        margin: 23px 0 0;
+        padding: 0;
+        line-height: 28px;
+        color: #333333;
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      h6 {
+        margin: 23px 0 0;
+        padding: 0;
+        line-height: 28px;
+        color: #333333;
+        font-size: 18px;
+        font-weight: 700;
+      }
       .goa-header-event-template {
         padding-bottom: 0.875rem;
         padding-top: 0.875rem;
@@ -20,23 +138,27 @@
         line-height: 3rem;
       }
       .goa-footer-event {
-        background-color: #F1F1F1;
+        background-color: #f1f1f1;
         padding-top: 2.5rem;
-        padding-top: 3rem;
+        padding-left: 3rem;
+        padding-right: 2rem;
         padding-bottom: 3rem;
       }
       .goa-footer-event .link {
         padding-left: 4.5rem;
         flex: 5;
         padding-bottom: 1.5rem;
-        }
+      }
+      .footer-link-border {
+        border-top: 1px solid #dcdcdc;
+      }
       .goa-footer-event .logo {
         padding-right: 6.75rem;
         flex: 1;
       }
       .goa-footer-event .footer-disclaimer {
-        padding-left: 4.5rem;
-        padding-right: 5.5rem;
+        margin-left: 4.5rem;
+        margin-right: 5.5rem;
         color: #666666;
         padding-top: 1.75rem;
         font-size: 14px;
@@ -44,13 +166,15 @@
       }
       .container {
         display: flex;
-      }
-      .footer-link-border {
-        border-bottom: 1px solid #DCDCDC;
+        padding-bottom: 2rem;
       }
       .email-content {
-        padding: 3rem 11rem;
+        padding: 3rem 7.5rem;
         background-color: white;
+      }
+      .goa-logo {
+        padding-left: 1.25rem;
+        padding-top: 0.625rem;
       }
     </style>
   </head>
@@ -74,10 +198,10 @@
   </div>
   <footer>
     <div class='goa-footer-event'>
-      <div class='container footer-link-border'>
+      <div class='container'>
         <div class='link'>
           <span>
-            Please do not reply to this email.
+            Please do not reply to this email. <a href="{{ managementUrl }}" target="_blank" rel="noopener noreferrer">Manage your subscription here.</a>
           </span>
           <br />
         </div>
@@ -88,7 +212,7 @@
           />
         </div>
       </div>
-      <div class='footer-disclaimer'>
+      <div class='footer-disclaimer footer-link-border'>
         This email was sent from the Government of Alberta and any files transmitted with it are confidential and
         intended solely for the use of the individual For entity to whom they are addressed. If you have received this
         email in error please notify the system manager. This message contains confidential information and is intended

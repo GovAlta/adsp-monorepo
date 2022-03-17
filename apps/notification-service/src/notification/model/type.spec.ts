@@ -352,6 +352,7 @@ describe('NotificationTypeEntity', () => {
   });
 
   describe('generateNotifications', () => {
+    const subscriberAppUrl = new URL('https://subscriptions');
     it('can generate notifications', () => {
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
       const tenant = { id: tenantId, name: 'test', realm: 'test' };
@@ -410,7 +411,16 @@ describe('NotificationTypeEntity', () => {
         timestamp: new Date(),
         payload: {},
       };
-      const [notification] = entity.generateNotifications(logger, templateServiceMock, tenant, event, [subscription]);
+      const [notification] = entity.generateNotifications(
+        logger,
+        templateServiceMock,
+        subscriberAppUrl,
+        event,
+        [subscription],
+        {
+          tenant,
+        }
+      );
       expect(templateServiceMock.generateMessage).toHaveBeenCalledTimes(1);
       expect(notification.to).toBe('test@testco.org');
       expect(notification.channel).toBe(Channel.email);
@@ -470,7 +480,16 @@ describe('NotificationTypeEntity', () => {
         payload: {},
       };
 
-      const notifications = entity.generateNotifications(logger, templateServiceMock, tenant, event, [subscription]);
+      const notifications = entity.generateNotifications(
+        logger,
+        templateServiceMock,
+        subscriberAppUrl,
+        event,
+        [subscription],
+        {
+          tenant,
+        }
+      );
       expect(notifications.length).toBe(0);
     });
 
@@ -535,7 +554,16 @@ describe('NotificationTypeEntity', () => {
         correlationId: '123',
       };
 
-      const [notification] = entity.generateNotifications(logger, templateServiceMock, tenant, event, [subscription]);
+      const [notification] = entity.generateNotifications(
+        logger,
+        templateServiceMock,
+        subscriberAppUrl,
+        event,
+        [subscription],
+        {
+          tenant,
+        }
+      );
       expect(notification.to).toBe('test@testco.org');
       expect(notification.channel).toBe(Channel.email);
       expect(notification.message).toBe(message);
@@ -601,7 +629,16 @@ describe('NotificationTypeEntity', () => {
         correlationId: '123',
       };
 
-      const [notification] = entity.generateNotifications(logger, templateServiceMock, null, event, [subscription]);
+      const [notification] = entity.generateNotifications(
+        logger,
+        templateServiceMock,
+        subscriberAppUrl,
+        event,
+        [subscription],
+        {
+          tenant: null,
+        }
+      );
       expect(notification.to).toBe('test@testco.org');
       expect(notification.channel).toBe(Channel.email);
       expect(notification.message).toBe(message);
@@ -661,7 +698,16 @@ describe('NotificationTypeEntity', () => {
         correlationId: '213',
       };
 
-      const notifications = entity.generateNotifications(logger, templateServiceMock, tenant, event, [subscription]);
+      const notifications = entity.generateNotifications(
+        logger,
+        templateServiceMock,
+        subscriberAppUrl,
+        event,
+        [subscription],
+        {
+          tenant,
+        }
+      );
       expect(notifications.length).toBe(0);
     });
   });

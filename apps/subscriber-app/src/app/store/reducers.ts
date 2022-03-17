@@ -4,6 +4,7 @@ import Session from './session/reducers';
 import Subscription from './subscription/reducers';
 import Notifications from './notifications/reducers';
 import Notification from './notification/reducers';
+import Tenant from './tenant/reducers';
 
 export const rootReducer = combineReducers({
   session: Session,
@@ -11,4 +12,5 @@ export const rootReducer = combineReducers({
   subscription: Subscription,
   notifications: Notifications,
   notification: Notification,
+  tenant: Tenant,
 });

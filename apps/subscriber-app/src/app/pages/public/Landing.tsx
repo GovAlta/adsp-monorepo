@@ -1,8 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Band } from '@components/Band';
-import Header from '@components/AppHeader';
-import Footer from '@components/Footer';
 import Container from '@components/Container';
 import { Grid, GridItem } from '@components/Grid';
 import { Main } from '@components/Html';
@@ -13,7 +11,6 @@ import ContactInformation from '@assets/icons/ContactInformation.png';
 const LandingPage = (): JSX.Element => {
   return (
     <>
-      <Header serviceName="Alberta Digital Service Platform - Subscription management " />
       <Main>
         <CenterText>
           <Band title="Subscription management">Manage your subscription preferences</Band>
@@ -104,8 +101,6 @@ const LandingPage = (): JSX.Element => {
               </Grid>
             </Container>
           </Section>
-          <div></div>
-          <Footer />
         </CenterText>
       </Main>
     </>
