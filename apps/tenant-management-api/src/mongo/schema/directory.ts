@@ -24,6 +24,10 @@ export const directorySchema = new Schema({
           message: `It is not a valid service name! allowed characters: a-z, 0-9, -`,
         },
       },
+      description: {
+        type: String,
+        maxlength: [50, 'Maximum length 500 characters'],
+      },
       host: {
         type: String,
         required: [true, 'host name required'],

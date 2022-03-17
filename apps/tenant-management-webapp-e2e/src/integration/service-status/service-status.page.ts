@@ -172,7 +172,9 @@ class StatusServicePage {
   }
 
   applicationCardEditBtn(appName) {
-    return cy.xpath(`//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//*[name()="svg"]`);
+    return cy.xpath(
+      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//div[@data-testid="icon-create"]`
+    );
   }
 
   applicationCardDeleteBtn(appName) {

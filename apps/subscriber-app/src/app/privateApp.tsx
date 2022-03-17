@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Route, useParams } from 'react-router-dom';
 import Header from '@components/AppHeader';
 import { HeaderCtx } from '@lib/headerContext';
-import Container from '@components/Container';
 import { RootState } from '@store/index';
 import { KeycloakCheckSSOWithLogout, KeycloakRefreshToken } from '@store/tenant/actions';
 import { GoAPageLoader } from '@abgov/react-components';

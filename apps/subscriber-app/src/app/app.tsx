@@ -23,13 +23,6 @@ const AppRouters = () => {
     <Router>
       <Switch>
         <Route exact path="/" render={() => <Redirect to="/overview" />} />
-        <Route path="/overview">
-          <LandingPage />
-        </Route>
-
-        <Route exact path="/:subscriberId">
-          <Route path="/:subscriberId" component={PublicSubscriptions} />
-        </Route>
 
         <Route path="/subscriptions/:realm">
           <PrivateApp>
@@ -38,13 +31,23 @@ const AppRouters = () => {
         </Route>
 
         <PublicApp>
-          <Route path="/:realm/login">
-            <Login />
-          </Route>
+          <Switch>
+            <Route exact path="/overview">
+              <LandingPage />
+            </Route>
 
-          <Route exact path="/logout-redirect">
-            <LogoutRedirect />
-          </Route>
+            <Route exact path="/logout-redirect">
+              <LogoutRedirect />
+            </Route>
+
+            <Route path="/:realm/login">
+              <Login />
+            </Route>
+
+            <Route exact path="/:subscriberId">
+              <Route path="/:subscriberId" component={PublicSubscriptions} />
+            </Route>
+          </Switch>
         </PublicApp>
       </Switch>
     </Router>

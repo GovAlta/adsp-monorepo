@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from 'react';
-import DOMPurify from 'dompurify';
+import { sanitizeHtml } from '../utils';
 import { PreviewContainer, SubjectPreview, BodyPreview } from './styled-components';
 
 interface PreviewTemplateProps {
@@ -20,7 +20,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
       <h3>{subjectTitle}</h3>
       <SubjectPreview
         dangerouslySetInnerHTML={{
-          __html: DOMPurify.sanitize(subjectPreviewContent),
+          __html: sanitizeHtml(subjectPreviewContent),
         }}
       ></SubjectPreview>
       <h3>{emailTitle}</h3>

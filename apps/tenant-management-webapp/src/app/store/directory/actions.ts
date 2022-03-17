@@ -12,12 +12,21 @@ export const UPDATE_ENTRY_SUCCESS = 'tenant/directory-service/entry/update/succe
 export const DELETE_ENTRY = 'tenant/directory-service/entry/delete';
 export const DELETE_ENTRY_SUCCESS = 'tenant/directory-service/entry/delete/success';
 
+export const FETCH_ENTRY_DETAIL = 'tenant/directory-service/entry/detail';
+export const FETCH_ENTRY_DETAIL_SUCCESS = 'tenant/directory-service/entry/detail/success';
+
+export const CREATE_DIRECTORY = 'tenant/directory-service/directory/create';
+export const CREATE_DIRECTORY_SUCCESS = 'tenant/directory-service/directory/create/success';
 // =============
 // Actions Types
 // =============
 export type ActionType =
   | FetchDirectoryAction
   | FetchDirectorySuccessAction
+  | FetchEntryDetailAction
+  | FetchEntryDetailSuccessAction
+  | CreateDirectoryAction
+  | CreateDirectorySuccessAction
   | CreateEntryAction
   | CreateEntrySuccessAction
   | UpdateEntryAction
@@ -62,6 +71,24 @@ interface DeleteEntrySuccessAction {
   type: typeof DELETE_ENTRY_SUCCESS;
   payload: Service;
 }
+export interface FetchEntryDetailAction {
+  type: typeof FETCH_ENTRY_DETAIL;
+  data: Service;
+}
+
+interface FetchEntryDetailSuccessAction {
+  type: typeof FETCH_ENTRY_DETAIL_SUCCESS;
+  payload: Service;
+}
+export interface CreateDirectoryAction {
+  type: typeof CREATE_DIRECTORY;
+  payload: Directory;
+}
+
+export interface CreateDirectorySuccessAction {
+  type: typeof CREATE_DIRECTORY_SUCCESS;
+  payload: Directory;
+}
 
 export const fetchDirectory = (): FetchDirectoryAction => ({
   type: FETCH_DIRECTORY,
@@ -82,6 +109,16 @@ export const createEntrySuccess = (data: Service): CreateEntrySuccessAction => (
   payload: data,
 });
 
+export const createDirectory = (data: Directory): CreateDirectoryAction => ({
+  type: CREATE_DIRECTORY,
+  payload: data,
+});
+
+export const createDirectorySuccess = (data: Directory): CreateDirectorySuccessAction => ({
+  type: CREATE_DIRECTORY_SUCCESS,
+  payload: data,
+});
+
 export const updateEntry = (data: Service): UpdateEntryAction => ({
   type: UPDATE_ENTRY,
   data,
@@ -99,5 +136,15 @@ export const deleteEntry = (data: Service): DeleteEntryAction => ({
 
 export const deleteEntrySuccess = (data: Service): DeleteEntrySuccessAction => ({
   type: DELETE_ENTRY_SUCCESS,
+  payload: data,
+});
+
+export const fetchEntryDetail = (data: Service): FetchEntryDetailAction => ({
+  type: FETCH_ENTRY_DETAIL,
+  data,
+});
+
+export const fetchEntryDetailSuccess = (data): FetchEntryDetailSuccessAction => ({
+  type: FETCH_ENTRY_DETAIL_SUCCESS,
   payload: data,
 });

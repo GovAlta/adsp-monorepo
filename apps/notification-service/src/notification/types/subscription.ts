@@ -1,4 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
+import { SubscriberCriteria } from './subscriber';
 
 export interface SubscriptionCriteria {
   correlationId?: string;
@@ -17,6 +18,5 @@ export interface Subscription {
 export interface SubscriptionSearchCriteria {
   typeIdEquals?: string;
   subscriberIdEquals?: string;
-  name?: string;
-  email?: string;
+  subscriberCriteria?: SubscriberCriteria;
 }

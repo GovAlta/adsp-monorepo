@@ -1,12 +1,33 @@
-import { put, select } from 'redux-saga/effects';
+import { put, select, call, takeEvery } from 'redux-saga/effects';
 import { RootState, store } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
-import { KeycloakCheckSSOAction, TenantLoginAction, KeycloakCheckSSOWithLogOutAction } from './actions';
+import {
+  KeycloakCheckSSOAction,
+  TenantLoginAction,
+  KeycloakCheckSSOWithLogOutAction,
+  FetchTenantAction,
+  FetchTenantSucceededService,
+  FETCH_TENANT,
+} from './actions';
 
 import { SessionLoginSuccess } from '@store/session/actions';
 import { createKeycloakAuth, keycloakAuth } from '@lib/keycloak';
 import { convertToSession } from '@lib/session';
 import { SagaIterator } from '@redux-saga/core';
+
+import axios from 'axios';
+
+export function* fetchTenant(action: FetchTenantAction): SagaIterator {
+  const { tenantId } = action.payload.tenant;
+
+  try {
+    const tenant = (yield call(axios.get, `/api/tenant/v1/tenant/${tenantId}`)).data;
+
+    yield put(FetchTenantSucceededService(tenant));
+  } catch (e) {
+    yield put(ErrorNotification({ message: `${e.message} - fetchContactInfo` }));
+  }
+}
 
 export function* keycloakCheckSSO(action: KeycloakCheckSSOAction): SagaIterator {
   try {
@@ -96,4 +117,8 @@ export function* tenantLogout(): SagaIterator {
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to tenant out: ${e.message}` }));
   }
+}
+
+export function* watchTenantSagas(): Generator {
+  yield takeEvery(FETCH_TENANT, fetchTenant);
 }
