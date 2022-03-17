@@ -219,12 +219,19 @@ export class BotNotificationProvider implements NotificationProvider {
           conversation.serviceUrl,
           null,
           {
+            bot: {
+              id: conversation.botId,
+            },
+            tenantId: conversation.tenantId,
             isGroup: true,
             channelData: {
+              tenant: {
+                id: conversation.tenantId,
+              },
               channel: {
                 id: conversationId,
               },
-            },
+            } as TeamsChannelData,
           } as ConversationParameters,
           async (context) => {
             const conversationReference = TurnContext.getConversationReference(context.activity);
