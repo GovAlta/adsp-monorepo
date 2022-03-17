@@ -133,6 +133,7 @@ class BotNotificationActivityHandler extends ActivityHandler {
     this.onMessage(async (context, next) => {
       await this.storeConversationRecord(context.activity);
       const reference = TurnContext.getConversationReference(context.activity);
+      this.logger.debug(`Conversation reference: ${JSON.stringify(reference || {}, null, 2)}`, this.LOG_CONTEXT);
 
       let address: string;
       if (reference.channelId === Channels.Slack) {
@@ -212,32 +213,29 @@ export class BotNotificationProvider implements NotificationProvider {
 
     let conversationReference: Partial<ConversationReference>;
     if (channelId === Channels.Msteams) {
-      conversationReference = await new Promise((resolve) =>
-        this.adapter.createConversationAsync(
-          this.appId,
-          Channels.Msteams,
-          conversation.serviceUrl,
-          null,
-          {
-            bot: {
-              id: conversation.botId,
+      await this.adapter.createConversationAsync(
+        this.appId,
+        Channels.Msteams,
+        conversation.serviceUrl,
+        null,
+        {
+          bot: {
+            id: conversation.botId,
+          },
+          tenantId: conversation.tenantId,
+          isGroup: true,
+          channelData: {
+            tenant: {
+              id: conversation.tenantId,
             },
-            tenantId: conversation.tenantId,
-            isGroup: true,
-            channelData: {
-              tenant: {
-                id: conversation.tenantId,
-              },
-              channel: {
-                id: conversationId,
-              },
-            } as TeamsChannelData,
-          } as ConversationParameters,
-          async (context) => {
-            const conversationReference = TurnContext.getConversationReference(context.activity);
-            resolve(conversationReference);
-          }
-        )
+            channel: {
+              id: conversationId,
+            },
+          } as TeamsChannelData,
+        } as ConversationParameters,
+        async (context) => {
+          conversationReference = TurnContext.getConversationReference(context.activity);
+        }
       );
     } else if (channelId === Channels.Slack) {
       conversationReference = {
