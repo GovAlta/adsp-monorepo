@@ -11,9 +11,22 @@ interface DirectoryEntry {
   url: string;
 }
 
+export interface DirectoryMetadata {
+  name?: string;
+  description?: string;
+  displayName?: string;
+  _links?: {
+    self?: string;
+    doc?: string;
+    health?: string;
+    api?: Array<Record<string, any>>;
+  };
+}
+
 export interface ServiceDirectory {
   getServiceUrl(serviceId: AdspId): Promise<URL>;
   getResourceUrl(resourceId: AdspId): Promise<URL>;
+  getMetadataByNamespaces(namespaces: string[]): Promise<Record<string, DirectoryMetadata>>;
 }
 
 export class ServiceDirectoryImpl implements ServiceDirectory {
@@ -24,21 +37,43 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
     useClones: false,
   });
 
+  #directoryMetadataCache = new NodeCache({
+    stdTTL: 36000,
+    useClones: false,
+  });
+
   constructor(
     private readonly logger: Logger,
     private readonly directoryUrl: URL,
     private readonly tokenProvider: TokenProvider
   ) {}
 
+  #tryRetrieveDirectoryMetaData = async (requestUrl: URL): Promise<DirectoryMetadata> => {
+    const { data } = await axios.get<DirectoryMetadata>(requestUrl.href);
+    return data;
+  };
+
   #tryRetrieveDirectory = async (requestUrl: URL, count: number): Promise<{ urn: string; serviceUrl: URL }[]> => {
     this.logger.debug(`Try ${count}: retrieve directory entries...`, this.LOG_CONTEXT);
-
     const token = await this.tokenProvider.getAccessToken();
     const { data } = await axios.get<DirectoryEntry[]>(requestUrl.href, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    return data.map(({ urn, url }) => {
+    let directories = null;
+    // consolidate directory v1 and v2 fetch endpoint schema
+    if (Array.isArray(data)) {
+      directories = data;
+    } else {
+      directories = Object.entries(data).map((e) => {
+        return {
+          urn: e[0],
+          url: e[1],
+        };
+      });
+    }
+
+    return directories.map(({ urn, url }) => {
       let serviceUrl = null;
       try {
         serviceUrl = new URL(url);
@@ -54,8 +89,16 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
     });
   };
 
-  #retrieveDirectory = async (): Promise<void> => {
-    const url = new URL('/api/discovery/v1', this.directoryUrl);
+  #retrieveDirectory = async (namespace?: string): Promise<void> => {
+    let url = null;
+
+    if (namespace === undefined) {
+      // fetch the default platform directories
+      url = new URL('/api/discovery/v1', this.directoryUrl);
+    } else {
+      // fetch the tenant platform directories by namespace
+      url = new URL(`api/directory/v2/namespaces/${namespace}`, this.directoryUrl);
+    }
 
     try {
       const results = await retry(async (next, count) => {
@@ -66,8 +109,24 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
           next(err);
         }
       });
-      results.forEach(({ urn, serviceUrl }) => {
+
+      results.forEach(async ({ urn, serviceUrl }) => {
         this.#directoryCache.set(urn, serviceUrl);
+        // Start to cache metadata
+        try {
+          const id = adspId`${urn}`;
+          if (id.type === 'service') {
+            const url = new URL(
+              `/api/directory/v2/namespaces/${id.namespace}/services/${id.service}`,
+              this.directoryUrl
+            );
+            const metadata = await this.#tryRetrieveDirectoryMetaData(url);
+            this.#directoryMetadataCache.set(urn, metadata);
+            this.logger.info(`Updated the directory metadata for urn: ${urn}.`);
+          }
+        } catch (err) {
+          this.logger.warn(`Unable to retrieve metadata for ${urn}: ${err.message}`);
+        }
       });
       this.logger.info(`Retrieved service directory from ${url}.`, this.LOG_CONTEXT);
     } catch (err) {
@@ -91,9 +150,40 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
     return value;
   }
 
+  #retrieveServiceUrlByNamespaces = async (namespaces: string[]): Promise<void> => {
+    namespaces.forEach(async (namespace) => {
+      await this.#retrieveDirectory(namespace);
+    });
+  };
+
+  async getMetadataByNamespaces(namespaces: string[]): Promise<Record<string, DirectoryMetadata>> {
+    const URNs = this.#directoryMetadataCache.keys() as string[];
+    const metadata: Record<string, DirectoryMetadata> = {};
+    let hasUpdated = false;
+
+    await URNs.forEach(async (urn) => {
+      const id = adspId`${urn}`;
+      if (namespaces.includes(id.namespace)) {
+        let data = this.#directoryMetadataCache.get(urn);
+        if (data === null && !hasUpdated) {
+          this.logger.debug(
+            `There is no cache for ${urn}. Try to fetch data from remote for namespaces: ${namespaces}`
+          );
+          await this.#retrieveServiceUrlByNamespaces(namespaces);
+          data = this.#directoryMetadataCache.get(urn);
+          hasUpdated = true;
+        }
+        if (data) {
+          metadata[urn] = data;
+        }
+      }
+    });
+
+    return metadata;
+  }
+
   async getResourceUrl(id: AdspId): Promise<URL> {
     assertAdspId(id, 'Provided ID is not for a Resource.', 'resource');
-
     const serviceUrl = await this.getServiceUrl(adspId`urn:ads:${id.namespace}:${id.service}:${id.api}`);
     // Trim any trailing slash on API url and leading slash on resource
     const resourceUrl = new URL(

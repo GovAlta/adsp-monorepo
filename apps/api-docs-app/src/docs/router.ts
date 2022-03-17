@@ -21,8 +21,9 @@ export const createDocsRouter = async ({
   router.get('/docs/:service', async (req: Request, res: Response, next: NextFunction) => {
     const { service } = req.params;
     const { tenant } = req.query;
+    const namespace = tenant ? toKebabName(tenant as string) : null;
 
-    const docs = await serviceDocs.getDocs();
+    const docs = await serviceDocs.getDocs(namespace);
     const serviceDoc = docs[service];
     if (!serviceDoc) {
       next(new NotFoundError('API docs', service));
@@ -49,7 +50,10 @@ export const createDocsRouter = async ({
   });
 
   router.use('/swagger', swaggerUi.serve, async (req: Request, res: Response, next: NextFunction) => {
-    const tenant = req.query?.tenant ? toKebabName(req.query?.tenant as string) : null;
+    const { tenant } = req.query;
+
+    const namespace = tenant ? toKebabName(tenant as string) : null;
+
     if (tenant) {
       let tenantInfo = null;
       try {
@@ -63,7 +67,7 @@ export const createDocsRouter = async ({
       }
     }
 
-    const docs = await serviceDocs.getDocs();
+    const docs = await serviceDocs.getDocs(namespace);
     const urls = Object.entries(docs).map(([name, serviceDoc]) => ({
       name: serviceDoc.service.name,
       url: `/docs/${name}${tenant ? `?tenant=${tenant}` : ''}`,
