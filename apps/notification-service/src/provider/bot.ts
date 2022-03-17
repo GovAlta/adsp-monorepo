@@ -10,6 +10,8 @@ import {
   ConversationParameters,
   ConversationReference,
   Activity,
+  teamsGetChannelId,
+  ActivityTypes,
 } from 'botbuilder';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
@@ -32,7 +34,7 @@ class BotNotificationActivityHandler extends ActivityHandler {
         const { tenant, team } = activity.channelData as TeamsChannelData;
 
         tenantId = tenant.id;
-        conversationId = activity.conversation?.id.split(';')[0] || team.id;
+        conversationId = teamsGetChannelId(activity) || team.id;
         botId = activity.recipient.id;
         break;
       }
@@ -139,17 +141,19 @@ class BotNotificationActivityHandler extends ActivityHandler {
       if (reference.channelId === Channels.Slack) {
         address = reference.conversation?.id.split(':').slice(1).join('/');
       } else if (reference.channelId === Channels.Msteams) {
-        address = reference.conversation?.id.split(';')[0];
+        address = teamsGetChannelId(context.activity);
       } else {
         address = reference.conversation?.id;
       }
 
-      const reply: Partial<Activity> = {
-        text: `*Bee boop...* Ready to send notifications to this channel at address: **${reference.channelId}/${address}**`,
-        textFormat: 'markdown',
-      };
+      if (address) {
+        const reply: Partial<Activity> = {
+          text: `*Bee boop...* Ready to send notifications to this channel at address: **${reference.channelId}/${address}**`,
+          textFormat: 'markdown',
+        };
 
-      await context.sendActivity(reply);
+        await context.sendActivity(reply);
+      }
       await next();
     });
   }
@@ -213,26 +217,30 @@ export class BotNotificationProvider implements NotificationProvider {
 
     let conversationReference: Partial<ConversationReference>;
     if (channelId === Channels.Msteams) {
+      const parameters = {
+        isGroup: true,
+        channelData: {
+          channel: {
+            id: conversation.conversationId,
+          },
+        } as TeamsChannelData,
+        activity: {
+          type: ActivityTypes.Message,
+          text: `${message.subject}\n\n${message.body}`,
+          textFormat: 'markdown',
+        },
+      } as ConversationParameters;
+      this.logger.debug(
+        `Creating teams conversation with parameters ${JSON.stringify(parameters, null, 2)} information...`,
+        this.LOG_CONTEXT
+      );
+
       await this.adapter.createConversationAsync(
         this.appId,
         Channels.Msteams,
         conversation.serviceUrl,
         null,
-        {
-          bot: {
-            id: conversation.botId,
-          },
-          tenantId: conversation.tenantId,
-          isGroup: true,
-          channelData: {
-            tenant: {
-              id: conversation.tenantId,
-            },
-            channel: {
-              id: conversationId,
-            },
-          } as TeamsChannelData,
-        } as ConversationParameters,
+        parameters,
         async (context) => {
           conversationReference = TurnContext.getConversationReference(context.activity);
         }
