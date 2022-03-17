@@ -370,8 +370,8 @@ Then('the user clicks Save button', function () {
 Then(
   'the user views email {string}, phone {string}, and support instructions {string}',
   function (email, phone, instruction) {
-    notificationsObj.contactInformationEmail().invoke('text').should('contain', 'test@test.ca');
-    notificationsObj.contactInformationPhone().invoke('text').should('contain', '1 (647) 333-8965');
-    notificationsObj.contactInformationInstructions().invoke('text').should('contain', 'test');
+    notificationsObj.contactInformationEmail().invoke('text').should('contain', email);
+    notificationsObj.contactInformationPhone().invoke('text').should('contain', phone);
+    notificationsObj.contactInformationInstructions().invoke('text').should('contain', instruction);
   }
 );
