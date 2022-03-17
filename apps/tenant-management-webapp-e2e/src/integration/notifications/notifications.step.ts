@@ -348,19 +348,30 @@ When('the user clicks edit button for contact information', function () {
   cy.wait(2000);
   notificationsObj.editContactModal().should('exist');
 });
-Then('the user edited email, phone, and support instructions', function () {
-  const rand_str = String(Math.floor(Math.random() * 10000 + 1));
-  const newEmail = 'abc' + rand_str + '@gov.ab.ca';
-  const newPhone = '1 (780) 123-' + rand_str;
-  const newInstructions = rand_str + 'autotest';
 
-  notificationsObj.editContactModalEmail().clear().type(newEmail);
-  notificationsObj.editContactModalPhone().clear().type(newPhone);
-  notificationsObj.editContactModalInstructions().clear().type(newInstructions);
+Then(
+  'the user edited email {string}, phone {string}, and support instructions {string}',
+  function (email, phone, instruction) {
+    const rand_str = String(Math.floor(Math.random() * 1000 + 1000));
+    const newEmail = rand_str + email;
+    const newPhone = String(phone.slice(-7)) + rand_str;
+    const newInstructions = rand_str + instruction;
 
-  // notificationsObj.editContactModalCancelBtn().should('exist');
-  // notificationsObj.editContactModalCancelBtn().click();
-  // notificationsObj.contactInformationEmail().invoke('text').should('contain', 'test@test.ca');
-  //notificationsObj.contactInformationPhone().invoke('text').should('contain', '1 (647) 333-8965');
-  //notificationsObj.contactInformationInstructions().invoke('text').should('contain', 'test');
+    notificationsObj.editContactModalEmail().clear().type(newEmail);
+    notificationsObj.editContactModalPhone().clear().type(newPhone);
+    notificationsObj.editContactModalInstructions().clear().type(newInstructions);
+  }
+);
+
+Then('the user clicks Save button', function () {
+  notificationsObj.editContactModalSaveBtn().click();
 });
+
+Then(
+  'the user views email {string}, phone {string}, and support instructions {string}',
+  function (email, phone, instruction) {
+    notificationsObj.contactInformationEmail().invoke('text').should('contain', 'test@test.ca');
+    notificationsObj.contactInformationPhone().invoke('text').should('contain', '1 (647) 333-8965');
+    notificationsObj.contactInformationInstructions().invoke('text').should('contain', 'test');
+  }
+);

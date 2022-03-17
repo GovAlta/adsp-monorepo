@@ -267,19 +267,13 @@ class NotificationsPage {
 
   editContactModalEmail() {
     return cy.get('[data-testid="form-email"]');
-
-    // return cy.xpath('//*[@data-testid="form-email" and @data-state="visible"]//*[@class="input--goa"]');
   }
 
   editContactModalPhone() {
-    // return cy.xpath('//*[@data-testid="form-name" and @data-state="visible"]//*[@class="goa-form-item"]');
-    // return cy.get('[data-testid="form-name"]');
     return cy.xpath('//input[@name="phoneNumber"]');
   }
 
   editContactModalInstructions() {
-    // return cy.xpath('//*[@data-testid="form-name" and @data-state="visible"]//*[@class="input"]');
-    // return cy.get('[data-testid="form-name"]');
     return cy.xpath('//*[@name="supportInstruction"]');
   }
 
