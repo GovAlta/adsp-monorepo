@@ -12,6 +12,8 @@ import { validateNamespaceEndpointsPermission, toKebabName } from '../../middlew
 
 const passportMiddleware = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
 
+import axios from 'axios';
+import { Service } from '../../directory/types/directory';
 interface DirectoryRouterProps {
   logger?: Logger;
   directoryRepository: DirectoryRepository;
@@ -202,5 +204,37 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
       }
     }
   );
+
+  /**
+   * Get all of services in one directory
+   */
+  directoryRouter.get('/namespaces/:namespace/services/:service', async (req: Request, res: Response, _next) => {
+    const { namespace, service } = req.params;
+    try {
+      const directoryEntity = await directoryRepository.getDirectories(namespace);
+      if (!directoryEntity) {
+        return res.sendStatus(HttpStatusCodes.BAD_REQUEST).json({ error: `${namespace} could not find` });
+      }
+      const services = directoryEntity['services'];
+      const filteredService = services.filter((x) => x.service.indexOf(service) > -1);
+
+      // will return service information and HAL link information
+
+      if (filteredService) {
+        const base: Service = filteredService[0];
+
+        const { data } = await axios.get(base.host);
+        if (data._links) {
+          base._links = data._links;
+        }
+        return res.status(HttpStatusCodes.OK).json(base);
+      } else {
+        return res.sendStatus(HttpStatusCodes.BAD_REQUEST).json({ error: `${service} could not find` });
+      }
+    } catch (err) {
+      logger.error(`Failed get service for namespace: ${namespace} with error ${err.message}`);
+      _next(err);
+    }
+  });
   return directoryRouter;
 };
