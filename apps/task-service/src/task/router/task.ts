@@ -74,8 +74,7 @@ export const getTask =
     try {
       const user = req.user;
       const { id } = req.params;
-      const { tenantId: tenantIdValue } = req.query;
-      const tenantId = user?.isCore && tenantIdValue ? AdspId.parse(tenantIdValue as string) : user.tenantId;
+      const tenantId = req.tenant.id;
 
       const [{ queues }] = await req.getConfiguration<TaskServiceConfiguration>();
       const entity = await repository.getTask(queues, tenantId, id);
