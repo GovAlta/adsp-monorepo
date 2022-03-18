@@ -10,6 +10,8 @@ import {
   ConversationParameters,
   ConversationReference,
   Activity,
+  teamsGetChannelId,
+  ActivityTypes,
 } from 'botbuilder';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
@@ -22,8 +24,6 @@ class BotNotificationActivityHandler extends ActivityHandler {
   };
 
   private async storeConversationRecord(activity: Activity): Promise<void> {
-    this.logger.debug(`Channel data: ${JSON.stringify(activity.channelData || {}, null, 2)}`, this.LOG_CONTEXT);
-
     let tenantId: string;
     let conversationId: string;
     let botId: string;
@@ -32,7 +32,7 @@ class BotNotificationActivityHandler extends ActivityHandler {
         const { tenant, team } = activity.channelData as TeamsChannelData;
 
         tenantId = tenant.id;
-        conversationId = activity.conversation?.id.split(';')[0] || team.id;
+        conversationId = teamsGetChannelId(activity) || team.id;
         botId = activity.recipient.id;
         break;
       }
@@ -138,17 +138,19 @@ class BotNotificationActivityHandler extends ActivityHandler {
       if (reference.channelId === Channels.Slack) {
         address = reference.conversation?.id.split(':').slice(1).join('/');
       } else if (reference.channelId === Channels.Msteams) {
-        address = reference.conversation?.id.split(';')[0];
+        address = teamsGetChannelId(context.activity);
       } else {
         address = reference.conversation?.id;
       }
 
-      const reply: Partial<Activity> = {
-        text: `*Bee boop...* Ready to send notifications to this channel at address: **${reference.channelId}/${address}**`,
-        textFormat: 'markdown',
-      };
+      if (address) {
+        const reply: Partial<Activity> = {
+          text: `*Bee boop...* Ready to send notifications to this channel at address: **${reference.channelId}/${address}**`,
+          textFormat: 'markdown',
+        };
 
-      await context.sendActivity(reply);
+        await context.sendActivity(reply);
+      }
       await next();
     });
   }
@@ -212,84 +214,85 @@ export class BotNotificationProvider implements NotificationProvider {
 
     let conversationReference: Partial<ConversationReference>;
     if (channelId === Channels.Msteams) {
-      conversationReference = await new Promise((resolve) =>
-        this.adapter.createConversationAsync(
-          this.appId,
-          Channels.Msteams,
-          conversation.serviceUrl,
-          null,
-          {
-            bot: {
-              id: conversation.botId,
-            },
-            tenantId: conversation.tenantId,
-            isGroup: true,
-            channelData: {
-              tenant: {
-                id: conversation.tenantId,
-              },
-              channel: {
-                id: conversationId,
-              },
-            } as TeamsChannelData,
-          } as ConversationParameters,
-          async (context) => {
-            const conversationReference = TurnContext.getConversationReference(context.activity);
-            resolve(conversationReference);
-          }
-        )
-      );
-    } else if (channelId === Channels.Slack) {
-      conversationReference = {
-        bot: {
-          id: `${conversation.botId}:${conversation.tenantId}`,
-          name: conversation.botName,
+      const parameters = {
+        isGroup: true,
+        channelData: {
+          channel: {
+            id: conversation.conversationId,
+          },
+        } as TeamsChannelData,
+        activity: {
+          type: ActivityTypes.Message,
+          text: `${message.subject}\n\n${message.body}`,
+          textFormat: 'markdown',
         },
-        channelId,
-        serviceUrl: conversation.serviceUrl,
-        conversation: {
-          id: `${conversation.botId}:${tenantId}:${conversationId}`,
-          name: conversation.name,
-          isGroup: true,
-        },
-      } as ConversationReference;
-    } else {
-      conversationReference = {
-        bot: {
-          id: conversation.botId,
-          name: conversation.botName,
-        },
-        channelId,
-        serviceUrl: conversation.serviceUrl,
-        conversation: {
-          id: conversationId,
-          conversationType: null,
-          name: conversation.name,
-          isGroup: true,
-        },
-      };
-    }
-
-    await this.adapter.continueConversationAsync(this.appId, conversationReference, async (turnContext) => {
+      } as ConversationParameters;
       this.logger.debug(
-        `Sending activity to channel ${channelId}: ${
-          conversationReference.conversation.id
-        } with conversation reference: ${JSON.stringify(conversationReference, null, 2)}`,
+        `Creating teams conversation with parameters ${JSON.stringify(parameters, null, 2)} information...`,
         this.LOG_CONTEXT
       );
-      try {
-        await turnContext.sendActivity({ text: `${message.subject}\n\n${message.body}`, textFormat: 'markdown' });
-      } catch (err) {
-        this.logger.error(
-          `Failed sending activity to channel ${channelId}: ${conversationReference.conversation.id}. ${JSON.stringify(
-            err
-          )}`,
+
+      await this.adapter.createConversationAsync(
+        this.appId,
+        Channels.Msteams,
+        conversation.serviceUrl,
+        null,
+        parameters,
+        async (context) => {
+          conversationReference = TurnContext.getConversationReference(context.activity);
+        }
+      );
+    } else {
+      if (channelId === Channels.Slack) {
+        conversationReference = {
+          bot: {
+            id: `${conversation.botId}:${conversation.tenantId}`,
+            name: conversation.botName,
+          },
+          channelId,
+          serviceUrl: conversation.serviceUrl,
+          conversation: {
+            id: `${conversation.botId}:${tenantId}:${conversationId}`,
+            name: conversation.name,
+            isGroup: true,
+          },
+        } as ConversationReference;
+      } else {
+        conversationReference = {
+          bot: {
+            id: conversation.botId,
+            name: conversation.botName,
+          },
+          channelId,
+          serviceUrl: conversation.serviceUrl,
+          conversation: {
+            id: conversationId,
+            conversationType: null,
+            name: conversation.name,
+            isGroup: true,
+          },
+        };
+      }
+
+      await this.adapter.continueConversationAsync(this.appId, conversationReference, async (turnContext) => {
+        this.logger.debug(
+          `Sending activity to channel ${channelId}: ${
+            conversationReference.conversation.id
+          } with conversation reference: ${JSON.stringify(conversationReference, null, 2)}`,
           this.LOG_CONTEXT
         );
+        try {
+          await turnContext.sendActivity({ text: `${message.subject}\n\n${message.body}`, textFormat: 'markdown' });
+        } catch (err) {
+          this.logger.error(
+            `Failed sending activity to channel ${channelId}: ${conversationReference.conversation.id}. ${err}`,
+            this.LOG_CONTEXT
+          );
 
-        throw err;
-      }
-    });
+          throw err;
+        }
+      });
+    }
   }
 }
 
