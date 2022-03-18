@@ -8,15 +8,16 @@ const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('EventService', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
-  const logger: Logger = ({
+  const logger: Logger = {
     debug: jest.fn(),
     info: jest.fn(),
     error: jest.fn(),
-  } as unknown) as Logger;
+  } as unknown as Logger;
 
   const directoryMock = {
     getServiceUrl: jest.fn(() => Promise.resolve(new URL('http://totally-real-directory'))),
     getResourceUrl: jest.fn(),
+    getMetadataByNamespaces: jest.fn(),
   };
 
   const tokenProviderMock = {

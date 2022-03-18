@@ -16,6 +16,7 @@ describe('ServiceRegistrar', () => {
   const directoryMock = {
     getServiceUrl: jest.fn(() => Promise.resolve(new URL('http://totally-real-directory'))),
     getResourceUrl: jest.fn(),
+    getMetadataByNamespaces: jest.fn(),
   };
 
   const tokenProviderMock = {

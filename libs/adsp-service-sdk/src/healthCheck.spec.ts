@@ -52,6 +52,7 @@ describe('healthCheck', () => {
     const directoryMock = {
       getServiceUrl: jest.fn(() => Promise.resolve(new URL('http://totally-real-service'))),
       getResourceUrl: jest.fn(),
+      getMetadataByNamespaces: jest.fn(),
     };
 
     it('can create health check', () => {

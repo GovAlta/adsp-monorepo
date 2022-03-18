@@ -24,6 +24,7 @@ describe('TenantService', () => {
   const directoryMock = {
     getServiceUrl: jest.fn(() => Promise.resolve(new URL('http://totally-real-service/api/tenant/v2'))),
     getResourceUrl: jest.fn(),
+    getMetadataByNamespaces: jest.fn(),
   };
 
   const tokenProviderMock = {
