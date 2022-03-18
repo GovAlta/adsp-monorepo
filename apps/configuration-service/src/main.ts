@@ -27,7 +27,7 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(cors());
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
-  const { coreStrategy, tenantStrategy, eventService, healthCheck } = await initializePlatform(
+  const { coreStrategy, tenantStrategy, tenantHandler, eventService, healthCheck } = await initializePlatform(
     {
       serviceId,
       displayName: 'Configuration service',
@@ -65,7 +65,7 @@ const initializeApp = async (): Promise<express.Application> => {
   });
 
   app.use(passport.initialize());
-  app.use('/configuration', passport.authenticate(['core', 'tenant'], { session: false }));
+  app.use('/configuration', passport.authenticate(['core', 'tenant'], { session: false }), tenantHandler);
 
   const validationService = new AjvValidationService(logger);
   const repositories = await createRepositories({ ...environment, validationService, logger });
