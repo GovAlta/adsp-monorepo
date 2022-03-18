@@ -341,9 +341,6 @@ When('the user clicks Confirm button on Delete subscription modal', function () 
   notificationsObj.deleteConfirmationModalConfirmBtn().click();
 });
 
-<<<<<<< HEAD
-// LD
-
 When('the user clicks edit button for contact information', function () {
   notificationsObj.contactInformationEdit().click();
   cy.wait(2000);
@@ -385,7 +382,6 @@ Then('the user views edited email, phone and support instructions', function () 
     notificationsObj.contactInformationInstructions().invoke('text').should('contain', newInstructions);
   });
 });
-=======
 Given('a tenant admin user is on notification subscribers page', function () {
   commonlib.tenantAdminDirectURLLogin(
     Cypress.config().baseUrl,
@@ -501,4 +497,3 @@ Then(
     notificationsObj.subscriberSubscriptions(addressAs, email).invoke('text').should('contain', subscription);
   }
 );
->>>>>>> 09200e6758b4dc1454044e230b925cf490ce1f17

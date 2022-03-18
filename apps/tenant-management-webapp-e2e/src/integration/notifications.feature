@@ -122,14 +122,6 @@ Feature: Notifications
     When the user clicks Close button in Preview an email template modal
     Then Preview an email template modal is closed
 
-  @TEST_CS-1191 @REQ_CS-1148 @regression
-  Scenario: As a tenant admin, I can configure subscription management contact information on notifications overview page
-    Given a tenant admin user is on notification overview page
-    When the user clicks edit button for contact information
-    Then the user edited email "abc@gov.ab.ca", phone "1 (780) 567-1456", and support instructions "autotest notification instruction"
-    And the user clicks Save button
-    Then the user views edited email, phone and support instructions
-
   @TEST_CS-1097 @REQ_CS-1031 @regression
   Scenario: As a tenant admin, I can find subscriptions for a particular subscriber
     Given a tenant admin user is on notification subscribers page
@@ -141,3 +133,11 @@ Feature: Notifications
     Then the user views subscribers with "address as" containing "auto test" and "email" containing "auto.test"
     When the user expands the subscription list for the subscriber of "Auto Test" and "auto.test@gov.ab.ca"
     Then the user views the subscription of "status-application-health-change" for the subscriber of "Auto Test" and "auto.test@gov.ab.ca"
+
+  @TEST_CS-1191 @REQ_CS-1148 @regression
+  Scenario: As a tenant admin, I can configure subscription management contact information on notifications overview page
+    Given a tenant admin user is on notification overview page
+    When the user clicks edit button for contact information
+    Then the user edited email "abc@gov.ab.ca", phone "1 (780) 567-1456", and support instructions "autotest notification instruction"
+    And the user clicks Save button
+    Then the user views edited email, phone and support instructions

@@ -256,8 +256,6 @@ class NotificationsPage {
     );
   }
 
-<<<<<<< HEAD
-  //LD
   contactInformationEdit() {
     return cy.get('[data-testid="icon-create"]');
   }
@@ -296,7 +294,6 @@ class NotificationsPage {
 
   contactInformationInstructions() {
     return cy.get('[data-testid="support-instructions"]');
-=======
   subscribersAddressAsSearchField() {
     return cy.xpath('//input[@id="name"]');
   }
@@ -331,7 +328,6 @@ class NotificationsPage {
     return cy.xpath(
       `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//following-sibling::tr[1]`
     );
->>>>>>> 09200e6758b4dc1454044e230b925cf490ce1f17
   }
 }
 export default NotificationsPage;
