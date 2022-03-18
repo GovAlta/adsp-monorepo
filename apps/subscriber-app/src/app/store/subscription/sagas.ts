@@ -53,7 +53,7 @@ export function* getSubscriberDetails(action: GetSubscriberAction): SagaIterator
     const { data } = yield call(axios.get, `/api/subscriber/v1/get-subscriber/${subscriberId}`);
 
     if (data) {
-      yield put(GetSubscriberDetailsSuccess(data?.subscriber));
+      yield put(GetSubscriberDetailsSuccess(data));
     }
   } catch (e) {
     yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
@@ -118,8 +118,9 @@ export function* unsubscribe(action: UnsubscribeAction): SagaIterator {
 export function* signedOutUnsubscribe(action: GetSignedOutSubscriberAction): SagaIterator {
   const type = action.payload.type;
   const id = action.payload.subscriberId;
+  const tenantId = action.payload.tenantId;
   try {
-    yield call(axios.delete, `/api/subscriber/v1/types/${type}/subscriptions/${id}`);
+    yield call(axios.delete, `/api/subscriber/v1/types/${type}/subscriptions/${id}?tenantId=${tenantId}`);
     yield put(
       SuccessNotification({
         message: 'Subscription removed.',

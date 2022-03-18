@@ -108,7 +108,7 @@ export function getSubscriber(tokenProvider: TokenProvider, directory: ServiceDi
       const token = await tokenProvider.getAccessToken();
 
       const subscribersUrl = new URL(
-        `/subscription/v1/subscribers/subscriberDetails/${subscriberId}`,
+        `/subscription/v1/subscribers/${subscriberId}?includeSubscriptions=true`,
         notificationServiceUrl
       );
       const { data } = await axios.get(subscribersUrl.href, {
@@ -125,11 +125,15 @@ export function unsubscribe(tokenProvider: TokenProvider, directory: ServiceDire
   return async (req, res, next) => {
     try {
       const { type, id } = req.params;
+      const { tenantId } = req.query;
 
       const notificationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:notification-service`);
       const token = await tokenProvider.getAccessToken();
 
-      const subscribersUrl = new URL(`/subscription/v1/types/${type}/subscriptions/${id}`, notificationServiceUrl);
+      const subscribersUrl = new URL(
+        `/subscription/v1/types/${type}/subscriptions/${id}?tenantId=${tenantId}`,
+        notificationServiceUrl
+      );
 
       const result = await axios.delete(subscribersUrl.href, {
         headers: { Authorization: `Bearer ${token}` },

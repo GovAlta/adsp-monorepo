@@ -7,8 +7,6 @@ export interface SubscriptionRepository {
   getSubscriber(tenantId: AdspId, subscriberId: string, byUserId?: boolean): Promise<SubscriberEntity>;
 
   getSubscription(type: NotificationTypeEntity, subscriberId: string): Promise<SubscriptionEntity>;
-  getSubscriberById(subscriberId: string): Promise<SubscriberEntity>;
-  getSubscriptionsCore(criteria: SubscriberCriteria): Promise<Results<SubscriptionEntity>>;
   getSubscriptions(
     tenantId: AdspId,
     top: number,

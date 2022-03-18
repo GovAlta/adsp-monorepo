@@ -41,7 +41,6 @@ describe('subscription router', () => {
     deleteSubscriber: jest.fn(),
     saveSubscription: jest.fn(),
     deleteSubscriptions: jest.fn(),
-    getSubscriberById: jest.fn(),
     saveSubscriber: jest.fn((entity) => Promise.resolve(entity)),
   };
 
@@ -69,7 +68,6 @@ describe('subscription router', () => {
     repositoryMock.saveSubscription.mockReset();
     repositoryMock.deleteSubscriptions.mockReset();
     repositoryMock.deleteSubscriber.mockReset();
-    repositoryMock.getSubscriberById.mockReset();
     verifyServiceMock.sendCode.mockReset();
     verifyServiceMock.verifyCode.mockReset();
   });

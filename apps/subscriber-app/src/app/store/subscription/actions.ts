@@ -58,7 +58,7 @@ export interface UnsubscribeAction {
 
 export interface GetSignedOutSubscriberAction {
   type: typeof SIGNED_OUT_UNSUBSCRIBE;
-  payload: { type: string; subscriberId: string };
+  payload: { type: string; subscriberId: string; tenantId: string };
 }
 
 export interface PatchSubscriberAction {
@@ -93,6 +93,7 @@ export const unsubscribe = (subscriptionInfo: { type: string; subscriberId: stri
 export const signedOutUnsubscribe = (subscriptionInfo: {
   type: string;
   subscriberId: string;
+  tenantId: string;
 }): GetSignedOutSubscriberAction => ({
   type: SIGNED_OUT_UNSUBSCRIBE,
   payload: {

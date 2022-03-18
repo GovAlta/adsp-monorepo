@@ -42,19 +42,8 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
       criteria.userId = subscriberId;
     }
 
-    if (tenantId) {
-      return new Promise<SubscriberEntity>((resolve, reject) =>
-        this.subscriberModel.findOne(criteria, null, { lean: true }, (err, doc) =>
-          err ? reject(err) : resolve(this.fromDoc(doc))
-        )
-      );
-    } else {
-      return new Promise<SubscriberEntity>((resolve, reject) =>
-        this.subscriberModel.find(criteria, (err, docs) => {
-          err ? reject(err) : resolve(docs.map((doc) => this.fromDoc(doc)));
-        })
-      );
-    }
+    const doc = await this.subscriberModel.findOne(criteria, null, { lean: true });
+    return this.fromDoc(doc);
   }
 
   async getSubscription(type: NotificationTypeEntity, subscriberId: string): Promise<SubscriptionEntity> {
@@ -71,22 +60,6 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
       .populate('subscriberId');
 
     return this.fromSubscriptionDoc(doc);
-  }
-
-  async getSubscriptionsCore(criteria: any): Promise<Results<SubscriptionEntity>> {
-    const docs = await this.subscriptionModel.find(criteria);
-    const top = 1000;
-    const skip = null;
-    const after = null;
-
-    return {
-      results: docs.map((doc) => this.fromSubscriptionDoc(doc)),
-      page: {
-        after,
-        next: encodeNext(docs.length, top, skip),
-        size: docs.length,
-      },
-    };
   }
 
   async getSubscriptions(

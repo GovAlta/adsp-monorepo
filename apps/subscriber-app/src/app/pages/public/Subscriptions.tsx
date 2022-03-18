@@ -96,6 +96,7 @@ const Subscriptions = (): JSX.Element => {
                 signedOutUnsubscribe({
                   type: selectedUnsubscribeSub.typeId,
                   subscriberId: selectedUnsubscribeSub.subscriberId,
+                  tenantId: subscriber?.tenantId,
                 })
               );
               resetSelectedUnsubscribe();
