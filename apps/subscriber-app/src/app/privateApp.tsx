@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Route, useParams } from 'react-router-dom';
 import Header from '@components/AppHeader';
 import { HeaderCtx } from '@lib/headerContext';
-import Container from '@components/Container';
 import { RootState } from '@store/index';
 import { KeycloakCheckSSOWithLogout, KeycloakRefreshToken } from '@store/tenant/actions';
 import { GoAPageLoader } from '@abgov/react-components';
@@ -16,7 +15,7 @@ interface privateAppProps {
   children: ReactNode;
 }
 export function PrivateApp({ children }: privateAppProps): JSX.Element {
-  const [title, setTitle] = useState<string>('Alberta Digital Service Platform - Subscription Management');
+  const [title, setTitle] = useState<string>('Alberta Digital Service Platform - Subscription management');
   const dispatch = useDispatch();
   const realm = useParams()['realm'];
   useEffect(() => {
@@ -31,7 +30,7 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
     <HeaderCtx.Provider value={{ setTitle }}>
       <Header serviceName={title} />
       <NotificationBanner />
-      <Container>{children}</Container>
+      {children}
       <Footer logoSrc={GoaLogo} />
     </HeaderCtx.Provider>
   );

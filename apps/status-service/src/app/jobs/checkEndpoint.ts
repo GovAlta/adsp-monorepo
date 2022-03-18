@@ -10,7 +10,8 @@ import { applicationStatusToHealthy, applicationStatusToUnhealthy } from '../eve
 import { HealthCheckJobs } from './healthCheckJobs';
 
 const ENTRY_SAMPLE_SIZE = 5;
-const MIN_PASS_COUNT = 3;
+const HEALTHY_MAX_FAIL_COUNT = 0;
+const UNHEALTHY_MIN_FAIL_COUNT = 3;
 
 type Getter = (url: string) => Promise<{ status: number | string }>;
 export interface CreateCheckEndpointProps {
@@ -59,33 +60,26 @@ async function doRequest(getter: Getter, url: string, logger: Logger): Promise<E
   }
 }
 
-const getNewEndpointStatus = (history: EndpointStatusEntry[], EntrySampleSize: number): EndpointStatusType => {
-  let passCount = 0;
-  let failedCount = 0;
-  const recentHistory = history
-    .sort((prev, next) => {
-      return next.timestamp - prev.timestamp;
-    })
-    .slice(0, EntrySampleSize);
+export const getNewEndpointStatus = (
+  current: EndpointStatusType,
+  samples: EndpointStatusEntry[]
+): EndpointStatusType => {
+  const failed = samples.filter((sample) => !sample.ok).length;
 
-  for (const h of recentHistory) {
-    passCount += h.ok ? 1 : 0;
-    failedCount += h.ok ? 0 : 1;
-
-    if (passCount >= MIN_PASS_COUNT) {
-      return 'online';
-    }
-
-    if (failedCount > EntrySampleSize - MIN_PASS_COUNT) {
-      return 'offline';
-    }
+  // Starting from pending, a single sample is sufficient to establish a starting status.
+  if (current === 'pending' || current === 'n/a') {
+    return failed ? 'offline' : 'online';
+  }
+  // If currently offline, then samples less than equal (max fail) before we determine it is online.
+  else if (current === 'offline' && failed <= HEALTHY_MAX_FAIL_COUNT) {
+    return 'online';
+  }
+  // If currently online, then samples greater than equal (min fail) failed means we consider it offline.
+  else if (current === 'online' && failed >= UNHEALTHY_MIN_FAIL_COUNT) {
+    return 'offline';
   }
 
-  if (recentHistory.length < EntrySampleSize) {
-    return 'pending';
-  }
-
-  return 'offline';
+  return current;
 };
 
 async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStatusEntry) {
@@ -94,24 +88,23 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
   await EndpointStatusEntryEntity.create(endpointStatusEntryRepository, statusEntry);
   // verify that in the last [ENTRY_SAMPLE_SIZE] minutes, at least [MIN_OK_COUNT] are ok
   const recentHistory = await endpointStatusEntryRepository.findRecentByUrl(url, ENTRY_SAMPLE_SIZE);
-  const newStatus = getNewEndpointStatus(recentHistory, ENTRY_SAMPLE_SIZE);
-  logger.debug(`Endpoint ${props.url} new status evaluated as: ${newStatus}`);
+  const healthCheckJobs = new HealthCheckJobs(props.logger);
+  const applicationIds = healthCheckJobs.idsByUrl(url);
 
-  const healCheckJob = new HealthCheckJobs(props.logger);
-  const applicationIds = healCheckJob.idsByUrl(url);
-
-  applicationIds.forEach(async (id) => {
-    const application = await serviceStatusRepository.get(id);
+  for (const applicationId of applicationIds) {
+    const application = await serviceStatusRepository.get(applicationId);
     // Make sure the application existed
     if (!application) {
       return;
     }
 
     const oldStatus = application.endpoint.status;
-
     logger.debug(
       `Evaluating status for ${application.name} (ID: ${application._id} ) with previous status of ${oldStatus}`
     );
+
+    const newStatus = getNewEndpointStatus(oldStatus, recentHistory);
+    logger.debug(`Endpoint ${props.url} new status evaluated as: ${newStatus}`);
 
     // set the application status based on the endpoints
     if (newStatus !== oldStatus) {
@@ -131,9 +124,11 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
         eventService.send(applicationStatusToUnhealthy(application, errMessage));
       }
 
-      await serviceStatusRepository
-        .save(application)
-        .catch((err) => console.error('failed to update service status: ', err));
+      try {
+        await serviceStatusRepository.save(application);
+      } catch (err) {
+        logger.info(`Failed to updated application ${application.name} (ID: ${application._id}) status.`);
+      }
     }
-  });
+  }
 }

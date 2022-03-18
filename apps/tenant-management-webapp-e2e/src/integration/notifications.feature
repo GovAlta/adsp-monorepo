@@ -48,26 +48,26 @@ Feature: Notifications
   Scenario: Test the registration of notification type in status service for application health change
     Given a tenant admin user is on notification types page
     # Verify the type and its events
-    Then the user "views" the notification type card of "status-application-health-change"
-    And the user "views" the event of "status-service:health-check-started" in "status-application-health-change"
-    And the user "views" the event of "status-service:health-check-stopped" in "status-application-health-change"
-    And the user "views" the event of "status-service:application-unhealthy" in "status-application-health-change"
-    And the user "views" the event of "status-service:application-healthy" in "status-application-health-change"
+    Then the user "views" the notification type card of "Application health check change"
+    And the user "views" the event of "status-service:health-check-started" in "Application health check change"
+    And the user "views" the event of "status-service:health-check-stopped" in "Application health check change"
+    And the user "views" the event of "status-service:application-unhealthy" in "Application health check change"
+    And the user "views" the event of "status-service:application-healthy" in "Application health check change"
     # Verify the events' email icons and preview links, and no edit buttons
-    And the user "views" "email template indicator" for "status-service:health-check-started" in "status-application-health-change"
-    And the user "views" "Preview link" for "status-service:health-check-started" in "status-application-health-change"
-    And the user "views" "Edit button" for "status-service:health-check-started" in "status-application-health-change"
-    And the user "views" "email template indicator" for "status-service:health-check-stopped" in "status-application-health-change"
-    And the user "views" "Preview link" for "status-service:health-check-stopped" in "status-application-health-change"
-    And the user "views" "Edit button" for "status-service:health-check-stopped" in "status-application-health-change"
-    And the user "views" "email template indicator" for "status-service:application-unhealthy" in "status-application-health-change"
-    And the user "views" "Preview link" for "status-service:application-unhealthy" in "status-application-health-change"
-    And the user "views" "Edit button" for "status-service:application-unhealthy" in "status-application-health-change"
-    And the user "views" "email template indicator" for "status-service:application-healthy" in "status-application-health-change"
-    And the user "views" "Preview link" for "status-service:application-healthy" in "status-application-health-change"
-    And the user "views" "Edit button" for "status-service:application-healthy" in "status-application-health-change"
+    And the user "views" "email template indicator" for "status-service:health-check-started" in "Application health check change"
+    And the user "views" "Preview link" for "status-service:health-check-started" in "Application health check change"
+    And the user "views" "Edit button" for "status-service:health-check-started" in "Application health check change"
+    And the user "views" "email template indicator" for "status-service:health-check-stopped" in "Application health check change"
+    And the user "views" "Preview link" for "status-service:health-check-stopped" in "Application health check change"
+    And the user "views" "Edit button" for "status-service:health-check-stopped" in "Application health check change"
+    And the user "views" "email template indicator" for "status-service:application-unhealthy" in "Application health check change"
+    And the user "views" "Preview link" for "status-service:application-unhealthy" in "Application health check change"
+    And the user "views" "Edit button" for "status-service:application-unhealthy" in "Application health check change"
+    And the user "views" "email template indicator" for "status-service:application-healthy" in "Application health check change"
+    And the user "views" "Preview link" for "status-service:application-healthy" in "Application health check change"
+    And the user "views" "Edit button" for "status-service:application-healthy" in "Application health check change"
     # Verify email template is read-only (pick one event)
-    When the user clicks Preview button on "status-service:health-check-started" in "status-application-health-change"
+    When the user clicks Preview button on "status-service:health-check-started" in "Application health check change"
     Then the user views Preview an email template modal
     # Future work: need in-depth research on test automation with Monaco-editor before we can automate test steps.
     # When the user attempts to edit the template
@@ -75,7 +75,7 @@ Feature: Notifications
     When the user clicks Close button in Preview an email template modal
     Then Preview an email template modal is closed
     # Verify the event is still there (had a bug of the event disappearing after preview)
-    And the user "views" the event of "status-service:health-check-started" in "status-application-health-change"
+    And the user "views" the event of "status-service:health-check-started" in "Application health check change"
 
   @TEST_CS-1081 @REQ_CS-1029 @TEST_CS-1002 @REQ_CS-1027 @regression
   Scenario: Test As a tenant admin, I can delete a subscription
@@ -87,12 +87,12 @@ Feature: Notifications
     Given a tenant admin user is on notification subscriptions page
     When the user types "Auto Test" in Search subuscriber address as field and "auto.test@gov.ab.ca" in Search subscriber email field
     And the user clicks Search button on notifications page
-    Then the user "views" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Status-Application-Health-Change"
-    When the user clicks delete button of "Auto Test", "auto.test@gov.ab.ca" under "Status-Application-Health-Change"
+    Then the user "views" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Application health check change"
+    When the user clicks delete button of "Auto Test", "auto.test@gov.ab.ca" under "Application health check change"
     Then the user views Delete subscription modal
     And the user views the Delete subscription confirmation message of "auto.test@gov.ab.ca"
     When the user clicks Confirm button on Delete subscription modal
-    Then the user "should not view" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Status-Application-Health-Change"
+    Then the user "should not view" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Application health check change"
     # Restore the subscription
     Given a tenant admin user is on status applications page
     Then the user views the subscribe checkbox is "unchecked"
@@ -102,22 +102,22 @@ Feature: Notifications
   @TEST_CS-986 @TEST_CS-443 @REQ_CS-1068 @REQ_CS-963 @REQ_CS-978 @regression
   Scenario: As a tenant admin, I can see notification type for application status change updates
     Given a tenant admin user is on notification types page
-    Then the user "views" the notification type card of "status-application-status-change"
-    And  the user views "status-application-status-change" has self-service-allowed attribute is "yes"
+    Then the user "views" the notification type card of "Application status update"
+    And the user views "Application status update" has self-service-allowed attribute is "yes"
     # Verify the events' email template indicator, preview link and edit button
-    And the user "views" the event of "status-service:application-status-changed" in "status-application-status-change"
-    And the user "views" the event of "status-service:application-notice-published" in "status-application-status-change"
-    And the user "views" "email template indicator" for "status-service:application-status-changed" in "status-application-status-change"
-    And the user "views" "Preview link" for "status-service:application-status-changed" in "status-application-status-change"
-    And the user "views" "Edit button" for "status-service:application-status-changed" in "status-application-status-change"
-    And the user "views" "email template indicator" for "status-service:application-notice-published" in "status-application-status-change"
-    And the user "views" "Preview link" for "status-service:application-notice-published" in "status-application-status-change"
-    And the user "views" "Edit button" for "status-service:application-notice-published" in "status-application-status-change"
-    When the user clicks Preview button on "status-service:application-status-changed" in "status-application-status-change"
+    And the user "views" the event of "status-service:application-status-changed" in "Application status update"
+    And the user "views" the event of "status-service:application-notice-published" in "Application status update"
+    And the user "views" "email template indicator" for "status-service:application-status-changed" in "Application status update"
+    And the user "views" "Preview link" for "status-service:application-status-changed" in "Application status update"
+    And the user "views" "Edit button" for "status-service:application-status-changed" in "Application status update"
+    And the user "views" "email template indicator" for "status-service:application-notice-published" in "Application status update"
+    And the user "views" "Preview link" for "status-service:application-notice-published" in "Application status update"
+    And the user "views" "Edit button" for "status-service:application-notice-published" in "Application status update"
+    When the user clicks Preview button on "status-service:application-status-changed" in "Application status update"
     Then the user views Preview an email template modal
     When the user clicks Close button in Preview an email template modal
     Then Preview an email template modal is closed
-    When the user clicks Preview button on "status-service:application-notice-published" in "status-application-status-change"
+    When the user clicks Preview button on "status-service:application-notice-published" in "Application status update"
     Then the user views Preview an email template modal
     When the user clicks Close button in Preview an email template modal
     Then Preview an email template modal is closed
@@ -129,3 +129,15 @@ Feature: Notifications
     Then the user edited email "abc@gov.ab.ca", phone "1 (780) 567-1456", and support instructions "autotest notification instruction"
     And the user clicks Save button
     Then the user views edited email, phone and support instructions
+
+  @TEST_CS-1097 @REQ_CS-1031 @regression
+  Scenario: As a tenant admin, I can find subscriptions for a particular subscriber
+    Given a tenant admin user is on notification subscribers page
+    When the user searches subscribers with "address as" containing "auto"
+    Then the user views all the subscribers with "address as" containing "auto"
+    When the user searches subscribers with "email" containing "auto.Test"
+    Then the user views all the subscribers with "email" containing "auto.Test"
+    When the user searches subscribers with address as containing "auto test" and email containing "auto.test"
+    Then the user views subscribers with "address as" containing "auto test" and "email" containing "auto.test"
+    When the user expands the subscription list for the subscriber of "Auto Test" and "auto.test@gov.ab.ca"
+    Then the user views the subscription of "status-application-health-change" for the subscriber of "Auto Test" and "auto.test@gov.ab.ca"

@@ -310,10 +310,10 @@ Then(
   function (viewOrNot, addressAd, email, notificationType) {
     switch (viewOrNot) {
       case 'views':
-        notificationsObj.notificationRecord(notificationType.toLowerCase(), addressAd, email).should('exist');
+        notificationsObj.notificationRecord(notificationType, addressAd, email).should('exist');
         break;
       case 'should not view':
-        notificationsObj.notificationRecord(notificationType.toLowerCase(), addressAd, email).should('not.exist');
+        notificationsObj.notificationRecord(notificationType, addressAd, email).should('not.exist');
         break;
       default:
         expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
@@ -324,7 +324,7 @@ Then(
 When(
   'the user clicks delete button of {string}, {string} under {string}',
   function (addressAd, email, notificationType) {
-    notificationsObj.deleteIconForNotificationRecord(notificationType.toLowerCase(), addressAd, email).click();
+    notificationsObj.deleteIconForNotificationRecord(notificationType, addressAd, email).click();
   }
 );
 
@@ -341,6 +341,7 @@ When('the user clicks Confirm button on Delete subscription modal', function () 
   notificationsObj.deleteConfirmationModalConfirmBtn().click();
 });
 
+<<<<<<< HEAD
 // LD
 
 When('the user clicks edit button for contact information', function () {
@@ -384,3 +385,120 @@ Then('the user views edited email, phone and support instructions', function () 
     notificationsObj.contactInformationInstructions().invoke('text').should('contain', newInstructions);
   });
 });
+=======
+Given('a tenant admin user is on notification subscribers page', function () {
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
+  commonlib.tenantAdminMenuItem('Notifications', 4000);
+  commonObj.serviceTab('Notifications', 'Subscribers').click();
+  cy.wait(5000);
+});
+
+When('the user searches subscribers with {string} containing {string}', function (searchField, searchText) {
+  //Enter search text
+  switch (searchField) {
+    case 'address as':
+      notificationsObj.subscribersAddressAsSearchField().clear().type(searchText);
+      notificationsObj.subscribersEmailSearchField().clear();
+      break;
+    case 'email':
+      notificationsObj.subscribersEmailSearchField().clear().type(searchText);
+      notificationsObj.subscribersAddressAsSearchField().clear();
+      break;
+    default:
+      expect(searchField).to.be.oneOf(['address as', 'email']);
+  }
+
+  //Click Search button
+  notificationsObj.subscribersSearchBtn().click();
+  cy.wait(2000);
+});
+
+When(
+  'the user searches subscribers with address as containing {string} and email containing {string}',
+  function (addressAsSearchText, emailSearchText) {
+    //Enter search text
+    notificationsObj.subscribersAddressAsSearchField().clear().type(addressAsSearchText);
+    notificationsObj.subscribersEmailSearchField().clear().type(emailSearchText);
+
+    //Click Search button
+    notificationsObj.subscribersSearchBtn().click();
+    cy.wait(2000);
+  }
+);
+
+Then('the user views all the subscribers with {string} containing {string}', function (headerLabel, searchText) {
+  //Find which column to search
+  let columnNumber;
+  notificationsObj
+    .subscriberTableHeader()
+    .get('th')
+    .then((elements) => {
+      for (let i = 0; i < elements.length; i++) {
+        if (elements[i].innerText.toLowerCase() == headerLabel) {
+          columnNumber = i;
+        }
+      }
+    });
+
+  //Search all cells of the column
+  notificationsObj.subscriberTableBody().each((rows) => {
+    cy.wrap(rows).within(() => {
+      cy.get('td').each(($col, index) => {
+        if (index == columnNumber) {
+          expect($col.text().toLowerCase()).to.contain(searchText.toLowerCase());
+        }
+      });
+    });
+  });
+});
+
+Then(
+  'the user views subscribers with {string} containing {string} and {string} containing {string}',
+  function (headerLabel1, searchText1, headerLabel2, searchText2) {
+    //Find which columns to search
+    let columnNumber1;
+    let columnNumber2;
+    notificationsObj
+      .subscriberTableHeader()
+      .get('th')
+      .then((elements) => {
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].innerText.toLowerCase() == headerLabel1) {
+            columnNumber1 = i;
+          } else if (elements[i].innerText.toLowerCase() == headerLabel2) {
+            columnNumber2 = i;
+          }
+        }
+      });
+
+    //Search all cells of the columns
+    notificationsObj.subscriberTableBody().each((rows) => {
+      cy.wrap(rows).within(() => {
+        cy.get('td').each(($col, index) => {
+          if (index == columnNumber1) {
+            expect($col.text().toLowerCase()).to.contain(searchText1.toLowerCase());
+          } else if (index == columnNumber2) {
+            expect($col.text().toLowerCase()).to.contain(searchText2.toLowerCase());
+          }
+        });
+      });
+    });
+  }
+);
+
+When('the user expands the subscription list for the subscriber of {string} and {string}', function (addressAs, email) {
+  notificationsObj.subscriberIconEye(addressAs, email).click();
+});
+
+Then(
+  'the user views the subscription of {string} for the subscriber of {string} and {string}',
+  function (subscription, addressAs, email) {
+    notificationsObj.subscriberSubscriptions(addressAs, email).invoke('text').should('contain', subscription);
+  }
+);
+>>>>>>> 09200e6758b4dc1454044e230b925cf490ce1f17

@@ -6,11 +6,18 @@ export interface Service {
   namespace: string;
   api?: string;
   url: string;
+  description?: string;
+  _links?: Links;
+}
+export interface Links {
+  self: string;
+  docs?: string;
+  api?: string;
+  health?: string;
 }
 export const defaultService: Service = {
   name: '',
   namespace: '',
-  api: '',
   url: '',
 };
 

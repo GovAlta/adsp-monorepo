@@ -72,8 +72,8 @@ describe('NotificationConfiguration', () => {
   });
 
   describe('getNotificationType', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const configuration = new NotificationConfiguration(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       { contact: {} as any, test: type },
       { base: baseType },
       tenantId
@@ -161,7 +161,10 @@ describe('NotificationConfiguration', () => {
     });
 
     it('can return type for event', () => {
-      const types = configuration.getEventNotificationTypes({ namespace: 'test', name: 'test-complete' } as DomainEvent);
+      const types = configuration.getEventNotificationTypes({
+        namespace: 'test',
+        name: 'test-complete',
+      } as DomainEvent);
       expect(types).toBeTruthy();
       expect(types.length).toBe(1);
       expect(types[0].name).toBe('Base Type');

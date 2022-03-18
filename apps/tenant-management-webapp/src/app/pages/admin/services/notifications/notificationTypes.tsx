@@ -13,6 +13,7 @@ import { FetchRealmRoles } from '@store/tenant/actions';
 import { isDuplicatedNotificationName } from './validation';
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
+import MailIcon from '@assets/icons/mail-outline.svg';
 
 import {
   UpdateNotificationTypeService,
@@ -38,6 +39,7 @@ import { PreviewTemplate } from './emailPreviewEditor/PreviewTemplate';
 import { dynamicGeneratePayload } from '@lib/dynamicPlaceHolder';
 import { convertToSuggestion } from '@lib/autoComplete';
 import { useDebounce } from '@lib/useDebounce';
+import { subscriberAppUrlSelector } from './selectors';
 
 const emptyNotificationType: NotificationItem = {
   name: '',
@@ -86,9 +88,12 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
+  const tenant = useSelector((state: RootState) => ({ name: state.tenant?.name, realm: state.session.realm }));
   const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
   const eventDef = eventDefinitions[`${selectedEvent?.namespace}:${selectedEvent?.name}`];
-  const htmlPayload = dynamicGeneratePayload(eventDef);
+
+  const subscriberAppUrl = useSelector(subscriberAppUrlSelector);
+  const htmlPayload = dynamicGeneratePayload(tenant, eventDef, subscriberAppUrl);
   const serviceName = `${selectedEvent?.namespace}:${selectedEvent?.name}`;
 
   const getEventSuggestion = () => {
@@ -412,12 +417,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                         </div>
                         <div className="columnFlex height-100">
                           <div className="flex1 flex flexEndAlign">
-                            <NotificationBorder className="smallPadding">
-                              <a className="noCursor">
-                                <GoAIcon type="mail" style="filled" />
-                              </a>
-                            </NotificationBorder>
-
+                            <img src={MailIcon} alt="non-interactive email icon" data-testid="icon-mail" />
                             <div className="rightAlignEdit">
                               <a
                                 style={{ marginRight: '20px' }}
@@ -528,11 +528,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           <div className="flex1 flex flexEndAlign">
                             <div className="flex1">
                               <MailButton>
-                                <NotificationBorder className="smallPadding">
-                                  <a className="noCursor">
-                                    <GoAIcon type="mail" style="filled" />
-                                  </a>
-                                </NotificationBorder>
+                                <img src={MailIcon} alt="non-interactive email icon" data-testid="icon-mail" />
                               </MailButton>
                               {event.customized && <SmallText>Edited</SmallText>}
                             </div>
@@ -779,7 +775,7 @@ const Buttons = styled.div`
 `;
 
 const NotificationBorder = styled.div`
-  border: 1px solid #56a0d8;
+  border: 1px solid #666666;
   margin: 3px;
   border-radius: 3px;
 `;
@@ -853,6 +849,10 @@ const NotificationStyles = styled.div`
 
   .smallPadding {
     padding: 3px;
+  }
+
+  .mail-outline {
+    padding: 0px 3px;
   }
 
   .flexEndAlign {

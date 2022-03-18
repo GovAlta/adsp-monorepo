@@ -19,7 +19,7 @@ interface FetchContactInfoSucceededAction {
 export interface FetchContactInfoAction {
   type: typeof FETCH_CONTACT_INFO;
   payload: {
-    realm: string;
+    tenant: { realm?: string; tenantId?: string };
   };
 }
 
@@ -36,9 +36,9 @@ export const FetchContactInfoSucceededService = (notificationInfo: {
   },
 });
 
-export const FetchContactInfoService = (realm: string): FetchContactInfoAction => ({
+export const FetchContactInfoService = (tenant: { realm?: string; tenantId?: string }): FetchContactInfoAction => ({
   type: FETCH_CONTACT_INFO,
   payload: {
-    realm,
+    tenant,
   },
 });

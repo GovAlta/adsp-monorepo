@@ -34,6 +34,8 @@ import {
   GET_ALL_TYPE_SUBSCRIPTIONS,
   SUBSCRIBE,
   DeleteSubscriberSuccess,
+  DELETE_SUBSCRIPTION,
+  DeleteSubscriptionSuccess,
 } from './actions';
 import { Subscriber, SubscriptionWrapper } from './models';
 import { RootState } from '../index';
@@ -63,7 +65,10 @@ export function* getMySubscriber(): SagaIterator {
 
       yield put(GetMySubscriberSuccess(result));
     } catch (e) {
-      yield put(ErrorNotification({ message: `Subscriptions (getSubscriber): ${e.message}` }));
+      // Don't show error for 404 since that is expected when user has never subscribed before.
+      if (!axios.isAxiosError(e) || e.response.status !== 404) {
+        yield put(ErrorNotification({ message: `Subscriptions (getSubscriber): ${e.message}` }));
+      }
     }
   }
 }
@@ -87,11 +92,8 @@ function* subscribe(action: SubscribeAction): SagaIterator {
       );
 
       const result = response.data.subscriber;
-
       const subData: Subscriber = {
-        id: result.id,
-        urn: result.urn,
-        channels: result.channels,
+        ...result,
       };
 
       yield put(SubscribeSuccess({ data: { type: type, data: subData, email: email } }));
@@ -115,6 +117,7 @@ function* unsubscribe(action: UnsubscribeAction): SagaIterator {
 
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const userId: string = yield select((state: RootState) => state.session.userInfo?.sub);
 
   if (configBaseUrl && token) {
     try {
@@ -123,6 +126,35 @@ function* unsubscribe(action: UnsubscribeAction): SagaIterator {
       });
 
       yield put(UnsubscribeSuccess(subscriber, type));
+      if (subscriber.userId === userId) {
+        yield put(
+          SuccessNotification({
+            message: `You are unsubscribed! You will no longer receive notifications for ${type}.`,
+          })
+        );
+      }
+    } catch (e) {
+      yield put(ErrorNotification({ message: `Subscriptions (unsubscribe): ${e.message}` }));
+    }
+  }
+}
+
+// deletes a subscription for a given subscriberId
+function* deleteSubscription(action: UnsubscribeAction): SagaIterator {
+  const type = action.payload.subscriptionInfo.data.type;
+  const id = action.payload.subscriptionInfo.data.data.id;
+  const subscriber = action.payload.subscriptionInfo.data.data;
+
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  if (configBaseUrl && token) {
+    try {
+      yield call(axios.delete, `${configBaseUrl}/subscription/v1/types/${type}/subscriptions/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      yield put(DeleteSubscriptionSuccess(subscriber, type));
     } catch (e) {
       yield put(ErrorNotification({ message: `Subscriptions (unsubscribe): ${e.message}` }));
     }
@@ -135,10 +167,8 @@ function* getAllTypeSubscriptions(action: GetAllTypeSubscriptionsAction): SagaIt
     ...state.notification.core,
   }));
 
-  if (!Object.keys(notificationTypes).length) {
-    yield call(fetchCoreNotificationTypes);
-    yield call(fetchNotificationTypes);
-  }
+  yield call(fetchCoreNotificationTypes);
+  yield call(fetchNotificationTypes);
 
   notificationTypes = yield select((state: RootState) => ({
     ...state.notification.core,
@@ -157,25 +187,22 @@ function* getTypeSubscriptions(action: GetTypeSubscriptionsActions): SagaIterato
 
   if (configBaseUrl && token) {
     try {
+      const subscriberCriteria =
+        criteria.name || criteria.email
+          ? JSON.stringify({
+              name: criteria.name || undefined,
+              email: criteria.email || undefined,
+            })
+          : null;
       const response = yield call(
         axios.get,
-        `${configBaseUrl}/subscription/v1/types/${type}/subscriptions/?name=${criteria.name}&email=${
-          criteria.email
+        `${configBaseUrl}/subscription/v1/types/${type}/subscriptions?${
+          subscriberCriteria ? `subscriberCriteria=${subscriberCriteria}` : ''
         }&top=10${after ? `&after=${after}` : ''}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // TODO: The subscriber criteria are not implemented on the API... should be handled server side.
-      const subscriptions = response.data.results.filter((result: SubscriptionWrapper) => {
-        return (
-          (!criteria.name || result.subscriber?.addressAs?.toLowerCase().includes(criteria.name.toLowerCase())) &&
-          (!criteria.email ||
-            result.subscriber?.channels?.find(
-              ({ channel, address }) =>
-                channel === 'email' && address?.toLowerCase().includes(criteria.email.toLowerCase())
-            ))
-        );
-      });
+      const subscriptions = response.data.results;
 
       yield put(GetTypeSubscriptionSuccess(type, subscriptions, after, response.data.page.next));
     } catch (e) {
@@ -331,6 +358,7 @@ export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(GET_MY_SUBSCRIBER, getMySubscriber);
   yield takeEvery(SUBSCRIBE, subscribe);
   yield takeEvery(UNSUBSCRIBE, unsubscribe);
+  yield takeEvery(DELETE_SUBSCRIPTION, deleteSubscription);
   yield takeEvery(GET_ALL_TYPE_SUBSCRIPTIONS, getAllTypeSubscriptions);
   yield takeEvery(GET_TYPE_SUBSCRIPTIONS, getTypeSubscriptions);
   yield takeEvery(GET_SUBSCRIBER_SUBSCRIPTIONS, getSubscriberSubscriptions);

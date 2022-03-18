@@ -7,6 +7,7 @@ import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { createSubscriberRouter } from './subscriber/router';
 import { createConfigurationRouter } from './configuration/router';
+import { createTenantRouter } from './tenant/router';
 
 const logger = createLogger('subscriber-gateway', environment.LOG_LEVEL);
 
@@ -41,8 +42,13 @@ const initializeApp = async (): Promise<express.Application> => {
     tenantService,
     tokenProvider,
   });
+  const tenantRouter = createTenantRouter({
+    ...environment,
+    tenantService,
+  });
   app.use('/subscriber/v1', subscriberRouter);
   app.use('/configuration/v1', configurationRouter);
+  app.use('/tenant/v1', tenantRouter);
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();

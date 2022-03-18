@@ -1,4 +1,12 @@
-import type { AdspId, ConfigurationService, EventService, TenantService, TokenProvider } from '@abgov/adsp-service-sdk';
+import {
+  adspId,
+  AdspId,
+  ConfigurationService,
+  EventService,
+  ServiceDirectory,
+  TenantService,
+  TokenProvider,
+} from '@abgov/adsp-service-sdk';
 import type { DomainEvent, WorkQueueService } from '@core-services/core-common';
 import { Logger } from 'winston';
 import type { Notification } from '../types';
@@ -6,13 +14,13 @@ import type { SubscriptionRepository } from '../repository';
 import type { TemplateService } from '../template';
 import { NotificationConfiguration } from '../configuration';
 import { notificationsGenerated } from '../events';
-import { NotificationTypeEntity } from '../model';
 
 interface ProcessEventJobProps {
   logger: Logger;
   serviceId: AdspId;
   tokenProvider: TokenProvider;
   tenantService: TenantService;
+  directory: ServiceDirectory;
   configurationService: ConfigurationService;
   eventService: EventService;
   templateService: TemplateService;
@@ -27,6 +35,7 @@ export const createProcessEventJob =
     serviceId,
     tokenProvider,
     tenantService,
+    directory,
     configurationService,
     eventService,
     templateService,
@@ -50,6 +59,7 @@ export const createProcessEventJob =
 
     try {
       const tenant = await tenantService.getTenant(tenantId);
+      const subscriberAppUrl = await directory.getServiceUrl(adspId`urn:ads:platform:subscriber-app`);
 
       const token = await tokenProvider.getAccessToken();
       const configuration = await configurationService.getConfiguration<
@@ -68,7 +78,16 @@ export const createProcessEventJob =
           const { results, page } = await subscriptionRepository.getSubscriptions(tenantId, 1000, after, {
             typeIdEquals: type.id,
           });
-          const pageNotifications = type.generateNotifications(logger, templateService, tenant, event, results);
+          const pageNotifications = type.generateNotifications(
+            logger,
+            templateService,
+            subscriberAppUrl,
+            event,
+            results,
+            {
+              tenant,
+            }
+          );
           notifications.push(...pageNotifications);
           after = page.next;
         } while (after);

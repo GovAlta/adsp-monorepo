@@ -3,16 +3,17 @@ import { ErrorNotification, SuccessNotification } from '@store/notifications/act
 import { SagaIterator } from '@redux-saga/core';
 import {
   GET_MY_SUBSCRIBER_DETAILS,
-  GetMySubscriberDetailsSuccess,
+  GET_SUBSCRIBER_DETAILS,
+  GetSubscriberDetailsSuccess,
   UNSUBSCRIBE,
   UnsubscribeAction,
   UnsubscribeSuccess,
   PatchSubscriberAction,
+  GetSubscriberAction,
   PatchSubscriberSuccess,
   PATCH_SUBSCRIBER,
   NoSubscriberAction,
 } from './actions';
-import { Subscriber } from './models';
 
 import { RootState } from '../index';
 import axios from 'axios';
@@ -23,7 +24,7 @@ export function* getMySubscriberDetails(): SagaIterator {
 
   if (configBaseUrl && token) {
     try {
-      const response = yield call(
+      const { data } = yield call(
         axios.get,
         `${configBaseUrl}/subscription/v1/subscribers/my-subscriber?includeSubscriptions=true`,
         {
@@ -31,10 +32,8 @@ export function* getMySubscriberDetails(): SagaIterator {
         }
       );
 
-      const result: Subscriber = response.data;
-
-      if (result) {
-        yield put(GetMySubscriberDetailsSuccess(result));
+      if (data) {
+        yield put(GetSubscriberDetailsSuccess(data));
       }
     } catch (e) {
       if (e.response.status === 404) {
@@ -43,6 +42,19 @@ export function* getMySubscriberDetails(): SagaIterator {
         yield put(ErrorNotification({ message: `${e.message} - getMySubscriberDetails` }));
       }
     }
+  }
+}
+
+export function* getSubscriberDetails(action: GetSubscriberAction): SagaIterator {
+  try {
+    const subscriberId = action.payload.subscriberId;
+    const { data } = yield call(axios.get, `/api/subscriber/v1/get-subscriber/${subscriberId}`);
+
+    if (data) {
+      yield put(GetSubscriberDetailsSuccess(data));
+    }
+  } catch (e) {
+    yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
   }
 }
 
@@ -102,6 +114,7 @@ export function* unsubscribe(action: UnsubscribeAction): SagaIterator {
 }
 export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(GET_MY_SUBSCRIBER_DETAILS, getMySubscriberDetails);
+  yield takeEvery(GET_SUBSCRIBER_DETAILS, getSubscriberDetails);
   yield takeEvery(UNSUBSCRIBE, unsubscribe);
   yield takeEvery(PATCH_SUBSCRIBER, patchSubscriber);
 }

@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { SubscriptionList } from './subscriptionList';
-import { GetAllTypeSubscriptions, Unsubscribe } from '@store/subscription/actions';
+import { GetAllTypeSubscriptions, DeleteSubscription } from '@store/subscription/actions';
 import type { Subscriber, SubscriberSearchCriteria, SubscriptionSearchCriteria } from '@store/subscription/models';
 import { SubscribersSearchForm } from './subscribers/subscriberSearchForm';
 import { CheckSubscriberRoles } from './checkSubscriberRoles';
@@ -54,7 +54,7 @@ export const Subscriptions: FunctionComponent = () => {
           onCancel={() => setShowDeleteConfirmation(false)}
           onDelete={() => {
             setShowDeleteConfirmation(false);
-            dispatch(Unsubscribe({ data: { type: selectedType, data: selectedSubscription } }));
+            dispatch(DeleteSubscription({ data: { type: selectedType, data: selectedSubscription } }));
           }}
         />
       )}

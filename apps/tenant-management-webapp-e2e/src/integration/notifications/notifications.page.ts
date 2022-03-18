@@ -256,6 +256,7 @@ class NotificationsPage {
     );
   }
 
+<<<<<<< HEAD
   //LD
   contactInformationEdit() {
     return cy.get('[data-testid="icon-create"]');
@@ -295,6 +296,42 @@ class NotificationsPage {
 
   contactInformationInstructions() {
     return cy.get('[data-testid="support-instructions"]');
+=======
+  subscribersAddressAsSearchField() {
+    return cy.xpath('//input[@id="name"]');
+  }
+
+  subscribersEmailSearchField() {
+    return cy.xpath('//input[@id="email"]');
+  }
+
+  subscribersSearchBtn() {
+    return cy.xpath('//button[@title="Search"]');
+  }
+
+  subscribersResetBtn() {
+    return cy.xpath('//button[@title="Reset"]');
+  }
+
+  subscriberTableHeader() {
+    return cy.xpath('//*[@data-testid="subscribers-list-title"]//thead');
+  }
+
+  subscriberTableBody() {
+    return cy.xpath('//*[@data-testid="subscribers-list-title"]//tbody');
+  }
+
+  subscriberIconEye(addressAs, email) {
+    return cy.xpath(
+      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//*[@data-testid="icon-eye"]`
+    );
+  }
+
+  subscriberSubscriptions(addressAs, email) {
+    return cy.xpath(
+      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//following-sibling::tr[1]`
+    );
+>>>>>>> 09200e6758b4dc1454044e230b925cf490ce1f17
   }
 }
 export default NotificationsPage;

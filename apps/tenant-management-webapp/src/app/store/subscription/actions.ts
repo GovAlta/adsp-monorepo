@@ -7,6 +7,8 @@ export const SUBSCRIBE = 'tenant/subscriber-service/subscribe';
 export const SUBSCRIBE_SUCCESS = 'tenant/subscriber-service/subscribe-success';
 export const UNSUBSCRIBE = 'tenant/subscriber-service/unsubscribe';
 export const UNSUBSCRIBE_SUCCESS = 'tenant/subscriber-service/unsubscribe-success';
+export const DELETE_SUBSCRIPTION = 'tenant/subscriber-service/delete-subscription';
+export const DELETE_SUBSCRIPTION_SUCCESS = 'tenant/subscriber-service/delete-subscription-success';
 
 export const UPDATE_SUBSCRIBER = 'tenant/subscriber-service/update-subscriber';
 export const UPDATE_SUBSCRIBER_SUCCESS = 'tenant/subscriber-service/update-subscriber-success';
@@ -42,7 +44,9 @@ export type ActionTypes =
   | GetSubscriberSubscriptionsSuccessAction
   | ResolveSubscriberUserAction
   | ResolveSubscriberUserSuccessAction
-  | DeleteSubscriberSuccessAction;
+  | DeleteSubscriberSuccessAction
+  | DeleteSubscriptionAction
+  | DeleteSubscriptionSuccessAction;
 
 export interface GetMySubscriberAction {
   type: typeof GET_MY_SUBSCRIBER;
@@ -74,6 +78,16 @@ export interface UnsubscribeAction {
   payload: {
     subscriptionInfo: { data: { type: string; data: Subscriber } };
   };
+}
+export interface DeleteSubscriptionAction {
+  type: typeof DELETE_SUBSCRIPTION;
+  payload: {
+    subscriptionInfo: { data: { type: string; data: Subscriber } };
+  };
+}
+export interface DeleteSubscriptionSuccessAction {
+  type: typeof DELETE_SUBSCRIPTION_SUCCESS;
+  payload: { subscriber: Subscriber; type: string };
 }
 
 export interface UnsubscribeSuccessAction {
@@ -217,8 +231,22 @@ export const Unsubscribe = (subscriptionInfo: { data: { type: string; data: Subs
   },
 });
 
+export const DeleteSubscription = (subscriptionInfo: {
+  data: { type: string; data: Subscriber };
+}): DeleteSubscriptionAction => ({
+  type: DELETE_SUBSCRIPTION,
+  payload: {
+    subscriptionInfo,
+  },
+});
+
 export const UnsubscribeSuccess = (subscriber: Subscriber, type: string): UnsubscribeSuccessAction => ({
   type: UNSUBSCRIBE_SUCCESS,
+  payload: { subscriber, type },
+});
+
+export const DeleteSubscriptionSuccess = (subscriber: Subscriber, type: string): DeleteSubscriptionSuccessAction => ({
+  type: DELETE_SUBSCRIPTION_SUCCESS,
   payload: { subscriber, type },
 });
 
