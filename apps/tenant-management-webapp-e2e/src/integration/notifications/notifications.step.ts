@@ -459,11 +459,10 @@ Then(
 
 When('the user clicks edit button for contact information', function () {
   notificationsObj.contactInformationEdit().click();
-  cy.wait(2000);
   notificationsObj.editContactModal().should('exist');
 });
 
-Then(
+When(
   'the user edited email {string}, phone {string}, and support instructions {string}',
   function (email, phone, instruction) {
     const rand_str = String(Math.floor(Math.random() * 1000 + 1000));
@@ -485,6 +484,7 @@ Then(
 
 Then('the user clicks Save button', function () {
   notificationsObj.editContactModalSaveBtn().click();
+  cy.wait(2000);
 });
 
 Then('the user views edited email, phone and support instructions', function () {
