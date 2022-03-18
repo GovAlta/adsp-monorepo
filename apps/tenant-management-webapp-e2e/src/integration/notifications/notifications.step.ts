@@ -354,12 +354,18 @@ Then(
   function (email, phone, instruction) {
     const rand_str = String(Math.floor(Math.random() * 1000 + 1000));
     const newEmail = rand_str + email;
-    const newPhone = String(phone.slice(-7)) + rand_str;
+    const newrandPhone = phone.slice(3, 6) + phone.slice(8, 11) + rand_str;
     const newInstructions = rand_str + instruction;
 
     notificationsObj.editContactModalEmail().clear().type(newEmail);
-    notificationsObj.editContactModalPhone().clear().type(newPhone);
+    notificationsObj.editContactModalPhone().clear().type(newrandPhone);
     notificationsObj.editContactModalInstructions().clear().type(newInstructions);
+
+    const newPhone = phone.slice(0, -4) + rand_str;
+
+    cy.wrap(newEmail).as('newEmail');
+    cy.wrap(newPhone).as('newPhone');
+    cy.wrap(newInstructions).as('newInstructions');
   }
 );
 
@@ -367,11 +373,14 @@ Then('the user clicks Save button', function () {
   notificationsObj.editContactModalSaveBtn().click();
 });
 
-Then(
-  'the user views email {string}, phone {string}, and support instructions {string}',
-  function (email, phone, instruction) {
-    notificationsObj.contactInformationEmail().invoke('text').should('contain', email);
-    notificationsObj.contactInformationPhone().invoke('text').should('contain', phone);
-    notificationsObj.contactInformationInstructions().invoke('text').should('contain', instruction);
-  }
-);
+Then('the user views edited email, phone and support instructions', function () {
+  cy.get('@newEmail').then((newEmail) => {
+    notificationsObj.contactInformationEmail().invoke('text').should('contain', newEmail);
+  });
+  cy.get('@newPhone').then((newPhone) => {
+    notificationsObj.contactInformationPhone().invoke('text').should('contain', newPhone);
+  });
+  cy.get('@newInstructions').then((newInstructions) => {
+    notificationsObj.contactInformationInstructions().invoke('text').should('contain', newInstructions);
+  });
+});
