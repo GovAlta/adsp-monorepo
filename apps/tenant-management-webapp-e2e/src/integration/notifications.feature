@@ -138,6 +138,7 @@ Feature: Notifications
   Scenario: As a tenant admin, I can configure subscription management contact information on notifications overview page
     Given a tenant admin user is on notification overview page
     When the user clicks edit button for contact information
+    Then the user views Edit contact information modal
     When the user edited email "abc@gov.ab.ca", phone "1 (780) 567-1456", and support instructions "autotest notification instruction"
     And the user clicks Save button
     Then the user views edited email, phone and support instructions

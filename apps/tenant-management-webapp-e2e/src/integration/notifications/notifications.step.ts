@@ -462,6 +462,10 @@ When('the user clicks edit button for contact information', function () {
   notificationsObj.editContactModal().should('exist');
 });
 
+Then('the user views Edit contact information modal', function () {
+  notificationsObj.editContactModal().should('exist');
+});
+
 When(
   'the user edited email {string}, phone {string}, and support instructions {string}',
   function (email, phone, instruction) {
