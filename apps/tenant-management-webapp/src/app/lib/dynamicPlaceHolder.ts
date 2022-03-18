@@ -130,8 +130,12 @@ export const eventObject = {
     email: 'auto.test@gov.ab.ca',
   },
 };
-// eslint-disable-next-line
-export const dynamicGeneratePayload: any = (eventDef: EventDefinition) => {
+
+export const dynamicGeneratePayload = (
+  tenant: { name: string; realm: string },
+  eventDef: EventDefinition,
+  managementUrl: string
+): Record<string, unknown> => {
   const eventName = eventDef?.name;
   const eventNamespace = eventDef?.namespace;
 
@@ -192,5 +196,9 @@ export const dynamicGeneratePayload: any = (eventDef: EventDefinition) => {
     }
   }
 
-  return { event: { payload: payload } };
+  return {
+    event: { payload: payload },
+    tenant,
+    managementUrl,
+  };
 };

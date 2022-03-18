@@ -54,9 +54,7 @@ const Subscriptions = (): JSX.Element => {
   }, []);
 
   useEffect(() => {
-    const resource = subscriber?.tenantId?.resource;
-    const resourcePieces = resource && resource.split('/');
-    const tenantId = resourcePieces && resourcePieces[resourcePieces.length - 1];
+    const tenantId = subscriber?.tenantId?.split('/').pop();
     if (tenantId) {
       dispatch(FetchContactInfoService({ tenantId: tenantId }));
       dispatch(FetchTenantService({ tenantId: tenantId }));

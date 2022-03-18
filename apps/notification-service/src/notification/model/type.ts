@@ -1,4 +1,4 @@
-import { AdspId, Channel, isAllowedUser, Tenant, User } from '@abgov/adsp-service-sdk';
+import { AdspId, Channel, isAllowedUser, User } from '@abgov/adsp-service-sdk';
 import type { DomainEvent } from '@core-services/core-common';
 import { UnauthorizedError } from '@core-services/core-common';
 import { getTemplateBody } from '@core-services/notification-shared';
@@ -80,14 +80,22 @@ export class NotificationTypeEntity implements NotificationType {
   generateNotifications(
     logger: Logger,
     templateService: TemplateService,
-    tenant: Tenant,
+    subscriberAppUrl: URL,
     event: DomainEvent,
-    subscriptions: SubscriptionEntity[]
+    subscriptions: SubscriptionEntity[],
+    messageContext: Record<string, unknown>
   ): Notification[] {
     const notifications: Notification[] = [];
     subscriptions.forEach((subscription) => {
       if (subscription.shouldSend(event)) {
-        const notification = this.generateNotification(logger, templateService, tenant, event, subscription);
+        const notification = this.generateNotification(
+          logger,
+          templateService,
+          subscriberAppUrl,
+          event,
+          subscription,
+          messageContext
+        );
         if (notification) {
           notifications.push(notification);
         }
@@ -115,9 +123,10 @@ export class NotificationTypeEntity implements NotificationType {
   private generateNotification(
     logger: Logger,
     templateService: TemplateService,
-    tenant: Tenant,
+    subscriberAppUrl: URL,
     event: DomainEvent,
-    subscription: SubscriptionEntity
+    subscription: SubscriptionEntity,
+    messageContext: Record<string, unknown>
   ): Notification {
     const eventNotification = this.events.find((e) => e.namespace === event.namespace && e.name === event.name);
     const { address, channel } =
@@ -140,10 +149,11 @@ export class NotificationTypeEntity implements NotificationType {
         addressAs: subscription.subscriber.addressAs,
       };
 
-      const messageContext = {
+      const context = {
+        ...messageContext,
         event,
         subscriber,
-        tenant,
+        managementUrl: subscriberAppUrl ? new URL(`/${subscriber.id}`, subscriberAppUrl).href : null,
       };
 
       return {
@@ -162,8 +172,8 @@ export class NotificationTypeEntity implements NotificationType {
         to: address,
         channel,
         message: templateService.generateMessage(
-          this.getTemplate(channel, eventNotification.templates[channel], messageContext),
-          messageContext
+          this.getTemplate(channel, eventNotification.templates[channel], context),
+          context
         ),
         subscriber,
       };

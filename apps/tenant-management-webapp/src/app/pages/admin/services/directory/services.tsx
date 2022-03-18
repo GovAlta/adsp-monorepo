@@ -7,19 +7,18 @@ import { Service, defaultService } from '@store/directory/models';
 import styled from 'styled-components';
 import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
-import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
-import { GoAIconButton } from '@abgov/react-components/experimental';
 import { GoAButton } from '@abgov/react-components';
 import { DeleteModal } from '@components/DeleteModal';
 import { DirectoryModal } from './directoryModal';
 import { deleteEntry } from '@store/directory/actions';
-
+import { ServiceItemComponent } from './serviceList';
 export const DirectoryService: FunctionComponent = () => {
   const dispatch = useDispatch();
   const [isEdit, setIsEdit] = useState(false);
   const [editEntry, setEditEntry] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<Service>(defaultService);
+
   useEffect(() => {
     dispatch(fetchDirectory());
   }, []);
@@ -38,6 +37,16 @@ export const DirectoryService: FunctionComponent = () => {
     setEditEntry(false);
     setSelectedEntry(defaultService);
   }
+
+  const onEdit = (service) => {
+    setSelectedEntry(service);
+    setIsEdit(true);
+    setEditEntry(true);
+  };
+  const onDelete = (service) => {
+    setShowDeleteConfirmation(true);
+    setSelectedEntry(service);
+  };
   return (
     <>
       <PageIndicator />
@@ -56,7 +65,7 @@ export const DirectoryService: FunctionComponent = () => {
                   setEditEntry(true);
                 }}
               >
-                Add directory
+                Add entry
               </GoAButton>
               <DataTable data-testid="directory-table">
                 <thead data-testid="directory-table-header">
@@ -72,42 +81,9 @@ export const DirectoryService: FunctionComponent = () => {
                 <tbody key={item['name']}>
                   {directory
                     .filter((dir) => dir.name === item['name'])
-                    .map((dir: Service) => {
-                      return (
-                        <tr key={dir.namespace}>
-                          <td headers="namespace" data-testid="namespace">
-                            {dir.namespace}
-                          </td>
-                          <td headers="directory" data-testid="directory">
-                            {dir.url}
-                          </td>
-                          <td className="actionCol">
-                            <GoAContextMenu>
-                              <GoAContextMenuIcon
-                                type="create"
-                                title="Edit"
-                                testId={`directory-edit-${dir.namespace}`}
-                                onClick={() => {
-                                  setSelectedEntry(dir);
-                                  setIsEdit(true);
-                                  setEditEntry(true);
-                                }}
-                              />
-                              <GoAIconButton
-                                testId={`directory-delete-${dir.namespace}`}
-                                title="Delete"
-                                size="medium"
-                                type="trash"
-                                onClick={() => {
-                                  setShowDeleteConfirmation(true);
-                                  setSelectedEntry(dir);
-                                }}
-                              />
-                            </GoAContextMenu>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    .map((dir: Service) => (
+                      <ServiceItemComponent service={dir} onEdit={onEdit} onDelete={onDelete} />
+                    ))}
                 </tbody>
               </DataTable>
             </TableDiv>

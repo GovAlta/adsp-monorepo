@@ -2,6 +2,7 @@ import { adspId, AdspId } from '@abgov/adsp-service-sdk';
 import { NotificationTypeEntity, SubscriberEntity, SubscriptionEntity } from '../model';
 
 export const mapSubscriber = (apiId: AdspId, subscriber: SubscriberEntity): Record<string, unknown> => ({
+  tenantId: subscriber.tenantId?.toString(),
   id: subscriber.id,
   urn: adspId`${apiId}:/subscribers/${subscriber.id}`.toString(),
   addressAs: subscriber.addressAs,

@@ -4,15 +4,6 @@ export interface Subscription {
   criteria: SubscriptionCriteria;
   type: SubscriptionType;
   subscriber?: Subscriber;
-  tenantId?: TenantId;
-}
-
-export interface TenantId {
-  type: string;
-  namespace: string;
-  service: string;
-  api: string;
-  resource: string;
 }
 
 export interface SubscriptionCriteria {
@@ -34,6 +25,7 @@ export interface SubscriberChannel {
   verified?: boolean;
 }
 export interface Subscriber {
+  tenantId?: string;
   id: string;
   channels: SubscriberChannel[];
   addressAs: string;
