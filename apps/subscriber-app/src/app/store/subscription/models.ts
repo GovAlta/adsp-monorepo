@@ -39,6 +39,8 @@ export interface Subscriber {
   addressAs: string;
   urn?: string;
   userId?: string;
+  subscriptions?: Subscription[];
+  tenantId?: TenantId;
 }
 export interface SubscriberService {
   subscriber: Subscriber;

@@ -21,7 +21,7 @@ import {
 import { useParams } from 'react-router-dom';
 
 import { useDispatch, useSelector } from 'react-redux';
-import { getSubscriberDetails, unsubscribe } from '@store/subscription/actions';
+import { getSubscriberDetails, signedOutUnsubscribe } from '@store/subscription/actions';
 import { RootState } from '@store/index';
 import SubscriptionsList from '@components/SubscriptionsList';
 import { SubscriberChannel, Subscription } from '@store/subscription/models';
@@ -29,9 +29,8 @@ import { SubscriberChannel, Subscription } from '@store/subscription/models';
 const Subscriptions = (): JSX.Element => {
   const dispatch = useDispatch();
   const EMAIL = 'email';
-  const { subscriber, subscriptions, notifications } = useSelector((state: RootState) => ({
+  const { subscriber, notifications } = useSelector((state: RootState) => ({
     subscriber: state.subscription.subscriber,
-    subscriptions: state.subscription.subscriptions,
     notifications: state.notifications.notification,
     tenant: state.tenant,
   }));
@@ -55,18 +54,18 @@ const Subscriptions = (): JSX.Element => {
   }, []);
 
   useEffect(() => {
-    const resource = subscriptions?.length > 0 && subscriptions[0]?.tenantId?.resource;
+    const resource = subscriber?.tenantId?.resource;
     const resourcePieces = resource && resource.split('/');
     const tenantId = resourcePieces && resourcePieces[resourcePieces.length - 1];
     if (tenantId) {
       dispatch(FetchContactInfoService({ tenantId: tenantId }));
       dispatch(FetchTenantService({ tenantId: tenantId }));
     }
-  }, [subscriptions]);
+  }, [subscriber]);
 
   const unSubscribe = (typeId: string) => {
     setShowUnSubscribeModal(true);
-    setSelectedUnsubscribeSub(subscriptions?.filter((item) => item.typeId === typeId)[0]);
+    setSelectedUnsubscribeSub(subscriber?.subscriptions.filter((item) => item.typeId === typeId)[0]);
   };
   const resetSelectedUnsubscribe = () => {
     setShowUnSubscribeModal(false);
@@ -96,7 +95,7 @@ const Subscriptions = (): JSX.Element => {
             data-testid="unsubscribe-modal-okay-button"
             onClick={() => {
               dispatch(
-                unsubscribe({
+                signedOutUnsubscribe({
                   type: selectedUnsubscribeSub.typeId,
                   subscriberId: selectedUnsubscribeSub.subscriberId,
                 })
@@ -125,7 +124,7 @@ const Subscriptions = (): JSX.Element => {
               </p>
             </DescriptionWrapper>
             {showUnSubscribeModal ? unSubscribeModal() : ''}
-            {subscriptions ? (
+            {subscriber ? (
               <>
                 <ContactInformationWrapper>
                   <GoACard title="Contact information" data-testid="contact-information-card">
@@ -139,7 +138,7 @@ const Subscriptions = (): JSX.Element => {
                 </ContactInformationWrapper>
                 <GoAModal></GoAModal>
                 <SubscriptionListContainer>
-                  {subscriptions?.length > 0 ? (
+                  {subscriber.subscriptions?.length > 0 ? (
                     <DataTable data-testid="subscriptions-table">
                       <TableHeaders>
                         <tr>
@@ -149,7 +148,7 @@ const Subscriptions = (): JSX.Element => {
                         </tr>
                       </TableHeaders>
                       <tbody>
-                        <SubscriptionsList onUnsubscribe={unSubscribe} subscriptions={subscriptions} />
+                        <SubscriptionsList onUnsubscribe={unSubscribe} subscriptions={subscriber.subscriptions} />
                       </tbody>
                     </DataTable>
                   ) : (
