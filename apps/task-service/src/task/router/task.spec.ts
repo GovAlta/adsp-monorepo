@@ -10,11 +10,11 @@ import { createTaskRouter, getTask, mapTask } from './task';
 
 describe('task', () => {
   const apiId = adspId`urn:ads:platform:task-service:v1`;
-  const loggerMock = ({
+  const loggerMock = {
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
-  } as unknown) as Logger;
+  } as unknown as Logger;
 
   const eventServiceMock = {
     send: jest.fn(),
@@ -121,12 +121,13 @@ describe('task', () => {
       repositoryMock.getTasks.mockResolvedValueOnce(result);
 
       await handler(
-        ({
+        {
+          tenant: { id: tenantId },
           user: { tenantId, id: 'user-1', roles: [TaskServiceRoles.TaskReader] },
           query: {},
           getConfiguration: getConfigurationMock,
-        } as unknown) as Request,
-        (res as unknown) as Response,
+        } as unknown as Request,
+        res as unknown as Response,
         next
       );
 
@@ -139,7 +140,7 @@ describe('task', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
     });
 
-    it('can handle get tasks request with tenant criteria for core user', async () => {
+    it('can call next with invalid operation for no tenant context', async () => {
       const res = {
         send: jest.fn(),
       };
@@ -148,48 +149,17 @@ describe('task', () => {
       const result = { results: [task], page: { size: 1 } };
       repositoryMock.getTasks.mockResolvedValueOnce(result);
 
-      const tenantCriteria = adspId`urn:ads:platform:tenant-service:v2:/tenants/different`;
       await handler(
-        ({
-          user: { isCore: true, id: 'user-1', roles: [TaskServiceRoles.TaskReader] },
-          query: { criteria: JSON.stringify({ tenantId: tenantCriteria.toString() }) },
-          getConfiguration: getConfigurationMock,
-        } as unknown) as Request,
-        (res as unknown) as Response,
-        next
-      );
-
-      expect(repositoryMock.getTasks.mock.calls[0][3].tenantId.toString()).toEqual(tenantCriteria.toString());
-      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
-    });
-
-    it('can ignore tenant criteria for tenant user', async () => {
-      const res = {
-        send: jest.fn(),
-      };
-      const next = jest.fn();
-      getConfigurationMock.mockResolvedValueOnce([{ queues }]);
-      const result = { results: [task], page: { size: 1 } };
-      repositoryMock.getTasks.mockResolvedValueOnce(result);
-
-      const tenantCriteria = adspId`urn:ads:platform:tenant-service:v2:/tenants/different`;
-      await handler(
-        ({
+        {
           user: { tenantId, id: 'user-1', roles: [TaskServiceRoles.TaskReader] },
-          query: { criteria: JSON.stringify({ tenantId: tenantCriteria.toString() }) },
+          query: {},
           getConfiguration: getConfigurationMock,
-        } as unknown) as Request,
-        (res as unknown) as Response,
+        } as unknown as Request,
+        res as unknown as Response,
         next
       );
 
-      expect(repositoryMock.getTasks).toHaveBeenCalledWith(
-        queues,
-        10,
-        undefined,
-        expect.objectContaining({ tenantId })
-      );
-      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
 
     it('can handle get tasks request with top', async () => {
@@ -202,12 +172,13 @@ describe('task', () => {
       repositoryMock.getTasks.mockResolvedValueOnce(result);
 
       await handler(
-        ({
+        {
+          tenant: { id: tenantId },
           user: { tenantId, id: 'user-1', roles: [TaskServiceRoles.TaskReader] },
           query: { top: 100 },
           getConfiguration: getConfigurationMock,
-        } as unknown) as Request,
-        (res as unknown) as Response,
+        } as unknown as Request,
+        res as unknown as Response,
         next
       );
 
@@ -230,12 +201,13 @@ describe('task', () => {
       repositoryMock.getTasks.mockResolvedValueOnce(result);
 
       await handler(
-        ({
+        {
+          tenant: { id: tenantId },
           user: { tenantId, id: 'user-1', roles: [TaskServiceRoles.TaskReader] },
           query: { after: '0fds' },
           getConfiguration: getConfigurationMock,
-        } as unknown) as Request,
-        (res as unknown) as Response,
+        } as unknown as Request,
+        res as unknown as Response,
         next
       );
 
@@ -253,12 +225,13 @@ describe('task', () => {
       repositoryMock.getTasks.mockResolvedValueOnce(result);
 
       await handler(
-        ({
+        {
+          tenant: { id: tenantId },
           user: { id: 'user-1', roles: [] },
           query: {},
           getConfiguration: getConfigurationMock,
-        } as unknown) as Request,
-        (res as unknown) as Response,
+        } as unknown as Request,
+        res as unknown as Response,
         next
       );
 
@@ -284,20 +257,21 @@ describe('task', () => {
       repositoryMock.getTask.mockResolvedValueOnce(task);
 
       const req = {
+        tenant: { id: tenantId },
         user: { tenantId, id: 'user-1', roles: [TaskServiceRoles.TaskReader] },
         params: { id: task.id },
         query: {},
         getConfiguration: getConfigurationMock,
       };
 
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(repositoryMock.getTask).toHaveBeenCalledWith(queues, tenantId, task.id);
       expect(req['task']).toBe(task);
       expect(next).toHaveBeenCalledTimes(1);
     });
 
-    it('can handle get task request with tenant criteria for core user', async () => {
+    it('can call next with invalid operation for no tenant context', async () => {
       const res = {
         send: jest.fn(),
       };
@@ -305,42 +279,16 @@ describe('task', () => {
       getConfigurationMock.mockResolvedValueOnce([{ queues }]);
       repositoryMock.getTask.mockResolvedValueOnce(task);
 
-      const tenantCriteria = adspId`urn:ads:platform:tenant-service:v2:/tenants/different`;
-      const req = {
-        user: { isCore: true, id: 'user-1', roles: [TaskServiceRoles.TaskReader] },
-        params: { id: task.id },
-        query: { tenantId: tenantCriteria.toString() },
-        getConfiguration: getConfigurationMock,
-      };
-
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
-
-      expect(repositoryMock.getTask.mock.calls[0][1].toString()).toEqual(tenantCriteria.toString());
-      expect(req['task']).toBe(task);
-      expect(next).toHaveBeenCalledTimes(1);
-    });
-
-    it('can ignore get task request with tenant criteria for tenant user', async () => {
-      const res = {
-        send: jest.fn(),
-      };
-      const next = jest.fn();
-      getConfigurationMock.mockResolvedValueOnce([{ queues }]);
-      repositoryMock.getTask.mockResolvedValueOnce(task);
-
-      const tenantCriteria = adspId`urn:ads:platform:tenant-service:v2:/tenants/different`;
       const req = {
         user: { tenantId, id: 'user-1', roles: [TaskServiceRoles.TaskReader] },
         params: { id: task.id },
-        query: { tenantId: tenantCriteria.toString() },
+        query: {},
         getConfiguration: getConfigurationMock,
       };
 
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
 
-      expect(repositoryMock.getTask).toHaveBeenCalledWith(queues, tenantId, task.id);
-      expect(req['task']).toBe(task);
-      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
 
     it('can call next with not found error', async () => {
@@ -352,13 +300,14 @@ describe('task', () => {
       repositoryMock.getTask.mockResolvedValueOnce(null);
 
       const req = {
+        tenant: { id: tenantId },
         user: { tenantId, id: 'user-1', roles: [TaskServiceRoles.TaskReader] },
         params: { id: task.id },
         query: {},
         getConfiguration: getConfigurationMock,
       };
 
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(repositoryMock.getTask).toHaveBeenCalledWith(queues, tenantId, task.id);
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
@@ -373,13 +322,14 @@ describe('task', () => {
       repositoryMock.getTask.mockResolvedValueOnce(task);
 
       const req = {
+        tenant: { id: tenantId },
         user: { tenantId, id: 'user-1', roles: [] },
         params: { id: task.id },
         query: {},
         getConfiguration: getConfigurationMock,
       };
 
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
 
       expect(repositoryMock.getTask).toHaveBeenCalledWith(queues, tenantId, task.id);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
@@ -405,7 +355,7 @@ describe('task', () => {
       };
       const next = jest.fn();
 
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ description: 'updated' }));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
     });
@@ -421,7 +371,7 @@ describe('task', () => {
       };
       const next = jest.fn();
 
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
   });
@@ -450,7 +400,7 @@ describe('task', () => {
 
       req.task.start.mockResolvedValueOnce(req.task);
 
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(req.task.start).toHaveBeenCalledWith(req.user);
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'task-started' }));
     });
@@ -472,7 +422,7 @@ describe('task', () => {
 
       req.task.complete.mockResolvedValueOnce(req.task);
 
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(req.task.complete).toHaveBeenCalledWith(req.user);
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'task-completed' }));
     });
@@ -493,7 +443,7 @@ describe('task', () => {
 
       req.task.cancel.mockResolvedValueOnce(req.task);
 
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(req.task.cancel).toHaveBeenCalledWith(req.user);
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'task-cancelled' }));
     });
@@ -517,7 +467,7 @@ describe('task', () => {
 
       req.task.assign.mockResolvedValueOnce(req.task);
 
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(req.task.assign).toHaveBeenCalledWith(req.user, req.body.assignTo);
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'task-assigned' }));
     });
@@ -541,7 +491,7 @@ describe('task', () => {
 
       req.task.setPriority.mockResolvedValueOnce(req.task);
 
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(req.task.setPriority).toHaveBeenCalledWith(req.user, TaskPriority.High);
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'task-priority-set' }));
     });
@@ -557,7 +507,7 @@ describe('task', () => {
       };
       const next = jest.fn();
 
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(0);
     });

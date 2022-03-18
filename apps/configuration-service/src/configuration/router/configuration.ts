@@ -49,13 +49,11 @@ export const getConfigurationEntity =
     requestCore = (_req: Request): boolean => false
   ): RequestHandler =>
   async (req, _res, next) => {
-    const user = req.user;
-    const { namespace, name } = req.params;
-    const { tenantId: tenantIdValue } = req.query;
-    const getCore = requestCore(req);
-
     try {
-      const tenantId = user?.isCore && tenantIdValue ? AdspId.parse(tenantIdValue as string) : user.tenantId;
+      const user = req.user;
+      const { namespace, name } = req.params;
+      const getCore = requestCore(req);
+      const tenantId = req.tenant?.id;
 
       const definition = await getDefinition(configurationServiceId, repository, namespace, name, tenantId);
 
