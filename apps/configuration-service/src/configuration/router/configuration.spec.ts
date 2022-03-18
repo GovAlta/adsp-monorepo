@@ -92,6 +92,7 @@ describe('router', () => {
       repositoryMock.get.mockResolvedValueOnce(entity);
 
       const req = ({
+        tenant: { id: tenantId },
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
@@ -130,6 +131,7 @@ describe('router', () => {
       repositoryMock.get.mockResolvedValueOnce(entity);
 
       const req = ({
+        tenant: { id: tenantId },
         user: { isCore: true, roles: [ConfigurationServiceRoles.Reader] } as User,
         params: { namespace, name },
         query: { tenantId: tenantId.toString() },
@@ -169,6 +171,7 @@ describe('router', () => {
       repositoryMock.get.mockResolvedValueOnce(entity);
 
       const req = ({
+        tenant: { id: tenantId },
         user: { isCore: false, roles: [], tenantId } as User,
         params: { namespace, name },
         query: {},
@@ -204,6 +207,7 @@ describe('router', () => {
       repositoryMock.get.mockResolvedValueOnce(entity);
 
       const req = ({
+        tenant: { id: tenantId },
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
@@ -250,6 +254,7 @@ describe('router', () => {
       repositoryMock.get.mockResolvedValueOnce(entity);
 
       const req = ({
+        tenant: { id: tenantId },
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
@@ -295,6 +300,7 @@ describe('router', () => {
       repositoryMock.get.mockResolvedValueOnce(entity);
 
       const req = ({
+        tenant: { id: tenantId },
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
