@@ -28,6 +28,7 @@ describe('createServiceDocs', () => {
   const directoryMock = {
     getServiceUrl: jest.fn(() => Promise.resolve(new URL('http://totally-real-directory'))),
     getResourceUrl: jest.fn(),
+    getMetadataByNamespaces: jest.fn(),
   };
 
   it('can create ServiceDocs', () => {
@@ -63,32 +64,6 @@ describe('createServiceDocs', () => {
 
         const records = await result.getDocs();
         expect(records).toBe(docs);
-      });
-
-      it('can get from API on cache miss', async () => {
-        const result = createServiceDocs({
-          logger: loggerMock,
-          tokenProvider: tokenProviderMock,
-          directory: directoryMock,
-        });
-
-        const service = {
-          service: 'test-service',
-          version: 'v1',
-          displayName: 'Test service',
-        };
-        const docs = {
-          openapi: '3.0.0',
-        };
-        cacheMock.mockReturnValueOnce(null);
-        tokenProviderMock.getAccessToken.mockResolvedValueOnce('test');
-
-        axiosMock.get.mockResolvedValueOnce({ data: { results: [service] } });
-        axiosMock.get.mockResolvedValueOnce({ data: docs });
-
-        const records = await result.getDocs();
-        expect(records['test-service'].service.name).toBe(service.displayName);
-        expect(records['test-service'].docs).toBe(docs);
       });
 
       it('can handle error in API doc request', async () => {
