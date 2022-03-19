@@ -246,7 +246,7 @@ const Subscriptions = (): JSX.Element => {
                       {contact?.contactEmail}
                     </a>
                   </div>
-                  <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>
+                  {contact?.phoneNumber && <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>}
                   <div data-testid="service-notice-date-range"></div>
                 </GoACallout>
               </CalloutWrapper>
