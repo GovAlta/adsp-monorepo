@@ -3,7 +3,7 @@ import { Logger } from 'winston';
 import { Channel, Providers } from '../notification';
 import { createEmailProvider } from './email';
 import { createBotProviderRouter } from './router';
-import { createABNotifySmsProvider } from './sms';
+import { createNotifySmsProvider } from './sms';
 import { createBotProvider, BotNotificationProvider } from './bot';
 import { BotRepository } from './types';
 
@@ -38,7 +38,7 @@ export function initializeProviders(
 ): Providers {
   const providers = {
     [Channel.email]: props.SMTP_HOST ? createEmailProvider(props) : null,
-    [Channel.sms]: props.NOTIFY_API_KEY ? createABNotifySmsProvider(props) : null,
+    [Channel.sms]: props.NOTIFY_API_KEY ? createNotifySmsProvider(props) : null,
     [Channel.bot]: props.BOT_APP_ID ? createBotProvider(logger, botRepository, props) : null,
   };
 
