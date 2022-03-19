@@ -1,13 +1,16 @@
 import { InvalidOperationError } from '@core-services/core-common';
-import { ActivityTypes, Channels, CloudAdapter, TurnContext } from 'botbuilder';
+import { ActivityTypes, Channels, CloudAdapter, TurnContext, teamsGetChannelId, Activity } from 'botbuilder';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
-import { Channel } from '../notification';
 import { BotNotificationActivityHandler, createBotProvider } from './bot';
 import { ConversationRecord } from './types';
 
 jest.mock('botbuilder');
-const MockedCloudAdapter = CloudAdapter as unknown as jest.MockedClass<typeof CloudAdapter>;
+const MockedCloudAdapter = CloudAdapter as jest.MockedClass<typeof CloudAdapter>;
+const mockedTeamsGetChannelId = teamsGetChannelId as jest.MockedFunction<typeof teamsGetChannelId>;
+const mockedGetConversationReference = TurnContext.getConversationReference as jest.MockedFunction<
+  typeof TurnContext.getConversationReference
+>;
 
 describe('createBotProvider', () => {
   const loggerMock = {
@@ -18,8 +21,8 @@ describe('createBotProvider', () => {
 
   const repositoryMock = {
     get: jest.fn(),
-    delete: jest.fn(),
-    save: jest.fn(),
+    delete: jest.fn(() => Promise.resolve(true)),
+    save: jest.fn((record) => Promise.resolve(record)),
   };
 
   const botParameters = {
@@ -36,8 +39,8 @@ describe('createBotProvider', () => {
 
   describe('BotNotificationProvider', () => {
     beforeEach(() => {
-      repositoryMock.get.mockReset();
-      MockedCloudAdapter.mockReset();
+      repositoryMock.get.mockClear();
+      MockedCloudAdapter.mockClear();
     });
 
     it('can process message', async () => {
@@ -149,12 +152,225 @@ describe('createBotProvider', () => {
       const handler = new BotNotificationActivityHandler(loggerMock, repositoryMock);
 
       beforeEach(() => {
-        // TODO;
+        repositoryMock.save.mockClear();
+        repositoryMock.delete.mockClear();
+        mockedTeamsGetChannelId.mockClear();
       });
 
-      it('can handle members added', async () => {
-        const next = jest.fn();
-        handler.handleMembersAdded({} as TurnContext, next);
+      describe('handleMembersAdded', () => {
+        it('can handle members added without bot added', async () => {
+          const context = {
+            activity: {
+              recipient: { id: 'bot-123' },
+              membersAdded: [{ id: 'human-123' }],
+            },
+          };
+          const next = jest.fn();
+          handler.handleMembersAdded(context as unknown as TurnContext, next);
+          expect(next).toHaveBeenCalled();
+        });
+
+        it('can handle members added with teams bot added', async () => {
+          const activity = {
+            channelId: Channels.Msteams,
+            recipient: { id: 'bot-123', name: 'boti' },
+            membersAdded: [{ id: 'bot-123' }],
+            channelData: {
+              tenant: { id: 'tenant-123' },
+              team: { id: 'team-123' },
+            },
+            serviceUrl: 'https://teams',
+          };
+          const next = jest.fn();
+          mockedTeamsGetChannelId.mockReturnValueOnce('conversation-123');
+          await handler.handleMembersAdded({ activity } as unknown as TurnContext, next);
+          expect(repositoryMock.save).toHaveBeenCalledWith({
+            botId: activity.recipient.id,
+            botName: activity.recipient.name,
+            channelId: activity.channelId,
+            conversationId: 'conversation-123',
+            serviceUrl: activity.serviceUrl,
+            tenantId: activity.channelData.tenant.id,
+          });
+          expect(next).toHaveBeenCalled();
+        });
+
+        it('can handle members added with slack bot added', async () => {
+          const activity = {
+            channelId: Channels.Slack,
+            recipient: { id: 'bot-123:team-123', name: 'boti' },
+            membersAdded: [{ id: 'bot-123:team-123' }],
+            channelData: {
+              SlackMessage: {
+                event: { team: 'team-123', channel: 'team-123:channel-123' },
+              },
+            },
+            serviceUrl: 'https://slack',
+          };
+          const next = jest.fn();
+          await handler.handleMembersAdded({ activity } as unknown as TurnContext, next);
+          expect(repositoryMock.save).toHaveBeenCalledWith({
+            botId: 'bot-123',
+            botName: activity.recipient.name,
+            channelId: activity.channelId,
+            conversationId: 'team-123:channel-123',
+            serviceUrl: activity.serviceUrl,
+            tenantId: 'team-123',
+          });
+          expect(next).toHaveBeenCalled();
+        });
+
+        it('can handle members added with default bot added', async () => {
+          const activity = {
+            channelId: Channels.Directline,
+            recipient: { id: 'bot-123', name: 'boti' },
+            membersAdded: [{ id: 'bot-123' }],
+            conversation: { id: 'conversation-123', tenantId: 'tenant-123' },
+            serviceUrl: 'https://unknown',
+          };
+          const next = jest.fn();
+          await handler.handleMembersAdded({ activity } as unknown as TurnContext, next);
+          expect(repositoryMock.save).toHaveBeenCalledWith({
+            botId: 'bot-123',
+            botName: activity.recipient.name,
+            channelId: activity.channelId,
+            conversationId: 'conversation-123',
+            serviceUrl: activity.serviceUrl,
+            tenantId: 'tenant-123',
+          });
+          expect(next).toHaveBeenCalled();
+        });
+      });
+
+      describe('handleMembersRemoved', () => {
+        it('can handle members removed without bot removed', async () => {
+          const context = {
+            activity: {
+              recipient: { id: 'bot-123' },
+              membersRemoved: [{ id: 'human-123' }],
+            },
+          };
+          const next = jest.fn();
+          handler.handleMembersRemoved(context as unknown as TurnContext, next);
+          expect(next).toHaveBeenCalled();
+        });
+
+        it('can handle members removed with default bot removed', async () => {
+          const activity = {
+            channelId: Channels.Directline,
+            recipient: { id: 'bot-123', name: 'boti' },
+            membersRemoved: [{ id: 'bot-123' }],
+            conversation: { id: 'conversation-123', tenantId: 'tenant-123' },
+            serviceUrl: 'https://unknown',
+          };
+          const next = jest.fn();
+          await handler.handleMembersRemoved({ activity } as unknown as TurnContext, next);
+          expect(repositoryMock.delete).toHaveBeenCalledWith({
+            channelId: activity.channelId,
+            conversationId: 'conversation-123',
+            tenantId: 'tenant-123',
+          });
+          expect(next).toHaveBeenCalled();
+        });
+      });
+
+      describe('handleMessage', () => {
+        it('can handle message from teams', async () => {
+          const activity = {
+            channelId: Channels.Msteams,
+            recipient: { id: 'bot-123', name: 'boti' },
+            channelData: {
+              tenant: { id: 'tenant-123' },
+              team: { id: 'team-123' },
+            },
+            serviceUrl: 'https://teams',
+          };
+          const next = jest.fn();
+          const sendActivity = jest.fn();
+          mockedTeamsGetChannelId.mockReturnValueOnce('conversation-123');
+          mockedTeamsGetChannelId.mockReturnValueOnce('conversation-123');
+          mockedGetConversationReference.mockReturnValueOnce(activity);
+          await handler.handleMessage({ activity, sendActivity } as unknown as TurnContext, next);
+          expect(repositoryMock.save).toHaveBeenCalledWith({
+            botId: activity.recipient.id,
+            botName: activity.recipient.name,
+            channelId: activity.channelId,
+            conversationId: 'conversation-123',
+            serviceUrl: activity.serviceUrl,
+            tenantId: activity.channelData.tenant.id,
+          });
+          expect(sendActivity).toHaveBeenCalledWith(
+            expect.objectContaining({
+              text: `*Bee boop...* Ready to send notifications to this channel at address: **${activity.channelId}/conversation-123**`,
+              textFormat: 'markdown',
+            })
+          );
+          expect(next).toHaveBeenCalled();
+        });
+
+        it('can handle message from slack', async () => {
+          const activity = {
+            channelId: Channels.Slack,
+            recipient: { id: 'bot-123:team-123', name: 'boti' },
+            channelData: {
+              SlackMessage: {
+                event: { team: 'team-123', channel: 'team-123:channel-123' },
+              },
+            },
+            conversation: {
+              id: 'bot-123:team-123:channel-123',
+            },
+            serviceUrl: 'https://slack',
+          };
+          const next = jest.fn();
+          const sendActivity = jest.fn();
+          mockedGetConversationReference.mockReturnValueOnce(activity as Partial<Activity>);
+          await handler.handleMessage({ activity, sendActivity } as unknown as TurnContext, next);
+          expect(repositoryMock.save).toHaveBeenCalledWith({
+            botId: 'bot-123',
+            botName: activity.recipient.name,
+            channelId: activity.channelId,
+            conversationId: 'team-123:channel-123',
+            serviceUrl: activity.serviceUrl,
+            tenantId: 'team-123',
+          });
+          expect(sendActivity).toHaveBeenCalledWith(
+            expect.objectContaining({
+              text: `*Bee boop...* Ready to send notifications to this channel at address: **${activity.channelId}/team-123/channel-123**`,
+              textFormat: 'markdown',
+            })
+          );
+          expect(next).toHaveBeenCalled();
+        });
+
+        it('can handle message from default', async () => {
+          const activity = {
+            channelId: Channels.Directline,
+            recipient: { id: 'bot-123', name: 'boti' },
+            membersAdded: [{ id: 'bot-123' }],
+            conversation: { id: 'conversation-123', tenantId: 'tenant-123' },
+            serviceUrl: 'https://unknown',
+          };
+          const next = jest.fn();
+          const sendActivity = jest.fn();
+          mockedGetConversationReference.mockReturnValueOnce(activity as Partial<Activity>);
+          await handler.handleMessage({ activity, sendActivity } as unknown as TurnContext, next);
+          expect(repositoryMock.save).toHaveBeenCalledWith({
+            botId: 'bot-123',
+            botName: activity.recipient.name,
+            channelId: activity.channelId,
+            conversationId: 'conversation-123',
+            serviceUrl: activity.serviceUrl,
+            tenantId: 'tenant-123',
+          });
+          expect(sendActivity).toHaveBeenCalledWith(
+            expect.objectContaining({
+              text: `*Bee boop...* Ready to send notifications to this channel at address: **${activity.channelId}/conversation-123**`,
+              textFormat: 'markdown',
+            })
+          );
+          expect(next).toHaveBeenCalled();
+        });
       });
     });
   });

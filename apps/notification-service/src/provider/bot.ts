@@ -63,7 +63,7 @@ export class BotNotificationActivityHandler extends ActivityHandler {
       name: activity.conversation?.name,
       serviceUrl: activity.serviceUrl,
       botId,
-      botName: activity.name,
+      botName: activity.recipient.name,
     };
 
     this.logger.debug(`Storing conversation reference: ${JSON.stringify(record, null, 2)}`, this.LOG_CONTEXT);
