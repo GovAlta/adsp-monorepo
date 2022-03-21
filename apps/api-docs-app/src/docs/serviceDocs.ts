@@ -110,7 +110,7 @@ class ServiceDocsImpl {
         ...this.cache.get<Record<string, ServiceDoc>>('platform'),
       };
     } else {
-      // Merge the platform ant tenant docs
+      // Merge the platform and tenant docs
       mergedDocs = {
         ...this.cache.get<Record<string, ServiceDoc>>('platform'),
         ...this.cache.get<Record<string, ServiceDoc>>(id.namespace),
