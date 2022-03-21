@@ -74,10 +74,18 @@ describe('createServiceDocs', () => {
           directory: directoryMock,
         });
 
-        const directory = {
-          'urn:ads:autotest:test-service': 'http://mock-url',
-        };
-
+        const directory = [
+          {
+            namespace: 'mock-a',
+            service: 'mock-a',
+            url: 'htt://mock-url-a',
+          },
+          {
+            namespace: 'mock-b',
+            service: 'mock-b',
+            url: 'htt://mock-url-b',
+          },
+        ];
         const metadata = {
           _links: {
             doc: 'http://mock-url',

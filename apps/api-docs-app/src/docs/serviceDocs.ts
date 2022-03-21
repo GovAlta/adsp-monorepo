@@ -26,6 +26,12 @@ interface DirectoryMetadata {
   };
 }
 
+interface Directory {
+  url: string;
+  namespace: string;
+  service: string;
+}
+
 export interface ServiceDocs {
   getDocs(id: AdspId): Promise<Record<string, ServiceDoc>>;
 }
@@ -50,10 +56,10 @@ class ServiceDocsImpl {
 
       const tenantDirectoryUrl = new URL(`api/directory/v2/namespaces/${namespace}`, directoryServiceUrl);
 
-      const { data } = await axios.get<Record<string, string>>(tenantDirectoryUrl.href);
-      for (const entry of Object.entries(data)) {
-        const urn = entry[0];
-        const url = entry[1];
+      const { data } = await axios.get<Array<Directory>>(tenantDirectoryUrl.href);
+      for (const entry of data) {
+        const urn = `urn:ads:${entry.namespace}:${entry.service}`;
+        const url = entry.url;
         const id = adspId`${urn}`;
         if (id.type === 'service') {
           try {
