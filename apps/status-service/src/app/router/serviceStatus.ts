@@ -166,7 +166,10 @@ export function createServiceStatusRouter({
 
     eventService.send(applicationStatusChange(updatedApplication, applicationStatus, user));
 
-    res.status(200).json(updatedApplication);
+    res.status(200).json({
+      ...updatedApplication,
+      internalStatus: updatedApplication.internalStatus,
+    });
   });
 
   router.patch('/applications/:id/toggle', assertAuthenticatedHandler, async (req, res) => {
