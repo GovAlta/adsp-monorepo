@@ -5,6 +5,15 @@ nav_order: 2
 parent: Platform development
 ---
 
+<details open markdown="block">
+  <summary>
+    Table of contents
+  </summary>
+  {: .text-delta }
+1. TOC
+{:toc}
+</details>
+
 # Platform service SDK
 Platform services integrate into the foundational capabilities via a Software Development Kit (SDK). The SDK includes interfaces and utilities for handling tenancy, configurations, and registration. Note that the SDK provides friendly interfaces on top of APIs. It is intended to speed up platform service development but is not the only way to access platform capabilities. Currently the SDK is only available for NodeJS.
 
@@ -21,7 +30,7 @@ The generate output includes sub-project structure and initial files under `/app
 ## Initializing the SDK
 SDK capabilities are access via the `initializePlatform` function. It takes service metadata as inputs and returns an object with the initialized platform interfaces and utilities.
 
-```Typescript
+```typescript
   import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
@@ -47,24 +56,36 @@ SDK capabilities are access via the `initializePlatform` function. It takes serv
 ```
 
 ## Authorizing requests
-The SDK provides [Passport](https://www.passportjs.org/) strategies for verifying JWT bearer tokens in core and tenant realm requests.
+The SDK provides [Passport](https://www.passportjs.org/) strategies for verifying JWT bearer tokens in tenant and core realm requests.
 
-### Using the core strategy
-Core requests are used by platform services making requests to other platform services under a service account. However, users may have core accounts as well. Services should only use the core strategy when requests from a core context is expected, and should enforce role-based access controls on operations.
-
-```Typescript
+Verify tenant bearer token:
+```typescript
   const {
-      coreStrategy,
       tenantStrategy,
       ...sdkCapabilities,
     } = await initializePlatform(parameters);
 
-  passport.use('jwt', coreStrategy);
-  passport.use('jwt-tenant', tenantStrategy);
-
-  // Handle both core and tenant access.
-  const authenticateHandler = passport.authenticate(['jwt-tenant', 'jwt'], { session: false });
+  passport.use('tenant', tenantStrategy);
+  const authenticateHandler = passport.authenticate(['tenant'], { session: false });
 ```
+
+### Using the core strategies
+Core requests are used by platform services making requests to other platform services under a service account. However, users may have core accounts as well. Services should only use the core strategy when requests from a core context is expected, and should enforce role-based access controls on operations.
+
+```typescript
+  const {
+      coreStrategy,
+      ...sdkCapabilities,
+    } = await initializePlatform(parameters);
+
+  passport.use('core', coreStrategy);
+  const authenticateHandler = passport.authenticate(['core'], { session: false });
+```
+
+### Service specific user roles
+Keycloak issued tokens contain client roles nested under `realm_access`. Both tenant and core strategies flatten service specific roles from the token and exclude roles related to other service clients.
+
+This means that service should define their roles in SDK initialization so the roles are created as roles under the service specific client. For services that allow users to configure which roles have what access, those roles must either be realm roles or roles added under the service client.
 
 ## Determining tenancy
 Requests to platform services are in the context of a specific tenant with few exceptions. The context is implicit when a request is made with a tenant bearer token. It can be explicit in cases where an endpoint allows anonymous access or when a platform service makes a request to another platform service under a core service account.
@@ -72,7 +93,7 @@ Requests to platform services are in the context of a specific tenant with few e
 The SDK provides a request handler that resolves implicit from user tenancy and explicit from a `tenantId` query parameter. Resolved tenant is set on the request object; no value is set if tenancy cannot be resolved.
 
 Getting tenancy using the tenant request handler:
-```Typescript
+```typescript
   const {
     tenantHandler,
     ...sdkCapabilities
@@ -89,7 +110,7 @@ Getting tenancy using the tenant request handler:
 The handler uses the tenant service client to retrieve tenant information. This is also available from the SDK for direct use.
 
 Getting tenant information using the tenant service:
-```Typescript
+```typescript
   const {
     tenantService,
     ...sdkCapabilities
@@ -109,7 +130,7 @@ Getting tenant information using the tenant service:
 Service discovery in ADSP is handled using client side service discovery with a directory of services providing a register of available services.
 
 Getting a service URL from the directory:
-```Typescript
+```typescript
   const {
     directory,
     ...sdkCapabilities,
@@ -122,7 +143,7 @@ Getting a service URL from the directory:
 Platform services can make use of a common configuration service for managing configuration. The SDK allows services to define their configuration schema and access configuration.
 
 Defining the configuration json schema:
-```Typescript
+```typescript
   const {
     configurationHandler,
     configurationService,
@@ -153,7 +174,7 @@ Defining the configuration json schema:
 Each service can have core configuration that applies across tenants and configuration specific to each tenant. The SDK provides a configuration request handler that will retrieve configuration for in the request tenant context.
 
 Defining the configuration json schema:
-```Typescript
+```typescript
   const {
     configurationHandler,
     ...sdkCapabilities,
@@ -175,7 +196,7 @@ The tenant context is based on `req.tenant` set by the tenant request handler wh
 The handler uses configuration service client to retrieve configuration. This is also available from the SDK for direct use.
 
 Getting configuration using the configuration service:
-```Typescript
+```typescript
   const {
     configurationService,
     ...sdkCapabilities,
@@ -200,7 +221,7 @@ Getting configuration using the configuration service:
 Services may want to apply transformations on the retrieved configuration. The SDK allows services to provide functions for converting and combining core and tenant configuration. For example, services can use these to generate effective configuration when tenant overrides parts of core configuration.
 
 Provide conversion functions:
-```Typescript
+```typescript
   const {
     configurationHandler,
     configurationService,
@@ -237,7 +258,7 @@ The SDK allows services to register configuration for some platform services.
 - `notifications` defines the notification types of the service.
 
 Defining configuration for other platform services:
-```Typescript
+```typescript
   const {
     ...sdkCapabilities,
   } = await initializePlatform({
@@ -286,7 +307,7 @@ The SDK provides several other useful utilities.
 Utilities for handling ADSP URNs.
 
 Parse and convert urns:
-```Typescript
+```typescript
   import { adspId, AdspId } from '@abgov/adsp-service-sdk';
 
   const dynamicAdspId = AdspId.parse(dynamicId);
@@ -296,7 +317,31 @@ Parse and convert urns:
 ### Role-based authorization
 
 ### Platform health check
+Include platform service checks in the service health check endpoint.
+```typescript
+  const {
+    healthCheck,
+    ...sdkCapabilities,
+  } = await initializePlatform(parameters);
+
+   app.get('/health', async (_req, res) => {
+    const platform = await healthCheck();
+    res.json(platform);
+  });
+```
 
 ### Errors and error handler
+Use a standard error handler:
+```typescript
+  import { createErrorHandler } from '@abgov/adsp-service-sdk';
+
+  const errorHandler = createErrorHandler(logger);
+  app.use(errorHandler);
+```
 
 ### Logging
+Import a standard logger for platform services:
+```typescript
+  import { createLogger } from '@abgov/adsp-service-sdk';
+  const logger = createLogger('my-service', environment.LOG_LEVEL);
+```
