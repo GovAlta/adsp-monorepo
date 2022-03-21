@@ -456,3 +456,29 @@ Then(
     notificationsObj.subscriberSubscriptions(addressAs, email).invoke('text').should('contain', subscription);
   }
 );
+
+Then('the user {string} the subscriber of {string}, {string}', function (viewOrNot, addressAs, email) {
+  switch (viewOrNot) {
+    case 'views':
+      notificationsObj.subscriber(addressAs, email).should('exist');
+      break;
+    case 'should not view':
+      notificationsObj.subscriber(addressAs, email).should('not.exist');
+      break;
+    default:
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});
+
+When('the user clicks delete button of {string}, {string} on subscribers page', function (addressAs, email) {
+  notificationsObj.subscriberDeleteIcon(addressAs, email).click();
+});
+
+Then('the user views Delete subscriber modal', function () {
+  notificationsObj.subscriberDeleteConfirmationModalTitle().invoke('text').should('eq', 'Delete subscriber');
+});
+
+When('the user clicks Delete button on Delete subscriber modal', function () {
+  notificationsObj.subscriberDeleteConfirmationModalDeleteBtn().click();
+  cy.wait(4000); //Wait for the subscriber list to be updated
+});
