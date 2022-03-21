@@ -39,7 +39,7 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
   }
 
   function phoneError(phone) {
-    if (!/^\d{10}$/.test(phone)) {
+    if (!/^\d{10}$/.test(phone) && phone.length !== 0) {
       return { phoneNumber: 'Please enter a valid phone number ie. 1 (780) 123-4567' };
     }
   }
@@ -85,7 +85,9 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
                 />
               </GoAFormItem>
               <GoAFormItem error={formErrors?.['phoneNumber']}>
-                <label>Phone number</label>
+                <label>
+                  Phone number <em>optional</em>
+                </label>
                 <InputMask
                   name="phoneNumber"
                   value={contactInformation?.phoneNumber || ''}

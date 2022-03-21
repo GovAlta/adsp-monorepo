@@ -8,11 +8,14 @@ jest.mock('node-cache', () => {
   return class FakeCache {
     get = cacheMock;
     set = jest.fn();
+    keys = jest.fn(() => ['platform']);
   };
 });
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
+const id = adspId`urn:ads:platform:test-service`;
+const tenantId = adspId`urn:ads:autotest:test-service`;
 
 describe('createServiceDocs', () => {
   const loggerMock = {
@@ -50,9 +53,9 @@ describe('createServiceDocs', () => {
         });
 
         const docs = {
-          test: {
+          'urn:ads:platform:test-service': {
             service: {
-              id: adspId`urn:ads:platform:test-service`,
+              id,
               name: 'Test service',
             },
             docs: {},
@@ -60,9 +63,8 @@ describe('createServiceDocs', () => {
           },
         };
         cacheMock.mockReturnValueOnce(docs);
-
-        const records = await result.getDocs();
-        expect(records).toBe(docs);
+        const records = await result.getDocs(id);
+        expect(records).toStrictEqual(docs);
       });
 
       it('can get from API on cache miss', async () => {
@@ -72,23 +74,38 @@ describe('createServiceDocs', () => {
           directory: directoryMock,
         });
 
-        const service = {
-          service: 'test-service',
-          version: 'v1',
-          displayName: 'Test service',
+        const directory = {
+          'urn:ads:autotest:test-service': 'http://mock-url',
         };
+
+        const metadata = {
+          _links: {
+            doc: 'http://mock-url',
+          },
+        };
+
         const docs = {
           openapi: '3.0.0',
         };
-        cacheMock.mockReturnValueOnce(null);
+        cacheMock.mockReturnValueOnce({});
         tokenProviderMock.getAccessToken.mockResolvedValueOnce('test');
-
-        axiosMock.get.mockResolvedValueOnce({ data: { results: [service] } });
+        axiosMock.get.mockResolvedValueOnce({ data: directory });
+        axiosMock.get.mockResolvedValueOnce({ data: metadata });
         axiosMock.get.mockResolvedValueOnce({ data: docs });
 
-        const records = await result.getDocs();
-        expect(records['test-service'].service.name).toBe(service.displayName);
-        expect(records['test-service'].docs).toBe(docs);
+        const docsInCache = {
+          'urn:ads:autotest:test-service': {
+            service: {
+              id,
+              name: 'Test service',
+            },
+            docs: {},
+            url: 'http://test-service',
+          },
+        };
+        cacheMock.mockReturnValueOnce(docsInCache);
+        const records = await result.getDocs(tenantId);
+        expect(records).toStrictEqual(docsInCache);
       });
 
       it('can handle error in API doc request', async () => {
@@ -109,7 +126,7 @@ describe('createServiceDocs', () => {
         axiosMock.get.mockResolvedValueOnce({ data: { results: [service] } });
         axiosMock.get.mockRejectedValueOnce(new Error('Something went terribly wrong.'));
 
-        const records = await result.getDocs();
+        const records = await result.getDocs(id);
         expect(records).toBeTruthy();
         expect(records['test-service']).toBeFalsy();
       });
@@ -133,7 +150,7 @@ describe('createServiceDocs', () => {
       axiosMock.get.mockResolvedValueOnce({ data: { results: [service] } });
       axiosMock.get.mockResolvedValueOnce({ data: 'this is wrong.' });
 
-      const records = await result.getDocs();
+      const records = await result.getDocs(id);
       expect(records).toBeTruthy();
       expect(records['test-service']).toBeFalsy();
     });
@@ -156,7 +173,7 @@ describe('createServiceDocs', () => {
 
       axiosMock.get.mockResolvedValueOnce({ data: { results: [service] } });
 
-      const records = await result.getDocs();
+      const records = await result.getDocs(id);
       expect(records).toBeTruthy();
       expect(records['test-service']).toBeFalsy();
     });

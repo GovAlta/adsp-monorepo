@@ -30,6 +30,42 @@ Task represents a unit of work in a *queue*. Each task has basic name and descri
 *Tasks* are assigned to people for completion. Each task can be assigned to one person at a time (sole responsibility). Workers can self-assign tasks and assigners can assign tasks to others.
 
 ## Code examples
+### Configure a queue
+Queues are configured using the [configuration service](configuration-service.md). Note that new configuration may take up to 15 mins to apply.
+
+```typescript
+  const configurationServiceUrl = 'https://configuration-service.alpha.alberta.ca';
+
+  const namespace = 'my-service';
+  const name = 'intake-submissions';
+  const request = {
+    operation: 'UPDATE',
+    update: {
+      queues: {
+        [`${namespace}:${name}`]: {
+          namespace,
+          name,
+          context: {},
+          assignerRoles: ['intake-supervisors'],
+          workerRoles: ['intake-assessors'],
+        }
+      }
+    }
+  }
+
+  await fetch(
+    `${configurationServiceUrl}/configuration/v1/configuration/platform/task-service`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(request),
+    }
+  );
+```
+
 ### Create and queue a task
 ```typescript
   const namespace = 'support';

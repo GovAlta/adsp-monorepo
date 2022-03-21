@@ -12,20 +12,19 @@ import {
   Activity,
   teamsGetChannelId,
   ActivityTypes,
+  BotHandler,
 } from 'botbuilder';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
 import { NotificationContent, NotificationProvider } from '../notification';
 import { BotRepository, SlackChannelData } from './types';
 
-class BotNotificationActivityHandler extends ActivityHandler {
+export class BotNotificationActivityHandler extends ActivityHandler {
   private LOG_CONTEXT = {
     context: 'BotNotificationActivityHandler',
   };
 
   private async storeConversationRecord(activity: Activity): Promise<void> {
-    this.logger.debug(`Channel data: ${JSON.stringify(activity.channelData || {}, null, 2)}`, this.LOG_CONTEXT);
-
     let tenantId: string;
     let conversationId: string;
     let botId: string;
@@ -64,7 +63,7 @@ class BotNotificationActivityHandler extends ActivityHandler {
       name: activity.conversation?.name,
       serviceUrl: activity.serviceUrl,
       botId,
-      botName: activity.name,
+      botName: activity.recipient.name,
     };
 
     this.logger.debug(`Storing conversation reference: ${JSON.stringify(record, null, 2)}`, this.LOG_CONTEXT);
@@ -76,86 +75,89 @@ class BotNotificationActivityHandler extends ActivityHandler {
     );
   }
 
+  public handleMembersAdded: BotHandler = async (context, next) => {
+    const botAdded = context.activity.membersAdded.find(({ id }) => id === context.activity.recipient.id);
+    this.logger.debug(
+      `Received member added activity for members: ${context.activity.membersAdded
+        .map(({ id, name }) => `${name} (ID ${id})`)
+        .join(', ')}`,
+      this.LOG_CONTEXT
+    );
+
+    if (botAdded) {
+      this.logger.info(
+        `Bot added to conversation, resolving ${context.activity.channelId} information...`,
+        this.LOG_CONTEXT
+      );
+
+      await this.storeConversationRecord(context.activity);
+    }
+
+    await next();
+  };
+
+  public handleMembersRemoved: BotHandler = async (context, next) => {
+    const botRemoved = context.activity.membersRemoved.find(({ id }) => id === context.activity.recipient.id);
+    this.logger.debug(
+      `Received member removed activity for members: ${context.activity.membersRemoved
+        .map(({ id, name }) => `${name} (ID ${id})`)
+        .join(', ')}`,
+      this.LOG_CONTEXT
+    );
+
+    if (botRemoved) {
+      this.logger.info(`Bot removed from conversation, resolving teams information...`, this.LOG_CONTEXT);
+
+      const recordId = {
+        channelId: context.activity.channelId as Channels,
+        tenantId: context.activity.conversation?.tenantId,
+        conversationId: context.activity.conversation?.id,
+      };
+
+      const deleted = await this.repository.delete(recordId);
+      if (deleted) {
+        this.logger.info(
+          `Deleted ${recordId.channelId} reference for ${
+            context.activity.conversation?.name || context.activity.conversation?.name
+          } ` + `(ID: ${recordId.tenantId}:${recordId.conversationId}).`,
+          this.LOG_CONTEXT
+        );
+      }
+    }
+
+    await next();
+  };
+
+  public handleMessage: BotHandler = async (context, next) => {
+    await this.storeConversationRecord(context.activity);
+    const reference = TurnContext.getConversationReference(context.activity);
+
+    let address: string;
+    if (reference.channelId === Channels.Slack) {
+      address = reference.conversation?.id.split(':').slice(1).join('/');
+    } else if (reference.channelId === Channels.Msteams) {
+      address = teamsGetChannelId(context.activity);
+    } else {
+      address = reference.conversation?.id;
+    }
+
+    if (address) {
+      const reply: Partial<Activity> = {
+        text: `*Bee boop...* Ready to send notifications to this channel at address: **${reference.channelId}/${address}**`,
+        textFormat: 'markdown',
+      };
+
+      await context.sendActivity(reply);
+    }
+    await next();
+  };
+
   constructor(private logger: Logger, private repository: BotRepository) {
     super();
 
-    this.onMembersAdded(async (context, next) => {
-      const botAdded = context.activity.membersAdded.find(({ id }) => id === context.activity.recipient.id);
-      this.logger.debug(
-        `Received member added activity for members: ${context.activity.membersAdded
-          .map(({ id, name }) => `${name} (ID ${id})`)
-          .join(', ')}`,
-        this.LOG_CONTEXT
-      );
-
-      if (botAdded) {
-        this.logger.info(
-          `Bot added to conversation, resolving ${context.activity.channelId} information...`,
-          this.LOG_CONTEXT
-        );
-
-        await this.storeConversationRecord(context.activity);
-      }
-
-      await next();
-    });
-
-    this.onMembersRemoved(async (context, next) => {
-      const botRemoved = context.activity.membersRemoved.find(({ id }) => id === context.activity.recipient.id);
-      this.logger.debug(
-        `Received member removed activity for members: ${context.activity.membersRemoved
-          .map(({ id, name }) => `${name} (ID ${id})`)
-          .join(', ')}`,
-        this.LOG_CONTEXT
-      );
-
-      if (botRemoved) {
-        this.logger.info(`Bot removed from conversation, resolving teams information...`, this.LOG_CONTEXT);
-
-        const recordId = {
-          channelId: context.activity.channelId as Channels,
-          tenantId: context.activity.conversation?.tenantId,
-          conversationId: context.activity.conversation?.id,
-        };
-
-        const deleted = await this.repository.delete(recordId);
-        if (deleted) {
-          this.logger.info(
-            `Deleted ${recordId.channelId} reference for ${
-              context.activity.conversation?.name || context.activity.conversation?.name
-            } ` + `(ID: ${recordId.tenantId}:${recordId.conversationId}).`,
-            this.LOG_CONTEXT
-          );
-        }
-      }
-
-      await next();
-    });
-
-    this.onMessage(async (context, next) => {
-      await this.storeConversationRecord(context.activity);
-      const reference = TurnContext.getConversationReference(context.activity);
-      this.logger.debug(`Conversation reference: ${JSON.stringify(reference || {}, null, 2)}`, this.LOG_CONTEXT);
-
-      let address: string;
-      if (reference.channelId === Channels.Slack) {
-        address = reference.conversation?.id.split(':').slice(1).join('/');
-      } else if (reference.channelId === Channels.Msteams) {
-        address = teamsGetChannelId(context.activity);
-      } else {
-        address = reference.conversation?.id;
-      }
-
-      if (address) {
-        const reply: Partial<Activity> = {
-          text: `*Bee boop...* Ready to send notifications to this channel at address: **${reference.channelId}/${address}**`,
-          textFormat: 'markdown',
-        };
-
-        await context.sendActivity(reply);
-      }
-      await next();
-    });
+    this.onMembersAdded(this.handleMembersAdded);
+    this.onMembersRemoved(this.handleMembersRemoved);
+    this.onMessage(this.handleMessage);
   }
 }
 
@@ -196,7 +198,7 @@ export class BotNotificationProvider implements NotificationProvider {
   }
 
   async processMessage(req: Request, res: Response): Promise<void> {
-    await this.adapter.process(req, res, (context) => this.handler.run(context));
+    await this.adapter.process(req, res, async (context) => this.handler.run(context));
   }
 
   async send({ to, message }: NotificationContent): Promise<void> {
@@ -245,57 +247,57 @@ export class BotNotificationProvider implements NotificationProvider {
           conversationReference = TurnContext.getConversationReference(context.activity);
         }
       );
-    } else if (channelId === Channels.Slack) {
-      conversationReference = {
-        bot: {
-          id: `${conversation.botId}:${conversation.tenantId}`,
-          name: conversation.botName,
-        },
-        channelId,
-        serviceUrl: conversation.serviceUrl,
-        conversation: {
-          id: `${conversation.botId}:${tenantId}:${conversationId}`,
-          name: conversation.name,
-          isGroup: true,
-        },
-      } as ConversationReference;
     } else {
-      conversationReference = {
-        bot: {
-          id: conversation.botId,
-          name: conversation.botName,
-        },
-        channelId,
-        serviceUrl: conversation.serviceUrl,
-        conversation: {
-          id: conversationId,
-          conversationType: null,
-          name: conversation.name,
-          isGroup: true,
-        },
-      };
-    }
+      if (channelId === Channels.Slack) {
+        conversationReference = {
+          bot: {
+            id: `${conversation.botId}:${conversation.tenantId}`,
+            name: conversation.botName,
+          },
+          channelId,
+          serviceUrl: conversation.serviceUrl,
+          conversation: {
+            id: `${conversation.botId}:${tenantId}:${conversationId}`,
+            name: conversation.name,
+            isGroup: true,
+          },
+        } as ConversationReference;
+      } else {
+        conversationReference = {
+          bot: {
+            id: conversation.botId,
+            name: conversation.botName,
+          },
+          channelId,
+          serviceUrl: conversation.serviceUrl,
+          conversation: {
+            id: conversationId,
+            conversationType: null,
+            name: conversation.name,
+            isGroup: true,
+          },
+        };
+      }
 
-    await this.adapter.continueConversationAsync(this.appId, conversationReference, async (turnContext) => {
-      this.logger.debug(
-        `Sending activity to channel ${channelId}: ${
-          conversationReference.conversation.id
-        } with conversation reference: ${JSON.stringify(conversationReference, null, 2)}`,
-        this.LOG_CONTEXT
-      );
-      try {
-        await turnContext.sendActivity({ text: `${message.subject}\n\n${message.body}`, textFormat: 'markdown' });
-      } catch (err) {
-        this.logger.error(
-          `Failed sending activity to channel ${channelId}: ${conversationReference.conversation.id}. ${JSON.stringify(
-            err
-          )}`,
+      await this.adapter.continueConversationAsync(this.appId, conversationReference, async (turnContext) => {
+        this.logger.debug(
+          `Sending activity to channel ${channelId}: ${
+            conversationReference.conversation.id
+          } with conversation reference: ${JSON.stringify(conversationReference, null, 2)}`,
           this.LOG_CONTEXT
         );
+        try {
+          await turnContext.sendActivity({ text: `${message.subject}\n\n${message.body}`, textFormat: 'markdown' });
+        } catch (err) {
+          this.logger.error(
+            `Failed sending activity to channel ${channelId}: ${conversationReference.conversation.id}. ${err}`,
+            this.LOG_CONTEXT
+          );
 
-        throw err;
-      }
-    });
+          throw err;
+        }
+      });
+    }
   }
 }
 

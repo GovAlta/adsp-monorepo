@@ -9,7 +9,7 @@ import { Tab, Tabs } from '@components/Tabs';
 import SupportLinks from '@components/SupportLinks';
 
 const HelpLink = (): JSX.Element => {
-  const tenantId = useSelector((state: RootState) => state.tenant?.id);
+  const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
   return (
     <>
@@ -17,7 +17,7 @@ const HelpLink = (): JSX.Element => {
       <a
         rel="noopener noreferrer"
         target="_blank"
-        href={`${docBaseUrl}?tenant=${tenantId}&urls.primaryName=File service`}
+        href={`${docBaseUrl}?tenant=${tenantName}&urls.primaryName=File service`}
       >
         Read the API docs
       </a>
