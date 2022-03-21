@@ -41,23 +41,27 @@ export const ServiceItemComponent: FunctionComponent<serviceProps> = ({ service,
               onClick={() => setDetails(service)}
               testId="directory-toggle-details-visibility"
             />
-            <GoAContextMenuIcon
-              type="create"
-              title="Edit"
-              testId={`directory-edit-${service.namespace}`}
-              onClick={() => {
-                onEdit(service);
-              }}
-            />
-            <GoAIconButton
-              testId={`directory-delete-${service.namespace}`}
-              title="Delete"
-              size="medium"
-              type="trash"
-              onClick={() => {
-                onDelete(service);
-              }}
-            />
+            {!service.isCore && (
+              <GoAContextMenuIcon
+                type="create"
+                title="Edit"
+                testId={`directory-edit-${service.namespace}`}
+                onClick={() => {
+                  onEdit(service);
+                }}
+              />
+            )}
+            {!service.isCore && (
+              <GoAIconButton
+                testId={`directory-delete-${service.namespace}`}
+                title="Delete"
+                size="medium"
+                type="trash"
+                onClick={() => {
+                  onDelete(service);
+                }}
+              />
+            )}
           </GoAContextMenu>
         </td>
       </tr>

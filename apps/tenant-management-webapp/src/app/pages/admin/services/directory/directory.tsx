@@ -13,7 +13,7 @@ export const Directory: FunctionComponent = () => {
           <h1>Directory service</h1>
           <Tabs activeIndex={0}>
             <Tab label="Overview">
-              <DirectoryOverview />+
+              <DirectoryOverview />
             </Tab>
             <Tab label="Entries">
               <DirectoryService />
