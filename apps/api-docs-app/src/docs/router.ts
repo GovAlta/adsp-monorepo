@@ -3,6 +3,7 @@ import { NotFoundError } from '@core-services/core-common';
 import { NextFunction, Request, Response, Router } from 'express';
 import * as swaggerUi from 'swagger-ui-express';
 import { ServiceDocs } from './serviceDocs';
+import { toKebabName } from '@abgov/adsp-service-sdk';
 
 interface RouterProps {
   accessServiceUrl: URL;
@@ -20,9 +21,10 @@ export const createDocsRouter = async ({
   router.get('/docs/:service', async (req: Request, res: Response, next: NextFunction) => {
     const { service } = req.params;
     const { tenant } = req.query;
+    const namespace = tenant ? toKebabName(tenant as string) : 'platform';
+    const id = adspId`urn:ads:${namespace}:${service}`;
 
-    const docs = await serviceDocs.getDocs();
-    const serviceDoc = docs[service];
+    const serviceDoc = (await serviceDocs.getDocs(id))[id.toString()];
     if (!serviceDoc) {
       next(new NotFoundError('API docs', service));
       return;
@@ -48,7 +50,9 @@ export const createDocsRouter = async ({
   });
 
   router.use('/swagger', swaggerUi.serve, async (req: Request, res: Response, next: NextFunction) => {
-    const { tenant } = req.query;
+    const tenant = req.query?.tenant || 'platform';
+    const namespace = toKebabName(tenant as string);
+
     if (tenant) {
       let tenantInfo = null;
       try {
@@ -61,12 +65,15 @@ export const createDocsRouter = async ({
         return;
       }
     }
+    const docs = await serviceDocs.getDocs(adspId`urn:ads:${namespace}`);
 
-    const docs = await serviceDocs.getDocs();
-    const urls = Object.entries(docs).map(([name, serviceDoc]) => ({
-      name: serviceDoc.service.name,
-      url: `/docs/${name}${tenant ? `?tenant=${tenant}` : ''}`,
-    }));
+    const urls = Object.entries(docs).map(([id, serviceDoc]) => {
+      const tenantInQuery = adspId`${id}`.namespace === 'platform' ? 'platform' : tenant;
+      return {
+        name: serviceDoc.service.name,
+        url: `/docs/${adspId`${id}`.service}${tenant ? `?tenant=${tenantInQuery}` : ''}`,
+      };
+    });
 
     swaggerUi.setup(null, {
       // customCss: '.swagger-ui .topbar { display: none }',
@@ -80,14 +87,14 @@ export const createDocsRouter = async ({
     })(req, res, next);
   });
 
-  router.get('/:tenant?', async (req: Request, res: Response, next: NextFunction) => {
-    const {tenant} = req.params
+  router.get('/:tenant', async (req: Request, res: Response, next: NextFunction) => {
+    const { tenant } = req.params;
     if (tenant) {
-      res.redirect(`/swagger?tenant=${tenant}`)
+      res.redirect(`/swagger?tenant=${tenant}`);
     } else {
-      res.redirect(`/swagger`)
+      res.redirect(`/swagger`);
     }
-  })
+  });
 
   return router;
 };
