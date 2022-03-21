@@ -10,8 +10,13 @@ import {
 
 export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
   switch (action.type) {
-    case FETCH_DIRECTORY_SUCCESS:
-      return { ...state, directory: action.payload.directory };
+    case FETCH_DIRECTORY_SUCCESS: {
+      const directories = action.payload.directory;
+      directories.forEach((dir) => {
+        dir.isCore = dir.name.toLowerCase() === 'platform';
+      });
+      return { ...state, directory: directories };
+    }
 
     case CREATE_ENTRY_SUCCESS: {
       const directoryList = state.directory;
