@@ -14,7 +14,7 @@ export const CalloutWrapper = styled.div`
   padding-top: 2rem;
 `;
 export const DescriptionWrapper = styled.div`
-   padding-bottom: 2.5rem;
+  padding-bottom: 2.5rem;
 `;
 export const ContactInformationContainer = styled.div`
   display: flex;
@@ -29,5 +29,9 @@ export const SubscriptionListContainer = styled.div`
 export const TableHeaders = styled.thead`
   #action {
     text-align: right;
+  }
+
+  #available-channels {
+    text-align: center;
   }
 `;
