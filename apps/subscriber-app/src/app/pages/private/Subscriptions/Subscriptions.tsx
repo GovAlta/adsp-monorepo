@@ -229,7 +229,7 @@ const Subscriptions = (): JSX.Element => {
                       </tr>
                     </TableHeaders>
                     <tbody>
-                      <SubscriptionsList onUnsubscribe={unSubscribe} subscriptions={subscriber?.subscriptions} />
+                      <SubscriptionsList onUnsubscribe={unSubscribe} subscriptions={subscriber.subscriptions} />
                     </tbody>
                   </DataTable>
                 ) : (
