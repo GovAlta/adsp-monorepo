@@ -151,7 +151,6 @@ describe('createServiceDocs', () => {
       axiosMock.get.mockResolvedValueOnce({ data: 'this is wrong.' });
 
       const records = await result.getDocs(id);
-      console.log(records);
       expect(records).toBeTruthy();
       expect(records['test-service']).toBeFalsy();
     });
