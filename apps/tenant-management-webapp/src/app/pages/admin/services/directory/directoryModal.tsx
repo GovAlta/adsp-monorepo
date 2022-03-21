@@ -3,8 +3,9 @@ import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgo
 import { GoAButton } from '@abgov/react-components';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { Service } from '@store/directory/models';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { createEntry, updateEntry } from '@store/directory/actions';
+import { RootState } from '@store/index';
 
 interface DirectoryModalProps {
   entry?: Service;
@@ -18,8 +19,18 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   const [entry, setEntry] = useState(props.entry);
   const title = isNew ? 'Add directory' : 'Edit directory';
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const { directory } = useSelector((state: RootState) => state.directory);
+  const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const dispatch = useDispatch();
 
+  const checkNamespace = (namespace) => {
+    const tenantDirectory = directory.find((x) => x.name === tenantName && x.namespace === namespace);
+    return tenantDirectory;
+  };
+  const checkApi = (api) => {
+    const tenantDirectory = directory.find((x) => x.name === tenantName && x.api && x.api === api);
+    return tenantDirectory;
+  };
   return (
     <GoAModal testId="directory-modal" isOpen={props.open}>
       <GoAModalTitle>{title}</GoAModalTitle>
@@ -85,9 +96,16 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               setErrors({ ...errors, namespace: 'Service allowed characters: a-z, 0-9, -' });
               return;
             }
-
+            if (checkNamespace(entry.namespace)) {
+              setErrors({ ...errors, namespace: 'Service name duplicate, please use another one' });
+              return;
+            }
             if (entry.api && !regex.test(entry.api)) {
               setErrors({ ...errors, api: 'Api allowed characters: a-z, 0-9, -' });
+              return;
+            }
+            if (checkApi(entry.api)) {
+              setErrors({ ...errors, api: 'Api duplicate, please use another one' });
               return;
             }
             const urlReg = new RegExp(/^(http|https):\/\/[^ "]+$/);

@@ -8,6 +8,7 @@ export interface Service {
   url: string;
   description?: string;
   _links?: Links;
+  isCore?: boolean;
 }
 export interface Links {
   self: string;
