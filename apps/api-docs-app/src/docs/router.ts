@@ -20,8 +20,8 @@ export const createDocsRouter = async ({
 
   router.get('/docs/:service', async (req: Request, res: Response, next: NextFunction) => {
     const { service } = req.params;
-    const { tenant } = req.query;
-    const namespace = tenant ? toKebabName(tenant as string) : 'platform';
+    const tenant = req.query?.tenant ? (req.query?.tenant as string).replace(/-/g, ' ') : null;
+    const namespace = tenant ? toKebabName(tenant) : 'platform';
     const id = adspId`urn:ads:${namespace}:${service}`;
 
     const serviceDoc = (await serviceDocs.getDocs(id))[id.toString()];
@@ -30,7 +30,7 @@ export const createDocsRouter = async ({
       return;
     }
 
-    const tenantInfo = tenant ? await tenantService.getTenantByName(tenant as string) : null;
+    const tenantInfo = tenant ? await tenantService.getTenantByName(tenant) : null;
 
     if (tenantInfo && serviceDoc.docs?.components?.securitySchemes) {
       const oidcUrl = new URL(`auth/realms/${tenantInfo.realm}/.well-known/openid-configuration`, accessServiceUrl);
@@ -50,8 +50,8 @@ export const createDocsRouter = async ({
   });
 
   router.use('/swagger', swaggerUi.serve, async (req: Request, res: Response, next: NextFunction) => {
-    const tenant = req.query?.tenant || 'platform';
-    const namespace = toKebabName(tenant as string);
+    const tenant = req.query?.tenant;
+    const namespace = tenant ? toKebabName((tenant as string).replace(/-/g, ' ')) : 'platform';
 
     if (tenant) {
       let tenantInfo = null;
@@ -59,7 +59,6 @@ export const createDocsRouter = async ({
         tenantInfo = await tenantService.getTenantByName(tenant as string);
         // eslint-disable-next-line no-empty
       } catch (_err) {}
-
       if (!tenantInfo) {
         next(new NotFoundError('tenant', tenant as string));
         return;
@@ -68,10 +67,11 @@ export const createDocsRouter = async ({
     const docs = await serviceDocs.getDocs(adspId`urn:ads:${namespace}`);
 
     const urls = Object.entries(docs).map(([id, serviceDoc]) => {
-      const tenantInQuery = adspId`${id}`.namespace === 'platform' ? 'platform' : tenant;
       return {
         name: serviceDoc.service.name,
-        url: `/docs/${adspId`${id}`.service}${tenant ? `?tenant=${tenantInQuery}` : ''}`,
+        url: `/docs/${adspId`${id}`.service}${
+          tenant ? `?tenant=${adspId`${id}`.namespace === 'platform' ? 'platform' : tenant}` : ''
+        }`,
       };
     });
 
@@ -87,7 +87,7 @@ export const createDocsRouter = async ({
     })(req, res, next);
   });
 
-  router.get('/:tenant', async (req: Request, res: Response, next: NextFunction) => {
+  router.get('/:tenant?', async (req: Request, res: Response, next: NextFunction) => {
     const { tenant } = req.params;
     if (tenant) {
       res.redirect(`/swagger?tenant=${tenant}`);
