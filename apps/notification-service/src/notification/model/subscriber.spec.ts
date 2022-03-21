@@ -13,7 +13,6 @@ describe('SubscriberEntity', () => {
     deleteSubscriber: jest.fn(),
     saveSubscription: jest.fn(),
     deleteSubscriptions: jest.fn(),
-    getSubscriberById: jest.fn(),
     saveSubscriber: jest.fn((entity: SubscriberEntity) => Promise.resolve(entity)),
   };
 

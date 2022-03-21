@@ -21,14 +21,6 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     this.subscriptionModel = model<Document & SubscriptionDoc>('subscription', subscriptionSchema);
   }
 
-  async getSubscriberById(id: string): Promise<SubscriberEntity> {
-    return new Promise<SubscriberEntity>((resolve, reject) => {
-      this.subscriberModel.find({ _id: id }, (err, docs) => {
-        err ? reject(err) : resolve(docs.map((doc) => this.fromDoc(doc))[0]);
-      });
-    });
-  }
-
   async getSubscriber(tenantId: AdspId, subscriberId: string, byUserId = false): Promise<SubscriberEntity> {
     const criteria: Record<string, string> = {};
 
