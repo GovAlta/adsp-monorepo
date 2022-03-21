@@ -6,6 +6,7 @@ import {
   GET_SUBSCRIBER_DETAILS,
   GetSubscriberDetailsSuccess,
   UNSUBSCRIBE,
+  SIGNED_OUT_UNSUBSCRIBE,
   UnsubscribeAction,
   UnsubscribeSuccess,
   PatchSubscriberAction,
@@ -13,6 +14,7 @@ import {
   PatchSubscriberSuccess,
   PATCH_SUBSCRIBER,
   NoSubscriberAction,
+  GetSignedOutSubscriberAction,
 } from './actions';
 
 import { RootState } from '../index';
@@ -112,9 +114,29 @@ export function* unsubscribe(action: UnsubscribeAction): SagaIterator {
     }
   }
 }
+
+export function* signedOutUnsubscribe(action: GetSignedOutSubscriberAction): SagaIterator {
+  const type = action.payload.type;
+  const id = action.payload.subscriberId;
+  const tenantId = action.payload.tenantId;
+  try {
+    yield call(axios.delete, `/api/subscriber/v1/types/${type}/subscriptions/${id}?tenantId=${tenantId}`);
+    yield put(
+      SuccessNotification({
+        message: 'Subscription removed.',
+      })
+    );
+
+    yield put(UnsubscribeSuccess(type));
+  } catch (e) {
+    yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+  }
+}
+
 export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(GET_MY_SUBSCRIBER_DETAILS, getMySubscriberDetails);
   yield takeEvery(GET_SUBSCRIBER_DETAILS, getSubscriberDetails);
   yield takeEvery(UNSUBSCRIBE, unsubscribe);
+  yield takeEvery(SIGNED_OUT_UNSUBSCRIBE, signedOutUnsubscribe);
   yield takeEvery(PATCH_SUBSCRIBER, patchSubscriber);
 }
