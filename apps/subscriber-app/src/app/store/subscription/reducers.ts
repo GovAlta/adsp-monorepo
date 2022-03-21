@@ -8,6 +8,9 @@ import {
 import { SUBSCRIBER_INIT, SubscriberService } from './models';
 
 export default function (state = SUBSCRIBER_INIT, action: ActionTypes): SubscriberService {
+  const prevStateSubscriptions = state.subscriber?.subscriptions;
+  const prevSubscriptions = state.subscriptions;
+
   switch (action.type) {
     case NO_SUBSCRIBER:
       return {
@@ -15,17 +18,19 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
         hasSubscriberId: false,
       };
     case GET_SUBSCRIBER_DETAILS_SUCCESS: {
-      const { subscriptions, ...subscriber } = action.payload.subscriber;
       return {
         ...state,
-        subscriber: subscriber,
-        subscriptions: [...subscriptions],
+        subscriber: action.payload.subscriber,
       };
     }
     case UNSUBSCRIBE_SUCCESS:
       return {
         ...state,
-        subscriptions: state.subscriptions.filter((item) => item.typeId !== action.payload.typeId),
+        subscriptions: prevSubscriptions.filter((item) => item.typeId !== action.payload.typeId),
+        subscriber: {
+          ...state.subscriber,
+          subscriptions: prevStateSubscriptions.filter((item) => item.typeId !== action.payload.typeId),
+        },
       };
     case PATCH_SUBSCRIBER_SUCCESS:
       return {

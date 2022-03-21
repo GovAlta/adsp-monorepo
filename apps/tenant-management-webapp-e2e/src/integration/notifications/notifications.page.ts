@@ -286,10 +286,30 @@ class NotificationsPage {
     );
   }
 
+  subscriberDeleteIcon(addressAs, email) {
+    return cy.xpath(
+      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//*[@data-testid="icon-trash"]`
+    );
+  }
+
   subscriberSubscriptions(addressAs, email) {
     return cy.xpath(
       `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//following-sibling::tr[1]`
     );
+  }
+
+  subscriber(addressAs, email) {
+    return cy.xpath(
+      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*`
+    );
+  }
+
+  subscriberDeleteConfirmationModalTitle() {
+    return cy.xpath('//*[@data-testid="delete-confirmation"]//*[@class="modal-title"]');
+  }
+
+  subscriberDeleteConfirmationModalDeleteBtn() {
+    return cy.xpath('//*[@data-testid="delete-confirmation"]//*[@data-testid="delete-confirm"]');
   }
 }
 export default NotificationsPage;

@@ -18,6 +18,7 @@ import {
   subscriberOperations,
   getSubscriberSubscriptions,
   getSubscriberDetails,
+  getSubscriberByUserId,
 } from './subscription';
 import { NotificationType, ServiceUserRoles, Subscription } from '../types';
 import { assertHasTenant, createSubscriber, deleteSubscriber, updateSubscriber } from '.';
@@ -41,7 +42,6 @@ describe('subscription router', () => {
     deleteSubscriber: jest.fn(),
     saveSubscription: jest.fn(),
     deleteSubscriptions: jest.fn(),
-    getSubscriberById: jest.fn(),
     saveSubscriber: jest.fn((entity) => Promise.resolve(entity)),
   };
 
@@ -69,7 +69,6 @@ describe('subscription router', () => {
     repositoryMock.saveSubscription.mockReset();
     repositoryMock.deleteSubscriptions.mockReset();
     repositoryMock.deleteSubscriber.mockReset();
-    repositoryMock.getSubscriberById.mockReset();
     verifyServiceMock.sendCode.mockReset();
     verifyServiceMock.verifyCode.mockReset();
   });
@@ -793,6 +792,27 @@ describe('subscription router', () => {
         })
       );
     });
+
+    it('can call next with unauthorized', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          tenantId,
+          roles: [],
+        },
+        query: {},
+        body: { addressAs: 'tester@test.com', userId: 'tester@test.com' },
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const handler = createSubscriber(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+      expect(res.send).not.toHaveBeenCalled();
+    });
   });
 
   describe('getSubscriber', () => {
@@ -883,6 +903,99 @@ describe('subscription router', () => {
       repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
 
       const handler = getSubscriber(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+  });
+
+  describe('getSubscriberByUserId', () => {
+    const subscriber = new SubscriberEntity(repositoryMock, {
+      id: 'subscriber',
+      tenantId,
+      addressAs: 'tester',
+      channels: [],
+    });
+
+    it('can create handler', () => {
+      const handler = getSubscriberByUserId(repositoryMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can get subscriber', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [ServiceUserRoles.SubscriptionAdmin],
+        },
+        query: {},
+        params: {},
+        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
+
+      const handler = getSubscriberByUserId(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'tester', true);
+      expect(req['subscriber']).toBe(subscriber);
+    });
+
+    it('can call next with not found.', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [ServiceUserRoles.SubscriptionAdmin],
+        },
+        query: {},
+        params: {},
+        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      repositoryMock.getSubscriber.mockResolvedValueOnce(null);
+
+      const handler = getSubscriberByUserId(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+
+    it('can call next for unauthorized.', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [],
+        },
+        query: {},
+        params: {},
+        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
+
+      const handler = getSubscriberByUserId(repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
