@@ -89,8 +89,13 @@ describe('createServiceDocs', () => {
           },
         ];
         const metadata = {
-          _links: {
-            doc: 'http://mock-url',
+          _id: '623a10f1954b8686d92b86f6',
+          service: 'value-service',
+          host: 'http://value-service:3336',
+          metadata: {
+            _links: {
+              doc: { href: 'http://mock-host/swagger/docs/v1' },
+            },
           },
         };
 
