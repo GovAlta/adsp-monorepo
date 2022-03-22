@@ -42,6 +42,7 @@ import { renderNoItem } from '@components/NoItem';
 import { StatusMetrics } from './metrics';
 import { DeleteModal } from '@components/DeleteModal';
 import { createSelector } from 'reselect';
+import { ContactInformation } from './contactInformation/contactInformation';
 
 const userHealthSubscriptionSelector = createSelector(
   (state: RootState) => state.session.userInfo?.sub,
@@ -136,7 +137,7 @@ function Status(): JSX.Element {
         <h1>Service status</h1>
         <Tabs activeIndex={activeIndex}>
           <Tab label="Overview">
-            <div>
+            <OverviewCss>
               <section>
                 This service allows for easy monitoring of application downtime.
                 <p>
@@ -147,8 +148,9 @@ function Status(): JSX.Element {
                   Add application
                 </GoAButton>
               </section>
+              <ContactInformation />
               <StatusMetrics />
-            </div>
+            </OverviewCss>
           </Tab>
           <Tab label="Applications">
             <p>
@@ -634,4 +636,15 @@ const AppName = styled.div`
   font-weight: var(--fw-bold);
   text-transform: capitalize;
   margin-top: 1rem;
+`;
+
+const OverviewCss = styled.div`
+  .contact-border {
+    padding: 16px;
+    border: 1px solid #ccc;
+  }
+
+  .left-float {
+    float: left;
+  }
 `;
