@@ -477,34 +477,24 @@ When(
     const rand_str = String(Math.floor(Math.random() * 1000 + 1000));
 
     const editedEmail = email.match(/(?<=rnd{)[^{}]+(?=})/g);
-    cy.log(editedEmail);
     if (editedEmail == null) {
       emailInput = email;
     } else {
       emailInput = (rand_str + email).replace('rnd{', '').replace('}', '');
-      cy.log(emailInput);
     }
 
     const editedPhone = phone.match(/(?<=rnd{)[^{}]+(?=})/g);
-    cy.log(editedPhone);
     if (editedPhone == null) {
-      // phoneInput = phone.slice(7, 10) + phone.slice(12, 15) + phone.slice(-4);
       phoneInput = phone;
-      //1 (780) 567-1160
     } else {
-      //rnd{1 (780) 567-1160}
-      // phoneInput = phone.slice(7, 10) + phone.slice(12, 15) + rand_str;
       phoneInput = editedPhone.toString().slice(0, -4) + rand_str;
-      cy.log(phoneInput);
     }
 
     const editedInstructions = instructions.match(/(?<=rnd{)[^{}]+(?=})/g);
-    cy.log(editedInstructions);
     if (editedInstructions == null) {
       instructionsInput = instructions;
     } else {
       instructionsInput = (rand_str + instructions).replace('rnd{', '').replace('}', '');
-      cy.log(instructionsInput);
     }
 
     notificationsObj.editContactModalEmail().clear().type(emailInput);
