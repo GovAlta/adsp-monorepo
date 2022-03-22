@@ -96,7 +96,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               setErrors({ ...errors, namespace: 'Service allowed characters: a-z, 0-9, -' });
               return;
             }
-            if (checkNamespace(entry.namespace)) {
+            if (checkNamespace(entry.namespace) && props.type === 'new') {
               setErrors({ ...errors, namespace: 'Service name duplicate, please use another one' });
               return;
             }
@@ -104,7 +104,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               setErrors({ ...errors, api: 'Api allowed characters: a-z, 0-9, -' });
               return;
             }
-            if (checkApi(entry.api)) {
+            if (checkApi(entry.api) && props.type === 'new') {
               setErrors({ ...errors, api: 'Api duplicate, please use another one' });
               return;
             }

@@ -48,7 +48,7 @@ export function* fetchDirectory(action: FetchDirectoryAction): SagaIterator {
       })
     );
   } catch (e) {
-    yield put(ErrorNotification({ message: 'failed to fetch directory' }));
+    yield put(ErrorNotification({ message: 'failed to update directory service' }));
     yield put(
       UpdateIndicator({
         show: false,
@@ -68,7 +68,7 @@ export function* createEntryDirectory(action: CreateEntryAction): SagaIterator {
       yield put(createEntrySuccess(action.data));
     }
   } catch (err) {
-    yield put(ErrorNotification({ message: 'failed to create directory' }));
+    yield put(ErrorNotification({ message: `Failed to create directory service ${action.data.namespace}` }));
   }
 }
 
@@ -83,7 +83,7 @@ export function* updateEntryDirectory(action: UpdateEntryAction): SagaIterator {
       yield put(updateEntrySuccess(action.data));
     }
   } catch (err) {
-    yield put(ErrorNotification({ message: 'failed to create directory' }));
+    yield put(ErrorNotification({ message: `Failed to update directory service ${action.data.namespace}` }));
   }
 }
 
@@ -98,7 +98,7 @@ export function* deleteEntryDirectory(action: DeleteEntryAction): SagaIterator {
       yield put(deleteEntrySuccess(action.data));
     }
   } catch (err) {
-    yield put(ErrorNotification({ message: 'failed to delete directory' }));
+    yield put(ErrorNotification({ message: `Failed to delete directory service ${action.data.namespace}` }));
   }
 }
 
@@ -111,17 +111,17 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
     const result = yield call([api, api.fetchEntryDetail], action.data);
     if (result) {
       const service = action.data;
-      if (result._links) {
-        service._links = result._links;
+      if (result.metadata) {
+        service.metadata = result.metadata;
       } else {
-        service._links = null;
+        service.metadata = null;
       }
 
       yield put(fetchEntryDetailSuccess(service));
     }
   } catch (err) {
     const service = action.data;
-    service._links = null;
+    service.metadata = null;
     yield put(fetchEntryDetailSuccess(service));
   }
 }

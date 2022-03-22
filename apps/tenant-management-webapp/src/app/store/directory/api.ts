@@ -54,18 +54,18 @@ export class DirectoryApi {
   }
 
   async deleteEntry(service: Service): Promise<boolean> {
-    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.name}`;
-    const tenantUrl =
-      url.substr(0, url.lastIndexOf('/') + 1) + toKebabName(service.name) + '/services/' + service.namespace;
-    const res = await this.http.delete(tenantUrl);
+    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${toKebabName(
+      service.name
+    )}/services/${service.namespace}`;
+    const res = await this.http.delete(url);
     return res?.data === 'OK';
   }
 
   async fetchEntryDetail(service: Service): Promise<boolean> {
-    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.name}`;
-    const tenantUrl =
-      url.substr(0, url.lastIndexOf('/') + 1) + toKebabName(service.name) + '/services/' + service.namespace;
-    const res = await this.http.get(tenantUrl);
+    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${toKebabName(
+      service.name
+    )}/services/${service.namespace}`;
+    const res = await this.http.get(url);
     return res?.data;
   }
 }
