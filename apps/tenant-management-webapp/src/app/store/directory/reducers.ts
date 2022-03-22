@@ -51,7 +51,7 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
       const directoryUpdateList = state.directory;
       const isExist = directoryUpdateList.find((x) => x.namespace === action.payload.namespace);
       if (isExist) {
-        isExist._links = action.payload._links;
+        isExist.metadata = action.payload.metadata;
       }
       return { ...state, directory: directoryUpdateList };
     }
