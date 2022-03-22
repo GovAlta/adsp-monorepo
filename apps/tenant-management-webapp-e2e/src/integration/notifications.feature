@@ -139,10 +139,10 @@ Feature: Notifications
     Given a tenant admin user is on notification overview page
     When the user clicks edit button for contact information
     Then the user views Edit contact information modal
-    When the user edited email "<Email>", phone "<Phone>", and support instructions "<Instructions>"
-    And the user clicks Save button
-    Then the user views edited email "<Email>", phone "<Phone>" and support instructions "<Instructions>"
-    # In the code, rnd{} will attach a random 4-digit number to the static string in the {} brackets
+    When the user enters "<Email>", "<Phone>" and "<Instructions>" in Edit contact information modal
+    And the user clicks Save button in Edit contact information modal
+    Then the user views contact information of "<Email>", "<Phone>" and "<Instructions>" on notifications page
+    # In the step definition, rnd{} will use a random 4-digit number to attach/replace part of the static strings in {}
     Examples:
       | Email              | Phone                 | Instructions  |
       | rnd{abc@gov.ab.ca} | rnd{1 (780) 567-1456} | rnd{autotest} |

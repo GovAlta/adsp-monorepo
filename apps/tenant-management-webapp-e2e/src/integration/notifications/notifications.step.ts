@@ -469,55 +469,85 @@ Then('the user views Edit contact information modal', function () {
 });
 
 When(
-  'the user edited email {string}, phone {string}, and support instructions {string}',
+  'the user enters {string}, {string} and {string} in Edit contact information modal',
   function (email, phone, instructions) {
+    // Check phone parameter to match 1 (111) 111-1111 format
+    expect(phone).to.match(/1\s\(\d{3}\)\s\d{3}-\d{4}/g);
+    // Generate a random number between 1000 and 2000
     const rand_str = String(Math.floor(Math.random() * 1000 + 1000));
 
-    const editedEmail = email.match('/(?<=rnd{)[^{}]+(?=})/g');
+    const editedEmail = email.match(/(?<=rnd{)[^{}]+(?=})/g);
     cy.log(editedEmail);
-    if (editedEmail == '') {
+    if (editedEmail == null) {
       emailInput = email;
     } else {
       emailInput = (rand_str + email).replace('rnd{', '').replace('}', '');
       cy.log(emailInput);
     }
-    const editedPhone = phone.match('/(?<=rnd{)[^{}]+(?=})/g');
+
+    const editedPhone = phone.match(/(?<=rnd{)[^{}]+(?=})/g);
     cy.log(editedPhone);
-    if (editedPhone == '') {
-      phoneInput = phone.slice(7, 10) + phone.slice(12, 15) + phone.slice(-4);
+    if (editedPhone == null) {
+      // phoneInput = phone.slice(7, 10) + phone.slice(12, 15) + phone.slice(-4);
+      phoneInput = phone;
       //1 (780) 567-1160
     } else {
       //rnd{1 (780) 567-1160}
-      phoneInput = phone.slice(7, 10) + phone.slice(12, 15) + rand_str;
+      // phoneInput = phone.slice(7, 10) + phone.slice(12, 15) + rand_str;
+      phoneInput = editedPhone.toString().slice(0, -4) + rand_str;
       cy.log(phoneInput);
     }
-    const editedInstructions = instructions.match('/(?<=rnd{)[^{}]+(?=})/g');
+
+    const editedInstructions = instructions.match(/(?<=rnd{)[^{}]+(?=})/g);
     cy.log(editedInstructions);
-    if (editedInstructions == '') {
+    if (editedInstructions == null) {
       instructionsInput = instructions;
     } else {
       instructionsInput = (rand_str + instructions).replace('rnd{', '').replace('}', '');
       cy.log(instructionsInput);
     }
+
     notificationsObj.editContactModalEmail().clear().type(emailInput);
-    notificationsObj.editContactModalPhone().clear().type(phoneInput);
+    // Remove (, ), - and spaces and the first number
+    const phoneInputForUI = phoneInput
+      .replace('(', '')
+      .replace(')', '')
+      .replaceAll(' ', '')
+      .replace('-', '')
+      .substring(1);
+    cy.log(phoneInputForUI);
+    notificationsObj.editContactModalPhone().clear().type(phoneInputForUI);
     notificationsObj.editContactModalInstructions().clear().type(instructionsInput);
   }
 );
 
-Then('the user clicks Save button', function () {
+Then('the user clicks Save button in Edit contact information modal', function () {
   notificationsObj.editContactModalSaveBtn().click();
   cy.wait(2000);
 });
 
 Then(
-  'the user views edited email {string}, phone {string} and support instructions {string}',
+  'the user views contact information of {string}, {string} and {string} on notifications page',
   function (email, phone, instructions) {
-    notificationsObj.contactInformationEmail().invoke('text').should('contain', emailInput);
-    expect(email).equals(emailInput);
-    notificationsObj.contactInformationPhone().invoke('text').should('contain', phoneInput);
-    expect(phone).equals(phoneInput);
-    notificationsObj.contactInformationInstructions().invoke('text').should('contain', instructionsInput);
-    expect(instructions).equals(instructionsInput);
+    const editedEmail = email.match(/(?<=rnd{)[^{}]+(?=})/g);
+    if (editedEmail == '') {
+      notificationsObj.contactInformationEmail().invoke('text').should('contain', email);
+    } else {
+      notificationsObj.contactInformationEmail().invoke('text').should('contain', emailInput);
+    }
+
+    const editedPhone = phone.match(/(?<=rnd{)[^{}]+(?=})/g);
+    if (editedPhone == '') {
+      notificationsObj.contactInformationPhone().invoke('text').should('contain', phone);
+    } else {
+      notificationsObj.contactInformationPhone().invoke('text').should('contain', phoneInput);
+    }
+
+    const editedInstructions = instructions.match(/(?<=rnd{)[^{}]+(?=})/g);
+    if (editedInstructions == '') {
+      notificationsObj.contactInformationInstructions().invoke('text').should('contain', instructions);
+    } else {
+      notificationsObj.contactInformationInstructions().invoke('text').should('contain', instructionsInput);
+    }
   }
 );
