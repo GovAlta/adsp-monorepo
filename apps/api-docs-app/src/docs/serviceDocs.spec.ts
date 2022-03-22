@@ -76,13 +76,15 @@ describe('createServiceDocs', () => {
 
         const directory = [
           {
+            name: 'Mock Service A',
             namespace: 'mock-a',
-            service: 'mock-a',
+            urn: 'urn:ads:autotest:mock-a',
             url: 'htt://mock-url-a',
           },
           {
+            name: 'Mock Service B',
             namespace: 'mock-b',
-            service: 'mock-b',
+            urn: 'urn:ads:autotest:mock-b',
             url: 'htt://mock-url-b',
           },
         ];
