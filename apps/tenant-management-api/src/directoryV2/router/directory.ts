@@ -14,6 +14,27 @@ const passportMiddleware = passport.authenticate(['jwt', 'jwt-tenant'], { sessio
 
 import axios from 'axios';
 import { Service } from '../../directory/types/directory';
+export interface URNComponent {
+  scheme?: string;
+  nic?: string;
+  core?: string;
+  service?: string;
+  apiVersion?: string;
+  resource?: string;
+}
+
+export interface Resp {
+  url?: string;
+  urn?: string;
+}
+
+const getUrn = (component: URNComponent) => {
+  let urn = `${component.scheme}:${component.nic}:${component.core}:${component.service}`;
+  urn = component.apiVersion ? `${urn}:${component.apiVersion}` : urn;
+  urn = component.resource ? `${urn}:${component.resource}` : urn;
+  return urn;
+};
+
 interface DirectoryRouterProps {
   logger?: Logger;
   directoryRepository: DirectoryRepository;
@@ -50,6 +71,13 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
       element['name'] = namespace;
       element['namespace'] = service.service;
       element['url'] = service.host;
+      const component: URNComponent = {
+        scheme: 'urn',
+        nic: 'ads',
+        core: namespace,
+        service: service.service,
+      };
+      element['urn'] = getUrn(component);
       response.push(element);
     }
 
@@ -157,7 +185,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
    * Delete one service by namespace
    */
   directoryRouter.delete(
-    '/namespaces/:namespace/service/:service',
+    '/namespaces/:namespace/services/:service',
     [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
     async (req: Request, res: Response, _next) => {
       const { namespace, service } = req.params;
@@ -196,7 +224,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
 
     if (results) {
       const isExist = results.find((x) => x.service === service);
-      if (isExist && isExist?._links) {
+      if (isExist && isExist?.metadata) {
         return res.status(HttpStatusCodes.OK).json(isExist);
       }
     }
@@ -212,8 +240,8 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
 
       if (filteredService) {
         const { data } = await axios.get(filteredService.host);
-        if (!filteredService._links) {
-          filteredService._links = data._links;
+        if (!filteredService.metadata) {
+          filteredService.metadata = data;
         }
         directoryCache.set(`directory-${namespace}`, services);
         return res.status(HttpStatusCodes.OK).json(filteredService);

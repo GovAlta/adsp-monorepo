@@ -3,12 +3,18 @@ export interface Service {
   api?: string;
   host: string;
   description?: string;
-  _links?: Links;
+  metadata?: Links;
 }
 export interface Directory {
   id?: string;
   name: string;
   services: Service[];
+}
+
+export interface Metadata {
+  name?: string;
+  description?: string;
+  _links?: Links;
 }
 export interface Links {
   self: string;
