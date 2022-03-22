@@ -268,7 +268,6 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
 
       res.send(mapSubscriber(apiId, entity));
     } catch (err) {
-      this.logger.error(`Failed :${err.message}`);
       next(err);
     }
   };

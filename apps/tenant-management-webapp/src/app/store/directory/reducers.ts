@@ -10,8 +10,13 @@ import {
 
 export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
   switch (action.type) {
-    case FETCH_DIRECTORY_SUCCESS:
-      return { ...state, directory: action.payload.directory };
+    case FETCH_DIRECTORY_SUCCESS: {
+      const directories = action.payload.directory;
+      directories.forEach((dir) => {
+        dir.isCore = dir.name.toLowerCase() === 'platform';
+      });
+      return { ...state, directory: directories };
+    }
 
     case CREATE_ENTRY_SUCCESS: {
       const directoryList = state.directory;
@@ -46,7 +51,7 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
       const directoryUpdateList = state.directory;
       const isExist = directoryUpdateList.find((x) => x.namespace === action.payload.namespace);
       if (isExist) {
-        isExist._links = action.payload._links;
+        isExist.metadata = action.payload.metadata;
       }
       return { ...state, directory: directoryUpdateList };
     }

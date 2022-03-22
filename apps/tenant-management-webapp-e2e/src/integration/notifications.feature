@@ -134,16 +134,26 @@ Feature: Notifications
     When the user expands the subscription list for the subscriber of "Auto Test" and "auto.test@gov.ab.ca"
     Then the user views the subscription of "status-application-health-change" for the subscriber of "Auto Test" and "auto.test@gov.ab.ca"
 
-  @TEST_CS-1191 @REQ_CS-1148 @regression
-  Scenario Outline: As a tenant admin, I can configure subscription management contact information on notifications overview page
-    Given a tenant admin user is on notification overview page
-    When the user clicks edit button for contact information
-    Then the user views Edit contact information modal
-    When the user enters "<Email>", "<Phone>" and "<Instructions>" in Edit contact information modal
-    And the user clicks Save button in Edit contact information modal
-    Then the user views contact information of "<Email>", "<Phone>" and "<Instructions>" on notifications page
-    # In the step definition, rnd{} will use a random 4-digit number to attach/replace part of the static strings in {}
-    Examples:
-      | Email              | Phone                 | Instructions  |
-      | rnd{abc@gov.ab.ca} | rnd{1 (780) 567-1456} | rnd{autotest} |
-      | abc@gov.ab.ca      | 1 (780) 567-1456      | autotest      |
+  @TEST_CS-1224 @REQ_CS-1183 @regression
+  Scenario: As a tenant admin, I can delete a subscriber
+    # Autotest user should be already subscribed to application health change notifications. If not, set it to subscribed
+    Given a tenant admin user is on status applications page
+    When the user "selects" the subscribe checkbox for health check notification type
+    Then the user views the subscribe checkbox is "checked"
+    # Test subscriber deletion
+    Given a tenant admin user is on notification subscribers page
+    When the user searches subscribers with address as containing "Auto Test" and email containing "auto.test@gov.ab.ca"
+    Then the user "views" the subscriber of "Auto Test", "auto.test@gov.ab.ca"
+    When the user clicks delete button of "Auto Test", "auto.test@gov.ab.ca" on subscribers page
+    Then the user views Delete subscriber modal
+    # The validation of delete confirmation modal content is skipped due to the bug of CS-1266
+    # And the user views the Delete subscriber confirmation message of "auto.test@gov.ab.ca"
+    When the user clicks Delete button on Delete subscriber modal
+    Then the user "should not view" the subscriber of "Auto Test", "auto.test@gov.ab.ca"
+    When the user selects "Subscriptions" tab for "Notifications"
+    Then the user "should not view" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Status-Application-Health-Change"
+    # Restore the subscription
+    Given a tenant admin user is on status applications page
+    Then the user views the subscribe checkbox is "unchecked"
+    When the user "selects" the subscribe checkbox for health check notification type
+    Then the user views a callout message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"

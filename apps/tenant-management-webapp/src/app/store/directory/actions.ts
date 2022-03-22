@@ -15,8 +15,6 @@ export const DELETE_ENTRY_SUCCESS = 'tenant/directory-service/entry/delete/succe
 export const FETCH_ENTRY_DETAIL = 'tenant/directory-service/entry/detail';
 export const FETCH_ENTRY_DETAIL_SUCCESS = 'tenant/directory-service/entry/detail/success';
 
-export const CREATE_DIRECTORY = 'tenant/directory-service/directory/create';
-export const CREATE_DIRECTORY_SUCCESS = 'tenant/directory-service/directory/create/success';
 // =============
 // Actions Types
 // =============
@@ -25,8 +23,6 @@ export type ActionType =
   | FetchDirectorySuccessAction
   | FetchEntryDetailAction
   | FetchEntryDetailSuccessAction
-  | CreateDirectoryAction
-  | CreateDirectorySuccessAction
   | CreateEntryAction
   | CreateEntrySuccessAction
   | UpdateEntryAction
@@ -80,15 +76,6 @@ interface FetchEntryDetailSuccessAction {
   type: typeof FETCH_ENTRY_DETAIL_SUCCESS;
   payload: Service;
 }
-export interface CreateDirectoryAction {
-  type: typeof CREATE_DIRECTORY;
-  payload: Directory;
-}
-
-export interface CreateDirectorySuccessAction {
-  type: typeof CREATE_DIRECTORY_SUCCESS;
-  payload: Directory;
-}
 
 export const fetchDirectory = (): FetchDirectoryAction => ({
   type: FETCH_DIRECTORY,
@@ -106,16 +93,6 @@ export const createEntry = (data: Service): CreateEntryAction => ({
 
 export const createEntrySuccess = (data: Service): CreateEntrySuccessAction => ({
   type: CREATE_ENTRY_SUCCESS,
-  payload: data,
-});
-
-export const createDirectory = (data: Directory): CreateDirectoryAction => ({
-  type: CREATE_DIRECTORY,
-  payload: data,
-});
-
-export const createDirectorySuccess = (data: Directory): CreateDirectorySuccessAction => ({
-  type: CREATE_DIRECTORY_SUCCESS,
   payload: data,
 });
 
@@ -144,7 +121,7 @@ export const fetchEntryDetail = (data: Service): FetchEntryDetailAction => ({
   data,
 });
 
-export const fetchEntryDetailSuccess = (data): FetchEntryDetailSuccessAction => ({
+export const fetchEntryDetailSuccess = (data: Service): FetchEntryDetailSuccessAction => ({
   type: FETCH_ENTRY_DETAIL_SUCCESS,
   payload: data,
 });

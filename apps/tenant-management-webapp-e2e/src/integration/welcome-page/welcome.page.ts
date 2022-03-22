@@ -71,6 +71,10 @@ class WelcomePage {
   welcomePageTitle() {
     return cy.xpath('//*[@class="goa-hero"]//div/h1');
   }
+
+  createTenantNameErrorMsg() {
+    return cy.xpath('//*[@class="goa-form"]//*[@class="error-msg"]');
+  }
 }
 
 export default WelcomePage;

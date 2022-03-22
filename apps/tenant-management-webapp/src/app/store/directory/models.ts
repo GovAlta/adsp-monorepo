@@ -6,6 +6,13 @@ export interface Service {
   namespace: string;
   api?: string;
   url: string;
+  urn?: string;
+  description?: string;
+  metadata?: Metadata;
+  isCore?: boolean;
+}
+export interface Metadata {
+  name?: string;
   description?: string;
   _links?: Links;
 }

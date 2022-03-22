@@ -35,7 +35,7 @@ Feature: Tenant management welcome page
         And the user clicks Sign in button
         And the user enters "env{email2}" and "env{password2}", and clicks login button
         Then the user views create tenant page
-        When the user enters "autotest signup" as tenant name and clicks create tenant button
+        When the user enters "autotest signup" as tenant name, clicks create tenant button and waits "30" seconds
         Then the user views the tenant is successfully created message
         And the new tenant login button is presented
         When the user clicks the tenant login button
@@ -59,3 +59,16 @@ Feature: Tenant management welcome page
         Then the user views a message of cannot create a tenant without beta-tester role
         When the user clicks back to sign in page button
         Then the user views the tenant management welcome page title
+
+    # TEST DATA: autotest tenant exists
+    @TEST_CS-332 @regression
+    Scenario: As a tenant management user, I cannot create a tenant having a name with special chars or the same as an existing name
+        Given the user is on the tenant management welcome page
+        When the user selects get started button
+        And the user clicks Sign in button
+        And the user enters "env{email2}" and "env{password2}", and clicks login button
+        Then the user views create tenant page
+        When the user enters "autotest!&%" as tenant name, clicks create tenant button and waits "2" seconds
+        Then the user views the error message of "Value not valid for Tenant name: Names cannot contain special characters (e.g. ! & %)." for tenant creation
+        When the user enters "autoTest" as tenant name, clicks create tenant button and waits "2" seconds
+        Then the user views the error message of "Tenant exist, please use another tenant name" for tenant creation

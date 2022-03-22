@@ -31,6 +31,7 @@ export interface Subscriber {
   addressAs: string;
   urn?: string;
   userId?: string;
+  subscriptions?: Subscription[];
 }
 export interface SubscriberService {
   subscriber: Subscriber;

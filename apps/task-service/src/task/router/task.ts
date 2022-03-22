@@ -50,15 +50,17 @@ export const getTasks =
         throw new UnauthorizedUserError('read tasks', user);
       }
 
+      const tenantId = req.tenant?.id;
+      if (!tenantId) {
+        throw new InvalidOperationError('Cannot retrieve task without tenant context.');
+      }
+
       const { top: topValue, after, criteria: criteriaValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 10;
       const criteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
-      if (!user.isCore) {
-        criteria.tenantId = user.tenantId;
-      }
 
       const [{ queues }] = await req.getConfiguration<TaskServiceConfiguration>();
-      const tasks = await repository.getTasks(queues, top, after as string, criteria);
+      const tasks = await repository.getTasks(queues, top, after as string, { ...criteria, tenantId });
       res.send({
         page: tasks.page,
         results: tasks.results.map((r) => mapTask(apiId, r)),
@@ -74,8 +76,10 @@ export const getTask =
     try {
       const user = req.user;
       const { id } = req.params;
-      const { tenantId: tenantIdValue } = req.query;
-      const tenantId = user?.isCore && tenantIdValue ? AdspId.parse(tenantIdValue as string) : user.tenantId;
+      const tenantId = req.tenant?.id;
+      if (!tenantId) {
+        throw new InvalidOperationError('Cannot retrieve task without tenant context.');
+      }
 
       const [{ queues }] = await req.getConfiguration<TaskServiceConfiguration>();
       const entity = await repository.getTask(queues, tenantId, id);

@@ -83,8 +83,8 @@ const LandingPage = (): JSX.Element => {
                 <GridItem md={10}>
                   <BoldTitle>The Alberta Digital Service Platform (ADSP)</BoldTitle>
                   <p>
-                    Enabling your team to add, configure and manage a range of services that can integrate with your
-                    projects.
+                    Enabling your team to add, configure, and manage a range of services that can integrate with your
+                    products.
                   </p>
                   <br />
                   <p>
@@ -108,7 +108,7 @@ const LandingPage = (): JSX.Element => {
                     <h2>Why ADSP?</h2>
                     <p>
                       ADSP is a secure in-house cloud-based platform built to enable service teams of the DDI. Users can
-                      sign up to take advantage of the platform and build applications to manage their projects.
+                      sign up to take advantage of the platform capabilities within their own products.
                     </p>
                     <p>
                       Check out the quick-start{' '}
@@ -138,9 +138,9 @@ const LandingPage = (): JSX.Element => {
                     <GridItem md={9}>
                       <h2>Built for teams to move faster</h2>
                       <p>
-                        The ADSP comes with services out of the box available for your team with code examples and
-                        sandbox environments. Grant your team access in a quick and secure way. Super easy to integrate
-                        with projects, built to save time and effort and help your team deliver faster.
+                        The ADSP comes with services out of the box available to your team with code examples and
+                        sandbox environments. Grant your team access in a quick and secure way. Super easy to integrate,
+                        built to save time and effort, and help your team deliver faster.
                       </p>
                     </GridItem>
                   </Grid>
@@ -158,10 +158,10 @@ const LandingPage = (): JSX.Element => {
               <GridItem md={1} />
               <GridItem md={10}>
                 <ServiceLayout>
-                  <h2>Service we offer</h2>
+                  <h2>Services we offer</h2>
                   <p>
-                    The ADSP provides a huge catalog of services and existing capabilities for product teams to leverage
-                    and deliver on time quality service to Albertans. Here are few of our offerings.
+                    The ADSP provides a catalog of services and capabilities for product teams to leverage in delivering
+                    digital services to Albertans. Here are a few of our offerings.
                   </p>
                 </ServiceLayout>
               </GridItem>
@@ -179,8 +179,8 @@ const LandingPage = (): JSX.Element => {
                       <CardLayout>
                         <CardTitle>UI components library</CardTitle>
                         <CardContent maxHeight={rowOneMaxHeight}>
-                          We're encouraging companies to turn our oil and gas resources into more valuable products –
-                          creating good jobs for Albertans.
+                          The design system and UI component library provide reusable patterns and components for your
+                          front end application. Choose from components for Angular, React, and Vue.
                         </CardContent>
                         <RedirectButton
                           name="ui-components"
@@ -194,11 +194,11 @@ const LandingPage = (): JSX.Element => {
                   <GridItem md={4} hSpacing={0.5}>
                     <GoACard type="primary">
                       <CardLayout>
-                        <CardTitle>Keycloak access service</CardTitle>
+                        <CardTitle>Access service</CardTitle>
                         <CardContent maxHeight={rowOneMaxHeight}>
-                          Access allows you to add a secure sign in to your application and services with minimum effort
-                          and configuration. No need to deal with storing or authenticating users. It's all available
-                          out of the box.
+                          Access service allows you to add a secure sign in to your application and services with
+                          minimum effort and configuration. No need to deal with storing or authenticating users. It's
+                          all available out of the box.
                         </CardContent>
 
                         <RedirectButton
@@ -246,7 +246,7 @@ const LandingPage = (): JSX.Element => {
                       <CardLayout>
                         <CardTitle>Event service</CardTitle>
                         <CardContent id="event-service-description" maxHeight={rowTwoMaxHeight}>
-                          The event service provides tenant applications with the ability to send domain events.
+                          Event service provides tenant applications with the ability to send domain events.
                           Applications are able to leverage additional capabilities as side effects through these
                           events.
                         </CardContent>
@@ -264,8 +264,8 @@ const LandingPage = (): JSX.Element => {
                       <CardLayout>
                         <CardTitle>Notification service</CardTitle>
                         <CardContent maxHeight={rowTwoMaxHeight}>
-                          The notifications service provides tenant applications with the ability to configure and
-                          manage notifications for your subscribers.
+                          Notifications service provides tenant applications with the ability to configure and manage
+                          notifications for your subscribers.
                         </CardContent>
 
                         <RedirectButton

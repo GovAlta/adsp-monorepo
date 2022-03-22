@@ -121,6 +121,30 @@ export function getSubscriber(tokenProvider: TokenProvider, directory: ServiceDi
   };
 }
 
+export function unsubscribe(tokenProvider: TokenProvider, directory: ServiceDirectory): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const { type, id } = req.params;
+      const { tenantId } = req.query;
+
+      const notificationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:notification-service`);
+      const token = await tokenProvider.getAccessToken();
+
+      const subscribersUrl = new URL(
+        `/subscription/v1/types/${type}/subscriptions/${id}?tenantId=${tenantId}`,
+        notificationServiceUrl
+      );
+
+      const result = await axios.delete(subscribersUrl.href, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      res.send(result.data);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 interface RouterProps {
   logger: Logger;
   directory: ServiceDirectory;
@@ -145,6 +169,7 @@ export const createSubscriberRouter = ({
   );
 
   router.get('/get-subscriber/:subscriberId', getSubscriber(tokenProvider, directory));
+  router.delete('/types/:type/subscriptions/:id', unsubscribe(tokenProvider, directory));
 
   return router;
 };

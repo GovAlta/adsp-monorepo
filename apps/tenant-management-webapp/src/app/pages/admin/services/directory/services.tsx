@@ -22,7 +22,8 @@ export const DirectoryService: FunctionComponent = () => {
   useEffect(() => {
     dispatch(fetchDirectory());
   }, []);
-
+  const coreTenant = 'Platform';
+  const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const { directory } = useSelector((state: RootState) => state.directory);
 
   const nameArray = [...new Map(directory.map((item) => [item['name'], item])).values()];
@@ -33,6 +34,7 @@ export const DirectoryService: FunctionComponent = () => {
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
+
   function reset() {
     setEditEntry(false);
     setSelectedEntry(defaultService);
@@ -53,20 +55,23 @@ export const DirectoryService: FunctionComponent = () => {
       {!indicator.show && !nameArray && renderNoItem('directory')}
       {!indicator.show && nameArray && (
         <div>
+          {tenantName !== coreTenant && (
+            <GoAButton
+              data-testid="add-directory-btn"
+              onClick={() => {
+                defaultService.name = tenantName;
+                setSelectedEntry(defaultService);
+                setIsEdit(false);
+                setEditEntry(true);
+              }}
+            >
+              Add entry
+            </GoAButton>
+          )}
+          <br />
           {nameArray.map((item) => (
             <TableDiv key={item['name']}>
               <NameDiv>{item['name']}</NameDiv>
-              <GoAButton
-                data-testid="add-directory-btn"
-                onClick={() => {
-                  defaultService.name = item['name'];
-                  setSelectedEntry(defaultService);
-                  setIsEdit(false);
-                  setEditEntry(true);
-                }}
-              >
-                Add entry
-              </GoAButton>
               <DataTable data-testid="directory-table">
                 <thead data-testid="directory-table-header">
                   <tr>
@@ -78,7 +83,7 @@ export const DirectoryService: FunctionComponent = () => {
                   </tr>
                 </thead>
 
-                <tbody key={item['name']}>
+                <tbody key={tenantName}>
                   {directory
                     .filter((dir) => dir.name === item['name'])
                     .map((dir: Service) => (
@@ -86,6 +91,7 @@ export const DirectoryService: FunctionComponent = () => {
                     ))}
                 </tbody>
               </DataTable>
+              <br />
             </TableDiv>
           ))}
         </div>

@@ -36,38 +36,44 @@ export const ServiceItemComponent: FunctionComponent<serviceProps> = ({ service,
         </td>
         <td className="actionCol">
           <GoAContextMenu>
-            <GoAContextMenuIcon
-              type={showDetails ? 'eye-off' : 'eye'}
-              onClick={() => setDetails(service)}
-              testId="directory-toggle-details-visibility"
-            />
-            <GoAContextMenuIcon
-              type="create"
-              title="Edit"
-              testId={`directory-edit-${service.namespace}`}
-              onClick={() => {
-                onEdit(service);
-              }}
-            />
-            <GoAIconButton
-              testId={`directory-delete-${service.namespace}`}
-              title="Delete"
-              size="medium"
-              type="trash"
-              onClick={() => {
-                onDelete(service);
-              }}
-            />
+            {service.namespace.split(':').length === 1 && (
+              <GoAContextMenuIcon
+                type={showDetails ? 'eye-off' : 'eye'}
+                onClick={() => setDetails(service)}
+                testId="directory-toggle-details-visibility"
+              />
+            )}
+            {!service.isCore && (
+              <GoAContextMenuIcon
+                type="create"
+                title="Edit"
+                testId={`directory-edit-${service.namespace}`}
+                onClick={() => {
+                  onEdit(service);
+                }}
+              />
+            )}
+            {!service.isCore && (
+              <GoAIconButton
+                testId={`directory-delete-${service.namespace}`}
+                title="Delete"
+                size="medium"
+                type="trash"
+                onClick={() => {
+                  onDelete(service);
+                }}
+              />
+            )}
           </GoAContextMenu>
         </td>
       </tr>
       {showDetails && (
         <tr>
           <td headers="Entry metadata information" colSpan={5}>
-            {service._links === null ? (
+            {service.metadata === null ? (
               renderNoItem('service metadata')
             ) : (
-              <EntryDetail data-testid="details">{JSON.stringify(service._links, null, 4)}</EntryDetail>
+              <EntryDetail data-testid="details">{JSON.stringify(service.metadata, null, 4)}</EntryDetail>
             )}
           </td>
         </tr>

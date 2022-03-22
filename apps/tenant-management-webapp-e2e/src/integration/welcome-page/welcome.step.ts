@@ -76,11 +76,16 @@ Then('the user views create tenant page', function () {
   welcomPageObj.createTenantTitle().contains('Create tenant');
 });
 
-When('the user enters {string} as tenant name and clicks create tenant button', function (tenantName) {
-  welcomPageObj.tenantNameField().type(tenantName);
-  welcomPageObj.createTenantButton().click();
-  cy.wait(20000); // Wait the tenant creation to finish
-});
+When(
+  'the user enters {string} as tenant name, clicks create tenant button and waits {string} seconds',
+  function (tenantName, seconds) {
+    expect(isNaN(seconds)).to.be.false; // Verify the pass in seconds is a number
+    expect(Number(seconds)).to.be.lessThan(300); // provent user from passing in too big a number to hange the test execution
+    welcomPageObj.tenantNameField().clear().type(tenantName);
+    welcomPageObj.createTenantButton().click();
+    cy.wait(Number(seconds) * 1000); // Wait N seconds for the tenant creation
+  }
+);
 
 Then('the user views the tenant is successfully created message', function () {
   welcomPageObj.newTenantCreationMessage().contains('successfully created');
@@ -144,4 +149,8 @@ Then('the user views a message of cannot create a tenant without beta-tester rol
 
 When('the user clicks back to sign in page button', function () {
   welcomPageObj.backToSignInPageLinkButton().click();
+});
+
+Then('the user views the error message of {string} for tenant creation', function (errorMsg) {
+  welcomPageObj.createTenantNameErrorMsg().invoke('text').should('contain', errorMsg);
 });
