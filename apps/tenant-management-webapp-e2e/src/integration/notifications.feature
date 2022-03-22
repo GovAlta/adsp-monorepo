@@ -135,10 +135,15 @@ Feature: Notifications
     Then the user views the subscription of "status-application-health-change" for the subscriber of "Auto Test" and "auto.test@gov.ab.ca"
 
   @TEST_CS-1191 @REQ_CS-1148 @regression
-  Scenario: As a tenant admin, I can configure subscription management contact information on notifications overview page
+  Scenario Outline: As a tenant admin, I can configure subscription management contact information on notifications overview page
     Given a tenant admin user is on notification overview page
     When the user clicks edit button for contact information
     Then the user views Edit contact information modal
-    When the user edited email "abc@gov.ab.ca", phone "1 (780) 567-1456", and support instructions "autotest notification instruction"
+    When the user edited email "<Email>", phone "<Phone>", and support instructions "<Instructions>"
     And the user clicks Save button
-    Then the user views edited email, phone and support instructions
+    Then the user views edited email "<Email>", phone "<Phone>" and support instructions "<Instructions>"
+    # In the code, rnd{} will attach a random 4-digit number to the static string in the {} brackets
+    Examples:
+      | Email              | Phone                 | Instructions  |
+      | rnd{abc@gov.ab.ca} | rnd{1 (780) 567-1456} | rnd{autotest} |
+      | abc@gov.ab.ca      | 1 (780) 567-1456      | autotest      |
