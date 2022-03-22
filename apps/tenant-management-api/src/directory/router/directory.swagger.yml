@@ -1,41 +1,40 @@
-Ok: &Ok
-  description: OK
-
-GoA401: &GoA401
-  description: |
-    Unauthorized. The allowed user groups are listed as follows:
-      | Group Name    | Keycloak Realm| Client  |
-      | ------------- |:-------------:| -------:|
-      | GoA  | any | any |
-
-# Define schema:
-Discovery: &Discovery
-  type: object
-  properties:
-    service:
-      type: string
-    host:
-      type: string
+components:
+  schemas:
+    Directory:
+      title: Directory
+      type: object
+      properties:
+        urn:
+          type: string
+          description: ADSP urn of the directory
+        url:
+          type: string
+          description: Url of the directory
 
 '/api/discovery/v1':
   get:
     tags:
-      - Discovery
+      - Discovery V1
     description:
       Fetch the discovery (URN-service) list.
     responses:
-      200: *Ok
-      401: *GoA401
+      200:
+        title: Successful response
+        type: Array
+        items:
+            $ref: '#/components/schemas/schemas'
+      401:
+        description: Unauthorized
 
   post:
     tags:
-      - Discovery
+      - Discovery V1
     description:
       Create a new URN entry
     requestBody:
       content:
         application/json:
-          schema:      # Request body contents
+          schema:
             type: object
             properties:
               name:
@@ -43,7 +42,8 @@ Discovery: &Discovery
               services:
                 type: array
                 items:
-                  *Discovery
+                  $ref: '#/components/schemas/schemas'
+
     responses:
       200: *Ok
       401: *GoA401
