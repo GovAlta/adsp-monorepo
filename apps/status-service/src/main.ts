@@ -13,6 +13,9 @@ import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import * as util from 'util';
 import type { User } from '@abgov/adsp-service-sdk';
 import {
+  configurationSchema
+} from './mongo/schema';
+import {
   HealthCheckStartedDefinition,
   HealthCheckStoppedDefinition,
   HealthCheckUnhealthyDefinition,
@@ -50,6 +53,7 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
           inTenantAdmin: true,
         },
       ],
+      configurationSchema,
       events: [
         HealthCheckStartedDefinition,
         HealthCheckStoppedDefinition,

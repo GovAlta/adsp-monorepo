@@ -8,6 +8,8 @@ import {
   SET_APPLICATION_SUCCESS_STATUS_ACTION,
   TOGGLE_APPLICATION_SUCCESS_STATUS_ACTION,
   UPDATE_FORM_DATA_ACTION,
+  FETCH_STATUS_CONFIGURATION_SUCCEEDED,
+  UPDATE_STATUS_CONTACT_INFORMATION,
 } from './actions';
 import { ServiceStatus } from './models';
 
@@ -22,6 +24,9 @@ const initialState: ServiceStatus = {
     endpoint: { url: '', status: 'offline' },
   },
   metrics: {},
+  contact: {
+    contactEmail: null,
+  },
 };
 
 const compareIds = (a: { _id?: string }, b: { _id?: string }): number => (a._id <= b._id ? 1 : -1);
@@ -75,6 +80,16 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
       return {
         ...state,
         metrics: action.metrics,
+      };
+    case FETCH_STATUS_CONFIGURATION_SUCCEEDED:
+      return {
+        ...state,
+        contact: action.payload.contact,
+      };
+    case UPDATE_STATUS_CONTACT_INFORMATION:
+      return {
+        ...state,
+        contact: action.payload,
       };
     default:
       return state;

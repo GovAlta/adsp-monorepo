@@ -6,6 +6,7 @@ import * as status from './setApplicationStatus';
 import * as toggle from './toggleApplication';
 import * as form from './updateFormData';
 import * as metrics from './metrics';
+import * as statusSupportInstructions from './statusSupportInstructions';
 
 export * from './fetchApplications';
 export * from './getApplication';
@@ -15,6 +16,7 @@ export * from './setApplicationStatus';
 export * from './toggleApplication';
 export * from './updateFormData';
 export * from './metrics';
+export * from './statusSupportInstructions';
 
 export type ActionTypes =
   | toggle.ToggleApplicationStatusSuccessAction
@@ -27,4 +29,6 @@ export type ActionTypes =
   | status.SetApplicationStatusSuccessAction
   | form.UpdateFormDataAction
   | metrics.FetchStatusMetricsAction
-  | metrics.FetchStatusMetricsSuccessAction;
+  | metrics.FetchStatusMetricsSuccessAction
+  | statusSupportInstructions.FetchNotificationConfigurationSucceededAction
+  | statusSupportInstructions.UpdateStatusContactInformationAction;

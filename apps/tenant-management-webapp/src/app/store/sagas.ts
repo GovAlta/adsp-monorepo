@@ -24,6 +24,8 @@ import {
   saveApplication,
   setApplicationStatus,
   toggleApplicationStatus,
+  updateStatusContactInformation,
+  fetchStatusConfiguration,
 } from './status/sagas';
 import { watchEventSagas } from './event/sagas';
 import { watchFileSagas } from './file/sagas';
@@ -60,6 +62,8 @@ import {
   FETCH_SERVICE_STATUS_APPS_ACTION,
   FETCH_STATUS_METRICS_ACTION,
   SAVE_APPLICATION_ACTION,
+  UPDATE_STATUS_CONTACT_INFORMATION,
+  FETCH_STATUS_CONFIGURATION,
 } from './status/actions';
 import { SAVE_NOTICE_ACTION, GET_NOTICES_ACTION, DELETE_NOTICE_ACTION } from './notice/actions';
 import { saveNotice, getNotices, deleteNotice } from './notice/sagas';
@@ -103,6 +107,8 @@ export function* watchSagas() {
   yield takeEvery(DELETE_APPLICATION_ACTION, deleteApplication);
   yield takeEvery(SET_APPLICATION_STATUS_ACTION, setApplicationStatus);
   yield takeEvery(TOGGLE_APPLICATION_STATUS_ACTION, toggleApplicationStatus);
+  yield takeEvery(UPDATE_STATUS_CONTACT_INFORMATION, updateStatusContactInformation);
+  yield takeEvery(FETCH_STATUS_CONFIGURATION, fetchStatusConfiguration);
   yield takeLatest(FETCH_STATUS_METRICS_ACTION, fetchStatusMetrics);
 
   // notices
