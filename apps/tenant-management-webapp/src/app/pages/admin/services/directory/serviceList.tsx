@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useMemo, useState } from 'react';
 
 import styled from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
@@ -90,15 +90,10 @@ interface serviceTableProps {
 }
 
 export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({ name, directory, onEdit, onDelete }) => {
-  const compare = (a, b) => {
-    if (a.namespace < b.namespace) {
-      return -1;
-    }
-    if (a.namespace > b.namespace) {
-      return 1;
-    }
-    return 0;
-  };
+  const memoizedDirectory = useMemo(() => {
+    return [...directory].sort((a, b) => (a.namespace < b.namespace ? -1 : 1));
+  }, [directory]);
+
   return (
     <TableDiv key={name}>
       <NameDiv>{name}</NameDiv>
@@ -114,8 +109,7 @@ export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({ na
         </thead>
 
         <tbody key={name}>
-          {directory
-            .sort(compare)
+          {memoizedDirectory
             .filter((dir) => dir.name === name)
             .map((dir: Service) => (
               <ServiceItemComponent service={dir} onEdit={onEdit} onDelete={onDelete} />
