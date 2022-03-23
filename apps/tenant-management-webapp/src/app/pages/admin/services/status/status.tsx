@@ -640,7 +640,7 @@ const AppName = styled.div`
 
 const OverviewCss = styled.div`
   .contact-border {
-    padding: 16px;
+    padding: 1rem;
     border: 1px solid #ccc;
   }
 
