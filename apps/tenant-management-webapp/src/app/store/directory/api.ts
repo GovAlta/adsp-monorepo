@@ -22,8 +22,6 @@ export class DirectoryApi {
 
   async fetchDirectoryTenant(tenantName: string): Promise<Directory> {
     const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${toKebabName(tenantName)}`;
-
-    console.log('in api  tenantUrl', url);
     const res = await this.http.get(url);
     return res?.data;
   }
