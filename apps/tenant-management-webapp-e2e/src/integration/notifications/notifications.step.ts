@@ -515,13 +515,14 @@ When(
     } else {
       phoneInput = editedPhone.toString().slice(0, -4) + rand_str;
     }
+
     const editedInstructions = instructions.match(/(?<=rnd{)[^{}]+(?=})/g);
     if (editedInstructions == null) {
       instructionsInput = instructions;
     } else {
       instructionsInput = (rand_str + instructions).replace('rnd{', '').replace('}', '');
-      cy.log(instructionsInput);
     }
+
     notificationsObj.editContactModalEmail().clear().type(emailInput);
     // Remove (, ), - and spaces and the first number
     const phoneInputForUI = phoneInput
@@ -530,7 +531,7 @@ When(
       .replaceAll(' ', '')
       .replace('-', '')
       .substring(1);
-    cy.log(phoneInputForUI);
+
     notificationsObj.editContactModalPhone().clear().type(phoneInputForUI);
     notificationsObj.editContactModalInstructions().clear().type(instructionsInput);
   }

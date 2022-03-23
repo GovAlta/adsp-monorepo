@@ -170,4 +170,4 @@ Feature: Notifications
     Examples:
       | Email              | Phone                 | Instructions  |
       | rnd{abc@gov.ab.ca} | rnd{1 (780) 567-1456} | rnd{autotest} |
-      | abc@gov.ab.ca      | 1 (780) 567-1456      | autotest      |
+
