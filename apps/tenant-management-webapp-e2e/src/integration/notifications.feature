@@ -158,7 +158,7 @@ Feature: Notifications
     When the user "selects" the subscribe checkbox for health check notification type
     Then the user views a callout message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"
 
-    @TEST_CS-1020 @REQ_CS-905 @regression
+    @TEST_CS-1282 @REQ_CS-905 @regression
     Given a tenant admin user is on status applications page
 
   # Then the user views the subscribe successfully message
