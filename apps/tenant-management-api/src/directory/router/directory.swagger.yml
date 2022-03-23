@@ -15,22 +15,23 @@ components:
   get:
     tags:
       - Discovery V1
-    description:
-      Fetch the discovery (URN-service) list.
+    description: Fetch the discovery (URN-service) list.
     responses:
       200:
-        title: Successful response
-        type: Array
-        items:
-            $ref: '#/components/schemas/schemas'
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: 'components/schemas/Directory'
       401:
         description: Unauthorized
 
   post:
     tags:
       - Discovery V1
-    description:
-      Create a new URN entry
+    description: Create a new URN entry
     requestBody:
       content:
         application/json:
@@ -42,20 +43,27 @@ components:
               services:
                 type: array
                 items:
-                  $ref: '#/components/schemas/schemas'
-
+                  $ref: 'components/schemas/Directory'
     responses:
-      200: *Ok
-      401: *GoA401
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: 'components/schemas/schemas'
+      401:
+        description: Unauthorized
+
   put:
     tags:
-      - Discovery
-    description:
-      Update the URN entry by name
+      - Discovery V1
+    description: Update the URN entry by name
     requestBody:
       content:
         application/json:
-          schema:      # Request body contents
+          schema:
             type: object
             properties:
               name:
@@ -63,22 +71,39 @@ components:
               services:
                 type: array
                 items:
-                  *Discovery
-    responses:
-      201: *Ok
-      401: *GoA401
+                  $ref: 'components/schemas/Directory'
 
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: 'components/schemas/schemas'
+      401:
+        description: Unauthorized
+
+'/api/discovery/v1/{name}':
   delete:
     tags:
-     - Discovery
-    description:
-      Delete the URN entry by name
+      - Discovery V1
     parameters:
-      - in: query
-        name: name
+      - name: name
+        description: Name of the directory entry
+        in: path
+        required: true
         schema:
           type: string
-        description: Service Name
     responses:
-      200: *Ok
-      401: *GoA401
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: 'components/schemas/Directory'
+      401:
+        description: Unauthorized
