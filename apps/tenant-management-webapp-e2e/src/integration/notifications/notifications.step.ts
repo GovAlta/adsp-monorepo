@@ -542,7 +542,7 @@ Then('the user clicks Save button in Edit contact information modal', function (
 });
 
 Then(
-  'the user views contact information of "<Email>", "<Phone>" and "<Instructions>" on notifications page',
+  'the user views contact information of {string}, {string} and {string} on notifications page',
   function (email, phone, instructions) {
     const editedEmail = email.match(/(?<=rnd{)[^{}]+(?=})/g);
     if (editedEmail == '') {
