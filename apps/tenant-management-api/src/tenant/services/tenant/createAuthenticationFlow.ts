@@ -1,14 +1,12 @@
 import axios from 'axios';
 import { logger } from '../../../middleware/logger';
-import { createkcAdminClient } from '../../../keycloak';
 import { v4 as uuidv4 } from 'uuid';
 import { environment } from '../../../environments/environment';
+import KeycloakAdminClient from '@keycloak/keycloak-admin-client';
 export const FLOW_ALIAS = 'GOA SSO Login Flow';
 
-export const createAuthenticationFlow = async (realm: string): Promise<void> => {
+export const createAuthenticationFlow = async (client: KeycloakAdminClient, realm: string): Promise<void> => {
   logger.debug('Adding authentication flow to tenant public client...');
-
-  const client = await createkcAdminClient();
 
   const flowAlias = FLOW_ALIAS;
   const authFlow = {
