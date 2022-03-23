@@ -24,10 +24,9 @@ components:
             schema:
               type: array
               items:
-                $ref: 'components/schemas/Directory'
+                $ref: '#/components/schemas/Directory'
       401:
         description: Unauthorized
-
   post:
     tags:
       - Discovery V1
@@ -43,7 +42,7 @@ components:
               services:
                 type: array
                 items:
-                  $ref: 'components/schemas/Directory'
+                  $ref: '#/components/schemas/Directory'
     responses:
       200:
         description: Request completed successfully.
@@ -52,7 +51,8 @@ components:
             schema:
               type: array
               items:
-                $ref: 'components/schemas/schemas'
+                $ref: '#/components/schemas/Directory'
+
       401:
         description: Unauthorized
 
@@ -71,17 +71,11 @@ components:
               services:
                 type: array
                 items:
-                  $ref: 'components/schemas/Directory'
+                  $ref: '#/components/schemas/Directory'
 
     responses:
       200:
         description: Request completed successfully.
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: 'components/schemas/schemas'
       401:
         description: Unauthorized
 
@@ -104,6 +98,6 @@ components:
             schema:
               type: array
               items:
-                $ref: 'components/schemas/Directory'
+                $ref: '#/components/schemas/Directory'
       401:
         description: Unauthorized
