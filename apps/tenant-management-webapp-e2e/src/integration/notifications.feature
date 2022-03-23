@@ -157,3 +157,17 @@ Feature: Notifications
     Then the user views the subscribe checkbox is "unchecked"
     When the user "selects" the subscribe checkbox for health check notification type
     Then the user views a callout message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"
+
+  @TEST_CS-1191 @REQ_CS-1148 @regression
+  Scenario Outline: As a tenant admin, I can configure subscription management contact information on notifications overview page
+    Given a tenant admin user is on notification overview page
+    When the user clicks edit button for contact information
+    Then the user views Edit contact information modal
+    When the user enters "<Email>", "<Phone>" and "<Instructions>" in Edit contact information modal
+    And the user clicks Save button in Edit contact information modal
+    Then the user views contact information of "<Email>", "<Phone>" and "<Instructions>" on notifications page
+    # In the step definition, rnd{} will use a random 4-digit number to attach/replace part of the static strings in {}
+    Examples:
+      | Email              | Phone                 | Instructions  |
+      | rnd{abc@gov.ab.ca} | rnd{1 (780) 567-1456} | rnd{autotest} |
+
