@@ -26,11 +26,9 @@ export class Service {
 
 export class ServiceV2 {
   @IsDefined()
-  @Matches(/^[a-z0-9-]/gs)
   @MaxLength(50)
   service: string;
 
-  @Matches(/^[a-z0-9-]/gs)
   @MaxLength(50)
   @IsOptional()
   api: string;
