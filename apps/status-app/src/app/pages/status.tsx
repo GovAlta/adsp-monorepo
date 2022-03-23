@@ -8,7 +8,12 @@ import { useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { useDispatch } from 'react-redux';
-import { fetchApplications, subscribeToTenant, subscribeToTenantSuccess } from '@store/status/actions';
+import {
+  fetchApplications,
+  subscribeToTenant,
+  subscribeToTenantSuccess,
+  FetchContactInfoService,
+} from '@store/status/actions';
 import { clearNotification } from '@store/session/actions';
 import { toTenantName } from '@store/status/models';
 import { RootState } from '@store/index';
@@ -34,12 +39,13 @@ const ServiceStatusPage = (): JSX.Element => {
   const realm = location.pathname.slice(1) || config.platformTenantRealm;
   const dispatch = useDispatch();
 
-  const { tenantName, loaded, subscriber, applications, error } = useSelector((state: RootState) => ({
+  const { tenantName, loaded, subscriber, applications, error, contact } = useSelector((state: RootState) => ({
     tenantName: state.session?.tenant?.name,
     loaded: state.session?.isLoadingReady,
     subscriber: state.subscription.subscriber,
     applications: state.application?.applications,
     error: state.session?.notifications,
+    contact: state.configuration.contact,
   }));
 
   const { allApplicationsNotices } = useSelector((state: RootState) => ({
@@ -49,6 +55,10 @@ const ServiceStatusPage = (): JSX.Element => {
   useEffect(() => {
     dispatch(fetchApplications(realm));
   }, [realm]);
+
+  useEffect(() => {
+    dispatch(FetchContactInfoService(realm));
+  }, []);
 
   useEffect(() => {
     if (error && error.length > 0) {
@@ -64,12 +74,13 @@ const ServiceStatusPage = (): JSX.Element => {
         <PageLoader />
         <Title data-testid="service-name">All {capitalizeFirstLetter(tenantName)} services</Title>
         <br />
+        Description updated to indicate user can report issues via the contact info
         <p>
           These are the services currently being offered by{' '}
           {location.pathname.slice(1) ? capitalizeFirstLetter(tenantName) : 'the Alberta Digital Service Platform'}. All
           statuses are in real time and reflect current states of the individual services. Please{' '}
-          <a href="mailto: DIO@gov.ab.ca">contact support</a> for additional information or any other inquiries
-          regarding service statuses.
+          <a href={`mailto: ${contact.contactEmail}`}>contact support</a> for additional information, or to report
+          issues, or for for any other inquiries regarding service statuses.
         </p>
         <div className="timezone">
           <i>All times are in {timeZone}</i>
@@ -198,8 +209,8 @@ const ServiceStatusPage = (): JSX.Element => {
                 <h2>Sign up for notifications</h2>
                 <div>
                   Sign up to receive notifications by email for status change of the individual services and notices.
-                  Please contact <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a> for additional information or any
-                  other inquiries regarding service statuses.
+                  Please contact <a href={`mailto: ${contact.contactEmail}`}>{contact.contactEmail}</a> for additional
+                  information, or to report issues, or for for any other inquiries regarding service statuses.
                 </div>
                 <div>
                   <GoAForm>
