@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useMemo, useState } from 'react';
 
 import styled from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
@@ -7,14 +7,14 @@ import { Service } from '@store/directory/models';
 import { useDispatch } from 'react-redux';
 import { fetchEntryDetail } from '@store/directory/actions';
 import { renderNoItem } from '@components/NoItem';
-
-interface serviceProps {
+import DataTable from '@components/DataTable';
+interface serviceItemProps {
   service: Service;
   onEdit: (service: Service) => void;
   onDelete: (service: Service) => void;
 }
 
-export const ServiceItemComponent: FunctionComponent<serviceProps> = ({ service, onEdit, onDelete }) => {
+const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, onEdit, onDelete }) => {
   const [showDetails, setShowDetails] = useState(false);
   const dispatch = useDispatch();
 
@@ -82,6 +82,44 @@ export const ServiceItemComponent: FunctionComponent<serviceProps> = ({ service,
   );
 };
 
+interface serviceTableProps {
+  name: string;
+  directory: Service[];
+  onEdit: (service: Service) => void;
+  onDelete: (service: Service) => void;
+}
+
+export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({ name, directory, onEdit, onDelete }) => {
+  const memoizedDirectory = useMemo(() => {
+    return [...directory].sort((a, b) => (a.namespace < b.namespace ? -1 : 1));
+  }, [directory]);
+
+  return (
+    <TableDiv key={name}>
+      <NameDiv>{name}</NameDiv>
+      <DataTable data-testid="directory-table">
+        <thead data-testid="directory-table-header">
+          <tr>
+            <th id="name" data-testid="directory-table-header-name">
+              Name
+            </th>
+            <th id="directory">URL</th>
+            <th id="directory">Action</th>
+          </tr>
+        </thead>
+
+        <tbody key={name}>
+          {memoizedDirectory
+            .filter((dir) => dir.name === name)
+            .map((dir: Service) => (
+              <ServiceItemComponent service={dir} onEdit={onEdit} onDelete={onDelete} />
+            ))}
+        </tbody>
+      </DataTable>
+      <br />
+    </TableDiv>
+  );
+};
 export const EntryDetail = styled.div`
   background: #f3f3f3;
   white-space: pre-wrap;
@@ -89,4 +127,27 @@ export const EntryDetail = styled.div`
   font-size: 12px;
   line-height: 16px;
   padding: 16px;
+`;
+export const NameDiv = styled.div`
+  margin-top: 1rem;
+  text-transform: capitalize;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  padding-left: 0.4rem;
+  padding-bottom: 0.5rem;
+`;
+export const TableDiv = styled.div`
+  & td:first-child {
+    width: 100px;
+    white-space: nowrap;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+  }
+
+  & td:last-child {
+    width: 40px;
+    white-space: nowrap;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+  }
 `;
