@@ -118,6 +118,17 @@ async function initializeApp(): Promise<express.Application> {
 
   let swagger = null;
 
+  app.get('/', async (req, res) => {
+    const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
+    res.json({
+      _links: {
+        self: { href: new URL(req.originalUrl, rootUrl).href },
+        health: { href: new URL('/health', rootUrl).href },
+        docs: { href: new URL('/swagger/docs/v1', rootUrl).href },
+      },
+    });
+  });
+
   app.use('/swagger/docs/v1', (_req, res) => {
     if (swagger) {
       res.json(swagger);

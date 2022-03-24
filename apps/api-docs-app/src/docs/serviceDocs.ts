@@ -18,7 +18,7 @@ interface Metadata {
   displayName?: string;
   _links?: {
     self?: string;
-    doc?: {
+    docs?: {
       href: string;
     };
   };
@@ -74,8 +74,8 @@ class ServiceDocsImpl {
               directoryServiceUrl.href
             );
             const { metadata } = (await axios.get<DirectoryServiceResponse>(serviceDirectoryUrl.href)).data;
-            if (metadata?._links?.doc?.href) {
-              const docUrl = metadata?._links?.doc.href;
+            if (metadata?._links?.docs?.href) {
+              const docUrl = metadata?._links?.docs.href;
               this.logger.debug(`Retrieving API docs for service ${id} ...`);
               const { data: docData } = await axios.get(docUrl);
               if (docData.openapi) {
