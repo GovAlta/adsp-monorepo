@@ -3,26 +3,15 @@ import { Session, SESSION_INIT } from './models';
 
 export default function (state: Session = SESSION_INIT, action: ActionType): Session {
   switch (action.type) {
-    case 'session/login/success': {
-      const payloadKeys = Object.keys(action.payload);
-      let returnObject = state;
-      const modifiedKeys = [];
-
-      for (let i = 0; i < payloadKeys.length; i++) {
-        if (JSON.stringify(state[payloadKeys[i]]) !== JSON.stringify(action.payload[payloadKeys[i]])) {
-          modifiedKeys.push(payloadKeys[i]);
-          returnObject = { ...returnObject, [payloadKeys[i]]: action.payload[payloadKeys[i]] };
-        }
-      }
-
-      if (modifiedKeys[0] === 'credentials' && modifiedKeys.length === 1) {
-        state.credentials = action.payload.credentials;
-        return state;
-      } else {
-        return returnObject;
-      }
-    }
-
+    case 'session/login/success':
+      return {
+        ...state,
+        ...action.payload,
+        credentials: {
+          ...state.credentials,
+          ...action.payload.credentials,
+        },
+      };
     case 'credential/refresh':
       return {
         ...state,

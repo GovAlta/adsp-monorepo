@@ -90,7 +90,7 @@ export function* watchSagas() {
 
   //tenant config
   yield takeEvery(CREATE_TENANT, createTenant);
-  yield takeEvery(FETCH_TENANT, fetchTenant);
+  yield takeLatest(FETCH_TENANT, fetchTenant);
   yield takeEvery(FETCH_REALM_ROLES, fetchRealmRoles);
   yield takeEvery(TENANT_ADMIN_LOGIN, tenantAdminLogin);
   yield takeEvery(TENANT_CREATION_LOGIN_INIT, tenantCreationInitLogin);
