@@ -228,7 +228,7 @@ const createCoreIdentityProvider = async (
 };
 
 const createBrokerClient = async (client: KeycloakAdminClient, realm: string, secret: string, clientId: string) => {
-  const redirectUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/realms/${realm}/broker/core/endpoint`;
+  const redirectUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/realms/${realm}/broker/core/endpoint/*`;
 
   const config: ClientRepresentation & { realm: string } = {
     id: uuidv4(),

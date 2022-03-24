@@ -9,6 +9,7 @@ export default (state = TENANT_INIT, action: ActionType): Tenant => {
         id: action.payload.id,
         name: action.payload.name,
         adminEmail: action.payload.adminEmail,
+        realm: action.payload.realm,
       };
 
     case 'UPDATE_TENANT_ADMIN_INFO':
