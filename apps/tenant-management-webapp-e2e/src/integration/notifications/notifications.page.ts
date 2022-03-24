@@ -347,27 +347,5 @@ class NotificationsPage {
   contactInformationInstructions() {
     return cy.get('[data-testid="support-instructions"]');
   }
-  //LD
-  applicationChangeStatusBtn() {
-    return cy.xpath(
-      '//*[@data-testid="application"]//h2[contains(text(), "Autotest")]//ancestor::*[@class="card-content"]//button[contains(text(), "Change Status")]'
-    );
-  }
-
-  manualStatusChangeModalTitle() {
-    return cy.xpath(
-      '//div[@class="modal-root" and @data-state="visible"]/div[@class="modal"]/div[@class="modal-container"]/div[@class="modal-title"]'
-    );
-  }
-
-  manualStatusChangeModalSaveBtn() {
-    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//button[text()="Save"]');
-  }
-
-  applicationTCard(appName) {
-    return cy.xpath(
-      `//*[@data-testid="application"]//h2[contains(text(), "${appName}")]//ancestor::*[@data-testid="card-title"]/following-sibling::*[@data-testid="application"]`
-    );
-  }
 }
 export default NotificationsPage;

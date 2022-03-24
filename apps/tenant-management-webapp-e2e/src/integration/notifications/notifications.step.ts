@@ -567,16 +567,3 @@ Then(
     }
   }
 );
-
-//LD
-When('the user clicks Change status button for application', function () {
-  notificationsObj.applicationChangeStatusBtn().click();
-});
-
-Then('the user views Manual Status Change modal', function () {
-  notificationsObj.manualStatusChangeModalTitle().invoke('text').should('eq', 'Manual Status Change');
-});
-
-Then('the user clicks Save button on Manual Status Change modal', function () {
-  notificationsObj.manualStatusChangeModalSaveBtn().click();
-});
