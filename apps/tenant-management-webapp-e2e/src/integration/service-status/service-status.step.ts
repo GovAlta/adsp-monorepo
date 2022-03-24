@@ -517,3 +517,21 @@ When('the user enters {string} as name and {string} as description fields', func
   statusObj.addApplicationNameModalField().clear().type(appName);
   statusObj.addApplicationDescriptionModalField().clear().type(description);
 });
+
+When('the user clicks Change status button for {string}', function (appName) {
+  statusObj.applicationCardChangeStatusBtn(appName).click();
+});
+
+Then('the user views Manual status change modal', function () {
+  statusObj.manualStatusChangeModalTitle().invoke('text').should('contain', 'Manual status change');
+});
+
+When('the user selects {string} and clicks Save button', function (statusName) {
+  statusObj.manualStatusChangeModalStatusRadio(statusName.toLowerCase()).click();
+  statusObj.manualStatusChangeModalSaveBtn().click();
+  cy.wait(2000); // Wait for the status to change after save
+});
+
+Then('the user views the {string} status for {string}', function (statusValue, appName) {
+  statusObj.applicationCardStatusBadge(appName).invoke('text').should('eq', statusValue);
+});
