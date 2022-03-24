@@ -43,6 +43,11 @@ describe('Service statuses', () => {
       subscription: {
         subscriber: null,
       },
+      configuration: {
+        contact: {
+          contactEmail: 'fake.email@fake.server.com',
+        },
+      },
     });
 
     axiosMock.get.mockResolvedValueOnce({ data: {} });
@@ -109,6 +114,11 @@ describe('Service statuses (2 of them)', () => {
       notice: NoticeInit,
       subscription: {
         subscriber: null,
+      },
+      configuration: {
+        contact: {
+          contactEmail: 'fake.email@fake.server.com',
+        },
       },
     });
     axiosMock.get.mockResolvedValueOnce({ data: data });
