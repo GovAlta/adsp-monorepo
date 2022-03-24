@@ -20,12 +20,12 @@ import { TenantApi } from './api';
 import { TENANT_INIT } from './models';
 import { createKeycloakAuth, KeycloakAuth, LOGIN_TYPES } from '@lib/keycloak';
 import { SagaIterator } from '@redux-saga/core';
-import { KeycloakConfig } from 'keycloak-js';
 import { Session } from '@store/session/models';
 
-export function* initializeKeycloakAuth(config?: KeycloakConfig): SagaIterator {
-  const keycloakConfig = config || (yield select((state: RootState) => state.config.keycloakApi));
-  return yield call(createKeycloakAuth, keycloakConfig);
+export function* initializeKeycloakAuth(realm?: string): SagaIterator {
+  const keycloakConfig = yield select((state: RootState) => state.config.keycloakApi);
+  realm = realm || (yield select((state: RootState) => state.tenant.realm || 'core'));
+  return yield call(createKeycloakAuth, { ...keycloakConfig, realm });
 }
 
 export function* fetchTenant(action: FetchTenantAction): SagaIterator {
@@ -90,9 +90,8 @@ export function* tenantCreationInitLogin(): SagaIterator {
 
 export function* keycloakCheckSSO(action: KeycloakCheckSSOAction): SagaIterator {
   try {
-    const config = yield select((state: RootState) => state.config.keycloakApi);
     const realm = action.payload;
-    const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth, { ...config, realm });
+    const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth, realm);
 
     console.log('Run keycloak check sso');
 
@@ -108,9 +107,8 @@ export function* keycloakCheckSSO(action: KeycloakCheckSSOAction): SagaIterator 
 
 export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAction): SagaIterator {
   try {
-    const config = yield select((state: RootState) => state.config.keycloakApi);
     const realm = action.payload;
-    const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth, { ...config, realm });
+    const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth, realm);
 
     console.debug('Checkout keycloak SSO');
 
@@ -154,10 +152,9 @@ export function* keycloakRefreshToken(): SagaIterator {
 
 export function* tenantLogout(): SagaIterator {
   try {
-    const config = yield select((state: RootState) => state.config.keycloakApi);
     const realm = yield select((state: RootState) => state.tenant.realm);
     if (realm) {
-      const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth, { ...config, realm });
+      const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth);
       yield call([keycloakAuth, keycloakAuth.logout]);
     }
   } catch (e) {
