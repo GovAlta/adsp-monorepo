@@ -74,13 +74,28 @@ describe('createServiceDocs', () => {
           directory: directoryMock,
         });
 
-        const directory = {
-          'urn:ads:autotest:test-service': 'http://mock-url',
-        };
-
+        const directory = [
+          {
+            name: 'Mock Service A',
+            namespace: 'mock-a',
+            urn: 'urn:ads:autotest:mock-a',
+            url: 'htt://mock-url-a',
+          },
+          {
+            name: 'Mock Service B',
+            namespace: 'mock-b',
+            urn: 'urn:ads:autotest:mock-b',
+            url: 'htt://mock-url-b',
+          },
+        ];
         const metadata = {
-          _links: {
-            doc: 'http://mock-url',
+          _id: '623a10f1954b8686d92b86f6',
+          service: 'value-service',
+          host: 'http://value-service:3336',
+          metadata: {
+            _links: {
+              doc: { href: 'http://mock-host/swagger/docs/v1' },
+            },
           },
         };
 

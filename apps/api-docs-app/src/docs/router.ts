@@ -48,9 +48,10 @@ export const createDocsRouter = async ({
     }
     res.send(serviceDoc.docs);
   });
+  router.use(swaggerUi.serve);
 
-  router.use('/swagger', swaggerUi.serve, async (req: Request, res: Response, next: NextFunction) => {
-    const tenant = req.query?.tenant;
+  router.use('/:tenant?', async (req: Request, res: Response, next: NextFunction) => {
+    const tenant = req.params?.tenant;
     const namespace = tenant ? toKebabName((tenant as string).replace(/-/g, ' ')) : 'platform';
 
     if (tenant) {
@@ -85,15 +86,6 @@ export const createDocsRouter = async ({
         urls,
       },
     })(req, res, next);
-  });
-
-  router.get('/:tenant?', async (req: Request, res: Response, next: NextFunction) => {
-    const { tenant } = req.params;
-    if (tenant) {
-      res.redirect(`/swagger?tenant=${tenant}`);
-    } else {
-      res.redirect(`/swagger`);
-    }
   });
 
   return router;
