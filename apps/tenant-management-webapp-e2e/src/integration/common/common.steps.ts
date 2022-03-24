@@ -125,6 +125,6 @@ When('the user clicks Delete button in delete confirmation modal', function () {
 
 When('the user waits {string} seconds', function (seconds) {
   expect(isNaN(seconds)).to.be.false; // Verify the pass in seconds is a number
-  expect(Number(seconds)).to.be.lessThan(300); // provent user from passing in too big a number to hange the test execution
-  cy.wait(Number(seconds) * 1000); // Wait N seconds for the tenant creation
+  expect(Number(seconds)).to.be.lessThan(300); // provent user from passing in too big a number to hang the test execution
+  cy.wait(Number(seconds) * 1000); // Wait N seconds
 });
