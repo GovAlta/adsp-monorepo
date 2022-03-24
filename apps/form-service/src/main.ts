@@ -131,10 +131,10 @@ const initializeApp = async (): Promise<express.Application> => {
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
       _links: {
-        self: new URL(req.originalUrl, rootUrl).href,
-        health: new URL('/health', rootUrl).href,
-        api: new URL('/form/v1', rootUrl).href,
-        doc: new URL('/swagger/docs/v1', rootUrl).href,
+        self: { href: new URL(req.originalUrl, rootUrl).href },
+        health: { href: new URL('/health', rootUrl).href },
+        api: { href: new URL('/form/v1', rootUrl).href },
+        docs: { href: new URL('/swagger/docs/v1', rootUrl).href },
       },
     });
   });

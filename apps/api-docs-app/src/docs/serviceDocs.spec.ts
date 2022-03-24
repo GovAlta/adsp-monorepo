@@ -94,7 +94,7 @@ describe('createServiceDocs', () => {
           host: 'http://value-service:3336',
           metadata: {
             _links: {
-              doc: { href: 'http://mock-host/swagger/docs/v1' },
+              docs: { href: 'http://mock-host/swagger/docs/v1' },
             },
           },
         };
