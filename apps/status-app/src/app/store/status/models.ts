@@ -13,6 +13,14 @@ export interface SubscriberState {
   subscriber: Subscriber;
 }
 
+export interface ConfigurationState {
+  contact: ContactInformation;
+}
+
+export interface ContactInformation {
+  contactEmail?: string;
+}
+
 export interface ServiceStatusApplication {
   id: string;
   name: string;
@@ -91,6 +99,10 @@ export const NoticeInit: Notices = {
 
 export const ApplicationInit: ServiceStatus = {
   applications: null,
+};
+
+export const ConfigurationInit: ConfigurationState = {
+  contact: null,
 };
 
 export const SubscriberInit: SubscriberState = {
