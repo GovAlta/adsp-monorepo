@@ -1,4 +1,4 @@
-import { adspId, AdspId, assertAdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import * as NodeCache from 'node-cache';
 import { JsonObject } from 'swagger-ui-express';

@@ -116,50 +116,22 @@ async function initializeApp(): Promise<express.Application> {
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  // Start to define swagger. Might need it to a module
-  const swaggerDocument = fs
-    .readFileSync(__dirname + '/swagger.json', 'utf8')
-    .replace(/<KEYCLOAK_ROOT>/g, environment.KEYCLOAK_ROOT_URL);
+  let swagger = null;
 
-  const swaggerDocBaseUrl = 'swagger/docs/';
-
-  const swaggerHosts = {
-    tenantAPI: (await directory.getServiceUrl(adspId`urn:ads:platform:tenant-service`))?.href || '',
-    fileService: (await directory.getServiceUrl(adspId`urn:ads:platform:file-service`))?.href || '',
-  };
-
-  const swaggerUITenantAPIOptions = {
-    explorer: true,
-    swaggerOptions: {
-      persistAuthorization: true,
-      oauth2RedirectUrl: swaggerHosts.tenantAPI + swaggerDocBaseUrl + 'oauth2-redirect.html',
-      url: `${swaggerHosts.tenantAPI}swagger/json/v1`,
-    },
-  };
-
-  // Only allow swagger UI when ALLOW_SWAGGER_UI presents
-  if (environment.ALLOW_SWAGGER_UI) {
-    app.use('/' + swaggerDocBaseUrl, swaggerUi.serve, swaggerUi.setup(null, swaggerUITenantAPIOptions));
-  }
-
-  app.get('/swagger/json/v1', (req, res) => {
-    const { tenant } = req.query;
-    console.log(typeof swaggerDocument);
-    const swaggerObj = JSON.parse(swaggerDocument);
-    const tenantAuthentication = swaggerObj?.components?.securitySchemes?.tenant?.flows.authorizationCode;
-
-    if (tenant && tenantAuthentication) {
-      tenantAuthentication.tokenUrl = tenantAuthentication.tokenUrl.replace('realms/autotest', `realms/${tenant}`);
-      tenantAuthentication.authorizationUrl = tenantAuthentication.authorizationUrl.replace(
-        'realms/autotest',
-        `realms/${tenant}`
-      );
-      swaggerObj.components.securitySchemes.tenant.flows.authorizationCode = tenantAuthentication;
+  app.use('/swagger/docs/v1', (_req, res) => {
+    if (swagger) {
+      res.json(swagger);
+    } else {
+      fs.readFile(`${__dirname}/swagger.json`, 'utf8', (err, data) => {
+        if (err) {
+          res.sendStatus(404);
+        } else {
+          swagger = JSON.parse(data);
+          res.json(swagger);
+        }
+      });
     }
-
-    res.json(swaggerObj);
   });
-
   return app;
 }
 
