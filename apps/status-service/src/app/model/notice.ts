@@ -25,7 +25,7 @@ export class NoticeApplicationEntity {
     this.created = application.created;
     this.tenantId = application.tenantId;
     this.isAllApplications = application.isAllApplications;
-    this.tenantName = application.tenantName
+    this.tenantName = application.tenantName;
   }
 
   static create(
@@ -67,7 +67,7 @@ export class NoticeApplicationEntity {
       this.startDate = update.startDate ?? this.startDate;
       this.endDate = update.endDate ?? this.endDate;
       this.mode = update.mode ?? this.mode;
-      this.isAllApplications = update.isAllApplications ?? this.isAllApplications
+      this.isAllApplications = update.isAllApplications ?? this.isAllApplications;
     }
 
     return this.repository.save(this);
@@ -98,7 +98,7 @@ export class NoticeApplicationEntity {
   }
 
   canAccessById(user: User, application: NewOrExisting<NoticeApplication>): boolean {
-    if (application.mode == 'active') {
+    if (application.mode == 'published') {
       return true;
     }
 

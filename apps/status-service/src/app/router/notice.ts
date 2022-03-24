@@ -56,7 +56,7 @@ export function createNoticeRouter({
     const anonymous = !user;
     const isAdmin = user && user.roles.includes(ServiceUserRoles.StatusAdmin);
     const filter: NoticeFilter = {};
-    filter.mode = 'active';
+    filter.mode = 'published';
 
     try {
       if (!anonymous) {
@@ -87,6 +87,8 @@ export function createNoticeRouter({
         page: applications.page,
         results: applications.results.map((result) => ({
           ...result,
+          // temporary to facilitate a rename from active to published
+          mode: result.mode === 'active' ? 'published' : result.mode,
           tennantServRef: JSON.parse(result.tennantServRef),
         })),
       });
@@ -195,7 +197,7 @@ export function createNoticeRouter({
         mode,
         isAllApplications,
       });
-      if (applicationMode !== 'active' && mode === 'active') {
+      if (applicationMode !== 'published' && mode === 'published') {
         eventService.send(applicationNoticePublished(application, user));
       }
       res.status(200).json({

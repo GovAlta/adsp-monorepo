@@ -213,7 +213,7 @@ Then('the user views Edit notice dialog', function () {
 When('the user selects {string} filter by status radio button', function (filterType) {
   expect(filterType).to.be.oneOf(['Draft', 'Published', 'Archived', 'All']);
   if (filterType == 'Published') {
-    filterType = 'active';
+    filterType = 'published';
   }
   statusObj.filterByStatusRadio(filterType.toLowerCase()).click();
 });

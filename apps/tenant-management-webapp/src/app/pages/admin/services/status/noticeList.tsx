@@ -78,9 +78,9 @@ export const NoticeListFilter = (props: NoticeListFilterProps): JSX.Element => {
       <div className="filter-radio">
         <GoARadio
           testId="notice-filter-radio-published"
-          value={'active'}
+          value={'published'}
           name={'Published'}
-          checked={option === 'active'}
+          checked={option === 'published'}
           onChange={(option) => {
             onSelect(option);
           }}
@@ -173,7 +173,7 @@ export const NoticeList = (): JSX.Element => {
           notices
             .filter((notice) => {
               if (filerOption === 'nonArchived') {
-                return notice.mode === 'active' || notice.mode === 'draft';
+                return notice.mode !== 'archived';
               } else {
                 if (notice.mode === filerOption) {
                   count++;
