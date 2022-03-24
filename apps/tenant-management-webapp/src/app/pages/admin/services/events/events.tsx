@@ -43,7 +43,7 @@ export const Events: FunctionComponent = () => {
           <a
             rel="noopener noreferrer"
             target="_blank"
-            href="https://gitlab.gov.ab.ca/dio/core/core-services/-/tree/master/apps/event-service"
+            href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/event-service"
           >
             See the code
           </a>

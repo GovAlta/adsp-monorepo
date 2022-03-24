@@ -25,7 +25,7 @@ const HelpLink = (): JSX.Element => {
       <a
         rel="noopener noreferrer"
         target="_blank"
-        href="https://gitlab.gov.ab.ca/dio/core/core-services/-/tree/master/apps/file-service"
+        href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/file-service"
       >
         See the code
       </a>
