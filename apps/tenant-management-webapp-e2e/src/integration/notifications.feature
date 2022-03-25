@@ -55,27 +55,19 @@ Feature: Notifications
     And the user "views" the event of "status-service:application-healthy" in "Application health check change"
     # Verify the events' email icons and preview links, and no edit buttons
     And the user "views" "email template indicator" for "status-service:health-check-started" in "Application health check change"
-    And the user "views" "Preview link" for "status-service:health-check-started" in "Application health check change"
     And the user "views" "Edit button" for "status-service:health-check-started" in "Application health check change"
     And the user "views" "email template indicator" for "status-service:health-check-stopped" in "Application health check change"
-    And the user "views" "Preview link" for "status-service:health-check-stopped" in "Application health check change"
     And the user "views" "Edit button" for "status-service:health-check-stopped" in "Application health check change"
     And the user "views" "email template indicator" for "status-service:application-unhealthy" in "Application health check change"
-    And the user "views" "Preview link" for "status-service:application-unhealthy" in "Application health check change"
     And the user "views" "Edit button" for "status-service:application-unhealthy" in "Application health check change"
     And the user "views" "email template indicator" for "status-service:application-healthy" in "Application health check change"
-    And the user "views" "Preview link" for "status-service:application-healthy" in "Application health check change"
     And the user "views" "Edit button" for "status-service:application-healthy" in "Application health check change"
     # Verify email template is read-only (pick one event)
-    When the user clicks Preview button on "status-service:health-check-started" in "Application health check change"
-    Then the user views Preview an email template modal
     # Future work: need in-depth research on test automation with Monaco-editor before we can automate test steps.
     # When the user attempts to edit the template
     # Then the user gets "Cannot edit in read-only editor"
-    When the user clicks Close button in Preview an email template modal
-    Then Preview an email template modal is closed
     # Verify the event is still there (had a bug of the event disappearing after preview)
-    And the user "views" the event of "status-service:health-check-started" in "Application health check change"
+
 
   @TEST_CS-1081 @REQ_CS-1029 @TEST_CS-1002 @REQ_CS-1027 @regression
   Scenario: Test As a tenant admin, I can delete a subscription
@@ -108,19 +100,9 @@ Feature: Notifications
     And the user "views" the event of "status-service:application-status-changed" in "Application status update"
     And the user "views" the event of "status-service:application-notice-published" in "Application status update"
     And the user "views" "email template indicator" for "status-service:application-status-changed" in "Application status update"
-    And the user "views" "Preview link" for "status-service:application-status-changed" in "Application status update"
     And the user "views" "Edit button" for "status-service:application-status-changed" in "Application status update"
     And the user "views" "email template indicator" for "status-service:application-notice-published" in "Application status update"
-    And the user "views" "Preview link" for "status-service:application-notice-published" in "Application status update"
     And the user "views" "Edit button" for "status-service:application-notice-published" in "Application status update"
-    When the user clicks Preview button on "status-service:application-status-changed" in "Application status update"
-    Then the user views Preview an email template modal
-    When the user clicks Close button in Preview an email template modal
-    Then Preview an email template modal is closed
-    When the user clicks Preview button on "status-service:application-notice-published" in "Application status update"
-    Then the user views Preview an email template modal
-    When the user clicks Close button in Preview an email template modal
-    Then Preview an email template modal is closed
 
   @TEST_CS-1097 @REQ_CS-1031 @regression
   Scenario: As a tenant admin, I can find subscriptions for a particular subscriber
