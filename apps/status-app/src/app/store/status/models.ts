@@ -3,7 +3,7 @@ export type PublicServiceStatusType = 'operational' | 'maintenance' | 'outage' |
 export type ServiceStatusType = InternalServiceStatusType | PublicServiceStatusType;
 export const PublicServiceStatusTypes = ['operational', 'maintenance', 'outage', 'reported-issues'];
 export type EndpointStatusType = 'offline' | 'online' | 'pending';
-export type ModeType = 'draft' | 'active';
+export type ModeType = 'draft' | 'published';
 
 export interface ServiceStatus {
   applications: ServiceStatusApplication[];

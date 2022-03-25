@@ -41,7 +41,7 @@ export const DraftDropdownMenu = (props: DropdownMenuProps): JSX.Element => {
   }
   return (
     <DropdownMenuContainer>
-      <div className="item" onClick={() => changeMode('active')} data-testid="notice-card-menu-publish">
+      <div className="item" onClick={() => changeMode('published')} data-testid="notice-card-menu-publish">
         Publish
       </div>
       <div
