@@ -84,7 +84,7 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
     case FETCH_STATUS_CONFIGURATION_SUCCEEDED:
       return {
         ...state,
-        contact: action.payload.contact,
+        contact: action.payload?.contact,
       };
     case UPDATE_STATUS_CONTACT_INFORMATION:
       return {
