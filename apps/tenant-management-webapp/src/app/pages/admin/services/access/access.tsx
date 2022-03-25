@@ -120,8 +120,8 @@ export default function (): JSX.Element {
       </Main>
 
       <Aside>
-        <h4>Helpful links</h4>
-        <a rel="noopener noreferrer" target="_blank" href="https://gitlab.gov.ab.ca/dio/keycloak-themes">
+        <h3>Helpful links</h3>
+        <a rel="noopener noreferrer" target="_blank" href="https://github.com/GovAlta/access-service">
           See the code
         </a>
         <SupportLinks />

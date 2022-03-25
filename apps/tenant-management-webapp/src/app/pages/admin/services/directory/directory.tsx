@@ -23,6 +23,13 @@ export const Directory: FunctionComponent = () => {
       </Main>
       <Aside>
         <h3>Helpful links</h3>
+        <a
+          rel="noopener noreferrer"
+          target="_blank"
+          href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/tenant-management-api"
+        >
+          See the code
+        </a>
         <SupportLinks />
       </Aside>
     </Page>
