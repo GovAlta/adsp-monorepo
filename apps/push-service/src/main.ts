@@ -92,7 +92,7 @@ const initializeApp = async (): Promise<Server> => {
   ioServer.of('/').on('connection', async (socket) => socket.disconnect(true));
 
   // Connections on namespace correspond to tenants.
-  const io = ioServer.of(/^\/[a-z0-9]{24}$/);
+  const io = ioServer.of(/^\/[a-zA-Z0-9- ]+$/);
 
   const wrapForIo = (handler: express.RequestHandler) => (socket: Socket, next) =>
     handler(socket.request as express.Request, {} as express.Response, next);
