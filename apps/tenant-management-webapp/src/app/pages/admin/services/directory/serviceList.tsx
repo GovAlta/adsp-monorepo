@@ -28,8 +28,8 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
   return (
     <>
       <tr key={service.urn}>
-        <td headers="namespace" data-testid="namespace">
-          {service.namespace}
+        <td headers="service" data-testid="service">
+          {service.service}
         </td>
         <td headers="directory" data-testid="directory">
           {service.url}
@@ -47,7 +47,7 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
               <GoAContextMenuIcon
                 type="create"
                 title="Edit"
-                testId={`directory-edit-${service.namespace}`}
+                testId={`directory-edit-${service.service}`}
                 onClick={() => {
                   onEdit(service);
                 }}
@@ -55,7 +55,7 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
             )}
             {!service.isCore && (
               <GoAIconButton
-                testId={`directory-delete-${service.namespace}`}
+                testId={`directory-delete-${service.service}`}
                 title="Delete"
                 size="medium"
                 type="trash"
@@ -85,6 +85,7 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
 interface serviceTableProps {
   namespace: string;
   directory: Service[];
+  isCore: boolean;
   onEdit: (service: Service) => void;
   onDelete: (service: Service) => void;
 }
@@ -92,11 +93,12 @@ interface serviceTableProps {
 export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({
   namespace,
   directory,
+  isCore,
   onEdit,
   onDelete,
 }) => {
   const memoizedDirectory = useMemo(() => {
-    return [...directory].sort((a, b) => (a.namespace < b.namespace ? -1 : 1));
+    return [...directory].sort((a, b) => (a.service < b.service ? -1 : 1));
   }, [directory]);
 
   return (
@@ -114,11 +116,14 @@ export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({
         </thead>
 
         <tbody key={namespace}>
-          {memoizedDirectory
-            .filter((dir) => dir.namespace === namespace)
-            .map((dir: Service) => (
-              <ServiceItemComponent service={dir} onEdit={onEdit} onDelete={onDelete} />
-            ))}
+          {isCore
+            ? memoizedDirectory
+                .filter((dir) => dir.namespace === namespace)
+                .map((dir: Service) => <ServiceItemComponent service={dir} onEdit={onEdit} onDelete={onDelete} />)
+            : directory
+                .filter((dir) => dir.namespace === namespace)
+                .sort((a, b) => (a.service < b.service ? -1 : 1))
+                .map((dir: Service) => <ServiceItemComponent service={dir} onEdit={onEdit} onDelete={onDelete} />)}
         </tbody>
       </DataTable>
       <br />
