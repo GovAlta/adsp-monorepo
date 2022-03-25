@@ -16,7 +16,7 @@ import type { SubscriberSearchCriteria } from '@store/subscription/models';
 interface ActionComponentProps {
   subscriber: Subscriber;
   openModalFunction: (subscriber: Subscriber) => void;
-  openDeleteModalFunction: (subscriber: string) => void;
+  openDeleteModalFunction: (subscriber: Subscriber) => void;
 }
 
 const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
@@ -79,7 +79,7 @@ const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
               size="medium"
               type="trash"
               onClick={() => {
-                openDeleteModalFunction(subscriber.id);
+                openDeleteModalFunction(subscriber);
               }}
             />
           </RowFlex>
@@ -116,7 +116,7 @@ interface SubscriberListProps {
 export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
   const dispatch = useDispatch();
   const [editSubscription, setEditSubscription] = useState(false);
-  const [selectedSubscription, setSelectedSubscription] = useState(null);
+  const [selectedSubscriber, setSelectedSubscriber] = useState(null);
   const [selectedDeleteSubscriberId, setSelectedDeleteSubscriberId] = useState(null);
 
   const search = useSelector((state: RootState) => state.subscription.subscriberSearch);
@@ -131,17 +131,18 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
 
   // eslint-disable-next-line
   const openModalFunction = (subscription) => {
-    setSelectedSubscription(subscription);
+    setSelectedSubscriber(subscription);
     setEditSubscription(true);
   };
 
-  const openDeleteModalFunction = (subscriberId) => {
-    setSelectedDeleteSubscriberId(subscriberId);
+  const openDeleteModalFunction = (subscriber) => {
+    setSelectedDeleteSubscriberId(subscriber.id);
+    setSelectedSubscriber(subscriber);
   };
 
   function reset() {
     setEditSubscription(false);
-    setSelectedSubscription(null);
+    setSelectedSubscriber(null);
   }
 
   return (
@@ -170,7 +171,7 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
       )}
       <SubscriberModalForm
         open={editSubscription}
-        initialValue={selectedSubscription}
+        initialValue={selectedSubscriber}
         onSave={(subscriber) => {
           dispatch(UpdateSubscriber(subscriber));
           setEditSubscription(false);
@@ -187,7 +188,10 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
         }}
         content={
           <div>
-            <div>Deletion of a subscriber will remove all of its related subscriptions.</div>
+            <div>
+              Deletion of a subscriber <b>{selectedSubscriber?.addressAs}</b> will remove all of its related
+              subscriptions.
+            </div>
             <div>Do you still want to continue?</div>
           </div>
         }
