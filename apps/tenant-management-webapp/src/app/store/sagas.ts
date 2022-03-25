@@ -16,7 +16,6 @@ import {
   tenantLogout,
   fetchRealmRoles,
 } from './tenant/sagas';
-import { fetchTenantConfig, createTenantConfig, updateTenantConfig } from './tenantConfig/sagas';
 import {
   deleteApplication,
   fetchServiceStatusApps,
@@ -56,7 +55,6 @@ import {
   FETCH_REALM_ROLES,
 } from './tenant/actions';
 import { FETCH_DIRECTORY, CREATE_ENTRY, UPDATE_ENTRY, DELETE_ENTRY, FETCH_ENTRY_DETAIL } from './directory/actions';
-import { FETCH_TENANT_CONFIG, CREATE_TENANT_CONFIG, UPDATE_TENANT_CONFIG } from './tenantConfig/actions';
 import {
   DELETE_APPLICATION_ACTION,
   FETCH_SERVICE_STATUS_APPS_ACTION,
@@ -77,11 +75,6 @@ export function* watchSagas() {
 
   // tenant and keycloak
   yield takeEvery(CHECK_IS_TENANT_ADMIN, isTenantAdmin);
-
-  //tenant config
-  yield takeEvery(FETCH_TENANT_CONFIG, fetchTenantConfig);
-  yield takeEvery(CREATE_TENANT_CONFIG, createTenantConfig);
-  yield takeEvery(UPDATE_TENANT_CONFIG, updateTenantConfig);
   yield takeEvery(KEYCLOAK_CHECK_SSO, keycloakCheckSSO);
   yield takeEvery(TENANT_LOGIN, tenantLogin);
   yield takeEvery(KEYCLOAK_CHECK_SSO_WITH_LOGOUT, keycloakCheckSSOWithLogout);

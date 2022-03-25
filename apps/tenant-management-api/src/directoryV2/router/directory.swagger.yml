@@ -1,53 +1,65 @@
 components:
   schemas:
-    DirectoryV2:
-      title: Directory V2
+    DirectoryEntry:
+      title: Directory entry
       type: object
       properties:
         urn:
           type: string
-          description: ADSP urn of the directory
+          description: ADSP urn of the service or API.
         url:
           type: string
-          description: Url of the directory
-        name:
+          description: Url of the service or API.
+        service:
           type: string
-          description: name of the directory entry
+          description: Name of the service.
+        api:
+          type: string
+          description: Name of the API.
         namespace:
           type: string
-          description: namespace of the directory entry
-    DirectoryMetadata:
-      title: Directory V2 Metadata
+          description: Namespace of the directory entry.
+    Link:
       type: object
       properties:
+        href:
+          type: string
+        title:
+          type: string
+    ServiceMetadata:
+      title: Service metadata
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
         _links:
           type: object
           properties:
             self:
-              type: object
-              properties:
-                href:
-                  type: string
+              $ref: "#/components/schemas/Link"
             api:
-              type: object
-              properties:
-                href:
-                  type: string
+              oneOf:
+                - $ref: "#/components/schemas/Link"
+                - type: array
+                  items:
+                    $ref: "#/components/schemas/Link"
             doc:
-              type: object
-              properties:
-                href:
-                  type: string
+              $ref: "#/components/schemas/Link"
             health:
-              type: object
-              properties:
-                href:
-                  type: string
+              $ref: "#/components/schemas/Link"
+          additionalProperties:
+            oneOf:
+              - $ref: "#/components/schemas/Link"
+              - type: array
+                items:
+                  $ref: "#/components/schemas/Link"
 
-'/api/directory/v2/namespaces/{namespace}':
+"/api/directory/v2/namespaces/{namespace}":
   get:
     tags:
-      - Directory V2
+      - Directory service
     description: Fetch the directory entries by namespace
     parameters:
       - name: namespace
@@ -64,10 +76,10 @@ components:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/DirectoryV2'
+                $ref: "#/components/schemas/DirectoryEntry"
   put:
     tags:
-      - Directory V2
+      - Directory service
     description: Update the directory entires
     parameters:
       - name: namespace
@@ -96,10 +108,10 @@ components:
       401:
         description: Unauthorized
 
-'/namespaces/{namespace}/services/{service}':
+"/api/directory/v2/namespaces/{namespace}/services/{service}":
   get:
     tags:
-      - Directory V2
+      - Directory service
     parameters:
       - name: namespace
         description: namespace of the directory entry
@@ -128,13 +140,13 @@ components:
                 host:
                   type: string
                 metadata:
-                  $ref: '#/components/schemas/DirectoryMetadata'
+                  $ref: "#/components/schemas/ServiceMetadata"
       401:
         description: Unauthorized
 
   delete:
     tags:
-      - Directory V2
+      - Directory service
     parameters:
       - name: namespace
         description: namespace of the directory entry

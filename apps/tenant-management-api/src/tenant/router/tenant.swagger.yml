@@ -1,7 +1,7 @@
 '/api/tenant/v1':
   post:
     tags:
-      - Tenant V1
+      - Tenant service
     description: Create a new tenant.
     requestBody:
       content:
@@ -32,7 +32,7 @@
         description: The tenant name is used.
   delete:
     tags:
-      - Tenant V1
+      - Tenant service
     description: Delete a tenant.
     parameters:
       - in: query
@@ -49,7 +49,7 @@
 '/api/tenant/v1/realm/roles':
   get:
     tags:
-      - Tenant V1
+      - Tenant service
     description: Return the realm roles of the tenant
     responses:
       200:
@@ -60,7 +60,7 @@
 '/api/tenant/v1/email':
   post:
     tags:
-      - Tenant V1
+      - Tenant service
     description: Fetch the tenant admin information by email.
     requestBody:
       content:
@@ -79,7 +79,7 @@
 '/api/tenant/v2/tenants':
   get:
     tags:
-      - Tenant V2
+      - Tenant service
     description: Search for tenants
     parameters:
       - in: query
@@ -106,7 +106,7 @@
 '/api/tenant/v2/tenants/{id}':
   get:
     tags:
-      - Tenant V2
+      - Tenant service
     description: Search for tenants
     parameters:
       - in: path

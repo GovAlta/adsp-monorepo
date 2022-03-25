@@ -18,7 +18,7 @@ Feature: Tenant admin
       | Status    | Service status |
       | Event log | Event log      |
 
-  @regression @smoke-test @api
+  @regression @smoke-test @api @ignore
   Scenario Outline: As a GoA service owner I can get a list of "<Options>"
     When the user sends a configuration service request to "<End Point>"
     Then the user gets a list of "<Options>"
