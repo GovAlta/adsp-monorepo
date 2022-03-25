@@ -22,6 +22,7 @@ export const DirectoryService: FunctionComponent = () => {
   useEffect(() => {
     dispatch(fetchDirectory());
   }, []);
+
   const coreTenant = 'Platform';
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const { directory } = useSelector((state: RootState) => state.directory);
@@ -34,7 +35,6 @@ export const DirectoryService: FunctionComponent = () => {
   useEffect(() => {}, [indicator]);
   // eslint-disable-next-line
   useEffect(() => {}, [tenantName]);
-  console.log(tenantName);
 
   function reset() {
     setEditEntry(false);
@@ -70,11 +70,18 @@ export const DirectoryService: FunctionComponent = () => {
             </GoAButton>
           )}
 
-          <ServiceTableComponent namespace={tenantName} directory={directory} onEdit={onEdit} onDelete={onDelete} />
+          <ServiceTableComponent
+            namespace={tenantName}
+            directory={directory}
+            isCore={false}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
 
           <ServiceTableComponent
             namespace={coreTenant.toLowerCase()}
             directory={directory}
+            isCore={true}
             onEdit={onEdit}
             onDelete={onDelete}
           />
@@ -85,7 +92,7 @@ export const DirectoryService: FunctionComponent = () => {
         <DeleteModal
           isOpen={showDeleteConfirmation}
           title="Delete directory entry"
-          content={`Delete ${selectedEntry?.namespace} ?`}
+          content={`Delete ${selectedEntry?.service} ?`}
           onCancel={() => setShowDeleteConfirmation(false)}
           onDelete={() => {
             setShowDeleteConfirmation(false);

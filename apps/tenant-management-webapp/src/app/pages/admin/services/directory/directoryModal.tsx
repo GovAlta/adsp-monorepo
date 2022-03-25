@@ -23,12 +23,12 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const dispatch = useDispatch();
 
-  const checkNamespace = (namespace) => {
-    const tenantDirectory = directory.find((x) => x.name === tenantName && x.namespace === namespace);
+  const checkService = (service) => {
+    const tenantDirectory = directory.find((x) => x.namespace === tenantName && x.service === service);
     return tenantDirectory;
   };
   const checkApi = (api) => {
-    const tenantDirectory = directory.find((x) => x.name === tenantName && x.api && x.api === api);
+    const tenantDirectory = directory.find((x) => x.namespace === tenantName && x.api && x.api === api);
     return tenantDirectory;
   };
   return (
@@ -36,14 +36,14 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
       <GoAModalTitle>{title}</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>
-          <GoAFormItem error={errors?.['namespace']}>
+          <GoAFormItem error={errors?.['service']}>
             <label>Service</label>
             <input
               type="text"
               name="name"
-              value={entry.namespace}
+              value={entry.service}
               data-testid={`directory-modal-service-input`}
-              onChange={(e) => setEntry({ ...entry, namespace: e.target.value })}
+              onChange={(e) => setEntry({ ...entry, service: e.target.value })}
               aria-label="name"
               maxLength={50}
             />
@@ -87,17 +87,17 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
         </GoAButton>
         <GoAButton
           buttonType="primary"
-          disabled={!entry.namespace || !entry.url}
+          disabled={!entry.service || !entry.url}
           data-testid="directory-modal-save"
           onClick={() => {
             const regex = new RegExp(/^[a-z0-9-]+$/);
 
-            if (!regex.test(entry.namespace)) {
-              setErrors({ ...errors, namespace: 'Service allowed characters: a-z, 0-9, -' });
+            if (!regex.test(entry.service)) {
+              setErrors({ ...errors, service: 'Service allowed characters: a-z, 0-9, -' });
               return;
             }
-            if (checkNamespace(entry.namespace) && props.type === 'new') {
-              setErrors({ ...errors, namespace: 'Service name duplicate, please use another one' });
+            if (checkService(entry.service) && props.type === 'new') {
+              setErrors({ ...errors, service: 'Service name duplicate, please use another one' });
               return;
             }
             if (entry.api && !regex.test(entry.api)) {
