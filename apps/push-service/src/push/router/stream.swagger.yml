@@ -76,7 +76,7 @@ components:
     parameters:
       - in: query
         name: tenant
-        description: ID of the tenant associated with the stream for.
+        description: Name of the tenant associated with the stream for in kebab case.
         schema:
           type: string
       - in: path

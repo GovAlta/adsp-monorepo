@@ -57,12 +57,12 @@ export const createDocsRouter = async ({
   // Express modifies the req.url when there is parameter capture. Static asset handler is on this router path so it
   // doesn't return 301 Moved Permanently responses.
   router.use(
-    '/:tenant([a-zA-Z0-9-_]+)?',
+    '/:tenant([a-zA-Z0-9-_ ]+)?',
     async (req, _res, next) => {
       const { tenant: tenantName } = req.params;
 
       if (req.url === '/swagger-ui-init.js') {
-        const tenant = tenantName ? await tenantService.getTenantByName(tenantName as string) : null;
+        const tenant = tenantName ? await tenantService.getTenantByName(tenantName.replace('-', ' ') as string) : null;
         const namespace = tenant ? toKebabName(tenant.name) : null;
         const docs = {
           ...(await serviceDocs.getDocs(adspId`urn:ads:platform`)),

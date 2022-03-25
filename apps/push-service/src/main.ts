@@ -27,7 +27,7 @@ const initializeApp = async (): Promise<Server> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { tenantStrategy, configurationHandler, clearCached, healthCheck } = await initializePlatform(
+  const { tenantService, tenantStrategy, configurationHandler, clearCached, healthCheck } = await initializePlatform(
     {
       serviceId,
       displayName: 'Push service',
@@ -103,7 +103,7 @@ const initializeApp = async (): Promise<Server> => {
 
   const eventService = await createAmqpEventService({ ...environment, logger });
 
-  applyPushMiddleware(app, io, { logger, eventService });
+  applyPushMiddleware(app, io, { logger, eventService, tenantService });
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();
