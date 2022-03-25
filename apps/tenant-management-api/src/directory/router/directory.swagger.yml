@@ -11,10 +11,11 @@ components:
           type: string
           description: Url of the directory
 
-'/api/discovery/v1':
+"/api/discovery/v1":
   get:
+    deprecated: true
     tags:
-      - Discovery V1
+      - Directory service
     description: Fetch the discovery (URN-service) list.
     responses:
       200:
@@ -24,12 +25,13 @@ components:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/Directory'
+                $ref: "#/components/schemas/Directory"
       401:
         description: Unauthorized
   post:
+    deprecated: true
     tags:
-      - Discovery V1
+      - Directory service
     description: Create a new URN entry
     requestBody:
       content:
@@ -42,7 +44,7 @@ components:
               services:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Directory'
+                  $ref: "#/components/schemas/Directory"
     responses:
       200:
         description: Request completed successfully.
@@ -51,14 +53,15 @@ components:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/Directory'
+                $ref: "#/components/schemas/Directory"
 
       401:
         description: Unauthorized
 
   put:
+    deprecated: true
     tags:
-      - Discovery V1
+      - Directory service
     description: Update the URN entry by name
     requestBody:
       content:
@@ -71,7 +74,7 @@ components:
               services:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Directory'
+                  $ref: "#/components/schemas/Directory"
 
     responses:
       200:
@@ -79,10 +82,11 @@ components:
       401:
         description: Unauthorized
 
-'/api/discovery/v1/{name}':
+"/api/discovery/v1/{name}":
   delete:
+    deprecated: true
     tags:
-      - Discovery V1
+      - Directory service
     parameters:
       - name: name
         description: Name of the directory entry
@@ -98,6 +102,6 @@ components:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/Directory'
+                $ref: "#/components/schemas/Directory"
       401:
         description: Unauthorized

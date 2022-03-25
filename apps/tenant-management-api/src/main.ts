@@ -1,4 +1,4 @@
-import { AdspId, adspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
 import { createErrorHandler } from '@core-services/core-common';
 import * as cors from 'cors';
 import * as express from 'express';
@@ -6,9 +6,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as healthCheck from 'express-healthcheck';
 import * as fs from 'fs';
 import * as passport from 'passport';
-import * as swaggerUi from 'swagger-ui-express';
 import { environment } from './environments/environment';
-import { applyConfigMiddleware, ConfigurationUpdatedDefinition } from './configuration';
 import { applyDirectoryMiddleware, bootstrapDirectory, directoryService } from './directory';
 import { applyDirectoryV2Middleware } from './directoryV2';
 import { createRepositories, disconnect } from './mongo';
@@ -33,7 +31,7 @@ async function initializeApp(): Promise<express.Application> {
   app.use(cors());
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
-  const { coreStrategy, tenantStrategy, directory, tenantService, eventService, configurationHandler } =
+  const { coreStrategy, tenantStrategy, tenantService, eventService, configurationHandler } =
     await initializePlatform(
       {
         serviceId,
@@ -45,7 +43,7 @@ async function initializeApp(): Promise<express.Application> {
         ignoreServiceAud: true,
         configurationSchema,
         configurationConverter: (c) => Object.entries(c).map(([k, v]) => ({ serviceId: AdspId.parse(k), ...v })),
-        events: [TenantCreatedDefinition, TenantDeletedDefinition, ConfigurationUpdatedDefinition],
+        events: [TenantCreatedDefinition, TenantDeletedDefinition],
         roles: [
           // Note: Tenant Admin role is a special composite role.
           {
@@ -109,7 +107,6 @@ async function initializeApp(): Promise<express.Application> {
   });
 
   applyTenantMiddleware(app, { ...repositories, logger, eventService, configurationHandler });
-  applyConfigMiddleware(app, { ...repositories, logger, eventService });
   applyDirectoryMiddleware(app, { ...repositories, logger });
   applyDirectoryV2Middleware(app, { ...repositories, logger, tenantService });
 

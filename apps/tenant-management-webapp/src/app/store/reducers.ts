@@ -9,7 +9,6 @@ import Notifications from './notifications/reducers';
 import Subscription from './subscription/reducers';
 import Tenant from './tenant/reducers';
 import ServiceStatus from './status/reducers';
-import TenantConfig from './tenantConfig/reducers';
 import Event from './event/reducers';
 import Notice from './notice/reducers';
 
@@ -23,7 +22,6 @@ export const rootReducer = combineReducers({
   notification: Notification,
   subscription: Subscription,
   notifications: Notifications,
-  tenantConfig: TenantConfig,
   serviceStatus: ServiceStatus,
   event: Event,
   notice: Notice,

@@ -1,12 +1,9 @@
 import { connect, connection, ConnectionStates } from 'mongoose';
 import { Logger } from 'winston';
-import { Repositories as ConfigurationRepositories } from '../configuration';
 import { Repositories as DirectoryRepositories } from '../directory';
 import { Repositories as TenantRepositories } from '../tenant';
 import { MongoDirectoryRepository } from './directory';
-import { MongoServiceOptionRepository } from './serviceOption';
 import { MongoTenantRepository } from './tenant';
-import { MongoTenantConfigurationRepository } from './tenantConfig';
 
 export const disconnect = async (logger: Logger): Promise<void> => {
   logger.info('MongoDB disconnected...');
@@ -22,7 +19,7 @@ interface MongoRepositoryProps {
   MONGO_TLS: boolean;
 }
 
-type Repositories = ConfigurationRepositories & DirectoryRepositories & TenantRepositories;
+type Repositories = DirectoryRepositories & TenantRepositories;
 
 export const createRepositories = ({
   logger,
@@ -49,8 +46,6 @@ export const createRepositories = ({
         } else {
           resolve({
             tenantRepository: new MongoTenantRepository(),
-            serviceConfigurationRepository: new MongoServiceOptionRepository(),
-            tenantConfigurationRepository: new MongoTenantConfigurationRepository(),
             directoryRepository: new MongoDirectoryRepository(),
             isConnected: () => connection.readyState === ConnectionStates.connected,
           });

@@ -74,6 +74,7 @@ export class MongoDirectoryRepository implements DirectoryRepository {
       )
     );
   }
+
   update(directory: Directory): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) =>
       this.directoryModel.findOneAndUpdate({ name: directory.name }, directory, { upsert: true }, (err, doc) =>
@@ -81,6 +82,7 @@ export class MongoDirectoryRepository implements DirectoryRepository {
       )
     );
   }
+  
   async exists(name: string): Promise<boolean> {
     const result = await this.directoryModel.findOne({
       where: { name: name },
