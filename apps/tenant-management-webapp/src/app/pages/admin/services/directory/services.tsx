@@ -10,6 +10,8 @@ import { DeleteModal } from '@components/DeleteModal';
 import { DirectoryModal } from './directoryModal';
 import { deleteEntry } from '@store/directory/actions';
 import { ServiceTableComponent } from './serviceList';
+import { toKebabName } from '@lib/kebabName';
+
 export const DirectoryService: FunctionComponent = () => {
   const dispatch = useDispatch();
   const [isEdit, setIsEdit] = useState(false);
@@ -30,6 +32,9 @@ export const DirectoryService: FunctionComponent = () => {
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
+  // eslint-disable-next-line
+  useEffect(() => {}, [tenantName]);
+  console.log(tenantName);
 
   function reset() {
     setEditEntry(false);
@@ -55,7 +60,7 @@ export const DirectoryService: FunctionComponent = () => {
             <GoAButton
               data-testid="add-directory-btn"
               onClick={() => {
-                defaultService.name = tenantName;
+                defaultService.namespace = toKebabName(tenantName);
                 setSelectedEntry(defaultService);
                 setIsEdit(false);
                 setEditEntry(true);
@@ -65,10 +70,10 @@ export const DirectoryService: FunctionComponent = () => {
             </GoAButton>
           )}
 
-          <ServiceTableComponent name={tenantName} directory={directory} onEdit={onEdit} onDelete={onDelete} />
+          <ServiceTableComponent namespace={tenantName} directory={directory} onEdit={onEdit} onDelete={onDelete} />
 
           <ServiceTableComponent
-            name={coreTenant.toLowerCase()}
+            namespace={coreTenant.toLowerCase()}
             directory={directory}
             onEdit={onEdit}
             onDelete={onDelete}

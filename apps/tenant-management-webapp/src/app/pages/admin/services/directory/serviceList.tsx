@@ -27,7 +27,7 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
 
   return (
     <>
-      <tr key={service.namespace}>
+      <tr key={service.urn}>
         <td headers="namespace" data-testid="namespace">
           {service.namespace}
         </td>
@@ -36,7 +36,7 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
         </td>
         <td className="actionCol">
           <GoAContextMenu>
-            {service.namespace.split(':').length === 1 && (
+            {service.service.split(':').length === 1 && (
               <GoAContextMenuIcon
                 type={showDetails ? 'eye-off' : 'eye'}
                 onClick={() => setDetails(service)}
@@ -83,20 +83,25 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
 };
 
 interface serviceTableProps {
-  name: string;
+  namespace: string;
   directory: Service[];
   onEdit: (service: Service) => void;
   onDelete: (service: Service) => void;
 }
 
-export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({ name, directory, onEdit, onDelete }) => {
+export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({
+  namespace,
+  directory,
+  onEdit,
+  onDelete,
+}) => {
   const memoizedDirectory = useMemo(() => {
     return [...directory].sort((a, b) => (a.namespace < b.namespace ? -1 : 1));
   }, [directory]);
 
   return (
-    <TableDiv key={name}>
-      <NameDiv>{name}</NameDiv>
+    <TableDiv key={namespace}>
+      <NameDiv>{namespace}</NameDiv>
       <DataTable data-testid="directory-table">
         <thead data-testid="directory-table-header">
           <tr>
@@ -108,9 +113,9 @@ export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({ na
           </tr>
         </thead>
 
-        <tbody key={name}>
+        <tbody key={namespace}>
           {memoizedDirectory
-            .filter((dir) => dir.name === name)
+            .filter((dir) => dir.namespace === namespace)
             .map((dir: Service) => (
               <ServiceItemComponent service={dir} onEdit={onEdit} onDelete={onDelete} />
             ))}

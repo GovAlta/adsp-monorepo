@@ -42,13 +42,14 @@ export function* fetchDirectory(action: FetchDirectoryAction): SagaIterator {
     } else {
       yield put(fetchDirectorySuccess({ directory: coreDirectory }));
     }
+
     yield put(
       UpdateIndicator({
         show: false,
       })
     );
   } catch (e) {
-    yield put(ErrorNotification({ message: 'failed to update directory service' }));
+    yield put(ErrorNotification({ message: 'failed to fetch directory service' }));
     yield put(
       UpdateIndicator({
         show: false,
