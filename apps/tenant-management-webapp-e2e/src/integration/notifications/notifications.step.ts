@@ -567,3 +567,18 @@ Then(
     }
   }
 );
+
+Then('the user views the event details with subject: {string} and userId: {string}', function (subject, userID) {
+  notificationsObj
+    .eventDetails()
+    .invoke('text')
+    .then((eventDetails) => {
+      if (subject == 'Empty' || userID == 'Empty') {
+        expect(eventDetails).to.not.contain(subject);
+      } else {
+        expect(eventDetails).to.contain(subject);
+        expect(eventDetails).to.contain(userID);
+      }
+      // expect(eventDetails).to.contain(userID);
+    });
+});
