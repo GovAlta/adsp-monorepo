@@ -72,7 +72,7 @@ export const createProcessEventJob =
       let count = 0;
       for (const type of types) {
         // Page through all subscriptions and generate notifications.
-        const notifications = [];
+        const notifications: Notification[] = [];
         let after: string = null;
         do {
           const { results, page } = await subscriptionRepository.getSubscriptions(tenantId, 1000, after, {
