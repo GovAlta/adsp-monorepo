@@ -182,5 +182,31 @@ class StatusServicePage {
       `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//div[@data-testid="icon-trash"]`
     );
   }
+
+  applicationCardChangeStatusBtn(appName) {
+    return cy.xpath(
+      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//button[text()='Change status']`
+    );
+  }
+
+  manualStatusChangeModalTitle() {
+    return cy.xpath('//*[@class="modal-root" and @data-state="visible"]//*[@class="modal-title"]');
+  }
+
+  manualStatusChangeModalStatusRadio(statusName) {
+    return cy.xpath(
+      `//*[@class="modal-root" and @data-state="visible"]//input[@value="${statusName}"]/following-sibling::div`
+    );
+  }
+
+  manualStatusChangeModalSaveBtn() {
+    return cy.xpath('//*[@class="modal-root" and @data-state="visible"]//button[text()="Save"]');
+  }
+
+  applicationCardStatusBadge(appName) {
+    return cy.xpath(
+      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//*[contains(@class, "badge-content")]`
+    );
+  }
 }
 export default StatusServicePage;
