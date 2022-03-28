@@ -214,21 +214,14 @@ Feature: Notifications
         Given a tenant admin user is on status applications page
         Then the user "views" "Autotest" in the application list
         # ###Change status from empty to outage and verify the even
-        # When the user clicks Change status button for "autotest-status-change-event"
-        # Then the user views Manual status change modal
-        # When the user selects "Outage" and clicks Save button
-        #     Then the user views the "Outage" status for "autotest-status-change-event"
-        #  When the user waits "20" seconds
+        When the user clicks Change status button for "Autotest"
+        When the user selects "Operational" and clicks Save button
+        Then the user views the "Operational" status for "Autotest"
+        When the user waits "20" seconds
         And the user selects the "Event log" menu item
         Then the "Event log" landing page is displayed
-        When the user searches with "status-service:application-status-changed", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
-        # And the user clicks Show details button for the latest event of "application-status-changed" for "status-service"
-        # Then the user views the event details with status changing from "Empty" to "Outage"
+        When the user searches with "notification-service:notification-sent", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
+        And the user clicks Show details button for the latest event of "notification-sent" for "notification-service"
+        Then the user views the event details with subject: "Autotest status has changed to operational" and userId: "auto.test@gov.ab.ca"
 
-        When the user selects the "Status" menu item
-        And the user selects "Applications" tab for "Status"
-        Then the user "views" "autotest-status-change-event" in the application list
-        When the user clicks "Delete" button for "autotest-status-change-event"
-        Then the user views delete "application" confirmation modal for "autotest-status-change-event"
-        When the user clicks Delete button in delete confirmation modal
-        Then the user "should not view" "autotest-status-change-event" in the application list
+
