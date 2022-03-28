@@ -114,12 +114,15 @@ const initializeApp = async (): Promise<Server> => {
   });
 
   app.get('/', async (req, res) => {
+    logger.debug(`X-Forwarded-For: ${req.headers['x-forwarded-for']}`);
+    logger.debug(`X-Forwarded-Proto: ${req.headers['x-forwarded-proto']}`);
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
       _links: {
         self: { href: new URL(req.originalUrl, rootUrl).href },
         health: { href: new URL('/health', rootUrl).href },
         api: { href: new URL('/stream/v1', rootUrl).href },
+        docs: { href: new URL('/swagger/docs/v1', rootUrl).href },
       },
     });
   });
