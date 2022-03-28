@@ -807,3 +807,46 @@ Then(
     });
   }
 );
+
+When('the user clicks Show details button for the latest event of {string} for {string}', function (name, namespace) {
+  // Verify the first record matches the name and namespace
+  tenantAdminObj
+    .eventTableBody()
+    .children('tr')
+    .first()
+    .within(() => {
+      tenantAdminObj.eventTableNameCells().invoke('text').should('eq', name);
+    });
+  tenantAdminObj
+    .eventTableBody()
+    .children('tr')
+    .first()
+    .within(() => {
+      tenantAdminObj.eventTableNameSpaceCells().invoke('text').should('eq', namespace);
+    });
+
+  // Verify the first toggle details icon is eye icon, not eye-off icon, and then click it
+  tenantAdminObj.eventToggleDetailsIcons().first().invoke('attr', 'data-testid').should('eq', 'icon-eye');
+  tenantAdminObj.eventToggleDetailsIcons().first().click();
+});
+
+// Only one event details is open before calling this step
+Then(
+  'the user views the event details with status changing from {string} to {string}',
+  function (oldStatus, newStatus) {
+    tenantAdminObj.eventDetails().then((elements) => {
+      expect(elements.length).to.equal(1);
+    });
+    tenantAdminObj
+      .eventDetails()
+      .invoke('text')
+      .then((eventDetails) => {
+        if (oldStatus == 'Empty') {
+          expect(eventDetails).to.not.contain('originalStatus');
+        } else {
+          expect(eventDetails).to.contain('"originalStatus": ' + '"' + oldStatus.toLowerCase() + '"');
+        }
+        expect(eventDetails).to.contain('"newStatus": ' + '"' + newStatus.toLowerCase() + '"');
+      });
+  }
+);

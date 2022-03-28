@@ -111,12 +111,20 @@ class TenantAdminPage {
     return cy.get('button:contains("Load more...")');
   }
 
-  eventHideDetailsBtn() {
-    return cy.get('button:contains("Hide details")');
+  eventToggleDetailsIcons() {
+    return cy.xpath('//*[@data-testid="toggle-details-visibility"]/div');
   }
 
-  eventDetailsBody() {
-    return cy.get('.event-details');
+  eventDetails() {
+    return cy.xpath('//td[@class="event-details"]');
+  }
+
+  eventTableNameCells() {
+    return cy.get('td[headers="name"]');
+  }
+
+  eventTableNameSpaceCells() {
+    return cy.get('td[headers="namespace"]');
   }
 }
 export default TenantAdminPage;

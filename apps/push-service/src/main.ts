@@ -25,6 +25,10 @@ const initializeApp = async (): Promise<Server> => {
   app.use(express.json({ limit: '1mb' }));
   app.use(cors());
 
+  if (environment.TRUSTED_PROXY) {
+    app.set('trust proxy', environment.TRUSTED_PROXY);
+  }
+
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
   const { tenantService, tenantStrategy, configurationHandler, clearCached, healthCheck } = await initializePlatform(
@@ -120,6 +124,7 @@ const initializeApp = async (): Promise<Server> => {
         self: { href: new URL(req.originalUrl, rootUrl).href },
         health: { href: new URL('/health', rootUrl).href },
         api: { href: new URL('/stream/v1', rootUrl).href },
+        docs: { href: new URL('/swagger/docs/v1', rootUrl).href },
       },
     });
   });
