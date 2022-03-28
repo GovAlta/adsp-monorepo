@@ -1,6 +1,8 @@
 import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
 import { createErrorHandler } from '@core-services/core-common';
 import * as cors from 'cors';
+import * as compression from 'compression';
+import * as helmet from 'helmet';
 import * as express from 'express';
 import { Request, Response, NextFunction } from 'express';
 import * as healthCheck from 'express-healthcheck';
@@ -27,8 +29,14 @@ async function initializeApp(): Promise<express.Application> {
   }
 
   const app = express();
+  app.use(compression());
+  app.use(helmet());
   app.use(express.json());
   app.use(cors());
+
+  if (environment.TRUSTED_PROXY) {
+    app.set('trust proxy', environment.TRUSTED_PROXY);
+  }
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const { coreStrategy, tenantStrategy, tenantService, eventService, configurationHandler } =

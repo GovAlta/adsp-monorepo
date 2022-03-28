@@ -19,6 +19,7 @@ export const environment = envalid.cleanEnv(
     DB_TLS: envalid.bool({ default: false }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: 3341 }),
+    TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
   },
   {
     reporter: ({ errors }) => {
