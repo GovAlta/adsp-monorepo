@@ -95,11 +95,11 @@ Feature: Notifications
         And the user "views" "Edit button" for "status-service:application-unhealthy" in "Application health check change"
         And the user "views" "email template indicator" for "status-service:application-healthy" in "Application health check change"
         And the user "views" "Edit button" for "status-service:application-healthy" in "Application health check change"
-        Verify email template is read-only (pick one event)
-        Future work: need in-depth research on test automation with Monaco-editor before we can automate test steps.
-        When the user attempts to edit the template
-        Then the user gets "Cannot edit in read-only editor"
-    Verify the event is still there (had a bug of the event disappearing after preview)
+    # Verify email template is read-only (pick one event)
+    # Future work: need in-depth research on test automation with Monaco-editor before we can automate test steps.
+    # When the user attempts to edit the template
+    # Then the user gets "Cannot edit in read-only editor"
+    # Verify the event is still there (had a bug of the event disappearing after preview)
 
     @TEST_CS-1081 @REQ_CS-1029 @TEST_CS-1002 @REQ_CS-1027 @regression
     Scenario: Test As a tenant admin, I can delete a subscription
