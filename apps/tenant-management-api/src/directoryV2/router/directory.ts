@@ -13,7 +13,7 @@ import { validateNamespaceEndpointsPermission, toKebabName } from '../../middlew
 const passportMiddleware = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
 
 import axios from 'axios';
-import { Service } from '../../directory/types/directory';
+import { Service, Links } from '../../directory/types/directory';
 export interface URNComponent {
   scheme?: string;
   nic?: string;
@@ -238,17 +238,25 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
       const filteredService = services.find((x) => x.service === service);
 
       // will return service information and HAL link information
+      if (!filteredService) {
+        throw new InvalidValueError('Update service', `Cannot find service: ${service}`);
+      }
+      try {
+        const { data } = await axios.get<Links>(filteredService.host);
+        // Root attributes of Links type are all optional. So, string can pass the axios type validation.
+        if (typeof data !== 'object') {
+          throw new InvalidValueError('Fetch metadata', 'Invalid metadata schema');
+        }
 
-      if (filteredService) {
-        const { data } = await axios.get(filteredService.host);
         if (!filteredService.metadata) {
           filteredService.metadata = data;
         }
-        directoryCache.set(`directory-${namespace}`, services);
-        return res.status(HttpStatusCodes.OK).json(filteredService);
-      } else {
-        return res.sendStatus(HttpStatusCodes.BAD_REQUEST).json({ error: `${service} could not find` });
+      } catch (err) {
+        logger.warn(`Failed fetching metadata for service ${service} with error ${err.message}`);
       }
+
+      directoryCache.set(`directory-${namespace}`, services);
+      return res.status(HttpStatusCodes.OK).json(filteredService);
     } catch (err) {
       logger.error(`Failed get service for namespace: ${namespace} with error ${err.message}`);
       _next(err);
