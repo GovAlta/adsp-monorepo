@@ -137,6 +137,9 @@ describe('create', () => {
 
       await createRealm([serviceRoles], realm, adminEmail, name);
 
+      // Expect two calls since after realm creation client needs to be re-authenticated to have permissions for new realm.
+      expect(keycloakMock.createkcAdminClient).toHaveBeenCalledTimes(2);
+
       expect(keycloakClientMock.clients.create).toHaveBeenCalledWith(expect.objectContaining({ realm: 'core' }));
       expect(keycloakClientMock.realms.create).toHaveBeenCalledWith(
         expect.objectContaining({ displayName: name, displayNameHtml: name })

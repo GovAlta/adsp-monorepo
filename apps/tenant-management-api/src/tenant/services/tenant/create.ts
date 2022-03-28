@@ -339,7 +339,7 @@ export const createRealm = async (
 
   logger.info(`Starting to create IdP broker client on the core for ${realm} realm...`);
 
-  const client = await createkcAdminClient();
+  let client = await createkcAdminClient();
   await createBrokerClient(client, realm, brokerClientSecret, brokerClient);
 
   logger.info(`Created IdP broker client on the core realm for ${realm} realm`);
@@ -368,6 +368,10 @@ export const createRealm = async (
   logger.info(`New realm config: ${util.inspect(realmConfig)}`);
 
   await client.realms.create(realmConfig);
+
+  // Re-authenticate the admin client. This is necessary because the original access token does not include access
+  // to the new realm that was just created.
+  client = await createkcAdminClient();
 
   // Find the tenant admin role
   const tenantServiceClient = (
