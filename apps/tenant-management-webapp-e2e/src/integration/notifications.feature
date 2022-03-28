@@ -44,7 +44,7 @@ Feature: Notifications
     #     When the user clicks Delete button in delete confirmation modal
     #     Then the user "should not view" the event of "tenant-service:tenant-created" in "autotest-notificationType"
 
-<<<<<<< HEAD
+    <<<<<<< HEAD
     # @TEST_CS-976 @REQ_CS-906 @regression
     # Scenario: Test the registration of notification type in status service for application health change
     #     Given a tenant admin user is on notification types page
@@ -77,32 +77,32 @@ Feature: Notifications
     #     Then Preview an email template modal is closed
     #     # Verify the event is still there (had a bug of the event disappearing after preview)
     #     And the user "views" the event of "status-service:health-check-started" in "Application health check change"
-=======
-  @TEST_CS-976 @REQ_CS-906 @regression
-  Scenario: Test the registration of notification type in status service for application health change
-    Given a tenant admin user is on notification types page
-    # Verify the type and its events
-    Then the user "views" the notification type card of "Application health check change"
-    And the user "views" the event of "status-service:health-check-started" in "Application health check change"
-    And the user "views" the event of "status-service:health-check-stopped" in "Application health check change"
-    And the user "views" the event of "status-service:application-unhealthy" in "Application health check change"
-    And the user "views" the event of "status-service:application-healthy" in "Application health check change"
-    # Verify the events' email icons and preview links, and no edit buttons
-    And the user "views" "email template indicator" for "status-service:health-check-started" in "Application health check change"
-    And the user "views" "Edit button" for "status-service:health-check-started" in "Application health check change"
-    And the user "views" "email template indicator" for "status-service:health-check-stopped" in "Application health check change"
-    And the user "views" "Edit button" for "status-service:health-check-stopped" in "Application health check change"
-    And the user "views" "email template indicator" for "status-service:application-unhealthy" in "Application health check change"
-    And the user "views" "Edit button" for "status-service:application-unhealthy" in "Application health check change"
-    And the user "views" "email template indicator" for "status-service:application-healthy" in "Application health check change"
-    And the user "views" "Edit button" for "status-service:application-healthy" in "Application health check change"
+    =======
+    @TEST_CS-976 @REQ_CS-906 @regression
+    Scenario: Test the registration of notification type in status service for application health change
+        Given a tenant admin user is on notification types page
+        # Verify the type and its events
+        Then the user "views" the notification type card of "Application health check change"
+        And the user "views" the event of "status-service:health-check-started" in "Application health check change"
+        And the user "views" the event of "status-service:health-check-stopped" in "Application health check change"
+        And the user "views" the event of "status-service:application-unhealthy" in "Application health check change"
+        And the user "views" the event of "status-service:application-healthy" in "Application health check change"
+        # Verify the events' email icons and preview links, and no edit buttons
+        And the user "views" "email template indicator" for "status-service:health-check-started" in "Application health check change"
+        And the user "views" "Edit button" for "status-service:health-check-started" in "Application health check change"
+        And the user "views" "email template indicator" for "status-service:health-check-stopped" in "Application health check change"
+        And the user "views" "Edit button" for "status-service:health-check-stopped" in "Application health check change"
+        And the user "views" "email template indicator" for "status-service:application-unhealthy" in "Application health check change"
+        And the user "views" "Edit button" for "status-service:application-unhealthy" in "Application health check change"
+        And the user "views" "email template indicator" for "status-service:application-healthy" in "Application health check change"
+        And the user "views" "Edit button" for "status-service:application-healthy" in "Application health check change"
     # Verify email template is read-only (pick one event)
     # Future work: need in-depth research on test automation with Monaco-editor before we can automate test steps.
     # When the user attempts to edit the template
     # Then the user gets "Cannot edit in read-only editor"
     # Verify the event is still there (had a bug of the event disappearing after preview)
 
->>>>>>> 4decce8234b28a1c3f00feaf57d77d513c67551e
+    >>>>>>> 4decce8234b28a1c3f00feaf57d77d513c67551e
 
     # @TEST_CS-1081 @REQ_CS-1029 @TEST_CS-1002 @REQ_CS-1027 @regression
     # Scenario: Test As a tenant admin, I can delete a subscription
@@ -126,7 +126,6 @@ Feature: Notifications
     #     When the user "selects" the subscribe checkbox for health check notification type
     #     Then the user views a callout message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"
 
-<<<<<<< HEAD
     # @TEST_CS-986 @TEST_CS-443 @REQ_CS-1068 @REQ_CS-963 @REQ_CS-978 @regression
     # Scenario: As a tenant admin, I can see notification type for application status change updates
     #     Given a tenant admin user is on notification types page
@@ -149,20 +148,18 @@ Feature: Notifications
     #     Then the user views Preview an email template modal
     #     When the user clicks Close button in Preview an email template modal
     #     Then Preview an email template modal is closed
-=======
-  @TEST_CS-986 @TEST_CS-443 @REQ_CS-1068 @REQ_CS-963 @REQ_CS-978 @regression
-  Scenario: As a tenant admin, I can see notification type for application status change updates
-    Given a tenant admin user is on notification types page
-    Then the user "views" the notification type card of "Application status update"
-    And the user views "Application status update" has self-service-allowed attribute is "yes"
-    # Verify the events' email template indicator, preview link and edit button
-    And the user "views" the event of "status-service:application-status-changed" in "Application status update"
-    And the user "views" the event of "status-service:application-notice-published" in "Application status update"
-    And the user "views" "email template indicator" for "status-service:application-status-changed" in "Application status update"
-    And the user "views" "Edit button" for "status-service:application-status-changed" in "Application status update"
-    And the user "views" "email template indicator" for "status-service:application-notice-published" in "Application status update"
-    And the user "views" "Edit button" for "status-service:application-notice-published" in "Application status update"
->>>>>>> 4decce8234b28a1c3f00feaf57d77d513c67551e
+    @TEST_CS-986 @TEST_CS-443 @REQ_CS-1068 @REQ_CS-963 @REQ_CS-978 @regression
+    Scenario: As a tenant admin, I can see notification type for application status change updates
+        Given a tenant admin user is on notification types page
+        Then the user "views" the notification type card of "Application status update"
+        And the user views "Application status update" has self-service-allowed attribute is "yes"
+        # Verify the events' email template indicator, preview link and edit button
+        And the user "views" the event of "status-service:application-status-changed" in "Application status update"
+        And the user "views" the event of "status-service:application-notice-published" in "Application status update"
+        And the user "views" "email template indicator" for "status-service:application-status-changed" in "Application status update"
+        And the user "views" "Edit button" for "status-service:application-status-changed" in "Application status update"
+        And the user "views" "email template indicator" for "status-service:application-notice-published" in "Application status update"
+        And the user "views" "Edit button" for "status-service:application-notice-published" in "Application status update"
 
     # @TEST_CS-1097 @REQ_CS-1031 @regression
     # Scenario: As a tenant admin, I can find subscriptions for a particular subscriber
