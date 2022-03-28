@@ -3,7 +3,7 @@ export type PublicServiceStatusType = 'operational' | 'maintenance' | 'outage' |
 export type ServiceStatusType = InternalServiceStatusType | PublicServiceStatusType;
 export const PublicServiceStatusTypes = ['operational', 'maintenance', 'outage', 'reported-issues'];
 export type EndpointStatusType = 'offline' | 'online' | 'pending';
-export type ModeType = 'draft' | 'active';
+export type ModeType = 'draft' | 'published';
 
 export interface ServiceStatus {
   applications: ServiceStatusApplication[];
@@ -11,6 +11,14 @@ export interface ServiceStatus {
 
 export interface SubscriberState {
   subscriber: Subscriber;
+}
+
+export interface ConfigurationState {
+  contact: ContactInformation;
+}
+
+export interface ContactInformation {
+  contactEmail?: string;
 }
 
 export interface ServiceStatusApplication {
@@ -91,6 +99,10 @@ export const NoticeInit: Notices = {
 
 export const ApplicationInit: ServiceStatus = {
   applications: null,
+};
+
+export const ConfigurationInit: ConfigurationState = {
+  contact: null,
 };
 
 export const SubscriberInit: SubscriberState = {

@@ -129,7 +129,7 @@ describe('ConfigurationService', () => {
 
   it('can use combine with memoized result', async () => {
     const combine = jest.fn(() => 'combined');
-    const service = new ConfigurationServiceImpl(logger, directoryMock, null, (a, b) => combine());
+    const service = new ConfigurationServiceImpl(logger, directoryMock, null, combine);
 
     const tenant = { value: 'this is tenant' };
     const core = { value: 'this is core' };

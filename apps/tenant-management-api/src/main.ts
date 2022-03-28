@@ -1,4 +1,4 @@
-import { AdspId, adspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
 import { createErrorHandler } from '@core-services/core-common';
 import * as cors from 'cors';
 import * as express from 'express';
@@ -6,9 +6,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as healthCheck from 'express-healthcheck';
 import * as fs from 'fs';
 import * as passport from 'passport';
-import * as swaggerUi from 'swagger-ui-express';
 import { environment } from './environments/environment';
-import { applyConfigMiddleware, ConfigurationUpdatedDefinition } from './configuration';
 import { applyDirectoryMiddleware, bootstrapDirectory, directoryService } from './directory';
 import { applyDirectoryV2Middleware } from './directoryV2';
 import { createRepositories, disconnect } from './mongo';
@@ -33,7 +31,7 @@ async function initializeApp(): Promise<express.Application> {
   app.use(cors());
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
-  const { coreStrategy, tenantStrategy, directory, tenantService, eventService, configurationHandler } =
+  const { coreStrategy, tenantStrategy, tenantService, eventService, configurationHandler } =
     await initializePlatform(
       {
         serviceId,
@@ -45,7 +43,7 @@ async function initializeApp(): Promise<express.Application> {
         ignoreServiceAud: true,
         configurationSchema,
         configurationConverter: (c) => Object.entries(c).map(([k, v]) => ({ serviceId: AdspId.parse(k), ...v })),
-        events: [TenantCreatedDefinition, TenantDeletedDefinition, ConfigurationUpdatedDefinition],
+        events: [TenantCreatedDefinition, TenantDeletedDefinition],
         roles: [
           // Note: Tenant Admin role is a special composite role.
           {
@@ -109,57 +107,39 @@ async function initializeApp(): Promise<express.Application> {
   });
 
   applyTenantMiddleware(app, { ...repositories, logger, eventService, configurationHandler });
-  applyConfigMiddleware(app, { ...repositories, logger, eventService });
   applyDirectoryMiddleware(app, { ...repositories, logger });
   applyDirectoryV2Middleware(app, { ...repositories, logger, tenantService });
 
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 
-  // Start to define swagger. Might need it to a module
-  const swaggerDocument = fs
-    .readFileSync(__dirname + '/swagger.json', 'utf8')
-    .replace(/<KEYCLOAK_ROOT>/g, environment.KEYCLOAK_ROOT_URL);
+  let swagger = null;
 
-  const swaggerDocBaseUrl = 'swagger/docs/';
-
-  const swaggerHosts = {
-    tenantAPI: (await directory.getServiceUrl(adspId`urn:ads:platform:tenant-service`))?.href || '',
-    fileService: (await directory.getServiceUrl(adspId`urn:ads:platform:file-service`))?.href || '',
-  };
-
-  const swaggerUITenantAPIOptions = {
-    explorer: true,
-    swaggerOptions: {
-      persistAuthorization: true,
-      oauth2RedirectUrl: swaggerHosts.tenantAPI + swaggerDocBaseUrl + 'oauth2-redirect.html',
-      url: `${swaggerHosts.tenantAPI}swagger/json/v1`,
-    },
-  };
-
-  // Only allow swagger UI when ALLOW_SWAGGER_UI presents
-  if (environment.ALLOW_SWAGGER_UI) {
-    app.use('/' + swaggerDocBaseUrl, swaggerUi.serve, swaggerUi.setup(null, swaggerUITenantAPIOptions));
-  }
-
-  app.get('/swagger/json/v1', (req, res) => {
-    const { tenant } = req.query;
-    console.log(typeof swaggerDocument);
-    const swaggerObj = JSON.parse(swaggerDocument);
-    const tenantAuthentication = swaggerObj?.components?.securitySchemes?.tenant?.flows.authorizationCode;
-
-    if (tenant && tenantAuthentication) {
-      tenantAuthentication.tokenUrl = tenantAuthentication.tokenUrl.replace('realms/autotest', `realms/${tenant}`);
-      tenantAuthentication.authorizationUrl = tenantAuthentication.authorizationUrl.replace(
-        'realms/autotest',
-        `realms/${tenant}`
-      );
-      swaggerObj.components.securitySchemes.tenant.flows.authorizationCode = tenantAuthentication;
-    }
-
-    res.json(swaggerObj);
+  app.get('/', async (req, res) => {
+    const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
+    res.json({
+      _links: {
+        self: { href: new URL(req.originalUrl, rootUrl).href },
+        health: { href: new URL('/health', rootUrl).href },
+        docs: { href: new URL('/swagger/docs/v1', rootUrl).href },
+      },
+    });
   });
 
+  app.use('/swagger/docs/v1', (_req, res) => {
+    if (swagger) {
+      res.json(swagger);
+    } else {
+      fs.readFile(`${__dirname}/swagger.json`, 'utf8', (err, data) => {
+        if (err) {
+          res.sendStatus(404);
+        } else {
+          swagger = JSON.parse(data);
+          res.json(swagger);
+        }
+      });
+    }
+  });
   return app;
 }
 

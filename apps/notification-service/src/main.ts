@@ -188,10 +188,10 @@ async function initializeApp() {
     const rootUrl = req[ROOT_URL];
     res.json({
       _links: {
-        self: new URL(req.originalUrl, rootUrl).href,
-        health: new URL('/health', rootUrl).href,
-        api: new URL('/subscription/v1', rootUrl).href,
-        doc: new URL('/swagger/docs/v1', rootUrl).href,
+        self: { href: new URL(req.originalUrl, rootUrl).href },
+        health: { href: new URL('/health', rootUrl).href },
+        api: { href: new URL('/subscription/v1', rootUrl).href },
+        docs: { href: new URL('/swagger/docs/v1', rootUrl).href },
       },
     });
   });

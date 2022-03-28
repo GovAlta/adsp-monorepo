@@ -12,7 +12,6 @@ import {
   GoAFormItem,
   GoAModal,
   GoAModalActions,
-  GoAModalContent,
   GoAModalTitle,
 } from '@abgov/react-components/experimental';
 
@@ -84,10 +83,10 @@ const Subscriptions = (): JSX.Element => {
     return (
       <GoAModal isOpen={true} key={1} data-testId="unsubscribe-modal">
         <GoAModalTitle>Are you sure you want unsubscribe?</GoAModalTitle>
-        <GoAModalContent data-testId="unsubscribe-modal-content">
+        <GoAModelTextWrapper data-testId="unsubscribe-modal-content">
           If you decide to unsubscribe from “{selectedUnsubscribeSub.type.name}” you won’t receive any updates from the
           service in the future.{' '}
-        </GoAModalContent>
+        </GoAModelTextWrapper>
         <GoAModalActions>
           <GoAButton
             buttonType="secondary"
@@ -270,4 +269,9 @@ const SubscriptionManagement = styled.div`
   tr > th {
     padding-bottom: 0.5rem;
   }
+`;
+
+const GoAModelTextWrapper = styled.div`
+  padding: 0 1.5rem 0 1.75rem;
+  max-width: 36rem;
 `;

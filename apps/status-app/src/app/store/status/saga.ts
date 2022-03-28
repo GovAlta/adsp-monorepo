@@ -7,12 +7,15 @@ import {
   fetchNoticesSuccess,
   SubscribeToTenantAction,
   subscribeToTenantSuccess,
+  FetchContactInfoAction,
+  FetchContactInfoSucceededService,
 } from './actions';
 import { parseNotices, bindApplicationsWithNotices } from './models';
 import { addErrorMessage, updateIsReady, updateTenantName } from '@store/session/actions';
 import { SagaIterator } from '@redux-saga/core';
 import { toTenantName } from './models';
 import { ConfigState } from '@store/config/models';
+import axios from 'axios';
 
 export function* fetchApplications(action: FetchApplicationsAction): SagaIterator {
   const rootState: RootState = yield select();
@@ -65,5 +68,17 @@ export function* subscribeToTenant(action: SubscribeToTenantAction): SagaIterato
     yield put(subscribeToTenantSuccess(subscriber));
   } catch (e) {
     yield put(addErrorMessage({ message: e.message }));
+  }
+}
+
+export function* fetchContactInfo(action: FetchContactInfoAction): SagaIterator {
+  const { name } = action.payload;
+
+  try {
+    const contactInfo = (yield call(axios.get, `/api/configuration/v1/status-support-info/${name}`)).data;
+
+    yield put(FetchContactInfoSucceededService(contactInfo));
+  } catch (e) {
+    yield put(addErrorMessage({ message: `${e.message} - fetchContactInfo` }));
   }
 }

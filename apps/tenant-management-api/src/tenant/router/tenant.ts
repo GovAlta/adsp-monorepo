@@ -163,13 +163,7 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
 
         const [_, clients] = await req.getConfiguration<ServiceClient[]>();
 
-        const isValidEmail = await TenantService.validateEmailInDB(tenantRepository, email);
-        if (!isValidEmail) {
-          res
-            .status(404)
-            .json({ error: `${email} is the tenant admin in our record. One user can create only one realm.` });
-        }
-
+        await TenantService.validateEmailInDB(tenantRepository, email);
         await TenantService.createRealm(clients || [], realm, email, tenantName);
       }
 

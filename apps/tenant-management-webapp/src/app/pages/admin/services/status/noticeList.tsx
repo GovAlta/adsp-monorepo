@@ -53,14 +53,14 @@ export const NoticeListFilter = (props: NoticeListFilterProps): JSX.Element => {
       </div>
       <div className="filter-radio">
         <GoARadio
-          value={'all'}
+          value={'active'}
           testId={'notice-filter-radio-draft'}
-          checked={option === 'all'}
+          checked={option === 'active'}
           onChange={(option) => {
             onSelect(option);
           }}
         >
-          All
+          Active
         </GoARadio>
       </div>
       <div className="filter-radio">
@@ -78,9 +78,9 @@ export const NoticeListFilter = (props: NoticeListFilterProps): JSX.Element => {
       <div className="filter-radio">
         <GoARadio
           testId="notice-filter-radio-published"
-          value={'active'}
+          value={'published'}
           name={'Published'}
-          checked={option === 'active'}
+          checked={option === 'published'}
           onChange={(option) => {
             onSelect(option);
           }}
@@ -106,7 +106,7 @@ export const NoticeListFilter = (props: NoticeListFilterProps): JSX.Element => {
 };
 
 export const NoticeList = (): JSX.Element => {
-  const [filerOption, setFilterOption] = useState('all');
+  const [filerOption, setFilterOption] = useState('active');
   const [showEditModalId, setShowEditModalId] = useState<string>(null);
 
   const { notices } = useSelector((state: RootState) => ({
@@ -172,8 +172,8 @@ export const NoticeList = (): JSX.Element => {
         {notices &&
           notices
             .filter((notice) => {
-              if (filerOption === 'all') {
-                return true;
+              if (filerOption === 'active') {
+                return notice.mode !== 'archived';
               } else {
                 if (notice.mode === filerOption) {
                   count++;
@@ -196,7 +196,7 @@ export const NoticeList = (): JSX.Element => {
               </GridItem>
             ))}
       </Grid>
-      {count === 0 && filerOption !== 'all' && notices.length > 0 && renderNoItem('notice')}
+      {count === 0 && filerOption !== 'active' && notices.length > 0 && renderNoItem('notice')}
     </NoticeListContainer>
   );
 };

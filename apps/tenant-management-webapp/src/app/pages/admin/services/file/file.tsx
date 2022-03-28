@@ -14,18 +14,14 @@ const HelpLink = (): JSX.Element => {
   return (
     <>
       <h3>Helpful links</h3>
-      <a
-        rel="noopener noreferrer"
-        target="_blank"
-        href={`${docBaseUrl}?tenant=${tenantName}&urls.primaryName=File service`}
-      >
+      <a rel="noopener noreferrer" target="_blank" href={`${docBaseUrl}/${tenantName}&urls.primaryName=File service`}>
         Read the API docs
       </a>
       <br />
       <a
         rel="noopener noreferrer"
         target="_blank"
-        href="https://gitlab.gov.ab.ca/dio/core/core-services/-/tree/master/apps/file-service"
+        href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/file-service"
       >
         See the code
       </a>

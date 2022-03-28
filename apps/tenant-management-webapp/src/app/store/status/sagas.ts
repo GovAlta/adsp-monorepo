@@ -14,6 +14,9 @@ import {
   fetchServiceStatusAppHealth,
   fetchStatusMetricsSucceeded,
   FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION,
+  UpdateStatusContactInformationAction,
+  FetchStatusConfigurationService,
+  FetchStatusConfigurationSucceededService,
 } from './actions';
 import { Session } from '@store/session/models';
 import { ConfigState } from '@store/config/models';
@@ -212,6 +215,60 @@ export function* fetchStatusMetrics(): SagaIterator {
       );
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - fetchStatusMetrics` }));
+    }
+  }
+}
+
+export function* updateStatusContactInformation({ payload }: UpdateStatusContactInformationAction): SagaIterator {
+  const configBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  if (configBaseUrl && token) {
+    try {
+      yield call(
+        axios.patch,
+        `${configBaseUrl}/configuration/v2/configuration/platform/status-service`,
+        {
+          operation: 'UPDATE',
+          update: {
+            contact: {
+              contactEmail: payload.contactEmail,
+            },
+          },
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      yield put(FetchStatusConfigurationService());
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.message} - updateNotificationType` }));
+    }
+  }
+}
+
+export function* fetchStatusConfiguration(): SagaIterator {
+  const configBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  if (configBaseUrl && token) {
+    try {
+      const { data: configuration } = yield call(
+        axios.get,
+        `${configBaseUrl}/configuration/v2/configuration/platform/status-service`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const statusInfo = configuration.latest && configuration.latest.configuration;
+      yield put(FetchStatusConfigurationSucceededService(statusInfo));
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.message} - fetchCoreNotificationTypes` }));
     }
   }
 }

@@ -1,4 +1,4 @@
-import { adspId, AdspId, assertAdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import * as NodeCache from 'node-cache';
 import { JsonObject } from 'swagger-ui-express';
@@ -14,16 +14,29 @@ interface ServiceDoc {
   url: string;
 }
 
-interface DirectoryMetadata {
-  name?: string;
-  description?: string;
+interface Metadata {
   displayName?: string;
   _links?: {
     self?: string;
-    doc?: string;
-    health?: string;
-    api?: Array<Record<string, any>>;
+    docs?: {
+      href: string;
+    };
   };
+  name?: string;
+}
+
+interface DirectoryServiceResponse {
+  name?: string;
+  description?: string;
+  displayName?: string;
+  metadata: Metadata;
+}
+
+interface Directory {
+  url: string;
+  namespace: string;
+  urn: string;
+  name: string;
 }
 
 export interface ServiceDocs {
@@ -50,22 +63,20 @@ class ServiceDocsImpl {
 
       const tenantDirectoryUrl = new URL(`api/directory/v2/namespaces/${namespace}`, directoryServiceUrl);
 
-      const { data } = await axios.get<Record<string, string>>(tenantDirectoryUrl.href);
-      for (const entry of Object.entries(data)) {
-        const urn = entry[0];
-        const url = entry[1];
-        const id = adspId`${urn}`;
+      const { data } = await axios.get<Array<Directory>>(tenantDirectoryUrl.href);
+      for (const entry of data) {
+        const url = entry.url;
+        const id = adspId`${entry.urn}`;
         if (id.type === 'service') {
           try {
             const serviceDirectoryUrl = new URL(
               `api/directory/v2/namespaces/${namespace}/services/${id.service}`,
               directoryServiceUrl.href
             );
-            const { data: metadata } = await axios.get<DirectoryMetadata>(serviceDirectoryUrl.href);
-            if (metadata?._links?.doc) {
-              const docUrl = metadata?._links?.doc;
+            const { metadata } = (await axios.get<DirectoryServiceResponse>(serviceDirectoryUrl.href)).data;
+            if (metadata?._links?.docs?.href) {
+              const docUrl = metadata?._links?.docs.href;
               this.logger.debug(`Retrieving API docs for service ${id} ...`);
-
               const { data: docData } = await axios.get(docUrl);
               if (docData.openapi) {
                 docData.servers = [{ url }];

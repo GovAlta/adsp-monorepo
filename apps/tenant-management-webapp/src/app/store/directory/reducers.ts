@@ -13,7 +13,7 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
     case FETCH_DIRECTORY_SUCCESS: {
       const directories = action.payload.directory;
       directories.forEach((dir) => {
-        dir.isCore = dir.name.toLowerCase() === 'platform';
+        dir.isCore = dir.namespace.toLowerCase() === 'platform';
       });
       return { ...state, directory: directories };
     }
@@ -25,7 +25,7 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
     }
     case UPDATE_ENTRY_SUCCESS: {
       const directoryUpdateList = state.directory;
-      const isExist = directoryUpdateList.find((x) => x.namespace === action.payload.namespace);
+      const isExist = directoryUpdateList.find((x) => x?.service === action.payload?.service);
       if (isExist) {
         if (action.payload.api) {
           isExist.api = action.payload.api;
@@ -37,10 +37,10 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
     }
     case DELETE_ENTRY_SUCCESS: {
       const directoryDelList = state.directory;
-      const hasExist = directoryDelList.find((x) => x.namespace === action.payload.namespace);
+      const hasExist = directoryDelList.find((x) => x.service === action.payload.service);
       if (hasExist) {
         directoryDelList.splice(
-          directoryDelList.findIndex((item) => item.namespace === action.payload.namespace),
+          directoryDelList.findIndex((item) => item.service === action.payload.service),
           1
         );
       }
@@ -49,9 +49,9 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
     }
     case FETCH_ENTRY_DETAIL_SUCCESS: {
       const directoryUpdateList = state.directory;
-      const isExist = directoryUpdateList.find((x) => x.namespace === action.payload.namespace);
+      const isExist = directoryUpdateList.find((x) => x.service === action.payload.service);
       if (isExist) {
-        isExist._links = action.payload._links;
+        isExist.metadata = action.payload.metadata;
       }
       return { ...state, directory: directoryUpdateList };
     }

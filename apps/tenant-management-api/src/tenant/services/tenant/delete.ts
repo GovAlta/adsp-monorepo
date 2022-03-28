@@ -55,11 +55,14 @@ const deleteKeycloakBrokerClient = async (keycloakRealm): Promise<DeleteResponse
       return client.clientId === brokerClientName(keycloakRealm);
     });
 
-    logger.info(brokerClient.id);
-    await kcClient.clients.del({
-      id: brokerClient.id,
-      realm: 'core',
-    });
+    // If broker client isn't found, that's ok... since end result is the same.
+    if (brokerClient) {
+      logger.info(brokerClient.id);
+      await kcClient.clients.del({
+        id: brokerClient.id,
+        realm: 'core',
+      });
+    }
 
     return Promise.resolve({
       isDeleted: true,
@@ -102,7 +105,3 @@ export const deleteTenant = async (
   };
   return Promise.resolve(deleteTenantResponse);
 };
-
-export function testDelete(): boolean {
-  return true;
-}

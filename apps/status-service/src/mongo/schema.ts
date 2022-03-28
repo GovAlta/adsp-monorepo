@@ -122,4 +122,16 @@ export const noticeApplicationSchema = new Schema(
   { timestamps: true }
 );
 
+export const configurationSchema = {
+  type: 'object',
+  properties: {
+    contact: {
+      type: 'object',
+      properties: {
+        contactEmail: { type: 'string' },
+      },
+    },
+  },
+};
+
 noticeApplicationSchema.index({ createdAt: 1 });

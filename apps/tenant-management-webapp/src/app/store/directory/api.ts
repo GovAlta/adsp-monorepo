@@ -22,50 +22,31 @@ export class DirectoryApi {
 
   async fetchDirectoryTenant(tenantName: string): Promise<Directory> {
     const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${toKebabName(tenantName)}`;
-
-    console.log('in api  tenantUrl', url);
     const res = await this.http.get(url);
     return res?.data;
   }
 
   async createEntry(service: Service): Promise<boolean> {
-    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${toKebabName(service.name)}`;
-
-    const payload = {};
-    payload['service'] = service.namespace;
-    if (service.api) {
-      payload['api'] = service.api;
-    }
-    payload['url'] = service.url;
-    const res = await this.http.post(url, payload);
+    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.namespace}`;
+    const res = await this.http.post(url, { ...service });
     return res?.data === 'Created';
   }
-  async updateEntry(service: Service): Promise<boolean> {
-    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${toKebabName(service.name)}`;
 
-    const payload = {};
-    payload['service'] = service.namespace;
-    if (service.api) {
-      payload['api'] = service.api;
-    }
-    payload['url'] = service.url;
-    const res = await this.http.put(url, payload);
+  async updateEntry(service: Service): Promise<boolean> {
+    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.namespace}`;
+    const res = await this.http.put(url, { ...service });
     return res?.data === 'Created';
   }
 
   async deleteEntry(service: Service): Promise<boolean> {
-    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.name}`;
-    const tenantUrl =
-      url.substr(0, url.lastIndexOf('/') + 1) + toKebabName(service.name) + '/services/' + service.namespace;
-    const res = await this.http.delete(tenantUrl);
+    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.namespace}/services/${service.service}`;
+    const res = await this.http.delete(url);
     return res?.data === 'OK';
   }
 
   async fetchEntryDetail(service: Service): Promise<boolean> {
-    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.name}`;
-    const tenantUrl =
-      url.substr(0, url.lastIndexOf('/') + 1) + toKebabName(service.name) + '/services/' + service.namespace;
-    const res = await this.http.get(tenantUrl);
+    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.namespace}/services/${service.service}`;
+    const res = await this.http.get(url);
     return res?.data;
   }
 }

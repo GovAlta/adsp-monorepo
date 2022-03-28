@@ -1,5 +1,5 @@
 import { adspId, Tenant } from '@abgov/adsp-service-sdk';
-import { Router } from 'express';
+import { RequestHandler, Router } from 'express';
 import { requirePlatformService } from '../../middleware/authentication';
 import * as tenantService from '../services/tenant';
 import { logger } from '../../middleware/logger';
@@ -18,10 +18,8 @@ function mapTenant(tenant: Tenant) {
   };
 }
 
-export const createTenantV2Router = ({ tenantRepository }: TenantRouterProps): Router => {
-  const tenantV2Router: Router = Router();
-
-  tenantV2Router.get('/tenants', requirePlatformService, async (req, res, next) => {
+export function getTenants(tenantRepository: TenantRepository): RequestHandler {
+  return async (req, res, next) => {
     try {
       const { name, realm, adminEmail } = req.query;
       const criteria: TenantCriteria = {};
@@ -50,9 +48,11 @@ export const createTenantV2Router = ({ tenantRepository }: TenantRouterProps): R
       logger.error(`Failed to get tenants with error: ${err.message}`);
       next(err);
     }
-  });
+  };
+}
 
-  tenantV2Router.get('/tenants/:id', requirePlatformService, async (req, res, next) => {
+export function getTenant(tenantRepository: TenantRepository): RequestHandler {
+  return async (req, res, next) => {
     const { id } = req.params;
 
     try {
@@ -62,7 +62,14 @@ export const createTenantV2Router = ({ tenantRepository }: TenantRouterProps): R
       logger.error(`Failed to get tenant with error: ${err.message}`);
       next(err);
     }
-  });
+  };
+}
+
+export const createTenantV2Router = ({ tenantRepository }: TenantRouterProps): Router => {
+  const tenantV2Router: Router = Router();
+
+  tenantV2Router.get('/tenants', requirePlatformService, getTenants(tenantRepository));
+  tenantV2Router.get('/tenants/:id', requirePlatformService, getTenant(tenantRepository));
 
   return tenantV2Router;
 };
