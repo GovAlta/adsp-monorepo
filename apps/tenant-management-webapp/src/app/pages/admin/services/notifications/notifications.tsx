@@ -13,7 +13,6 @@ import { GoAButton } from '@abgov/react-components';
 import { subscriberAppUrlSelector } from './selectors';
 
 export const Notifications: FunctionComponent = () => {
-  const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
 
   const loginUrl = useSelector(subscriberAppUrlSelector);
