@@ -21,6 +21,10 @@ const initializeApp = async () => {
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ limit: '1mb', extended: true }));
 
+  if (environment.TRUSTED_PROXY) {
+    app.set('trust proxy', environment.TRUSTED_PROXY);
+  }
+
   const repositories = await createRepositories({ ...environment, logger });
 
   const { coreStrategy, tenantStrategy, tenantHandler, configurationHandler, eventService, healthCheck } =

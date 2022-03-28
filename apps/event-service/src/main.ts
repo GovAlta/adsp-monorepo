@@ -25,6 +25,10 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(express.json({ limit: '1mb' }));
   app.use(cors());
 
+  if (environment.TRUSTED_PROXY) {
+    app.set('trust proxy', environment.TRUSTED_PROXY);
+  }
+
   const eventService = await createEventService({
     amqpHost: environment.AMQP_HOST,
     amqpUser: environment.AMQP_USER,
