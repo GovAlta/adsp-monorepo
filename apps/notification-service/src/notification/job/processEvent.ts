@@ -70,7 +70,7 @@ export const createProcessEventJob =
       const types = configuration?.getEventNotificationTypes(event) || [];
 
       let count = 0;
-      types.forEach(async (type) => {
+      for (const type of types) {
         // Page through all subscriptions and generate notifications.
         const notifications = [];
         let after: string = null;
@@ -92,7 +92,10 @@ export const createProcessEventJob =
           after = page.next;
         } while (after);
 
-        notifications.forEach((notification) => queueService.enqueue(notification));
+        for (const notification of notifications) {
+          queueService.enqueue(notification);
+        }
+
         if (notifications.length > 0) {
           eventService.send(notificationsGenerated(event, type, notifications.length));
         }
@@ -105,7 +108,7 @@ export const createProcessEventJob =
             tenant: tenantId?.toString(),
           }
         );
-      });
+      }
 
       if (count > 0) {
         logger.info(`Generated ${count} notifications for event ${namespace}:${name} for tenant ${tenantId}.`, {

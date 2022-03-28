@@ -86,7 +86,7 @@ export class NotificationTypeEntity implements NotificationType {
     messageContext: Record<string, unknown>
   ): Notification[] {
     const notifications: Notification[] = [];
-    subscriptions.forEach((subscription) => {
+    for (const subscription of subscriptions) {
       if (subscription.shouldSend(event)) {
         const notification = this.generateNotification(
           logger,
@@ -100,7 +100,7 @@ export class NotificationTypeEntity implements NotificationType {
           notifications.push(notification);
         }
       }
-    });
+    }
 
     return notifications;
   }
