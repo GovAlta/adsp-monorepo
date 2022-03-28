@@ -25,6 +25,10 @@ const initializeApp = async (): Promise<Server> => {
   app.use(express.json({ limit: '1mb' }));
   app.use(cors());
 
+  if (environment.TRUSTED_PROXY) {
+    app.set('trust proxy', environment.TRUSTED_PROXY);
+  }
+
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
   const { tenantService, tenantStrategy, configurationHandler, clearCached, healthCheck } = await initializePlatform(
@@ -114,8 +118,6 @@ const initializeApp = async (): Promise<Server> => {
   });
 
   app.get('/', async (req, res) => {
-    logger.debug(`X-Forwarded-For: ${req.headers['x-forwarded-for']}`);
-    logger.debug(`X-Forwarded-Proto: ${req.headers['x-forwarded-proto']}`);
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
       _links: {
