@@ -1,8 +1,12 @@
-@import url("/assets/goa-core.css");
+@import url('/assets/goa-core.css');
 
 .swagger-ui div.topbar {
   background-color: #fff;
   height: 66px;
+}
+
+.swagger-ui div.wrapper {
+  position: relative;
 }
 
 .swagger-ui .topbar-wrapper > a {
@@ -11,16 +15,15 @@
   background-repeat: no-repeat;
 }
 
-.swagger-ui div.topbar .select-label > span {
-  color: #333;
-}
-
-
 .topbar-wrapper:before {
-  content: "Alberta Digital Service Platform - APIs";
+  content: 'Alberta Digital Service Platform - APIs';
   position: absolute;
   left: 200px;
   font-size: 16px;
+}
+
+.swagger-ui div.topbar .select-label > span {
+  color: #333;
 }
 
 .topbar img {
