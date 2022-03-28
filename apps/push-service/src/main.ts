@@ -27,7 +27,7 @@ const initializeApp = async (): Promise<Server> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { tenantStrategy, configurationHandler, clearCached, healthCheck } = await initializePlatform(
+  const { tenantService, tenantStrategy, configurationHandler, clearCached, healthCheck } = await initializePlatform(
     {
       serviceId,
       displayName: 'Push service',
@@ -92,7 +92,7 @@ const initializeApp = async (): Promise<Server> => {
   ioServer.of('/').on('connection', async (socket) => socket.disconnect(true));
 
   // Connections on namespace correspond to tenants.
-  const io = ioServer.of(/^\/[a-z0-9]{24}$/);
+  const io = ioServer.of(/^\/[a-zA-Z0-9- ]+$/);
 
   const wrapForIo = (handler: express.RequestHandler) => (socket: Socket, next) =>
     handler(socket.request as express.Request, {} as express.Response, next);
@@ -103,7 +103,7 @@ const initializeApp = async (): Promise<Server> => {
 
   const eventService = await createAmqpEventService({ ...environment, logger });
 
-  applyPushMiddleware(app, io, { logger, eventService });
+  applyPushMiddleware(app, io, { logger, eventService, tenantService });
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();
@@ -117,9 +117,9 @@ const initializeApp = async (): Promise<Server> => {
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
       _links: {
-        self: new URL(req.originalUrl, rootUrl).href,
-        health: new URL('/health', rootUrl).href,
-        api: new URL('/stream/v1', rootUrl).href,
+        self: { href: new URL(req.originalUrl, rootUrl).href },
+        health: { href: new URL('/health', rootUrl).href },
+        api: { href: new URL('/stream/v1', rootUrl).href },
       },
     });
   });

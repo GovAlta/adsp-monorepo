@@ -1,27 +1,33 @@
+import { Session } from '@store/session/models';
 import Keycloak, { KeycloakConfig, KeycloakInstance } from 'keycloak-js';
-export let keycloak: KeycloakInstance;
-
-export let keycloakAuth: KeycloakAuth = null;
 
 const LOGOUT_REDIRECT = '/logout-redirect';
-
 const LOGIN_REDIRECT = '/login-redirect';
 
-export const LOGIN_TYPES = {
-  tenantAdmin: 'tenant-admin',
-  tenantCreationInit: 'tenant-creation-init',
-  tenant: 'tenant',
+export enum LOGIN_TYPES {
+  tenantAdmin = 'tenant-admin',
+  tenantCreationInit = 'tenant-creation-init',
+  tenant = 'tenant',
+}
+
+let authInstance: KeycloakAuthImpl = null;
+export const createKeycloakAuth = (config: KeycloakConfig): KeycloakAuth => {
+  // Lazy create singleton and reinitialize if realm changes ()
+  if (!authInstance || authInstance.config.realm !== config.realm) {
+    authInstance = new KeycloakAuthImpl(config);
+  }
+  return authInstance;
 };
 
-export const createKeycloakAuth = (config: KeycloakConfig): void => {
-  keycloakAuth = new KeycloakAuth(config);
-};
+export interface KeycloakAuth {
+  loginByCore(type: string): Promise<void>;
+  loginByIdP(idp: string, realm: string): Promise<void>;
+  logout(): Promise<void>;
+  checkSSO(): Promise<Session>;
+  refreshToken(): Promise<Session>;
+}
 
-type checkSSOSuccess = (keycloak: KeycloakInstance) => void;
-
-type checkSSOError = () => void;
-
-class KeycloakAuth {
+class KeycloakAuthImpl implements KeycloakAuth {
   config: KeycloakConfig;
   keycloak: KeycloakInstance;
   loginRedirect: string;
@@ -34,28 +40,20 @@ class KeycloakAuth {
     this.logoutRedirect = `${window.location.origin}${LOGOUT_REDIRECT}`;
   }
 
-  initKeycloak() {
-    // TODO: find the right type for keycloak
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return new (Keycloak as any)(this.config);
+  private initKeycloak(realm?: string) {
+    if (realm) {
+      this.config.realm = realm;
+    }
+    return Keycloak(this.config);
   }
 
-  updateRealm(realm: string) {
-    this.config.realm = realm;
-  }
-
-  getRealm() {
-    return this.config.realm;
-  }
-
-  updateRealmWithInit(realm: string) {
+  private updateRealmWithInit(realm: string) {
     if (realm !== this.config.realm) {
-      this.updateRealm(realm);
-      this.keycloak = this.initKeycloak();
+      this.keycloak = this.initKeycloak(realm);
     }
   }
 
-  loginByCore(type: string) {
+  async loginByCore(type: string) {
     const location: string = window.location.href;
     const skipSSO = location.indexOf('kc_idp_hint') > -1;
     const urlParams = new URLSearchParams(window.location.search);
@@ -67,64 +65,42 @@ class KeycloakAuth {
 
       if (skipSSO && !idpFromUrl) {
         redirectUri += `&kc_idp_hint=`;
-        Promise.all([this.keycloak.init({}), this.keycloak.login({ idpHint: ' ', redirectUri })]);
+        await this.keycloak.init({});
+        await this.keycloak.login({ idpHint: ' ', redirectUri });
       } else {
         if (idpFromUrl) {
           redirectUri += `&kc_idp_hint=${idpFromUrl}`;
         }
 
-        this.keycloak
-          .init({ onLoad: 'login-required', redirectUri })
-          .then((authenticated) => {
-            if (authenticated) {
-              console.debug(`Keycloak IdP login is successful`);
-            }
-          })
-          .catch((e) => {
-            console.error(`Failed to login`, e);
-          });
+        const authenticated = await this.keycloak.init({ onLoad: 'login-required', redirectUri });
+        if (authenticated) {
+          console.debug(`Keycloak IdP login is successful`);
+        }
       }
     } catch (e) {
       console.error(`Failed to login`, e);
     }
   }
 
-  logout() {
-    this.keycloak.logout({ redirectUri: this.logoutRedirect });
+  async logout() {
+    await this.keycloak.logout({ redirectUri: this.logoutRedirect });
   }
 
-  checkSSO(successHandler: checkSSOSuccess, errorHandler: checkSSOError) {
+  async checkSSO() {
     try {
-      this.keycloak
-        .init({ onLoad: 'check-sso' })
-        .then((authenticated: boolean) => {
-          if (authenticated) {
-            this.keycloak
-              .loadUserInfo()
-              .then(() => {
-                console.log('check-sso');
-                successHandler(this.keycloak);
-              })
-              .catch((e) => {
-                console.error('failed loading user info', e);
-                errorHandler();
-              });
-          } else {
-            console.error('Unauthorized');
-            errorHandler();
-          }
-        })
-        .catch(() => {
-          console.error('failed to initialize');
-          errorHandler();
-        });
+      const authenticated = this.keycloak.authenticated || (await this.keycloak.init({ onLoad: 'check-sso' }));
+      if (authenticated) {
+        return this.convertToSession(this.keycloak);
+      } else {
+        return null;
+      }
     } catch (e) {
-      console.error('failed to initialize', e);
-      errorHandler();
+      console.error('Failed to initialize', e);
+      throw e;
     }
   }
 
-  loginByIdP(idp: string, realm: string) {
+  async loginByIdP(idp: string, realm: string) {
     this.updateRealmWithInit(realm);
 
     const location: string = window.location.href;
@@ -139,10 +115,8 @@ class KeycloakAuth {
     if (skipSSO && !idpFromUrl) {
       // kc_idp_hint with empty value, skip checkSSO
       redirectUri += `&kc_idp_hint=`;
-      Promise.all([
-        this.keycloak.init({ checkLoginIframe: false }),
-        this.keycloak.login({ idpHint: ' ', redirectUri }),
-      ]);
+      await this.keycloak.init({ checkLoginIframe: false });
+      await this.keycloak.login({ idpHint: ' ', redirectUri });
     } else {
       /**
        * Paul Li - Tried to use keycloak.init().then(()=>{keycloak.login}). But, it does not work.
@@ -153,32 +127,45 @@ class KeycloakAuth {
         redirectUri += `&kc_idp_hint=${idp}`;
       }
 
-      Promise.all([
-        this.keycloak.init({ checkLoginIframe: false }),
-        this.keycloak.login({ idpHint: idp, redirectUri }),
-      ]);
+      await this.keycloak.init({ checkLoginIframe: false });
+      await this.keycloak.login({ idpHint: idp, redirectUri });
     }
   }
 
-  refreshToken(successHandler: checkSSOSuccess, errorHandler: checkSSOError) {
+  async refreshToken(): Promise<Session> {
     try {
-      this.keycloak
-        .updateToken(70)
-        .then(() => {
-          successHandler(this.keycloak);
-          console.debug('Keycloak token was refreshed');
-        })
-        .catch((e) => {
-          errorHandler();
-          console.error(`Failed to refresh the keycloak token: ${e.message}`);
-        });
+      const refreshed = await this.keycloak.updateToken(60);
+      if (refreshed) {
+        console.debug('Keycloak token was refreshed');
+        return this.convertToSession(this.keycloak);
+      } else {
+        return null;
+      }
     } catch (e) {
       console.error(`Failed to refresh the keycloak token: ${e.message}`);
     }
   }
-}
 
-export function createKeycloakInstance(config: KeycloakConfig): void {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  keycloak = new (Keycloak as any)(config);
+  private convertToSession(kc: KeycloakInstance): Session {
+    return {
+      authenticated: kc.authenticated,
+      clientId: kc.clientId,
+      realm: kc.realm,
+      userInfo: {
+        sub: kc.tokenParsed?.['sub'],
+        email: kc.tokenParsed?.['email'],
+        name: kc.tokenParsed?.['name'],
+        preferredUsername: kc.tokenParsed?.['preferred_username'],
+        emailVerified: kc.tokenParsed?.['email_verified'],
+      },
+      realmAccess: kc.realmAccess,
+      resourceAccess: kc.resourceAccess,
+      credentials: {
+        token: kc.token,
+        tokenExp: kc.tokenParsed.exp,
+        refreshToken: kc.refreshToken,
+        refreshTokenExp: kc.refreshTokenParsed.exp,
+      },
+    };
+  }
 }

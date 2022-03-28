@@ -26,6 +26,11 @@ describe('App', () => {
       session: {
         notifications: [],
       },
+      configuration: {
+        contact: {
+          contactEmail: 'fake.email@fake.server.com',
+        },
+      },
     });
   });
   it('should render successfully', () => {

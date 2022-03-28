@@ -64,12 +64,13 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
         _next(err);
       }
     }
+
     const response = [];
 
     for (const service of services) {
       const element = {};
-      element['name'] = namespace;
-      element['namespace'] = service.service;
+      element['namespace'] = namespace;
+      element['service'] = service.service;
       element['url'] = service.host;
       const component: URNComponent = {
         scheme: 'urn',

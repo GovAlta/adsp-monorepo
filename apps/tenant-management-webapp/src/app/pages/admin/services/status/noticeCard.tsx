@@ -81,7 +81,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
               testId="notice-card-mode"
             />
           )}
-          {props.mode === 'active' && (
+          {props.mode === 'published' && (
             <GoABadge
               key={`${notice.id}-badge-published`}
               content={'Published'}
@@ -185,7 +185,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
               deleteActionFn={() => setShowDeleteConfirmation(true)}
             />
           )}
-          {isMenuOpen && notice.mode === 'active' && (
+          {isMenuOpen && notice.mode === 'published' && (
             <PublishedDropdownMenu
               notice={notice}
               id={`${notice.id}`}

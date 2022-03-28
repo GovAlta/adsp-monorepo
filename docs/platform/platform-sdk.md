@@ -69,7 +69,7 @@ Verify tenant bearer token:
   const authenticateHandler = passport.authenticate(['tenant'], { session: false });
 ```
 
-### Using the core strategies
+### Using the core strategy
 Core requests are used by platform services making requests to other platform services under a service account. However, users may have core accounts as well. Services should only use the core strategy when requests from a core context is expected, and should enforce role-based access controls on operations.
 
 ```typescript

@@ -1,24 +1,30 @@
 import axios from 'axios';
 import { logger } from '../../../middleware/logger';
-import { createkcAdminClient } from '../../../keycloak';
 import { v4 as uuidv4 } from 'uuid';
 import { environment } from '../../../environments/environment';
+import KeycloakAdminClient from '@keycloak/keycloak-admin-client';
 export const FLOW_ALIAS = 'GOA SSO Login Flow';
 
-interface authConfig {
-  id: string;
-  alias: string;
-  realm: string;
-  description: string;
-  providerId: string;
-  topLevel: boolean;
-  builtIn: boolean;
-}
+export const createAuthenticationFlow = async (client: KeycloakAdminClient, realm: string): Promise<void> => {
+  logger.debug('Adding authentication flow to tenant public client...');
 
-const createFlowExecutions = async (realm, flowAlias, token) => {
+  const flowAlias = FLOW_ALIAS;
+  const authFlow = {
+    id: uuidv4(),
+    alias: flowAlias,
+    realm,
+    description:
+      'An authentication flow that allows GOA SSO as new keycloak account or link to existing (usually Admin) account.',
+    providerId: 'basic-flow',
+    topLevel: true,
+    builtIn: false,
+  };
+
+  await client.authenticationManagement.createFlow(authFlow);
+
+  // Have issue of creating executions with the authentication flow. Add executions separately...
   const executionUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/admin/realms/${realm}/authentication/flows/${flowAlias}/executions/execution`;
   const executionsUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/admin/realms/${realm}/authentication/flows/${flowAlias}/executions`;
-  const http = axios.create();
 
   // Can we preset the id here?
   const userExecution = {
@@ -30,54 +36,23 @@ const createFlowExecutions = async (realm, flowAlias, token) => {
   };
 
   const headers = {
-    Authorization: `Bearer ${token}`,
+    Authorization: `Bearer ${client.accessToken}`,
     'Content-Type': 'application/json',
   };
 
-  await http.post(executionUrl, userExecution, { headers });
-  await http.post(executionUrl, idpLinkExecution, { headers });
+  await axios.post(executionUrl, userExecution, { headers });
+  await axios.post(executionUrl, idpLinkExecution, { headers });
+
   // Note: tried to add requirement: 'ALTERNATIVE' in creation, but it does not work.
-  const res = await http.get(executionsUrl, { headers });
-  const executions = await res.data;
+  const { data: executions } = await axios.get(executionsUrl, { headers });
 
   for (const execution of executions) {
     const updatePayload = {
       id: execution.id,
       requirement: 'ALTERNATIVE',
     };
-    await http.put(executionsUrl, updatePayload, { headers });
+    await axios.put(executionsUrl, updatePayload, { headers });
   }
+
+  logger.info('Added authentication flow to tenant public client.');
 };
-
-export const creatFlowConfig = (realm: string, flowAlias: string, flowId: string): authConfig => {
-  const config = {
-    id: flowId,
-    alias: flowAlias,
-    realm: realm,
-    description:
-      'An authentication flow that allows GOA SSO as new keycloak account or link to existing (usually Admin) account.',
-    providerId: 'basic-flow',
-    topLevel: true,
-    builtIn: false,
-  };
-
-  return config;
-};
-
-export const createAuthenticationFlow = async (realm: string): Promise<void> => {
-  const client = await createkcAdminClient();
-
-  logger.info('Added authentication flow to  tenant public client');
-  const flowId = uuidv4();
-  const authFlow = creatFlowConfig(realm, FLOW_ALIAS, flowId);
-  await client.authenticationManagement.createFlow(authFlow);
-
-  // Have issue of creating executions with the authentication flow and try to add executions separately
-  await createFlowExecutions(realm, FLOW_ALIAS, client.accessToken);
-
-  logger.info('Start to add authentication flow');
-};
-
-export function testCreateAuthenticationFlow(): boolean {
-  return true;
-}

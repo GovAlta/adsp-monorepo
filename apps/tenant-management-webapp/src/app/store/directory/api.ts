@@ -27,42 +27,25 @@ export class DirectoryApi {
   }
 
   async createEntry(service: Service): Promise<boolean> {
-    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${toKebabName(service.name)}`;
-
-    const payload = {};
-    payload['service'] = service.namespace;
-    if (service.api) {
-      payload['api'] = service.api;
-    }
-    payload['url'] = service.url;
-    const res = await this.http.post(url, payload);
+    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.namespace}`;
+    const res = await this.http.post(url, { ...service });
     return res?.data === 'Created';
   }
-  async updateEntry(service: Service): Promise<boolean> {
-    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${toKebabName(service.name)}`;
 
-    const payload = {};
-    payload['service'] = service.namespace;
-    if (service.api) {
-      payload['api'] = service.api;
-    }
-    payload['url'] = service.url;
-    const res = await this.http.put(url, payload);
+  async updateEntry(service: Service): Promise<boolean> {
+    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.namespace}`;
+    const res = await this.http.put(url, { ...service });
     return res?.data === 'Created';
   }
 
   async deleteEntry(service: Service): Promise<boolean> {
-    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${toKebabName(
-      service.name
-    )}/services/${service.namespace}`;
+    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.namespace}/services/${service.service}`;
     const res = await this.http.delete(url);
     return res?.data === 'OK';
   }
 
   async fetchEntryDetail(service: Service): Promise<boolean> {
-    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${toKebabName(
-      service.name
-    )}/services/${service.namespace}`;
+    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.namespace}/services/${service.service}`;
     const res = await this.http.get(url);
     return res?.data;
   }

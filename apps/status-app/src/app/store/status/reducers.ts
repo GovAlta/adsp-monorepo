@@ -1,28 +1,40 @@
 import { ActionTypes } from './actions';
-import { NoticeInit, Notices, ServiceStatus, ApplicationInit, SubscriberInit, SubscriberState } from './models';
+import {
+  NoticeInit,
+  Notices,
+  ServiceStatus,
+  ApplicationInit,
+  SubscriberInit,
+  SubscriberState,
+  ConfigurationState,
+  ConfigurationInit,
+} from './models';
 
 export const noticeReducer = (state: Notices = NoticeInit, action: ActionTypes): Notices => {
   switch (action.type) {
     case 'status/notices/fetch/success': {
       const notices = action.payload;
-      const allApplicationsNotices = notices
-        .filter((notice) => { return notice.isAllApplications === true });
+      const allApplicationsNotices = notices.filter((notice) => {
+        return notice.isAllApplications === true;
+      });
       return {
         ...state,
         notices: notices,
-        allApplicationsNotices
+        allApplicationsNotices,
       };
     }
 
     default:
       return state;
   }
-}
+};
 
 export const applicationReducer = (state: ServiceStatus = ApplicationInit, action: ActionTypes): ServiceStatus => {
   switch (action.type) {
     case 'status/applications/fetch/success': {
-      const applications = action.payload.filter((app) => { return app.status !== null })
+      const applications = action.payload.filter((app) => {
+        return app.status !== null;
+      });
       return {
         ...state,
         applications: applications,
@@ -32,7 +44,7 @@ export const applicationReducer = (state: ServiceStatus = ApplicationInit, actio
     default:
       return state;
   }
-}
+};
 
 export const subscriptionReducer = (state: SubscriberState = SubscriberInit, action: ActionTypes): SubscriberState => {
   switch (action.type) {
@@ -46,4 +58,20 @@ export const subscriptionReducer = (state: SubscriberState = SubscriberInit, act
     default:
       return state;
   }
-}
+};
+
+export const configurationReducer = (
+  state: ConfigurationState = ConfigurationInit,
+  action: ActionTypes
+): ConfigurationState => {
+  switch (action.type) {
+    case 'status/status-contact-info-succeeded': {
+      return {
+        ...state,
+        contact: action.payload.contactInfo,
+      };
+    }
+    default:
+      return state;
+  }
+};

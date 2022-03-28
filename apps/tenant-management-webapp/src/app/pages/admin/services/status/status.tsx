@@ -240,7 +240,7 @@ function Status(): JSX.Element {
         <a
           rel="noopener noreferrer"
           target="_blank"
-          href="https://gitlab.gov.ab.ca/dio/core/core-services/-/tree/master/apps/status-service"
+          href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/status-service"
         >
           See the code
         </a>

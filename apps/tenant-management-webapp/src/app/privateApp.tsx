@@ -53,8 +53,7 @@ const PageLoader = (): JSX.Element => {
 // eslint-disable-next-line
 export function PrivateRoute({ component: Component, ...rest }): JSX.Element {
   const userInfo = useSelector((state: RootState) => state.session?.userInfo);
-  const tenantRealm = useSelector((state: RootState) => state.tenant?.realm);
-  const ready = userInfo !== undefined && tenantRealm === '';
+  const ready = !!userInfo;
 
   return <Route {...rest} render={(props) => (ready ? <Component {...props} /> : <PageLoader />)} />;
 }

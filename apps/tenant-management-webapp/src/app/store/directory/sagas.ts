@@ -42,13 +42,14 @@ export function* fetchDirectory(action: FetchDirectoryAction): SagaIterator {
     } else {
       yield put(fetchDirectorySuccess({ directory: coreDirectory }));
     }
+
     yield put(
       UpdateIndicator({
         show: false,
       })
     );
   } catch (e) {
-    yield put(ErrorNotification({ message: 'failed to update directory service' }));
+    yield put(ErrorNotification({ message: 'failed to fetch directory service' }));
     yield put(
       UpdateIndicator({
         show: false,
@@ -68,7 +69,7 @@ export function* createEntryDirectory(action: CreateEntryAction): SagaIterator {
       yield put(createEntrySuccess(action.data));
     }
   } catch (err) {
-    yield put(ErrorNotification({ message: `Failed to create directory service ${action.data.namespace}` }));
+    yield put(ErrorNotification({ message: `Failed to create directory service ${action.data.service}` }));
   }
 }
 
@@ -98,7 +99,7 @@ export function* deleteEntryDirectory(action: DeleteEntryAction): SagaIterator {
       yield put(deleteEntrySuccess(action.data));
     }
   } catch (err) {
-    yield put(ErrorNotification({ message: `Failed to delete directory service ${action.data.namespace}` }));
+    yield put(ErrorNotification({ message: `Failed to delete directory service ${action.data.service}` }));
   }
 }
 

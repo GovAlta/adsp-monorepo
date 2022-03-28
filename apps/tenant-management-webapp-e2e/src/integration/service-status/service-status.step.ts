@@ -211,16 +211,16 @@ Then('the user views Edit notice dialog', function () {
 });
 
 When('the user selects {string} filter by status radio button', function (filterType) {
-  expect(filterType).to.be.oneOf(['Draft', 'Published', 'Archived', 'All']);
+  expect(filterType).to.be.oneOf(['Draft', 'Published', 'Archived', 'Active']);
   if (filterType == 'Published') {
-    filterType = 'active';
+    filterType = 'published';
   }
   statusObj.filterByStatusRadio(filterType.toLowerCase()).click();
 });
 
 Then('the user views {string} notices', function (filterType) {
   // Verify either the grid is empty or all cards have the filtered status
-  expect(filterType).to.be.oneOf(['Draft', 'Published', 'Archived', 'All']);
+  expect(filterType).to.be.oneOf(['Draft', 'Published', 'Archived', 'Active']);
   statusObj.noticeList().then((elements) => {
     if (elements.length > 1) {
       for (let i = 0; i < elements.length; i++) {
@@ -230,7 +230,7 @@ Then('the user views {string} notices', function (filterType) {
             .noticeCardMode(i + 1)
             .invoke('text')
             .then((modeText) => {
-              if (filterType != 'All') {
+              if (filterType != 'Active') {
                 expect(modeText).to.equal(filterType);
               } else {
                 expect(modeText).to.be.oneOf(['Draft', 'Published', 'Archived']);

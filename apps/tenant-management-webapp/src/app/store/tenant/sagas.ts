@@ -1,5 +1,5 @@
 import { put, select, call } from 'redux-saga/effects';
-import { RootState, store } from '@store/index';
+import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
 import {
   CheckIsTenantAdminAction,
@@ -15,12 +15,18 @@ import {
   FetchRealmRolesSuccess,
 } from './actions';
 
-import { SessionLoginSuccess } from '@store/session/actions';
+import { CredentialRefresh, SessionLoginSuccess } from '@store/session/actions';
 import { TenantApi } from './api';
 import { TENANT_INIT } from './models';
-import { createKeycloakAuth, keycloakAuth, LOGIN_TYPES } from '@lib/keycloak';
-import { convertToSession } from '@lib/session';
+import { createKeycloakAuth, KeycloakAuth, LOGIN_TYPES } from '@lib/keycloak';
 import { SagaIterator } from '@redux-saga/core';
+import { Session } from '@store/session/models';
+
+export function* initializeKeycloakAuth(realm?: string): SagaIterator {
+  const keycloakConfig = yield select((state: RootState) => state.config.keycloakApi);
+  realm = realm || (yield select((state: RootState) => state.tenant.realm || 'core'));
+  return yield call(createKeycloakAuth, { ...keycloakConfig, realm });
+}
 
 export function* fetchTenant(action: FetchTenantAction): SagaIterator {
   const state: RootState = yield select();
@@ -66,10 +72,8 @@ export function* createTenant(action: CreateTenantAction): SagaIterator {
 
 export function* tenantAdminLogin(): SagaIterator {
   try {
-    const state: RootState = yield select();
-    const keycloakConfig = state.config.keycloakApi;
-    createKeycloakAuth(keycloakConfig);
-    keycloakAuth.loginByCore(LOGIN_TYPES.tenantAdmin);
+    const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth);
+    yield call([keycloakAuth, keycloakAuth.loginByCore], LOGIN_TYPES.tenantAdmin);
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to login as admin: ${e.message}` }));
   }
@@ -77,10 +81,8 @@ export function* tenantAdminLogin(): SagaIterator {
 
 export function* tenantCreationInitLogin(): SagaIterator {
   try {
-    const state: RootState = yield select();
-    const keycloakConfig = state.config.keycloakApi;
-    createKeycloakAuth(keycloakConfig);
-    keycloakAuth.loginByCore(LOGIN_TYPES.tenantCreationInit);
+    const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth);
+    yield call([keycloakAuth, keycloakAuth.loginByCore], LOGIN_TYPES.tenantCreationInit);
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to first step of tenant creation: ${e.message}` }));
   }
@@ -88,24 +90,16 @@ export function* tenantCreationInitLogin(): SagaIterator {
 
 export function* keycloakCheckSSO(action: KeycloakCheckSSOAction): SagaIterator {
   try {
-    const state: RootState = yield select();
     const realm = action.payload;
+    const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth, realm);
 
-    const keycloakConfig = state.config.keycloakApi;
-    createKeycloakAuth({ ...keycloakConfig, realm });
     console.log('Run keycloak check sso');
-    keycloakAuth.checkSSO(
-      (keycloak) => {
-        const session = convertToSession(keycloak);
-        Promise.all([
-          store.dispatch(SessionLoginSuccess(session)),
-          store.dispatch(IsTenantAdmin(session.userInfo.email)),
-        ]);
-      },
-      () => {
-        console.error('Failed to check the SSO');
-      }
-    );
+
+    const session = yield call([keycloakAuth, keycloakAuth.checkSSO]);
+    if (session) {
+      yield put(SessionLoginSuccess(session));
+      yield put(IsTenantAdmin(session.userInfo.email));
+    }
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to check keycloak SSO: ${e.message}` }));
   }
@@ -113,20 +107,17 @@ export function* keycloakCheckSSO(action: KeycloakCheckSSOAction): SagaIterator 
 
 export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAction): SagaIterator {
   try {
-    const state: RootState = yield select();
     const realm = action.payload;
-    const keycloakConfig = state.config.keycloakApi;
-    createKeycloakAuth({ ...keycloakConfig, realm });
+    const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth, realm);
+
     console.debug('Checkout keycloak SSO');
-    keycloakAuth.checkSSO(
-      (keycloak) => {
-        const session = convertToSession(keycloak);
-        Promise.all([store.dispatch(SessionLoginSuccess(session))]);
-      },
-      () => {
-        window.location.replace('/');
-      }
-    );
+
+    const session = yield call([keycloakAuth, keycloakAuth.checkSSO]);
+    if (!session) {
+      window.location.replace('/');
+    } else {
+      yield put(SessionLoginSuccess(session));
+    }
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to check keycloak SSO: ${e.message}` }));
   }
@@ -134,11 +125,9 @@ export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAc
 
 export function* tenantLogin(action: TenantLoginAction): SagaIterator {
   try {
-    const state: RootState = yield select();
-    const keycloakConfig = state.config.keycloakApi;
-    createKeycloakAuth(keycloakConfig);
+    const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth);
 
-    keycloakAuth.loginByIdP('core', action.payload);
+    yield call([keycloakAuth, keycloakAuth.loginByIdP], 'core', action.payload);
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to tenant login: ${e.message}` }));
   }
@@ -146,16 +135,13 @@ export function* tenantLogin(action: TenantLoginAction): SagaIterator {
 
 export function* keycloakRefreshToken(): SagaIterator {
   try {
+    const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth);
     if (keycloakAuth) {
-      keycloakAuth.refreshToken(
-        (keycloak) => {
-          const session = convertToSession(keycloak);
-          Promise.all([store.dispatch(SessionLoginSuccess(session))]);
-        },
-        () => {
-          window.location.replace('/');
-        }
-      );
+      const session: Session = yield call([keycloakAuth, keycloakAuth.refreshToken]);
+      if (session) {
+        const { credentials } = session;
+        yield put(CredentialRefresh(credentials));
+      }
     } else {
       console.warn(`Try to fresh keycloak token. But, keycloak instance is empty.`);
     }
@@ -166,8 +152,10 @@ export function* keycloakRefreshToken(): SagaIterator {
 
 export function* tenantLogout(): SagaIterator {
   try {
-    if (keycloakAuth) {
-      Promise.resolve(keycloakAuth.logout());
+    const realm = yield select((state: RootState) => state.tenant.realm);
+    if (realm) {
+      const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth);
+      yield call([keycloakAuth, keycloakAuth.logout]);
     }
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to tenant out: ${e.message}` }));

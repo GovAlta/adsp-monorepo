@@ -27,16 +27,16 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
 
   return (
     <>
-      <tr key={service.namespace}>
-        <td headers="namespace" data-testid="namespace">
-          {service.namespace}
+      <tr key={service.urn}>
+        <td headers="service" data-testid="service">
+          {service.service}
         </td>
         <td headers="directory" data-testid="directory">
           {service.url}
         </td>
         <td className="actionCol">
           <GoAContextMenu>
-            {service.namespace.split(':').length === 1 && (
+            {service.service.split(':').length === 1 && (
               <GoAContextMenuIcon
                 type={showDetails ? 'eye-off' : 'eye'}
                 onClick={() => setDetails(service)}
@@ -47,7 +47,7 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
               <GoAContextMenuIcon
                 type="create"
                 title="Edit"
-                testId={`directory-edit-${service.namespace}`}
+                testId={`directory-edit-${service.service}`}
                 onClick={() => {
                   onEdit(service);
                 }}
@@ -55,7 +55,7 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
             )}
             {!service.isCore && (
               <GoAIconButton
-                testId={`directory-delete-${service.namespace}`}
+                testId={`directory-delete-${service.service}`}
                 title="Delete"
                 size="medium"
                 type="trash"
@@ -83,20 +83,27 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
 };
 
 interface serviceTableProps {
-  name: string;
+  namespace: string;
   directory: Service[];
+  isCore: boolean;
   onEdit: (service: Service) => void;
   onDelete: (service: Service) => void;
 }
 
-export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({ name, directory, onEdit, onDelete }) => {
+export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({
+  namespace,
+  directory,
+  isCore,
+  onEdit,
+  onDelete,
+}) => {
   const memoizedDirectory = useMemo(() => {
-    return [...directory].sort((a, b) => (a.namespace < b.namespace ? -1 : 1));
+    return [...directory].sort((a, b) => (a.service < b.service ? -1 : 1));
   }, [directory]);
 
   return (
-    <TableDiv key={name}>
-      <NameDiv>{name}</NameDiv>
+    <TableDiv key={namespace}>
+      <NameDiv>{namespace}</NameDiv>
       <DataTable data-testid="directory-table">
         <thead data-testid="directory-table-header">
           <tr>
@@ -108,12 +115,15 @@ export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({ na
           </tr>
         </thead>
 
-        <tbody key={name}>
-          {memoizedDirectory
-            .filter((dir) => dir.name === name)
-            .map((dir: Service) => (
-              <ServiceItemComponent service={dir} onEdit={onEdit} onDelete={onDelete} />
-            ))}
+        <tbody key={namespace}>
+          {isCore
+            ? memoizedDirectory
+                .filter((dir) => dir.namespace === namespace)
+                .map((dir: Service) => <ServiceItemComponent service={dir} onEdit={onEdit} onDelete={onDelete} />)
+            : directory
+                .filter((dir) => dir.namespace === namespace)
+                .sort((a, b) => (a.service < b.service ? -1 : 1))
+                .map((dir: Service) => <ServiceItemComponent service={dir} onEdit={onEdit} onDelete={onDelete} />)}
         </tbody>
       </DataTable>
       <br />

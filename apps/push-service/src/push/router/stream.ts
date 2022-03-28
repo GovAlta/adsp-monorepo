@@ -1,4 +1,4 @@
-import { adspId, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { adspId, TenantService, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import {
   DomainEvent,
   DomainEventSubscriberService,
@@ -18,6 +18,7 @@ import { ExtendedError } from 'socket.io/dist/namespace';
 interface StreamRouterProps {
   logger: Logger;
   eventService: DomainEventSubscriberService;
+  tenantService: TenantService;
 }
 
 function mapStream(entity: StreamEntity): Stream {
@@ -32,12 +33,17 @@ function mapStream(entity: StreamEntity): Stream {
 }
 
 const STREAM_KEY = 'stream';
-export const getStream = async (req: Request, tenant: string, stream: string, next: NextFunction): Promise<void> => {
+export const getStream = async (
+  tenantService: TenantService,
+  req: Request,
+  tenant: string,
+  stream: string,
+  next: NextFunction
+): Promise<void> => {
   try {
     const user = req.user as User;
 
-    const tenantId =
-      (tenant && adspId`urn:ads:platform:tenant-service:v2:/tenants/${tenant as string}`) || user?.tenantId;
+    const tenantId = (tenant && (await tenantService.getTenantByName(tenant.replace('-', ' '))))?.id || user?.tenantId;
     if (!tenantId) {
       throw new InvalidOperationError('No tenant specified for request.');
     }
@@ -160,7 +166,10 @@ export function onIoConnection(logger: Logger, events: Observable<DomainEvent>) 
 }
 
 const LOG_CONTEXT = { context: 'StreamRouter' };
-export const createStreamRouter = (io: IoNamespace, { logger, eventService }: StreamRouterProps): Router => {
+export const createStreamRouter = (
+  io: IoNamespace,
+  { logger, eventService, tenantService }: StreamRouterProps
+): Router => {
   const events = eventService.getItems().pipe(
     map(({ item, done }) => {
       done();
@@ -177,7 +186,7 @@ export const createStreamRouter = (io: IoNamespace, { logger, eventService }: St
   streamRouter.get('/streams', getStreams);
   streamRouter.get(
     '/streams/:stream',
-    (req, _res, next) => getStream(req, req.query.tenant as string, req.params.stream, next),
+    (req, _res, next) => getStream(tenantService, req, req.query.tenant as string, req.params.stream, next),
     subscribeBySse(logger, events)
   );
 
@@ -187,7 +196,7 @@ export const createStreamRouter = (io: IoNamespace, { logger, eventService }: St
     const user = req.user;
     req.query = socket.handshake.query;
 
-    getStream(req, tenant, req.query.stream as string, (err?: unknown) => {
+    getStream(tenantService, req, tenant, req.query.stream as string, (err?: unknown) => {
       if (!err && !(req[STREAM_KEY] as StreamEntity).canSubscribe(user)) {
         next(new UnauthorizedUserError('connect stream', user));
       } else {
