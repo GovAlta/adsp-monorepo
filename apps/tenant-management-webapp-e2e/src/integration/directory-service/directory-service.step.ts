@@ -19,5 +19,5 @@ Then('the user views the service entry of {string} and {string}', function (dire
   } else {
     url = Cypress.env(String(envFileApi));
   }
-  directoryObj.directoryTable().contains('td', directoryName).siblings().contains(url);
+  directoryObj.directoryTable().contains('td[data-testid="service"]', directoryName).siblings().contains(url);
 });
