@@ -1,5 +1,5 @@
 {
-  "name": "@abgov/adsp-service-sdk",
+  "name": "@govalta/adsp-service-sdk",
   "version": "0.0.1",
   "repository": "https://github.com/GovAlta/adsp-monorepo",
   "publishConfig": {
