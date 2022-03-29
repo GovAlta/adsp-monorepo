@@ -22,6 +22,9 @@ runs:
       run: npx nx affected --configuration=production --target=build --base=${{ inputs.affected-base }}
     - name: Release
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: npx nx affected --target=release --base=${{ inputs.affected-base }}
     # Set affected apps to output.
     - id: nx-affected
