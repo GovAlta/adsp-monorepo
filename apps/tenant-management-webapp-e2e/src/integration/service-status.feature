@@ -24,7 +24,7 @@ Feature: Service status
     When the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     Then the user views delete "notice" confirmation modal for "<Description2>"
     When the user clicks Delete button in delete confirmation modal
-    And the user selects "All" filter by status radio button
+    And the user selects "Active" filter by status radio button
     Then the user "should not view" the "draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
 
     Examples:
@@ -71,8 +71,8 @@ Feature: Service status
     Then the user views "Published" notices
     When the user selects "Archived" filter by status radio button
     Then the user views "Archived" notices
-    When the user selects "All" filter by status radio button
-    Then the user views "All" notices
+    When the user selects "Active" filter by status radio button
+    Then the user views "Active" notices
 
   @TEST_CS-936 @REQ_CS-907 @regression
   Scenario: As a tenant admin, I can subscribe to health check notification type
@@ -129,7 +129,7 @@ Feature: Service status
     When the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
     Then the user views delete "notice" confirmation modal for "<Description2>"
     When the user clicks Delete button in delete confirmation modal
-    And the user selects "All" filter by status radio button
+    And the user selects "Active" filter by status radio button
     Then the user "should not view" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
 
     Examples:
