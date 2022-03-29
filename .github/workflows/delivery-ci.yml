@@ -42,6 +42,7 @@ jobs:
         uses: ./.github/actions/nx-production-build
         with:
           affected-base: ${{ github.event.inputs.AFFECTED_BASE || steps.last_successful_commit.outputs.commit_hash }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
       - run: npm prune --production
       - if: steps.production-build.outputs.affected-apps
         run: tar czf adsp-build-dist.tar.gz node_modules/ dist/

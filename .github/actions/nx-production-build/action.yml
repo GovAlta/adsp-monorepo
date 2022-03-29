@@ -4,6 +4,9 @@ inputs:
   affected-base:
     description: "Value of the --base argument for nx affected"
     required: true
+  github_token:
+    description: "GitHub token for publishing library"
+    required: false
 outputs:
   affected-apps:
     description: "Apps affected by the commit."
@@ -23,8 +26,8 @@ runs:
     - name: Release
       shell: bash
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        NPM_TOKEN: ${{ inputs.github_token }}
       run: npx nx affected --target=release --base=${{ inputs.affected-base }}
     # Set affected apps to output.
     - id: nx-affected
