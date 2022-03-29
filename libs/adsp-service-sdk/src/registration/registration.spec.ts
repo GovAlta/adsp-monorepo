@@ -104,4 +104,35 @@ describe('ServiceRegistrar', () => {
     expect(axiosMock.patch.mock.calls[0][0]).toContain('notification-service');
     expect(axiosMock.patch.mock.calls[0][1].update).toHaveProperty('test-notification');
   });
+
+  it('can register push streams', async () => {
+    const registrar = new ServiceRegistrarImpl(logger, directoryMock, tokenProviderMock);
+
+    axiosMock.patch.mockResolvedValue({ data: {} });
+
+    await registrar.register({
+      serviceId: adspId`urn:ads:platform:test-service`,
+      displayName: 'Test service',
+      description: 'This is a test service.',
+      eventStreams: [
+        {
+          id: 'configuration-updates',
+          name: 'Configuration Updates',
+          description: 'Provides configuration update events',
+          publicSubscribe: false,
+          subscriberRoles: [],
+          events: [
+            {
+              namespace: 'configuration-service',
+              name: 'configuration-updated',
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(axiosMock.patch).toHaveBeenCalledTimes(1);
+    expect(axiosMock.patch.mock.calls[0][0]).toContain('push-service');
+    expect(axiosMock.patch.mock.calls[0][1].update).toHaveProperty('configuration-updates');
+  });
 });

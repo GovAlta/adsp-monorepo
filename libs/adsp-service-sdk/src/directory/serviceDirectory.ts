@@ -54,8 +54,8 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
     });
   };
 
-  #retrieveDirectory = async (): Promise<void> => {
-    const url = new URL('/api/discovery/v1', this.directoryUrl);
+  #retrieveDirectory = async (namespace: string): Promise<void> => {
+    const url = new URL(`/api/directory/v2/namespaces/${namespace}`, this.directoryUrl);
 
     try {
       const results = await retry(async (next, count) => {
@@ -81,7 +81,7 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
     const key = `${id}`;
     let value = this.#directoryCache.get<URL>(key);
     if (!value) {
-      await this.#retrieveDirectory();
+      await this.#retrieveDirectory(id.namespace);
       value = this.#directoryCache.get<URL>(key);
       if (!value) {
         throw new Error(`Failed to find directory entry for ${key}`);
