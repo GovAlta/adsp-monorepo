@@ -20,6 +20,9 @@ runs:
     - name: Build
       shell: bash
       run: npx nx affected --configuration=production --target=build --base=${{ inputs.affected-base }}
+    - name: Release
+      shell: bash
+      run: npx nx affected --target=release --base=${{ inputs.affected-base }}
     # Set affected apps to output.
     - id: nx-affected
       name: Set affected-apps
