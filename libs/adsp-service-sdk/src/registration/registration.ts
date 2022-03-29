@@ -59,6 +59,24 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
       await this.updateConfiguration(adspId`urn:ads:platform:event-service`, update);
     }
 
+    if (registration.eventStreams) {
+      const update = registration.eventStreams.reduce(
+        (streams, stream) => ({
+          ...streams,
+          [stream.id]: {
+            id: stream.id,
+            name: stream.name,
+            description: stream.description,
+            events: stream.events,
+            subscriberRoles: stream.subscriberRoles,
+            publicSubscribe: stream.publicSubscribe,
+          },
+        }),
+        {}
+      );
+      await this.updateConfiguration(adspId`urn:ads:platform:push-service`, update);
+    }
+
     if (registration.notifications) {
       const update = registration.notifications.reduce(
         (types, type) => ({

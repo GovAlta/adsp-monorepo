@@ -16,7 +16,8 @@ export class TokenProviderImpl implements TokenProvider {
     private logger: Logger,
     private serviceId: AdspId,
     private clientSecret: string,
-    private accessServiceUrl: URL
+    private accessServiceUrl: URL,
+    private realm = 'core'
   ) {
     assertAdspId(serviceId, null, 'service');
   }
@@ -27,7 +28,7 @@ export class TokenProviderImpl implements TokenProvider {
 
       return this.#token;
     } else {
-      const authUrl = new URL('/auth/realms/core/protocol/openid-connect/token', this.accessServiceUrl);
+      const authUrl = new URL(`/auth/realms/${this.realm}/protocol/openid-connect/token`, this.accessServiceUrl);
       this.logger.debug(`Requesting access token from ${authUrl}...'`, this.LOG_CONTEXT);
 
       try {
