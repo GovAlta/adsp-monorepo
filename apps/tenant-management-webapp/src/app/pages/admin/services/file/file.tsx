@@ -9,23 +9,19 @@ import { Tab, Tabs } from '@components/Tabs';
 import SupportLinks from '@components/SupportLinks';
 
 const HelpLink = (): JSX.Element => {
-  const tenantId = useSelector((state: RootState) => state.tenant?.id);
+  const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
   return (
     <>
       <h3>Helpful links</h3>
-      <a
-        rel="noopener noreferrer"
-        target="_blank"
-        href={`${docBaseUrl}?tenant=${tenantId}&urls.primaryName=File service`}
-      >
+      <a rel="noopener noreferrer" target="_blank" href={`${docBaseUrl}/${tenantName}&urls.primaryName=File service`}>
         Read the API docs
       </a>
       <br />
       <a
         rel="noopener noreferrer"
         target="_blank"
-        href="https://gitlab.gov.ab.ca/dio/core/core-services/-/tree/master/apps/file-service"
+        href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/file-service"
       >
         See the code
       </a>

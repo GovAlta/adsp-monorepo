@@ -8,7 +8,7 @@ import { EventDefinitions } from './definitions';
 import { EventsOverview } from './overview';
 
 export const Events: FunctionComponent = () => {
-  const tenantId = useSelector((state: RootState) => state.tenant?.id);
+  const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
   const [activeIndex, setActiveIndex] = useState<number>(0);
 
@@ -35,7 +35,7 @@ export const Events: FunctionComponent = () => {
           <a
             rel="noopener noreferrer"
             target="_blank"
-            href={`${docBaseUrl}?tenant=${tenantId}&urls.primaryName=Event service`}
+            href={`${docBaseUrl}/${tenantName}&urls.primaryName=Event service`}
           >
             Read the API docs
           </a>
@@ -43,7 +43,7 @@ export const Events: FunctionComponent = () => {
           <a
             rel="noopener noreferrer"
             target="_blank"
-            href="https://gitlab.gov.ab.ca/dio/core/core-services/-/tree/master/apps/event-service"
+            href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/event-service"
           >
             See the code
           </a>

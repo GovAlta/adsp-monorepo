@@ -56,6 +56,10 @@ describe('createProcessEventJob', () => {
     enqueue: jest.fn(),
   };
 
+  beforeEach(() => {
+    queueServiceMock.enqueue.mockReset();
+  });
+
   it('can create job', () => {
     const job = createProcessEventJob({
       logger,
@@ -73,7 +77,7 @@ describe('createProcessEventJob', () => {
   });
 
   describe('processEventJob', () => {
-    it('can process event', (done) => {
+    it('can process event', async () => {
       const job = createProcessEventJob({
         logger,
         serviceId: adspId`urn:ads:platform:notification-service`,
@@ -118,6 +122,7 @@ describe('createProcessEventJob', () => {
       configurationServiceMock.getConfiguration.mockResolvedValueOnce(configuration);
 
       const subscriber = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
+        id: 'test',
         tenantId,
         addressAs: 'Tester',
         channels: [
@@ -139,7 +144,7 @@ describe('createProcessEventJob', () => {
         page: {},
       });
 
-      job(
+      await job(
         {
           tenantId,
           namespace: 'test',
@@ -149,8 +154,119 @@ describe('createProcessEventJob', () => {
         },
         (err) => {
           expect(err).toBeFalsy();
-          done();
         }
+      );
+
+      expect(queueServiceMock.enqueue).toHaveBeenCalledWith(
+        expect.objectContaining({ subscriber: expect.objectContaining({ id: 'test' }), to: 'test@testco.org' })
+      );
+    });
+
+    it('can process event for multiple subscribers', async () => {
+      const job = createProcessEventJob({
+        logger,
+        serviceId: adspId`urn:ads:platform:notification-service`,
+        tokenProvider: tokenProviderMock,
+        configurationService: configurationServiceMock,
+        eventService: eventServiceMock,
+        templateService: templateServiceMock,
+        tenantService: tenantServiceMock,
+        directory: directoryMock,
+        subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
+        queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
+      });
+
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const type = {
+        id: 'test',
+        name: 'Test Type',
+        description: '',
+        publicSubscribe: true,
+        subscriberRoles: [],
+        channels: [Channel.email],
+        events: [
+          {
+            namespace: 'test',
+            name: 'test-run',
+            templates: {
+              [Channel.email]: { subject: '', body: '' },
+              [Channel.sms]: null,
+              [Channel.mail]: null,
+            },
+          },
+        ],
+      };
+      const configuration = new NotificationConfiguration(
+        {
+          test: type,
+        },
+        {},
+        tenantId
+      );
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
+      configurationServiceMock.getConfiguration.mockResolvedValueOnce(configuration);
+
+      const subscriberA = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
+        id: 'testA',
+        tenantId,
+        addressAs: 'TesterA',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'testA@testco.org',
+            verified: false,
+          },
+        ],
+      });
+
+      const subscriptionA = new SubscriptionEntity(
+        repositoryMock as unknown as SubscriptionRepository,
+        { tenantId, typeId: 'test', subscriberId: 'testA', criteria: {} },
+        subscriberA
+      );
+
+      const subscriberB = new SubscriberEntity(repositoryMock as unknown as SubscriptionRepository, {
+        id: 'testB',
+        tenantId,
+        addressAs: 'TesterB',
+        channels: [
+          {
+            channel: Channel.email,
+            address: 'testB@testco.org',
+            verified: false,
+          },
+        ],
+      });
+
+      const subscriptionB = new SubscriptionEntity(
+        repositoryMock as unknown as SubscriptionRepository,
+        { tenantId, typeId: 'test', subscriberId: 'testB', criteria: {} },
+        subscriberB
+      );
+      repositoryMock.getSubscriptions.mockResolvedValueOnce({
+        results: [subscriptionA, subscriptionB],
+        page: {},
+      });
+
+      await job(
+        {
+          tenantId,
+          namespace: 'test',
+          name: 'test-run',
+          timestamp: new Date(),
+          payload: {},
+        },
+        (err) => {
+          expect(err).toBeFalsy();
+        }
+      );
+
+      expect(queueServiceMock.enqueue).toHaveBeenCalledTimes(2);
+      expect(queueServiceMock.enqueue).toHaveBeenCalledWith(
+        expect.objectContaining({ subscriber: expect.objectContaining({ id: 'testA' }), to: 'testA@testco.org' })
+      );
+      expect(queueServiceMock.enqueue).toHaveBeenCalledWith(
+        expect.objectContaining({ subscriber: expect.objectContaining({ id: 'testB' }), to: 'testB@testco.org' })
       );
     });
 

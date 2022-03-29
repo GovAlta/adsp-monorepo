@@ -154,3 +154,44 @@ Feature: Service status
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" "Autotest-addApp Edited" in the application list
 
+  @TEST_CS-996 @regression
+  Scenario: As a tenant admin, I can trigger application status change event and see the event in the event log
+    # Create an application for testing application status chagne events
+    Given a tenant admin user is on status applications page
+    When the user clicks Add application button
+    Then the user views Add application modal
+    When the user enters "autotest-status-change-event" as name and "autotest-status-change-event-desc" as description and "https://localhost" as endpoint
+    And the user clicks Save application button
+    Then the user "views" "autotest-status-change-event" in the application list
+    # Change status from empty to outage and verify the event
+    When the user clicks Change status button for "autotest-status-change-event"
+    Then the user views Manual status change modal
+    When the user selects "Outage" and clicks Save button
+    Then the user views the "Outage" status for "autotest-status-change-event"
+    When the user waits "20" seconds
+    And the user selects the "Event log" menu item
+    Then the "Event log" landing page is displayed
+    When the user searches with "status-service:application-status-changed", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
+    And the user clicks Show details button for the latest event of "application-status-changed" for "status-service"
+    Then the user views the event details with status changing from "Empty" to "Outage"
+    # Change status from outage to maintenance and verify the event
+    When the user selects the "Status" menu item
+    And the user selects "Applications" tab for "Status"
+    And the user clicks Change status button for "autotest-status-change-event"
+    Then the user views Manual status change modal
+    When the user selects "Maintenance" and clicks Save button
+    Then the user views the "Maintenance" status for "autotest-status-change-event"
+    When the user waits "20" seconds
+    And the user selects the "Event log" menu item
+    Then the "Event log" landing page is displayed
+    When the user searches with "status-service:application-status-changed", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
+    When the user clicks Show details button for the latest event of "application-status-changed" for "status-service"
+    Then the user views the event details with status changing from "Outage" to "Maintenance"
+    # Remove the application
+    When the user selects the "Status" menu item
+    And the user selects "Applications" tab for "Status"
+    Then the user "views" "autotest-status-change-event" in the application list
+    When the user clicks "Delete" button for "autotest-status-change-event"
+    Then the user views delete "application" confirmation modal for "autotest-status-change-event"
+    When the user clicks Delete button in delete confirmation modal
+    Then the user "should not view" "autotest-status-change-event" in the application list

@@ -14,6 +14,7 @@ import { TenantEntity } from '../../models';
 import { TenantServiceRoles } from '../../../roles';
 import { ServiceClient } from '../../types';
 import { TenantRepository } from '../../repository';
+import KeycloakAdminClient from '@keycloak/keycloak-admin-client';
 
 export const tenantManagementRealm = 'core';
 
@@ -77,11 +78,11 @@ const createSubscriberAppPublicClientConfig = (id: string): ClientRepresentation
 };
 
 const createTenantAdminComposite = async (
+  client: KeycloakAdminClient,
   registeredClients: ServiceClient[],
   realm: string,
   tenantAdminRole: RoleRepresentation
 ) => {
-  const client = await createkcAdminClient();
   // Unfortunately the keycloak client isn't very friendly around creating composite roles.
   // Find all the client roles that should be included as part of tenant admin.
   const tenantAdminRoles: RoleRepresentation[] = [];
@@ -115,13 +116,13 @@ const createTenantAdminComposite = async (
 };
 
 const createAdminUser = async (
+  client: KeycloakAdminClient,
   realm: string,
   email: string,
   tenantServiceClientId: string,
   tenantAdminRole: RoleRepresentation
 ) => {
   logger.info('Start to create admin user');
-  const kcClient = await createkcAdminClient();
   const username = email;
   const adminUser = {
     id: uuidv4(),
@@ -130,16 +131,16 @@ const createAdminUser = async (
     realm: realm,
     enabled: true,
   };
-  const user = await kcClient.users.create(adminUser);
+  const user = await client.users.create(adminUser);
   // Add realm admin roles
   const realmManagementClient = (
-    await kcClient.clients.find({
+    await client.clients.find({
       clientId: 'realm-management',
       realm: realm,
     })
   )[0];
 
-  const roles = await kcClient.clients.listRoles({
+  const roles = await client.clients.listRoles({
     id: realmManagementClient.id,
     realm: realm,
   });
@@ -159,9 +160,9 @@ const createAdminUser = async (
   }
 
   logger.info(`Add realm management roles to user: ${util.inspect(roleMapping)}`);
-  await kcClient.users.addClientRoleMappings(roleMapping);
+  await client.users.addClientRoleMappings(roleMapping);
 
-  await kcClient.users.addClientRoleMappings({
+  await client.users.addClientRoleMappings({
     id: user.id,
     realm: realm,
     clientUniqueId: tenantServiceClientId,
@@ -178,12 +179,13 @@ const createAdminUser = async (
   logger.info('Created admin user');
 };
 
-const createIdpConfig = (
+const createCoreIdentityProvider = async (
+  client: KeycloakAdminClient,
   clientSecret: string,
   clientId: string,
   firstFlowAlias: string,
   realm: string
-): IdentityProviderRepresentation => {
+): Promise<{ id: string }> => {
   const issuer = `${environment.KEYCLOAK_ROOT_URL}/auth/realms/core`;
   const authorizationUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/realms/core/protocol/openid-connect/auth`;
   const tokenUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/realms/core/protocol/openid-connect/token`;
@@ -222,20 +224,17 @@ const createIdpConfig = (
     },
   };
 
-  return config;
+  return await client.identityProviders.create(config);
 };
 
-const createBrokerClientConfig = (
-  realm: string,
-  secret: string,
-  client: string
-): ClientRepresentation & { realm: string } => {
-  const redirectUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/realms/${realm}/broker/core/endpoint`;
+const createBrokerClient = async (client: KeycloakAdminClient, realm: string, secret: string, clientId: string) => {
+  const redirectUrl = `${environment.KEYCLOAK_ROOT_URL}/auth/realms/${realm}/broker/core/endpoint/*`;
+
   const config: ClientRepresentation & { realm: string } = {
     id: uuidv4(),
-    clientId: client,
+    clientId,
     description: `Client used to support the IdP of realm ${realm}`,
-    secret: secret,
+    secret,
     redirectUris: [redirectUrl],
     realm: tenantManagementRealm,
     publicClient: false,
@@ -245,25 +244,17 @@ const createBrokerClientConfig = (
     standardFlowEnabled: true,
     serviceAccountsEnabled: true,
   };
-  return config;
-};
-
-const createBrokerClient = async (realm, secret, brokerClient) => {
-  const config = createBrokerClientConfig(realm, secret, brokerClient);
-  const client = await createkcAdminClient();
   await client.clients.create(config);
 };
 
-export const validateEmailInDB = async (repository: TenantRepository, email: string): Promise<boolean> => {
+export const validateEmailInDB = async (repository: TenantRepository, email: string): Promise<void> => {
   logger.info(`Validate - has user created tenant realm before?`);
   const isTenantAdmin = !!(await repository.find({ adminEmailEquals: email }))[0];
 
   if (isTenantAdmin) {
     const errorMessage = `${email} is the tenant admin in our record. One user can create only one realm.`;
     throw new InvalidOperationError(errorMessage);
-    return false;
   }
-  return true;
 };
 
 export const validateName = async (repository: TenantRepository, name: string): Promise<void> => {
@@ -312,12 +303,11 @@ export const validateName = async (repository: TenantRepository, name: string): 
   }
 };
 
-export const validateRealmCreation = async (realm: string): Promise<void> => {
+const validateRealmCreation = async (client: KeycloakAdminClient, realm: string): Promise<void> => {
   // Re-init the keycloak client after realm creation
   logger.info(`Start to validate the tenant creation: ${realm}`);
-  const kcClient = await createkcAdminClient();
   const clientName = brokerClientName(realm);
-  const brokerClient = await kcClient.clients.find({
+  const brokerClient = await client.clients.find({
     clientId: clientName,
     realm: tenantManagementRealm,
   });
@@ -326,19 +316,13 @@ export const validateRealmCreation = async (realm: string): Promise<void> => {
     throw new InvalidOperationError(`Cannot find broker client: ${clientName}`);
   }
 
-  const newRealm = await kcClient.realms.findOne({
+  const newRealm = await client.realms.findOne({
     realm: realm,
   });
 
-  if (newRealm === null) {
+  if (!newRealm) {
     throw new InvalidOperationError(`Cannot find the tenant realm: ${realm}`);
   }
-};
-
-export const isRealmExisted = async (realm: string): Promise<boolean> => {
-  const client = await createkcAdminClient();
-  const result = await client.realms.findOne({ realm });
-  return result !== null;
 };
 
 export const createRealm = async (
@@ -347,20 +331,21 @@ export const createRealm = async (
   email: string,
   tenantName: string
 ): Promise<void> => {
-  logger.info(`Start to create ${realm} realm`);
+  logger.info(`Starting create ${realm} realm...`);
   const brokerClientSecret = uuidv4();
   const tenantPublicClientId = uuidv4();
   const subscriberAppPublicClientId = uuidv4();
   const brokerClient = brokerClientName(realm);
-  logger.info(`Start to create IdP broker client on the core for ${realm} realm`);
+
+  logger.info(`Starting to create IdP broker client on the core for ${realm} realm...`);
 
   let client = await createkcAdminClient();
-  await createBrokerClient(realm, brokerClientSecret, brokerClient);
+  await createBrokerClient(client, realm, brokerClientSecret, brokerClient);
+
   logger.info(`Created IdP broker client on the core realm for ${realm} realm`);
 
   const publicClientConfig = createWebappClientConfig(tenantPublicClientId);
   const subscriberAppPublicClientConfig = createSubscriberAppPublicClientConfig(subscriberAppPublicClientId);
-  const idpConfig = createIdpConfig(brokerClientSecret, brokerClient, FLOW_ALIAS, realm);
 
   const clients = serviceClients.map((registeredClient) =>
     createPlatformServiceConfig(registeredClient.serviceId, ...registeredClient.roles)
@@ -384,8 +369,11 @@ export const createRealm = async (
 
   await client.realms.create(realmConfig);
 
-  // Find the tenant admin role
+  // Re-authenticate the admin client. This is necessary because the original access token does not include access
+  // to the new realm that was just created.
   client = await createkcAdminClient();
+
+  // Find the tenant admin role
   const tenantServiceClient = (
     await client.clients.find({
       realm,
@@ -401,19 +389,14 @@ export const createRealm = async (
   });
   logger.debug(`Found tenant service client admin role: ${tenantAdminRole?.id}`);
 
-  await createTenantAdminComposite(serviceClients, realm, tenantAdminRole);
+  await createTenantAdminComposite(client, serviceClients, realm, tenantAdminRole);
   logger.info(`Created tenant admin composite role.`);
 
-  await createAuthenticationFlow(realm);
+  await createAuthenticationFlow(client, realm);
+  await createCoreIdentityProvider(client, brokerClientSecret, brokerClient, FLOW_ALIAS, realm);
+  await createAdminUser(client, realm, email, tenantServiceClient.id, tenantAdminRole);
 
-  client = await createkcAdminClient();
-
-  // IdP shall be created after authentication flow
-  await client.identityProviders.create(idpConfig);
-
-  await createAdminUser(realm, email, tenantServiceClient.id, tenantAdminRole);
-
-  validateRealmCreation(realm);
+  await validateRealmCreation(client, realm);
 };
 
 export const createNewTenantInDB = async (
@@ -430,7 +413,3 @@ export const createNewTenantInDB = async (
   const tenant = await tenantEntity.save();
   return tenant;
 };
-
-export function testCreate(): boolean {
-  return true;
-}

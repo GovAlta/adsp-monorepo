@@ -18,6 +18,7 @@ import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
 
 export function* fetchDirectory(action: FetchDirectoryAction): SagaIterator {
+  const core = 'platform';
   const state: RootState = yield select();
   const token = state.session.credentials.token;
   const api = new DirectoryApi(state.config.tenantApi, token);
@@ -29,32 +30,26 @@ export function* fetchDirectory(action: FetchDirectoryAction): SagaIterator {
       message: 'Loading...',
     })
   );
+
   try {
-    let directory = yield call([api, api.fetchDirectory]);
     let tenantDirectory = [];
-    if (!directory[0]?.urn) {
+    const coreDirectory = yield call([api, api.fetchDirectoryTenant], core);
+
+    if (tenantName.toLowerCase() !== core) {
       tenantDirectory = yield call([api, api.fetchDirectoryTenant], tenantName);
-      directory = { ...directory, ...tenantDirectory };
+
+      yield put(fetchDirectorySuccess({ directory: [...tenantDirectory, ...coreDirectory] }));
+    } else {
+      yield put(fetchDirectorySuccess({ directory: coreDirectory }));
     }
-    const newDirectory = [];
-    Object.keys(directory).forEach((dir, index) => {
-      const urn = directory[dir].urn ? directory[dir].urn.split(':') : Object.keys(directory)[index].split(':');
 
-      newDirectory.push({
-        name: urn[2],
-        namespace: urn.length === 5 ? `${urn[3]}:${urn[4]}` : urn[3],
-        url: directory[dir].url ? directory[dir].url : directory[Object.keys(directory)[index]],
-      });
-    });
-
-    yield put(fetchDirectorySuccess({ directory: newDirectory }));
     yield put(
       UpdateIndicator({
         show: false,
       })
     );
   } catch (e) {
-    yield put(ErrorNotification({ message: 'failed to fetch directory' }));
+    yield put(ErrorNotification({ message: 'failed to fetch directory service' }));
     yield put(
       UpdateIndicator({
         show: false,
@@ -74,7 +69,7 @@ export function* createEntryDirectory(action: CreateEntryAction): SagaIterator {
       yield put(createEntrySuccess(action.data));
     }
   } catch (err) {
-    yield put(ErrorNotification({ message: 'failed to create directory' }));
+    yield put(ErrorNotification({ message: `Failed to create directory service ${action.data.service}` }));
   }
 }
 
@@ -89,7 +84,7 @@ export function* updateEntryDirectory(action: UpdateEntryAction): SagaIterator {
       yield put(updateEntrySuccess(action.data));
     }
   } catch (err) {
-    yield put(ErrorNotification({ message: 'failed to create directory' }));
+    yield put(ErrorNotification({ message: `Failed to update directory service ${action.data.namespace}` }));
   }
 }
 
@@ -104,7 +99,7 @@ export function* deleteEntryDirectory(action: DeleteEntryAction): SagaIterator {
       yield put(deleteEntrySuccess(action.data));
     }
   } catch (err) {
-    yield put(ErrorNotification({ message: 'failed to delete directory' }));
+    yield put(ErrorNotification({ message: `Failed to delete directory service ${action.data.service}` }));
   }
 }
 
@@ -117,15 +112,17 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
     const result = yield call([api, api.fetchEntryDetail], action.data);
     if (result) {
       const service = action.data;
-      if (result._links) {
-        service._links = result._links;
+      if (result.metadata) {
+        service.metadata = result.metadata;
       } else {
-        service._links = null;
+        service.metadata = null;
       }
 
       yield put(fetchEntryDetailSuccess(service));
     }
   } catch (err) {
-    yield put(ErrorNotification({ message: 'failed to get entry detail' }));
+    const service = action.data;
+    service.metadata = null;
+    yield put(fetchEntryDetailSuccess(service));
   }
 }

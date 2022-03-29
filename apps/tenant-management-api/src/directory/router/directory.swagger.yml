@@ -1,41 +1,42 @@
-Ok: &Ok
-  description: OK
+components:
+  schemas:
+    Directory:
+      title: Directory
+      type: object
+      properties:
+        urn:
+          type: string
+          description: ADSP urn of the directory
+        url:
+          type: string
+          description: Url of the directory
 
-GoA401: &GoA401
-  description: |
-    Unauthorized. The allowed user groups are listed as follows:
-      | Group Name    | Keycloak Realm| Client  |
-      | ------------- |:-------------:| -------:|
-      | GoA  | any | any |
-
-# Define schema:
-Discovery: &Discovery
-  type: object
-  properties:
-    service:
-      type: string
-    host:
-      type: string
-
-'/api/discovery/v1':
+"/api/discovery/v1":
   get:
+    deprecated: true
     tags:
-      - Discovery
-    description:
-      Fetch the discovery (URN-service) list.
+      - Directory service
+    description: Fetch the discovery (URN-service) list.
     responses:
-      200: *Ok
-      401: *GoA401
-
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Directory"
+      401:
+        description: Unauthorized
   post:
+    deprecated: true
     tags:
-      - Discovery
-    description:
-      Create a new URN entry
+      - Directory service
+    description: Create a new URN entry
     requestBody:
       content:
         application/json:
-          schema:      # Request body contents
+          schema:
             type: object
             properties:
               name:
@@ -43,42 +44,64 @@ Discovery: &Discovery
               services:
                 type: array
                 items:
-                  *Discovery
+                  $ref: "#/components/schemas/Directory"
     responses:
-      200: *Ok
-      401: *GoA401
-  put:
-    tags:
-      - Discovery
-    description:
-      Update the URN entry by name
-    requestBody:
-      content:
-        application/json:
-          schema:      # Request body contents
-            type: object
-            properties:
-              name:
-                type: string
-              services:
-                type: array
-                items:
-                  *Discovery
-    responses:
-      201: *Ok
-      401: *GoA401
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Directory"
 
-  delete:
+      401:
+        description: Unauthorized
+
+  put:
+    deprecated: true
     tags:
-     - Discovery
-    description:
-      Delete the URN entry by name
+      - Directory service
+    description: Update the URN entry by name
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              services:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Directory"
+
+    responses:
+      200:
+        description: Request completed successfully.
+      401:
+        description: Unauthorized
+
+"/api/discovery/v1/{name}":
+  delete:
+    deprecated: true
+    tags:
+      - Directory service
     parameters:
-      - in: query
-        name: name
+      - name: name
+        description: Name of the directory entry
+        in: path
+        required: true
         schema:
           type: string
-        description: Service Name
     responses:
-      200: *Ok
-      401: *GoA401
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Directory"
+      401:
+        description: Unauthorized

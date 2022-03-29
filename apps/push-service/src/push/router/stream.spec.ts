@@ -1,9 +1,5 @@
-import { adspId, User } from '@abgov/adsp-service-sdk';
-import {
-  DomainEventSubscriberService,
-  InvalidOperationError,
-  NotFoundError,
-} from '@core-services/core-common';
+import { adspId, TenantService, User } from '@abgov/adsp-service-sdk';
+import { DomainEventSubscriberService, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { of } from 'rxjs';
 import { Namespace, Socket } from 'socket.io';
@@ -26,6 +22,10 @@ describe('stream router', () => {
     warn: jest.fn(),
   } as unknown as Logger;
 
+  const tenantServiceMock = {
+    getTenantByName: jest.fn(),
+  };
+
   const eventServiceMock = {
     enqueue: jest.fn(),
     getItems: jest.fn(() => of()),
@@ -46,6 +46,7 @@ describe('stream router', () => {
   });
 
   beforeEach(() => {
+    tenantServiceMock.getTenantByName.mockReset();
     stream = new StreamEntity(tenantId, {
       id: 'test',
       name: 'Test Stream',
@@ -65,6 +66,7 @@ describe('stream router', () => {
     const router = createStreamRouter(ioMock as unknown as Namespace, {
       logger: loggerMock,
       eventService: eventServiceMock as DomainEventSubscriberService,
+      tenantService: tenantServiceMock as unknown as TenantService,
     });
 
     expect(router).toBeTruthy();
@@ -82,7 +84,13 @@ describe('stream router', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce({ test: stream });
-      await getStream(req as unknown as Request, req.query.tenant, req.params.stream, next);
+      await getStream(
+        tenantServiceMock as unknown as TenantService,
+        req as unknown as Request,
+        req.query.tenant,
+        req.params.stream,
+        next
+      );
       expect(req['stream']).toBe(stream);
     });
 
@@ -96,9 +104,19 @@ describe('stream router', () => {
       };
       const next = jest.fn();
 
+      tenantServiceMock.getTenantByName.mockResolvedValueOnce({
+        id: adspId`urn:ads:platform:tenant-service:v2:/tenants/test-2`,
+      });
       req.getConfiguration.mockResolvedValueOnce({ test: stream });
-      await getStream(req as unknown as Request, req.query.tenant, req.params.stream, next);
+      await getStream(
+        tenantServiceMock as unknown as TenantService,
+        req as unknown as Request,
+        req.query.tenant,
+        req.params.stream,
+        next
+      );
       expect(req['stream']).toBe(stream);
+      expect(tenantServiceMock.getTenantByName).toHaveBeenCalledWith('test 2');
       expect(req.getConfiguration.mock.calls[0][0].toString()).toMatch(
         'urn:ads:platform:tenant-service:v2:/tenants/test-2'
       );
@@ -117,7 +135,13 @@ describe('stream router', () => {
       };
       const next = jest.fn();
 
-      await getStream(req as unknown as Request, null, req.params.stream, next);
+      await getStream(
+        tenantServiceMock as unknown as TenantService,
+        req as unknown as Request,
+        null,
+        req.params.stream,
+        next
+      );
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
@@ -136,7 +160,13 @@ describe('stream router', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce({});
-      await getStream(req as unknown as Request, req.query.tenant, req.params.stream, next);
+      await getStream(
+        tenantServiceMock as unknown as TenantService,
+        req as unknown as Request,
+        req.query.tenant,
+        req.params.stream,
+        next
+      );
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
     });

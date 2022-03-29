@@ -13,7 +13,7 @@ import { GoAButton } from '@abgov/react-components';
 import { subscriberAppUrlSelector } from './selectors';
 
 export const Notifications: FunctionComponent = () => {
-  const tenantId = useSelector((state: RootState) => state.tenant?.id);
+  const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
 
   const loginUrl = useSelector(subscriberAppUrlSelector);
@@ -60,7 +60,7 @@ export const Notifications: FunctionComponent = () => {
         <a
           rel="noopener noreferrer"
           target="_blank"
-          href={`${docBaseUrl}?tenant=${tenantId}&urls.primaryName=Notification service`}
+          href={`${docBaseUrl}/${tenantName}&urls.primaryName=Notification service`}
         >
           Read the API docs
         </a>
@@ -68,7 +68,7 @@ export const Notifications: FunctionComponent = () => {
         <a
           rel="noopener noreferrer"
           target="_blank"
-          href="https://gitlab.gov.ab.ca/dio/core/core-services/-/tree/master/apps/event-service"
+          href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/notification-service"
         >
           See the code
         </a>

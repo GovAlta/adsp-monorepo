@@ -1,8 +1,8 @@
-export type NoticeModeType = 'draft' | 'active' | 'archived';
+export type NoticeModeType = 'active' | 'draft' | 'published' | 'archived';
 export function isValidNoticeModeType(mode: NoticeModeType): boolean {
   switch (mode) {
     case 'draft':
-    case 'active':
+    case 'published':
     case 'archived':
       return true;
     default:

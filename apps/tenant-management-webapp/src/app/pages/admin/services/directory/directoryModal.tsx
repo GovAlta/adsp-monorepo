@@ -3,8 +3,9 @@ import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgo
 import { GoAButton } from '@abgov/react-components';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { Service } from '@store/directory/models';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { createEntry, updateEntry } from '@store/directory/actions';
+import { RootState } from '@store/index';
 
 interface DirectoryModalProps {
   entry?: Service;
@@ -18,21 +19,31 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   const [entry, setEntry] = useState(props.entry);
   const title = isNew ? 'Add directory' : 'Edit directory';
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const { directory } = useSelector((state: RootState) => state.directory);
+  const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const dispatch = useDispatch();
 
+  const checkService = (service) => {
+    const tenantDirectory = directory.find((x) => x.namespace === tenantName && x.service === service);
+    return tenantDirectory;
+  };
+  const checkApi = (api) => {
+    const tenantDirectory = directory.find((x) => x.namespace === tenantName && x.api && x.api === api);
+    return tenantDirectory;
+  };
   return (
     <GoAModal testId="directory-modal" isOpen={props.open}>
       <GoAModalTitle>{title}</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>
-          <GoAFormItem error={errors?.['namespace']}>
+          <GoAFormItem error={errors?.['service']}>
             <label>Service</label>
             <input
               type="text"
               name="name"
-              value={entry.namespace}
+              value={entry.service}
               data-testid={`directory-modal-service-input`}
-              onChange={(e) => setEntry({ ...entry, namespace: e.target.value })}
+              onChange={(e) => setEntry({ ...entry, service: e.target.value })}
               aria-label="name"
               maxLength={50}
             />
@@ -76,18 +87,25 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
         </GoAButton>
         <GoAButton
           buttonType="primary"
-          disabled={!entry.namespace || !entry.url}
+          disabled={!entry.service || !entry.url}
           data-testid="directory-modal-save"
           onClick={() => {
             const regex = new RegExp(/^[a-z0-9-]+$/);
 
-            if (!regex.test(entry.namespace)) {
-              setErrors({ ...errors, namespace: 'Service allowed characters: a-z, 0-9, -' });
+            if (!regex.test(entry.service)) {
+              setErrors({ ...errors, service: 'Service allowed characters: a-z, 0-9, -' });
               return;
             }
-
+            if (checkService(entry.service) && props.type === 'new') {
+              setErrors({ ...errors, service: 'Service name duplicate, please use another one' });
+              return;
+            }
             if (entry.api && !regex.test(entry.api)) {
               setErrors({ ...errors, api: 'Api allowed characters: a-z, 0-9, -' });
+              return;
+            }
+            if (checkApi(entry.api) && props.type === 'new') {
+              setErrors({ ...errors, api: 'Api duplicate, please use another one' });
               return;
             }
             const urlReg = new RegExp(/^(http|https):\/\/[^ "]+$/);

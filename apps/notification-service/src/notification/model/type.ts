@@ -5,7 +5,6 @@ import { getTemplateBody } from '@core-services/notification-shared';
 import { Logger } from 'winston';
 import { SubscriptionRepository } from '../repository';
 import { TemplateService } from '../template';
-import { Template } from '../types';
 import {
   NotificationType,
   Notification,
@@ -13,6 +12,7 @@ import {
   SubscriptionCriteria,
   ServiceUserRoles,
   Subscriber,
+  Template,
 } from '../types';
 import { SubscriberEntity } from './subscriber';
 import { SubscriptionEntity } from './subscription';
@@ -86,7 +86,7 @@ export class NotificationTypeEntity implements NotificationType {
     messageContext: Record<string, unknown>
   ): Notification[] {
     const notifications: Notification[] = [];
-    subscriptions.forEach((subscription) => {
+    for (const subscription of subscriptions) {
       if (subscription.shouldSend(event)) {
         const notification = this.generateNotification(
           logger,
@@ -100,7 +100,7 @@ export class NotificationTypeEntity implements NotificationType {
           notifications.push(notification);
         }
       }
-    });
+    }
 
     return notifications;
   }
@@ -181,9 +181,10 @@ export class NotificationTypeEntity implements NotificationType {
   }
 
   private getTemplate(channel: Channel, template: Template, context: Record<string, unknown>): Template {
+    const effectiveTemplate = { ...template };
     if (channel === Channel.email) {
-      template['body'] = getTemplateBody(template.body.toString(), context);
+      effectiveTemplate.body = getTemplateBody(template.body.toString(), context);
     }
-    return template;
+    return effectiveTemplate;
   }
 }

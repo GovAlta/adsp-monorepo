@@ -2,7 +2,7 @@ export type InternalServiceStatusType = 'operational' | 'reported-issues' | 'pen
 export type PublicServiceStatusType = 'operational' | 'maintenance' | 'outage' | 'pending' | 'disabled';
 export type ServiceStatusType = InternalServiceStatusType | PublicServiceStatusType;
 export const PublicServiceStatusTypes = ['operational', 'maintenance', 'outage', 'pending', 'disabled'];
-export type ModeType = 'draft' | 'active';
+export type ModeType = 'draft' | 'published' | 'archived';
 
 export interface Notices {
   notices: Notice[];

@@ -25,6 +25,10 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(express.json({ limit: '1mb' }));
   app.use(cors());
 
+  if (environment.TRUSTED_PROXY) {
+    app.set('trust proxy', environment.TRUSTED_PROXY);
+  }
+
   const eventService = await createEventService({
     amqpHost: environment.AMQP_HOST,
     amqpUser: environment.AMQP_USER,
@@ -120,10 +124,14 @@ const initializeApp = async (): Promise<express.Application> => {
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
       _links: {
-        self: new URL(req.originalUrl, rootUrl).href,
-        health: new URL('/health', rootUrl).href,
-        api: new URL('/event/v1', rootUrl).href,
-        doc: new URL('/swagger/docs/v1', rootUrl).href,
+        self: {
+          href: new URL(req.originalUrl, rootUrl).href,
+        },
+        health: {
+          href: new URL('/health', rootUrl).href,
+        },
+        api: { href: new URL('/event/v1', rootUrl).href },
+        docs: { href: new URL('/swagger/docs/v1', rootUrl).href },
       },
     });
   });

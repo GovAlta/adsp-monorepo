@@ -8,6 +8,7 @@ export const GET_SUBSCRIBER_DETAILS = 'tenant/notification-service/get-Subscribe
 export const UNSUBSCRIBE_SUCCESS = 'tenant/notification-service/unsubscribe-success';
 export const UNSUBSCRIBE_FAILED = 'tenant/notification-service/unsubscribe-failed';
 export const UNSUBSCRIBE = 'tenant/notification-service/unsubscribe';
+export const SIGNED_OUT_UNSUBSCRIBE = 'tenant/notification-service/signed-out-unsubscribe';
 
 export const PATCH_SUBSCRIBER = 'tenant/notification-service/patch-subscriber';
 export const PATCH_SUBSCRIBER_SUCCESS = 'tenant/notification-service/patch-subscriber-success';
@@ -55,6 +56,11 @@ export interface UnsubscribeAction {
   payload: { type: string; subscriberId: string };
 }
 
+export interface GetSignedOutSubscriberAction {
+  type: typeof SIGNED_OUT_UNSUBSCRIBE;
+  payload: { type: string; subscriberId: string; tenantId: string };
+}
+
 export interface PatchSubscriberAction {
   type: typeof PATCH_SUBSCRIBER;
   payload: { channels: SubscriberChannel[]; subscriberId: string };
@@ -79,6 +85,17 @@ export const NoSubscriberAction = (): NoSubscriber => ({
 
 export const unsubscribe = (subscriptionInfo: { type: string; subscriberId: string }): UnsubscribeAction => ({
   type: UNSUBSCRIBE,
+  payload: {
+    ...subscriptionInfo,
+  },
+});
+
+export const signedOutUnsubscribe = (subscriptionInfo: {
+  type: string;
+  subscriberId: string;
+  tenantId: string;
+}): GetSignedOutSubscriberAction => ({
+  type: SIGNED_OUT_UNSUBSCRIBE,
   payload: {
     ...subscriptionInfo,
   },

@@ -4,6 +4,7 @@ import { Logger } from 'winston';
 import { DomainEventSubscriberService } from '@core-services/core-common';
 import { createStreamRouter } from './router';
 import { Namespace as IoNamespace } from 'socket.io';
+import { TenantService } from '@abgov/adsp-service-sdk';
 
 export * from './configuration';
 export * from './types';
@@ -13,6 +14,7 @@ export * from './roles';
 interface PushMiddlewareProps {
   logger: Logger;
   eventService: DomainEventSubscriberService;
+  tenantService: TenantService;
 }
 
 export const applyPushMiddleware = (

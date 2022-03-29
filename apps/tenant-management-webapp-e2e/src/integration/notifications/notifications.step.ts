@@ -5,6 +5,9 @@ import NotificationsPage from './notifications.page';
 
 const commonObj = new common();
 const notificationsObj = new NotificationsPage();
+let emailInput;
+let phoneInput;
+let instructionsInput;
 
 Given('a tenant admin user is on notification overview page', function () {
   commonlib.tenantAdminDirectURLLogin(
@@ -454,5 +457,113 @@ Then(
   'the user views the subscription of {string} for the subscriber of {string} and {string}',
   function (subscription, addressAs, email) {
     notificationsObj.subscriberSubscriptions(addressAs, email).invoke('text').should('contain', subscription);
+  }
+);
+
+Then('the user {string} the subscriber of {string}, {string}', function (viewOrNot, addressAs, email) {
+  switch (viewOrNot) {
+    case 'views':
+      notificationsObj.subscriber(addressAs, email).should('exist');
+      break;
+    case 'should not view':
+      notificationsObj.subscriber(addressAs, email).should('not.exist');
+      break;
+    default:
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});
+
+When('the user clicks delete button of {string}, {string} on subscribers page', function (addressAs, email) {
+  notificationsObj.subscriberDeleteIcon(addressAs, email).click();
+});
+
+Then('the user views Delete subscriber modal', function () {
+  notificationsObj.subscriberDeleteConfirmationModalTitle().invoke('text').should('eq', 'Delete subscriber');
+});
+
+When('the user clicks Delete button on Delete subscriber modal', function () {
+  notificationsObj.subscriberDeleteConfirmationModalDeleteBtn().click();
+  cy.wait(4000); //Wait for the subscriber list to be updated
+});
+
+When('the user clicks edit button for contact information', function () {
+  notificationsObj.contactInformationEdit().click();
+});
+
+Then('the user views Edit contact information modal', function () {
+  notificationsObj.editContactModal().should('exist');
+});
+
+When(
+  'the user enters {string}, {string} and {string} in Edit contact information modal',
+  function (email, phone, instructions) {
+    // Check phone parameter to match 1 (111) 111-1111 format
+    expect(phone).to.match(/1\s\(\d{3}\)\s\d{3}-\d{4}/g);
+    // Generate a random number between 1000 and 2000
+    const rand_str = String(Math.floor(Math.random() * 1000 + 1000));
+
+    const editedEmail = email.match(/(?<=rnd{)[^{}]+(?=})/g);
+    if (editedEmail == null) {
+      emailInput = email;
+    } else {
+      emailInput = (rand_str + email).replace('rnd{', '').replace('}', '');
+    }
+
+    const editedPhone = phone.match(/(?<=rnd{)[^{}]+(?=})/g);
+    if (editedPhone == null) {
+      phoneInput = phone;
+    } else {
+      phoneInput = editedPhone.toString().slice(0, -4) + rand_str;
+    }
+
+    const editedInstructions = instructions.match(/(?<=rnd{)[^{}]+(?=})/g);
+    if (editedInstructions == null) {
+      instructionsInput = instructions;
+    } else {
+      instructionsInput = (rand_str + instructions).replace('rnd{', '').replace('}', '');
+    }
+
+    notificationsObj.editContactModalEmail().clear().type(emailInput);
+    // Remove (, ), - and spaces and the first number
+    const phoneInputForUI = phoneInput
+      .replace('(', '')
+      .replace(')', '')
+      .replaceAll(' ', '')
+      .replace('-', '')
+      .substring(1);
+
+    notificationsObj.editContactModalPhone().clear().type(phoneInputForUI);
+    notificationsObj.editContactModalInstructions().clear().type(instructionsInput);
+  }
+);
+
+Then('the user clicks Save button in Edit contact information modal', function () {
+  notificationsObj.editContactModalSaveBtn().click();
+  cy.wait(2000);
+});
+
+Then(
+  'the user views contact information of {string}, {string} and {string} on notifications page',
+  function (email, phone, instructions) {
+    const editedEmail = email.match(/(?<=rnd{)[^{}]+(?=})/g);
+    if (editedEmail == '') {
+      notificationsObj.contactInformationEmail().invoke('text').should('contain', email);
+    } else {
+      notificationsObj.contactInformationEmail().invoke('text').should('contain', emailInput);
+    }
+
+    const editedPhone = phone.match(/(?<=rnd{)[^{}]+(?=})/g);
+    if (editedPhone == '') {
+      notificationsObj.contactInformationPhone().invoke('text').should('contain', phone);
+    } else {
+      notificationsObj.contactInformationPhone().invoke('text').should('contain', phoneInput);
+    }
+
+    const editedInstructions = instructions.match(/(?<=rnd{)[^{}]+(?=})/g);
+    if (editedInstructions == '') {
+      notificationsObj.contactInformationInstructions().invoke('text').should('contain', instructions);
+    } else {
+      notificationsObj.contactInformationInstructions().invoke('text').should('contain', instructionsInput);
+    }
   }
 );

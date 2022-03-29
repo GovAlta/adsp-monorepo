@@ -28,21 +28,6 @@ describe('ServiceRegistrar', () => {
     axiosMock.patch.mockReset();
   });
 
-  it('can register service', async () => {
-    const registrar = new ServiceRegistrarImpl(logger, directoryMock, tokenProviderMock);
-
-    axiosMock.post.mockResolvedValue({ data: {} });
-    await registrar.register({
-      serviceId: adspId`urn:ads:platform:test-service`,
-      displayName: 'Test service',
-      description: 'This is a test service.',
-      configurationSchema: {},
-    });
-
-    expect(axiosMock.post).toHaveBeenCalledTimes(1);
-    expect(axiosMock.post.mock.calls[0][0]).toContain('test-service');
-  });
-
   it('can register events', async () => {
     const registrar = new ServiceRegistrarImpl(logger, directoryMock, tokenProviderMock);
 

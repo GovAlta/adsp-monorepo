@@ -7,7 +7,7 @@ interface NotifySmsProviderProps {
   NOTIFY_TEMPLATE_ID: string;
 }
 
-export const createABNotifySmsProvider = ({
+export const createNotifySmsProvider = ({
   NOTIFY_URL,
   NOTIFY_API_KEY,
   NOTIFY_TEMPLATE_ID,

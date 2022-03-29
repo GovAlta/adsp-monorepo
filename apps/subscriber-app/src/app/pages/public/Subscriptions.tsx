@@ -6,7 +6,7 @@ import { GoAButton, GoACard, GoAPageLoader } from '@abgov/react-components';
 import { GoACallout } from '@abgov/react-components';
 import { FetchContactInfoService } from '@store/notification/actions';
 import { FetchTenantService } from '@store/tenant/actions';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
+import { GoAModal, GoAModalActions, GoAModalTitle } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
 import {
   Label,
@@ -21,7 +21,7 @@ import {
 import { useParams } from 'react-router-dom';
 
 import { useDispatch, useSelector } from 'react-redux';
-import { getSubscriberDetails, unsubscribe } from '@store/subscription/actions';
+import { getSubscriberDetails, signedOutUnsubscribe } from '@store/subscription/actions';
 import { RootState } from '@store/index';
 import SubscriptionsList from '@components/SubscriptionsList';
 import { SubscriberChannel, Subscription } from '@store/subscription/models';
@@ -29,9 +29,8 @@ import { SubscriberChannel, Subscription } from '@store/subscription/models';
 const Subscriptions = (): JSX.Element => {
   const dispatch = useDispatch();
   const EMAIL = 'email';
-  const { subscriber, subscriptions, notifications } = useSelector((state: RootState) => ({
+  const { subscriber, notifications } = useSelector((state: RootState) => ({
     subscriber: state.subscription.subscriber,
-    subscriptions: state.subscription.subscriptions,
     notifications: state.notifications.notification,
     tenant: state.tenant,
   }));
@@ -60,11 +59,11 @@ const Subscriptions = (): JSX.Element => {
       dispatch(FetchContactInfoService({ tenantId: tenantId }));
       dispatch(FetchTenantService({ tenantId: tenantId }));
     }
-  }, [subscriptions]);
+  }, [subscriber]);
 
   const unSubscribe = (typeId: string) => {
     setShowUnSubscribeModal(true);
-    setSelectedUnsubscribeSub(subscriptions?.filter((item) => item.typeId === typeId)[0]);
+    setSelectedUnsubscribeSub(subscriber?.subscriptions.filter((item) => item.typeId === typeId)[0]);
   };
   const resetSelectedUnsubscribe = () => {
     setShowUnSubscribeModal(false);
@@ -75,10 +74,10 @@ const Subscriptions = (): JSX.Element => {
     return (
       <GoAModal isOpen={true} key={1} data-testId="unsubscribe-modal">
         <GoAModalTitle>Are you sure you want unsubscribe?</GoAModalTitle>
-        <GoAModalContent data-testId="unsubscribe-modal-content">
-          If you decide to unsubscribe from “{selectedUnsubscribeSub?.type?.name}” you won’t receive any updates from
-          the service in the future.{' '}
-        </GoAModalContent>
+        <GoAModelTextWrapper data-testId="unsubscribe-modal-content">
+          If you decide to unsubscribe from “{selectedUnsubscribeSub.type.name}” you won’t receive any updates from the
+          service in the future.{' '}
+        </GoAModelTextWrapper>
         <GoAModalActions>
           <GoAButton
             buttonType="secondary"
@@ -94,9 +93,10 @@ const Subscriptions = (): JSX.Element => {
             data-testid="unsubscribe-modal-okay-button"
             onClick={() => {
               dispatch(
-                unsubscribe({
+                signedOutUnsubscribe({
                   type: selectedUnsubscribeSub.typeId,
                   subscriberId: selectedUnsubscribeSub.subscriberId,
+                  tenantId: subscriber?.tenantId,
                 })
               );
               resetSelectedUnsubscribe();
@@ -123,7 +123,7 @@ const Subscriptions = (): JSX.Element => {
               </p>
             </DescriptionWrapper>
             {showUnSubscribeModal ? unSubscribeModal() : ''}
-            {subscriptions ? (
+            {subscriber ? (
               <>
                 <ContactInformationWrapper>
                   <GoACard title="Contact information" data-testid="contact-information-card">
@@ -137,7 +137,7 @@ const Subscriptions = (): JSX.Element => {
                 </ContactInformationWrapper>
                 <GoAModal></GoAModal>
                 <SubscriptionListContainer>
-                  {subscriptions?.length > 0 ? (
+                  {subscriber.subscriptions?.length > 0 ? (
                     <DataTable data-testid="subscriptions-table">
                       <TableHeaders>
                         <tr>
@@ -147,26 +147,28 @@ const Subscriptions = (): JSX.Element => {
                         </tr>
                       </TableHeaders>
                       <tbody>
-                        <SubscriptionsList onUnsubscribe={unSubscribe} subscriptions={subscriptions} />
+                        <SubscriptionsList onUnsubscribe={unSubscribe} subscriptions={subscriber.subscriptions} />
                       </tbody>
                     </DataTable>
                   ) : (
                     <GoACallout title="You have no subscriptions" type="important"></GoACallout>
                   )}
                 </SubscriptionListContainer>
-                <CalloutWrapper id="contactSupport">
-                  <GoACallout title="Need help? Contact your service admin" type="information">
-                    <div>{contact?.supportInstructions}</div>
-                    <div>
-                      Email:{' '}
-                      <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
-                        {contact?.contactEmail}
-                      </a>
-                    </div>
-                    <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>
-                    <div data-testid="service-notice-date-range"></div>
-                  </GoACallout>
-                </CalloutWrapper>
+                {contact?.contactEmail && (
+                  <CalloutWrapper id="contactSupport">
+                    <GoACallout title="Need help? Contact your service admin" type="information">
+                      <div>{contact?.supportInstructions}</div>
+                      <div>
+                        Email:{' '}
+                        <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
+                          {contact?.contactEmail}
+                        </a>
+                      </div>
+                      {contact?.phoneNumber && <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>}
+                      <div data-testid="service-notice-date-range"></div>
+                    </GoACallout>
+                  </CalloutWrapper>
+                )}
               </>
             ) : notifications ? (
               <GoACallout title={`${notifications.message}`} type="important"></GoACallout>
@@ -185,4 +187,9 @@ const SubscriptionManagement = styled.div`
   tr > th {
     padding-bottom: 0.5rem;
   }
+`;
+
+const GoAModelTextWrapper = styled.div`
+  padding: 0 1.5rem 0 1.75rem;
+  max-width: 36rem;
 `;

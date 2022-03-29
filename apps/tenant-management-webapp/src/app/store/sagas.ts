@@ -16,7 +16,6 @@ import {
   tenantLogout,
   fetchRealmRoles,
 } from './tenant/sagas';
-import { fetchTenantConfig, createTenantConfig, updateTenantConfig } from './tenantConfig/sagas';
 import {
   deleteApplication,
   fetchServiceStatusApps,
@@ -24,6 +23,8 @@ import {
   saveApplication,
   setApplicationStatus,
   toggleApplicationStatus,
+  updateStatusContactInformation,
+  fetchStatusConfiguration,
 } from './status/sagas';
 import { watchEventSagas } from './event/sagas';
 import { watchFileSagas } from './file/sagas';
@@ -54,12 +55,13 @@ import {
   FETCH_REALM_ROLES,
 } from './tenant/actions';
 import { FETCH_DIRECTORY, CREATE_ENTRY, UPDATE_ENTRY, DELETE_ENTRY, FETCH_ENTRY_DETAIL } from './directory/actions';
-import { FETCH_TENANT_CONFIG, CREATE_TENANT_CONFIG, UPDATE_TENANT_CONFIG } from './tenantConfig/actions';
 import {
   DELETE_APPLICATION_ACTION,
   FETCH_SERVICE_STATUS_APPS_ACTION,
   FETCH_STATUS_METRICS_ACTION,
   SAVE_APPLICATION_ACTION,
+  UPDATE_STATUS_CONTACT_INFORMATION,
+  FETCH_STATUS_CONFIGURATION,
 } from './status/actions';
 import { SAVE_NOTICE_ACTION, GET_NOTICES_ACTION, DELETE_NOTICE_ACTION } from './notice/actions';
 import { saveNotice, getNotices, deleteNotice } from './notice/sagas';
@@ -73,11 +75,6 @@ export function* watchSagas() {
 
   // tenant and keycloak
   yield takeEvery(CHECK_IS_TENANT_ADMIN, isTenantAdmin);
-
-  //tenant config
-  yield takeEvery(FETCH_TENANT_CONFIG, fetchTenantConfig);
-  yield takeEvery(CREATE_TENANT_CONFIG, createTenantConfig);
-  yield takeEvery(UPDATE_TENANT_CONFIG, updateTenantConfig);
   yield takeEvery(KEYCLOAK_CHECK_SSO, keycloakCheckSSO);
   yield takeEvery(TENANT_LOGIN, tenantLogin);
   yield takeEvery(KEYCLOAK_CHECK_SSO_WITH_LOGOUT, keycloakCheckSSOWithLogout);
@@ -86,7 +83,7 @@ export function* watchSagas() {
 
   //tenant config
   yield takeEvery(CREATE_TENANT, createTenant);
-  yield takeEvery(FETCH_TENANT, fetchTenant);
+  yield takeLatest(FETCH_TENANT, fetchTenant);
   yield takeEvery(FETCH_REALM_ROLES, fetchRealmRoles);
   yield takeEvery(TENANT_ADMIN_LOGIN, tenantAdminLogin);
   yield takeEvery(TENANT_CREATION_LOGIN_INIT, tenantCreationInitLogin);
@@ -103,6 +100,8 @@ export function* watchSagas() {
   yield takeEvery(DELETE_APPLICATION_ACTION, deleteApplication);
   yield takeEvery(SET_APPLICATION_STATUS_ACTION, setApplicationStatus);
   yield takeEvery(TOGGLE_APPLICATION_STATUS_ACTION, toggleApplicationStatus);
+  yield takeEvery(UPDATE_STATUS_CONTACT_INFORMATION, updateStatusContactInformation);
+  yield takeEvery(FETCH_STATUS_CONFIGURATION, fetchStatusConfiguration);
   yield takeLatest(FETCH_STATUS_METRICS_ACTION, fetchStatusMetrics);
 
   // notices

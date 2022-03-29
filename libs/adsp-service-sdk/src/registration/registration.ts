@@ -17,8 +17,6 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
   ) {}
 
   async register(registration: ServiceRegistration): Promise<void> {
-    await this.updateRegistration(registration);
-
     if (registration.configurationSchema) {
       const namespace = registration.serviceId.namespace;
       const name = registration.serviceId.service;
@@ -78,46 +76,6 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
       await this.updateConfiguration(adspId`urn:ads:platform:notification-service`, update);
     }
   }
-
-  private async updateRegistration(registration: ServiceRegistration): Promise<void> {
-    const configurationServiceId = adspId`urn:ads:platform:configuration-service:v1`;
-    const serviceUrl = await this.directory.getServiceUrl(configurationServiceId);
-
-    try {
-      await retry(async (next, count) => {
-        try {
-          await this.#tryRegister(serviceUrl, count, registration);
-        } catch (err) {
-          this.logger.debug(`Try ${count} failed with error. ${err}`, this.LOG_CONTEXT);
-          next(err);
-        }
-      });
-
-      this.logger.info(`Registered service ${registration.serviceId}`, this.LOG_CONTEXT);
-    } catch (err) {
-      this.logger.error(`Error encountered registering service. ${err}`);
-      throw err;
-    }
-  }
-
-  #tryRegister = async (serviceUrl: URL, count: number, registration: ServiceRegistration): Promise<void> => {
-    const { serviceId, displayName, description } = registration;
-
-    this.logger.debug(`Try ${count}: registering service ${serviceId}...`, this.LOG_CONTEXT);
-
-    const registerUrl = new URL(`v1/serviceOptions/${serviceId.service}/v1`, serviceUrl);
-    const token = await this.tokenProvider.getAccessToken();
-    await axios.post(
-      registerUrl.href,
-      {
-        service: serviceId.service,
-        version: 'v1',
-        displayName,
-        description,
-      },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-  };
 
   private async updateConfiguration<C extends Record<string, unknown>>(serviceId: AdspId, update: C): Promise<void> {
     const configurationServiceId = adspId`urn:ads:platform:configuration-service:v2`;

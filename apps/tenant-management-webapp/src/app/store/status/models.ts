@@ -16,12 +16,21 @@ export interface ServiceStatus {
   currentFormData: ServiceStatusApplication;
   endpointHealth: Record<string, { url: string; entries: EndpointStatusEntry[] }>;
   metrics: ServiceStatusMetrics;
+  contact: ContactInformation;
 }
 
 export interface FormData {
   name: string;
   description: string;
   endpoint: { url: string; status: string };
+}
+
+export interface StatusConfigurationInfo {
+  contact: ContactInformation;
+}
+
+export interface ContactInformation {
+  contactEmail?: string;
 }
 
 export interface ServiceStatusApplication {

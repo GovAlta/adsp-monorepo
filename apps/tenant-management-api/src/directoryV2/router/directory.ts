@@ -13,13 +13,7 @@ import { validateNamespaceEndpointsPermission, toKebabName } from '../../middlew
 const passportMiddleware = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
 
 import axios from 'axios';
-import { Service } from '../../directory/types/directory';
-interface DirectoryRouterProps {
-  logger?: Logger;
-  directoryRepository: DirectoryRepository;
-  tenantService: TenantService;
-}
-
+import { Service, Links } from '../../directory/types/directory';
 export interface URNComponent {
   scheme?: string;
   nic?: string;
@@ -41,6 +35,12 @@ const getUrn = (component: URNComponent) => {
   return urn;
 };
 
+interface DirectoryRouterProps {
+  logger?: Logger;
+  directoryRepository: DirectoryRepository;
+  tenantService: TenantService;
+}
+
 const directoryCache = new NodeCache({ stdTTL: 300 });
 
 export const createDirectoryRouter = ({ logger, directoryRepository, tenantService }: DirectoryRouterProps): Router => {
@@ -50,38 +50,40 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
    */
   directoryRouter.get('/namespaces/:namespace', async (req: Request, res: Response, _next) => {
     const { namespace } = req.params;
-    const results = directoryCache.get(`directory-${namespace}`);
-    if (results) {
-      res.json(results);
-    } else {
-      try {
-        const response = {};
-        const result = await directoryRepository.find(100, null, null);
-        const directories = result.results;
-        if (directories && directories.length > 0) {
-          for (const directory of directories) {
-            if (directory.name === namespace) {
-              const services = directory['services'];
-              for (const service of services) {
-                const component: URNComponent = {
-                  scheme: 'urn',
-                  nic: 'ads',
-                  core: directory['name'],
-                  service: service['service'],
-                };
-                const serviceName: string = service['host'].toString();
-                response[getUrn(component)] = serviceName;
-              }
-            }
-          }
-        }
+    let services;
 
-        directoryCache.set(`directory-${namespace}`, response);
-        res.json(response);
+    services = directoryCache.get(`directory-${namespace}`);
+    if (!services) {
+      try {
+        const directory = await directoryRepository.getDirectories(namespace);
+        if (!directory) {
+          res.json([]);
+        }
+        services = directory['services'];
       } catch (err) {
         _next(err);
       }
     }
+
+    const response = [];
+
+    for (const service of services) {
+      const element = {};
+      element['namespace'] = namespace;
+      element['service'] = service.service;
+      element['url'] = service.host;
+      const component: URNComponent = {
+        scheme: 'urn',
+        nic: 'ads',
+        core: namespace,
+        service: service.service,
+      };
+      element['urn'] = getUrn(component);
+      response.push(element);
+    }
+
+    directoryCache.set(`directory-${namespace}`, services);
+    res.json(response);
   });
 
   /*
@@ -116,18 +118,27 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
       try {
         const { service, api, url } = req.body;
         const result = await directoryRepository.getDirectories(namespace);
+
         const mappingService = {
           service: service,
           api: api,
           host: url,
         };
+        if (!result) {
+          const directory = { name: namespace, services: [mappingService] };
+          await directoryRepository.update(directory);
+          directoryCache.del(`directory-${namespace}`);
+          return res.sendStatus(HttpStatusCodes.CREATED);
+        }
         const services = result['services'];
         const isExist = services.find((x) => x.service === service);
+
         if (isExist) {
           throw new InvalidValueError('Create new service', `${service} is exist in ${namespace}`);
         } else {
           services.push(mappingService);
           const directory = { name: namespace, services: services };
+
           await directoryRepository.update(directory);
           directoryCache.del(`directory-${namespace}`);
           return res.sendStatus(HttpStatusCodes.CREATED);
@@ -175,7 +186,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
    * Delete one service by namespace
    */
   directoryRouter.delete(
-    '/namespaces/:namespace/service/:service',
+    '/namespaces/:namespace/services/:service',
     [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
     async (req: Request, res: Response, _next) => {
       const { namespace, service } = req.params;
@@ -210,27 +221,42 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
    */
   directoryRouter.get('/namespaces/:namespace/services/:service', async (req: Request, res: Response, _next) => {
     const { namespace, service } = req.params;
+    const results: [Service] = directoryCache.get(`directory-${namespace}`);
+
+    if (results) {
+      const isExist = results.find((x) => x.service === service);
+      if (isExist && isExist?.metadata) {
+        return res.status(HttpStatusCodes.OK).json(isExist);
+      }
+    }
     try {
       const directoryEntity = await directoryRepository.getDirectories(namespace);
       if (!directoryEntity) {
         return res.sendStatus(HttpStatusCodes.BAD_REQUEST).json({ error: `${namespace} could not find` });
       }
       const services = directoryEntity['services'];
-      const filteredService = services.filter((x) => x.service.indexOf(service) > -1);
+      const filteredService = services.find((x) => x.service === service);
 
       // will return service information and HAL link information
-
-      if (filteredService) {
-        const base: Service = filteredService[0];
-
-        const { data } = await axios.get(base.host);
-        if (data._links) {
-          base._links = data._links;
-        }
-        return res.status(HttpStatusCodes.OK).json(base);
-      } else {
-        return res.sendStatus(HttpStatusCodes.BAD_REQUEST).json({ error: `${service} could not find` });
+      if (!filteredService) {
+        throw new InvalidValueError('Update service', `Cannot find service: ${service}`);
       }
+      try {
+        const { data } = await axios.get<Links>(filteredService.host);
+        // Root attributes of Links type are all optional. So, string can pass the axios type validation.
+        if (typeof data !== 'object') {
+          throw new InvalidValueError('Fetch metadata', 'Invalid metadata schema');
+        }
+
+        if (!filteredService.metadata) {
+          filteredService.metadata = data;
+        }
+      } catch (err) {
+        logger.warn(`Failed fetching metadata for service ${service} with error ${err.message}`);
+      }
+
+      directoryCache.set(`directory-${namespace}`, services);
+      return res.status(HttpStatusCodes.OK).json(filteredService);
     } catch (err) {
       logger.error(`Failed get service for namespace: ${namespace} with error ${err.message}`);
       _next(err);

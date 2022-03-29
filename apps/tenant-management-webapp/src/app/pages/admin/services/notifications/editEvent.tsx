@@ -59,6 +59,12 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
   const existingEventList =
     initialValue?.events?.filter((def) => `${def.namespace}:${def.name}` !== selectedValues[0]) || [];
 
+  for (const key in eventDefinitions) {
+    if (key.indexOf('notification-service') > -1) {
+      existingEventList.push({ namespace: key.split(':')[0], name: key.split(':')[1] });
+    }
+  }
+
   if (initialValue) {
     dropDownOptions = Object.keys(eventDefinitions)
       .filter((def) => {

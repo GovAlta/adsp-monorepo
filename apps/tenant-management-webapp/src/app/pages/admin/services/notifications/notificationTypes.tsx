@@ -24,7 +24,6 @@ import {
 import { NotificationItem } from '@store/notification/models';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
-import { EmailPreview } from './emailPreview';
 import { EditIcon } from '@components/icons/EditIcon';
 import { subjectEditorConfig, bodyEditorConfig } from './emailPreviewEditor/config';
 import {
@@ -67,7 +66,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [showEventDeleteConfirmation, setShowEventDeleteConfirmation] = useState(false);
   const [coreEvent, setCoreEvent] = useState(false);
   const [showTemplateForm, setShowTemplateForm] = useState(false);
-  const [showEmailPreview, setShowEmailPreview] = useState(false);
   const [templateEditErrors, setTemplateEditErrors] = useState({
     subject: '',
     body: '',
@@ -162,7 +160,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     setEditType(false);
     setEditEvent(null);
     setSelectedType(emptyNotificationType);
-    setShowEmailPreview(false);
     setErrors({});
   }
 
@@ -420,18 +417,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                             <img src={MailIcon} alt="non-interactive email icon" data-testid="icon-mail" />
                             <div className="rightAlignEdit">
                               <a
-                                style={{ marginRight: '20px' }}
-                                data-testid="preview-event"
-                                onClick={() => {
-                                  setSelectedEvent(event);
-                                  setSelectedType(notificationType);
-                                  setShowEmailPreview(true);
-                                }}
-                              >
-                                Preview
-                              </a>
-
-                              <a
                                 data-testid="edit-event"
                                 onClick={() => {
                                   setSelectedEvent(event);
@@ -547,18 +532,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                   Reset
                                 </a>
                               )}
-
-                              <a
-                                style={{ marginRight: '10px', fontSize: '15px' }}
-                                data-testid="preview-event"
-                                onClick={() => {
-                                  setSelectedEvent(event);
-                                  setSelectedType(notificationType);
-                                  setShowEmailPreview(true);
-                                }}
-                              >
-                                Preview
-                              </a>
                               <a
                                 data-testid="edit-event"
                                 style={{ fontSize: '15px' }}
@@ -749,16 +722,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           </NotificationTemplateEditorContainer>
         </ModalContent>
       </Modal>
-
-      <EmailPreview
-        initialValue={editEvent}
-        selectedEvent={selectedEvent}
-        notifications={selectedType}
-        open={showEmailPreview}
-        onCancel={() => {
-          setShowEmailPreview(false);
-        }}
-      />
     </NotificationStyles>
   );
 };

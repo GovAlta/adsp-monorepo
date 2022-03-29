@@ -3,6 +3,7 @@ import axios from 'axios';
 import * as NodeCache from 'node-cache';
 import { JsonObject } from 'swagger-ui-express';
 import { Logger } from 'winston';
+import { toKebabName } from '@abgov/adsp-service-sdk';
 
 interface ServiceDoc {
   service: {
@@ -13,8 +14,33 @@ interface ServiceDoc {
   url: string;
 }
 
+interface Metadata {
+  displayName?: string;
+  _links?: {
+    self?: string;
+    docs?: {
+      href: string;
+    };
+  };
+  name?: string;
+}
+
+interface DirectoryServiceResponse {
+  name?: string;
+  description?: string;
+  displayName?: string;
+  metadata: Metadata;
+}
+
+interface Directory {
+  url: string;
+  namespace: string;
+  urn: string;
+  name: string;
+}
+
 export interface ServiceDocs {
-  getDocs(): Promise<Record<string, ServiceDoc>>;
+  getDocs(id: AdspId): Promise<Record<string, ServiceDoc>>;
 }
 
 class ServiceDocsImpl {
@@ -28,45 +54,45 @@ class ServiceDocsImpl {
     private readonly tokenProvider: TokenProvider
   ) {}
 
-  #retrieveDocs = async (): Promise<Record<string, ServiceDoc>> => {
-    this.logger.debug('Retrieving service API docs...');
-
-    const configurationServiceUrl = await this.directory.getServiceUrl(
-      adspId`urn:ads:platform:configuration-service:v1`
-    );
-    const optionsUrl = new URL('v1/serviceOptions?top=100', configurationServiceUrl);
-
-    const token = await this.tokenProvider.getAccessToken();
-    const { data } = await axios.get<{ results: { service: string; version: string; displayName: string }[] }>(
-      optionsUrl.href,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
+  #retrieveDocs = async (tenant?: string): Promise<Record<string, ServiceDoc>> => {
+    const directoryServiceUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:tenant-service`);
     const docs = {} as Record<string, ServiceDoc>;
-    for (const { service, version, displayName } of data.results) {
-      if (version === 'v1') {
-        try {
-          const serviceId = adspId`urn:ads:platform:${service}`;
-          this.logger.debug(`Retrieving API docs for service ${serviceId} ...`);
 
-          const serviceUrl = await this.directory.getServiceUrl(serviceId);
-          const docUrl = new URL('swagger/docs/v1', serviceUrl);
+    if (tenant) {
+      const namespace = toKebabName(tenant);
 
-          const { data } = await axios.get(docUrl.href);
+      const tenantDirectoryUrl = new URL(`api/directory/v2/namespaces/${namespace}`, directoryServiceUrl);
 
-          if (data.openapi) {
-            data.servers = [{ url: serviceUrl.href }];
-            docs[service] = {
-              service: {
-                id: serviceId,
-                name: displayName,
-              },
-              docs: data,
-              url: docUrl.href,
-            };
+      const { data } = await axios.get<Array<Directory>>(tenantDirectoryUrl.href);
+      for (const entry of data) {
+        const url = entry.url;
+        const id = adspId`${entry.urn}`;
+        if (id.type === 'service') {
+          try {
+            const serviceDirectoryUrl = new URL(
+              `api/directory/v2/namespaces/${namespace}/services/${id.service}`,
+              directoryServiceUrl.href
+            );
+            const { metadata } = (await axios.get<DirectoryServiceResponse>(serviceDirectoryUrl.href)).data;
+            if (metadata?._links?.docs?.href) {
+              const docUrl = metadata?._links?.docs.href;
+              this.logger.debug(`Retrieving API docs for service ${id} ...`);
+              const { data: docData } = await axios.get(docUrl);
+              if (docData.openapi) {
+                docData.servers = [{ url }];
+                docs[id.toString()] = {
+                  service: {
+                    id: id,
+                    name: docData?.info?.title || metadata?.displayName || metadata?.name,
+                  },
+                  docs: docData,
+                  url,
+                };
+              }
+            }
+          } catch (err) {
+            this.logger.warn(`Failed retrieving docs for ${id} with error ${err.message}`);
           }
-        } catch (err) {
-          this.logger.warn(`Error encountered in getting docs for ${service}. ${err}`);
         }
       }
     }
@@ -75,14 +101,38 @@ class ServiceDocsImpl {
     return docs;
   };
 
-  async getDocs(): Promise<Record<string, ServiceDoc>> {
-    const key = 'docs';
-    let docs = this.cache.get<Record<string, ServiceDoc>>(key);
-    if (!docs) {
-      docs = await this.#retrieveDocs();
-      this.cache.set(key, docs);
+  async getDocs(id?: AdspId): Promise<Record<string, ServiceDoc>> {
+    const namespaces = this.cache.keys();
+    let mergedDocs: Record<string, ServiceDoc> = {};
+    const docs: Record<string, ServiceDoc> = {};
+
+    if (!namespaces.includes(id.namespace)) {
+      const docs = await this.#retrieveDocs(id.namespace);
+      this.cache.set(id.namespace, docs);
     }
-    return docs;
+    // Avoid re-cache of platform
+    if (id.namespace !== 'platform' && !namespaces.includes('platform')) {
+      const docs = await this.#retrieveDocs('platform');
+      this.cache.set('platform', docs);
+    }
+
+    if (id.namespace === 'platform') {
+      mergedDocs = {
+        ...this.cache.get<Record<string, ServiceDoc>>('platform'),
+      };
+    } else {
+      // Merge the platform and tenant docs
+      mergedDocs = {
+        ...this.cache.get<Record<string, ServiceDoc>>('platform'),
+        ...this.cache.get<Record<string, ServiceDoc>>(id.namespace),
+      };
+    }
+
+    if (id.type === 'service') {
+      docs[id.toString()] = id.toString() in mergedDocs ? mergedDocs[id.toString()] : null;
+      return docs;
+    }
+    return mergedDocs;
   }
 }
 
