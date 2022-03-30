@@ -4,8 +4,10 @@ import {
   UnauthorizedError,
   NotFoundError,
   InvalidOperationError,
+  createValidationHandler,
 } from '@core-services/core-common';
-import { RequestHandler, Router } from 'express';
+import { Request, RequestHandler, Response, Router } from 'express';
+import { param } from 'express-validator';
 import { Logger } from 'winston';
 import { FileRepository } from '../repository';
 import { FileEntity, FileTypeEntity } from '../model';
@@ -259,11 +261,22 @@ export const createFileRouter = ({
   fileRouter.delete(
     '/files/:fileId',
     assertAuthenticatedHandler,
+    createValidationHandler(param('fileId').isUUID()),
     getFile(fileRepository),
     deleteFile(logger, eventService)
   );
-  fileRouter.get('/files/:fileId', getFile(fileRepository), (req, res) => res.send(mapFile(apiId, req.fileEntity)));
-  fileRouter.get('/files/:fileId/download', getFile(fileRepository), downloadFile);
+  fileRouter.get(
+    '/files/:fileId',
+    createValidationHandler(param('fileId').isUUID()),
+    getFile(fileRepository),
+    (req: Request, res: Response) => res.send(mapFile(apiId, req.fileEntity))
+  );
+  fileRouter.get(
+    '/files/:fileId/download',
+    createValidationHandler(param('fileId').isUUID()),
+    getFile(fileRepository),
+    downloadFile
+  );
 
   return fileRouter;
 };
