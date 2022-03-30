@@ -24,14 +24,8 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const dispatch = useDispatch();
 
-  const checkService = (service) => {
-    const tenantDirectory = directory.find((x) => x.namespace === tenantName && x.service === service);
-    return tenantDirectory;
-  };
   const checkApi = (entry) => {
-    const tenantDirectory = directory.find(
-      (x) => x.namespace === tenantName && x.service === entry.service && x.api === entry.api
-    );
+    const tenantDirectory = directory.find((x) => x.namespace === tenantName && x.service === entry.service);
     return tenantDirectory;
   };
 
@@ -108,16 +102,8 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               setErrors({ ...errors, service: 'Service allowed characters: a-z, 0-9, -' });
               return;
             }
-            if (checkService(entry.service) && props.type === 'new') {
-              setErrors({ ...errors, service: 'Service name duplicate, please use another one' });
-              return;
-            }
             if (entry.api && !regex.test(entry.api)) {
               setErrors({ ...errors, api: 'Api allowed characters: a-z, 0-9, -' });
-              return;
-            }
-            if (entry.api && checkApi(entry)) {
-              setErrors({ ...errors, api: 'Api duplicate, please use another one' });
               return;
             }
             const urlReg = new RegExp(/^(http|https):\/\/[^ "]+$/);
@@ -129,6 +115,11 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
 
             if (entry.api) {
               entry.service = `${entry.service}:${entry.api}`;
+            }
+
+            if (entry.api && checkApi(entry)) {
+              setErrors({ ...errors, api: 'Api duplicate, please use another one' });
+              return;
             }
 
             if (props.type === 'new') {
