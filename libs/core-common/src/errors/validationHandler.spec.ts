@@ -1,6 +1,7 @@
-import { createValidationHandler, ValidationFailedError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { body, checkSchema } from 'express-validator';
+import { ValidationFailedError } from './validationFailed';
+import { createValidationHandler } from './validationHandler';
 
 describe('validationHandler', () => {
   it('can validate', async () => {
