@@ -2,7 +2,7 @@ import type { Logger } from 'winston';
 import { initializePlatform } from './platform';
 import { LogOptions, PlatformCapabilities, PlatformOptions } from './types';
 
-type Options = Omit<PlatformOptions, 'ignoreServiceAud'>;
+type Options = Omit<PlatformOptions, 'ignoreServiceAud' | 'roles'>;
 type Capabilities = Omit<PlatformCapabilities, 'tenantService' | 'tenantHandler'>;
 
 /**

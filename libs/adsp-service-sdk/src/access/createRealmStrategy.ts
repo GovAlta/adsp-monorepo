@@ -4,6 +4,7 @@ import { ExtractJwt, Strategy as JwtStrategy, VerifyCallbackWithRequest } from '
 import type { Logger } from 'winston';
 import { Tenant, TenantService } from '../tenant';
 import { AdspId, assertAdspId } from '../utils';
+import { resolveRoles } from './resolveRoles';
 
 export interface AccessStrategyOptions {
   realm: string;
@@ -25,7 +26,7 @@ export const createRealmStrategy = ({
   const serviceAud = serviceId.toString();
   const realmIssUrl = new URL(`/auth/realms/${realm}`, accessServiceUrl);
   const realmIss = realmIssUrl.href;
-  const realmJwksUrl = new URL(`/auth/realms/${realm}`, accessServiceUrl);
+  const realmJwksUrl = new URL(`/auth/realms/${realm}/protocol/openid-connect/certs`, accessServiceUrl);
   const realmJwks = realmJwksUrl.href;
 
   let tenant: Tenant = null;
@@ -37,7 +38,7 @@ export const createRealmStrategy = ({
       id: payload.sub,
       name: payload.name || payload.preferred_username,
       email: payload.email,
-      roles: [...(payload.realm_access?.roles || []), ...(payload.resource_access?.[serviceAud]?.roles || [])],
+      roles: resolveRoles(serviceAud, payload),
       tenantId: tenant?.id,
       isCore: realm === 'core',
       token: {
