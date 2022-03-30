@@ -245,9 +245,7 @@ export function createConfigurationRouter({
     '/configuration/:namespace/:name',
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
-    createValidationHandler(
-      body('operation').isString().isWhitelisted([OPERATION_DELETE, OPERATION_UPDATE, OPERATION_REPLACE])
-    ),
+    createValidationHandler(body('operation').isString()),
     getConfigurationEntity(serviceId, configurationRepository),
     patchConfigurationRevision(logger, eventService)
   );
