@@ -1,11 +1,13 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { SubscriptionList } from './subscriptionList';
 import { GetAllTypeSubscriptions, DeleteSubscription } from '@store/subscription/actions';
 import type { Subscriber, SubscriberSearchCriteria, SubscriptionSearchCriteria } from '@store/subscription/models';
 import { SubscribersSearchForm } from './subscribers/subscriberSearchForm';
 import { CheckSubscriberRoles } from './checkSubscriberRoles';
 import { DeleteModal } from '@components/DeleteModal';
+import { PageIndicator } from '@components/Indicator';
+import { RootState } from '@store/index';
 
 export const Subscriptions: FunctionComponent = () => {
   const criteriaInit = {
@@ -27,25 +29,38 @@ export const Subscriptions: FunctionComponent = () => {
   };
 
   const resetState = () => {
-    setCriteriaState(criteriaInit);
     dispatch(GetAllTypeSubscriptions({}));
+    setCriteriaState(criteriaInit);
   };
+
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
 
   const emailIndex = selectedSubscription?.channels?.findIndex((channel) => channel.channel === 'email');
 
   return (
     <CheckSubscriberRoles>
-      <SubscribersSearchForm onSearch={searchFn} reset={resetState} />
-      <SubscriptionList
-        onDelete={(sub: Subscriber, type: string) => {
-          setSelectedSubscription(sub);
-          setShowDeleteConfirmation(true);
-          setSelectedType(type);
-        }}
+      <SubscribersSearchForm
+        onSearch={searchFn}
+        reset={resetState}
         searchCriteria={criteriaState}
+        onUpdate={setCriteriaState}
       />
-      {/* Delete confirmation */}
+      {indicator.show && <PageIndicator />}
 
+      {indicator.show === false && (
+        <SubscriptionList
+          onDelete={(sub: Subscriber, type: string) => {
+            setSelectedSubscription(sub);
+            setShowDeleteConfirmation(true);
+            setSelectedType(type);
+          }}
+          searchCriteria={criteriaState}
+        />
+      )}
+
+      {/* Delete confirmation */}
       {showDeleteConfirmation && (
         <DeleteModal
           isOpen={showDeleteConfirmation}
