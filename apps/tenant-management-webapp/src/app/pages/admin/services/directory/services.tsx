@@ -36,10 +36,10 @@ export const DirectoryService: FunctionComponent = () => {
   // eslint-disable-next-line
   useEffect(() => {}, [tenantName]);
 
-  function reset() {
+  const reset = () => {
     setEditEntry(false);
     setSelectedEntry(defaultService);
-  }
+  };
 
   const onEdit = (service) => {
     setSelectedEntry(service);
@@ -50,12 +50,14 @@ export const DirectoryService: FunctionComponent = () => {
     setShowDeleteConfirmation(true);
     setSelectedEntry(service);
   };
+
   return (
     <>
       {indicator.show && <PageIndicator />}
       {!indicator.show && !directory && renderNoItem('directory')}
       {!indicator.show && directory && (
         <div>
+          <p>Add your own entry so they can be found using the directory.</p>
           {tenantName !== coreTenant && (
             <GoAButton
               data-testid="add-directory-btn"
@@ -91,7 +93,7 @@ export const DirectoryService: FunctionComponent = () => {
       {showDeleteConfirmation && (
         <DeleteModal
           isOpen={showDeleteConfirmation}
-          title="Delete directory entry"
+          title="Delete entry"
           content={`Delete ${selectedEntry?.service} ?`}
           onCancel={() => setShowDeleteConfirmation(false)}
           onDelete={() => {

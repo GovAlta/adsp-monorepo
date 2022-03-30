@@ -34,7 +34,7 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
         <td headers="directory" data-testid="directory">
           {service.url}
         </td>
-        <td className="actionCol">
+        <td>
           <GoAContextMenu>
             {service.service.split(':').length === 1 && (
               <GoAContextMenuIcon
@@ -159,5 +159,6 @@ export const TableDiv = styled.div`
     white-space: nowrap;
     overflow-x: hidden;
     text-overflow: ellipsis;
+    text-align: right;
   }
 `;

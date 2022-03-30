@@ -21,7 +21,7 @@ export const DirectoryOverview: FunctionComponent = () => {
       <p>
         The directory service is a register of services and their APIs. Applications can use the directory API to lookup
         URLs for services. Directory information is public and anonymous frontend applications can read this
-        information. Add your own services so they can be found using the directory.
+        information. Add your own entry so they can be found using the directory.
       </p>
       <section>
         <h2>Service metadata</h2>

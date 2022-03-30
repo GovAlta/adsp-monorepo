@@ -69,7 +69,7 @@ export function* createEntryDirectory(action: CreateEntryAction): SagaIterator {
       yield put(createEntrySuccess(action.data));
     }
   } catch (err) {
-    yield put(ErrorNotification({ message: `Failed to create directory service ${action.data.service}` }));
+    yield put(ErrorNotification({ message: `Failed to create directory service ${action.data.namespace}` }));
   }
 }
 
@@ -99,7 +99,7 @@ export function* deleteEntryDirectory(action: DeleteEntryAction): SagaIterator {
       yield put(deleteEntrySuccess(action.data));
     }
   } catch (err) {
-    yield put(ErrorNotification({ message: `Failed to delete directory service ${action.data.service}` }));
+    yield put(ErrorNotification({ message: `Failed to delete directory service ${action.data.namespace}` }));
   }
 }
 

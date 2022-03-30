@@ -1,4 +1,5 @@
 export interface Service {
+  _id?: string;
   service: string;
   api?: string;
   host: string;

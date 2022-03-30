@@ -17,7 +17,8 @@ interface DirectoryModalProps {
 export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   const isNew = props.type === 'new';
   const [entry, setEntry] = useState(props.entry);
-  const title = isNew ? 'Add directory' : 'Edit directory';
+
+  const title = isNew ? 'Add entry' : 'Edit entry';
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { directory } = useSelector((state: RootState) => state.directory);
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -27,10 +28,18 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
     const tenantDirectory = directory.find((x) => x.namespace === tenantName && x.service === service);
     return tenantDirectory;
   };
-  const checkApi = (api) => {
-    const tenantDirectory = directory.find((x) => x.namespace === tenantName && x.api && x.api === api);
+  const checkApi = (entry) => {
+    const tenantDirectory = directory.find(
+      (x) => x.namespace === tenantName && x.service === entry.service && x.api === entry.api
+    );
     return tenantDirectory;
   };
+
+  if (entry.service.indexOf(':') > -1) {
+    entry.api = entry.service.split(':')[1];
+    entry.service = entry.service.split(':')[0];
+  }
+
   return (
     <GoAModal testId="directory-modal" isOpen={props.open}>
       <GoAModalTitle>{title}</GoAModalTitle>
@@ -104,7 +113,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               setErrors({ ...errors, api: 'Api allowed characters: a-z, 0-9, -' });
               return;
             }
-            if (checkApi(entry.api) && props.type === 'new') {
+            if (entry.api && checkApi(entry)) {
               setErrors({ ...errors, api: 'Api duplicate, please use another one' });
               return;
             }
@@ -115,9 +124,14 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               return;
             }
 
+            if (entry.api) {
+              entry.service = `${entry.service}:${entry.api}`;
+            }
+
             if (props.type === 'new') {
               dispatch(createEntry(entry));
             }
+
             if (props.type === 'edit') {
               dispatch(updateEntry(entry));
             }
