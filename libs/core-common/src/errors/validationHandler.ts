@@ -2,9 +2,9 @@ import { RequestHandler } from 'express';
 import { ValidationChain, validationResult } from 'express-validator';
 import { ValidationFailedError } from './validationFailed';
 
-export function createValidationHandler(chain: ValidationChain | ValidationChain[]): RequestHandler[] {
+export function createValidationHandler(...chain: ValidationChain[]): RequestHandler[] {
   return [
-    ...(Array.isArray(chain) ? chain : [chain]),
+    ...chain,
     (req, _res, next) => {
       const result = validationResult(req);
       if (!result?.isEmpty()) {

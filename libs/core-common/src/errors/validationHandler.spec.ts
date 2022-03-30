@@ -6,7 +6,7 @@ import { createValidationHandler } from './validationHandler';
 describe('validationHandler', () => {
   it('can validate', async () => {
     const validationHandlers = createValidationHandler(
-      checkSchema(
+      ...checkSchema(
         {
           timestamp: { optional: true, isISO8601: true },
           context: { optional: true, isObject: true },
@@ -33,7 +33,7 @@ describe('validationHandler', () => {
 
   it('can validate and fail', async () => {
     const validationHandlers = createValidationHandler(
-      checkSchema(
+      ...checkSchema(
         {
           timestamp: { optional: true, isISO8601: true },
           context: { optional: true, isObject: true },
@@ -62,7 +62,7 @@ describe('validationHandler', () => {
   });
 
   it('can handle no result', async () => {
-    const validationHandlers = createValidationHandler([]);
+    const validationHandlers = createValidationHandler();
 
     const req = {
       body: {},

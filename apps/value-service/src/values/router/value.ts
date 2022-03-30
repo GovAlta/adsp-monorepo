@@ -232,41 +232,30 @@ export function writeValue(logger: Logger, eventService: EventService, repositor
 export const createValueRouter = ({ logger, repository, eventService }: ValueRouterProps): Router => {
   const valueRouter = Router();
 
+  const validateNamespaceNameHandler = createValidationHandler(
+    ...checkSchema(
+      {
+        namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+        name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+      },
+      ['params']
+    )
+  );
+
   valueRouter.get(
     '/:namespace/values',
     createValidationHandler(param('namespace').isString().isLength({ min: 1, max: 50 })),
     readValues
   );
-  valueRouter.get(
-    '/:namespace/values/:name',
-    createValidationHandler(
-      checkSchema(
-        {
-          namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
-          name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
-        },
-        ['params']
-      )
-    ),
-    readValue(repository)
-  );
-  valueRouter.get(
-    '/:namespace/values/:name/metrics',
-    createValidationHandler(
-      checkSchema(
-        {
-          namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
-          name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
-        },
-        ['params']
-      )
-    ),
-    readMetrics(repository)
-  );
+
+  valueRouter.get('/:namespace/values/:name', validateNamespaceNameHandler, readValue(repository));
+
+  valueRouter.get('/:namespace/values/:name/metrics', validateNamespaceNameHandler, readMetrics(repository));
+
   valueRouter.get(
     '/:namespace/values/:name/metrics/:metric',
     createValidationHandler(
-      checkSchema(
+      ...checkSchema(
         {
           namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
           name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
@@ -280,14 +269,9 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
 
   valueRouter.post(
     '/:namespace/values/:name',
-    createValidationHandler([
-      ...checkSchema(
-        {
-          namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
-          name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
-        },
-        ['params']
-      ),
+    assertUserCanWrite,
+    validateNamespaceNameHandler,
+    createValidationHandler(
       ...checkSchema(
         {
           timestamp: { optional: true, isISO8601: true },
@@ -295,9 +279,8 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
           correlationId: { optional: true, isString: true },
         },
         ['body']
-      ),
-    ]),
-    assertUserCanWrite,
+      )
+    ),
     writeValue(logger, eventService, repository)
   );
 

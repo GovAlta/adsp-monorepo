@@ -89,7 +89,7 @@ export const createEventRouter = ({ logger, eventService }: EventRouterProps): R
     assertAuthenticatedHandler,
     assertUserCanSend,
     createValidationHandler(
-      checkSchema(
+      ...checkSchema(
         {
           namespace: {
             exists: true,

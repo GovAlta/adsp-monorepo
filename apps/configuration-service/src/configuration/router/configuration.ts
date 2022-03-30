@@ -1,6 +1,13 @@
 import { AdspId, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { assertAuthenticatedHandler, InvalidOperationError, NotFoundError, Results } from '@core-services/core-common';
+import {
+  assertAuthenticatedHandler,
+  createValidationHandler,
+  InvalidOperationError,
+  NotFoundError,
+  Results,
+} from '@core-services/core-common';
 import { Request, RequestHandler, Router } from 'express';
+import { body, checkSchema } from 'express-validator';
 import { Logger } from 'winston';
 import { configurationUpdated, revisionCreated } from '../events';
 import { ConfigurationEntity } from '../model';
@@ -208,9 +215,20 @@ export function createConfigurationRouter({
 }: ConfigurationRouterProps): Router {
   const router = Router();
 
+  const validateNamespaceNameHandler = createValidationHandler(
+    ...checkSchema(
+      {
+        namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+        name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+      },
+      ['params']
+    )
+  );
+
   router.get(
     '/configuration/:namespace/:name',
     assertAuthenticatedHandler,
+    validateNamespaceNameHandler,
     getConfigurationEntity(serviceId, configurationRepository, (req) => req.query.core !== undefined),
     getConfiguration()
   );
@@ -218,6 +236,7 @@ export function createConfigurationRouter({
   router.get(
     '/configuration/:namespace/:name/latest',
     assertAuthenticatedHandler,
+    validateNamespaceNameHandler,
     getConfigurationEntity(serviceId, configurationRepository, (req) => req.query.core !== undefined),
     getConfiguration((configuration) => configuration.latest?.configuration || {})
   );
@@ -225,6 +244,10 @@ export function createConfigurationRouter({
   router.patch(
     '/configuration/:namespace/:name',
     assertAuthenticatedHandler,
+    validateNamespaceNameHandler,
+    createValidationHandler(
+      body('operation').isString().isWhitelisted([OPERATION_DELETE, OPERATION_UPDATE, OPERATION_REPLACE])
+    ),
     getConfigurationEntity(serviceId, configurationRepository),
     patchConfigurationRevision(logger, eventService)
   );
@@ -232,6 +255,8 @@ export function createConfigurationRouter({
   router.post(
     '/configuration/:namespace/:name',
     assertAuthenticatedHandler,
+    validateNamespaceNameHandler,
+    createValidationHandler(body('revision').isBoolean()),
     getConfigurationEntity(serviceId, configurationRepository),
     createConfigurationRevision(logger, eventService)
   );
@@ -239,6 +264,7 @@ export function createConfigurationRouter({
   router.get(
     '/configuration/:namespace/:name/revisions',
     assertAuthenticatedHandler,
+    validateNamespaceNameHandler,
     getConfigurationEntity(serviceId, configurationRepository),
     getRevisions()
   );
@@ -246,6 +272,16 @@ export function createConfigurationRouter({
   router.get(
     '/configuration/:namespace/:name/revisions/:revision',
     assertAuthenticatedHandler,
+    createValidationHandler(
+      ...checkSchema(
+        {
+          namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+          name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+          revision: { isInt: { options: { min: 0 } } },
+        },
+        ['params']
+      )
+    ),
     getConfigurationEntity(serviceId, configurationRepository),
     getRevisions(
       (req) => ({ revision: req.params.revision }),
