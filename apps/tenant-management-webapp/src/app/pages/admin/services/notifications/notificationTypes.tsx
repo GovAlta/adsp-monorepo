@@ -21,7 +21,7 @@ import {
   FetchNotificationConfigurationService,
   FetchCoreNotificationTypesService,
 } from '@store/notification/actions';
-import { NotificationItem } from '@store/notification/models';
+import { NotificationItem, baseTemplate, Template } from '@store/notification/models';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 import { EditIcon } from '@components/icons/EditIcon';
@@ -46,7 +46,7 @@ const emptyNotificationType: NotificationItem = {
   events: [],
   subscriberRoles: [],
   // TODO: This is hardcoded to email for now. Needs to be updated after additional channels are supported in the UI.
-  channels: ['email'],
+  channels: [],
   id: null,
   publicSubscribe: false,
   customized: false,
@@ -77,9 +77,19 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [formTitle, setFormTitle] = useState<string>('');
 
   const [subject, setSubject] = useState('');
-  const debouncedSubjectRender = useDebounce(subject, TEMPALTE_RENDER_DEBOUNCE_TIMER);
+  const [templates, setTemplates] = useState<Template>(baseTemplate);
+  //const debouncedRender = useDebounce(templates, TEMPALTE_RENDER_DEBOUNCE_TIMER);
+  const debouncedSubjectRenderEmail = useDebounce(templates.email.subject, TEMPALTE_RENDER_DEBOUNCE_TIMER);
+  const debouncedSubjectRenderBot = useDebounce(templates.bot.subject, TEMPALTE_RENDER_DEBOUNCE_TIMER);
+  const debouncedSubjectRenderSms = useDebounce(templates.sms.subject, TEMPALTE_RENDER_DEBOUNCE_TIMER);
+  const debouncedSubjectRenderMail = useDebounce(templates.mail.subject, TEMPALTE_RENDER_DEBOUNCE_TIMER);
+
   const [body, setBody] = useState('');
-  const debouncedBodyRender = useDebounce(body, TEMPALTE_RENDER_DEBOUNCE_TIMER);
+
+  const debouncedBodyRenderEmail = useDebounce(templates.email.body, TEMPALTE_RENDER_DEBOUNCE_TIMER);
+  const debouncedBodyRenderBot = useDebounce(templates.bot.body, TEMPALTE_RENDER_DEBOUNCE_TIMER);
+  const debouncedBodyRenderSms = useDebounce(templates.sms.body, TEMPALTE_RENDER_DEBOUNCE_TIMER);
+  const debouncedBodyRenderMail = useDebounce(templates.mail.body, TEMPALTE_RENDER_DEBOUNCE_TIMER);
 
   const [subjectPreview, setSubjectPreview] = useState('');
   const [bodyPreview, setBodyPreview] = useState('');
@@ -104,14 +114,17 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   useEffect(() => {
     // if an event is selected for editing
     if (selectedEvent) {
-      setSubject(selectedEvent?.templates?.email?.subject);
-      setBody(selectedEvent?.templates?.email?.body);
+      //setSubject(selectedEvent?.templates?.email?.subject);
+      //setBody(selectedEvent?.templates?.email?.body);
+
+      console.log(JSON.stringify(selectedEvent) + '<selectedEvent');
+
+      setTemplates(selectedEvent?.templates);
+
       // try to render preview of subject and body.
       // Will only load if the subject and body is a valid handlebar template
       try {
-        setBodyPreview(
-          generateMessage(getTemplateBody(selectedEvent?.templates?.email?.body, htmlPayload), htmlPayload)
-        );
+        setBodyPreview(generateMessage(getTemplateBody(selectedEvent?.templates?.body, htmlPayload), htmlPayload));
         setTemplateEditErrors({
           ...templateEditErrors,
           body: '',
@@ -179,13 +192,33 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   }
 
   useEffect(() => {
-    renderSubjectPreview(debouncedSubjectRender);
-  }, [debouncedSubjectRender]);
+    renderSubjectPreview(debouncedSubjectRenderEmail);
+  }, [debouncedSubjectRenderEmail]);
   useEffect(() => {
-    renderBodyPreview(debouncedBodyRender);
-  }, [debouncedBodyRender]);
+    renderSubjectPreview(debouncedSubjectRenderBot);
+  }, [debouncedSubjectRenderBot]);
+  useEffect(() => {
+    renderSubjectPreview(debouncedSubjectRenderSms);
+  }, [debouncedSubjectRenderSms]);
+  useEffect(() => {
+    renderSubjectPreview(debouncedSubjectRenderMail);
+  }, [debouncedSubjectRenderMail]);
+
+  useEffect(() => {
+    renderBodyPreview(debouncedBodyRenderEmail);
+  }, [debouncedBodyRenderEmail]);
+  useEffect(() => {
+    renderBodyPreview(debouncedBodyRenderBot);
+  }, [debouncedBodyRenderBot]);
+  useEffect(() => {
+    renderBodyPreview(debouncedBodyRenderSms);
+  }, [debouncedBodyRenderSms]);
+  useEffect(() => {
+    renderBodyPreview(debouncedBodyRenderMail);
+  }, [debouncedBodyRenderMail]);
 
   const renderSubjectPreview = (value) => {
+    console.log(JSON.stringify(value) + '<rendersubjectpreview');
     try {
       const msg = generateMessage(value, htmlPayload);
       setSubjectPreview(msg);
@@ -247,12 +280,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     if (definitionEventIndex > -1) {
       selectedType.events[definitionEventIndex] = {
         ...selectedEvent,
-        templates: {
-          email: {
-            subject,
-            body,
-          },
-        },
+        templates: templates,
       };
     }
     dispatch(UpdateNotificationTypeService(selectedType));
@@ -273,12 +301,12 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const eventTemplateEditHintText =
     "*GOA default header and footer wrapper is applied if the template doesn't include proper <html> opening and closing tags";
   const validateEventTemplateFields = () => {
-    if (subject.length === 0 || body.length === 0) {
-      return false;
-    }
-    if (templateEditErrors.subject || templateEditErrors.body) {
-      return false;
-    }
+    // if (subject.length === 0 || body.length === 0) {
+    //   return false;
+    // }
+    // if (templateEditErrors.subject || templateEditErrors.body) {
+    //   return false;
+    // }
     try {
       handlebars.parse(body);
       handlebars.parse(subject);
@@ -664,17 +692,46 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             <TemplateEditor
               mainTitle={eventTemplateFormState.mainTitle}
               subjectTitle="Subject"
-              subject={subject}
+              //subject={subject}
+              templates={templates}
+              validChannels={selectedType.channels}
               serviceName={serviceName}
-              onSubjectChange={(value) => {
-                setSubject(value);
+              onSubjectChange={(value, channel) => {
+                console.log(JSON.stringify(value) + 'value');
+                console.log(JSON.stringify(channel) + 'value');
+                console.log(JSON.stringify(templates) + 'templates');
+                console.log(JSON.stringify(templates[channel]) + 'templates[channel]');
+                let newTemplates = templates;
+                if (templates[channel]) {
+                  newTemplates[channel].subject = value;
+                } else {
+                  newTemplates = { ...templates, [channel]: { subject: value } };
+                }
+
+                setTemplates(newTemplates);
               }}
               subjectEditorConfig={subjectEditorConfig}
               bodyTitle="Body"
-              onBodyChange={(value) => {
-                setBody(value);
+              onBodyChange={(value, channel) => {
+                //setBody(value);
+                let newTemplates = templates;
+                if (templates[channel]) {
+                  newTemplates[channel].body = value;
+                } else {
+                  newTemplates = { ...templates, [channel]: { body: value } };
+                }
+
+                setTemplates(newTemplates);
               }}
-              body={body}
+              setPreview={(channel) => {
+                console.log(JSON.stringify(channel) + '<channel');
+                if (templates) {
+                  console.log(JSON.stringify(templates[channel]?.subject) + '<emplates[channel].subject');
+                  setBodyPreview(generateMessage(getTemplateBody(templates[channel]?.body, htmlPayload), htmlPayload));
+                  setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
+                }
+              }}
+              //body={body}
               bodyEditorConfig={bodyEditorConfig}
               errors={templateEditErrors}
               bodyEditorHintText={eventTemplateEditHintText}

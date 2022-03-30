@@ -10,6 +10,19 @@ export interface NotificationItem {
   manageSubscribe?: boolean;
 }
 
+export enum Channel {
+  email = 'email',
+  mail = 'mail',
+  sms = 'sms',
+  bot = 'bot',
+}
+
+export interface Channels {
+  channel: string;
+  address: string;
+  verified: boolean;
+}
+
 export interface ContactInformation {
   contactEmail?: string;
   phoneNumber?: string;
@@ -25,8 +38,17 @@ export interface EventItem {
 
 export interface Template {
   email?: notifyText;
+  bot?: notifyText;
   sms?: notifyText;
+  mail?: notifyText;
 }
+
+export const baseTemplate = {
+  email: { subject: '', body: '' },
+  bot: { subject: '', body: '' },
+  sms: { subject: '', body: '' },
+  mail: { subject: '', body: '' },
+};
 
 export interface notifyText {
   subject: string;

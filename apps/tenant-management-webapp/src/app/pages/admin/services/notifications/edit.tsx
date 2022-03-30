@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import type { NotificationItem } from '@store/notification/models';
+import type { NotificationItem, Channel } from '@store/notification/models';
 import { GoAButton, GoADropdownOption } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
@@ -19,6 +19,13 @@ interface NotificationTypeFormProps {
   open: boolean;
   errors?: Record<string, string>;
 }
+
+const channels = [
+  { value: 'email', title: 'Email' },
+  { value: 'bot', title: 'Slack bot' },
+  { value: 'sms', title: 'Text Message' },
+  { value: 'mail', title: 'Mail' },
+];
 
 const IdField = styled.div`
   min-height: 1.6rem;
@@ -81,7 +88,9 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 value={type.name}
                 data-testid="form-name"
                 aria-label="name"
-                onChange={(e) => setType({ ...type, name: e.target.value, id: isEdit ? type.id : toKebabName(e.target.value) })}
+                onChange={(e) =>
+                  setType({ ...type, name: e.target.value, id: isEdit ? type.id : toKebabName(e.target.value) })
+                }
               />
             </GoAFormItem>
             <GoAFormItem>
@@ -130,6 +139,26 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                   />
                 ))}
               </GoADropdown>
+            </GoAFormItem>
+            <GoAFormItem>
+              <label>Supported Channels</label>
+              {channels.map((channel) => {
+                return (
+                  <GoACheckbox
+                    name={channel.value}
+                    checked={type.channels?.map((value) => value).includes(channel.value)}
+                    onChange={() => {
+                      const channels = type.channels || [];
+                      channels.push(channel.value);
+                      setType({ ...type, channels: [...new Set(channels)] });
+                    }}
+                    data-testid="manage-subscriptions-checkbox"
+                    value="manageSubscribe"
+                  >
+                    {channel.title}
+                  </GoACheckbox>
+                );
+              })}
             </GoAFormItem>
             <div data-testid="manage-subscriptions-checkbox-wrapper">
               <GoAFormItem>
