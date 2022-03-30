@@ -82,7 +82,7 @@ export class MongoDirectoryRepository implements DirectoryRepository {
       )
     );
   }
-  
+
   async exists(name: string): Promise<boolean> {
     const result = await this.directoryModel.findOne({
       where: { name: name },
@@ -92,13 +92,7 @@ export class MongoDirectoryRepository implements DirectoryRepository {
   }
 
   private fromDoc(doc: Doc<Directory>) {
-    return doc
-      ? new DirectoryEntity(this, {
-          id: `${doc._id}`,
-          name: doc.name,
-          services: doc.services,
-        })
-      : null;
+    return doc ? new DirectoryEntity(this, { id: `${doc._id}`, name: doc.name, services: doc.services }) : null;
   }
 
   private toDoc(entity: DirectoryEntity) {
