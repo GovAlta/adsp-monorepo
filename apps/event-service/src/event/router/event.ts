@@ -92,17 +92,14 @@ export const createEventRouter = ({ logger, eventService }: EventRouterProps): R
       ...checkSchema(
         {
           namespace: {
-            exists: true,
             isString: true,
             isLength: { options: { min: 1, max: 50 } },
           },
           name: {
-            exists: true,
             isString: true,
             isLength: { options: { min: 1, max: 50 } },
           },
           timestamp: {
-            exists: true,
             isISO8601: true,
           },
           correlationId: {
@@ -114,7 +111,6 @@ export const createEventRouter = ({ logger, eventService }: EventRouterProps): R
             isObject: true,
           },
           payload: {
-            exists: true,
             isObject: true,
           },
         },
