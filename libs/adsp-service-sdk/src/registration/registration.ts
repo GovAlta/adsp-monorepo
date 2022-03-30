@@ -105,9 +105,6 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
           await this.#tryUpdateConfiguration(serviceUrl, count, serviceId, update);
         } catch (err) {
           this.logger.debug(`Try ${count} failed with error. ${err}`, this.LOG_CONTEXT);
-          if (axios.isAxiosError(err)) {
-            this.logger.debug(err.response?.data);
-          }
           next(err);
         }
       });

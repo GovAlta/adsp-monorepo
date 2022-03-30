@@ -46,6 +46,10 @@ const initializeApp = async (): Promise<express.Application> => {
           description: 'Administrator role that grants access to and modification of configuration.',
           inTenantAdmin: true,
         },
+        {
+          role: ConfigurationServiceRoles.ConfiguredService,
+          description: 'Service role that grants service accounts access to configuration.',
+        },
       ],
       events: [ConfigurationUpdatedDefinition, RevisionCreatedDefinition],
       clientSecret: environment.CLIENT_SECRET,
