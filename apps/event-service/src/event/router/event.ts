@@ -1,5 +1,6 @@
-import { assertAuthenticatedHandler, InvalidOperationError } from '@core-services/core-common';
+import { assertAuthenticatedHandler, createValidationHandler, InvalidOperationError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
+import { checkSchema } from 'express-validator';
 import { Logger } from 'winston';
 import { NamespaceEntity } from '../model';
 import { AdspId, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
@@ -83,7 +84,45 @@ export const sendEvent =
 export const createEventRouter = ({ logger, eventService }: EventRouterProps): Router => {
   const eventRouter = Router();
 
-  eventRouter.post('/events', assertAuthenticatedHandler, assertUserCanSend, sendEvent(logger, eventService));
+  eventRouter.post(
+    '/events',
+    assertAuthenticatedHandler,
+    assertUserCanSend,
+    createValidationHandler(
+      checkSchema(
+        {
+          namespace: {
+            exists: true,
+            isString: true,
+            isLength: { options: { min: 1, max: 50 } },
+          },
+          name: {
+            exists: true,
+            isString: true,
+            isLength: { options: { min: 1, max: 50 } },
+          },
+          timestamp: {
+            exists: true,
+            isISO8601: true,
+          },
+          correlationId: {
+            optional: true,
+            isString: true,
+          },
+          context: {
+            optional: true,
+            isObject: true,
+          },
+          payload: {
+            exists: true,
+            isObject: true,
+          },
+        },
+        ['body']
+      )
+    ),
+    sendEvent(logger, eventService)
+  );
 
   return eventRouter;
 };

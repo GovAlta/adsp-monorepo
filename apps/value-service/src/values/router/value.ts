@@ -1,6 +1,7 @@
 import { AdspId, EventService, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
+import { checkSchema, param } from 'express-validator';
 import { Logger } from 'winston';
 import { valueWritten } from '../events';
 import { NamespaceEntity } from '../model';
@@ -231,12 +232,74 @@ export function writeValue(logger: Logger, eventService: EventService, repositor
 export const createValueRouter = ({ logger, repository, eventService }: ValueRouterProps): Router => {
   const valueRouter = Router();
 
-  valueRouter.get('/:namespace/values', readValues);
-  valueRouter.get('/:namespace/values/:name', readValue(repository));
-  valueRouter.get('/:namespace/values/:name/metrics', readMetrics(repository));
-  valueRouter.get('/:namespace/values/:name/metrics/:metric', readMetric(repository));
+  valueRouter.get(
+    '/:namespace/values',
+    createValidationHandler(param('namespace').isString().isLength({ min: 1, max: 50 })),
+    readValues
+  );
+  valueRouter.get(
+    '/:namespace/values/:name',
+    createValidationHandler(
+      checkSchema(
+        {
+          namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+          name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+        },
+        ['params']
+      )
+    ),
+    readValue(repository)
+  );
+  valueRouter.get(
+    '/:namespace/values/:name/metrics',
+    createValidationHandler(
+      checkSchema(
+        {
+          namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+          name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+        },
+        ['params']
+      )
+    ),
+    readMetrics(repository)
+  );
+  valueRouter.get(
+    '/:namespace/values/:name/metrics/:metric',
+    createValidationHandler(
+      checkSchema(
+        {
+          namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+          name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+          metric: { isString: true, isLength: { options: { min: 1, max: 100 } } },
+        },
+        ['params']
+      )
+    ),
+    readMetric(repository)
+  );
 
-  valueRouter.post('/:namespace/values/:name', assertUserCanWrite, writeValue(logger, eventService, repository));
+  valueRouter.post(
+    '/:namespace/values/:name',
+    createValidationHandler([
+      ...checkSchema(
+        {
+          namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+          name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+        },
+        ['params']
+      ),
+      ...checkSchema(
+        {
+          timestamp: { optional: true, isISO8601: true },
+          context: { optional: true, isObject: true },
+          correlationId: { optional: true, isString: true },
+        },
+        ['body']
+      ),
+    ]),
+    assertUserCanWrite,
+    writeValue(logger, eventService, repository)
+  );
 
   return valueRouter;
 };
