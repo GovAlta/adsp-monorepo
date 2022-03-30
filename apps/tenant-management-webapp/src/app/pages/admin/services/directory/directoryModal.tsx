@@ -88,6 +88,9 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
           buttonType="tertiary"
           data-testid="directory-modal-cancel"
           onClick={() => {
+            if (entry.api) {
+              entry.service = `${entry.service}:${entry.api}`;
+            }
             props.onCancel();
             setErrors({});
           }}
