@@ -14,6 +14,7 @@ import { subscriberAppUrlSelector } from './selectors';
 
 export const Notifications: FunctionComponent = () => {
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
+  const tenantName = useSelector((state: RootState) => state.tenant.name);
 
   const loginUrl = useSelector(subscriberAppUrlSelector);
 
