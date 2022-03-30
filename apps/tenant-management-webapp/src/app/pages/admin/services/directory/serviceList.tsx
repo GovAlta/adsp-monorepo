@@ -137,6 +137,7 @@ export const EntryDetail = styled.div`
   font-size: 12px;
   line-height: 16px;
   padding: 16px;
+  text-align: left;
 `;
 export const NameDiv = styled.div`
   margin-top: 1rem;

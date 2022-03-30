@@ -25,15 +25,11 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
     }
     case UPDATE_ENTRY_SUCCESS: {
       const directoryUpdateList = state.directory;
-      const isExist = directoryUpdateList.find((x) => x?.service === action.payload?.service);
-      if (isExist) {
-        if (action.payload.api) {
-          isExist.api = action.payload.api;
-        }
-        isExist.url = action.payload.url;
+      const index = directoryUpdateList.findIndex((x) => x?._id === action.payload?._id);
+      if (index !== -1) {
+        directoryUpdateList[index] = action.payload;
       }
-
-      return { ...state, directory: directoryUpdateList };
+      return { ...state, directory: [...directoryUpdateList] };
     }
     case DELETE_ENTRY_SUCCESS: {
       const directoryDelList = state.directory;
