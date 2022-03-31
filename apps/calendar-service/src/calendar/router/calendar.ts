@@ -1,6 +1,7 @@
 import { adspId, AdspId, EventService, ServiceDirectory } from '@abgov/adsp-service-sdk';
-import { NotFoundError } from '@core-services/core-common';
+import { createValidationHandler, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
+import { checkSchema, param } from 'express-validator';
 import { ICalCalendar } from 'ical-generator';
 import { DateTime } from 'luxon';
 import { Logger } from 'winston';
@@ -348,30 +349,114 @@ export const createCalendarRouter = ({
 }: DateRouterProps): Router => {
   const router = Router();
 
+  const validateNameHandler = createValidationHandler(param('name').isString().isLength({ min: 1, max: 50 }));
+  const validateNameAndEventIdHandler = createValidationHandler(
+    param('name').isString().isLength({ min: 1, max: 50 }),
+    param('id').isInt()
+  );
+  const validateNameEventIdAndAttendeeIdHandler = createValidationHandler(
+    param('name').isString().isLength({ min: 1, max: 50 }),
+    param('id').isInt(),
+    param('attendeeId').isInt()
+  );
+
+  const validateCalendarEventHandler = createValidationHandler(
+    ...checkSchema(
+      {
+        start: { isISO8601: true },
+        end: { isISO8601: true },
+        name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+        description: { optional: true, isString: true },
+        isPublic: { optional: true, isBoolean: true },
+        isAllDay: { optional: true, isBoolean: true },
+      },
+      ['body']
+    )
+  );
+
+  const validateAttendeeHandler = createValidationHandler(
+    ...checkSchema(
+      {
+        name: { isString: true },
+        email: { isEmail: true },
+      },
+      ['body']
+    )
+  );
+
   router.get('/calendars', getCalendars);
-  router.get('/calendars/:name', getCalendar, (req, res) => res.send(mapCalendar(req[CALENDAR_KEY])));
+  router.get('/calendars/:name', validateNameHandler, getCalendar, (req, res) =>
+    res.send(mapCalendar(req[CALENDAR_KEY]))
+  );
 
-  router.get('/calendars/:name/export', getCalendar, exportCalendar(serviceId, directory));
+  router.get('/calendars/:name/export', validateNameHandler, getCalendar, exportCalendar(serviceId, directory));
 
-  router.get('/calendars/:name/events', getCalendar, getCalendarEvents);
-  router.post('/calendars/:name/events', getCalendar, createCalendarEvent(eventService));
+  router.get('/calendars/:name/events', validateNameHandler, getCalendar, getCalendarEvents);
+  router.post(
+    '/calendars/:name/events',
+    validateNameHandler,
+    validateCalendarEventHandler,
+    getCalendar,
+    createCalendarEvent(eventService)
+  );
 
-  router.get('/calendars/:name/events/:id', getCalendar, getCalendarEvent, retrieveCalendarEvent);
-  router.patch('/calendars/:name/events/:id', getCalendar, getCalendarEvent, updateCalendarEvent(eventService));
-  router.delete('/calendars/:name/events/:id', getCalendar, getCalendarEvent, deleteCalendarEvent(eventService));
+  router.get(
+    '/calendars/:name/events/:id',
+    validateNameAndEventIdHandler,
+    getCalendar,
+    getCalendarEvent,
+    retrieveCalendarEvent
+  );
+  router.patch(
+    '/calendars/:name/events/:id',
+    validateNameAndEventIdHandler,
+    validateCalendarEventHandler,
+    getCalendar,
+    getCalendarEvent,
+    updateCalendarEvent(eventService)
+  );
+  router.delete(
+    '/calendars/:name/events/:id',
+    validateNameAndEventIdHandler,
+    getCalendar,
+    getCalendarEvent,
+    deleteCalendarEvent(eventService)
+  );
 
-  router.get('/calendars/:name/events/:id/attendees', getCalendar, getCalendarEvent, getEventAttendees);
-  router.post('/calendars/:name/events/:id/attendees', getCalendar, getCalendarEvent, addEventAttendee(eventService));
+  router.get(
+    '/calendars/:name/events/:id/attendees',
+    validateNameAndEventIdHandler,
+    getCalendar,
+    getCalendarEvent,
+    getEventAttendees
+  );
+  router.post(
+    '/calendars/:name/events/:id/attendees',
+    validateNameAndEventIdHandler,
+    validateAttendeeHandler,
+    getCalendar,
+    getCalendarEvent,
+    addEventAttendee(eventService)
+  );
 
-  router.get('/calendars/:name/events/:id/attendees/:attendeeId', getCalendar, getCalendarEvent, getEventAttendee);
+  router.get(
+    '/calendars/:name/events/:id/attendees/:attendeeId',
+    validateNameEventIdAndAttendeeIdHandler,
+    getCalendar,
+    getCalendarEvent,
+    getEventAttendee
+  );
   router.put(
     '/calendars/:name/events/:id/attendees/:attendeeId',
+    validateNameEventIdAndAttendeeIdHandler,
+    validateAttendeeHandler,
     getCalendar,
     getCalendarEvent,
     setEventAttendee(eventService)
   );
   router.delete(
     '/calendars/:name/events/:id/attendees/:attendeeId',
+    validateNameEventIdAndAttendeeIdHandler,
     getCalendar,
     getCalendarEvent,
     deleteEventAttendee(eventService)
