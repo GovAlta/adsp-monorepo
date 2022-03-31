@@ -11,6 +11,7 @@ import { DirectoryModal } from './directoryModal';
 import { deleteEntry } from '@store/directory/actions';
 import { ServiceTableComponent } from './serviceList';
 import { toKebabName } from '@lib/kebabName';
+import styled from 'styled-components';
 
 export const DirectoryService: FunctionComponent = () => {
   const dispatch = useDispatch();
@@ -58,28 +59,32 @@ export const DirectoryService: FunctionComponent = () => {
       {!indicator.show && directory && (
         <div>
           <p>Add your own entry so they can be found using the directory.</p>
+
           {tenantName !== coreTenant && (
-            <GoAButton
-              data-testid="add-directory-btn"
-              onClick={() => {
-                defaultService.namespace = toKebabName(tenantName);
-                setSelectedEntry(defaultService);
-                setIsEdit(false);
-                setEditEntry(true);
-              }}
-            >
-              Add entry
-            </GoAButton>
+            <>
+              <NameDiv>{tenantName}</NameDiv>
+              <GoAButton
+                data-testid="add-directory-btn"
+                onClick={() => {
+                  defaultService.namespace = toKebabName(tenantName);
+                  setSelectedEntry(defaultService);
+                  setIsEdit(false);
+                  setEditEntry(true);
+                }}
+              >
+                Add entry
+              </GoAButton>
+
+              <ServiceTableComponent
+                namespace={tenantName}
+                directory={directory}
+                isCore={false}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            </>
           )}
-
-          <ServiceTableComponent
-            namespace={tenantName}
-            directory={directory}
-            isCore={false}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-
+          <NameDiv>{coreTenant}</NameDiv>
           <ServiceTableComponent
             namespace={coreTenant.toLowerCase()}
             directory={directory}
@@ -115,3 +120,11 @@ export const DirectoryService: FunctionComponent = () => {
     </>
   );
 };
+const NameDiv = styled.div`
+  margin-top: 1rem;
+  text-transform: capitalize;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  padding-left: 0.4rem;
+  padding-bottom: 0.5rem;
+`;
