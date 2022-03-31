@@ -9,7 +9,6 @@ export interface Service {
   api?: string;
   url: string;
   urn?: string;
-  description?: string;
   metadata?: Metadata;
   isCore?: boolean;
 }

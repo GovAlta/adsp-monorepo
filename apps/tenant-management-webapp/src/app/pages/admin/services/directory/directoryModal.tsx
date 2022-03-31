@@ -24,11 +24,12 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const dispatch = useDispatch();
 
+  const checkService = (entry) => {
+    return directory.find((x) => x.namespace === tenantName && x.service === entry.service);
+  };
+
   const checkApi = (entry) => {
-    const tenantDirectory = directory.find(
-      (x) => x.namespace === tenantName && x.service === entry.service && x.api === entry.api
-    );
-    return tenantDirectory;
+    return directory.find((x) => x.namespace === tenantName && x.service === entry.service && x.api === entry.api);
   };
 
   return (
@@ -79,9 +80,6 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
           buttonType="tertiary"
           data-testid="directory-modal-cancel"
           onClick={() => {
-            if (entry.api) {
-              entry.service = `${entry.service}:${entry.api}`;
-            }
             props.onCancel();
             setErrors({});
           }}
@@ -114,7 +112,10 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               setErrors({ ...errors, api: 'Api duplicate, please use another one' });
               return;
             }
-
+            if (!entry.api && checkService(entry)) {
+              setErrors({ ...errors, service: 'Service duplicate, please use another one' });
+              return;
+            }
             if (props.type === 'new') {
               dispatch(createEntry(entry));
             }
