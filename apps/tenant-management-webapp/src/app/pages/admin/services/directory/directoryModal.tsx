@@ -25,14 +25,11 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   const dispatch = useDispatch();
 
   const checkApi = (entry) => {
-    const tenantDirectory = directory.find((x) => x.namespace === tenantName && x.service === entry.service);
+    const tenantDirectory = directory.find(
+      (x) => x.namespace === tenantName && x.service === entry.service && x.api === entry.api
+    );
     return tenantDirectory;
   };
-
-  if (entry.service.indexOf(':') > -1) {
-    entry.api = entry.service.split(':')[1];
-    entry.service = entry.service.split(':')[0];
-  }
 
   return (
     <GoAModal testId="directory-modal" isOpen={props.open}>
@@ -43,11 +40,11 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
             <label>Service</label>
             <input
               type="text"
-              name="name"
+              name="service"
               value={entry.service}
               data-testid={`directory-modal-service-input`}
               onChange={(e) => setEntry({ ...entry, service: e.target.value })}
-              aria-label="name"
+              aria-label="service"
               maxLength={50}
             />
           </GoAFormItem>
@@ -111,10 +108,6 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
             if (!urlReg.test(entry.url)) {
               setErrors({ ...errors, url: 'Please input right url format' });
               return;
-            }
-
-            if (entry.api) {
-              entry.service = `${entry.service}:${entry.api}`;
             }
 
             if (entry.api && checkApi(entry)) {

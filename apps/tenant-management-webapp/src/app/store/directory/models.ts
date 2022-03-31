@@ -29,6 +29,7 @@ export const defaultService: Service = {
   namespace: '',
   url: '',
   service: '',
+  api: '',
   urn: '',
 };
 
