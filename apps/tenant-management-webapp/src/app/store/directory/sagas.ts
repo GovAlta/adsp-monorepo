@@ -16,6 +16,7 @@ import {
 import { DirectoryApi } from './api';
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
+import { Service } from './models';
 
 export function* fetchDirectory(action: FetchDirectoryAction): SagaIterator {
   const core = 'platform';
@@ -64,7 +65,13 @@ export function* createEntryDirectory(action: CreateEntryAction): SagaIterator {
   const api = new DirectoryApi(state.config.tenantApi, token);
 
   try {
-    const result = yield call([api, api.createEntry], action.data);
+    const sendEntry = {} as Service;
+
+    sendEntry['service'] = action.data.api ? `${action.data.service}:${action.data.api}` : action.data.service;
+    sendEntry['url'] = action.data.url;
+    sendEntry['namespace'] = action.data.namespace;
+
+    const result = yield call([api, api.createEntry], sendEntry);
     if (result) {
       yield put(createEntrySuccess(action.data));
     }
@@ -79,6 +86,12 @@ export function* updateEntryDirectory(action: UpdateEntryAction): SagaIterator {
   const api = new DirectoryApi(state.config.tenantApi, token);
 
   try {
+    const sendEntry = {} as Service;
+
+    sendEntry['service'] = action.data.api ? `${action.data.service}:${action.data.api}` : action.data.service;
+    sendEntry['url'] = action.data.url;
+    sendEntry['namespace'] = action.data.namespace;
+    sendEntry['_id'] = action.data._id;
     const result = yield call([api, api.updateEntry], action.data);
     if (result) {
       yield put(updateEntrySuccess(action.data));
