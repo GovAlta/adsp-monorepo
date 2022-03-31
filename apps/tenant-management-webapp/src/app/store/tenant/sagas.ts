@@ -1,4 +1,4 @@
-import { put, select, call } from 'redux-saga/effects';
+import { put, select, call, takeEvery, takeLatest, delay } from 'redux-saga/effects';
 import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
 import {
@@ -13,9 +13,26 @@ import {
   TenantLoginAction,
   KeycloakCheckSSOWithLogOutAction,
   FetchRealmRolesSuccess,
+  CHECK_IS_TENANT_ADMIN,
+  CREATE_TENANT,
+  FETCH_REALM_ROLES,
+  FETCH_TENANT,
+  KEYCLOAK_CHECK_SSO,
+  KEYCLOAK_CHECK_SSO_WITH_LOGOUT,
+  TENANT_ADMIN_LOGIN,
+  TENANT_CREATION_LOGIN_INIT,
+  TENANT_LOGIN,
+  TENANT_LOGOUT,
 } from './actions';
 
-import { CredentialRefresh, SessionLoginSuccess } from '@store/session/actions';
+import {
+  CredentialRefresh,
+  CredentialRefreshAction,
+  CREDENTIAL_REFRESH,
+  SessionLoginSuccess,
+  SessionLoginSuccessAction,
+  SESSION_LOGIN_SUCCESS,
+} from '@store/session/actions';
 import { TenantApi } from './api';
 import { TENANT_INIT } from './models';
 import { createKeycloakAuth, KeycloakAuth, LOGIN_TYPES } from '@lib/keycloak';
@@ -133,17 +150,25 @@ export function* tenantLogin(action: TenantLoginAction): SagaIterator {
   }
 }
 
-export function* keycloakRefreshToken(): SagaIterator {
+export function* keycloakRefreshToken(action: CredentialRefreshAction | SessionLoginSuccessAction): SagaIterator {
   try {
-    const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth);
-    if (keycloakAuth) {
-      const session: Session = yield call([keycloakAuth, keycloakAuth.refreshToken]);
-      if (session) {
-        const { credentials } = session;
-        yield put(CredentialRefresh(credentials));
+    let credentials = action.type === SESSION_LOGIN_SUCCESS ? action.payload.credentials : action.payload;
+    const refreshDelay = Math.floor(credentials.tokenExp * 1000 - (Date.now() + 60000));
+    yield delay(refreshDelay);
+
+    // Check if credentials still present or if logout has occurred.
+    credentials = yield select((state: RootState) => state.session.credentials);
+    if (credentials) {
+      const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth);
+      if (keycloakAuth) {
+        const session: Session = yield call([keycloakAuth, keycloakAuth.refreshToken]);
+        if (session) {
+          const { credentials } = session;
+          yield put(CredentialRefresh(credentials));
+        }
+      } else {
+        console.warn(`Try to fresh keycloak token. But, keycloak instance is empty.`);
       }
-    } else {
-      console.warn(`Try to fresh keycloak token. But, keycloak instance is empty.`);
     }
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to tenant login: ${e.message}` }));
@@ -172,4 +197,21 @@ export function* fetchRealmRoles(): SagaIterator {
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to fetch realm roles: ${e.message}` }));
   }
+}
+
+export function* watchTenantSagas(): SagaIterator {
+  // tenant and keycloak
+  yield takeEvery(CHECK_IS_TENANT_ADMIN, isTenantAdmin);
+  yield takeEvery(KEYCLOAK_CHECK_SSO, keycloakCheckSSO);
+  yield takeEvery(TENANT_LOGIN, tenantLogin);
+  yield takeEvery(KEYCLOAK_CHECK_SSO_WITH_LOGOUT, keycloakCheckSSOWithLogout);
+  yield takeEvery(TENANT_LOGOUT, tenantLogout);
+  yield takeLatest([SESSION_LOGIN_SUCCESS, CREDENTIAL_REFRESH], keycloakRefreshToken);
+
+  //tenant config
+  yield takeEvery(CREATE_TENANT, createTenant);
+  yield takeLatest(FETCH_TENANT, fetchTenant);
+  yield takeEvery(FETCH_REALM_ROLES, fetchRealmRoles);
+  yield takeEvery(TENANT_ADMIN_LOGIN, tenantAdminLogin);
+  yield takeEvery(TENANT_CREATION_LOGIN_INIT, tenantCreationInitLogin);
 }

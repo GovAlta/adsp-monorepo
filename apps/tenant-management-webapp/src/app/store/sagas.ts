@@ -3,19 +3,7 @@ import { all, takeEvery, takeLatest } from 'redux-saga/effects';
 // Sagas
 import { fetchAccess } from './access/sagas';
 import { fetchConfig } from './config/sagas';
-import {
-  fetchTenant,
-  createTenant,
-  isTenantAdmin,
-  tenantAdminLogin,
-  tenantCreationInitLogin,
-  keycloakCheckSSO,
-  tenantLogin,
-  keycloakCheckSSOWithLogout,
-  keycloakRefreshToken,
-  tenantLogout,
-  fetchRealmRoles,
-} from './tenant/sagas';
+import { watchTenantSagas } from './tenant/sagas';
 import {
   deleteApplication,
   fetchServiceStatusApps,
@@ -41,19 +29,6 @@ import { watchSubscriptionSagas } from './subscription/sagas';
 // Actions
 import { FETCH_ACCESS_ACTION } from './access/actions';
 import { FETCH_CONFIG_ACTION } from './config/actions';
-import {
-  FETCH_TENANT,
-  CREATE_TENANT,
-  CHECK_IS_TENANT_ADMIN,
-  TENANT_ADMIN_LOGIN,
-  TENANT_CREATION_LOGIN_INIT,
-  KEYCLOAK_CHECK_SSO,
-  TENANT_LOGIN,
-  KEYCLOAK_CHECK_SSO_WITH_LOGOUT,
-  KEYCLOAK_REFRESH_TOKEN,
-  TENANT_LOGOUT,
-  FETCH_REALM_ROLES,
-} from './tenant/actions';
 import { FETCH_DIRECTORY, CREATE_ENTRY, UPDATE_ENTRY, DELETE_ENTRY, FETCH_ENTRY_DETAIL } from './directory/actions';
 import {
   DELETE_APPLICATION_ACTION,
@@ -72,21 +47,6 @@ import { TOGGLE_APPLICATION_STATUS_ACTION } from './status/actions/toggleApplica
 export function* watchSagas() {
   yield takeEvery(FETCH_CONFIG_ACTION, fetchConfig);
   yield takeLatest(FETCH_ACCESS_ACTION, fetchAccess);
-
-  // tenant and keycloak
-  yield takeEvery(CHECK_IS_TENANT_ADMIN, isTenantAdmin);
-  yield takeEvery(KEYCLOAK_CHECK_SSO, keycloakCheckSSO);
-  yield takeEvery(TENANT_LOGIN, tenantLogin);
-  yield takeEvery(KEYCLOAK_CHECK_SSO_WITH_LOGOUT, keycloakCheckSSOWithLogout);
-  yield takeEvery(KEYCLOAK_REFRESH_TOKEN, keycloakRefreshToken);
-  yield takeEvery(TENANT_LOGOUT, tenantLogout);
-
-  //tenant config
-  yield takeEvery(CREATE_TENANT, createTenant);
-  yield takeLatest(FETCH_TENANT, fetchTenant);
-  yield takeEvery(FETCH_REALM_ROLES, fetchRealmRoles);
-  yield takeEvery(TENANT_ADMIN_LOGIN, tenantAdminLogin);
-  yield takeEvery(TENANT_CREATION_LOGIN_INIT, tenantCreationInitLogin);
 
   //directory
   yield takeEvery(FETCH_DIRECTORY, fetchDirectory);
@@ -110,6 +70,8 @@ export function* watchSagas() {
   yield takeEvery(DELETE_NOTICE_ACTION, deleteNotice);
 
   yield all([
+    // keycloak and tenant
+    watchTenantSagas(),
     // file service
     watchFileSagas(),
     // event

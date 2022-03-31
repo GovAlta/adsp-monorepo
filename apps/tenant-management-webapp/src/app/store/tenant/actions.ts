@@ -12,7 +12,6 @@ export const TENANT_CREATION_LOGIN_INIT = 'TENANT_CREATION_LOGIN_INIT';
 export const TENANT_LOGIN = 'TENANT_LOGIN';
 export const KEYCLOAK_CHECK_SSO = 'KEYCLOAK_CHECK_SSO';
 export const KEYCLOAK_CHECK_SSO_WITH_LOGOUT = 'KEYCLOAK_CHECK_SSO_WITH_LOGOUT';
-export const KEYCLOAK_REFRESH_TOKEN = 'KEYCLOAK_REFRESH_TOKEN';
 export const TENANT_LOGOUT = 'TENANT_LOGOUT';
 export const UPDATE_TENANT_CREATED = 'UPDATE_TENANT_CREATED';
 export const FETCH_REALM_ROLES = 'FETCH_REALM_ROLES';
@@ -83,10 +82,6 @@ export interface TenantLoginAction {
   payload: string;
 }
 
-interface KeycloakRefreshTokenAction {
-  type: typeof KEYCLOAK_REFRESH_TOKEN;
-}
-
 interface TenantLogoutAction {
   type: typeof TENANT_LOGOUT;
 }
@@ -111,7 +106,6 @@ export type ActionType =
   | TenantAdminLoginAction
   | TenantCreationLoginInitAction
   | TenantLoginAction
-  | KeycloakRefreshTokenAction
   | TenantLogoutAction
   | KeycloakCheckSSOAction
   | FetchRealmRolesAction
@@ -168,10 +162,6 @@ export const KeycloakCheckSSO = (realm: string): KeycloakCheckSSOAction => ({
 export const KeycloakCheckSSOWithLogout = (realm: string): KeycloakCheckSSOWithLogOutAction => ({
   type: 'KEYCLOAK_CHECK_SSO_WITH_LOGOUT',
   payload: realm,
-});
-
-export const KeycloakRefreshToken = (): KeycloakRefreshTokenAction => ({
-  type: 'KEYCLOAK_REFRESH_TOKEN',
 });
 
 export const UpdateTenantAdminInfo = (
