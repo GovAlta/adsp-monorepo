@@ -1,47 +1,50 @@
 import { Credentials, Session, Indicator } from './models';
 
 export const SESSION_LOGIN_SUCCESS = 'session/login/success';
-export const SESSION_LOGIN_FAILED = 'session/login/failed';
 export const SESSION_LOGOUT = 'session/logout';
 export const CREDENTIAL_REFRESH = 'credential/refresh';
 export const UPDATE_INDICATOR = 'session/indicator';
 
-export type ActionType = SessionLoginSuccessAction | SessionLogoutAction | CredentialRefreshAction | UpdateIndicatorAction;
+export type ActionType =
+  | SessionLoginSuccessAction
+  | SessionLogoutAction
+  | CredentialRefreshAction
+  | UpdateIndicatorAction;
 
-interface CredentialRefreshAction {
+export interface CredentialRefreshAction {
   type: typeof CREDENTIAL_REFRESH;
   payload: Credentials;
 }
 
-interface SessionLoginSuccessAction {
+export interface SessionLoginSuccessAction {
   type: typeof SESSION_LOGIN_SUCCESS;
   payload: Session;
 }
 
-interface SessionLogoutAction {
+export interface SessionLogoutAction {
   type: typeof SESSION_LOGOUT;
 }
 
-interface UpdateIndicatorAction {
+export interface UpdateIndicatorAction {
   type: typeof UPDATE_INDICATOR;
   payload: Indicator;
 }
 
 export const SessionLoginSuccess = (session: Session): SessionLoginSuccessAction => ({
-  type: 'session/login/success',
+  type: SESSION_LOGIN_SUCCESS,
   payload: session,
 });
 
 export const SessionLogout = (): SessionLogoutAction => ({
-  type: 'session/logout',
+  type: SESSION_LOGOUT,
 });
 
 export const CredentialRefresh = (credentials: Credentials): CredentialRefreshAction => ({
-  type: 'credential/refresh',
+  type: CREDENTIAL_REFRESH,
   payload: credentials,
 });
 
 export const UpdateIndicator = (indicator: Indicator): UpdateIndicatorAction => ({
-  type: 'session/indicator',
+  type: UPDATE_INDICATOR,
   payload: indicator,
 });
