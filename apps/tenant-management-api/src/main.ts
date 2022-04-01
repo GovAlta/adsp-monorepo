@@ -126,6 +126,8 @@ async function initializeApp(): Promise<express.Application> {
   app.get('/', async (req, res) => {
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
+      name: 'Tenant service',
+      description: 'Service for management of ADSP tenants.',
       _links: {
         self: { href: new URL(req.originalUrl, rootUrl).href },
         health: { href: new URL('/health', rootUrl).href },
