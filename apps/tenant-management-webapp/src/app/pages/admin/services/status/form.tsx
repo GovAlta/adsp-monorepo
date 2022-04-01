@@ -66,8 +66,6 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSav
     return true;
   }
 
-  console.log(healthEndpoints);
-
   function save() {
     if (!isFormValid()) {
       return;
