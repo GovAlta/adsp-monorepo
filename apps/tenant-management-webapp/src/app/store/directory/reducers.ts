@@ -14,6 +14,10 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
       const directories = action.payload.directory;
       directories.forEach((dir) => {
         dir.isCore = dir.namespace.toLowerCase() === 'platform';
+        if (dir.service.indexOf(':') > -1) {
+          dir.api = dir.service.split(':')[1];
+          dir.service = dir.service.split(':')[0];
+        }
       });
       return { ...state, directory: directories };
     }

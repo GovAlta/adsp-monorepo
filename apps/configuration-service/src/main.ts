@@ -106,6 +106,8 @@ const initializeApp = async (): Promise<express.Application> => {
   app.get('/', async (req, res) => {
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
+      name: 'Configuration service',
+      description: 'Service for managing configuration',
       _links: {
         self: {
           href: new URL(req.originalUrl, rootUrl).href,

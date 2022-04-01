@@ -24,15 +24,13 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const dispatch = useDispatch();
 
-  const checkApi = (entry) => {
-    const tenantDirectory = directory.find((x) => x.namespace === tenantName && x.service === entry.service);
-    return tenantDirectory;
+  const checkService = (entry) => {
+    return directory.find((x) => x.namespace === tenantName && x.service === entry.service);
   };
 
-  if (entry.service.indexOf(':') > -1) {
-    entry.api = entry.service.split(':')[1];
-    entry.service = entry.service.split(':')[0];
-  }
+  const checkApi = (entry) => {
+    return directory.find((x) => x.namespace === tenantName && x.service === entry.service && x.api === entry.api);
+  };
 
   return (
     <GoAModal testId="directory-modal" isOpen={props.open}>
@@ -43,11 +41,11 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
             <label>Service</label>
             <input
               type="text"
-              name="name"
+              name="service"
               value={entry.service}
               data-testid={`directory-modal-service-input`}
               onChange={(e) => setEntry({ ...entry, service: e.target.value })}
-              aria-label="name"
+              aria-label="service"
               maxLength={50}
             />
           </GoAFormItem>
@@ -82,9 +80,6 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
           buttonType="tertiary"
           data-testid="directory-modal-cancel"
           onClick={() => {
-            if (entry.api) {
-              entry.service = `${entry.service}:${entry.api}`;
-            }
             props.onCancel();
             setErrors({});
           }}
@@ -113,15 +108,14 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               return;
             }
 
-            if (entry.api) {
-              entry.service = `${entry.service}:${entry.api}`;
-            }
-
             if (entry.api && checkApi(entry)) {
               setErrors({ ...errors, api: 'Api duplicate, please use another one' });
               return;
             }
-
+            if (!entry.api && checkService(entry)) {
+              setErrors({ ...errors, service: 'Service duplicate, please use another one' });
+              return;
+            }
             if (props.type === 'new') {
               dispatch(createEntry(entry));
             }

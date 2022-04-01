@@ -29,10 +29,10 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
     <>
       <tr key={service.urn}>
         <td headers="service" data-testid="service">
-          {service.service.split(':')[0]}
+          {service.service}
         </td>
         <td headers="api" data-testid="api">
-          {service.service.indexOf(':') > -1 ? service.service.split(':')[1] : ''}
+          {service.api}
         </td>
         <td headers="directory" data-testid="directory">
           {service.url}
@@ -40,7 +40,7 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
         <td>
           <IconDiv>
             <GoAContextMenu>
-              {service.service.split(':').length === 1 && (
+              {!service.api && (
                 <GoAContextMenuIcon
                   type={showDetails ? 'eye-off' : 'eye'}
                   onClick={() => setDetails(service)}
@@ -75,11 +75,9 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
       {showDetails && (
         <tr>
           <td headers="Entry metadata information" colSpan={5}>
-            {service.metadata === null ? (
-              renderNoItem('service metadata')
-            ) : (
-              <EntryDetail data-testid="details">{JSON.stringify(service.metadata, null, 2)}</EntryDetail>
-            )}
+            <EntryDetail data-testid="details">
+              {service.metadata === null ? renderNoItem('service metadata') : JSON.stringify(service.metadata, null, 2)}
+            </EntryDetail>
           </td>
         </tr>
       )}
