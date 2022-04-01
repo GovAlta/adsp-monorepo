@@ -23,6 +23,7 @@ import {
   TENANT_CREATION_LOGIN_INIT,
   TENANT_LOGIN,
   TENANT_LOGOUT,
+  TenantLogout,
 } from './actions';
 
 import {
@@ -171,7 +172,8 @@ export function* keycloakRefreshToken(action: CredentialRefreshAction | SessionL
       }
     }
   } catch (e) {
-    yield put(ErrorNotification({ message: `Failed to tenant login: ${e.message}` }));
+    // Refresh error means that the session has expired or idle timeout etc... so log out.
+    yield put(TenantLogout());
   }
 }
 
@@ -183,7 +185,7 @@ export function* tenantLogout(): SagaIterator {
       yield call([keycloakAuth, keycloakAuth.logout]);
     }
   } catch (e) {
-    yield put(ErrorNotification({ message: `Failed to tenant out: ${e.message}` }));
+    yield put(ErrorNotification({ message: `Failed to log tenant out: ${e.message}` }));
   }
 }
 
