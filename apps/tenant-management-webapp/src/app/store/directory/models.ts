@@ -25,6 +25,14 @@ export interface Links {
   api?: { href: string };
   health?: { href: string };
 }
+
+export interface MetadataFetchResponse {
+  _id: string;
+  service: string;
+  host: string;
+  metadata: Metadata;
+}
+
 export const defaultService: Service = {
   namespace: '',
   url: '',

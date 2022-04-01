@@ -49,7 +49,7 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
       if (isExist) {
         isExist.metadata = action.payload.metadata;
       }
-      return { ...state, directory: directoryUpdateList };
+      return { ...state, directory: [...directoryUpdateList] };
     }
     default:
       return state;
