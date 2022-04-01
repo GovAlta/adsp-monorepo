@@ -8,6 +8,8 @@ import {
 } from '@core-services/core-common';
 import { Request, RequestHandler, Router } from 'express';
 import { body, checkSchema } from 'express-validator';
+import * as HttpStatusCodes from 'http-status-codes';
+import { isEqual as isDeepEqual } from 'lodash';
 import { Logger } from 'winston';
 import { configurationUpdated, revisionCreated } from '../events';
 import { ConfigurationEntity } from '../model';
@@ -122,30 +124,43 @@ export const patchConfigurationRevision =
           if (!request.property) {
             throw new InvalidOperationError(`Delete request must include 'property' property.`);
           }
-          update = entity.latest?.configuration || {};
+          update = { ...entity.latest?.configuration };
           updateData = request.property;
           delete update[request.property];
           break;
         default:
           throw new InvalidOperationError('Request does not include recognized operation.');
       }
-      const updated = await entity.update(user, update);
 
-      res.send(mapConfiguration(updated));
-      if (updated.tenantId) {
-        eventService.send(
-          configurationUpdated(user, updated.tenantId, updated.namespace, updated.name, updated.latest?.revision, {
-            operation: request.operation,
-            data: updateData,
-          })
+      if (isDeepEqual(update, entity.latest?.configuration)) {
+        logger.info(
+          `Configuration ${entity.namespace}:${entity.name} update by ${user.name} (ID: ${user.id}) resulted in no changes to configuration.`,
+          {
+            tenant: entity.tenantId?.toString(),
+            context: 'configuration-router',
+            user: `${user.name} (ID: ${user.id})`,
+          }
         );
-      }
+        res.send(mapConfiguration(entity));
+      } else {
+        const updated = await entity.update(user, update);
 
-      logger.info(`Configuration ${updated.namespace}:${updated.name} updated by ${user.name} (ID: ${user.id}).`, {
-        tenant: updated.tenantId?.toString(),
-        context: 'configuration-router',
-        user: `${user.name} (ID: ${user.id})`,
-      });
+        res.send(mapConfiguration(updated));
+        if (updated.tenantId) {
+          eventService.send(
+            configurationUpdated(user, updated.tenantId, updated.namespace, updated.name, updated.latest?.revision, {
+              operation: request.operation,
+              data: updateData,
+            })
+          );
+        }
+
+        logger.info(`Configuration ${updated.namespace}:${updated.name} updated by ${user.name} (ID: ${user.id}).`, {
+          tenant: updated.tenantId?.toString(),
+          context: 'configuration-router',
+          user: `${user.name} (ID: ${user.id})`,
+        });
+      }
     } catch (err) {
       next(err);
     }
