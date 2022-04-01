@@ -154,7 +154,6 @@ export function* fetchDirectoryByDetailURNs(action: FetchEntryDetailByURNsAction
 
   try {
     for (const urn of action.payload) {
-      console.log(urn);
       const id = adspId`${urn}`;
       if (id.type === 'service') {
         try {
@@ -167,10 +166,10 @@ export function* fetchDirectoryByDetailURNs(action: FetchEntryDetailByURNsAction
           if (!(existed && existed.metadata)) {
             // fetch metadata from remote only when it does not exist
             const result = yield call([api, api.fetchEntryDetail], _service);
-            console.log(result);
             _service.metadata = result?.metadata ? { ...result?.metadata } : null;
             yield put(fetchEntryDetailSuccess(_service));
           }
+          // eslint-disable-next-line
         } finally {
         }
       }

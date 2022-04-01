@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect, useRef } from 'react';
+import React, { FC, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { saveApplication } from '@store/status/actions';
 import { fetchDirectory, fetchDirectoryDetailByURNs } from '@store/directory/actions';
@@ -15,7 +15,7 @@ import {
 } from '@abgov/react-components/experimental';
 import { RootState } from '@store/index';
 import { createSelector } from 'reselect';
-import * as ReactDOM from 'react-dom';
+import styled from 'styled-components';
 
 interface Props {
   isOpen: boolean;
@@ -43,7 +43,6 @@ const tenantServiceURNSelector = createSelector(
 const healthEndpointsSelector = createSelector(
   (state: RootState) => state.directory.directory,
   (directory) => {
-    console.log(directory);
     return directory
       .filter((_directory) => {
         return _directory?.metadata?._links?.health?.href !== undefined;
@@ -61,13 +60,13 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSav
   const healthEndpoints = useSelector(healthEndpointsSelector);
   const [openDropdown, setOpenDropdown] = useState<boolean>(false);
 
-  const dropdownRef = useRef();
-
   function isFormValid(): boolean {
     if (!application?.name) return false;
     if (!application?.endpoint.url) return false;
     return true;
   }
+
+  console.log(healthEndpoints);
 
   function save() {
     if (!isFormValid()) {
@@ -77,42 +76,27 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSav
     if (onSave) onSave();
   }
 
-  function getDropdownInput() {
-    return (ReactDOM.findDOMNode(dropdownRef.current) as Element).getElementsByClassName('input--goa')[0];
-  }
-
   useEffect(() => {
-    dispatch(fetchDirectory());
+    if (healthEndpoints.length === 0) {
+      dispatch(fetchDirectory());
+    }
   }, []);
 
   useEffect(() => {
     dispatch(fetchDirectoryDetailByURNs(tenantServiceUrns));
   }, [tenantServiceUrns.length]);
 
-  useEffect(() => {
-    const dropdownInput = getDropdownInput();
-    if (dropdownInput) {
-      dropdownInput.addEventListener(
-        'click',
-        (e) => {
-          setOpenDropdown(!openDropdown);
-        },
-        { passive: true }
-      );
-    }
-  });
-
+  // eslint-disable-next-line
   useEffect(() => {}, [healthEndpoints]);
+
   return (
     <GoAModal isOpen={isOpen}>
       <GoAModalTitle>{title}</GoAModalTitle>
-
       <GoAModalContent>
-        <p>{String(openDropdown)}</p>
-
         <GoAForm>
           <GoAFormItem>
             <label>Application name</label>
+
             <GoAInput
               type="text"
               name="name"
@@ -142,45 +126,50 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSav
             />
           </GoAFormItem>
           <GoAFormItem>
-            <div ref={dropdownRef}>
-              <GoAInput
-                type="test"
-                name="url"
-                value={application?.endpoint?.url}
-                onChange={(name, value) => {
-                  setApplication({
-                    ...application,
-                    endpoint: {
-                      url: value,
-                      status: 'offline',
-                    },
-                  });
-                  console.log(value);
-                }}
-              />
+            <GoAInput
+              type="test"
+              name="url"
+              value={application?.endpoint?.url}
+              onChange={(name, value) => {
+                setApplication({
+                  ...application,
+                  endpoint: {
+                    url: value,
+                    status: 'offline',
+                  },
+                });
+              }}
+              onTrailingIconClick={() => {
+                setOpenDropdown(!openDropdown);
+              }}
+              trailingIcon={openDropdown ? 'close-circle' : 'chevron-down'}
+            />
 
-              {openDropdown &&
-                healthEndpoints.map((endpoint): JSX.Element => {
-                  return (
-                    <GoADropdownOption
-                      label={endpoint}
-                      value={endpoint}
-                      key={endpoint}
-                      visible={true}
-                      onClick={(value) => {
-                        setOpenDropdown(false);
-                        setApplication({
-                          ...application,
-                          endpoint: {
-                            url: value,
-                            status: 'offline',
-                          },
-                        });
-                      }}
-                    />
-                  );
-                })}
-            </div>
+            {openDropdown && (
+              <DropdownListContainer>
+                <DropdownList>
+                  {healthEndpoints.map((endpoint): JSX.Element => {
+                    return (
+                      <GoADropdownOption
+                        label={endpoint}
+                        value={endpoint}
+                        key={endpoint}
+                        visible={true}
+                        onClick={(value) => {
+                          setApplication({
+                            ...application,
+                            endpoint: {
+                              url: value,
+                              status: 'offline',
+                            },
+                          });
+                        }}
+                      />
+                    );
+                  })}
+                </DropdownList>
+              </DropdownListContainer>
+            )}
           </GoAFormItem>
         </GoAForm>
       </GoAModalContent>
@@ -200,5 +189,22 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSav
     </GoAModal>
   );
 };
+const DropdownListContainer = styled.div`
+  max-height: 10rem;
+  overflow: hidden auto;
+  padding: 0rem;
+  scroll-behavior: smooth;
+`;
+
+const DropdownList = styled.ul`
+  position: relative;
+  margin-top: 3px;
+  list-style-type: none;
+  background: var(--color-white);
+  border-radius: var(--input-border-radius);
+  box-shadow: 0 8px 8px rgb(0 0 0 / 20%), 0 4px 4px rgb(0 0 0 / 10%);
+  z-index: 99;
+  padding-left: 0rem !important;
+`;
 
 export default ApplicationFormModal;
