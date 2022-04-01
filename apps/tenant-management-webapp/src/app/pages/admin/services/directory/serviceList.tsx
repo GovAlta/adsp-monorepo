@@ -40,7 +40,7 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
         <td>
           <IconDiv>
             <GoAContextMenu>
-              {service.api && (
+              {!service.api && (
                 <GoAContextMenuIcon
                   type={showDetails ? 'eye-off' : 'eye'}
                   onClick={() => setDetails(service)}
