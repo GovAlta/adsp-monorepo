@@ -1,6 +1,7 @@
 import { adspId, AdspId, DomainEvent, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError, Update } from '@core-services/core-common';
-import { RequestHandler, Router } from 'express';
+import { createValidationHandler, InvalidOperationError, NotFoundError, Update } from '@core-services/core-common';
+import { Request, RequestHandler, Response, Router } from 'express';
+import { checkSchema, param } from 'express-validator';
 import { Logger } from 'winston';
 import { taskAssigned, taskCancelled, taskCompleted, taskPrioritySet, taskStarted, taskUpdated } from '../events';
 import { TaskEntity } from '../model/task';
@@ -169,10 +170,35 @@ export function createTaskRouter({
 }: TaskRouterProps): Router {
   const router = Router();
 
+  const validateIdHandler = createValidationHandler(param('id').isUUID());
+
   router.get('/tasks', getTasks(apiId, repository));
-  router.get('/tasks/:id', getTask(repository), (req, res) => res.send(mapTask(apiId, req[TASK_KEY])));
-  router.patch('/tasks/:id', getTask(repository), updateTask(apiId, eventService));
-  router.post('/tasks/:id', getTask(repository), taskOperation(apiId, eventService));
+  router.get('/tasks/:id', validateIdHandler, getTask(repository), (req: Request, res: Response) =>
+    res.send(mapTask(apiId, req[TASK_KEY]))
+  );
+  router.patch(
+    '/tasks/:id',
+    validateIdHandler,
+    createValidationHandler(
+      ...checkSchema(
+        {
+          name: { optional: true, isLength: { options: { min: 1, max: 50 } } },
+          description: { optional: true, isString: true },
+          context: { optional: true, isObject: true },
+        },
+        ['body']
+      )
+    ),
+    getTask(repository),
+    updateTask(apiId, eventService)
+  );
+  router.post(
+    '/tasks/:id',
+    validateIdHandler,
+
+    getTask(repository),
+    taskOperation(apiId, eventService)
+  );
 
   return router;
 }

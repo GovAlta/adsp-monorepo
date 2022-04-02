@@ -26,6 +26,7 @@ export const environment = envalid.cleanEnv(
     CLIENT_SECRET: envalid.str({ default: '' }),
     APP_ENVIRONMENT: envalid.str({ default: 'dev' }),
     DIRECTORY_BOOTSTRAP: envalid.str({ default: '' }),
+    TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
   },
   {
     reporter: ({ errors }) => {

@@ -5,7 +5,6 @@ import { getTemplateBody } from '@core-services/notification-shared';
 import { Logger } from 'winston';
 import { SubscriptionRepository } from '../repository';
 import { TemplateService } from '../template';
-import { Template } from '../types';
 import {
   NotificationType,
   Notification,
@@ -13,6 +12,7 @@ import {
   SubscriptionCriteria,
   ServiceUserRoles,
   Subscriber,
+  Template,
 } from '../types';
 import { SubscriberEntity } from './subscriber';
 import { SubscriptionEntity } from './subscription';
@@ -30,8 +30,8 @@ export class NotificationTypeEntity implements NotificationType {
   events: NotificationTypeEvent[] = [];
 
   constructor(type: NotificationType, tenantId?: AdspId) {
-    this.tenantId = tenantId;
     Object.assign(this, type);
+    this.tenantId = tenantId;
   }
 
   canSubscribe(user: User, subscriber: Subscriber): boolean {
@@ -86,7 +86,7 @@ export class NotificationTypeEntity implements NotificationType {
     messageContext: Record<string, unknown>
   ): Notification[] {
     const notifications: Notification[] = [];
-    subscriptions.forEach((subscription) => {
+    for (const subscription of subscriptions) {
       if (subscription.shouldSend(event)) {
         const notification = this.generateNotification(
           logger,
@@ -100,24 +100,22 @@ export class NotificationTypeEntity implements NotificationType {
           notifications.push(notification);
         }
       }
-    });
+    }
 
     return notifications;
   }
 
   overrideWith(customType: NotificationTypeEntity): NotificationTypeEntity {
-    const mergedType = new NotificationTypeEntity(this);
-
-    mergedType.events.map((event) => {
-      customType.events.forEach((ev) => {
-        if (`${ev.namespace}:${ev.name}` === `${event.namespace}:${event.name}`) {
-          event.templates = { ...event.templates, ...ev.templates };
-        }
-      });
-      return event;
+    // This needs to make a deep copy to avoid the modified template applying to the base type entity.
+    const events: NotificationTypeEvent[] = this.events.map((event) => {
+      const overrideEvent = customType.events.find(
+        (customEvent) => customEvent.namespace === event.namespace && customEvent.name === event.name
+      );
+      const templates = overrideEvent ? { ...event.templates, ...overrideEvent.templates } : event.templates;
+      return { ...event, templates };
     });
 
-    return mergedType;
+    return new NotificationTypeEntity({ ...this, events }, customType.tenantId);
   }
 
   private generateNotification(
@@ -181,9 +179,10 @@ export class NotificationTypeEntity implements NotificationType {
   }
 
   private getTemplate(channel: Channel, template: Template, context: Record<string, unknown>): Template {
+    const effectiveTemplate = { ...template };
     if (channel === Channel.email) {
-      template['body'] = getTemplateBody(template.body.toString(), context);
+      effectiveTemplate.body = getTemplateBody(template.body.toString(), context);
     }
-    return template;
+    return effectiveTemplate;
   }
 }

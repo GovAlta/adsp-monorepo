@@ -17,20 +17,21 @@ interface DirectoryModalProps {
 export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   const isNew = props.type === 'new';
   const [entry, setEntry] = useState(props.entry);
-  const title = isNew ? 'Add directory' : 'Edit directory';
+
+  const title = isNew ? 'Add entry' : 'Edit entry';
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { directory } = useSelector((state: RootState) => state.directory);
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const dispatch = useDispatch();
 
-  const checkService = (service) => {
-    const tenantDirectory = directory.find((x) => x.namespace === tenantName && x.service === service);
-    return tenantDirectory;
+  const checkService = (entry) => {
+    return directory.find((x) => x.namespace === tenantName && x.service === entry.service);
   };
-  const checkApi = (api) => {
-    const tenantDirectory = directory.find((x) => x.namespace === tenantName && x.api && x.api === api);
-    return tenantDirectory;
+
+  const checkApi = (entry) => {
+    return directory.find((x) => x.namespace === tenantName && x.service === entry.service && x.api === entry.api);
   };
+
   return (
     <GoAModal testId="directory-modal" isOpen={props.open}>
       <GoAModalTitle>{title}</GoAModalTitle>
@@ -40,11 +41,11 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
             <label>Service</label>
             <input
               type="text"
-              name="name"
+              name="service"
               value={entry.service}
               data-testid={`directory-modal-service-input`}
               onChange={(e) => setEntry({ ...entry, service: e.target.value })}
-              aria-label="name"
+              aria-label="service"
               maxLength={50}
             />
           </GoAFormItem>
@@ -96,16 +97,8 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               setErrors({ ...errors, service: 'Service allowed characters: a-z, 0-9, -' });
               return;
             }
-            if (checkService(entry.service) && props.type === 'new') {
-              setErrors({ ...errors, service: 'Service name duplicate, please use another one' });
-              return;
-            }
             if (entry.api && !regex.test(entry.api)) {
               setErrors({ ...errors, api: 'Api allowed characters: a-z, 0-9, -' });
-              return;
-            }
-            if (checkApi(entry.api) && props.type === 'new') {
-              setErrors({ ...errors, api: 'Api duplicate, please use another one' });
               return;
             }
             const urlReg = new RegExp(/^(http|https):\/\/[^ "]+$/);
@@ -115,9 +108,18 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               return;
             }
 
+            if (entry.api && checkApi(entry)) {
+              setErrors({ ...errors, api: 'Api duplicate, please use another one' });
+              return;
+            }
+            if (!entry.api && checkService(entry)) {
+              setErrors({ ...errors, service: 'Service duplicate, please use another one' });
+              return;
+            }
             if (props.type === 'new') {
               dispatch(createEntry(entry));
             }
+
             if (props.type === 'edit') {
               dispatch(updateEntry(entry));
             }

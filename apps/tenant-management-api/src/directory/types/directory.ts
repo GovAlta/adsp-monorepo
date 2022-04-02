@@ -1,8 +1,7 @@
 export interface Service {
+  _id?: string;
   service: string;
-  api?: string;
   host: string;
-  description?: string;
   metadata?: Links;
 }
 export interface Directory {
@@ -17,10 +16,10 @@ export interface Metadata {
   _links?: Links;
 }
 export interface Links {
-  self: string;
-  docs?: string;
-  api?: string;
-  health?: string;
+  self: { href: string };
+  docs?: { href: string };
+  api?: { href: string };
+  health?: { href: string };
 }
 export interface Criteria {
   name: { $regex: string; $options: 'i' };

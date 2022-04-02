@@ -1,0 +1,25 @@
+{
+  "extends": "../../.releaserc.json",
+  "tagFormat": "adsp-service-sdk-v${version}",
+  "plugins": [
+    [
+      "@abgov/nx-release",
+      {
+        "project": "adsp-service-sdk"
+      }
+    ],
+    [
+      "@semantic-release/npm",
+      {
+        "pkgRoot": "dist/libs/adsp-service-sdk"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "releasedLabels": false,
+        "successComment": false
+      }
+    ]
+  ]
+}

@@ -18,6 +18,7 @@ export const environment = envalid.cleanEnv(
     MONGO_TLS: envalid.bool({ default: false }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: 3343 }),
+    TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
   },
   {
     reporter: ({ errors }) => {

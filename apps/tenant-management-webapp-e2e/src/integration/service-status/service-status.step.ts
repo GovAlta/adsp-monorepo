@@ -212,9 +212,6 @@ Then('the user views Edit notice dialog', function () {
 
 When('the user selects {string} filter by status radio button', function (filterType) {
   expect(filterType).to.be.oneOf(['Draft', 'Published', 'Archived', 'Active']);
-  if (filterType == 'Published') {
-    filterType = 'published';
-  }
   statusObj.filterByStatusRadio(filterType.toLowerCase()).click();
 });
 
@@ -233,7 +230,7 @@ Then('the user views {string} notices', function (filterType) {
               if (filterType != 'Active') {
                 expect(modeText).to.equal(filterType);
               } else {
-                expect(modeText).to.be.oneOf(['Draft', 'Published', 'Archived']);
+                expect(modeText).to.be.oneOf(['Draft', 'Published']);
               }
             });
         }

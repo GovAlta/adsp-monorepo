@@ -13,6 +13,7 @@ export const environment = envalid.cleanEnv(
     CLIENT_SECRET: envalid.str(),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: <%= port %> }),
+    TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
   },
   {
     reporter: ({ errors }) => {

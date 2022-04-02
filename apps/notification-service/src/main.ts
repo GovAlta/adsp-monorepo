@@ -39,6 +39,10 @@ async function initializeApp() {
   app.use(express.json({ limit: '1mb' }));
   app.use(cors());
 
+  if (environment.TRUSTED_PROXY) {
+    app.set('trust proxy', environment.TRUSTED_PROXY);
+  }
+
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const {
     coreStrategy,
@@ -129,14 +133,6 @@ async function initializeApp() {
     done();
   });
 
-  // This should be done with 'trust proxy', but that depends on the proxies using the x-forward headers.
-  const ROOT_URL = 'rootUrl';
-  function getRootUrl(req: express.Request, _res: express.Response, next: express.NextFunction) {
-    const host = req.get('host');
-    req[ROOT_URL] = new URL(`${host === 'localhost' ? 'http' : 'https'}://${host}`);
-    next();
-  }
-
   const templateService = createTemplateService();
 
   const providers = initializeProviders(logger, app, botRepository, environment);
@@ -184,9 +180,11 @@ async function initializeApp() {
     });
   });
 
-  app.get('/', getRootUrl, async (req, res) => {
-    const rootUrl = req[ROOT_URL];
+  app.get('/', async (req, res) => {
+    const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
+      name: 'Notification service',
+      description: 'Service for subscription based notifications.',
       _links: {
         self: { href: new URL(req.originalUrl, rootUrl).href },
         health: { href: new URL('/health', rootUrl).href },

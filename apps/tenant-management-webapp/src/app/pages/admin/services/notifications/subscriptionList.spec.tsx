@@ -14,6 +14,9 @@ describe('NotificationTypes Page', () => {
     session: {
       realm: 'core',
       resourceAccess: { 'urn:ads:platform:notification-service': { roles: ['subscription-admin'] } },
+      indicator: {
+        show: false,
+      },
     },
     tenant: {
       realmRoles: ['uma_auth'],

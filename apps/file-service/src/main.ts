@@ -34,6 +34,10 @@ async function initializeApp(): Promise<express.Application> {
   app.use(express.json({ limit: '1mb' }));
   app.use(cors());
 
+  if (environment.TRUSTED_PROXY) {
+    app.set('trust proxy', environment.TRUSTED_PROXY);
+  }
+
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
   const {
@@ -161,6 +165,8 @@ async function initializeApp(): Promise<express.Application> {
   app.get('/', async (req, res) => {
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
+      name: 'File service',
+      description: 'Service for upload and download of files.',
       _links: {
         self: { href: new URL(req.originalUrl, rootUrl).href },
         health: { href: new URL('/health', rootUrl).href },

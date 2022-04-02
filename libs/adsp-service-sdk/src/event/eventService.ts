@@ -16,6 +16,7 @@ export class EventServiceImpl implements EventService {
   private readonly definitions: string[];
 
   constructor(
+    private readonly isCore: boolean,
     private readonly logger: Logger,
     private readonly directory: ServiceDirectory,
     private readonly tokenProvider: TokenProvider,
@@ -26,7 +27,7 @@ export class EventServiceImpl implements EventService {
     this.definitions = events?.map((e) => e.name) || [];
   }
 
-  async send(event: DomainEvent): Promise<void> {
+  async send({ tenantId, ...event }: DomainEvent): Promise<void> {
     if (!this.definitions.includes(event.name)) {
       throw new Error(`Event ${this.namespace}:${event.name} is not recognized; only registered events can be sent.`);
     }
@@ -39,23 +40,25 @@ export class EventServiceImpl implements EventService {
 
       this.logger.debug(`Sending event ${this.namespace}:${event.name} to: ${sendUrl}...`, {
         ...this.LOG_CONTEXT,
-        tenant: event.tenantId?.toString(),
+        tenant: tenantId?.toString(),
       });
 
       await axios.post(
         sendUrl.href,
-        { ...event, namespace: this.namespace, tenantId: event.tenantId ? `${event.tenantId}` : null },
+        this.isCore
+          ? { ...event, namespace: this.namespace, tenantId: `${tenantId}` }
+          : { ...event, namespace: this.namespace },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       this.logger.info(`Sent domain event ${this.namespace}:${event.name}.`, {
         ...this.LOG_CONTEXT,
-        tenant: event.tenantId?.toString(),
+        tenant: tenantId?.toString(),
       });
     } catch (err) {
       this.logger.error(`Error encountered on sending of event ${this.namespace}:${event.name}. ${err}`, {
         ...this.LOG_CONTEXT,
-        tenant: event?.tenantId?.toString(),
+        tenant: tenantId?.toString(),
       });
     }
   }

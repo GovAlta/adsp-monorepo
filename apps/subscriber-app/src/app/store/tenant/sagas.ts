@@ -25,7 +25,7 @@ export function* fetchTenant(action: FetchTenantAction): SagaIterator {
 
     yield put(FetchTenantSucceededService(tenant));
   } catch (e) {
-    yield put(ErrorNotification({ message: `${e.message} - fetchContactInfo` }));
+    yield put(ErrorNotification({ message: `${e.message} - fetchTenant` }));
   }
 }
 

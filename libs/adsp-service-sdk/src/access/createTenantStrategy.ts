@@ -1,13 +1,12 @@
 import type { Strategy } from 'passport';
 import { ExtractJwt, Strategy as JwtStrategy, VerifyCallbackWithRequest } from 'passport-jwt';
-import { TenantService } from '../tenant';
 import { assertAdspId } from '../utils';
-import { AccessStrategyOptions as BaseAccessStrategyOptions } from './createCoreStrategy';
+import { AccessStrategyOptions as BaseAccessStrategyOptions } from './createRealmStrategy';
 import { IssuerCache } from './issuerCache';
 import { TenantKeyProvider } from './keyProvider';
+import { resolveRoles } from './resolveRoles';
 
-interface AccessStrategyOptions extends BaseAccessStrategyOptions {
-  tenantService: TenantService;
+interface AccessStrategyOptions extends Omit<BaseAccessStrategyOptions, 'realm'> {
   accessTokenInQuery?: boolean;
 }
 
@@ -31,7 +30,7 @@ export const createTenantStrategy = ({
       id: payload.sub,
       name: payload.name || payload.preferred_username,
       email: payload.email,
-      roles: [...(payload.realm_access?.roles || []), ...(payload.resource_access?.[serviceAud]?.roles || [])],
+      roles: resolveRoles(serviceAud, payload),
       tenantId: tenant?.id,
       isCore: false,
       token: {

@@ -32,6 +32,7 @@ export const environment = envalid.cleanEnv(
     BOT_APP_ID: envalid.str({ default: '' }),
     BOT_APP_SECRET: envalid.str({ default: '' }),
     PORT: envalid.num({ default: 3335 }),
+    TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
   },
   {
     reporter: ({ errors }) => {
