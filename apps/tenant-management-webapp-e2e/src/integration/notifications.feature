@@ -213,15 +213,16 @@ Feature: Notifications
         When the user searches subscribers with address as containing "Auto Test" and email containing "auto.test@gov.ab.ca"
         Given a tenant admin user is on status applications page
         Then the user "views" "Autotest" in the application list
-        # ###Change status from empty to outage and verify the even
+        And the user views current status for "Autotest"
         When the user clicks Change status button for "Autotest"
-        When the user selects "Operational" and clicks Save button
-        Then the user views the "Operational" status for "Autotest"
+        Then the user changes to the first unckeck status
+        And the user clicks Save button
         When the user waits "20" seconds
+        Then the user views the status after change for "Autotest" and compares with previous status
         And the user selects the "Event log" menu item
         Then the "Event log" landing page is displayed
         When the user searches with "notification-service:notification-sent", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
         And the user clicks Show details button for the latest event of "notification-sent" for "notification-service"
-        Then the user views the event details with subject: "Autotest status has changed to operational" and userId: "auto.test@gov.ab.ca"
+        Then the user views the event details with subject: "Autotest status has changed to" and userId: "auto.test@gov.ab.ca"
 
 
