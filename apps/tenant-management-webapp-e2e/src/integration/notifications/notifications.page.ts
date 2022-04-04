@@ -347,9 +347,5 @@ class NotificationsPage {
   contactInformationInstructions() {
     return cy.get('[data-testid="support-instructions"]');
   }
-
-  eventDetails() {
-    return cy.xpath('//td[@class="event-details"]');
-  }
 }
 export default NotificationsPage;
