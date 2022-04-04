@@ -74,7 +74,7 @@ const Dashboard = (): JSX.Element => {
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
                     <GoACard type="primary">
                       <h2>
-                        <Link to="/admin/services/files">File service</Link>
+                        <Link to="/admin/services/files">File</Link>
                       </h2>
                       <div>
                         The file service provides the capability to upload and download files. Consumers are registered

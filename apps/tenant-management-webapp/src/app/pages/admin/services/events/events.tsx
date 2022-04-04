@@ -15,7 +15,7 @@ export const Events: FunctionComponent = () => {
   return (
     <Page>
       <Main>
-        <h1>Events</h1>
+        <h1 data-testid="events-title">Events</h1>
         <Tabs activeIndex={activeIndex} data-testid="events-tabs">
           <Tab label="Overview" data-testid="events-overview-tab">
             <EventsOverview

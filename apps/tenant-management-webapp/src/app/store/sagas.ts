@@ -54,7 +54,7 @@ export function* watchSagas() {
   yield takeEvery(UPDATE_ENTRY, updateEntryDirectory);
   yield takeEvery(DELETE_ENTRY, deleteEntryDirectory);
   yield takeEvery(FETCH_ENTRY_DETAIL, fetchEntryDetail);
-  // service status
+  //status
   yield takeEvery(FETCH_SERVICE_STATUS_APPS_ACTION, fetchServiceStatusApps);
   yield takeEvery(SAVE_APPLICATION_ACTION, saveApplication);
   yield takeEvery(DELETE_APPLICATION_ACTION, deleteApplication);
