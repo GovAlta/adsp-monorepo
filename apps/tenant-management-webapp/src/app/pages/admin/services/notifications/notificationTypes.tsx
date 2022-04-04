@@ -21,7 +21,7 @@ import {
   FetchNotificationConfigurationService,
   FetchCoreNotificationTypesService,
 } from '@store/notification/actions';
-import { NotificationItem, baseTemplate, Template } from '@store/notification/models';
+import { NotificationItem, baseTemplate, Template, EventItem } from '@store/notification/models';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 import { EditIcon } from '@components/icons/EditIcon';
@@ -52,6 +52,13 @@ const emptyNotificationType: NotificationItem = {
   customized: false,
 };
 
+const emptyEvent: EventItem = {
+  name: '',
+  namespace: '',
+  templates: baseTemplate,
+  customized: false,
+};
+
 interface ParentCompProps {
   activeEdit?: boolean;
   activateEdit?: (boolean) => void;
@@ -77,22 +84,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [formTitle, setFormTitle] = useState<string>('');
 
   const [subject, setSubject] = useState('');
-  const [templates, setTemplates] = useState<Template>(baseTemplate);
-  //const debouncedRender = useDebounce(templates, TEMPALTE_RENDER_DEBOUNCE_TIMER);
-  const debouncedSubjectRenderEmail = useDebounce(templates.email.subject, TEMPALTE_RENDER_DEBOUNCE_TIMER);
-  const debouncedSubjectRenderBot = useDebounce(templates.bot.subject, TEMPALTE_RENDER_DEBOUNCE_TIMER);
-  const debouncedSubjectRenderSms = useDebounce(templates.sms.subject, TEMPALTE_RENDER_DEBOUNCE_TIMER);
-  const debouncedSubjectRenderMail = useDebounce(templates.mail.subject, TEMPALTE_RENDER_DEBOUNCE_TIMER);
-
   const [body, setBody] = useState('');
-
-  const debouncedBodyRenderEmail = useDebounce(templates.email.body, TEMPALTE_RENDER_DEBOUNCE_TIMER);
-  const debouncedBodyRenderBot = useDebounce(templates.bot.body, TEMPALTE_RENDER_DEBOUNCE_TIMER);
-  const debouncedBodyRenderSms = useDebounce(templates.sms.body, TEMPALTE_RENDER_DEBOUNCE_TIMER);
-  const debouncedBodyRenderMail = useDebounce(templates.mail.body, TEMPALTE_RENDER_DEBOUNCE_TIMER);
+  const [templates, setTemplates] = useState<Template>(baseTemplate);
+  const debouncedRenderSubject = useDebounce(subject, TEMPALTE_RENDER_DEBOUNCE_TIMER);
+  const debouncedRenderBody = useDebounce(body, TEMPALTE_RENDER_DEBOUNCE_TIMER);
 
   const [subjectPreview, setSubjectPreview] = useState('');
   const [bodyPreview, setBodyPreview] = useState('');
+  const [currentChannel, setCurrentChannel] = useState('Email');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
@@ -111,6 +110,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     return [];
   };
 
+  const channelNames = { email: 'Email', bot: 'Slack bot', sms: 'Text message' };
+
   useEffect(() => {
     // if an event is selected for editing
     if (selectedEvent) {
@@ -123,25 +124,31 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
       // try to render preview of subject and body.
       // Will only load if the subject and body is a valid handlebar template
+      console.log(JSON.stringify(selectedType.channels[0]) + '<selectedType.channels[0]');
+      console.log(JSON.stringify(templates[selectedType.channels[0]]) + '<templates[selectedType.channels[0]]');
+      const channel = selectedEvent?.templates[selectedType.channels[0]];
+      console.log(JSON.stringify(channel) + '<channelchannel');
       try {
-        setBodyPreview(generateMessage(getTemplateBody(selectedEvent?.templates?.body, htmlPayload), htmlPayload));
+        setBodyPreview(generateMessage(getTemplateBody(channel.body, channel, htmlPayload), htmlPayload));
         setTemplateEditErrors({
           ...templateEditErrors,
           body: '',
         });
       } catch (e) {
+        console.log(JSON.stringify(e.message) + '<e.message body');
         setTemplateEditErrors({
           ...templateEditErrors,
           body: syntaxErrorMessage,
         });
       }
       try {
-        setSubjectPreview(generateMessage(selectedEvent?.templates?.email?.subject, htmlPayload));
+        setSubjectPreview(generateMessage(channel.subject, htmlPayload));
         setTemplateEditErrors({
           ...templateEditErrors,
           subject: '',
         });
       } catch (e) {
+        console.log(JSON.stringify(e.message) + '<e.message subject');
         setTemplateEditErrors({
           ...templateEditErrors,
           subject: syntaxErrorMessage,
@@ -192,30 +199,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   }
 
   useEffect(() => {
-    renderSubjectPreview(debouncedSubjectRenderEmail);
-  }, [debouncedSubjectRenderEmail]);
-  useEffect(() => {
-    renderSubjectPreview(debouncedSubjectRenderBot);
-  }, [debouncedSubjectRenderBot]);
-  useEffect(() => {
-    renderSubjectPreview(debouncedSubjectRenderSms);
-  }, [debouncedSubjectRenderSms]);
-  useEffect(() => {
-    renderSubjectPreview(debouncedSubjectRenderMail);
-  }, [debouncedSubjectRenderMail]);
+    console.log(JSON.stringify(debouncedRenderBody) + '>>debouncedRenderBody');
+    renderBodyPreview(debouncedRenderBody);
+  }, [debouncedRenderBody]);
 
   useEffect(() => {
-    renderBodyPreview(debouncedBodyRenderEmail);
-  }, [debouncedBodyRenderEmail]);
-  useEffect(() => {
-    renderBodyPreview(debouncedBodyRenderBot);
-  }, [debouncedBodyRenderBot]);
-  useEffect(() => {
-    renderBodyPreview(debouncedBodyRenderSms);
-  }, [debouncedBodyRenderSms]);
-  useEffect(() => {
-    renderBodyPreview(debouncedBodyRenderMail);
-  }, [debouncedBodyRenderMail]);
+    console.log(JSON.stringify(debouncedRenderSubject) + '>>debouncedRenderSubject');
+    renderSubjectPreview(debouncedRenderSubject);
+  }, [debouncedRenderSubject]);
 
   const renderSubjectPreview = (value) => {
     console.log(JSON.stringify(value) + '<rendersubjectpreview');
@@ -237,7 +228,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   const renderBodyPreview = (value) => {
     try {
-      const msg = generateMessage(getTemplateBody(value, htmlPayload), htmlPayload);
+      const channel = selectedEvent?.templates[selectedType.channels[0]];
+      const msg = generateMessage(getTemplateBody(value, channel, htmlPayload), htmlPayload);
       setBodyPreview(msg);
       setTemplateEditErrors({
         ...templateEditErrors,
@@ -289,12 +281,12 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const editEventTemplateContent = {
     saveOrAddActionText: 'Save',
     cancelOrBackActionText: 'Cancel',
-    mainTitle: 'Edit an email template',
+    mainTitle: 'Edit a',
   };
   const addNewEventTemplateContent = {
     saveOrAddActionText: 'Add',
     cancelOrBackActionText: 'Back',
-    mainTitle: 'Add an email template',
+    mainTitle: 'Add a',
   };
   const [eventTemplateFormState, setEventTemplateFormState] = useState(addNewEventTemplateContent);
 
@@ -338,6 +330,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             setSelectedType(emptyNotificationType);
             setEditType(true);
             setFormTitle('Add notification type');
+            setSelectedEvent(emptyEvent);
           }}
         >
           Add notification type
@@ -470,7 +463,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                         buttonType="secondary"
                         data-testid="add-event"
                         onClick={() => {
-                          setSelectedEvent(null);
+                          setSelectedEvent(emptyEvent);
                           manageEvents(notificationType);
                         }}
                       >
@@ -708,7 +701,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                   newTemplates = { ...templates, [channel]: { subject: value } };
                 }
 
+                console.log(JSON.stringify(newTemplates) + 'newTemplates');
                 setTemplates(newTemplates);
+                setSubject(value);
               }}
               subjectEditorConfig={subjectEditorConfig}
               bodyTitle="Body"
@@ -722,16 +717,19 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 }
 
                 setTemplates(newTemplates);
+                setBody(value);
               }}
               setPreview={(channel) => {
-                console.log(JSON.stringify(channel) + '<channel');
+                console.log(JSON.stringify(channel) + '<channelaaa');
                 if (templates) {
-                  console.log(JSON.stringify(templates[channel]?.subject) + '<emplates[channel].subject');
-                  setBodyPreview(generateMessage(getTemplateBody(templates[channel]?.body, htmlPayload), htmlPayload));
+                  console.log(JSON.stringify(templates[channel]) + '<templates[channel]xxx');
+                  setBodyPreview(
+                    generateMessage(getTemplateBody(templates[channel]?.body, channel, htmlPayload), htmlPayload)
+                  );
                   setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
                 }
+                setCurrentChannel(channel);
               }}
-              //body={body}
               bodyEditorConfig={bodyEditorConfig}
               errors={templateEditErrors}
               bodyEditorHintText={eventTemplateEditHintText}
@@ -771,7 +769,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             <PreviewTemplateContainer>
               <PreviewTemplate
                 subjectTitle="Subject"
-                emailTitle="Email preview"
+                channelTitle={`${channelNames[currentChannel]} preview`}
                 subjectPreviewContent={subjectPreview}
                 emailPreviewContent={bodyPreview}
               />

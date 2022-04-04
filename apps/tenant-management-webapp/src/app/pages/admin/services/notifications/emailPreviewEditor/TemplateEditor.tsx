@@ -2,7 +2,7 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { TemplateEditorContainer, MonacoDiv, EditTemplateActions, MonacoDivBody } from './styled-components';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
-import { GoADropdown, GoADropdownOption } from '@abgov/react-components';
+import { GoARadioGroup, GoARadio } from '@abgov/react-components';
 import { languages } from 'monaco-editor';
 import { buildSuggestions } from '@lib/autoComplete';
 import { Template } from '@store/notification/models';
@@ -70,29 +70,25 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
   console.log(JSON.stringify(validChannels) + '<validChannels');
 
-  const [templateChange, setTemplateChange] = useState([validChannels[0]]);
+  const [selectedTemplate, setSelectedTemplate] = useState(validChannels[0]);
+  const [currentTemplate, setCurrentTemplate] = useState('');
 
   useEffect(() => {
     if (validChannels.length > 0) {
-      setTemplateChange([validChannels[0]]);
+      setSelectedTemplate(validChannels[0]);
       setPreview(validChannels[0]);
     }
   }, [validChannels]);
 
-  const channels = [
-    { value: 'email', title: 'Email' },
-    { value: 'bot', title: 'Slack bot' },
-    { value: 'sms', title: 'Text Message' },
-    { value: 'mail', title: 'Mail' },
-  ];
+  const channelNames = { email: 'n email', bot: ' slack bot', sms: ' text message', mail: 'mail' };
 
   console.log(JSON.stringify(templates) + '<templates');
 
-  let dropDownOptions = [];
+  let radioOptions = [];
 
   if (templates) {
-    dropDownOptions = validChannels.map((eventKey, index) => {
-      // console.log(JSON.stringify(dropDownOptions) + '>dropDownOptions');
+    radioOptions = validChannels.map((eventKey, index) => {
+      // console.log(JSON.stringify(radioOptions) + '>radioOptions');
       // console.log(JSON.stringify(eventKey) + '>eventKey');
       // console.log(JSON.stringify(Object.keys(templates)) + '>Object.keys(templates)');
       // console.log(JSON.stringify(templates) + '>templates');
@@ -102,57 +98,78 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
         body: templates[eventKey]?.body,
         label: eventKey,
         key: index,
-        dataTestId: `${eventKey}-dropdown`,
+        dataTestId: `${eventKey}-radio-button`,
       };
     });
   } else return null;
 
   return (
     <TemplateEditorContainer>
-      <h3 data-testid="modal-title">{`${mainTitle}--${serviceName}`}</h3>
       <GoAForm>
-        <h4>Template Type</h4>
-        {console.log(JSON.stringify(dropDownOptions) + '<dropDownOptions')}
-        {console.log(JSON.stringify(templateChange) + '<templateChange')}
+        <h4>Select Template</h4>
+        {console.log(JSON.stringify(radioOptions) + '<radioOptions')}
+        {console.log(JSON.stringify(selectedTemplate) + '<selectedTemplate')}
         <GoAFormItem error={errors['body'] ?? ''} helpText={bodyEditorHintText}>
-          <GoADropdown
-            name="channels"
+          <GoARadioGroup
+            name="selectedTemplate"
+            value={selectedTemplate}
             onChange={(_name, value) => {
-              console.log(JSON.stringify(value) + '|value');
-              setTemplateChange(value);
-              setPreview(value[0]);
+              console.log(JSON.stringify(value) + '|xxvaluexx');
+              setSelectedTemplate(value);
+              setPreview(value);
             }}
-            selectedValues={templateChange}
+            orientation="horizontal"
           >
-            {dropDownOptions.map((item, key) => (
-              <GoADropdownOption label={item.label} value={item.name} key={key} data-testid={item.dataTestId} />
+            {radioOptions.map((item, key) => (
+              <GoARadio key={item.name} value={item.name} data-testid={item.dataTestId}>
+                {item.name}
+              </GoARadio>
             ))}
-          </GoADropdown>
+          </GoARadioGroup>
         </GoAFormItem>
-        <h4>{subjectTitle}</h4>
-        <GoAFormItem error={errors['subject'] ?? ''} helpText={subjectEditorHintText}>
-          <MonacoDiv>
-            <MonacoEditor
-              onChange={(value) => {
-                onSubjectChange(value, templateChange[0]);
-              }}
-              value={templates[templateChange[0]]?.subject}
-              {...subjectEditorConfig}
-            />
-          </MonacoDiv>
-        </GoAFormItem>
-        <h4>{bodyTitle}</h4>
-        <GoAFormItem error={errors['body'] ?? ''} helpText={bodyEditorHintText}>
-          <MonacoDivBody>
-            <MonacoEditor
-              value={templates[templateChange[0]]?.body}
-              onChange={(value) => {
-                onBodyChange(value, templateChange[0]);
-              }}
-              {...bodyEditorConfig}
-            />
-          </MonacoDivBody>
-        </GoAFormItem>
+
+        <h3 data-testid="modal-title">{`${mainTitle}${
+          channelNames[selectedTemplate] || ''
+        } template--${serviceName}`}</h3>
+
+        {selectedTemplate && (
+          <>
+            <h4>{subjectTitle}</h4>
+            <GoAFormItem error={errors['subject'] ?? ''} helpText={subjectEditorHintText}>
+              <MonacoDiv>
+                <MonacoEditor
+                  onChange={(value) => {
+                    console.log(
+                      JSON.stringify(templates[selectedTemplate]?.subject) +
+                        '<value - templates[selectedTemplate]?.subject'
+                    );
+                    console.log(JSON.stringify(currentTemplate) + '<currentTemplate');
+                    console.log(JSON.stringify(selectedTemplate) + '<selectedTemplate');
+                    if (currentTemplate === selectedTemplate) {
+                      console.log(JSON.stringify(value) + '<this should only happen if you type inside subject');
+                      onSubjectChange(value, selectedTemplate);
+                    }
+                    setCurrentTemplate(selectedTemplate);
+                  }}
+                  value={templates[selectedTemplate]?.subject}
+                  {...subjectEditorConfig}
+                />
+              </MonacoDiv>
+            </GoAFormItem>
+            <h4>{bodyTitle}</h4>
+            <GoAFormItem error={errors['body'] ?? ''} helpText={bodyEditorHintText}>
+              <MonacoDivBody>
+                <MonacoEditor
+                  value={templates[selectedTemplate]?.body}
+                  onChange={(value) => {
+                    onBodyChange(value, selectedTemplate);
+                  }}
+                  {...bodyEditorConfig}
+                />
+              </MonacoDivBody>
+            </GoAFormItem>
+          </>
+        )}
         <EditTemplateActions>{actionButtons}</EditTemplateActions>
       </GoAForm>
     </TemplateEditorContainer>
