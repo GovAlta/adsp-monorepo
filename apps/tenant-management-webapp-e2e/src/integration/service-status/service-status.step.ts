@@ -591,7 +591,7 @@ Then('the user views the event detail with subject: {string} and userId: {string
     .eventDetails()
     .invoke('text')
     .then((eventDetails) => {
-      if (subject != 'Empty' && userID != 'Empty') {
+      if (subject != 'Empty' || userID != 'Empty') {
         expect(eventDetails).to.contain(subjectStatus);
         expect(eventDetails).to.contain(userID);
       }
