@@ -195,3 +195,21 @@ Feature: Service status
     Then the user views delete "application" confirmation modal for "autotest-status-change-event"
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" "autotest-status-change-event" in the application list
+
+  @TEST_CS-1282 @REQ_CS-905 @regression
+  Scenario: As an interested stakeholder, I can verify status notifications for a tenant, so that I know about service availability.
+    Given a tenant admin user is on notification subscribers page
+    When the user searches subscribers with address as containing "Auto Test" and email containing "auto.test@gov.ab.ca"
+    Given a tenant admin user is on status applications page
+    Then the user "views" "Autotest" in the application list
+    And the user views current status for "Autotest"
+    When the user clicks Change status button for "Autotest"
+    Then the user changes status to the first unckeck status
+    And the user clicks Save button in Manual status change modal
+    When the user waits "20" seconds
+    Then the user views the status after change for "Autotest" and compares it with previous status
+    When the user selects the "Event log" menu item
+    Then the "Event log" landing page is displayed
+    When the user searches with "notification-service:notification-sent", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
+    And the user clicks Show details button for the latest event of "notification-sent" for "notification-service"
+    Then the user views the event detail with subject: "Autotest status has changed to + changedStatus" and userId: "auto.test@gov.ab.ca"

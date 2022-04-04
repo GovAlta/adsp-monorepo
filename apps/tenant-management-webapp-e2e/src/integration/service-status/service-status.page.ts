@@ -208,5 +208,8 @@ class StatusServicePage {
       `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//*[contains(@class, "badge-content")]`
     );
   }
+  manualStatusList() {
+    return cy.xpath('//*[@class="goa-form-item"]//div/*[@class="goa-radio"]');
+  }
 }
 export default StatusServicePage;

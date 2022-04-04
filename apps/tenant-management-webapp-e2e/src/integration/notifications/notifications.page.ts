@@ -351,19 +351,5 @@ class NotificationsPage {
   eventDetails() {
     return cy.xpath('//td[@class="event-details"]');
   }
-
-  manualStatusList() {
-    return cy.xpath('//*[@class="goa-form-item"]//div/*[@class="goa-radio"]');
-  }
-
-  applicationCardStatusBadge(appName) {
-    return cy.xpath(
-      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//*[contains(@class, "badge-content")]`
-    );
-  }
-
-  manualStatusChangeModalSaveBtn() {
-    return cy.xpath('//*[@class="modal-root" and @data-state="visible"]//button[text()="Save"]');
-  }
 }
 export default NotificationsPage;

@@ -5,6 +5,8 @@ import serviceStatusPage from './service-status.page';
 
 const commonObj = new common();
 const statusObj = new serviceStatusPage();
+let currentStatus;
+let afterStatus;
 
 Given('a service owner user is on service status page', function () {
   commonlib.tenantAdminDirectURLLogin(
@@ -531,4 +533,67 @@ When('the user selects {string} and clicks Save button', function (statusName) {
 
 Then('the user views the {string} status for {string}', function (statusValue, appName) {
   statusObj.applicationCardStatusBadge(appName).invoke('text').should('eq', statusValue);
+});
+
+Then('the user views the event details with subject: {string} and userId: {string}', function (subject, userID) {
+  statusObj
+    .eventDetails()
+    .invoke('text')
+    .then((eventDetails) => {
+      if (subject == 'Empty' || userID == 'Empty') {
+        expect(eventDetails).to.not.contain(subject);
+      } else {
+        expect(eventDetails).to.contain(subject);
+        expect(eventDetails).to.contain(userID);
+      }
+    });
+});
+
+Then('the user views current status for {string}', function (appName) {
+  statusObj
+    .applicationCardStatusBadge(appName)
+    .invoke('text')
+    .then((statusValue) => {
+      cy.log('Current Status: ' + statusValue);
+      currentStatus = statusValue;
+    });
+});
+
+Then('the user changes status to the first unckeck status', function () {
+  statusObj.manualStatusList().each(($status) => {
+    if ($status.text() != currentStatus) {
+      cy.log($status.text());
+      $status.click();
+      return false;
+    }
+  });
+});
+
+Then('the user clicks Save button in Manual status change modal', function () {
+  statusObj.manualStatusChangeModalSaveBtn().click();
+  cy.wait(2000);
+});
+
+Then('the user views the status after change for {string} and compares it with previous status', function (appName) {
+  statusObj
+    .applicationCardStatusBadge(appName)
+    .invoke('text')
+    .then((statusValue) => {
+      cy.log('Current Status: ' + statusValue);
+      afterStatus = statusValue;
+    });
+  expect(afterStatus).not.to.equal(currentStatus);
+});
+
+Then('the user views the event detail with subject: {string} and userId: {string}', function (subject, userID) {
+  const subjectStatus = subject.replace('+ changedStatus', '') + afterStatus.toLowerCase();
+  statusObj
+    .eventDetails()
+    .invoke('text')
+    .then((eventDetails) => {
+      if (subject != 'Empty' && userID != 'Empty') {
+        expect(eventDetails).to.contain(subjectStatus);
+        expect(eventDetails).to.contain(userID);
+      }
+    });
 });
