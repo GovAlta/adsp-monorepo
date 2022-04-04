@@ -16,7 +16,7 @@ export const DeleteModal: FunctionComponent<deleteModalProps> = ({ isOpen, title
       <GoAModalTitle>{title}</GoAModalTitle>
       <GoAModalContent>{content}</GoAModalContent>
       <GoAModalActions>
-        <GoAButton buttonType="tertiary" data-testid="delete-cancel" onClick={onCancel}>
+        <GoAButton buttonType="secondary" data-testid="delete-cancel" onClick={onCancel}>
           Cancel
         </GoAButton>
         <GoAButton buttonType="primary" data-testid="delete-confirm" onClick={onDelete}>
