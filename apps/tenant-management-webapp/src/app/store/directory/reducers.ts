@@ -14,6 +14,10 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
       const directories = action.payload.directory;
       directories.forEach((dir) => {
         dir.isCore = dir.namespace.toLowerCase() === 'platform';
+        if (dir.service.indexOf(':') > -1) {
+          dir.api = dir.service.split(':')[1];
+          dir.service = dir.service.split(':')[0];
+        }
       });
       return { ...state, directory: directories };
     }
@@ -25,22 +29,26 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
     }
     case UPDATE_ENTRY_SUCCESS: {
       const directoryUpdateList = state.directory;
-      const isExist = directoryUpdateList.find((x) => x?.service === action.payload?.service);
-      if (isExist) {
-        if (action.payload.api) {
-          isExist.api = action.payload.api;
-        }
-        isExist.url = action.payload.url;
+      const index = directoryUpdateList.findIndex((x) => x?._id === action.payload?._id);
+      if (index !== -1) {
+        directoryUpdateList[index] = action.payload;
       }
-
-      return { ...state, directory: directoryUpdateList };
+      return { ...state, directory: [...directoryUpdateList] };
     }
     case DELETE_ENTRY_SUCCESS: {
       const directoryDelList = state.directory;
-      const hasExist = directoryDelList.find((x) => x.service === action.payload.service);
+      const hasExist = directoryDelList.find((x) =>
+        action.payload.api
+          ? x.api === action.payload.api && x.service === action.payload.service
+          : x.service === action.payload.service
+      );
       if (hasExist) {
         directoryDelList.splice(
-          directoryDelList.findIndex((item) => item.service === action.payload.service),
+          directoryDelList.findIndex((x) =>
+            action.payload.api
+              ? x.api === action.payload.api && x.service === action.payload.service
+              : x.service === action.payload.service
+          ),
           1
         );
       }
@@ -53,7 +61,7 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
       if (isExist) {
         isExist.metadata = action.payload.metadata;
       }
-      return { ...state, directory: directoryUpdateList };
+      return { ...state, directory: [...directoryUpdateList] };
     }
     default:
       return state;

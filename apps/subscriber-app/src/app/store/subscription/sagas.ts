@@ -102,11 +102,6 @@ export function* unsubscribe(action: UnsubscribeAction): SagaIterator {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      yield put(
-        SuccessNotification({
-          message: 'Subscription removed.',
-        })
-      );
       // remove the deleted subscription from the list after its successful
       yield put(UnsubscribeSuccess(type));
     } catch (e) {
@@ -121,11 +116,6 @@ export function* signedOutUnsubscribe(action: GetSignedOutSubscriberAction): Sag
   const tenantId = action.payload.tenantId;
   try {
     yield call(axios.delete, `/api/subscriber/v1/types/${type}/subscriptions/${id}?tenantId=${tenantId}`);
-    yield put(
-      SuccessNotification({
-        message: 'Subscription removed.',
-      })
-    );
 
     yield put(UnsubscribeSuccess(type));
   } catch (e) {

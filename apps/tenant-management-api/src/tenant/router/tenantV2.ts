@@ -1,4 +1,4 @@
-import { adspId, Tenant } from '@abgov/adsp-service-sdk';
+import { adspId, Tenant, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { RequestHandler, Router } from 'express';
 import { requirePlatformService } from '../../middleware/authentication';
 import * as tenantService from '../services/tenant';
@@ -21,6 +21,7 @@ function mapTenant(tenant: Tenant) {
 export function getTenants(tenantRepository: TenantRepository): RequestHandler {
   return async (req, res, next) => {
     try {
+      const user = req.user;
       const { name, realm, adminEmail } = req.query;
       const criteria: TenantCriteria = {};
       if (name) {
@@ -36,7 +37,9 @@ export function getTenants(tenantRepository: TenantRepository): RequestHandler {
       }
 
       // FIXME: accessing a non-injected dependency makes this hard to test
-      const tenants = await tenantService.getTenants(tenantRepository, criteria);
+      const tenants = (await tenantService.getTenants(tenantRepository, criteria)).filter(
+        (tenant) => user.isCore || user.tenantId.toString() === tenant.id.toString()
+      );
 
       res.json({
         results: tenants.map(mapTenant),
@@ -53,10 +56,16 @@ export function getTenants(tenantRepository: TenantRepository): RequestHandler {
 
 export function getTenant(tenantRepository: TenantRepository): RequestHandler {
   return async (req, res, next) => {
+    const user = req.user;
     const { id } = req.params;
 
     try {
-      const tenant = await tenantService.getTenant(tenantRepository, adspId`urn:ads:platform:tenant-service:v2:${id}`);
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/${id}`;
+      if (!user.isCore && user.tenantId.toString() !== tenantId.toString()) {
+        throw new UnauthorizedUserError('get tenant', user);
+      }
+
+      const tenant = await tenantService.getTenant(tenantRepository, tenantId);
       res.json(mapTenant(tenant));
     } catch (err) {
       logger.error(`Failed to get tenant with error: ${err.message}`);

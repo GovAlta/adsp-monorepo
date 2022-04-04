@@ -13,7 +13,7 @@ declare global {
   }
 }
 
-export type { ConfigurationConverter } from './configuration';
+export type { ConfigurationConverter, CombineConfiguration } from './configuration';
 export { createConfigurationHandler } from './configurationHandler';
 export type { ConfigurationService } from './configurationService';
 

@@ -711,4 +711,153 @@ describe('NotificationTypeEntity', () => {
       expect(notifications.length).toBe(0);
     });
   });
+
+  describe('overrideWith', () => {
+    it('can override event template', () => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const baseTypeEntity = new NotificationTypeEntity({
+        id: 'test-type',
+        name: 'test type',
+        description: null,
+        publicSubscribe: false,
+        subscriberRoles: [],
+        channels: [Channel.email, Channel.bot],
+        events: [
+          {
+            namespace: 'test',
+            name: 'test-started',
+            templates: {
+              email: {
+                subject: 'base',
+                body: 'base',
+              },
+              bot: {
+                subject: 'base',
+                body: 'base',
+              },
+            },
+          },
+          {
+            namespace: 'test',
+            name: 'test-stopped',
+            templates: {
+              email: {
+                subject: 'base',
+                body: 'base',
+              },
+              bot: {
+                subject: 'base',
+                body: 'base',
+              },
+            },
+          },
+        ],
+      });
+
+      const customTypeEntity = new NotificationTypeEntity(
+        {
+          ...baseTypeEntity,
+          events: [
+            {
+              namespace: 'test',
+              name: 'test-started',
+              templates: {
+                email: {
+                  subject: 'custom',
+                  body: 'custom',
+                },
+              },
+            },
+          ],
+        },
+        tenantId
+      );
+
+      const effectiveEvent = baseTypeEntity.overrideWith(customTypeEntity);
+      // Expect effective to be override of event template.
+      expect(effectiveEvent).toMatchObject(
+        expect.objectContaining({
+          tenantId,
+          id: 'test-type',
+          name: 'test type',
+          description: null,
+          publicSubscribe: false,
+          subscriberRoles: expect.arrayContaining([]),
+          channels: expect.arrayContaining([Channel.email, Channel.bot]),
+          events: expect.arrayContaining([
+            expect.objectContaining({
+              namespace: 'test',
+              name: 'test-started',
+              templates: expect.objectContaining({
+                email: expect.objectContaining({
+                  subject: 'custom',
+                  body: 'custom',
+                }),
+                bot: expect.objectContaining({
+                  subject: 'base',
+                  body: 'base',
+                }),
+              }),
+            }),
+            expect.objectContaining({
+              namespace: 'test',
+              name: 'test-stopped',
+              templates: expect.objectContaining({
+                email: expect.objectContaining({
+                  subject: 'base',
+                  body: 'base',
+                }),
+                bot: expect.objectContaining({
+                  subject: 'base',
+                  body: 'base',
+                }),
+              }),
+            }),
+          ]),
+        })
+      );
+
+      expect(baseTypeEntity).toMatchObject(
+        expect.objectContaining({
+          tenantId: undefined,
+          id: 'test-type',
+          name: 'test type',
+          description: null,
+          publicSubscribe: false,
+          subscriberRoles: expect.arrayContaining([]),
+          channels: expect.arrayContaining([Channel.email, Channel.bot]),
+          events: expect.arrayContaining([
+            expect.objectContaining({
+              namespace: 'test',
+              name: 'test-started',
+              templates: expect.objectContaining({
+                email: expect.objectContaining({
+                  subject: 'base',
+                  body: 'base',
+                }),
+                bot: expect.objectContaining({
+                  subject: 'base',
+                  body: 'base',
+                }),
+              }),
+            }),
+            expect.objectContaining({
+              namespace: 'test',
+              name: 'test-stopped',
+              templates: expect.objectContaining({
+                email: expect.objectContaining({
+                  subject: 'base',
+                  body: 'base',
+                }),
+                bot: expect.objectContaining({
+                  subject: 'base',
+                  body: 'base',
+                }),
+              }),
+            }),
+          ]),
+        })
+      );
+    });
+  });
 });

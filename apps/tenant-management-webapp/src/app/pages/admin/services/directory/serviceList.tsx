@@ -31,50 +31,53 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
         <td headers="service" data-testid="service">
           {service.service}
         </td>
+        <td headers="api" data-testid="api">
+          {service.api}
+        </td>
         <td headers="directory" data-testid="directory">
           {service.url}
         </td>
-        <td className="actionCol">
-          <GoAContextMenu>
-            {service.service.split(':').length === 1 && (
-              <GoAContextMenuIcon
-                type={showDetails ? 'eye-off' : 'eye'}
-                onClick={() => setDetails(service)}
-                testId="directory-toggle-details-visibility"
-              />
-            )}
-            {!service.isCore && (
-              <GoAContextMenuIcon
-                type="create"
-                title="Edit"
-                testId={`directory-edit-${service.service}`}
-                onClick={() => {
-                  onEdit(service);
-                }}
-              />
-            )}
-            {!service.isCore && (
-              <GoAIconButton
-                testId={`directory-delete-${service.service}`}
-                title="Delete"
-                size="medium"
-                type="trash"
-                onClick={() => {
-                  onDelete(service);
-                }}
-              />
-            )}
-          </GoAContextMenu>
+        <td>
+          <IconDiv>
+            <GoAContextMenu>
+              {!service.api && (
+                <GoAContextMenuIcon
+                  type={showDetails ? 'eye-off' : 'eye'}
+                  onClick={() => setDetails(service)}
+                  testId="directory-toggle-details-visibility"
+                />
+              )}
+              {!service.isCore && (
+                <GoAContextMenuIcon
+                  type="create"
+                  title="Edit"
+                  testId={`directory-edit-${service.service}`}
+                  onClick={() => {
+                    onEdit(service);
+                  }}
+                />
+              )}
+              {!service.isCore && (
+                <GoAIconButton
+                  testId={`directory-delete-${service.service}`}
+                  title="Delete"
+                  size="medium"
+                  type="trash"
+                  onClick={() => {
+                    onDelete(service);
+                  }}
+                />
+              )}
+            </GoAContextMenu>
+          </IconDiv>
         </td>
       </tr>
       {showDetails && (
         <tr>
           <td headers="Entry metadata information" colSpan={5}>
-            {service.metadata === null ? (
-              renderNoItem('service metadata')
-            ) : (
-              <EntryDetail data-testid="details">{JSON.stringify(service.metadata, null, 4)}</EntryDetail>
-            )}
+            <EntryDetail data-testid="details">
+              {service.metadata === null ? renderNoItem('service metadata') : JSON.stringify(service.metadata, null, 2)}
+            </EntryDetail>
           </td>
         </tr>
       )}
@@ -103,15 +106,17 @@ export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({
 
   return (
     <TableDiv key={namespace}>
-      <NameDiv>{namespace}</NameDiv>
       <DataTable data-testid="directory-table">
         <thead data-testid="directory-table-header">
           <tr>
-            <th id="name" data-testid="directory-table-header-name">
-              Name
+            <th id="directory-service" data-testid="directory-table-header-name">
+              Service
             </th>
-            <th id="directory">URL</th>
-            <th id="directory">Action</th>
+            <th id="directory-api" data-testid="directory-table-header-name">
+              API
+            </th>
+            <th id="directory-url">URL</th>
+            <th id="directory-action">Action</th>
           </tr>
         </thead>
 
@@ -130,23 +135,16 @@ export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({
     </TableDiv>
   );
 };
-export const EntryDetail = styled.div`
+const EntryDetail = styled.div`
   background: #f3f3f3;
   white-space: pre-wrap;
   font-family: monospace;
   font-size: 12px;
   line-height: 16px;
-  padding: 16px;
+  text-align: left;
 `;
-export const NameDiv = styled.div`
-  margin-top: 1rem;
-  text-transform: capitalize;
-  font-size: var(--fs-xl);
-  font-weight: var(--fw-bold);
-  padding-left: 0.4rem;
-  padding-bottom: 0.5rem;
-`;
-export const TableDiv = styled.div`
+
+const TableDiv = styled.div`
   & td:first-child {
     width: 100px;
     white-space: nowrap;
@@ -159,5 +157,13 @@ export const TableDiv = styled.div`
     white-space: nowrap;
     overflow-x: hidden;
     text-overflow: ellipsis;
+    text-align: right;
   }
+`;
+
+const IconDiv = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
 `;

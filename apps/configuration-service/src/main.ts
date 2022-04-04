@@ -26,6 +26,10 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(express.json({ limit: '1mb' }));
   app.use(cors());
 
+  if (environment.TRUSTED_PROXY) {
+    app.set('trust proxy', environment.TRUSTED_PROXY);
+  }
+
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const { coreStrategy, tenantStrategy, tenantHandler, eventService, healthCheck } = await initializePlatform(
     {
@@ -41,6 +45,10 @@ const initializeApp = async (): Promise<express.Application> => {
           role: ConfigurationServiceRoles.ConfigurationAdmin,
           description: 'Administrator role that grants access to and modification of configuration.',
           inTenantAdmin: true,
+        },
+        {
+          role: ConfigurationServiceRoles.ConfiguredService,
+          description: 'Service role that grants service accounts access to configuration.',
         },
       ],
       events: [ConfigurationUpdatedDefinition, RevisionCreatedDefinition],
@@ -98,6 +106,8 @@ const initializeApp = async (): Promise<express.Application> => {
   app.get('/', async (req, res) => {
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
+      name: 'Configuration service',
+      description: 'Service for managing configuration',
       _links: {
         self: {
           href: new URL(req.originalUrl, rootUrl).href,

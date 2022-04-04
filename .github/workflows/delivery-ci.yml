@@ -24,7 +24,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v2
         with:
-          node-version: "12"
+          node-version: "16"
       - uses: actions/cache@v2
         with:
           path: ~/.npm
@@ -42,6 +42,7 @@ jobs:
         uses: ./.github/actions/nx-production-build
         with:
           affected-base: ${{ github.event.inputs.AFFECTED_BASE || steps.last_successful_commit.outputs.commit_hash }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
       - run: npm prune --production
       - if: steps.production-build.outputs.affected-apps
         run: tar czf adsp-build-dist.tar.gz node_modules/ dist/
@@ -131,7 +132,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: "12"
+          node-version: "16"
       - uses: actions/cache@v2
         with:
           path: ~/.npm
@@ -199,7 +200,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: "12"
+          node-version: "16"
       - uses: actions/cache@v2
         with:
           path: ~/.npm

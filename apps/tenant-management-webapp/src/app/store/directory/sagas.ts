@@ -12,10 +12,13 @@ import {
   DeleteEntryAction,
   FetchEntryDetailAction,
   fetchEntryDetailSuccess,
+  FetchEntryDetailByURNsAction,
 } from './actions';
 import { DirectoryApi } from './api';
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
+import { adspId } from '@lib/adspId';
+import { Service } from './models';
 
 export function* fetchDirectory(action: FetchDirectoryAction): SagaIterator {
   const core = 'platform';
@@ -49,7 +52,7 @@ export function* fetchDirectory(action: FetchDirectoryAction): SagaIterator {
       })
     );
   } catch (e) {
-    yield put(ErrorNotification({ message: 'failed to fetch directory service' }));
+    yield put(ErrorNotification({ message: 'Failed to fetch directory service' }));
     yield put(
       UpdateIndicator({
         show: false,
@@ -64,12 +67,22 @@ export function* createEntryDirectory(action: CreateEntryAction): SagaIterator {
   const api = new DirectoryApi(state.config.tenantApi, token);
 
   try {
-    const result = yield call([api, api.createEntry], action.data);
+    const sendEntry = {} as Service;
+
+    sendEntry['service'] = action.data.api ? `${action.data.service}:${action.data.api}` : action.data.service;
+    sendEntry['url'] = action.data.url;
+    sendEntry['namespace'] = action.data.namespace;
+
+    const result = yield call([api, api.createEntry], sendEntry);
     if (result) {
       yield put(createEntrySuccess(action.data));
     }
   } catch (err) {
-    yield put(ErrorNotification({ message: `Failed to create directory service ${action.data.service}` }));
+    yield put(
+      ErrorNotification({
+        message: `Failed to create a directory service entry,  ${action.data.service} already exists.`,
+      })
+    );
   }
 }
 
@@ -79,12 +92,18 @@ export function* updateEntryDirectory(action: UpdateEntryAction): SagaIterator {
   const api = new DirectoryApi(state.config.tenantApi, token);
 
   try {
+    const sendEntry = {} as Service;
+
+    sendEntry['service'] = action.data.api ? `${action.data.service}:${action.data.api}` : action.data.service;
+    sendEntry['url'] = action.data.url;
+    sendEntry['namespace'] = action.data.namespace;
+    sendEntry['_id'] = action.data._id;
     const result = yield call([api, api.updateEntry], action.data);
     if (result) {
       yield put(updateEntrySuccess(action.data));
     }
   } catch (err) {
-    yield put(ErrorNotification({ message: `Failed to update directory service ${action.data.namespace}` }));
+    yield put(ErrorNotification({ message: `Failed to update service entry ${action.data.service} already exists.` }));
   }
 }
 
@@ -99,7 +118,7 @@ export function* deleteEntryDirectory(action: DeleteEntryAction): SagaIterator {
       yield put(deleteEntrySuccess(action.data));
     }
   } catch (err) {
-    yield put(ErrorNotification({ message: `Failed to delete directory service ${action.data.service}` }));
+    yield put(ErrorNotification({ message: `Failed to delete directory service entry ${action.data.service} ` }));
   }
 }
 
@@ -124,5 +143,38 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
     const service = action.data;
     service.metadata = null;
     yield put(fetchEntryDetailSuccess(service));
+  }
+}
+
+export function* fetchDirectoryByDetailURNs(action: FetchEntryDetailByURNsAction): SagaIterator {
+  const state: RootState = yield select();
+  const token = state.session.credentials.token;
+  const api = new DirectoryApi(state.config.tenantApi, token);
+  const directoryUpdateList = state.directory.directory;
+
+  try {
+    for (const urn of action.payload) {
+      const id = adspId`${urn}`;
+      if (id.type === 'service') {
+        try {
+          const _service = {
+            service: id.service,
+            namespace: id.namespace,
+          } as Service;
+
+          const existed = directoryUpdateList.find((x) => x.service === _service?.service);
+          if (!(existed && existed.metadata)) {
+            // fetch metadata from remote only when it does not exist
+            const result = yield call([api, api.fetchEntryDetail], _service);
+            _service.metadata = result?.metadata ? { ...result?.metadata } : null;
+            yield put(fetchEntryDetailSuccess(_service));
+          }
+          // eslint-disable-next-line
+        } finally {
+        }
+      }
+    }
+  } catch (err) {
+    yield put(ErrorNotification({ message: `Failed to fetch metadata by urns: ${err.message}` }));
   }
 }

@@ -2,38 +2,45 @@ import { passportJwtSecret } from 'jwks-rsa';
 import type { Strategy } from 'passport';
 import { ExtractJwt, Strategy as JwtStrategy, VerifyCallbackWithRequest } from 'passport-jwt';
 import type { Logger } from 'winston';
+import { Tenant, TenantService } from '../tenant';
 import { AdspId, assertAdspId } from '../utils';
+import { resolveRoles } from './resolveRoles';
 
 export interface AccessStrategyOptions {
+  realm: string;
   ignoreServiceAud?: boolean;
   serviceId: AdspId;
+  tenantService: TenantService;
   accessServiceUrl: URL;
   logger: Logger;
 }
-
-const CORE_ISS_PATH = '/auth/realms/core';
-const CORE_JWKS_PATH = '/auth/realms/core/protocol/openid-connect/certs';
-
-export const createCoreStrategy = ({
+export const createRealmStrategy = ({
+  realm,
   serviceId,
+  tenantService,
   accessServiceUrl,
   ignoreServiceAud,
 }: AccessStrategyOptions): Strategy => {
   assertAdspId(serviceId, null, 'service');
 
   const serviceAud = serviceId.toString();
-  const coreIssUrl = new URL(CORE_ISS_PATH, accessServiceUrl);
-  const coreIss = coreIssUrl.href;
-  const coreJwksUrl = new URL(CORE_JWKS_PATH, accessServiceUrl);
-  const coreJwks = coreJwksUrl.href;
+  const realmIssUrl = new URL(`/auth/realms/${realm}`, accessServiceUrl);
+  const realmIss = realmIssUrl.href;
+  const realmJwksUrl = new URL(`/auth/realms/${realm}/protocol/openid-connect/certs`, accessServiceUrl);
+  const realmJwks = realmJwksUrl.href;
 
+  let tenant: Tenant = null;
   const verifyCallback: VerifyCallbackWithRequest = async (req, payload, done) => {
+    if (!tenant && realm !== 'core') {
+      tenant = await tenantService.getTenantByRealm(realm);
+    }
     const user: Express.User = {
       id: payload.sub,
       name: payload.name || payload.preferred_username,
       email: payload.email,
-      roles: [...(payload.realm_access?.roles || []), ...(payload.resource_access?.[serviceAud]?.roles || [])],
-      isCore: true,
+      roles: resolveRoles(serviceAud, payload),
+      tenantId: tenant?.id,
+      isCore: realm === 'core',
       token: {
         ...payload,
         bearer: req.headers.authorization?.substring(7),
@@ -48,14 +55,14 @@ export const createCoreStrategy = ({
       jwtFromRequest: ExtractJwt.fromExtractors([ExtractJwt.fromAuthHeaderAsBearerToken()]),
       secretOrKeyProvider: (req, token, done) => {
         passportJwtSecret({
-          jwksUri: coreJwks,
+          jwksUri: realmJwks,
           cache: true,
           strictSsl: true,
         })(req, token, done);
       },
       passReqToCallback: true,
       audience: !ignoreServiceAud ? serviceAud : null,
-      issuer: coreIss,
+      issuer: realmIss,
     },
     verifyCallback
   );

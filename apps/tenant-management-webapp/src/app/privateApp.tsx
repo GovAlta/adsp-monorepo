@@ -5,7 +5,7 @@ import Header from '@components/AppHeader';
 import { HeaderCtx } from '@lib/headerContext';
 import Container from '@components/Container';
 import { RootState } from '@store/index';
-import { KeycloakCheckSSOWithLogout, KeycloakRefreshToken } from '@store/tenant/actions';
+import { KeycloakCheckSSOWithLogout } from '@store/tenant/actions';
 import { GoAPageLoader } from '@abgov/react-components';
 import { NotificationBanner } from './notificationBanner';
 
@@ -19,9 +19,6 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
   const realm = urlParams.get('realm') || localStorage.getItem('realm');
 
   useEffect(() => {
-    setInterval(async () => {
-      dispatch(KeycloakRefreshToken());
-    }, 120 * 1000);
     dispatch(KeycloakCheckSSOWithLogout(realm));
   }, []);
 
