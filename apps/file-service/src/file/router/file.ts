@@ -198,7 +198,7 @@ export const downloadFile: RequestHandler = async (req, res, next) => {
       res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeRFC5987(fileEntity.filename)}`);
     }
 
-    stream.pipe(res);
+    stream.pipe(res, { end: true });
   } catch (err) {
     next(err);
   }

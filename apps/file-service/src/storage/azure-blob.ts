@@ -24,20 +24,44 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
     this.blobServiceClient = new BlobServiceClient(BLOB_ACCOUNT_URL, credential);
   }
 
+  private createReadable(entity: FileEntity, stream: NodeJS.ReadableStream) {
+    const readable = new Readable().wrap(stream);
+    readable.on('data', ({ length }) => {
+      this.logger.debug(
+        `Reading file ${entity.filename} (ID: ${entity.id}) blob ${entity.id} stream: received chunks ${length}`,
+        {
+          tenant: entity.tenantId?.toString(),
+          context: 'AzureBlobStorageProvider',
+        }
+      );
+    });
+    readable.on('closed', () => {
+      this.logger.debug(`Reading file ${entity.filename} (ID: ${entity.id}) blob ${entity.id} stream: stream closed.`, {
+        tenant: entity.tenantId?.toString(),
+        context: 'AzureBlobStorageProvider',
+      });
+    });
+    readable.on('end', () => {
+      this.logger.debug(`Reading file ${entity.filename} (ID: ${entity.id}) blob ${entity.id} stream: stream ended.`, {
+        tenant: entity.tenantId?.toString(),
+        context: 'AzureBlobStorageProvider',
+      });
+    });
+    readable.on('error', (err) => {
+      this.logger.error(`Error in read file ${entity.filename} (ID: ${entity.id}) blob ${entity.id} stream. ${err}`, {
+        tenant: entity.tenantId?.toString(),
+        context: 'AzureBlobStorageProvider',
+      });
+    });
+    return readable;
+  }
+
   async readFile(entity: FileEntity): Promise<Readable> {
     try {
       const containerClient = await this.getContainerClient(entity);
       const blobClient = containerClient.getBlockBlobClient(entity.id);
-      const result = await blobClient.download();
-
-      const readable = new Readable().wrap(result.readableStreamBody);
-      readable.on('error', (err) => {
-        this.logger.error(`Error in read file ${entity.filename} (ID: ${entity.id}) blob ${entity.id} stream. ${err}`, {
-          tenant: entity.tenantId?.toString(),
-          context: 'AzureBlobStorageProvider',
-        });
-      });
-      return readable;
+      const result = await blobClient.download(0, undefined, {});
+      return this.createReadable(entity, result.readableStreamBody);
     } catch (err) {
       this.logger.error(`Error in read file ${entity.filename} (ID: ${entity.id}) blob ${entity.id}. ${err}`, {
         tenant: entity.tenantId?.toString(),
