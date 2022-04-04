@@ -352,12 +352,6 @@ class NotificationsPage {
     return cy.xpath('//td[@class="event-details"]');
   }
 
-  manualStatusRadio(statusName) {
-    return cy.xpath(
-      `//*[@class="modal-root" and @data-state="visible"]//input[@value="${statusName}"]/following-sibling::div`
-    );
-  }
-
   manualStatusList() {
     return cy.xpath('//*[@class="goa-form-item"]//div/*[@class="goa-radio"]');
   }

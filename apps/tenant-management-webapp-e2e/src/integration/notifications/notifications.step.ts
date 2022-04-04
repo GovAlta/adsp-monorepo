@@ -583,6 +583,7 @@ Then('the user views the event details with subject: {string} and userId: {strin
       }
     });
 });
+
 Then('the user views current status for {string}', function (appName) {
   notificationsObj
     .applicationCardStatusBadge(appName)
@@ -593,7 +594,7 @@ Then('the user views current status for {string}', function (appName) {
     });
 });
 
-Then('the user changes to the first unckeck status', function () {
+Then('the user changes status to the first unckeck status', function () {
   notificationsObj.manualStatusList().each(($status) => {
     if ($status.text() != currentStatus) {
       cy.log($status.text());
@@ -603,12 +604,12 @@ Then('the user changes to the first unckeck status', function () {
   });
 });
 
-Then('the user clicks Save button', function () {
+Then('the user clicks Save button in Manual status change modal', function () {
   notificationsObj.manualStatusChangeModalSaveBtn().click();
   cy.wait(2000);
 });
 
-Then('the user views the status after change for {string} and compares with previous status', function (appName) {
+Then('the user views the status after change for {string} and compares it with previous status', function (appName) {
   notificationsObj
     .applicationCardStatusBadge(appName)
     .invoke('text')
@@ -619,21 +620,15 @@ Then('the user views the status after change for {string} and compares with prev
   expect(afterStatus).not.to.equal(currentStatus);
 });
 
-Then('the user views the event details with subject: {string} and userId: {string}', function (subject, userID) {
-  afterStatus.toLowerCase();
-  cy.log(subject);
-  cy.log(userID);
-  cy.log(afterStatus);
-  // notificationsObj
-  //   .eventDetails()
-  //   .invoke('text')
-  //   .then((eventDetails) => {
-  //     if (subject != 'Empty' && userID != 'Empty') {
-  //       ///const subjectStatus = subject.replace(/(\+ changedStatus)/g, '').to.toLowerCase(afterStatus);
-
-  //       //expect(eventDetails).to.contain(subject);
-  //       //expect(eventDetails).to.contain(userID);
-  //     }
-
-  //   });
+Then('the user views the event detail with subject: {string} and userId: {string}', function (subject, userID) {
+  const subjectStatus = subject.replace('+ changedStatus', '') + afterStatus.toLowerCase();
+  notificationsObj
+    .eventDetails()
+    .invoke('text')
+    .then((eventDetails) => {
+      if (subject != 'Empty' && userID != 'Empty') {
+        expect(eventDetails).to.contain(subjectStatus);
+        expect(eventDetails).to.contain(userID);
+      }
+    });
 });
