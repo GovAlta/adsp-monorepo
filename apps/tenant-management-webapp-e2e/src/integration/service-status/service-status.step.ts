@@ -2,9 +2,11 @@ import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import commonlib from '../common/common-library';
 import common from '../common/common.page';
 import serviceStatusPage from './service-status.page';
+import tenantAdminPage from '../tenant-admin/tenant-admin.page';
 
 const commonObj = new common();
 const statusObj = new serviceStatusPage();
+const tenantAdminObj = new tenantAdminPage();
 let currentStatus;
 let afterStatus;
 
@@ -535,20 +537,6 @@ Then('the user views the {string} status for {string}', function (statusValue, a
   statusObj.applicationCardStatusBadge(appName).invoke('text').should('eq', statusValue);
 });
 
-Then('the user views the event details with subject: {string} and userId: {string}', function (subject, userID) {
-  statusObj
-    .eventDetails()
-    .invoke('text')
-    .then((eventDetails) => {
-      if (subject == 'Empty' || userID == 'Empty') {
-        expect(eventDetails).to.not.contain(subject);
-      } else {
-        expect(eventDetails).to.contain(subject);
-        expect(eventDetails).to.contain(userID);
-      }
-    });
-});
-
 Then('the user views current status for {string}', function (appName) {
   statusObj
     .applicationCardStatusBadge(appName)
@@ -587,7 +575,7 @@ Then('the user views the status after change for {string} and compares it with p
 
 Then('the user views the event detail with subject: {string} and userId: {string}', function (subject, userID) {
   const subjectStatus = subject.replace('+ changedStatus', '') + afterStatus.toLowerCase();
-  statusObj
+  tenantAdminObj
     .eventDetails()
     .invoke('text')
     .then((eventDetails) => {
