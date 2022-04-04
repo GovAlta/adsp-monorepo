@@ -211,9 +211,5 @@ class StatusServicePage {
   manualStatusList() {
     return cy.xpath('//*[@class="goa-form-item"]//div/*[@class="goa-radio"]');
   }
-
-  eventDetails() {
-    return cy.xpath('//td[@class="event-details"]');
-  }
 }
 export default StatusServicePage;
