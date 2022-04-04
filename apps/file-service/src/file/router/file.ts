@@ -285,7 +285,7 @@ export const createFileRouter = ({
     '/files/:fileId/download',
     createValidationHandler(param('fileId').isUUID()),
     getFile(fileRepository),
-    downloadFile
+    downloadFile(logger)
   );
 
   return fileRouter;
