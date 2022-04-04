@@ -39,7 +39,8 @@ export class DirectoryApi {
   }
 
   async deleteEntry(service: Service): Promise<boolean> {
-    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.namespace}/services/${service.service}`;
+    const delService = service?.api ? `${service.service}:${service.api}` : service.service;
+    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.namespace}/services/${delService}`;
     const res = await this.http.delete(url);
     return res?.data === 'OK';
   }

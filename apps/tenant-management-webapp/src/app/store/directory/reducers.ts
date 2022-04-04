@@ -37,10 +37,18 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
     }
     case DELETE_ENTRY_SUCCESS: {
       const directoryDelList = state.directory;
-      const hasExist = directoryDelList.find((x) => x.service === action.payload.service);
+      const hasExist = directoryDelList.find((x) =>
+        action.payload.api
+          ? x.api === action.payload.api && x.service === action.payload.service
+          : x.service === action.payload.service
+      );
       if (hasExist) {
         directoryDelList.splice(
-          directoryDelList.findIndex((item) => item.service === action.payload.service),
+          directoryDelList.findIndex((x) =>
+            action.payload.api
+              ? x.api === action.payload.api && x.service === action.payload.service
+              : x.service === action.payload.service
+          ),
           1
         );
       }
