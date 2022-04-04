@@ -1,4 +1,4 @@
-import { all, takeEvery, takeLatest } from 'redux-saga/effects';
+import { all, takeEvery, takeLatest, takeLeading } from 'redux-saga/effects';
 
 // Sagas
 import { fetchAccess } from './access/sagas';
@@ -22,6 +22,7 @@ import {
   updateEntryDirectory,
   deleteEntryDirectory,
   fetchEntryDetail,
+  fetchDirectoryByDetailURNs,
 } from './directory/sagas';
 import { watchNotificationSagas } from './notification/sagas';
 import { watchSubscriptionSagas } from './subscription/sagas';
@@ -29,7 +30,14 @@ import { watchSubscriptionSagas } from './subscription/sagas';
 // Actions
 import { FETCH_ACCESS_ACTION } from './access/actions';
 import { FETCH_CONFIG_ACTION } from './config/actions';
-import { FETCH_DIRECTORY, CREATE_ENTRY, UPDATE_ENTRY, DELETE_ENTRY, FETCH_ENTRY_DETAIL } from './directory/actions';
+import {
+  FETCH_DIRECTORY,
+  CREATE_ENTRY,
+  UPDATE_ENTRY,
+  DELETE_ENTRY,
+  FETCH_ENTRY_DETAIL,
+  FETCH_ENTRY_DETAIL_BY_URNS,
+} from './directory/actions';
 import {
   DELETE_APPLICATION_ACTION,
   FETCH_SERVICE_STATUS_APPS_ACTION,
@@ -54,7 +62,8 @@ export function* watchSagas() {
   yield takeEvery(UPDATE_ENTRY, updateEntryDirectory);
   yield takeEvery(DELETE_ENTRY, deleteEntryDirectory);
   yield takeEvery(FETCH_ENTRY_DETAIL, fetchEntryDetail);
-  //status
+  yield takeLeading(FETCH_ENTRY_DETAIL_BY_URNS, fetchDirectoryByDetailURNs);
+  // service status
   yield takeEvery(FETCH_SERVICE_STATUS_APPS_ACTION, fetchServiceStatusApps);
   yield takeEvery(SAVE_APPLICATION_ACTION, saveApplication);
   yield takeEvery(DELETE_APPLICATION_ACTION, deleteApplication);

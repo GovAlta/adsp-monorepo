@@ -123,6 +123,8 @@ const initializeApp = async (): Promise<express.Application> => {
   app.get('/', async (req, res) => {
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
+      name: 'Event service',
+      description: 'Service for sending of domain events.',
       _links: {
         self: {
           href: new URL(req.originalUrl, rootUrl).href,

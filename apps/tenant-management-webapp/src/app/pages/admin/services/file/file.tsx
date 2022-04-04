@@ -37,7 +37,7 @@ export const File: FunctionComponent = () => {
     <Page>
       <Main>
         <>
-          <h1 data-testid="file-title">File</h1>
+          <h1 data-testid="file-title">Files</h1>
           <Tabs activeIndex={activeIndex}>
             <Tab label="Overview">
               <FileOverview

@@ -91,12 +91,12 @@ describe('router', () => {
       const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
       repositoryMock.get.mockResolvedValueOnce(entity);
 
-      const req = ({
+      const req = {
         tenant: { id: tenantId },
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
-      } as unknown) as Request;
+      } as unknown as Request;
 
       handler(req, null, () => {
         expect(req['entity']).toBe(entity);
@@ -130,12 +130,12 @@ describe('router', () => {
       const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
       repositoryMock.get.mockResolvedValueOnce(entity);
 
-      const req = ({
+      const req = {
         tenant: { id: tenantId },
         user: { isCore: true, roles: [ConfigurationServiceRoles.Reader] } as User,
         params: { namespace, name },
         query: { tenantId: tenantId.toString() },
-      } as unknown) as Request;
+      } as unknown as Request;
 
       handler(req, null, () => {
         expect(req['entity']).toBe(entity);
@@ -170,12 +170,12 @@ describe('router', () => {
       const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
       repositoryMock.get.mockResolvedValueOnce(entity);
 
-      const req = ({
+      const req = {
         tenant: { id: tenantId },
         user: { isCore: false, roles: [], tenantId } as User,
         params: { namespace, name },
         query: {},
-      } as unknown) as Request;
+      } as unknown as Request;
 
       handler(req, null, (err) => {
         expect(err).toBeTruthy();
@@ -206,12 +206,12 @@ describe('router', () => {
       const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
       repositoryMock.get.mockResolvedValueOnce(entity);
 
-      const req = ({
+      const req = {
         tenant: { id: tenantId },
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
-      } as unknown) as Request;
+      } as unknown as Request;
 
       handler(req, null, () => {
         expect(req['entity']).toBe(entity);
@@ -253,12 +253,12 @@ describe('router', () => {
       const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
       repositoryMock.get.mockResolvedValueOnce(entity);
 
-      const req = ({
+      const req = {
         tenant: { id: tenantId },
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
-      } as unknown) as Request;
+      } as unknown as Request;
 
       handler(req, null, () => {
         expect(req['entity']).toBe(entity);
@@ -299,12 +299,12 @@ describe('router', () => {
       const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
       repositoryMock.get.mockResolvedValueOnce(entity);
 
-      const req = ({
+      const req = {
         tenant: { id: tenantId },
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
-      } as unknown) as Request;
+      } as unknown as Request;
 
       handler(req, null, () => {
         expect(req['entity']).toBe(entity);
@@ -325,18 +325,18 @@ describe('router', () => {
 
       const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
 
-      const req = ({
+      const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
-      } as unknown) as Request;
+      } as unknown as Request;
 
       const res = {
         send: jest.fn(),
       };
 
-      handler(req, (res as unknown) as Response, jest.fn());
+      handler(req, res as unknown as Response, jest.fn());
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ latest: null, namespace, name }));
     });
   });
@@ -357,7 +357,7 @@ describe('router', () => {
         update: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: { old: 'old' } },
       };
-      const req = ({
+      const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
@@ -368,7 +368,7 @@ describe('router', () => {
             value: 'value',
           },
         },
-      } as unknown) as Request;
+      } as unknown as Request;
 
       const res = {
         send: jest.fn(),
@@ -376,7 +376,7 @@ describe('router', () => {
 
       const next = jest.fn();
 
-      await handler(req, (res as unknown) as Response, next);
+      await handler(req, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
       expect(entity.update).toHaveBeenCalledWith(req.user, expect.objectContaining({ ...req.body.update, old: 'old' }));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
@@ -392,7 +392,7 @@ describe('router', () => {
         update: jest.fn(() => Promise.resolve(entity)),
         latest: null,
       };
-      const req = ({
+      const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
@@ -403,7 +403,7 @@ describe('router', () => {
             value: 'value',
           },
         },
-      } as unknown) as Request;
+      } as unknown as Request;
 
       const res = {
         send: jest.fn(),
@@ -411,7 +411,7 @@ describe('router', () => {
 
       const next = jest.fn();
 
-      await handler(req, (res as unknown) as Response, next);
+      await handler(req, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
       expect(entity.update).toHaveBeenCalledWith(req.user, expect.objectContaining(req.body.update));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
@@ -427,7 +427,7 @@ describe('router', () => {
         update: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: { old: 'old' } },
       };
-      const req = ({
+      const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
@@ -435,7 +435,7 @@ describe('router', () => {
         body: {
           operation: 'UPDATE',
         },
-      } as unknown) as Request;
+      } as unknown as Request;
 
       const res = {
         send: jest.fn(),
@@ -443,9 +443,44 @@ describe('router', () => {
 
       const next = jest.fn();
 
-      await handler(req, (res as unknown) as Response, next);
+      await handler(req, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(0);
+    });
+
+    it('can handle unchanged configuration', async () => {
+      const handler = patchConfigurationRevision(loggerMock as Logger, eventServiceMock);
+
+      const entity = {
+        tenantId,
+        namespace,
+        name,
+        update: jest.fn(() => Promise.resolve(entity)),
+        latest: { revision: 1, configuration: { value: 'value', other: 'other' } },
+      };
+      const req = {
+        entity,
+        user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
+        params: { namespace, name },
+        query: {},
+        body: {
+          operation: 'UPDATE',
+          update: {
+            value: 'value',
+          },
+        },
+      } as unknown as Request;
+
+      const res = {
+        send: jest.fn(),
+      };
+
+      const next = jest.fn();
+
+      await handler(req, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
+      expect(entity.update).not.toHaveBeenCalled();
+      expect(eventServiceMock.send).not.toHaveBeenCalled();
     });
 
     it('can replace', async () => {
@@ -458,7 +493,7 @@ describe('router', () => {
         update: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: { old: 'old' } },
       };
-      const req = ({
+      const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
@@ -469,7 +504,7 @@ describe('router', () => {
             value: 'value',
           },
         },
-      } as unknown) as Request;
+      } as unknown as Request;
 
       const res = {
         send: jest.fn(),
@@ -477,7 +512,7 @@ describe('router', () => {
 
       const next = jest.fn();
 
-      await handler(req, (res as unknown) as Response, next);
+      await handler(req, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
       expect(entity.update).toHaveBeenCalledWith(
         req.user,
@@ -496,7 +531,7 @@ describe('router', () => {
         update: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: { old: 'old' } },
       };
-      const req = ({
+      const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
@@ -504,7 +539,7 @@ describe('router', () => {
         body: {
           operation: 'REPLACE',
         },
-      } as unknown) as Request;
+      } as unknown as Request;
 
       const res = {
         send: jest.fn(),
@@ -512,7 +547,7 @@ describe('router', () => {
 
       const next = jest.fn();
 
-      await handler(req, (res as unknown) as Response, next);
+      await handler(req, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(0);
     });
@@ -527,7 +562,7 @@ describe('router', () => {
         update: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: { old: 'old' } },
       };
-      const req = ({
+      const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
@@ -536,7 +571,7 @@ describe('router', () => {
           operation: 'DELETE',
           property: 'old',
         },
-      } as unknown) as Request;
+      } as unknown as Request;
 
       const res = {
         send: jest.fn(),
@@ -544,7 +579,7 @@ describe('router', () => {
 
       const next = jest.fn();
 
-      await handler(req, (res as unknown) as Response, next);
+      await handler(req, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
       expect(entity.update).toHaveBeenCalledWith(req.user, expect.not.objectContaining({ old: 'old' }));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
@@ -560,7 +595,7 @@ describe('router', () => {
         update: jest.fn(() => Promise.resolve(entity)),
         latest: null,
       };
-      const req = ({
+      const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
@@ -569,7 +604,7 @@ describe('router', () => {
           operation: 'DELETE',
           property: 'missing',
         },
-      } as unknown) as Request;
+      } as unknown as Request;
 
       const res = {
         send: jest.fn(),
@@ -577,7 +612,7 @@ describe('router', () => {
 
       const next = jest.fn();
 
-      await handler(req, (res as unknown) as Response, next);
+      await handler(req, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
       expect(entity.update).toHaveBeenCalledWith(req.user, expect.objectContaining({}));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
@@ -593,7 +628,7 @@ describe('router', () => {
         update: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: { old: 'old' } },
       };
-      const req = ({
+      const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
@@ -602,7 +637,7 @@ describe('router', () => {
           operation: 'DELETE',
           property: 'missing',
         },
-      } as unknown) as Request;
+      } as unknown as Request;
 
       const res = {
         send: jest.fn(),
@@ -610,10 +645,10 @@ describe('router', () => {
 
       const next = jest.fn();
 
-      await handler(req, (res as unknown) as Response, next);
+      await handler(req, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
-      expect(entity.update).toHaveBeenCalledWith(req.user, expect.objectContaining(entity.latest.configuration));
-      expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
+      expect(entity.update).not.toHaveBeenCalled();
+      expect(eventServiceMock.send).not.toHaveBeenCalled();
     });
 
     it('can return error for delete without property', async () => {
@@ -626,7 +661,7 @@ describe('router', () => {
         update: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: { old: 'old' } },
       };
-      const req = ({
+      const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
@@ -634,7 +669,7 @@ describe('router', () => {
         body: {
           operation: 'DELETE',
         },
-      } as unknown) as Request;
+      } as unknown as Request;
 
       const res = {
         send: jest.fn(),
@@ -642,7 +677,7 @@ describe('router', () => {
 
       const next = jest.fn();
 
-      await handler(req, (res as unknown) as Response, next);
+      await handler(req, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(0);
     });
@@ -657,7 +692,7 @@ describe('router', () => {
         update: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: { old: 'old' } },
       };
-      const req = ({
+      const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
@@ -665,7 +700,7 @@ describe('router', () => {
         body: {
           operation: 'NOP',
         },
-      } as unknown) as Request;
+      } as unknown as Request;
 
       const res = {
         send: jest.fn(),
@@ -673,7 +708,7 @@ describe('router', () => {
 
       const next = jest.fn();
 
-      await handler(req, (res as unknown) as Response, next);
+      await handler(req, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(0);
     });
@@ -695,7 +730,7 @@ describe('router', () => {
         createRevision: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: {} },
       };
-      const req = ({
+      const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
@@ -703,7 +738,7 @@ describe('router', () => {
         body: {
           revision: true,
         },
-      } as unknown) as Request;
+      } as unknown as Request;
 
       const res = {
         send: jest.fn(),
@@ -711,7 +746,7 @@ describe('router', () => {
 
       const next = jest.fn();
 
-      await handler(req, (res as unknown) as Response, next);
+      await handler(req, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
       expect(entity.createRevision).toHaveBeenCalledTimes(1);
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
@@ -727,7 +762,7 @@ describe('router', () => {
         createRevision: jest.fn(() => Promise.resolve(entity)),
         latest: null,
       };
-      const req = ({
+      const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
@@ -735,7 +770,7 @@ describe('router', () => {
         body: {
           revision: true,
         },
-      } as unknown) as Request;
+      } as unknown as Request;
 
       const res = {
         send: jest.fn(),
@@ -743,7 +778,7 @@ describe('router', () => {
 
       const next = jest.fn();
 
-      await handler(req, (res as unknown) as Response, next);
+      await handler(req, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
       expect(entity.createRevision).toHaveBeenCalledTimes(1);
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
@@ -759,13 +794,13 @@ describe('router', () => {
         createRevision: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: {} },
       };
-      const req = ({
+      const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
         body: {},
-      } as unknown) as Request;
+      } as unknown as Request;
 
       const res = {
         send: jest.fn(),
@@ -773,7 +808,7 @@ describe('router', () => {
 
       const next = jest.fn();
 
-      await handler(req, (res as unknown) as Response, next);
+      await handler(req, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
   });
@@ -794,7 +829,7 @@ describe('router', () => {
         getRevisions: jest.fn(),
         latest: { revision: 1, configuration: {} },
       };
-      const req = ({
+      const req = {
         entity,
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
@@ -802,7 +837,7 @@ describe('router', () => {
         body: {
           revision: true,
         },
-      } as unknown) as Request;
+      } as unknown as Request;
 
       const res = {
         send: jest.fn(),
@@ -812,7 +847,7 @@ describe('router', () => {
 
       const result = {};
       entity.getRevisions.mockResolvedValueOnce(result);
-      await handler(req, (res as unknown) as Response, next);
+      await handler(req, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(result);
       expect(entity.getRevisions).toHaveBeenCalledWith(12, '123', {});
     });

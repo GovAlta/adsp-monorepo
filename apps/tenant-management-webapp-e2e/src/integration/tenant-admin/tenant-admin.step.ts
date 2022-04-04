@@ -21,17 +21,17 @@ Then('the tenant management admin page is displayed', function () {
 Then('the {string} landing page is displayed', function (pageTitle) {
   let urlPart = 'undefined';
   switch (pageTitle) {
-    case 'File service':
+    case 'Files':
       urlPart = '/admin/services/files';
       break;
-    case 'Service status':
+    case 'Status':
       urlPart = '/admin/services/status';
       break;
     case 'Event log':
       urlPart = '/admin/event-log';
       break;
     default:
-      expect(pageTitle).to.be.oneOf(['File service', 'Service status', 'Event log']);
+      expect(pageTitle).to.be.oneOf(['Files', 'Status', 'Event log']);
   }
   cy.url().should('include', urlPart);
   tenantAdminObj.servicePageTitle(pageTitle).then((title) => {
