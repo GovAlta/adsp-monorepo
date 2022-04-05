@@ -1,12 +1,12 @@
 import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import commonlib from '../common/common-library';
 import common from '../common/common.page';
-import serviceStatusPage from './service-status.page';
-import tenantAdminPage from '../tenant-admin/tenant-admin.page';
+import ServiceStatusPage from './service-status.page';
+import TenantAdminPage from '../tenant-admin/tenant-admin.page';
 
 const commonObj = new common();
-const statusObj = new serviceStatusPage();
-const tenantAdminObj = new tenantAdminPage();
+const statusObj = new ServiceStatusPage();
+const tenantAdminObj = new TenantAdminPage();
 let currentStatus;
 let afterStatus;
 
@@ -547,7 +547,7 @@ Then('the user views current status for {string}', function (appName) {
     });
 });
 
-Then('the user changes status to the first unckeck status', function () {
+Then('the user changes status to the first unused status', function () {
   statusObj.manualStatusList().each(($status) => {
     if ($status.text() != currentStatus) {
       cy.log($status.text());
@@ -562,7 +562,7 @@ Then('the user clicks Save button in Manual status change modal', function () {
   cy.wait(2000);
 });
 
-Then('the user views the status after change for {string} and compares it with previous status', function (appName) {
+Then('the user views the status of {string} changed to the first unused status', function (appName) {
   statusObj
     .applicationCardStatusBadge(appName)
     .invoke('text')
