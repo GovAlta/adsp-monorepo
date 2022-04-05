@@ -25,16 +25,6 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
   }
 
   private createReadable(entity: FileEntity, stream: NodeJS.ReadableStream) {
-    stream.pause();
-    stream.on('data', ({ length }) => {
-      this.logger.debug(
-        `Reading file ${entity.filename} (ID: ${entity.id}) blob ${entity.id} stream: received chunks ${length}`,
-        {
-          tenant: entity.tenantId?.toString(),
-          context: 'AzureBlobStorageProvider',
-        }
-      );
-    });
     stream.on('closed', () => {
       this.logger.debug(`Reading file ${entity.filename} (ID: ${entity.id}) blob ${entity.id} stream: stream closed.`, {
         tenant: entity.tenantId?.toString(),
