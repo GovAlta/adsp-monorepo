@@ -37,7 +37,7 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
         context: 'AzureBlobStorageProvider',
       });
     });
-    return new Readable().wrap(stream);
+    return stream as Readable;
   }
 
   async readFile(entity: FileEntity): Promise<Readable> {
