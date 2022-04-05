@@ -31,12 +31,6 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
         context: 'AzureBlobStorageProvider',
       });
     });
-    stream.on('end', () => {
-      this.logger.debug(`Reading file ${entity.filename} (ID: ${entity.id}) blob ${entity.id} stream: stream ended.`, {
-        tenant: entity.tenantId?.toString(),
-        context: 'AzureBlobStorageProvider',
-      });
-    });
     stream.on('error', (err) => {
       this.logger.error(`Error in read file ${entity.filename} (ID: ${entity.id}) blob ${entity.id} stream. ${err}`, {
         tenant: entity.tenantId?.toString(),

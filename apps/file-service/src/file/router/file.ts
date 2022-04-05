@@ -191,6 +191,7 @@ export function downloadFile(logger: Logger): RequestHandler {
       const stream = await fileEntity.readFile(user);
       res.status(200);
       res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Length', fileEntity.size);
       if (embed === 'true') {
         res.setHeader('Cache-Control', fileEntity.type?.anonymousRead ? 'public' : 'no-store');
         res.setHeader('Content-Disposition', 'inline');
@@ -199,7 +200,6 @@ export function downloadFile(logger: Logger): RequestHandler {
         res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeRFC5987(fileEntity.filename)}`);
       }
 
-      stream.pipe(res, { end: false });
       stream.on('end', () => {
         logger.debug(`Ending streaming of file '${fileEntity.filename}' (ID: ${fileEntity.id}).`, {
           context: 'file-router',
@@ -208,6 +208,7 @@ export function downloadFile(logger: Logger): RequestHandler {
         });
         res.end();
       });
+      stream.pipe(res, { end: false });
     } catch (err) {
       next(err);
     }
