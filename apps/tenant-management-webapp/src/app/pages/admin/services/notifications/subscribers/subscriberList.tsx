@@ -15,13 +15,15 @@ import type { SubscriberSearchCriteria } from '@store/subscription/models';
 
 interface ActionComponentProps {
   subscriber: Subscriber;
-  openModalFunction: (subscriber: Subscriber) => void;
-  openDeleteModalFunction: (subscriber: Subscriber) => void;
+  openModalFunction?: (subscriber: Subscriber) => void;
+  openDeleteModalFunction?: (subscriber: Subscriber) => void;
+  hideUserActions?: boolean;
 }
 
 const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
   subscriber,
   openModalFunction,
+  hideUserActions = false,
   openDeleteModalFunction,
 }) => {
   // TODO: this should be overflow ellipse as a css style instead of modifying value in DOM?
@@ -46,44 +48,48 @@ const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
       <tr key={subscriber.id}>
         <td>{characterLimit(subscriber?.addressAs, 30)}</td>
         <td>{characterLimit(email, 30)}</td>
-        <td>
-          <RowFlex>
-            <div data-account-link={subscriber.accountLink}>
+        {!hideUserActions ? (
+          <td>
+            <RowFlex>
+              <div data-account-link={subscriber.accountLink}>
+                <GoAContextMenuIcon
+                  type={'person'}
+                  onClick={() => {
+                    window.open(subscriber.accountLink, '_blank');
+                  }}
+                  testId="subscriber-account-link"
+                />
+              </div>
               <GoAContextMenuIcon
-                type={'person'}
+                type={showSubscriptions ? 'eye-off' : 'eye'}
                 onClick={() => {
-                  window.open(subscriber.accountLink, '_blank');
+                  setShowSubscriptions(!showSubscriptions);
+                  if (!showSubscriptions) {
+                    dispatch(GetSubscriberSubscriptions(subscriber, null));
+                  }
                 }}
-                testId="subscriber-account-link"
+                testId="toggle-details-visibility"
               />
-            </div>
-            <GoAContextMenuIcon
-              type={showSubscriptions ? 'eye-off' : 'eye'}
-              onClick={() => {
-                setShowSubscriptions(!showSubscriptions);
-                if (!showSubscriptions) {
-                  dispatch(GetSubscriberSubscriptions(subscriber, null));
-                }
-              }}
-              testId="toggle-details-visibility"
-            />
-            <GoAContextMenuIcon
-              type="create"
-              title="Edit"
-              onClick={() => openModalFunction(subscriber)}
-              testId={`edit-subscription-item-${subscriber.id}`}
-            />
+              <GoAContextMenuIcon
+                type="create"
+                title="Edit"
+                onClick={() => openModalFunction(subscriber)}
+                testId={`edit-subscription-item-${subscriber.id}`}
+              />
 
-            <GoAIconButton
-              data-testid="delete-icon"
-              size="medium"
-              type="trash"
-              onClick={() => {
-                openDeleteModalFunction(subscriber);
-              }}
-            />
-          </RowFlex>
-        </td>
+              <GoAIconButton
+                data-testid="delete-icon"
+                size="medium"
+                type="trash"
+                onClick={() => {
+                  openDeleteModalFunction(subscriber);
+                }}
+              />
+            </RowFlex>
+          </td>
+        ) : (
+          ''
+        )}
       </tr>
       {showSubscriptions && (
         <tr>
@@ -164,6 +170,7 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
                 subscriber={subscriber}
                 openDeleteModalFunction={openDeleteModalFunction}
                 key={subscriber.id}
+                hideUserActions={false}
               />
             ))}
           </tbody>
@@ -188,11 +195,27 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
         }}
         content={
           <div>
-            <div>
-              Deletion of a subscriber <b>{selectedSubscriber?.addressAs}</b> will remove all of its related
-              subscriptions.
-            </div>
+            <div>Deletion of the following subscriber will remove all of its related subscriptions.</div>
             <div>Do you still want to continue?</div>
+            {selectedSubscriber ? (
+              <DataTable>
+                <thead>
+                  <tr>
+                    <th>Address as</th>
+                    <th>Email</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <SubscriberListItem
+                    subscriber={selectedSubscriber}
+                    key={selectedSubscriber.id}
+                    hideUserActions={true}
+                  />
+                </tbody>
+              </DataTable>
+            ) : (
+              ''
+            )}
           </div>
         }
         onDelete={() => {
