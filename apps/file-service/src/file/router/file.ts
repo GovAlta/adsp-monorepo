@@ -15,7 +15,6 @@ import { createUpload } from './upload';
 import { fileDeleted, fileUploaded } from '../events';
 import { ServiceConfiguration } from '../configuration';
 import { FileStorageProvider } from '../storage';
-import { pipeline } from 'stream';
 
 interface FileRouterProps {
   serviceId: AdspId;
@@ -179,7 +178,7 @@ function encodeRFC5987(value: string) {
     .replace(/%(?:7C|60|5E)/g, unescape);
 }
 
-export function downloadFile(logger: Logger): RequestHandler {
+export function downloadFile(): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -200,14 +199,7 @@ export function downloadFile(logger: Logger): RequestHandler {
         res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeRFC5987(fileEntity.filename)}`);
       }
 
-      pipeline(stream, res, (err) => {
-        logger.error(`Streaming of file '${fileEntity.filename}' (ID: ${fileEntity.id}) for download failed. ${err}`, {
-          context: 'file-router',
-          tenant: user?.tenantId?.toString(),
-          user: user ? `${user.name} (ID: ${user.id})` : null,
-        });
-        res.end();
-      });
+      stream.pipe(res, { end: true });
     } catch (err) {
       next(err);
     }
@@ -285,7 +277,7 @@ export const createFileRouter = ({
     '/files/:fileId/download',
     createValidationHandler(param('fileId').isUUID()),
     getFile(fileRepository),
-    downloadFile(logger)
+    downloadFile()
   );
 
   return fileRouter;
