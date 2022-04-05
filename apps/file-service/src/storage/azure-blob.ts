@@ -44,7 +44,7 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
     try {
       const containerClient = await this.getContainerClient(entity);
       const blobClient = containerClient.getBlockBlobClient(entity.id);
-      const result = await blobClient.download();
+      const result = await blobClient.download(0, entity.size);
       return this.createReadable(entity, result.readableStreamBody);
     } catch (err) {
       this.logger.error(`Error in read file ${entity.filename} (ID: ${entity.id}) blob ${entity.id}. ${err}`, {
