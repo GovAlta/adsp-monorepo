@@ -178,7 +178,7 @@ function encodeRFC5987(value: string) {
     .replace(/%(?:7C|60|5E)/g, unescape);
 }
 
-export function downloadFile(): RequestHandler {
+export function downloadFile(logger: Logger): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -199,7 +199,15 @@ export function downloadFile(): RequestHandler {
         res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeRFC5987(fileEntity.filename)}`);
       }
 
-      stream.pipe(res, { end: true });
+      stream.pipe(res, { end: false });
+      stream.on('end', () => {
+        logger.debug(`Ending streaming of file '${fileEntity.filename}' (ID: ${fileEntity.id}).`, {
+          context: 'file-router',
+          tenant: user?.tenantId?.toString(),
+          user: user ? `${user.name} (ID: ${user.id})` : null,
+        });
+        res.end();
+      });
     } catch (err) {
       next(err);
     }
@@ -277,7 +285,7 @@ export const createFileRouter = ({
     '/files/:fileId/download',
     createValidationHandler(param('fileId').isUUID()),
     getFile(fileRepository),
-    downloadFile()
+    downloadFile(logger)
   );
 
   return fileRouter;

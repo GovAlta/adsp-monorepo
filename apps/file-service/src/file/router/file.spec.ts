@@ -308,7 +308,7 @@ describe('file router', () => {
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(file);
 
-      const handler = downloadFile();
+      const handler = downloadFile(loggerMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
@@ -337,7 +337,7 @@ describe('file router', () => {
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(file);
 
-      const handler = downloadFile();
+      const handler = downloadFile(loggerMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.setHeader).toHaveBeenCalledWith('Content-Disposition', 'inline');
@@ -373,7 +373,7 @@ describe('file router', () => {
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(file);
 
-      const handler = downloadFile();
+      const handler = downloadFile(loggerMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
@@ -409,7 +409,7 @@ describe('file router', () => {
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(file);
 
-      const handler = downloadFile();
+      const handler = downloadFile(loggerMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.setHeader).toHaveBeenCalled();
