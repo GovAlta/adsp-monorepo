@@ -213,7 +213,7 @@ const LandingPage = (): JSX.Element => {
                   <GridItem md={4} hSpacing={0.5}>
                     <GoACard type="primary">
                       <CardLayout>
-                        <CardTitle>Files</CardTitle>
+                        <CardTitle>File</CardTitle>
                         <CardContent maxHeight={rowOneMaxHeight}>
                           <div id="file-service-description" ref={maxRowOneDiv as React.RefObject<HTMLDivElement>}>
                             File service provides the ability to upload and download files. Applications can upload

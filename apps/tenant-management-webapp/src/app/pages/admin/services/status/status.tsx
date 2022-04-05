@@ -134,7 +134,7 @@ function Status(): JSX.Element {
             }}
           />
         )}
-        <h1 data-testid="status-title">Status</h1>
+        <h1 data-testid="status-title">Status service</h1>
         <Tabs activeIndex={activeIndex}>
           <Tab label="Overview">
             <OverviewCss>
