@@ -6,6 +6,7 @@ export type { ServiceDirectory } from './directory';
 export type { Tenant, TenantService } from './tenant';
 export type { ConfigurationService } from './configuration';
 export type { DomainEvent, DomainEventDefinition, EventService } from './event';
+export type { FileType } from './file';
 export type { EventCriteria, StreamEvent, Stream } from './push';
 export { Channel } from './notification';
 export type { Template, NotificationType, NotificationTypeEvent } from './notification';
