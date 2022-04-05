@@ -200,6 +200,7 @@ Feature: Service status
   Scenario: As an interested stakeholder, I can verify status notifications for a tenant, so that I know about service availability.
     Given a tenant admin user is on notification subscribers page
     When the user searches subscribers with address as containing "Auto Test" and email containing "auto.test@gov.ab.ca"
+    Then the user "views" the subscriber of "Auto Test", "auto.test@gov.ab.ca"
     Given a tenant admin user is on status applications page
     Then the user "views" "Autotest" in the application list
     And the user views current status for "Autotest"
