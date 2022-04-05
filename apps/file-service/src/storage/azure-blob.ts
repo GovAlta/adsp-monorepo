@@ -25,9 +25,8 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
   }
 
   private createReadable(entity: FileEntity, stream: NodeJS.ReadableStream) {
-    const readable = new Readable().wrap(stream);
-    readable.pause();
-    readable.on('data', ({ length }) => {
+    stream.pause();
+    stream.on('data', ({ length }) => {
       this.logger.debug(
         `Reading file ${entity.filename} (ID: ${entity.id}) blob ${entity.id} stream: received chunks ${length}`,
         {
@@ -36,32 +35,32 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
         }
       );
     });
-    readable.on('closed', () => {
+    stream.on('closed', () => {
       this.logger.debug(`Reading file ${entity.filename} (ID: ${entity.id}) blob ${entity.id} stream: stream closed.`, {
         tenant: entity.tenantId?.toString(),
         context: 'AzureBlobStorageProvider',
       });
     });
-    readable.on('end', () => {
+    stream.on('end', () => {
       this.logger.debug(`Reading file ${entity.filename} (ID: ${entity.id}) blob ${entity.id} stream: stream ended.`, {
         tenant: entity.tenantId?.toString(),
         context: 'AzureBlobStorageProvider',
       });
     });
-    readable.on('error', (err) => {
+    stream.on('error', (err) => {
       this.logger.error(`Error in read file ${entity.filename} (ID: ${entity.id}) blob ${entity.id} stream. ${err}`, {
         tenant: entity.tenantId?.toString(),
         context: 'AzureBlobStorageProvider',
       });
     });
-    return readable;
+    return new Readable().wrap(stream);
   }
 
   async readFile(entity: FileEntity): Promise<Readable> {
     try {
       const containerClient = await this.getContainerClient(entity);
       const blobClient = containerClient.getBlockBlobClient(entity.id);
-      const result = await blobClient.download(0, undefined, {});
+      const result = await blobClient.download();
       return this.createReadable(entity, result.readableStreamBody);
     } catch (err) {
       this.logger.error(`Error in read file ${entity.filename} (ID: ${entity.id}) blob ${entity.id}. ${err}`, {
