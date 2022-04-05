@@ -205,10 +205,10 @@ Feature: Service status
     Then the user "views" "Autotest" in the application list
     And the user views current status for "Autotest"
     When the user clicks Change status button for "Autotest"
-    Then the user changes status to the first unckeck status
+    And the user changes status to the first unused status
     And the user clicks Save button in Manual status change modal
     When the user waits "20" seconds
-    Then the user views the status after change for "Autotest" and compares it with previous status
+    Then the user views the status of "Autotest" changed to the first unused status
     When the user selects the "Event log" menu item
     Then the "Event log" landing page is displayed
     When the user searches with "notification-service:notification-sent", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
