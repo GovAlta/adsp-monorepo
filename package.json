@@ -42,7 +42,7 @@
   },
   "private": true,
   "dependencies": {
-    "@azure/storage-blob": "^12.8.0",
+    "@azure/storage-blob": "^12.9.0",
     "@keycloak/keycloak-admin-client": "^15.0.2",
     "@socket.io/redis-adapter": "^7.1.0",
     "ajv": "^6.12.6",
