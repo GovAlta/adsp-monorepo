@@ -124,6 +124,7 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSav
             />
           </GoAFormItem>
           <GoAFormItem>
+            <label>URL</label>
             <GoAInput
               type="test"
               name="url"
