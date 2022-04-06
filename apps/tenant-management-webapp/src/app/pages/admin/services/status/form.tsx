@@ -1,8 +1,9 @@
-import React, { FC, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { FC, useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { saveApplication } from '@store/status/actions';
+import { fetchDirectory, fetchDirectoryDetailByURNs } from '@store/directory/actions';
 import { ServiceStatusApplication } from '@store/status/models';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton, GoADropdownOption } from '@abgov/react-components';
 import {
   GoAForm,
   GoAFormItem,
@@ -12,6 +13,9 @@ import {
   GoAModalContent,
   GoAModalTitle,
 } from '@abgov/react-components/experimental';
+import { RootState } from '@store/index';
+import { createSelector } from 'reselect';
+import styled from 'styled-components';
 
 interface Props {
   isOpen: boolean;
@@ -20,10 +24,41 @@ interface Props {
   onCancel?: () => void;
   onSave?: () => void;
 }
+const tenantServiceURNSelector = createSelector(
+  (state: RootState) => state.directory.directory,
+  (directory) => {
+    if (!directory) {
+      return [];
+    }
+    return Object.entries(directory)
+      .filter((_directory) => {
+        return _directory[1].isCore === false;
+      })
+      .map((_directory) => {
+        return _directory[1].urn;
+      });
+  }
+);
+
+const healthEndpointsSelector = createSelector(
+  (state: RootState) => state.directory.directory,
+  (directory) => {
+    return directory
+      .filter((_directory) => {
+        return _directory?.metadata?._links?.health?.href !== undefined;
+      })
+      .map((_directory) => {
+        return _directory?.metadata._links.health.href;
+      });
+  }
+);
 
 export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSave, defaultApplication }: Props) => {
   const dispatch = useDispatch();
   const [application, setApplication] = useState<ServiceStatusApplication>({ ...defaultApplication });
+  const tenantServiceUrns = useSelector(tenantServiceURNSelector);
+  const healthEndpoints = useSelector(healthEndpointsSelector);
+  const [openDropdown, setOpenDropdown] = useState<boolean>(false);
 
   function isFormValid(): boolean {
     if (!application?.name) return false;
@@ -39,6 +74,19 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSav
     if (onSave) onSave();
   }
 
+  useEffect(() => {
+    if (healthEndpoints.length === 0) {
+      dispatch(fetchDirectory());
+    }
+  }, []);
+
+  useEffect(() => {
+    dispatch(fetchDirectoryDetailByURNs(tenantServiceUrns));
+  }, [tenantServiceUrns.length]);
+
+  // eslint-disable-next-line
+  useEffect(() => {}, [healthEndpoints]);
+
   return (
     <GoAModal isOpen={isOpen}>
       <GoAModalTitle>{title}</GoAModalTitle>
@@ -46,6 +94,7 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSav
         <GoAForm>
           <GoAFormItem>
             <label>Application name</label>
+
             <GoAInput
               type="text"
               name="name"
@@ -74,12 +123,11 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSav
               aria-label="description"
             />
           </GoAFormItem>
-
           <GoAFormItem>
-            <label>Endpoint url</label>
+            <label>URL</label>
             <GoAInput
-              type="text"
-              name="endpoint"
+              type="test"
+              name="url"
               value={application?.endpoint?.url}
               onChange={(name, value) => {
                 setApplication({
@@ -90,8 +138,37 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSav
                   },
                 });
               }}
-              aria-label="endpoint"
+              onTrailingIconClick={() => {
+                setOpenDropdown(!openDropdown);
+              }}
+              trailingIcon={openDropdown ? 'close-circle' : 'chevron-down'}
             />
+
+            {openDropdown && (
+              <DropdownListContainer>
+                <DropdownList>
+                  {healthEndpoints.map((endpoint): JSX.Element => {
+                    return (
+                      <GoADropdownOption
+                        label={endpoint}
+                        value={endpoint}
+                        key={endpoint}
+                        visible={true}
+                        onClick={(value) => {
+                          setApplication({
+                            ...application,
+                            endpoint: {
+                              url: value,
+                              status: 'offline',
+                            },
+                          });
+                        }}
+                      />
+                    );
+                  })}
+                </DropdownList>
+              </DropdownListContainer>
+            )}
           </GoAFormItem>
         </GoAForm>
       </GoAModalContent>
@@ -111,5 +188,22 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSav
     </GoAModal>
   );
 };
+const DropdownListContainer = styled.div`
+  max-height: 10rem;
+  overflow: hidden auto;
+  padding: 0rem;
+  scroll-behavior: smooth;
+`;
+
+const DropdownList = styled.ul`
+  position: relative;
+  margin-top: 3px;
+  list-style-type: none;
+  background: var(--color-white);
+  border-radius: var(--input-border-radius);
+  box-shadow: 0 8px 8px rgb(0 0 0 / 20%), 0 4px 4px rgb(0 0 0 / 10%);
+  z-index: 99;
+  padding-left: 0rem !important;
+`;
 
 export default ApplicationFormModal;

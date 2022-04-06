@@ -1,7 +1,8 @@
 import { AdspId, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { NotFoundError } from '@core-services/core-common';
+import { createValidationHandler, NotFoundError } from '@core-services/core-common';
 import axios from 'axios';
-import { RequestHandler, Router } from 'express';
+import { Request, RequestHandler, Response, Router } from 'express';
+import { checkSchema, param } from 'express-validator';
 import * as HttpStatusCodes from 'http-status-codes';
 import { Logger } from 'winston';
 import { updateTask } from '.';
@@ -11,7 +12,14 @@ import { TaskEntity } from '../model/task';
 import { TaskRepository } from '../repository';
 import { Queue, TaskPriority, TaskServiceConfiguration } from '../types';
 import { getTask, mapTask, taskOperation, TASK_KEY } from './task';
-import { UserInformation } from './types';
+import {
+  OPERATION_ASSIGN,
+  OPERATION_CANCEL,
+  OPERATION_COMPLETE,
+  OPERATION_SET_PRIORITY,
+  OPERATION_START,
+  UserInformation,
+} from './types';
 
 interface QueueRouterProps {
   apiId: AdspId;
@@ -190,31 +198,121 @@ export function createQueueRouter({
 }: QueueRouterProps): Router {
   const router = Router();
 
+  const validateNamespaceNameHandler = createValidationHandler(
+    param('namespace').isString().isLength({ min: 1, max: 50 }),
+    param('name').isString().isLength({ min: 1, max: 50 })
+  );
+
+  const validateNamespaceNameAndTaskIdHandler = createValidationHandler(
+    param('namespace').isString().isLength({ min: 1, max: 50 }),
+    param('name').isString().isLength({ min: 1, max: 50 }),
+    param('id').isUUID()
+  );
+
   router.get('/queues', getQueues);
-  router.get('/queues/:namespace/:name', getQueue, (req, res) => {
+  router.get('/queues/:namespace/:name', validateNamespaceNameHandler, getQueue, (req, res) => {
     res.send(mapQueue(req[QUEUE_KEY]));
   });
 
-  router.get('/queues/:namespace/:name/tasks', getQueue, getQueuedTasks(apiId, repository));
-  router.post('/queues/:namespace/:name/tasks', getQueue, createTask(apiId, repository, eventService));
-  router.get('/queues/:namespace/:name/tasks/:id', getTask(repository), verifyQueuedTask, (req, res) =>
-    res.send(mapTask(apiId, req[TASK_KEY]))
+  router.get(
+    '/queues/:namespace/:name/tasks',
+    validateNamespaceNameHandler,
+    getQueue,
+    getQueuedTasks(apiId, repository)
+  );
+  router.post(
+    '/queues/:namespace/:name/tasks',
+    validateNamespaceNameHandler,
+    createValidationHandler(
+      ...checkSchema(
+        {
+          name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+          description: { optional: true, isString: true },
+          recordId: { optional: true, isString: true },
+          context: { optional: true, isObject: true },
+        },
+        ['body']
+      )
+    ),
+    getQueue,
+    createTask(apiId, repository, eventService)
+  );
+  router.get(
+    '/queues/:namespace/:name/tasks/:id',
+    validateNamespaceNameAndTaskIdHandler,
+    getTask(repository),
+    verifyQueuedTask,
+    (req: Request, res: Response) => res.send(mapTask(apiId, req[TASK_KEY]))
   );
   router.patch(
     '/queues/:namespace/:name/tasks/:id',
+    validateNamespaceNameAndTaskIdHandler,
+    createValidationHandler(
+      ...checkSchema(
+        {
+          name: { optional: true, isLength: { options: { min: 1, max: 50 } } },
+          description: { optional: true, isString: true },
+          context: { optional: true, isObject: true },
+        },
+        ['body']
+      )
+    ),
     getTask(repository),
     verifyQueuedTask,
     updateTask(apiId, eventService)
   );
   router.post(
     '/queues/:namespace/:name/tasks/:id',
+    validateNamespaceNameAndTaskIdHandler,
+    createValidationHandler(
+      ...checkSchema(
+        {
+          operation: {
+            isIn: {
+              options: [
+                OPERATION_START,
+                OPERATION_COMPLETE,
+                OPERATION_CANCEL,
+                OPERATION_SET_PRIORITY,
+                OPERATION_ASSIGN,
+              ],
+            },
+          },
+          priority: {
+            optional: true,
+            isIn: {
+              options: ['Normal', 'High', 'Urgent'],
+            },
+          },
+          reason: {
+            optional: true,
+            isString: true,
+          },
+          assignTo: {
+            optional: true,
+            isObject: true,
+          },
+        },
+        ['body']
+      )
+    ),
     getTask(repository),
     verifyQueuedTask,
     taskOperation(apiId, eventService)
   );
 
-  router.get('/queues/:namespace/:name/assigners', getQueue, getRoleUsers(logger, KEYCLOAK_ROOT_URL, 'assignerRoles'));
-  router.get('/queues/:namespace/:name/workers', getQueue, getRoleUsers(logger, KEYCLOAK_ROOT_URL, 'workerRoles'));
+  router.get(
+    '/queues/:namespace/:name/assigners',
+    validateNamespaceNameHandler,
+    getQueue,
+    getRoleUsers(logger, KEYCLOAK_ROOT_URL, 'assignerRoles')
+  );
+  router.get(
+    '/queues/:namespace/:name/workers',
+    validateNamespaceNameHandler,
+    getQueue,
+    getRoleUsers(logger, KEYCLOAK_ROOT_URL, 'workerRoles')
+  );
 
   return router;
 }

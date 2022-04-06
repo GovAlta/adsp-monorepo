@@ -51,7 +51,6 @@ const initializeApp = async (): Promise<Server> => {
         ),
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
-      accessTokenInQuery: true,
       directoryUrl: new URL(environment.DIRECTORY_URL),
     },
     { logger }
@@ -120,6 +119,8 @@ const initializeApp = async (): Promise<Server> => {
   app.get('/', async (req, res) => {
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
+      name: 'Push service',
+      description: 'Service for push mode connections.',
       _links: {
         self: { href: new URL(req.originalUrl, rootUrl).href },
         health: { href: new URL('/health', rootUrl).href },

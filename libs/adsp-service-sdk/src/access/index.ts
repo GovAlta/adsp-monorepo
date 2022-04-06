@@ -18,11 +18,12 @@ declare global {
 export type { User } from './user';
 
 export { isAllowedUser, AssertRole, AssertCoreRole, UnauthorizedUserError, hasRequiredRole } from './assert';
-export { createCoreStrategy } from './createCoreStrategy';
+export { createRealmStrategy } from './createRealmStrategy';
 export { createTenantStrategy } from './createTenantStrategy';
 export type { TokenProvider } from './tokenProvider';
 
 interface TokenProviderOptions {
+  realm: string;
   serviceId: AdspId;
   clientSecret: string;
   accessServiceUrl: URL;
@@ -30,10 +31,11 @@ interface TokenProviderOptions {
 }
 
 export const createTokenProvider = ({
+  realm,
   serviceId,
   clientSecret,
   accessServiceUrl,
   logger,
 }: TokenProviderOptions): TokenProvider => {
-  return new TokenProviderImpl(logger, serviceId, clientSecret, accessServiceUrl);
+  return new TokenProviderImpl(logger, serviceId, clientSecret, accessServiceUrl, realm);
 };

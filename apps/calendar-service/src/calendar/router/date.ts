@@ -1,5 +1,6 @@
-import { NotFoundError } from '@core-services/core-common';
+import { createValidationHandler, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
+import { param } from 'express-validator';
 import { CalendarRepository } from '../repository';
 
 interface DateRouterProps {
@@ -44,7 +45,11 @@ export const createDateRouter = ({ repository }: DateRouterProps): Router => {
   const router = Router();
 
   router.get('/dates', getDates(repository));
-  router.get('/dates/:id', getDate(repository));
+  router.get(
+    '/dates/:id',
+    createValidationHandler(param('id').isInt({ min: 20200000, max: 20600000 })),
+    getDate(repository)
+  );
 
   return router;
 };

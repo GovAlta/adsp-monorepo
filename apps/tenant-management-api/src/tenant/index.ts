@@ -25,9 +25,8 @@ export function applyTenantMiddleware(
   const tenantRouter = createTenantRouter({ tenantRepository, eventService });
   const tenantV2Router = createTenantV2Router({ tenantRepository });
   const authenticate = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
-  const authenticateCore = passport.authenticate(['jwt'], { session: false });
   app.use('/api/tenant/v1', authenticate, configurationHandler, tenantRouter);
-  app.use('/api/tenant/v2', authenticateCore, tenantV2Router);
+  app.use('/api/tenant/v2', authenticate, tenantV2Router);
 
   return app;
 }

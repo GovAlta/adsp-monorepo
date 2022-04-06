@@ -74,7 +74,7 @@ const Dashboard = (): JSX.Element => {
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
                     <GoACard type="primary">
                       <h2>
-                        <Link to="/admin/services/files">File service</Link>
+                        <Link to="/admin/services/files">File</Link>
                       </h2>
                       <div>
                         The file service provides the capability to upload and download files. Consumers are registered
@@ -99,7 +99,7 @@ const Dashboard = (): JSX.Element => {
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
                     <GoACard type="primary">
                       <h2>
-                        <Link to="/admin/services/events">Events</Link>
+                        <Link to="/admin/services/events">Event</Link>
                       </h2>
                       <div>
                         The event service provides tenant applications with the ability to send domain events.
@@ -110,7 +110,7 @@ const Dashboard = (): JSX.Element => {
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
                     <GoACard type="primary">
                       <h2>
-                        <Link to="/admin/services/notifications">Notifications</Link>
+                        <Link to="/admin/services/notifications">Notification</Link>
                       </h2>
                       <div>
                         The notifications service provides tenant applications with the ability to configure

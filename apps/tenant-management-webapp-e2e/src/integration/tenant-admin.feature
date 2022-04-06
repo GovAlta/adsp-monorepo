@@ -14,8 +14,8 @@ Feature: Tenant admin
     Then the "<Page Title>" landing page is displayed
     Examples:
       | Menu      | Page Title     |
-      | Files     | File service   |
-      | Status    | Service status |
+      | Files     | Files   |
+      | Status    | Status |
       | Event log | Event log      |
 
   @regression @smoke-test @api @ignore
@@ -78,7 +78,7 @@ Feature: Tenant admin
     Then the user is directed to "File service" page
     When the user selects the "Dashboard" menu item
     And the user clicks "Status" link
-    Then the user is directed to "Service status" page
+    Then the user is directed to "Status" page
     When the user selects the "Dashboard" menu item
     And the user clicks "Events" link
     Then the user is directed to "Events" page

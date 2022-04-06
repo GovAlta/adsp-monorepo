@@ -143,6 +143,7 @@ class KeycloakAuthImpl implements KeycloakAuth {
       }
     } catch (e) {
       console.error(`Failed to refresh the keycloak token: ${e.message}`);
+      throw e;
     }
   }
 

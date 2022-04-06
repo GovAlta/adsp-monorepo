@@ -59,6 +59,41 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
       await this.updateConfiguration(adspId`urn:ads:platform:event-service`, update);
     }
 
+    if (registration.fileTypes) {
+      const update = registration.fileTypes.reduce(
+        (types, type) => ({
+          ...types,
+          [type.id]: {
+            id: type.id,
+            name: type.name,
+            anonymousRead: type.anonymousRead,
+            readRoles: type.readRoles,
+            updateRoles: type.updateRoles,
+          },
+        }),
+        {}
+      );
+      await this.updateConfiguration(adspId`urn:ads:platform:file-service`, update);
+    }
+
+    if (registration.eventStreams) {
+      const update = registration.eventStreams.reduce(
+        (streams, stream) => ({
+          ...streams,
+          [stream.id]: {
+            id: stream.id,
+            name: stream.name,
+            description: stream.description,
+            events: stream.events,
+            subscriberRoles: stream.subscriberRoles,
+            publicSubscribe: stream.publicSubscribe,
+          },
+        }),
+        {}
+      );
+      await this.updateConfiguration(adspId`urn:ads:platform:push-service`, update);
+    }
+
     if (registration.notifications) {
       const update = registration.notifications.reduce(
         (types, type) => ({
@@ -87,9 +122,6 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
           await this.#tryUpdateConfiguration(serviceUrl, count, serviceId, update);
         } catch (err) {
           this.logger.debug(`Try ${count} failed with error. ${err}`, this.LOG_CONTEXT);
-          if (axios.isAxiosError(err)) {
-            this.logger.debug(err.response?.data);
-          }
           next(err);
         }
       });

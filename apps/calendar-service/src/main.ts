@@ -119,6 +119,8 @@ const initializeApp = async (): Promise<express.Application> => {
   app.get('/', async (req, res) => {
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
+      name: 'Calendar service',
+      description: 'Service that provides calendar date information, events, and scheduling.',
       _links: {
         self: {
           href: new URL(req.originalUrl, rootUrl).href,

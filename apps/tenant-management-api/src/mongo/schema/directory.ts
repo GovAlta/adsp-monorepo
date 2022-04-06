@@ -24,10 +24,6 @@ export const directorySchema = new Schema({
           message: `It is not a valid service name! allowed characters: a-z, 0-9, -`,
         },
       },
-      description: {
-        type: String,
-        maxlength: [50, 'Maximum length 500 characters'],
-      },
       host: {
         type: String,
         required: [true, 'host name required'],
@@ -37,16 +33,6 @@ export const directorySchema = new Schema({
             return /^[a-z0-9._%+-]+.[a-z0-9.-]+.[a-z]{2,4}$/.test(v);
           },
           message: `It is not a host!`,
-        },
-      },
-      api: {
-        type: String,
-        maxlength: [50, 'Maximum length 50 characters'],
-        validate: {
-          validator: function (v) {
-            return /^[a-z0-9.-]$/.test(v);
-          },
-          message: `It is not a api! allowed characters: a-z, 0-9, -`,
         },
       },
     },

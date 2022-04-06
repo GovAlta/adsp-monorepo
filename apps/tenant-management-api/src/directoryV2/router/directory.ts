@@ -23,11 +23,6 @@ export interface URNComponent {
   resource?: string;
 }
 
-export interface Resp {
-  url?: string;
-  urn?: string;
-}
-
 const getUrn = (component: URNComponent) => {
   let urn = `${component.scheme}:${component.nic}:${component.core}:${component.service}`;
   urn = component.apiVersion ? `${urn}:${component.apiVersion}` : urn;
@@ -50,7 +45,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
    */
   directoryRouter.get('/namespaces/:namespace', async (req: Request, res: Response, _next) => {
     const { namespace } = req.params;
-    let services;
+    let services: Service[];
 
     services = directoryCache.get(`directory-${namespace}`);
     if (!services) {
@@ -59,7 +54,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
         if (!directory) {
           res.json([]);
         }
-        services = directory['services'];
+        services = directory.services;
       } catch (err) {
         _next(err);
       }
@@ -69,9 +64,11 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
 
     for (const service of services) {
       const element = {};
+      element['_id'] = service._id;
       element['namespace'] = namespace;
       element['service'] = service.service;
       element['url'] = service.host;
+
       const component: URNComponent = {
         scheme: 'urn',
         nic: 'ads',
@@ -79,10 +76,12 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
         service: service.service,
       };
       element['urn'] = getUrn(component);
+
       response.push(element);
     }
 
     directoryCache.set(`directory-${namespace}`, services);
+
     res.json(response);
   });
 
@@ -116,18 +115,17 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
     async (req: Request, res: Response, _next) => {
       const { namespace } = req.params;
       try {
-        const { service, api, url } = req.body;
+        const { service, url } = req.body;
         const result = await directoryRepository.getDirectories(namespace);
 
         const mappingService = {
           service: service,
-          api: api,
           host: url,
         };
         if (!result) {
           const directory = { name: namespace, services: [mappingService] };
           await directoryRepository.update(directory);
-          directoryCache.del(`directory-${namespace}`);
+          directoryCache.set(`directory-${namespace}`, directory.services);
           return res.sendStatus(HttpStatusCodes.CREATED);
         }
         const services = result['services'];
@@ -140,7 +138,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
           const directory = { name: namespace, services: services };
 
           await directoryRepository.update(directory);
-          directoryCache.del(`directory-${namespace}`);
+          directoryCache.set(`directory-${namespace}`, services);
           return res.sendStatus(HttpStatusCodes.CREATED);
         }
       } catch (err) {
@@ -157,20 +155,19 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
     [passportMiddleware, validateNamespaceEndpointsPermission(tenantService), validationMiddleware(ServiceV2)],
     async (req: Request, res: Response, _next) => {
       const { namespace } = req.params;
+
       try {
-        const { service, api, url } = req.body;
+        const { _id, service, url } = req.body;
         const result = await directoryRepository.getDirectories(namespace);
         const services = result['services'];
-        const isExist = services.find((x) => x.service === service);
+        const isExist = services.find((x) => x._id.toString() === _id);
 
         if (isExist) {
-          if (api) {
-            isExist.api = api;
-          }
+          isExist.service = service;
           isExist.host = url;
           const directory = { name: namespace, services: services };
           await directoryRepository.update(directory);
-          directoryCache.del(`directory-${namespace}`);
+          directoryCache.set(`directory-${namespace}`, services);
           return res.sendStatus(HttpStatusCodes.CREATED);
         } else {
           logger.error('modify service has error');
@@ -207,7 +204,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
         const directory = { name: namespace, services: services };
         await directoryRepository.update(directory);
 
-        directoryCache.del(`directory-${namespace}`);
+        directoryCache.set(`directory-${namespace}`, services);
         return res.sendStatus(HttpStatusCodes.OK);
       } catch (err) {
         logger.error(`Failed deleting directory for namespace: ${namespace} with error ${err.message}`);

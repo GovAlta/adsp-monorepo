@@ -16,11 +16,11 @@ jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('ServiceDirectory', () => {
-  const logger: Logger = ({
+  const logger: Logger = {
     debug: jest.fn(),
     info: jest.fn(),
     error: jest.fn(),
-  } as unknown) as Logger;
+  } as unknown as Logger;
 
   const tokenProvider: TokenProvider = {
     getAccessToken: jest.fn(),
@@ -63,7 +63,10 @@ describe('ServiceDirectory', () => {
     const result = await directory.getServiceUrl(apiId);
 
     expect(result).toBe(apiUrl);
-    expect(axiosMock.get).toHaveBeenCalled();
+    expect(axiosMock.get).toHaveBeenCalledWith(
+      'https://directory/api/directory/v2/namespaces/test-sandbox',
+      expect.any(Object)
+    );
   });
 
   it('can throw for missing entry', async () => {

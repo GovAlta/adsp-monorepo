@@ -14,6 +14,7 @@ export const DELETE_ENTRY_SUCCESS = 'tenant/directory-service/entry/delete/succe
 
 export const FETCH_ENTRY_DETAIL = 'tenant/directory-service/entry/detail';
 export const FETCH_ENTRY_DETAIL_SUCCESS = 'tenant/directory-service/entry/detail/success';
+export const FETCH_ENTRY_DETAIL_BY_URNS = 'tenant/directory-service/urn/detail/';
 
 // =============
 // Actions Types
@@ -28,6 +29,7 @@ export type ActionType =
   | UpdateEntryAction
   | UpdateEntrySuccessAction
   | DeleteEntryAction
+  | FetchEntryDetailByURNsAction
   | DeleteEntrySuccessAction;
 
 export interface FetchDirectoryAction {
@@ -61,6 +63,11 @@ interface UpdateEntrySuccessAction {
 export interface DeleteEntryAction {
   type: typeof DELETE_ENTRY;
   data: Service;
+}
+
+export interface FetchEntryDetailByURNsAction {
+  type: typeof FETCH_ENTRY_DETAIL_BY_URNS;
+  payload: string[];
 }
 
 interface DeleteEntrySuccessAction {
@@ -123,5 +130,10 @@ export const fetchEntryDetail = (data: Service): FetchEntryDetailAction => ({
 
 export const fetchEntryDetailSuccess = (data: Service): FetchEntryDetailSuccessAction => ({
   type: FETCH_ENTRY_DETAIL_SUCCESS,
+  payload: data,
+});
+
+export const fetchDirectoryDetailByURNs = (data: string[]): FetchEntryDetailByURNsAction => ({
+  type: FETCH_ENTRY_DETAIL_BY_URNS,
   payload: data,
 });

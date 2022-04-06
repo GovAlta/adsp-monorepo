@@ -37,9 +37,10 @@ export function* fetchNotificationTypes(): SagaIterator {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
-      const { contact, ...notificationTypeInfo } = configuration.latest.configuration;
-      yield put(FetchNotificationConfigurationSucceededService({ data: notificationTypeInfo }, contact));
+      if (configuration.latest) {
+        const { contact, ...notificationTypeInfo } = configuration.latest.configuration;
+        yield put(FetchNotificationConfigurationSucceededService({ data: notificationTypeInfo }, contact));
+      }
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
     }

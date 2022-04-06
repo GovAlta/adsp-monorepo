@@ -18,6 +18,8 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
   const criteriaInit = {
     email: '',
     name: '',
+    top: 10,
+    next: null,
   };
 
   const indicator = useSelector((state: RootState) => {
@@ -33,10 +35,11 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
 
   const searchFn2 = (criteria: SubscriberSearchCriteria) => {
     dispatch(FindSubscribers(criteria));
+    setCriteriaState(criteria);
   };
 
-  const resetState = (resetCriteria) => {
-    dispatch(FindSubscribers(resetCriteria));
+  const resetState = () => {
+    dispatch(FindSubscribers(criteriaInit));
     setCriteriaState(criteriaInit);
   };
 
@@ -47,7 +50,12 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
   return (
     <CheckSubscriberRoles>
       <div data-testid="subscribers-list-title">
-        <SubscribersSearchForm onSearch={searchFn2} reset={resetState} />
+        <SubscribersSearchForm
+          onSearch={searchFn2}
+          reset={resetState}
+          searchCriteria={criteriaState}
+          onUpdate={setCriteriaState}
+        />
         {indicator.show && <PageIndicator />}
         {indicator.show === false && <SubscriberList searchCriteria={criteriaState} />}
         {indicator.show === false && <NextLoader onSearch={searchFn} searchCriteria={criteriaState} />}

@@ -14,7 +14,7 @@ const HelpLink = (): JSX.Element => {
   return (
     <>
       <h3>Helpful links</h3>
-      <a rel="noopener noreferrer" target="_blank" href={`${docBaseUrl}/${tenantName}&urls.primaryName=File service`}>
+      <a rel="noopener noreferrer" target="_blank" href={`${docBaseUrl}/${tenantName}?urls.primaryName=File service`}>
         Read the API docs
       </a>
       <br />
@@ -37,7 +37,7 @@ export const File: FunctionComponent = () => {
     <Page>
       <Main>
         <>
-          <h1>File service</h1>
+          <h1 data-testid="file-title">File service</h1>
           <Tabs activeIndex={activeIndex}>
             <Tab label="Overview">
               <FileOverview

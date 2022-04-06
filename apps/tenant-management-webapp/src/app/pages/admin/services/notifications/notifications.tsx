@@ -13,8 +13,8 @@ import { GoAButton } from '@abgov/react-components';
 import { subscriberAppUrlSelector } from './selectors';
 
 export const Notifications: FunctionComponent = () => {
-  const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
+  const tenantName = useSelector((state: RootState) => state.tenant.name);
 
   const loginUrl = useSelector(subscriberAppUrlSelector);
 
@@ -39,7 +39,7 @@ export const Notifications: FunctionComponent = () => {
   return (
     <Page>
       <Main>
-        <h1>Notifications</h1>
+        <h1 data-testid="notification-title">Notification service</h1>
         <Tabs activeIndex={activeIndex}>
           <Tab label="Overview">
             <NotificationsOverview setActiveEdit={activateEdit} />
@@ -60,7 +60,7 @@ export const Notifications: FunctionComponent = () => {
         <a
           rel="noopener noreferrer"
           target="_blank"
-          href={`${docBaseUrl}/${tenantName}&urls.primaryName=Notification service`}
+          href={`${docBaseUrl}/${tenantName}?urls.primaryName=Notification service`}
         >
           Read the API docs
         </a>

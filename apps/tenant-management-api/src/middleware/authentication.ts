@@ -64,7 +64,7 @@ export const toKebabName = (tenantName: string): string => {
 
 export const requirePlatformService: RequestHandler = (req, res, next) => {
   const authConfig: AuthenticationConfig = {
-    requireCore: true,
+    requireCore: false,
     allowedRoles: [TenantServiceRoles.PlatformService],
   };
 

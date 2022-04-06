@@ -194,7 +194,7 @@ const LandingPage = (): JSX.Element => {
                   <GridItem md={4} hSpacing={0.5}>
                     <GoACard type="primary">
                       <CardLayout>
-                        <CardTitle>Access service</CardTitle>
+                        <CardTitle>Access</CardTitle>
                         <CardContent maxHeight={rowOneMaxHeight}>
                           Access service allows you to add a secure sign in to your application and services with
                           minimum effort and configuration. No need to deal with storing or authenticating users. It's
@@ -213,7 +213,7 @@ const LandingPage = (): JSX.Element => {
                   <GridItem md={4} hSpacing={0.5}>
                     <GoACard type="primary">
                       <CardLayout>
-                        <CardTitle>File service</CardTitle>
+                        <CardTitle>File</CardTitle>
                         <CardContent maxHeight={rowOneMaxHeight}>
                           <div id="file-service-description" ref={maxRowOneDiv as React.RefObject<HTMLDivElement>}>
                             File service provides the ability to upload and download files. Applications can upload
@@ -244,7 +244,7 @@ const LandingPage = (): JSX.Element => {
                   <GridItem md={4} hSpacing={0.5}>
                     <GoACard type="primary">
                       <CardLayout>
-                        <CardTitle>Event service</CardTitle>
+                        <CardTitle>Event</CardTitle>
                         <CardContent id="event-service-description" maxHeight={rowTwoMaxHeight}>
                           Event service provides tenant applications with the ability to send domain events.
                           Applications are able to leverage additional capabilities as side effects through these
@@ -262,7 +262,7 @@ const LandingPage = (): JSX.Element => {
                   <GridItem md={4} hSpacing={0.5}>
                     <GoACard type="primary">
                       <CardLayout>
-                        <CardTitle>Notification service</CardTitle>
+                        <CardTitle>Notification</CardTitle>
                         <CardContent maxHeight={rowTwoMaxHeight}>
                           Notifications service provides tenant applications with the ability to configure and manage
                           notifications for your subscribers.

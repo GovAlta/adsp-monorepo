@@ -9,6 +9,7 @@ export type { DomainEvent, DomainEventDefinition } from './event';
 export type { EventService } from './eventService';
 
 interface EventServiceOptions {
+  isCore: boolean;
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
   logger: Logger;
@@ -17,11 +18,12 @@ interface EventServiceOptions {
 }
 
 export const createEventService = ({
+  isCore,
   logger,
   directory,
   tokenProvider,
   serviceId,
   events,
 }: EventServiceOptions): EventServiceImpl => {
-  return new EventServiceImpl(logger, directory, tokenProvider, serviceId, events);
+  return new EventServiceImpl(isCore, logger, directory, tokenProvider, serviceId, events);
 };
