@@ -11,9 +11,8 @@ class Common {
     return cy.get('[name=password]');
   }
 
-  adminMenuItem(menuItemKey: string) {
-    const menuItemSelector = `nav > div > [href="${menuItemKey}"] > span`;
-    return cy.get(menuItemSelector);
+  adminMenuItem(testid) {
+    return cy.xpath(`//nav//*[@data-testid="${testid}"]`);
   }
 
   readTheApiDocsLink() {

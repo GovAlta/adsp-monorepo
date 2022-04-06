@@ -160,7 +160,7 @@ class StatusServicePage {
   }
 
   addApplicationEndpointModalField() {
-    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//input[@aria-label="endpoint"]');
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//*[label="URL"]//input');
   }
 
   addApplicationSaveBtn() {
