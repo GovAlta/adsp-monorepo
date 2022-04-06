@@ -101,7 +101,7 @@ export const DirectoryService: FunctionComponent = () => {
           title="Delete entry"
           content={`Delete ${
             selectedEntry?.api ? `${selectedEntry?.service}:${selectedEntry?.api}` : selectedEntry.service
-          } ?`}
+          }?`}
           onCancel={() => setShowDeleteConfirmation(false)}
           onDelete={() => {
             setShowDeleteConfirmation(false);
