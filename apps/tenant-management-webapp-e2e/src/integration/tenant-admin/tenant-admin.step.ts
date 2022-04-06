@@ -21,17 +21,17 @@ Then('the tenant management admin page is displayed', function () {
 Then('the {string} landing page is displayed', function (pageTitle) {
   let urlPart = 'undefined';
   switch (pageTitle) {
-    case 'Files':
-      urlPart = '/admin/services/files';
+    case 'File service':
+      urlPart = '/admin/services/file';
       break;
-    case 'Status':
+    case 'Status service':
       urlPart = '/admin/services/status';
       break;
     case 'Event log':
       urlPart = '/admin/event-log';
       break;
     default:
-      expect(pageTitle).to.be.oneOf(['Files', 'Status', 'Event log']);
+      expect(pageTitle).to.be.oneOf(['File service', 'Status service', 'Event log']);
   }
   cy.url().should('include', urlPart);
   tenantAdminObj.servicePageTitle(pageTitle).then((title) => {
@@ -421,7 +421,7 @@ When('the user clicks {string} link', function (link) {
 });
 
 Then('the user is directed to {string} page', function (page) {
-  tenantAdminObj.servicePageTitle(page);
+  tenantAdminObj.servicePageTitle(page).should('exist');
 });
 
 Then('the user views an instruction of role requirement indicating user needs tenant-admin', function () {

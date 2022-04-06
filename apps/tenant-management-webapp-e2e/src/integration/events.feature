@@ -3,14 +3,14 @@ Feature: Events
   @regression
   Scenario: As a service admin, I can see events overview
     Given a tenant admin user is on tenant admin page
-    When the user selects the "Events" menu item
+    When the user selects the "Event" menu item
     Then the user views events overview page
 
   @regression
   Scenario: As a service admin, I can see details of event definitions
     Given a tenant admin user is on tenant admin page
-    When the user selects the "Events" menu item
-    And the user selects "Definitions" tab for "Events"
+    When the user selects the "Event" menu item
+    And the user selects "Definitions" tab for "Event"
     Then the user views an event definition of "tenant-created" under "tenant-service"
     When the user clicks "show" details button for the definition of "tenant-created" under "tenant-service"
     Then the user "views" the definition details of "tenant-created" under "tenant-service"
@@ -21,7 +21,7 @@ Feature: Events
   # Ignore this test until CS-1134 is fixed
   Scenario: As a service admin, I can see event service API docs
     Given a tenant admin user is on tenant admin page
-    When the user selects the "Events" menu item
+    When the user selects the "Event" menu item
     Then the user views the link for "Event service" API docs
     When the user goes to the web link of the API docs
     Then the user views "Event service" API documentation
@@ -30,8 +30,8 @@ Feature: Events
   @TEST_CS-735 @REQ_CS-250 @regression
   Scenario: As a service admin, I can see add, edit and delete an event definition
     Given a tenant admin user is on tenant admin page
-    When the user selects the "Events" menu item
-    And the user selects "Definitions" tab for "Events"
+    When the user selects the "Event" menu item
+    And the user selects "Definitions" tab for "Event"
     And the user clicks Add definition button
     Then the user views Add definition dialog
     When the user enters "Autotest" in Namespace, "autotest-addEditDeleteEvent" in Name, "autotest event desc" in Description
@@ -50,8 +50,8 @@ Feature: Events
   @accessibility @regression
   Scenario: As a service admin, I can use event definitions page without any critical or serious accessibility issues
     Given a tenant admin user is on tenant admin page
-    When the user selects the "Events" menu item
-    And the user selects "Definitions" tab for "Events"
+    When the user selects the "Event" menu item
+    And the user selects "Definitions" tab for "Event"
     Then no critical or serious accessibility issues on "event definitions page"
 
   @TEST_CS-739 @REQ_CS-250 @regression

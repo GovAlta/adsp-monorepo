@@ -115,9 +115,9 @@ Given('a service owner user is on event definitions page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  commonObj.adminMenuItem('/admin/services/events').click();
+  commonObj.adminMenuItem('menu-event').click();
   eventsObj.eventsOverviewh3Title().invoke('text').should('contain', 'Event definitions');
-  commonObj.serviceTab('Events', 'Definitions').click();
+  commonObj.serviceTab('Event', 'Definitions').click();
   cy.wait(2000);
 });
 

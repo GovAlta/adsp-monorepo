@@ -62,11 +62,11 @@ Feature: Notifications
     And the user "views" "Edit button" for "status-service:application-unhealthy" in "Application health check change"
     And the user "views" "email template indicator" for "status-service:application-healthy" in "Application health check change"
     And the user "views" "Edit button" for "status-service:application-healthy" in "Application health check change"
-    # Verify email template is read-only (pick one event)
-    # Future work: need in-depth research on test automation with Monaco-editor before we can automate test steps.
-    # When the user attempts to edit the template
-    # Then the user gets "Cannot edit in read-only editor"
-    # Verify the event is still there (had a bug of the event disappearing after preview)
+  # Verify email template is read-only (pick one event)
+  # Future work: need in-depth research on test automation with Monaco-editor before we can automate test steps.
+  # When the user attempts to edit the template
+  # Then the user gets "Cannot edit in read-only editor"
+  # Verify the event is still there (had a bug of the event disappearing after preview)
 
 
   @TEST_CS-1081 @REQ_CS-1029 @TEST_CS-1002 @REQ_CS-1027 @regression
@@ -132,7 +132,7 @@ Feature: Notifications
     # And the user views the Delete subscriber confirmation message of "auto.test@gov.ab.ca"
     When the user clicks Delete button on Delete subscriber modal
     Then the user "should not view" the subscriber of "Auto Test", "auto.test@gov.ab.ca"
-    When the user selects "Subscriptions" tab for "Notifications"
+    When the user selects "Subscriptions" tab for "Notification"
     Then the user "should not view" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Status-Application-Health-Change"
     # Restore the subscription
     Given a tenant admin user is on status applications page
