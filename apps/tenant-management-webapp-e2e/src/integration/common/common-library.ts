@@ -27,7 +27,7 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
       menuItemSelector = '/admin/event-log';
       break;
     case 'Files':
-      menuItemSelector = '/admin/services/files';
+      menuItemSelector = '/admin/services/file';
       break;
     case 'Access':
       menuItemSelector = '/admin/access';
@@ -36,7 +36,7 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
       menuItemSelector = '/admin/services/status';
       break;
     case 'Events':
-      menuItemSelector = '/admin/services/events';
+      menuItemSelector = '/admin/services/event';
       break;
     case 'Notifications':
       menuItemSelector = '/admin/services/notifications';
