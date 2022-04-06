@@ -12,9 +12,6 @@ import {
   deleteApplication,
   getApplicationEntries,
 } from './serviceStatus';
-import { TenantService } from '@abgov/adsp-service-sdk';
-import { logger } from '../../../../tenant-management-api/src/middleware/logger';
-import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
 import { adspId } from '@abgov/adsp-service-sdk';
 import { Request, Response } from 'express';
 import { ServiceStatusApplicationEntity } from '../model';
@@ -193,7 +190,7 @@ describe('Service router', () => {
     it('Can get application entries', async () => {
       statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
       endpointRepositoryMock.findRecentByUrl.mockResolvedValueOnce(entriesMock);
-      const handler = getApplicationEntries(logger, statusRepositoryMock, endpointRepositoryMock);
+      const handler = getApplicationEntries(loggerMock, statusRepositoryMock, endpointRepositoryMock);
 
       const req: Request = {
         user: {
@@ -214,7 +211,7 @@ describe('Service router', () => {
 
   describe('Can toggle application', () => {
     it('Can enable application', async () => {
-      const handler = enableApplication(logger, statusRepositoryMock);
+      const handler = enableApplication(loggerMock, statusRepositoryMock);
       const req: Request = {
         user: {
           tenantId,
@@ -234,7 +231,7 @@ describe('Service router', () => {
     });
 
     it('Can disable application', async () => {
-      const handler = disableApplication(logger, statusRepositoryMock);
+      const handler = disableApplication(loggerMock, statusRepositoryMock);
       const req: Request = {
         user: {
           tenantId,
@@ -253,7 +250,7 @@ describe('Service router', () => {
     });
 
     it('Can toggle application', async () => {
-      const handler = toggleApplication(logger, statusRepositoryMock, eventServiceMock);
+      const handler = toggleApplication(loggerMock, statusRepositoryMock, eventServiceMock);
       const req: Request = {
         user: {
           tenantId,
@@ -296,7 +293,7 @@ describe('Service router', () => {
 
   describe('Can update application', () => {
     it('Can update application', async () => {
-      const handler = updateApplication(logger, statusRepositoryMock);
+      const handler = updateApplication(loggerMock, statusRepositoryMock);
 
       const req: Request = {
         user: {
@@ -327,7 +324,7 @@ describe('Service router', () => {
       statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
       jest.spyOn(eventFuncs, 'applicationStatusChange').mockReturnValue({} as unknown as DomainEvent);
 
-      const handler = updateApplicationStatus(logger, statusRepositoryMock, eventServiceMock);
+      const handler = updateApplicationStatus(loggerMock, statusRepositoryMock, eventServiceMock);
       const req: Request = {
         user: {
           tenantId,
@@ -350,7 +347,7 @@ describe('Service router', () => {
     });
     it('Can delete application', async () => {
       statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
-      const handler = deleteApplication(logger, statusRepositoryMock);
+      const handler = deleteApplication(loggerMock, statusRepositoryMock);
       const req: Request = {
         user: {
           tenantId,
