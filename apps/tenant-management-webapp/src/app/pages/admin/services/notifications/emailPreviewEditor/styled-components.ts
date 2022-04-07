@@ -18,6 +18,22 @@ export const TemplateEditorContainer = styled.div`
   &:hover {
     overflow: auto;
   }
+
+  @media (min-width: 1279px) {
+    .mobile {
+      display: none;
+    }
+  }
+
+  @media (max-width: 1280px) {
+    .desktop {
+      display: none;
+    }
+
+    .mobile > div {
+      padding: 2px 0 2px 3px;
+    }
+  }
 `;
 export const Modal = styled.div<{ open: boolean }>`
   display: ${(props) => (props.open ? `block` : `none`)};

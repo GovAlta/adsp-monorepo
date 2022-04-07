@@ -11,7 +11,6 @@ const hasProperHtmlWrapper = (content: string): boolean => {
 
 export const getTemplateBody = (body: string, channel: string, context?: Record<string, unknown>): string => {
   if (!hasProperHtmlWrapper(body)) {
-    console.log(JSON.stringify(channel) + '<templateBodyChannel');
     if (channel === 'email') {
       return emailWrapperTemplate({ content: body, ...context });
     } else {

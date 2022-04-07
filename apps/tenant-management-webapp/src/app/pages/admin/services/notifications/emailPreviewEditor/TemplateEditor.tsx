@@ -7,17 +7,15 @@ import { languages } from 'monaco-editor';
 import { buildSuggestions } from '@lib/autoComplete';
 import { Template } from '@store/notification/models';
 import { SaveFormModal } from './saveModal';
-import { IndicatorWithDelay } from '@components/Indicator';
+import { GoASuccessBadge, GoAWarningBadge } from '@abgov/react-components/experimental';
 interface TemplateEditorProps {
   mainTitle: string;
   onSubjectChange: (value: string, channel: string) => void;
-  //subject: string;
   subjectEditorHintText?: string;
   subjectTitle: string;
   subjectEditorConfig?: EditorProps;
   onBodyChange: (value: string, channel: string) => void;
   setPreview: (channel: string) => void;
-  //body: string;
   templates: Template;
   validChannels: string[];
   bodyTitle: string;
@@ -25,6 +23,7 @@ interface TemplateEditorProps {
   bodyEditorHintText?: string;
   saveCurrentTemplate?: () => void;
   resetToSavedAction: () => void;
+  savedTemplates: Template;
   initialChannel: string;
   actionButtons?: JSX.Element;
   // eslint-disable-next-line
@@ -37,7 +36,6 @@ interface TemplateEditorProps {
 export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   mainTitle,
   onSubjectChange,
-  //subject,
   subjectEditorHintText,
   subjectTitle,
   subjectEditorConfig,
@@ -45,12 +43,12 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   setPreview,
   templates,
   validChannels,
-  //body,
   bodyTitle,
   bodyEditorConfig,
   bodyEditorHintText,
   saveCurrentTemplate,
   resetToSavedAction,
+  savedTemplates,
   initialChannel,
   actionButtons,
   errors,
@@ -76,8 +74,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [monaco, eventSuggestion]);
 
-  console.log(JSON.stringify(validChannels) + '<validChannels');
-
   const [selectedTemplate, setSelectedTemplate] = useState(initialChannel);
   const [preferredTemplate, setPreferredTemplate] = useState(null);
   const [saveModal, setSaveModal] = useState(false);
@@ -102,8 +98,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
   const channelNames = { email: 'n email', bot: ' slack bot', sms: ' text message', mail: 'mail' };
 
-  console.log(JSON.stringify(templates) + '<templates');
-
   let radioOptions = [];
 
   if (templates) {
@@ -123,25 +117,47 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     <TemplateEditorContainer>
       <GoAForm>
         <h4>Select Template</h4>
-        {console.log(JSON.stringify(radioOptions) + '<radioOptions')}
-        {console.log(JSON.stringify(selectedTemplate) + '<selectedTemplate')}
         <GoAFormItem error={errors['body'] ?? ''} helpText={bodyEditorHintText}>
           <GoARadioGroup
             name="selectedTemplate"
             value={selectedTemplate}
             onChange={(_name, value) => {
-              console.log(JSON.stringify(value) + '|xxvaluexx');
               setPreferredTemplate(value);
-              setSaveModal(true);
-
-              //setSelectedTemplate(value);
-              //setPreview(value);
+              if (JSON.stringify(savedTemplates[selectedTemplate]) !== JSON.stringify(templates[selectedTemplate])) {
+                setSaveModal(true);
+              } else {
+                setSelectedTemplate(value);
+                setPreview(value);
+              }
             }}
             orientation="horizontal"
           >
             {radioOptions.map((item, key) => (
               <GoARadio key={item.name} value={item.name} data-testid={item.dataTestId}>
-                {item.name}
+                <div style={{ display: 'flex', flexDirection: 'row' }}>
+                  <div>{item.name}</div>
+                  <div style={{ margin: '3px 0 0 5px' }}>
+                    {item.body.length > 0 && item.subject.length > 0 ? (
+                      <div>
+                        <div className="mobile">
+                          <GoASuccessBadge content="" type="success" />
+                        </div>
+                        <div className="desktop">
+                          <GoASuccessBadge content="Filled" type="success" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="mobile">
+                          <GoAWarningBadge content="" type="warning" />
+                        </div>
+                        <div className="desktop">
+                          <GoAWarningBadge content="Unfilled" type="warning" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </GoARadio>
             ))}
           </GoARadioGroup>
@@ -158,14 +174,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               <MonacoDiv>
                 <MonacoEditor
                   onChange={(value) => {
-                    console.log(
-                      JSON.stringify(templates[selectedTemplate]?.subject) +
-                        '<value - templates[selectedTemplate]?.subject'
-                    );
-                    console.log(JSON.stringify(currentTemplate) + '<currentTemplate');
-                    console.log(JSON.stringify(selectedTemplate) + '<selectedTemplate');
                     if (currentTemplate === selectedTemplate) {
-                      console.log(JSON.stringify(value) + '<this should only happen if you type inside subject');
                       onSubjectChange(value, selectedTemplate);
                     }
                     setCurrentTemplate(selectedTemplate);
@@ -198,13 +207,11 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
         initialValue={preferredTemplate}
         errors={errors}
         onDontSave={(type) => {
-          console.log(JSON.stringify(type) + '<type2');
           resetSavedAction();
           setSelectedTemplate(preferredTemplate);
           setSaveModal(false);
         }}
         onSave={(template) => {
-          console.log(JSON.stringify(template) + '<template');
           setSelectedTemplate(preferredTemplate);
           saveChangesAction(template);
           setSaveModal(false);

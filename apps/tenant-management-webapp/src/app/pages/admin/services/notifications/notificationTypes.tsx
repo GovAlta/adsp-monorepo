@@ -14,9 +14,6 @@ import { isDuplicatedNotificationName } from './validation';
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
 import MailIcon from '@assets/icons/mail-outline.svg';
-//import Mail from '@assets/icons/mail.svg';
-//import Chat from '@assets/icons/chat.svg';
-//import Slack from '@assets/icons/slack.svg';
 import { ReactComponent as Mail } from '@assets/icons/mail.svg';
 import { ReactComponent as Slack } from '@assets/icons/slack.svg';
 import { ReactComponent as Chat } from '@assets/icons/chat.svg';
@@ -127,30 +124,22 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   useEffect(() => {
     // if an event is selected for editing
     if (selectedEvent) {
-      //setSubject(selectedEvent?.templates?.email?.subject);
-      //setBody(selectedEvent?.templates?.email?.body);
-
-      console.log(JSON.stringify(selectedEvent) + '<selectedEvent');
-
       setTemplates(selectedEvent?.templates);
       setSavedTemplates(JSON.parse(JSON.stringify(selectedEvent?.templates)));
 
       // try to render preview of subject and body.
       // Will only load if the subject and body is a valid handlebar template
-      console.log(JSON.stringify(Object.keys(selectedEvent.templates)[0]) + '<Object.keys(selectedEvent.templates)[0]');
-      const channel = currentChannel; //selectedType.channels[0];
-      const template = selectedEvent?.templates[channel];
-      console.log(JSON.stringify(channel) + '<channelchannel');
+      const template = selectedEvent?.templates[currentChannel];
+
       try {
         setSubjectPreview('');
-        const x = generateMessage(getTemplateBody(template.body, channel, htmlPayload), htmlPayload);
-        setBodyPreview(x);
+        const bodyPreview = generateMessage(getTemplateBody(template.body, currentChannel, htmlPayload), htmlPayload);
+        setBodyPreview(bodyPreview);
         setTemplateEditErrors({
           ...templateEditErrors,
           body: '',
         });
       } catch (e) {
-        console.log(JSON.stringify(e.message) + '<e.message body');
         setTemplateEditErrors({
           ...templateEditErrors,
           body: syntaxErrorMessage,
@@ -163,7 +152,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           subject: '',
         });
       } catch (e) {
-        console.log(JSON.stringify(e.message) + '<e.message subject');
         setTemplateEditErrors({
           ...templateEditErrors,
           subject: syntaxErrorMessage,
@@ -214,17 +202,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   }
 
   useEffect(() => {
-    console.log(JSON.stringify(debouncedRenderBody) + '>>debouncedRenderBody');
     renderBodyPreview(debouncedRenderBody);
   }, [debouncedRenderBody]);
 
   useEffect(() => {
-    console.log(JSON.stringify(debouncedRenderSubject) + '>>debouncedRenderSubject');
     renderSubjectPreview(debouncedRenderSubject);
   }, [debouncedRenderSubject]);
 
   const renderSubjectPreview = (value) => {
-    console.log(JSON.stringify(value) + '<rendersubjectpreview');
     try {
       const msg = generateMessage(value, htmlPayload);
       setSubjectPreview(msg);
@@ -243,7 +228,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   const renderBodyPreview = (value) => {
     try {
-      console.log(JSON.stringify(currentChannel) + '<currentChannel');
       const msg = generateMessage(getTemplateBody(value, currentChannel, htmlPayload), htmlPayload);
       setBodyPreview(msg);
       setTemplateEditErrors({
@@ -726,10 +710,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               validChannels={selectedType.channels}
               serviceName={serviceName}
               onSubjectChange={(value, channel) => {
-                console.log(JSON.stringify(value) + 'value');
-                console.log(JSON.stringify(channel) + 'value');
-                console.log(JSON.stringify(templates) + 'templates');
-                console.log(JSON.stringify(templates[channel]) + 'templates[channel]');
                 let newTemplates = templates;
                 if (templates[channel]) {
                   newTemplates[channel].subject = value;
@@ -737,7 +717,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                   newTemplates = { ...templates, [channel]: { subject: value } };
                 }
 
-                console.log(JSON.stringify(newTemplates) + 'newTemplates');
                 setTemplates(newTemplates);
                 setSubject(value);
               }}
@@ -756,9 +735,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 setBody(value);
               }}
               setPreview={(channel) => {
-                console.log(JSON.stringify(channel) + '<channelaaa');
                 if (templates) {
-                  console.log(JSON.stringify(templates[channel]) + '<templates[channel]xxx');
                   setBodyPreview(
                     generateMessage(getTemplateBody(templates[channel]?.body, channel, htmlPayload), htmlPayload)
                   );
@@ -772,9 +749,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               eventSuggestion={getEventSuggestion()}
               saveCurrentTemplate={() => saveOrAddEventTemplate()}
               resetToSavedAction={() => {
-                console.log(JSON.stringify(savedTemplates) + '<savedTemplate');
                 setTemplates(JSON.parse(JSON.stringify(savedTemplates)));
               }}
+              savedTemplates={savedTemplates}
               actionButtons={
                 <>
                   <GoAButton
