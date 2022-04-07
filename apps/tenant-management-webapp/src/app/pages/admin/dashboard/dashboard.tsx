@@ -120,6 +120,19 @@ const Dashboard = (): JSX.Element => {
                       <div>&nbsp;</div>
                     </GoACard>
                   </GridItem>
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <h2>
+                        <Link to="/admin/services/configuration">Configuration</Link>
+                      </h2>
+                      <div>
+                        The configuration service provides a generic json document store for storage and revisioning of
+                        infrequently changing configuration. Store configuration against namespace and name keys, and
+                        optionally define configuration schemas for write validation.
+                        <div>&nbsp;</div>
+                      </div>
+                    </GoACard>
+                  </GridItem>
                 </Grid>
               </>
             )}

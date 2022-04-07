@@ -13,6 +13,7 @@ import FitnessIcon from '@icons/fitness-outline.svg';
 import MegaphoneIcon from '@icons/megaphone-outline.svg';
 import NotificationsIcon from '@icons/notifications-outline.svg';
 import DirectoryIcon from '@icons/list-outline.svg';
+import { GoAIcon } from '@abgov/react-components/experimental';
 import { RootState } from '@store/index';
 import { TenantAdminLogin, TenantLogout, FetchTenant } from '@store/tenant/actions';
 
@@ -60,6 +61,15 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
               <NavLink to="/admin/access" activeClassName="current" title="Access" data-testid="menu-access">
                 <img src={BarChartIcon} width="16" alt="Access Service " />
                 <span>Access</span>
+              </NavLink>
+              <NavLink
+                to="/admin/services/configuration"
+                activeClassName="current"
+                title="Configuration"
+                data-testid="menu-access"
+              >
+                <GoAIcon type="settings" />
+                <span>Configuration</span>
               </NavLink>
               <NavLink
                 to="/admin/services/directory"
