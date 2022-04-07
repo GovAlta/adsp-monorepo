@@ -15,23 +15,148 @@ import { Request, Response } from 'express';
 import { ServiceStatusApplicationEntity } from '../../model';
 import * as eventFuncs from '../../events';
 import { DomainEvent } from '@abgov/adsp-service-sdk';
-import {
-  loggerMock,
-  endpointRepositoryMock,
-  entriesMock,
-  tenantServiceMock,
-  applicationsMock,
-  nextMock,
-  eventServiceMock,
-  statusRepositoryMock,
-  resMock,
-  tenantId,
-} from './mock';
-
+import { Logger } from 'winston';
+import { adspId } from '@abgov/adsp-service-sdk';
 describe('Service router', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
+
+  const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+
+  const loggerMock = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  } as unknown as Logger;
+
+  const tenantServiceMock = {
+    getTenants: jest.fn(() => Promise.resolve([{ id: tenantId, name: 'test-mock', realm: 'test' }])),
+    getTenant: jest.fn((id) => Promise.resolve({ id, name: 'Test', realm: 'test' })),
+    getTenantByName: jest.fn(),
+    getTenantByRealm: jest.fn(),
+  };
+
+  const eventServiceMock = {
+    send: jest.fn(),
+  };
+
+  const endpointRepositoryMock = {
+    findRecentByUrl: jest.fn(),
+    deleteOldUrlStatus: jest.fn(),
+    get: jest.fn(),
+    find: jest.fn(),
+    save: jest.fn((entity) => Promise.resolve(entity)),
+    delete: jest.fn(),
+  };
+
+  const nextMock = jest.fn();
+
+  const applicationsMock = [
+    {
+      repository: {},
+      _id: '620ae946ddd181001195caad',
+      endpoint: { status: 'online', url: 'https://www.yahoo.com' },
+      metadata: '',
+      name: 'MyApp 1',
+      description: 'MyApp',
+      statusTimestamp: 1648247257463,
+      tenantId: tenantId.toString(),
+      tenantName: 'Platform',
+      tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
+      status: 'operational',
+      enabled: true,
+      internalStatus: 'healthy',
+    },
+    {
+      repository: {},
+      _id: '624365fe3367d200110e17c5',
+      endpoint: { status: 'offline', url: 'https://localhost.com' },
+      metadata: '',
+      name: 'test-mock',
+      description: '',
+      statusTimestamp: 0,
+      tennantServRef: '{}',
+      tenantId: tenantId.toString(),
+      tenantName: 'Platform',
+      tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
+      enabled: false,
+      internalStatus: 'stopped',
+      status: 'offline',
+      enable: jest.fn((app) => {
+        return {
+          ...app,
+          enabled: true,
+        };
+      }),
+
+      disable: jest.fn((app) => {
+        return {
+          ...app,
+          enabled: false,
+        };
+      }),
+      setStatus: jest.fn(() =>
+        Promise.resolve({
+          name: 'status-updated-app',
+          internalStatus: 'stopped',
+        })
+      ),
+      update: jest.fn(() =>
+        Promise.resolve({
+          name: 'updated-app',
+          internalStatus: 'stopped',
+          tennantServRef: '{}',
+        })
+      ),
+      delete: jest.fn(() => Promise.resolve()),
+      canAccessById: jest.fn(() => {
+        return true;
+      }),
+    },
+  ];
+
+  const entriesMock = [
+    {
+      repository: { opts: { limit: 200, everyMilliseconds: 60000 } },
+      ok: true,
+      url: 'https://www.yahoo.com',
+      timestamp: 1649277360004,
+      responseTime: 685,
+      status: '200',
+    },
+    {
+      repository: { opts: { limit: 200, everyMilliseconds: 60000 } },
+      ok: true,
+      url: 'https://www.yahoo.com',
+      timestamp: 1649277300002,
+      responseTime: 514,
+      status: '200',
+    },
+  ];
+
+  const statusRepositoryMock = {
+    findEnabledApplications: jest.fn(),
+    enable: jest.fn(),
+    disable: jest.fn(),
+    get: jest.fn(),
+    find: jest.fn(),
+    save: jest.fn((entity) => Promise.resolve(entity)),
+    delete: jest.fn(),
+    setStatus: jest.fn(),
+  };
+
+  const resMock = {
+    json: jest.fn(),
+    sendStatus: jest.fn(),
+    send: jest.fn(),
+    status: jest.fn(() => {
+      return {
+        json: jest.fn(),
+      };
+    }),
+  } as unknown as Response;
   describe('createStatusServiceRouter', () => {
     it('Can create status service routers', () => {
       const publicRouter = createPublicServiceStatusRouter({
