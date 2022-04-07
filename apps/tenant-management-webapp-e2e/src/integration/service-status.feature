@@ -199,8 +199,8 @@ Feature: Service status
   @TEST_CS-1282 @REQ_CS-905 @regression
   Scenario: As an interested stakeholder, I can verify status notifications for a tenant, so that I know about service availability.
     Given a tenant admin user is on notification subscribers page
-    When the user searches subscribers with address as containing "Auto Test" and email containing "auto.test@gov.ab.ca"
-    Then the user "views" the subscriber of "Auto Test", "auto.test@gov.ab.ca"
+    When the user searches subscribers with address as containing "auto.test@gov.ab.ca" and email containing "auto.test@gov.ab.ca"
+    Then the user "views" the subscriber of "auto.test@gov.ab.ca", "auto.test@gov.ab.ca"
     Given a tenant admin user is on status applications page
     Then the user "views" "Autotest" in the application list
     And the user views current status for "Autotest"
@@ -213,4 +213,4 @@ Feature: Service status
     Then the "Event log" landing page is displayed
     When the user searches with "notification-service:notification-sent", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
     And the user clicks Show details button for the latest event of "notification-sent" for "notification-service"
-    Then the user views the event detail with subject: "Autotest status has changed to + changedStatus" and userId: "auto.test@gov.ab.ca"
+    Then the user views the event details of "Autotest" application status changed to "{new status}" for subscriber of "auto.test@gov.ab.ca"
