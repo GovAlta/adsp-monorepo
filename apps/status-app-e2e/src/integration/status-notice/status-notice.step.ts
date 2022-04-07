@@ -69,3 +69,7 @@ And('the user views the timezone information', function () {
       expect(text).to.match(/All times are in [a-zA-Z0-9 ]+ Time/g);
     });
 });
+
+And('the user views the all services notice of {string}', function (noticeMessage) {
+  statusNoticeObj.allApplicationNoticeMessage(noticeMessage).should('exist');
+});
