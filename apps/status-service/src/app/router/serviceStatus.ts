@@ -1,6 +1,6 @@
 import type { User } from '@abgov/adsp-service-sdk';
 import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
-import { Router } from 'express';
+import { Router, RequestHandler } from 'express';
 import { Logger } from 'winston';
 import { ServiceStatusApplicationEntity } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
@@ -16,70 +16,80 @@ export interface ServiceStatusRouterProps {
   serviceStatusRepository: ServiceStatusRepository;
   endpointStatusEntryRepository: EndpointStatusEntryRepository;
 }
-export function createServiceStatusRouter({
-  logger,
-  serviceStatusRepository,
-  tenantService,
-  eventService,
-  endpointStatusEntryRepository,
-}: ServiceStatusRouterProps): Router {
-  const router = Router();
 
-  // Get the service for the tenant
-  router.get('/applications', assertAuthenticatedHandler, async (req, res) => {
-    logger.info(req.method, req.url);
-    const { tenantId } = req.user;
-    if (!tenantId) {
-      throw new UnauthorizedError('missing tenant id');
+export const getApplications = (logger: Logger, serviceStatusRepository: ServiceStatusRepository): RequestHandler => {
+  return async (req, res, next) => {
+    try {
+      logger.info(req.method, req.url);
+      const { tenantId } = req.user as User;
+      if (!tenantId) {
+        throw new UnauthorizedError('missing tenant id');
+      }
+
+      const applications = await serviceStatusRepository.find({ tenantId: tenantId.toString() });
+
+      res.json(
+        applications.map((app) => {
+          return {
+            ...app,
+            internalStatus: app.internalStatus,
+          };
+        })
+      );
+    } catch (err) {
+      logger.error(`Failed to fetch applications: ${err.message}`);
+      next(err);
     }
+  };
+};
 
-    const applications = await serviceStatusRepository.find({ tenantId: tenantId.toString() });
+export const enableApplication =
+  (logger: Logger, serviceStatusRepository: ServiceStatusRepository): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      logger.info(req.method, req.url);
+      const user = req.user as User;
+      const { id } = req.params;
+      const application = await serviceStatusRepository.get(id);
 
-    res.json(
-      applications.map((app) => {
-        return {
-          ...app,
-          internalStatus: app.internalStatus,
-        };
-      })
-    );
-  });
-
-  // Enable the service
-  router.patch('/applications/:id/enable', assertAuthenticatedHandler, async (req, res) => {
-    logger.info(req.method, req.url);
-    const user = req.user as Express.User;
-    const { id } = req.params;
-    const application = await serviceStatusRepository.get(id);
-
-    if (user.tenantId?.toString() !== application.tenantId) {
-      throw new UnauthorizedError('invalid tenant id');
+      if (user.tenantId?.toString() !== application.tenantId) {
+        throw new UnauthorizedError('invalid tenant id');
+      }
+      const updatedApplication = await application.enable({ ...req.user } as User);
+      res.json(updatedApplication);
+    } catch (err) {
+      logger.error(`Failed to enable application: ${err.message}`);
+      next(err);
     }
+  };
 
-    const updatedApplication = await application.enable({ ...req.user } as User);
-    res.json(updatedApplication);
-  });
+export const disableApplication =
+  (logger: Logger, serviceStatusRepository: ServiceStatusRepository): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      logger.info(req.method, req.url);
+      const user = req.user as User;
+      const { id } = req.params;
+      const application = await serviceStatusRepository.get(id);
 
-  // Disable the service
-  router.patch('/applications/:id/disable', assertAuthenticatedHandler, async (req, res) => {
-    logger.info(req.method, req.url);
-    const user = req.user;
-    const { id } = req.params;
-    const application = await serviceStatusRepository.get(id);
+      if (user.tenantId?.toString() !== application.tenantId) {
+        throw new UnauthorizedError('invalid tenant id');
+      }
 
-    if (user.tenantId?.toString() !== application.tenantId) {
-      throw new UnauthorizedError('invalid tenant id');
+      const updatedApplication = await application.disable({ ...req.user } as User);
+      res.json(updatedApplication);
+    } catch (err) {
+      logger.error(`Failed to disable application: ${err.message}`);
+      next(err);
     }
+  };
 
-    const updatedApplication = await application.disable({ ...req.user } as User);
-    res.json(updatedApplication);
-  });
-
-  // add application
-  router.post('/applications', assertAuthenticatedHandler, async (req, res) => {
+export const createNewApplication =
+  (logger: Logger, tenantService: TenantService, serviceStatusRepository: ServiceStatusRepository): RequestHandler =>
+  async (req, res, next) => {
     logger.info(`${req.method} - ${req.url}`);
 
-    const user = req.user;
+    const user = req.user as User;
     const { name, description, endpoint } = req.body;
     const tenant = await tenantService.getTenant(user.tenantId);
 
@@ -97,128 +107,210 @@ export function createServiceStatusRouter({
         statusTimestamp: 0,
         enabled: false,
       });
-
       res.status(201).json(app);
-    } catch (e) {
-      res.status(400).send(e.message);
+    } catch (err) {
+      logger.error(`Failed to create new application: ${err.message}`);
+      next(err);
     }
-  });
+  };
 
-  router.put('/applications/:id', assertAuthenticatedHandler, async (req, res) => {
-    logger.info(`${req.method} - ${req.url}`);
+export const updateApplication =
+  (logger: Logger, serviceStatusRepository: ServiceStatusRepository): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      logger.info(`${req.method} - ${req.url}`);
 
-    const user = req.user as Express.User;
-    const { name, description, endpoint } = req.body;
-    const { id } = req.params;
-    const tenantId = user.tenantId?.toString() ?? '';
+      const user = req.user as User;
+      const { name, description, endpoint } = req.body;
+      const { id } = req.params;
+      const tenantId = user.tenantId?.toString() ?? '';
 
-    if (!tenantId) {
-      throw new UnauthorizedError('missing tenant id');
+      if (!tenantId) {
+        throw new UnauthorizedError('missing tenant id');
+      }
+
+      // TODO: this needs to be moved to a service
+      const application = await serviceStatusRepository.get(id);
+      if (tenantId !== application.tenantId) {
+        throw new UnauthorizedError('invalid tenant id');
+      }
+
+      const updatedApplication = await application.update({ ...user } as User, {
+        name,
+        description,
+        endpoint,
+      });
+      res.json({
+        ...updatedApplication,
+        internalStatus: updatedApplication.internalStatus,
+      });
+    } catch (err) {
+      logger.error(`Failed to update application: ${err.message}`);
+      next(err);
     }
+  };
 
-    // TODO: this needs to be moved to a service
-    const application = await serviceStatusRepository.get(id);
-    if (tenantId !== application.tenantId) {
-      throw new UnauthorizedError('invalid tenant id');
+export const deleteApplication =
+  (logger: Logger, serviceStatusRepository: ServiceStatusRepository): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      logger.info(`${req.method} - ${req.url}`);
+
+      const user = req.user as User;
+      const { id } = req.params;
+      const application = await serviceStatusRepository.get(id);
+
+      if (user.tenantId?.toString() !== application.tenantId) {
+        throw new UnauthorizedError('invalid tenant id');
+      }
+
+      await application.delete({ ...user } as User);
+
+      res.sendStatus(204);
+    } catch (err) {
+      logger.error(`Failed to delete application: ${err.message}`);
+      next(err);
     }
+  };
 
-    const updatedApplication = await application.update({ ...user } as User, {
-      name,
-      description,
-      endpoint,
-    });
-    res.status(200).json({
-      ...updatedApplication,
-      internalStatus: updatedApplication.internalStatus,
-    });
-  });
+export const updateApplicationStatus =
+  (logger: Logger, serviceStatusRepository: ServiceStatusRepository, eventService: EventService): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      logger.info(`${req.method} - ${req.url}`);
 
-  router.delete('/applications/:id', assertAuthenticatedHandler, async (req, res) => {
-    logger.info(`${req.method} - ${req.url}`);
+      const user = req.user as User;
+      const { id } = req.params;
+      const { status } = req.body;
+      const application = await serviceStatusRepository.get(id);
+      const applicationStatus = application.status;
 
-    const user = req.user as Express.User;
-    const { id } = req.params;
-    const application = await serviceStatusRepository.get(id);
+      if (user.tenantId?.toString() !== application.tenantId) {
+        throw new UnauthorizedError('invalid tenant id');
+      }
 
-    if (user.tenantId?.toString() !== application.tenantId) {
-      throw new UnauthorizedError('invalid tenant id');
+      const updatedApplication = await application.setStatus(user, status as PublicServiceStatusType);
+      eventService.send(applicationStatusChange(updatedApplication, applicationStatus, user));
+      res.json({
+        ...updatedApplication,
+        internalStatus: updatedApplication.internalStatus,
+      });
+    } catch (err) {
+      logger.error(`Failed to update application: ${err.message}`);
+      next(err);
     }
+  };
 
-    await application.delete({ ...user } as User);
+export const toggleApplication =
+  (logger: Logger, serviceStatusRepository: ServiceStatusRepository, eventService: EventService): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      logger.info(`${req.method} - ${req.url}`);
 
-    res.sendStatus(204);
-  });
+      const user = req.user as User;
+      const { id } = req.params;
+      const application = await serviceStatusRepository.get(id);
 
-  router.patch('/applications/:id/status', assertAuthenticatedHandler, async (req, res) => {
-    logger.info(`${req.method} - ${req.url}`);
+      if (!application.enabled) {
+        eventService.send(applicationStatusToStarted(application, user));
+      } else {
+        eventService.send(applicationStatusToStopped(application, user));
+      }
 
-    const user = req.user as Express.User;
-    const { id } = req.params;
-    const { status } = req.body;
-    const application = await serviceStatusRepository.get(id);
-    const applicationStatus = application.status;
+      if (user.tenantId?.toString() !== application.tenantId) {
+        throw new UnauthorizedError('invalid tenant id');
+      }
 
-    if (user.tenantId?.toString() !== application.tenantId) {
-      throw new UnauthorizedError('invalid tenant id');
+      const updatedApplication = application.enabled ? await application.disable(user) : await application.enable(user);
+      res.json(updatedApplication);
+    } catch (err) {
+      logger.error(`Failed to toggle application: ${err.message}`);
+      next(err);
     }
+  };
 
-    const updatedApplication = await application.setStatus(user, status as PublicServiceStatusType);
+export const getApplicationEntries =
+  (
+    logger: Logger,
+    serviceStatusRepository: ServiceStatusRepository,
+    endpointStatusEntryRepository: EndpointStatusEntryRepository
+  ): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      logger.info(req.method, req.url);
+      const { tenantId } = req.user as User;
+      const { applicationId } = req.params;
+      const { topValue } = req.query;
+      const top = topValue ? parseInt(topValue as string) : 200;
 
-    eventService.send(applicationStatusChange(updatedApplication, applicationStatus, user));
+      if (!tenantId) {
+        throw new UnauthorizedError('missing tenant id');
+      }
 
-    res.status(200).json({
-      ...updatedApplication,
-      internalStatus: updatedApplication.internalStatus,
-    });
-  });
+      const application = await serviceStatusRepository.get(applicationId);
 
-  router.patch('/applications/:id/toggle', assertAuthenticatedHandler, async (req, res) => {
-    logger.info(`${req.method} - ${req.url}`);
+      if (!application) {
+        throw new NotFoundError('Status application', applicationId.toString());
+      }
 
-    const user = req.user as Express.User;
-    const { id } = req.params;
-    const application = await serviceStatusRepository.get(id);
-
-    if (!application.enabled) {
-      eventService.send(applicationStatusToStarted(application, user));
-    } else {
-      eventService.send(applicationStatusToStopped(application, user));
+      if (tenantId?.toString() !== application.tenantId) {
+        throw new UnauthorizedError('invalid tenant id');
+      }
+      const entries = await endpointStatusEntryRepository.findRecentByUrl(application.endpoint.url, top);
+      res.send(entries);
+    } catch (err) {
+      logger.error(`Failed to get application: ${err.message}`);
+      next(err);
     }
+  };
+export function createServiceStatusRouter({
+  logger,
+  serviceStatusRepository,
+  tenantService,
+  eventService,
+  endpointStatusEntryRepository,
+}: ServiceStatusRouterProps): Router {
+  const router = Router();
+  // Get the service for the tenant
+  router.get('/applications', getApplications(logger, serviceStatusRepository));
 
-    if (user.tenantId?.toString() !== application.tenantId) {
-      throw new UnauthorizedError('invalid tenant id');
-    }
+  // Enable the service
+  router.patch(
+    '/applications/:id/enable',
+    assertAuthenticatedHandler,
+    enableApplication(logger, serviceStatusRepository)
+  );
 
-    const updatedApplication = application.enabled ? await application.disable(user) : await application.enable(user);
-    res.status(200).json(updatedApplication);
-  });
+  // Disable the service
+  router.patch(
+    '/applications/:id/disable',
+    assertAuthenticatedHandler,
+    disableApplication(logger, serviceStatusRepository)
+  );
+  // add application
+  router.post(
+    '/applications',
+    assertAuthenticatedHandler,
+    createNewApplication(logger, tenantService, serviceStatusRepository)
+  );
+  router.put('/applications/:id', assertAuthenticatedHandler, updateApplication(logger, serviceStatusRepository));
+  router.delete('/applications/:id', assertAuthenticatedHandler, deleteApplication(logger, serviceStatusRepository));
+  router.patch(
+    '/applications/:id/status',
+    assertAuthenticatedHandler,
+    updateApplicationStatus(logger, serviceStatusRepository, eventService)
+  );
 
-  // TODO: create test
-  router.get('/applications/:applicationId/endpoint-status-entries', async (req, res) => {
-    logger.info(req.method, req.url);
-    const { tenantId } = req.user;
-    const { applicationId } = req.params;
-    const { top: topValue } = req.query;
-    const top = topValue ? parseInt(topValue as string) : 200;
+  router.patch(
+    '/applications/:id/toggle',
+    assertAuthenticatedHandler,
+    toggleApplication(logger, serviceStatusRepository, eventService)
+  );
 
-    if (!tenantId) {
-      throw new UnauthorizedError('missing tenant id');
-    }
-
-    const application = await serviceStatusRepository.get(applicationId);
-
-    if (!application) {
-      throw new NotFoundError('Status application', applicationId.toString());
-    }
-
-    if (tenantId?.toString() !== application.tenantId) {
-      throw new UnauthorizedError('invalid tenant id');
-    }
-
-    const entries = await endpointStatusEntryRepository.findRecentByUrl(application.endpoint.url, top);
-
-    res.send(entries);
-  });
+  router.get(
+    '/applications/:applicationId/endpoint-status-entries',
+    getApplicationEntries(logger, serviceStatusRepository, endpointStatusEntryRepository)
+  );
 
   return router;
 }
