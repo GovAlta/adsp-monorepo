@@ -1,13 +1,13 @@
 import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
-import { EventService } from '@abgov/adsp-service-sdk';
-import { Router } from 'express';
+import { EventService, TenantService } from '@abgov/adsp-service-sdk';
+import { Router, RequestHandler } from 'express';
 import { UrlWithStringQuery } from 'url';
 import { Logger } from 'winston';
 import { NoticeApplicationEntity } from '../model/notice';
 import { NoticeRepository } from '../repository/notice';
 import { ServiceUserRoles, NoticeModeType } from '../types';
-import { TenantService } from '@abgov/adsp-service-sdk';
 import { applicationNoticePublished } from '../events';
+import type { User } from '@abgov/adsp-service-sdk';
 
 export interface NoticeRouterProps {
   logger: Logger;
@@ -38,19 +38,12 @@ const parseTenantServRef = (tennantServRef?: string | applicationRef[] | null): 
   return tennantServRef;
 };
 
-export function createNoticeRouter({
-  logger,
-  tenantService,
-  noticeRepository,
-  eventService,
-}: NoticeRouterProps): Router {
-  const router = Router();
-
-  // Get notices by query
-  router.get('/notices', async (req, res, next) => {
+export const getNotices =
+  (logger: Logger, tenantService: TenantService, noticeRepository: NoticeRepository): RequestHandler =>
+  async (req, res, next) => {
     const { top, after, mode } = req.query;
     const tenantName = req.query.name as string;
-    const user = req.user as Express.User;
+    const user = req.user as User;
 
     logger.info(req.method, req.url);
     const anonymous = !user;
@@ -82,7 +75,6 @@ export function createNoticeRouter({
         parseInt(after?.toString()) || 0,
         filter
       );
-
       res.json({
         page: applications.page,
         results: applications.results.map((result) => ({
@@ -97,13 +89,15 @@ export function createNoticeRouter({
       logger.error(errMessage);
       next(err);
     }
-  });
+  };
 
-  router.get('/notices/:id', assertAuthenticatedHandler, async (req, res, next) => {
+export const getNoticeById =
+  (logger: Logger, noticeRepository: NoticeRepository): RequestHandler =>
+  async (req, res, next) => {
     logger.info(req.method, req.url);
     try {
       const { id } = req.params;
-      const user = req.user as Express.User;
+      const user = req.user as User;
       const application = await noticeRepository.get(id, user.tenantId.toString());
 
       if (!application) {
@@ -120,15 +114,15 @@ export function createNoticeRouter({
       logger.error(errMessage);
       next(err);
     }
-  });
+  };
 
-  router.delete('/notices/:id', assertAuthenticatedHandler, async (req, res, next) => {
+export const deleteNotice =
+  (logger: Logger, noticeRepository: NoticeRepository): RequestHandler =>
+  async (req, res, next) => {
     logger.info(req.method, req.url);
-
     try {
       const { id } = req.params;
-      const user = req.user as Express.User;
-
+      const user = req.user as User;
       const application = await noticeRepository.get(id, user.tenantId.toString());
 
       if (!application) {
@@ -142,16 +136,17 @@ export function createNoticeRouter({
       logger.error(errMessage);
       next(err);
     }
-  });
+  };
 
-  // Add notice
-  router.post('/notices', assertAuthenticatedHandler, async (req, res, next) => {
+export const createNotice =
+  (logger: Logger, tenantService: TenantService, noticeRepository: NoticeRepository): RequestHandler =>
+  async (req, res, next) => {
     logger.info(`${req.method} - ${req.url}`);
 
     try {
       const { message, startDate, endDate, isAllApplications } = req.body;
       const tennantServRef = parseTenantServRef(req.body.tennantServRef);
-      const user = req.user as Express.User;
+      const user = req.user as User;
       const tenant = await tenantService.getTenant(user.tenantId);
       const notice = await NoticeApplicationEntity.create(user, noticeRepository, {
         message,
@@ -171,15 +166,16 @@ export function createNoticeRouter({
       logger.error(errMessage);
       next(err);
     }
-  });
+  };
 
-  // Update notice fields or mode
-  router.patch('/notices/:id', assertAuthenticatedHandler, async (req, res, next) => {
+export const updateNotice =
+  (logger: Logger, eventService: EventService, noticeRepository: NoticeRepository): RequestHandler =>
+  async (req, res, next) => {
     logger.info(`${req.method} - ${req.url}`);
 
     const { message, startDate, endDate, mode, isAllApplications } = req.body;
     const { id } = req.params;
-    const user = req.user as Express.User;
+    const user = req.user as User;
     const tennantServRef = parseTenantServRef(req.body.tennantServRef);
 
     try {
@@ -197,10 +193,12 @@ export function createNoticeRouter({
         mode,
         isAllApplications,
       });
+
       if (applicationMode !== 'published' && mode === 'published') {
         eventService.send(applicationNoticePublished(application, user));
       }
-      res.status(200).json({
+
+      res.json({
         ...updatedApplication,
         tennantServRef: JSON.parse(updatedApplication.tennantServRef),
       });
@@ -209,7 +207,24 @@ export function createNoticeRouter({
       logger.error(errMessage);
       next(err);
     }
-  });
+  };
+
+export function createNoticeRouter({
+  logger,
+  tenantService,
+  noticeRepository,
+  eventService,
+}: NoticeRouterProps): Router {
+  const router = Router();
+
+  // Get notices by query
+  router.get('/notices', getNotices(logger, tenantService, noticeRepository));
+  router.get('/notices/:id', assertAuthenticatedHandler, getNoticeById(logger, noticeRepository));
+  router.delete('/notices/:id', assertAuthenticatedHandler, deleteNotice(logger, noticeRepository));
+  // Add notice
+  router.post('/notices', assertAuthenticatedHandler, createNotice(logger, tenantService, noticeRepository));
+  // Update notice fields or mode
+  router.patch('/notices/:id', assertAuthenticatedHandler, updateNotice(logger, eventService, noticeRepository));
 
   return router;
 }
