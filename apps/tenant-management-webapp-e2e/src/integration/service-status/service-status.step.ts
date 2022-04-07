@@ -548,10 +548,17 @@ Then('the user views current status for {string}', function (appName) {
 });
 
 Then('the user changes status to the first unused status', function () {
+  const radioList = ['Operational', 'Maintenance', 'Outage', 'Reported issues'];
+  statusObj.manualStatusList().should('have.length', 8);
+  statusObj.manualStatusList().each((item, index, list) => {
+    // cy.wrap(item).should('contain.text', radioList[index]);
+    expect(Cypress.$(item).text()).to.eq(radioList[index]);
+  });
   statusObj.manualStatusList().each(($status) => {
     if ($status.text() != currentStatus) {
-      cy.log($status.text());
-      $status.click();
+      cy.wrap($status).click({ force: true });
+      afterStatus = $status.text();
+      cy.log('New Status: ' + afterStatus);
       return false;
     }
   });
@@ -567,21 +574,25 @@ Then('the user views the status of {string} changed to the first unused status',
     .applicationCardStatusBadge(appName)
     .invoke('text')
     .then((statusValue) => {
-      cy.log('Current Status: ' + statusValue);
-      afterStatus = statusValue;
+      cy.log('New Status: ' + statusValue);
     });
   expect(afterStatus).not.to.equal(currentStatus);
 });
 
-Then('the user views the event detail with subject: {string} and userId: {string}', function (subject, userID) {
-  const subjectStatus = subject.replace('+ changedStatus', '') + afterStatus.toLowerCase();
-  tenantAdminObj
-    .eventDetails()
-    .invoke('text')
-    .then((eventDetails) => {
-      if (subject != 'Empty' || userID != 'Empty') {
-        expect(eventDetails).to.contain(subjectStatus);
-        expect(eventDetails).to.contain(userID);
-      }
-    });
-});
+Then(
+  'the user views the event details of {string} application status changed to {string} for subscriber of {string}',
+  function (appName, newStatus, userID) {
+    const subjectStatus =
+      newStatus.replace('{new status}', 'Autotest status has changed to ') + afterStatus.toLowerCase();
+    tenantAdminObj
+      .eventDetails()
+      .invoke('text')
+      .then((eventDetails) => {
+        if (newStatus != 'Empty' || userID != 'Empty') {
+          expect(eventDetails).to.contain(appName);
+          expect(eventDetails).to.contain(userID);
+          expect(eventDetails).to.contain(subjectStatus);
+        }
+      });
+  }
+);
