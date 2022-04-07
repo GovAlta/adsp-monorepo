@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { Directory, Service } from './models';
+import { Directory, Service, MetadataFetchResponse } from './models';
 import { TenantApi as TenantApiConfig } from '@store/config/models';
 import { toKebabName } from '@lib/kebabName';
 
@@ -39,12 +39,13 @@ export class DirectoryApi {
   }
 
   async deleteEntry(service: Service): Promise<boolean> {
-    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.namespace}/services/${service.service}`;
+    const delService = service?.api ? `${service.service}:${service.api}` : service.service;
+    const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.namespace}/services/${delService}`;
     const res = await this.http.delete(url);
     return res?.data === 'OK';
   }
 
-  async fetchEntryDetail(service: Service): Promise<boolean> {
+  async fetchEntryDetail(service: Service): Promise<MetadataFetchResponse> {
     const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.namespace}/services/${service.service}`;
     const res = await this.http.get(url);
     return res?.data;

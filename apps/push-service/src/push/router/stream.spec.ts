@@ -297,6 +297,7 @@ describe('stream router', () => {
           expect(value).toBeTruthy();
           done();
         }),
+        disconnect: jest.fn(),
       };
 
       const listener = onIoConnection(

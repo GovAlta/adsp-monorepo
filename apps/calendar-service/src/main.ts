@@ -31,6 +31,10 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(express.json({ limit: '1mb' }));
   app.use(cors());
 
+  if (environment.TRUSTED_PROXY) {
+    app.set('trust proxy', environment.TRUSTED_PROXY);
+  }
+
   const repositories = await createRepositories({
     logger,
     ...environment,
@@ -115,6 +119,8 @@ const initializeApp = async (): Promise<express.Application> => {
   app.get('/', async (req, res) => {
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
+      name: 'Calendar service',
+      description: 'Service that provides calendar date information, events, and scheduling.',
       _links: {
         self: {
           href: new URL(req.originalUrl, rootUrl).href,

@@ -26,5 +26,5 @@ export async function createkcAdminClient(opts?: Options): Promise<KcAdminClient
     clientSecret: environment.KEYCLOAK_TENANT_REALM_ADMIN_CLIENT_SECRET,
   });
 
-  return Promise.resolve(client);
+  return client;
 }

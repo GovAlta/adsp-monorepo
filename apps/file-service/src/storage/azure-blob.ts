@@ -24,13 +24,28 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
     this.blobServiceClient = new BlobServiceClient(BLOB_ACCOUNT_URL, credential);
   }
 
+  private createReadable(entity: FileEntity, stream: NodeJS.ReadableStream) {
+    stream.on('closed', () => {
+      this.logger.debug(`Reading file ${entity.filename} (ID: ${entity.id}) blob ${entity.id} stream: stream closed.`, {
+        tenant: entity.tenantId?.toString(),
+        context: 'AzureBlobStorageProvider',
+      });
+    });
+    stream.on('error', (err) => {
+      this.logger.error(`Error in read file ${entity.filename} (ID: ${entity.id}) blob ${entity.id} stream. ${err}`, {
+        tenant: entity.tenantId?.toString(),
+        context: 'AzureBlobStorageProvider',
+      });
+    });
+    return stream as Readable;
+  }
+
   async readFile(entity: FileEntity): Promise<Readable> {
     try {
       const containerClient = await this.getContainerClient(entity);
       const blobClient = containerClient.getBlockBlobClient(entity.id);
-      const result = await blobClient.download();
-
-      return new Readable().wrap(result.readableStreamBody);
+      const result = await blobClient.download(0, entity.size);
+      return this.createReadable(entity, result.readableStreamBody);
     } catch (err) {
       this.logger.error(`Error in read file ${entity.filename} (ID: ${entity.id}) blob ${entity.id}. ${err}`, {
         tenant: entity.tenantId?.toString(),

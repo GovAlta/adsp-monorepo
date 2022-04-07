@@ -91,18 +91,7 @@ Then('the user views {string} API documentation', function (serviceName) {
 });
 
 When('the user selects {string} tab for {string}', function (tab, menuItem) {
-  let service;
-  // Convert menu item name to service title
-  if (menuItem == 'Files') {
-    service = 'File service';
-  } else if (menuItem == 'Status') {
-    service = 'Service status';
-  } else if (menuItem == 'directory') {
-    service = 'Directory service';
-  } else {
-    service = menuItem;
-  }
-  commonObj.serviceTab(service, tab).click();
+  commonObj.serviceTab(menuItem, tab).click();
   cy.wait(3000);
 });
 
@@ -121,4 +110,10 @@ Then('the user views delete {string} confirmation modal for {string}', function 
 
 When('the user clicks Delete button in delete confirmation modal', function () {
   commonObj.deleteConfirmationModalDeleteBtn().click();
+});
+
+When('the user waits {string} seconds', function (seconds) {
+  expect(isNaN(seconds)).to.be.false; // Verify the pass in seconds is a number
+  expect(Number(seconds)).to.be.lessThan(300); // provent user from passing in too big a number to hang the test execution
+  cy.wait(Number(seconds) * 1000); // Wait N seconds
 });

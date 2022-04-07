@@ -15,7 +15,7 @@ export const Events: FunctionComponent = () => {
   return (
     <Page>
       <Main>
-        <h1>Events</h1>
+        <h1 data-testid="event-title">Event service</h1>
         <Tabs activeIndex={activeIndex} data-testid="events-tabs">
           <Tab label="Overview" data-testid="events-overview-tab">
             <EventsOverview
@@ -35,7 +35,7 @@ export const Events: FunctionComponent = () => {
           <a
             rel="noopener noreferrer"
             target="_blank"
-            href={`${docBaseUrl}/${tenantName}&urls.primaryName=Event service`}
+            href={`${docBaseUrl}/${tenantName}?urls.primaryName=Event service`}
           >
             Read the API docs
           </a>

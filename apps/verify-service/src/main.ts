@@ -22,6 +22,10 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(express.json({ limit: '1mb' }));
   app.use(cors());
 
+  if (environment.TRUSTED_PROXY) {
+    app.set('trust proxy', environment.TRUSTED_PROXY);
+  }
+
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
   const { coreStrategy, tenantStrategy, healthCheck } = await initializePlatform(
@@ -87,6 +91,8 @@ const initializeApp = async (): Promise<express.Application> => {
   app.get('/', async (req, res) => {
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
+      name: 'Verify service',
+      description: 'Service for generating and verifying codes.',
       _links: {
         self: { href: new URL(req.originalUrl, rootUrl).href },
         health: { href: new URL('/health', rootUrl).href },

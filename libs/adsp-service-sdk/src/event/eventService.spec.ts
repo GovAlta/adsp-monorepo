@@ -8,11 +8,11 @@ const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('EventService', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
-  const logger: Logger = ({
+  const logger: Logger = {
     debug: jest.fn(),
     info: jest.fn(),
     error: jest.fn(),
-  } as unknown) as Logger;
+  } as unknown as Logger;
 
   const directoryMock = {
     getServiceUrl: jest.fn(() => Promise.resolve(new URL('http://totally-real-directory'))),
@@ -31,6 +31,7 @@ describe('EventService', () => {
 
   it('can be created', () => {
     const service = new EventServiceImpl(
+      true,
       logger,
       directoryMock,
       tokenProviderMock,
@@ -42,6 +43,7 @@ describe('EventService', () => {
 
   it('can send event', async () => {
     const service = new EventServiceImpl(
+      true,
       logger,
       directoryMock,
       tokenProviderMock,
@@ -76,8 +78,47 @@ describe('EventService', () => {
     });
   });
 
+  it('can send event as tenant', async () => {
+    const service = new EventServiceImpl(
+      false,
+      logger,
+      directoryMock,
+      tokenProviderMock,
+      adspId`urn:ads:platform:test-service`,
+      [
+        {
+          name: 'test-event',
+          description: 'signalled when unit testing',
+          payloadSchema: {
+            type: 'object',
+          },
+        },
+      ]
+    );
+
+    axiosMock.get.mockResolvedValue({ data: { results: [{ id: 'test-123', configOptions: {} }] } });
+
+    const event = {
+      tenantId,
+      name: 'test-event',
+      timestamp: new Date(),
+      payload: {},
+    };
+
+    await service.send(event);
+
+    expect(axiosMock.post).toHaveBeenCalledTimes(1);
+    expect(axiosMock.post.mock.calls[0][1]).toStrictEqual({
+      namespace: 'test-service',
+      name: event.name,
+      timestamp: event.timestamp,
+      payload: event.payload,
+    });
+  });
+
   it('fails for send of unknown event', async () => {
     const service = new EventServiceImpl(
+      true,
       logger,
       directoryMock,
       tokenProviderMock,

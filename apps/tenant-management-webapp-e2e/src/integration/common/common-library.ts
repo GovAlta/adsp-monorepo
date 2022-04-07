@@ -18,36 +18,45 @@ export function tenantAdminDirectURLLogin(url, id, user, password) {
 }
 
 export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
-  let menuItemSelector = '';
+  let menuItemTestid = '';
   switch (menuItem) {
     case 'Dashboard':
-      menuItemSelector = '/admin';
+      menuItemTestid = 'menu-dashboard';
       break;
     case 'Event log':
-      menuItemSelector = '/admin/event-log';
+      menuItemTestid = 'menu-eventLog';
       break;
-    case 'Files':
-      menuItemSelector = '/admin/services/files';
+    case 'File':
+      menuItemTestid = 'menu-file';
       break;
     case 'Access':
-      menuItemSelector = '/admin/access';
+      menuItemTestid = 'menu-access';
       break;
     case 'Status':
-      menuItemSelector = '/admin/services/status';
+      menuItemTestid = 'menu-status';
       break;
-    case 'Events':
-      menuItemSelector = '/admin/services/events';
+    case 'Event':
+      menuItemTestid = 'menu-event';
       break;
-    case 'Notifications':
-      menuItemSelector = '/admin/services/notifications';
+    case 'Notification':
+      menuItemTestid = 'menu-notification';
       break;
     case 'Directory':
-      menuItemSelector = '/admin/services/directory';
+      menuItemTestid = 'menu-directory';
       break;
     default:
-      expect(menuItem).to.be.oneOf(['Files', 'Access', 'Status', 'Events', 'Notifications', 'Directory']);
+      expect(menuItem).to.be.oneOf([
+        'File',
+        'Access',
+        'Status',
+        'Event',
+        'Notification',
+        'Directory',
+        'Dashboard',
+        'Event log',
+      ]);
   }
-  commonObj.adminMenuItem(menuItemSelector).click();
+  commonObj.adminMenuItem(menuItemTestid).click();
   cy.wait(waitMilliSecs);
 }
 

@@ -1,12 +1,7 @@
-import { AdspId } from '@abgov/adsp-service-sdk';
+import type { AdspId, FileType as BaseFileType } from '@abgov/adsp-service-sdk';
 
-export interface FileType {
+export interface FileType extends BaseFileType {
   tenantId: AdspId;
-  id: string;
-  name: string;
-  anonymousRead: boolean;
-  readRoles: string[];
-  updateRoles: string[];
 }
 
 export interface FileTypeCriteria {

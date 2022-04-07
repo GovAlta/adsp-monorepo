@@ -20,6 +20,7 @@ export const environment = envalid.cleanEnv(
     REDIS_PASSWORD: envalid.str({ default: '' }),
     PORT: envalid.num({ default: 3334 }),
     TLS_ENABLED: envalid.bool({ default: true }),
+    TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
   },
   {
     reporter: ({ errors }) => {

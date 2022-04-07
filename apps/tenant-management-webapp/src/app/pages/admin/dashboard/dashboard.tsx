@@ -44,7 +44,7 @@ const Dashboard = (): JSX.Element => {
           <Main>
             {tenantName && (
               <>
-                <h1>{tenantName} dashboard</h1>
+                <h1 data-testid="dashboard-title">{tenantName} dashboard</h1>
                 <Grid>
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
                     <GoACard type="primary">
@@ -74,7 +74,7 @@ const Dashboard = (): JSX.Element => {
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
                     <GoACard type="primary">
                       <h2>
-                        <Link to="/admin/services/files">File service</Link>
+                        <Link to="/admin/services/file">File</Link>
                       </h2>
                       <div>
                         The file service provides the capability to upload and download files. Consumers are registered
@@ -99,7 +99,7 @@ const Dashboard = (): JSX.Element => {
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
                     <GoACard type="primary">
                       <h2>
-                        <Link to="/admin/services/events">Events</Link>
+                        <Link to="/admin/services/event">Event</Link>
                       </h2>
                       <div>
                         The event service provides tenant applications with the ability to send domain events.
@@ -110,7 +110,7 @@ const Dashboard = (): JSX.Element => {
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
                     <GoACard type="primary">
                       <h2>
-                        <Link to="/admin/services/notifications">Notifications</Link>
+                        <Link to="/admin/services/notification">Notification</Link>
                       </h2>
                       <div>
                         The notifications service provides tenant applications with the ability to configure
@@ -118,6 +118,19 @@ const Dashboard = (): JSX.Element => {
                       </div>
                       <div>&nbsp;</div>
                       <div>&nbsp;</div>
+                    </GoACard>
+                  </GridItem>
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <h2>
+                        <Link to="/admin/services/configuration">Configuration</Link>
+                      </h2>
+                      <div>
+                        The configuration service provides a generic json document store for storage and revisioning of
+                        infrequently changing configuration. Store configuration against namespace and name keys, and
+                        optionally define configuration schemas for write validation.
+                        <div>&nbsp;</div>
+                      </div>
                     </GoACard>
                   </GridItem>
                 </Grid>

@@ -1,11 +1,11 @@
 class StatusServicePage {
   statusTabs() {
-    return cy.xpath('//h1[contains(text(), "Service status")]/following-sibling::div[1]//descendant::div');
+    return cy.xpath('//h1[contains(text(), "Status")]/following-sibling::div[1]//descendant::div');
   }
 
   statusTab(text: string) {
     return cy.xpath(
-      `//h1[contains(text(), "Service status")]/following-sibling::div[1]//descendant::div[contains(text(), "${text}")]`
+      `//h1[contains(text(), "Status")]/following-sibling::div[1]//descendant::div[contains(text(), "${text}")]`
     );
   }
 
@@ -160,7 +160,7 @@ class StatusServicePage {
   }
 
   addApplicationEndpointModalField() {
-    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//input[@aria-label="endpoint"]');
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//*[label="URL"]//input');
   }
 
   addApplicationSaveBtn() {
@@ -180,6 +180,32 @@ class StatusServicePage {
   applicationCardDeleteBtn(appName) {
     return cy.xpath(
       `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//div[@data-testid="icon-trash"]`
+    );
+  }
+
+  applicationCardChangeStatusBtn(appName) {
+    return cy.xpath(
+      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//button[text()='Change status']`
+    );
+  }
+
+  manualStatusChangeModalTitle() {
+    return cy.xpath('//*[@class="modal-root" and @data-state="visible"]//*[@class="modal-title"]');
+  }
+
+  manualStatusChangeModalStatusRadio(statusName) {
+    return cy.xpath(
+      `//*[@class="modal-root" and @data-state="visible"]//input[@value="${statusName}"]/following-sibling::div`
+    );
+  }
+
+  manualStatusChangeModalSaveBtn() {
+    return cy.xpath('//*[@class="modal-root" and @data-state="visible"]//button[text()="Save"]');
+  }
+
+  applicationCardStatusBadge(appName) {
+    return cy.xpath(
+      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//*[contains(@class, "badge-content")]`
     );
   }
 }

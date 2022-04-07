@@ -28,7 +28,7 @@ export function getSupportInfo(
       const { data } = await axios.get(subscribersUrl.href, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      res.send(data.latest.configuration?.contact);
+      res.send(data.latest?.configuration?.contact);
     } catch (err) {
       next(err);
     }
@@ -58,7 +58,7 @@ export function getSupportInfoTenantId(
       const { data } = await axios.get(subscribersUrl.href, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      res.send(data.latest.configuration?.contact);
+      res.send(data.latest?.configuration?.contact);
     } catch (err) {
       next(err);
     }
@@ -86,7 +86,7 @@ export function getStatusSupportInfo(
       const { data } = await axios.get(subscribersUrl.href, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      res.send(data.latest.configuration?.contact);
+      res.send(data.latest?.configuration?.contact);
     } catch (err) {
       next(err);
     }

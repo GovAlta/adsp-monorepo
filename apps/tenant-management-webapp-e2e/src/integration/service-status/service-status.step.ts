@@ -31,7 +31,7 @@ Given('a service owner user is on status notices page', function () {
     Cypress.env('password')
   );
   commonlib.tenantAdminMenuItem('Status', 4000);
-  commonObj.serviceTab('Service status', 'Notices').click();
+  commonObj.serviceTab('Status', 'Notices').click();
   cy.wait(4000);
 });
 
@@ -179,6 +179,7 @@ When(
       expect(index).to.not.equal(0);
       statusObj
         .noticeCardGearButton(index)
+        .scrollIntoView()
         .click()
         .then(() => {
           switch (menu) {
@@ -212,9 +213,6 @@ Then('the user views Edit notice dialog', function () {
 
 When('the user selects {string} filter by status radio button', function (filterType) {
   expect(filterType).to.be.oneOf(['Draft', 'Published', 'Archived', 'Active']);
-  if (filterType == 'Published') {
-    filterType = 'published';
-  }
   statusObj.filterByStatusRadio(filterType.toLowerCase()).click();
 });
 
@@ -233,7 +231,7 @@ Then('the user views {string} notices', function (filterType) {
               if (filterType != 'Active') {
                 expect(modeText).to.equal(filterType);
               } else {
-                expect(modeText).to.be.oneOf(['Draft', 'Published', 'Archived']);
+                expect(modeText).to.be.oneOf(['Draft', 'Published']);
               }
             });
         }
@@ -390,7 +388,7 @@ Given('a tenant admin user is on status applications page', function () {
     Cypress.env('password')
   );
   commonlib.tenantAdminMenuItem('Status', 4000);
-  commonObj.serviceTab('Service status', 'Applications').click();
+  commonObj.serviceTab('Status', 'Applications').click();
   cy.wait(2000); // Applications page is slow to load applications and healt check info
 });
 
@@ -516,4 +514,22 @@ Then(
 When('the user enters {string} as name and {string} as description fields', function (appName, description) {
   statusObj.addApplicationNameModalField().clear().type(appName);
   statusObj.addApplicationDescriptionModalField().clear().type(description);
+});
+
+When('the user clicks Change status button for {string}', function (appName) {
+  statusObj.applicationCardChangeStatusBtn(appName).click();
+});
+
+Then('the user views Manual status change modal', function () {
+  statusObj.manualStatusChangeModalTitle().invoke('text').should('contain', 'Manual status change');
+});
+
+When('the user selects {string} and clicks Save button', function (statusName) {
+  statusObj.manualStatusChangeModalStatusRadio(statusName.toLowerCase()).click();
+  statusObj.manualStatusChangeModalSaveBtn().click();
+  cy.wait(2000); // Wait for the status to change after save
+});
+
+Then('the user views the {string} status for {string}', function (statusValue, appName) {
+  statusObj.applicationCardStatusBadge(appName).invoke('text').should('eq', statusValue);
 });

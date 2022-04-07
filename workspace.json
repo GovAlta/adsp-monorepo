@@ -30,6 +30,12 @@
             "main": "libs/adsp-service-sdk/src/index.ts",
             "assets": ["libs/adsp-service-sdk/*.md"]
           }
+        },
+        "release": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "command": "npx semantic-release -e ./libs/adsp-service-sdk/.releaserc.json"
+          }
         }
       },
       "tags": []

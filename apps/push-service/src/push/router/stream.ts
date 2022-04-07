@@ -134,7 +134,7 @@ export function onIoConnection(logger: Logger, events: Observable<DomainEvent>) 
       const user = req.user;
       const { criteria: criteriaValue } = req.query;
       const criteria: EventCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
-      const entity = req[STREAM_KEY];
+      const entity: StreamEntity = req[STREAM_KEY];
 
       entity.connect(events);
       const sub = entity

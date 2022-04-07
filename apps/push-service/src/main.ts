@@ -25,6 +25,10 @@ const initializeApp = async (): Promise<Server> => {
   app.use(express.json({ limit: '1mb' }));
   app.use(cors());
 
+  if (environment.TRUSTED_PROXY) {
+    app.set('trust proxy', environment.TRUSTED_PROXY);
+  }
+
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
   const { tenantService, tenantStrategy, configurationHandler, clearCached, healthCheck } = await initializePlatform(
@@ -47,7 +51,6 @@ const initializeApp = async (): Promise<Server> => {
         ),
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
-      accessTokenInQuery: true,
       directoryUrl: new URL(environment.DIRECTORY_URL),
     },
     { logger }
@@ -92,7 +95,7 @@ const initializeApp = async (): Promise<Server> => {
   ioServer.of('/').on('connection', async (socket) => socket.disconnect(true));
 
   // Connections on namespace correspond to tenants.
-  const io = ioServer.of(/^\/[a-z0-9]{24}$/);
+  const io = ioServer.of(/^\/[a-zA-Z0-9- ]+$/);
 
   const wrapForIo = (handler: express.RequestHandler) => (socket: Socket, next) =>
     handler(socket.request as express.Request, {} as express.Response, next);
@@ -116,10 +119,13 @@ const initializeApp = async (): Promise<Server> => {
   app.get('/', async (req, res) => {
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
+      name: 'Push service',
+      description: 'Service for push mode connections.',
       _links: {
         self: { href: new URL(req.originalUrl, rootUrl).href },
         health: { href: new URL('/health', rootUrl).href },
         api: { href: new URL('/stream/v1', rootUrl).href },
+        docs: { href: new URL('/swagger/docs/v1', rootUrl).href },
       },
     });
   });

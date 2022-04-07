@@ -8,6 +8,9 @@ export const environment = envalid.cleanEnv(
   process.env,
   {
     KEYCLOAK_ROOT_URL: envalid.str({ default: 'https://access-dev.os99.gov.ab.ca' }),
+    DIRECTORY_URL: envalid.str({ default: 'https://tenant-management-api-core-services-dev.os99.gov.ab.ca' }),
+    CLIENT_ID: envalid.str({ default: 'urn:ads:platform:file-service' }),
+    CLIENT_SECRET: envalid.str({ default: '' }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     MONGO_URI: envalid.str({ default: 'mongodb://localhost:27017' }),
     MONGO_DB: envalid.str({ default: 'file' }),
@@ -26,9 +29,7 @@ export const environment = envalid.cleanEnv(
     AMQP_USER: envalid.str({ default: 'guest' }),
     AMQP_PASSWORD: envalid.str({ default: 'guest' }),
     PORT: envalid.num({ default: 3337 }),
-    CLIENT_ID: envalid.str({ default: 'urn:ads:platform:file-service' }),
-    CLIENT_SECRET: envalid.str({ default: '' }),
-    DIRECTORY_URL: envalid.str({ default: 'https://tenant-management-api-core-services-dev.os99.gov.ab.ca' }),
+    TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
   },
   {
     reporter: ({ errors }) => {

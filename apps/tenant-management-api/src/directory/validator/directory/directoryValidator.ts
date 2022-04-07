@@ -35,6 +35,5 @@ export class ServiceV2 {
 
   @IsDefined()
   @MaxLength(1024)
-  @IsUrl()
   url: string;
 }

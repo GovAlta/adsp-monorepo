@@ -166,17 +166,35 @@ function* getAllTypeSubscriptions(action: GetAllTypeSubscriptionsAction): SagaIt
     ...state.notification.notificationTypes,
     ...state.notification.core,
   }));
+  try {
+    yield put(
+      UpdateIndicator({
+        show: true,
+        message: 'Loading...',
+      })
+    );
+    yield call(fetchCoreNotificationTypes);
+    yield call(fetchNotificationTypes);
 
-  yield call(fetchCoreNotificationTypes);
-  yield call(fetchNotificationTypes);
+    notificationTypes = yield select((state: RootState) => ({
+      ...state.notification.core,
+      ...state.notification.notificationTypes,
+    }));
 
-  notificationTypes = yield select((state: RootState) => ({
-    ...state.notification.core,
-    ...state.notification.notificationTypes,
-  }));
-
-  for (const typeId of Object.keys(notificationTypes)) {
-    yield put(getTypeSubscriptionsAction(typeId, action.payload, null));
+    for (const typeId of Object.keys(notificationTypes)) {
+      yield put(getTypeSubscriptionsAction(typeId, action.payload, null));
+    }
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
+  } catch (err) {
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
   }
 }
 

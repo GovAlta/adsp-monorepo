@@ -74,7 +74,7 @@ describe('NotificationConfiguration', () => {
   describe('getNotificationType', () => {
     const configuration = new NotificationConfiguration(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      { contact: {} as any, test: type },
+      { contact: {} as any, base: baseOverride, test: type },
       { base: baseType },
       tenantId
     );
@@ -88,7 +88,7 @@ describe('NotificationConfiguration', () => {
     it('can return overridden type', () => {
       const entity = configuration.getNotificationType('base');
       expect(entity).toBeTruthy();
-      expect(entity).toEqual(
+      expect(entity).toMatchObject(
         expect.objectContaining({
           name: 'Base Type',
           events: expect.arrayContaining([

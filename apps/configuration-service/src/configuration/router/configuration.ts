@@ -1,6 +1,15 @@
 import { AdspId, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { assertAuthenticatedHandler, InvalidOperationError, NotFoundError, Results } from '@core-services/core-common';
+import {
+  assertAuthenticatedHandler,
+  createValidationHandler,
+  InvalidOperationError,
+  NotFoundError,
+  Results,
+} from '@core-services/core-common';
 import { Request, RequestHandler, Router } from 'express';
+import { body, checkSchema } from 'express-validator';
+import * as HttpStatusCodes from 'http-status-codes';
+import { isEqual as isDeepEqual } from 'lodash';
 import { Logger } from 'winston';
 import { configurationUpdated, revisionCreated } from '../events';
 import { ConfigurationEntity } from '../model';
@@ -115,30 +124,43 @@ export const patchConfigurationRevision =
           if (!request.property) {
             throw new InvalidOperationError(`Delete request must include 'property' property.`);
           }
-          update = entity.latest?.configuration || {};
+          update = { ...entity.latest?.configuration };
           updateData = request.property;
           delete update[request.property];
           break;
         default:
           throw new InvalidOperationError('Request does not include recognized operation.');
       }
-      const updated = await entity.update(user, update);
 
-      res.send(mapConfiguration(updated));
-      if (updated.tenantId) {
-        eventService.send(
-          configurationUpdated(user, updated.tenantId, updated.namespace, updated.name, updated.latest?.revision, {
-            operation: request.operation,
-            data: updateData,
-          })
+      if (isDeepEqual(update, entity.latest?.configuration)) {
+        logger.info(
+          `Configuration ${entity.namespace}:${entity.name} update by ${user.name} (ID: ${user.id}) resulted in no changes to configuration.`,
+          {
+            tenant: entity.tenantId?.toString(),
+            context: 'configuration-router',
+            user: `${user.name} (ID: ${user.id})`,
+          }
         );
-      }
+        res.send(mapConfiguration(entity));
+      } else {
+        const updated = await entity.update(user, update);
 
-      logger.info(`Configuration ${updated.namespace}:${updated.name} updated by ${user.name} (ID: ${user.id}).`, {
-        tenant: updated.tenantId?.toString(),
-        context: 'configuration-router',
-        user: `${user.name} (ID: ${user.id})`,
-      });
+        res.send(mapConfiguration(updated));
+        if (updated.tenantId) {
+          eventService.send(
+            configurationUpdated(user, updated.tenantId, updated.namespace, updated.name, updated.latest?.revision, {
+              operation: request.operation,
+              data: updateData,
+            })
+          );
+        }
+
+        logger.info(`Configuration ${updated.namespace}:${updated.name} updated by ${user.name} (ID: ${user.id}).`, {
+          tenant: updated.tenantId?.toString(),
+          context: 'configuration-router',
+          user: `${user.name} (ID: ${user.id})`,
+        });
+      }
     } catch (err) {
       next(err);
     }
@@ -208,9 +230,20 @@ export function createConfigurationRouter({
 }: ConfigurationRouterProps): Router {
   const router = Router();
 
+  const validateNamespaceNameHandler = createValidationHandler(
+    ...checkSchema(
+      {
+        namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+        name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+      },
+      ['params']
+    )
+  );
+
   router.get(
     '/configuration/:namespace/:name',
     assertAuthenticatedHandler,
+    validateNamespaceNameHandler,
     getConfigurationEntity(serviceId, configurationRepository, (req) => req.query.core !== undefined),
     getConfiguration()
   );
@@ -218,6 +251,7 @@ export function createConfigurationRouter({
   router.get(
     '/configuration/:namespace/:name/latest',
     assertAuthenticatedHandler,
+    validateNamespaceNameHandler,
     getConfigurationEntity(serviceId, configurationRepository, (req) => req.query.core !== undefined),
     getConfiguration((configuration) => configuration.latest?.configuration || {})
   );
@@ -225,6 +259,8 @@ export function createConfigurationRouter({
   router.patch(
     '/configuration/:namespace/:name',
     assertAuthenticatedHandler,
+    validateNamespaceNameHandler,
+    createValidationHandler(body('operation').isString().isIn([OPERATION_DELETE, OPERATION_UPDATE, OPERATION_REPLACE])),
     getConfigurationEntity(serviceId, configurationRepository),
     patchConfigurationRevision(logger, eventService)
   );
@@ -232,6 +268,8 @@ export function createConfigurationRouter({
   router.post(
     '/configuration/:namespace/:name',
     assertAuthenticatedHandler,
+    validateNamespaceNameHandler,
+    createValidationHandler(body('revision').isBoolean()),
     getConfigurationEntity(serviceId, configurationRepository),
     createConfigurationRevision(logger, eventService)
   );
@@ -239,6 +277,7 @@ export function createConfigurationRouter({
   router.get(
     '/configuration/:namespace/:name/revisions',
     assertAuthenticatedHandler,
+    validateNamespaceNameHandler,
     getConfigurationEntity(serviceId, configurationRepository),
     getRevisions()
   );
@@ -246,6 +285,16 @@ export function createConfigurationRouter({
   router.get(
     '/configuration/:namespace/:name/revisions/:revision',
     assertAuthenticatedHandler,
+    createValidationHandler(
+      ...checkSchema(
+        {
+          namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+          name: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+          revision: { isInt: { options: { min: 0 } } },
+        },
+        ['params']
+      )
+    ),
     getConfigurationEntity(serviceId, configurationRepository),
     getRevisions(
       (req) => ({ revision: req.params.revision }),
