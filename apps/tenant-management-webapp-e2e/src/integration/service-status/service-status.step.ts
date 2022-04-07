@@ -35,7 +35,7 @@ Given('a service owner user is on status notices page', function () {
     Cypress.env('password')
   );
   commonlib.tenantAdminMenuItem('Status', 4000);
-  commonObj.serviceTab('Service status', 'Notices').click();
+  commonObj.serviceTab('Status', 'Notices').click();
   cy.wait(4000);
 });
 
@@ -391,7 +391,7 @@ Given('a tenant admin user is on status applications page', function () {
     Cypress.env('password')
   );
   commonlib.tenantAdminMenuItem('Status', 4000);
-  commonObj.serviceTab('Service status', 'Applications').click();
+  commonObj.serviceTab('Status', 'Applications').click();
   cy.wait(2000); // Applications page is slow to load applications and healt check info
 });
 

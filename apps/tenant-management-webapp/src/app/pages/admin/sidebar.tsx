@@ -45,39 +45,49 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
       {authenticated && (
         <>
           <Title>{tenantName}</Title>
-          <NavLink to="/admin" exact={true} activeClassName="current" title="Dashboard">
+          <NavLink to="/admin" exact={true} activeClassName="current" title="Dashboard" data-testid="menu-dashboard">
             <img src={DashboardIcon} width="16" alt="Admin Dashboard" />
             <span>Dashboard</span>
           </NavLink>
           {hasAdminRole && (
             <>
-              <NavLink to="/admin/event-log" activeClassName="current" title="Event log">
+              <NavLink to="/admin/event-log" activeClassName="current" title="Event log" data-testid="menu-eventLog">
                 <img src={ReceiptIcon} width="16" alt="Admin Event log" />
                 <span>Event log</span>
               </NavLink>
 
               <Title>Services</Title>
-              <NavLink to="/admin/access" activeClassName="current" title="Access">
+              <NavLink to="/admin/access" activeClassName="current" title="Access" data-testid="menu-access">
                 <img src={BarChartIcon} width="16" alt="Access Service " />
                 <span>Access</span>
               </NavLink>
-              <NavLink to="/admin/services/directory" activeClassName="current" title="Directory">
+              <NavLink
+                to="/admin/services/directory"
+                activeClassName="current"
+                title="Directory"
+                data-testid="menu-directory"
+              >
                 <img src={DirectoryIcon} width="16" alt="Directory Service " />
                 <span>Directory</span>
               </NavLink>
-              <NavLink to="/admin/services/events" activeClassName="current" title="Events">
+              <NavLink to="/admin/services/event" activeClassName="current" title="Event" data-testid="menu-event">
                 <img src={MegaphoneIcon} width="16" alt="Events Service" />
-                <span>Events</span>
+                <span>Event</span>
               </NavLink>
-              <NavLink to="/admin/services/files" activeClassName="current" title="Files">
+              <NavLink to="/admin/services/file" activeClassName="current" title="File" data-testid="menu-file">
                 <img src={FileIcon} width="16" alt="Files Service" />
-                <span>Files</span>
+                <span>File</span>
               </NavLink>
-              <NavLink to="/admin/services/notifications" activeClassName="current" title="Notifications">
+              <NavLink
+                to="/admin/services/notification"
+                activeClassName="current"
+                title="Notification"
+                data-testid="menu-notification"
+              >
                 <img src={NotificationsIcon} width="16" alt="Notifications Service" />
-                <span>Notifications</span>
+                <span>Notification</span>
               </NavLink>
-              <NavLink to="/admin/services/status" activeClassName="current" title="Status">
+              <NavLink to="/admin/services/status" activeClassName="current" title="Status" data-testid="menu-status">
                 <img src={FitnessIcon} width="16" alt="Status Service" />
                 <span>Status</span>
               </NavLink>

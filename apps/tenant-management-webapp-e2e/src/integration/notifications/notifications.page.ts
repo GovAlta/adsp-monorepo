@@ -300,7 +300,7 @@ class NotificationsPage {
 
   subscriber(addressAs, email) {
     return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*`
+      `//*[@data-testid="subscribers-list-title"]/div/div/table/tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*`
     );
   }
 

@@ -308,10 +308,10 @@ describe('file router', () => {
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(file);
 
-      await downloadFile(req as unknown as Request, res as unknown as Response, next);
+      const handler = downloadFile(loggerMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
-      expect(stream.pipe).toHaveBeenCalled();
     });
 
     it('can embed file', async () => {
@@ -337,10 +337,10 @@ describe('file router', () => {
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(file);
 
-      await downloadFile(req as unknown as Request, res as unknown as Response, next);
+      const handler = downloadFile(loggerMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.setHeader).toHaveBeenCalledWith('Content-Disposition', 'inline');
-      expect(stream.pipe).toHaveBeenCalled();
     });
 
     it('can call next with invalid for not scanned', async () => {
@@ -373,7 +373,8 @@ describe('file router', () => {
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(file);
 
-      await downloadFile(req as unknown as Request, res as unknown as Response, next);
+      const handler = downloadFile(loggerMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
     });
 
@@ -408,10 +409,10 @@ describe('file router', () => {
       storageProviderMock.readFile.mockResolvedValueOnce(stream);
       fileRepositoryMock.get.mockResolvedValueOnce(file);
 
-      await downloadFile(req as unknown as Request, res as unknown as Response, next);
+      const handler = downloadFile(loggerMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.setHeader).toHaveBeenCalled();
-      expect(stream.pipe).toHaveBeenCalled();
     });
   });
 

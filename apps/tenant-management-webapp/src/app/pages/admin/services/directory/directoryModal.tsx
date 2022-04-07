@@ -25,7 +25,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   const dispatch = useDispatch();
 
   const checkService = (entry) => {
-    return directory.find((x) => x.namespace === tenantName && x.service === entry.service);
+    return directory.find((x) => !x.api && x.namespace === tenantName && x.service === entry.service);
   };
 
   const checkApi = (entry) => {

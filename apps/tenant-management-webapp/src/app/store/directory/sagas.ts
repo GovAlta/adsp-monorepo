@@ -12,10 +12,12 @@ import {
   DeleteEntryAction,
   FetchEntryDetailAction,
   fetchEntryDetailSuccess,
+  FetchEntryDetailByURNsAction,
 } from './actions';
 import { DirectoryApi } from './api';
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
+import { adspId } from '@lib/adspId';
 import { Service } from './models';
 
 export function* fetchDirectory(action: FetchDirectoryAction): SagaIterator {
@@ -141,5 +143,38 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
     const service = action.data;
     service.metadata = null;
     yield put(fetchEntryDetailSuccess(service));
+  }
+}
+
+export function* fetchDirectoryByDetailURNs(action: FetchEntryDetailByURNsAction): SagaIterator {
+  const state: RootState = yield select();
+  const token = state.session.credentials.token;
+  const api = new DirectoryApi(state.config.tenantApi, token);
+  const directoryUpdateList = state.directory.directory;
+
+  try {
+    for (const urn of action.payload) {
+      const id = adspId`${urn}`;
+      if (id.type === 'service') {
+        try {
+          const _service = {
+            service: id.service,
+            namespace: id.namespace,
+          } as Service;
+
+          const existed = directoryUpdateList.find((x) => x.service === _service?.service);
+          if (!(existed && existed.metadata)) {
+            // fetch metadata from remote only when it does not exist
+            const result = yield call([api, api.fetchEntryDetail], _service);
+            _service.metadata = result?.metadata ? { ...result?.metadata } : null;
+            yield put(fetchEntryDetailSuccess(_service));
+          }
+          // eslint-disable-next-line
+        } finally {
+        }
+      }
+    }
+  } catch (err) {
+    yield put(ErrorNotification({ message: `Failed to fetch metadata by urns: ${err.message}` }));
   }
 }

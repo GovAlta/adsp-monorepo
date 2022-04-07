@@ -26,8 +26,6 @@ export interface PlatformOptions extends ServiceRegistration {
   accessServiceUrl: URL;
   /** Ignore Service Aud: Skip verification of Service ID in token audience. */
   ignoreServiceAud?: boolean;
-  /** Access Token in Query: Accept a tenant access token passed in as a token query parameter. */
-  accessTokenInQuery?: boolean;
   /** Configuration Converter: Converter function for configuration; converted value is cached. */
   configurationConverter?: ConfigurationConverter;
   /** Combine Configuration: Combine function for merging tenant and core configuration. */

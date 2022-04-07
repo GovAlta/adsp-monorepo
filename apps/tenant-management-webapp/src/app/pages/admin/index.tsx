@@ -40,16 +40,16 @@ const TenantManagement = (): JSX.Element => {
           <Route exact path="/admin/services/directory">
             <Directory />
           </Route>
-          <Route exact path="/admin/services/files">
+          <Route exact path="/admin/services/file">
             <File />
           </Route>
           <Route path="/admin/services/status">
             <Status />
           </Route>
-          <Route path="/admin/services/events">
+          <Route path="/admin/services/event">
             <Events />
           </Route>
-          <Route path="/admin/services/notifications">
+          <Route path="/admin/services/notification">
             <Notifications />
           </Route>
 

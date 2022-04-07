@@ -3,6 +3,7 @@ import { NotificationType } from '..';
 import { TokenProvider } from '../access';
 import { ServiceDirectory } from '../directory';
 import { DomainEventDefinition } from '../event';
+import { FileType } from '../file';
 import { Stream } from '../push';
 import { AdspId } from '../utils';
 import { ServiceRegistrarImpl } from './registration';
@@ -26,6 +27,8 @@ export interface ServiceRegistration {
   configurationSchema?: Record<string, unknown>;
   /** Events: Domain events of the service. */
   events?: DomainEventDefinition[];
+  /** File Types: File types of the service. */
+  fileTypes?: FileType[];
   /** Event Streams: Push mode event streams of the service. */
   eventStreams?: Stream[];
   /** Notifications: Subscribable notification types of the service. */
