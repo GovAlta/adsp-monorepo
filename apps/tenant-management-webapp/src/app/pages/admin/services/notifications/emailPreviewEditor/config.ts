@@ -1,7 +1,7 @@
 export const subjectEditorConfig = {
   'data-testid': 'templateForm-subject',
   height: 50,
-  language: 'handlebars',
+  language: 'markdown',
   options: {
     wordWrap: 'off' as const,
     scrollbar: { horizontal: 'hidden' as const, vertical: 'hidden' as const },
@@ -21,7 +21,7 @@ export const subjectEditorConfig = {
 
 export const bodyEditorConfig = {
   'data-testid': 'templateForm-body',
-  language: 'handlebars',
+  language: 'markdown',
   options: {
     tabSize: 2,
     minimap: { enabled: false },
