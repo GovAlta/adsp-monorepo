@@ -6,6 +6,8 @@ import { GoARadioGroup, GoARadio } from '@abgov/react-components';
 import { languages } from 'monaco-editor';
 import { buildSuggestions } from '@lib/autoComplete';
 import { Template } from '@store/notification/models';
+import { SaveFormModal } from './saveModal';
+import { IndicatorWithDelay } from '@components/Indicator';
 interface TemplateEditorProps {
   mainTitle: string;
   onSubjectChange: (value: string, channel: string) => void;
@@ -21,6 +23,9 @@ interface TemplateEditorProps {
   bodyTitle: string;
   bodyEditorConfig?: EditorProps;
   bodyEditorHintText?: string;
+  saveCurrentTemplate?: () => void;
+  resetToSavedAction: () => void;
+  initialChannel: string;
   actionButtons?: JSX.Element;
   // eslint-disable-next-line
   errors?: any;
@@ -44,6 +49,9 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   bodyTitle,
   bodyEditorConfig,
   bodyEditorHintText,
+  saveCurrentTemplate,
+  resetToSavedAction,
+  initialChannel,
   actionButtons,
   errors,
   serviceName,
@@ -70,15 +78,27 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
   console.log(JSON.stringify(validChannels) + '<validChannels');
 
-  const [selectedTemplate, setSelectedTemplate] = useState(validChannels[0]);
+  const [selectedTemplate, setSelectedTemplate] = useState(initialChannel);
+  const [preferredTemplate, setPreferredTemplate] = useState(null);
+  const [saveModal, setSaveModal] = useState(false);
   const [currentTemplate, setCurrentTemplate] = useState('');
 
   useEffect(() => {
-    if (validChannels.length > 0) {
-      setSelectedTemplate(validChannels[0]);
-      setPreview(validChannels[0]);
+    if (initialChannel) {
+      setSelectedTemplate(initialChannel);
+      setPreview(initialChannel);
     }
-  }, [validChannels]);
+  }, [initialChannel]);
+
+  const saveChangesAction = (value) => {
+    saveCurrentTemplate();
+    setPreview(preferredTemplate);
+  };
+
+  const resetSavedAction = () => {
+    resetToSavedAction();
+    setPreview(preferredTemplate);
+  };
 
   const channelNames = { email: 'n email', bot: ' slack bot', sms: ' text message', mail: 'mail' };
 
@@ -88,10 +108,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
   if (templates) {
     radioOptions = validChannels.map((eventKey, index) => {
-      // console.log(JSON.stringify(radioOptions) + '>radioOptions');
-      // console.log(JSON.stringify(eventKey) + '>eventKey');
-      // console.log(JSON.stringify(Object.keys(templates)) + '>Object.keys(templates)');
-      // console.log(JSON.stringify(templates) + '>templates');
       return {
         name: eventKey,
         subject: templates[eventKey]?.subject,
@@ -115,8 +131,11 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             value={selectedTemplate}
             onChange={(_name, value) => {
               console.log(JSON.stringify(value) + '|xxvaluexx');
-              setSelectedTemplate(value);
-              setPreview(value);
+              setPreferredTemplate(value);
+              setSaveModal(true);
+
+              //setSelectedTemplate(value);
+              //setPreview(value);
             }}
             orientation="horizontal"
           >
@@ -172,6 +191,28 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
         )}
         <EditTemplateActions>{actionButtons}</EditTemplateActions>
       </GoAForm>
+
+      {/* Form */}
+      <SaveFormModal
+        open={saveModal}
+        initialValue={preferredTemplate}
+        errors={errors}
+        onDontSave={(type) => {
+          console.log(JSON.stringify(type) + '<type2');
+          resetSavedAction();
+          setSelectedTemplate(preferredTemplate);
+          setSaveModal(false);
+        }}
+        onSave={(template) => {
+          console.log(JSON.stringify(template) + '<template');
+          setSelectedTemplate(preferredTemplate);
+          saveChangesAction(template);
+          setSaveModal(false);
+        }}
+        onCancel={() => {
+          setSaveModal(false);
+        }}
+      />
     </TemplateEditorContainer>
   );
 };

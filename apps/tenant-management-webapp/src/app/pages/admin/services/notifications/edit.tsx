@@ -201,7 +201,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
             Cancel
           </GoAButton>
           <GoAButton
-            disabled={!type.name}
+            disabled={!type?.name}
             buttonType="primary"
             data-testid="form-save"
             type="submit"

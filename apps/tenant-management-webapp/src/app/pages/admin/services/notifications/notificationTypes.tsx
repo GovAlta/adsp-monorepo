@@ -14,6 +14,12 @@ import { isDuplicatedNotificationName } from './validation';
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
 import MailIcon from '@assets/icons/mail-outline.svg';
+//import Mail from '@assets/icons/mail.svg';
+//import Chat from '@assets/icons/chat.svg';
+//import Slack from '@assets/icons/slack.svg';
+import { ReactComponent as Mail } from '@assets/icons/mail.svg';
+import { ReactComponent as Slack } from '@assets/icons/slack.svg';
+import { ReactComponent as Chat } from '@assets/icons/chat.svg';
 
 import {
   UpdateNotificationTypeService,
@@ -86,12 +92,13 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [templates, setTemplates] = useState<Template>(baseTemplate);
+  const [savedTemplates, setSavedTemplates] = useState<Template>(baseTemplate);
   const debouncedRenderSubject = useDebounce(subject, TEMPALTE_RENDER_DEBOUNCE_TIMER);
   const debouncedRenderBody = useDebounce(body, TEMPALTE_RENDER_DEBOUNCE_TIMER);
 
   const [subjectPreview, setSubjectPreview] = useState('');
   const [bodyPreview, setBodyPreview] = useState('');
-  const [currentChannel, setCurrentChannel] = useState('Email');
+  const [currentChannel, setCurrentChannel] = useState('email');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
@@ -111,6 +118,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   };
 
   const channelNames = { email: 'Email', bot: 'Slack bot', sms: 'Text message' };
+  const channelIcons = {
+    email: <Mail style={{ color: '#666666' }} />,
+    sms: <Chat style={{ color: '#666666' }} />,
+    bot: <Slack style={{ color: '#666666' }} />,
+  };
 
   useEffect(() => {
     // if an event is selected for editing
@@ -121,15 +133,18 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       console.log(JSON.stringify(selectedEvent) + '<selectedEvent');
 
       setTemplates(selectedEvent?.templates);
+      setSavedTemplates(JSON.parse(JSON.stringify(selectedEvent?.templates)));
 
       // try to render preview of subject and body.
       // Will only load if the subject and body is a valid handlebar template
-      console.log(JSON.stringify(selectedType.channels[0]) + '<selectedType.channels[0]');
-      console.log(JSON.stringify(templates[selectedType.channels[0]]) + '<templates[selectedType.channels[0]]');
-      const channel = selectedEvent?.templates[selectedType.channels[0]];
+      console.log(JSON.stringify(Object.keys(selectedEvent.templates)[0]) + '<Object.keys(selectedEvent.templates)[0]');
+      const channel = currentChannel; //selectedType.channels[0];
+      const template = selectedEvent?.templates[channel];
       console.log(JSON.stringify(channel) + '<channelchannel');
       try {
-        setBodyPreview(generateMessage(getTemplateBody(channel.body, channel, htmlPayload), htmlPayload));
+        setSubjectPreview('');
+        const x = generateMessage(getTemplateBody(template.body, channel, htmlPayload), htmlPayload);
+        setBodyPreview(x);
         setTemplateEditErrors({
           ...templateEditErrors,
           body: '',
@@ -142,7 +157,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         });
       }
       try {
-        setSubjectPreview(generateMessage(channel.subject, htmlPayload));
+        setSubjectPreview(generateMessage(template.subject, htmlPayload));
         setTemplateEditErrors({
           ...templateEditErrors,
           subject: '',
@@ -228,8 +243,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   const renderBodyPreview = (value) => {
     try {
-      const channel = selectedEvent?.templates[selectedType.channels[0]];
-      const msg = generateMessage(getTemplateBody(value, channel, htmlPayload), htmlPayload);
+      console.log(JSON.stringify(currentChannel) + '<currentChannel');
+      const msg = generateMessage(getTemplateBody(value, currentChannel, htmlPayload), htmlPayload);
       setBodyPreview(msg);
       setTemplateEditErrors({
         ...templateEditErrors,
@@ -275,9 +290,16 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         templates: templates,
       };
     }
-    dispatch(UpdateNotificationTypeService(selectedType));
+    if (dispatch(UpdateNotificationTypeService(selectedType))) {
+      setSavedTemplates(templates);
+    }
+  };
+
+  const saveAndReset = () => {
+    saveOrAddEventTemplate();
     reset();
   };
+
   const editEventTemplateContent = {
     saveOrAddActionText: 'Save',
     cancelOrBackActionText: 'Cancel',
@@ -409,7 +431,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 {notificationType.events.map((event, key) => (
                   <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
                     <EventBorder>
-                      <MaxHeight height={168}>
+                      <div className="flex columnFlex" style={{ height: '168px' }}>
                         <div className="rowFlex">
                           <div className="flex1">
                             {event.namespace}:{event.name}
@@ -433,10 +455,22 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                             </MaxHeight>
                           </div>
                         </div>
-                        <div className="columnFlex height-100">
-                          <div className="flex1 flex flexEndAlign">
-                            <img src={MailIcon} alt="non-interactive email icon" data-testid="icon-mail" />
-                            <div className="rightAlignEdit">
+                        <div style={{ marginTop: 'auto' }}>
+                          <div className="flex1 flex endAlign">
+                            <div className="flex3 endAlign">
+                              <div style={{ display: 'flex', flexDirection: 'row' }}>
+                                {notificationType.channels.map((channel) => (
+                                  <div style={{ height: '23px', margin: '0 9px 0 9px', flex: '1' }}>
+                                    {channelIcons[channel]}
+                                    {(event.templates[channel].subject.length === 0 ||
+                                      event.templates[channel].body.length === 0) && (
+                                      <div className="icon-badge">!</div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="flex3" style={{ textAlignLast: 'right' }}>
                               <a
                                 data-testid="edit-event"
                                 onClick={() => {
@@ -445,6 +479,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                   setEventTemplateFormState(editEventTemplateContent);
                                   setShowTemplateForm(true);
                                   setCoreEvent(false);
+                                  setCurrentChannel(notificationType.channels[0]);
                                 }}
                               >
                                 Edit
@@ -452,7 +487,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                             </div>
                           </div>
                         </div>
-                      </MaxHeight>
+                      </div>
                     </EventBorder>
                   </GridItem>
                 ))}
@@ -687,6 +722,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               subjectTitle="Subject"
               //subject={subject}
               templates={templates}
+              initialChannel={currentChannel}
               validChannels={selectedType.channels}
               serviceName={serviceName}
               onSubjectChange={(value, channel) => {
@@ -734,6 +770,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               errors={templateEditErrors}
               bodyEditorHintText={eventTemplateEditHintText}
               eventSuggestion={getEventSuggestion()}
+              saveCurrentTemplate={() => saveOrAddEventTemplate()}
+              resetToSavedAction={() => {
+                console.log(JSON.stringify(savedTemplates) + '<savedTemplate');
+                setTemplates(JSON.parse(JSON.stringify(savedTemplates)));
+              }}
               actionButtons={
                 <>
                   <GoAButton
@@ -755,7 +796,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                     {eventTemplateFormState.cancelOrBackActionText}
                   </GoAButton>
                   <GoAButton
-                    onClick={() => saveOrAddEventTemplate()}
+                    onClick={() => saveAndReset()}
                     buttonType="primary"
                     data-testid="template-form-save"
                     type="submit"
@@ -853,12 +894,28 @@ const NotificationStyles = styled.div`
     height: 100px;
   }
 
+  .height-120 {
+    height: 120px;
+  }
+
   .flex {
     display: flex;
   }
 
   .flex1 {
     flex: 1;
+  }
+
+  .flex3 {
+    flex: 3;
+  }
+
+  .flex4 {
+    flex: 4;
+  }
+
+  .flex5 {
+    flex: 5;
   }
 
   .padding {
@@ -877,6 +934,10 @@ const NotificationStyles = styled.div`
     align-items: flex-end;
   }
 
+  .endAlign {
+    align-self: end;
+  }
+
   .rightAlignEdit {
     text-align: end;
     width: 100%;
@@ -887,5 +948,38 @@ const NotificationStyles = styled.div`
 
   .minimumLineHeight {
     line-height: 0.75rem;
+  }
+
+  .icon-badge-group .icon-badge-container {
+    display: inline-block;
+    margin-left: 15px;
+  }
+
+  .icon-badge-group .icon-badge-container:first-child {
+    margin-left: 0;
+  }
+
+  .icon-badge-container {
+    margin-top: 20px;
+    position: relative;
+  }
+
+  .icon-badge-icon {
+    font-size: 30px;
+    position: relative;
+  }
+
+  .icon-badge {
+    background-color: red;
+    font-size: 12px;
+    font-weight: 700;
+    color: white;
+    text-align: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 45%;
+    position: relative;
+    top: -35px;
+    left: 17px;
   }
 `;
