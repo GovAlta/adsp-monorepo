@@ -580,7 +580,7 @@ Then('the user views the status of {string} changed to the first unused status',
 });
 
 Then(
-  'the user views the event details of {string} application status changed from "{string}" to {string} for subscriber of {string}',
+  'the user views the event details of {string} application status changed from {string} to {string} for subscriber of {string}',
   function (appName, originalStatus, newStatus, userID) {
     const newSubjectStatus =
       newStatus.replace('{new status}', 'Autotest status has changed to ') + afterStatus.toLowerCase();
