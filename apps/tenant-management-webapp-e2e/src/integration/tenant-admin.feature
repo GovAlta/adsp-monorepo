@@ -70,7 +70,7 @@ Feature: Tenant admin
     # Getting content from clipboard doesn't work on build agent. Commented out this validation.
     # When the user clicks click to copy button
     # Then the login link is copied to the clipboard
-    And the user views introductions and links for "Access", "Directory", "File", "Status", "Event" and "Notification"
+    And the user views introductions and links for "Access", "Directory", "File", "Status", "Event", "Notification" and "Configuration"
     When the user clicks "Access" link
     Then the user is directed to "Access service" page
     When the user selects the "Dashboard" menu item
@@ -82,6 +82,9 @@ Feature: Tenant admin
     When the user selects the "Dashboard" menu item
     And the user clicks "Event" link
     Then the user is directed to "Event service" page
+    When the user selects the "Dashboard" menu item
+    And the user clicks "Configuration" link
+    Then the user is directed to "Configuration service" page
 
   # TEST DATA: need a user without tenant admin role
   @TEST_CS-743 @regression
