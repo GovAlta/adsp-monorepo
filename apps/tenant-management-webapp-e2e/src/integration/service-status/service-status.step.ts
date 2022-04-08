@@ -549,9 +549,8 @@ Then('the user views current status for {string}', function (appName) {
 
 Then('the user changes status to the first unused status', function () {
   const radioList = ['Operational', 'Maintenance', 'Outage', 'Reported issues'];
-  statusObj.manualStatusList().should('have.length', 8);
-  statusObj.manualStatusList().each((item, index, list) => {
-    // cy.wrap(item).should('contain.text', radioList[index]);
+  statusObj.manualStatusList().should('have.length', 4);
+  statusObj.manualStatusList().each((item, index) => {
     expect(Cypress.$(item).text()).to.eq(radioList[index]);
   });
   statusObj.manualStatusList().each(($status) => {
