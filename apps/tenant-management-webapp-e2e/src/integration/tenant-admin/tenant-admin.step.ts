@@ -827,7 +827,7 @@ When('the user clicks Show details button for the latest event of {string} for {
 
   // Verify the first toggle details icon is eye icon, not eye-off icon, and then click it
   tenantAdminObj.eventToggleDetailsIcons().first().invoke('attr', 'data-testid').should('eq', 'icon-eye');
-  tenantAdminObj.eventToggleDetailsIcons().first().click();
+  tenantAdminObj.eventToggleDetailsIcons().first().click({ force: true });
 });
 
 // Only one event details is open before calling this step
