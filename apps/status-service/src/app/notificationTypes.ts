@@ -103,7 +103,7 @@ export const StatusApplicationHealthChange: NotificationType = {
     },
   ],
   publicSubscribe: false,
-  manageSubscribe: true,
+  manageSubscribe: false,
 };
 
 export const StatusApplicationStatusChange: NotificationType = {

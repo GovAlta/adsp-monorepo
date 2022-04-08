@@ -75,7 +75,7 @@ export const MonacoDivBody = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: 45vh;
+  height: 40vh;
 `;
 export const EditTemplateActions = styled.div`
   display: flex;
