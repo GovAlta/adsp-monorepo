@@ -213,4 +213,4 @@ Feature: Service status
     Then the "Event log" landing page is displayed
     When the user searches with "notification-service:notification-sent", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
     And the user clicks Show details button for the latest event of "notification-sent" for "notification-service"
-    Then the user views the event details of "Autotest" application status changed to "{new status}" for subscriber of "auto.test@gov.ab.ca"
+    Then the user views the event details of "Autotest" application status changed from "{original status}" to "{new status}" for subscriber of "auto.test@gov.ab.ca"
