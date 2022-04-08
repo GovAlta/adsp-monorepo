@@ -11,6 +11,7 @@ export interface Service {
   urn?: string;
   metadata?: Metadata;
   isCore?: boolean;
+  loaded?: boolean;
 }
 
 export interface Metadata {
