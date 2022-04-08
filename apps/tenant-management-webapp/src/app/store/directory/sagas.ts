@@ -180,7 +180,8 @@ export function* fetchDirectoryByDetailURNs(action: FetchEntryDetailByURNsAction
             yield put(fetchEntryDetailSuccess(_service));
           }
           // eslint-disable-next-line
-        } finally {
+        } catch (err) {
+          console.warn(`Failed to fetch metadata ${err.message}`);
         }
       }
     }
