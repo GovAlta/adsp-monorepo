@@ -59,6 +59,7 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSav
   const tenantServiceUrns = useSelector(tenantServiceURNSelector);
   const healthEndpoints = useSelector(healthEndpointsSelector);
   const [openDropdown, setOpenDropdown] = useState<boolean>(false);
+  const { directory } = useSelector((state: RootState) => state.directory);
 
   function isFormValid(): boolean {
     if (!application?.name) return false;
@@ -75,7 +76,7 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSav
   }
 
   useEffect(() => {
-    if (healthEndpoints.length === 0) {
+    if (directory.length === 0) {
       dispatch(fetchDirectory());
     }
   }, []);
