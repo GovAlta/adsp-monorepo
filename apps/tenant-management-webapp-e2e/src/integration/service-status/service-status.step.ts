@@ -580,10 +580,12 @@ Then('the user views the status of {string} changed to the first unused status',
 });
 
 Then(
-  'the user views the event details of {string} application status changed to {string} for subscriber of {string}',
-  function (appName, newStatus, userID) {
-    const subjectStatus =
+  'the user views the event details of {string} application status changed from "{string}" to {string} for subscriber of {string}',
+  function (appName, originalStatus, newStatus, userID) {
+    const newSubjectStatus =
       newStatus.replace('{new status}', 'Autotest status has changed to ') + afterStatus.toLowerCase();
+    const originalSubjectStatus =
+      originalStatus.replace('{original status}', 'The original status was: ') + currentStatus.toLowerCase();
     tenantAdminObj
       .eventDetails()
       .invoke('text')
@@ -591,7 +593,8 @@ Then(
         if (newStatus != 'Empty' || userID != 'Empty') {
           expect(eventDetails).to.contain(appName);
           expect(eventDetails).to.contain(userID);
-          expect(eventDetails).to.contain(subjectStatus);
+          expect(eventDetails).to.contain(originalSubjectStatus);
+          expect(eventDetails).to.contain(newSubjectStatus);
         }
       });
   }
