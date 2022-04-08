@@ -393,8 +393,8 @@ Then('the login link is copied to the clipboard', function () {
 });
 
 Then(
-  'the user views introductions and links for {string}, {string}, {string}, {string}, {string} and {string}',
-  function (access, directory, fileService, status, events, notifications) {
+  'the user views introductions and links for {string}, {string}, {string}, {string}, {string}, {string} and {string}',
+  function (access, directory, file, status, events, notification, configuration) {
     const cardTextArray = [
       'Access allows',
       'The directory service is',
@@ -402,8 +402,9 @@ Then(
       'The status service allows',
       'The event service provides',
       'The notifications service provides',
+      'The configuration service provides',
     ];
-    const cardTitleArray = [access, directory, fileService, status, events, notifications];
+    const cardTitleArray = [access, directory, file, status, events, notification, configuration];
     tenantAdminObj.goaCardTexts().should('have.length', cardTextArray.length);
     tenantAdminObj.goaCardTitles().should('have.length', cardTitleArray.length);
     tenantAdminObj.goaCardTexts().each((element, index) => {
