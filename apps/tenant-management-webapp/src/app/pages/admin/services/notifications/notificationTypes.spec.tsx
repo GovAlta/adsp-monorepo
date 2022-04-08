@@ -36,7 +36,19 @@ describe('NotificationTypes Page', () => {
         anotherNotificationId: {
           name: 'Some other subsidy application',
           description: 'Lorem ipsum dolor sit amet',
-          events: [{ namespace: 'file-service', name: 'file-deleted', templates: {}, channels: [] }],
+          events: [
+            {
+              namespace: 'file-service',
+              name: 'file-deleted',
+              templates: {
+                email: {
+                  subject: 'diggles',
+                  body: 'Lorem ipsum dolorLorem ipsum dolorLorem ipsum dolorLorem ipsum dolor',
+                },
+              },
+              channels: [],
+            },
+          ],
           subscriberRoles: [],
           channels: ['email'],
           id: 'anotherNotificationId',
@@ -48,7 +60,16 @@ describe('NotificationTypes Page', () => {
         superCoreNotificationStuff: {
           name: 'Some other subsidy application',
           description: 'Lorem ipsum dolor sit amet',
-          events: [{ namespace: 'file-service', name: 'file-deleted', templates: {}, channels: [] }],
+          events: [
+            {
+              namespace: 'file-service',
+              name: 'file-deleted',
+              templates: {
+                email: { subject: 'sdd', body: 'sds' },
+              },
+              channels: [],
+            },
+          ],
           subscriberRoles: [],
           channels: ['email'],
           id: 'superCoreNotificationStuff',

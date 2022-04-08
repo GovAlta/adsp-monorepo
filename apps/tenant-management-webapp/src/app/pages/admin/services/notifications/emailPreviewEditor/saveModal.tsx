@@ -35,17 +35,17 @@ export const SaveFormModal: FunctionComponent<NotificationTypeFormProps> = ({
 
   return (
     <EditStyles>
-      <GoAModal testId="notification-types-form" isOpen={open}>
+      <GoAModal testId="notification-types-save-form" isOpen={open}>
         <GoAModalTitle>You have unsaved changes</GoAModalTitle>
         <GoAModelTextWrapper>Leaving this page will discard any changes that haven't been saved</GoAModelTextWrapper>
         <GoAModalActions>
-          <GoAButton data-testid="form-cancel" buttonType="tertiary" type="button" onClick={onCancel}>
+          <GoAButton data-testid="form-cancel-modal" buttonType="tertiary" type="button" onClick={onCancel}>
             Cancel
           </GoAButton>
-          <GoAButton buttonType="tertiary" data-testid="form-save" type="submit" onClick={(e) => onDontSave(type)}>
+          <GoAButton buttonType="tertiary" data-testid="form-dont-save" type="submit" onClick={(e) => onDontSave(type)}>
             Don't save
           </GoAButton>
-          <GoAButton buttonType="primary" data-testid="form-save" type="submit" onClick={(e) => onSave(type)}>
+          <GoAButton buttonType="primary" data-testid="form-agree-save" type="submit" onClick={(e) => onSave(type)}>
             Save
           </GoAButton>
         </GoAModalActions>

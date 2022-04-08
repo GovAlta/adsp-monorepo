@@ -181,7 +181,7 @@ export class NotificationTypeEntity implements NotificationType {
   private getTemplate(channel: Channel, template: Template, context: Record<string, unknown>): Template {
     const effectiveTemplate = { ...template };
     if (channel === Channel.email) {
-      effectiveTemplate.body = getTemplateBody(template.body.toString(), context);
+      effectiveTemplate.body = getTemplateBody(template.body.toString(), channel, context);
     }
     return effectiveTemplate;
   }
