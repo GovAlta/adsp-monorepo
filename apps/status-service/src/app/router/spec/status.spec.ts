@@ -1,5 +1,4 @@
-import { Logger } from 'winston';
-import { createPublicServiceStatusRouter } from './publicServiceStatus';
+import { createPublicServiceStatusRouter, getApplicationsByName } from '../publicServiceStatus';
 import {
   createServiceStatusRouter,
   getApplications,
@@ -11,14 +10,20 @@ import {
   updateApplicationStatus,
   deleteApplication,
   getApplicationEntries,
-} from './serviceStatus';
-import { adspId } from '@abgov/adsp-service-sdk';
+} from '../serviceStatus';
 import { Request, Response } from 'express';
-import { ServiceStatusApplicationEntity } from '../model';
-import * as eventFuncs from '../events';
+import { ServiceStatusApplicationEntity } from '../../model';
+import * as eventFuncs from '../../events';
 import { DomainEvent } from '@abgov/adsp-service-sdk';
-
+import { Logger } from 'winston';
+import { adspId } from '@abgov/adsp-service-sdk';
 describe('Service router', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+
   const loggerMock = {
     debug: jest.fn(),
     info: jest.fn(),
@@ -27,7 +32,7 @@ describe('Service router', () => {
   } as unknown as Logger;
 
   const tenantServiceMock = {
-    getTenants: jest.fn(),
+    getTenants: jest.fn(() => Promise.resolve([{ id: tenantId, name: 'test-mock', realm: 'test' }])),
     getTenant: jest.fn((id) => Promise.resolve({ id, name: 'Test', realm: 'test' })),
     getTenantByName: jest.fn(),
     getTenantByRealm: jest.fn(),
@@ -46,8 +51,8 @@ describe('Service router', () => {
     delete: jest.fn(),
   };
 
-  const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
-  const next = jest.fn();
+  const nextMock = jest.fn();
+
   const applicationsMock = [
     {
       repository: {},
@@ -69,14 +74,16 @@ describe('Service router', () => {
       _id: '624365fe3367d200110e17c5',
       endpoint: { status: 'offline', url: 'https://localhost.com' },
       metadata: '',
-      name: 'paul-test',
+      name: 'test-mock',
       description: '',
       statusTimestamp: 0,
+      tennantServRef: '{}',
       tenantId: tenantId.toString(),
       tenantName: 'Platform',
       tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
       enabled: false,
       internalStatus: 'stopped',
+      status: 'offline',
       enable: jest.fn((app) => {
         return {
           ...app,
@@ -100,9 +107,32 @@ describe('Service router', () => {
         Promise.resolve({
           name: 'updated-app',
           internalStatus: 'stopped',
+          tennantServRef: '{}',
         })
       ),
       delete: jest.fn(() => Promise.resolve()),
+      canAccessById: jest.fn(() => {
+        return true;
+      }),
+    },
+  ];
+
+  const entriesMock = [
+    {
+      repository: { opts: { limit: 200, everyMilliseconds: 60000 } },
+      ok: true,
+      url: 'https://www.yahoo.com',
+      timestamp: 1649277360004,
+      responseTime: 685,
+      status: '200',
+    },
+    {
+      repository: { opts: { limit: 200, everyMilliseconds: 60000 } },
+      ok: true,
+      url: 'https://www.yahoo.com',
+      timestamp: 1649277300002,
+      responseTime: 514,
+      status: '200',
     },
   ];
 
@@ -117,7 +147,7 @@ describe('Service router', () => {
     setStatus: jest.fn(),
   };
 
-  const res = {
+  const resMock = {
     json: jest.fn(),
     sendStatus: jest.fn(),
     send: jest.fn(),
@@ -127,7 +157,6 @@ describe('Service router', () => {
       };
     }),
   } as unknown as Response;
-
   describe('createStatusServiceRouter', () => {
     it('Can create status service routers', () => {
       const publicRouter = createPublicServiceStatusRouter({
@@ -164,28 +193,10 @@ describe('Service router', () => {
       } as unknown as Request;
 
       statusRepositoryMock.find.mockResolvedValueOnce(applicationsMock);
-      await getApplicationsHandler(req, res as unknown as Response, next);
-      expect(res.json).toHaveBeenCalledWith(expect.arrayContaining(applicationsMock));
-    });
+      await getApplicationsHandler(req, resMock as unknown as Response, nextMock);
 
-    const entriesMock = [
-      {
-        repository: { opts: { limit: 200, everyMilliseconds: 60000 } },
-        ok: true,
-        url: 'https://www.yahoo.com',
-        timestamp: 1649277360004,
-        responseTime: 685,
-        status: '200',
-      },
-      {
-        repository: { opts: { limit: 200, everyMilliseconds: 60000 } },
-        ok: true,
-        url: 'https://www.yahoo.com',
-        timestamp: 1649277300002,
-        responseTime: 514,
-        status: '200',
-      },
-    ];
+      expect(resMock.json).toHaveBeenCalledWith(expect.arrayContaining(applicationsMock));
+    });
 
     it('Can get application entries', async () => {
       statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
@@ -204,8 +215,32 @@ describe('Service router', () => {
           applicationId: statusRepositoryMock[1],
         },
       } as unknown as Request;
-      await handler(req, res, next);
-      expect(res.send).toHaveBeenCalledWith(expect.arrayContaining([entriesMock[1]]));
+      await handler(req, resMock, nextMock);
+      expect(resMock.send).toHaveBeenCalledWith(expect.arrayContaining([entriesMock[1]]));
+    });
+  });
+
+  describe('Can get applications by name for public', () => {
+    it('Can get applications by name', async () => {
+      statusRepositoryMock.find.mockResolvedValueOnce([applicationsMock[1]]);
+      const handler = getApplicationsByName(loggerMock, tenantServiceMock, statusRepositoryMock);
+      const reqMock = {
+        user: {
+          tenantId,
+          id: 'test',
+          roles: ['test-updater'],
+        },
+        params: {
+          name: 'test-mock',
+        },
+      } as unknown as Request;
+
+      await handler(reqMock, resMock, nextMock);
+      expect(resMock.json).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          { description: '', id: '624365fe3367d200110e17c5', lastUpdated: null, name: 'test-mock', status: 'offline' },
+        ])
+      );
     });
   });
 
@@ -222,8 +257,8 @@ describe('Service router', () => {
       } as unknown as Request;
 
       statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
-      await handler(req, res, next);
-      expect(res.json).toHaveBeenCalledWith(
+      await handler(req, resMock, nextMock);
+      expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
           enabled: true,
         })
@@ -241,8 +276,8 @@ describe('Service router', () => {
         params: {},
       } as unknown as Request;
       statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
-      await handler(req, res, next);
-      expect(res.json).toHaveBeenCalledWith(
+      await handler(req, resMock, nextMock);
+      expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
           enabled: false,
         })
@@ -261,8 +296,8 @@ describe('Service router', () => {
       } as unknown as Request;
 
       statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
-      await handler(req, res, next);
-      expect(res.json).toHaveBeenCalledWith(
+      await handler(req, resMock, nextMock);
+      expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
           enabled: true,
         })
@@ -286,15 +321,14 @@ describe('Service router', () => {
         },
       } as unknown as Request;
       const handler = createNewApplication(loggerMock, tenantServiceMock, statusRepositoryMock);
-      await handler(req, res, next);
-      expect(res.status).toHaveBeenCalledWith(201);
+      await handler(req, resMock, nextMock);
+      expect(resMock.status).toHaveBeenCalledWith(201);
     });
   });
 
   describe('Can update application', () => {
     it('Can update application', async () => {
       const handler = updateApplication(loggerMock, statusRepositoryMock);
-
       const req: Request = {
         user: {
           tenantId,
@@ -312,8 +346,8 @@ describe('Service router', () => {
       } as unknown as Request;
       statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
 
-      await handler(req, res, next);
-      expect(res.json).toHaveBeenCalledWith(
+      await handler(req, resMock, nextMock);
+      expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'updated-app',
         })
@@ -338,8 +372,8 @@ describe('Service router', () => {
           status: 'online',
         },
       } as unknown as Request;
-      await handler(req, res, next);
-      expect(res.json).toHaveBeenCalledWith(
+      await handler(req, resMock, nextMock);
+      expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'status-updated-app',
         })
@@ -358,8 +392,8 @@ describe('Service router', () => {
           id: applicationsMock[1]._id,
         },
       } as unknown as Request;
-      await handler(req, res, next);
-      expect(res.sendStatus).toHaveBeenCalledWith(204);
+      await handler(req, resMock, nextMock);
+      expect(resMock.sendStatus).toHaveBeenCalledWith(204);
     });
   });
 });
