@@ -13,7 +13,7 @@ export const Configuration: FunctionComponent = () => {
   return (
     <Page>
       <Main>
-        <h1 data-testid="directory-title">Configuration service</h1>
+        <h1 data-testid="configuration-title">Configuration service</h1>
         <Tabs activeIndex={0}>
           <Tab label="Overview">
             <ConfigurationOverview />

@@ -66,7 +66,7 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
                 to="/admin/services/configuration"
                 activeClassName="current"
                 title="Configuration"
-                data-testid="menu-access"
+                data-testid="menu-configuration"
               >
                 <GoAIcon type="settings" />
                 <span>Configuration</span>
