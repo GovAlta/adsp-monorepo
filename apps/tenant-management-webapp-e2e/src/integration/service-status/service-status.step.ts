@@ -183,6 +183,7 @@ When(
       expect(index).to.not.equal(0);
       statusObj
         .noticeCardGearButton(index)
+        .scrollIntoView()
         .click()
         .then(() => {
           switch (menu) {

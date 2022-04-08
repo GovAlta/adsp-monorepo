@@ -20,6 +20,10 @@ class ServiceStatusPage {
   timezoneInfo() {
     return cy.xpath('//*[@class="timezone"]/i');
   }
+
+  allApplicationNoticeMessage(msg) {
+    return cy.xpath(`//*[@data-testid="all-application-notice-message" and contains(text(), "${msg}")]`);
+  }
 }
 
 export default ServiceStatusPage;
