@@ -1,15 +1,17 @@
-import { Credentials, Session, Indicator } from './models';
+import { Credentials, Session, Indicator, ElementIndicator } from './models';
 
 export const SESSION_LOGIN_SUCCESS = 'session/login/success';
 export const SESSION_LOGOUT = 'session/logout';
 export const CREDENTIAL_REFRESH = 'credential/refresh';
 export const UPDATE_INDICATOR = 'session/indicator';
+export const UPDATE_ELEMENT_INDICATOR = 'session/elementIndicator';
 
 export type ActionType =
   | SessionLoginSuccessAction
   | SessionLogoutAction
   | CredentialRefreshAction
-  | UpdateIndicatorAction;
+  | UpdateIndicatorAction
+  | UpdateElementIndicatorAction;
 
 export interface CredentialRefreshAction {
   type: typeof CREDENTIAL_REFRESH;
@@ -30,6 +32,11 @@ export interface UpdateIndicatorAction {
   payload: Indicator;
 }
 
+export interface UpdateElementIndicatorAction {
+  type: typeof UPDATE_ELEMENT_INDICATOR;
+  payload: ElementIndicator;
+}
+
 export const SessionLoginSuccess = (session: Session): SessionLoginSuccessAction => ({
   type: SESSION_LOGIN_SUCCESS,
   payload: session,
@@ -42,6 +49,11 @@ export const SessionLogout = (): SessionLogoutAction => ({
 export const CredentialRefresh = (credentials: Credentials): CredentialRefreshAction => ({
   type: CREDENTIAL_REFRESH,
   payload: credentials,
+});
+
+export const UpdateElementIndicator = (elementIndicator: ElementIndicator): UpdateElementIndicatorAction => ({
+  type: UPDATE_ELEMENT_INDICATOR,
+  payload: elementIndicator,
 });
 
 export const UpdateIndicator = (indicator: Indicator): UpdateIndicatorAction => ({

@@ -16,7 +16,7 @@ import {
 } from './actions';
 import { DirectoryApi } from './api';
 import { SagaIterator } from '@redux-saga/core';
-import { UpdateIndicator } from '@store/session/actions';
+import { UpdateIndicator, UpdateElementIndicator } from '@store/session/actions';
 import { adspId } from '@lib/adspId';
 import { Service } from './models';
 
@@ -126,6 +126,11 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
   const state: RootState = yield select();
   const token = state.session.credentials.token;
   const api = new DirectoryApi(state.config.tenantApi, token);
+  yield put(
+    UpdateElementIndicator({
+      show: true,
+    })
+  );
 
   try {
     const result = yield call([api, api.fetchEntryDetail], action.data);
@@ -136,7 +141,7 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
       } else {
         service.metadata = null;
       }
-
+      service.loaded = true;
       yield put(fetchEntryDetailSuccess(service));
     }
   } catch (err) {
@@ -144,6 +149,11 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
     service.metadata = null;
     yield put(fetchEntryDetailSuccess(service));
   }
+  yield put(
+    UpdateElementIndicator({
+      show: false,
+    })
+  );
 }
 
 export function* fetchDirectoryByDetailURNs(action: FetchEntryDetailByURNsAction): SagaIterator {
