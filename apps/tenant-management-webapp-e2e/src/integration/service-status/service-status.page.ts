@@ -209,7 +209,9 @@ class StatusServicePage {
     );
   }
   manualStatusList() {
-    return cy.xpath('//*[@class="goa-form-item"]//div/*[@class="goa-radio"]');
+    return cy.xpath(
+      '//*[@class="modal-root" and @data-state="visible"]//*[@class="goa-form-item"]//div/*[@class="goa-radio"]'
+    );
   }
 }
 export default StatusServicePage;
