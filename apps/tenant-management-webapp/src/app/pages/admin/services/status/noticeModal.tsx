@@ -253,7 +253,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
         </NoticeFormStyle>
       </GoAModalContent>
       <GoAModalActions>
-        <GoAButton buttonType="tertiary" data-testid="notice-form-cancel" onClick={cancel}>
+        <GoAButton buttonType="secondary" data-testid="notice-form-cancel" onClick={cancel}>
           Cancel
         </GoAButton>
         <GoAButton buttonType="primary" type="submit" data-testid="notice-form-submit" onClick={submit}>

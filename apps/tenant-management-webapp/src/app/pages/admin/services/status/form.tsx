@@ -175,7 +175,7 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSav
       </GoAModalContent>
       <GoAModalActions>
         <GoAButton
-          buttonType="tertiary"
+          buttonType="secondary"
           onClick={() => {
             if (onCancel) onCancel();
           }}

@@ -133,7 +133,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
-          <GoAButton data-testid="form-cancel" buttonType="tertiary" type="button" onClick={tryCancel}>
+          <GoAButton data-testid="form-cancel" buttonType="secondary" type="button" onClick={tryCancel}>
             Cancel
           </GoAButton>
           <GoAButton buttonType="primary" data-testid="form-save" type="submit" onClick={(e) => trySave(subscriber)}>
