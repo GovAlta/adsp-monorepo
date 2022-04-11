@@ -285,7 +285,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   };
 
   const editEventTemplateContent = {
-    saveOrAddActionText: 'Save',
+    saveOrAddActionText: 'Save Templates',
     cancelOrBackActionText: 'Cancel',
     mainTitle: 'Edit a',
   };
@@ -444,11 +444,19 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                             <div className="flex3 endAlign">
                               <div style={{ display: 'flex', flexDirection: 'row' }}>
                                 {notificationType.channels.map((channel) => (
-                                  <div style={{ height: '23px', margin: '0 9px 0 9px', flex: '1' }}>
+                                  <div
+                                    style={{ height: '23px', margin: '0 9px 0 9px', flex: '1' }}
+                                    data-testid={`${notificationType.name}:${channel}`}
+                                  >
                                     {channelIcons[channel]}
                                     {(event.templates[channel].subject.length === 0 ||
                                       event.templates[channel].body.length === 0) && (
-                                      <div className="icon-badge">!</div>
+                                      <div
+                                        className="icon-badge"
+                                        data-testid={`${notificationType.name}:${channel}:badge`}
+                                      >
+                                        !
+                                      </div>
                                     )}
                                   </div>
                                 ))}
@@ -456,7 +464,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                             </div>
                             <div className="flex3" style={{ textAlignLast: 'right' }}>
                               <a
-                                data-testid="edit-event"
+                                data-testid={`edit-event-${event.namespace}:${event.name}`}
                                 onClick={() => {
                                   setSelectedEvent(event);
                                   setSelectedType(notificationType);
@@ -702,9 +710,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         <ModalContent>
           <NotificationTemplateEditorContainer>
             <TemplateEditor
+              modelOpen={showTemplateForm}
               mainTitle={eventTemplateFormState.mainTitle}
               subjectTitle="Subject"
-              //subject={subject}
               templates={templates}
               initialChannel={currentChannel}
               validChannels={selectedType.channels}
@@ -746,43 +754,16 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               bodyEditorConfig={bodyEditorConfig}
               errors={templateEditErrors}
               bodyEditorHintText={eventTemplateEditHintText}
-              eventSuggestion={getEventSuggestion()}
               saveCurrentTemplate={() => saveOrAddEventTemplate()}
               resetToSavedAction={() => {
                 setTemplates(JSON.parse(JSON.stringify(savedTemplates)));
+                reset();
               }}
+              saveAndReset={() => saveAndReset()}
+              validateEventTemplateFields={() => validateEventTemplateFields()}
+              eventSuggestion={getEventSuggestion()}
               savedTemplates={savedTemplates}
-              actionButtons={
-                <>
-                  <GoAButton
-                    onClick={() => {
-                      // while editing existing event, clear the event on cancel so the changes did are discarded and not saved in local state
-                      if (eventTemplateFormState.cancelOrBackActionText === 'Cancel') {
-                        setSelectedEvent(null);
-                      }
-                      setSubject('');
-                      setBody('');
-                      setShowTemplateForm(false);
-                      resetEventEditorForm();
-                      setEventTemplateFormState(addNewEventTemplateContent);
-                    }}
-                    data-testid="template-form-cancel"
-                    buttonType="tertiary"
-                    type="button"
-                  >
-                    {eventTemplateFormState.cancelOrBackActionText}
-                  </GoAButton>
-                  <GoAButton
-                    onClick={() => saveAndReset()}
-                    buttonType="primary"
-                    data-testid="template-form-save"
-                    type="submit"
-                    disabled={!validateEventTemplateFields()}
-                  >
-                    {eventTemplateFormState.saveOrAddActionText}
-                  </GoAButton>
-                </>
-              }
+              eventTemplateFormState={eventTemplateFormState}
             />
             <PreviewTemplateContainer>
               <PreviewTemplate
@@ -958,5 +939,9 @@ const NotificationStyles = styled.div`
     position: relative;
     top: -35px;
     left: 17px;
+  }
+
+  .badgePadding > div {
+    padding: 2px 0 2px 3px;
   }
 `;

@@ -42,10 +42,23 @@ export const combineNotification = (
 export default function (state = NOTIFICATION_INIT, action: ActionTypes): NotificationState {
   switch (action.type) {
     case FETCH_NOTIFICATION_CONFIGURATION_SUCCEEDED: {
+      const notificationTypes: Record<string, NotificationItem> = action.payload.notificationInfo.data;
+      Object.keys(notificationTypes).forEach((notificationTypeName) => {
+        notificationTypes[notificationTypeName].channels = notificationTypes[notificationTypeName].channels.sort(
+          (a, b) => {
+            if (a === 'Email') {
+              return -1;
+            } else {
+              return 1;
+            }
+          }
+        );
+      });
+
       return {
         ...state,
         supportContact: action.payload.contact,
-        notificationTypes: action.payload.notificationInfo.data,
+        notificationTypes: notificationTypes,
       };
     }
     case FETCH_CORE_NOTIFICATION_TYPES_SUCCEEDED: {

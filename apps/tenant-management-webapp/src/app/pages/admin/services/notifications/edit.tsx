@@ -141,10 +141,10 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
             </GoAFormItem>
             <GoAFormItem>
               <label>Select Notification Channels</label>
-              <div style={{ display: 'flex', flexDirection: 'row' }}>
-                {channels.map((channel) => {
+              <div key="select channel" style={{ display: 'flex', flexDirection: 'row' }}>
+                {channels.map((channel, key) => {
                   return (
-                    <div>
+                    <div key={key}>
                       <div style={{ paddingRight: '20px' }}>
                         <GoACheckbox
                           name={channel.value}

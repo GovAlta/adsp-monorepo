@@ -1,32 +1,17 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { FunctionComponent } from 'react';
 import type { NotificationItem } from '@store/notification/models';
 import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalTitle } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
 
 interface NotificationTypeFormProps {
-  initialValue?: NotificationItem;
   onCancel?: () => void;
-  onSave?: (type: NotificationItem) => void;
-  onDontSave?: (type: NotificationItem) => void;
+  onSave?: () => void;
+  onDontSave?: () => void;
   open: boolean;
-  errors?: Record<string, string>;
 }
 
-export const SaveFormModal: FunctionComponent<NotificationTypeFormProps> = ({
-  initialValue,
-  onCancel,
-  onDontSave,
-  onSave,
-  errors,
-  open,
-}) => {
-  const [type, setType] = useState(initialValue);
-
-  useEffect(() => {
-    setType(initialValue);
-  }, [initialValue]);
-
+export const SaveFormModal: FunctionComponent<NotificationTypeFormProps> = ({ onCancel, onDontSave, onSave, open }) => {
   return (
     <EditStyles>
       <GoAModal testId="notification-types-save-form" isOpen={open}>
@@ -36,10 +21,10 @@ export const SaveFormModal: FunctionComponent<NotificationTypeFormProps> = ({
           <GoAButton data-testid="form-cancel-modal" buttonType="tertiary" type="button" onClick={onCancel}>
             Cancel
           </GoAButton>
-          <GoAButton buttonType="tertiary" data-testid="form-dont-save" type="submit" onClick={(e) => onDontSave(type)}>
+          <GoAButton buttonType="tertiary" data-testid="form-dont-save" type="submit" onClick={(e) => onDontSave()}>
             Don't save
           </GoAButton>
-          <GoAButton buttonType="primary" data-testid="form-agree-save" type="submit" onClick={(e) => onSave(type)}>
+          <GoAButton buttonType="primary" data-testid="form-agree-save" type="submit" onClick={(e) => onSave()}>
             Save
           </GoAButton>
         </GoAModalActions>

@@ -16,15 +16,19 @@ describe('NotificationTypes Page', () => {
         notificationId: {
           name: 'Child care subsidy application',
           description: 'Lorem ipsum dolor sit amet',
-          channels: ['email'],
+          channels: ['email', 'bot'],
           events: [
             {
               namespace: 'file-service',
               name: 'file-uploaded',
               templates: {
                 email: {
-                  subject: 'dfds',
-                  body: 'sdfsdf',
+                  subject: 'hi',
+                  body: 'this is a triumph',
+                },
+                bot: {
+                  subject: 'hello',
+                  body: 'huge success',
                 },
               },
             },
@@ -36,6 +40,7 @@ describe('NotificationTypes Page', () => {
         anotherNotificationId: {
           name: 'Some other subsidy application',
           description: 'Lorem ipsum dolor sit amet',
+          channels: ['email', 'bot'],
           events: [
             {
               namespace: 'file-service',
@@ -45,12 +50,14 @@ describe('NotificationTypes Page', () => {
                   subject: 'diggles',
                   body: 'Lorem ipsum dolorLorem ipsum dolorLorem ipsum dolorLorem ipsum dolor',
                 },
+                bot: {
+                  subject: '',
+                  body: '',
+                },
               },
-              channels: [],
             },
           ],
           subscriberRoles: [],
-          channels: ['email'],
           id: 'anotherNotificationId',
           publicSubscribe: false,
           manageSubscribe: true,
@@ -92,7 +99,24 @@ describe('NotificationTypes Page', () => {
     user: { jwt: { token: '' } },
     session: { realm: 'core' },
     tenant: {
-      realmRoles: ['uma_auth'],
+      realmRoles: [
+        {
+          id: '5ef67c57',
+          name: 'uma_authorization',
+          description: 'role_uma_authorization',
+          composite: false,
+          clientRole: false,
+          containerId: '4cc89eed',
+        },
+        {
+          id: 'c85d9bdd',
+          name: 'offline_access',
+          description: 'role_offline-access',
+          composite: false,
+          clientRole: false,
+          containerId: '4cc89eed',
+        },
+      ],
     },
     config: {
       serviceUrls: {
@@ -280,6 +304,34 @@ describe('NotificationTypes Page', () => {
     expect(saveAction).toBeTruthy();
   });
 
+  it('edit an event', async () => {
+    const { getAllByTestId, queryByTestId, getByLabelText } = render(
+      <Provider store={store}>
+        <NotificationTypes />
+      </Provider>
+    );
+    const editBtn = getAllByTestId('edit-event-file-service:file-uploaded')[0];
+    await waitFor(() => {
+      fireEvent.click(editBtn);
+    });
+
+    // fields
+    const cancelBtn = queryByTestId('template-form-cancel');
+    const saveBtn = queryByTestId('template-form-save');
+
+    expect(cancelBtn).toBeTruthy();
+    expect(saveBtn).toBeTruthy();
+
+    // fill
+
+    fireEvent.click(saveBtn);
+
+    const actions = store.getActions();
+    const saveAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
+
+    expect(saveAction).toBeTruthy();
+  });
+
   it('deletes an event', async () => {
     const { getAllByTestId, queryByTestId } = render(
       <Provider store={store}>
@@ -300,5 +352,16 @@ describe('NotificationTypes Page', () => {
 
     const deleteAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
     expect(deleteAction).toBeTruthy();
+  });
+
+  it('shows badge where required as expected', async () => {
+    const { getByTestId, queryByTestId } = render(
+      <Provider store={store}>
+        <NotificationTypes />
+      </Provider>
+    );
+
+    expect(getByTestId('Some other subsidy application:bot:badge').textContent).toBe('!');
+    expect(queryByTestId('Child care subsidy application:bot:badge')).not.toBeInTheDocument();
   });
 });

@@ -2,13 +2,16 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { TemplateEditorContainer, MonacoDiv, EditTemplateActions, MonacoDivBody } from './styled-components';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
-import { GoARadioGroup, GoARadio } from '@abgov/react-components';
 import { languages } from 'monaco-editor';
 import { buildSuggestions } from '@lib/autoComplete';
 import { Template } from '@store/notification/models';
 import { SaveFormModal } from './saveModal';
-import { GoASuccessBadge, GoAWarningBadge } from '@abgov/react-components/experimental';
+
+import { GoAWarningBadge } from '@abgov/react-components/experimental';
+import { Tab, Tabs } from '@components/Tabs';
+import { GoAButton } from '@abgov/react-components';
 interface TemplateEditorProps {
+  modelOpen: boolean;
   mainTitle: string;
   onSubjectChange: (value: string, channel: string) => void;
   subjectEditorHintText?: string;
@@ -23,8 +26,11 @@ interface TemplateEditorProps {
   bodyEditorHintText?: string;
   saveCurrentTemplate?: () => void;
   resetToSavedAction: () => void;
+  eventTemplateFormState?: { saveOrAddActionText: string; cancelOrBackActionText: string; mainTitle: string };
   savedTemplates: Template;
   initialChannel: string;
+  saveAndReset: () => void;
+  validateEventTemplateFields: () => boolean;
   actionButtons?: JSX.Element;
   // eslint-disable-next-line
   errors?: any;
@@ -34,6 +40,7 @@ interface TemplateEditorProps {
 }
 
 export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
+  modelOpen,
   mainTitle,
   onSubjectChange,
   subjectEditorHintText,
@@ -46,11 +53,13 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   bodyTitle,
   bodyEditorConfig,
   bodyEditorHintText,
+  eventTemplateFormState,
   saveCurrentTemplate,
   resetToSavedAction,
   savedTemplates,
   initialChannel,
-  actionButtons,
+  saveAndReset,
+  validateEventTemplateFields,
   errors,
   serviceName,
   eventSuggestion,
@@ -73,30 +82,38 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
       };
     }
   }, [monaco, eventSuggestion]);
-
-  const [selectedTemplate, setSelectedTemplate] = useState(initialChannel);
-  const [preferredTemplate, setPreferredTemplate] = useState(null);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [saveModal, setSaveModal] = useState(false);
   const [currentTemplate, setCurrentTemplate] = useState('');
 
   useEffect(() => {
     if (initialChannel) {
-      setSelectedTemplate(initialChannel);
       setPreview(initialChannel);
     }
   }, [initialChannel]);
 
-  const saveChangesAction = (value) => {
+  useEffect(() => {
+    if (modelOpen) {
+      setActiveIndex(0);
+    } else {
+      setActiveIndex(-1);
+    }
+  }, [modelOpen]);
+
+  const switchTabPreview = (value) => {
+    setPreview(value);
+  };
+
+  const channelNames = { email: 'n email', bot: ' slack bot', sms: ' text message' };
+  const tabNames = { sms: 'Sms', bot: 'Slack', email: 'Email' };
+  const saveChangesAction = () => {
     saveCurrentTemplate();
-    setPreview(preferredTemplate);
+    //setPreview(preferredTemplate);
   };
 
   const resetSavedAction = () => {
     resetToSavedAction();
-    setPreview(preferredTemplate);
   };
-
-  const channelNames = { email: 'n email', bot: ' slack bot', sms: ' text message', mail: 'mail' };
 
   let radioOptions = [];
 
@@ -104,6 +121,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     radioOptions = validChannels.map((eventKey, index) => {
       return {
         name: eventKey,
+        display: tabNames[eventKey],
         subject: templates[eventKey]?.subject,
         body: templates[eventKey]?.body,
         label: eventKey,
@@ -116,104 +134,99 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   return (
     <TemplateEditorContainer>
       <GoAForm>
-        <h4>Select Template</h4>
-        <GoAFormItem error={errors['body'] ?? ''} helpText={bodyEditorHintText}>
-          <GoARadioGroup
-            name="selectedTemplate"
-            value={selectedTemplate}
-            onChange={(_name, value) => {
-              setPreferredTemplate(value);
-              if (JSON.stringify(savedTemplates[selectedTemplate]) !== JSON.stringify(templates[selectedTemplate])) {
-                setSaveModal(true);
-              } else {
-                setSelectedTemplate(value);
-                setPreview(value);
-              }
-            }}
-            orientation="horizontal"
-          >
+        <GoAFormItem error={errors['body'] ?? ''}>
+          <Tabs activeIndex={activeIndex} changeTabCallback={(index: number) => switchTabPreview(validChannels[index])}>
             {radioOptions.map((item, key) => (
-              <GoARadio key={item.name} value={item.name} data-testid={item.dataTestId}>
-                <div style={{ display: 'flex', flexDirection: 'row' }}>
-                  <div>{item.name}</div>
-                  <div style={{ margin: '3px 0 0 5px' }}>
-                    {item.body.length > 0 && item.subject.length > 0 ? (
-                      <div>
-                        <div className="mobile">
-                          <GoASuccessBadge content="" type="success" />
+              <Tab
+                data-testid={`${item.display}-tab`}
+                label={
+                  <div style={{ display: 'flex', flexDirection: 'row' }}>
+                    <div>{item.display}</div>
+                    <div style={{ margin: '3px 0 0 5px' }}>
+                      {(item.body.length === 0 || item.subject.length === 0) && (
+                        <div>
+                          <div className="mobile">
+                            <GoAWarningBadge content="" type="warning" />
+                          </div>
+                          <div className="desktop">
+                            <GoAWarningBadge content="Unfilled" type="warning" />
+                          </div>
                         </div>
-                        <div className="desktop">
-                          <GoASuccessBadge content="Filled" type="success" />
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <div className="mobile">
-                          <GoAWarningBadge content="" type="warning" />
-                        </div>
-                        <div className="desktop">
-                          <GoAWarningBadge content="Unfilled" type="warning" />
-                        </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              </GoARadio>
+                }
+              >
+                <h3 data-testid="modal-title">{`${mainTitle}${
+                  channelNames[item.name] || ''
+                } template--${serviceName}`}</h3>
+
+                <>
+                  <h4>{subjectTitle}</h4>
+                  <GoAFormItem error={errors['subject'] ?? ''} helpText={subjectEditorHintText}>
+                    <MonacoDiv>
+                      <MonacoEditor
+                        onChange={(value) => {
+                          if (currentTemplate === item.name) {
+                            onSubjectChange(value, item.name);
+                          }
+                          setCurrentTemplate(item.name);
+                        }}
+                        value={templates[item.name]?.subject}
+                        {...subjectEditorConfig}
+                      />
+                    </MonacoDiv>
+                  </GoAFormItem>
+                  <h4>{bodyTitle}</h4>
+                  <GoAFormItem error={errors['body'] ?? ''} helpText={bodyEditorHintText}>
+                    <MonacoDivBody>
+                      <MonacoEditor
+                        value={templates[item.name]?.body}
+                        onChange={(value) => {
+                          onBodyChange(value, item.name);
+                        }}
+                        {...bodyEditorConfig}
+                      />
+                    </MonacoDivBody>
+                  </GoAFormItem>
+                </>
+              </Tab>
             ))}
-          </GoARadioGroup>
+          </Tabs>
         </GoAFormItem>
-
-        <h3 data-testid="modal-title">{`${mainTitle}${
-          channelNames[selectedTemplate] || ''
-        } template--${serviceName}`}</h3>
-
-        {selectedTemplate && (
-          <>
-            <h4>{subjectTitle}</h4>
-            <GoAFormItem error={errors['subject'] ?? ''} helpText={subjectEditorHintText}>
-              <MonacoDiv>
-                <MonacoEditor
-                  onChange={(value) => {
-                    if (currentTemplate === selectedTemplate) {
-                      onSubjectChange(value, selectedTemplate);
-                    }
-                    setCurrentTemplate(selectedTemplate);
-                  }}
-                  value={templates[selectedTemplate]?.subject}
-                  {...subjectEditorConfig}
-                />
-              </MonacoDiv>
-            </GoAFormItem>
-            <h4>{bodyTitle}</h4>
-            <GoAFormItem error={errors['body'] ?? ''} helpText={bodyEditorHintText}>
-              <MonacoDivBody>
-                <MonacoEditor
-                  value={templates[selectedTemplate]?.body}
-                  onChange={(value) => {
-                    onBodyChange(value, selectedTemplate);
-                  }}
-                  {...bodyEditorConfig}
-                />
-              </MonacoDivBody>
-            </GoAFormItem>
-          </>
-        )}
-        <EditTemplateActions>{actionButtons}</EditTemplateActions>
+        <EditTemplateActions>
+          {' '}
+          <GoAButton
+            onClick={() => {
+              setSaveModal(true);
+            }}
+            data-testid="template-form-cancel"
+            buttonType="secondary"
+            type="button"
+          >
+            {eventTemplateFormState.cancelOrBackActionText}
+          </GoAButton>
+          <GoAButton
+            onClick={() => saveAndReset()}
+            buttonType="primary"
+            data-testid="template-form-save"
+            type="submit"
+            disabled={!validateEventTemplateFields()}
+          >
+            {eventTemplateFormState.saveOrAddActionText}
+          </GoAButton>
+        </EditTemplateActions>
       </GoAForm>
-
       {/* Form */}
       <SaveFormModal
         open={saveModal}
-        initialValue={preferredTemplate}
-        errors={errors}
-        onDontSave={(type) => {
+        onDontSave={() => {
           resetSavedAction();
-          setSelectedTemplate(preferredTemplate);
           setSaveModal(false);
         }}
-        onSave={(template) => {
-          setSelectedTemplate(preferredTemplate);
-          saveChangesAction(template);
+        onSave={() => {
+          saveChangesAction();
+          saveAndReset();
           setSaveModal(false);
         }}
         onCancel={() => {
