@@ -28,6 +28,13 @@ export default function (state: Session = SESSION_INIT, action: ActionType): Ses
           ...action.payload,
         },
       };
+    case 'session/elementIndicator':
+      return {
+        ...state,
+        elementIndicator: {
+          ...action.payload,
+        },
+      };
 
     case 'session/logout':
       return SESSION_INIT;
