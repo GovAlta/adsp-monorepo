@@ -81,7 +81,9 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 value={type.name}
                 data-testid="form-name"
                 aria-label="name"
-                onChange={(e) => setType({ ...type, name: e.target.value, id: isEdit ? type.id : toKebabName(e.target.value) })}
+                onChange={(e) =>
+                  setType({ ...type, name: e.target.value, id: isEdit ? type.id : toKebabName(e.target.value) })
+                }
               />
             </GoAFormItem>
             <GoAFormItem>
@@ -157,7 +159,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
-          <GoAButton data-testid="form-cancel" buttonType="tertiary" type="button" onClick={onCancel}>
+          <GoAButton data-testid="form-cancel" buttonType="secondary" type="button" onClick={onCancel}>
             Cancel
           </GoAButton>
           <GoAButton

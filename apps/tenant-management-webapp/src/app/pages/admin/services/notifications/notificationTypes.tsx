@@ -694,7 +694,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                       setEventTemplateFormState(addNewEventTemplateContent);
                     }}
                     data-testid="template-form-cancel"
-                    buttonType="tertiary"
+                    buttonType="secondary"
                     type="button"
                   >
                     {eventTemplateFormState.cancelOrBackActionText}
