@@ -126,7 +126,6 @@ const EventDefinitionsListComponent: FunctionComponent<EventDefinitionsListCompo
 export const EventDefinitionsList = styled(EventDefinitionsListComponent)`
   display: flex-inline-table;
   & .group-name {
-    text-transform: capitalize;
     font-size: var(--fs-lg);
     font-weight: var(--fw-bold);
   }
