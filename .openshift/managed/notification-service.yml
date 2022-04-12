@@ -320,6 +320,8 @@ objects:
                     secretKeyRef:
                       key: database-tls
                       name: notification-service-mongodb${NAME_SUFFIX}
+                - name: NODE_EXTRA_CA_CERTS
+                  value: /etc/certs/notify.pem
               imagePullPolicy: IfNotPresent
               name: notification-service
               ports:
@@ -333,6 +335,10 @@ objects:
                 requests:
                   cpu: 20m
                   memory: 50Mi
+              volumeMounts:
+                - name: cert-volume
+                  mountPath: /etc/certs
+                  readOnly: true
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
               readinessProbe:
@@ -355,6 +361,13 @@ objects:
                 periodSeconds: 60
                 successThreshold: 1
                 failureThreshold: 3
+          volumes:
+            - secret:
+                items:
+                  - key: certificate
+                    path: notify.pem
+                secretName: ab-notify-cert
+              name: cert-volume
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           schedulerName: default-scheduler
