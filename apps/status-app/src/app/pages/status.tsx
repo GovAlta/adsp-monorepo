@@ -83,13 +83,24 @@ const ServiceStatusPage = (): JSX.Element => {
           <a href={`mailto: ${contactEmail}`}>contact support</a> for additional information, or to report issues, or
           for any other inquiries regarding service statuses.
         </p>
-        <div className="timezone">
-          <i>All times are in {timeZone}</i>
-        </div>
         <br />
         {allApplicationsNotices.length > 0 && <AllApplicationsNotices />}
         <br />
         {applications?.length === 0 && <div>There are no services available by this provider</div>}
+
+        {applications?.length > 0 && (
+          <div className="title-line">
+            <Grid>
+              <GridItem md={7}>
+                <h3>Service specific statuses and notices</h3>
+              </GridItem>
+              <GridItem md={5}>
+                {allApplicationsNotices?.length === 0 && <div className="timezone-text">Time Zone: {timeZone}</div>}
+              </GridItem>
+            </Grid>
+          </div>
+        )}
+
         <Grid>
           {applications.map((app, index) => {
             return (
@@ -162,9 +173,16 @@ const ServiceStatusPage = (): JSX.Element => {
   const AllApplicationsNotices = () => {
     return (
       <AllApplications>
-        <label>
-          <b>All services notice</b>
-        </label>
+        <div className="title-line">
+          <Grid>
+            <GridItem md={6}>
+              <h3>All services notice</h3>
+            </GridItem>
+            <GridItem md={6}>
+              <div className="timezone-text">Time Zone: {timeZone}</div>
+            </GridItem>
+          </Grid>
+        </div>
         {allApplicationsNotices.map((notice) => {
           return (
             <div data-testid="all-application-notice">
@@ -298,6 +316,18 @@ const ServiceStatusesCss = styled.div`
 
 const AllApplications = styled.div`
   margin-right: 0.5rem;
+  title-line: {
+    line-height: 2rem;
+    margin-bottom: 0.5rem;
+  }
+  .goa-callout {
+    margin: 0px !important;
+  }
+  .timezone-text {
+    font-size: 1rem;
+    line-height: 2rem;
+    text-align: right;
+  }
 `;
 
 export default ServiceStatusPage;
