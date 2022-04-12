@@ -48,7 +48,7 @@ const ServiceStatusPage = (): JSX.Element => {
     contact: state.configuration.contact,
   }));
 
-  const contactEmail = contact?.contactEmail || 'DIO@gov.ab.ca';
+  const contactEmail = contact?.contactEmail || 'adsp@gov.ab.ca';
 
   const { allApplicationsNotices } = useSelector((state: RootState) => ({
     allApplicationsNotices: state.notice?.allApplicationsNotices,

@@ -370,7 +370,7 @@ Then('the user views the release info and DIO contact info', function () {
     .releaseContactInfo()
     .invoke('text')
     .then((text) => {
-      expect(text).to.match(/This service is in .+ release.+ DIO@gov.ab.ca/g);
+      expect(text).to.match(/This service is in .+ release.+ adsp@gov.ab.ca/g);
     });
 });
 
