@@ -7,7 +7,7 @@ import { buildSuggestions } from '@lib/autoComplete';
 import { Template } from '@store/notification/models';
 import { SaveFormModal } from './saveModal';
 
-import { GoAWarningBadge, GoAInfoBadge } from '@abgov/react-components/experimental';
+import { GoAWarningBadge, GoAInfoBadge, GoABadge } from '@abgov/react-components/experimental';
 import { Tab, Tabs } from '@components/Tabs';
 import { GoAButton } from '@abgov/react-components';
 interface TemplateEditorProps {
@@ -104,8 +104,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     setPreview(value);
   };
 
-  const channelNames = { email: 'n email', bot: ' slack bot', sms: ' text message' };
-  const tabNames = { sms: 'Sms', bot: 'Slack', email: 'Email' };
+  const tabNames = { sms: 'SMS', bot: 'Slack', email: 'Email' };
   const saveChangesAction = () => {
     saveCurrentTemplate();
   };
@@ -138,6 +137,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             {radioOptions.map((item, key) => (
               <Tab
                 data-testid={`${item.display}-tab`}
+                key={item.name}
                 label={
                   <div style={{ display: 'flex', flexDirection: 'row' }}>
                     <div>{item.display}</div>
@@ -148,20 +148,20 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                       item.subject.length !== 0 ? (
                         <div>
                           <div className="mobile">
-                            <GoAInfoBadge content="" type="information" />
+                            <GoABadge type="information" icon="information" />
                           </div>
                           <div className="desktop">
-                            <GoAInfoBadge content="Unsaved" type="information" />
+                            <GoABadge type="information" content="Unsaved" icon="information" />
                           </div>
                         </div>
                       ) : (
                         (item.body.length === 0 || item.subject.length === 0) && (
                           <div>
                             <div className="mobile">
-                              <GoAWarningBadge content="" type="warning" />
+                              <GoABadge type="warning" icon="warning" />
                             </div>
                             <div className="desktop">
-                              <GoAWarningBadge content="Unfilled" type="warning" />
+                              <GoABadge type="warning" content="Unfilled" icon="warning" />
                             </div>
                           </div>
                         )
@@ -170,9 +170,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   </div>
                 }
               >
-                <h3 data-testid="modal-title">{`${mainTitle}${
-                  channelNames[item.name] || ''
-                } template--${serviceName}`}</h3>
+                <h3 data-testid="modal-title">{`${mainTitle}${[item.name] || ''} template--${serviceName}`}</h3>
 
                 <>
                   <h4>{subjectTitle}</h4>

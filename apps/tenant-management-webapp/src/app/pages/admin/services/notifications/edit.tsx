@@ -93,8 +93,13 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               />
             </GoAFormItem>
             <GoAFormItem>
-              <label>Type ID</label>
-              <IdField data-testid={`form-id`}>{type.id || ''}</IdField>
+              <div style={{ display: 'flex', flexDirection: 'row' }}>
+                <label>Type ID</label>
+
+                <div style={{ margin: '3px 10px' }}>
+                  <IdField data-testid={`form-id`}>{type.id || ''}</IdField>
+                </div>
+              </div>
             </GoAFormItem>
             <GoAFormItem>
               <label>Description</label>

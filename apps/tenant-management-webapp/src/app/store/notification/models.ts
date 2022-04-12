@@ -4,6 +4,7 @@ export interface NotificationItem {
   events: Array<EventItem>;
   subscriberRoles: string[];
   channels: string[];
+  sortedChannels?: string[];
   id: string;
   publicSubscribe: boolean;
   customized?: boolean;

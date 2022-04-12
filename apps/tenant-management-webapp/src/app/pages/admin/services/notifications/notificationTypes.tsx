@@ -27,16 +27,16 @@ import { NotificationItem, baseTemplate, Template, EventItem } from '@store/noti
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 import { EditIcon } from '@components/icons/EditIcon';
-import { subjectEditorConfig, bodyEditorConfig } from './emailPreviewEditor/config';
+import { subjectEditorConfig, bodyEditorConfig } from './previewEditor/config';
 import {
   PreviewTemplateContainer,
   NotificationTemplateEditorContainer,
   Modal,
   BodyGlobalStyles,
   ModalContent,
-} from './emailPreviewEditor/styled-components';
-import { TemplateEditor } from './emailPreviewEditor/TemplateEditor';
-import { PreviewTemplate } from './emailPreviewEditor/PreviewTemplate';
+} from './previewEditor/styled-components';
+import { TemplateEditor } from './previewEditor/TemplateEditor';
+import { PreviewTemplate } from './previewEditor/PreviewTemplate';
 import { dynamicGeneratePayload } from '@lib/dynamicPlaceHolder';
 import { convertToSuggestion } from '@lib/autoComplete';
 import { useDebounce } from '@lib/useDebounce';
@@ -49,6 +49,7 @@ const emptyNotificationType: NotificationItem = {
   subscriberRoles: [],
   // TODO: This is hardcoded to email for now. Needs to be updated after additional channels are supported in the UI.
   channels: [],
+  sortedChannels: [],
   id: null,
   publicSubscribe: false,
   customized: false,
@@ -170,12 +171,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     }
   }, [notification?.notificationTypes]);
 
-  function resetEventEditorForm() {
-    setTemplateEditErrors({
-      subject: '',
-      body: '',
-    });
-  }
   function reset() {
     setShowTemplateForm(false);
     setEventTemplateFormState(addNewEventTemplateContent);
@@ -353,7 +348,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           setFormTitle('Edit notification type');
                         }}
                       >
-                        <NotificationBorder className="smallPadding" style={{ height: '26px', display: 'flex' }}>
+                        <NotificationBorder className="smallPadding flex">
                           <EditIcon size="small" />
                         </NotificationBorder>
                       </a>
@@ -408,7 +403,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 {notificationType.events.map((event, key) => (
                   <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
                     <EventBorder>
-                      <div className="flex columnFlex" style={{ height: '168px' }}>
+                      <div className="flex columnFlex gridBoxHeight">
                         <div className="rowFlex">
                           <div className="flex1">
                             {event.namespace}:{event.name}
@@ -432,13 +427,13 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                             </MaxHeight>
                           </div>
                         </div>
-                        <div style={{ marginTop: 'auto' }}>
+                        <div className="marginTopAuto">
                           <div className="flex1 flex endAlign">
                             <div className="flex3 endAlign">
-                              <div style={{ display: 'flex', flexDirection: 'row' }}>
-                                {notificationType.channels.map((channel) => (
+                              <div className="flex rowFlex">
+                                {notificationType.sortedChannels.map((channel) => (
                                   <div
-                                    style={{ height: '23px', margin: '0 9px 0 9px', flex: '1' }}
+                                    className="nonCoreIconPadding flex1"
                                     data-testid={`${notificationType.name}:${channel}`}
                                   >
                                     {channelIcons[channel]}
@@ -455,7 +450,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                 ))}
                               </div>
                             </div>
-                            <div className="flex3" style={{ textAlignLast: 'right' }}>
+                            <div className="flex3 textAlignLastRight">
                               <a
                                 data-testid={`edit-event-${event.namespace}:${event.name}`}
                                 onClick={() => {
@@ -464,7 +459,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                   setEventTemplateFormState(editEventTemplateContent);
                                   setShowTemplateForm(true);
                                   setCoreEvent(false);
-                                  setCurrentChannel(notificationType.channels[0]);
+                                  setCurrentChannel(notificationType.sortedChannels[0]);
                                 }}
                               >
                                 Edit
@@ -545,19 +540,19 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                   <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
                     <EventBorder>
                       <MaxHeight height={168}>
-                        <div className="flex columnFlex" style={{ height: '168px' }}>
+                        <div className="flex columnFlex gridBoxHeight">
                           <div className="rowFlex">
                             <div className="flex1">
                               {event.namespace}:{event.name}
                             </div>
                           </div>
-                          <div style={{ marginTop: 'auto' }}>
+                          <div className="marginTopAuto">
                             <div className="flex1 flex endAlign">
                               <div className="flex5 endAlign">
-                                <div style={{ display: 'flex', flexDirection: 'row' }}>
-                                  {notificationType.channels.map((channel) => (
+                                <div className="flex rowFlex">
+                                  {notificationType.sortedChannels.map((channel) => (
                                     <div
-                                      style={{ height: '23px', margin: '0 4px 0 4px', flex: '1' }}
+                                      className="flex1 coreIconPadding"
                                       data-testid={`${notificationType.name}:${channel}`}
                                     >
                                       {channelIcons[channel]}
@@ -574,10 +569,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                   ))}
                                 </div>
                               </div>
-                              <div className="flex4" style={{ textAlignLast: 'right' }}>
+                              <div className="flex4 textAlignLastRight">
                                 {event.customized && (
                                   <a
-                                    style={{ marginRight: '10px', fontSize: '15px' }}
+                                    className="resetButton"
                                     onClick={() => {
                                       setSelectedEvent(event);
                                       setSelectedType(notificationType);
@@ -591,13 +586,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                 )}
                                 <a
                                   data-testid={`edit-event-${event.namespace}:${event.name}`}
+                                  className="coreEditButton"
                                   onClick={() => {
                                     setSelectedEvent(event);
                                     setSelectedType(notificationType);
                                     setEventTemplateFormState(editEventTemplateContent);
                                     setShowTemplateForm(true);
                                     setCoreEvent(false);
-                                    setCurrentChannel(notificationType.channels[0]);
+                                    setCurrentChannel(notificationType.sortedChannels[0]);
                                   }}
                                 >
                                   Edit
@@ -725,7 +721,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               subjectTitle="Subject"
               templates={templates}
               initialChannel={currentChannel}
-              validChannels={selectedType.channels}
+              validChannels={selectedType.sortedChannels}
               serviceName={serviceName}
               onSubjectChange={(value, channel) => {
                 let newTemplates = templates;
@@ -824,6 +820,20 @@ const MaxHeight = styled.div`
 `;
 
 const NotificationStyles = styled.div`
+  .gridBoxHeight {
+    height: 10.5rem;
+  }
+
+  .nonCoreIconPadding {
+    height: 23px;
+    margin: 0 9px 0 9px;
+  }
+
+  .coreIconPadding {
+    height: 23px;
+    margin: 0 4px 0 4px;
+  }
+
   .smallFont {
     font-size: 12px;
   }
@@ -920,7 +930,7 @@ const NotificationStyles = styled.div`
   }
 
   .icon-badge-container {
-    margin-top: 20px;
+    margin-top: 5px;
     position: relative;
   }
 
@@ -931,19 +941,38 @@ const NotificationStyles = styled.div`
 
   .icon-badge {
     background-color: #feba35;
-    font-size: 12px;
-    font-weight: bold;
+    font-size: 15px;
+    font-weight: bolder;
     color: black;
     text-align: center;
+    font-family: sans-serif;
     width: 18px;
     height: 18px;
     border-radius: 100%;
     position: relative;
     top: -35px;
     left: 17px;
+    border: solid 1px;
   }
 
   .badgePadding > div {
     padding: 2px 0 2px 3px;
+  }
+
+  .marginTopAuto {
+    margin-top: auto;
+  }
+
+  .textAlignLastRight {
+    text-align-last: right;
+  }
+
+  .resetButton {
+    margin-right: 10px;
+    font-size: 15px;
+  }
+
+  .coreEditButton {
+    font-size: 15px;
   }
 `;

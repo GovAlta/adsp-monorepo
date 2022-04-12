@@ -17,6 +17,7 @@ describe('NotificationTypes Page', () => {
           name: 'Child care subsidy application',
           description: 'Lorem ipsum dolor sit amet',
           channels: ['email', 'bot'],
+          sortedChannels: ['email', 'bot'],
           events: [
             {
               namespace: 'file-service',
@@ -41,6 +42,7 @@ describe('NotificationTypes Page', () => {
           name: 'Some other subsidy application',
           description: 'Lorem ipsum dolor sit amet',
           channels: ['email', 'bot'],
+          sortedChannels: ['email', 'bot'],
           events: [
             {
               namespace: 'file-service',
@@ -74,11 +76,11 @@ describe('NotificationTypes Page', () => {
               templates: {
                 email: { subject: 'sdd', body: 'sds' },
               },
-              channels: [],
             },
           ],
           subscriberRoles: [],
           channels: ['email'],
+          sortedChannels: ['email'],
           id: 'superCoreNotificationStuff',
           publicSubscribe: false,
           manageSubscribe: true,
