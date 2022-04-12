@@ -7,7 +7,7 @@ import { buildSuggestions } from '@lib/autoComplete';
 import { Template } from '@store/notification/models';
 import { SaveFormModal } from './saveModal';
 
-import { GoAWarningBadge } from '@abgov/react-components/experimental';
+import { GoAWarningBadge, GoAInfoBadge } from '@abgov/react-components/experimental';
 import { Tab, Tabs } from '@components/Tabs';
 import { GoAButton } from '@abgov/react-components';
 interface TemplateEditorProps {
@@ -108,7 +108,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   const tabNames = { sms: 'Sms', bot: 'Slack', email: 'Email' };
   const saveChangesAction = () => {
     saveCurrentTemplate();
-    //setPreview(preferredTemplate);
   };
 
   const resetSavedAction = () => {
@@ -143,15 +142,29 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   <div style={{ display: 'flex', flexDirection: 'row' }}>
                     <div>{item.display}</div>
                     <div style={{ margin: '3px 0 0 5px' }}>
-                      {(item.body.length === 0 || item.subject.length === 0) && (
+                      {(savedTemplates[item.name]?.body !== templates[item.name]?.body ||
+                        savedTemplates[item.name]?.subject !== templates[item.name]?.subject) &&
+                      item.body.length !== 0 &&
+                      item.subject.length !== 0 ? (
                         <div>
                           <div className="mobile">
-                            <GoAWarningBadge content="" type="warning" />
+                            <GoAInfoBadge content="" type="information" />
                           </div>
                           <div className="desktop">
-                            <GoAWarningBadge content="Unfilled" type="warning" />
+                            <GoAInfoBadge content="Unsaved" type="information" />
                           </div>
                         </div>
+                      ) : (
+                        (item.body.length === 0 || item.subject.length === 0) && (
+                          <div>
+                            <div className="mobile">
+                              <GoAWarningBadge content="" type="warning" />
+                            </div>
+                            <div className="desktop">
+                              <GoAWarningBadge content="Unfilled" type="warning" />
+                            </div>
+                          </div>
+                        )
                       )}
                     </div>
                   </div>
@@ -198,7 +211,11 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           {' '}
           <GoAButton
             onClick={() => {
-              setSaveModal(true);
+              if (JSON.stringify(savedTemplates) !== JSON.stringify(templates)) {
+                setSaveModal(true);
+              } else {
+                resetSavedAction();
+              }
             }}
             data-testid="template-form-cancel"
             buttonType="secondary"

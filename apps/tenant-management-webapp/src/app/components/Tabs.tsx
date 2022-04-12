@@ -22,7 +22,9 @@ function Tabs(props: TabsProps): JSX.Element {
 
   function selectTab(index: number) {
     setActiveTabIndex(index);
-    props.changeTabCallback(index);
+    if (typeof props.changeTabCallback === 'function') {
+      props.changeTabCallback(index);
+    }
   }
 
   useEffect(() => {

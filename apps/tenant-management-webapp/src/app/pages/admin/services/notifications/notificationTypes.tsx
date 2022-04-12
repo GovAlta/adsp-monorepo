@@ -13,7 +13,6 @@ import { FetchRealmRoles } from '@store/tenant/actions';
 import { isDuplicatedNotificationName } from './validation';
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
-import MailIcon from '@assets/icons/mail-outline.svg';
 import { ReactComponent as Mail } from '@assets/icons/mail.svg';
 import { ReactComponent as Slack } from '@assets/icons/slack.svg';
 import { ReactComponent as Chat } from '@assets/icons/chat.svg';
@@ -285,8 +284,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   };
 
   const editEventTemplateContent = {
-    saveOrAddActionText: 'Save Templates',
-    cancelOrBackActionText: 'Cancel',
+    saveOrAddActionText: 'Save all',
+    cancelOrBackActionText: 'Close',
     mainTitle: 'Edit a',
   };
   const addNewEventTemplateContent = {
@@ -299,12 +298,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const eventTemplateEditHintText =
     "*GOA default header and footer wrapper is applied if the template doesn't include proper <html> opening and closing tags";
   const validateEventTemplateFields = () => {
-    // if (subject.length === 0 || body.length === 0) {
-    //   return false;
-    // }
-    // if (templateEditErrors.subject || templateEditErrors.body) {
-    //   return false;
-    // }
     try {
       handlebars.parse(body);
       handlebars.parse(subject);
@@ -552,47 +545,64 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                   <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
                     <EventBorder>
                       <MaxHeight height={168}>
-                        <div className="rowFlex">
-                          <div className="flex1">
-                            {event.namespace}:{event.name}
-                          </div>
-                        </div>
-                        <div className="columnFlex height-100">
-                          <div className="flex1 flex flexEndAlign">
+                        <div className="flex columnFlex" style={{ height: '168px' }}>
+                          <div className="rowFlex">
                             <div className="flex1">
-                              <MailButton>
-                                <img src={MailIcon} alt="non-interactive email icon" data-testid="icon-mail" />
-                              </MailButton>
-                              {event.customized && <SmallText>Edited</SmallText>}
+                              {event.namespace}:{event.name}
                             </div>
-                            <div className="rightAlignEdit flex1">
-                              {event.customized && (
+                          </div>
+                          <div style={{ marginTop: 'auto' }}>
+                            <div className="flex1 flex endAlign">
+                              <div className="flex5 endAlign">
+                                <div style={{ display: 'flex', flexDirection: 'row' }}>
+                                  {notificationType.channels.map((channel) => (
+                                    <div
+                                      style={{ height: '23px', margin: '0 4px 0 4px', flex: '1' }}
+                                      data-testid={`${notificationType.name}:${channel}`}
+                                    >
+                                      {channelIcons[channel]}
+                                      {(event.templates[channel].subject.length === 0 ||
+                                        event.templates[channel].body.length === 0) && (
+                                        <div
+                                          className="icon-badge"
+                                          data-testid={`${notificationType.name}:${channel}:badge`}
+                                        >
+                                          !
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="flex4" style={{ textAlignLast: 'right' }}>
+                                {event.customized && (
+                                  <a
+                                    style={{ marginRight: '10px', fontSize: '15px' }}
+                                    onClick={() => {
+                                      setSelectedEvent(event);
+                                      setSelectedType(notificationType);
+                                      setCoreEvent(true);
+                                      setShowEventDeleteConfirmation(true);
+                                    }}
+                                    data-testid="delete-event"
+                                  >
+                                    Reset
+                                  </a>
+                                )}
                                 <a
-                                  style={{ marginRight: '10px', fontSize: '15px' }}
+                                  data-testid={`edit-event-${event.namespace}:${event.name}`}
                                   onClick={() => {
                                     setSelectedEvent(event);
                                     setSelectedType(notificationType);
-                                    setCoreEvent(true);
-                                    setShowEventDeleteConfirmation(true);
+                                    setEventTemplateFormState(editEventTemplateContent);
+                                    setShowTemplateForm(true);
+                                    setCoreEvent(false);
+                                    setCurrentChannel(notificationType.channels[0]);
                                   }}
-                                  data-testid="delete-event"
                                 >
-                                  Reset
+                                  Edit
                                 </a>
-                              )}
-                              <a
-                                data-testid="edit-event"
-                                style={{ fontSize: '15px' }}
-                                onClick={() => {
-                                  setSelectedEvent(event);
-                                  setSelectedType(notificationType);
-                                  setEventTemplateFormState(editEventTemplateContent);
-                                  setShowTemplateForm(true);
-                                  setCoreEvent(true);
-                                }}
-                              >
-                                Edit
-                              </a>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -804,17 +814,9 @@ const EventBorder = styled.div`
   padding: 20px;
 `;
 
-const SmallText = styled.div`
-  font-size: small;
-`;
-
 const EventButtonWrapper = styled.div`
   text-align: center;
   margin: 19px 0;
-`;
-
-const MailButton = styled.div`
-  max-width: 32px;
 `;
 
 const MaxHeight = styled.div`
@@ -928,14 +930,14 @@ const NotificationStyles = styled.div`
   }
 
   .icon-badge {
-    background-color: red;
+    background-color: #feba35;
     font-size: 12px;
-    font-weight: 700;
-    color: white;
+    font-weight: bold;
+    color: black;
     text-align: center;
     width: 18px;
     height: 18px;
-    border-radius: 45%;
+    border-radius: 100%;
     position: relative;
     top: -35px;
     left: 17px;
