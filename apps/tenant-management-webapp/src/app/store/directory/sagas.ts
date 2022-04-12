@@ -136,16 +136,18 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
     const result = yield call([api, api.fetchEntryDetail], action.data);
     if (result) {
       const service = action.data;
+      service.loaded = true;
       if (result.metadata) {
         service.metadata = result.metadata;
       } else {
         service.metadata = null;
       }
-      service.loaded = true;
+
       yield put(fetchEntryDetailSuccess(service));
     }
   } catch (err) {
     const service = action.data;
+    service.loaded = true;
     service.metadata = null;
     yield put(fetchEntryDetailSuccess(service));
   }
