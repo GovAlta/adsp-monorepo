@@ -581,20 +581,37 @@ Then('the user views the status of {string} changed to the first unused status',
 
 Then(
   'the user views the event details of {string} application status changed from {string} to {string} for subscriber of {string}',
-  function (appName, originalStatus, newStatus, userID) {
-    const newSubjectStatus =
-      newStatus.replace('{new status}', 'Autotest status has changed to ') + afterStatus.toLowerCase();
-    const originalSubjectStatus =
-      originalStatus.replace('{original status}', 'The original status was: ') + currentStatus.toLowerCase();
+  function (appName, originalStatus, newStatus, sentTo) {
+    const orgSubjectStatus = originalStatus.match(/(.*{original status}.*)/g);
+    if (orgSubjectStatus == null) {
+      currentStatus = originalStatus;
+      cy.log('orgSubjectStatus is null: ' + currentStatus);
+    } else {
+      currentStatus =
+        originalStatus.replace('{original status}', 'The original status was: ') + currentStatus.toLowerCase();
+      cy.log('orgSubjectStatus is not null: ' + currentStatus);
+    }
+    const newSubjectStatus = newStatus.match(/(.*{new status}.*)/g);
+    if (newSubjectStatus == null) {
+      currentStatus = newStatus;
+      cy.log('newSubjectStatus is null: ' + afterStatus);
+    } else {
+      afterStatus = newStatus.replace('{new status}', 'The new status was: ') + afterStatus.toLowerCase();
+      cy.log('newSubjectStatus is not null: ' + afterStatus);
+    }
+    // const newSubjectStatus = newStatus.replace('{new status}', 'The new status is now: ') + afterStatus.toLowerCase();
+    cy.log('newSubjectStatus is: ' + newSubjectStatus);
+    // const originalSubjectStatus =
+    //   originalStatus.replace('{original status}', 'The original status was: ') + currentStatus.toLowerCase();
     tenantAdminObj
       .eventDetails()
       .invoke('text')
       .then((eventDetails) => {
-        if (newStatus != 'Empty' || userID != 'Empty') {
+        if (newStatus != 'Empty' || sentTo != 'Empty') {
           expect(eventDetails).to.contain(appName);
-          expect(eventDetails).to.contain(userID);
-          expect(eventDetails).to.contain(originalSubjectStatus);
-          expect(eventDetails).to.contain(newSubjectStatus);
+          expect(eventDetails).to.contain(sentTo);
+          expect(eventDetails).to.contain(currentStatus);
+          expect(eventDetails).to.contain(afterStatus);
         }
       });
   }
