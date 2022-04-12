@@ -70,23 +70,23 @@ const ServiceStatusPage = (): JSX.Element => {
 
   const timeZone = new Date().toString().split('(')[1].split(')')[0];
 
-  const services = () => {
+  const Services = () => {
     return (
       <div className="small-container">
         <PageLoader />
         <Title data-testid="service-name">All {capitalizeFirstLetter(tenantName)} services</Title>
-        <br />
-        <p>
+        <div className="section-vs">
           These are the services currently being offered by{' '}
           {location.pathname.slice(1) ? capitalizeFirstLetter(tenantName) : 'the Alberta Digital Service Platform'}. All
           statuses are in real time and reflect current states of the individual services. Please{' '}
           <a href={`mailto: ${contactEmail}`}>contact support</a> for additional information, or to report issues, or
           for any other inquiries regarding service statuses.
-        </p>
-        <br />
-        {allApplicationsNotices.length > 0 && <AllApplicationsNotices />}
-        <br />
-        {applications?.length === 0 && <div>There are no services available by this provider</div>}
+        </div>
+
+        <div className="section-vs-small">
+          {allApplicationsNotices.length > 0 && <AllApplicationsNotices />}
+          {applications?.length === 0 && <div>There are no services available by this provider</div>}
+        </div>
 
         {applications?.length > 0 && (
           <div className="title-line">
@@ -94,8 +94,11 @@ const ServiceStatusPage = (): JSX.Element => {
               <GridItem md={7}>
                 <h3>Service specific statuses and notices</h3>
               </GridItem>
+              <div className="line-vs" />
               <GridItem md={5}>
-                {allApplicationsNotices?.length === 0 && <div className="timezone-text">Time Zone: {timeZone}</div>}
+                {allApplicationsNotices?.length === 0 && (
+                  <div className="timezone-text">All times are in {timeZone}</div>
+                )}
               </GridItem>
             </Grid>
           </div>
@@ -137,7 +140,7 @@ const ServiceStatusPage = (): JSX.Element => {
       }
       return <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />;
     } else {
-      return services();
+      return Services();
     }
   };
 
@@ -179,7 +182,7 @@ const ServiceStatusPage = (): JSX.Element => {
               <h3>All services notice</h3>
             </GridItem>
             <GridItem md={6}>
-              <div className="timezone-text">Time Zone: {timeZone}</div>
+              <div className="timezone-text">All times are in {timeZone}</div>
             </GridItem>
           </Grid>
         </div>
@@ -221,11 +224,10 @@ const ServiceStatusPage = (): JSX.Element => {
           <section>
             <SectionView />
           </section>
-          <br />
           {applications && (
             <div className="small-container">
               <div>
-                <h2>Sign up for notifications</h2>
+                <h3>Sign up for notifications</h3>
                 <div>
                   Sign up to receive notifications by email for status change of the individual services and notices.
                   Please contact <a href={`mailto: ${contactEmail}`}>{contactEmail}</a> for additional information, or
@@ -281,12 +283,28 @@ const ServiceStatusPage = (): JSX.Element => {
 const Title = styled.h1`
   && {
     font-weight: var(--fw-regular);
+    margin-bottom: 1.5rem;
   }
 `;
 
 const ServiceStatusesCss = styled.div`
+  .section-vs {
+    margin-bottom: 5rem;
+  }
+
+  .section-vs-small {
+    margin-bottom: 2.5rem;
+  }
+
+  .line-vs {
+    margin-bottom: 1.5rem;
+  }
+
+  h3 {
+    margin-bottom: 1.5rem !important;
+  }
   .small-container {
-    max-width: 43.75rem;
+    max-width: 50rem;
     padding: 1.25rem;
     margin: 0 auto;
     div.goa-form div {
@@ -324,7 +342,8 @@ const AllApplications = styled.div`
     margin: 0px !important;
   }
   .timezone-text {
-    font-size: 1rem;
+    font-size: 0.875rem;
+    color: #666666;
     line-height: 2rem;
     text-align: right;
   }
