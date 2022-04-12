@@ -121,7 +121,7 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
-          <GoAButton data-testid="form-cancel" buttonType="tertiary" type="button" onClick={tryCancel}>
+          <GoAButton data-testid="form-cancel" buttonType="secondary" type="button" onClick={tryCancel}>
             Cancel
           </GoAButton>
           <GoAButton

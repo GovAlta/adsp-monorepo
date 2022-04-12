@@ -99,7 +99,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
         </GoAForm>
       </GoAModalContent>
       <GoAModalActions>
-        <GoAButton data-testid="event-form-cancel" buttonType="tertiary" type="button" onClick={onCancel}>
+        <GoAButton data-testid="event-form-cancel" buttonType="secondary" type="button" onClick={onCancel}>
           Cancel
         </GoAButton>
         <GoAButton

@@ -77,7 +77,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
       </GoAModalContent>
       <GoAModalActions>
         <GoAButton
-          buttonType="tertiary"
+          buttonType="secondary"
           data-testid="directory-modal-cancel"
           onClick={() => {
             props.onCancel();

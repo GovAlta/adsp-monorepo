@@ -3,6 +3,9 @@ export interface Indicator {
   message?: string;
 }
 
+export interface ElementIndicator {
+  show: boolean;
+}
 export interface Session {
   authenticated?: boolean;
   clientId?: string;
@@ -20,6 +23,7 @@ export interface Session {
   resourceAccess?: Record<string, { roles: string[] }>;
   credentials?: Credentials;
   indicator?: Indicator;
+  elementIndicator?: ElementIndicator;
 }
 
 export interface Credentials {
