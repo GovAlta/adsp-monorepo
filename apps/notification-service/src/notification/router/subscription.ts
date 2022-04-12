@@ -508,6 +508,7 @@ export const createSubscriptionRouter = ({
   subscriptionRouter.get(
     '/types/:type/subscriptions',
     validateTypeHandler,
+    createValidationHandler(query('top').optional().isInt(), query('after').optional().isString()),
     getNotificationType,
     getTypeSubscriptions(apiId, subscriptionRepository)
   );
@@ -553,7 +554,11 @@ export const createSubscriptionRouter = ({
     deleteTypeSubscription(subscriptionRepository)
   );
 
-  subscriptionRouter.get('/subscribers', getSubscribers(apiId, subscriptionRepository));
+  subscriptionRouter.get(
+    '/subscribers',
+    createValidationHandler(query('top').optional().isInt(), query('after').optional().isString()),
+    getSubscribers(apiId, subscriptionRepository)
+  );
   subscriptionRouter.post('/subscribers', createSubscriber(apiId, subscriptionRepository));
 
   subscriptionRouter.get(
@@ -614,6 +619,7 @@ export const createSubscriptionRouter = ({
   subscriptionRouter.get(
     '/subscribers/:subscriber/subscriptions',
     validateSubscriberHandler,
+    createValidationHandler(query('top').optional().isInt(), query('after').optional().isString()),
     getSubscriber(subscriptionRepository),
     getSubscriberSubscriptions(apiId, subscriptionRepository)
   );
