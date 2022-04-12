@@ -280,7 +280,7 @@ const ServiceStatusPage = (): JSX.Element => {
   );
 };
 
-const Title = styled.h1`
+const Title = styled.h2`
   && {
     font-weight: var(--fw-regular);
     margin-bottom: 1.5rem;
