@@ -307,7 +307,7 @@ describe('NotificationTypes Page', () => {
   });
 
   it('edit an event', async () => {
-    const { getAllByTestId, queryByTestId, getByLabelText } = render(
+    const { getAllByTestId, queryByTestId } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>

@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import type { NotificationItem, Channel } from '@store/notification/models';
+import type { NotificationItem } from '@store/notification/models';
 import { GoAButton, GoADropdownOption } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';

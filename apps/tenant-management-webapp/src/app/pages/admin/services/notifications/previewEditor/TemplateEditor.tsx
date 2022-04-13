@@ -7,7 +7,7 @@ import { buildSuggestions } from '@lib/autoComplete';
 import { Template } from '@store/notification/models';
 import { SaveFormModal } from './saveModal';
 
-import { GoAWarningBadge, GoAInfoBadge, GoABadge } from '@abgov/react-components/experimental';
+import { GoABadge } from '@abgov/react-components/experimental';
 import { Tab, Tabs } from '@components/Tabs';
 import { GoAButton } from '@abgov/react-components';
 interface TemplateEditorProps {

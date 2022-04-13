@@ -1,5 +1,4 @@
 import React, { FunctionComponent } from 'react';
-import type { NotificationItem } from '@store/notification/models';
 import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalTitle } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
