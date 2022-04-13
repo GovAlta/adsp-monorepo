@@ -18,7 +18,7 @@ class ServiceStatusPage {
   }
 
   timezoneInfo() {
-    return cy.xpath('//*[@class="timezone"]/i');
+    return cy.xpath('//*[@class="timezone-text"]');
   }
 
   allApplicationNoticeMessage(msg) {
