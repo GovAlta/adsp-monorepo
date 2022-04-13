@@ -599,10 +599,6 @@ Then(
       afterStatus = newStatus.replace('{new status}', 'The new status was: ') + afterStatus.toLowerCase();
       cy.log('newSubjectStatus is not null: ' + afterStatus);
     }
-    // const newSubjectStatus = newStatus.replace('{new status}', 'The new status is now: ') + afterStatus.toLowerCase();
-    cy.log('newSubjectStatus is: ' + newSubjectStatus);
-    // const originalSubjectStatus =
-    //   originalStatus.replace('{original status}', 'The original status was: ') + currentStatus.toLowerCase();
     tenantAdminObj
       .eventDetails()
       .invoke('text')
