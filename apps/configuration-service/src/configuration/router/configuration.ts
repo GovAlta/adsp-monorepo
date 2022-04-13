@@ -7,8 +7,7 @@ import {
   Results,
 } from '@core-services/core-common';
 import { Request, RequestHandler, Router } from 'express';
-import { body, checkSchema } from 'express-validator';
-import * as HttpStatusCodes from 'http-status-codes';
+import { body, checkSchema, query } from 'express-validator';
 import { isEqual as isDeepEqual } from 'lodash';
 import { Logger } from 'winston';
 import { configurationUpdated, revisionCreated } from '../events';
@@ -278,6 +277,7 @@ export function createConfigurationRouter({
     '/configuration/:namespace/:name/revisions',
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
+    createValidationHandler(query('top').optional().isInt(), query('after').optional().isString()),
     getConfigurationEntity(serviceId, configurationRepository),
     getRevisions()
   );

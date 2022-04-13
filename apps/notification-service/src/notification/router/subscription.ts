@@ -1,7 +1,7 @@
-import { RequestHandler, Router } from 'express';
+import { Request, RequestHandler, Response, Router } from 'express';
 import { Logger } from 'winston';
 import { adspId, AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { SubscriptionRepository } from '../repository';
 import { NotificationTypeEntity, SubscriberEntity } from '../model';
 import { mapSubscriber, mapSubscription, mapType } from './mappers';
@@ -14,6 +14,7 @@ import {
   SUBSCRIBER_VERIFY_CHANNEL,
 } from './types';
 import { VerifyService } from '../verify';
+import { body, checkSchema, param, query } from 'express-validator';
 
 interface SubscriptionRouterProps {
   serviceId: AdspId;
@@ -95,7 +96,7 @@ export function createTypeSubscription(apiId: AdspId, repository: SubscriptionRe
       const tenantId = req.tenant.id;
       const user = req.user as User;
       const type: NotificationTypeEntity = req[TYPE_KEY];
-      const { criteria, ...subscriberInfo } = req.body;
+      const { criteria, id, userId, addressAs, channels } = req.body;
       const subscriber: Subscriber =
         req.query.userSub === 'true'
           ? {
@@ -110,7 +111,10 @@ export function createTypeSubscription(apiId: AdspId, repository: SubscriptionRe
               ],
             }
           : {
-              ...subscriberInfo,
+              id,
+              userId,
+              addressAs,
+              channels,
               tenantId,
             };
 
@@ -126,7 +130,8 @@ export function createTypeSubscription(apiId: AdspId, repository: SubscriptionRe
       }
 
       if (!subscriberEntity) {
-        subscriberEntity = await SubscriberEntity.create(user, repository, subscriber);
+        const { id: _id, ...newSubscriber } = subscriber;
+        subscriberEntity = await SubscriberEntity.create(user, repository, newSubscriber);
       }
 
       const subscription = await type.subscribe(repository, user, subscriberEntity, {
@@ -148,13 +153,17 @@ export function addTypeSubscription(apiId: AdspId, repository: SubscriptionRepos
 
       const type: NotificationTypeEntity = req[TYPE_KEY];
       const { subscriber } = req.params;
+      const { criteria } = req.body;
 
       const subscriberEntity = await repository.getSubscriber(tenantId, subscriber, false);
       if (!subscriberEntity) {
         throw new NotFoundError('Subscriber', subscriber);
       }
 
-      const subscription = await type.subscribe(repository, user, subscriberEntity);
+      const subscription = await type.subscribe(repository, user, subscriberEntity, {
+        correlationId: criteria?.correlationId,
+        context: criteria?.context,
+      });
       res.send(mapSubscription(apiId, subscription));
     } catch (err) {
       res.status(400).json({ error: JSON.stringify(err) });
@@ -240,6 +249,8 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
     try {
       const user = req.user;
       const tenantId = req.tenant.id;
+      // Omit the id field from the request body.
+      const { userId, addressAs, channels } = req.body;
 
       const subscriber: Subscriber =
         req.query.userSub === 'true'
@@ -255,8 +266,10 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
               ],
             }
           : {
-              ...req.body,
               tenantId,
+              userId,
+              addressAs,
+              channels,
             };
 
       let entity = subscriber.userId ? await repository.getSubscriber(tenantId, subscriber.userId, true) : null;
@@ -477,39 +490,75 @@ export const createSubscriptionRouter = ({
   const apiId = adspId`${serviceId}:v1`;
   const subscriptionRouter = Router();
 
+  const validateTypeHandler = createValidationHandler(param('type').isString().isLength({ min: 1, max: 50 }));
+  const validateSubscriberHandler = createValidationHandler(param('subscriber').isMongoId());
+  const validateTypeAndSubscriberHandler = createValidationHandler(
+    param('type').isString().isLength({ min: 1, max: 50 }),
+    param('subscriber').isMongoId()
+  );
+
   subscriptionRouter.get('/types', getNotificationTypes);
-  subscriptionRouter.get('/types/:type', getNotificationType, async (req, res) => res.send(mapType(req[TYPE_KEY])));
+  subscriptionRouter.get(
+    '/types/:type',
+    validateTypeHandler,
+    getNotificationType,
+    async (req: Request, res: Response) => res.send(mapType(req[TYPE_KEY]))
+  );
 
   subscriptionRouter.get(
     '/types/:type/subscriptions',
+    validateTypeHandler,
+    createValidationHandler(query('top').optional().isInt(), query('after').optional().isString()),
     getNotificationType,
     getTypeSubscriptions(apiId, subscriptionRepository)
   );
   subscriptionRouter.post(
     '/types/:type/subscriptions',
+    validateTypeHandler,
+    createValidationHandler(
+      query('userSub').optional().isBoolean(),
+      ...checkSchema(
+        {
+          id: { optional: true, isMongoId: true },
+          userId: { optional: true, isString: true },
+          addressAs: { optional: true, isString: true },
+          channels: { optional: true, isArray: true },
+          criteria: { optional: true, isObject: true },
+        },
+        ['body']
+      )
+    ),
     getNotificationType,
     createTypeSubscription(apiId, subscriptionRepository)
   );
 
   subscriptionRouter.post(
     '/types/:type/subscriptions/:subscriber',
+    validateTypeAndSubscriberHandler,
+    createValidationHandler(body('criteria').optional().isObject()),
     getNotificationType,
     addTypeSubscription(apiId, subscriptionRepository)
   );
 
   subscriptionRouter.get(
     '/types/:type/subscriptions/:subscriber',
+    validateTypeAndSubscriberHandler,
     getNotificationType,
     getTypeSubscription(apiId, subscriptionRepository)
   );
 
   subscriptionRouter.delete(
     '/types/:type/subscriptions/:subscriber',
+    validateTypeAndSubscriberHandler,
     getNotificationType,
     deleteTypeSubscription(subscriptionRepository)
   );
 
-  subscriptionRouter.get('/subscribers', getSubscribers(apiId, subscriptionRepository));
+  subscriptionRouter.get(
+    '/subscribers',
+    createValidationHandler(query('top').optional().isInt(), query('after').optional().isString()),
+    getSubscribers(apiId, subscriptionRepository)
+  );
   subscriptionRouter.post('/subscribers', createSubscriber(apiId, subscriptionRepository));
 
   subscriptionRouter.get(
@@ -520,19 +569,57 @@ export const createSubscriptionRouter = ({
 
   subscriptionRouter.get(
     '/subscribers/:subscriber',
+    validateSubscriberHandler,
     getSubscriber(subscriptionRepository),
     getSubscriberDetails(apiId, subscriptionRepository)
   );
 
-  subscriptionRouter.patch('/subscribers/:subscriber', getSubscriber(subscriptionRepository), updateSubscriber(apiId));
+  subscriptionRouter.patch(
+    '/subscribers/:subscriber',
+    validateSubscriberHandler,
+    createValidationHandler(
+      ...checkSchema(
+        {
+          addressAs: { optional: true, isString: true },
+          channels: { optional: true, isArray: true },
+        },
+        ['body']
+      )
+    ),
+    getSubscriber(subscriptionRepository),
+    updateSubscriber(apiId)
+  );
   subscriptionRouter.post(
     '/subscribers/:subscriber',
+    validateSubscriberHandler,
+    createValidationHandler(
+      ...checkSchema(
+        {
+          operation: {
+            isString: true,
+            isIn: { options: [SUBSCRIBER_SEND_VERIFY_CODE, SUBSCRIBER_CHECK_CODE, SUBSCRIBER_VERIFY_CHANNEL] },
+          },
+          channel: { optional: true, isString: true },
+          address: { optional: true, isString: true },
+          code: { optional: true, isString: true },
+          reason: { optional: true, isString: true },
+        },
+        ['body']
+      )
+    ),
     getSubscriber(subscriptionRepository),
     subscriberOperations(verifyService)
   );
-  subscriptionRouter.delete('/subscribers/:subscriber', getSubscriber(subscriptionRepository), deleteSubscriber);
+  subscriptionRouter.delete(
+    '/subscribers/:subscriber',
+    validateSubscriberHandler,
+    getSubscriber(subscriptionRepository),
+    deleteSubscriber
+  );
   subscriptionRouter.get(
     '/subscribers/:subscriber/subscriptions',
+    validateSubscriberHandler,
+    createValidationHandler(query('top').optional().isInt(), query('after').optional().isString()),
     getSubscriber(subscriptionRepository),
     getSubscriberSubscriptions(apiId, subscriptionRepository)
   );

@@ -16,7 +16,7 @@ import {
 } from './actions';
 import { DirectoryApi } from './api';
 import { SagaIterator } from '@redux-saga/core';
-import { UpdateIndicator } from '@store/session/actions';
+import { UpdateIndicator, UpdateElementIndicator } from '@store/session/actions';
 import { adspId } from '@lib/adspId';
 import { Service } from './models';
 
@@ -126,11 +126,17 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
   const state: RootState = yield select();
   const token = state.session.credentials.token;
   const api = new DirectoryApi(state.config.tenantApi, token);
+  yield put(
+    UpdateElementIndicator({
+      show: true,
+    })
+  );
 
   try {
     const result = yield call([api, api.fetchEntryDetail], action.data);
     if (result) {
       const service = action.data;
+      service.loaded = true;
       if (result.metadata) {
         service.metadata = result.metadata;
       } else {
@@ -141,9 +147,15 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
     }
   } catch (err) {
     const service = action.data;
+    service.loaded = true;
     service.metadata = null;
     yield put(fetchEntryDetailSuccess(service));
   }
+  yield put(
+    UpdateElementIndicator({
+      show: false,
+    })
+  );
 }
 
 export function* fetchDirectoryByDetailURNs(action: FetchEntryDetailByURNsAction): SagaIterator {
@@ -170,7 +182,8 @@ export function* fetchDirectoryByDetailURNs(action: FetchEntryDetailByURNsAction
             yield put(fetchEntryDetailSuccess(_service));
           }
           // eslint-disable-next-line
-        } finally {
+        } catch (err) {
+          console.warn(`Failed to fetch metadata ${err.message}`);
         }
       }
     }

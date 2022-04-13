@@ -29,7 +29,15 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   };
 
   const checkApi = (entry) => {
-    return directory.find((x) => x.namespace === tenantName && x.service === entry.service && x.api === entry.api);
+    const hasExist = directory.find(
+      (x) => x.namespace === tenantName && x.service === entry.service && x.api === entry.api
+    );
+
+    if (!isNew && hasExist && hasExist.service === props.entry.service && hasExist.api === props.entry.api) {
+      return false;
+    }
+
+    return hasExist;
   };
 
   return (
@@ -77,7 +85,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
       </GoAModalContent>
       <GoAModalActions>
         <GoAButton
-          buttonType="tertiary"
+          buttonType="secondary"
           data-testid="directory-modal-cancel"
           onClick={() => {
             props.onCancel();

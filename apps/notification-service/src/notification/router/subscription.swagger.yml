@@ -326,6 +326,28 @@ components:
           application/json:
             schema:
               $ref: "#/components/schemas/Subscription"
+  post:
+    tags:
+      - Subscription
+    description: Subscribes an existing subscriber to the notification type.
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              criteria:
+                $ref: "#/components/schemas/SubscriptionCriteria"
+
+    responses:
+      200:
+        description: Subscriptions successfully added.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Subscription"
+
   delete:
     tags:
       - Subscription

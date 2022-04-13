@@ -7,7 +7,7 @@ import {
   createValidationHandler,
 } from '@core-services/core-common';
 import { Request, RequestHandler, Response, Router } from 'express';
-import { param } from 'express-validator';
+import { param, query } from 'express-validator';
 import { Logger } from 'winston';
 import { FileRepository } from '../repository';
 import { FileEntity, FileTypeEntity } from '../model';
@@ -266,7 +266,12 @@ export const createFileRouter = ({
   fileRouter.get('/types', assertAuthenticatedHandler, getTypes);
   fileRouter.get('/types/:fileTypeId', assertAuthenticatedHandler, getType(logger));
 
-  fileRouter.get('/files', assertAuthenticatedHandler, getFiles(apiId, fileRepository));
+  fileRouter.get(
+    '/files',
+    assertAuthenticatedHandler,
+    createValidationHandler(query('top').optional().isInt(), query('after').optional().isString()),
+    getFiles(apiId, fileRepository)
+  );
   fileRouter.post('/files', assertAuthenticatedHandler, upload.single('file'), uploadFile(apiId, logger, eventService));
 
   fileRouter.delete(
@@ -284,7 +289,11 @@ export const createFileRouter = ({
   );
   fileRouter.get(
     '/files/:fileId/download',
-    createValidationHandler(param('fileId').isUUID()),
+    createValidationHandler(
+      param('fileId').isUUID(),
+      query('unsafe').optional().isBoolean(),
+      query('embed').optional().isBoolean()
+    ),
     getFile(fileRepository),
     downloadFile(logger)
   );

@@ -85,7 +85,7 @@ export function ServiceStatus(props: ServiceOptions): JSX.Element {
             </div>
           </div>
           <div className="date-assignment-status">
-            <i data-testid="service-created-date">{date}</i>
+            <span data-testid="service-created-date">{date}</span>
           </div>
           <div>{description}</div>
           {sortedNotice.map((notice) => {
@@ -133,8 +133,8 @@ const ServiceStatusCss = styled.div`
 
   .date-assignment-status {
     flex: 1;
-    font-size: 1rem;
-    padding-bottom: 0.625rem;
+    font-size: 0.875rem;
+    color: #333333;
   }
 
   .flex-row {
