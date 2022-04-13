@@ -7,7 +7,7 @@ import { buildSuggestions } from '@lib/autoComplete';
 import { Template } from '@store/notification/models';
 import { SaveFormModal } from './saveModal';
 
-import { GoABadge } from '@abgov/react-components/experimental';
+import { GoAInfoBadge, GoABadge } from '@abgov/react-components/experimental';
 import { Tab, Tabs } from '@components/Tabs';
 import { GoAButton } from '@abgov/react-components';
 interface TemplateEditorProps {
@@ -148,10 +148,10 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                       item.subject.length !== 0 ? (
                         <div>
                           <div className="mobile">
-                            <GoABadge type="information" icon="information" />
+                            <GoAInfoBadge content="" type="information" />
                           </div>
                           <div className="desktop">
-                            <GoABadge type="information" content="Unsaved" icon="information" />
+                            <GoAInfoBadge content="Unsaved" type="information" />
                           </div>
                         </div>
                       ) : (
