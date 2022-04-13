@@ -595,10 +595,7 @@ export const createSubscriptionRouter = ({
     createValidationHandler(
       ...checkSchema(
         {
-          operation: {
-            isString: true,
-            isIn: { options: [SUBSCRIBER_SEND_VERIFY_CODE, SUBSCRIBER_CHECK_CODE, SUBSCRIBER_VERIFY_CHANNEL] },
-          },
+          operation: { isString: true },
           channel: { optional: true, isString: true },
           address: { optional: true, isString: true },
           code: { optional: true, isString: true },
