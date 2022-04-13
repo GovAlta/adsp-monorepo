@@ -1,5 +1,6 @@
 import { adspId, Channel, ServiceDirectory, Template, TokenProvider } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
+import { getTemplateBody } from '@core-services/notification-shared';
 import axios from 'axios';
 import { readFile } from 'fs';
 import { v4 as uuidv4 } from 'uuid';
@@ -18,7 +19,7 @@ export class VerifyServiceImpl implements VerifyService {
         if (!err) {
           this.templates[channel] = {
             subject: 'Your verify code',
-            body: value,
+            body: channel === Channel.email ? getTemplateBody(value) : value,
           };
         }
       });

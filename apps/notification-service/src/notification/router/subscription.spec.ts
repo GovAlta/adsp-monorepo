@@ -406,6 +406,7 @@ describe('subscription router', () => {
           email: 'tester@test.co',
           roles: [ServiceUserRoles.SubscriptionAdmin],
         },
+        body: {},
         query: {},
         params: { subscriber: 'subscriber' },
         notificationType: new NotificationTypeEntity(notificationType, tenantId),
@@ -433,6 +434,54 @@ describe('subscription router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
     });
 
+    it('can add subscription with criteria', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [ServiceUserRoles.SubscriptionAdmin],
+        },
+        body: { criteria: { correlationId: '123', context: {} } },
+        query: {},
+        params: { subscriber: 'subscriber' },
+        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const subscriber = new SubscriberEntity(repositoryMock, {
+        id: 'subscriber',
+        tenantId,
+        addressAs: 'tester',
+        channels: [],
+      });
+      const subscription = new SubscriptionEntity(
+        repositoryMock,
+        { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        subscriber
+      );
+      repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
+      repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
+
+      const handler = addTypeSubscription(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'subscriber', false);
+      expect(repositoryMock.saveSubscription).toHaveBeenCalledWith(
+        expect.objectContaining({
+          criteria: expect.objectContaining({
+            correlationId: req.body.criteria.correlationId,
+            context: req.body.criteria.context,
+          }),
+        })
+      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
+    });
+
     it('can call with error 400', async () => {
       const req = {
         tenant: {
@@ -445,6 +494,7 @@ describe('subscription router', () => {
           email: 'tester@test.co',
           roles: [ServiceUserRoles.SubscriptionAdmin],
         },
+        body: {},
         query: {},
         params: { subscriber: 'subscriber' },
         notificationType: new NotificationTypeEntity(notificationType, tenantId),

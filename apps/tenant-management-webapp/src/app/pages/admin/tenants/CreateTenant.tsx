@@ -157,7 +157,7 @@ const CreateRealm = (): JSX.Element => {
             a tenant.
           </p>
           <div>
-            Please contact <a href="mailto: DIO@gov.ab.ca">DIO@gov.ab.ca</a> for more information.
+            Please contact <a href="mailto: adsp@gov.ab.ca">adsp@gov.ab.ca</a> for more information.
           </div>
           <GoALinkButton buttonType="primary" onClick={() => dispatch(TenantLogout())} to="">
             Back to sign in page
