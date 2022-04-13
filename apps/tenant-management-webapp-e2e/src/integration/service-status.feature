@@ -199,18 +199,23 @@ Feature: Service status
   @TEST_CS-1282 @REQ_CS-905 @regression
   Scenario: As an interested stakeholder, I can verify status notifications for a tenant, so that I know about service availability.
     Given a tenant admin user is on notification subscribers page
-    When the user searches subscribers with address as containing "auto.test@gov.ab.ca" and email containing "auto.test@gov.ab.ca"
-    Then the user "views" the subscriber of "auto.test@gov.ab.ca", "auto.test@gov.ab.ca"
+    When the user searches subscribers with address as containing "Auto Test" and email containing "auto.test@gov.ab.ca"
+    Then the user "views" the subscriber of "Auto Test", "auto.test@gov.ab.ca"
+    Given a tenant admin user is on notification subscriptions page
+    When the user types "auto.test@gov.ab.ca" in Search subscriber email field
+    And the user clicks Search button on notifications page
+    Then the user "views" the subscription of "auto.test@gov.ab.ca", "auto.test@gov.ab.ca" under "Application health check change"
+    # Then the user "views" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Application Status Update"
     Given a tenant admin user is on status applications page
     Then the user "views" "Autotest" in the application list
     And the user views current status for "Autotest"
     When the user clicks Change status button for "Autotest"
     And the user changes status to the first unused status
     And the user clicks Save button in Manual status change modal
-    When the user waits "20" seconds
     Then the user views the status of "Autotest" changed to the first unused status
+    When the user waits "10" seconds
     When the user selects the "Event log" menu item
     Then the "Event log" landing page is displayed
     When the user searches with "notification-service:notification-sent", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
     And the user clicks Show details button for the latest event of "notification-sent" for "notification-service"
-    Then the user views the event details of "Autotest" application status changed from "{original status}" to "{new status}" for subscriber of "auto.test@gov.ab.ca"
+    Then the user views the event details of "Auto Test" application status changed from "{original status}" to "{new status}" for subscriber of "auto.test@gov.ab.ca"
