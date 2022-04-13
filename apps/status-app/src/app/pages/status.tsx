@@ -224,6 +224,7 @@ const ServiceStatusPage = (): JSX.Element => {
           <section>
             <SectionView />
           </section>
+          <div className="line-vs-small" />
           {applications && (
             <div className="small-container">
               <div>
@@ -310,6 +311,10 @@ const ServiceStatusesCss = styled.div`
 
   .line-vs {
     margin-bottom: 1.5rem;
+  }
+
+  .line-vs-small {
+    padding-bottom: 1rem;
   }
 
   h3 {
