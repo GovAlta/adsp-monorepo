@@ -19,7 +19,7 @@ export class VerifyServiceImpl implements VerifyService {
         if (!err) {
           this.templates[channel] = {
             subject: 'Your verify code',
-            body: channel === Channel.email ? getTemplateBody(value) : value,
+            body: channel === Channel.email ? getTemplateBody(value, channel) : value,
           };
         }
       });
