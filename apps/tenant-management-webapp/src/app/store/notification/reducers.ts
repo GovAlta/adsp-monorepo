@@ -44,9 +44,13 @@ export default function (state = NOTIFICATION_INIT, action: ActionTypes): Notifi
     case FETCH_NOTIFICATION_CONFIGURATION_SUCCEEDED: {
       const notificationTypes: Record<string, NotificationItem> = action.payload.notificationInfo.data;
       Object.keys(notificationTypes).forEach((notificationTypeName) => {
-        notificationTypes[notificationTypeName].sortedChannels = notificationTypes[notificationTypeName].channels.sort(
-          (a, b) => (a === 'email' ? -1 : 1)
-        );
+        if (notificationTypes[notificationTypeName].channels) {
+          notificationTypes[notificationTypeName].sortedChannels = notificationTypes[
+            notificationTypeName
+          ].channels.sort((a, b) => (a === 'email' ? -1 : 1));
+        } else {
+          notificationTypes[notificationTypeName].sortedChannels = [];
+        }
       });
 
       return {
@@ -64,9 +68,13 @@ export default function (state = NOTIFICATION_INIT, action: ActionTypes): Notifi
       }
 
       Object.keys(coreNotificationType).forEach((notificationTypeName) => {
-        coreNotificationType[notificationTypeName].sortedChannels = coreNotificationType[
-          notificationTypeName
-        ].channels.sort((a, b) => (a === 'email' ? -1 : 1));
+        if (coreNotificationType[notificationTypeName].channels) {
+          coreNotificationType[notificationTypeName].sortedChannels = coreNotificationType[
+            notificationTypeName
+          ].channels.sort((a, b) => (a === 'email' ? -1 : 1));
+        } else {
+          coreNotificationType[notificationTypeName].sortedChannels = [];
+        }
       });
 
       return {
