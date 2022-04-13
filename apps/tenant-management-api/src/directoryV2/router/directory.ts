@@ -241,7 +241,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
         throw new InvalidValueError('Update service', `Cannot find service: ${service}`);
       }
       try {
-        const { data } = await axios.get<Links>(filteredService.host, { timeout: 500 });
+        const { data } = await axios.get<Links>(filteredService.host, { timeout: 5000 });
         // Root attributes of Links type are all optional. So, string can pass the axios type validation.
         if (typeof data !== 'object') {
           throw new InvalidValueError('Fetch metadata', 'Invalid metadata schema');
