@@ -1,4 +1,4 @@
-import { IsFQDN, ValidateNested, IsDefined, MinLength, MaxLength, IsOptional, IsUrl } from 'class-validator';
+import { IsFQDN, ValidateNested, IsDefined, MinLength, MaxLength, IsOptional } from 'class-validator';
 
 export class Directory {
   @IsDefined()
