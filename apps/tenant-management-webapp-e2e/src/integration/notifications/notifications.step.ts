@@ -304,6 +304,10 @@ When(
   }
 );
 
+When('the user types {string} in Search subscriber email field', function (email) {
+  notificationsObj.searchSubscriberEmail().clear().type(email);
+});
+
 When('the user clicks Search button on notifications page', function () {
   notificationsObj.notificationSearchBtn().click();
 });
