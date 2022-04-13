@@ -83,8 +83,15 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [monaco, eventSuggestion]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [newActiveValue, setNewActiveValue] = useState(validChannels[0]);
   const [saveModal, setSaveModal] = useState(false);
   const [currentTemplate, setCurrentTemplate] = useState('');
+
+  useEffect(() => {
+    if (setNewActiveValue) {
+      setNewActiveValue(validChannels[0]);
+    }
+  }, [validChannels]);
 
   useEffect(() => {
     if (initialChannel) {
@@ -101,6 +108,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   }, [modelOpen]);
 
   const switchTabPreview = (value) => {
+    setNewActiveValue(value);
     setPreview(value);
   };
 
@@ -145,7 +153,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                       {(savedTemplates[item.name]?.body !== templates[item.name]?.body ||
                         savedTemplates[item.name]?.subject !== templates[item.name]?.subject) &&
                       item.body.length !== 0 &&
-                      item.subject.length !== 0 ? (
+                      item.subject.length !== 0 &&
+                      newActiveValue !== item.name ? (
                         <div>
                           <div className="mobile">
                             <GoAInfoBadge content="" type="information" />
