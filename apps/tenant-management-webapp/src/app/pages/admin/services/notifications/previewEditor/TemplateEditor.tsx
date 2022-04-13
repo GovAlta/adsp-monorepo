@@ -131,7 +131,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   return (
     <TemplateEditorContainer>
       <GoAForm>
-        <GoAFormItem error={errors['body'] ?? ''}>
+        <GoAFormItem>
           <Tabs activeIndex={activeIndex} changeTabCallback={(index: number) => switchTabPreview(validChannels[index])}>
             {radioOptions.map((item, key) => (
               <Tab
