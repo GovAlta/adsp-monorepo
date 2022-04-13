@@ -585,19 +585,17 @@ Then(
     const orgSubjectStatus = originalStatus.match(/(.*{original status}.*)/g);
     if (orgSubjectStatus == null) {
       currentStatus = originalStatus;
-      cy.log('orgSubjectStatus is null: ' + currentStatus);
     } else {
       currentStatus =
         originalStatus.replace('{original status}', 'The original status was: ') + currentStatus.toLowerCase();
-      cy.log('orgSubjectStatus is not null: ' + currentStatus);
+      cy.log('Original status: ' + currentStatus);
     }
     const newSubjectStatus = newStatus.match(/(.*{new status}.*)/g);
     if (newSubjectStatus == null) {
       currentStatus = newStatus;
-      cy.log('newSubjectStatus is null: ' + afterStatus);
     } else {
       afterStatus = newStatus.replace('{new status}', 'The new status was: ') + afterStatus.toLowerCase();
-      cy.log('newSubjectStatus is not null: ' + afterStatus);
+      cy.log('New status: ' + afterStatus);
     }
     tenantAdminObj
       .eventDetails()
@@ -605,9 +603,9 @@ Then(
       .then((eventDetails) => {
         if (newStatus != 'Empty' || sentTo != 'Empty') {
           expect(eventDetails).to.contain(appName);
-          expect(eventDetails).to.contain(sentTo);
           expect(eventDetails).to.contain(currentStatus);
           expect(eventDetails).to.contain(afterStatus);
+          expect(eventDetails).to.contain(sentTo);
         }
       });
   }
