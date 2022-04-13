@@ -47,7 +47,7 @@ export class DirectoryApi {
 
   async fetchEntryDetail(service: Service): Promise<MetadataFetchResponse> {
     const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.namespace}/services/${service.service}`;
-    const res = await this.http.get(url, { timeout: 2000 });
+    const res = await this.http.get(url, { timeout: 5000 });
     return res?.data;
   }
 }
