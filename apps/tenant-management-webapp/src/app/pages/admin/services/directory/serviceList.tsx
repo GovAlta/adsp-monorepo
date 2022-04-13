@@ -140,7 +140,7 @@ export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({
           </tr>
         </thead>
 
-        <tbody key={namespace}>
+        <tbody key={`${namespace}:${isCore}`}>
           {isCore
             ? memoizedDirectory
                 .filter((dir) => dir.namespace === namespace)

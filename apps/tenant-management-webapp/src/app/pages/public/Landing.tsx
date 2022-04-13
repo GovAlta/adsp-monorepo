@@ -324,14 +324,6 @@ const CardLayout = styled.div`
   padding-bottom: 1.5em;
 `;
 
-const CardTitle = styled.div`
-  font-size: 24px;
-  margin-bottom: 1.25em;
-  text-align: left;
-  color: var(--color-blue-500);
-  text-decoration: underline;
-`;
-
 const BoldTitle = styled.h1`
   && {
     font-weight: var(--fw-bold);

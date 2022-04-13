@@ -251,7 +251,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
         </GoAModalContent>
         <GoAModalActions>
           <GoAButton
-            buttonType="tertiary"
+            buttonType="secondary"
             data-testid="file-type-modal-cancel"
             onClick={() => {
               props.onCancel();

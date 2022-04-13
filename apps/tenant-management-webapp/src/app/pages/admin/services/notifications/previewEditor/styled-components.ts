@@ -18,6 +18,22 @@ export const TemplateEditorContainer = styled.div`
   &:hover {
     overflow: auto;
   }
+
+  @media (min-width: 1279px) {
+    .mobile {
+      display: none;
+    }
+  }
+
+  @media (max-width: 1280px) {
+    .desktop {
+      display: none;
+    }
+
+    .mobile > div {
+      padding: 2px 0 2px 3px;
+    }
+  }
 `;
 export const Modal = styled.div<{ open: boolean }>`
   display: ${(props) => (props.open ? `block` : `none`)};
@@ -59,7 +75,7 @@ export const MonacoDivBody = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: 50vh;
+  height: 40vh;
 `;
 export const EditTemplateActions = styled.div`
   display: flex;

@@ -74,7 +74,9 @@ export function* createEntryDirectory(action: CreateEntryAction): SagaIterator {
     sendEntry['namespace'] = action.data.namespace;
 
     const result = yield call([api, api.createEntry], sendEntry);
+
     if (result) {
+      action.data['_id'] = result._id;
       yield put(createEntrySuccess(action.data));
     }
   } catch (err) {
@@ -98,7 +100,7 @@ export function* updateEntryDirectory(action: UpdateEntryAction): SagaIterator {
     sendEntry['url'] = action.data.url;
     sendEntry['namespace'] = action.data.namespace;
     sendEntry['_id'] = action.data._id;
-    const result = yield call([api, api.updateEntry], action.data);
+    const result = yield call([api, api.updateEntry], sendEntry);
     if (result) {
       yield put(updateEntrySuccess(action.data));
     }
@@ -111,9 +113,12 @@ export function* deleteEntryDirectory(action: DeleteEntryAction): SagaIterator {
   const state: RootState = yield select();
   const token = state.session.credentials.token;
   const api = new DirectoryApi(state.config.tenantApi, token);
+  const sendEntry = {} as Service;
 
+  sendEntry['service'] = action.data.api ? `${action.data.service}:${action.data.api}` : action.data.service;
+  sendEntry['namespace'] = action.data.namespace;
   try {
-    const result = yield call([api, api.deleteEntry], action.data);
+    const result = yield call([api, api.deleteEntry], sendEntry);
     if (result) {
       yield put(deleteEntrySuccess(action.data));
     }
@@ -136,16 +141,18 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
     const result = yield call([api, api.fetchEntryDetail], action.data);
     if (result) {
       const service = action.data;
+      service.loaded = true;
       if (result.metadata) {
         service.metadata = result.metadata;
       } else {
         service.metadata = null;
       }
-      service.loaded = true;
+
       yield put(fetchEntryDetailSuccess(service));
     }
   } catch (err) {
     const service = action.data;
+    service.loaded = true;
     service.metadata = null;
     yield put(fetchEntryDetailSuccess(service));
   }

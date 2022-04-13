@@ -6,7 +6,7 @@ import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgo
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { RootState } from '@store/index';
 import { getEventDefinitions } from '@store/event/actions';
-import { EventItem, Template } from '@store/notification/models';
+import { EventItem, baseTemplate } from '@store/notification/models';
 
 interface NotificationDefinitionFormProps {
   initialValue?: NotificationItem;
@@ -99,7 +99,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
         </GoAForm>
       </GoAModalContent>
       <GoAModalActions>
-        <GoAButton data-testid="event-form-cancel" buttonType="tertiary" type="button" onClick={onCancel}>
+        <GoAButton data-testid="event-form-cancel" buttonType="secondary" type="button" onClick={onCancel}>
           Cancel
         </GoAButton>
         <GoAButton
@@ -109,16 +109,10 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
           type="submit"
           onClick={() => {
             const dropdownObject = dropDownOptions.find((dropdown) => dropdown.value === selectedValues[0]);
-            const emptyTemplate: Template = {
-              email: {
-                subject: '',
-                body: '',
-              },
-            };
             const eventObject: EventItem = {
               namespace: dropdownObject.nameSpace,
               name: dropdownObject.name,
-              templates: emptyTemplate,
+              templates: baseTemplate,
             };
             // deep cloning props to avoid unwanted side effects
             // note: do not mutate props directly, it will cause unnecessary side effects

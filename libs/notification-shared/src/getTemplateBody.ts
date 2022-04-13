@@ -9,9 +9,13 @@ const hasProperHtmlWrapper = (content: string): boolean => {
   return hasHtmlOpeningTag && hasHtmlClosingTag;
 };
 
-export const getTemplateBody = (body: string, context?: Record<string, unknown>): string => {
+export const getTemplateBody = (body: string, channel: string, context?: Record<string, unknown>): string => {
   if (!hasProperHtmlWrapper(body)) {
-    return emailWrapperTemplate({ content: body, ...context });
+    if (channel === 'email') {
+      return emailWrapperTemplate({ content: body, ...context });
+    } else {
+      return body;
+    }
   }
 
   return body;

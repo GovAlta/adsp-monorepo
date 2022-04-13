@@ -138,8 +138,10 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
           const directory = { name: namespace, services: services };
 
           await directoryRepository.update(directory);
-          directoryCache.set(`directory-${namespace}`, services);
-          return res.sendStatus(HttpStatusCodes.CREATED);
+          const resultInDB = await directoryRepository.getDirectories(namespace);
+          const serviceInDB = resultInDB['services'];
+          directoryCache.set(`directory-${namespace}`, serviceInDB);
+          return res.status(HttpStatusCodes.CREATED).json(serviceInDB.find((x) => x.service === service));
         }
       } catch (err) {
         logger.error(`Failed creating directory for namespace: ${namespace} with error ${err.message}`);

@@ -4,14 +4,14 @@ import { PreviewContainer, SubjectPreview, BodyPreview } from './styled-componen
 
 interface PreviewTemplateProps {
   subjectTitle: string;
-  emailTitle: string;
+  channelTitle: string;
   subjectPreviewContent: string;
   emailPreviewContent: string;
 }
 
 export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
   subjectTitle,
-  emailTitle,
+  channelTitle,
   subjectPreviewContent,
   emailPreviewContent,
 }) => {
@@ -23,8 +23,8 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
           __html: sanitizeHtml(subjectPreviewContent),
         }}
       ></SubjectPreview>
-      <h3>{emailTitle}</h3>
-      <BodyPreview title="Email preview" html={emailPreviewContent}></BodyPreview>
+      <h3>{channelTitle}</h3>
+      <BodyPreview title={channelTitle} html={emailPreviewContent}></BodyPreview>
     </PreviewContainer>
   );
 };

@@ -400,7 +400,7 @@ function Application(app: ServiceStatusApplication) {
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
-          <GoAButton buttonType="tertiary" onClick={cancelManualStatusChange}>
+          <GoAButton buttonType="secondary" onClick={cancelManualStatusChange}>
             Cancel
           </GoAButton>
 

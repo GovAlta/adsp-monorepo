@@ -12,14 +12,7 @@ import { TaskEntity } from '../model/task';
 import { TaskRepository } from '../repository';
 import { Queue, TaskPriority, TaskServiceConfiguration } from '../types';
 import { getTask, mapTask, taskOperation, TASK_KEY } from './task';
-import {
-  OPERATION_ASSIGN,
-  OPERATION_CANCEL,
-  OPERATION_COMPLETE,
-  OPERATION_SET_PRIORITY,
-  OPERATION_START,
-  UserInformation,
-} from './types';
+import { UserInformation } from './types';
 
 interface QueueRouterProps {
   apiId: AdspId;
@@ -267,22 +260,10 @@ export function createQueueRouter({
     createValidationHandler(
       ...checkSchema(
         {
-          operation: {
-            isIn: {
-              options: [
-                OPERATION_START,
-                OPERATION_COMPLETE,
-                OPERATION_CANCEL,
-                OPERATION_SET_PRIORITY,
-                OPERATION_ASSIGN,
-              ],
-            },
-          },
+          operation: { isString: true },
           priority: {
             optional: true,
-            isIn: {
-              options: ['Normal', 'High', 'Urgent'],
-            },
+            isString: true,
           },
           reason: {
             optional: true,

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.5/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.5",
+  "version": "1.0.0",
+  "id": "cd571625-1d6f-4766-b3da-c10c8f215ab3",
+  "packageName": "ca.alberta.adsp.notification-service",
+  "developer": {
+    "name": "ADSP Platform team",
+    "websiteUrl": "https://adsp.alberta.ca",
+    "privacyUrl": "https://adsp.alberta.ca",
+    "termsOfUseUrl": "https://adsp.alberta.ca"
+  },
+  "icons": {
+    "outline": "icon-outline.png",
+    "color": "icon-color.png"
+  },
+  "name": {
+    "short": "ADSP Notifications",
+    "full": "ADSP Notifications"
+  },
+  "description": {
+    "short": "Teams App for ADSP notification service.",
+    "full": "Teams App that provides notifications from ADSP notification service."
+  },
+  "accentColor": "#FFFFFF",
+  "bots": [
+    {
+      "botId": "cd571625-1d6f-4766-b3da-c10c8f215ab3",
+      "scopes": [
+        "team",
+        "personal"
+      ],
+      "supportsFiles": false,
+      "isNotificationOnly": false
+    }
+  ],
+  "permissions": [
+    "identity",
+    "messageTeamMembers"
+  ],
+  "validDomains": []
+}
