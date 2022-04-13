@@ -26,10 +26,10 @@ export class DirectoryApi {
     return res?.data;
   }
 
-  async createEntry(service: Service): Promise<boolean> {
+  async createEntry(service: Service): Promise<Service> {
     const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.namespace}`;
     const res = await this.http.post(url, { ...service });
-    return res?.data === 'Created';
+    return res?.data;
   }
 
   async updateEntry(service: Service): Promise<boolean> {
