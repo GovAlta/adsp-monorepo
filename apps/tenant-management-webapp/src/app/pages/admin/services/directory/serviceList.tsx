@@ -30,7 +30,7 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
   const renderNoItem = () => {
     return (
       <NoItem>
-        <p>No metadata placeholder</p>
+        <p>No metadata found</p>
       </NoItem>
     );
   };
@@ -76,6 +76,7 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
                   size="medium"
                   type="trash"
                   onClick={() => {
+                    setShowDetails(false);
                     onDelete(service);
                   }}
                 />
@@ -89,12 +90,14 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
           <td headers="Entry metadata information" colSpan={5} className="meta">
             <EntryDetail data-testid="details">
               {!service.loaded && (
-                <GoAElementLoader
-                  visible={elementIndicator.show}
-                  size="default"
-                  baseColour="#c8eef9"
-                  spinnerColour="#0070c4"
-                />
+                <ElementLoader>
+                  <GoAElementLoader
+                    visible={elementIndicator.show}
+                    size="default"
+                    baseColour="#c8eef9"
+                    spinnerColour="#0070c4"
+                  />
+                </ElementLoader>
               )}
               {service.metadata === null ? renderNoItem() : JSON.stringify(service.metadata, null, 2)}
             </EntryDetail>
@@ -195,4 +198,10 @@ const NoItem = styled.div`
   text-align: center;
   padding-top: 1.5rem;
   padding-bottom: 0.5rem;
+`;
+
+const ElementLoader = styled.div`
+  text-align: center;
+  padding-top: 1.3rem;
+  padding-bottom: 1rem;
 `;
