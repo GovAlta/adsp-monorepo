@@ -29,10 +29,8 @@ import { SubscriberChannel, Subscription } from '@store/subscription/models';
 const Subscriptions = (): JSX.Element => {
   const dispatch = useDispatch();
   const EMAIL = 'email';
-  const { subscriber, notifications } = useSelector((state: RootState) => ({
+  const { subscriber } = useSelector((state: RootState) => ({
     subscriber: state.subscription.subscriber,
-    notifications: state.notifications.notification,
-    tenant: state.tenant,
   }));
 
   const contact = useSelector((state: RootState) => state.notification?.contactInfo);
@@ -154,24 +152,28 @@ const Subscriptions = (): JSX.Element => {
                     <GoACallout title="You have no subscriptions" type="important"></GoACallout>
                   )}
                 </SubscriptionListContainer>
-                {contact?.contactEmail && (
-                  <CalloutWrapper id="contactSupport">
-                    <GoACallout title="Need help? Contact your service admin" type="information">
-                      <div>{contact?.supportInstructions}</div>
-                      <div>
-                        Email:{' '}
-                        <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
-                          {contact?.contactEmail}
-                        </a>
-                      </div>
-                      {contact?.phoneNumber && <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>}
-                      <div data-testid="service-notice-date-range"></div>
-                    </GoACallout>
-                  </CalloutWrapper>
+                {contact === undefined ? (
+                  <LoaderPadding>
+                  <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
+                  </LoaderPadding>
+                ) : (
+                  contact && (
+                    <CalloutWrapper id="contactSupport">
+                      <GoACallout title="Need help? Contact your service admin" type="information">
+                        <div>{contact?.supportInstructions}</div>
+                        <div>
+                          Email:{' '}
+                          <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
+                            {contact?.contactEmail}
+                          </a>
+                        </div>
+                        {contact?.phoneNumber && <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>}
+                        <div data-testid="service-notice-date-range"></div>
+                      </GoACallout>
+                    </CalloutWrapper>
+                  )
                 )}
               </>
-            ) : notifications ? (
-              <GoACallout title={`${notifications.message}`} type="important"></GoACallout>
             ) : (
               <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
             )}
@@ -192,4 +194,8 @@ const SubscriptionManagement = styled.div`
 const GoAModelTextWrapper = styled.div`
   padding: 0 1.5rem 0 1.75rem;
   max-width: 36rem;
+`;
+
+const LoaderPadding = styled.div`
+  padding: 3rem 0;
 `;
