@@ -581,7 +581,7 @@ Then('the user views the status of {string} changed to the first unused status',
 
 Then(
   'the user views the event details of {string} application status changed from {string} to {string} for subscriber of {string}',
-  function (appName, originalStatus, newStatus, sentTo) {
+  function (appName, originalStatus, newStatus, email) {
     const orgSubjectStatus = originalStatus.match(/(.*{original status}.*)/g);
     if (orgSubjectStatus == null) {
       currentStatus = originalStatus;
@@ -601,11 +601,11 @@ Then(
       .eventDetails()
       .invoke('text')
       .then((eventDetails) => {
-        if (newStatus != 'Empty' || sentTo != 'Empty') {
+        if (newStatus != 'Empty' || email != 'Empty') {
           expect(eventDetails).to.contain(appName);
           expect(eventDetails).to.contain(currentStatus);
           expect(eventDetails).to.contain(afterStatus);
-          expect(eventDetails).to.contain(sentTo);
+          expect(eventDetails).to.contain(email);
         }
       });
   }
