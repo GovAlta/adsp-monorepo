@@ -13,6 +13,7 @@ import {
   GoAModal,
   GoAModalActions,
   GoAModalTitle,
+  GoAInput,
 } from '@abgov/react-components/experimental';
 
 import SubscriptionsList from '@components/SubscriptionsList';
@@ -21,6 +22,7 @@ import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { getMySubscriberDetails, patchSubscriber, unsubscribe } from '@store/subscription/actions';
 import { RootState } from '@store/index';
+import { Channels } from '@store/notifications/models';
 import { SubscriberChannel, Subscription } from '@store/subscription/models';
 import {
   NoSubscriberCallout,
@@ -35,15 +37,20 @@ import {
 
 const Subscriptions = (): JSX.Element => {
   const dispatch = useDispatch();
-  const EMAIL = 'email';
   const { subscriber, hasSubscriberId } = useSelector((state: RootState) => ({
     subscriber: state.subscription.subscriber,
     hasSubscriberId: state.subscription.hasSubscriberId,
   }));
   const contact = useSelector((state: RootState) => state.notification?.contactInfo);
   const [formErrors, setFormErrors] = useState({});
-  const subscriberEmail = subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === EMAIL)[0]?.address;
+  const subscriberEmail = subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === Channels.email)[0]
+    ?.address;
+  const subscriberSMS = subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === Channels.sms)[0]
+    ?.address;
+
   const [emailContactInformation, setEmailContactInformation] = useState(subscriberEmail);
+  const [SMSContactInformation, setSMSContactInformation] = useState(subscriberSMS);
+
   const [editContactInformation, setEditContactInformation] = useState(false);
   const [showUnSubscribeModal, setShowUnSubscribeModal] = useState(false);
   const [selectedUnsubscribeSub, setSelectedUnsubscribeSub] = useState<Subscription>();
@@ -74,9 +81,14 @@ const Subscriptions = (): JSX.Element => {
   };
   const setValue = (name: string, value: string) => {
     switch (name) {
-      case EMAIL:
+      case Channels.email:
         setEmailContactInformation(value);
         break;
+      case Channels.sms: {
+        console.log(Channels.sms);
+        setSMSContactInformation(value);
+        break;
+      }
     }
   };
   const unSubscribeModal = () => {
@@ -123,18 +135,44 @@ const Subscriptions = (): JSX.Element => {
     e.preventDefault();
     if (isValidEmail(emailContactInformation)) {
       setFormErrors({});
-      if (subscriberEmail !== emailContactInformation) {
-        dispatch(
-          patchSubscriber(
-            [
-              {
-                channel: EMAIL,
-                address: emailContactInformation,
-              },
-            ],
-            subscriber.id
-          )
-        );
+
+      if (subscriber.channels) {
+        const emailChannelIndex = subscriber.channels.findIndex((channel) => {
+          return channel.channel === Channels.email;
+        });
+
+        const smsChannelIndex = subscriber.channels.findIndex((channel) => {
+          return channel.channel === Channels.sms;
+        });
+        let channels = [...subscriber.channels];
+
+        if (emailChannelIndex !== -1) {
+          channels[emailChannelIndex].address = emailContactInformation;
+        } else {
+          channels = [
+            ...channels,
+            {
+              channel: Channels.email,
+              address: emailContactInformation,
+            },
+          ];
+        }
+
+        if (smsChannelIndex !== -1) {
+          channels[smsChannelIndex].address = SMSContactInformation;
+        } else {
+          channels = [
+            ...channels,
+            {
+              channel: Channels.sms,
+              address: SMSContactInformation,
+            },
+          ];
+        }
+
+        if (subscriberEmail !== emailContactInformation || subscriberEmail !== SMSContactInformation) {
+          dispatch(patchSubscriber(channels, subscriber.id));
+        }
       }
       setEditContactInformation(!editContactInformation);
     } else {
@@ -178,23 +216,38 @@ const Subscriptions = (): JSX.Element => {
             <>
               <ContactInformationWrapper>
                 <GoACard title="Contact information" data-testid="contact-information-card">
-                  <Label>Email</Label>
                   <ContactInformationContainer>
                     <div>
                       {editContactInformation ? (
                         <GoAForm>
+                          <Label>Email</Label>
                           <GoAFormItem error={formErrors?.['email']}>
                             <GoAInputEmail
                               aria-label="email"
                               name="email"
                               value={emailContactInformation}
                               onChange={setValue}
-                              data-testid="edit-contact-input-text"
+                              data-testid="contact-email-input"
+                            />
+                          </GoAFormItem>
+
+                          <Label>SMS</Label>
+                          <GoAFormItem error={formErrors?.['sms']}>
+                            <GoAInput
+                              type="text"
+                              aria-label="sms"
+                              name="sms"
+                              value={SMSContactInformation}
+                              data-testid="contact-sms-input"
+                              onChange={setValue}
                             />
                           </GoAFormItem>
                         </GoAForm>
                       ) : (
-                        <p>{subscriberEmail}</p>
+                        <div>
+                          {subscriberEmail && <p>Email: {subscriberEmail}</p>}
+                          {subscriberSMS && <p>SMS: {subscriberSMS}</p>}
+                        </div>
                       )}
                     </div>
                     <div>

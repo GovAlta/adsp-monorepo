@@ -5,6 +5,11 @@ export interface Notification {
 }
 type NotificationType = 'important' | 'information' | 'event' | 'emergency';
 
+export const Channels = Object.freeze({
+  email: 'email',
+  sms: 'sms',
+});
+
 export interface NotificationState {
   notification: Notification;
 }
