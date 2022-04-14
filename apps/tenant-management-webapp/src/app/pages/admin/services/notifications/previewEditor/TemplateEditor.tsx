@@ -104,6 +104,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   };
 
   const tabNames = { sms: 'SMS', bot: 'Slack', email: 'Email' };
+  const titleNames = { sms: ' SMS', bot: ' slack', email: 'n email' };
   const saveChangesAction = () => {
     saveCurrentTemplate();
   };
@@ -169,7 +170,9 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   </div>
                 }
               >
-                <h3 data-testid="modal-title">{`${mainTitle}${[item.name] || ''} template--${serviceName}`}</h3>
+                <h3 data-testid="modal-title">{`${mainTitle}${
+                  titleNames[item.name] || ''
+                } template--${serviceName}`}</h3>
 
                 <>
                   <h4>{subjectTitle}</h4>
