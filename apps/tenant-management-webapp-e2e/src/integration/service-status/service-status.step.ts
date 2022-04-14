@@ -594,19 +594,26 @@ Then(
     if (newSubjectStatus == null) {
       currentStatus = newStatus;
     } else {
-      afterStatus = newStatus.replace('{new status}', 'The new status was: ') + afterStatus.toLowerCase();
+      afterStatus = newStatus.replace('{new status}', 'The new status is now: ') + afterStatus.toLowerCase();
       cy.log('New status: ' + afterStatus);
     }
-    tenantAdminObj
-      .eventDetails()
-      .invoke('text')
-      .then((eventDetails) => {
-        if (newStatus != 'Empty' || email != 'Empty') {
-          expect(eventDetails).to.contain(appName);
-          expect(eventDetails).to.contain(currentStatus);
-          expect(eventDetails).to.contain(afterStatus);
-          expect(eventDetails).to.contain(email);
-        }
-      });
+    tenantAdminObj.eventToggleDetailsIcons().each(($element) => {
+      //clicking each eye-icon in the list
+      cy.wrap($element).click();
+      tenantAdminObj
+        .eventDetails()
+        .invoke('text')
+        .then((eventDetails) => {
+          //if event log details contains email then verify expect statements else close the event details and continue down the list
+          if (eventDetails.includes(email)) {
+            expect(eventDetails).to.contain(appName);
+            expect(eventDetails).to.contain(currentStatus);
+            expect(eventDetails).to.contain(afterStatus);
+          } else {
+            //clicking eye icon to close eventDetails
+            cy.wrap($element).click();
+          }
+        });
+    });
   }
 );
