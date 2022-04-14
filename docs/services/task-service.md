@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Task service
-nav_order: 10
+nav_order: 11
 parent: Services
 ---
 
@@ -34,7 +34,7 @@ Task represents a unit of work in a *queue*. Each task has basic name and descri
 Queues are configured using the [configuration service](configuration-service.md). Note that new configuration may take up to 15 mins to apply.
 
 ```typescript
-  const configurationServiceUrl = 'https://configuration-service.alpha.alberta.ca';
+  const configurationServiceUrl = 'https://configuration-service.adsp.alberta.ca';
 
   const namespace = 'my-service';
   const name = 'intake-submissions';
@@ -78,7 +78,7 @@ Queues are configured using the [configuration service](configuration-service.md
   }
 
   await fetch(
-    `https://task-service.alpha.alberta.ca/task/v1/queues/${namespace}/${name}/tasks`,
+    `https://task-service.adsp.alberta.ca/task/v1/queues/${namespace}/${name}/tasks`,
     {
       method: 'POST',
       headers: {
@@ -98,7 +98,7 @@ Tasks are returned in order with highest priority tasks first and, within each p
   const top = 20;
 
   await fetch(
-    `https://task-service.alpha.alberta.ca/task/v1/queues/${namespace}/${name}/tasks?top=${top}`,
+    `https://task-service.adsp.alberta.ca/task/v1/queues/${namespace}/${name}/tasks?top=${top}`,
     {
       method: 'GET',
       headers: {
@@ -112,7 +112,7 @@ Tasks are returned in order with highest priority tasks first and, within each p
 Tasks can be assigned by users with one of the assigner roles for the queue or self-assigned by users with one of the worker roles.
 
 ```typescript
-  const taskServiceUrl = 'https://task-service.alpha.alberta.ca';
+  const taskServiceUrl = 'https://task-service.adsp.alberta.ca';
   const taskId = 'b7aba911-7bd9-485e-b0e9-416506f025d9';
   const namespace = 'support';
   const name = 'intake-processing';

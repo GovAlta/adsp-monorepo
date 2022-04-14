@@ -1,6 +1,6 @@
 ---
 layout: page
-title: Platform service SDK
+title: Service SDK
 nav_order: 2
 parent: Platform development
 ---
@@ -14,8 +14,14 @@ parent: Platform development
 {:toc}
 </details>
 
-# Platform service SDK
-Platform services integrate into the foundational capabilities via a Software Development Kit (SDK). The SDK includes interfaces and utilities for handling tenancy, configurations, and registration. Note that the SDK provides friendly interfaces on top of APIs. It is intended to speed up platform service development but is not the only way to access platform capabilities. Currently the SDK is only available for NodeJS.
+# ADSP service SDK
+Platform services integrate into the foundational capabilities via a Software Development Kit (SDK). The SDK includes interfaces and utilities for handling tenancy, configurations, and registration. The same SDK can be used for development of tenant services.
+
+Note that the SDK provides friendly interfaces on top of APIs. It is intended to speed up service development but is not the only way to access platform capabilities. Currently the SDK is only available for NodeJS.
+
+```bash
+npm i @govalta/adsp-service-sdk
+```
 
 ## Generating service
 The ADSP project includes a [workspace generator](https://nx.dev/l/r/generators/workspace-generators) for creating new express based backend services. The base template includes usages of SDK capabilities and is a good starting point for understanding the SDK.
@@ -28,7 +34,7 @@ npx nx workspace-generator adsp-service
 The generate output includes sub-project structure and initial files under `/apps` as well as deployment manifests under `.openshift/managed` and `.compose`.
 
 ## Initializing the SDK
-SDK capabilities are access via the `initializePlatform` function. It takes service metadata as inputs and returns an object with the initialized platform interfaces and utilities.
+SDK capabilities are access via either the `initializePlatform` or the `initializeService` function. It takes service metadata as inputs and returns an object with the initialized platform interfaces and utilities.
 
 ```typescript
   import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';

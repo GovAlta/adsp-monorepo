@@ -35,7 +35,7 @@ Platform capabilities are often access via their API under a service account. Re
 
 ```typescript
   const response = await fetch(
-    `https://access.alpha.alberta.ca/auth/realms/${realm}/protocol/openid-connect/token`,
+    `https://access.alberta.ca/auth/realms/${realm}/protocol/openid-connect/token`,
     {
       method: 'POST',
       body: new URLSearchParams({

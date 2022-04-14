@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Push service
-nav_order: 6
+nav_order: 7
 parent: Services
 ---
 
@@ -28,7 +28,7 @@ Stream represents a collection of domain events that can be subscribed to throug
 Streams are configured using the [configuration service](configuration-service.md).
 
 ```typescript
-  const configurationServiceUrl = 'https://configuration-service.alpha.alberta.ca';
+  const configurationServiceUrl = 'https://configuration-service.adsp.alberta.ca';
   const request = {
     operation: 'UPDATE',
     update: {
@@ -72,7 +72,7 @@ Server side event with Authorization header may require a polyfill. Alternativel
 
 ```typescript
   const eventSource = new EventSource(
-    `https://push-service.alpha.alberta.ca/stream/v1/streams/${streamId}`,
+    `https://push-service.adsp.alberta.ca/stream/v1/streams/${streamId}`,
     {
       headers: { Authorization: `Bearer ${accessToken}` }
     }
@@ -91,7 +91,7 @@ Socket.io connections use namespaces for tenancy. Each connection is made to a s
 ```typescript
   import { io } from 'socket.io-client';
   const socket = io(
-    `https://push-service.alpha.alberta.ca/${tenantId}?stream=${streamId}`,
+    `https://push-service.adsp.alberta.ca/${tenantId}?stream=${streamId}`,
     {
       withCredentials: true,
       extraHeaders: {
