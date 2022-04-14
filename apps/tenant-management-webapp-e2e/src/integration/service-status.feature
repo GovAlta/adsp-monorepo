@@ -204,8 +204,7 @@ Feature: Service status
     Given a tenant admin user is on notification subscriptions page
     When the user types "auto.test@gov.ab.ca" in Search subscriber email field
     And the user clicks Search button on notifications page
-    Then the user "views" the subscription of "auto.test@gov.ab.ca", "auto.test@gov.ab.ca" under "Application health check change"
-    # Then the user "views" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Application Status Update"
+    Then the user "views" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Application status update"
     Given a tenant admin user is on status applications page
     Then the user "views" "Autotest" in the application list
     And the user views current status for "Autotest"
@@ -213,9 +212,9 @@ Feature: Service status
     And the user changes status to the first unused status
     And the user clicks Save button in Manual status change modal
     Then the user views the status of "Autotest" changed to the first unused status
-    When the user waits "10" seconds
+    When the user waits "20" seconds
     When the user selects the "Event log" menu item
     Then the "Event log" landing page is displayed
     When the user searches with "notification-service:notification-sent", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
-    And the user clicks Show details button for the latest event of "notification-sent" for "notification-service"
+    And the user views the events matching the search filter of "notification-service:notification-sent"
     Then the user views the event details of "Auto Test" application status changed from "{original status}" to "{new status}" for subscriber of "auto.test@gov.ab.ca"
