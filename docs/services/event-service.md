@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Event service
-nav_order: 4
+nav_order: 5
 parent: Services
 ---
 
@@ -30,7 +30,7 @@ Event log records all *events* emitted via the event service and keeps basic met
 Event definitions are configured using the [configuration service](configuration-service.md). Note that new configuration may take up to 15 mins to apply.
 
 ```typescript
-  const configurationServiceUrl = 'https://configuration-service.alpha.alberta.ca';
+  const configurationServiceUrl = 'https://configuration-service.adsp.alberta.ca';
   const request = {
     operation: 'UPDATE',
     update: {
@@ -87,7 +87,7 @@ Event definitions are configured using the [configuration service](configuration
   }
 
   await fetch(
-    'https://event-service.alpha.alberta.ca/event/v1/events',
+    'https://event-service.adsp.alberta.ca/event/v1/events',
     {
       method: 'POST',
       headers: {
@@ -103,7 +103,7 @@ Event definitions are configured using the [configuration service](configuration
 The event log is stored as a value (event-service:event) in the [value service](value-service.md) and can be queried using the value API.
 
 ```typescript
-  const valueServiceUrl = 'https://value-service.alpha.alberta.ca';
+  const valueServiceUrl = 'https://value-service.adsp.alberta.ca';
   const top = 50;
   const timestampMin = `2021-10-10T12:00:00Z`;
 

@@ -1,7 +1,7 @@
 ---
 layout: page
 title: File service
-nav_order: 7
+nav_order: 8
 parent: Services
 ---
 
@@ -32,7 +32,7 @@ A file represents an uploaded file and consists of a minimal metadata record and
 File types are configured using the [configuration service](configuration-service.md). Note that new configuration may take up to 15 mins to apply.
 
 ```typescript
-  const configurationServiceUrl = 'https://configuration-service.alpha.alberta.ca';
+  const configurationServiceUrl = 'https://configuration-service.adsp.alberta.ca';
   const request = {
     operation: 'UPDATE',
     update: {
@@ -71,7 +71,7 @@ File types are configured using the [configuration service](configuration-servic
   formData.append('file', selectedFile);
 
   await fetch(
-    'https://file-service.alpha.alberta.ca/file/v1/files',
+    'https://file-service.adsp.alberta.ca/file/v1/files',
     {
       method: 'POST',
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -85,7 +85,7 @@ Note that file service requires an authenticated user for uploads. In order to a
 ```typescript
   app.use(
     '/api/upload',
-    proxy('https://file-service.alpha.alberta.ca', {
+    proxy('https://file-service.adsp.alberta.ca', {
       proxyReqPathResolver: function() {
         return '/file/v1/files';
       },

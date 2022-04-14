@@ -26,10 +26,10 @@ export class DirectoryApi {
     return res?.data;
   }
 
-  async createEntry(service: Service): Promise<boolean> {
+  async createEntry(service: Service): Promise<Service> {
     const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.namespace}`;
     const res = await this.http.post(url, { ...service });
-    return res?.data === 'Created';
+    return res?.data;
   }
 
   async updateEntry(service: Service): Promise<boolean> {
@@ -47,7 +47,7 @@ export class DirectoryApi {
 
   async fetchEntryDetail(service: Service): Promise<MetadataFetchResponse> {
     const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.namespace}/services/${service.service}`;
-    const res = await this.http.get(url, { timeout: 500 });
+    const res = await this.http.get(url, { timeout: 5000 });
     return res?.data;
   }
 }

@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Value service
-nav_order: 5
+nav_order: 6
 parent: Services
 ---
 
@@ -42,7 +42,7 @@ Metrics are numeric values that can be included in value writes. The are automat
   }
 
   const response = await fetch(
-    `https://value-service.alpha.alberta.ca/value/v1/${namespace}/values/${name}`,
+    `https://value-service.adsp.alberta.ca/value/v1/${namespace}/values/${name}`,
     {
       method: 'POST',
       headers: {
@@ -66,7 +66,7 @@ Metrics are numeric values that can be included in value writes. The are automat
   const namespace = 'support';
   const name = 'application-stats';
   const response = await fetch(
-    `https://value-service.alpha.alberta.ca/value/v1/${namespace}/values/${name}`,
+    `https://value-service.adsp.alberta.ca/value/v1/${namespace}/values/${name}`,
     {
       method: 'GET',
       headers: { Authorization: `Bearer ${accessToken}` },

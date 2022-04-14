@@ -138,8 +138,10 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
           const directory = { name: namespace, services: services };
 
           await directoryRepository.update(directory);
-          directoryCache.set(`directory-${namespace}`, services);
-          return res.sendStatus(HttpStatusCodes.CREATED);
+          const resultInDB = await directoryRepository.getDirectories(namespace);
+          const serviceInDB = resultInDB['services'];
+          directoryCache.set(`directory-${namespace}`, serviceInDB);
+          return res.status(HttpStatusCodes.CREATED).json(serviceInDB.find((x) => x.service === service));
         }
       } catch (err) {
         logger.error(`Failed creating directory for namespace: ${namespace} with error ${err.message}`);
@@ -239,7 +241,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
         throw new InvalidValueError('Update service', `Cannot find service: ${service}`);
       }
       try {
-        const { data } = await axios.get<Links>(filteredService.host, { timeout: 500 });
+        const { data } = await axios.get<Links>(filteredService.host, { timeout: 5000 });
         // Root attributes of Links type are all optional. So, string can pass the axios type validation.
         if (typeof data !== 'object') {
           throw new InvalidValueError('Fetch metadata', 'Invalid metadata schema');

@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Configuration service
-nav_order: 3
+nav_order: 4
 parent: Services
 ---
 
@@ -29,7 +29,7 @@ Revisions are specific snapshots of *configuration*. Updates to configuration va
 ## Code examples
 ### Read a revision of configuration
 ```typescript
-  const configurationServiceUrl = 'https://configuration-service.alpha.alberta.ca';
+  const configurationServiceUrl = 'https://configuration-service.adsp.alberta.ca';
   const namespace = 'support';
   const name = 'formula-values';
   const response = await fetch(
@@ -47,7 +47,7 @@ Revisions are specific snapshots of *configuration*. Updates to configuration va
 ### Update configuration
 Updates are applied to the latest revision of configuration.
 ```typescript
-  const configurationServiceUrl = 'https://configuration-service.alpha.alberta.ca';
+  const configurationServiceUrl = 'https://configuration-service.adsp.alberta.ca';
   const namespace = 'support';
   const name = 'formula-values';
   const request = {
@@ -74,7 +74,7 @@ Updates are applied to the latest revision of configuration.
 ### Create a revision
 Create a revision to snapshot the latest configuration. The snapshot cannot be modified afterwards.
 ```typescript
-  const configurationServiceUrl = 'https://configuration-service.alpha.alberta.ca';
+  const configurationServiceUrl = 'https://configuration-service.adsp.alberta.ca';
   const namespace = 'support';
   const name = 'formula-values';
 

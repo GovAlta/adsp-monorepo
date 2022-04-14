@@ -219,11 +219,12 @@ const ServiceStatusPage = (): JSX.Element => {
         <h1>Status & Outages</h1>
         <div className="descriptor">Real time monitoring of our applications and services</div>
       </div> */}
-      <main>
+      <Main>
         <ServiceStatusesCss>
           <section>
             <SectionView />
           </section>
+          <div className="line-vs-small" />
           {applications && (
             <div className="small-container">
               <div>
@@ -235,29 +236,37 @@ const ServiceStatusPage = (): JSX.Element => {
                 </div>
                 <div>
                   <GoAForm>
-                    <GoAFormItem error={formErrors?.['email'] || error?.length > 0}>
-                      <label>Enter your email to receive updates</label>
-                      <GoAInputEmail
-                        id="email"
-                        disabled={subscriber !== null}
-                        name="email"
-                        value={email}
-                        data-testid="email"
-                        onChange={setValue}
-                        aria-label="email"
-                      />
-                    </GoAFormItem>
+                    <Grid>
+                      <GridItem md={4.6}>
+                        <GoAFormItem error={formErrors?.['email'] || error?.length > 0}>
+                          <GoAFormLabelOverwrite>
+                            <label>Enter your email to receive updates</label>
+                          </GoAFormLabelOverwrite>
+                          <GoAInputEmail
+                            id="email"
+                            disabled={subscriber !== null}
+                            name="email"
+                            value={email}
+                            data-testid="email"
+                            onChange={setValue}
+                            aria-label="email"
+                          />
+                        </GoAFormItem>
+                      </GridItem>
+                    </Grid>
                   </GoAForm>
-                  <GoAFormActions alignment="left">
-                    <GoAButton
-                      disabled={subscriber !== null}
-                      buttonType="primary"
-                      data-testid="subscribe"
-                      onClick={save}
-                    >
-                      Submit
-                    </GoAButton>
-                  </GoAFormActions>
+                  <GoAFormActionOverwrite>
+                    <GoAFormActions alignment="left">
+                      <GoAButton
+                        disabled={subscriber !== null}
+                        buttonType="primary"
+                        data-testid="subscribe"
+                        onClick={save}
+                      >
+                        Submit
+                      </GoAButton>
+                    </GoAFormActions>
+                  </GoAFormActionOverwrite>
                 </div>
                 {subscriber && (
                   <GoACallout title="You have signed up for notifications" key="success" type="success">
@@ -274,7 +283,7 @@ const ServiceStatusPage = (): JSX.Element => {
             </div>
           )}
         </ServiceStatusesCss>
-      </main>
+      </Main>
       <Footer logoSrc={GoaLogo} />
     </div>
   );
@@ -285,6 +294,10 @@ const Title = styled.h2`
     font-weight: var(--fw-regular);
     margin-bottom: 1.5rem;
   }
+`;
+
+const Main = styled.main`
+  padding-bottom: 10rem;
 `;
 
 const ServiceStatusesCss = styled.div`
@@ -300,12 +313,15 @@ const ServiceStatusesCss = styled.div`
     margin-bottom: 1.5rem;
   }
 
+  .line-vs-small {
+    padding-bottom: 1rem;
+  }
+
   h3 {
     margin-bottom: 1.5rem !important;
   }
   .small-container {
     max-width: 50rem;
-    padding: 1.25rem;
     margin: 0 auto;
     div.goa-form div {
       padding: 0;
@@ -329,6 +345,18 @@ const ServiceStatusesCss = styled.div`
     text-align: right;
     color: #70757a;
     font-size: var(-fs-xs);
+  }
+`;
+
+const GoAFormActionOverwrite = styled.div`
+  .goa-form-actions {
+    margin-top: 0px !important;
+  }
+`;
+
+const GoAFormLabelOverwrite = styled.div`
+  label {
+    margin-top: 1rem !important;
   }
 `;
 

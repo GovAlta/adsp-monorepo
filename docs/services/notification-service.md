@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Notification service
-nav_order: 8
+nav_order: 9
 parent: Services
 ---
 
@@ -36,7 +36,7 @@ A subscriber represents a receiver of notifications. Subscriber is not a represe
 Notification types are configured using the [configuration service](configuration-service.md).
 
 ```typescript
-  const configurationServiceUrl = 'https://configuration-service.alpha.alberta.ca';
+  const configurationServiceUrl = 'https://configuration-service.adsp.alberta.ca';
   const request = {
     operation: 'UPDATE',
     update: {
@@ -83,7 +83,7 @@ For this type of subscription request, the user must have a subscriber role.
 
 ```typescript
   const response = await fetch(
-    `https://notification-service.alpha.alberta.ca/subscription/v1/types/${typeId}/subscriptions?userSub=true`,
+    `https://notification-service.adsp.alberta.ca/subscription/v1/types/${typeId}/subscriptions?userSub=true`,
     {
       method: 'POST',
       headers: {
@@ -111,7 +111,7 @@ Users can update their subscriber preferences including the channels of notifica
 
 ```typescript
   const response = await fetch(
-    `https://notification-service.alpha.alberta.ca/subscription/v1/subscribers/${subscriberId}`,
+    `https://notification-service.adsp.alberta.ca/subscription/v1/subscribers/${subscriberId}`,
     {
       method: 'PATCH',
       headers: {
@@ -140,7 +140,7 @@ Users can update their subscriber preferences including the channels of notifica
 ### Unsubscribe from a notification type
 ```typescript
   const response = await fetch(
-    `https://notification-service.alpha.alberta.ca/subscription/v1/types/${typeId}/subscriptions/${subscriberId}`,
+    `https://notification-service.adsp.alberta.ca/subscription/v1/types/${typeId}/subscriptions/${subscriberId}`,
     {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${accessToken}` },
