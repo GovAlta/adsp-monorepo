@@ -5,7 +5,7 @@ import * as NodeCache from 'node-cache';
 import { Logger } from 'winston';
 import validationMiddleware from '../../middleware/requestValidator';
 import { ServiceV2 } from '../../directory/validator/directory/directoryValidator';
-import { InvalidValueError } from '@core-services/core-common';
+import { InvalidValueError, InvalidOperationError } from '@core-services/core-common';
 import { TenantService } from '@abgov/adsp-service-sdk';
 import * as passport from 'passport';
 import { validateNamespaceEndpointsPermission, toKebabName } from '../../middleware/authentication';
@@ -252,6 +252,9 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
         }
       } catch (err) {
         logger.warn(`Failed fetching metadata for service ${service} with error ${err.message}`);
+        throw new InvalidOperationError('Failed to fetch data from remote server', {
+          statusCode: HttpStatusCodes.FAILED_DEPENDENCY,
+        });
       }
 
       directoryCache.set(`directory-${namespace}`, services);
