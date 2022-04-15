@@ -83,15 +83,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [monaco, eventSuggestion]);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [newActiveValue, setNewActiveValue] = useState(validChannels[0]);
   const [saveModal, setSaveModal] = useState(false);
-  const [currentTemplate, setCurrentTemplate] = useState('');
-
-  useEffect(() => {
-    if (setNewActiveValue) {
-      setNewActiveValue(validChannels[0]);
-    }
-  }, [validChannels]);
 
   useEffect(() => {
     if (initialChannel) {
@@ -108,11 +100,11 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   }, [modelOpen]);
 
   const switchTabPreview = (value) => {
-    setNewActiveValue(value);
     setPreview(value);
   };
 
   const tabNames = { sms: 'SMS', bot: 'Slack', email: 'Email' };
+  const titleNames = { sms: ' SMS', bot: ' slack', email: 'n email' };
   const saveChangesAction = () => {
     saveCurrentTemplate();
   };
@@ -140,7 +132,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   return (
     <TemplateEditorContainer>
       <GoAForm>
-        <GoAFormItem error={errors['body'] ?? ''}>
+        <GoAFormItem>
           <Tabs activeIndex={activeIndex} changeTabCallback={(index: number) => switchTabPreview(validChannels[index])}>
             {radioOptions.map((item, key) => (
               <Tab
@@ -152,9 +144,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     <div style={{ margin: '3px 0 0 5px' }}>
                       {(savedTemplates[item.name]?.body !== templates[item.name]?.body ||
                         savedTemplates[item.name]?.subject !== templates[item.name]?.subject) &&
-                      item.body.length !== 0 &&
-                      item.subject.length !== 0 &&
-                      newActiveValue !== item.name ? (
+                      item.body?.length !== 0 &&
+                      item.subject?.length !== 0 ? (
                         <div>
                           <div className="mobile">
                             <GoAInfoBadge content="" type="information" />
@@ -164,7 +155,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                           </div>
                         </div>
                       ) : (
-                        (item.body.length === 0 || item.subject.length === 0) && (
+                        (item.body?.length === 0 || item.subject?.length === 0) && (
                           <div>
                             <div className="mobile">
                               <GoABadge type="warning" icon="warning" />
@@ -179,7 +170,9 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   </div>
                 }
               >
-                <h3 data-testid="modal-title">{`${mainTitle}${[item.name] || ''} template--${serviceName}`}</h3>
+                <h3 data-testid="modal-title">{`${mainTitle}${
+                  titleNames[item.name] || ''
+                } template--${serviceName}`}</h3>
 
                 <>
                   <h4>{subjectTitle}</h4>
@@ -187,10 +180,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     <MonacoDiv>
                       <MonacoEditor
                         onChange={(value) => {
-                          if (currentTemplate === item.name) {
-                            onSubjectChange(value, item.name);
-                          }
-                          setCurrentTemplate(item.name);
+                          onSubjectChange(value, item.name);
                         }}
                         value={templates[item.name]?.subject}
                         {...subjectEditorConfig}

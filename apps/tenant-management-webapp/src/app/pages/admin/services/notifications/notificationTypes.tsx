@@ -133,7 +133,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
       try {
         setSubjectPreview('');
-        const bodyPreview = generateMessage(getTemplateBody(template.body, currentChannel, htmlPayload), htmlPayload);
+        const bodyPreview = generateMessage(getTemplateBody(template?.body, currentChannel, htmlPayload), htmlPayload);
         setBodyPreview(bodyPreview);
         setTemplateEditErrors({
           ...templateEditErrors,
@@ -146,7 +146,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         });
       }
       try {
-        setSubjectPreview(generateMessage(template.subject, htmlPayload));
+        setSubjectPreview(generateMessage(template?.subject, htmlPayload));
         setTemplateEditErrors({
           ...templateEditErrors,
           subject: '',
@@ -437,8 +437,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                     data-testid={`${notificationType.name}:${channel}`}
                                   >
                                     {channelIcons[channel]}
-                                    {(event.templates[channel].subject?.length === 0 ||
-                                      event.templates[channel].body?.length === 0) && (
+                                    {(event.templates[channel]?.subject?.length === 0 ||
+                                      event.templates[channel]?.body?.length === 0) && (
                                       <div
                                         className="icon-badge"
                                         data-testid={`${notificationType.name}:${channel}:badge`}
@@ -737,7 +737,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               subjectEditorConfig={subjectEditorConfig}
               bodyTitle="Body"
               onBodyChange={(value, channel) => {
-                //setBody(value);
                 let newTemplates = templates;
                 if (templates[channel]) {
                   newTemplates[channel].body = value;

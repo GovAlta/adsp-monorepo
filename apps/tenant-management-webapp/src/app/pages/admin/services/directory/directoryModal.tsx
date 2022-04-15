@@ -25,11 +25,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   const dispatch = useDispatch();
 
   const checkService = (entry) => {
-    const hasExist = directory.find((x) => !x.api && x.namespace === tenantName && x.service === entry.service);
-    if (!isNew && hasExist && hasExist.service === props.entry.service) {
-      return false;
-    }
-    return hasExist;
+    return directory.find((x) => !x.api && x.namespace === tenantName && x.service === entry.service);
   };
 
   const checkApi = (entry) => {
@@ -124,7 +120,8 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               setErrors({ ...errors, api: 'Api duplicate, please use another one' });
               return;
             }
-            if (!entry.api && checkService(entry)) {
+
+            if ((!entry.api || entry.api === '') && checkService(entry)) {
               setErrors({ ...errors, service: 'Service duplicate, please use another one' });
               return;
             }
