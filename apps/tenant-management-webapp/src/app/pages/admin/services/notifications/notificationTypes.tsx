@@ -556,8 +556,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                       data-testid={`${notificationType.name}:${channel}`}
                                     >
                                       {channelIcons[channel]}
-                                      {(event.templates[channel].subject?.length === 0 ||
-                                        event.templates[channel].body?.length === 0) && (
+                                      {(event.templates[channel]?.subject?.length === 0 ||
+                                        event.templates[channel]?.body?.length === 0) && (
                                         <div
                                           className="icon-badge"
                                           data-testid={`${notificationType.name}:${channel}:badge`}
