@@ -249,6 +249,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                   value={Channels.email}
                   disabled={true}
                   checked={preferredChannel === Channels.email}
+                  //eslint-disable-next-line
                   onChange={() => {}}
                 >
                   Email
@@ -258,6 +259,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                   value={Channels.sms}
                   disabled={true}
                   checked={preferredChannel === Channels.sms}
+                  //eslint-disable-next-line
                   onChange={() => {}}
                 >
                   SMS

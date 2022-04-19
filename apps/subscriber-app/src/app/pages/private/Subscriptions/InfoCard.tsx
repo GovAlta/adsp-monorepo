@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
 import styled from 'styled-components';
-import { GapVS } from './styled-components';
 
 interface InfoCardProps {
   title: string;
