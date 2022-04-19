@@ -269,7 +269,7 @@ export const createFileRouter = ({
   fileRouter.get(
     '/files',
     assertAuthenticatedHandler,
-    createValidationHandler(query('top').optional().isInt(), query('after').optional().isString()),
+    createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
     getFiles(apiId, fileRepository)
   );
   fileRouter.post('/files', assertAuthenticatedHandler, upload.single('file'), uploadFile(apiId, logger, eventService));
