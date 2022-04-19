@@ -2,6 +2,7 @@ import React, { FunctionComponent } from 'react';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { ConfigurationOverview } from './overview';
+import { ConfigurationDefinitions } from './definitions/definitions';
 import SupportLinks from '@components/SupportLinks';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
@@ -17,6 +18,9 @@ export const Configuration: FunctionComponent = () => {
         <Tabs activeIndex={0}>
           <Tab label="Overview">
             <ConfigurationOverview />
+          </Tab>
+          <Tab label="Definitions">
+            <ConfigurationDefinitions />
           </Tab>
         </Tabs>
       </Main>
