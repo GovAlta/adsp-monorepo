@@ -1,6 +1,9 @@
 {
   "env": {
     "env-name": "DEV",
+    "email": "auto.test@gov.ab.ca",
+    "password": "",
+    "realm": "b6aff762-20f8-4c5d-88d3-c38ae16d1937",
     "TAGS": ""
   },
   "baseUrl": "https://subscription.adsp-dev.gov.ab.ca/",
