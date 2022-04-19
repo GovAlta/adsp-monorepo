@@ -1,4 +1,4 @@
-import React, { FormEvent, useState, useEffect } from 'react';
+import React, { FormEvent, useState, useEffect, isValidElement } from 'react';
 import { GoAButton, GoARadio } from '@abgov/react-components';
 import { GoAInputEmail, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { useDispatch, useSelector } from 'react-redux';
@@ -12,6 +12,7 @@ import { Label } from './styled-components';
 import { GapVS } from './styled-components';
 import { RootState } from '@store/index';
 import { IndicatorWithDelay } from '@components/Indicator';
+import { phoneWrapper } from '@lib/wrappers';
 
 interface ContactInfoCardProps {
   subscriber: Subscriber;
@@ -25,10 +26,12 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
   const subscriberSMS =
     subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === Channels.sms)[0]?.address || '';
 
+  const subscriberPreferredChannel = subscriber?.channels ? subscriber?.channels[0].channel : null;
+
   const [emailContactInformation, setEmailContactInformation] = useState(subscriberEmail);
   const [SMSContactInformation, setSMSContactInformation] = useState(subscriberSMS);
   const [editContactInformation, setEditContactInformation] = useState(false);
-  const preferredChannel = subscriber?.channels ? subscriber?.channels[0].channel : null;
+  const [preferredChannel, setPreferredChannel] = useState(subscriberPreferredChannel);
   const indicator = useSelector((state: RootState) => {
     const indicator = state.session?.indicator;
     if (indicator) {
@@ -47,7 +50,9 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
         setEmailContactInformation(value);
         break;
       case Channels.sms: {
-        setSMSContactInformation(value);
+        if (inValidSMSInput(value)) {
+          setSMSContactInformation(value);
+        }
         break;
       }
     }
@@ -61,9 +66,17 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
 
   const isValidSMS = (sms: string): boolean => {
     if (sms) {
-      return /^(\(\d{3}\)[.-]?|\d{3}[.-]?)?\d{3}[.-]?\d{4}$/.test(sms);
+      return /^[0-9]{10}$/.test(sms);
     }
     // allow empty phone number
+    return true;
+  };
+
+  const inValidSMSInput = (smsInput: string): boolean => {
+    if (smsInput) {
+      return /^[0-9\.\-\/]+$/.test(smsInput);
+    }
+
     return true;
   };
 
@@ -90,54 +103,63 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
     }
 
     if (!isValidSMS(SMSContactInformation)) {
-      setFormErrors({ sms: 'You must enter a valid phone number with format: 111-111-1111.' });
+      setFormErrors({ sms: 'You must enter a valid phone number with format: 1111111111.' });
       return;
     }
+    let channels = [];
 
     if (subscriber.channels) {
-      const emailChannelIndex = subscriber.channels.findIndex((channel) => {
-        return channel.channel === Channels.email;
-      });
+      channels = [...subscriber.channels];
+    }
 
-      const smsChannelIndex = subscriber.channels.findIndex((channel) => {
-        return channel.channel === Channels.sms;
-      });
-      let channels = [...subscriber.channels];
+    const emailChannelIndex = subscriber.channels.findIndex((channel) => {
+      return channel.channel === Channels.email;
+    });
 
-      if (emailChannelIndex !== -1) {
-        channels[emailChannelIndex].address = emailContactInformation;
+    const smsChannelIndex = subscriber.channels.findIndex((channel) => {
+      return channel.channel === Channels.sms;
+    });
+
+    if (emailChannelIndex !== -1) {
+      channels[emailChannelIndex].address = emailContactInformation;
+    } else {
+      channels = [
+        ...channels,
+        {
+          channel: Channels.email,
+          address: emailContactInformation,
+        },
+      ];
+    }
+
+    if (smsChannelIndex !== -1) {
+      if (SMSContactInformation) {
+        channels[smsChannelIndex].address = sanitizeSMS(SMSContactInformation);
       } else {
+        channels.splice(smsChannelIndex, 1);
+      }
+    } else {
+      if (SMSContactInformation) {
         channels = [
           ...channels,
           {
-            channel: Channels.email,
-            address: emailContactInformation,
+            channel: Channels.sms,
+            address: sanitizeSMS(SMSContactInformation),
           },
         ];
       }
-
-      if (smsChannelIndex !== -1) {
-        if (SMSContactInformation) {
-          channels[smsChannelIndex].address = sanitizeSMS(SMSContactInformation);
-        } else {
-          channels.splice(smsChannelIndex, 1);
-        }
-      } else {
-        if (SMSContactInformation) {
-          channels = [
-            ...channels,
-            {
-              channel: Channels.sms,
-              address: sanitizeSMS(SMSContactInformation),
-            },
-          ];
-        }
-      }
-
-      if (subscriberEmail !== emailContactInformation || subscriberSMS !== SMSContactInformation) {
-        dispatch(patchSubscriber(channels, subscriber.id, actionTypes.updateContactInfo));
-      }
     }
+
+    const index = channels.findIndex((c) => {
+      return c.channel === preferredChannel;
+    });
+    if (index !== -1 && index !== 0) {
+      const tmp = channels[index];
+      channels.splice(index, 1);
+      channels = [tmp, ...channels];
+    }
+
+    dispatch(patchSubscriber(channels, subscriber.id, actionTypes.updateContactInfo));
     setEditContactInformation(!editContactInformation);
   };
 
@@ -154,6 +176,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
           data-testid="edit-contact-cancel-button"
           onClick={() => {
             setEditContactInformation(!editContactInformation);
+
             setFormErrors({});
           }}
         >
@@ -164,17 +187,12 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
   };
 
   const updateChannelPreference = (channel: string) => {
-    let channels = [...subscriber?.channels];
-    const index = channels.findIndex((c) => {
-      return c.channel === channel;
-    });
-    if (index !== -1 && index !== 0) {
-      const tmp = channels[index];
-      channels.splice(index, 1);
-      channels = [tmp, ...channels];
-      dispatch(patchSubscriber(channels, subscriber.id, actionTypes.updatePreference));
-    }
+    setPreferredChannel(channel);
   };
+
+  const isAllowSMS =
+    (!editContactInformation && subscriberSMS) ||
+    (editContactInformation && SMSContactInformation && isValidSMS(SMSContactInformation));
 
   return (
     <InfoCard title="Contact information" data-testid="contact-information-card">
@@ -195,7 +213,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
             </GridItem>
 
             <GridItem md={3.5} hSpacing={1.5}>
-              <Label>SMS</Label>
+              <Label>Phone number</Label>
 
               <GoAFormItem error={formErrors?.['sms']}>
                 <GoAInput
@@ -205,7 +223,10 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                   value={SMSContactInformation}
                   data-testid="contact-sms-input"
                   onChange={setValue}
-                  placeholder="111-111-1111"
+                  trailingIcon="close"
+                  onTrailingIconClick={() => {
+                    setSMSContactInformation('');
+                  }}
                 />
               </GoAFormItem>
             </GridItem>
@@ -227,8 +248,13 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                 testId="channel-preference-sms-btn"
                 checked={preferredChannel === Channels.sms}
                 onChange={updateChannelPreference}
+                disabled={!isAllowSMS}
               >
-                SMS
+                {isAllowSMS ? (
+                  'SMS'
+                ) : (
+                  <span style={{ color: 'var(--color-gray-700)' }}>Valid SMS number not found</span>
+                )}
               </GoARadio>
             </GridItem>
           </Grid>
@@ -244,7 +270,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
               <GridItem md={3.5}>
                 <div>
                   <Label>Phone number</Label>
-                  <p>{subscriberSMS}</p>
+                  <p>{phoneWrapper(subscriberSMS)}</p>
                 </div>
               </GridItem>
               <GridItem md={5}>
@@ -285,6 +311,9 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
             data-testid="edit-contact-button"
             onClick={() => {
               setEditContactInformation(!editContactInformation);
+              setEmailContactInformation(subscriberEmail);
+              setSMSContactInformation(subscriberSMS);
+              setPreferredChannel(subscriberPreferredChannel);
             }}
           >
             Edit contact information
