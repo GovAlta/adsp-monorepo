@@ -7,7 +7,7 @@ import {
   createValidationHandler,
 } from '@core-services/core-common';
 import { Request, RequestHandler, Response, Router } from 'express';
-import { param } from 'express-validator';
+import { param, query } from 'express-validator';
 import { Logger } from 'winston';
 import { FileRepository } from '../repository';
 import { FileEntity, FileTypeEntity } from '../model';
@@ -178,31 +178,42 @@ function encodeRFC5987(value: string) {
     .replace(/%(?:7C|60|5E)/g, unescape);
 }
 
-export const downloadFile: RequestHandler = async (req, res, next) => {
-  try {
-    const user = req.user;
-    const { unsafe, embed } = req.query;
-    const fileEntity = req.fileEntity;
-    if (unsafe !== 'true' && !fileEntity.scanned) {
-      throw new InvalidOperationError('File scan pending.');
-    }
+export function downloadFile(logger: Logger): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const { unsafe, embed } = req.query;
+      const fileEntity = req.fileEntity;
+      if (unsafe !== 'true' && !fileEntity.scanned) {
+        throw new InvalidOperationError('File scan pending.');
+      }
 
-    const stream = await fileEntity.readFile(user);
-    res.status(200);
-    res.setHeader('Content-Type', 'application/octet-stream');
-    if (embed === 'true') {
-      res.setHeader('Cache-Control', fileEntity.type?.anonymousRead ? 'public' : 'no-store');
-      res.setHeader('Content-Disposition', 'inline');
-    } else {
-      res.setHeader('Cache-Control', 'no-store');
-      res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeRFC5987(fileEntity.filename)}`);
-    }
+      const stream = await fileEntity.readFile(user);
+      res.status(200);
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Length', fileEntity.size);
+      if (embed === 'true') {
+        res.setHeader('Cache-Control', fileEntity.type?.anonymousRead ? 'public' : 'no-store');
+        res.setHeader('Content-Disposition', 'inline');
+      } else {
+        res.setHeader('Cache-Control', 'no-store');
+        res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeRFC5987(fileEntity.filename)}`);
+      }
 
-    stream.pipe(res);
-  } catch (err) {
-    next(err);
-  }
-};
+      stream.on('end', () => {
+        logger.debug(`Ending streaming of file '${fileEntity.filename}' (ID: ${fileEntity.id}).`, {
+          context: 'file-router',
+          tenant: user?.tenantId?.toString(),
+          user: user ? `${user.name} (ID: ${user.id})` : null,
+        });
+        res.end();
+      });
+      stream.pipe(res, { end: false });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
 
 export function deleteFile(logger: Logger, eventService: EventService): RequestHandler {
   return async (req, res, next) => {
@@ -255,7 +266,12 @@ export const createFileRouter = ({
   fileRouter.get('/types', assertAuthenticatedHandler, getTypes);
   fileRouter.get('/types/:fileTypeId', assertAuthenticatedHandler, getType(logger));
 
-  fileRouter.get('/files', assertAuthenticatedHandler, getFiles(apiId, fileRepository));
+  fileRouter.get(
+    '/files',
+    assertAuthenticatedHandler,
+    createValidationHandler(query('top').optional().isInt(), query('after').optional().isString()),
+    getFiles(apiId, fileRepository)
+  );
   fileRouter.post('/files', assertAuthenticatedHandler, upload.single('file'), uploadFile(apiId, logger, eventService));
 
   fileRouter.delete(
@@ -273,9 +289,13 @@ export const createFileRouter = ({
   );
   fileRouter.get(
     '/files/:fileId/download',
-    createValidationHandler(param('fileId').isUUID()),
+    createValidationHandler(
+      param('fileId').isUUID(),
+      query('unsafe').optional().isBoolean(),
+      query('embed').optional().isBoolean()
+    ),
     getFile(fileRepository),
-    downloadFile
+    downloadFile(logger)
   );
 
   return fileRouter;

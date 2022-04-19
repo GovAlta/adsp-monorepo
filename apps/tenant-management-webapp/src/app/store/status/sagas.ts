@@ -268,7 +268,7 @@ export function* fetchStatusConfiguration(): SagaIterator {
       const statusInfo = configuration.latest && configuration.latest.configuration;
       yield put(FetchStatusConfigurationSucceededService(statusInfo));
     } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchCoreNotificationTypes` }));
+      yield put(ErrorNotification({ message: `${e.message} - fetchStatusConfiguration` }));
     }
   }
 }

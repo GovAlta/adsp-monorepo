@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Verify service
-nav_order: 9
+nav_order: 10
 parent: Services
 ---
 
@@ -22,7 +22,7 @@ Generate a time limited code at a particular key with an optional valid duration
 
 ```typescript
   const response = await fetch(
-    `https://verify-service.alpha.alberta.ca/verify/v1/codes/${codeKey}?expireIn=${validMinutes}`,
+    `https://verify-service.adsp.alberta.ca/verify/v1/codes/${codeKey}?expireIn=${validMinutes}`,
     {
       method: 'POST',
       headers: {
@@ -43,7 +43,7 @@ Post the key to the API to verify that it is valid. Note that multiple failed ve
 
 ```typescript
   const response = await fetch(
-    `https://verify-service.alpha.alberta.ca/verify/v1/codes/${codeKey}`,
+    `https://verify-service.adsp.alberta.ca/verify/v1/codes/${codeKey}`,
     {
       method: 'POST',
       headers: {

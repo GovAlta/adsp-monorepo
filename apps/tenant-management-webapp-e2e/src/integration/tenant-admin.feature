@@ -14,8 +14,8 @@ Feature: Tenant admin
     Then the "<Page Title>" landing page is displayed
     Examples:
       | Menu      | Page Title     |
-      | Files     | File service   |
-      | Status    | Service status |
+      | File      | File service   |
+      | Status    | Status service |
       | Event log | Event log      |
 
   @regression @smoke-test @api @ignore
@@ -70,18 +70,21 @@ Feature: Tenant admin
     # Getting content from clipboard doesn't work on build agent. Commented out this validation.
     # When the user clicks click to copy button
     # Then the login link is copied to the clipboard
-    And the user views introductions and links for "Access", "Directory", "File service", "Status", "Events" and "Notifications"
+    And the user views introductions and links for "Access", "Directory", "File", "Status", "Event", "Notification" and "Configuration"
     When the user clicks "Access" link
-    Then the user is directed to "Access" page
+    Then the user is directed to "Access service" page
     When the user selects the "Dashboard" menu item
-    And the user clicks "File service" link
+    And the user clicks "File" link
     Then the user is directed to "File service" page
     When the user selects the "Dashboard" menu item
     And the user clicks "Status" link
-    Then the user is directed to "Service status" page
+    Then the user is directed to "Status service" page
     When the user selects the "Dashboard" menu item
-    And the user clicks "Events" link
-    Then the user is directed to "Events" page
+    And the user clicks "Event" link
+    Then the user is directed to "Event service" page
+    When the user selects the "Dashboard" menu item
+    And the user clicks "Configuration" link
+    Then the user is directed to "Configuration service" page
 
   # TEST DATA: need a user without tenant admin role
   @TEST_CS-743 @regression
@@ -95,8 +98,8 @@ Feature: Tenant admin
   Scenario: Test As a service owner, I can search the event log, so I can find events of interest
     Given a tenant admin user is on tenant admin page
     #//First create an event definition under events it will be used to verify the event log
-    When the user selects the "Events" menu item
-    And the user selects "Definitions" tab for "Events"
+    When the user selects the "Event" menu item
+    And the user selects "Definitions" tab for "Event"
     And the user clicks Add definition button
     Then the user views Add definition dialog
     When the user enters "Autotest" in Namespace, "Autotest-eventDefinition" in Name, "event log testing" in Description
@@ -125,8 +128,8 @@ Feature: Tenant admin
     Then the user views that search fields are empty
     And the user views that the event log is no longer filtered by "configuration-service:configuration-updated", "now-2mins", "now+2mins"
     #//Last the user deletes the event at the end of the test
-    When the user selects the "Events" menu item
-    And the user selects "Definitions" tab for "Events"
+    When the user selects the "Event" menu item
+    And the user selects "Definitions" tab for "Event"
     When the user clicks "Delete" button for the definition of "Autotest-eventDefinition" and "event log testing" under "Autotest"
     Then the user views delete "event definition" confirmation modal for "Autotest-eventDefinition"
     And the user clicks Delete button in delete confirmation modal

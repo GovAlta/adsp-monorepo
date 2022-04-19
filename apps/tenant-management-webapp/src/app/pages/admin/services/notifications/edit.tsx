@@ -20,6 +20,12 @@ interface NotificationTypeFormProps {
   errors?: Record<string, string>;
 }
 
+const channels = [
+  { value: 'email', title: 'Email' },
+  { value: 'bot', title: 'Slack bot' },
+  { value: 'sms', title: 'Text Message' },
+];
+
 const IdField = styled.div`
   min-height: 1.6rem;
 `;
@@ -81,12 +87,19 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 value={type.name}
                 data-testid="form-name"
                 aria-label="name"
-                onChange={(e) => setType({ ...type, name: e.target.value, id: isEdit ? type.id : toKebabName(e.target.value) })}
+                onChange={(e) =>
+                  setType({ ...type, name: e.target.value, id: isEdit ? type.id : toKebabName(e.target.value) })
+                }
               />
             </GoAFormItem>
             <GoAFormItem>
-              <label>Type ID</label>
-              <IdField data-testid={`form-id`}>{type.id || ''}</IdField>
+              <div style={{ display: 'flex', flexDirection: 'row' }}>
+                <label>Type ID</label>
+
+                <div style={{ margin: '3px 10px' }}>
+                  <IdField data-testid={`form-id`}>{type.id || ''}</IdField>
+                </div>
+              </div>
             </GoAFormItem>
             <GoAFormItem>
               <label>Description</label>
@@ -131,6 +144,38 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 ))}
               </GoADropdown>
             </GoAFormItem>
+            <GoAFormItem>
+              <label>Select Notification Channels</label>
+              <div key="select channel" style={{ display: 'flex', flexDirection: 'row' }}>
+                {channels.map((channel, key) => {
+                  return (
+                    <div key={key}>
+                      <div style={{ paddingRight: '20px' }}>
+                        <GoACheckbox
+                          name={channel.value}
+                          checked={type.channels?.map((value) => value).includes(channel.value)}
+                          onChange={() => {
+                            const channels = type.channels || [];
+                            const checked = channels.findIndex((ch) => ch === channel.value);
+                            if (checked === -1) {
+                              channels.push(channel.value);
+                            } else {
+                              channels.splice(checked, 1);
+                            }
+
+                            setType({ ...type, channels: channels });
+                          }}
+                          data-testid="manage-subscriptions-checkbox"
+                          value="manageSubscribe"
+                        >
+                          {channel.title}
+                        </GoACheckbox>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </GoAFormItem>
             <div data-testid="manage-subscriptions-checkbox-wrapper">
               <GoAFormItem>
                 <GoACheckbox
@@ -157,11 +202,11 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
-          <GoAButton data-testid="form-cancel" buttonType="tertiary" type="button" onClick={onCancel}>
+          <GoAButton data-testid="form-cancel" buttonType="secondary" type="button" onClick={onCancel}>
             Cancel
           </GoAButton>
           <GoAButton
-            disabled={!type.name}
+            disabled={!type?.name}
             buttonType="primary"
             data-testid="form-save"
             type="submit"

@@ -134,7 +134,7 @@ function Status(): JSX.Element {
             }}
           />
         )}
-        <h1>Service status</h1>
+        <h1 data-testid="status-title">Status service</h1>
         <Tabs activeIndex={activeIndex}>
           <Tab label="Overview">
             <OverviewCss>
@@ -400,7 +400,7 @@ function Application(app: ServiceStatusApplication) {
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
-          <GoAButton buttonType="tertiary" onClick={cancelManualStatusChange}>
+          <GoAButton buttonType="secondary" onClick={cancelManualStatusChange}>
             Cancel
           </GoAButton>
 

@@ -1,10 +1,22 @@
 {
-  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "sourceMap": false,
-    "outDir": "../../dist/out-tsc",
+    "target": "es2015",
+    "module": "commonjs",
+    "lib": [
+      "es2017",
+      "dom"
+    ],
     "allowJs": true,
-    "types": ["cypress", "node"]
+    "strict": true,
+    "noImplicitAny": false,
+    "types": [
+      "cypress"
+    ],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*.ts", "src/**/*.js"]
+  "include": [
+    "**/*.ts"
+  ]
 }

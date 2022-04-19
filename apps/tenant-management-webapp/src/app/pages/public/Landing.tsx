@@ -45,7 +45,7 @@ const RedirectButton = ({ url, name, label }: RedirectButtonProps): JSX.Element 
         buttonType="tertiary"
         data-testid={`redirect-button-${name}`}
         onClick={() => {
-          window.location.replace(url);
+          window.open(url, '_blank');
         }}
       >
         <Content>
@@ -177,7 +177,7 @@ const LandingPage = (): JSX.Element => {
                   <GridItem md={4} hSpacing={0.5}>
                     <GoACard type="primary">
                       <CardLayout>
-                        <CardTitle>UI components library</CardTitle>
+                        <h2>UI components library</h2>
                         <CardContent maxHeight={rowOneMaxHeight}>
                           The design system and UI component library provide reusable patterns and components for your
                           front end application. Choose from components for Angular, React, and Vue.
@@ -194,7 +194,7 @@ const LandingPage = (): JSX.Element => {
                   <GridItem md={4} hSpacing={0.5}>
                     <GoACard type="primary">
                       <CardLayout>
-                        <CardTitle>Access service</CardTitle>
+                        <h2>Access</h2>
                         <CardContent maxHeight={rowOneMaxHeight}>
                           Access service allows you to add a secure sign in to your application and services with
                           minimum effort and configuration. No need to deal with storing or authenticating users. It's
@@ -213,7 +213,7 @@ const LandingPage = (): JSX.Element => {
                   <GridItem md={4} hSpacing={0.5}>
                     <GoACard type="primary">
                       <CardLayout>
-                        <CardTitle>File service</CardTitle>
+                        <h2>File</h2>
                         <CardContent maxHeight={rowOneMaxHeight}>
                           <div id="file-service-description" ref={maxRowOneDiv as React.RefObject<HTMLDivElement>}>
                             File service provides the ability to upload and download files. Applications can upload
@@ -244,7 +244,7 @@ const LandingPage = (): JSX.Element => {
                   <GridItem md={4} hSpacing={0.5}>
                     <GoACard type="primary">
                       <CardLayout>
-                        <CardTitle>Event service</CardTitle>
+                        <h2>Event</h2>
                         <CardContent id="event-service-description" maxHeight={rowTwoMaxHeight}>
                           Event service provides tenant applications with the ability to send domain events.
                           Applications are able to leverage additional capabilities as side effects through these
@@ -262,7 +262,7 @@ const LandingPage = (): JSX.Element => {
                   <GridItem md={4} hSpacing={0.5}>
                     <GoACard type="primary">
                       <CardLayout>
-                        <CardTitle>Notification service</CardTitle>
+                        <h2>Notification</h2>
                         <CardContent maxHeight={rowTwoMaxHeight}>
                           Notifications service provides tenant applications with the ability to configure and manage
                           notifications for your subscribers.
@@ -322,14 +322,6 @@ const CardContent = styled.div`
 const CardLayout = styled.div`
   padding-top: 0.75em;
   padding-bottom: 1.5em;
-`;
-
-const CardTitle = styled.div`
-  font-size: 24px;
-  margin-bottom: 1.25em;
-  text-align: left;
-  color: var(--color-blue-500);
-  text-decoration: underline;
 `;
 
 const BoldTitle = styled.h1`

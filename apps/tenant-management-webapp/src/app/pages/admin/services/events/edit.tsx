@@ -83,7 +83,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
       <GoAModalActions>
         <GoAButton
           data-testid="form-cancel"
-          buttonType="tertiary"
+          buttonType="secondary"
           type="button"
           onClick={() => {
             onClose();

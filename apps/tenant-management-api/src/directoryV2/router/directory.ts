@@ -5,7 +5,7 @@ import * as NodeCache from 'node-cache';
 import { Logger } from 'winston';
 import validationMiddleware from '../../middleware/requestValidator';
 import { ServiceV2 } from '../../directory/validator/directory/directoryValidator';
-import { InvalidValueError } from '@core-services/core-common';
+import { InvalidValueError, InvalidOperationError } from '@core-services/core-common';
 import { TenantService } from '@abgov/adsp-service-sdk';
 import * as passport from 'passport';
 import { validateNamespaceEndpointsPermission, toKebabName } from '../../middleware/authentication';
@@ -138,8 +138,10 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
           const directory = { name: namespace, services: services };
 
           await directoryRepository.update(directory);
-          directoryCache.set(`directory-${namespace}`, services);
-          return res.sendStatus(HttpStatusCodes.CREATED);
+          const resultInDB = await directoryRepository.getDirectories(namespace);
+          const serviceInDB = resultInDB['services'];
+          directoryCache.set(`directory-${namespace}`, serviceInDB);
+          return res.status(HttpStatusCodes.CREATED).json(serviceInDB.find((x) => x.service === service));
         }
       } catch (err) {
         logger.error(`Failed creating directory for namespace: ${namespace} with error ${err.message}`);
@@ -239,7 +241,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
         throw new InvalidValueError('Update service', `Cannot find service: ${service}`);
       }
       try {
-        const { data } = await axios.get<Links>(filteredService.host);
+        const { data } = await axios.get<Links>(filteredService.host, { timeout: 5000 });
         // Root attributes of Links type are all optional. So, string can pass the axios type validation.
         if (typeof data !== 'object') {
           throw new InvalidValueError('Fetch metadata', 'Invalid metadata schema');
@@ -250,6 +252,9 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
         }
       } catch (err) {
         logger.warn(`Failed fetching metadata for service ${service} with error ${err.message}`);
+        throw new InvalidOperationError('Failed to fetch data from remote server', {
+          statusCode: HttpStatusCodes.FAILED_DEPENDENCY,
+        });
       }
 
       directoryCache.set(`directory-${namespace}`, services);

@@ -1,12 +1,12 @@
-import React, { FunctionComponent, useMemo, useState } from 'react';
-
+import React, { FunctionComponent, useMemo, useState, useEffect } from 'react';
+import { GoAElementLoader } from '@abgov/react-components';
 import styled from 'styled-components';
+import { RootState } from '@store/index';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { GoAIconButton } from '@abgov/react-components/experimental';
 import { Service } from '@store/directory/models';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { fetchEntryDetail } from '@store/directory/actions';
-import { renderNoItem } from '@components/NoItem';
 import DataTable from '@components/DataTable';
 interface serviceItemProps {
   service: Service;
@@ -17,13 +17,25 @@ interface serviceItemProps {
 const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, onEdit, onDelete }) => {
   const [showDetails, setShowDetails] = useState(false);
   const dispatch = useDispatch();
-
   const setDetails = (service: Service) => {
     if (!showDetails) {
       dispatch(fetchEntryDetail(service));
     }
     setShowDetails(!showDetails);
   };
+  const elementIndicator = useSelector((state: RootState) => {
+    return state?.session?.elementIndicator;
+  });
+
+  const renderNoItem = () => {
+    return (
+      <NoItem>
+        <p>No metadata found</p>
+      </NoItem>
+    );
+  };
+  // eslint-disable-next-line
+  useEffect(() => {}, [elementIndicator]);
 
   return (
     <>
@@ -64,6 +76,7 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
                   size="medium"
                   type="trash"
                   onClick={() => {
+                    setShowDetails(false);
                     onDelete(service);
                   }}
                 />
@@ -74,9 +87,19 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
       </tr>
       {showDetails && (
         <tr>
-          <td headers="Entry metadata information" colSpan={5}>
+          <td headers="Entry metadata information" colSpan={5} className="meta">
             <EntryDetail data-testid="details">
-              {service.metadata === null ? renderNoItem('service metadata') : JSON.stringify(service.metadata, null, 2)}
+              {!service.loaded && (
+                <ElementLoader>
+                  <GoAElementLoader
+                    visible={elementIndicator.show}
+                    size="default"
+                    baseColour="#c8eef9"
+                    spinnerColour="#0070c4"
+                  />
+                </ElementLoader>
+              )}
+              {service.metadata === null ? renderNoItem() : JSON.stringify(service.metadata, null, 2)}
             </EntryDetail>
           </td>
         </tr>
@@ -120,7 +143,7 @@ export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({
           </tr>
         </thead>
 
-        <tbody key={namespace}>
+        <tbody key={`${namespace}:${isCore}`}>
           {isCore
             ? memoizedDirectory
                 .filter((dir) => dir.namespace === namespace)
@@ -159,6 +182,9 @@ const TableDiv = styled.div`
     text-overflow: ellipsis;
     text-align: right;
   }
+  & .meta {
+    padding: 0;
+  }
 `;
 
 const IconDiv = styled.div`
@@ -166,4 +192,16 @@ const IconDiv = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
+`;
+
+const NoItem = styled.div`
+  text-align: center;
+  padding-top: 1.5rem;
+  padding-bottom: 0.5rem;
+`;
+
+const ElementLoader = styled.div`
+  text-align: center;
+  padding-top: 1.3rem;
+  padding-bottom: 1rem;
 `;

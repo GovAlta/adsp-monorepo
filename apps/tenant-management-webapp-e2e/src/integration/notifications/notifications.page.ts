@@ -36,7 +36,9 @@ class NotificationsPage {
   }
 
   notificationTypeModalSelfServiceCheckbox() {
-    return cy.xpath('//label[@class="goa-checkbox"]/div[contains(@class, "goa-checkbox-container")]');
+    return cy.xpath(
+      '//*[@data-testid="manage-subscriptions-checkbox-wrapper"]//div[contains(@class, "goa-checkbox-container")]'
+    );
   }
 
   notificationTypeModalSelfServiceCalloutContent() {
@@ -170,7 +172,7 @@ class NotificationsPage {
   // Internal notification type card elements have different xpath than those from custom created notification type cards, so use "Internal" prefix for the following several UI page object names
   internalNotificationTypeEventMailIcon(cardTitle, eventName) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="icon-mail"]`
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[contains(@data-testid, "email")]`
     );
   }
 
@@ -182,7 +184,7 @@ class NotificationsPage {
 
   internalNotificationTypeEventEditButton(cardTitle, eventName) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="edit-event"]`
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[contains(@data-testid, "edit-event-status-service")]`
     );
   }
 
@@ -300,7 +302,7 @@ class NotificationsPage {
 
   subscriber(addressAs, email) {
     return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*`
+      `//*[@data-testid="subscribers-list-title"]/div/div/table/tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*`
     );
   }
 

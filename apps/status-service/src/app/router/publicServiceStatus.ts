@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, RequestHandler } from 'express';
 import { Logger } from 'winston';
 import { ServiceStatusApplicationEntity } from '../model';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
@@ -16,10 +16,36 @@ export function mapApplication(entity: ServiceStatusApplicationEntity): unknown 
     id: entity._id,
     name: entity.name,
     description: entity.description,
-    status: entity.status,
-    lastUpdated: entity.statusTimestamp ? new Date(entity.statusTimestamp) : null,
+    status: entity?.status,
+    lastUpdated: entity?.statusTimestamp ? new Date(entity.statusTimestamp) : null,
   };
 }
+
+export const getApplicationsByName =
+  (logger: Logger, tenantService: TenantService, serviceStatusRepository: ServiceStatusRepository): RequestHandler =>
+  async (req, res, next) => {
+    logger.info(req.method, req.url);
+    const { name } = req.params;
+    const searchName = (name || environment.PLATFORM_TENANT_REALM).toLowerCase();
+
+    try {
+      const tenants = await tenantService.getTenants();
+      const tenantId = tenants.find((tenant) => tenant.name.toLowerCase() === searchName)?.id;
+
+      if (!tenantId) {
+        throw new NotFoundError('tenant', name);
+      }
+
+      const applications = await serviceStatusRepository.find({
+        tenantId: tenantId.toString(),
+      });
+      res.json(applications.map(mapApplication));
+    } catch (err) {
+      const errMessage = `Error getting applications: ${err.message}`;
+      logger.error(errMessage);
+      next(err);
+    }
+  };
 
 export function createPublicServiceStatusRouter({
   logger,
@@ -29,29 +55,7 @@ export function createPublicServiceStatusRouter({
   const router = Router();
 
   // Get the public service for the tenant
-  router.get('/applications/:name', async (req, res, next) => {
-    logger.info(req.method, req.url);
-    const { name } = req.params;
-    const searchName = (name || environment.PLATFORM_TENANT_REALM).toLowerCase();
-
-    try {
-      const tenants = await tenantService.getTenants();
-      const tenantId = tenants.find((tenant) => tenant.name.toLowerCase() === searchName)?.id;
-      if (!tenantId) {
-        throw new NotFoundError('tenant', name);
-      }
-
-      const applications = await serviceStatusRepository.find({
-        tenantId: tenantId.toString(),
-      });
-
-      res.json(applications.map(mapApplication));
-    } catch (err) {
-      const errMessage = `Error getting applications: ${err.message}`;
-      logger.error(errMessage);
-      next(err);
-    }
-  });
+  router.get('/applications/:name', getApplicationsByName(logger, tenantService, serviceStatusRepository));
 
   return router;
 }

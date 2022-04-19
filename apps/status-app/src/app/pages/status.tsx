@@ -48,7 +48,7 @@ const ServiceStatusPage = (): JSX.Element => {
     contact: state.configuration.contact,
   }));
 
-  const contactEmail = contact?.contactEmail || 'DIO@gov.ab.ca';
+  const contactEmail = contact?.contactEmail || 'adsp@gov.ab.ca';
 
   const { allApplicationsNotices } = useSelector((state: RootState) => ({
     allApplicationsNotices: state.notice?.allApplicationsNotices,
@@ -70,26 +70,40 @@ const ServiceStatusPage = (): JSX.Element => {
 
   const timeZone = new Date().toString().split('(')[1].split(')')[0];
 
-  const services = () => {
+  const Services = () => {
     return (
       <div className="small-container">
         <PageLoader />
         <Title data-testid="service-name">All {capitalizeFirstLetter(tenantName)} services</Title>
-        <br />
-        <p>
+        <div className="section-vs">
           These are the services currently being offered by{' '}
           {location.pathname.slice(1) ? capitalizeFirstLetter(tenantName) : 'the Alberta Digital Service Platform'}. All
           statuses are in real time and reflect current states of the individual services. Please{' '}
           <a href={`mailto: ${contactEmail}`}>contact support</a> for additional information, or to report issues, or
           for any other inquiries regarding service statuses.
-        </p>
-        <div className="timezone">
-          <i>All times are in {timeZone}</i>
         </div>
-        <br />
-        {allApplicationsNotices.length > 0 && <AllApplicationsNotices />}
-        <br />
-        {applications?.length === 0 && <div>There are no services available by this provider</div>}
+
+        <div className="section-vs-small">
+          {allApplicationsNotices.length > 0 && <AllApplicationsNotices />}
+          {applications?.length === 0 && <div>There are no services available by this provider</div>}
+        </div>
+
+        {applications?.length > 0 && (
+          <div className="title-line">
+            <Grid>
+              <GridItem md={7}>
+                <h3>Service specific statuses and notices</h3>
+              </GridItem>
+              <div className="line-vs" />
+              <GridItem md={5}>
+                {allApplicationsNotices?.length === 0 && (
+                  <div className="timezone-text">All times are in {timeZone}</div>
+                )}
+              </GridItem>
+            </Grid>
+          </div>
+        )}
+
         <Grid>
           {applications.map((app, index) => {
             return (
@@ -126,7 +140,7 @@ const ServiceStatusPage = (): JSX.Element => {
       }
       return <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />;
     } else {
-      return services();
+      return Services();
     }
   };
 
@@ -162,9 +176,16 @@ const ServiceStatusPage = (): JSX.Element => {
   const AllApplicationsNotices = () => {
     return (
       <AllApplications>
-        <label>
-          <b>All services notice</b>
-        </label>
+        <div className="title-line">
+          <Grid>
+            <GridItem md={6}>
+              <h3>All services notice</h3>
+            </GridItem>
+            <GridItem md={6}>
+              <div className="timezone-text">All times are in {timeZone}</div>
+            </GridItem>
+          </Grid>
+        </div>
         {allApplicationsNotices.map((notice) => {
           return (
             <div data-testid="all-application-notice">
@@ -198,16 +219,16 @@ const ServiceStatusPage = (): JSX.Element => {
         <h1>Status & Outages</h1>
         <div className="descriptor">Real time monitoring of our applications and services</div>
       </div> */}
-      <main>
+      <Main>
         <ServiceStatusesCss>
           <section>
             <SectionView />
           </section>
-          <br />
+          <div className="line-vs-small" />
           {applications && (
             <div className="small-container">
               <div>
-                <h2>Sign up for notifications</h2>
+                <h3>Sign up for notifications</h3>
                 <div>
                   Sign up to receive notifications by email for status change of the individual services and notices.
                   Please contact <a href={`mailto: ${contactEmail}`}>{contactEmail}</a> for additional information, or
@@ -215,29 +236,37 @@ const ServiceStatusPage = (): JSX.Element => {
                 </div>
                 <div>
                   <GoAForm>
-                    <GoAFormItem error={formErrors?.['email'] || error?.length > 0}>
-                      <label>Enter your email to receive updates</label>
-                      <GoAInputEmail
-                        id="email"
-                        disabled={subscriber !== null}
-                        name="email"
-                        value={email}
-                        data-testid="email"
-                        onChange={setValue}
-                        aria-label="email"
-                      />
-                    </GoAFormItem>
+                    <Grid>
+                      <GridItem md={4.6}>
+                        <GoAFormItem error={formErrors?.['email'] || error?.length > 0}>
+                          <GoAFormLabelOverwrite>
+                            <label>Enter your email to receive updates</label>
+                          </GoAFormLabelOverwrite>
+                          <GoAInputEmail
+                            id="email"
+                            disabled={subscriber !== null}
+                            name="email"
+                            value={email}
+                            data-testid="email"
+                            onChange={setValue}
+                            aria-label="email"
+                          />
+                        </GoAFormItem>
+                      </GridItem>
+                    </Grid>
                   </GoAForm>
-                  <GoAFormActions alignment="left">
-                    <GoAButton
-                      disabled={subscriber !== null}
-                      buttonType="primary"
-                      data-testid="subscribe"
-                      onClick={save}
-                    >
-                      Submit
-                    </GoAButton>
-                  </GoAFormActions>
+                  <GoAFormActionOverwrite>
+                    <GoAFormActions alignment="left">
+                      <GoAButton
+                        disabled={subscriber !== null}
+                        buttonType="primary"
+                        data-testid="subscribe"
+                        onClick={save}
+                      >
+                        Submit
+                      </GoAButton>
+                    </GoAFormActions>
+                  </GoAFormActionOverwrite>
                 </div>
                 {subscriber && (
                   <GoACallout title="You have signed up for notifications" key="success" type="success">
@@ -254,22 +283,45 @@ const ServiceStatusPage = (): JSX.Element => {
             </div>
           )}
         </ServiceStatusesCss>
-      </main>
+      </Main>
       <Footer logoSrc={GoaLogo} />
     </div>
   );
 };
 
-const Title = styled.h1`
+const Title = styled.h2`
   && {
     font-weight: var(--fw-regular);
+    margin-bottom: 1.5rem;
   }
 `;
 
+const Main = styled.main`
+  padding-bottom: 10rem;
+`;
+
 const ServiceStatusesCss = styled.div`
+  .section-vs {
+    margin-bottom: 5rem;
+  }
+
+  .section-vs-small {
+    margin-bottom: 2.5rem;
+  }
+
+  .line-vs {
+    margin-bottom: 1.5rem;
+  }
+
+  .line-vs-small {
+    padding-bottom: 1rem;
+  }
+
+  h3 {
+    margin-bottom: 1.5rem !important;
+  }
   .small-container {
-    max-width: 43.75rem;
-    padding: 1.25rem;
+    max-width: 50rem;
     margin: 0 auto;
     div.goa-form div {
       padding: 0;
@@ -296,8 +348,33 @@ const ServiceStatusesCss = styled.div`
   }
 `;
 
+const GoAFormActionOverwrite = styled.div`
+  .goa-form-actions {
+    margin-top: 0px !important;
+  }
+`;
+
+const GoAFormLabelOverwrite = styled.div`
+  label {
+    margin-top: 1rem !important;
+  }
+`;
+
 const AllApplications = styled.div`
   margin-right: 0.5rem;
+  title-line: {
+    line-height: 2rem;
+    margin-bottom: 0.5rem;
+  }
+  .goa-callout {
+    margin: 0px !important;
+  }
+  .timezone-text {
+    font-size: 0.875rem;
+    color: #666666;
+    line-height: 2rem;
+    text-align: right;
+  }
 `;
 
 export default ServiceStatusPage;

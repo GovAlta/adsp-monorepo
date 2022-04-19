@@ -39,7 +39,7 @@ export const Notifications: FunctionComponent = () => {
   return (
     <Page>
       <Main>
-        <h1>Notifications</h1>
+        <h1 data-testid="notification-title">Notification service</h1>
         <Tabs activeIndex={activeIndex}>
           <Tab label="Overview">
             <NotificationsOverview setActiveEdit={activateEdit} />

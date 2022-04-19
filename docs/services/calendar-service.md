@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Calendar service
-nav_order: 11
+nav_order: 12
 parent: Services
 ---
 
@@ -44,7 +44,7 @@ Calendar service API provides information endpoints for dates, including which d
   }
 
   const response = await fetch(
-    `https://calendar-service.alpha.alberta.ca/calendar/v1/dates?top=${top}&criteria=${JSON.stringify(criteria)}`
+    `https://calendar-service.adsp.alberta.ca/calendar/v1/dates?top=${top}&criteria=${JSON.stringify(criteria)}`
   );
 
   const {
@@ -64,7 +64,7 @@ Calendar service API provides information endpoints for dates, including which d
   }
 
   const response = await fetch(
-    `https://calendar-service.alpha.alberta.ca/calendar/v1/calendars/${calendar}/events`,
+    `https://calendar-service.adsp.alberta.ca/calendar/v1/calendars/${calendar}/events`,
     {
       method: 'POST',
       headers: {

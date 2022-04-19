@@ -14,6 +14,7 @@ import styled from 'styled-components';
 interface TabsProps {
   activeIndex?: number;
   children: ReactNode;
+  changeTabCallback?: (index: number) => void;
 }
 
 function Tabs(props: TabsProps): JSX.Element {
@@ -21,6 +22,9 @@ function Tabs(props: TabsProps): JSX.Element {
 
   function selectTab(index: number) {
     setActiveTabIndex(index);
+    if (typeof props.changeTabCallback === 'function') {
+      props.changeTabCallback(index);
+    }
   }
 
   useEffect(() => {
@@ -52,7 +56,7 @@ function Tabs(props: TabsProps): JSX.Element {
 }
 
 interface TabProps {
-  label: string;
+  label: ReactNode;
 }
 
 function Tab(props: TabProps & { children: ReactNode }): JSX.Element {

@@ -16,15 +16,20 @@ describe('NotificationTypes Page', () => {
         notificationId: {
           name: 'Child care subsidy application',
           description: 'Lorem ipsum dolor sit amet',
-          channels: ['email'],
+          channels: ['email', 'bot'],
+          sortedChannels: ['email', 'bot'],
           events: [
             {
               namespace: 'file-service',
               name: 'file-uploaded',
               templates: {
                 email: {
-                  subject: 'dfds',
-                  body: 'sdfsdf',
+                  subject: 'hi',
+                  body: 'this is a triumph',
+                },
+                bot: {
+                  subject: 'hello',
+                  body: 'huge success',
                 },
               },
             },
@@ -36,9 +41,25 @@ describe('NotificationTypes Page', () => {
         anotherNotificationId: {
           name: 'Some other subsidy application',
           description: 'Lorem ipsum dolor sit amet',
-          events: [{ namespace: 'file-service', name: 'file-deleted', templates: {}, channels: [] }],
+          channels: ['email', 'bot'],
+          sortedChannels: ['email', 'bot'],
+          events: [
+            {
+              namespace: 'file-service',
+              name: 'file-deleted',
+              templates: {
+                email: {
+                  subject: 'diggles',
+                  body: 'Lorem ipsum dolorLorem ipsum dolorLorem ipsum dolorLorem ipsum dolor',
+                },
+                bot: {
+                  subject: '',
+                  body: '',
+                },
+              },
+            },
+          ],
           subscriberRoles: [],
-          channels: ['email'],
           id: 'anotherNotificationId',
           publicSubscribe: false,
           manageSubscribe: true,
@@ -48,9 +69,18 @@ describe('NotificationTypes Page', () => {
         superCoreNotificationStuff: {
           name: 'Some other subsidy application',
           description: 'Lorem ipsum dolor sit amet',
-          events: [{ namespace: 'file-service', name: 'file-deleted', templates: {}, channels: [] }],
+          events: [
+            {
+              namespace: 'file-service',
+              name: 'file-deleted',
+              templates: {
+                email: { subject: 'sdd', body: 'sds' },
+              },
+            },
+          ],
           subscriberRoles: [],
           channels: ['email'],
+          sortedChannels: ['email'],
           id: 'superCoreNotificationStuff',
           publicSubscribe: false,
           manageSubscribe: true,
@@ -71,7 +101,24 @@ describe('NotificationTypes Page', () => {
     user: { jwt: { token: '' } },
     session: { realm: 'core' },
     tenant: {
-      realmRoles: ['uma_auth'],
+      realmRoles: [
+        {
+          id: '5ef67c57',
+          name: 'uma_authorization',
+          description: 'role_uma_authorization',
+          composite: false,
+          clientRole: false,
+          containerId: '4cc89eed',
+        },
+        {
+          id: 'c85d9bdd',
+          name: 'offline_access',
+          description: 'role_offline-access',
+          composite: false,
+          clientRole: false,
+          containerId: '4cc89eed',
+        },
+      ],
     },
     config: {
       serviceUrls: {
@@ -250,6 +297,34 @@ describe('NotificationTypes Page', () => {
     // fill
     fireEvent.click(queryByTestId('event-dropdown'));
     fireEvent.click(queryByTestId('event-dropdown-option--foo:bar'));
+
+    fireEvent.click(saveBtn);
+
+    const actions = store.getActions();
+    const saveAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
+
+    expect(saveAction).toBeTruthy();
+  });
+
+  it('edit an event', async () => {
+    const { getAllByTestId, queryByTestId } = render(
+      <Provider store={store}>
+        <NotificationTypes />
+      </Provider>
+    );
+    const editBtn = getAllByTestId('edit-event')[0];
+    await waitFor(() => {
+      fireEvent.click(editBtn);
+    });
+
+    // fields
+    const cancelBtn = queryByTestId('template-form-cancel');
+    const saveBtn = queryByTestId('template-form-save');
+
+    expect(cancelBtn).toBeTruthy();
+    expect(saveBtn).toBeTruthy();
+
+    // fill
 
     fireEvent.click(saveBtn);
 
