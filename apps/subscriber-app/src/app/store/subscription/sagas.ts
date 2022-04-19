@@ -16,6 +16,7 @@ import {
   NoSubscriberAction,
   GetSignedOutSubscriberAction,
 } from './actions';
+import { UpdateIndicator } from '@store/session/actions';
 
 import { RootState } from '../index';
 import axios from 'axios';
@@ -66,6 +67,16 @@ export function* patchSubscriber(action: PatchSubscriberAction): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
 
+  if (action.payload.action) {
+    yield put(
+      UpdateIndicator({
+        show: true,
+        message: '',
+        action: action.payload.action,
+      })
+    );
+  }
+
   if (configBaseUrl && token) {
     try {
       const response = yield call(
@@ -82,9 +93,29 @@ export function* patchSubscriber(action: PatchSubscriberAction): SagaIterator {
           message: 'Contact information updated.',
         })
       );
+
       // updated channel information for the subscriber
       yield put(PatchSubscriberSuccess(response.data));
+
+      if (action.payload.action) {
+        yield put(
+          UpdateIndicator({
+            show: false,
+            message: '',
+            action: '',
+          })
+        );
+      }
     } catch (e) {
+      if (action.payload.action) {
+        yield put(
+          UpdateIndicator({
+            show: false,
+            message: '',
+            action: '',
+          })
+        );
+      }
       yield put(ErrorNotification({ message: `${e.message} - failed to updated contact information` }));
     }
   }
