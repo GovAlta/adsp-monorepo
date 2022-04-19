@@ -25,6 +25,7 @@ import {
 } from './styled-components';
 
 import { ContactInfoCard } from './ContactInfoCard';
+import { IndicatorWithDelay } from '@components/Indicator';
 
 const Subscriptions = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -159,7 +160,7 @@ const Subscriptions = (): JSX.Element => {
               <GoACallout title="You have no subscriptions" type="important"></GoACallout>
             </NoSubscriberCallout>
           ) : (
-            <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
+            <IndicatorWithDelay pageLock={false} />
           )}
         </Container>
       </Main>
