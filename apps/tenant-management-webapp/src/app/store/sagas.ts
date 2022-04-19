@@ -16,6 +16,7 @@ import {
 } from './status/sagas';
 import { watchEventSagas } from './event/sagas';
 import { watchFileSagas } from './file/sagas';
+import { watchConfigurationSagas } from './configuration/sagas';
 import {
   fetchDirectory,
   createEntryDirectory,
@@ -89,5 +90,7 @@ export function* watchSagas() {
     watchNotificationSagas(),
     // subscription
     watchSubscriptionSagas(),
+    //configuration
+    watchConfigurationSagas(),
   ]);
 }
