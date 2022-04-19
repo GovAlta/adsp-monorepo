@@ -22,8 +22,8 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
   const [formErrors, setFormErrors] = useState({});
   const subscriberEmail = subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === Channels.email)[0]
     ?.address;
-  const subscriberSMS = subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === Channels.sms)[0]
-    ?.address;
+  const subscriberSMS =
+    subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === Channels.sms)[0]?.address || '';
 
   const [emailContactInformation, setEmailContactInformation] = useState(subscriberEmail);
   const [SMSContactInformation, setSMSContactInformation] = useState(subscriberSMS);
@@ -117,15 +117,21 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
       }
 
       if (smsChannelIndex !== -1) {
-        channels[smsChannelIndex].address = sanitizeSMS(SMSContactInformation);
+        if (SMSContactInformation) {
+          channels[smsChannelIndex].address = sanitizeSMS(SMSContactInformation);
+        } else {
+          channels.splice(smsChannelIndex, 1);
+        }
       } else {
-        channels = [
-          ...channels,
-          {
-            channel: Channels.sms,
-            address: sanitizeSMS(SMSContactInformation),
-          },
-        ];
+        if (SMSContactInformation) {
+          channels = [
+            ...channels,
+            {
+              channel: Channels.sms,
+              address: sanitizeSMS(SMSContactInformation),
+            },
+          ];
+        }
       }
 
       if (subscriberEmail !== emailContactInformation || subscriberSMS !== SMSContactInformation) {
