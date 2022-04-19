@@ -1,7 +1,7 @@
 import { AdspId, EventService, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
-import { checkSchema, param } from 'express-validator';
+import { checkSchema, param, query } from 'express-validator';
 import { Logger } from 'winston';
 import { valueWritten } from '../events';
 import { NamespaceEntity } from '../model';
@@ -244,13 +244,37 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
 
   valueRouter.get(
     '/:namespace/values',
-    createValidationHandler(param('namespace').isString().isLength({ min: 1, max: 50 })),
+    createValidationHandler(
+      param('namespace').isString().isLength({ min: 1, max: 50 }),
+      query('names').optional().isString()
+    ),
     readValues
   );
 
-  valueRouter.get('/:namespace/values/:name', validateNamespaceNameHandler, readValue(repository));
+  valueRouter.get(
+    '/:namespace/values/:name',
+    validateNamespaceNameHandler,
+    createValidationHandler(
+      ...checkSchema(
+        {
+          top: { optional: true, isInt: { options: { min: 1, max: 5000 } } },
+          after: { optional: true, isString: true },
+          correlationId: { optional: true, isString: true },
+          timestampMin: { optional: true, isISO8601: true },
+          timestampMax: { optional: true, isISO8601: true },
+        },
+        ['query']
+      )
+    ),
+    readValue(repository)
+  );
 
-  valueRouter.get('/:namespace/values/:name/metrics', validateNamespaceNameHandler, readMetrics(repository));
+  valueRouter.get(
+    '/:namespace/values/:name/metrics',
+    validateNamespaceNameHandler,
+    createValidationHandler(query('interval').optional().isString()),
+    readMetrics(repository)
+  );
 
   valueRouter.get(
     '/:namespace/values/:name/metrics/:metric',
@@ -262,7 +286,8 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
           metric: { isString: true, isLength: { options: { min: 1, max: 100 } } },
         },
         ['params']
-      )
+      ),
+      query('interval').optional().isString()
     ),
     readMetric(repository)
   );
