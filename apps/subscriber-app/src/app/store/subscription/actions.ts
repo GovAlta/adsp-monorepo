@@ -63,7 +63,7 @@ export interface GetSignedOutSubscriberAction {
 
 export interface PatchSubscriberAction {
   type: typeof PATCH_SUBSCRIBER;
-  payload: { channels: SubscriberChannel[]; subscriberId: string };
+  payload: { channels: SubscriberChannel[]; subscriberId: string; action?: string };
 }
 export interface PatchSubscriberActionSuccess {
   type: typeof PATCH_SUBSCRIBER_SUCCESS;
@@ -115,11 +115,16 @@ export const PatchSubscriberSuccess = (subscriber: Subscriber): PatchSubscriberA
   },
 });
 
-export const patchSubscriber = (channels: SubscriberChannel[], subscriberId: string): PatchSubscriberAction => ({
+export const patchSubscriber = (
+  channels: SubscriberChannel[],
+  subscriberId: string,
+  action?: string
+): PatchSubscriberAction => ({
   type: PATCH_SUBSCRIBER,
   payload: {
     channels,
     subscriberId,
+    action,
   },
 });
 
