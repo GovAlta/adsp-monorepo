@@ -1,4 +1,4 @@
-import React, { FormEvent, useState, useEffect } from 'react';
+import React, { FormEvent, useState, useEffect, isValidElement } from 'react';
 import { GoAButton, GoARadio } from '@abgov/react-components';
 import { GoAInputEmail, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { useDispatch, useSelector } from 'react-redux';
@@ -28,7 +28,9 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
   const [emailContactInformation, setEmailContactInformation] = useState(subscriberEmail);
   const [SMSContactInformation, setSMSContactInformation] = useState(subscriberSMS);
   const [editContactInformation, setEditContactInformation] = useState(false);
-  const preferredChannel = subscriber?.channels ? subscriber?.channels[0].channel : null;
+  const [preferredChannel, setPreferredChannel] = useState(
+    subscriber?.channels ? subscriber?.channels[0].channel : null
+  );
   const indicator = useSelector((state: RootState) => {
     const indicator = state.session?.indicator;
     if (indicator) {
@@ -93,51 +95,63 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
       setFormErrors({ sms: 'You must enter a valid phone number with format: 111-111-1111.' });
       return;
     }
+    let channels = [];
 
     if (subscriber.channels) {
-      const emailChannelIndex = subscriber.channels.findIndex((channel) => {
-        return channel.channel === Channels.email;
-      });
+      channels = [...subscriber.channels];
+    }
 
-      const smsChannelIndex = subscriber.channels.findIndex((channel) => {
-        return channel.channel === Channels.sms;
-      });
-      let channels = [...subscriber.channels];
+    const emailChannelIndex = subscriber.channels.findIndex((channel) => {
+      return channel.channel === Channels.email;
+    });
 
-      if (emailChannelIndex !== -1) {
-        channels[emailChannelIndex].address = emailContactInformation;
+    const smsChannelIndex = subscriber.channels.findIndex((channel) => {
+      return channel.channel === Channels.sms;
+    });
+
+    if (emailChannelIndex !== -1) {
+      channels[emailChannelIndex].address = emailContactInformation;
+    } else {
+      channels = [
+        ...channels,
+        {
+          channel: Channels.email,
+          address: emailContactInformation,
+        },
+      ];
+    }
+
+    if (smsChannelIndex !== -1) {
+      if (SMSContactInformation) {
+        channels[smsChannelIndex].address = sanitizeSMS(SMSContactInformation);
       } else {
+        channels.splice(smsChannelIndex, 1);
+      }
+    } else {
+      if (SMSContactInformation) {
         channels = [
           ...channels,
           {
-            channel: Channels.email,
-            address: emailContactInformation,
+            channel: Channels.sms,
+            address: sanitizeSMS(SMSContactInformation),
           },
         ];
       }
-
-      if (smsChannelIndex !== -1) {
-        if (SMSContactInformation) {
-          channels[smsChannelIndex].address = sanitizeSMS(SMSContactInformation);
-        } else {
-          channels.splice(smsChannelIndex, 1);
-        }
-      } else {
-        if (SMSContactInformation) {
-          channels = [
-            ...channels,
-            {
-              channel: Channels.sms,
-              address: sanitizeSMS(SMSContactInformation),
-            },
-          ];
-        }
-      }
-
-      if (subscriberEmail !== emailContactInformation || subscriberSMS !== SMSContactInformation) {
-        dispatch(patchSubscriber(channels, subscriber.id, actionTypes.updateContactInfo));
-      }
     }
+
+    const index = channels.findIndex((c) => {
+      return c.channel === preferredChannel;
+    });
+    if (index !== -1 && index !== 0) {
+      const tmp = channels[index];
+      channels.splice(index, 1);
+      channels = [tmp, ...channels];
+    }
+
+    if (subscriberEmail !== emailContactInformation || subscriberSMS !== SMSContactInformation) {
+      dispatch(patchSubscriber(channels, subscriber.id, actionTypes.updateContactInfo));
+    }
+
     setEditContactInformation(!editContactInformation);
   };
 
@@ -164,17 +178,12 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
   };
 
   const updateChannelPreference = (channel: string) => {
-    let channels = [...subscriber?.channels];
-    const index = channels.findIndex((c) => {
-      return c.channel === channel;
-    });
-    if (index !== -1 && index !== 0) {
-      const tmp = channels[index];
-      channels.splice(index, 1);
-      channels = [tmp, ...channels];
-      dispatch(patchSubscriber(channels, subscriber.id, actionTypes.updatePreference));
-    }
+    setPreferredChannel(channel);
   };
+
+  const isAllowSMS =
+    (!editContactInformation && subscriberSMS) ||
+    (editContactInformation && SMSContactInformation && isValidSMS(SMSContactInformation));
 
   return (
     <InfoCard title="Contact information" data-testid="contact-information-card">
@@ -227,8 +236,9 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                 testId="channel-preference-sms-btn"
                 checked={preferredChannel === Channels.sms}
                 onChange={updateChannelPreference}
+                disabled={!isAllowSMS}
               >
-                SMS
+                {isAllowSMS ? 'SMS' : <span style={{ color: 'red' }}>SMS (not valid)</span>}
               </GoARadio>
             </GridItem>
           </Grid>
