@@ -53,7 +53,7 @@ function mapFile(apiId: AdspId, entity: FileEntity) {
 export const getTypes: RequestHandler = async (req, res, next) => {
   try {
     const user = req.user;
-    const [configuration] = await req.getConfiguration<ServiceConfiguration>();
+    const configuration = await req.getConfiguration<ServiceConfiguration, ServiceConfiguration>();
 
     res.send(
       Object.values(configuration)
@@ -70,7 +70,7 @@ export function getType(_logger: Logger): RequestHandler {
     try {
       const user = req.user;
       const { fileTypeId } = req.params;
-      const [configuration] = await req.getConfiguration<ServiceConfiguration>();
+      const configuration = await req.getConfiguration<ServiceConfiguration, ServiceConfiguration>();
 
       const entity = configuration?.[fileTypeId];
       if (!entity) {
