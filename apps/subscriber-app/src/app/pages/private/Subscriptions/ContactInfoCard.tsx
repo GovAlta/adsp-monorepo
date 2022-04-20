@@ -12,6 +12,7 @@ import { Label } from './styled-components';
 import { GapVS } from './styled-components';
 import { RootState } from '@store/index';
 import { IndicatorWithDelay } from '@components/Indicator';
+import { phoneWrapper } from '@lib/wrappers';
 
 interface ContactInfoCardProps {
   subscriber: Subscriber;
@@ -25,12 +26,12 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
   const subscriberSMS =
     subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === Channels.sms)[0]?.address || '';
 
+  const subscriberPreferredChannel = subscriber?.channels ? subscriber?.channels[0].channel : null;
+
   const [emailContactInformation, setEmailContactInformation] = useState(subscriberEmail);
   const [SMSContactInformation, setSMSContactInformation] = useState(subscriberSMS);
   const [editContactInformation, setEditContactInformation] = useState(false);
-  const [preferredChannel, setPreferredChannel] = useState(
-    subscriber?.channels ? subscriber?.channels[0].channel : null
-  );
+  const [preferredChannel, setPreferredChannel] = useState(subscriberPreferredChannel);
   const indicator = useSelector((state: RootState) => {
     const indicator = state.session?.indicator;
     if (indicator) {
@@ -65,7 +66,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
 
   const isValidSMS = (sms: string): boolean => {
     if (sms) {
-      return /^(\(\d{3}\)[.-]?|\d{3}[.-]?)?\d{3}[.-]?\d{4}$/.test(sms);
+      return /^[0-9]{10}$/.test(sms);
     }
     // allow empty phone number
     return true;
@@ -102,7 +103,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
     }
 
     if (!isValidSMS(SMSContactInformation)) {
-      setFormErrors({ sms: 'You must enter a valid phone number with format: 111-111-1111.' });
+      setFormErrors({ sms: 'You must enter a valid phone number with format: 1111111111.' });
       return;
     }
     let channels = [];
@@ -158,10 +159,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
       channels = [tmp, ...channels];
     }
 
-    if (subscriberEmail !== emailContactInformation || subscriberSMS !== SMSContactInformation) {
-      dispatch(patchSubscriber(channels, subscriber.id, actionTypes.updateContactInfo));
-    }
-
+    dispatch(patchSubscriber(channels, subscriber.id, actionTypes.updateContactInfo));
     setEditContactInformation(!editContactInformation);
   };
 
@@ -214,7 +212,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
             </GridItem>
 
             <GridItem md={3.5} hSpacing={1.5}>
-              <Label>SMS</Label>
+              <Label>Phone number</Label>
 
               <GoAFormItem error={formErrors?.['sms']}>
                 <GoAInput
@@ -224,7 +222,10 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                   value={SMSContactInformation}
                   data-testid="contact-sms-input"
                   onChange={setValue}
-                  placeholder="111-111-1111"
+                  trailingIcon="close"
+                  onTrailingIconClick={() => {
+                    setSMSContactInformation('');
+                  }}
                 />
               </GoAFormItem>
             </GridItem>
@@ -248,7 +249,11 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                 onChange={updateChannelPreference}
                 disabled={!isAllowSMS}
               >
-                {isAllowSMS ? 'SMS' : <span style={{ color: 'red' }}>SMS (not valid)</span>}
+                {isAllowSMS ? (
+                  'SMS'
+                ) : (
+                  <span style={{ color: 'var(--color-gray-700)' }}>Valid SMS number not found</span>
+                )}
               </GoARadio>
             </GridItem>
           </Grid>
@@ -264,7 +269,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
               <GridItem md={3.5}>
                 <div>
                   <Label>Phone number</Label>
-                  <p>{subscriberSMS}</p>
+                  <p>{phoneWrapper(subscriberSMS)}</p>
                 </div>
               </GridItem>
               <GridItem md={5}>
@@ -305,6 +310,9 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
             data-testid="edit-contact-button"
             onClick={() => {
               setEditContactInformation(!editContactInformation);
+              setEmailContactInformation(subscriberEmail);
+              setSMSContactInformation(subscriberSMS);
+              setPreferredChannel(subscriberPreferredChannel);
             }}
           >
             Edit contact information

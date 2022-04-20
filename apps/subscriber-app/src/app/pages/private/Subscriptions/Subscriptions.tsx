@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Main } from '@components/Html';
 import Container from '@components/Container';
 import DataTable from '@components/DataTable';
-import { GoAButton, GoAPageLoader } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components';
 import { GoACallout } from '@abgov/react-components';
 import { FetchContactInfoService } from '@store/notification/actions';
 import { useParams } from 'react-router-dom';
@@ -23,6 +23,9 @@ import {
   TableHeaders,
   DescriptionWrapper,
 } from './styled-components';
+import { phoneWrapper } from '@lib/wrappers';
+import { ContactInfoCard } from './ContactInfoCard';
+import { IndicatorWithDelay } from '@components/Indicator';
 
 import { ContactInfoCard } from './ContactInfoCard';
 import { IndicatorWithDelay } from '@components/Indicator';
@@ -37,14 +40,6 @@ const Subscriptions = (): JSX.Element => {
   const [showUnSubscribeModal, setShowUnSubscribeModal] = useState(false);
   const [selectedUnsubscribeSub, setSelectedUnsubscribeSub] = useState<Subscription>();
   const { realm } = useParams<{ realm: string }>();
-
-  const phoneWrapper = (phoneNumber) => {
-    if (phoneNumber) {
-      return (
-        '1 (' + phoneNumber.substring(0, 3) + ') ' + phoneNumber.substring(3, 6) + '-' + phoneNumber.substring(6, 10)
-      );
-    }
-  };
 
   useEffect(() => {
     dispatch(getMySubscriberDetails());
