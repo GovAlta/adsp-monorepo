@@ -49,7 +49,9 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
         setEmailContactInformation(value);
         break;
       case Channels.sms: {
-        setSMSContactInformation(value);
+        if (inValidSMSInput(value)) {
+          setSMSContactInformation(value);
+        }
         break;
       }
     }
@@ -66,6 +68,14 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
       return /^(\(\d{3}\)[.-]?|\d{3}[.-]?)?\d{3}[.-]?\d{4}$/.test(sms);
     }
     // allow empty phone number
+    return true;
+  };
+
+  const inValidSMSInput = (smsInput: string): boolean => {
+    if (smsInput) {
+      return /^[0-9\.\-\/]+$/.test(smsInput);
+    }
+
     return true;
   };
 
