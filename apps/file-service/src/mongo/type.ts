@@ -10,7 +10,7 @@ export class ConfigurationFileTypeRepository implements FileTypeRepository {
 
   async getType(tenantId: AdspId, id: string): Promise<FileTypeEntity> {
     const token = await this.tokenProvider.getAccessToken();
-    const [configuration] = await this.configurationService.getConfiguration<ServiceConfiguration>(
+    const configuration = await this.configurationService.getConfiguration<ServiceConfiguration, ServiceConfiguration>(
       this.serviceId,
       token,
       tenantId

@@ -24,7 +24,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v2
         with:
-          node-version: "16"
+          node-version: '16'
       - uses: actions/cache@v2
         with:
           path: ~/.npm
@@ -127,12 +127,12 @@ jobs:
       name: Dev-e2e
     strategy:
       matrix:
-        app: [tenant-management-webapp, status-app]
+        app: [tenant-management-webapp, status-app, subscriber-app]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: "16"
+          node-version: '16'
       - uses: actions/cache@v2
         with:
           path: ~/.npm
@@ -142,7 +142,7 @@ jobs:
         with:
           app: ${{ matrix.app }}
           environment: dev
-          tags: "@smoke-test and not @ignore"
+          tags: '@smoke-test and not @ignore'
           core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
           core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
           api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
@@ -195,12 +195,12 @@ jobs:
       name: Staging-e2e
     strategy:
       matrix:
-        app: [tenant-management-webapp, status-app]
+        app: [tenant-management-webapp, status-app, subscriber-app]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: "16"
+          node-version: '16'
       - uses: actions/cache@v2
         with:
           path: ~/.npm
@@ -210,7 +210,7 @@ jobs:
         with:
           app: ${{ matrix.app }}
           environment: staging
-          tags: "@smoke-test and not @ignore"
+          tags: '@smoke-test and not @ignore'
           core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
           core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
           api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
