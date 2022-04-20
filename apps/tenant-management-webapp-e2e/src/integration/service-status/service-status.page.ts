@@ -208,9 +208,22 @@ class StatusServicePage {
       `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//*[contains(@class, "badge-content")]`
     );
   }
+
   manualStatusList() {
     return cy.xpath(
       '//*[@class="modal-root" and @data-state="visible"]//*[@class="goa-form-item"]//div/*[@class="goa-radio"]'
+    );
+  }
+
+  manualStatusListCheckedInput() {
+    return cy.xpath(
+      '//*[@class="modal-root" and @data-state="visible"]//*[@class="goa-form-item"]//div/*[@class="goa-radio"]//input[@type="radio" and @checked]'
+    );
+  }
+
+  manualStatusListInput() {
+    return cy.xpath(
+      '//*[@class="modal-root" and @data-state="visible"]//*[@class="goa-form-item"]//div/*[@class="goa-radio"]//input[@type="radio"]'
     );
   }
 }

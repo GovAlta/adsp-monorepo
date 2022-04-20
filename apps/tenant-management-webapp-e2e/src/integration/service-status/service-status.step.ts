@@ -554,14 +554,20 @@ Then('the user changes status to the first unused status', function () {
   statusObj.manualStatusList().each((item, index) => {
     expect(Cypress.$(item).text()).to.eq(radioList[index]);
   });
-  statusObj.manualStatusList().each(($status) => {
-    if ($status.text() != currentStatus) {
-      cy.wrap($status).click({ force: true });
-      afterStatus = $status.text();
-      cy.log('New Status: ' + afterStatus);
-      return false;
-    }
-  });
+  statusObj
+    .manualStatusListCheckedInput()
+    .invoke('val')
+    .then(($value) => {
+      const checkedStatus = String($value);
+      statusObj.manualStatusListInput().each(($item) => {
+        if ($item.val() != checkedStatus) {
+          $item.trigger('click');
+          afterStatus = $item.val();
+          cy.log('New Status: ' + afterStatus);
+          return false;
+        }
+      });
+    });
 });
 
 Then('the user clicks Save button in Manual status change modal', function () {
