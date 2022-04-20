@@ -27,9 +27,6 @@ import { phoneWrapper } from '@lib/wrappers';
 import { ContactInfoCard } from './ContactInfoCard';
 import { IndicatorWithDelay } from '@components/Indicator';
 
-import { ContactInfoCard } from './ContactInfoCard';
-import { IndicatorWithDelay } from '@components/Indicator';
-
 const Subscriptions = (): JSX.Element => {
   const dispatch = useDispatch();
   const { subscriber, hasSubscriberId } = useSelector((state: RootState) => ({
