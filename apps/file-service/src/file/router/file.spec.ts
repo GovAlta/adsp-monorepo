@@ -89,7 +89,7 @@ describe('file router', () => {
       const next = jest.fn();
 
       const configuration = { test: new FileTypeEntity(fileType) };
-      req.getConfiguration.mockResolvedValueOnce([configuration]);
+      req.getConfiguration.mockResolvedValueOnce(configuration);
       await getTypes(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(
         expect.arrayContaining([expect.objectContaining({ id: 'test', name: 'Test' })])
@@ -115,7 +115,7 @@ describe('file router', () => {
       const next = jest.fn();
 
       const configuration = { test: new FileTypeEntity(fileType) };
-      req.getConfiguration.mockResolvedValueOnce([configuration]);
+      req.getConfiguration.mockResolvedValueOnce(configuration);
 
       const handler = getType(loggerMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
@@ -133,7 +133,7 @@ describe('file router', () => {
       const next = jest.fn();
 
       const configuration = {};
-      req.getConfiguration.mockResolvedValueOnce([configuration]);
+      req.getConfiguration.mockResolvedValueOnce(configuration);
 
       const handler = getType(loggerMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
