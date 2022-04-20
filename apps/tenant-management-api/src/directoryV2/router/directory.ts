@@ -44,20 +44,16 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
    * Get all of directories
    */
   directoryRouter.get('/namespaces/:namespace', async (req: Request, res: Response, _next) => {
-    const { namespace } = req.params;
     let services: Service[];
-
-    services = directoryCache.get(`directory-${namespace}`);
-    if (!services) {
-      try {
-        const directory = await directoryRepository.getDirectories(namespace);
-        if (!directory) {
-          res.json([]);
-        }
-        services = directory.services;
-      } catch (err) {
-        _next(err);
+    const { namespace } = req.params;
+    try {
+      const directory = await directoryRepository.getDirectories(namespace);
+      if (!directory) {
+        res.json([]);
       }
+      services = directory.services;
+    } catch (err) {
+      _next(err);
     }
 
     const response = [];
@@ -79,8 +75,6 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
 
       response.push(element);
     }
-
-    directoryCache.set(`directory-${namespace}`, services);
 
     res.json(response);
   });
@@ -125,7 +119,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
         if (!result) {
           const directory = { name: namespace, services: [mappingService] };
           await directoryRepository.update(directory);
-          directoryCache.set(`directory-${namespace}`, directory.services);
+
           return res.sendStatus(HttpStatusCodes.CREATED);
         }
         const services = result['services'];
@@ -140,7 +134,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
           await directoryRepository.update(directory);
           const resultInDB = await directoryRepository.getDirectories(namespace);
           const serviceInDB = resultInDB['services'];
-          directoryCache.set(`directory-${namespace}`, serviceInDB);
+
           return res.status(HttpStatusCodes.CREATED).json(serviceInDB.find((x) => x.service === service));
         }
       } catch (err) {
@@ -169,11 +163,11 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
           isExist.host = url;
           const directory = { name: namespace, services: services };
           await directoryRepository.update(directory);
-          directoryCache.set(`directory-${namespace}`, services);
+
           return res.sendStatus(HttpStatusCodes.CREATED);
         } else {
           logger.error('modify service has error');
-          return res.sendStatus(HttpStatusCodes.BAD_REQUEST).json({ errors: `${service} not exist in ${namespace}` });
+          return res.status(HttpStatusCodes.BAD_REQUEST).json({ errors: `${service} not exist in ${namespace}` });
         }
       } catch (err) {
         logger.error(`Failed updating directory for namespace: ${namespace} with error ${err.message}`);
@@ -206,7 +200,6 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
         const directory = { name: namespace, services: services };
         await directoryRepository.update(directory);
 
-        directoryCache.set(`directory-${namespace}`, services);
         return res.sendStatus(HttpStatusCodes.OK);
       } catch (err) {
         logger.error(`Failed deleting directory for namespace: ${namespace} with error ${err.message}`);
@@ -216,18 +209,19 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
   );
 
   /**
-   * Get all of services in one directory
+   * Get service by service name
    */
   directoryRouter.get('/namespaces/:namespace/services/:service', async (req: Request, res: Response, _next) => {
     const { namespace, service } = req.params;
-    const results: [Service] = directoryCache.get(`directory-${namespace}`);
-
-    if (results) {
-      const isExist = results.find((x) => x.service === service);
-      if (isExist && isExist?.metadata) {
-        return res.status(HttpStatusCodes.OK).json(isExist);
+    // check cache if data exist
+    const services: Service[] = directoryCache.get(`directory-${namespace}`);
+    if (services) {
+      const cachedService = services.find((x) => x.service === service);
+      if (cachedService && cachedService.metadata) {
+        return res.status(HttpStatusCodes.OK).json(cachedService);
       }
     }
+
     try {
       const directoryEntity = await directoryRepository.getDirectories(namespace);
       if (!directoryEntity) {
@@ -242,6 +236,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
       }
       try {
         const { data } = await axios.get<Links>(filteredService.host, { timeout: 5000 });
+
         // Root attributes of Links type are all optional. So, string can pass the axios type validation.
         if (typeof data !== 'object') {
           throw new InvalidValueError('Fetch metadata', 'Invalid metadata schema');
@@ -256,7 +251,6 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
           statusCode: HttpStatusCodes.FAILED_DEPENDENCY,
         });
       }
-
       directoryCache.set(`directory-${namespace}`, services);
       return res.status(HttpStatusCodes.OK).json(filteredService);
     } catch (err) {

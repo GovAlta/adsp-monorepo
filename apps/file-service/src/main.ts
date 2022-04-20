@@ -63,11 +63,11 @@ async function initializeApp(): Promise<express.Application> {
         },
       ],
       configurationSchema,
-      configurationConverter: (configuration: Record<string, FileType>, tenantId: AdspId) =>
-        Object.entries(configuration).reduce(
-          (types, [id, type]) => ({ ...types, [id]: new FileTypeEntity({ ...type, tenantId }) }),
-          {}
-        ),
+      combineConfiguration: (tenant: Record<string, FileType>, core: Record<string, FileType>, tenantId) =>
+        Object.entries({
+          ...tenant,
+          ...core,
+        }).reduce((types, [id, type]) => ({ ...types, [id]: new FileTypeEntity({ ...type, tenantId }) }), {}),
       events: [FileUploadedDefinition, FileDeletedDefinition],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
