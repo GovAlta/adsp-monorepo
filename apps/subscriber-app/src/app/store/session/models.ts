@@ -25,7 +25,8 @@ export interface Credentials {
 
 export interface Indicator {
   show: boolean;
-  message?: string
+  message?: string;
+  action?: string;
 }
 
 export const SESSION_INIT: Session = {};

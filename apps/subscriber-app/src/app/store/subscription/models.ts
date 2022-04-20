@@ -44,3 +44,8 @@ export const SUBSCRIBER_INIT: SubscriberService = {
   subscriptions: [],
   hasSubscriberId: true,
 };
+
+export const actionTypes = Object.freeze({
+  updatePreference: 'update-subscription-preference',
+  updateContactInfo: 'update-subscription-contact-info',
+});
