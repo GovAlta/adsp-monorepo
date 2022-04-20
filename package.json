@@ -94,7 +94,7 @@
     "passport-jwt": "^4.0.0",
     "pg": "^8.3.3",
     "promise-retry": "^2.0.1",
-    "puppeteer-core": "^13.5.2",
+    "puppeteer": "^13.5.2",
     "react-date-picker": "^8.3.2",
     "react-input-mask": "^2.0.4",
     "react-time-picker": "^4.4.1",

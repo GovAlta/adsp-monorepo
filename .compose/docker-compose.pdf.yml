@@ -1,0 +1,19 @@
+version: '3.2'
+services:
+  pdf-service:
+    build:
+      context: ../
+      dockerfile: .compose/service/Dockerfile
+      args:
+        - SERVICE=pdf-service
+    ports:
+      - 3345:3345
+    expose:
+      - 3345
+    environment:
+      - KEYCLOAK_ROOT_URL=http://keycloak:8080
+      - DIRECTORY_URL=http://tenant-management-api:3333
+      - CLIENT_ID=urn:ads:platform:pdf-service
+      - CLIENT_SECRET=2b8c914a-ccd5-4585-a69d-7b2c5378ecf9
+      - PORT=3345
+      - LOG_LEVEL=debug

@@ -444,6 +444,54 @@
       },
       "tags": []
     },
+    "pdf-service": {
+      "root": "apps/pdf-service",
+      "sourceRoot": "apps/pdf-service/src",
+      "projectType": "application",
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/pdf-service",
+            "main": "apps/pdf-service/src/main.ts",
+            "tsConfig": "apps/pdf-service/tsconfig.app.json",
+            "assets": [],
+            "webpackConfig": "apps/pdf-service/webpack.config.js"
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "pdf-service:build"
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/pdf-service/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/pdf-service"],
+          "options": {
+            "jestConfig": "apps/pdf-service/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
     "push-service": {
       "root": "apps/push-service",
       "sourceRoot": "apps/push-service/src",

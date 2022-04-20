@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: pdf-service
+        component: api
+      name: pdf-service
+    data:
+      KEYCLOAK_ROOT_URL: https://access.adsp-dev.gov.ab.ca
+      DIRECTORY_URL: https://tenant-service.adsp-dev.gov.ab.ca
+      LOG_LEVEL: debug
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        app: pdf-service
+        component: api
+      name: pdf-service
+    stringData:
+      CLIENT_ID: urn:ads:platform:pdf-service
+      CLIENT_SECRET:
