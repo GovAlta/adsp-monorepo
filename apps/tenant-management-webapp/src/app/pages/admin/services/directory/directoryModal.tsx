@@ -55,6 +55,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               onChange={(e) => setEntry({ ...entry, service: e.target.value })}
               aria-label="service"
               maxLength={50}
+              disabled={!isNew}
             />
           </GoAFormItem>
           <GoAFormItem error={errors?.['api']}>
@@ -67,6 +68,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               onChange={(e) => setEntry({ ...entry, api: e.target.value })}
               aria-label="api"
               maxLength={50}
+              disabled={!isNew}
             />
           </GoAFormItem>
           <GoAFormItem error={errors?.['url']}>
