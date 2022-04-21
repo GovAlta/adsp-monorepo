@@ -46,21 +46,23 @@ export const getTemplates: RequestHandler = async (req, res, next) => {
 };
 
 const TEMPLATE = 'template';
-export const getTemplate: RequestHandler = async (req, res, next) => {
-  try {
-    const { templateId } = req.params;
-    const [configuration] = await req.getConfiguration<Record<string, PdfTemplateEntity>>();
-    const template = configuration[templateId];
-    if (!template) {
-      throw new NotFoundError('PDF Template', templateId);
-    }
+export function getTemplate(templateIn: 'params' | 'body'): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const { templateId } = req[templateIn];
+      const [configuration] = await req.getConfiguration<Record<string, PdfTemplateEntity>>();
+      const template = configuration[templateId];
+      if (!template) {
+        throw new NotFoundError('PDF Template', templateId);
+      }
 
-    req[TEMPLATE] = template;
-    next();
-  } catch (err) {
-    next(err);
-  }
-};
+      req[TEMPLATE] = template;
+      next();
+    } catch (err) {
+      next(err);
+    }
+  };
+}
 
 export function generatePdf(
   repository: PdfJobRepository,
@@ -132,7 +134,7 @@ export function createPdfRouter({ serviceId, repository, eventService, queueServ
   router.get(
     '/templates/:templateId',
     createValidationHandler(param('templateId').isString().isLength({ min: 1, max: 50 })),
-    getTemplate,
+    getTemplate('params'),
     (req: Request, res: Response) => res.send(mapPdfTemplate(req[TEMPLATE]))
   );
   router.post(
@@ -142,15 +144,10 @@ export function createPdfRouter({ serviceId, repository, eventService, queueServ
       body('filename').isString().isLength({ min: 1, max: 50 }),
       body('data').optional().isObject()
     ),
-    getTemplate,
+    getTemplate('body'),
     generatePdf(repository, eventService, queueService)
   );
-  router.get(
-    '/jobs/:jobId',
-    createValidationHandler(param('jobId').isUUID()),
-    getTemplate,
-    getGeneratedFile(serviceId, repository)
-  );
+  router.get('/jobs/:jobId', createValidationHandler(param('jobId').isUUID()), getGeneratedFile(serviceId, repository));
 
   return router;
 }

@@ -93,6 +93,11 @@ describe('pdf', () => {
   });
 
   describe('getTemplate', () => {
+    it('can create handler', () => {
+      const handler = getTemplate('params');
+      expect(handler).toBeTruthy();
+    });
+
     it('can get template', async () => {
       const req = {
         params: {
@@ -105,7 +110,26 @@ describe('pdf', () => {
       };
       const next = jest.fn();
       req.getConfiguration.mockResolvedValueOnce([configuration]);
-      await getTemplate(req as unknown as Request, res as unknown as Response, next);
+      const handler = getTemplate('params');
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith();
+      expect(req['template']).toBe(configuration.test);
+    });
+
+    it('can get template by body property', async () => {
+      const req = {
+        body: {
+          templateId: 'test',
+        },
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+      req.getConfiguration.mockResolvedValueOnce([configuration]);
+      const handler = getTemplate('body');
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith();
       expect(req['template']).toBe(configuration.test);
     });
@@ -122,7 +146,8 @@ describe('pdf', () => {
       };
       const next = jest.fn();
       req.getConfiguration.mockResolvedValueOnce([{}]);
-      await getTemplate(req as unknown as Request, res as unknown as Response, next);
+      const handler = getTemplate('params');
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
     });
   });
