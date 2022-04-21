@@ -7,5 +7,5 @@ export const GeneratedPdfType: FileType = {
   name: 'Generated PDF',
   anonymousRead: false,
   readRoles: [`urn:ads:platform:pdf-service:${ServiceRoles.PdfGenerator}`],
-  updateRoles: [`urn:ads:platform:pdf-service:${ServiceRoles.PdfGenerator}`],
+  updateRoles: [`urn:ads:platform:tenant-service:platform-service`],
 };
