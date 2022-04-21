@@ -5,7 +5,7 @@ import { v4 as uuid } from 'uuid';
 import { FileResult, PdfJob, PdfJobRepository, PdfJobStatus } from './pdf';
 
 const EXPIRY_SECONDS = 60 * 60 * 24;
-class RedisJobRepository implements PdfJobRepository {
+export class RedisJobRepository implements PdfJobRepository {
   constructor(private readonly client: RedisClient) {}
 
   create(tenantId: AdspId): Promise<PdfJob> {

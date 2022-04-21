@@ -193,7 +193,7 @@ describe('pdf', () => {
           templateId: req.body.templateId,
           data: req.body.data,
           filename: req.body.filename,
-          generatedBy: expect.objectContaining({ id: req.user.id, name: req.user.name }),
+          requestedBy: expect.objectContaining({ id: req.user.id, name: req.user.name }),
         })
       );
       expect(eventServiceMock.send).toHaveBeenCalledWith(

@@ -89,7 +89,7 @@ export function generatePdf(
         templateId,
         filename,
         data,
-        generatedBy: {
+        requestedBy: {
           id: user.id,
           name: user.name,
         },
@@ -140,6 +140,7 @@ export function createPdfRouter({ serviceId, repository, eventService, queueServ
   router.post(
     '/jobs',
     createValidationHandler(
+      body('operation').isIn(['generate']),
       body('templateId').isString().isLength({ min: 1, max: 50 }),
       body('filename').isString().isLength({ min: 1, max: 50 }),
       body('data').optional().isObject()
