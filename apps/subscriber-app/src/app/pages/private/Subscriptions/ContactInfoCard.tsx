@@ -249,11 +249,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                 onChange={updateChannelPreference}
                 disabled={!isAllowSMS}
               >
-                {isAllowSMS ? (
-                  'SMS'
-                ) : (
-                  <span style={{ color: 'var(--color-gray-700)' }}>Valid SMS number not found</span>
-                )}
+                {isAllowSMS ? 'SMS' : <span style={{ color: 'var(--color-gray-700)' }}>SMS</span>}
               </GoARadio>
             </GridItem>
           </Grid>
