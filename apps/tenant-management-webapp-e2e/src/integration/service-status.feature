@@ -198,9 +198,6 @@ Feature: Service status
 
   @TEST_CS-1282 @REQ_CS-905 @regression
   Scenario: As an interested stakeholder, I can verify status notifications for a tenant, so that I know about service availability.
-    Given a tenant admin user is on notification subscribers page
-    When the user searches subscribers with address as containing "Auto Test" and email containing "auto.test@gov.ab.ca"
-    Then the user "views" the subscriber of "Auto Test", "auto.test@gov.ab.ca"
     Given a tenant admin user is on notification subscriptions page
     When the user types "auto.test@gov.ab.ca" in Search subscriber email field
     And the user clicks Search button on notifications page
@@ -209,7 +206,7 @@ Feature: Service status
     Then the user "views" "Autotest" in the application list
     And the user views current status for "Autotest"
     When the user clicks Change status button for "Autotest"
-    And the user changes status to the first unused status
+    Then the user changes status to the first unused status
     And the user clicks Save button in Manual status change modal
     Then the user views the status of "Autotest" changed to the first unused status
     When the user waits "20" seconds
