@@ -432,7 +432,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                             <div className="flex3 endAlign">
                               <div className="flex rowFlex">
                                 {notificationType.sortedChannels.map((channel) => (
-                                  <div className="nonCoreIconPadding flex1" data-testid="tenant-channel">
+                                  <div key={channel} className="nonCoreIconPadding flex1" data-testid="tenant-channel">
                                     {channelIcons[channel]}
                                     {(event.templates[channel]?.subject?.length === 0 ||
                                       event.templates[channel]?.body?.length === 0) && (
@@ -545,7 +545,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                               <div className="flex5 endAlign">
                                 <div className="flex rowFlex">
                                   {notificationType.sortedChannels.map((channel) => (
-                                    <div className="flex1 coreIconPadding" data-testid="core-channel">
+                                    <div key={channel} className="flex1 coreIconPadding" data-testid="core-channel">
                                       {channelIcons[channel]}
                                       {(event.templates[channel]?.subject?.length === 0 ||
                                         event.templates[channel]?.body?.length === 0) && (

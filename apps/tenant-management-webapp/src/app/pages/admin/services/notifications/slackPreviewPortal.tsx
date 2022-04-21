@@ -2,7 +2,6 @@ import React, { FunctionComponent } from 'react';
 import SlackProfileIcon from '@assets/slack.png';
 import styled from 'styled-components';
 import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 
 interface SlackPreviewPortalProps {
@@ -23,9 +22,9 @@ export const SlackPreviewPortal: FunctionComponent<SlackPreviewPortalProps> = ({
           </div>
         </div>
         <b>
-          <ReactMarkdown children={subject} remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]} />
+          <ReactMarkdown children={subject} rehypePlugins={[rehypeRaw]} />
         </b>
-        <ReactMarkdown children={body} remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]} />
+        <ReactMarkdown children={body} rehypePlugins={[rehypeRaw]} />
       </div>
     );
   };
