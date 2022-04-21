@@ -114,6 +114,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     return [];
   };
 
+  const indicator = useSelector((state: RootState) => {
+    return state.session.indicator;
+  });
+
   const channelNames = { email: 'Email', bot: 'Slack bot', sms: 'Text message' };
   const channelIcons = {
     email: <Mail style={{ color: '#666666' }} />,
@@ -159,6 +163,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       }
     }
   }, [selectedEvent]);
+  // eslint-disable-next-line
+  useEffect(() => {}, [indicator]);
 
   useEffect(() => {
     dispatch(FetchNotificationConfigurationService());
@@ -598,7 +604,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             </GoACard>
           </div>
         ))}
-      {notification.notificationTypes === undefined && <IndicatorWithDelay message="Loading..." pageLock={false} />}
+      {indicator && indicator.show && <IndicatorWithDelay message="Loading..." pageLock={false} />}
       {/* Delete confirmation */}
 
       {showDeleteConfirmation && (
