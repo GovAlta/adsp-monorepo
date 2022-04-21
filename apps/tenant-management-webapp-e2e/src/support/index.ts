@@ -31,7 +31,7 @@ Cypress.on('uncaught:exception', (err) => {
   if (
     err.message.includes('Cannot read properties of null') || // App error on event definition modal save
     err.message.includes("Failed to execute 'importScripts' on 'WorkerGlobalScope'") || // App error on event definition modal save
-    err.message.includes('expected 0 to not equal 0') // App error for clicking Published filtering radio button on notices page
+    err.message.includes('expected 0 to') // App error for clicking Published filtering radio button on notices page
   ) {
     return false;
   }

@@ -1,0 +1,333 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: pdf-service
+  annotations:
+    tags: core-services, pdf-service
+    template.openshift.io/provider-display-name: platform team
+    description: PDF Service
+labels:
+  application: pdf-service
+parameters:
+  - name: INFRA_NAMESPACE
+    description: Name of the infrastructure project.
+    displayName: Infra Namespace
+    value: core-services-infra
+    required: true
+  - name: NAMESPACE
+    description: Namespace of the environment.
+    displayName: Namespace
+    value: core-services-dev
+    required: true
+  - name: NAME_SUFFIX
+    description: Suffix applied to the names of the objects created.
+    displayName: Name Suffix
+    value: ""
+  - name: BUILD_TAG
+    description: Name of the ImageStreamTag to build.
+    displayName: Build Tag
+    value: latest
+  - name: DEPLOY_TAG
+    description: Name of the ImageStreamTag to deploy.
+    displayName: Deploy Tag
+    value: latest
+  - name: ROUTE_HOST
+    description: Host for the route.
+    displayName: Route Host
+    value: ""
+  - description: Password for the Redis connection user.
+    displayName: Redis Connection Password
+    from: "[a-zA-Z0-9]{24}"
+    generate: expression
+    name: REDIS_PASSWORD
+    required: true
+objects:
+  # Redis Objects
+  # NOTE: Secret will generate new values if updated, so this is only for branch deployments.
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        app: pdf-service${NAME_SUFFIX}
+        component: database
+        apply-init: "true"
+        apply-branch: "true"
+      name: pdf-service-redis${NAME_SUFFIX}
+    stringData:
+      database-password: ${REDIS_PASSWORD}
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        template.openshift.io/expose-uri: redis://{.spec.clusterIP}:{.spec.ports[?(.name=="redis")].port}
+      labels:
+        app: pdf-service${NAME_SUFFIX}
+        component: database
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: pdf-service-redis${NAME_SUFFIX}
+    spec:
+      ports:
+        - name: redis
+          nodePort: 0
+          port: 6379
+          protocol: TCP
+          targetPort: 6379
+      selector:
+        app: pdf-service${NAME_SUFFIX}
+        component: database
+      sessionAffinity: None
+      type: ClusterIP
+    status:
+      loadBalancer: {}
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      annotations:
+        template.alpha.openshift.io/wait-for-ready: "true"
+      labels:
+        app: pdf-service${NAME_SUFFIX}
+        component: database
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: pdf-service-redis${NAME_SUFFIX}
+    spec:
+      replicas: 3
+      selector:
+        app: pdf-service${NAME_SUFFIX}
+        component: database
+      strategy:
+        type: Recreate
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 20m
+            memory: 50Mi
+      template:
+        metadata:
+          labels:
+            app: pdf-service${NAME_SUFFIX}
+            component: database
+        spec:
+          containers:
+            - capabilities: {}
+              env:
+                - name: REDIS_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-password
+                      name: pdf-service-redis${NAME_SUFFIX}
+              image: " "
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                initialDelaySeconds: 60
+                tcpSocket:
+                  port: 6379
+                timeoutSeconds: 30
+              name: redis
+              ports:
+                - containerPort: 6379
+                  protocol: TCP
+              readinessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -i
+                    - -c
+                    - test "$(redis-cli -h 127.0.0.1 -a $REDIS_PASSWORD ping)" == "PONG"
+                initialDelaySeconds: 60
+                timeoutSeconds: 1
+              resources:
+                requests:
+                  cpu: 20m
+                  memory: 100Mi
+                limits:
+                  cpu: 200m
+                  memory: 512Mi
+              securityContext:
+                capabilities: {}
+                privileged: false
+              terminationMessagePath: /dev/termination-log
+              volumeMounts:
+                - mountPath: /var/lib/redis/data
+                  name: pdf-service-redis-data
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          volumes:
+            - emptyDir:
+                medium: ""
+              name: pdf-service-redis-data
+      triggers:
+        - imageChangeParams:
+            automatic: true
+            containerNames:
+              - redis
+            from:
+              kind: ImageStreamTag
+              name: 'redis:5-el8'
+              namespace: openshift
+            lastTriggeredImage: ""
+          type: ImageChange
+        - type: ConfigChange
+    status: {}
+
+  # Service Objects
+
+  # ImageStream is here for reference.
+  # There is a single ImageStream created in the infra project.
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      labels:
+        app: pdf-service
+        component: api
+        apply-infra: "true"
+      name: pdf-service
+      namespace: ${INFRA_NAMESPACE}
+    spec:
+      tags:
+        - name: ${BUILD_TAG}
+          from:
+            kind: DockerImage
+            name: ghcr.io/govalta/pdf-service:${BUILD_TAG}
+          referencePolicy:
+            type: Local
+
+  # DeploymentConfig (and Service and Route) is created in each environment of the
+  # primary pipline as well as branch deployment.
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      labels:
+        app: pdf-service${NAME_SUFFIX}
+        component: api
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: pdf-service${NAME_SUFFIX}
+    spec:
+      replicas: 1
+      revisionHistoryLimit: 3
+      selector:
+        app: pdf-service${NAME_SUFFIX}
+        component: api
+      strategy:
+        activeDeadlineSeconds: 21600
+        recreateParams:
+          timeoutSeconds: 600
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 20m
+            memory: 50Mi
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            app: pdf-service${NAME_SUFFIX}
+            component: api
+        spec:
+          containers:
+            - envFrom:
+                - configMapRef:
+                    name: pdf-service
+                - secretRef:
+                    name: pdf-service
+              env:
+                - name: PORT
+                  value: "3333"
+                - name: REDIS_HOST
+                  value: pdf-service-redis
+                - name: REDIS_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-password
+                      name: pdf-service-redis${NAME_SUFFIX}
+              imagePullPolicy: IfNotPresent
+              name: pdf-service
+              ports:
+                - containerPort: 3333
+                  name: http
+                  protocol: TCP
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 200Mi
+                requests:
+                  cpu: 20m
+                  memory: 50Mi
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+      test: false
+      triggers:
+        - imageChangeParams:
+            containerNames:
+              - pdf-service
+            from:
+              kind: ImageStreamTag
+              name: pdf-service:${DEPLOY_TAG}
+              namespace: ${INFRA_NAMESPACE}
+          type: ImageChange
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: pdf-service${NAME_SUFFIX}
+        component: api
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: pdf-service${NAME_SUFFIX}
+    spec:
+      ports:
+        - name: http
+          port: 3333
+          protocol: TCP
+          targetPort: 3333
+      selector:
+        app: pdf-service${NAME_SUFFIX}
+        component: api
+      sessionAffinity: None
+      type: ClusterIP
+  - apiVersion: v1
+    kind: Route
+    metadata:
+      labels:
+        app: pdf-service${NAME_SUFFIX}
+        component: api
+        apply-branch: "true"
+        apply-dev: "true"
+        apply-test: "true"
+        apply-staging: "true"
+        apply-prod: "true"
+      name: pdf-service${NAME_SUFFIX}
+    spec:
+      host: ${ROUTE_HOST}
+      port:
+        targetPort: http
+      tls:
+        termination: edge
+      to:
+        kind: Service
+        name: pdf-service${NAME_SUFFIX}
+        weight: 100
+      wildcardPolicy: None

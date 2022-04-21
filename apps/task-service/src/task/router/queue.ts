@@ -2,7 +2,7 @@ import { AdspId, EventService, UnauthorizedUserError } from '@abgov/adsp-service
 import { createValidationHandler, NotFoundError } from '@core-services/core-common';
 import axios from 'axios';
 import { Request, RequestHandler, Response, Router } from 'express';
-import { checkSchema, param } from 'express-validator';
+import { checkSchema, param, query } from 'express-validator';
 import * as HttpStatusCodes from 'http-status-codes';
 import { Logger } from 'winston';
 import { updateTask } from '.';
@@ -210,6 +210,7 @@ export function createQueueRouter({
   router.get(
     '/queues/:namespace/:name/tasks',
     validateNamespaceNameHandler,
+    createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
     getQueue,
     getQueuedTasks(apiId, repository)
   );

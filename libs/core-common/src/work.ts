@@ -7,6 +7,7 @@ export interface WorkItem<T> {
 }
 
 export interface WorkQueueService<T> {
+  isConnected(): boolean;
   enqueue(item: T): Promise<void>;
   getItems(): Observable<WorkItem<T>>;
 }

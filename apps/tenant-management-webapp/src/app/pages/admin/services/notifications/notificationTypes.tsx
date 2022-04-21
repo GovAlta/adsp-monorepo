@@ -114,6 +114,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     return [];
   };
 
+  const indicator = useSelector((state: RootState) => {
+    return state.session.indicator;
+  });
+
   const channelNames = { email: 'Email', bot: 'Slack bot', sms: 'Text message' };
   const channelIcons = {
     email: <Mail style={{ color: '#666666' }} />,
@@ -159,6 +163,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       }
     }
   }, [selectedEvent]);
+  // eslint-disable-next-line
+  useEffect(() => {}, [indicator]);
 
   useEffect(() => {
     dispatch(FetchNotificationConfigurationService());
@@ -432,7 +438,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                             <div className="flex3 endAlign">
                               <div className="flex rowFlex">
                                 {notificationType.sortedChannels.map((channel) => (
-                                  <div className="nonCoreIconPadding flex1" data-testid={`tenant-${channel}-channel`}>
+                                  <div key={channel} className="nonCoreIconPadding flex1" data-testid={`tenant-${channel}-channel`}>
                                     {channelIcons[channel]}
                                     {(event.templates[channel]?.subject?.length === 0 ||
                                       event.templates[channel]?.body?.length === 0) && (
@@ -545,7 +551,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                               <div className="flex5 endAlign">
                                 <div className="flex rowFlex">
                                   {notificationType.sortedChannels.map((channel) => (
-                                    <div className="flex1 coreIconPadding" data-testid={`core-${channel}-channel`}>
+                                    <div key={channel} className="flex1 coreIconPadding" data-testid={`core-${channel}-channel`}>
                                       {channelIcons[channel]}
                                       {(event.templates[channel]?.subject?.length === 0 ||
                                         event.templates[channel]?.body?.length === 0) && (
@@ -598,7 +604,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             </GoACard>
           </div>
         ))}
-      {notification.notificationTypes === undefined && <IndicatorWithDelay message="Loading..." pageLock={false} />}
+      {indicator && indicator.show && <IndicatorWithDelay message="Loading..." pageLock={false} />}
       {/* Delete confirmation */}
 
       {showDeleteConfirmation && (
@@ -761,9 +767,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             <PreviewTemplateContainer>
               <PreviewTemplate
                 subjectTitle="Subject"
+                channel={channelNames[currentChannel]}
                 channelTitle={`${channelNames[currentChannel]} preview`}
                 subjectPreviewContent={subjectPreview}
-                emailPreviewContent={bodyPreview}
+                bodyPreviewContent={bodyPreview}
               />
             </PreviewTemplateContainer>
           </NotificationTemplateEditorContainer>

@@ -21,6 +21,7 @@ import { RootState } from '../index';
 import axios from 'axios';
 import moment from 'moment';
 import { EventItem } from './models';
+import { UpdateIndicator } from '@store/session/actions';
 
 export function* fetchNotificationTypes(): SagaIterator {
   const configBaseUrl: string = yield select(
@@ -37,6 +38,7 @@ export function* fetchNotificationTypes(): SagaIterator {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
       if (configuration.latest) {
         const { contact, ...notificationTypeInfo } = configuration.latest.configuration;
         yield put(FetchNotificationConfigurationSucceededService({ data: notificationTypeInfo }, contact));
@@ -55,6 +57,11 @@ export function* fetchCoreNotificationTypes(): SagaIterator {
 
   if (configBaseUrl && token) {
     try {
+      yield put(
+        UpdateIndicator({
+          show: true,
+        })
+      );
       const { data: configuration } = yield call(
         axios.get,
         `${configBaseUrl}/configuration/v2/configuration/platform/notification-service?core`,
@@ -64,9 +71,20 @@ export function* fetchCoreNotificationTypes(): SagaIterator {
       );
 
       const notificationTypeInfo = configuration.latest && configuration.latest.configuration;
+
       yield put(FetchCoreNotificationTypeSucceededService({ data: notificationTypeInfo }));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - fetchCoreNotificationTypes` }));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
     }
   }
 }
