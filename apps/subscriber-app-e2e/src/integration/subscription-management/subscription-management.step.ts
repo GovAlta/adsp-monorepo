@@ -40,7 +40,7 @@ When('an authenticated user is in the subscriber app', function () {
   cy.wait(5000); // Wait all the redirects to settle down
 });
 
-Then('the user views Subscription management page', function () {
+Then('the user views subscription management page', function () {
   subscriptionManagementObj.serviceName().invoke('text').should('contain', 'Subscription management');
 });
 
