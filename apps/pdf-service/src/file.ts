@@ -16,8 +16,9 @@ class PlatformFileService implements FileService {
     const fileServiceUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:file-service`);
     const filesUrl = new URL('/file/v1/files', fileServiceUrl);
     const token = await this.tokenProvider.getAccessToken();
+    
     const { data } = await axios.post<FileResult>(filesUrl.href, formData, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { ...formData.getHeaders(), Authorization: `Bearer ${token}` },
     });
 
     return data;

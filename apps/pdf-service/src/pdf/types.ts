@@ -1,3 +1,4 @@
+import { AdspId } from '@abgov/adsp-service-sdk';
 import { Readable } from 'stream';
 
 export interface TemplateService {
@@ -19,8 +20,18 @@ export interface FileService {
 }
 
 export interface PdfTemplate {
+  tenantId: AdspId;
   id: string;
   name: string;
   description: string;
   template: string;
+}
+
+export type PdfJobStatus = 'queued' | 'completed' | 'failed';
+
+export interface PdfJob {
+  tenantId: AdspId;
+  id: string;
+  status: PdfJobStatus;
+  result?: FileResult;
 }

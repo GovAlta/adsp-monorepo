@@ -11,6 +11,7 @@ items:
     data:
       KEYCLOAK_ROOT_URL: https://access.adsp-dev.gov.ab.ca
       DIRECTORY_URL: https://tenant-service.adsp-dev.gov.ab.ca
+      AMQP_HOST: event-service-rabbitmq-balancer
       LOG_LEVEL: debug
   - apiVersion: v1
     kind: Secret
@@ -22,3 +23,5 @@ items:
     stringData:
       CLIENT_ID: urn:ads:platform:pdf-service
       CLIENT_SECRET:
+      AMQP_USER: pdf-service
+      AMQP_PASSWORD:

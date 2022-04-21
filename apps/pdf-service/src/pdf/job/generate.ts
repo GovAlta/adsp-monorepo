@@ -2,6 +2,7 @@ import { AdspId, ConfigurationService, EventService, TokenProvider } from '@abgo
 import { Logger } from 'winston';
 import { pdfGenerated, pdfGenerationFailed } from '../events';
 import { PdfTemplateEntity } from '../model';
+import { PdfJobRepository } from '../repository';
 import { FileService } from '../types';
 import { PdfServiceWorkItem } from './types';
 
@@ -10,6 +11,7 @@ export interface GenerateJobProps {
   serviceId: AdspId;
   tokenProvider: TokenProvider;
   configurationService: ConfigurationService;
+  repository: PdfJobRepository;
   fileService: FileService;
   eventService: EventService;
 }
@@ -20,29 +22,31 @@ export function createGenerateJob({
   serviceId,
   tokenProvider,
   configurationService,
+  repository,
   fileService,
   eventService,
 }: GenerateJobProps) {
   return async (
-    { tenantId, jobId, filename, template, data, generatedBy }: PdfServiceWorkItem,
+    { tenantId: tenantIdValue, jobId, filename, templateId, data, generatedBy }: PdfServiceWorkItem,
     retryOnError: boolean,
     done: (err?: Error) => void
   ): Promise<void> => {
-    try {
-      logger.info(`Starting generation of PDF (ID: ${jobId}) file: ${filename}...`, {
-        context,
-        tenant: tenantId,
-      });
+    logger.info(`Starting generation of PDF (ID: ${jobId}) file: ${filename}...`, {
+      context,
+      tenant: tenantIdValue,
+    });
 
+    const tenantId = AdspId.parse(tenantIdValue);
+    try {
       const token = await tokenProvider.getAccessToken();
       const [configuration] = await configurationService.getConfiguration<Record<string, PdfTemplateEntity>>(
         serviceId,
         token,
-        AdspId.parse(tenantId)
+        tenantId
       );
 
-      const pdfTemplate = configuration[template.id];
-      const pdf = await pdfTemplate.evaluate({ data });
+      const pdfTemplate = configuration[templateId];
+      const pdf = await pdfTemplate.generate({ data });
       logger.debug(`Generation of PDF (ID: ${jobId}) completed PDF creation from content...`, {
         context,
         tenant: tenantId,
@@ -50,17 +54,19 @@ export function createGenerateJob({
 
       const result = await fileService.upload(jobId, filename, pdf);
 
-      eventService.send(pdfGenerated(jobId, result, generatedBy));
+      eventService.send(pdfGenerated(tenantId, jobId, templateId, result, generatedBy));
 
       logger.info(`Generated PDF (ID: ${jobId}) file ${filename} and uploaded to file service at: ${result.urn}`, {
         context,
         tenant: tenantId,
       });
 
+      await repository.update(jobId, 'completed', result);
       done();
     } catch (err) {
       if (!retryOnError) {
-        eventService.send(pdfGenerationFailed(jobId, generatedBy));
+        await repository.update(jobId, 'failed');
+        eventService.send(pdfGenerationFailed(tenantId, jobId, templateId, generatedBy));
         logger.error(`Generation of PDF (ID: ${jobId}) failed with error. ${err}`);
       }
 

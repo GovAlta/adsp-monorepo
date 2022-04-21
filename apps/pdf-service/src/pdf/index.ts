@@ -3,6 +3,7 @@ import { WorkQueueService } from '@core-services/core-common';
 import { Application } from 'express';
 import { Logger } from 'winston';
 import { createPdfJobs, PdfServiceWorkItem } from './job';
+import { PdfJobRepository } from './repository';
 import { createPdfRouter } from './router';
 import { FileService } from './types';
 
@@ -12,12 +13,15 @@ export * from './fileTypes';
 export * from './roles';
 export * from './types';
 export * from './job';
+export * from './repository';
+export * from './model';
 
 interface MiddlewareProps {
   logger: Logger;
   serviceId: AdspId;
   tokenProvider: TokenProvider;
   configurationService: ConfigurationService;
+  repository: PdfJobRepository;
   fileService: FileService;
   eventService: EventService;
   queueService: WorkQueueService<PdfServiceWorkItem>;

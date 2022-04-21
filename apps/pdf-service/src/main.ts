@@ -6,21 +6,22 @@ import * as cors from 'cors';
 import * as helmet from 'helmet';
 import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
-import { createLogger, createErrorHandler } from '@core-services/core-common';
+import { createLogger, createErrorHandler, createAmqpConfigUpdateService } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import {
   applyPdfMiddleware,
   configurationSchema,
   GeneratedPdfType,
-  PdfConfiguration,
   PdfGeneratedDefinition,
+  PdfTemplate,
+  PdfTemplateEntity,
   ServiceRoles,
 } from './pdf';
 import { createTemplateService } from './handlebars';
 import { createPdfService } from './puppeteer';
 import { createFileService } from './file';
 import { createPdfQueueService } from './amqp';
-import { PdfTemplateEntity } from './pdf/model';
+import { createJobRepository } from './redis';
 
 const logger = createLogger('pdf-service', environment.LOG_LEVEL);
 
@@ -42,6 +43,7 @@ const initializeApp = async (): Promise<express.Application> => {
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
   const {
+    clearCached,
     configurationHandler,
     configurationService,
     directory,
@@ -56,11 +58,11 @@ const initializeApp = async (): Promise<express.Application> => {
       displayName: 'PDF Service',
       description: 'Provides utility PDF capabilities.',
       configurationSchema,
-      configurationConverter: (config: PdfConfiguration, tenantId) =>
+      configurationConverter: (config: Record<string, Omit<PdfTemplate, 'tenantId'>>, tenantId) =>
         Object.entries(config).reduce(
           (templates, [templateId, template]) => ({
             ...templates,
-            [templateId]: new PdfTemplateEntity(templateService, pdfService, tenantId, template),
+            [templateId]: new PdfTemplateEntity(templateService, pdfService, { ...template, tenantId }),
           }),
           {}
         ),
@@ -84,15 +86,27 @@ const initializeApp = async (): Promise<express.Application> => {
     done(null, user as User);
   });
 
+  const configurationSync = await createAmqpConfigUpdateService({
+    ...environment,
+    logger,
+  });
+
+  configurationSync.getItems().subscribe(({ item, done }) => {
+    clearCached(item.tenantId, item.serviceId);
+    done();
+  });
+
   app.use(passport.initialize());
   app.use('/pdf', passport.authenticate(['tenant'], { session: false }), tenantHandler, configurationHandler);
 
+  const { repository, ...repositories } = createJobRepository(environment);
   const queueService = await createPdfQueueService({ logger, ...environment });
   applyPdfMiddleware(app, {
     logger,
     serviceId,
     tokenProvider,
     configurationService,
+    repository,
     queueService,
     fileService: createFileService({ tokenProvider, directory }),
     eventService,
@@ -116,7 +130,7 @@ const initializeApp = async (): Promise<express.Application> => {
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();
-    res.json(platform);
+    res.json({ ...platform, db: repositories.isConnected(), msg: queueService.isConnected() });
   });
 
   app.get('/', async (req, res) => {

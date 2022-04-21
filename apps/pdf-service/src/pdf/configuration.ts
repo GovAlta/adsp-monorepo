@@ -1,5 +1,3 @@
-import { PdfTemplate } from './types';
-
 export const configurationSchema = {
   type: 'object',
   additionalProperties: {
@@ -23,4 +21,3 @@ export const configurationSchema = {
   },
 };
 
-export type PdfConfiguration = Record<string, PdfTemplate>;
