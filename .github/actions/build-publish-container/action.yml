@@ -13,6 +13,9 @@ inputs:
   build-context:
     description: "Context directory path for the build input."
     required: true
+  container-file:
+    description: "Container file for the container build."
+    required: true
   ghcr-token:
     description: "Token for GHCR"
     required: true
@@ -45,7 +48,7 @@ runs:
         build-args: |
           SERVICE=${{ inputs.app }}
         containerfiles: |
-          .openshift/service/Dockerfile
+          ${{ inputs.container-file }}
     - name: Push to GitHub container registry
       uses: redhat-actions/push-to-registry@v2
       with:
