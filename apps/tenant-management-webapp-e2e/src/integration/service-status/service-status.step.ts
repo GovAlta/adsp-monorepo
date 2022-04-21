@@ -7,8 +7,8 @@ import TenantAdminPage from '../tenant-admin/tenant-admin.page';
 const commonObj = new common();
 const statusObj = new ServiceStatusPage();
 const tenantAdminObj = new TenantAdminPage();
-let currentStatus;
-let afterStatus;
+let originalStatus;
+let newStatus;
 
 Given('a service owner user is on service status page', function () {
   commonlib.tenantAdminDirectURLLogin(
@@ -544,7 +544,7 @@ Then('the user views current status for {string}', function (appName) {
     .invoke('text')
     .then((statusValue) => {
       cy.log('Current Status: ' + statusValue);
-      currentStatus = statusValue;
+      originalStatus = statusValue;
     });
 });
 
@@ -562,8 +562,8 @@ Then('the user changes status to the first unused status', function () {
       statusObj.manualStatusListInput().each(($item) => {
         if ($item.val() != checkedStatus) {
           $item.trigger('click');
-          afterStatus = $item.val();
-          cy.log('New Status: ' + afterStatus);
+          newStatus = $item.val();
+          cy.log('New Status: ' + newStatus);
           return false;
         }
       });
@@ -582,26 +582,26 @@ Then('the user views the status of {string} changed to the first unused status',
     .then((statusValue) => {
       cy.log('New Status: ' + statusValue);
     });
-  expect(afterStatus).not.to.equal(currentStatus);
+  expect(newStatus).not.to.equal(originalStatus);
 });
 
 Then(
-  'the user views the event details of {string} application status changed from {string} to {string} for subscriber of {string}',
-  function (appName, originalStatus, newStatus, email) {
-    const orgSubjectStatus = originalStatus.match(/(.*{original status}.*)/g);
-    if (orgSubjectStatus == null) {
-      currentStatus = originalStatus;
+  'the user should find the event details of {string} application status changed from {string} to {string} for subscriber of {string}',
+  function (appName, orgStatusValidationStr, newStatusValidationStr, email) {
+    const orgStatusInput = orgStatusValidationStr.match(/(.*{original status}.*)/g);
+
+    if (orgStatusInput == null) {
+      orgStatusValidationStr = 'The original status was: ' + orgStatusValidationStr;
     } else {
-      currentStatus =
-        originalStatus.replace('{original status}', 'The original status was: ') + currentStatus.toLowerCase();
-      cy.log('Original status: ' + currentStatus);
+      orgStatusValidationStr =
+        orgStatusValidationStr.replace('{original status}', 'The original status was: ') + originalStatus.toLowerCase();
     }
-    const newSubjectStatus = newStatus.match(/(.*{new status}.*)/g);
-    if (newSubjectStatus == null) {
-      currentStatus = newStatus;
+    const newStatusInput = newStatusValidationStr.match(/(.*{new status}.*)/g);
+    if (newStatusInput == null) {
+      newStatusValidationStr = 'The new status is now: ' + newStatusValidationStr;
     } else {
-      afterStatus = newStatus.replace('{new status}', 'The new status is now: ') + afterStatus.toLowerCase();
-      cy.log('New status: ' + afterStatus);
+      newStatusValidationStr =
+        newStatusValidationStr.replace('{new status}', 'The new status is now: ') + newStatus.toLowerCase();
     }
     tenantAdminObj.eventToggleDetailsIcons().each(($element) => {
       //clicking each eye-icon in the list
@@ -612,9 +612,11 @@ Then(
         .then((eventDetails) => {
           //if event log details contains email then verify expect statements else close the event details and continue down the list
           if (eventDetails.includes(email)) {
+            expect(eventDetails).to.contain(email);
             expect(eventDetails).to.contain(appName);
-            expect(eventDetails).to.contain(currentStatus);
-            expect(eventDetails).to.contain(afterStatus);
+            expect(eventDetails).to.contain(orgStatusValidationStr);
+            expect(eventDetails).to.contain(newStatusValidationStr);
+            cy.wrap($element).click();
           } else {
             //clicking eye icon to close eventDetails
             cy.wrap($element).click();
