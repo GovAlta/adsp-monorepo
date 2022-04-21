@@ -1,4 +1,4 @@
-import React, { FormEvent, useState, useEffect, isValidElement } from 'react';
+import React, { FormEvent, useState, useEffect } from 'react';
 import { GoAButton, GoARadio } from '@abgov/react-components';
 import { GoAInputEmail, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { useDispatch, useSelector } from 'react-redux';
@@ -74,6 +74,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
 
   const inValidSMSInput = (smsInput: string): boolean => {
     if (smsInput) {
+      // eslint-disable-next-line
       return /^[0-9\.\-\/]+$/.test(smsInput);
     }
 
@@ -249,11 +250,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                 onChange={updateChannelPreference}
                 disabled={!isAllowSMS}
               >
-                {isAllowSMS ? (
-                  'SMS'
-                ) : (
-                  <span style={{ color: 'var(--color-gray-700)' }}>Valid SMS number not found</span>
-                )}
+                {isAllowSMS ? 'SMS' : <span style={{ color: 'var(--color-gray-700)' }}>SMS</span>}
               </GoARadio>
             </GridItem>
           </Grid>
