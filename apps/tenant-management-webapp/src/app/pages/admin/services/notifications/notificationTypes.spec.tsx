@@ -312,7 +312,7 @@ describe('NotificationTypes Page', () => {
         <NotificationTypes />
       </Provider>
     );
-    const editBtn = getAllByTestId('edit-event-file-service:file-uploaded')[0];
+    const editBtn = getAllByTestId('edit-event')[0];
     await waitFor(() => {
       fireEvent.click(editBtn);
     });
@@ -354,16 +354,5 @@ describe('NotificationTypes Page', () => {
 
     const deleteAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
     expect(deleteAction).toBeTruthy();
-  });
-
-  it('shows badge where required as expected', async () => {
-    const { getByTestId, queryByTestId } = render(
-      <Provider store={store}>
-        <NotificationTypes />
-      </Provider>
-    );
-
-    expect(getByTestId('Some other subsidy application:bot:badge').textContent).toBe('!');
-    expect(queryByTestId('Child care subsidy application:bot:badge')).not.toBeInTheDocument();
   });
 });

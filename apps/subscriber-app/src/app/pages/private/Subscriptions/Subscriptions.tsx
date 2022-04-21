@@ -1,61 +1,43 @@
-import React, { FormEvent, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Main } from '@components/Html';
 import Container from '@components/Container';
 import DataTable from '@components/DataTable';
-import { GoAButton, GoACard, GoAPageLoader } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components';
 import { GoACallout } from '@abgov/react-components';
 import { FetchContactInfoService } from '@store/notification/actions';
 import { useParams } from 'react-router-dom';
-import {
-  GoAInputEmail,
-  GoAForm,
-  GoAFormItem,
-  GoAModal,
-  GoAModalActions,
-  GoAModalTitle,
-} from '@abgov/react-components/experimental';
+import { GoAModal, GoAModalActions, GoAModalTitle } from '@abgov/react-components/experimental';
 
 import SubscriptionsList from '@components/SubscriptionsList';
 
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
-import { getMySubscriberDetails, patchSubscriber, unsubscribe } from '@store/subscription/actions';
+import { getMySubscriberDetails, unsubscribe } from '@store/subscription/actions';
 import { RootState } from '@store/index';
-import { SubscriberChannel, Subscription } from '@store/subscription/models';
+import { Subscription } from '@store/subscription/models';
 import {
   NoSubscriberCallout,
-  Label,
-  ContactInformationContainer,
   ContactInformationWrapper,
   CalloutWrapper,
   SubscriptionListContainer,
   TableHeaders,
   DescriptionWrapper,
 } from './styled-components';
+import { phoneWrapper } from '@lib/wrappers';
+import { ContactInfoCard } from './ContactInfoCard';
+import { IndicatorWithDelay } from '@components/Indicator';
 
 const Subscriptions = (): JSX.Element => {
   const dispatch = useDispatch();
-  const EMAIL = 'email';
   const { subscriber, hasSubscriberId } = useSelector((state: RootState) => ({
     subscriber: state.subscription.subscriber,
     hasSubscriberId: state.subscription.hasSubscriberId,
   }));
   const contact = useSelector((state: RootState) => state.notification?.contactInfo);
-  const [formErrors, setFormErrors] = useState({});
-  const subscriberEmail = subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === EMAIL)[0]?.address;
-  const [emailContactInformation, setEmailContactInformation] = useState(subscriberEmail);
-  const [editContactInformation, setEditContactInformation] = useState(false);
   const [showUnSubscribeModal, setShowUnSubscribeModal] = useState(false);
   const [selectedUnsubscribeSub, setSelectedUnsubscribeSub] = useState<Subscription>();
   const { realm } = useParams<{ realm: string }>();
 
-  const phoneWrapper = (phoneNumber) => {
-    if (phoneNumber) {
-      return (
-        '1 (' + phoneNumber.substring(0, 3) + ') ' + phoneNumber.substring(3, 6) + '-' + phoneNumber.substring(6, 10)
-      );
-    }
-  };
   useEffect(() => {
     dispatch(getMySubscriberDetails());
   }, []);
@@ -68,17 +50,12 @@ const Subscriptions = (): JSX.Element => {
     setShowUnSubscribeModal(true);
     setSelectedUnsubscribeSub(subscriber?.subscriptions.filter((item) => item.typeId === typeId)[0]);
   };
+
   const resetSelectedUnsubscribe = () => {
     setShowUnSubscribeModal(false);
     setSelectedUnsubscribeSub(undefined);
   };
-  const setValue = (name: string, value: string) => {
-    switch (name) {
-      case EMAIL:
-        setEmailContactInformation(value);
-        break;
-    }
-  };
+
   const unSubscribeModal = () => {
     return (
       <GoAModal isOpen={true} key={1} data-testId="unsubscribe-modal">
@@ -116,51 +93,7 @@ const Subscriptions = (): JSX.Element => {
       </GoAModal>
     );
   };
-  const isValidEmail = (email: string): boolean => {
-    return /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email);
-  };
-  const saveContactInformation = async (e: FormEvent) => {
-    e.preventDefault();
-    if (isValidEmail(emailContactInformation)) {
-      setFormErrors({});
-      if (subscriberEmail !== emailContactInformation) {
-        dispatch(
-          patchSubscriber(
-            [
-              {
-                channel: EMAIL,
-                address: emailContactInformation,
-              },
-            ],
-            subscriber.id
-          )
-        );
-      }
-      setEditContactInformation(!editContactInformation);
-    } else {
-      setFormErrors({ email: 'You must enter a valid email' });
-    }
-  };
-  const updateContactInfoButtons = () => {
-    return (
-      <div>
-        <GoAButton
-          buttonSize="small"
-          buttonType="secondary"
-          data-testid="edit-contact-cancel-button"
-          onClick={() => {
-            setEditContactInformation(!editContactInformation);
-            setFormErrors({});
-          }}
-        >
-          Cancel
-        </GoAButton>
-        <GoAButton buttonSize="small" data-testid="edit-contact-save-button" onClick={saveContactInformation}>
-          Save
-        </GoAButton>
-      </div>
-    );
-  };
+
   return (
     <SubscriptionManagement>
       <Main>
@@ -177,46 +110,9 @@ const Subscriptions = (): JSX.Element => {
           {subscriber ? (
             <>
               <ContactInformationWrapper>
-                <GoACard title="Contact information" data-testid="contact-information-card">
-                  <Label>Email</Label>
-                  <ContactInformationContainer>
-                    <div>
-                      {editContactInformation ? (
-                        <GoAForm>
-                          <GoAFormItem error={formErrors?.['email']}>
-                            <GoAInputEmail
-                              aria-label="email"
-                              name="email"
-                              value={emailContactInformation}
-                              onChange={setValue}
-                              data-testid="edit-contact-input-text"
-                            />
-                          </GoAFormItem>
-                        </GoAForm>
-                      ) : (
-                        <p>{subscriberEmail}</p>
-                      )}
-                    </div>
-                    <div>
-                      {editContactInformation ? (
-                        updateContactInfoButtons()
-                      ) : (
-                        <GoAButton
-                          buttonSize="small"
-                          data-testid="edit-contact-button"
-                          onClick={() => {
-                            setEmailContactInformation(subscriberEmail);
-                            setEditContactInformation(!editContactInformation);
-                          }}
-                        >
-                          Edit contact information
-                        </GoAButton>
-                      )}
-                    </div>
-                  </ContactInformationContainer>
-                </GoACard>
+                <ContactInfoCard subscriber={subscriber} />
               </ContactInformationWrapper>
-              <GoAModal></GoAModal>
+
               <SubscriptionListContainer>
                 {subscriber?.subscriptions?.length > 0 ? (
                   <DataTable data-testid="subscriptions-table">
@@ -256,7 +152,7 @@ const Subscriptions = (): JSX.Element => {
               <GoACallout title="You have no subscriptions" type="important"></GoACallout>
             </NoSubscriberCallout>
           ) : (
-            <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
+            <IndicatorWithDelay pageLock={false} />
           )}
         </Container>
       </Main>

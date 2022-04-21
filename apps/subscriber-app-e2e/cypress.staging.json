@@ -1,0 +1,25 @@
+{
+  "env": {
+    "env-name": "UAT",
+    "TAGS": ""
+  },
+  "baseUrl": "https://subscription.adsp-uat.alberta.ca/",
+  "tenantWebAppUrl": "https://adsp-uat.alberta.ca/",
+  "fileServerFolder": ".",
+  "fixturesFolder": "./src/fixtures",
+  "integrationFolder": "./src/integration",
+  "modifyObstructiveCode": false,
+  "pluginsFile": "./src/plugins/index",
+  "supportFile": "./src/support/index.ts",
+  "video": false,
+  "videosFolder": "../../dist/cypress/apps/subsriber-app-e2e/videos",
+  "screenshotsFolder": "../../dist/cypress/apps/subscriber-app-e2e/screenshots",
+  "chromeWebSecurity": false,
+  "testFiles": "**/*.feature",
+  "ignoreTestFiles": "*.js",
+  "videoUploadOnPasses": false,
+  "reporter": "junit",
+  "reporterOptions": {
+    "mochaFile": "../../dist/cypress/apps/subscriber-app-e2e/results/results-[hash].xml"
+  }
+}

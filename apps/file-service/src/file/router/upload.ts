@@ -46,8 +46,7 @@ export class FileStorageEngine implements multer.StorageEngine {
       if (filename && !validFilename(filename)) {
         throw new InvalidOperationError(`Specified filename is not valid.`);
       }
-      const [configuration] = await req.getConfiguration<ServiceConfiguration>();
-
+      const configuration = await req.getConfiguration<ServiceConfiguration, ServiceConfiguration>();
       const fileType = configuration?.[type];
       if (!fileType) {
         throw new NotFoundError('File Type', type);

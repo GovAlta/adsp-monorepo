@@ -70,7 +70,7 @@ describe('upload', () => {
       const cb = jest.fn();
 
       const configuration = { test: new FileTypeEntity(fileType) };
-      req.getConfiguration.mockResolvedValueOnce([configuration]);
+      req.getConfiguration.mockResolvedValueOnce(configuration);
       storageProviderMock.saveFile.mockResolvedValueOnce(true);
       fileRepositoryMock.save.mockResolvedValueOnce(file);
 
@@ -94,7 +94,7 @@ describe('upload', () => {
       const cb = jest.fn();
 
       const configuration = {};
-      req.getConfiguration.mockResolvedValueOnce([configuration]);
+      req.getConfiguration.mockResolvedValueOnce(configuration);
 
       await engine._handleFile(req as unknown as Request, multerFile as Express.Multer.File, cb);
       expect(cb).toHaveBeenCalledWith(expect.any(NotFoundError));
