@@ -277,7 +277,7 @@ export function createConfigurationRouter({
     '/configuration/:namespace/:name/revisions',
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
-    createValidationHandler(query('top').optional().isInt(), query('after').optional().isString()),
+    createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
     getConfigurationEntity(serviceId, configurationRepository),
     getRevisions()
   );

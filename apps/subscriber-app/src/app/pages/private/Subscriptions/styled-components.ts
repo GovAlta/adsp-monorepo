@@ -3,10 +3,16 @@ import styled from 'styled-components';
 // Subscriptions.tsx
 export const Label = styled.label`
   font-weight: bold;
+  padding-bottom: 0.5rem;
 `;
 export const NoSubscriberCallout = styled.div`
   width: 55%;
 `;
+
+export const GapVS = styled.div`
+  line-height: 1.75rem;
+`;
+
 export const ContactInformationWrapper = styled.div`
   padding-bottom: 3.5rem;
 `;
