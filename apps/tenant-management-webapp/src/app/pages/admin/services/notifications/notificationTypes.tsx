@@ -432,11 +432,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                             <div className="flex3 endAlign">
                               <div className="flex rowFlex">
                                 {notificationType.sortedChannels.map((channel) => (
-                                  <div className="nonCoreIconPadding flex1" data-testid="tenant-channel">
+                                  <div className="nonCoreIconPadding flex1" data-testid={`tenant-${channel}-channel`}>
                                     {channelIcons[channel]}
                                     {(event.templates[channel]?.subject?.length === 0 ||
                                       event.templates[channel]?.body?.length === 0) && (
-                                      <div className="icon-badge" data-testid="tenant-channel-badge">
+                                      <div className="icon-badge" data-testid={`tenant-${channel}-channel-badge`}>
                                         !
                                       </div>
                                     )}
@@ -545,11 +545,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                               <div className="flex5 endAlign">
                                 <div className="flex rowFlex">
                                   {notificationType.sortedChannels.map((channel) => (
-                                    <div className="flex1 coreIconPadding" data-testid="core-channel">
+                                    <div className="flex1 coreIconPadding" data-testid={`core-${channel}-channel`}>
                                       {channelIcons[channel]}
                                       {(event.templates[channel]?.subject?.length === 0 ||
                                         event.templates[channel]?.body?.length === 0) && (
-                                        <div className="icon-badge" data-testid="core-channel-badge">
+                                        <div className="icon-badge" data-testid={`core-${channel}-channel-badge`}>
                                           !
                                         </div>
                                       )}
