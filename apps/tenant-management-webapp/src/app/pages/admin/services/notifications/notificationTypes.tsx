@@ -761,9 +761,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             <PreviewTemplateContainer>
               <PreviewTemplate
                 subjectTitle="Subject"
+                channel={channelNames[currentChannel]}
                 channelTitle={`${channelNames[currentChannel]} preview`}
                 subjectPreviewContent={subjectPreview}
-                emailPreviewContent={bodyPreview}
+                bodyPreviewContent={bodyPreview}
               />
             </PreviewTemplateContainer>
           </NotificationTemplateEditorContainer>

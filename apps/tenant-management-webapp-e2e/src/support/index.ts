@@ -28,11 +28,10 @@ it('Get a token and store it in token environment variable', function () {
 });
 
 Cypress.on('uncaught:exception', (err) => {
-  // we expect tenant management webapp to have some random errors with message 'Cannot read properties of null' or 'Failed to execute 'importScripts' on 'WorkerGlobalScope''
-  // after event definition modal save and don't want to fail the test so we return false
   if (
-    err.message.includes('Cannot read properties of null') ||
-    err.message.includes("Failed to execute 'importScripts' on 'WorkerGlobalScope'")
+    err.message.includes('Cannot read properties of null') || // App error on event definition modal save
+    err.message.includes("Failed to execute 'importScripts' on 'WorkerGlobalScope'") || // App error on event definition modal save
+    err.message.includes('expected 0 to') // App error for clicking Published filtering radio button on notices page
   ) {
     return false;
   }

@@ -1,0 +1,11 @@
+/templates:
+  get:
+
+/templates/{templateId}:
+  get:
+
+/templates/{templateId}/generate:
+  post:
+
+/jobs/{jobId}:
+  get:

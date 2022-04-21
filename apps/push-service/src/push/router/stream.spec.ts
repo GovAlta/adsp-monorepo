@@ -29,6 +29,7 @@ describe('stream router', () => {
   const eventServiceMock = {
     enqueue: jest.fn(),
     getItems: jest.fn(() => of()),
+    isConnected: jest.fn(),
   };
 
   let stream: StreamEntity = new StreamEntity(tenantId, {
