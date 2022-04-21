@@ -1,7 +1,6 @@
 import { adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { NotFoundError } from '@core-services/core-common';
 import { Request, Response } from 'express';
-import { blockParams } from 'handlebars';
 import { Logger } from 'winston';
 import { PDF_GENERATION_QUEUED } from '../events';
 import { ServiceRoles } from '../roles';
