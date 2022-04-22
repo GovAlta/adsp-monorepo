@@ -209,19 +209,19 @@ class StatusServicePage {
     );
   }
 
-  manualStatusList() {
+  manualStatusChangeModalItemList() {
     return cy.xpath(
       '//*[@class="modal-root" and @data-state="visible"]//*[@class="goa-form-item"]//div/*[@class="goa-radio"]'
     );
   }
 
-  manualStatusListCheckedInput() {
+  manualStatusChangeModalCheckedRadioBtn() {
     return cy.xpath(
       '//*[@class="modal-root" and @data-state="visible"]//*[@class="goa-form-item"]//div/*[@class="goa-radio"]//input[@type="radio" and @checked]'
     );
   }
 
-  manualStatusListInput() {
+  manualStatusChangeModalRadioBtns() {
     return cy.xpath(
       '//*[@class="modal-root" and @data-state="visible"]//*[@class="goa-form-item"]//div/*[@class="goa-radio"]//input[@type="radio"]'
     );
