@@ -47,10 +47,12 @@ export const getNamespace =
       const directory = await directoryRepository.getDirectories(namespace);
       if (!directory) {
         res.json([]);
+        return;
       }
       services = directory.services;
     } catch (err) {
       _next(err);
+      return;
     }
 
     const response = [];
