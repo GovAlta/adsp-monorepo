@@ -104,7 +104,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
     }
 
     if (!isValidSMS(SMSContactInformation)) {
-      setFormErrors({ sms: 'You must enter a valid phone number with format: 1111111111.' });
+      setFormErrors({ sms: 'You must enter a valid phone number.' });
       return;
     }
     let channels = [];
