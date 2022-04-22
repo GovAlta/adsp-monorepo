@@ -32,7 +32,7 @@ A subscriber represents a receiver of notifications. Subscriber is not a represe
 *Subscribers* have subscriptions to *notification types*. Each subscription relates a subscriber to a notification type and optionally includes criteria. The subscription criteria filters events that result in notifications to the associated subscriber. For example, in the case of 'Application Progress', the applicant is only subscribed to notifications regarding their specific application and this is handled as a subscription criteria.
 
 ## Code examples
-### Configure a stream
+### Configure a notification type
 Notification types are configured using the [configuration service](configuration-service.md).
 
 ```typescript
