@@ -51,7 +51,9 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
         break;
       case Channels.sms: {
         if (inValidSMSInput(value)) {
-          setSMSContactInformation(value);
+          if (!(value && value.length > 10)) {
+            setSMSContactInformation(value);
+          }
         }
         break;
       }
@@ -248,9 +250,8 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                 testId="channel-preference-sms-btn"
                 checked={preferredChannel === Channels.sms}
                 onChange={updateChannelPreference}
-                disabled={!isAllowSMS}
               >
-                {isAllowSMS ? 'SMS' : <span style={{ color: 'var(--color-gray-700)' }}>SMS</span>}
+                SMS
               </GoARadio>
             </GridItem>
           </Grid>
