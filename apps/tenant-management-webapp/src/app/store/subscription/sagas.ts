@@ -200,16 +200,18 @@ function* getAllTypeSubscriptions(action: GetAllTypeSubscriptionsAction): SagaIt
 
 function* getTypeSubscriptions(action: GetTypeSubscriptionsActions): SagaIterator {
   const { criteria, type, after } = action.payload;
+
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
 
   if (configBaseUrl && token) {
     try {
       const subscriberCriteria =
-        criteria.name || criteria.email
+        criteria.name || criteria.email || criteria.sms
           ? JSON.stringify({
               name: criteria.name || undefined,
               email: criteria.email || undefined,
+              sms: criteria.sms || undefined,
             })
           : null;
       const response = yield call(
@@ -271,6 +273,10 @@ function* findSubscribers(action: FindSubscribersAction): SagaIterator {
 
   if (criteria.name) {
     params.name = criteria.name;
+  }
+
+  if (criteria.sms) {
+    params.sms = criteria.sms;
   }
 
   if (criteria.next) {

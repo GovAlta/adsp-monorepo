@@ -42,12 +42,16 @@ const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
   const dispatch = useDispatch();
   const [showSubscriptions, setShowSubscriptions] = useState(false);
   const email = subscriber?.channels?.find(({ channel }) => channel === 'email')?.address;
+  const sms = subscriber?.channels?.find(({ channel }) => channel === 'sms')?.address;
 
   return (
     <>
       <tr key={subscriber.id}>
         <td>{characterLimit(subscriber?.addressAs, 30)}</td>
         <td>{characterLimit(email, 30)}</td>
+        <td>
+          <span style={{ whiteSpace: 'nowrap' }}>{sms}</span>
+        </td>
         {!hideUserActions ? (
           <td>
             <RowFlex>
@@ -160,6 +164,7 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
             <tr>
               <th>Address as</th>
               <th>Email</th>
+              <th>Phone</th>
               <th style={{ width: '0' }}>Actions</th>
             </tr>
           </thead>

@@ -24,8 +24,8 @@ export const Subscriptions: FunctionComponent = () => {
     dispatch(GetAllTypeSubscriptions({}));
   }, []);
 
-  const searchFn = ({ email, name }: SubscriberSearchCriteria) => {
-    dispatch(GetAllTypeSubscriptions({ email, name }));
+  const searchFn = ({ email, name, sms }: SubscriberSearchCriteria) => {
+    dispatch(GetAllTypeSubscriptions({ email, name, sms }));
   };
 
   const resetState = () => {
