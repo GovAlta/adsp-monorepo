@@ -110,7 +110,7 @@ const initializeApp = async (): Promise<express.Application> => {
     configurationService,
     repository,
     queueService,
-    fileService: createFileService({ tokenProvider, directory }),
+    fileService: createFileService({ logger, tokenProvider, directory }),
     eventService,
   });
 

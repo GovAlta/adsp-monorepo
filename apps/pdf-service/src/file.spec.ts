@@ -1,11 +1,19 @@
 import axios from 'axios';
 import FormData = require('form-data');
+import { Logger } from 'winston';
 import { createFileService } from './file';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('file', () => {
+  const loggerMock = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  } as unknown as Logger;
+
   const tokenProviderMock = {
     getAccessToken: jest.fn(),
   };
@@ -16,12 +24,20 @@ describe('file', () => {
   };
 
   it('can create file service', () => {
-    const service = createFileService({ tokenProvider: tokenProviderMock, directory: directoryMock });
+    const service = createFileService({
+      logger: loggerMock,
+      tokenProvider: tokenProviderMock,
+      directory: directoryMock,
+    });
     expect(service).toBeTruthy();
   });
 
   it('can upload file', async () => {
-    const service = createFileService({ tokenProvider: tokenProviderMock, directory: directoryMock });
+    const service = createFileService({
+      logger: loggerMock,
+      tokenProvider: tokenProviderMock,
+      directory: directoryMock,
+    });
 
     const content = Buffer.from([]);
     const file = { id: 'test' };
