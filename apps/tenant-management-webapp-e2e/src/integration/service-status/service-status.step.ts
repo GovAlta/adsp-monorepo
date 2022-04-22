@@ -612,7 +612,6 @@ Then(
         .then((eventDetails) => {
           //if event log details contains email then verify expect statements else close the event details and continue down the list
           if (eventDetails.includes(email)) {
-            expect(eventDetails).to.contain(email);
             expect(eventDetails).to.contain(appName);
             expect(eventDetails).to.contain(orgStatusValidationStr);
             expect(eventDetails).to.contain(newStatusValidationStr);
