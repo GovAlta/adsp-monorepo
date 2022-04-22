@@ -222,9 +222,12 @@ objects:
         app: pdf-service${NAME_SUFFIX}
         component: api
       strategy:
-        activeDeadlineSeconds: 21600
-        recreateParams:
+        type: Rolling
+        rollingParams:
           timeoutSeconds: 600
+          maxUnavailable: 25%
+          maxSurge: 25%
+        activeDeadlineSeconds: 21600
         resources:
           limits:
             cpu: 200m
@@ -232,7 +235,6 @@ objects:
           requests:
             cpu: 20m
             memory: 50Mi
-        type: Recreate
       template:
         metadata:
           labels:

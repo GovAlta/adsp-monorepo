@@ -47,12 +47,12 @@ export function createGenerateJob({
 
       const pdfTemplate = configuration[templateId];
       const pdf = await pdfTemplate.generate({ data });
-      logger.debug(`Generation of PDF (ID: ${jobId}) completed PDF creation from content...`, {
+      logger.debug(`Generation of PDF (ID: ${jobId}) completed PDF creation from content with ${pdf.length} bytes...`, {
         context,
         tenant: tenantId,
       });
 
-      const result = await fileService.upload(jobId, filename, pdf);
+      const result = await fileService.upload(tenantId, jobId, filename, pdf);
 
       eventService.send(pdfGenerated(tenantId, jobId, templateId, result, requestedBy));
 

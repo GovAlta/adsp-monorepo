@@ -1,4 +1,4 @@
-import { adspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
+import { AdspId, adspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import * as FormData from 'form-data';
 import { Logger } from 'winston';
@@ -7,7 +7,7 @@ import { FileResult, FileService, GENERATED_PDF } from './pdf';
 class PlatformFileService implements FileService {
   constructor(private logger: Logger, private tokenProvider: TokenProvider, private directory: ServiceDirectory) {}
 
-  async upload(jobId: string, filename: string, content: Buffer): Promise<FileResult> {
+  async upload(tenantId: AdspId, jobId: string, filename: string, content: Buffer): Promise<FileResult> {
     try {
       const formData = new FormData();
       formData.append('type', GENERATED_PDF);
@@ -21,13 +21,19 @@ class PlatformFileService implements FileService {
 
       const { data } = await axios.post<FileResult>(filesUrl.href, formData, {
         headers: { ...formData.getHeaders(), Authorization: `Bearer ${token}` },
+        params: { tenantId: `${tenantId}` },
       });
 
       return data;
     } catch (err) {
-      this.logger.debug(`Upload to file service failed with error. ${axios.isAxiosError(err) ? err.toJSON() : err}`, {
-        context: 'PlatformFileService',
-      });
+      this.logger.debug(
+        `Upload to file service failed with error. ${
+          axios.isAxiosError(err) ? JSON.stringify(err.toJSON(), null, 2) : err
+        }`,
+        {
+          context: 'PlatformFileService',
+        }
+      );
       throw err;
     }
   }
