@@ -62,11 +62,11 @@ Feature: Notifications
     And the user "views" "Edit button" for "status-service:application-unhealthy" in "Application health check change"
     And the user "views" "email template indicator" for "status-service:application-healthy" in "Application health check change"
     And the user "views" "Edit button" for "status-service:application-healthy" in "Application health check change"
-    # Verify email template is read-only (pick one event)
-    # Future work: need in-depth research on test automation with Monaco-editor before we can automate test steps.
-    # When the user attempts to edit the template
-    # Then the user gets "Cannot edit in read-only editor"
-    # Verify the event is still there (had a bug of the event disappearing after preview)
+  # Verify email template is read-only (pick one event)
+  # Future work: need in-depth research on test automation with Monaco-editor before we can automate test steps.
+  # When the user attempts to edit the template
+  # Then the user gets "Cannot edit in read-only editor"
+  # Verify the event is still there (had a bug of the event disappearing after preview)
 
   @TEST_CS-1081 @REQ_CS-1029 @TEST_CS-1002 @REQ_CS-1027 @regression
   Scenario: Test As a tenant admin, I can delete a subscription
@@ -90,100 +90,100 @@ Feature: Notifications
     When the user "selects" the subscribe checkbox for health check notification type
     Then the user views a callout message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"
 
- @TEST_CS-986 @TEST_CS-443 @REQ_CS-1068 @REQ_CS-963 @REQ_CS-978 @regression
- Scenario: As a tenant admin, I can see notification type for application status change updates
-   Given a tenant admin user is on notification types page
-   Then the user "views" the notification type card of "Application status update"
-   And the user views "Application status update" has self-service-allowed attribute is "yes"
-   # Verify the events' email template indicator, preview link and edit button
-   And the user "views" the event of "status-service:application-status-changed" in "Application status update"
-   And the user "views" the event of "status-service:application-notice-published" in "Application status update"
-   And the user "views" "email template indicator" for "status-service:application-status-changed" in "Application status update"
-   And the user "views" "Preview link" for "status-service:application-status-changed" in "Application status update"
-   And the user "views" "Edit button" for "status-service:application-status-changed" in "Application status update"
-   And the user "views" "email template indicator" for "status-service:application-notice-published" in "Application status update"
-   And the user "views" "Preview link" for "status-service:application-notice-published" in "Application status update"
-   And the user "views" "Edit button" for "status-service:application-notice-published" in "Application status update"
-   When the user clicks Preview button on "status-service:application-status-changed" in "Application status update"
-   Then the user views Preview an email template modal
-   When the user clicks Close button in Preview an email template modal
-   Then Preview an email template modal is closed
-   When the user clicks Preview button on "status-service:application-notice-published" in "Application status update"
-   Then the user views Preview an email template modal
-   When the user clicks Close button in Preview an email template modal
-   Then Preview an email template modal is closed
-   
- @TEST_CS-986 @TEST_CS-443 @REQ_CS-1068 @REQ_CS-963 @REQ_CS-978 @regression
- Scenario: As a tenant admin, I can see notification type for application status change updates
-   Given a tenant admin user is on notification types page
-   Then the user "views" the notification type card of "Application status update"
-   And the user views "Application status update" has self-service-allowed attribute is "yes"
-   # Verify the events' email template indicator, preview link and edit button
-   And the user "views" the event of "status-service:application-status-changed" in "Application status update"
-   And the user "views" the event of "status-service:application-notice-published" in "Application status update"
-   And the user "views" "email template indicator" for "status-service:application-status-changed" in "Application status update"
-   And the user "views" "Edit button" for "status-service:application-status-changed" in "Application status update"
-   And the user "views" "email template indicator" for "status-service:application-notice-published" in "Application status update"
-   And the user "views" "Edit button" for "status-service:application-notice-published" in "Application status update"
+  @TEST_CS-986 @TEST_CS-443 @REQ_CS-1068 @REQ_CS-963 @REQ_CS-978 @regression
+  Scenario: As a tenant admin, I can see notification type for application status change updates
+    Given a tenant admin user is on notification types page
+    Then the user "views" the notification type card of "Application status update"
+    And the user views "Application status update" has self-service-allowed attribute is "yes"
+    # Verify the events' email template indicator, preview link and edit button
+    And the user "views" the event of "status-service:application-status-changed" in "Application status update"
+    And the user "views" the event of "status-service:application-notice-published" in "Application status update"
+    And the user "views" "email template indicator" for "status-service:application-status-changed" in "Application status update"
+    And the user "views" "Preview link" for "status-service:application-status-changed" in "Application status update"
+    And the user "views" "Edit button" for "status-service:application-status-changed" in "Application status update"
+    And the user "views" "email template indicator" for "status-service:application-notice-published" in "Application status update"
+    And the user "views" "Preview link" for "status-service:application-notice-published" in "Application status update"
+    And the user "views" "Edit button" for "status-service:application-notice-published" in "Application status update"
+    When the user clicks Preview button on "status-service:application-status-changed" in "Application status update"
+    Then the user views Preview an email template modal
+    When the user clicks Close button in Preview an email template modal
+    Then Preview an email template modal is closed
+    When the user clicks Preview button on "status-service:application-notice-published" in "Application status update"
+    Then the user views Preview an email template modal
+    When the user clicks Close button in Preview an email template modal
+    Then Preview an email template modal is closed
 
- @TEST_CS-1097 @REQ_CS-1031 @regression
- Scenario: As a tenant admin, I can find subscriptions for a particular subscriber
-   Given a tenant admin user is on notification subscribers page
-   When the user searches subscribers with "address as" containing "auto"
-   Then the user views all the subscribers with "address as" containing "auto"
-   When the user searches subscribers with "email" containing "auto.Test"
-   Then the user views all the subscribers with "email" containing "auto.Test"
-   When the user searches subscribers with address as containing "auto test" and email containing "auto.test"
-   Then the user views subscribers with "address as" containing "auto test" and "email" containing "auto.test"
-   When the user expands the subscription list for the subscriber of "Auto Test" and "auto.test@gov.ab.ca"
-   Then the user views the subscription of "status-application-health-change" for the subscriber of "Auto Test" and "auto.test@gov.ab.ca"
+  @TEST_CS-986 @TEST_CS-443 @REQ_CS-1068 @REQ_CS-963 @REQ_CS-978 @regression
+  Scenario: As a tenant admin, I can see notification type for application status change updates
+    Given a tenant admin user is on notification types page
+    Then the user "views" the notification type card of "Application status update"
+    And the user views "Application status update" has self-service-allowed attribute is "yes"
+    # Verify the events' email template indicator, preview link and edit button
+    And the user "views" the event of "status-service:application-status-changed" in "Application status update"
+    And the user "views" the event of "status-service:application-notice-published" in "Application status update"
+    And the user "views" "email template indicator" for "status-service:application-status-changed" in "Application status update"
+    And the user "views" "Edit button" for "status-service:application-status-changed" in "Application status update"
+    And the user "views" "email template indicator" for "status-service:application-notice-published" in "Application status update"
+    And the user "views" "Edit button" for "status-service:application-notice-published" in "Application status update"
 
- @TEST_CS-1224 @REQ_CS-1183 @regression
- Scenario: As a tenant admin, I can delete a subscriber
-   # Autotest user should be already subscribed to application health change notifications. If not, set it to subscribed
-   Given a tenant admin user is on status applications page
-   When the user "selects" the subscribe checkbox for health check notification type
-   Then the user views the subscribe checkbox is "checked"
-   # Test subscriber deletion
-   Given a tenant admin user is on notification subscribers page
-   When the user searches subscribers with address as containing "Auto Test" and email containing "auto.test@gov.ab.ca"
-   Then the user "views" the subscriber of "Auto Test", "auto.test@gov.ab.ca"
-   When the user clicks delete button of "Auto Test", "auto.test@gov.ab.ca" on subscribers page
-   Then the user views Delete subscriber modal
-   # The validation of delete confirmation modal content is skipped due to the bug of CS-1266
-   # And the user views the Delete subscriber confirmation message of "auto.test@gov.ab.ca"
-   When the user clicks Delete button on Delete subscriber modal
-   Then the user "should not view" the subscriber of "Auto Test", "auto.test@gov.ab.ca"
-   When the user selects "Subscriptions" tab for "Notifications"
-   Then the user "should not view" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Status-Application-Health-Change"
-   # Restore the subscription
-   Given a tenant admin user is on status applications page
-   Then the user views the subscribe checkbox is "unchecked"
-   When the user "selects" the subscribe checkbox for health check notification type
-   Then the user views a callout message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"
+  @TEST_CS-1097 @REQ_CS-1031 @regression
+  Scenario: As a tenant admin, I can find subscriptions for a particular subscriber
+    Given a tenant admin user is on notification subscribers page
+    When the user searches subscribers with "address as" containing "auto"
+    Then the user views all the subscribers with "address as" containing "auto"
+    When the user searches subscribers with "email" containing "auto.Test"
+    Then the user views all the subscribers with "email" containing "auto.Test"
+    When the user searches subscribers with address as containing "auto test" and email containing "auto.test"
+    Then the user views subscribers with "address as" containing "auto test" and "email" containing "auto.test"
+    When the user expands the subscription list for the subscriber of "Auto Test" and "auto.test@gov.ab.ca"
+    Then the user views the subscription of "status-application-health-change" for the subscriber of "Auto Test" and "auto.test@gov.ab.ca"
 
- @TEST_CS-1224 @REQ_CS-1183 @regression
- Scenario: As a tenant admin, I can delete a subscriber
-   # Autotest user should be already subscribed to application health change notifications. If not, set it to subscribed
-   Given a tenant admin user is on status applications page
-   When the user "selects" the subscribe checkbox for health check notification type
-   Then the user views the subscribe checkbox is "checked"
-   # Test subscriber deletion
-   Given a tenant admin user is on notification subscribers page
-   When the user searches subscribers with address as containing "Auto Test" and email containing "auto.test@gov.ab.ca"
-   Then the user "views" the subscriber of "Auto Test", "auto.test@gov.ab.ca"
-   When the user clicks delete button of "Auto Test", "auto.test@gov.ab.ca" on subscribers page
-   Then the user views Delete subscriber modal
-   # The validation of delete confirmation modal content is skipped due to the bug of CS-1266
-   # And the user views the Delete subscriber confirmation message of "auto.test@gov.ab.ca"
-   When the user clicks Delete button on Delete subscriber modal
-   Then the user "should not view" the subscriber of "Auto Test", "auto.test@gov.ab.ca"
-   When the user selects "Subscriptions" tab for "Notification"
-   Then the user "should not view" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Status-Application-Health-Change"
-   # Restore the subscription
-   Given a tenant admin user is on status applications page
-   Then the user views the subscribe checkbox is "unchecked"
-   When the user "selects" the subscribe checkbox for health check notification type
-   Then the user views a callout message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"
+  @TEST_CS-1224 @REQ_CS-1183 @regression
+  Scenario: As a tenant admin, I can delete a subscriber
+    # Autotest user should be already subscribed to application health change notifications. If not, set it to subscribed
+    Given a tenant admin user is on status applications page
+    When the user "selects" the subscribe checkbox for health check notification type
+    Then the user views the subscribe checkbox is "checked"
+    # Test subscriber deletion
+    Given a tenant admin user is on notification subscribers page
+    When the user searches subscribers with address as containing "Auto Test" and email containing "auto.test@gov.ab.ca"
+    Then the user "views" the subscriber of "Auto Test", "auto.test@gov.ab.ca"
+    When the user clicks delete button of "Auto Test", "auto.test@gov.ab.ca" on subscribers page
+    Then the user views Delete subscriber modal
+    # The validation of delete confirmation modal content is skipped due to the bug of CS-1266
+    # And the user views the Delete subscriber confirmation message of "auto.test@gov.ab.ca"
+    When the user clicks Delete button on Delete subscriber modal
+    Then the user "should not view" the subscriber of "Auto Test", "auto.test@gov.ab.ca"
+    When the user selects "Subscriptions" tab for "Notifications"
+    Then the user "should not view" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Status-Application-Health-Change"
+    # Restore the subscription
+    Given a tenant admin user is on status applications page
+    Then the user views the subscribe checkbox is "unchecked"
+    When the user "selects" the subscribe checkbox for health check notification type
+    Then the user views a callout message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"
+
+  @TEST_CS-1224 @REQ_CS-1183 @regression
+  Scenario: As a tenant admin, I can delete a subscriber
+    # Autotest user should be already subscribed to application health change notifications. If not, set it to subscribed
+    Given a tenant admin user is on status applications page
+    When the user "selects" the subscribe checkbox for health check notification type
+    Then the user views the subscribe checkbox is "checked"
+    # Test subscriber deletion
+    Given a tenant admin user is on notification subscribers page
+    When the user searches subscribers with address as containing "Auto Test" and email containing "auto.test@gov.ab.ca"
+    Then the user "views" the subscriber of "Auto Test", "auto.test@gov.ab.ca"
+    When the user clicks delete button of "Auto Test", "auto.test@gov.ab.ca" on subscribers page
+    Then the user views Delete subscriber modal
+    # The validation of delete confirmation modal content is skipped due to the bug of CS-1266
+    # And the user views the Delete subscriber confirmation message of "auto.test@gov.ab.ca"
+    When the user clicks Delete button on Delete subscriber modal
+    Then the user "should not view" the subscriber of "Auto Test", "auto.test@gov.ab.ca"
+    When the user selects "Subscriptions" tab for "Notification"
+    Then the user "should not view" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Status-Application-Health-Change"
+    # Restore the subscription
+    Given a tenant admin user is on status applications page
+    Then the user views the subscribe checkbox is "unchecked"
+    When the user "selects" the subscribe checkbox for health check notification type
+    Then the user views a callout message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"
 
 
