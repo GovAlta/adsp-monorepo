@@ -3,6 +3,7 @@ import axios from 'axios';
 import FormData = require('form-data');
 import { Logger } from 'winston';
 import { createFileService } from './file';
+import { GENERATED_PDF } from './pdf';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
@@ -47,7 +48,7 @@ describe('file', () => {
     directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://file-service'));
     tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
     axiosMock.post.mockResolvedValueOnce({ data: file });
-    const result = await service.upload(tenantId, 'job1', 'test.pdf', content);
+    const result = await service.upload(tenantId, GENERATED_PDF, 'my-domain-record-1', 'test.pdf', content);
     expect(result).toBe(file);
     expect(axiosMock.post).toHaveBeenCalledWith(
       'https://file-service/file/v1/files',

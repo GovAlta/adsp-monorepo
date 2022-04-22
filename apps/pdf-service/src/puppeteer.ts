@@ -7,7 +7,7 @@ class PuppeteerPdfService implements PdfService {
     try {
       const page = await browser.newPage();
       await page.setContent(content);
-      return await page.pdf();
+      return await page.pdf({ printBackground: true });
     } finally {
       await browser.close();
     }
