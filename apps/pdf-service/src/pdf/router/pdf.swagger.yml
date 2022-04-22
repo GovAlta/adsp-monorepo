@@ -32,11 +32,17 @@ components:
         operation:
           type: string
           enum: [generate]
+        fileType:
+          type: string
         templateId:
           type: string
-        data: {}
+        recordId:
+          type: string
+        data:
+          type: object
         filename:
           type: string
+      required: [operation, templateId, filename]
 
 /templates:
   get:

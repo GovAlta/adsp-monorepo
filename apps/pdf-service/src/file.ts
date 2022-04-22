@@ -2,16 +2,22 @@ import { AdspId, adspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-ser
 import axios from 'axios';
 import * as FormData from 'form-data';
 import { Logger } from 'winston';
-import { FileResult, FileService, GENERATED_PDF } from './pdf';
+import { FileResult, FileService } from './pdf';
 
 class PlatformFileService implements FileService {
   constructor(private logger: Logger, private tokenProvider: TokenProvider, private directory: ServiceDirectory) {}
 
-  async upload(tenantId: AdspId, jobId: string, filename: string, content: Buffer): Promise<FileResult> {
+  async upload(
+    tenantId: AdspId,
+    fileType: string,
+    recordId: string,
+    filename: string,
+    content: Buffer
+  ): Promise<FileResult> {
     try {
       const formData = new FormData();
-      formData.append('type', GENERATED_PDF);
-      formData.append('recordId', jobId);
+      formData.append('type', fileType);
+      formData.append('recordId', recordId);
       formData.append('filename', filename);
       formData.append('file', content, filename);
 
