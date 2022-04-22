@@ -543,23 +543,23 @@ Then('the user views current status for {string}', function (appName) {
     .applicationCardStatusBadge(appName)
     .invoke('text')
     .then((statusValue) => {
-      cy.log('Current Status: ' + statusValue);
       originalStatus = statusValue;
+      cy.log('Current Status: ' + originalStatus);
     });
 });
 
 Then('the user changes status to the first unused status', function () {
   const radioList = ['Operational', 'Maintenance', 'Outage', 'Reported issues'];
-  statusObj.manualStatusList().should('have.length', 4);
-  statusObj.manualStatusList().each((item, index) => {
+  statusObj.manualStatusChangeModalItemList().should('have.length', 4);
+  statusObj.manualStatusChangeModalItemList().each((item, index) => {
     expect(Cypress.$(item).text()).to.eq(radioList[index]);
   });
   statusObj
-    .manualStatusListCheckedInput()
+    .manualStatusChangeModalCheckedRadioBtn()
     .invoke('val')
     .then(($value) => {
       const checkedStatus = String($value);
-      statusObj.manualStatusListInput().each(($item) => {
+      statusObj.manualStatusChangeModalRadioBtns().each(($item) => {
         if ($item.val() != checkedStatus) {
           $item.trigger('click');
           newStatus = $item.val();
@@ -616,6 +616,7 @@ Then(
             expect(eventDetails).to.contain(appName);
             expect(eventDetails).to.contain(orgStatusValidationStr);
             expect(eventDetails).to.contain(newStatusValidationStr);
+            return false;
             cy.wrap($element).click();
           } else {
             //clicking eye icon to close eventDetails
