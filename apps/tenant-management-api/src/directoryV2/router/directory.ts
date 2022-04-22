@@ -38,12 +38,9 @@ interface DirectoryRouterProps {
 
 const directoryCache = new NodeCache({ stdTTL: 300 });
 
-export const createDirectoryRouter = ({ logger, directoryRepository, tenantService }: DirectoryRouterProps): Router => {
-  const directoryRouter = Router();
-  /**
-   * Get all of directories
-   */
-  directoryRouter.get('/namespaces/:namespace', async (req: Request, res: Response, _next) => {
+export const getNamespace =
+  (directoryRepository: DirectoryRepository) =>
+  async (req: Request, res: Response, _next): Promise<void> => {
     let services: Service[];
     const { namespace } = req.params;
     try {
@@ -77,7 +74,15 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
     }
 
     res.json(response);
-  });
+  };
+
+export const createDirectoryRouter = ({ logger, directoryRepository, tenantService }: DirectoryRouterProps): Router => {
+  const directoryRouter = Router();
+
+  /**
+   * Get all directory entry's
+   */
+  directoryRouter.get('/namespaces/:namespace', getNamespace);
 
   /*
    * Create new namespace.
