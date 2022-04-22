@@ -85,7 +85,7 @@ describe('generate', () => {
         templateId: 'test-template',
         data: {},
         filename: 'test.pdf',
-        generatedBy: {
+        requestedBy: {
           id: 'tester',
           name: 'Testy McTester',
         },
@@ -116,7 +116,7 @@ describe('generate', () => {
         templateId: 'test-template',
         data: {},
         filename: 'test.pdf',
-        generatedBy: {
+        requestedBy: {
           id: 'tester',
           name: 'Testy McTester',
         },
@@ -144,7 +144,7 @@ describe('generate', () => {
         templateId: 'test-template',
         data: {},
         filename: 'test.pdf',
-        generatedBy: {
+        requestedBy: {
           id: 'tester',
           name: 'Testy McTester',
         },

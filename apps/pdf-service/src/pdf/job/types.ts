@@ -6,7 +6,7 @@ export interface PdfServiceWorkItem {
   templateId: string;
   data: Record<string, unknown>;
   filename: string;
-  generatedBy: {
+  requestedBy: {
     id: string;
     name: string;
   };
