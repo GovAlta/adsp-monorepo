@@ -1,4 +1,4 @@
-import type { DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
+import type { AdspId, DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
 import type { File } from './types';
 
 export const FILE_UPLOADED_EVENT = 'file-uploaded';
@@ -44,10 +44,10 @@ export const FileDeletedDefinition: DomainEventDefinition = {
   },
 };
 
-export function fileUploaded(user: User, file: File): DomainEvent {
+export function fileUploaded(tenantId: AdspId, user: User, file: File): DomainEvent {
   return {
     name: FILE_UPLOADED_EVENT,
-    tenantId: user.tenantId,
+    tenantId,
     timestamp: new Date(),
     correlationId: file.recordId || file.id,
     payload: {

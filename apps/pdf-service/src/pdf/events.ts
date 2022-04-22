@@ -50,7 +50,7 @@ export const PdfGeneratedDefinition: DomainEventDefinition = {
   interval: {
     namespace: 'pdf-service',
     name: PDF_GENERATION_QUEUED,
-    metric: 'pdf-generation',
+    metric: ['pdf-service', 'pdf-generation'],
   },
 };
 
@@ -75,7 +75,7 @@ export const PdfGenerationFailedDefinition: DomainEventDefinition = {
   interval: {
     namespace: 'pdf-service',
     name: PDF_GENERATION_QUEUED,
-    metric: 'pdf-generation-failed',
+    metric: ['pdf-service', 'pdf-generation-failed'],
   },
 };
 
