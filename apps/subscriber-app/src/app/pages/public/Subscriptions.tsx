@@ -115,9 +115,8 @@ const Subscriptions = (): JSX.Element => {
             <h1 data-testid="service-name">Subscription management</h1>
             <DescriptionWrapper>
               <p data-testid="service-description">
-                Use this page to manage notifications from the services of Government of Alberta. Please note,
-                unsubscribing from some notifications might require additional verification from the government
-                authorities.
+                Use this page to manage your subscriptions. Please note that you need to contact support to modify some
+                subscriptions. If you have an account, sign in to manage your contact information.
               </p>
             </DescriptionWrapper>
             {showUnSubscribeModal ? unSubscribeModal() : ''}
@@ -154,7 +153,7 @@ const Subscriptions = (): JSX.Element => {
                 </SubscriptionListContainer>
                 {contact === undefined ? (
                   <LoaderPadding>
-                  <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
+                    <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
                   </LoaderPadding>
                 ) : (
                   contact && (
