@@ -221,7 +221,7 @@ export function getSubscribers(apiId: AdspId, repository: SubscriptionRepository
     try {
       const tenantId = req.tenant.id;
       const user = req.user;
-      const { top: topValue, after, email, name } = req.query;
+      const { top: topValue, after, email, sms, name } = req.query;
       const top = topValue ? parseInt(topValue as string, 10) : 10;
 
       if (!isAllowedUser(user, tenantId, ServiceUserRoles.SubscriptionAdmin, true)) {
@@ -231,6 +231,7 @@ export function getSubscribers(apiId: AdspId, repository: SubscriptionRepository
         tenantIdEquals: tenantId,
         name: name as string | undefined,
         email: email as string | undefined,
+        sms: sms as string | undefined,
       };
 
       const result = await repository.findSubscribers(top, after as string, criteria);

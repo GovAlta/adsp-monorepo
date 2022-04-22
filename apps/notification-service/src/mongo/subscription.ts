@@ -98,6 +98,10 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
         };
       }
 
+      if (criteria.subscriberCriteria.sms) {
+        subscriberQuery.channels = { $elemMatch: { address: { $regex: criteria.subscriberCriteria.sms } } };
+      }
+
       pipeline.push({
         $match: {
           subscriberId: {
@@ -139,6 +143,10 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
 
     if (criteria.name) {
       query.addressAs = { $regex: criteria.name, $options: 'i' };
+    }
+
+    if (criteria.sms) {
+      query.channels = { $elemMatch: { address: { $regex: criteria.sms } } };
     }
 
     if (criteria.email) {

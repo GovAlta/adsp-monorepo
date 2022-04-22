@@ -27,19 +27,10 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
 }) => {
   const [criteria, setCriteria] = useState<SubscriberSearchCriteria>(searchCriteria);
   const onChangeFn = (name: string, value: string) => {
-    if (name === 'name') {
-      setCriteria({
-        ...criteria,
-        name: value,
-      });
-    }
-
-    if (name === 'email') {
-      setCriteria({
-        ...criteria,
-        email: value,
-      });
-    }
+    setCriteria({
+      ...criteria,
+      [name]: value,
+    });
   };
   return (
     <div>
@@ -52,6 +43,10 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
           <GoAFormItem>
             <label htmlFor="email">Search subscriber email</label>
             <GoAInputEmail name="email" id="email" value={criteria?.email} onChange={onChangeFn} />
+          </GoAFormItem>
+          <GoAFormItem>
+            <label htmlFor="email">Search subscriber Phone</label>
+            <GoAInputText name="sms" id="sms" value={criteria?.sms} onChange={onChangeFn} />
           </GoAFormItem>
         </GoAFlexRow>
         <GoAFormActions alignment="right">
