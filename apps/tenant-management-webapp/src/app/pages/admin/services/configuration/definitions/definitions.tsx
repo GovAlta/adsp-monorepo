@@ -77,7 +77,7 @@ export const ConfigurationDefinitions: FunctionComponent = () => {
         {!indicator.show && !coreConfigDefinitions && renderNoItem('configuration')}
         {!indicator.show && coreConfigDefinitions && (
           <>
-            <ServiceTableComponent tenantName={tenantName} definitions={coreConfigDefinitions} />
+            <ServiceTableComponent tenantName={coreTenant} definitions={coreConfigDefinitions} />
           </>
         )}
       </div>
