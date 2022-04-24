@@ -26,11 +26,18 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
   const x = JSON.stringify(initialValue);
   const [contactInformation, setContactInformation] = useState<ContactInformation>(JSON.parse(x));
   const [formErrors, setFormErrors] = useState(null);
+  const [prettyPhone, setPrettyPhone] = useState(null);
 
   useEffect(() => {
     const x = JSON.stringify(initialValue);
     setContactInformation(JSON.parse(x));
   }, [initialValue]);
+
+  useEffect(() => {
+    if (open && contactInformation) {
+      setPrettyPhone('1' + contactInformation?.phoneNumber);
+    }
+  }, [open, contactInformation]);
 
   function emailErrors(email) {
     if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
@@ -48,9 +55,13 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
     const formErrorList = Object.assign(
       {},
       emailErrors(contactInformation.contactEmail),
-      phoneError(contactInformation.phoneNumber)
+      phoneError(prettyPhone.replace(/[- )(]/g, '').slice(1))
     );
     if (Object.keys(formErrorList).length === 0) {
+      if (contactInformation.phoneNumber) {
+        const cleanNumber = prettyPhone.replace(/[- )(]/g, '').slice(1);
+        contactInformation.phoneNumber = cleanNumber;
+      }
       onSave(contactInformation);
       setFormErrors(null);
     } else {
@@ -90,18 +101,15 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
                 </label>
                 <InputMask
                   name="phoneNumber"
-                  value={contactInformation?.phoneNumber || ''}
+                  value={prettyPhone}
                   placeholder="1 (780) 123-4567"
                   mask="1\ (999) 999-9999"
                   maskChar=" "
                   data-testid="form-phone-number"
                   aria-label="name"
-                  onChange={(e) =>
-                    setContactInformation({
-                      ...contactInformation,
-                      phoneNumber: e.target.value.replace(/[- )(]/g, '').slice(1),
-                    })
-                  }
+                  onChange={(e) => {
+                    setPrettyPhone(e.target.value);
+                  }}
                 />
               </GoAFormItem>
               <GoAFormItem error={formErrors?.['supportInstructions']}>

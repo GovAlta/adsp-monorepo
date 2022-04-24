@@ -45,7 +45,7 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
             <GoAInputEmail name="email" id="email" value={criteria?.email} onChange={onChangeFn} />
           </GoAFormItem>
           <GoAFormItem>
-            <label htmlFor="email">Search subscriber Phone</label>
+            <label htmlFor="email">Search subscriber phone</label>
             <GoAInputText name="sms" id="sms" value={criteria?.sms} onChange={onChangeFn} />
           </GoAFormItem>
         </GoAFlexRow>

@@ -4,8 +4,9 @@ import { GoAButton } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
+import InputMask from 'react-input-mask';
 
 interface NotificationTypeFormProps {
   initialValue?: Subscriber;
@@ -25,6 +26,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
   const x = JSON.stringify(initialValue);
   const [subscriber, setSubscriber] = useState(JSON.parse(x));
   const [formErrors, setFormErrors] = useState(null);
+  const [prettyPhone, setPrettyPhone] = useState(null);
 
   const updateError = useSelector((state: RootState) => state.subscription.updateError);
 
@@ -33,9 +35,23 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
     setSubscriber(JSON.parse(x));
   }, [initialValue]);
 
+  const smsIndex = getChannelIndex(subscriber, 'sms');
+
+  useEffect(() => {
+    if (open && subscriber) {
+      setPrettyPhone('1' + subscriber.channels[smsIndex].address);
+    }
+  }, [open, subscriber]);
+
   function emailErrors(email) {
     if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
       return { email: 'You must enter a valid email' };
+    }
+  }
+
+  function phoneError(phone) {
+    if (!/^\d{10}$/.test(phone) && phone.length !== 0) {
+      return { sms: 'Please enter a valid phone number ie. 1 (780) 123-4567' };
     }
   }
 
@@ -56,18 +72,22 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
   const slackIndex = getChannelIndex(subscriber, 'slack');
 
   const trySave = (subscriber) => {
-    const emailIndex = getChannelIndex(subscriber, 'email');
-
+    let formErrorList = {};
     if (emailIndex !== -1) {
-      const formErrorList = emailErrors(subscriber.channels[emailIndex].address);
-      if (!formErrorList) {
-        onSave(subscriber);
-      } else {
-        setFormErrors(formErrorList);
+      formErrorList = Object.assign(formErrorList, emailErrors(subscriber.channels[emailIndex].address));
+    }
+    if (smsIndex !== -1) {
+      const cleanNumber = prettyPhone.replace(/[- )(]/g, '').slice(1);
+      formErrorList = Object.assign(formErrorList, phoneError(cleanNumber));
+    }
+    if (Object.keys(formErrorList).length === 0) {
+      if (smsIndex !== -1) {
+        const cleanNumber = prettyPhone.replace(/[- )(]/g, '').slice(1);
+        subscriber.channels[smsIndex].address = cleanNumber;
       }
-    } else {
-      // TODO: need to add validation for slack and sms channels.
       onSave(subscriber);
+    } else {
+      setFormErrors(formErrorList);
     }
   };
 
@@ -108,6 +128,23 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
                       const channel = subscriber.channels;
                       channel[emailIndex].address = e.target.value;
                       setSubscriber({ ...subscriber, channels: channel });
+                    }}
+                  />
+                </GoAFormItem>
+              )}
+              {smsIndex !== -1 && (
+                <GoAFormItem error={formErrors?.['sms'] || updateError}>
+                  <label>Phone number</label>
+                  <InputMask
+                    name="phoneNumber"
+                    value={prettyPhone}
+                    placeholder="1 (780) 123-4567"
+                    mask="1\ (999) 999-9999"
+                    maskChar={null}
+                    data-testid="form-phone-number"
+                    aria-label="name"
+                    onChange={(e) => {
+                      setPrettyPhone(e.target.value);
                     }}
                   />
                 </GoAFormItem>
