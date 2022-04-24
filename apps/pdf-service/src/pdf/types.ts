@@ -15,7 +15,7 @@ export interface FileResult {
 }
 
 export interface FileService {
-  upload(jobId: string, filename: string, content: Buffer): Promise<FileResult>;
+  upload(tenantId: AdspId, fileType: string, recordId: string, filename: string, content: Buffer): Promise<FileResult>;
 }
 
 export interface PdfTemplate {

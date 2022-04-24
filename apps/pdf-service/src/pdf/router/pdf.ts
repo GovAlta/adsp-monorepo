@@ -4,6 +4,7 @@ import { Request, RequestHandler, Response, Router } from 'express';
 import { body, param } from 'express-validator';
 import { Logger } from 'winston';
 import { pdfGenerationQueued } from '../events';
+import { GENERATED_PDF } from '../fileTypes';
 import { PdfServiceWorkItem } from '../job';
 import { PdfTemplateEntity } from '../model';
 import { PdfJobRepository } from '../repository';
@@ -65,6 +66,7 @@ export function getTemplate(templateIn: 'params' | 'body'): RequestHandler {
 }
 
 export function generatePdf(
+  serviceId: AdspId,
   repository: PdfJobRepository,
   eventService: EventService,
   queueService: WorkQueueService<PdfServiceWorkItem>
@@ -73,31 +75,33 @@ export function generatePdf(
     try {
       const user = req.user;
       const tenantId = req.tenant.id;
-      const { templateId, filename, data } = req.body;
+      const { templateId, fileType, filename, recordId, data } = req.body;
       const template: PdfTemplateEntity = req[TEMPLATE];
 
       if (!isAllowedUser(user, template.tenantId, ServiceRoles.PdfGenerator)) {
         throw new UnauthorizedUserError('generate pdf', user);
       }
 
-      const { id: jobId } = await repository.create(tenantId);
+      const job = await repository.create(tenantId);
       await queueService.enqueue({
         timestamp: new Date(),
         work: 'generate',
-        jobId,
+        jobId: job.id,
         tenantId: `${tenantId}`,
+        fileType: fileType || GENERATED_PDF,
         templateId,
         filename,
-        data,
-        generatedBy: {
+        recordId: recordId || job.id,
+        data: data || {},
+        requestedBy: {
           id: user.id,
           name: user.name,
         },
       });
 
-      eventService.send(pdfGenerationQueued(tenantId, jobId, templateId, { id: user.id, name: user.name }));
+      eventService.send(pdfGenerationQueued(tenantId, job.id, templateId, { id: user.id, name: user.name }));
 
-      res.send({ id: jobId });
+      res.send(mapJob(serviceId, job));
     } catch (err) {
       next(err);
     }
@@ -140,12 +144,15 @@ export function createPdfRouter({ serviceId, repository, eventService, queueServ
   router.post(
     '/jobs',
     createValidationHandler(
+      body('operation').isIn(['generate']),
       body('templateId').isString().isLength({ min: 1, max: 50 }),
+      body('data').optional().isObject(),
       body('filename').isString().isLength({ min: 1, max: 50 }),
-      body('data').optional().isObject()
+      body('fileType').optional().isString().isLength({ min: 1, max: 50 }),
+      body('recordId').optional().isString()
     ),
     getTemplate('body'),
-    generatePdf(repository, eventService, queueService)
+    generatePdf(serviceId, repository, eventService, queueService)
   );
   router.get('/jobs/:jobId', createValidationHandler(param('jobId').isUUID()), getGeneratedFile(serviceId, repository));
 

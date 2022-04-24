@@ -52,6 +52,10 @@ export class FileStorageEngine implements multer.StorageEngine {
         throw new NotFoundError('File Type', type);
       }
 
+      if (!fileType.tenantId) {
+        throw new InvalidOperationError('Cannot upload file without tenant context.');
+      }
+
       if (!file.stream) {
         this.logger.warn(`Handling file ${filename || file.originalname} upload but stream is not set.`, {
           context: 'FileStorageEngine',

@@ -1,4 +1,4 @@
-import React, { FormEvent, useState, useEffect, isValidElement } from 'react';
+import React, { FormEvent, useState, useEffect } from 'react';
 import { GoAButton, GoARadio } from '@abgov/react-components';
 import { GoAInputEmail, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { useDispatch, useSelector } from 'react-redux';
@@ -51,7 +51,9 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
         break;
       case Channels.sms: {
         if (inValidSMSInput(value)) {
-          setSMSContactInformation(value);
+          if (!(value && value.length > 10)) {
+            setSMSContactInformation(value);
+          }
         }
         break;
       }
@@ -74,6 +76,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
 
   const inValidSMSInput = (smsInput: string): boolean => {
     if (smsInput) {
+      // eslint-disable-next-line
       return /^[0-9\.\-\/]+$/.test(smsInput);
     }
 
@@ -103,7 +106,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
     }
 
     if (!isValidSMS(SMSContactInformation)) {
-      setFormErrors({ sms: 'You must enter a valid phone number with format: 1111111111.' });
+      setFormErrors({ sms: 'You must enter a valid phone number.' });
       return;
     }
     let channels = [];
@@ -247,13 +250,8 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                 testId="channel-preference-sms-btn"
                 checked={preferredChannel === Channels.sms}
                 onChange={updateChannelPreference}
-                disabled={!isAllowSMS}
               >
-                {isAllowSMS ? (
-                  'SMS'
-                ) : (
-                  <span style={{ color: 'var(--color-gray-700)' }}>Valid SMS number not found</span>
-                )}
+                SMS
               </GoARadio>
             </GridItem>
           </Grid>

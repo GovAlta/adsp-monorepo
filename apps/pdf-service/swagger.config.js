@@ -5,7 +5,12 @@ module.exports = {
     version: '0.0.0',
     description: '',
   },
-  tags: [],
+  tags: [
+    {
+      name: 'PDF',
+      description: 'Utility API for PDF operations.',
+    },
+  ],
   components: {
     securitySchemes: {
       accessToken: {

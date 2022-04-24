@@ -5,8 +5,10 @@ export interface PdfServiceWorkItem {
   tenantId: string;
   templateId: string;
   data: Record<string, unknown>;
+  fileType: string;
   filename: string;
-  generatedBy: {
+  recordId: string;
+  requestedBy: {
     id: string;
     name: string;
   };

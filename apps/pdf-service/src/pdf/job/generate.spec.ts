@@ -2,6 +2,7 @@ import { adspId } from '@abgov/adsp-service-sdk';
 import { v4 as uuid } from 'uuid';
 import { Logger } from 'winston';
 import { PDF_GENERATED, PDF_GENERATION_FAILED } from '../events';
+import { GENERATED_PDF } from '../fileTypes';
 import { createGenerateJob } from './generate';
 import { PdfServiceWorkItem } from './types';
 
@@ -83,9 +84,11 @@ describe('generate', () => {
         jobId: uuid(),
         timestamp: new Date(),
         templateId: 'test-template',
+        fileType: GENERATED_PDF,
+        recordId: 'my-domain-record-1',
         data: {},
         filename: 'test.pdf',
-        generatedBy: {
+        requestedBy: {
           id: 'tester',
           name: 'Testy McTester',
         },
@@ -114,9 +117,11 @@ describe('generate', () => {
         jobId: uuid(),
         timestamp: new Date(),
         templateId: 'test-template',
+        fileType: GENERATED_PDF,
+        recordId: 'my-domain-record-1',
         data: {},
         filename: 'test.pdf',
-        generatedBy: {
+        requestedBy: {
           id: 'tester',
           name: 'Testy McTester',
         },
@@ -142,9 +147,11 @@ describe('generate', () => {
         jobId: uuid(),
         timestamp: new Date(),
         templateId: 'test-template',
+        fileType: GENERATED_PDF,
+        recordId: 'my-domain-record-1',
         data: {},
         filename: 'test.pdf',
-        generatedBy: {
+        requestedBy: {
           id: 'tester',
           name: 'Testy McTester',
         },

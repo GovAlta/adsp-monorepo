@@ -15,6 +15,7 @@ import {
   PdfGeneratedDefinition,
   PdfGenerationFailedDefinition,
   PdfGenerationQueuedDefinition,
+  PdfGenerationUpdatesStream,
   PdfTemplate,
   PdfTemplateEntity,
   ServiceRoles,
@@ -70,6 +71,7 @@ const initializeApp = async (): Promise<express.Application> => {
         ),
       roles: [ServiceRoles.PdfGenerator],
       events: [PdfGenerationQueuedDefinition, PdfGeneratedDefinition, PdfGenerationFailedDefinition],
+      eventStreams: [PdfGenerationUpdatesStream],
       fileTypes: [GeneratedPdfType],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
@@ -110,7 +112,7 @@ const initializeApp = async (): Promise<express.Application> => {
     configurationService,
     repository,
     queueService,
-    fileService: createFileService({ tokenProvider, directory }),
+    fileService: createFileService({ logger, tokenProvider, directory }),
     eventService,
   });
 

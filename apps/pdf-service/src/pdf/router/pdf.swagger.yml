@@ -1,11 +1,124 @@
+components:
+  schemas:
+    Template:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        template:
+          type: string
+    Job:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [queued, completed, failed]
+        result:
+          type: object
+          properties:
+            urn:
+              type: string
+            id:
+              type: string
+    GenerateOperation:
+      type: object
+      properties:
+        operation:
+          type: string
+          enum: [generate]
+        fileType:
+          type: string
+        templateId:
+          type: string
+        recordId:
+          type: string
+        data:
+          type: object
+        filename:
+          type: string
+      required: [operation, templateId, filename]
+
 /templates:
   get:
+    tags:
+      - PDF
+    description: Retrieves PDF templates.
+    responses:
+      200:
+        description: PDF templates successfully retrieved.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Template"
 
 /templates/{templateId}:
   get:
+    tags:
+      - PDF
+    description: Retrieve a PDF template.
+    parameters:
+      - name: templateId
+        description: ID of template to retrieve.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: PDF templates successfully retrieved.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Template"
 
-/templates/{templateId}/generate:
+/jobs:
   post:
+    tags:
+      - PDF
+    description: Creates a new job.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: "#/components/schemas/GenerateOperation"
+            discriminator:
+              propertyName: operation
+              mapping:
+                generate: "#/components/schemas/GenerateOperation"
+    responses:
+      200:
+        description: Job successfully created.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Job"
 
 /jobs/{jobId}:
   get:
+    tags:
+      - PDF
+    description: Retrieve a job.
+    parameters:
+      - name: jobId
+        description: ID of job to retrieve.
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Job successfully retrieved.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Job"

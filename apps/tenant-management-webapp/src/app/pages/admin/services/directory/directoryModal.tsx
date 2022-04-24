@@ -118,12 +118,12 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               return;
             }
 
-            if (entry.api && checkApi(entry)) {
+            if (entry.api && checkApi(entry) && isNew) {
               setErrors({ ...errors, api: 'Api duplicate, please use another one' });
               return;
             }
 
-            if ((!entry.api || entry.api === '') && checkService(entry)) {
+            if ((!entry.api || entry.api === '') && checkService(entry) && isNew) {
               setErrors({ ...errors, service: 'Service duplicate, please use another one' });
               return;
             }
