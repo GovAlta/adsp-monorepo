@@ -5,11 +5,21 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 interface serviceItemProps {
   configSchema: string;
   configName: string;
+  tenantName: string;
+  nameSpace: string;
+  onEdit: (definition: any) => void;
+  onDelete: (definition: any) => void;
 }
 
-export const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ configSchema, configName }) => {
+export const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({
+  configSchema,
+  configName,
+  onEdit,
+  onDelete,
+  tenantName,
+  nameSpace,
+}) => {
   const [showSchema, setShowSchema] = useState(false);
-  console.log('configName', configName);
   return (
     <>
       <tr>
@@ -23,6 +33,18 @@ export const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ conf
                 testId="configuration-toggle-details-visibility"
               />
             </GoAContextMenu>
+            {tenantName !== 'Platform' ? (
+              <>
+                <GoAContextMenuIcon type="create" onClick={() => onEdit('definition')} testId="edit-details" />
+                <GoAContextMenuIcon
+                  type="trash"
+                  onClick={() => onDelete(`${nameSpace}:${configName}`)}
+                  testId="delete-details"
+                />
+              </>
+            ) : (
+              ''
+            )}
           </IconDiv>
         </td>
       </tr>

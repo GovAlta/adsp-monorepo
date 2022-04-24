@@ -1,15 +1,15 @@
 {
-    "/config/*": {
-        "target": "https://subscription.adsp-dev.gov.ab.ca",
-        "secure": true,
-        "changeOrigin": true
+  "/config/*": {
+    "target": "https://subscription.adsp-dev.gov.ab.ca",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/api/*": {
+    "target": "http://localhost:3344",
+    "pathRewrite": {
+      "^/api": ""
     },
-    "/api/*": {
-      "target": "http://localhost:3344",
-      "pathRewrite": {
-        "^/api": ""
-      },
-      "secure": false,
-      "changeOrigin": true
-    }
+    "secure": false,
+    "changeOrigin": true
+  }
 }

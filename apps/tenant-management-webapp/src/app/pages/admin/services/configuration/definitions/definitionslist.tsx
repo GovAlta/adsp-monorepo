@@ -5,8 +5,10 @@ import { ServiceItemComponent } from './definitionListItem';
 
 interface serviceTableProps {
   definitions: Record<string, unknown>;
+  tenantName: string;
+  onDelete?: (configurationDefinition: any) => void;
 }
-export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({ definitions }) => {
+export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({ onDelete, definitions, tenantName }) => {
   const nameSpaces: Record<any, any> = {};
   const memoizedSortedConfiguration = Object.keys(definitions)
     .sort()
@@ -23,29 +25,35 @@ export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({ de
     }, {});
   return (
     <>
-      {Object.keys(nameSpaces).map((name) => {
+      {Object.keys(nameSpaces).map((nameSpace) => {
         return (
           <>
-            <NameDiv>{name}</NameDiv>
-            <TableDiv key={name}>
+            <NameDiv>{nameSpace}</NameDiv>
+            <TableDiv key={nameSpace}>
               <DataTable data-testid="configuration-table">
                 <thead data-testid="configuration-table-header">
                   <tr>
-                    <th id="c" data-testid="configuration-table-header-name">
-                      Name
-                    </th>
+                    <th data-testid="configuration-table-header-name">Name</th>
                     <th id="configuration-action" data-testid="configuration-table-header-action">
                       Action
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {nameSpaces[name].map((configName) => {
+                  {nameSpaces[nameSpace].map((configName) => {
                     return (
                       <ServiceItemComponent
+                        tenantName={tenantName}
                         configName={configName}
+                        nameSpace={nameSpace}
+                        onEdit={() => {
+                          console.log();
+                        }}
+                        onDelete={(configurationDefinition) => {
+                          onDelete(configurationDefinition);
+                        }}
                         configSchema={JSON.stringify(
-                          memoizedSortedConfiguration[`${name}:${configName}`].configurationSchema,
+                          memoizedSortedConfiguration[`${nameSpace}:${configName}`].configurationSchema,
                           null,
                           2
                         )}

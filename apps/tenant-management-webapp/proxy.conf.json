@@ -6,12 +6,12 @@
   },
   "/config/*": {
     "target": "https://adsp-dev.gov.ab.ca",
-    "secure": true,
+    "secure": false,
     "changeOrigin": true
   },
   "/auth/*": {
     "target": "https://access.adsp-dev.gov.ab.ca",
-    "secure": true,
+    "secure": false,
     "changeOrigin": true
   },
   "/health": {

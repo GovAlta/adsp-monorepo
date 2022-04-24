@@ -2,6 +2,7 @@ import {
   ConfigurationActionTypes,
   FETCH_CONFIGURATION_DEFINITIONS_ACTION,
   FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION,
+  UPDATE_CONFIGURATION__DEFINITION_SUCCESS_ACTION,
 } from './action';
 import { ConfigurationState } from './model';
 
@@ -28,6 +29,15 @@ export default function (
       return {
         coreConfigDefinitions: action.payload.core,
         tenantConfigDefinitions: action.payload.tenant,
+        isLoading: {
+          ...state.isLoading,
+          definitions: false,
+        },
+      };
+    case UPDATE_CONFIGURATION__DEFINITION_SUCCESS_ACTION:
+      return {
+        ...state,
+        tenantConfigDefinitions: action.payload,
         isLoading: {
           ...state.isLoading,
           definitions: false,

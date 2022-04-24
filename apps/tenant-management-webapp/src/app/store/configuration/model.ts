@@ -13,3 +13,14 @@ export interface ConfigurationState {
     log: boolean;
   };
 }
+export const defaultConfigDefinition = {
+  isCore: false,
+  namespace: '',
+  name: '',
+  payloadSchema: {
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: true,
+  },
+};
