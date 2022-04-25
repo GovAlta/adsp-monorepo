@@ -8,19 +8,12 @@ import { RootState } from '@store/index';
 import styled from 'styled-components';
 import { ContactInformationModalForm } from './edit';
 import { ReactComponent as Edit } from '@icons/edit.svg';
+import { phoneWrapper } from '../utils';
 
 interface SubscribersProps {
   subscribers?: Subscriber[];
   readonly?: boolean;
 }
-
-const phoneWrapper = (phoneNumber) => {
-  if (phoneNumber) {
-    return (
-      '1 (' + phoneNumber.substring(0, 3) + ') ' + phoneNumber.substring(3, 6) + '-' + phoneNumber.substring(6, 10)
-    );
-  }
-};
 
 export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
   const dispatch = useDispatch();

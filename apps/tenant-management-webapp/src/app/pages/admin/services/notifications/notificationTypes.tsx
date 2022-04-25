@@ -106,6 +106,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const subscriberAppUrl = useSelector(subscriberAppUrlSelector);
   const htmlPayload = dynamicGeneratePayload(tenant, eventDef, subscriberAppUrl);
   const serviceName = `${selectedEvent?.namespace}:${selectedEvent?.name}`;
+  const contact = useSelector((state: RootState) => state.notification.supportContact);
 
   const getEventSuggestion = () => {
     if (eventDef) {
@@ -776,11 +777,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             />
             <PreviewTemplateContainer>
               <PreviewTemplate
-                subjectTitle="Subject"
                 channel={channelNames[currentChannel]}
                 channelTitle={`${channelNames[currentChannel]} preview`}
                 subjectPreviewContent={subjectPreview}
                 bodyPreviewContent={bodyPreview}
+                contactPhoneNumber={contact?.phoneNumber}
               />
             </PreviewTemplateContainer>
           </NotificationTemplateEditorContainer>
