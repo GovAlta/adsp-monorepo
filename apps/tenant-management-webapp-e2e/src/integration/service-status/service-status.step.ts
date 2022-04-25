@@ -603,8 +603,8 @@ Then(
       newStatusValidationStr =
         newStatusValidationStr.replace('{new status}', 'The new status is now: ') + newStatus.toLowerCase();
     }
-    tenantAdminObj.eventToggleDetailsIcons().each(($element) => {
-      //clicking each eye-icon in the list
+    tenantAdminObj.eventToggleDetailsIcons().each(($element, $index, $full_array) => {
+      //clicking each eye-icon in the list to verify event details
       cy.wrap($element).click();
       tenantAdminObj
         .eventDetails()
@@ -615,11 +615,14 @@ Then(
             expect(eventDetails).to.contain(appName);
             expect(eventDetails).to.contain(orgStatusValidationStr);
             expect(eventDetails).to.contain(newStatusValidationStr);
-            return false;
             cy.wrap($element).click();
           } else {
-            //clicking eye icon to close eventDetails
+            //clicking eye icon to close event details
             cy.wrap($element).click();
+            if ($index + 1 == $full_array.length) {
+              cy.log('No matching email found throughout list of event details');
+              expect(eventDetails).to.contain(email);
+            }
           }
         });
     });
