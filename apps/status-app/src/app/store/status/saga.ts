@@ -1,4 +1,5 @@
 import { put, select, call } from 'redux-saga/effects';
+import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '@store/index';
 import { ApplicationApi, SubscriberApi } from './api';
 import {
@@ -51,6 +52,13 @@ export function* fetchApplications(action: FetchApplicationsAction): SagaIterato
 export function* subscribeToTenant(action: SubscribeToTenantAction): SagaIterator {
   const { email, tenant } = action.payload;
 
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading...',
+    })
+  );
+
   try {
     const configState: ConfigState = yield select((state: RootState) => state.config);
 
@@ -66,8 +74,19 @@ export function* subscribeToTenant(action: SubscribeToTenantAction): SagaIterato
     const subscriber = yield call([subscriberApi, subscriberApi.subscribe], tenant, email, token);
 
     yield put(subscribeToTenantSuccess(subscriber));
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
   } catch (e) {
+    console.log(JSON.stringify(e) + '<e');
     yield put(addErrorMessage({ message: e.message }));
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
   }
 }
 
