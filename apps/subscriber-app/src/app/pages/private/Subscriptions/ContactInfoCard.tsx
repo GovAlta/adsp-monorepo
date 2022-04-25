@@ -11,8 +11,8 @@ import { InfoCard } from './InfoCard';
 import { Label } from './styled-components';
 import { GapVS } from './styled-components';
 import { RootState } from '@store/index';
-import { IndicatorWithDelay } from '@components/Indicator';
 import { phoneWrapper } from '@lib/wrappers';
+import { GoAPageLoader } from '@abgov/react-components';
 
 interface ContactInfoCardProps {
   subscriber: Subscriber;
@@ -192,112 +192,110 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
     setPreferredChannel(channel);
   };
 
-  const isAllowSMS =
-    (!editContactInformation && subscriberSMS) ||
-    (editContactInformation && SMSContactInformation && isValidSMS(SMSContactInformation));
-
   return (
     <InfoCard title="Contact information" data-testid="contact-information-card">
-      <div>
-        {editContactInformation ? (
-          <Grid>
-            <GridItem md={3.5} hSpacing={1.5}>
-              <Label>Email</Label>
-              <GoAFormItem error={formErrors?.['email']}>
-                <GoAInputEmail
-                  aria-label="email"
-                  name="email"
-                  value={emailContactInformation}
-                  onChange={setValue}
-                  data-testid="contact-email-input"
-                />
-              </GoAFormItem>
-            </GridItem>
-
-            <GridItem md={3.5} hSpacing={1.5}>
-              <Label>Phone number</Label>
-
-              <GoAFormItem error={formErrors?.['sms']}>
-                <GoAInput
-                  type="text"
-                  aria-label="sms"
-                  name="sms"
-                  value={SMSContactInformation}
-                  data-testid="contact-sms-input"
-                  onChange={setValue}
-                  trailingIcon="close"
-                  onTrailingIconClick={() => {
-                    setSMSContactInformation('');
-                  }}
-                />
-              </GoAFormItem>
-            </GridItem>
-
-            <GridItem md={5} hSpacing={1.5}>
-              <Label>My primary notification channel</Label>
-              <GoARadio
-                key="channel-preference-email"
-                value={Channels.email}
-                testId="channel-preference-email-btn"
-                checked={preferredChannel === Channels.email}
-                onChange={updateChannelPreference}
-              >
-                Email
-              </GoARadio>
-              <GoARadio
-                key="channel-preference-sms"
-                value={Channels.sms}
-                testId="channel-preference-sms-btn"
-                checked={preferredChannel === Channels.sms}
-                onChange={updateChannelPreference}
-              >
-                SMS
-              </GoARadio>
-            </GridItem>
-          </Grid>
-        ) : (
-          <div>
+      {!indicator && (
+        <div>
+          {editContactInformation ? (
             <Grid>
-              <GridItem md={3.5}>
-                <div>
-                  <Label>Email</Label>
-                  <p>{subscriberEmail}</p>
-                </div>
+              <GridItem md={3.5} hSpacing={1.5}>
+                <Label>Email</Label>
+                <GoAFormItem error={formErrors?.['email']}>
+                  <GoAInputEmail
+                    aria-label="email"
+                    name="email"
+                    value={emailContactInformation}
+                    onChange={setValue}
+                    data-testid="contact-email-input"
+                  />
+                </GoAFormItem>
               </GridItem>
-              <GridItem md={3.5}>
-                <div>
-                  <Label>Phone number</Label>
-                  <p>{phoneWrapper(subscriberSMS)}</p>
-                </div>
+
+              <GridItem md={3.5} hSpacing={1.5}>
+                <Label>Phone number</Label>
+
+                <GoAFormItem error={formErrors?.['sms']}>
+                  <GoAInput
+                    type="text"
+                    aria-label="sms"
+                    name="sms"
+                    value={SMSContactInformation}
+                    data-testid="contact-sms-input"
+                    onChange={setValue}
+                    trailingIcon="close"
+                    onTrailingIconClick={() => {
+                      setSMSContactInformation('');
+                    }}
+                  />
+                </GoAFormItem>
               </GridItem>
-              <GridItem md={5}>
+
+              <GridItem md={5} hSpacing={1.5}>
                 <Label>My primary notification channel</Label>
                 <GoARadio
                   key="channel-preference-email"
                   value={Channels.email}
-                  disabled={true}
+                  testId="channel-preference-email-btn"
                   checked={preferredChannel === Channels.email}
-                  //eslint-disable-next-line
-                  onChange={() => {}}
+                  onChange={updateChannelPreference}
                 >
                   Email
                 </GoARadio>
                 <GoARadio
                   key="channel-preference-sms"
                   value={Channels.sms}
-                  disabled={true}
+                  testId="channel-preference-sms-btn"
                   checked={preferredChannel === Channels.sms}
-                  //eslint-disable-next-line
-                  onChange={() => {}}
+                  onChange={updateChannelPreference}
                 >
                   SMS
                 </GoARadio>
               </GridItem>
             </Grid>
-          </div>
-        )}
-      </div>
-      {indicator && <IndicatorWithDelay pageLock={false} />}
+          ) : (
+            <div>
+              <Grid>
+                <GridItem md={3.5}>
+                  <div>
+                    <Label>Email</Label>
+                    <p>{subscriberEmail}</p>
+                  </div>
+                </GridItem>
+                <GridItem md={3.5}>
+                  <div>
+                    <Label>Phone number</Label>
+                    <p>{phoneWrapper(subscriberSMS)}</p>
+                  </div>
+                </GridItem>
+                <GridItem md={5}>
+                  <Label>My primary notification channel</Label>
+                  <GoARadio
+                    key="channel-preference-email"
+                    value={Channels.email}
+                    disabled={true}
+                    checked={preferredChannel === Channels.email}
+                    //eslint-disable-next-line
+                    onChange={() => {}}
+                  >
+                    Email
+                  </GoARadio>
+                  <GoARadio
+                    key="channel-preference-sms"
+                    value={Channels.sms}
+                    disabled={true}
+                    checked={preferredChannel === Channels.sms}
+                    //eslint-disable-next-line
+                    onChange={() => {}}
+                  >
+                    SMS
+                  </GoARadio>
+                </GridItem>
+              </Grid>
+            </div>
+          )}
+        </div>
+      )}
+      {indicator && <GoAPageLoader visible={true} type="infinite" message={'Loading...'} pagelock={true} />}
       <GapVS />
       <div>
         {editContactInformation ? (
