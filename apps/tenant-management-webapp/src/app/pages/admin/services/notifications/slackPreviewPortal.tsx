@@ -1,7 +1,8 @@
 import React, { FunctionComponent } from 'react';
-import { sanitizeHtml } from './utils';
 import SlackProfileIcon from '@assets/slack.png';
 import styled from 'styled-components';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 
 interface SlackPreviewPortalProps {
   body: string;
@@ -21,14 +22,9 @@ export const SlackPreviewPortal: FunctionComponent<SlackPreviewPortalProps> = ({
           </div>
         </div>
         <b>
-          <div
-            dangerouslySetInnerHTML={{ __html: sanitizeHtml(subject, { WHOLE_DOCUMENT: true, ADD_TAGS: ['style'] }) }}
-          ></div>
+          <ReactMarkdown children={subject} rehypePlugins={[rehypeRaw]} />
         </b>
-        <div
-          className="marginBottom"
-          dangerouslySetInnerHTML={{ __html: sanitizeHtml(body, { WHOLE_DOCUMENT: true, ADD_TAGS: ['style'] }) }}
-        ></div>
+        <ReactMarkdown children={body} rehypePlugins={[rehypeRaw]} />
       </div>
     );
   };

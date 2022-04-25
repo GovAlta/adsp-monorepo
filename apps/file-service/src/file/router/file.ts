@@ -124,7 +124,7 @@ export function uploadFile(apiId: AdspId, logger: Logger, eventService: EventSer
       res.send(mapFile(apiId, fileEntity));
 
       eventService.send(
-        fileUploaded(user, {
+        fileUploaded(fileEntity.tenantId, user, {
           id: fileEntity.id,
           filename: fileEntity.filename,
           size: fileEntity.size,

@@ -1,4 +1,5 @@
 import { AdspId, ConfigurationService, EventService, TokenProvider } from '@abgov/adsp-service-sdk';
+import { NotFoundError } from '@core-services/core-common';
 import { Logger } from 'winston';
 import { pdfGenerated, pdfGenerationFailed } from '../events';
 import { PdfTemplateEntity } from '../model';
@@ -27,7 +28,7 @@ export function createGenerateJob({
   eventService,
 }: GenerateJobProps) {
   return async (
-    { tenantId: tenantIdValue, jobId, filename, templateId, data, generatedBy }: PdfServiceWorkItem,
+    { tenantId: tenantIdValue, jobId, fileType, filename, recordId, templateId, data, requestedBy }: PdfServiceWorkItem,
     retryOnError: boolean,
     done: (err?: Error) => void
   ): Promise<void> => {
@@ -46,15 +47,19 @@ export function createGenerateJob({
       );
 
       const pdfTemplate = configuration[templateId];
+      if (!pdfTemplate) {
+        throw new NotFoundError('PDF Template', templateId);
+      }
+
       const pdf = await pdfTemplate.generate({ data });
-      logger.debug(`Generation of PDF (ID: ${jobId}) completed PDF creation from content...`, {
+      logger.debug(`Generation of PDF (ID: ${jobId}) completed PDF creation from content with ${pdf.length} bytes...`, {
         context,
         tenant: tenantId,
       });
 
-      const result = await fileService.upload(jobId, filename, pdf);
+      const result = await fileService.upload(tenantId, fileType, recordId, filename, pdf);
 
-      eventService.send(pdfGenerated(tenantId, jobId, templateId, result, generatedBy));
+      eventService.send(pdfGenerated(tenantId, jobId, templateId, result, requestedBy));
 
       logger.info(`Generated PDF (ID: ${jobId}) file ${filename} and uploaded to file service at: ${result.urn}`, {
         context,
@@ -66,7 +71,7 @@ export function createGenerateJob({
     } catch (err) {
       if (!retryOnError) {
         await repository.update(jobId, 'failed');
-        eventService.send(pdfGenerationFailed(tenantId, jobId, templateId, generatedBy));
+        eventService.send(pdfGenerationFailed(tenantId, jobId, templateId, requestedBy));
         logger.error(`Generation of PDF (ID: ${jobId}) failed with error. ${err}`);
       }
 

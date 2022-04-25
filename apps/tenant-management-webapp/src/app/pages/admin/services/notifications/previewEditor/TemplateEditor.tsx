@@ -179,6 +179,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   <GoAFormItem error={errors['subject'] ?? ''} helpText={subjectEditorHintText}>
                     <MonacoDiv>
                       <MonacoEditor
+                        language={item.name === 'slack' ? 'markdown' : 'handlebars'}
                         onChange={(value) => {
                           onSubjectChange(value, item.name);
                         }}
@@ -191,6 +192,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   <GoAFormItem error={errors['body'] ?? ''} helpText={bodyEditorHintText}>
                     <MonacoDivBody>
                       <MonacoEditor
+                        language={item.name === 'slack' ? 'markdown' : 'handlebars'}
                         value={templates[item.name]?.body}
                         onChange={(value) => {
                           onBodyChange(value, item.name);

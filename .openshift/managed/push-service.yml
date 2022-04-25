@@ -104,6 +104,13 @@ objects:
         component: database
       strategy:
         type: Recreate
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 20m
+            memory: 50Mi
       template:
         metadata:
           labels:
@@ -165,8 +172,8 @@ objects:
               - redis
             from:
               kind: ImageStreamTag
-              name: redis-5-rhel7:5-48
-              namespace: ${INFRA_NAMESPACE}
+              name: redis:5-el8
+              namespace: openshift
             lastTriggeredImage: ""
           type: ImageChange
         - type: ConfigChange

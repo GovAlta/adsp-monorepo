@@ -55,6 +55,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               onChange={(e) => setEntry({ ...entry, service: e.target.value })}
               aria-label="service"
               maxLength={50}
+              disabled={!isNew}
             />
           </GoAFormItem>
           <GoAFormItem error={errors?.['api']}>
@@ -67,6 +68,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               onChange={(e) => setEntry({ ...entry, api: e.target.value })}
               aria-label="api"
               maxLength={50}
+              disabled={!isNew}
             />
           </GoAFormItem>
           <GoAFormItem error={errors?.['url']}>
@@ -116,12 +118,12 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               return;
             }
 
-            if (entry.api && checkApi(entry)) {
+            if (entry.api && checkApi(entry) && isNew) {
               setErrors({ ...errors, api: 'Api duplicate, please use another one' });
               return;
             }
 
-            if ((!entry.api || entry.api === '') && checkService(entry)) {
+            if ((!entry.api || entry.api === '') && checkService(entry) && isNew) {
               setErrors({ ...errors, service: 'Service duplicate, please use another one' });
               return;
             }

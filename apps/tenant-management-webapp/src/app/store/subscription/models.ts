@@ -78,10 +78,12 @@ export interface SubscriberSearchCriteria {
   email?: string;
   name?: string;
   next?: string;
+  sms?: string;
 }
 
 export interface SubscriptionSearchCriteria {
   email?: string;
   name?: string;
   next?: string;
+  sms?: string;
 }
