@@ -103,8 +103,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     setPreview(value);
   };
 
-  const tabNames = { sms: 'SMS', bot: 'Slack', email: 'Email' };
-  const titleNames = { sms: ' SMS', bot: ' slack', email: 'n email' };
+  const tabNames = { sms: 'SMS', bot: 'Bot', email: 'Email' };
+  const titleNames = { sms: ' SMS', bot: ' bot', email: 'n email' };
   const saveChangesAction = () => {
     saveCurrentTemplate();
   };
