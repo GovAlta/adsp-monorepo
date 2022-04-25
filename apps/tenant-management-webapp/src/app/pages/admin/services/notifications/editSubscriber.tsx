@@ -38,10 +38,10 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
   const smsIndex = getChannelIndex(subscriber, 'sms');
 
   useEffect(() => {
-    if (open && subscriber) {
+    if (subscriber) {
       setPrettyPhone('1' + subscriber.channels[smsIndex].address);
     }
-  }, [open, subscriber]);
+  }, [subscriber]);
 
   function emailErrors(email) {
     if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email)) {

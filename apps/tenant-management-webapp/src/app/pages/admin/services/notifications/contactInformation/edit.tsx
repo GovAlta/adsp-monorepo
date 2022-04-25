@@ -34,10 +34,10 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
   }, [initialValue]);
 
   useEffect(() => {
-    if (open && contactInformation) {
+    if (contactInformation) {
       setPrettyPhone('1' + contactInformation?.phoneNumber);
     }
-  }, [open, contactInformation]);
+  }, [contactInformation]);
 
   function emailErrors(email) {
     if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
