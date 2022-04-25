@@ -5,6 +5,7 @@ const FORM_EVENT_NAMESPACE = 'form-service';
 
 export const FormStatusNotificationType: NotificationType = {
   name: 'form-status-updates',
+  displayName: 'Form status updates',
   description: 'Provides notification of updates to the status of a form.',
   publicSubscribe: false,
   subscriberRoles: [],
