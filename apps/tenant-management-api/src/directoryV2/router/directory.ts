@@ -14,6 +14,8 @@ const passportMiddleware = passport.authenticate(['jwt', 'jwt-tenant'], { sessio
 
 import axios from 'axios';
 import { Service, Links } from '../../directory/types/directory';
+import { getNamespace } from './GetNamespace';
+
 export interface URNComponent {
   scheme?: string;
   nic?: string;
@@ -23,13 +25,6 @@ export interface URNComponent {
   resource?: string;
 }
 
-const getUrn = (component: URNComponent) => {
-  let urn = `${component.scheme}:${component.nic}:${component.core}:${component.service}`;
-  urn = component.apiVersion ? `${urn}:${component.apiVersion}` : urn;
-  urn = component.resource ? `${urn}:${component.resource}` : urn;
-  return urn;
-};
-
 interface DirectoryRouterProps {
   logger?: Logger;
   directoryRepository: DirectoryRepository;
@@ -38,53 +33,13 @@ interface DirectoryRouterProps {
 
 const directoryCache = new NodeCache({ stdTTL: 300 });
 
-export const getNamespace =
-  (directoryRepository: DirectoryRepository) =>
-  async (req: Request, res: Response, _next): Promise<void> => {
-    let services: Service[];
-    const { namespace } = req.params;
-    try {
-      const directory = await directoryRepository.getDirectories(namespace);
-      if (!directory) {
-        res.json([]);
-        return;
-      }
-      services = directory.services;
-    } catch (err) {
-      _next(err);
-      return;
-    }
-
-    const response = [];
-
-    for (const service of services) {
-      const element = {};
-      element['_id'] = service._id;
-      element['namespace'] = namespace;
-      element['service'] = service.service;
-      element['url'] = service.host;
-
-      const component: URNComponent = {
-        scheme: 'urn',
-        nic: 'ads',
-        core: namespace,
-        service: service.service,
-      };
-      element['urn'] = getUrn(component);
-
-      response.push(element);
-    }
-
-    res.json(response);
-  };
-
 export const createDirectoryRouter = ({ logger, directoryRepository, tenantService }: DirectoryRouterProps): Router => {
   const directoryRouter = Router();
 
   /**
-   * Get all directory entry's
+   * Get all directory entries
    */
-  directoryRouter.get('/namespaces/:namespace', getNamespace);
+  directoryRouter.get('/namespaces/:namespace/entries', getNamespace(directoryRepository));
 
   /*
    * Create new namespace.

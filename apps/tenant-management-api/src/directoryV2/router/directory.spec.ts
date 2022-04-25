@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Request, Response } from 'express';
 import { DirectoryRepository } from '../../directory/repository';
-import { getNamespace } from './directory';
+import { getNamespace } from './GetNamespace';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
