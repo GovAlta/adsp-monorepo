@@ -1,26 +1,26 @@
 import React, { FunctionComponent } from 'react';
-import { sanitizeHtml } from '../utils';
-import { PreviewContainer, SubjectPreview, BodyPreview, SlackPreview } from './styled-components';
+import { sanitizeHtml, phoneWrapper } from '../utils';
+import { PreviewContainer, SubjectPreview, BodyPreview, SlackPreview, SMSBodyPreview } from './styled-components';
 
 interface PreviewTemplateProps {
-  subjectTitle: string;
   channelTitle: string;
   subjectPreviewContent: string;
   bodyPreviewContent: string;
   channel: string;
+  contactPhoneNumber?: string;
 }
 
 export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
-  subjectTitle,
   channelTitle,
   subjectPreviewContent,
   bodyPreviewContent,
   channel,
+  contactPhoneNumber,
 }) => {
   const EmailPreview = () => {
     return (
       <>
-        <h3>{subjectTitle}</h3>
+        <h3>Subject</h3>
         <SubjectPreview
           dangerouslySetInnerHTML={{
             __html: sanitizeHtml(subjectPreviewContent),
@@ -35,14 +35,14 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
   const SmsPreview = () => {
     return (
       <>
-        <h3>{subjectTitle}</h3>
+        <h3>Sender’s number/short code</h3>
         <SubjectPreview
           dangerouslySetInnerHTML={{
-            __html: sanitizeHtml(subjectPreviewContent),
+            __html: sanitizeHtml(phoneWrapper(contactPhoneNumber)),
           }}
         ></SubjectPreview>
         <h3>{channelTitle}</h3>
-        <BodyPreview title={channelTitle} html={bodyPreviewContent}></BodyPreview>
+        <SMSBodyPreview subject={subjectPreviewContent} body={bodyPreviewContent}></SMSBodyPreview>
       </>
     );
   };
@@ -58,7 +58,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
 
   const previewByType = {
     Email: <EmailPreview />,
-    'Text message': <SmsPreview />,
+    SMS: <SmsPreview />,
     'Slack bot': <BotPreview />,
   };
 
