@@ -37,7 +37,6 @@ export const TableDiv = styled.div`
 `;
 
 export const IconDiv = styled.div`
-  /* width: 50%; */
   display: flex;
   flex-direction: row;
   justify-content: flex-end;

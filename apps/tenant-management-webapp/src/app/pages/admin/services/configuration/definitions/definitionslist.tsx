@@ -1,28 +1,45 @@
-import React, { FunctionComponent, useMemo, useState, useEffect } from 'react';
+import React, { FunctionComponent, useMemo } from 'react';
 import { NameDiv, TableDiv } from '../styled-components';
 import DataTable from '@components/DataTable';
-import { ServiceItemComponent } from './definitionListItem';
+import { ConfigurationDefinitionItemComponent } from './definitionListItem';
+import { ConfigDefinition } from '@store/configuration/model';
 
 interface serviceTableProps {
   definitions: Record<string, unknown>;
   tenantName: string;
-  onDelete?: (configurationDefinition: any) => void;
+  isTenantSpecificConfig?: boolean;
+  onDelete?: (configurationDefinition: string) => void;
+  onEdit?: (configurationDefinition: ConfigDefinition) => void;
 }
-export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({ onDelete, definitions, tenantName }) => {
-  const nameSpaces: Record<any, any> = {};
-  const memoizedSortedConfiguration = Object.keys(definitions)
-    .sort()
-    .reduce((obj, key) => {
-      obj[key] = definitions[key];
-      const nameSpace = key.split(':')[0];
-      const name = key.split(':')[1];
-      if (nameSpaces[nameSpace]) {
-        nameSpaces[nameSpace].push(name);
-      } else {
-        nameSpaces[nameSpace] = [name];
-      }
-      return obj;
-    }, {});
+export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTableProps> = ({
+  onEdit,
+  onDelete,
+  definitions,
+  tenantName,
+  isTenantSpecificConfig,
+}) => {
+  // to ensure it dosent re-calculate this value if v dosent change
+  const nameSpaces: Record<string, string[]> = useMemo(() => {
+    return {};
+  }, [definitions]);
+
+  // to ensure it dosent re-calculate this value if v dosent change
+  const memoizedSortedConfiguration = useMemo(() => {
+    return Object.keys(definitions)
+      .sort()
+      .reduce((obj, key) => {
+        obj[key] = definitions[key];
+        const nameSpace = key.split(':')[0];
+        const name = key.split(':')[1];
+        if (nameSpaces[nameSpace]) {
+          nameSpaces[nameSpace].push(name);
+        } else {
+          nameSpaces[nameSpace] = [name];
+        }
+        return obj;
+      }, {});
+  }, [definitions]);
+
   return (
     <>
       {Object.keys(nameSpaces).map((nameSpace) => {
@@ -42,21 +59,18 @@ export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({ on
                 <tbody>
                   {nameSpaces[nameSpace].map((configName) => {
                     return (
-                      <ServiceItemComponent
+                      <ConfigurationDefinitionItemComponent
                         tenantName={tenantName}
+                        isTenantSpecificConfig={isTenantSpecificConfig}
                         configName={configName}
                         nameSpace={nameSpace}
-                        onEdit={() => {
-                          console.log();
+                        onDelete={(configurationDefinitionName) => {
+                          onDelete(configurationDefinitionName);
                         }}
-                        onDelete={(configurationDefinition) => {
-                          onDelete(configurationDefinition);
+                        onEdit={(configurationDefinition) => {
+                          onEdit(configurationDefinition);
                         }}
-                        configSchema={JSON.stringify(
-                          memoizedSortedConfiguration[`${nameSpace}:${configName}`].configurationSchema,
-                          null,
-                          2
-                        )}
+                        configSchema={memoizedSortedConfiguration[`${nameSpace}:${configName}`]?.configurationSchema}
                       />
                     );
                   })}

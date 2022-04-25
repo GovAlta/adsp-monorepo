@@ -3,16 +3,38 @@ import Editor from '@monaco-editor/react';
 import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import { ConfigDefinition } from '@store/configuration/model';
 
-export const AddEditConfigDefinition: FunctionComponent<any> = ({ onSave, initialValue, open, isEdit, onClose }) => {
-  const [definition, setDefinition] = useState<any>(initialValue);
+interface AddEditConfigDefinitionProps {
+  onSave: (definition: ConfigDefinition) => void;
+  initialValue: ConfigDefinition;
+  open: boolean;
+  isEdit: boolean;
+  onClose: () => void;
+}
+export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionProps> = ({
+  onSave,
+  initialValue,
+  open,
+  isEdit,
+  onClose,
+}) => {
+  const [definition, setDefinition] = useState<ConfigDefinition>(initialValue);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const regex = new RegExp(/^[a-z0-9-]+$/);
+  const regex = new RegExp(/^[a-zA-Z0-9]+$/);
 
+  const hasFormErrors = () => {
+    return Object.keys(errors).length !== 0;
+  };
+  useEffect(() => {
+    setDefinition(initialValue);
+  }, [initialValue]);
   return (
     <>
       <GoAModal testId="definition-form" isOpen={open}>
-        <GoAModalTitle testId="definition-form-title">{isEdit ? 'Edit definition' : 'Add definition'}</GoAModalTitle>
+        <GoAModalTitle testId="definition-form-title">
+          {isEdit ? 'Edit configuration' : 'Add configuration'}
+        </GoAModalTitle>
         <GoAModalContent>
           <GoAForm>
             <GoAFormItem error={errors?.['namespace']}>
@@ -26,10 +48,14 @@ export const AddEditConfigDefinition: FunctionComponent<any> = ({ onSave, initia
                 aria-label="nameSpace"
                 onChange={(e) => {
                   if (!regex.test(e.target.value)) {
-                    setErrors({ ...errors, namespace: 'Service allowed characters: a-z, 0-9, -' });
+                    setErrors({ ...errors, namespace: 'allowed characters: a-z, A-Z, 0-9, -' });
                   } else {
-                    delete errors['namespace'];
-                    setErrors({ ...errors });
+                    if (e.target.value.toLocaleLowerCase() === 'platform') {
+                      setErrors({ ...errors, namespace: 'cannot use the word platform as namespace' });
+                    } else {
+                      delete errors['namespace'];
+                      setErrors({ ...errors });
+                    }
                   }
                   setDefinition({ ...definition, namespace: e.target.value });
                 }}
@@ -47,7 +73,7 @@ export const AddEditConfigDefinition: FunctionComponent<any> = ({ onSave, initia
                 onChange={(e) => {
                   const regex = new RegExp(/^[a-z0-9-]+$/);
                   if (!regex.test(e.target.value)) {
-                    setErrors({ ...errors, name: 'Service allowed characters: a-z, 0-9, -' });
+                    setErrors({ ...errors, name: 'allowed characters: a-z, A-Z, 0-9, -' });
                   } else {
                     delete errors['name'];
                     setErrors({ ...errors });
@@ -88,16 +114,13 @@ export const AddEditConfigDefinition: FunctionComponent<any> = ({ onSave, initia
             Cancel
           </GoAButton>
           <GoAButton
-            disabled={!definition.namespace || !definition.name}
+            disabled={!definition.namespace || !definition.name || hasFormErrors()}
             buttonType="primary"
             data-testid="form-save"
             type="submit"
             onClick={(e) => {
-              if (Object.keys(errors).length === 0) {
-                // dispatch(updateEventDefinition(definition));
-                // if (onSave) {
-                //   onSave();
-                // }
+              // if no errors in the form then save the definition
+              if (!hasFormErrors()) {
                 onSave(definition);
                 setDefinition(initialValue);
                 onClose();
