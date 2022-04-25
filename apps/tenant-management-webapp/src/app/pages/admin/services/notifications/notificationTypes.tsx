@@ -106,6 +106,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const subscriberAppUrl = useSelector(subscriberAppUrlSelector);
   const htmlPayload = dynamicGeneratePayload(tenant, eventDef, subscriberAppUrl);
   const serviceName = `${selectedEvent?.namespace}:${selectedEvent?.name}`;
+  const contact = useSelector((state: RootState) => state.notification.supportContact);
 
   const getEventSuggestion = () => {
     if (eventDef) {
@@ -118,7 +119,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     return state.session.indicator;
   });
 
-  const channelNames = { email: 'Email', bot: 'Slack bot', sms: 'Text message' };
+  const channelNames = { email: 'Email', bot: 'Slack bot', sms: 'SMS' };
   const channelIcons = {
     email: <Mail style={{ color: '#666666' }} />,
     sms: <Chat style={{ color: '#666666' }} />,
@@ -438,7 +439,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                             <div className="flex3 endAlign">
                               <div className="flex rowFlex">
                                 {notificationType.sortedChannels.map((channel) => (
-                                  <div key={channel} className="nonCoreIconPadding flex1" data-testid={`tenant-${channel}-channel`}>
+                                  <div
+                                    key={channel}
+                                    className="nonCoreIconPadding flex1"
+                                    data-testid={`tenant-${channel}-channel`}
+                                  >
                                     {channelIcons[channel]}
                                     {(event.templates[channel]?.subject?.length === 0 ||
                                       event.templates[channel]?.body?.length === 0) && (
@@ -551,7 +556,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                               <div className="flex5 endAlign">
                                 <div className="flex rowFlex">
                                   {notificationType.sortedChannels.map((channel) => (
-                                    <div key={channel} className="flex1 coreIconPadding" data-testid={`core-${channel}-channel`}>
+                                    <div
+                                      key={channel}
+                                      className="flex1 coreIconPadding"
+                                      data-testid={`core-${channel}-channel`}
+                                    >
                                       {channelIcons[channel]}
                                       {(event.templates[channel]?.subject?.length === 0 ||
                                         event.templates[channel]?.body?.length === 0) && (
@@ -766,11 +775,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             />
             <PreviewTemplateContainer>
               <PreviewTemplate
-                subjectTitle="Subject"
                 channel={channelNames[currentChannel]}
                 channelTitle={`${channelNames[currentChannel]} preview`}
                 subjectPreviewContent={subjectPreview}
                 bodyPreviewContent={bodyPreview}
+                contactPhoneNumber={contact?.phoneNumber}
               />
             </PreviewTemplateContainer>
           </NotificationTemplateEditorContainer>
