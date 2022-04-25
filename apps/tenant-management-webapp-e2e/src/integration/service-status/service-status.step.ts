@@ -620,8 +620,7 @@ Then(
             //clicking eye icon to close event details
             cy.wrap($element).click();
             if ($index + 1 == $full_array.length) {
-              cy.log('No matching email found throughout list of event details');
-              expect(eventDetails).to.contain(email);
+              expect.fail('No matching email found throughout list of event details');
             }
           }
         });
