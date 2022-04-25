@@ -14,7 +14,7 @@ const passportMiddleware = passport.authenticate(['jwt', 'jwt-tenant'], { sessio
 
 import axios from 'axios';
 import { Service, Links } from '../../directory/types/directory';
-import { getNamespace } from './GetNamespace';
+import { getNamespaceEntries } from './getNamespaceEntries';
 
 export interface URNComponent {
   scheme?: string;
@@ -39,7 +39,16 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
   /**
    * Get all directory entries
    */
-  directoryRouter.get('/namespaces/:namespace/entries', getNamespace(directoryRepository));
+  directoryRouter.get('/namespaces/:namespace/entries', async (req: Request, res: Response, _next) => {
+    let entries = [];
+    try {
+      const { namespace } = req.params;
+      entries = await getNamespaceEntries(directoryRepository, namespace);
+    } catch (err) {
+      _next(err);
+    }
+    res.json(entries);
+  });
 
   /*
    * Create new namespace.
