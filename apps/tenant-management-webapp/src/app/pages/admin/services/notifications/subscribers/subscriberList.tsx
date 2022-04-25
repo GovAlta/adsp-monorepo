@@ -20,6 +20,14 @@ interface ActionComponentProps {
   hideUserActions?: boolean;
 }
 
+const phoneWrapper = (phoneNumber) => {
+  if (phoneNumber) {
+    return (
+      '1 (' + phoneNumber.substring(0, 3) + ') ' + phoneNumber.substring(3, 6) + '-' + phoneNumber.substring(6, 10)
+    );
+  }
+};
+
 const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
   subscriber,
   openModalFunction,
@@ -50,7 +58,7 @@ const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
         <td>{characterLimit(subscriber?.addressAs, 30)}</td>
         <td>{characterLimit(email, 30)}</td>
         <td>
-          <span style={{ whiteSpace: 'nowrap' }}>{sms}</span>
+          <span style={{ whiteSpace: 'nowrap' }}>{phoneWrapper(sms)}</span>
         </td>
         {!hideUserActions ? (
           <td>
