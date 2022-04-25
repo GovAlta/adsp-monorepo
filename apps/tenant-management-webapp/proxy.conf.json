@@ -16,7 +16,7 @@
   },
   "/health": {
     "target": "http://localhost:3333",
-    "secure": true,
+    "secure": false,
     "changeOrigin": true
   }
 }
