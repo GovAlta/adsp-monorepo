@@ -22,8 +22,8 @@ interface NotificationTypeFormProps {
 
 const channels = [
   { value: 'email', title: 'Email' },
-  { value: 'bot', title: 'Slack bot' },
-  { value: 'sms', title: 'Text Message' },
+  { value: 'bot', title: 'Bot' },
+  { value: 'sms', title: 'SMS' },
 ];
 
 const IdField = styled.div`
@@ -43,7 +43,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   const [type, setType] = useState(initialValue);
 
   useEffect(() => {
-    setType(initialValue);
+    setType(JSON.parse(JSON.stringify(initialValue)));
   }, [initialValue]);
 
   const realmRoles = useSelector((state: RootState) => state.tenant.realmRoles);
@@ -144,7 +144,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 ))}
               </GoADropdown>
             </GoAFormItem>
-            <GoAFormItem>
+            <GoAFormItem error={errors?.['channels']}>
               <label>Select Notification Channels</label>
               <div key="select channel" style={{ display: 'flex', flexDirection: 'row' }}>
                 {channels.map((channel, key) => {

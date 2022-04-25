@@ -59,7 +59,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
   const previewByType = {
     Email: <EmailPreview />,
     SMS: <SmsPreview />,
-    'Slack bot': <BotPreview />,
+    Bot: <BotPreview />,
   };
 
   return <PreviewContainer>{previewByType[channel]}</PreviewContainer>;

@@ -119,7 +119,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     return state.session.indicator;
   });
 
-  const channelNames = { email: 'Email', bot: 'Slack bot', sms: 'SMS' };
+  const channelNames = { email: 'Email', bot: 'Bot', sms: 'SMS' };
   const channelIcons = {
     email: <Mail style={{ color: '#666666' }} />,
     sms: <Chat style={{ color: '#666666' }} />,
@@ -682,7 +682,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           const isDuplicatedName =
             notification.notificationTypes &&
             isDuplicatedNotificationName(coreNotification, notification.notificationTypes, selectedType, type.name);
-          if (isDuplicatedName) {
+          if (type.channels.length === 0) {
+            setErrors({ channels: 'Please select at least one channel.' });
+          } else if (isDuplicatedName) {
             setErrors({ name: 'Duplicated name of notification type.' });
           } else {
             dispatch(UpdateNotificationTypeService(type));
