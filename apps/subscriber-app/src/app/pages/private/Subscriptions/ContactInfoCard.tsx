@@ -101,7 +101,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
     }
 
     if (preferredChannel === Channels.sms && !SMSContactInformation) {
-      setFormErrors({ sms: 'SMS is the set as the preferred channel. A valid SMS number is required.' });
+      setFormErrors({ sms: 'SMS is set as the preferred channel. A valid SMS number is required.' });
       return;
     }
 
