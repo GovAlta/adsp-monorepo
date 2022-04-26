@@ -268,7 +268,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                   </div>
                 </GridItem>
                 <GridItem md={5}>
-                  <Label>My primary notification channel</Label>
+                  <Label>My preferred notification channel</Label>
                   <GoARadio
                     key="channel-preference-email"
                     value={Channels.email}
