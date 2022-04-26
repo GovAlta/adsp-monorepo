@@ -35,7 +35,9 @@ export const Configuration: FunctionComponent = () => {
           <a
             rel="noopener noreferrer"
             target="_blank"
-            href={`${docBaseUrl}/${tenantName}?urls.primaryName=Configuration service`}
+            href={`${docBaseUrl}/${tenantName
+              ?.toLowerCase()
+              .replace(/ /g, '-')}?urls.primaryName=Configuration service`}
           >
             Read the API docs
           </a>

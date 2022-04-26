@@ -50,7 +50,11 @@ export const DirectoryOverview: FunctionComponent = () => {
         </Example>
         <p>
           Include the Swagger JSON URL in this metadata to have the{' '}
-          <a rel="noopener noreferrer" target="_blank" href={`${docBaseUrl}/${tenantName}`}>
+          <a
+            rel="noopener noreferrer"
+            target="_blank"
+            href={`${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}`}
+          >
             API docs application
           </a>{' '}
           aggregate your API along with platform APIs.
