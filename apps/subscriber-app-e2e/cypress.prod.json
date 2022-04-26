@@ -1,6 +1,9 @@
 {
   "env": {
     "env-name": "PROD",
+    "email": "auto.test@gov.ab.ca",
+    "password": "",
+    "realm": "6b1dd8dc-fb74-4251-a5b8-7f0920dd4166",
     "TAGS": ""
   },
   "baseUrl": "https://subscription.adsp.alberta.ca/",
