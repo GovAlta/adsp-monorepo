@@ -153,4 +153,3 @@ Feature: Notifications
       | Email              | Phone                 | Instructions  |
       | rnd{abc@gov.ab.ca} | rnd{1 (780) 567-1456} | rnd{autotest} |
 
-
