@@ -164,7 +164,7 @@ class NotificationServiceImpl implements NotificationService {
           tenant: tenantId?.toString(),
         }
       );
-      throw err;
+      return false;
     }
   }
 }
