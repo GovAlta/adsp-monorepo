@@ -221,7 +221,7 @@ export function getSubscribers(apiId: AdspId, repository: SubscriptionRepository
     try {
       const tenantId = req.tenant.id;
       const user = req.user;
-      const { top: topValue, after, email, name } = req.query;
+      const { top: topValue, after, email, sms, name } = req.query;
       const top = topValue ? parseInt(topValue as string, 10) : 10;
 
       if (!isAllowedUser(user, tenantId, ServiceUserRoles.SubscriptionAdmin, true)) {
@@ -231,6 +231,7 @@ export function getSubscribers(apiId: AdspId, repository: SubscriptionRepository
         tenantIdEquals: tenantId,
         name: name as string | undefined,
         email: email as string | undefined,
+        sms: sms as string | undefined,
       };
 
       const result = await repository.findSubscribers(top, after as string, criteria);
@@ -508,7 +509,7 @@ export const createSubscriptionRouter = ({
   subscriptionRouter.get(
     '/types/:type/subscriptions',
     validateTypeHandler,
-    createValidationHandler(query('top').optional().isInt(), query('after').optional().isString()),
+    createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
     getNotificationType,
     getTypeSubscriptions(apiId, subscriptionRepository)
   );
@@ -556,7 +557,7 @@ export const createSubscriptionRouter = ({
 
   subscriptionRouter.get(
     '/subscribers',
-    createValidationHandler(query('top').optional().isInt(), query('after').optional().isString()),
+    createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
     getSubscribers(apiId, subscriptionRepository)
   );
   subscriptionRouter.post('/subscribers', createSubscriber(apiId, subscriptionRepository));
@@ -616,7 +617,7 @@ export const createSubscriptionRouter = ({
   subscriptionRouter.get(
     '/subscribers/:subscriber/subscriptions',
     validateSubscriberHandler,
-    createValidationHandler(query('top').optional().isInt(), query('after').optional().isString()),
+    createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
     getSubscriber(subscriptionRepository),
     getSubscriberSubscriptions(apiId, subscriptionRepository)
   );

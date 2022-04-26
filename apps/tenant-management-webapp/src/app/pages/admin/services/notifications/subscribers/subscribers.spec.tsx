@@ -19,6 +19,11 @@ describe('Notification - Subscribers Tab', () => {
           address: 'jonathan.weyermann@gov.ab.ca',
           verified: false,
         },
+        {
+          channel: 'sms',
+          address: '1234561234',
+          verified: false,
+        },
       ],
     },
     '61bd151b6d95d24f4cf632cc': {
@@ -107,23 +112,5 @@ describe('Notification - Subscribers Tab', () => {
 
     const saveAction = actions.find((action) => action.type === UPDATE_SUBSCRIBER);
     expect(saveAction).toBeTruthy();
-  });
-
-  it('edits the subscriber', async () => {
-    const { queryByTestId } = render(
-      <Provider store={store}>
-        <Subscribers />
-      </Provider>
-    );
-    const editBtn = queryByTestId('edit-subscription-item-61bd151b6d95d24f4cf632c1');
-    await waitFor(() => {
-      fireEvent.click(editBtn);
-    });
-
-    const name = queryByTestId('form-name');
-    const email = queryByTestId('form-slack');
-
-    expect(name).not.toBeNull();
-    expect(email).not.toBeNull();
   });
 });

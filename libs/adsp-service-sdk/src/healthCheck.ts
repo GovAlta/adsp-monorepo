@@ -43,19 +43,19 @@ export const createHealthCheck = (
       const accessHealthUrl = new URL('/auth/realms/core/.well-known/openid-configuration', accessServiceUrl);
       const accessHealth = exclude.access || (await checkServiceHealth(logger, accessHealthUrl));
 
-      const directoryHealthUrl = new URL('/health', directoryUrl);
+      const directoryHealthUrl = new URL('/', directoryUrl);
       const directoryHealth = exclude.directory || (await checkServiceHealth(logger, directoryHealthUrl));
 
       const tenantUrl = await directory.getServiceUrl(adspId`urn:ads:platform:tenant-service`);
-      const tenantHealthUrl = new URL('/health', tenantUrl);
+      const tenantHealthUrl = new URL('/', tenantUrl);
       const tenantHealth = exclude.tenant || (await checkServiceHealth(logger, tenantHealthUrl));
 
       const configurationUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service`);
-      const configurationHealthUrl = new URL('/health', configurationUrl);
+      const configurationHealthUrl = new URL('/', configurationUrl);
       const configurationHealth = exclude.configuration || (await checkServiceHealth(logger, configurationHealthUrl));
 
       const eventUrl = await directory.getServiceUrl(adspId`urn:ads:platform:event-service`);
-      const eventHealthUrl = new URL('/health', eventUrl);
+      const eventHealthUrl = new URL('/', eventUrl);
       const eventHealth = exclude.event || (await checkServiceHealth(logger, eventHealthUrl));
 
       results = {

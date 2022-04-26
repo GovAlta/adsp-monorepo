@@ -234,9 +234,6 @@ Then('the user {string} {string} for {string} in {string}', function (viewOrNot,
       case 'email template indicator':
         notificationsObj.internalNotificationTypeEventMailIcon(typeName, eventName).should('exist');
         break;
-      case 'Preview link':
-        notificationsObj.internalNotificationTypeEventPreviewLink(typeName, eventName).should('exist');
-        break;
       case 'Edit button':
         notificationsObj.internalNotificationTypeEventEditButton(typeName, eventName).should('exist');
         break;
@@ -251,9 +248,6 @@ Then('the user {string} {string} for {string} in {string}', function (viewOrNot,
       case 'email template indicator':
         notificationsObj.internalNotificationTypeEventMailIcon(typeName, eventName).should('not.exist');
         break;
-      case 'Preview link':
-        notificationsObj.internalNotificationTypeEventPreviewLink(typeName, eventName).should('not.exist');
-        break;
       case 'Edit button':
         notificationsObj.internalNotificationTypeEventEditButton(typeName, eventName).should('not.exist');
         break;
@@ -266,10 +260,6 @@ Then('the user {string} {string} for {string} in {string}', function (viewOrNot,
   } else {
     expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
   }
-});
-
-When('the user clicks Preview button on {string} in {string}', function (eventName, typeName) {
-  notificationsObj.internalNotificationTypeEventPreviewLink(typeName, eventName).click();
 });
 
 Then('the user views Preview an email template modal', function () {
