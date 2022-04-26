@@ -1,34 +1,33 @@
-const theRoot = 0;
-const theNamespaces = 1;
-const theNamespace = 2;
-const theEntries = 3;
-const theServices = 3;
-const theService = 4;
-const theApis = 5;
-const theApi = 6;
-
 export class DirectoryServicePathBuilder {
   private path: string[];
+  private readonly theRoot = 0;
+  private readonly theNamespaces = 1;
+  private readonly theNamespace = 2;
+  private readonly theEntries = 3;
+  private readonly theServices = 3;
+  private readonly theService = 4;
+  private readonly theApis = 5;
+  private readonly theApi = 6;
 
   constructor(root?: string) {
     this.path = new Array(7);
-    this.path[theRoot] = root ? `/${root}` : '';
-    this.path[theNamespaces] = 'namespaces';
+    this.path[this.theRoot] = root ? `/${root}` : '';
+    this.path[this.theNamespaces] = 'namespaces';
   }
 
   namespace(namespace: string): DirectoryServicePathBuilder {
-    this.path[theNamespace] = namespace;
+    this.path[this.theNamespace] = namespace;
     return this;
   }
 
   entries(namespace?: string): DirectoryServicePathBuilder {
-    if (this.path[theEntries] === 'services') {
+    if (this.path[this.theEntries] === 'services') {
       throw Error('Illegal State');
     }
     if (namespace) {
-      this.path[theNamespace] = namespace;
+      this.path[this.theNamespace] = namespace;
     }
-    this.path[theEntries] = 'entries';
+    this.path[this.theEntries] = 'entries';
     return this;
   }
 
@@ -36,16 +35,16 @@ export class DirectoryServicePathBuilder {
     if (namespace) {
       this.namespace(namespace);
     }
-    this.path[theServices] = 'services';
+    this.path[this.theServices] = 'services';
     return this;
   }
 
   service(service: string, namespace?: string): DirectoryServicePathBuilder {
-    if (this.path[theServices] === 'entries') {
+    if (this.path[this.theServices] === 'entries') {
       throw Error('Illegal State');
     }
     this.services(namespace);
-    this.path[theService] = service;
+    this.path[this.theService] = service;
     return this;
   }
 
@@ -53,7 +52,7 @@ export class DirectoryServicePathBuilder {
     if (service) {
       this.service(service, namespace);
     }
-    this.path[theApis] = 'apis';
+    this.path[this.theApis] = 'apis';
     return this;
   }
 
@@ -61,7 +60,7 @@ export class DirectoryServicePathBuilder {
     if (service) {
       this.apis(service, namespace);
     }
-    this.path[theApi] = api;
+    this.path[this.theApi] = api;
     return this;
   }
 
