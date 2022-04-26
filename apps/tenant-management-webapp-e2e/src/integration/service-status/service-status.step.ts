@@ -580,16 +580,17 @@ Then('the user views the status of {string} changed to the first unused status',
     .applicationCardStatusBadge(appName)
     .invoke('text')
     .then((statusValue) => {
-      cy.log('New Status: ' + statusValue);
+      cy.log('Badge Status: ' + statusValue);
+      const badgeValue = String(statusValue.toLowerCase());
+      expect(badgeValue).to.equal(newStatus);
+      expect(badgeValue).not.to.equal(originalStatus.toLowerCase());
     });
-  expect(newStatus).not.to.equal(originalStatus);
 });
 
 Then(
   'the user should find the event details of {string} application status changed from {string} to {string} for subscriber of {string}',
   function (appName, orgStatusValidationStr, newStatusValidationStr, email) {
     const orgStatusInput = orgStatusValidationStr.match(/(.*{original status}.*)/g);
-
     if (orgStatusInput == null) {
       orgStatusValidationStr = 'The original status was: ' + orgStatusValidationStr;
     } else {
