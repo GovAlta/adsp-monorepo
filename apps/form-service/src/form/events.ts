@@ -29,8 +29,8 @@ const formSchema = {
     id: { type: 'string' },
     status: { type: 'string' },
     created: { type: 'string', format: 'date-time' },
-    locked: { type: 'string', format: 'date-time' },
-    submitted: { type: 'string', format: 'date-time' },
+    locked: { oneOf: [{ type: 'string', format: 'date-time' }, { type: 'null' }] },
+    submitted: { oneOf: [{ type: 'string', format: 'date-time' }, { type: 'null' }] },
     lastAccessed: { type: 'string', format: 'date-time' },
   },
 };

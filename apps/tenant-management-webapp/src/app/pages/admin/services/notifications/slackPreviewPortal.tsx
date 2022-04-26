@@ -14,17 +14,19 @@ export const SlackPreviewPortal: FunctionComponent<SlackPreviewPortalProps> = ({
     const time = new Date();
     return (
       <div className="flexColumn">
-        <div className="appNotificationHeader">
-          <b className="adspHeader">ADSP Notifications</b>
-          <div className="appBadge">APP</div>
-          <div className="appTime">
-            {time.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+        <div>
+          <div className="appNotificationHeader">
+            <b className="adspHeader">ADSP Notifications</b>
+            <div className="appBadge">APP</div>
+            <div className="appTime">
+              {time.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+            </div>
           </div>
+          <b>
+            <ReactMarkdown children={subject} rehypePlugins={[rehypeRaw]} />
+          </b>
+          <ReactMarkdown children={body} rehypePlugins={[rehypeRaw]} />
         </div>
-        <b>
-          <ReactMarkdown children={subject} rehypePlugins={[rehypeRaw]} />
-        </b>
-        <ReactMarkdown children={body} rehypePlugins={[rehypeRaw]} />
       </div>
     );
   };

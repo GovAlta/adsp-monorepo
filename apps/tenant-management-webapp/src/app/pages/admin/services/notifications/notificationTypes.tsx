@@ -106,6 +106,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const subscriberAppUrl = useSelector(subscriberAppUrlSelector);
   const htmlPayload = dynamicGeneratePayload(tenant, eventDef, subscriberAppUrl);
   const serviceName = `${selectedEvent?.namespace}:${selectedEvent?.name}`;
+  const contact = useSelector((state: RootState) => state.notification.supportContact);
 
   const getEventSuggestion = () => {
     if (eventDef) {
@@ -118,7 +119,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     return state.session.indicator;
   });
 
-  const channelNames = { email: 'Email', bot: 'Slack bot', sms: 'Text message' };
+  const channelNames = { email: 'Email', bot: 'Bot', sms: 'SMS' };
   const channelIcons = {
     email: <Mail style={{ color: '#666666' }} />,
     sms: <Chat style={{ color: '#666666' }} />,
@@ -313,14 +314,12 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     <NotificationStyles>
       <div>
         <p>
-          Notification types represent a bundled set of notifications that can be subscribed to and provides the access
-          roles for that set. For example, a ‘Application Progress’ type could include notifications for submission of
-          the application, processing started, and application processed.
+          Notification types represent a bundled set of notifications that can be subscribed to. For example, an
+          ‘Application Progress’ type could include notifications for submission of the application, processing started,
+          and application processed.
         </p>
         <p>
-          A subscriber has a subscription to the set and cannot subscribe to the individual notifications in the set.
-          Notification types are configured in the configuration service under the platform:notification-service
-          namespace and name.
+          A subscriber has a subscription to the whole set and cannot subscribe to individual notifications in the set.
         </p>
       </div>
       <Buttons>
@@ -438,7 +437,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                             <div className="flex3 endAlign">
                               <div className="flex rowFlex">
                                 {notificationType.sortedChannels.map((channel) => (
-                                  <div key={channel} className="nonCoreIconPadding flex1" data-testid={`tenant-${channel}-channel`}>
+                                  <div
+                                    key={channel}
+                                    className="nonCoreIconPadding flex1"
+                                    data-testid={`tenant-${channel}-channel`}
+                                  >
                                     {channelIcons[channel]}
                                     {(event.templates[channel]?.subject?.length === 0 ||
                                       event.templates[channel]?.body?.length === 0) && (
@@ -551,7 +554,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                               <div className="flex5 endAlign">
                                 <div className="flex rowFlex">
                                   {notificationType.sortedChannels.map((channel) => (
-                                    <div key={channel} className="flex1 coreIconPadding" data-testid={`core-${channel}-channel`}>
+                                    <div
+                                      key={channel}
+                                      className="flex1 coreIconPadding"
+                                      data-testid={`core-${channel}-channel`}
+                                    >
                                       {channelIcons[channel]}
                                       {(event.templates[channel]?.subject?.length === 0 ||
                                         event.templates[channel]?.body?.length === 0) && (
@@ -673,7 +680,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           const isDuplicatedName =
             notification.notificationTypes &&
             isDuplicatedNotificationName(coreNotification, notification.notificationTypes, selectedType, type.name);
-          if (isDuplicatedName) {
+          if (type.channels.length === 0) {
+            setErrors({ channels: 'Please select at least one channel.' });
+          } else if (isDuplicatedName) {
             setErrors({ name: 'Duplicated name of notification type.' });
           } else {
             dispatch(UpdateNotificationTypeService(type));
@@ -766,11 +775,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             />
             <PreviewTemplateContainer>
               <PreviewTemplate
-                subjectTitle="Subject"
                 channel={channelNames[currentChannel]}
                 channelTitle={`${channelNames[currentChannel]} preview`}
                 subjectPreviewContent={subjectPreview}
                 bodyPreviewContent={bodyPreview}
+                contactPhoneNumber={contact?.phoneNumber}
               />
             </PreviewTemplateContainer>
           </NotificationTemplateEditorContainer>

@@ -8,8 +8,28 @@ export interface ConfigurationDefinitionTypes {
 export interface ConfigurationState {
   coreConfigDefinitions: Record<string, unknown>;
   tenantConfigDefinitions: Record<string, unknown>;
-  isLoading: {
-    definitions: boolean;
-    log: boolean;
-  };
+  isAddedFromOverviewPage: boolean;
 }
+
+export interface ConfigDefinition {
+  name: string;
+  namespace: string;
+  payloadSchema: ConfigurationSchema;
+}
+
+export interface ConfigurationSchema {
+  type: string;
+  properties: Record<string, unknown>;
+  required: string[];
+  additionalProperties: boolean;
+}
+export const defaultConfigDefinition: ConfigDefinition = {
+  namespace: '',
+  name: '',
+  payloadSchema: {
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: true,
+  },
+};

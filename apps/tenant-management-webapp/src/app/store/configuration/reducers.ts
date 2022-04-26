@@ -1,14 +1,16 @@
 import {
   ConfigurationActionTypes,
+  DELETE_CONFIGURATION_ACTION_SUCCESS,
   FETCH_CONFIGURATION_DEFINITIONS_ACTION,
   FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION,
+  UPDATE_CONFIGURATION__DEFINITION_SUCCESS_ACTION,
 } from './action';
 import { ConfigurationState } from './model';
 
 const defaultState: ConfigurationState = {
   coreConfigDefinitions: undefined,
   tenantConfigDefinitions: undefined,
-  isLoading: { definitions: false, log: false },
+  isAddedFromOverviewPage: false,
 };
 
 export default function (
@@ -19,19 +21,26 @@ export default function (
     case FETCH_CONFIGURATION_DEFINITIONS_ACTION:
       return {
         ...state,
-        isLoading: {
-          ...state.isLoading,
-          definitions: true,
-        },
+        isAddedFromOverviewPage: false,
       };
     case FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION:
       return {
+        ...state,
         coreConfigDefinitions: action.payload.core,
         tenantConfigDefinitions: action.payload.tenant,
-        isLoading: {
-          ...state.isLoading,
-          definitions: false,
-        },
+        isAddedFromOverviewPage: false,
+      };
+    case UPDATE_CONFIGURATION__DEFINITION_SUCCESS_ACTION:
+      return {
+        ...state,
+        tenantConfigDefinitions: action.payload,
+        isAddedFromOverviewPage: action.isAddedFromOverviewPage,
+      };
+    case DELETE_CONFIGURATION_ACTION_SUCCESS:
+      return {
+        ...state,
+        tenantConfigDefinitions: action.payload,
+        isAddedFromOverviewPage: false,
       };
     default:
       return state;

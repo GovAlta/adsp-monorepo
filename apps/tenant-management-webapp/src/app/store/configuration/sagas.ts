@@ -1,15 +1,20 @@
 import axios from 'axios';
 import {
+  DeleteConfigurationDefinitionAction,
+  deleteConfigurationDefinitionSuccess,
+  DELETE_CONFIGURATION_ACTION,
   FetchConfigurationDefinitionsAction,
   FETCH_CONFIGURATION_DEFINITIONS_ACTION,
   getConfigurationDefinitionsSuccess,
+  UpdateConfigurationDefinitionAction,
+  updateConfigurationDefinitionSuccess,
+  UPDATE_CONFIGURATION_DEFINITION_ACTION,
 } from './action';
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '..';
-import { select, call, put, takeEvery, takeLatest, all } from 'redux-saga/effects';
+import { select, call, put, takeEvery, all, delay } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
-import { ConfigurationDefinitionTypes } from './model';
 
 export function* fetchConfigurationDefinitions(action: FetchConfigurationDefinitionsAction): SagaIterator {
   yield put(
@@ -62,6 +67,65 @@ export function* fetchConfigurationDefinitions(action: FetchConfigurationDefinit
     }
   }
 }
+
+export function* updateConfigurationDefinition({
+  definition,
+  isAddedFromOverviewPage,
+}: UpdateConfigurationDefinitionAction): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  if (baseUrl && token) {
+    try {
+      const namespaceUpdate = {
+        configurationSchema: definition.payloadSchema,
+      };
+      const body = { operation: 'UPDATE', update: { [`${definition.namespace}:${definition.name}`]: namespaceUpdate } };
+      const {
+        data: { latest },
+      } = yield call(axios.patch, `${baseUrl}/configuration/v2/configuration/platform/configuration-service`, body, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      yield put(
+        updateConfigurationDefinitionSuccess(
+          {
+            ...latest.configuration,
+          },
+          isAddedFromOverviewPage
+        )
+      );
+    } catch (err) {
+      yield put(ErrorNotification({ message: err.message }));
+    }
+  }
+}
+
+export function* deleteConfigurationDefinition({ definitionName }: DeleteConfigurationDefinitionAction): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  if (baseUrl && token) {
+    try {
+      const {
+        data: { latest },
+      } = yield call(
+        axios.patch,
+        `${baseUrl}/configuration/v2/configuration/platform/configuration-service`,
+        { operation: 'DELETE', property: definitionName },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      yield put(deleteConfigurationDefinitionSuccess({ ...latest.configuration }));
+    } catch (err) {
+      yield put(ErrorNotification({ message: err.message }));
+    }
+  }
+}
+
 export function* watchConfigurationSagas(): Generator {
   yield takeEvery(FETCH_CONFIGURATION_DEFINITIONS_ACTION, fetchConfigurationDefinitions);
+  yield takeEvery(UPDATE_CONFIGURATION_DEFINITION_ACTION, updateConfigurationDefinition);
+  yield takeEvery(DELETE_CONFIGURATION_ACTION, deleteConfigurationDefinition);
 }
