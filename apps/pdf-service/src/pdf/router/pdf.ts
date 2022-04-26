@@ -4,6 +4,7 @@ import { Request, RequestHandler, Response, Router } from 'express';
 import { body, param } from 'express-validator';
 import { Logger } from 'winston';
 import { pdfGenerationQueued } from '../events';
+import { GENERATED_PDF } from '../fileTypes';
 import { PdfServiceWorkItem } from '../job';
 import { PdfTemplateEntity } from '../model';
 import { PdfJobRepository } from '../repository';
@@ -46,23 +47,26 @@ export const getTemplates: RequestHandler = async (req, res, next) => {
 };
 
 const TEMPLATE = 'template';
-export const getTemplate: RequestHandler = async (req, res, next) => {
-  try {
-    const { templateId } = req.params;
-    const [configuration] = await req.getConfiguration<Record<string, PdfTemplateEntity>>();
-    const template = configuration[templateId];
-    if (!template) {
-      throw new NotFoundError('PDF Template', templateId);
-    }
+export function getTemplate(templateIn: 'params' | 'body'): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const { templateId } = req[templateIn];
+      const [configuration] = await req.getConfiguration<Record<string, PdfTemplateEntity>>();
+      const template = configuration[templateId];
+      if (!template) {
+        throw new NotFoundError('PDF Template', templateId);
+      }
 
-    req[TEMPLATE] = template;
-    next();
-  } catch (err) {
-    next(err);
-  }
-};
+      req[TEMPLATE] = template;
+      next();
+    } catch (err) {
+      next(err);
+    }
+  };
+}
 
 export function generatePdf(
+  serviceId: AdspId,
   repository: PdfJobRepository,
   eventService: EventService,
   queueService: WorkQueueService<PdfServiceWorkItem>
@@ -71,31 +75,33 @@ export function generatePdf(
     try {
       const user = req.user;
       const tenantId = req.tenant.id;
-      const { templateId, filename, data } = req.body;
+      const { templateId, fileType, filename, recordId, data } = req.body;
       const template: PdfTemplateEntity = req[TEMPLATE];
 
       if (!isAllowedUser(user, template.tenantId, ServiceRoles.PdfGenerator)) {
         throw new UnauthorizedUserError('generate pdf', user);
       }
 
-      const { id: jobId } = await repository.create(tenantId);
+      const job = await repository.create(tenantId);
       await queueService.enqueue({
         timestamp: new Date(),
         work: 'generate',
-        jobId,
+        jobId: job.id,
         tenantId: `${tenantId}`,
+        fileType: fileType || GENERATED_PDF,
         templateId,
         filename,
-        data,
-        generatedBy: {
+        recordId: recordId || job.id,
+        data: data || {},
+        requestedBy: {
           id: user.id,
           name: user.name,
         },
       });
 
-      eventService.send(pdfGenerationQueued(tenantId, jobId, templateId, { id: user.id, name: user.name }));
+      eventService.send(pdfGenerationQueued(tenantId, job.id, templateId, { id: user.id, name: user.name }));
 
-      res.send({ id: jobId });
+      res.send(mapJob(serviceId, job));
     } catch (err) {
       next(err);
     }
@@ -132,25 +138,23 @@ export function createPdfRouter({ serviceId, repository, eventService, queueServ
   router.get(
     '/templates/:templateId',
     createValidationHandler(param('templateId').isString().isLength({ min: 1, max: 50 })),
-    getTemplate,
+    getTemplate('params'),
     (req: Request, res: Response) => res.send(mapPdfTemplate(req[TEMPLATE]))
   );
   router.post(
     '/jobs',
     createValidationHandler(
+      body('operation').isIn(['generate']),
       body('templateId').isString().isLength({ min: 1, max: 50 }),
+      body('data').optional().isObject(),
       body('filename').isString().isLength({ min: 1, max: 50 }),
-      body('data').optional().isObject()
+      body('fileType').optional().isString().isLength({ min: 1, max: 50 }),
+      body('recordId').optional().isString()
     ),
-    getTemplate,
-    generatePdf(repository, eventService, queueService)
+    getTemplate('body'),
+    generatePdf(serviceId, repository, eventService, queueService)
   );
-  router.get(
-    '/jobs/:jobId',
-    createValidationHandler(param('jobId').isUUID()),
-    getTemplate,
-    getGeneratedFile(serviceId, repository)
-  );
+  router.get('/jobs/:jobId', createValidationHandler(param('jobId').isUUID()), getGeneratedFile(serviceId, repository));
 
   return router;
 }

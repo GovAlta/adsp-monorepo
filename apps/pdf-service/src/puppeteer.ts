@@ -1,14 +1,13 @@
 import * as puppeteer from 'puppeteer';
-import { Readable } from 'stream';
 import { PdfService } from './pdf';
 
 class PuppeteerPdfService implements PdfService {
-  async generatePdf(content: string): Promise<Readable> {
+  async generatePdf(content: string): Promise<Buffer> {
     const browser = await puppeteer.launch({ headless: true, args: ['--disable-dev-shm-usage'] });
     try {
       const page = await browser.newPage();
       await page.setContent(content);
-      return await page.createPDFStream();
+      return await page.pdf({ printBackground: true });
     } finally {
       await browser.close();
     }

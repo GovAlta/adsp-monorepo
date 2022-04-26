@@ -18,4 +18,7 @@ module.exports = {
     '^@pages(.*)$': resolve(__dirname, './src/app/pages/$1'),
     '^@store(.*)$': resolve(__dirname, './src/app/store/$1'),
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!react-markdown|vfile|unist-util-stringify-position|unified|bail|is-plain-obj|trough|remark-parse|mdast-util-from-markdown|mdast-util-to-string|micromark|decode-named-character-reference|character-entities|remark-rehype|mdast-util-to-hast|unist-builder|unist-util-visit|unist-util-is|unist-util-position|unist-util-generated|mdast-util-definitions|property-information|hast-util-whitespace|space-separated-tokens|comma-separated-tokens|rehype-raw|hast-util-raw|hast-util-from-parse5|hastscript|hast-util-parse-selector|web-namespaces|hast-util-to-parse5|hast-to-hyperscript|zwitch|hast-util-raw|html-void-elements)',
+  ],
 };

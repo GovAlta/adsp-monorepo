@@ -101,9 +101,8 @@ const Subscriptions = (): JSX.Element => {
           <h1 data-testid="service-name">Subscription management</h1>
           <DescriptionWrapper>
             <p data-testid="service-description">
-              Use this page to manage notifications from the services of Government of Alberta. Please note,
-              unsubscribing from some notifications might require additional verification from the government
-              authorities.
+              Use this page to manage your contact information and subscriptions. Please note that you need to contact
+              support to modify some subscriptions.
             </p>
           </DescriptionWrapper>
           {showUnSubscribeModal ? unSubscribeModal() : ''}

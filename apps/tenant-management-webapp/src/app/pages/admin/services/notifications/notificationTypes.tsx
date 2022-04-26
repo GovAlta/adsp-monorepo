@@ -106,6 +106,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const subscriberAppUrl = useSelector(subscriberAppUrlSelector);
   const htmlPayload = dynamicGeneratePayload(tenant, eventDef, subscriberAppUrl);
   const serviceName = `${selectedEvent?.namespace}:${selectedEvent?.name}`;
+  const contact = useSelector((state: RootState) => state.notification.supportContact);
 
   const getEventSuggestion = () => {
     if (eventDef) {
@@ -114,7 +115,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     return [];
   };
 
-  const channelNames = { email: 'Email', bot: 'Slack bot', sms: 'Text message' };
+  const indicator = useSelector((state: RootState) => {
+    return state.session.indicator;
+  });
+
+  const channelNames = { email: 'Email', bot: 'Bot', sms: 'SMS' };
   const channelIcons = {
     email: <Mail style={{ color: '#666666' }} />,
     sms: <Chat style={{ color: '#666666' }} />,
@@ -159,6 +164,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       }
     }
   }, [selectedEvent]);
+  // eslint-disable-next-line
+  useEffect(() => {}, [indicator]);
 
   useEffect(() => {
     dispatch(FetchNotificationConfigurationService());
@@ -432,11 +439,15 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                             <div className="flex3 endAlign">
                               <div className="flex rowFlex">
                                 {notificationType.sortedChannels.map((channel) => (
-                                  <div className="nonCoreIconPadding flex1" data-testid="tenant-channel">
+                                  <div
+                                    key={channel}
+                                    className="nonCoreIconPadding flex1"
+                                    data-testid={`tenant-${channel}-channel`}
+                                  >
                                     {channelIcons[channel]}
                                     {(event.templates[channel]?.subject?.length === 0 ||
                                       event.templates[channel]?.body?.length === 0) && (
-                                      <div className="icon-badge" data-testid="tenant-channel-badge">
+                                      <div className="icon-badge" data-testid={`tenant-${channel}-channel-badge`}>
                                         !
                                       </div>
                                     )}
@@ -545,11 +556,15 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                               <div className="flex5 endAlign">
                                 <div className="flex rowFlex">
                                   {notificationType.sortedChannels.map((channel) => (
-                                    <div className="flex1 coreIconPadding" data-testid="core-channel">
+                                    <div
+                                      key={channel}
+                                      className="flex1 coreIconPadding"
+                                      data-testid={`core-${channel}-channel`}
+                                    >
                                       {channelIcons[channel]}
                                       {(event.templates[channel]?.subject?.length === 0 ||
                                         event.templates[channel]?.body?.length === 0) && (
-                                        <div className="icon-badge" data-testid="core-channel-badge">
+                                        <div className="icon-badge" data-testid={`core-${channel}-channel-badge`}>
                                           !
                                         </div>
                                       )}
@@ -598,7 +613,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             </GoACard>
           </div>
         ))}
-      {notification.notificationTypes === undefined && <IndicatorWithDelay message="Loading..." pageLock={false} />}
+      {indicator && indicator.show && <IndicatorWithDelay message="Loading..." pageLock={false} />}
       {/* Delete confirmation */}
 
       {showDeleteConfirmation && (
@@ -667,7 +682,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           const isDuplicatedName =
             notification.notificationTypes &&
             isDuplicatedNotificationName(coreNotification, notification.notificationTypes, selectedType, type.name);
-          if (isDuplicatedName) {
+          if (type.channels.length === 0) {
+            setErrors({ channels: 'Please select at least one channel.' });
+          } else if (isDuplicatedName) {
             setErrors({ name: 'Duplicated name of notification type.' });
           } else {
             dispatch(UpdateNotificationTypeService(type));
@@ -760,11 +777,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             />
             <PreviewTemplateContainer>
               <PreviewTemplate
-                subjectTitle="Subject"
                 channel={channelNames[currentChannel]}
                 channelTitle={`${channelNames[currentChannel]} preview`}
                 subjectPreviewContent={subjectPreview}
                 bodyPreviewContent={bodyPreview}
+                contactPhoneNumber={contact?.phoneNumber}
               />
             </PreviewTemplateContainer>
           </NotificationTemplateEditorContainer>

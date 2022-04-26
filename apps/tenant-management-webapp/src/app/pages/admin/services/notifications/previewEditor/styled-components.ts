@@ -1,7 +1,7 @@
 import styled, { createGlobalStyle } from 'styled-components';
 import { PreviewPortal } from '../previewPortal';
 import { SlackPreviewPortal } from '../slackPreviewPortal';
-
+import { SmsPreviewPortal } from '../smsPreviewPortal';
 export const NotificationTemplateEditorContainer = styled.div`
   display: flex;
   padding-left: 3rem;
@@ -108,6 +108,15 @@ export const BodyPreview = styled(PreviewPortal)`
 `;
 
 export const SlackPreview = styled(SlackPreviewPortal)`
+  background-color: white;
+  overflow: hidden;
+  &:hover {
+    overflow: auto;
+  }
+  flex-grow: 1;
+  margin-bottom: 2rem;
+`;
+export const SMSBodyPreview = styled(SmsPreviewPortal)`
   background-color: white;
   overflow: hidden;
   &:hover {

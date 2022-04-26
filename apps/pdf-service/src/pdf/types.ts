@@ -1,12 +1,11 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { Readable } from 'stream';
 
 export interface TemplateService {
   getTemplateFunction(template: string): (context: unknown) => string;
 }
 
 export interface PdfService {
-  generatePdf(content: string): Promise<Readable>;
+  generatePdf(content: string): Promise<Buffer>;
 }
 
 export interface FileResult {
@@ -16,7 +15,7 @@ export interface FileResult {
 }
 
 export interface FileService {
-  upload(jobId: string, filename: string, content: Readable): Promise<FileResult>;
+  upload(tenantId: AdspId, fileType: string, recordId: string, filename: string, content: Buffer): Promise<FileResult>;
 }
 
 export interface PdfTemplate {

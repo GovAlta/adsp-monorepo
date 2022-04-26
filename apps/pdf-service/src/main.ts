@@ -13,6 +13,9 @@ import {
   configurationSchema,
   GeneratedPdfType,
   PdfGeneratedDefinition,
+  PdfGenerationFailedDefinition,
+  PdfGenerationQueuedDefinition,
+  PdfGenerationUpdatesStream,
   PdfTemplate,
   PdfTemplateEntity,
   ServiceRoles,
@@ -55,7 +58,7 @@ const initializeApp = async (): Promise<express.Application> => {
   } = await initializePlatform(
     {
       serviceId,
-      displayName: 'PDF Service',
+      displayName: 'PDF service',
       description: 'Provides utility PDF capabilities.',
       configurationSchema,
       configurationConverter: (config: Record<string, Omit<PdfTemplate, 'tenantId'>>, tenantId) =>
@@ -67,7 +70,8 @@ const initializeApp = async (): Promise<express.Application> => {
           {}
         ),
       roles: [ServiceRoles.PdfGenerator],
-      events: [PdfGeneratedDefinition],
+      events: [PdfGenerationQueuedDefinition, PdfGeneratedDefinition, PdfGenerationFailedDefinition],
+      eventStreams: [PdfGenerationUpdatesStream],
       fileTypes: [GeneratedPdfType],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
@@ -108,7 +112,7 @@ const initializeApp = async (): Promise<express.Application> => {
     configurationService,
     repository,
     queueService,
-    fileService: createFileService({ tokenProvider, directory }),
+    fileService: createFileService({ logger, tokenProvider, directory }),
     eventService,
   });
 
@@ -136,11 +140,13 @@ const initializeApp = async (): Promise<express.Application> => {
   app.get('/', async (req, res) => {
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
+      name: 'PDF service',
+      description: 'Provides utility PDF capabilities.',
       _links: {
-        self: new URL(req.originalUrl, rootUrl).href,
-        health: new URL('/health', rootUrl).href,
-        api: new URL('/pdf/v1', rootUrl).href,
-        doc: new URL('/swagger/docs/v1', rootUrl).href,
+        self: { href: new URL(req.originalUrl, rootUrl).href },
+        health: { href: new URL('/health', rootUrl).href },
+        api: { href: new URL('/pdf/v1', rootUrl).href },
+        docs: { href: new URL('/swagger/docs/v1', rootUrl).href },
       },
     });
   });

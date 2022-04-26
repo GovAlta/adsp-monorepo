@@ -103,8 +103,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     setPreview(value);
   };
 
-  const tabNames = { sms: 'SMS', bot: 'Slack', email: 'Email' };
-  const titleNames = { sms: ' SMS', bot: ' slack', email: 'n email' };
+  const tabNames = { sms: 'SMS', bot: 'Bot', email: 'Email' };
+  const titleNames = { sms: ' SMS', bot: ' bot', email: 'n email' };
   const saveChangesAction = () => {
     saveCurrentTemplate();
   };
@@ -179,6 +179,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   <GoAFormItem error={errors['subject'] ?? ''} helpText={subjectEditorHintText}>
                     <MonacoDiv>
                       <MonacoEditor
+                        language={item.name === 'slack' ? 'markdown' : 'handlebars'}
                         onChange={(value) => {
                           onSubjectChange(value, item.name);
                         }}
@@ -191,6 +192,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   <GoAFormItem error={errors['body'] ?? ''} helpText={bodyEditorHintText}>
                     <MonacoDivBody>
                       <MonacoEditor
+                        language={item.name === 'slack' ? 'markdown' : 'handlebars'}
                         value={templates[item.name]?.body}
                         onChange={(value) => {
                           onBodyChange(value, item.name);
