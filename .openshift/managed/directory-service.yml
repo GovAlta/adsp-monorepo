@@ -72,7 +72,7 @@ objects:
       name: directory-service-mongodb${NAME_SUFFIX}
     stringData:
       database-admin-password: ${MONGODB_ADMIN_PASSWORD}
-      database-name: configurationDb
+      database-name: directoryDb
       database-password: ${MONGODB_PASSWORD}
       database-user: ${MONGODB_USER}
       database-uri: mongodb://directory-service-mongodb${NAME_SUFFIX}:27017

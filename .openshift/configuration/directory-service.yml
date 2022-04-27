@@ -10,7 +10,6 @@ items:
       name: directory-service
     data:
       KEYCLOAK_ROOT_URL: https://access.adsp-dev.gov.ab.ca
-      DIRECTORY_URL: https://tenant-service.adsp-dev.gov.ab.ca
       LOG_LEVEL: debug
   - apiVersion: v1
     kind: Secret
