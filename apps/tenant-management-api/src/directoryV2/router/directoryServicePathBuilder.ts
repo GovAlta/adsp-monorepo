@@ -15,12 +15,12 @@ export class DirectoryServicePathBuilder {
     this.path[this.theNamespaces] = 'namespaces';
   }
 
-  namespace(namespace: string): DirectoryServicePathBuilder {
+  namespace = (namespace: string): DirectoryServicePathBuilder => {
     this.path[this.theNamespace] = namespace;
     return this;
-  }
+  };
 
-  entries(namespace?: string): DirectoryServicePathBuilder {
+  entries = (namespace?: string): DirectoryServicePathBuilder => {
     if (this.path[this.theEntries] === 'services') {
       throw Error('Illegal State');
     }
@@ -29,40 +29,40 @@ export class DirectoryServicePathBuilder {
     }
     this.path[this.theEntries] = 'entries';
     return this;
-  }
+  };
 
-  services(namespace?: string): DirectoryServicePathBuilder {
+  services = (namespace?: string): DirectoryServicePathBuilder => {
     if (namespace) {
       this.namespace(namespace);
     }
     this.path[this.theServices] = 'services';
     return this;
-  }
+  };
 
-  service(service: string, namespace?: string): DirectoryServicePathBuilder {
+  service = (service: string, namespace?: string): DirectoryServicePathBuilder => {
     if (this.path[this.theServices] === 'entries') {
       throw Error('Illegal State');
     }
     this.services(namespace);
     this.path[this.theService] = service;
     return this;
-  }
+  };
 
-  apis(service?: string, namespace?: string): DirectoryServicePathBuilder {
+  apis = (service?: string, namespace?: string): DirectoryServicePathBuilder => {
     if (service) {
       this.service(service, namespace);
     }
     this.path[this.theApis] = 'apis';
     return this;
-  }
+  };
 
-  api(api: string, service?: string, namespace?: string): DirectoryServicePathBuilder {
+  api = (api: string, service?: string, namespace?: string): DirectoryServicePathBuilder => {
     if (service) {
       this.apis(service, namespace);
     }
     this.path[this.theApi] = api;
     return this;
-  }
+  };
 
   build(): string {
     const pathEnd = this.path.findIndex((e) => e === undefined);
