@@ -19,6 +19,8 @@ interface SubscriptionProps {
   onDelete: (subscription: Subscriber, type: string) => void;
 }
 
+const displayOrder = ['email', 'sms', 'bot'];
+
 const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscriber, onDelete, typeId }) => {
   function characterLimit(string, limit) {
     if (string?.length > limit) {
@@ -35,22 +37,30 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscribe
         {characterLimit(subscriber?.addressAs, 30)}
       </td>
       <td headers="channels" data-testid="channels">
-        {subscriber?.channels.map((channel, i) => (
-          <div key={`channels-id-${i}`} style={{ display: 'flex' }}>
-            <div>
+        {subscriber?.channels
+          .sort((a, b) =>
+            displayOrder.findIndex((o) => o === a.channel) < displayOrder.findIndex((o) => o === b.channel) ? -1 : 1
+          )
+          .map((channel, i) => (
+            <div key={`channels-id-${i}`} style={{ display: 'flex' }}>
               <div>
-                {channel.channel === 'email' ? (
-                  <IconsCell>
-                    <GoAIcon data-testid="mail-icon" size="medium" type="mail" />
-                  </IconsCell>
-                ) : (
-                  `${channel.channel}:`
-                )}{' '}
+                <div>
+                  {channel.channel === 'email' ? (
+                    <IconsCell>
+                      <GoAIcon data-testid="mail-icon" size="medium" type="mail" />
+                    </IconsCell>
+                  ) : channel.channel === 'sms' ? (
+                    <IconsCell>
+                      <GoAIcon data-testid="sms-icon" size="medium" type="phone-portrait" />
+                    </IconsCell>
+                  ) : (
+                    `${channel.channel}:`
+                  )}{' '}
+                </div>
               </div>
+              <div>{characterLimit(channel?.address, 30)}</div>
             </div>
-            <div>{characterLimit(channel?.address, 30)}</div>
-          </div>
-        ))}
+          ))}
       </td>
       <td headers="actions" data-testid="actions">
         <div style={{ display: 'flex', flexDirection: 'row' }}>
@@ -153,7 +163,7 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
           <DataTable data-testid={`subscription-table-${index}`}>
             <thead>
               <tr>
-                <th id="userName" data-testid={`subscription-header-address-as-${index}`}>
+                <th className="address-as" id="userName" data-testid={`subscription-header-address-as-${index}`}>
                   Address as
                 </th>
                 <th id="channels">Channels</th>
@@ -206,6 +216,10 @@ export const SubscriptionList = styled(SubscriptionsListComponent)`
     text-transform: capitalize;
     font-size: var(--fs-lg);
     font-weight: var(--fw-bold);
+  }
+
+  & .address-as {
+    min-width: 180px;
   }
 
   & td:first-child {

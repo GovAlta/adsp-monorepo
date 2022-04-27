@@ -6,7 +6,6 @@ import { RootState } from '@store/index';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem, GoAInputEmail, GoAInput } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
-import InputMask from 'react-input-mask';
 
 interface NotificationTypeFormProps {
   initialValue?: Subscriber;
@@ -26,7 +25,10 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
   const x = JSON.stringify(initialValue);
   const [subscriber, setSubscriber] = useState(JSON.parse(x));
   const [formErrors, setFormErrors] = useState(null);
-  const [prettyPhone, setPrettyPhone] = useState(null);
+  const [prettyPhone, setPrettyPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [bot, setBot] = useState('');
+  const [email, setEmail] = useState('');
 
   const updateError = useSelector((state: RootState) => state.subscription.updateError);
 
@@ -35,12 +37,26 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
     setSubscriber(JSON.parse(x));
   }, [initialValue]);
 
-  const smsIndex = getChannelIndex(subscriber, 'sms');
+  let smsIndex = getChannelIndex(subscriber, 'sms');
+  let emailIndex = getChannelIndex(subscriber, 'email');
+  let botIndex = getChannelIndex(subscriber, 'bot');
 
   useEffect(() => {
-    if (subscriber) {
-      setPrettyPhone('1' + subscriber.channels[smsIndex].address);
+    if (subscriber && smsIndex !== -1) {
+      setPrettyPhone(subscriber.channels[smsIndex].address);
     }
+    if (smsIndex === -1) {
+      setPrettyPhone('');
+    }
+
+    if (subscriber && emailIndex !== -1) {
+      setEmail(subscriber.channels[emailIndex].address);
+    }
+    if (emailIndex === -1) {
+      setEmail('');
+    }
+
+    setAddress(subscriber?.addressAs || '');
   }, [subscriber]);
 
   function emailErrors(email) {
@@ -51,7 +67,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
 
   function phoneError(phone) {
     if (!/^\d{10}$/.test(phone) && phone.length !== 0) {
-      return { sms: 'Please enter a valid phone number ie. 1 (780) 123-4567' };
+      return { sms: 'Please enter a valid 10 digit phone number ie. 7801234567' };
     }
   }
 
@@ -68,34 +84,88 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
     return -1;
   }
 
-  const emailIndex = getChannelIndex(subscriber, 'email');
-  const slackIndex = getChannelIndex(subscriber, 'slack');
-
   const trySave = (subscriber) => {
     let formErrorList = {};
     if (emailIndex !== -1) {
-      formErrorList = Object.assign(formErrorList, emailErrors(subscriber.channels[emailIndex].address));
+      formErrorList = Object.assign(formErrorList, emailErrors(email));
     }
-    if (smsIndex !== -1) {
-      const cleanNumber = prettyPhone.replace(/[- )(]/g, '').slice(1);
-      formErrorList = Object.assign(formErrorList, phoneError(cleanNumber));
+    let phoneIndex = smsIndex;
+    if (smsIndex === -1) {
+      phoneIndex = subscriber.channels ? subscriber.channels.length : 0;
     }
+
+    const channels = subscriber.channels || [];
+
+    formErrorList = Object.assign(formErrorList, phoneError(prettyPhone));
     if (Object.keys(formErrorList).length === 0) {
-      if (smsIndex !== -1) {
-        const cleanNumber = prettyPhone.replace(/[- )(]/g, '').slice(1);
-        subscriber.channels[smsIndex].address = cleanNumber;
+      if (smsIndex === -1 && email) {
+        if (prettyPhone.length !== 0) {
+          channels.push({ channel: 'sms', address: prettyPhone, verified: false });
+        }
+      } else {
+        if (prettyPhone.length === 0) {
+          channels.splice(smsIndex);
+          emailIndex = getChannelIndex(subscriber, 'email');
+          botIndex = getChannelIndex(subscriber, 'bot');
+        } else {
+          channels[phoneIndex].address = prettyPhone;
+        }
       }
-      onSave(subscriber);
+
+      if (emailIndex === -1) {
+        if (email.length !== 0) {
+          channels.push({ channel: 'email', address: email, verified: false });
+        }
+      } else {
+        if (email.length === 0) {
+          channels.splice(emailIndex);
+          smsIndex = getChannelIndex(subscriber, 'sms');
+          botIndex = getChannelIndex(subscriber, 'bot');
+        } else {
+          channels[emailIndex].address = email;
+        }
+      }
+
+      if (botIndex === -1) {
+        if (bot.length !== 0) {
+          channels.push({ channel: 'bot', address: bot, verified: false });
+        }
+      } else {
+        if (bot.length === 0) {
+          channels.splice(botIndex);
+          smsIndex = getChannelIndex(subscriber, 'sms');
+          emailIndex = getChannelIndex(subscriber, 'email');
+        } else {
+          channels[botIndex].address = bot;
+        }
+      }
+
+      setFormErrors(null);
+      if (subscriber.addressAs != null) {
+        subscriber.addressAs = address;
+      }
+
+      const updatedSubscriber = JSON.parse(JSON.stringify({ ...subscriber, channels: channels }));
+      onSave(updatedSubscriber);
     } else {
       setFormErrors(formErrorList);
     }
   };
 
   const tryCancel = () => {
-    const x = JSON.stringify(initialValue);
-    setSubscriber(JSON.parse(x));
+    // const x = JSON.stringify(initialValue);
+    // setSubscriber(JSON.parse(x));
     setFormErrors(null);
     onCancel();
+  };
+
+  const inValidSMSInput = (smsInput: string): boolean => {
+    if (smsInput) {
+      // eslint-disable-next-line
+      return /^[0-9\.\-\/]+$/.test(smsInput);
+    }
+
+    return true;
   };
 
   return (
@@ -110,60 +180,56 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
                 <GoAInput
                   type="text"
                   name="name"
-                  value={subscriber?.addressAs || ''}
+                  value={address}
                   data-testid="form-name"
                   aria-label="name"
-                  onChange={(_name, value) => setSubscriber({ ...subscriber, addressAs: value })}
+                  onChange={(_name, value) => setAddress(value)}
                 />
               </GoAFormItem>
-              {emailIndex !== -1 && (
-                <GoAFormItem error={formErrors?.['email'] || updateError}>
-                  <label>Email</label>
-                  <GoAInputEmail
-                    name="email"
-                    data-testid="form-email"
-                    value={subscriber?.channels[emailIndex].address || ''}
-                    aria-label="email"
-                    onChange={(_name, value) => {
-                      const channel = subscriber.channels;
-                      channel[emailIndex].address = value;
-                      setSubscriber({ ...subscriber, channels: channel });
+              <GoAFormItem error={formErrors?.['email'] || updateError}>
+                <label>Email</label>
+                <GoAInputEmail
+                  name="email"
+                  data-testid="form-email"
+                  value={email}
+                  aria-label="email"
+                  onChange={(_name, value) => {
+                    setEmail(value);
+                  }}
+                />
+              </GoAFormItem>
+              <GoAFormItem error={formErrors?.['sms'] || updateError}>
+                <label>Phone number</label>
+                <div className="phoneInputStyle">
+                  <GoAInput
+                    type="text"
+                    aria-label="sms"
+                    name="sms"
+                    value={prettyPhone}
+                    data-testid="contact-sms-input"
+                    onChange={(_, value) => {
+                      if (inValidSMSInput(value)) {
+                        setPrettyPhone(value.substring(0, 10));
+                      }
+                    }}
+                    trailingIcon="close"
+                    onTrailingIconClick={() => {
+                      setPrettyPhone('');
                     }}
                   />
-                </GoAFormItem>
-              )}
-              {smsIndex !== -1 && (
-                <GoAFormItem error={formErrors?.['sms'] || updateError}>
-                  <label>Phone number</label>
-                  <div className="phoneInputStyle">
-                    <InputMask
-                      name="phoneNumber"
-                      value={prettyPhone}
-                      placeholder="1 (780) 123-4567"
-                      mask="1\ (999) 999-9999"
-                      maskChar={null}
-                      data-testid="form-phone-number"
-                      aria-label="name"
-                      onChange={(e) => {
-                        setPrettyPhone(e.target.value);
-                      }}
-                    />
-                  </div>
-                </GoAFormItem>
-              )}
+                </div>
+              </GoAFormItem>
 
-              {slackIndex !== -1 && (
+              {botIndex !== -1 && (
                 <GoAFormItem error={formErrors?.['slack'] || updateError}>
                   <label>Slack</label>
                   <textarea
                     name="slack"
                     data-testid="form-slack"
-                    value={subscriber?.channels[slackIndex].address || ''}
+                    value={bot}
                     aria-label="slack"
                     onChange={(e) => {
-                      const channel = subscriber.channels;
-                      channel[slackIndex].address = e.target.value;
-                      setSubscriber({ ...subscriber, channels: channel });
+                      setBot(e.target.value);
                     }}
                   />
                 </GoAFormItem>
