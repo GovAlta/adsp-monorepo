@@ -21,6 +21,14 @@ export const sessionReducer = (state: Session = SessionInit, action: ActionTypes
         ...state,
       };
 
+    case 'session/indicator':
+      return {
+        ...state,
+        indicator: {
+          ...action.payload,
+        },
+      };
+
     case 'session/tenant/name/update':
       return {
         ...state,
