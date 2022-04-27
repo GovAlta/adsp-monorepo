@@ -80,7 +80,6 @@ export function* subscribeToTenant(action: SubscribeToTenantAction): SagaIterato
       })
     );
   } catch (e) {
-    console.log(JSON.stringify(e) + '<e');
     yield put(addErrorMessage({ message: e.message }));
     yield put(
       UpdateIndicator({
