@@ -4,6 +4,7 @@ import type { EventDefinition } from '@store/event/models';
 import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import { nameValidator, namespaceValidator } from './inputValidator';
 import { updateEventDefinition } from '@store/event/actions';
 import { useDispatch } from 'react-redux';
 
@@ -26,6 +27,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
 }) => {
   const [definition, setDefinition] = useState<EventDefinition>(initialValue);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
   const dispatch = useDispatch();
 
   return (
@@ -42,7 +44,10 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               disabled={isEdit}
               data-testid="form-namespace"
               aria-label="nameSpace"
-              onChange={(e) => setDefinition({ ...definition, namespace: e.target.value })}
+              onChange={(e) => {
+                namespaceValidator(e.target.value, 'namespace', ['platform'], setErrors, errors);
+                setDefinition({ ...definition, namespace: e.target.value });
+              }}
             />
           </GoAFormItem>
           <GoAFormItem error={errors?.['name']}>
@@ -54,7 +59,10 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               disabled={isEdit}
               data-testid="form-name"
               aria-label="name"
-              onChange={(e) => setDefinition({ ...definition, name: e.target.value })}
+              onChange={(e) => {
+                nameValidator(e.target.value, 'name', setErrors, errors);
+                setDefinition({ ...definition, name: e.target.value });
+              }}
             />
           </GoAFormItem>
           <GoAFormItem>
@@ -98,20 +106,6 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
           data-testid="form-save"
           type="submit"
           onClick={(e) => {
-            if (definition.namespace.includes(':')) {
-              setErrors({ ...errors, namespace: 'Must not contain `:` character' });
-              return;
-            }
-            if (definition.name.includes(':')) {
-              setErrors({ ...errors, name: 'Must not contain `:` character' });
-              return;
-            }
-
-            if (coreNamespaces.includes(definition.namespace.toLowerCase())) {
-              setErrors({ ...errors, namespace: 'Cannot add definitions to core namespaces' });
-              return;
-            }
-
             dispatch(updateEventDefinition(definition));
             if (onSave) {
               onSave();
