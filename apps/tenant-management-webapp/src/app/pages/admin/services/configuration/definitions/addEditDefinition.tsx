@@ -21,7 +21,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
 }) => {
   const [definition, setDefinition] = useState<ConfigDefinition>(initialValue);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const regex = new RegExp(/^[a-zA-Z0-9]+$/);
+  const regex = new RegExp(/^[a-zA-Z0-9-]+$/);
 
   const hasFormErrors = () => {
     return Object.keys(errors).length !== 0;
@@ -32,9 +32,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
   return (
     <>
       <GoAModal testId="definition-form" isOpen={open}>
-        <GoAModalTitle testId="definition-form-title">
-          {isEdit ? 'Edit configuration' : 'Add configuration'}
-        </GoAModalTitle>
+        <GoAModalTitle testId="definition-form-title">{isEdit ? 'Edit definition' : 'Add definition'}</GoAModalTitle>
         <GoAModalContent>
           <GoAForm>
             <GoAFormItem error={errors?.['namespace']}>
