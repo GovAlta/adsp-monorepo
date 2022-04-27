@@ -3,6 +3,7 @@ import SlackProfileIcon from '@assets/slack.png';
 import styled from 'styled-components';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 
 interface SlackPreviewPortalProps {
   body: string;
@@ -22,10 +23,10 @@ export const SlackPreviewPortal: FunctionComponent<SlackPreviewPortalProps> = ({
               {time.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
             </div>
           </div>
-          <b>
-            <ReactMarkdown children={subject} rehypePlugins={[rehypeRaw]} />
+          <b className="removeMargin">
+            <ReactMarkdown children={subject} rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]} />
           </b>
-          <ReactMarkdown children={body} rehypePlugins={[rehypeRaw]} />
+          <ReactMarkdown children={body} rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]} />
         </div>
       </div>
     );
@@ -58,6 +59,11 @@ const SlackPreviewPortalStyles = styled.div`
   .flexColumn {
     display: flex;
     flex-direction: column;
+    width: calc(100% - 100px);
+  }
+
+  .flexColumn * {
+    max-width: 100%;
   }
 
   .appNotificationHeader {
@@ -88,5 +94,9 @@ const SlackPreviewPortalStyles = styled.div`
 
   .marginBottom {
     margin: 0 0 8px 0;
+  }
+
+  .removeMargin > p {
+    margin-bottom: 0;
   }
 `;
