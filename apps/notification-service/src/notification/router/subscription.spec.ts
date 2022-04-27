@@ -19,6 +19,7 @@ import {
   getSubscriberSubscriptions,
   getSubscriberDetails,
   getSubscriberByUserId,
+  getSubscriptionChannels,
 } from './subscription';
 import { NotificationType, ServiceUserRoles, Subscription } from '../types';
 import { assertHasTenant, createSubscriber, deleteSubscriber, updateSubscriber } from '.';
@@ -1209,6 +1210,55 @@ describe('subscription router', () => {
       await deleteSubscriber(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
       expect(res.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getSubscriptionChannels', () => {
+    const subscriber = new SubscriberEntity(repositoryMock, {
+      id: 'subscriber',
+      tenantId,
+      addressAs: 'tester',
+      channels: [
+        {
+          channel: Channel.email,
+          address: 'tester@test.co',
+          verified: false,
+        },
+      ],
+    });
+    it('can create handler', () => {
+      const handler = getSubscriptionChannels(repositoryMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can get channels', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        params: {
+          subscriber: 'subscriber-id',
+        },
+        getConfiguration: jest.fn(),
+      };
+
+      req.getConfiguration.mockResolvedValueOnce(
+        new NotificationConfiguration({ test: notificationType }, {}, tenantId)
+      );
+
+      const subscription = new SubscriptionEntity(
+        repositoryMock,
+        { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        subscriber
+      );
+
+      repositoryMock.getSubscriptions.mockResolvedValueOnce(subscription);
+
+      const handler = getSubscriptionChannels(repositoryMock);
+      console.log(handler);
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+      await handler(req as unknown as Request, res as unknown as Response, next);
     });
   });
 

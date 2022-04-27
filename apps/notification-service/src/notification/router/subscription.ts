@@ -6,7 +6,7 @@ import { SubscriptionRepository } from '../repository';
 import { NotificationTypeEntity, SubscriberEntity } from '../model';
 import { mapSubscriber, mapSubscription, mapType } from './mappers';
 import { NotificationConfiguration } from '../configuration';
-import { Channel, ServiceUserRoles, Subscriber } from '../types';
+import { Channel, ServiceUserRoles, Subscriber, SubscriberChannel } from '../types';
 import {
   SubscriberOperationRequests,
   SUBSCRIBER_CHECK_CODE,
@@ -483,6 +483,28 @@ export function getSubscriberDetails(apiId: AdspId, repository: SubscriptionRepo
   };
 }
 
+export const getSubscriptionChannels = (repository: SubscriptionRepository): RequestHandler => {
+  return async (req, res, next) => {
+    try {
+      console.log('AAA');
+      const { subscriber } = req.params;
+      const notification = req[TYPE_KEY] as NotificationTypeEntity;
+      console.log('BBB');
+
+      const subscription = await repository.getSubscription(notification, subscriber);
+      console.log(notification);
+      const channels: Record<string, SubscriberChannel> = {};
+      notification.events.forEach(async (event) => {
+        channels[event.name] = await subscription.getSubscriberChannel(notification, event);
+      });
+      res.json(channels);
+    } catch (err) {
+      console.log(err);
+      next(err);
+    }
+  };
+};
+
 export const createSubscriptionRouter = ({
   serviceId,
   subscriptionRepository,
@@ -620,6 +642,13 @@ export const createSubscriptionRouter = ({
     createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
     getSubscriber(subscriptionRepository),
     getSubscriberSubscriptions(apiId, subscriptionRepository)
+  );
+
+  subscriptionRouter.get(
+    '/subscribers/:subscriber/notificationTypes/:type/channels',
+    validateTypeHandler,
+    getNotificationType,
+    getSubscriptionChannels
   );
 
   return subscriptionRouter;
