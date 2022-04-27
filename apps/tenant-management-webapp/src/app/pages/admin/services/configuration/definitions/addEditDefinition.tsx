@@ -46,10 +46,10 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
                 aria-label="nameSpace"
                 onChange={(e) => {
                   if (!regex.test(e.target.value)) {
-                    setErrors({ ...errors, namespace: 'allowed characters: a-z, A-Z, 0-9, -' });
+                    setErrors({ ...errors, namespace: 'Allowed characters: a-z, A-Z, 0-9, -' });
                   } else {
                     if (e.target.value.toLocaleLowerCase() === 'platform') {
-                      setErrors({ ...errors, namespace: 'cannot use the word platform as namespace' });
+                      setErrors({ ...errors, namespace: 'Cannot use the word platform as namespace' });
                     } else {
                       delete errors['namespace'];
                       setErrors({ ...errors });
@@ -69,9 +69,8 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
                 data-testid="form-name"
                 aria-label="name"
                 onChange={(e) => {
-                  const regex = new RegExp(/^[a-z0-9-]+$/);
                   if (!regex.test(e.target.value)) {
-                    setErrors({ ...errors, name: 'allowed characters: a-z, A-Z, 0-9, -' });
+                    setErrors({ ...errors, name: 'Allowed characters: a-z, A-Z, 0-9, -' });
                   } else {
                     delete errors['name'];
                     setErrors({ ...errors });
