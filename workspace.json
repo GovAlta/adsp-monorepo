@@ -215,6 +215,54 @@
       },
       "tags": []
     },
+    "directory-service": {
+      "root": "apps/directory-service",
+      "sourceRoot": "apps/directory-service/src",
+      "projectType": "application",
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/directory-service",
+            "main": "apps/directory-service/src/main.ts",
+            "tsConfig": "apps/directory-service/tsconfig.app.json",
+            "assets": [],
+            "webpackConfig": "apps/directory-service/webpack.config.js"
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "directory-service:build"
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/directory-service/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/directory-service"],
+          "options": {
+            "jestConfig": "apps/directory-service/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
     "event-service": {
       "root": "apps/event-service",
       "sourceRoot": "apps/event-service/src",

@@ -1,0 +1,19 @@
+version: '3.2'
+services:
+  directory-service:
+    build:
+      context: ../
+      dockerfile: .compose/service/Dockerfile
+      args:
+        - SERVICE=directory-service
+    ports:
+      - 3331:3331
+    expose:
+      - 3331
+    environment:
+      - KEYCLOAK_ROOT_URL=http://keycloak:8080
+      - DIRECTORY_URL=http://tenant-management-api:3333
+      - CLIENT_ID=urn:ads:platform:directory-service
+      - CLIENT_SECRET=a7b3cf6e-81ab-497d-9103-4f7ff82da46b
+      - PORT=3331
+      - LOG_LEVEL=debug
