@@ -4,7 +4,12 @@ import type { EventDefinition } from '@store/event/models';
 import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
-import { nameValidator, namespaceValidator } from './inputValidator';
+import {
+  reportCleansing,
+  ReactCleansingReporter,
+  serviceItemNameCleanser,
+  serviceNamespaceCleanser,
+} from '../../../../lib/inputCleansers';
 import { updateEventDefinition } from '@store/event/actions';
 import { useDispatch } from 'react-redux';
 
@@ -27,8 +32,8 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
 }) => {
   const [definition, setDefinition] = useState<EventDefinition>(initialValue);
   const [errors, setErrors] = useState<Record<string, string>>({});
-
   const dispatch = useDispatch();
+  const reporter = new ReactCleansingReporter(errors, setErrors);
 
   return (
     <GoAModal testId="definition-form" isOpen={open}>
@@ -45,7 +50,8 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               data-testid="form-namespace"
               aria-label="nameSpace"
               onChange={(e) => {
-                namespaceValidator(e.target.value, 'namespace', ['platform'], setErrors, errors);
+                const notice = serviceNamespaceCleanser(e.target.value, 'namespace', ['platform']);
+                reportCleansing(notice, 'namespace', reporter);
                 setDefinition({ ...definition, namespace: e.target.value });
               }}
             />
@@ -60,7 +66,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               data-testid="form-name"
               aria-label="name"
               onChange={(e) => {
-                nameValidator(e.target.value, 'name', setErrors, errors);
+                reportCleansing(serviceItemNameCleanser(e.target.value), 'name', reporter);
                 setDefinition({ ...definition, name: e.target.value });
               }}
             />
