@@ -36,10 +36,7 @@ export const DirectoryOverview: FunctionComponent = () => {
               description: 'My service for doing service things.',
               _links: {
                 self: { href: 'https://my-service.alberta.ca' },
-                api: [
-                  { title: 'v1', href: 'https://my-service.alberta.ca/my-service/v1' },
-                  { title: 'v2', href: 'https://my-service.alberta.ca/my-service/v2' },
-                ],
+                api: { href: 'https://my-service.alberta.ca/my-service/v1' },
                 health: { href: 'https://my-service.alberta.ca/health' },
                 docs: { href: 'https://my-service.alberta.ca/swagger/docs/v1' },
               },
