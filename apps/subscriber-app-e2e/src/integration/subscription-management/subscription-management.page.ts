@@ -21,7 +21,7 @@ class SubscriptionManagementPage {
 
   contactInformationEmail() {
     return cy.xpath(
-      '//*[@data-testid="contact-information-card"]//*[@data-testid="card-footer"]//label[text()="Email"]/following-sibling::div/div/p'
+      '//*[@data-testid="contact-information-card"]//*[@data-testid="email-label"]/label[text()="Email"]/following-sibling::p'
     );
   }
 
