@@ -21,7 +21,7 @@ import {
   getSubscriberByUserId,
   getSubscriptionChannels,
 } from './subscription';
-import { NotificationType, ServiceUserRoles, Subscription, SubscriberChannel } from '../types';
+import { NotificationType, ServiceUserRoles, Subscription } from '../types';
 import { assertHasTenant, createSubscriber, deleteSubscriber, updateSubscriber } from '.';
 
 describe('subscription router', () => {

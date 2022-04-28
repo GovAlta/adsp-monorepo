@@ -6,7 +6,7 @@ import { SubscriptionRepository } from '../repository';
 import { NotificationTypeEntity, SubscriberEntity } from '../model';
 import { mapSubscriber, mapSubscription, mapType } from './mappers';
 import { NotificationConfiguration } from '../configuration';
-import { Channel, ServiceUserRoles, Subscriber, SubscriberChannel } from '../types';
+import { Channel, ServiceUserRoles, Subscriber } from '../types';
 import {
   SubscriberOperationRequests,
   SUBSCRIBER_CHECK_CODE,
@@ -638,7 +638,7 @@ export const createSubscriptionRouter = ({
   );
 
   subscriptionRouter.get(
-    '/subscribers/:subscriber/notificationTypes/:type/channels',
+    '/subscribers/:subscriber/types/:type/channels',
     validateTypeHandler,
     getNotificationType,
     getSubscriptionChannels
