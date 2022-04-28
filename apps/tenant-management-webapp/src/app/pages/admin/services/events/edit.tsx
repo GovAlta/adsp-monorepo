@@ -9,7 +9,7 @@ import {
   ReactCleansingReporter,
   serviceItemNameCleanser,
   serviceNamespaceCleanser,
-} from '../../../../lib/inputCleansers';
+} from '@lib/inputCleansers';
 import { updateEventDefinition } from '@store/event/actions';
 import { useDispatch } from 'react-redux';
 
