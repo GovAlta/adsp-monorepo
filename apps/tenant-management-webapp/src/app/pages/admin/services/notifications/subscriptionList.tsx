@@ -19,8 +19,6 @@ interface SubscriptionProps {
   onDelete: (subscription: Subscriber, type: string) => void;
 }
 
-const displayOrder = ['email', 'sms', 'bot'];
-
 const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscriber, onDelete, typeId }) => {
   function characterLimit(string, limit) {
     if (string?.length > limit) {
@@ -31,36 +29,41 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscribe
     }
   }
 
+  const displayOrder = ['email', 'sms', 'bot'];
+  const sortedChannels = [];
+  displayOrder.forEach((display) => {
+    const ix = subscriber.channels.findIndex((channel) => channel.channel === display);
+    if (ix !== -1) {
+      sortedChannels.push(subscriber.channels[ix]);
+    }
+  });
+
   return (
     <tr>
       <td headers="userName" data-testid="addressAs">
         {characterLimit(subscriber?.addressAs, 30)}
       </td>
       <td headers="channels" data-testid="channels">
-        {subscriber?.channels
-          .sort((a, b) =>
-            displayOrder.findIndex((o) => o === a.channel) < displayOrder.findIndex((o) => o === b.channel) ? -1 : 1
-          )
-          .map((channel, i) => (
-            <div key={`channels-id-${i}`} style={{ display: 'flex' }}>
+        {sortedChannels.map((channel, i) => (
+          <div key={`channels-id-${i}`} style={{ display: 'flex' }}>
+            <div>
               <div>
-                <div>
-                  {channel.channel === 'email' ? (
-                    <IconsCell>
-                      <GoAIcon data-testid="mail-icon" size="medium" type="mail" />
-                    </IconsCell>
-                  ) : channel.channel === 'sms' ? (
-                    <IconsCell>
-                      <GoAIcon data-testid="sms-icon" size="medium" type="phone-portrait" />
-                    </IconsCell>
-                  ) : (
-                    `${channel.channel}:`
-                  )}{' '}
-                </div>
+                {channel.channel === 'email' ? (
+                  <IconsCell>
+                    <GoAIcon data-testid="mail-icon" size="medium" type="mail" />
+                  </IconsCell>
+                ) : channel.channel === 'sms' ? (
+                  <IconsCell>
+                    <GoAIcon data-testid="sms-icon" size="medium" type="phone-portrait" />
+                  </IconsCell>
+                ) : (
+                  `${channel.channel}:`
+                )}{' '}
               </div>
-              <div>{characterLimit(channel?.address, 30)}</div>
             </div>
-          ))}
+            <div>{characterLimit(channel?.address, 30)}</div>
+          </div>
+        ))}
       </td>
       <td headers="actions" data-testid="actions">
         <div style={{ display: 'flex', flexDirection: 'row' }}>

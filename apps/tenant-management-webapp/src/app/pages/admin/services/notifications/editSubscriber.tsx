@@ -145,8 +145,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
         subscriber.addressAs = address;
       }
 
-      const updatedSubscriber = JSON.parse(JSON.stringify({ ...subscriber, channels: channels }));
-      onSave(updatedSubscriber);
+      onSave({ ...subscriber, channels: channels });
     } else {
       setFormErrors(formErrorList);
     }

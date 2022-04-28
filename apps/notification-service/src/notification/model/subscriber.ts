@@ -76,7 +76,7 @@ export class SubscriberEntity implements Subscriber {
       }));
     }
 
-    if (update.addressAs != null) {
+    if (update.addressAs !== null) {
       this.addressAs = update.addressAs;
     }
 
