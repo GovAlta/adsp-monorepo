@@ -25,7 +25,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
   const x = JSON.stringify(initialValue);
   const [subscriber, setSubscriber] = useState(JSON.parse(x));
   const [formErrors, setFormErrors] = useState(null);
-  const [prettyPhone, setPrettyPhone] = useState('');
+  const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [bot, setBot] = useState('');
   const [email, setEmail] = useState('');
@@ -43,10 +43,10 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
 
   useEffect(() => {
     if (subscriber && smsIndex !== -1) {
-      setPrettyPhone(subscriber.channels[smsIndex].address);
+      setPhone(subscriber.channels[smsIndex].address);
     }
     if (smsIndex === -1) {
-      setPrettyPhone('');
+      setPhone('');
     }
 
     if (subscriber && emailIndex !== -1) {
@@ -65,8 +65,8 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
     }
   }
 
-  function phoneError(phone) {
-    if (!/^\d{10}$/.test(phone) && phone.length !== 0) {
+  function phoneError(phoneNumber) {
+    if (!/^\d{10}$/.test(phoneNumber) && phoneNumber.length !== 0) {
       return { sms: 'Please enter a valid 10 digit phone number ie. 7801234567' };
     }
   }
@@ -96,19 +96,19 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
 
     const channels = subscriber.channels || [];
 
-    formErrorList = Object.assign(formErrorList, phoneError(prettyPhone));
+    formErrorList = Object.assign(formErrorList, phoneError(phone));
     if (Object.keys(formErrorList).length === 0) {
       if (smsIndex === -1 && email) {
-        if (prettyPhone.length !== 0) {
-          channels.push({ channel: 'sms', address: prettyPhone, verified: false });
+        if (phone.length !== 0) {
+          channels.push({ channel: 'sms', address: phone, verified: false });
         }
       } else {
-        if (prettyPhone.length === 0) {
+        if (phone.length === 0) {
           channels.splice(smsIndex);
           emailIndex = getChannelIndex(subscriber, 'email');
           botIndex = getChannelIndex(subscriber, 'bot');
         } else {
-          channels[phoneIndex].address = prettyPhone;
+          channels[phoneIndex].address = phone;
         }
       }
 
@@ -153,8 +153,6 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
   };
 
   const tryCancel = () => {
-    // const x = JSON.stringify(initialValue);
-    // setSubscriber(JSON.parse(x));
     setFormErrors(null);
     onCancel();
   };
@@ -205,16 +203,16 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
                     type="text"
                     aria-label="sms"
                     name="sms"
-                    value={prettyPhone}
+                    value={phone}
                     data-testid="contact-sms-input"
                     onChange={(_, value) => {
                       if (inValidSMSInput(value)) {
-                        setPrettyPhone(value.substring(0, 10));
+                        setPhone(value.substring(0, 10));
                       }
                     }}
                     trailingIcon="close"
                     onTrailingIconClick={() => {
-                      setPrettyPhone('');
+                      setPhone('');
                     }}
                   />
                 </div>
