@@ -35,7 +35,7 @@ export const Events: FunctionComponent = () => {
           <a
             rel="noopener noreferrer"
             target="_blank"
-            href={`${docBaseUrl}/${tenantName}?urls.primaryName=Event service`}
+            href={`${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Event service`}
           >
             Read the API docs
           </a>

@@ -35,6 +35,12 @@ class NotificationsPage {
     return cy.get('[data-testid="subscriberRoles-dropdown-background"]');
   }
 
+  notificationChannelCheckbox(channelName) {
+    return cy.xpath(
+      `//*[@class="modal"]//input[@name="${channelName}"]/parent::*[contains(@class, "goa-checkbox-container")]`
+    );
+  }
+
   notificationTypeModalSelfServiceCheckbox() {
     return cy.xpath(
       '//*[@data-testid="manage-subscriptions-checkbox-wrapper"]//div[contains(@class, "goa-checkbox-container")]'

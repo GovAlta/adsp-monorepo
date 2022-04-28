@@ -25,7 +25,7 @@ Entries represent a registered service or API in the directory. Tenant entries a
 ### Reading the directory
 ```typescript
   const response = await fetch(
-    'https://directory.adsp.alberta.ca/api/directory/v2/namespaces/platform',
+    'https://directory.adsp.alberta.ca/api/directory/v2/namespaces/platform/entries',
     {
       method: 'GET',
       headers: {

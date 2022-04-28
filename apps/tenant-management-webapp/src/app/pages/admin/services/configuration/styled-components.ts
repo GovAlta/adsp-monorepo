@@ -3,7 +3,6 @@ import styled from 'styled-components';
 // configuration
 export const NameDiv = styled.div`
   margin-top: 1rem;
-  text-transform: capitalize;
   font-size: var(--fs-xl);
   font-weight: var(--fw-bold);
   padding-left: 0.4rem;
@@ -37,7 +36,6 @@ export const TableDiv = styled.div`
 `;
 
 export const IconDiv = styled.div`
-  /* width: 50%; */
   display: flex;
   flex-direction: row;
   justify-content: flex-end;

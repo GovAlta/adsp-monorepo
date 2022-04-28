@@ -135,7 +135,11 @@ export const pdfGenerated = (
   payload: {
     jobId,
     templateId,
-    file,
+    file: {
+      urn: file.urn,
+      id: file.id,
+      filename: file.filename,
+    },
     requestedBy,
   },
 });

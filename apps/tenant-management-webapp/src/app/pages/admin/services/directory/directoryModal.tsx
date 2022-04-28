@@ -4,21 +4,22 @@ import { GoAButton } from '@abgov/react-components';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { Service } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
-import { createEntry, updateEntry } from '@store/directory/actions';
+import { createEntry, updateEntry, fetchEntryDetail } from '@store/directory/actions';
 import { RootState } from '@store/index';
 
 interface DirectoryModalProps {
   entry?: Service;
-  type: 'new' | 'edit';
+  type: string;
   onCancel?: () => void;
   open: boolean;
 }
 
 export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   const isNew = props.type === 'new';
+  const isQuickAdd = props.type === 'quickAdd';
   const [entry, setEntry] = useState(props.entry);
 
-  const title = isNew ? 'Add entry' : 'Edit entry';
+  const title = isNew || isQuickAdd ? 'Add entry' : 'Edit entry';
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { directory } = useSelector((state: RootState) => state.directory);
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -55,7 +56,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               onChange={(e) => setEntry({ ...entry, service: e.target.value })}
               aria-label="service"
               maxLength={50}
-              disabled={!isNew}
+              disabled={!isNew || isQuickAdd}
             />
           </GoAFormItem>
           <GoAFormItem error={errors?.['api']}>
@@ -68,7 +69,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               onChange={(e) => setEntry({ ...entry, api: e.target.value })}
               aria-label="api"
               maxLength={50}
-              disabled={!isNew}
+              disabled={!isNew || isQuickAdd}
             />
           </GoAFormItem>
           <GoAFormItem error={errors?.['url']}>
@@ -81,6 +82,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               onChange={(e) => setEntry({ ...entry, url: e.target.value })}
               aria-label="name"
               maxLength={1024}
+              disabled={isQuickAdd}
             />
           </GoAFormItem>
         </GoAForm>
@@ -127,10 +129,13 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               setErrors({ ...errors, service: 'Service duplicate, please use another one' });
               return;
             }
-            if (props.type === 'new') {
+            if (isNew) {
+              dispatch(createEntry(entry));
+              dispatch(fetchEntryDetail(entry));
+            }
+            if (isQuickAdd) {
               dispatch(createEntry(entry));
             }
-
             if (props.type === 'edit') {
               dispatch(updateEntry(entry));
             }

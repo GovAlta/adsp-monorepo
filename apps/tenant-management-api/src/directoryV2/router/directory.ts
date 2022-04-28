@@ -14,6 +14,9 @@ const passportMiddleware = passport.authenticate(['jwt', 'jwt-tenant'], { sessio
 
 import axios from 'axios';
 import { Service, Links } from '../../directory/types/directory';
+import { getNamespaceEntries } from './getNamespaceEntries';
+import { DirectoryServicePathBuilder } from './directoryServicePathBuilder';
+
 export interface URNComponent {
   scheme?: string;
   nic?: string;
@@ -22,13 +25,6 @@ export interface URNComponent {
   apiVersion?: string;
   resource?: string;
 }
-
-const getUrn = (component: URNComponent) => {
-  let urn = `${component.scheme}:${component.nic}:${component.core}:${component.service}`;
-  urn = component.apiVersion ? `${urn}:${component.apiVersion}` : urn;
-  urn = component.resource ? `${urn}:${component.resource}` : urn;
-  return urn;
-};
 
 interface DirectoryRouterProps {
   logger?: Logger;
@@ -40,43 +36,21 @@ const directoryCache = new NodeCache({ stdTTL: 300 });
 
 export const createDirectoryRouter = ({ logger, directoryRepository, tenantService }: DirectoryRouterProps): Router => {
   const directoryRouter = Router();
+
+  const entriesPath = new DirectoryServicePathBuilder().entries(':namespace').build();
+
   /**
-   * Get all of directories
+   * Get all directory entries
    */
-  directoryRouter.get('/namespaces/:namespace', async (req: Request, res: Response, _next) => {
-    let services: Service[];
-    const { namespace } = req.params;
+  directoryRouter.get(entriesPath, async (req: Request, res: Response, _next) => {
+    let entries = [];
     try {
-      const directory = await directoryRepository.getDirectories(namespace);
-      if (!directory) {
-        res.json([]);
-      }
-      services = directory.services;
+      const { namespace } = req.params;
+      entries = await getNamespaceEntries(directoryRepository, namespace);
     } catch (err) {
       _next(err);
     }
-
-    const response = [];
-
-    for (const service of services) {
-      const element = {};
-      element['_id'] = service._id;
-      element['namespace'] = namespace;
-      element['service'] = service.service;
-      element['url'] = service.host;
-
-      const component: URNComponent = {
-        scheme: 'urn',
-        nic: 'ads',
-        core: namespace,
-        service: service.service,
-      };
-      element['urn'] = getUrn(component);
-
-      response.push(element);
-    }
-
-    res.json(response);
+    res.json(entries);
   });
 
   /*

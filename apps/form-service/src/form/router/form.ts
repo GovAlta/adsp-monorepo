@@ -6,7 +6,7 @@ import {
   isAllowedUser,
   UnauthorizedUserError,
 } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { formSubmitted, formUnlocked } from '..';
 import { formCreated } from '../events';
@@ -23,6 +23,7 @@ import {
   UNLOCK_FORM_OPERATION,
 } from './types';
 import { FileService } from '../../file';
+import { body, checkSchema, param, query } from 'express-validator';
 
 export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition {
   return {
@@ -276,17 +277,75 @@ export function createFormRouter({
 
   const router = Router();
   router.get('/definitions', getFormDefinitions);
-  router.get('/definitions/:definitionId', getFormDefinition);
+  router.get(
+    '/definitions/:definitionId',
+    createValidationHandler(param('definitionId').isString().isLength({ min: 1, max: 50 })),
+    getFormDefinition
+  );
 
-  router.get('/forms', findForms(apiId, repository));
-  router.post('/forms', createForm(apiId, repository, eventService, notificationService));
+  router.get(
+    '/forms',
+    createValidationHandler(
+      ...checkSchema(
+        {
+          top: { optional: true, isInt: { options: { min: 1, max: 5000 } } },
+          after: { optional: true, isString: true },
+        },
+        ['query']
+      )
+    ),
+    findForms(apiId, repository)
+  );
+  router.post(
+    '/forms',
+    createValidationHandler(
+      body('definitionId').isString().isLength({ min: 1, max: 50 }),
+      body('applicant.id').optional().isString(),
+      body('applicant.userId').optional().isString(),
+      body('applicant.channels').optional().isArray()
+    ),
+    createForm(apiId, repository, eventService, notificationService)
+  );
 
-  router.get('/forms/:formId', getForm(repository), (req, res) => res.send(mapForm(apiId, req[FORM])));
-  router.post('/forms/:formId', getForm(repository), formOperation(apiId, eventService, notificationService));
-  router.delete('/forms/:formId', getForm(repository), deleteForm(fileService, notificationService));
+  router.get('/forms/:formId', createValidationHandler(param('formId').isUUID()), getForm(repository), (req, res) =>
+    res.send(mapForm(apiId, req[FORM]))
+  );
+  router.post(
+    '/forms/:formId',
+    createValidationHandler(
+      param('formId').isUUID(),
+      body('operation').isIn([
+        SEND_CODE_OPERATION,
+        UNLOCK_FORM_OPERATION,
+        SUBMIT_FORM_OPERATION,
+        ARCHIVE_FORM_OPERATION,
+      ])
+    ),
+    getForm(repository),
+    formOperation(apiId, eventService, notificationService)
+  );
+  router.delete(
+    '/forms/:formId',
+    createValidationHandler(param('formId').isUUID()),
+    getForm(repository),
+    deleteForm(fileService, notificationService)
+  );
 
-  router.get('/forms/:formId/data', getForm(repository), accessForm(notificationService));
-  router.put('/forms/:formId/data', getForm(repository), updateFormData);
+  router.get(
+    '/forms/:formId/data',
+    createValidationHandler(
+      param('formId').isUUID(),
+      query('code').optional().isString().isLength({ min: 1, max: 10 })
+    ),
+    getForm(repository),
+    accessForm(notificationService)
+  );
+  router.put(
+    '/forms/:formId/data',
+    createValidationHandler(param('formId').isUUID(), body('data').isObject(), body('files').optional().isObject()),
+    getForm(repository),
+    updateFormData
+  );
 
   return router;
 }
