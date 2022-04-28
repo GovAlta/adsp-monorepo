@@ -286,6 +286,14 @@ objects:
             app: directory-service${NAME_SUFFIX}
             component: api
         spec:
+          volumes:
+            - name: service-directory
+              configMap:
+                name: service-directory
+                items:
+                  - key: platform
+                    path: directory.platform.json
+                defaultMode: 420
           containers:
             - envFrom:
                 - configMapRef:
@@ -320,8 +328,13 @@ objects:
                     secretKeyRef:
                       key: database-tls
                       name: directory-service-mongodb${NAME_SUFFIX}
+                - name: DIRECTORY_BOOTSTRAP
+                  value: /data/directory.platform.json
               imagePullPolicy: IfNotPresent
               name: directory-service
+              volumeMounts:
+                - name: service-directory
+                  mountPath: /data
               ports:
                 - containerPort: 3333
                   name: http

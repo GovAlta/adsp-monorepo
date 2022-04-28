@@ -31,7 +31,7 @@ const initializeApp = async (): Promise<express.Application> => {
     {
       serviceId,
       displayName: 'Directory service',
-      description: 'Service that provides a register of services and APIs.',
+      description: 'Service that provides a register of services and APIs for service discovery.',
       roles: [
         {
           role: ServiceRoles.DirectoryAdmin,
@@ -98,7 +98,7 @@ const initializeApp = async (): Promise<express.Application> => {
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
       name: 'Directory service',
-      description: 'Service that provides a register of services and APIs.',
+      description: 'Service that provides a register of services and APIs for service discovery.',
       _links: {
         self: { href: new URL(req.originalUrl, rootUrl).href },
         health: { href: new URL('/health', rootUrl).href },

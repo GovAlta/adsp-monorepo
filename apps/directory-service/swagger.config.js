@@ -3,7 +3,7 @@ module.exports = {
   info: {
     title: 'Directory service',
     version: '0.0.0',
-    description: '',
+    description: 'Service that provides a register of services and APIs for service discovery.',
   },
   tags: [],
   components: {
