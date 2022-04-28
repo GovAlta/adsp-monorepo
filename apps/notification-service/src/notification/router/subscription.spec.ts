@@ -21,7 +21,7 @@ import {
   getSubscriberByUserId,
   getSubscriptionChannels,
 } from './subscription';
-import { NotificationType, ServiceUserRoles, Subscription } from '../types';
+import { NotificationType, ServiceUserRoles, Subscription, SubscriberChannel } from '../types';
 import { assertHasTenant, createSubscriber, deleteSubscriber, updateSubscriber } from '.';
 
 describe('subscription router', () => {
@@ -1240,25 +1240,77 @@ describe('subscription router', () => {
           subscriber: 'subscriber-id',
         },
         getConfiguration: jest.fn(),
+        notificationType: {
+          channels: ['email', 'sms'],
+          events: [
+            {
+              namespace: 'mock-namespace',
+              name: 'mock-name',
+              customized: true,
+              templates: {
+                email: {
+                  subject: 'mock-email-subject',
+                  body: '<html></html>',
+                },
+              },
+            },
+          ],
+        },
       };
-
-      req.getConfiguration.mockResolvedValueOnce(
-        new NotificationConfiguration({ test: notificationType }, {}, tenantId)
-      );
-
       const subscription = new SubscriptionEntity(
         repositoryMock,
         { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
         subscriber
       );
-
-      repositoryMock.getSubscriptions.mockResolvedValueOnce(subscription);
-
+      repositoryMock.getSubscription.mockResolvedValueOnce(subscription);
       const handler = getSubscriptionChannels(repositoryMock);
-      console.log(handler);
-      const res = { send: jest.fn() };
+      const res = { json: jest.fn() };
       const next = jest.fn();
       await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.json).toHaveBeenCalledWith(
+        expect.arrayContaining([{ channel: 'email', address: 'tester@test.co', verified: false }])
+      );
+    });
+
+    it('will can ge empty channels', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        params: {
+          subscriber: 'subscriber-id',
+        },
+        getConfiguration: jest.fn(),
+        notificationType: {
+          channels: ['sms'],
+          events: [
+            {
+              namespace: 'mock-namespace',
+              name: 'mock-name',
+              customized: true,
+              templates: {
+                email: {
+                  subject: 'mock-email-subject',
+                  body: '<html></html>',
+                },
+              },
+            },
+          ],
+        },
+      };
+      const subscription = new SubscriptionEntity(
+        repositoryMock,
+        { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        subscriber
+      );
+      repositoryMock.getSubscription.mockResolvedValueOnce(subscription);
+      const handler = getSubscriptionChannels(repositoryMock);
+      const res = { json: jest.fn() };
+      const next = jest.fn();
+      await handler(req as unknown as Request, res as unknown as Response, next);
+
+      expect(res.json).toHaveBeenCalledWith(expect.arrayContaining([]));
     });
   });
 

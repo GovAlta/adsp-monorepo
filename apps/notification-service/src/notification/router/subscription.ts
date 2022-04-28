@@ -486,20 +486,12 @@ export function getSubscriberDetails(apiId: AdspId, repository: SubscriptionRepo
 export const getSubscriptionChannels = (repository: SubscriptionRepository): RequestHandler => {
   return async (req, res, next) => {
     try {
-      console.log('AAA');
       const { subscriber } = req.params;
       const notification = req[TYPE_KEY] as NotificationTypeEntity;
-      console.log('BBB');
-
       const subscription = await repository.getSubscription(notification, subscriber);
-      console.log(notification);
-      const channels: Record<string, SubscriberChannel> = {};
-      notification.events.forEach(async (event) => {
-        channels[event.name] = await subscription.getSubscriberChannel(notification, event);
-      });
+      const channels = await subscription.getSubscriberChannels(notification);
       res.json(channels);
     } catch (err) {
-      console.log(err);
       next(err);
     }
   };
@@ -636,6 +628,7 @@ export const createSubscriptionRouter = ({
     getSubscriber(subscriptionRepository),
     deleteSubscriber
   );
+
   subscriptionRouter.get(
     '/subscribers/:subscriber/subscriptions',
     validateSubscriberHandler,
