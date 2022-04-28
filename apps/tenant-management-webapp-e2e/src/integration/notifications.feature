@@ -153,3 +153,30 @@ Feature: Notifications
       | Email              | Phone                 | Instructions  |
       | rnd{abc@gov.ab.ca} | rnd{1 (780) 567-1456} | rnd{autotest} |
 
+  @TEST_CS-1102 @REQ_CS-1130 @regression
+  Scenario: As a tenant admin, I can modify a subscriber name and email
+    Given a tenant admin user is on notification subscribers page
+    # When the user searches subscribers with email containing "auto.test@gov.ab.ca" and phone containing "1 (780) 111-2345"
+    When the user searches subscribers with "email" containing "auto.test2@gov.ab.ca"
+    Then the user views all the subscribers with "email" containing "auto.test2@gov.ab.ca"
+    When the user clicks edit button for contact information
+    Then the user views Edit contact information modal
+#     When the user modifies the name from "auto.test2@gov.ab.ca" to "auto test 2"
+#     And the user clicks Save button in Edit contact information modal
+#     When the user searches subscribers with "email" containing "auto.test2@gov.ab.ca"
+# Then the user "views" the subscriber of "auto test 2", "auto.test2@gov.ab.ca"
+
+# When the user clicks Edit button of the subscriber of "auto test 2" and "auto.test2@gov.ab.ca"
+# When the user searches subscribers with address as containing "auto test 2" and email containing "auto.test2@gov.ab.ca"
+# # Then the user views the Edit subscriber modal
+# When the user modifies the email from "auto.test2@gov.ab.ca" to "auto.test22@gov.ab.ca"
+# Then the user clicks Save button in Edit subscriber modal
+# When the user searches subscribers with email of "auto.test22@gov.ab.ca"
+# Then the user views the subscriber of "auto test 2" and "auto.test22@gov.ab.ca"
+# When the user clicks Edit button of the subscriber of "auto test 2" and "auto.test22@gov.ab.ca"
+# Then the user views the Edit subscriber modal
+# When the user modifies the name from "auto test 2" to "auto.test2@gov.ab.ca"
+# And the user modifies the email from "auto.test22@gov.ab.ca" to "auto.test2@gov.ab.ca"
+# Then the user clicks Save button in Edit subscriber modal
+# When the user searches subscribers with email of "auto.test2@gov.ab.ca"
+# Then the user views the subscriber of "auto.test2@gov.ab.ca" and "auto.test2@gov.ab.ca"
