@@ -92,14 +92,28 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
         subscriberQuery.addressAs = { $regex: criteria.subscriberCriteria.name, $options: 'i' };
       }
 
-      if (criteria.subscriberCriteria.email) {
-        subscriberQuery.channels = {
-          $elemMatch: { address: { $regex: criteria.subscriberCriteria.email.toLocaleLowerCase() } },
-        };
-      }
-
       if (criteria.subscriberCriteria.sms) {
-        subscriberQuery.channels = { $elemMatch: { address: { $regex: criteria.subscriberCriteria.sms } } };
+        if (criteria.subscriberCriteria.email) {
+          subscriberQuery.channels = {
+            $all: [
+              { $elemMatch: { channel: 'sms', address: { $regex: criteria.subscriberCriteria.sms } } },
+              {
+                $elemMatch: {
+                  channel: 'email',
+                  address: { $regex: criteria.subscriberCriteria.email.toLocaleLowerCase() },
+                },
+              },
+            ],
+          };
+        } else {
+          subscriberQuery.channels = {
+            $elemMatch: { channel: 'sms', address: { $regex: criteria.subscriberCriteria.sms } },
+          };
+        }
+      } else if (criteria.subscriberCriteria.email) {
+        subscriberQuery.channels = {
+          $elemMatch: { channel: 'email', address: { $regex: criteria.subscriberCriteria.email.toLocaleLowerCase() } },
+        };
       }
 
       pipeline.push({
@@ -146,11 +160,18 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
     }
 
     if (criteria.sms) {
-      query.channels = { $elemMatch: { address: { $regex: criteria.sms } } };
-    }
-
-    if (criteria.email) {
-      query.channels = { $elemMatch: { address: { $regex: criteria.email.toLocaleLowerCase() } } };
+      if (criteria.email) {
+        query.channels = {
+          $all: [
+            { $elemMatch: { channel: 'sms', address: { $regex: criteria.sms } } },
+            { $elemMatch: { channel: 'email', address: { $regex: criteria.email.toLocaleLowerCase() } } },
+          ],
+        };
+      } else {
+        query.channels = { $elemMatch: { channel: 'sms', address: { $regex: criteria.sms } } };
+      }
+    } else if (criteria.email) {
+      query.channels = { $elemMatch: { channel: 'email', address: { $regex: criteria.email.toLocaleLowerCase() } } };
     }
 
     const docs = await this.subscriberModel.find(query, null, { lean: true }).skip(skip).limit(top).exec();
