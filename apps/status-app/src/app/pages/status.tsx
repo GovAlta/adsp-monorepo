@@ -1,5 +1,6 @@
 import React, { useState, useEffect, FormEvent } from 'react';
 import { GoAHeader, GoACallout } from '@abgov/react-components';
+import { IndicatorWithDelay } from '@components/Indicator';
 
 import { Grid, GridItem } from '@components/Grid';
 import Footer from '@components/Footer';
@@ -39,13 +40,14 @@ const ServiceStatusPage = (): JSX.Element => {
   const realm = location.pathname.slice(1) || config.platformTenantRealm;
   const dispatch = useDispatch();
 
-  const { tenantName, loaded, subscriber, applications, error, contact } = useSelector((state: RootState) => ({
+  const { tenantName, loaded, subscriber, applications, error, contact, indicator } = useSelector((state: RootState) => ({
     tenantName: state.session?.tenant?.name,
     loaded: state.session?.isLoadingReady,
     subscriber: state.subscription.subscriber,
     applications: state.application?.applications,
     error: state.session?.notifications,
     contact: state.configuration.contact,
+    indicator: state.session.indicator,
   }));
 
   const contactEmail = contact?.contactEmail || 'adsp@gov.ab.ca';
@@ -244,7 +246,6 @@ const ServiceStatusPage = (): JSX.Element => {
                           </GoAFormLabelOverwrite>
                           <GoAInputEmail
                             id="email"
-                            disabled={subscriber !== null}
                             name="email"
                             value={email}
                             data-testid="email"
@@ -258,7 +259,6 @@ const ServiceStatusPage = (): JSX.Element => {
                   <GoAFormActionOverwrite>
                     <GoAFormActions alignment="left">
                       <GoAButton
-                        disabled={subscriber !== null}
                         buttonType="primary"
                         data-testid="subscribe"
                         onClick={save}
@@ -268,17 +268,18 @@ const ServiceStatusPage = (): JSX.Element => {
                     </GoAFormActions>
                   </GoAFormActionOverwrite>
                 </div>
-                {subscriber && (
+                {subscriber && indicator && !indicator.show && (
                   <GoACallout title="You have signed up for notifications" key="success" type="success">
                     Thank you for signing up. You will receive notifications regarding service statuses on{' '}
                     {subscriber.channels[emailIndex].address}.
                   </GoACallout>
                 )}
-                {error && error.length > 0 && (
+                {error && error.length > 0 && indicator && !indicator.show && (
                   <GoACallout key="error" type="emergency" title="Your signup attempt has failed">
                     {error[error.length - 1].message}
                   </GoACallout>
                 )}
+                {indicator && indicator.show && <IndicatorWithDelay message="Loading..." pageLock={false} />}
               </div>
             </div>
           )}
