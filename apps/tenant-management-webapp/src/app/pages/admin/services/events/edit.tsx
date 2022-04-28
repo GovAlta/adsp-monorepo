@@ -34,6 +34,10 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
   const reporter = new ReactCleansingReporter(errors, setErrors);
+  const hasFormErrors = () => {
+    return Object.keys(errors).length !== 0;
+  };
+  const forbidden = coreNamespaces.concat('platform');
 
   return (
     <GoAModal testId="definition-form" isOpen={open}>
@@ -50,7 +54,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               data-testid="form-namespace"
               aria-label="nameSpace"
               onChange={(e) => {
-                const notice = serviceNamespaceCleanser(e.target.value, 'namespace', ['platform']);
+                const notice = serviceNamespaceCleanser(e.target.value, 'namespace', forbidden);
                 reportCleansing(notice, 'namespace', reporter);
                 setDefinition({ ...definition, namespace: e.target.value });
               }}
@@ -107,7 +111,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
           Cancel
         </GoAButton>
         <GoAButton
-          disabled={!definition.namespace || !definition.name}
+          disabled={!definition.namespace || !definition.name || hasFormErrors()}
           buttonType="primary"
           data-testid="form-save"
           type="submit"
