@@ -5,11 +5,13 @@ import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import {
-  reportCleansing,
   ReactCleansingReporter,
-  serviceItemNameCleanser,
-  serviceNamespaceCleanser,
-} from '@lib/inputCleansers';
+  wordCleanser,
+  characterCleanser,
+  cleansingPatterns,
+  checkInput,
+  isNotEmptyCheck,
+} from '@lib/checkInput';
 import { updateEventDefinition } from '@store/event/actions';
 import { useDispatch } from 'react-redux';
 
@@ -38,6 +40,8 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
     return Object.keys(errors).length !== 0;
   };
   const forbidden = coreNamespaces.concat('platform');
+  const checkForConflicts = wordCleanser(forbidden, 'namespace');
+  const checkForBadChars = characterCleanser(cleansingPatterns.alphanumericAC);
 
   return (
     <GoAModal testId="definition-form" isOpen={open}>
@@ -54,8 +58,12 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               data-testid="form-namespace"
               aria-label="nameSpace"
               onChange={(e) => {
-                const notice = serviceNamespaceCleanser(e.target.value, 'namespace', forbidden);
-                reportCleansing(notice, 'namespace', reporter);
+                checkInput(
+                  e.target.value,
+                  [checkForConflicts, checkForBadChars, isNotEmptyCheck('namespace')],
+                  reporter,
+                  'namespace'
+                );
                 setDefinition({ ...definition, namespace: e.target.value });
               }}
             />
@@ -70,7 +78,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               data-testid="form-name"
               aria-label="name"
               onChange={(e) => {
-                reportCleansing(serviceItemNameCleanser(e.target.value), 'name', reporter);
+                checkInput(e.target.value, [checkForBadChars, isNotEmptyCheck('name')], reporter, 'name');
                 setDefinition({ ...definition, name: e.target.value });
               }}
             />
