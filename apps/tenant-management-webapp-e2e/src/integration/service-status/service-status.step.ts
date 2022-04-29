@@ -600,7 +600,6 @@ Then(
     } else {
       newStatusInput = 'The new status is now: ' + newStatus.toLowerCase();
     }
-
     tenantAdminObj.eventToggleDetailsIcons().each(($element, $index, $full_array) => {
       //clicking each eye-icon in the list to verify event details
       cy.wrap($element).click();
