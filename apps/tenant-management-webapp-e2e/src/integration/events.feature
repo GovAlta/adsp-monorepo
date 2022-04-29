@@ -75,7 +75,7 @@ Feature: Events
     When the user clicks Add definition button
     And the user enters "tenant-service" in Namespace, "test" in Name, "test" in Description
     Then the user views the "Cannot use the word tenant-service as namespace" for "Namespace"
-    Then the user views disabled Save button on Definition modal
+    And the user views disabled Save button on Definition modal
     When the user clicks Cancel button on Definition modal
     Then the user exits the add definition dialog
 

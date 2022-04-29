@@ -83,7 +83,7 @@ When(
   }
 );
 
-Then('the user clicks Save button on Definition modal', function () {
+When('the user clicks Save button on Definition modal', function () {
   eventsObj.definitionModalSaveButton().click();
   cy.wait(2000);
 });
