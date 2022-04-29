@@ -1,5 +1,5 @@
 import { GoAButton } from '@abgov/react-components';
-import { Subscription, Subscriber, Channel } from '@store/subscription/models';
+import { Subscription, Subscriber, Channel, Channels } from '@store/subscription/models';
 import React from 'react';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
@@ -48,6 +48,12 @@ const AvailableChannels = ({ subscriberChannels, typeChannels }: AvailableChanne
     return typeChannels.includes(chn);
   });
 
+  const bot = Channels.bot as Channel;
+
+  if (!subscriberChannels.includes(bot) && typeChannels.includes(bot)) {
+    channels.push(bot);
+  }
+
   if (channels) {
     return (
       <AvailableChannelsContainer>
@@ -63,9 +69,13 @@ const AvailableChannels = ({ subscriberChannels, typeChannels }: AvailableChanne
 
 const SubscriptionsList = (props: SubscriptionsListProps): JSX.Element => {
   const subscriptions = props.subscriber.subscriptions;
-  const subscriberChannels = props.subscriber.channels.map((chn) => {
-    return chn.channel;
-  }) as Channel[];
+  const subscriberChannels = props.subscriber.channels
+    .filter((chn) => {
+      return chn?.address;
+    })
+    .map((chn) => {
+      return chn.channel;
+    }) as Channel[];
 
   return (
     <>
@@ -118,11 +128,4 @@ export default SubscriptionsList;
 
 const ButtonsCell = styled.td`
   text-align: right;
-`;
-
-const IconsCell = styled.td`
-  display: flex;
-  justify-content: space-around;
-  width: 100%;
-  margin-top: 0.4rem;
 `;

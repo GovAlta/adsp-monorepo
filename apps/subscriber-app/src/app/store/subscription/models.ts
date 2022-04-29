@@ -15,7 +15,7 @@ export interface SubscriptionCriteria {
 
 export type Channel = 'sms' | 'email' | 'bot';
 export const Channels = Object.freeze({
-  email: 'sms',
+  email: 'email',
   bot: 'bot',
   sms: 'sms',
 });
