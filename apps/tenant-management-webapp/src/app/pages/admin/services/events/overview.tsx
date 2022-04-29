@@ -2,6 +2,7 @@ import React, { FunctionComponent, useState, useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components';
 import { RootState } from '@store/index';
 import { EventDefinition, defaultEventDefinition } from '@store/event/models';
+import { getEventDefinitions } from '@store/event/actions';
 import { useDispatch, useSelector } from 'react-redux';
 import { EventDefinitionModalForm } from './edit';
 import { EventMetrics } from './metrics';
@@ -26,6 +27,10 @@ export const EventsOverview: FunctionComponent<OverviewProps> = ({ updateActiveI
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(fetchEventMetrics());
+  }, []);
+
+  useEffect(() => {
+    dispatch(getEventDefinitions());
   }, []);
 
   function reset() {
