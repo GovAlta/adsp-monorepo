@@ -32,9 +32,6 @@ export const EventDefinitions: FunctionComponent = () => {
   useEffect(() => {}, [indicator]);
 
   const dispatch = useDispatch();
-  useEffect(() => {
-    dispatch(getEventDefinitions());
-  }, []);
 
   function reset() {
     setEditDefinition(false);
