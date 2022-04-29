@@ -59,14 +59,14 @@ Feature: Events
     Given a service owner user is on event definitions page
     When the user clicks Add definition button
     And the user enters "<Namespace>" in Namespace, "<Name>" in Name, "<Description>" in Description
-    And the user clicks Save button on Definition modal
     Then the user views the "<Error Message>" for "<Error Field>"
+    Then the user views disabled Save button on Definition modal
     When the user clicks Cancel button on Definition modal
     Then the user exits the add definition dialog
     Examples:
-      | Namespace           | Name           | Description    | Error Message                  | Error Field |
-      | autotest-name:space | autotest-name  | auto-test-desc | Must not contain `:` character | Namespace   |
-      | autotest-namespace  | autotest-na:me | auto-test-desc | Must not contain `:` character | Name        |
+      | Namespace           | Name           | Description    | Error Message                            | Error Field |
+      | autotest-name:space | autotest-name  | auto-test-desc | Allowed characters are: a-z, A-Z, 0-9, - | Namespace   |
+      | autotest-namespace  | autotest-na:me | auto-test-desc | Allowed characters are: a-z, A-Z, 0-9, - | Name        |
 
   @TEST_CS-740 @REQ_CS-250 @regression
   Scenario: As a service owner, I cannot add/modify/delete event definitions within platform service namespaces
@@ -74,8 +74,8 @@ Feature: Events
     Then the user only views show button for event definitions of "tenant-service, configuration-service, notification-service, value-service, file-service"
     When the user clicks Add definition button
     And the user enters "tenant-service" in Namespace, "test" in Name, "test" in Description
-    And the user clicks Save button on Definition modal
-    Then the user views the "Cannot add definitions to core namespaces" for "Namespace"
+    Then the user views the "Cannot use the word tenant-service as namespace" for "Namespace"
+    Then the user views disabled Save button on Definition modal
     When the user clicks Cancel button on Definition modal
     Then the user exits the add definition dialog
 
