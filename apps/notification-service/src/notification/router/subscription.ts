@@ -483,6 +483,20 @@ export function getSubscriberDetails(apiId: AdspId, repository: SubscriptionRepo
   };
 }
 
+export const getSubscriptionChannels = (repository: SubscriptionRepository): RequestHandler => {
+  return async (req, res, next) => {
+    try {
+      const { subscriber } = req.params;
+      const notification = req[TYPE_KEY] as NotificationTypeEntity;
+      const subscription = await repository.getSubscription(notification, subscriber);
+      const channels = await subscription.getSubscriberChannels(notification);
+      res.json(channels);
+    } catch (err) {
+      next(err);
+    }
+  };
+};
+
 export const createSubscriptionRouter = ({
   serviceId,
   subscriptionRepository,
@@ -614,12 +628,20 @@ export const createSubscriptionRouter = ({
     getSubscriber(subscriptionRepository),
     deleteSubscriber
   );
+
   subscriptionRouter.get(
     '/subscribers/:subscriber/subscriptions',
     validateSubscriberHandler,
     createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
     getSubscriber(subscriptionRepository),
     getSubscriberSubscriptions(apiId, subscriptionRepository)
+  );
+
+  subscriptionRouter.get(
+    '/subscribers/:subscriber/types/:type/channels',
+    validateTypeHandler,
+    getNotificationType,
+    getSubscriptionChannels
   );
 
   return subscriptionRouter;
