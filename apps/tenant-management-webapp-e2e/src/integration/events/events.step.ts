@@ -83,9 +83,13 @@ When(
   }
 );
 
-When('the user clicks Save button on Definition modal', function () {
+Then('the user clicks Save button on Definition modal', function () {
   eventsObj.definitionModalSaveButton().click();
   cy.wait(2000);
+});
+
+Then('the user views disabled Save button on Definition modal', function () {
+  eventsObj.definitionModalSaveButton().should('be.disabled');
 });
 
 When(
