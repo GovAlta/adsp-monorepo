@@ -33,6 +33,7 @@ export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition 
     anonymousApply: entity.anonymousApply,
     applicantRoles: entity.applicantRoles,
     assessorRoles: entity.assessorRoles,
+    formDraftUrlTemplate: entity.formDraftUrlTemplate,
   };
 }
 
@@ -43,6 +44,7 @@ export function mapForm(
   return {
     urn: adspId`${apiId}:/forms/${entity.id}`.toString(),
     id: entity.id,
+    formDraftUrl: entity.formDraftUrl,
     status: entity.status,
     created: entity.created,
     createdBy: entity.createdBy,
@@ -135,7 +137,7 @@ export function createForm(
         throw new NotFoundError('form definition', definitionId);
       }
 
-      const form = await FormEntity.create(user, repository, definition, notificationService, applicantInfo);
+      const form = await definition.createForm(user, repository, notificationService, applicantInfo);
       res.send(mapForm(apiId, form));
 
       eventService.send(formCreated(user, form));

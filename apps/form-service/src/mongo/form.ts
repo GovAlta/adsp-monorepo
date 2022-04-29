@@ -104,6 +104,7 @@ export class MongoFormRepository implements FormRepository {
     return {
       tenantId: entity.tenantId.toString(),
       id: entity.id,
+      formDraftUrl: entity.formDraftUrl,
       definitionId: entity.definition.id,
       applicantId: entity.applicant.urn.toString(),
       status: entity.status,
@@ -130,6 +131,7 @@ export class MongoFormRepository implements FormRepository {
       applicant,
       {
         id: doc.id,
+        formDraftUrl: doc.formDraftUrl,
         status: doc.status,
         created: doc.created,
         createdBy: doc.createdBy,

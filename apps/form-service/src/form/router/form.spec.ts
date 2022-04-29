@@ -14,6 +14,7 @@ describe('form router', () => {
     id: 'test',
     name: 'test-form-definition',
     description: null,
+    formDraftUrlTemplate: 'https://my-form/{{ id }}',
     anonymousApply: false,
     applicantRoles: ['test-applicant'],
     assessorRoles: ['test-assessor'],
@@ -53,6 +54,7 @@ describe('form router', () => {
 
   const formInfo = {
     id: 'test-form',
+    formDraftUrl: 'https://my-form/test-form',
     created: new Date(),
     createdBy: { id: 'tester', name: 'tester' },
     status: FormStatus.Draft,
@@ -587,6 +589,7 @@ describe('form router', () => {
     it('can unlock form', async () => {
       const formInfo = {
         id: 'test-form',
+        formDraftUrl: 'https://my-form/test-form',
         created: new Date(),
         createdBy: { id: 'tester', name: 'tester' },
         status: FormStatus.Locked,
