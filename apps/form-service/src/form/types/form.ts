@@ -12,6 +12,7 @@ export enum FormStatus {
 export interface Form {
   definition: FormDefinition;
   id: string;
+  formDraftUrl: string;
   applicant: Subscriber;
   created: Date;
   createdBy: { id: string; name: string };
