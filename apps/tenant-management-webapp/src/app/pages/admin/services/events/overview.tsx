@@ -28,6 +28,11 @@ export const EventsOverview: FunctionComponent<OverviewProps> = ({ updateActiveI
     dispatch(fetchEventMetrics());
   }, []);
 
+  // set index to 0(overview tab) when switching back to it
+  useEffect(() => {
+    updateActiveIndex(0);
+  }, []);
+
   function reset() {
     setOpenAddDefinition(false);
   }
