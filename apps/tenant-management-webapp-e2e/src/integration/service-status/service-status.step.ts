@@ -613,13 +613,13 @@ Then(
             expect(eventDetails).to.contain(appName);
             expect(eventDetails).to.contain(orgStatus);
             expect(eventDetails).to.contain(newStatusInput);
-            cy.wrap($element).click();
+            cy.wrap($element).click({ force: true });
           } else {
             //clicking eye icon to close event details
             cy.wrap($element).click();
             if ($index + 1 == $full_array.length) {
               cy.log('No matching email found throughout list of event details');
-              expect(eventDetails).to.not.contain(email);
+              expect(eventDetails).to.contain(email);
             }
           }
         });
