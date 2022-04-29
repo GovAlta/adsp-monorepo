@@ -275,11 +275,11 @@ class NotificationsPage {
   }
 
   subscriberTableHeader() {
-    return cy.xpath('//*[@data-testid="subscribers-list-title"]//thead');
+    return cy.xpath('//*[@data-testid="subscribers-list-title"]//table/div/thead');
   }
 
   subscriberTableBody() {
-    return cy.xpath('//*[@data-testid="subscribers-list-title"]//tbody');
+    return cy.xpath('//*[@data-testid="subscribers-list-title"]//table/div/tbody');
   }
 
   subscriberIconEye(addressAs, email) {
@@ -302,7 +302,7 @@ class NotificationsPage {
 
   subscriber(addressAs, email) {
     return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*`
+      `//*[@data-testid="subscribers-list-title"]//table/div/tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*`
     );
   }
 
