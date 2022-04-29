@@ -4,7 +4,7 @@ import { GoAInputEmail, GoAFormItem, GoAInput } from '@abgov/react-components/ex
 import { useDispatch, useSelector } from 'react-redux';
 import { patchSubscriber } from '@store/subscription/actions';
 import { actionTypes } from '@store/subscription/models';
-import { Channels } from '@store/notifications/models';
+import { Channels } from '@store/subscription/models';
 import { Grid, GridItem } from '@components/Grid';
 import { SubscriberChannel, Subscriber } from '@store/subscription/models';
 import { InfoCard } from './InfoCard';
