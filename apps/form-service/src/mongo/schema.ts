@@ -15,6 +15,9 @@ export const formSchema = new Schema(
       type: String,
       required: true,
     },
+    formDraftUrl: {
+      type: String,
+    },
     applicantId: {
       type: String,
       required: true,

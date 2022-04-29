@@ -10,6 +10,7 @@ describe('FormEntity', () => {
   const definition = new FormDefinitionEntity(tenantId, {
     id: 'test',
     name: 'test-form-definition',
+    formDraftUrlTemplate: 'https://my-form/{{ id }}',
     description: null,
     anonymousApply: false,
     applicantRoles: ['test-applicant'],
@@ -54,6 +55,7 @@ describe('FormEntity', () => {
   it('it can be created', () => {
     const formInfo = {
       id: 'test-form',
+      formDraftUrl: 'https://my-form/test-form',
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Draft,
@@ -76,7 +78,14 @@ describe('FormEntity', () => {
         roles: ['test-applicant'],
       } as User;
 
-      const entity = await FormEntity.create(user, repositoryMock, definition, notificationMock, subscriber);
+      const entity = await FormEntity.create(
+        user,
+        repositoryMock,
+        definition,
+        'test-form',
+        'https://my-form/test-form',
+        subscriber
+      );
       expect(entity).toBeTruthy();
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
     });
@@ -88,15 +97,16 @@ describe('FormEntity', () => {
         roles: [],
       } as User;
 
-      await expect(FormEntity.create(user, repositoryMock, definition, notificationMock, subscriber)).rejects.toThrow(
-        UnauthorizedUserError
-      );
+      await expect(
+        FormEntity.create(user, repositoryMock, definition, 'test-form', 'https://my-form/test-form', subscriber)
+      ).rejects.toThrow(UnauthorizedUserError);
     });
   });
 
   describe('canAssess', () => {
     const formInfo = {
       id: 'test-form',
+      formDraftUrl: 'https://my-form/test-form',
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Draft,
@@ -122,6 +132,7 @@ describe('FormEntity', () => {
   describe('sendCode', () => {
     const formInfo = {
       id: 'test-form',
+      formDraftUrl: 'https://my-form/test-form',
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Draft,
@@ -150,6 +161,7 @@ describe('FormEntity', () => {
   describe('accessByCode', () => {
     const formInfo = {
       id: 'test-form',
+      formDraftUrl: 'https://my-form/test-form',
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Draft,
@@ -203,6 +215,7 @@ describe('FormEntity', () => {
   describe('accessByUser', () => {
     const formInfo = {
       id: 'test-form',
+      formDraftUrl: 'https://my-form/test-form',
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Draft,
@@ -264,6 +277,7 @@ describe('FormEntity', () => {
   describe('update', () => {
     const formInfo = {
       id: 'test-form',
+      formDraftUrl: 'https://my-form/test-form',
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Draft,
@@ -326,6 +340,7 @@ describe('FormEntity', () => {
   describe('lock', () => {
     const formInfo = {
       id: 'test-form',
+      formDraftUrl: 'https://my-form/test-form',
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Draft,
@@ -360,6 +375,7 @@ describe('FormEntity', () => {
   describe('lock', () => {
     const formInfo = {
       id: 'test-form',
+      formDraftUrl: 'https://my-form/test-form',
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Locked,
@@ -394,6 +410,7 @@ describe('FormEntity', () => {
   describe('submit', () => {
     const formInfo = {
       id: 'test-form',
+      formDraftUrl: 'https://my-form/test-form',
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Locked,
@@ -427,6 +444,7 @@ describe('FormEntity', () => {
   describe('archive', () => {
     const formInfo = {
       id: 'test-form',
+      formDraftUrl: 'https://my-form/test-form',
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Locked,
@@ -454,6 +472,7 @@ describe('FormEntity', () => {
   describe('delete', () => {
     const formInfo = {
       id: 'test-form',
+      formDraftUrl: 'https://my-form/test-form',
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Locked,
