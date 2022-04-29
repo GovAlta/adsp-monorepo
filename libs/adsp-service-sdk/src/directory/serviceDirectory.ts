@@ -55,7 +55,7 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
   };
 
   #retrieveDirectory = async (namespace: string): Promise<void> => {
-    const url = new URL(`/api/directory/v2/namespaces/${namespace}`, this.directoryUrl);
+    const url = new URL(`/api/directory/v2/namespaces/${namespace}/entries`, this.directoryUrl);
 
     try {
       const results = await retry(async (next, count) => {

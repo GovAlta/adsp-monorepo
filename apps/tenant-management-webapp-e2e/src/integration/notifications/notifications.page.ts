@@ -35,6 +35,12 @@ class NotificationsPage {
     return cy.get('[data-testid="subscriberRoles-dropdown-background"]');
   }
 
+  notificationChannelCheckbox(channelName) {
+    return cy.xpath(
+      `//*[@class="modal"]//input[@name="${channelName}"]/parent::*[contains(@class, "goa-checkbox-container")]`
+    );
+  }
+
   notificationTypeModalSelfServiceCheckbox() {
     return cy.xpath(
       '//*[@data-testid="manage-subscriptions-checkbox-wrapper"]//div[contains(@class, "goa-checkbox-container")]'
@@ -296,7 +302,7 @@ class NotificationsPage {
 
   subscriber(addressAs, email) {
     return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]/div/div/table/tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*`
+      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*`
     );
   }
 

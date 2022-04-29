@@ -1,7 +1,6 @@
 import { AdspId, assertAdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import * as hasha from 'hasha';
-import { v4 as uuidv4 } from 'uuid';
 import { FormDefinitionEntity } from '../model';
 import { FormRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
@@ -12,6 +11,7 @@ import { FileService } from '../../file';
 export class FormEntity implements Form {
   tenantId: AdspId;
   id: string;
+  formDraftUrl: string;
   created: Date;
   createdBy: { id: string; name: string };
   locked: Date;
@@ -25,18 +25,17 @@ export class FormEntity implements Form {
     user: User,
     repository: FormRepository,
     definition: FormDefinitionEntity,
-    notificationService: NotificationService,
-    applicantInfo: Omit<Subscriber, 'urn'>
+    id: string,
+    formDraftUrl: string,
+    applicant: Subscriber
   ): Promise<FormEntity> {
     if (!definition.canApply(user)) {
       throw new UnauthorizedUserError('create form', user);
     }
 
-    const id = uuidv4();
-    const applicant = await notificationService.subscribe(definition.tenantId, id, applicantInfo);
-
     const form = new FormEntity(repository, definition, applicant, {
       id,
+      formDraftUrl,
       created: new Date(),
       createdBy: { id: user.id, name: user.name },
       locked: null,
@@ -59,6 +58,7 @@ export class FormEntity implements Form {
   ) {
     this.tenantId = definition.tenantId;
     this.id = form.id;
+    this.formDraftUrl = form.formDraftUrl;
     this.created = form.created;
     this.createdBy = form.createdBy;
     this.locked = form.locked;

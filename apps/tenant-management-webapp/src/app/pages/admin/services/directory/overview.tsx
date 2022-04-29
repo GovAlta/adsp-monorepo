@@ -36,10 +36,7 @@ export const DirectoryOverview: FunctionComponent = () => {
               description: 'My service for doing service things.',
               _links: {
                 self: { href: 'https://my-service.alberta.ca' },
-                api: [
-                  { title: 'v1', href: 'https://my-service.alberta.ca/my-service/v1' },
-                  { title: 'v2', href: 'https://my-service.alberta.ca/my-service/v2' },
-                ],
+                api: { href: 'https://my-service.alberta.ca/my-service/v1' },
                 health: { href: 'https://my-service.alberta.ca/health' },
                 docs: { href: 'https://my-service.alberta.ca/swagger/docs/v1' },
               },
@@ -50,7 +47,11 @@ export const DirectoryOverview: FunctionComponent = () => {
         </Example>
         <p>
           Include the Swagger JSON URL in this metadata to have the{' '}
-          <a rel="noopener noreferrer" target="_blank" href={`${docBaseUrl}/${tenantName}`}>
+          <a
+            rel="noopener noreferrer"
+            target="_blank"
+            href={`${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}`}
+          >
             API docs application
           </a>{' '}
           aggregate your API along with platform APIs.

@@ -193,12 +193,12 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
   };
 
   return (
-    <InfoCard title="Contact information" data-testid="contact-information-card">
+    <InfoCard title="Contact information">
       {!indicator && (
         <div>
           {editContactInformation ? (
             <Grid>
-              <GridItem md={3.5} hSpacing={1.5}>
+              <GridItem md={3.5} hSpacing={1}>
                 <Label>Email</Label>
                 <GoAFormItem error={formErrors?.['email']}>
                   <GoAInputEmail
@@ -211,7 +211,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                 </GoAFormItem>
               </GridItem>
 
-              <GridItem md={3.5} hSpacing={1.5}>
+              <GridItem md={3.5} hSpacing={1}>
                 <Label>Phone number</Label>
 
                 <GoAFormItem error={formErrors?.['sms']}>
@@ -230,12 +230,12 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                 </GoAFormItem>
               </GridItem>
 
-              <GridItem md={5} hSpacing={1.5}>
+              <GridItem md={5}>
                 <Label>My preferred notification channel</Label>
                 <GoARadio
                   key="channel-preference-email"
                   value={Channels.email}
-                  testId="channel-preference-email-btn"
+                  testId="preferred-channel-email-opt"
                   checked={preferredChannel === Channels.email}
                   onChange={updateChannelPreference}
                 >
@@ -244,7 +244,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                 <GoARadio
                   key="channel-preference-sms"
                   value={Channels.sms}
-                  testId="channel-preference-sms-btn"
+                  testId="preferred-channel-sms-opt"
                   checked={preferredChannel === Channels.sms}
                   onChange={updateChannelPreference}
                 >
@@ -255,24 +255,25 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
           ) : (
             <div>
               <Grid>
-                <GridItem md={3.5}>
-                  <div>
+                <GridItem md={3.5} hSpacing={1}>
+                  <div data-testid="email-label">
                     <Label>Email</Label>
                     <p>{subscriberEmail}</p>
                   </div>
                 </GridItem>
-                <GridItem md={3.5}>
-                  <div>
+                <GridItem md={3.5} hSpacing={1}>
+                  <div data-testid="phone-number-label">
                     <Label>Phone number</Label>
                     <p>{phoneWrapper(subscriberSMS)}</p>
                   </div>
                 </GridItem>
                 <GridItem md={5}>
-                  <Label>My primary notification channel</Label>
+                  <Label>My preferred notification channel</Label>
                   <GoARadio
                     key="channel-preference-email"
                     value={Channels.email}
                     disabled={true}
+                    testId="preferred-channel-email-opt"
                     checked={preferredChannel === Channels.email}
                     //eslint-disable-next-line
                     onChange={() => {}}
@@ -283,6 +284,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                     key="channel-preference-sms"
                     value={Channels.sms}
                     disabled={true}
+                    testId="preferred-channel-sms-opt"
                     checked={preferredChannel === Channels.sms}
                     //eslint-disable-next-line
                     onChange={() => {}}

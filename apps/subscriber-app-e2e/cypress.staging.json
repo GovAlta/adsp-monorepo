@@ -1,6 +1,9 @@
 {
   "env": {
     "env-name": "UAT",
+    "email": "auto.test@gov.ab.ca",
+    "password": "",
+    "realm": "2ef492af-0a16-470b-9ea5-c8bfa7b08a7c",
     "TAGS": ""
   },
   "baseUrl": "https://subscription.adsp-uat.alberta.ca/",

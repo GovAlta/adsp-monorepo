@@ -62,7 +62,7 @@ export const createDocsRouter = async ({
       const { tenant: tenantName } = req.params;
 
       if (req.url === '/swagger-ui-init.js') {
-        const tenant = tenantName ? await tenantService.getTenantByName(tenantName.replace('-', ' ') as string) : null;
+        const tenant = tenantName ? await tenantService.getTenantByName(tenantName.replace(/-/g, ' ') as string) : null;
         const namespace = tenant ? toKebabName(tenant.name) : null;
         const docs = {
           ...(await serviceDocs.getDocs(adspId`urn:ads:platform`)),
