@@ -570,7 +570,7 @@ Then('the user changes status to the first unused status', function () {
     });
 });
 
-Then('the user clicks Save button in Manual status change modal', function () {
+When('the user clicks Save button in Manual status change modal', function () {
   statusObj.manualStatusChangeModalSaveBtn().click();
   cy.wait(2000);
 });
@@ -589,21 +589,18 @@ Then('the user views the status of {string} changed to the first unused status',
 
 Then(
   'the user should find the event details of {string} application status changed from {string} to {string} for subscriber of {string}',
-  function (appName, orgStatusValidationStr, newStatusValidationStr, email) {
-    const orgStatusInput = orgStatusValidationStr.match(/(.*{original status}.*)/g);
-    if (orgStatusInput == null) {
-      orgStatusValidationStr = 'The original status was: ' + orgStatusValidationStr;
+  function (appName, orgStatus, newStatusInput, email) {
+    if (orgStatus != '{original status}') {
+      orgStatus = 'The original status was: ' + orgStatus;
     } else {
-      orgStatusValidationStr =
-        orgStatusValidationStr.replace('{original status}', 'The original status was: ') + originalStatus.toLowerCase();
+      orgStatus = 'The original status was: ' + originalStatus.toLowerCase();
     }
-    const newStatusInput = newStatusValidationStr.match(/(.*{new status}.*)/g);
-    if (newStatusInput == null) {
-      newStatusValidationStr = 'The new status is now: ' + newStatusValidationStr;
+    if (newStatusInput != '{new status}') {
+      newStatusInput = 'The new status is now: ' + newStatusInput;
     } else {
-      newStatusValidationStr =
-        newStatusValidationStr.replace('{new status}', 'The new status is now: ') + newStatus.toLowerCase();
+      newStatusInput = 'The new status is now: ' + newStatus.toLowerCase();
     }
+
     tenantAdminObj.eventToggleDetailsIcons().each(($element, $index, $full_array) => {
       //clicking each eye-icon in the list to verify event details
       cy.wrap($element).click();
@@ -614,14 +611,15 @@ Then(
           //if event log details contains email then verify expect statements else close the event details and continue down the list
           if (eventDetails.includes(email)) {
             expect(eventDetails).to.contain(appName);
-            expect(eventDetails).to.contain(orgStatusValidationStr);
-            expect(eventDetails).to.contain(newStatusValidationStr);
+            expect(eventDetails).to.contain(orgStatus);
+            expect(eventDetails).to.contain(newStatusInput);
             cy.wrap($element).click();
           } else {
             //clicking eye icon to close event details
             cy.wrap($element).click();
             if ($index + 1 == $full_array.length) {
-              expect.fail('No matching email found throughout list of event details');
+              cy.log('No matching email found throughout list of event details');
+              expect(eventDetails).to.not.contain(email);
             }
           }
         });
