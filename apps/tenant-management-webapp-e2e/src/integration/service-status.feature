@@ -207,11 +207,11 @@ Feature: Service status
     And the user views current status for "Autotest"
     When the user clicks Change status button for "Autotest"
     Then the user changes status to the first unused status
-    And the user clicks Save button in Manual status change modal
+    When the user clicks Save button in Manual status change modal
     Then the user views the status of "Autotest" changed to the first unused status
     When the user waits "20" seconds
-    When the user selects the "Event log" menu item
+    And the user selects the "Event log" menu item
     Then the "Event log" landing page is displayed
     When the user searches with "notification-service:notification-sent", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
     Then the user views the events matching the search filter of "notification-service:notification-sent"
-    Then the user should find the event details of "Auto Test" application status changed from "{original status}" to "{new status}" for subscriber of "auto.test@gov.ab.ca"
+    And the user should find the event details of "Auto Test" application status changed from "{original status}" to "{new status}" for subscriber of "auto.test@gov.ab.ca"
