@@ -1,6 +1,16 @@
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useEffect } from 'react';
+import { GoAButton } from '@abgov/react-components';
 
-export const PdfOverview: FunctionComponent = () => {
+interface PdfOverviewProps {
+  updateActiveIndex: (index: number) => void;
+  setOpenAddTemplate: (val: boolean) => void;
+}
+
+export const PdfOverview: FunctionComponent<PdfOverviewProps> = ({ updateActiveIndex, setOpenAddTemplate }) => {
+  useEffect(() => {
+    updateActiveIndex(0);
+    setOpenAddTemplate(false);
+  }, []);
   return (
     <div>
       <p>
@@ -8,6 +18,15 @@ export const PdfOverview: FunctionComponent = () => {
         asynchronous jobs and uploads the output PDF files to the file service.
       </p>
       <br />
+      <GoAButton
+        data-testid="add-templates"
+        onClick={() => {
+          updateActiveIndex(1); // to switch to templates tab
+          setOpenAddTemplate(true);
+        }}
+      >
+        Add template
+      </GoAButton>
     </div>
   );
 };
