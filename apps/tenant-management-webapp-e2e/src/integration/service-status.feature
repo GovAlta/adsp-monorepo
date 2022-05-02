@@ -206,7 +206,7 @@ Feature: Service status
     Then the user "views" "Autotest" in the application list
     And the user views current status for "Autotest"
     When the user clicks Change status button for "Autotest"
-    Then the user changes status to the first unused status
+    And the user changes status to the first unused status
     When the user clicks Save button in Manual status change modal
     Then the user views the status of "Autotest" changed to the first unused status
     When the user waits "20" seconds
