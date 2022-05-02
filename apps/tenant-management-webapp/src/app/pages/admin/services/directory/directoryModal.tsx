@@ -6,14 +6,8 @@ import { Service } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { createEntry, updateEntry, fetchEntryDetail } from '@store/directory/actions';
 import { RootState } from '@store/index';
-import {
-  ReactErrorHandler,
-  characterCleanser,
-  cleansingPattern,
-  checkInput,
-  Cleanser,
-  isNotEmptyCheck,
-} from '@lib/checkInput';
+import { characterCheck, validationPattern, checkInput, Validator, isNotEmptyCheck } from '@lib/checkInput';
+import { ReactInputHandler } from '@lib/ReactInputHandler';
 
 interface DirectoryModalProps {
   entry?: Service;
@@ -21,14 +15,14 @@ interface DirectoryModalProps {
   onCancel?: () => void;
   open: boolean;
 }
-const duplicateServiceCheck = (directory: Service[], tenantName: string): Cleanser => {
+const duplicateServiceCheck = (directory: Service[], tenantName: string): Validator => {
   return (input: string) => {
     const duplicate = directory.find((s) => !s.api && s.namespace === tenantName && s.service === input);
     return duplicate ? 'Service duplicate, please use another' : '';
   };
 };
 
-const duplicateApiCheck = (directory: Service[], tenantName: string): Cleanser => {
+const duplicateApiCheck = (directory: Service[], tenantName: string): Validator => {
   return (input: Service) => {
     const duplicate = directory.find(
       (s) => s.namespace === tenantName && s.service === input.service && s.api === input.api
@@ -37,8 +31,8 @@ const duplicateApiCheck = (directory: Service[], tenantName: string): Cleanser =
   };
 };
 
-const lowerCaseCheck = characterCleanser(cleansingPattern.lowerArrowCase);
-const checkForBadUrl = characterCleanser(cleansingPattern.validURL);
+const lowerCaseCheck = characterCheck(validationPattern.lowerArrowCase);
+const checkForBadUrl = characterCheck(validationPattern.validURL);
 const checkServiceExists = isNotEmptyCheck('service');
 const checkUrlExists = isNotEmptyCheck('URL');
 
@@ -63,8 +57,8 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
       const dir = isNew
         ? directory
         : directory.slice(0).filter((e) => e.api !== entry.api && e.service === entry.service);
-      const errorHandler = new ReactErrorHandler(errors, setErrors, 'api');
-      if (checkInput(entry, [duplicateApiCheck(dir, tenantName)], errorHandler)) {
+      const inputHandler = new ReactInputHandler(errors, setErrors, 'api');
+      if (checkInput(entry, [duplicateApiCheck(dir, tenantName)], inputHandler)) {
         return true;
       }
     }
@@ -72,8 +66,8 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
     else {
       // If we're editing then the service name will already be in the directory; remove it for duplicate check.
       const dir = isNew ? directory : directory.slice(0).filter((e) => e.service === entry.service);
-      const errorHandler = new ReactErrorHandler(errors, setErrors, 'service');
-      if (checkInput(entry.service, [duplicateServiceCheck(dir, tenantName)], errorHandler)) {
+      const inputHandler = new ReactInputHandler(errors, setErrors, 'service');
+      if (checkInput(entry.service, [duplicateServiceCheck(dir, tenantName)], inputHandler)) {
         return true;
       }
     }
@@ -96,7 +90,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               maxLength={50}
               disabled={!isNew || isQuickAdd}
               onChange={(e) => {
-                const errorHandler = new ReactErrorHandler(errors, setErrors, 'service');
+                const errorHandler = new ReactInputHandler(errors, setErrors, 'service');
                 checkInput(e.target.value, [lowerCaseCheck, checkServiceExists], errorHandler);
                 setEntry({ ...entry, service: e.target.value });
               }}
@@ -113,7 +107,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               maxLength={50}
               disabled={!isNew || isQuickAdd}
               onChange={(e) => {
-                const errorHandler = new ReactErrorHandler(errors, setErrors, 'api');
+                const errorHandler = new ReactInputHandler(errors, setErrors, 'api');
                 checkInput(e.target.value, [lowerCaseCheck], errorHandler);
                 setEntry({ ...entry, api: e.target.value });
               }}
@@ -130,7 +124,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               maxLength={1024}
               disabled={isQuickAdd}
               onChange={(e) => {
-                const errorHandler = new ReactErrorHandler(errors, setErrors, 'url');
+                const errorHandler = new ReactInputHandler(errors, setErrors, 'url');
                 checkInput(e.target.value, [checkForBadUrl, checkUrlExists], errorHandler);
                 setEntry({ ...entry, url: e.target.value });
               }}
