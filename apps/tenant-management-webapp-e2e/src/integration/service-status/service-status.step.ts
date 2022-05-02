@@ -588,7 +588,7 @@ Then('the user views the status of {string} changed to the first unused status',
 });
 
 Then(
-  'the user should find the event details of {string} application status changed from {string} to {string} for subscriber of {string}',
+  'the user views find the event details of {string} application status changed from {string} to {string} for subscriber of {string}',
   function (appName, orgStatus, newStatusInput, email) {
     if (orgStatus != '{original status}') {
       orgStatus = 'The original status was: ' + orgStatus;
