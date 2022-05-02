@@ -12,6 +12,7 @@ import { renderNoItem } from '@components/NoItem';
 import { GoAIconButton } from '@abgov/react-components/experimental';
 import { DeleteModal } from '@components/DeleteModal';
 import type { SubscriberSearchCriteria } from '@store/subscription/models';
+import { phoneWrapper } from '@lib/wrappers';
 
 interface ActionComponentProps {
   subscriber: Subscriber;
@@ -19,14 +20,6 @@ interface ActionComponentProps {
   openDeleteModalFunction?: (subscriber: Subscriber) => void;
   hideUserActions?: boolean;
 }
-
-const phoneWrapper = (phoneNumber) => {
-  if (phoneNumber) {
-    return (
-      '1 (' + phoneNumber.substring(0, 3) + ') ' + phoneNumber.substring(3, 6) + '-' + phoneNumber.substring(6, 10)
-    );
-  }
-};
 
 const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
   subscriber,
@@ -57,7 +50,7 @@ const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
       <tr key={subscriber.id}>
         <td>{characterLimit(subscriber?.addressAs, 30)}</td>
         <td>{characterLimit(email, 30)}</td>
-        <td>{sms}</td>
+        <td className="no-wrap">{phoneWrapper(sms)}</td>
         {!hideUserActions ? (
           <td>
             <RowFlex>
@@ -252,5 +245,9 @@ const DataTableStyle = styled.div`
   .action {
     width: 0;
     text-align-last: right;
+  }
+
+  .no-wrap {
+    white-space: nowrap;
   }
 `;
