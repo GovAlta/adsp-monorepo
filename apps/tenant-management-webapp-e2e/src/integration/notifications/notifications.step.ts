@@ -652,3 +652,18 @@ Then(
     }
   }
 );
+
+When('the user modifies the name to {string}', function (name) {
+  notificationsObj.notificationTypeModalNameField().clear().type(name);
+});
+
+When('the user clicks Edit button of {string} and {string} on subscribers page', function (addressAs, email) {
+  notificationsObj.subscriberEditIcon(addressAs, email).click();
+});
+
+When('the user modifies the email from {string} to {string}', function (email, editEmail) {
+  notificationsObj.editContactModalEmail().invoke('text').should('contain', email);
+  // notificationsObj.editContactModalEmail().invoke('text');
+  // .should('contain', email);
+  notificationsObj.editContactModalEmail().clear().type(editEmail);
+});
