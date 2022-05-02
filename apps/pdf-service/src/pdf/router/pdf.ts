@@ -1,5 +1,10 @@
 import { AdspId, EventService, isAllowedUser, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { createValidationHandler, NotFoundError, WorkQueueService } from '@core-services/core-common';
+import {
+  createValidationHandler,
+  InvalidOperationError,
+  NotFoundError,
+  WorkQueueService,
+} from '@core-services/core-common';
 import { Request, RequestHandler, Response, Router } from 'express';
 import { body, param } from 'express-validator';
 import { Logger } from 'winston';
@@ -9,7 +14,7 @@ import { PdfServiceWorkItem } from '../job';
 import { PdfTemplateEntity } from '../model';
 import { PdfJobRepository } from '../repository';
 import { ServiceRoles } from '../roles';
-import { PdfJob } from '../types';
+import { FileService, PdfJob } from '../types';
 
 export interface RouterProps {
   serviceId: AdspId;
@@ -17,6 +22,7 @@ export interface RouterProps {
   repository: PdfJobRepository;
   queueService: WorkQueueService<PdfServiceWorkItem>;
   eventService: EventService;
+  fileService: FileService;
 }
 
 function mapPdfTemplate({ id, name, description, template }: PdfTemplateEntity) {
@@ -69,6 +75,7 @@ export function generatePdf(
   serviceId: AdspId,
   repository: PdfJobRepository,
   eventService: EventService,
+  fileService: FileService,
   queueService: WorkQueueService<PdfServiceWorkItem>
 ): RequestHandler {
   return async (req, res, next) => {
@@ -80,6 +87,13 @@ export function generatePdf(
 
       if (!isAllowedUser(user, template.tenantId, ServiceRoles.PdfGenerator)) {
         throw new UnauthorizedUserError('generate pdf', user);
+      }
+
+      if (fileType) {
+        const typeExists = await fileService.typeExists(tenantId, fileType);
+        if (!typeExists) {
+          throw new InvalidOperationError(`Specified target file type '${fileType}' cannot be found.`);
+        }
       }
 
       const job = await repository.create(tenantId);
@@ -131,7 +145,13 @@ export function getGeneratedFile(serviceId: AdspId, repository: PdfJobRepository
   };
 }
 
-export function createPdfRouter({ serviceId, repository, eventService, queueService }: RouterProps): Router {
+export function createPdfRouter({
+  serviceId,
+  repository,
+  eventService,
+  fileService,
+  queueService,
+}: RouterProps): Router {
   const router = Router();
 
   router.get('/templates', getTemplates);
@@ -152,7 +172,7 @@ export function createPdfRouter({ serviceId, repository, eventService, queueServ
       body('recordId').optional().isString()
     ),
     getTemplate('body'),
-    generatePdf(serviceId, repository, eventService, queueService)
+    generatePdf(serviceId, repository, eventService, fileService, queueService)
   );
   router.get('/jobs/:jobId', createValidationHandler(param('jobId').isUUID()), getGeneratedFile(serviceId, repository));
 

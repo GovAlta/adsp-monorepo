@@ -27,6 +27,13 @@ describe('file', () => {
     getResourceUrl: jest.fn(),
   };
 
+  beforeEach(() => {
+    directoryMock.getServiceUrl.mockReset();
+    tokenProviderMock.getAccessToken.mockReset();
+    axiosMock.post.mockReset();
+    axiosMock.get.mockReset();
+  });
+
   it('can create file service', () => {
     const service = createFileService({
       logger: loggerMock,
@@ -36,24 +43,54 @@ describe('file', () => {
     expect(service).toBeTruthy();
   });
 
-  it('can upload file', async () => {
-    const service = createFileService({
-      logger: loggerMock,
-      tokenProvider: tokenProviderMock,
-      directory: directoryMock,
+  describe('typeExists', () => {
+    it('can check type exists', async () => {
+      const service = createFileService({
+        logger: loggerMock,
+        tokenProvider: tokenProviderMock,
+        directory: directoryMock,
+      });
+      directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://file-service'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
+      axiosMock.get.mockResolvedValueOnce({ data: { id: 'my-test-type' } });
+      const exists = await service.typeExists(tenantId, 'my-test-type');
+      expect(exists).toBe(true);
     });
 
-    const content = Buffer.from([]);
-    const file = { id: 'test' };
-    directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://file-service'));
-    tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
-    axiosMock.post.mockResolvedValueOnce({ data: file });
-    const result = await service.upload(tenantId, GENERATED_PDF, 'my-domain-record-1', 'test.pdf', content);
-    expect(result).toBe(file);
-    expect(axiosMock.post).toHaveBeenCalledWith(
-      'https://file-service/file/v1/files',
-      expect.any(FormData),
-      expect.any(Object)
-    );
+    it('can return false for error', async () => {
+      const service = createFileService({
+        logger: loggerMock,
+        tokenProvider: tokenProviderMock,
+        directory: directoryMock,
+      });
+      directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://file-service'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
+      axiosMock.get.mockRejectedValueOnce(new Error('oh noes!'));
+      const exists = await service.typeExists(tenantId, 'my-test-type');
+      expect(exists).toBe(false);
+    });
+  });
+
+  describe('upload', () => {
+    it('can upload file', async () => {
+      const service = createFileService({
+        logger: loggerMock,
+        tokenProvider: tokenProviderMock,
+        directory: directoryMock,
+      });
+
+      const content = Buffer.from([]);
+      const file = { id: 'test' };
+      directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://file-service'));
+      tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
+      axiosMock.post.mockResolvedValueOnce({ data: file });
+      const result = await service.upload(tenantId, GENERATED_PDF, 'my-domain-record-1', 'test.pdf', content);
+      expect(result).toBe(file);
+      expect(axiosMock.post).toHaveBeenCalledWith(
+        'https://file-service/file/v1/files',
+        expect.any(FormData),
+        expect.any(Object)
+      );
+    });
   });
 });
