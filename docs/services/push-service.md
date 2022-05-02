@@ -55,7 +55,7 @@ Streams are configured using the [configuration service](configuration-service.m
   }
 
   await fetch(
-    `${configurationServiceUrl}/configuration/v1/configuration/platform/push-service`,
+    `${configurationServiceUrl}/configuration/v2/configuration/platform/push-service`,
     {
       method: 'PATCH',
       headers: {

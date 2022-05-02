@@ -44,7 +44,7 @@ components:
           type: string
       required: [operation, templateId, filename]
 
-/templates:
+/pdf/v1/templates:
   get:
     tags:
       - PDF
@@ -59,7 +59,7 @@ components:
               items:
                 $ref: "#/components/schemas/Template"
 
-/templates/{templateId}:
+/pdf/v1/templates/{templateId}:
   get:
     tags:
       - PDF
@@ -79,7 +79,7 @@ components:
             schema:
               $ref: "#/components/schemas/Template"
 
-/jobs:
+/pdf/v1/jobs:
   post:
     tags:
       - PDF
@@ -103,7 +103,7 @@ components:
             schema:
               $ref: "#/components/schemas/Job"
 
-/jobs/{jobId}:
+/pdf/v1/jobs/{jobId}:
   get:
     tags:
       - PDF

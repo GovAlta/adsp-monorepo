@@ -33,7 +33,7 @@ function mapJob(serviceId: AdspId, { id, status, result }: PdfJob) {
     urn: `${serviceId}:v1:/jobs/${id}`,
     id,
     status,
-    result,
+    result: result ? { urn: result.urn, id: result.id, filename: result.filename } : null,
   };
 }
 

@@ -173,9 +173,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   }, [dispatch]);
 
   useEffect(() => {
-    if (notification?.notificationTypes !== undefined) {
-      dispatch(FetchCoreNotificationTypesService());
-    }
+    dispatch(FetchCoreNotificationTypesService());
   }, [notification?.notificationTypes]);
 
   function reset() {
