@@ -95,6 +95,10 @@ class FileServicePage {
     return cy.get('[data-testid="FileType-0"]');
   }
 
+  fileTypeDeleteModal() {
+    return cy.xpath('//*[@data-testid="file-type-delete-modal"]');
+  }
+
   fileTypeDeleteModalTitle() {
     return cy.xpath('//*[@data-testid="file-type-delete-modal"]//*[@class="modal-title"]');
   }

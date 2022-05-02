@@ -28,8 +28,8 @@ Then('the user views Add notification type modal', function () {
 });
 
 When(
-  'the user enters {string}, {string}, {string}, {string} on notification type modal',
-  function (name, description, role, selfService) {
+  'the user enters {string}, {string}, {string}, {string}, {string}, {string}, {string} on notification type modal',
+  function (name, description, role, email, bot, sms, selfService) {
     const roles = role.split(',');
     notificationsObj.notificationTypeModalNameField().clear().type(name);
     notificationsObj.notificationTypeModalDescriptionField().clear().type(description);
@@ -38,6 +38,96 @@ When(
       notificationsObj.notificationTypeModalSubscriberRolesDropdownItem(roles[i].trim()).click();
     }
     notificationsObj.notificationTypeModalSubscriberRolesDropdownBackground().click({ force: true }); // To collapse the dropdown after selection
+    //email checkbox
+    notificationsObj
+      .notificationChannelCheckbox('email')
+      .invoke('attr', 'class')
+      .then((classAttVal) => {
+        if (classAttVal == undefined) {
+          expect.fail('Failed to get email checkbox class attribute value.');
+        } else {
+          switch (email) {
+            case 'yes':
+              if (classAttVal.includes('selected')) {
+                cy.log('Email check box is already selected. ');
+              } else {
+                notificationsObj.notificationChannelCheckbox('email').click();
+              }
+              break;
+            case 'no':
+              {
+                if (!classAttVal.includes('selected')) {
+                  cy.log('Email check box is already not selected. ');
+                } else {
+                  notificationsObj.notificationChannelCheckbox('email').click();
+                }
+              }
+              break;
+            default:
+              expect(email).to.be.oneOf(['yes', 'no']);
+          }
+        }
+      });
+    //bot checkbox
+    notificationsObj
+      .notificationChannelCheckbox('bot')
+      .invoke('attr', 'class')
+      .then((classAttVal) => {
+        if (classAttVal == undefined) {
+          expect.fail('Failed to get bot checkbox class attribute value.');
+        } else {
+          switch (bot) {
+            case 'yes':
+              if (classAttVal.includes('selected')) {
+                cy.log('Bot check box is already selected. ');
+              } else {
+                notificationsObj.notificationChannelCheckbox('bot').click();
+              }
+              break;
+            case 'no':
+              {
+                if (!classAttVal.includes('selected')) {
+                  cy.log('Bot check box is already not selected. ');
+                } else {
+                  notificationsObj.notificationChannelCheckbox('bot').click();
+                }
+              }
+              break;
+            default:
+              expect(bot).to.be.oneOf(['yes', 'no']);
+          }
+        }
+      });
+    //sms checkbox
+    notificationsObj
+      .notificationChannelCheckbox('sms')
+      .invoke('attr', 'class')
+      .then((classAttVal) => {
+        if (classAttVal == undefined) {
+          expect.fail('Failed to get sms checkbox class attribute value.');
+        } else {
+          switch (sms) {
+            case 'yes':
+              if (classAttVal.includes('selected')) {
+                cy.log('SMS check box is already selected. ');
+              } else {
+                notificationsObj.notificationChannelCheckbox('sms').click();
+              }
+              break;
+            case 'no':
+              {
+                if (!classAttVal.includes('selected')) {
+                  cy.log('SMS check box is already not selected. ');
+                } else {
+                  notificationsObj.notificationChannelCheckbox('sms').click();
+                }
+              }
+              break;
+            default:
+              expect(sms).to.be.oneOf(['yes', 'no']);
+          }
+        }
+      });
     //Self-service checkbox
     notificationsObj
       .notificationTypeModalSelfServiceCheckbox()

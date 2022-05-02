@@ -7,7 +7,7 @@ interface InfoCardProps {
 
 export const InfoCard: FC<InfoCardProps> = ({ title, children }) => {
   return (
-    <div>
+    <div data-testid="contact-information-card">
       <InfoCardTitle>{title}</InfoCardTitle>
       <InfoCardContent>{children}</InfoCardContent>
     </div>

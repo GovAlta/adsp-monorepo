@@ -173,9 +173,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   }, [dispatch]);
 
   useEffect(() => {
-    if (notification?.notificationTypes !== undefined) {
-      dispatch(FetchCoreNotificationTypesService());
-    }
+    dispatch(FetchCoreNotificationTypesService());
   }, [notification?.notificationTypes]);
 
   function reset() {
@@ -314,14 +312,12 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     <NotificationStyles>
       <div>
         <p>
-          Notification types represent a bundled set of notifications that can be subscribed to and provides the access
-          roles for that set. For example, a ‘Application Progress’ type could include notifications for submission of
-          the application, processing started, and application processed.
+          Notification types represent a bundled set of notifications that can be subscribed to. For example, an
+          ‘Application Progress’ type could include notifications for submission of the application, processing started,
+          and application processed.
         </p>
         <p>
-          A subscriber has a subscription to the set and cannot subscribe to the individual notifications in the set.
-          Notification types are configured in the configuration service under the platform:notification-service
-          namespace and name.
+          A subscriber has a subscription to the whole set and cannot subscribe to individual notifications in the set.
         </p>
       </div>
       <Buttons>

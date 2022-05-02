@@ -15,7 +15,7 @@ import styled from 'styled-components';
 
 export const DirectoryService: FunctionComponent = () => {
   const dispatch = useDispatch();
-  const [isEdit, setIsEdit] = useState(false);
+  const [modalType, setModalType] = useState('');
   const [editEntry, setEditEntry] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<Service>(defaultService);
@@ -44,7 +44,7 @@ export const DirectoryService: FunctionComponent = () => {
 
   const onEdit = (service) => {
     setSelectedEntry(service);
-    setIsEdit(true);
+    setModalType('edit');
     setEditEntry(true);
   };
   const onDelete = (service) => {
@@ -52,6 +52,11 @@ export const DirectoryService: FunctionComponent = () => {
     setSelectedEntry(service);
   };
 
+  const onQuickAdd = (service) => {
+    setSelectedEntry(service);
+    setModalType('quickAdd');
+    setEditEntry(true);
+  };
   return (
     <>
       {indicator.show && <PageIndicator />}
@@ -68,7 +73,7 @@ export const DirectoryService: FunctionComponent = () => {
                 onClick={() => {
                   defaultService.namespace = toKebabName(tenantName);
                   setSelectedEntry(defaultService);
-                  setIsEdit(false);
+                  setModalType('new');
                   setEditEntry(true);
                 }}
               >
@@ -81,6 +86,7 @@ export const DirectoryService: FunctionComponent = () => {
                 isCore={false}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                onQuickAdd={onQuickAdd}
               />
             </>
           )}
@@ -91,6 +97,7 @@ export const DirectoryService: FunctionComponent = () => {
             isCore={true}
             onEdit={onEdit}
             onDelete={onDelete}
+            onQuickAdd={onQuickAdd}
           />
         </div>
       )}
@@ -113,7 +120,7 @@ export const DirectoryService: FunctionComponent = () => {
         <DirectoryModal
           open={true}
           entry={selectedEntry}
-          type={isEdit ? 'edit' : 'new'}
+          type={modalType}
           onCancel={() => {
             reset();
           }}

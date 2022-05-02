@@ -29,19 +29,32 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscribe
     }
   }
 
+  const displayOrder = ['email', 'sms', 'bot'];
+  const sortedChannels = [];
+  displayOrder.forEach((display) => {
+    const ix = subscriber.channels.findIndex((channel) => channel.channel === display);
+    if (ix !== -1) {
+      sortedChannels.push(subscriber.channels[ix]);
+    }
+  });
+
   return (
     <tr>
       <td headers="userName" data-testid="addressAs">
         {characterLimit(subscriber?.addressAs, 30)}
       </td>
       <td headers="channels" data-testid="channels">
-        {subscriber?.channels.map((channel, i) => (
+        {sortedChannels.map((channel, i) => (
           <div key={`channels-id-${i}`} style={{ display: 'flex' }}>
             <div>
               <div>
                 {channel.channel === 'email' ? (
                   <IconsCell>
                     <GoAIcon data-testid="mail-icon" size="medium" type="mail" />
+                  </IconsCell>
+                ) : channel.channel === 'sms' ? (
+                  <IconsCell>
+                    <GoAIcon data-testid="sms-icon" size="medium" type="phone-portrait" />
                   </IconsCell>
                 ) : (
                   `${channel.channel}:`
@@ -153,7 +166,7 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
           <DataTable data-testid={`subscription-table-${index}`}>
             <thead>
               <tr>
-                <th id="userName" data-testid={`subscription-header-address-as-${index}`}>
+                <th className="address-as" id="userName" data-testid={`subscription-header-address-as-${index}`}>
                   Address as
                 </th>
                 <th id="channels">Channels</th>
@@ -206,6 +219,10 @@ export const SubscriptionList = styled(SubscriptionsListComponent)`
     text-transform: capitalize;
     font-size: var(--fs-lg);
     font-weight: var(--fw-bold);
+  }
+
+  & .address-as {
+    min-width: 180px;
   }
 
   & td:first-child {

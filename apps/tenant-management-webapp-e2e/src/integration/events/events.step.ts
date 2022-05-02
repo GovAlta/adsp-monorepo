@@ -88,6 +88,10 @@ When('the user clicks Save button on Definition modal', function () {
   cy.wait(2000);
 });
 
+Then('the user views disabled Save button on Definition modal', function () {
+  eventsObj.definitionModalSaveButton().should('be.disabled');
+});
+
 When(
   'the user clicks {string} button for the definition of {string} and {string} under {string}',
   function (button, eventName, eventDesc, eventNamespace) {

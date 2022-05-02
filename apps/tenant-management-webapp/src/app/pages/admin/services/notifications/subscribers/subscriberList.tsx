@@ -57,9 +57,7 @@ const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
       <tr key={subscriber.id}>
         <td>{characterLimit(subscriber?.addressAs, 30)}</td>
         <td>{characterLimit(email, 30)}</td>
-        <td>
-          <span style={{ whiteSpace: 'nowrap' }}>{phoneWrapper(sms)}</span>
-        </td>
+        <td>{sms}</td>
         {!hideUserActions ? (
           <td>
             <RowFlex>
@@ -168,25 +166,27 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
       {subscribers && subscribers.length === 0 && renderNoItem('subscriber')}
       {subscribers && subscribers.length > 0 && (
         <DataTable>
-          <thead>
-            <tr>
-              <th>Address as</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th style={{ width: '0' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {subscribers.map((subscriber) => (
-              <SubscriberListItem
-                openModalFunction={openModalFunction}
-                subscriber={subscriber}
-                openDeleteModalFunction={openDeleteModalFunction}
-                key={subscriber.id}
-                hideUserActions={false}
-              />
-            ))}
-          </tbody>
+          <DataTableStyle>
+            <thead>
+              <tr>
+                <th>Address as</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th className="action">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {subscribers.map((subscriber) => (
+                <SubscriberListItem
+                  openModalFunction={openModalFunction}
+                  subscriber={subscriber}
+                  openDeleteModalFunction={openDeleteModalFunction}
+                  key={subscriber.id}
+                  hideUserActions={false}
+                />
+              ))}
+            </tbody>
+          </DataTableStyle>
         </DataTable>
       )}
       <SubscriberModalForm
@@ -245,5 +245,12 @@ const RowFlex = styled.div`
   flex-direction: row;
   & > :not([data-account-link]):first-child {
     visibility: hidden;
+  }
+`;
+
+const DataTableStyle = styled.div`
+  .action {
+    width: 0;
+    text-align-last: right;
   }
 `;
