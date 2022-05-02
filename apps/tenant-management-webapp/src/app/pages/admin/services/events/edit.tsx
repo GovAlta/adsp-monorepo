@@ -5,10 +5,10 @@ import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import {
-  ReactCleansingReporter,
+  ReactErrorHandler,
   wordCleanser,
   characterCleanser,
-  cleansingPatterns,
+  cleansingPattern,
   checkInput,
   isNotEmptyCheck,
 } from '@lib/checkInput';
@@ -35,13 +35,15 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
   const [definition, setDefinition] = useState<EventDefinition>(initialValue);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
-  const reporter = new ReactCleansingReporter(errors, setErrors);
+
   const hasFormErrors = () => {
     return Object.keys(errors).length !== 0;
   };
-  const forbidden = coreNamespaces.concat('platform');
-  const checkForConflicts = wordCleanser(forbidden, 'namespace');
-  const checkForBadChars = characterCleanser(cleansingPatterns.alphanumericAC);
+  const forbiddenWords = coreNamespaces.concat('platform');
+  const checkForConflicts = wordCleanser(forbiddenWords);
+  const checkForBadChars = characterCleanser(cleansingPattern.mixedArrowCase);
+  const namespaceErrorHandler = new ReactErrorHandler(errors, setErrors, 'namespace');
+  const nameErrorHandler = new ReactErrorHandler(errors, setErrors, 'name');
 
   return (
     <GoAModal testId="definition-form" isOpen={open}>
@@ -61,8 +63,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
                 checkInput(
                   e.target.value,
                   [checkForConflicts, checkForBadChars, isNotEmptyCheck('namespace')],
-                  reporter,
-                  'namespace'
+                  namespaceErrorHandler
                 );
                 setDefinition({ ...definition, namespace: e.target.value });
               }}
@@ -78,7 +79,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               data-testid="form-name"
               aria-label="name"
               onChange={(e) => {
-                checkInput(e.target.value, [checkForBadChars, isNotEmptyCheck('name')], reporter, 'name');
+                checkInput(e.target.value, [checkForBadChars, isNotEmptyCheck('name')], nameErrorHandler);
                 setDefinition({ ...definition, name: e.target.value });
               }}
             />
