@@ -11,7 +11,11 @@ import { updateConfigurationDefinition } from '@store/configuration/action';
 import { AddEditConfigDefinition } from './addEditDefinition';
 import { DeleteModal } from '@components/DeleteModal';
 
-export const ConfigurationDefinitions: FunctionComponent = () => {
+interface ParentCompProps {
+  activeEdit?: boolean;
+}
+
+export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ activeEdit }) => {
   const { coreConfigDefinitions, tenantConfigDefinitions } = useSelector((state: RootState) => state.configuration);
   const coreTenant = 'Platform';
   const [selectedDefinition, setSelectedDefinition] = useState(defaultConfigDefinition);
@@ -33,6 +37,13 @@ export const ConfigurationDefinitions: FunctionComponent = () => {
   useEffect(() => {
     dispatch(getConfigurationDefinitions());
   }, []);
+
+  useEffect(() => {
+    if (activeEdit) {
+      reset();
+      setOpenAddDefinition(true);
+    }
+  }, [activeEdit]);
 
   return (
     <>
