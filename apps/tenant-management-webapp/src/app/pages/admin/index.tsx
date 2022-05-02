@@ -14,6 +14,7 @@ import { EventLog } from './event-log';
 import { Events } from './services/events';
 import { Notifications } from './services/notifications';
 import { Configuration } from './services/configuration';
+import { Pdf } from './services/pdf';
 
 const TenantManagement = (): JSX.Element => {
   const { setTitle } = useContext(HeaderCtx);
@@ -43,6 +44,9 @@ const TenantManagement = (): JSX.Element => {
           </Route>
           <Route exact path="/admin/services/configuration">
             <Configuration />
+          </Route>
+          <Route exact path="/admin/services/pdf">
+            <Pdf />
           </Route>
           <Route exact path="/admin/services/file">
             <File />
