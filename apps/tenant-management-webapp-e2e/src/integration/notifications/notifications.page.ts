@@ -349,5 +349,11 @@ class NotificationsPage {
   contactInformationInstructions() {
     return cy.get('[data-testid="support-instructions"]');
   }
+
+  subscriberEditIcon(addressAs, email) {
+    return cy.xpath(
+      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//*[@data-testid="icon-create"]`
+    );
+  }
 }
 export default NotificationsPage;
