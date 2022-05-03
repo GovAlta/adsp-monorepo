@@ -613,12 +613,14 @@ Then(
             expect(eventDetails).to.contain(orgStatus);
             expect(eventDetails).to.contain(newStatusInput);
             cy.wrap($element).click({ force: true });
+            return false;
           } else {
             //clicking eye icon to close event details
             cy.wrap($element).click();
             if ($index + 1 == $full_array.length) {
-              cy.log('No matching email found throughout list of event details');
-              expect(eventDetails).to.contain(email);
+              cy.log('No matching email found throughout list of event details').then(() => {
+                expect($index + 1).to.not.eq($full_array.length);
+              });
             }
           }
         });
