@@ -13,7 +13,7 @@ import {
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '..';
-import { select, call, put, takeEvery, all, delay } from 'redux-saga/effects';
+import { select, call, put, takeEvery, all } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 
 export function* fetchConfigurationDefinitions(action: FetchConfigurationDefinitionsAction): SagaIterator {

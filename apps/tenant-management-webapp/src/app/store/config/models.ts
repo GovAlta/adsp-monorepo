@@ -41,6 +41,7 @@ export interface ServiceUrls {
   valueServiceApiUrl?: string;
   docServiceApiUrl?: string;
   configurationServiceApiUrl?: string;
+  chatServiceApiUrl: string;
 }
 
 export interface ConfigState {
