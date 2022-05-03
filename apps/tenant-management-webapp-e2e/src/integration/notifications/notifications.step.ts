@@ -412,7 +412,7 @@ Then(
 When(
   'the user clicks delete button of {string}, {string} under {string}',
   function (addressAd, email, notificationType) {
-    notificationsObj.deleteIconForNotificationRecord(notificationType, addressAd, email).click();
+    notificationsObj.deleteIconForNotificationRecord(notificationType, addressAd, email).click({ force: true });
   }
 );
 
@@ -426,7 +426,7 @@ Then('the user views the Delete subscription confirmation message of {string}', 
 });
 
 When('the user clicks Confirm button on Delete subscription modal', function () {
-  notificationsObj.deleteConfirmationModalConfirmBtn().click();
+  notificationsObj.deleteConfirmationModalConfirmBtn().scrollIntoView().click();
 });
 
 Given('a tenant admin user is on notification subscribers page', function () {

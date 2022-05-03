@@ -10,7 +10,7 @@
  *  const error = checkInput(input, [validator])
  *
  * Optional Parameters:
- *   1. An action, for sophisticated input handling. See the ReactInputHandler
+ *   1. An action, for sophisticated input handling. See the reactInputHandlerFactory
  *      as an example.
  *      checkInput(input, [validator], inputHandler)
  *
@@ -50,12 +50,12 @@ export const checkInput = (input: unknown, cleansers: Validator[], action?: Vali
 
 /* Some common character cleansing patterns */
 export const validationPattern = {
-  mixedArrowCase: {
+  mixedKebabCase: {
     pattern: new RegExp(/^[a-zA-Z0-9-]+$/),
     onFailureMessage: 'Allowed characters are: a-z, A-Z, 0-9, -',
   },
-  lowerArrowCase: { pattern: new RegExp(/^[a-z0-9-]+$/), onFailureMessage: 'Allowed characters are: a-z, 0-9, -' },
-  upperArrowCase: { pattern: new RegExp(/^[A-Z0-9-]+$/), onFailureMessage: 'Allowed characters are: A-Z, 0-9, -' },
+  lowerKebabCase: { pattern: new RegExp(/^[a-z0-9-]+$/), onFailureMessage: 'Allowed characters are: a-z, 0-9, -' },
+  upperKebabCase: { pattern: new RegExp(/^[A-Z0-9-]+$/), onFailureMessage: 'Allowed characters are: A-Z, 0-9, -' },
   validURL: { pattern: new RegExp(/^(http|https):\/\/[^ "]+$/), onFailureMessage: 'Please enter a valid URL' },
 };
 

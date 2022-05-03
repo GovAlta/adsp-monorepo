@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { createEntry, updateEntry, fetchEntryDetail } from '@store/directory/actions';
 import { RootState } from '@store/index';
 import { characterCheck, validationPattern, checkInput, Validator, isNotEmptyCheck } from '@lib/checkInput';
-import { ReactInputHandler } from '@lib/ReactInputHandler';
+import { reactInputHandlerFactory } from '@lib/reactInputHandlerFactory';
 
 interface DirectoryModalProps {
   entry?: Service;
@@ -31,7 +31,7 @@ const duplicateApiCheck = (directory: Service[], tenantName: string): Validator 
   };
 };
 
-const lowerCaseCheck = characterCheck(validationPattern.lowerArrowCase);
+const lowerCaseCheck = characterCheck(validationPattern.lowerKebabCase);
 const checkForBadUrl = characterCheck(validationPattern.validURL);
 const checkServiceExists = isNotEmptyCheck('service');
 const checkUrlExists = isNotEmptyCheck('URL');
@@ -49,6 +49,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   const hasFormErrors = () => {
     return Object.keys(errors).length !== 0;
   };
+  const errorHandler = reactInputHandlerFactory(errors, setErrors);
 
   const duplicateExists = (entry: Service): boolean => {
     // If we have an API check that it is not a duplicate for the service.
@@ -57,8 +58,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
       const dir = isNew
         ? directory
         : directory.slice(0).filter((e) => e.api !== entry.api && e.service === entry.service);
-      const inputHandler = new ReactInputHandler(errors, setErrors, 'api');
-      if (checkInput(entry, [duplicateApiCheck(dir, tenantName)], inputHandler)) {
+      if (checkInput(entry, [duplicateApiCheck(dir, tenantName)], errorHandler('api'))) {
         return true;
       }
     }
@@ -66,8 +66,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
     else {
       // If we're editing then the service name will already be in the directory; remove it for duplicate check.
       const dir = isNew ? directory : directory.slice(0).filter((e) => e.service === entry.service);
-      const inputHandler = new ReactInputHandler(errors, setErrors, 'service');
-      if (checkInput(entry.service, [duplicateServiceCheck(dir, tenantName)], inputHandler)) {
+      if (checkInput(entry.service, [duplicateServiceCheck(dir, tenantName)], errorHandler('service'))) {
         return true;
       }
     }
@@ -90,8 +89,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               maxLength={50}
               disabled={!isNew || isQuickAdd}
               onChange={(e) => {
-                const errorHandler = new ReactInputHandler(errors, setErrors, 'service');
-                checkInput(e.target.value, [lowerCaseCheck, checkServiceExists], errorHandler);
+                checkInput(e.target.value, [lowerCaseCheck, checkServiceExists], errorHandler('service'));
                 setEntry({ ...entry, service: e.target.value });
               }}
             />
@@ -107,8 +105,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               maxLength={50}
               disabled={!isNew || isQuickAdd}
               onChange={(e) => {
-                const errorHandler = new ReactInputHandler(errors, setErrors, 'api');
-                checkInput(e.target.value, [lowerCaseCheck], errorHandler);
+                checkInput(e.target.value, [lowerCaseCheck], errorHandler('api'));
                 setEntry({ ...entry, api: e.target.value });
               }}
             />
@@ -124,8 +121,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               maxLength={1024}
               disabled={isQuickAdd}
               onChange={(e) => {
-                const errorHandler = new ReactInputHandler(errors, setErrors, 'url');
-                checkInput(e.target.value, [checkForBadUrl, checkUrlExists], errorHandler);
+                checkInput(e.target.value, [checkForBadUrl, checkUrlExists], errorHandler('url'));
                 setEntry({ ...entry, url: e.target.value });
               }}
             />
