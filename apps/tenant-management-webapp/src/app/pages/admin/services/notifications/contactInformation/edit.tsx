@@ -6,6 +6,7 @@ import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experime
 import styled from 'styled-components';
 
 import { GoAInputEmail } from '@abgov/react-components/experimental';
+import { isSmsValid, emailError, smsError } from '@lib/inputValidation';
 
 interface NotificationTypeFormProps {
   initialValue?: ContactInformation;
@@ -31,23 +32,11 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
     setContactInformation(JSON.parse(x));
   }, [initialValue]);
 
-  function emailErrors(email) {
-    if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
-      return { email: 'You must enter a valid email' };
-    }
-  }
-
-  function phoneError(phone) {
-    if (!/^\d{10}$/.test(phone) && phone.length !== 0) {
-      return { phoneNumber: 'Please enter a 10 digit phone number 7801231234' };
-    }
-  }
-
   const trySave = (contactInformation) => {
     const formErrorList = Object.assign(
       {},
-      emailErrors(contactInformation.contactEmail),
-      phoneError(contactInformation.phoneNumber)
+      emailError(contactInformation.contactEmail),
+      smsError(contactInformation.phoneNumber)
     );
     if (Object.keys(formErrorList).length === 0) {
       onSave(contactInformation);
@@ -62,15 +51,6 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
     setContactInformation(JSON.parse(x));
     setFormErrors(null);
     onCancel();
-  };
-
-  const inValidSMSInput = (smsInput: string): boolean => {
-    if (smsInput) {
-      // eslint-disable-next-line
-      return /^[0-9\.\-\/]+$/.test(smsInput);
-    }
-
-    return true;
   };
 
   return (
@@ -103,7 +83,7 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
                   value={contactInformation?.phoneNumber || ''}
                   data-testid="contact-sms-input"
                   onChange={(_, value) => {
-                    if (inValidSMSInput(value)) {
+                    if (isSmsValid(value)) {
                       setContactInformation({ ...contactInformation, phoneNumber: value.substring(0, 10) });
                     }
                   }}
