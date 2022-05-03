@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import React from 'react';
-import { FetchFileTypeService } from '@store/file/actions';
+import { FetchFileTypeService, FetchCoreFileTypeService } from '@store/file/actions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 import { FileTypeTable } from './fileTypesTable';
@@ -38,12 +38,17 @@ interface FileTypesTableContainerProps {
 const FileTypesTableContainer = ({ roles }: FileTypesTableContainerProps): JSX.Element => {
   const dispatch = useDispatch();
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
+  const coreFileTypes = useSelector((state: RootState) => state.fileService.coreFileTypes);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
 
   useEffect(() => {
     dispatch(FetchFileTypeService());
+  }, []);
+
+  useEffect(() => {
+    dispatch(FetchCoreFileTypeService());
   }, []);
 
   // eslint-disable-next-line
@@ -57,7 +62,12 @@ const FileTypesTableContainer = ({ roles }: FileTypesTableContainerProps): JSX.E
         )}
         {indicator.show && <PageIndicator />}
         {!indicator.show && fileTypes && (
-          <FileTypeTable roles={roles} fileTypes={fileTypes} data-testid="file-type-table" />
+          <FileTypeTable
+            roles={roles}
+            fileTypes={fileTypes}
+            coreFileTypes={coreFileTypes}
+            data-testid="file-type-table"
+          />
         )}
       </div>
     </div>

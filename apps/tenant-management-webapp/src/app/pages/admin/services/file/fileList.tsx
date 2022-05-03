@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   UploadFileService,
   FetchFileTypeService,
+  FetchCoreFileTypeService,
   FetchFilesService,
   DeleteFileService,
   DownloadFileService,
@@ -23,6 +24,7 @@ const FileList = (): JSX.Element => {
 
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
+  const coreFileTypes = useSelector((state: RootState) => state.fileService.coreFileTypes);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   const getFileTypesValues = () => {
@@ -36,6 +38,13 @@ const FileList = (): JSX.Element => {
       const type = {};
       type['text'] = fileType.name ? fileType.name : fileType.id;
       type['value'] = fileType.id;
+      typeValues.push(type);
+    });
+
+    coreFileTypes.forEach((coreFileType): void => {
+      const type = {};
+      type['text'] = coreFileType.name ? coreFileType.name : coreFileType.id;
+      type['value'] = coreFileType.id;
       typeValues.push(type);
     });
     return typeValues;
@@ -62,6 +71,7 @@ const FileList = (): JSX.Element => {
   useEffect(() => {
     dispatch(FetchFilesService());
     dispatch(FetchFileTypeService());
+    dispatch(FetchCoreFileTypeService());
   }, [dispatch]);
 
   const renderFileTable = () => {

@@ -7,6 +7,7 @@ import {
   FetchFilesSuccessService,
   UploadFileSuccessService,
   FetchFileTypeSucceededService,
+  FetchCoreFileTypeSucceededService,
   UpdateFileTypeSucceededService,
   DeleteFileSuccessService,
   FetchFileTypeHasFileSucceededService,
@@ -22,6 +23,7 @@ import {
   DOWNLOAD_FILE,
   FETCH_FILE_LIST,
   FETCH_FILE_TYPE,
+  FETCH_CORE_FILE_TYPE,
   FETCH_FILE_TYPE_HAS_FILE,
   UPDATE_FILE_TYPE,
   UPLOAD_FILE,
@@ -135,6 +137,59 @@ export function* fetchFileTypes(): SagaIterator {
       );
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - fetchFileTypes` }));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    }
+  }
+}
+
+export function* fetchCoreFileTypes(): SagaIterator {
+  const configBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading...',
+    })
+  );
+
+  if (configBaseUrl && token) {
+    try {
+      const { data: configuration } = yield call(
+        axios.get,
+        `${configBaseUrl}/configuration/v2/configuration/platform/file-service?core`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const fileTypeInfo = Object.entries(configuration?.latest?.configuration).map(
+        ([_k, type]) => type as FileTypeItem
+      );
+
+      yield put(FetchCoreFileTypeSucceededService({ data: fileTypeInfo }));
+
+      const fileTypes = yield select((state: RootState) => state.fileService.fileTypes);
+
+      if (fileTypes) {
+        for (const fileType of fileTypes) {
+          yield put(FetchFileTypeHasFileService(fileType.id));
+        }
+      }
+
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.message} - fetchCoreFileTypes` }));
       yield put(
         UpdateIndicator({
           show: false,
@@ -259,6 +314,7 @@ export function* watchFileSagas(): Generator {
   yield takeEvery(FETCH_FILE_TYPE_HAS_FILE, fetchFileTypeHasFile);
 
   yield takeEvery(FETCH_FILE_TYPE, fetchFileTypes);
+  yield takeEvery(FETCH_CORE_FILE_TYPE, fetchCoreFileTypes);
   yield takeEvery(DELETE_FILE_TYPE, deleteFileTypes);
   yield takeEvery(CREATE_FILE_TYPE, createFileType);
   yield takeEvery(UPDATE_FILE_TYPE, updateFileType);

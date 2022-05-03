@@ -1,6 +1,7 @@
 import {
   ActionTypes,
   FETCH_FILE_LIST_SUCCESSES,
+  FETCH_CORE_FILE_TYPE_SUCCEEDED,
   UPLOAD_FILE_SUCCESSES,
   DELETE_FILE_SUCCESSES,
   FETCH_FILE_TYPE_SUCCEEDED,
@@ -33,7 +34,7 @@ function uploadFile(fileList, file) {
 
 function deleteFile(fileList, id) {
   return fileList.filter((file) => {
-    return file.id !== id
+    return file.id !== id;
   });
 }
 export default function (state = FILE_INIT, action: ActionTypes): FileService {
@@ -57,6 +58,11 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
       return {
         ...state,
         fileTypes: action.payload.fileInfo.data,
+      };
+    case FETCH_CORE_FILE_TYPE_SUCCEEDED:
+      return {
+        ...state,
+        coreFileTypes: action.payload.fileInfo.data,
       };
     case DELETE_FILE_TYPE_SUCCEEDED:
       return {

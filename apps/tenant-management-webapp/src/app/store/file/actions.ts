@@ -19,6 +19,9 @@ export const DOWNLOAD_FILE_FAILED = 'tenant/file-service/file/download/fail';
 export const FETCH_FILE_TYPE = 'tenant/file-service/fileType/fetch';
 export const FETCH_FILE_TYPE_SUCCEEDED = 'file-service/space/fileType/succeeded';
 
+export const FETCH_CORE_FILE_TYPE = 'tenant/file-service/fileType/fetch-core';
+export const FETCH_CORE_FILE_TYPE_SUCCEEDED = 'file-service/space/fileType/succeeded-core';
+
 export const DELETE_FILE_TYPE = 'tenant/file-service/fileType/delete';
 export const DELETE_FILE_TYPE_SUCCEEDED = 'file-service/fileType/delete/success';
 
@@ -53,10 +56,12 @@ export type ActionTypes =
   | UpdateFileTypeSucceededAction
   | CreateFileTypeSucceededAction
   | FetchFileTypeAction
+  | FetchCoreFileTypeAction
   | UpdateFileTypeAction
   | DeleteFileTypeAction
   | CreateFileTypeAction
   | FetchFileTypeHasFileAction
+  | FetchCoreFileTypeSucceededAction
   | FetchFileTypeHasFileSucceededAction;
 
 // | SetupFileAction;
@@ -122,6 +127,13 @@ interface FetchFileTypeSucceededAction {
     fileInfo: { data: FileTypeItem[] };
   };
 }
+
+interface FetchCoreFileTypeSucceededAction {
+  type: typeof FETCH_CORE_FILE_TYPE_SUCCEEDED;
+  payload: {
+    fileInfo: { data: FileTypeItem[] };
+  };
+}
 interface DeleteFileTypeSucceededAction {
   type: typeof DELETE_FILE_TYPE_SUCCEEDED;
   payload: {
@@ -141,6 +153,10 @@ interface CreateFileTypeSucceededAction {
 
 interface FetchFileTypeAction {
   type: typeof FETCH_FILE_TYPE;
+}
+
+interface FetchCoreFileTypeAction {
+  type: typeof FETCH_CORE_FILE_TYPE;
 }
 
 export interface UpdateFileTypeAction {
@@ -255,6 +271,15 @@ export const FetchFileTypeSucceededService = (fileInfo: { data: FileTypeItem[] }
   },
 });
 
+export const FetchCoreFileTypeSucceededService = (fileInfo: {
+  data: FileTypeItem[];
+}): FetchCoreFileTypeSucceededAction => ({
+  type: FETCH_CORE_FILE_TYPE_SUCCEEDED,
+  payload: {
+    fileInfo,
+  },
+});
+
 export const DeleteFileTypeSucceededService = (fileInfo: { data: string }): DeleteFileTypeSucceededAction => {
   return {
     type: DELETE_FILE_TYPE_SUCCEEDED,
@@ -278,6 +303,10 @@ export const CreateFileTypeSucceededService = (fileType: FileTypeItem): CreateFi
 
 export const FetchFileTypeService = (): FetchFileTypeAction => ({
   type: FETCH_FILE_TYPE,
+});
+
+export const FetchCoreFileTypeService = (): FetchCoreFileTypeAction => ({
+  type: FETCH_CORE_FILE_TYPE,
 });
 
 export const UpdateFileTypeService = (fileType: FileTypeItem): UpdateFileTypeAction => ({
