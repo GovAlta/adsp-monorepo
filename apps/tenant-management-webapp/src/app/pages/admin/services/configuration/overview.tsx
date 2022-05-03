@@ -1,12 +1,18 @@
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components';
 
 interface ConfigurationOverviewProps {
-  setActiveEdit?: (boolean) => void;
+  setActiveEdit: (boolean) => void;
+  setActiveIndex: (number) => void;
   disabled?: boolean;
 }
 export const ConfigurationOverview: FunctionComponent<ConfigurationOverviewProps> = (props) => {
-  const { setActiveEdit, disabled } = props;
+  const { setActiveEdit, setActiveIndex, disabled } = props;
+
+  useEffect(() => {
+    setActiveEdit(false);
+    setActiveIndex(0);
+  }, []);
 
   return (
     <div>

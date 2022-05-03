@@ -30,7 +30,7 @@ export const Configuration: FunctionComponent = () => {
         <h1 data-testid="configuration-title">Configuration service</h1>
         <Tabs activeIndex={activeIndex}>
           <Tab label="Overview">
-            <ConfigurationOverview setActiveEdit={activateEdit} />
+            <ConfigurationOverview setActiveEdit={activateEdit} setActiveIndex={setActiveIndex} />
           </Tab>
           <Tab label="Definitions">
             <ConfigurationDefinitions activeEdit={activateEditState} />
