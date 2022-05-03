@@ -91,7 +91,7 @@ describe('checkInput', () => {
       expect(failureActionCalled).toEqual(true);
     });
 
-    it('fails on character check', () => {
+    it('calls action on success', () => {
       const charChecker = characterCheck(validationPattern.lowerKebabCase);
       let successActionCalled = false;
 
