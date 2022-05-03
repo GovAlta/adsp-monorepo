@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { createEntry, updateEntry, fetchEntryDetail } from '@store/directory/actions';
 import { RootState } from '@store/index';
 import { characterCheck, validationPattern, checkInput, Validator, isNotEmptyCheck } from '@lib/checkInput';
-import { reactInputHandlerFactory } from '@lib/reactInputHandler';
+import { reactInputHandlerFactory } from '@lib/reactInputHandlerFactory';
 
 interface DirectoryModalProps {
   entry?: Service;

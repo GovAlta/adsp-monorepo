@@ -10,7 +10,7 @@
  *  const error = checkInput(input, [validator])
  *
  * Optional Parameters:
- *   1. An action, for sophisticated input handling. See the ReactInputHandler
+ *   1. An action, for sophisticated input handling. See the reactInputHandlerFactory
  *      as an example.
  *      checkInput(input, [validator], inputHandler)
  *
