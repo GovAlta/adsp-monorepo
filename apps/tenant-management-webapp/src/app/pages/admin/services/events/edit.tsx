@@ -35,7 +35,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
   };
   const forbiddenWords = coreNamespaces.concat('platform');
   const checkForConflicts = wordCheck(forbiddenWords);
-  const checkForBadChars = characterCheck(validationPattern.mixedArrowCase);
+  const checkForBadChars = characterCheck(validationPattern.mixedKebabCase);
   const errorHandler = reactInputHandlerFactory(errors, setErrors);
 
   return (

@@ -31,7 +31,7 @@ const duplicateApiCheck = (directory: Service[], tenantName: string): Validator 
   };
 };
 
-const lowerCaseCheck = characterCheck(validationPattern.lowerArrowCase);
+const lowerCaseCheck = characterCheck(validationPattern.lowerKebabCase);
 const checkForBadUrl = characterCheck(validationPattern.validURL);
 const checkServiceExists = isNotEmptyCheck('service');
 const checkUrlExists = isNotEmptyCheck('URL');
