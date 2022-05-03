@@ -1,5 +1,5 @@
 import { adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { NotFoundError } from '@core-services/core-common';
+import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
 import { PDF_GENERATION_QUEUED } from '../events';
@@ -27,6 +27,11 @@ describe('pdf', () => {
     send: jest.fn(),
   };
 
+  const fileServiceMock = {
+    typeExists: jest.fn(),
+    upload: jest.fn(),
+  };
+
   const queueServiceMock = {
     enqueue: jest.fn(),
     getItems: jest.fn(),
@@ -47,6 +52,7 @@ describe('pdf', () => {
     queueServiceMock.enqueue.mockReset();
     repositoryMock.create.mockReset();
     repositoryMock.get.mockReset();
+    fileServiceMock.typeExists.mockReset();
   });
 
   it('can create router', () => {
@@ -56,6 +62,7 @@ describe('pdf', () => {
       repository: repositoryMock,
       queueService: queueServiceMock,
       eventService: eventServiceMock,
+      fileService: fileServiceMock,
     });
 
     expect(router).toBeTruthy();
@@ -154,7 +161,7 @@ describe('pdf', () => {
 
   describe('generatePdf', () => {
     it('can create handler', () => {
-      const handler = generatePdf(serviceId, repositoryMock, eventServiceMock, queueServiceMock);
+      const handler = generatePdf(serviceId, repositoryMock, eventServiceMock, fileServiceMock, queueServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -182,8 +189,9 @@ describe('pdf', () => {
       const next = jest.fn();
 
       repositoryMock.create.mockResolvedValueOnce({ id: 'job1' });
+      fileServiceMock.typeExists.mockResolvedValueOnce(true);
       queueServiceMock.enqueue.mockResolvedValueOnce(null);
-      const handler = generatePdf(serviceId, repositoryMock, eventServiceMock, queueServiceMock);
+      const handler = generatePdf(serviceId, repositoryMock, eventServiceMock, fileServiceMock, queueServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).not.toHaveBeenCalled();
       expect(queueServiceMock.enqueue).toHaveBeenCalledWith(
@@ -200,6 +208,39 @@ describe('pdf', () => {
         expect.objectContaining({ tenantId, name: PDF_GENERATION_QUEUED })
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'job1' }));
+    });
+
+    it('can call next with invalid operation', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          tenantId,
+          id: 'test',
+          name: 'tester',
+          roles: [ServiceRoles.PdfGenerator],
+        },
+        body: {
+          templateId: 'test',
+          filename: 'test.pdf',
+          fileType: 'my-test-type',
+          data: {},
+        },
+        template: configuration.test,
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.create.mockResolvedValueOnce({ id: 'job1' });
+      fileServiceMock.typeExists.mockResolvedValueOnce(false);
+      queueServiceMock.enqueue.mockResolvedValueOnce(null);
+      const handler = generatePdf(serviceId, repositoryMock, eventServiceMock, fileServiceMock, queueServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+      expect(res.send).not.toHaveBeenCalled();
     });
 
     it('can call next with unauthorized', async () => {
@@ -225,7 +266,7 @@ describe('pdf', () => {
       };
       const next = jest.fn();
 
-      const handler = generatePdf(serviceId, repositoryMock, eventServiceMock, queueServiceMock);
+      const handler = generatePdf(serviceId, repositoryMock, eventServiceMock, fileServiceMock, queueServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
       expect(res.send).not.toHaveBeenCalled();
