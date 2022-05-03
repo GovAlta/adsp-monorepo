@@ -119,9 +119,10 @@ interface DownloadFileFailedAction {
 interface FetchFileTypeSucceededAction {
   type: typeof FETCH_FILE_TYPE_SUCCEEDED;
   payload: {
-    fileInfo: { data: FileTypeItem[] };
+    fileInfo: { tenant: FileTypeItem[]; core: FileTypeItem[] };
   };
 }
+
 interface DeleteFileTypeSucceededAction {
   type: typeof DELETE_FILE_TYPE_SUCCEEDED;
   payload: {
@@ -248,7 +249,10 @@ export const DownloadFileFailedService = (data: string): DownloadFileFailedActio
   },
 });
 
-export const FetchFileTypeSucceededService = (fileInfo: { data: FileTypeItem[] }): FetchFileTypeSucceededAction => ({
+export const FetchFileTypeSucceededService = (fileInfo: {
+  tenant: FileTypeItem[];
+  core: FileTypeItem[];
+}): FetchFileTypeSucceededAction => ({
   type: FETCH_FILE_TYPE_SUCCEEDED,
   payload: {
     fileInfo,

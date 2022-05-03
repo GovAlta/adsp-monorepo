@@ -24,6 +24,7 @@ interface FileTypeRowProps {
 interface FileTypeTableProps {
   roles;
   fileTypes;
+  coreFileTypes;
 }
 
 const FileTypeTableRow = ({
@@ -79,11 +80,43 @@ const FileTypeTableRow = ({
   );
 };
 
-export const FileTypeTable = ({ roles, fileTypes }: FileTypeTableProps): JSX.Element => {
+const CoreFileTypeTableRow = ({
+  id,
+  name,
+  readRoles,
+  updateRoles,
+  anonymousRead,
+  onEdit,
+  onDelete,
+}: FileTypeRowProps): JSX.Element => {
+  return (
+    <tr key={id}>
+      <td>{name}</td>
+      <td className="readRolesCol">
+        {anonymousRead === false &&
+          readRoles.map((role): JSX.Element => {
+            return (
+              <div key={`read-roles-${role}`}>
+                <GoABadge key={`read-roles-${role}`} type="information" content={role} />
+              </div>
+            );
+          })}
+        {anonymousRead === true && 'public'}
+      </td>
+      <td className="updateRolesCol">
+        {updateRoles?.map((role): JSX.Element => {
+          return <GoABadge key={`update-roles-${id}-${role}`} type="information" content={role} />;
+        })}
+      </td>
+    </tr>
+  );
+};
+
+export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTableProps): JSX.Element => {
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const editFileType = fileTypes.find((x) => x.id === editId);
-  const deleteFileType = fileTypes.find((x) => x.id === deleteId);
+  const editFileType = fileTypes.find((x) => x && x.id === editId);
+  const deleteFileType = fileTypes.find((x) => x && x.id === deleteId);
 
   const editModalProps = {
     fileType: editFileType,
@@ -117,20 +150,20 @@ export const FileTypeTable = ({ roles, fileTypes }: FileTypeTableProps): JSX.Ele
               </tr>
             </thead>
             <tbody>
-              {fileTypes.map((fileType) => {
+              {fileTypes?.map((fileType) => {
                 const rowProps = {
                   ...fileType,
                   editId,
                 };
                 return (
                   <FileTypeTableRow
-                    key={`file-type-row-${fileType.id}`}
+                    key={`file-type-row-${fileType?.id}`}
                     {...rowProps}
                     onEdit={() => {
-                      setEditId(fileType.id);
+                      setEditId(fileType?.id);
                     }}
                     onDelete={() => {
-                      setDeleteId(fileType.id);
+                      setDeleteId(fileType?.id);
                     }}
                   />
                 );
@@ -138,6 +171,44 @@ export const FileTypeTable = ({ roles, fileTypes }: FileTypeTableProps): JSX.Ele
             </tbody>
           </DataTable>
         </TableLayout>
+      )}
+      {coreFileTypes && coreFileTypes.length > 0 && (
+        <div>
+          <h4>Core file types</h4>
+          <TableLayout>
+            <DataTable data-testid="file-types-table">
+              <thead data-testid="file-types-table-header">
+                <tr>
+                  <th id="name" data-testid="events-definitions-table-header-name">
+                    Name
+                  </th>
+                  <th id="read-roles">Read roles</th>
+                  <th id="write-roles">Modify roles</th>
+                </tr>
+              </thead>
+              <tbody>
+                {coreFileTypes?.map((coreFileType) => {
+                  const rowProps = {
+                    ...coreFileType,
+                    editId,
+                  };
+                  return (
+                    <CoreFileTypeTableRow
+                      key={`file-type-row-${coreFileType?.id}`}
+                      {...rowProps}
+                      onEdit={() => {
+                        setEditId(coreFileType?.id);
+                      }}
+                      onDelete={() => {
+                        setDeleteId(coreFileType?.id);
+                      }}
+                    />
+                  );
+                })}
+              </tbody>
+            </DataTable>
+          </TableLayout>
+        </div>
       )}
       {editId && <FileTypeModal {...{ ...editModalProps, roles, type: 'edit' }} />}
       {deleteId && <FileTypeDeleteModal {...deleteModalProps} />}
