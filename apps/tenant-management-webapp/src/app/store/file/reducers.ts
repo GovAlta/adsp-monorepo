@@ -1,7 +1,6 @@
 import {
   ActionTypes,
   FETCH_FILE_LIST_SUCCESSES,
-  FETCH_CORE_FILE_TYPE_SUCCEEDED,
   UPLOAD_FILE_SUCCESSES,
   DELETE_FILE_SUCCESSES,
   FETCH_FILE_TYPE_SUCCEEDED,
@@ -57,12 +56,8 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
     case FETCH_FILE_TYPE_SUCCEEDED:
       return {
         ...state,
-        fileTypes: action.payload.fileInfo.data,
-      };
-    case FETCH_CORE_FILE_TYPE_SUCCEEDED:
-      return {
-        ...state,
-        coreFileTypes: action.payload.fileInfo.data,
+        fileTypes: action.payload.fileInfo.tenant,
+        coreFileTypes: action.payload.fileInfo.core,
       };
     case DELETE_FILE_TYPE_SUCCEEDED:
       return {

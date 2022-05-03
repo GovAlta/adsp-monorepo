@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   UploadFileService,
   FetchFileTypeService,
-  FetchCoreFileTypeService,
   FetchFilesService,
   DeleteFileService,
   DownloadFileService,
@@ -71,7 +70,6 @@ const FileList = (): JSX.Element => {
   useEffect(() => {
     dispatch(FetchFilesService());
     dispatch(FetchFileTypeService());
-    dispatch(FetchCoreFileTypeService());
   }, [dispatch]);
 
   const renderFileTable = () => {

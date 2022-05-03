@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import React from 'react';
-import { FetchFileTypeService, FetchCoreFileTypeService } from '@store/file/actions';
+import { FetchFileTypeService } from '@store/file/actions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 import { FileTypeTable } from './fileTypesTable';
@@ -45,10 +45,6 @@ const FileTypesTableContainer = ({ roles }: FileTypesTableContainerProps): JSX.E
 
   useEffect(() => {
     dispatch(FetchFileTypeService());
-  }, []);
-
-  useEffect(() => {
-    dispatch(FetchCoreFileTypeService());
   }, []);
 
   // eslint-disable-next-line
