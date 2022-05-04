@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useMemo } from 'react';
+import React, { FunctionComponent } from 'react';
 import DataTable from '@components/DataTable';
 import { PdfTemplateItem } from './templateListItem';
 import { PdfTemplate } from '@store/pdf/model';

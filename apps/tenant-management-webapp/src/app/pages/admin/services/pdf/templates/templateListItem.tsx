@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent } from 'react';
 import { PdfTemplate } from '@store/pdf/model';
 
 interface PdfTemplateItemProps {
