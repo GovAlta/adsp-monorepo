@@ -58,8 +58,6 @@ export const validationPattern = {
     pattern: new RegExp(/^[a-zA-Z0-9- ]+$/),
     onFailureMessage: 'Allowed characters are: a-z, A-Z, 0-9, -, [space]',
   },
-  lowerArrowCase: { pattern: new RegExp(/^[a-z0-9-]+$/), onFailureMessage: 'Allowed characters are: a-z, 0-9, -' },
-  upperArrowCase: { pattern: new RegExp(/^[A-Z0-9-]+$/), onFailureMessage: 'Allowed characters are: A-Z, 0-9, -' },
   lowerKebabCase: { pattern: new RegExp(/^[a-z0-9-]+$/), onFailureMessage: 'Allowed characters are: a-z, 0-9, -' },
   upperKebabCase: { pattern: new RegExp(/^[A-Z0-9-]+$/), onFailureMessage: 'Allowed characters are: A-Z, 0-9, -' },
   validURL: { pattern: new RegExp(/^(http|https):\/\/[^ "]+$/), onFailureMessage: 'Please enter a valid URL' },
