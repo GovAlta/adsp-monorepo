@@ -44,9 +44,11 @@ export interface RequestBodySchema {
 export interface FileService {
   fileList: Array<FileItem>;
   fileTypes: Array<FileTypeItem>;
+  coreFileTypes: Array<FileTypeItem>;
 }
 
 export const FILE_INIT: FileService = {
   fileList: null,
   fileTypes: null,
+  coreFileTypes: null,
 };

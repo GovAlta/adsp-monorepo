@@ -14,11 +14,13 @@ export interface SubscriptionCriteria {
 }
 
 export type Channel = 'sms' | 'email' | 'bot';
+
 export const Channels = Object.freeze({
   email: 'email',
-  bot: 'bot',
   sms: 'sms',
+  bot: 'bot',
 });
+
 export interface SubscriptionType {
   description: string;
   id: string;

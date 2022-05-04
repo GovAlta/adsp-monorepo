@@ -2,11 +2,11 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { ContactInformation } from '@store/notification/models';
 import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
-import InputMask from 'react-input-mask';
 
 import { GoAInputEmail } from '@abgov/react-components/experimental';
+import { isSmsValid, emailError, smsError } from '@lib/inputValidation';
 
 interface NotificationTypeFormProps {
   initialValue?: ContactInformation;
@@ -26,42 +26,19 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
   const x = JSON.stringify(initialValue);
   const [contactInformation, setContactInformation] = useState<ContactInformation>(JSON.parse(x));
   const [formErrors, setFormErrors] = useState(null);
-  const [prettyPhone, setPrettyPhone] = useState(null);
 
   useEffect(() => {
     const x = JSON.stringify(initialValue);
     setContactInformation(JSON.parse(x));
   }, [initialValue]);
 
-  useEffect(() => {
-    if (contactInformation) {
-      setPrettyPhone('1' + contactInformation?.phoneNumber);
-    }
-  }, [contactInformation]);
-
-  function emailErrors(email) {
-    if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
-      return { email: 'You must enter a valid email' };
-    }
-  }
-
-  function phoneError(phone) {
-    if (!/^\d{10}$/.test(phone) && phone.length !== 0) {
-      return { phoneNumber: 'Please enter a valid phone number ie. 1 (780) 123-4567' };
-    }
-  }
-
   const trySave = (contactInformation) => {
     const formErrorList = Object.assign(
       {},
-      emailErrors(contactInformation.contactEmail),
-      phoneError(prettyPhone.replace(/[- )(]/g, '').slice(1))
+      emailError(contactInformation.contactEmail),
+      smsError(contactInformation.phoneNumber)
     );
     if (Object.keys(formErrorList).length === 0) {
-      if (contactInformation.phoneNumber) {
-        const cleanNumber = prettyPhone.replace(/[- )(]/g, '').slice(1);
-        contactInformation.phoneNumber = cleanNumber;
-      }
       onSave(contactInformation);
       setFormErrors(null);
     } else {
@@ -95,20 +72,24 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
                   }}
                 />
               </GoAFormItem>
-              <GoAFormItem error={formErrors?.['phoneNumber']}>
+              <GoAFormItem error={formErrors?.['sms']}>
                 <label>
                   Phone number <em>optional</em>
                 </label>
-                <InputMask
-                  name="phoneNumber"
-                  value={prettyPhone}
-                  placeholder="1 (780) 123-4567"
-                  mask="1\ (999) 999-9999"
-                  maskChar=" "
-                  data-testid="form-phone-number"
-                  aria-label="name"
-                  onChange={(e) => {
-                    setPrettyPhone(e.target.value);
+                <GoAInput
+                  type="text"
+                  aria-label="sms"
+                  name="sms"
+                  value={contactInformation?.phoneNumber || ''}
+                  data-testid="contact-sms-input"
+                  onChange={(_, value) => {
+                    if (isSmsValid(value)) {
+                      setContactInformation({ ...contactInformation, phoneNumber: value.substring(0, 10) });
+                    }
+                  }}
+                  trailingIcon="close"
+                  onTrailingIconClick={() => {
+                    setContactInformation({ ...contactInformation, phoneNumber: '' });
                   }}
                 />
               </GoAFormItem>
