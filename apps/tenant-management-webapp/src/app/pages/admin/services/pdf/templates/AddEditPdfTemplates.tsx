@@ -5,7 +5,7 @@ import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { PdfTemplate } from '@store/pdf/model';
 import { IdField } from '../styled-components';
 import { toKebabName } from '@lib/kebabName';
-import { ReactInputHandler } from '@lib/ReactInputHandler';
+import { reactInputHandlerFactory } from '@lib/reactInputHandlerFactory';
 import { characterCheck, validationPattern, checkInput, isNotEmptyCheck } from '@lib/checkInput';
 
 interface AddEditPdfTemplateProps {
@@ -26,6 +26,8 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
+  const errorHandler = reactInputHandlerFactory(errors, setErrors);
+
   const hasFormErrors = () => {
     return Object.keys(errors).length !== 0;
   };
@@ -46,8 +48,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
                 data-testid="pdf-template-name"
                 aria-label="pdf-template-name"
                 onChange={(e) => {
-                  const errorHandler = new ReactInputHandler(errors, setErrors, 'name');
-                  checkInput(e.target.value, [checkForBadChars, isNotEmptyCheck('name')], errorHandler);
+                  checkInput(e.target.value, [checkForBadChars, isNotEmptyCheck('name')], errorHandler('name'));
                   setTemplate({ ...template, name: e.target.value, id: toKebabName(e.target.value) });
                 }}
               />
