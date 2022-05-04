@@ -4,6 +4,9 @@ export interface PdfTemplate {
   description: string;
   template: string;
 }
+export interface PdfState {
+  pdfTemplates: Record<string, PdfTemplate>;
+}
 
 export const defaultPdfTemplate: PdfTemplate = {
   id: '',

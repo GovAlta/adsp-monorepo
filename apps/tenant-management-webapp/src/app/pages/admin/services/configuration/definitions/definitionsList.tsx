@@ -18,12 +18,12 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
   tenantName,
   isTenantSpecificConfig,
 }) => {
-  // to ensure it dosent re-calculate this value if v dosent change
+  // to ensure it dosent re-calculate this value if value dosent change
   const nameSpaces: Record<string, string[]> = useMemo(() => {
     return {};
   }, [definitions]);
 
-  // to ensure it dosent re-calculate this value if v dosent change
+  // to ensure it dosent re-calculate this value if value dosent change
   const memoizedSortedConfiguration = useMemo(() => {
     return Object.keys(definitions)
       .sort()
