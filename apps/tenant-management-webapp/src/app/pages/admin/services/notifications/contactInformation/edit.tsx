@@ -72,7 +72,7 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
                   }}
                 />
               </GoAFormItem>
-              <GoAFormItem error={formErrors?.['phoneNumber']}>
+              <GoAFormItem error={formErrors?.['sms']}>
                 <label>
                   Phone number <em>optional</em>
                 </label>
