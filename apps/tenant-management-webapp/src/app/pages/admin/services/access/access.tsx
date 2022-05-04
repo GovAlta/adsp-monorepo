@@ -15,7 +15,7 @@ export default function (): JSX.Element {
     return {
       userCount: state.access.metrics.users,
       activeUserCount: state.access.metrics.activeUsers,
-      roles: Object.values(state.access.roles),
+      roles: state.access.roles && Object.values(state.access.roles),
       keycloakConfig: state.config.keycloakApi,
     };
   });
@@ -56,52 +56,51 @@ export default function (): JSX.Element {
           Access allows you to add a secure sign in to your application and services with minimum effort and
           configuration. No need to deal with storing or authenticating users. It's all available out of the box.
         </p>
-        <PageIndicator />
 
-        {isReady(indicator, userCount) && (
-          <div>
-            <section id="keycloak-user-info">
-              <TitleLinkHeader>
-                <Title>Keycloak user information</Title>
-                <a
-                  href={getKeycloakAdminPortal()}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  className="link-button"
-                  title="Keycloak Admin"
-                >
-                  Keycloak admin portal
-                </a>
-              </TitleLinkHeader>
+        <div>
+          <section id="keycloak-user-info">
+            <TitleLinkHeader>
+              <Title>Keycloak user information</Title>
+              <a
+                href={getKeycloakAdminPortal()}
+                rel="noopener noreferrer"
+                target="_blank"
+                className="link-button"
+                title="Keycloak Admin"
+              >
+                Keycloak admin portal
+              </a>
+            </TitleLinkHeader>
 
-              <Metrics
-                metrics={[
-                  { id: 'user-count', name: 'Total number of users', value: userCount },
-                  { id: 'role-count', name: 'Total number of roles', value: roles?.length },
-                  { id: 'active-user-count', name: 'Active users', value: activeUserCount },
-                ]}
-              />
-            </section>
+            <Metrics
+              metrics={[
+                { id: 'user-count', name: 'Total number of users', value: userCount },
+                { id: 'role-count', name: 'Total number of roles', value: roles?.length },
+                { id: 'active-user-count', name: 'Active users', value: activeUserCount },
+              ]}
+            />
+          </section>
 
-            <section id="keycloak-role-info">
-              <h3>Keycloak role information</h3>
-              <p>
-                Displayed below are the top 5 user roles based on their counts. To view all your available roles, please{' '}
-                <a href={getKeycloakAdminPortal()} rel="noopener noreferrer" target="_blank">
-                  sign in
-                </a>{' '}
-                to your Keycloak admin portal.
-              </p>
+          <section id="keycloak-role-info">
+            <h3>Keycloak role information</h3>
+            <p>
+              Displayed below are the top 5 user roles based on their counts. To view all your available roles, please{' '}
+              <a href={getKeycloakAdminPortal()} rel="noopener noreferrer" target="_blank">
+                sign in
+              </a>{' '}
+              to your Keycloak admin portal.
+            </p>
 
-              <DataTable id="role-information">
-                <thead>
-                  <tr>
-                    <th>Role</th>
-                    <th>User count</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {roles
+            <DataTable id="role-information">
+              <thead>
+                <tr>
+                  <th>Role</th>
+                  <th>User count</th>
+                </tr>
+              </thead>
+              <tbody>
+                {roles ? (
+                  roles
                     .sort((a, b) => (a.userIds?.length > b.userIds?.length ? -1 : 1))
                     .slice(0, 5)
                     .map((role) => {
@@ -111,12 +110,14 @@ export default function (): JSX.Element {
                           <td>{role.userIds?.length ?? 0}</td>
                         </tr>
                       );
-                    })}
-                </tbody>
-              </DataTable>
-            </section>
-          </div>
-        )}
+                    })
+                ) : (
+                  <PageIndicator />
+                )}
+              </tbody>
+            </DataTable>
+          </section>
+        </div>
       </Main>
 
       <Aside>
