@@ -58,8 +58,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             </GoAFormItem>
             <GoAFormItem>
               <label>Description</label>
-              <input
-                type="text"
+              <textarea
                 name="pdf-template-description"
                 value={template.description}
                 disabled={isEdit}
