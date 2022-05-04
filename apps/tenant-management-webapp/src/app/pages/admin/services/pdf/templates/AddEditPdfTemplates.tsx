@@ -78,28 +78,19 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             buttonType="secondary"
             type="button"
             onClick={() => {
-              // setDefinition(initialValue);
               onClose();
-              // setErrors({});
             }}
           >
             Cancel
           </GoAButton>
           <GoAButton
-            // disabled={!definition.namespace || !definition.name || hasFormErrors()}
             buttonType="primary"
             data-testid="form-save"
             type="submit"
             disabled={!template.name || hasFormErrors()}
-            onClick={(e) => {
-              // if no errors in the form then save the definition
-              // if (!hasFormErrors()) {
+            onClick={() => {
               onSave(template);
-              //   setDefinition(initialValue);
               onClose();
-              // } else {
-              //   return;
-              // }
             }}
           >
             Save
