@@ -600,6 +600,7 @@ Then(
     } else {
       newStatusInput = 'The new status is now: ' + newStatus.toLowerCase();
     }
+
     tenantAdminObj.eventToggleDetailsIcons().each(($element, $index, $full_array) => {
       //clicking each eye-icon in the list to verify event details
       cy.wrap($element).click();
@@ -617,12 +618,12 @@ Then(
           } else {
             //clicking eye icon to close event details
             cy.wrap($element).click();
-            if ($index + 1 == $full_array.length) {
-              expect($index + 1).to.not.eq(
-                $full_array.length,
-                'No matching email found throughout list of event details'
-              );
-            }
+          }
+          if ($index + 1 == $full_array.length) {
+            expect($index + 1).to.not.eq(
+              $full_array.length,
+              'No matching email found throughout list of event details'
+            );
           }
         });
     });
