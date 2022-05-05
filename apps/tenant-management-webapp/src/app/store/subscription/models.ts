@@ -21,6 +21,11 @@ export interface Channels {
   verified?: boolean;
 }
 
+export interface Criteria {
+  correlationId?: unknown;
+  context?: unknown;
+}
+
 export interface Subscriber {
   id: string;
   urn?: string;
