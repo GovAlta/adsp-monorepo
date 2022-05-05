@@ -21,44 +21,56 @@ import CreateTenant from '@pages/admin/tenants/CreateTenant';
 import { ThemeProvider } from 'styled-components';
 import { theme } from 'theme';
 import PublicApp from './publicApp';
+import styled from 'styled-components';
+import { GoAHeader } from '@abgov/react-components';
 
 const AppRouters = () => {
   return (
-    <Router>
-      <Switch>
-        <Route exact path="/">
-          <LandingPage />
-        </Route>
+    <>
+      <MobileMessage>
+        <GoAHeader serviceHome="/" serviceLevel="beta" serviceName={'Alberta Digital Service Platform'}></GoAHeader>
+        <h1>Portrait mode is currently not supported</h1>
+        <h3>Please rotate your device</h3>
+        <h3>For the best experience, please use a Desktop</h3>
+      </MobileMessage>
+      <HideMobile>
+        <Router>
+          <Switch>
+            <Route exact path="/">
+              <LandingPage />
+            </Route>
 
-        <Route path="/admin">
-          <PrivateApp>
-            <PrivateRoute path="/admin" component={Admin} />
-            <PrivateRoute path="/admin/tenants" component={TenantsRouter} />
-          </PrivateApp>
-        </Route>
+            <Route path="/admin">
+              <PrivateApp>
+                <PrivateRoute path="/admin" component={Admin} />
+                <PrivateRoute path="/admin/tenants" component={TenantsRouter} />
+              </PrivateApp>
+            </Route>
 
-        <PublicApp>
-          <Route path="/:realm/login">
-            <Login />
-          </Route>
-          <Route path="/get-started">
-            <GetStarted />
-          </Route>
-          <Route exact path="/login-redirect">
-            <LoginRedirect />
-          </Route>
-          <Route exact path="/login-error">
-            <SignInError />
-          </Route>
-          <Route exact path="/logout-redirect">
-            <LogoutRedirect />
-          </Route>
-          <Route exact path="/tenant/creation">
-            <CreateTenant />
-          </Route>
-        </PublicApp>
-      </Switch>
-    </Router>
+            <PublicApp>
+              <Route path="/:realm/login">
+                <Login />
+              </Route>
+              <Route path="/get-started">
+                <GetStarted />
+              </Route>
+              <Route exact path="/login-redirect">
+                <LoginRedirect />
+              </Route>
+              <Route exact path="/login-error">
+                <SignInError />
+              </Route>
+              <Route exact path="/logout-redirect">
+                <LogoutRedirect />
+              </Route>
+              <Route exact path="/tenant/creation">
+                <CreateTenant />
+              </Route>
+            </PublicApp>
+          </Switch>
+        </Router>
+      </HideMobile>
+    </>
   );
 };
 
@@ -88,3 +100,21 @@ function AppWithAuthContext() {
 }
 
 export default App;
+
+const HideMobile = styled.div`
+  @media (max-width: 480px) {
+    display: none;
+  }
+`;
+
+const MobileMessage = styled.div`
+  h1,
+  h3 {
+    text-align: center;
+    margin: 40px;
+  }
+
+  @media (min-width: 480px) {
+    display: none;
+  }
+`;
