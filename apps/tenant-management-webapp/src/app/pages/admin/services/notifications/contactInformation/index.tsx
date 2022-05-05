@@ -8,7 +8,7 @@ import { RootState } from '@store/index';
 import styled from 'styled-components';
 import { ContactInformationModalForm } from './edit';
 import { ReactComponent as Edit } from '@icons/edit.svg';
-import { phoneWrapper } from '../utils';
+import { phoneWrapper } from '@lib/wrappers';
 
 interface SubscribersProps {
   subscribers?: Subscriber[];
@@ -88,7 +88,7 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
         </Grid>
         <ContactInformationModalForm
           open={editContactInformation}
-          initialValue={initialValue}
+          initialValue={contact || initialValue}
           onSave={(contactInfo) => {
             dispatch(UpdateContactInformationService(contactInfo));
             setEditContactInformation(false);

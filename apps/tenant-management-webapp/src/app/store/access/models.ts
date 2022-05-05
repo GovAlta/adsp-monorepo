@@ -30,9 +30,9 @@ export interface AccessState {
 
 export const ACCESS_INIT: AccessState = {
   metrics: {
-    users: 0,
-    activeUsers: 0,
+    users: null,
+    activeUsers: null,
   },
   users: {},
-  roles: {},
+  roles: null,
 };

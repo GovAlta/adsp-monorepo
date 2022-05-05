@@ -6,6 +6,7 @@ import { RootState } from '@store/index';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem, GoAInputEmail, GoAInput } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
+import { isSmsValid, emailError, smsError } from '@lib/inputValidation';
 
 interface NotificationTypeFormProps {
   initialValue?: Subscriber;
@@ -59,18 +60,6 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
     setAddress(subscriber?.addressAs || '');
   }, [subscriber]);
 
-  function emailErrors(email) {
-    if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
-      return { email: 'You must enter a valid email' };
-    }
-  }
-
-  function phoneError(phoneNumber) {
-    if (!/^\d{10}$/.test(phoneNumber) && phoneNumber.length !== 0) {
-      return { sms: 'Please enter a valid 10 digit phone number ie. 7801234567' };
-    }
-  }
-
   function getChannelIndex(subscriber, type) {
     const channels = subscriber?.channels;
     if (channels) {
@@ -87,7 +76,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
   const trySave = (subscriber) => {
     let formErrorList = {};
     if (emailIndex !== -1) {
-      formErrorList = Object.assign(formErrorList, emailErrors(email));
+      formErrorList = Object.assign(formErrorList, emailError(email));
     }
     let phoneIndex = smsIndex;
     if (smsIndex === -1) {
@@ -96,7 +85,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
 
     const channels = subscriber.channels || [];
 
-    formErrorList = Object.assign(formErrorList, phoneError(phone));
+    formErrorList = Object.assign(formErrorList, smsError(phone));
     if (Object.keys(formErrorList).length === 0) {
       if (smsIndex === -1 && email) {
         if (phone.length !== 0) {
@@ -156,15 +145,6 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
     onCancel();
   };
 
-  const inValidSMSInput = (smsInput: string): boolean => {
-    if (smsInput) {
-      // eslint-disable-next-line
-      return /^[0-9\.\-\/]+$/.test(smsInput);
-    }
-
-    return true;
-  };
-
   return (
     <EditStyles>
       <GoAModal testId="notification-types-form" isOpen={open}>
@@ -205,7 +185,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
                     value={phone}
                     data-testid="contact-sms-input"
                     onChange={(_, value) => {
-                      if (inValidSMSInput(value)) {
+                      if (isSmsValid(value)) {
                         setPhone(value.substring(0, 10));
                       }
                     }}
