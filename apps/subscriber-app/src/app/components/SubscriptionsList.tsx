@@ -27,12 +27,12 @@ const AvailableChannelsContainer = styled.div`
   position: relative;
   .icon-0 {
     position: absolute;
-    left: calc(20% - 12px);
+    left: calc(50% - 50px);
     top: -12px;
   }
   .icon-checked-0 {
     position: absolute;
-    left: calc(20% + 3px);
+    left: calc(50% - 35px);
     top: -22px;
   }
   .icon-1 {
@@ -48,13 +48,13 @@ const AvailableChannelsContainer = styled.div`
 
   .icon-2 {
     position: absolute;
-    left: calc(80% - 12px);
+    left: calc(50% + 36px);
     top: -12px;
   }
 
   .icon-checked-2 {
     position: absolute;
-    left: calc(80% + 3px);
+    left: calc(50% + 51px);
     top: -22px;
   }
 `;
