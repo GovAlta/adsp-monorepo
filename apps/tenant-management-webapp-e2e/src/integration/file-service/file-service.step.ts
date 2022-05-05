@@ -478,6 +478,7 @@ When(
 );
 
 Then('the user views Delete file type modal for {string}', function (fileTypeName) {
+  cy.wait(1000); // Wait for modal
   fileServiceObj.fileTypeDeleteModal().should('be.visible');
   fileServiceObj.fileTypeDeleteModalTitle().invoke('text').should('contains', 'Delete file type');
   fileServiceObj.fileTypeDeleteModalContent().invoke('text').should('contains', fileTypeName);
