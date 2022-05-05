@@ -45,7 +45,7 @@ export class SubscriberEntity implements Subscriber {
 
     this.tenantId = subscriber.tenantId;
     this.userId = subscriber.userId;
-    this.addressAs = subscriber.addressAs;
+    this.addressAs = subscriber.addressAs ? subscriber.addressAs : '';
     this.channels = subscriber.channels || [];
   }
 
