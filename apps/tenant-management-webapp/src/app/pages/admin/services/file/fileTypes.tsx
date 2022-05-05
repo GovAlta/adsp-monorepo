@@ -15,7 +15,11 @@ const NoContentContainer = styled.div`
   margin-bottom: 2em;
 `;
 
-export const FileTypes = (): JSX.Element => {
+interface AddFileTypeProps {
+  activeEdit: boolean;
+}
+
+export const FileTypes = ({ activeEdit }: AddFileTypeProps): JSX.Element => {
   const dispatch = useDispatch();
   const roles = useSelector((state: RootState) => state.tenant.realmRoles);
 
@@ -25,7 +29,7 @@ export const FileTypes = (): JSX.Element => {
 
   return (
     <div>
-      {roles && <AddFileType roles={roles} />}
+      {roles && <AddFileType roles={roles} activeEdit={activeEdit} />}
       <FileTypesTableContainer roles={roles} />
     </div>
   );

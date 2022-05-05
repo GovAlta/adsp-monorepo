@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FileTypeModal } from './fileTypeModal';
 import { GoAButton } from '@abgov/react-components';
 import { Role } from '@store/tenant/models';
 
 interface AddFileTypeProps {
   roles: Role[];
-  onSwitch?: () => void;
+  activeEdit: boolean;
 }
 
-export const AddFileType = ({ roles, onSwitch }: AddFileTypeProps): JSX.Element => {
+export const AddFileType = ({ roles, activeEdit }: AddFileTypeProps): JSX.Element => {
   const [willAddNew, setWillAddNew] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (activeEdit) {
+      setWillAddNew(true);
+    }
+  }, [activeEdit]);
 
   return (
     <div>
@@ -36,7 +42,6 @@ export const AddFileType = ({ roles, onSwitch }: AddFileTypeProps): JSX.Element 
           onCancel={() => {
             setWillAddNew(false);
           }}
-          onSwitch={onSwitch}
         />
       )}
     </div>
