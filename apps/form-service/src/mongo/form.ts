@@ -1,6 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { decodeAfter, encodeNext, InvalidOperationError, Results } from '@core-services/core-common';
-import { MongoError } from 'mongodb';
 import { Model, model } from 'mongoose';
 import { FormCriteria, FormEntity, FormRepository } from '../form';
 import { FormDefinitionRepository } from '../form';
@@ -86,7 +85,7 @@ export class MongoFormRepository implements FormRepository {
 
       return this.fromDoc(doc);
     } catch (err) {
-      if (err instanceof MongoError && err.code == 11000) {
+      if (err?.code == 11000) {
         throw new InvalidOperationError('Cannot create duplicate form.');
       } else {
         throw err;
