@@ -76,7 +76,7 @@ export const createDocsRouter = async ({
             url: `/docs/${serviceId.namespace}/${serviceId.service}${tenant ? `?tenant=${tenant.id}` : ''}`,
           };
         });
-
+        swaggerUrls.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
         req['options'] = { swaggerUrls };
       }
       next();
