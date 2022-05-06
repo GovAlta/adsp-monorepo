@@ -150,7 +150,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
             }
             if (isNew) {
               dispatch(createEntry(entry));
-              dispatch(fetchEntryDetail(entry));
+              setInterval(() => dispatch(fetchEntryDetail(entry)), 1000);
             }
             if (isQuickAdd) {
               dispatch(createEntry(entry));
