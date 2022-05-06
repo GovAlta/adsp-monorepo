@@ -13,13 +13,9 @@ export const EventStreams = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const tenantStreams = useSelector((state: RootState) => state.stream?.tenant);
   const coreStreams = useSelector((state: RootState) => state.stream?.core);
-  const events = useSelector((state: RootState) => state.event.definitions);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
-
-  // eslint-disable-next-line
-  useEffect(() => {}, [events]);
 
   useEffect(() => {
     dispatch(fetchCoreStreams());
