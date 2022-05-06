@@ -61,9 +61,6 @@ export function* fetchTenantStreams(): SagaIterator {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
-      alert('b');
-
       yield put(fetchTenantStreamsSuccess(response.data));
     }
   } catch (e) {

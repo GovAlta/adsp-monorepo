@@ -3,18 +3,12 @@ export interface Event {
   name: string;
 }
 
-// TODO: check whether needs to consolidate the role definition
-export interface Role {
-  id?: string;
-  name?: string;
-}
-
 export interface Stream {
   id: string;
   name: string;
   events: Event[];
   publicSubscribe: boolean;
-  subscriberRoles: Role[];
+  subscriberRoles: string[];
 }
 
 export interface StreamStatus {

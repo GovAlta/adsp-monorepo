@@ -1,8 +1,9 @@
 import DataTable from '@components/DataTable';
 import React, { useState } from 'react';
 import { Streams } from '@store/stream/models';
-import { TableWrapper } from './styleComponents';
+import { TableWrapper, EntryDetail } from './styleComponents';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
+import { GoABadge } from '@abgov/react-components/experimental';
 
 interface StreamTableProps {
   streams: Streams;
@@ -10,11 +11,25 @@ interface StreamTableProps {
   namespace: string;
 }
 
+interface SubscriberRolesProps {
+  roles: string[];
+}
+
+const SubscriberRoles = ({ roles }: SubscriberRolesProps): JSX.Element => {
+  return (
+    <td>
+      {roles.map((role): JSX.Element => {
+        return <GoABadge content={role} type="information" />;
+      })}
+    </td>
+  );
+};
+
 export const StreamTable = ({ streams, namespace }: StreamTableProps): JSX.Element => {
   const [showId, setShowId] = useState<string>(null);
   return (
     <TableWrapper key={`${namespace}-stream-table`}>
-      <DataTable data-testid="stream-table">
+      <DataTable data-testid={`${namespace}-stream-table`}>
         <thead data-testid="stream-table-header">
           <tr>
             <th id="stream-service-name" data-testid="stream-table-header-name">
@@ -34,25 +49,34 @@ export const StreamTable = ({ streams, namespace }: StreamTableProps): JSX.Eleme
         <tbody>
           {Object.entries(streams).map(([id, stream]) => {
             return (
-              <tr>
-                <td>{stream.name}</td>
-                <td>{stream.subscriberRoles}</td>
-                <td>
-                  <GoAContextMenu>
-                    <GoAContextMenuIcon
-                      type={showId === id ? 'eye-off' : 'eye'}
-                      onClick={() => {
-                        if (showId) {
-                          setShowId(null);
-                        } else {
-                          setShowId(id);
-                        }
-                      }}
-                      testId="toggle-event-visibility"
-                    />
-                  </GoAContextMenu>
-                </td>
-              </tr>
+              <>
+                <tr>
+                  <td data-testid={`stream-name-${id}`}>{stream.name}</td>
+                  <SubscriberRoles roles={stream.subscriberRoles} />
+                  <td>
+                    <GoAContextMenu>
+                      <GoAContextMenuIcon
+                        type={showId === id ? 'eye-off' : 'eye'}
+                        onClick={() => {
+                          if (showId) {
+                            setShowId(null);
+                          } else {
+                            setShowId(id);
+                          }
+                        }}
+                        testId="toggle-event-visibility"
+                      />
+                    </GoAContextMenu>
+                  </td>
+                </tr>
+                {showId === id && (
+                  <tr>
+                    <td colSpan={3}>
+                      <EntryDetail data-testid={`details-${id}`}>{JSON.stringify(stream, null, 2)}</EntryDetail>
+                    </td>
+                  </tr>
+                )}
+              </>
             );
           })}
         </tbody>

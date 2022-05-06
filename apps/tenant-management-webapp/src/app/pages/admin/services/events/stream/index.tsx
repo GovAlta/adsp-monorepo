@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { StreamTable } from './streamTable';
 import { CORE_TENANT } from '@store/tenant/models';
 import { NameDiv } from './styleComponents';
+import { getEventDefinitions } from '@store/event/actions';
 
 export const EventStreams = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -12,7 +13,15 @@ export const EventStreams = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const tenantStreams = useSelector((state: RootState) => state.stream?.tenant);
   const coreStreams = useSelector((state: RootState) => state.stream?.core);
+  const events = useSelector((state: RootState) => state.event.definitions);
 
+  useEffect(() => {
+    if (!events) {
+      dispatch(getEventDefinitions());
+    }
+  }, []);
+
+  useEffect(() => {}, [events]);
   useEffect(() => {
     dispatch(fetchCoreStreams());
     dispatch(fetchTenantStreams());

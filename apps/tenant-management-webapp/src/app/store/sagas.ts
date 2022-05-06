@@ -16,6 +16,7 @@ import {
   fetchStatusConfiguration,
 } from './status/sagas';
 import { watchEventSagas } from './event/sagas';
+import { watchPdfSagas } from './pdf/sagas';
 import { watchFileSagas } from './file/sagas';
 import { watchConfigurationSagas } from './configuration/sagas';
 import {
@@ -95,5 +96,7 @@ export function* watchSagas() {
     watchConfigurationSagas(),
     // event stream
     watchStreamSagas(),
+    //pdf
+    watchPdfSagas(),
   ]);
 }
