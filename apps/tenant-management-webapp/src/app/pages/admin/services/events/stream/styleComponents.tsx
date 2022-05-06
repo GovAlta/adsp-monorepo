@@ -21,6 +21,18 @@ export const TableWrapper = styled.div`
   tr td:nth-child(3) {
     width: 20%;
   }
+
+  tr th:nth-child(1) {
+    width: 40%;
+  }
+
+  tr th:nth-child(2) {
+    width: 40%;
+  }
+
+  tr th:nth-child(3) {
+    width: 20%;
+  }
 `;
 
 export const Details = styled.div`
@@ -40,4 +52,16 @@ export const EntryDetail = styled.div`
   font-size: 12px;
   line-height: 16px;
   text-align: left;
+`;
+
+// TODO: use GoABadge after we update the ui-component version
+export const Badge = styled.div`
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-base);
+  background-color: var(--color-gray-100);
+  color: var(--color-tealblue-900);
+  padding-left: 0.4rem;
+  padding-right: 0.4rem !important;
+  display: inline-block;
 `;

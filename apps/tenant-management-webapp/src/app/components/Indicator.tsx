@@ -15,7 +15,7 @@ export const IndicatorWithDelay = (props: IndicatorProps): JSX.Element => {
   const message = props.message || 'Loading';
   let pageLock = true;
   if (props?.pageLock === false) {
-    pageLock = false
+    pageLock = false;
   }
 
   useEffect(() => {
@@ -43,10 +43,20 @@ export const PageIndicator = (): JSX.Element => {
   });
 
   const props = {
-    ...indicator, pageLock: false
-  }
+    ...indicator,
+    pageLock: false,
+  };
 
   // eslint-disable-next-line
-  useEffect(() => { }, [indicator]);
-  return <Center>{indicator.show && <IndicatorWithDelay {...props} />}</Center>;
+  useEffect(() => {}, [indicator]);
+  return (
+    <>
+      {indicator.show && (
+        <Center>
+          {' '}
+          <IndicatorWithDelay {...props} />
+        </Center>
+      )}
+    </>
+  );
 };

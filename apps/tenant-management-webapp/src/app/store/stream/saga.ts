@@ -10,6 +10,7 @@ import {
 import { SagaIterator } from '@redux-saga/core';
 import axios from 'axios';
 import { CORE_TENANT } from '@store/tenant/models';
+import { UpdateIndicator } from '@store/session/actions';
 
 function selectConfigBaseUrl(state: RootState): string {
   return state.config.serviceUrls.configurationServiceApiUrl;
@@ -28,6 +29,12 @@ const API_VERSION = 'v2';
 
 export function* fetchCoreStreams(): SagaIterator {
   try {
+    yield put(
+      UpdateIndicator({
+        show: true,
+        message: 'Loading...',
+      })
+    );
     const state: RootState = yield select();
     const baseUrl = selectConfigBaseUrl(state);
     const token = selectToken(state);
@@ -41,13 +48,29 @@ export function* fetchCoreStreams(): SagaIterator {
     );
 
     yield put(fetchCoreStreamsSuccess(response.data));
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
   } catch (e) {
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
     yield put(ErrorNotification({ message: e.message }));
   }
 }
 
 export function* fetchTenantStreams(): SagaIterator {
   try {
+    yield put(
+      UpdateIndicator({
+        show: true,
+        message: 'Loading...',
+      })
+    );
     const state: RootState = yield select();
     const baseUrl = selectConfigBaseUrl(state);
     const token = selectToken(state);
@@ -63,7 +86,18 @@ export function* fetchTenantStreams(): SagaIterator {
       );
       yield put(fetchTenantStreamsSuccess(response.data));
     }
+
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
   } catch (e) {
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
     yield put(ErrorNotification({ message: e.message }));
   }
 }
