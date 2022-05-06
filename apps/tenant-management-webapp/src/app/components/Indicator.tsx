@@ -53,7 +53,6 @@ export const PageIndicator = (): JSX.Element => {
     <>
       {indicator.show && (
         <Center>
-          {' '}
           <IndicatorWithDelay {...props} />
         </Center>
       )}

@@ -1,5 +1,5 @@
 import React from 'react';
-export const renderNoItem = (itemName: string, isTight = false): JSX.Element => {
+export const renderNoItem = (itemName: string, isTight?: boolean): JSX.Element => {
   return (
     <div>
       {!isTight && <br />}
