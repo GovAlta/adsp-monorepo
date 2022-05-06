@@ -4,6 +4,7 @@ import { all, takeEvery, takeLatest, takeLeading } from 'redux-saga/effects';
 import { fetchAccess } from './access/sagas';
 import { fetchConfig } from './config/sagas';
 import { watchTenantSagas } from './tenant/sagas';
+import { watchStreamSagas } from './stream/saga';
 import {
   deleteApplication,
   fetchServiceStatusApps,
@@ -93,6 +94,8 @@ export function* watchSagas() {
     watchSubscriptionSagas(),
     //configuration
     watchConfigurationSagas(),
+    // event stream
+    watchStreamSagas(),
     //pdf
     watchPdfSagas(),
   ]);

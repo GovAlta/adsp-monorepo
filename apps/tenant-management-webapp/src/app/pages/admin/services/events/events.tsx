@@ -6,6 +6,7 @@ import React, { FunctionComponent, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { EventDefinitions } from './definitions';
 import { EventsOverview } from './overview';
+import { EventStreams } from './stream';
 
 export const Events: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -32,6 +33,10 @@ export const Events: FunctionComponent = () => {
           </Tab>
           <Tab label="Definitions" data-testid="events-definitions-tab">
             <EventDefinitions activeEdit={activateEditState} />
+          </Tab>
+
+          <Tab label="Streams" data-testid="events-streams-tab">
+            <EventStreams />
           </Tab>
         </Tabs>
       </Main>

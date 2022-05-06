@@ -51,6 +51,9 @@ export class AdspId {
     this.#formatSegment(this.service) +
     this.#formatSegment(this.api) +
     this.#formatSegment(this.resource);
+
+  toStringWithOutPrefix = (): string =>
+    this.service + this.#formatSegment(this.api) + this.#formatSegment(this.resource);
 }
 
 export function adspId(strings: TemplateStringsArray, ...parameters: unknown[]): AdspId {
