@@ -19,7 +19,9 @@ import { getNamespaceEntries } from './util/getNamespaceEntries';
 import { DirectoryServicePathBuilder } from './util/directoryServicePathBuilder';
 import { body, checkSchema } from 'express-validator';
 
-const passportMiddleware = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
+const TIME_OUT = 10000;
+
+const passportMiddleware = passport.authenticate(['core', 'tenant'], { session: false });
 interface DirectoryRouterProps {
   logger?: Logger;
   directoryRepository: DirectoryRepository;
@@ -263,7 +265,7 @@ export const createDirectoryRouter = ({ logger, directoryRepository, tenantServi
           throw new InvalidValueError('Update service', `Cannot find service: ${service}`);
         }
         try {
-          const { data } = await axios.get<Links>(filteredService.host, { timeout: 5000 });
+          const { data } = await axios.get<Links>(filteredService.host, { timeout: TIME_OUT });
 
           // Root attributes of Links type are all optional. So, string can pass the axios type validation.
           if (typeof data !== 'object') {
