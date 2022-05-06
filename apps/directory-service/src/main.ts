@@ -6,14 +6,21 @@ import * as cors from 'cors';
 import * as helmet from 'helmet';
 import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
-import { createLogger, createErrorHandler } from '@core-services/core-common';
+import { createLogger, createErrorHandler, AjvValidationService } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { createRepositories } from './mongo';
-import { ServiceRoles } from './directory';
+import { ServiceRoles, bootstrapDirectory, applyDirectoryV2Middleware } from './directory';
+import { getServiceUrlById, getResourceUrlById } from './directory/router/util/getNamespaceEntries';
 
 const logger = createLogger('directory-service', environment.LOG_LEVEL);
 
 const initializeApp = async (): Promise<express.Application> => {
+  const validationService = new AjvValidationService(logger);
+  const repositories = await createRepositories({ ...environment, validationService, logger });
+  if (environment.DIRECTORY_BOOTSTRAP) {
+    await bootstrapDirectory(logger, environment.DIRECTORY_BOOTSTRAP, repositories.directoryRepository);
+  }
+
   const app = express();
 
   app.use(compression());
@@ -27,7 +34,7 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { coreStrategy, tenantStrategy, healthCheck } = await initializePlatform(
+  const { coreStrategy, tenantStrategy, tenantService, healthCheck } = await initializePlatform(
     {
       serviceId,
       displayName: 'Directory service',
@@ -48,10 +55,10 @@ const initializeApp = async (): Promise<express.Application> => {
     {
       // TODO: This needs to be implemented so that the directory doesn't make re-entrant request to
       // itself via the SDK. Re-entrancy on start up can be a problem.
-      // directory: {
-      //   getResourceUrl: () => { throw new Error('Not implemented') },
-      //   getServiceUrl: () => { throw new Error('Not implemented') },
-      // }
+      directory: {
+        getResourceUrl: (serviceId: AdspId) => getResourceUrlById(serviceId, repositories.directoryRepository),
+        getServiceUrl: (serviceId: AdspId) => getServiceUrlById(serviceId, repositories.directoryRepository),
+      },
     }
   );
 
@@ -65,11 +72,11 @@ const initializeApp = async (): Promise<express.Application> => {
   passport.deserializeUser(function (user, done) {
     done(null, user as User);
   });
-
+  applyDirectoryV2Middleware(app, { ...repositories, logger, tenantService });
   app.use(passport.initialize());
   app.use('/directory', passport.authenticate(['core', 'tenant'], { session: false }));
 
-  const { isConnected } = await createRepositories({ ...environment, logger });
+  // const { isConnected } = await createRepositories({ ...environment, logger });
 
   // TODO: Add your API router here.
 
@@ -91,7 +98,7 @@ const initializeApp = async (): Promise<express.Application> => {
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();
-    res.json({ ...platform, db: isConnected() });
+    res.json({ ...platform, db: repositories.isConnected() });
   });
 
   app.get('/', async (req, res) => {

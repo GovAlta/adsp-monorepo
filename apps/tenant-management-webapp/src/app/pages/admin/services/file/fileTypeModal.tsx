@@ -272,9 +272,6 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
                 dispatch(UpdateFileTypeService(fileType));
               }
 
-              if (props.onSwitch) {
-                props.onSwitch();
-              }
               props.onCancel();
             }}
           >

@@ -36,6 +36,12 @@ const HelpLink = (): JSX.Element => {
 
 export const File: FunctionComponent = () => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
+  const [activateEditState, setActivateEditState] = useState<boolean>(false);
+
+  const activateEdit = (edit: boolean) => {
+    setActiveIndex(1);
+    setActivateEditState(edit);
+  };
 
   return (
     <Page>
@@ -44,14 +50,10 @@ export const File: FunctionComponent = () => {
           <h1 data-testid="file-title">File service</h1>
           <Tabs activeIndex={activeIndex}>
             <Tab label="Overview">
-              <FileOverview
-                onSwitch={() => {
-                  setActiveIndex(1);
-                }}
-              />
+              <FileOverview setActiveIndex={setActiveIndex} setActiveEdit={activateEdit} />
             </Tab>
             <Tab label="File types">
-              <FileTypes />
+              <FileTypes activeEdit={activateEditState} />
             </Tab>
             <Tab label="Test files">
               <FileList />
