@@ -59,6 +59,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
         {(isEdit || openAddPdfTemplate) && (
           <AddEditPdfTemplate
             open={openAddPdfTemplate}
+            templates={pdfTemplates}
             isEdit={isEdit}
             onClose={reset}
             initialValue={selectedPdfTemplate}
