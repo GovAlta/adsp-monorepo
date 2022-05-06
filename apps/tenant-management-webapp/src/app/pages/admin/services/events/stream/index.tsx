@@ -5,7 +5,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { StreamTable } from './streamTable';
 import { CORE_TENANT } from '@store/tenant/models';
 import { NameDiv } from './styleComponents';
-import { getEventDefinitions } from '@store/event/actions';
 import { PageIndicator } from '@components/Indicator';
 
 export const EventStreams = (): JSX.Element => {
@@ -18,11 +17,6 @@ export const EventStreams = (): JSX.Element => {
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
-  useEffect(() => {
-    if (!events) {
-      dispatch(getEventDefinitions());
-    }
-  }, []);
 
   // eslint-disable-next-line
   useEffect(() => {}, [events]);
