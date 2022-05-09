@@ -7,7 +7,7 @@ import { createCheckEndpointJob, CreateCheckEndpointProps } from './checkEndpoin
 import { EventService } from '@abgov/adsp-service-sdk';
 import { HealthCheckJobs } from './healthCheckJobs';
 const JOB_TIME_INTERVAL_MIN = 1;
-const REQUEST_TIMEOUT = 2000;
+const REQUEST_TIMEOUT = 5000;
 interface ServiceStatusJobProps {
   logger: Logger;
   serviceStatusRepository: ServiceStatusRepository;
