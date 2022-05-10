@@ -12,6 +12,7 @@ import ServiceStatus from './status/reducers';
 import Event from './event/reducers';
 import Notice from './notice/reducers';
 import Configuration from './configuration/reducers';
+import Stream from './stream/reducers';
 import Pdf from './pdf/reducers';
 
 export const rootReducer = combineReducers({
@@ -29,4 +30,5 @@ export const rootReducer = combineReducers({
   serviceStatus: ServiceStatus,
   event: Event,
   notice: Notice,
+  stream: Stream,
 });

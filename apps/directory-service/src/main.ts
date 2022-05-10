@@ -76,8 +76,6 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(passport.initialize());
   app.use('/directory', passport.authenticate(['core', 'tenant'], { session: false }));
 
-  // const { isConnected } = await createRepositories({ ...environment, logger });
-
   // TODO: Add your API router here.
 
   let swagger = null;

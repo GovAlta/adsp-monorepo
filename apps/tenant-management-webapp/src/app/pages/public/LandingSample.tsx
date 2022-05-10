@@ -30,7 +30,10 @@ export const LandingSample = (): JSX.Element => {
               <GoACard type="primary">
                 <CardLayout>
                   <h2>Chat app</h2>
-                  <CardContent maxHeight={200}>Chat app description.</CardContent>
+                  <CardContent maxHeight={100}>
+                    The chat app example is a basic real-time chat application built using ADSP services. It makes use
+                    of many platform services including: access, event, and file.
+                  </CardContent>
                   <RedirectButton name="chat-service" url={`${chatApiUrl}`} label="Learn more" />
                 </CardLayout>
               </GoACard>

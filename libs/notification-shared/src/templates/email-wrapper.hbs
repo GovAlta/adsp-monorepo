@@ -146,15 +146,14 @@
       }
       .goa-footer-event .link {
         padding-left: 4.5rem;
-        flex: 5;
         padding-bottom: 1.5rem;
       }
       .footer-link-border {
         border-top: 1px solid #dcdcdc;
       }
       .goa-footer-event .logo {
+        margin-left: auto;
         padding-right: 6.75rem;
-        flex: 1;
       }
       .goa-footer-event .footer-disclaimer {
         margin-left: 4.5rem;
@@ -178,47 +177,49 @@
       }
     </style>
   </head>
-  <header>
-    <div class='goa-header-event-template'>
-      <div class='goa-logo'>
-        <img
-          alt='Government of Alberta'
-          src='https://file-service.adsp.alberta.ca/file/v1/files/4b95b597-395f-4f4a-90ba-1d6cf2be0756/download?embed=true'
-        />
-      </div>
-    </div>
-    <div id='goa-callout-custom'>
-      <div class='title'>
-        {{#if tenant.name}}{{tenant.name}}{{else}}Alberta Digital Service Platform{{/if}}
-      </div>
-    </div>
-  </header>
-  <div class="email-content">
-    {{content}}
-  </div>
-  <footer>
-    <div class='goa-footer-event'>
-      <div class='container'>
-        <div class='link'>
-          <span>
-            Please do not reply to this email. Manage your subscription <a href="{{ managementUrl }}" target="_blank" rel="noopener noreferrer">here</a>.
-          </span>
-          <br />
-        </div>
-        <div class='logo'>
+  <body>
+    <header>
+      <div class='goa-header-event-template'>
+        <div class='goa-logo'>
           <img
             alt='Government of Alberta'
             src='https://file-service.adsp.alberta.ca/file/v1/files/4b95b597-395f-4f4a-90ba-1d6cf2be0756/download?embed=true'
           />
         </div>
       </div>
-      <div class='footer-disclaimer footer-link-border'>
-        This email was sent from the Government of Alberta and any files transmitted with it are confidential and
-        intended solely for the use of the individual For entity to whom they are addressed. If you have received this
-        email in error please notify the system manager. This message contains confidential information and is intended
-        only for the individual named. If you are not the named addressee you should not disseminate, distribute or copy
-        this e-mail.
+      <div id='goa-callout-custom'>
+        <div class='title'>
+          {{#if tenant.name}}{{tenant.name}}{{else}}Alberta Digital Service Platform{{/if}}
+        </div>
       </div>
+    </header>
+    <div class="email-content">
+      {{content}}
     </div>
-  </footer>
+    <footer>
+      <div class='goa-footer-event'>
+        <div class='container'>
+          <div class='link'>
+            <span>
+              Please do not reply to this email.{{#if managementUrl}} Manage your subscription <a href="{{ managementUrl }}" target="_blank" rel="noopener noreferrer">here</a>.{{/if}}
+            </span>
+            <br />
+          </div>
+          <div class='logo'>
+            <img
+              alt='Government of Alberta'
+              src='https://file-service.adsp.alberta.ca/file/v1/files/4b95b597-395f-4f4a-90ba-1d6cf2be0756/download?embed=true'
+            />
+          </div>
+        </div>
+        <div class='footer-disclaimer footer-link-border'>
+          This email was sent from the Government of Alberta and any files transmitted with it are confidential and
+          intended solely for the use of the individual For entity to whom they are addressed. If you have received this
+          email in error please notify the system manager. This message contains confidential information and is intended
+          only for the individual named. If you are not the named addressee you should not disseminate, distribute or copy
+          this e-mail.
+        </div>
+      </div>
+    </footer>
+  </body>
 </html>
