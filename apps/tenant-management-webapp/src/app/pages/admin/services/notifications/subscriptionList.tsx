@@ -93,9 +93,7 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscribe
       {showDetails && (
         <tr>
           <td className="payload-details" colSpan={3}>
-            <div data-testid={`subscriber-1`}>
-              <div data-testid="details">{JSON.stringify(criteria, null, 2)}</div>
-            </div>
+            <div data-testid="subscriber-criteria">{JSON.stringify(criteria, null, 2)}</div>
           </td>
         </tr>
       )}
