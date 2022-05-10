@@ -26,7 +26,7 @@ export const Directory: FunctionComponent = () => {
         <a
           rel="noopener noreferrer"
           target="_blank"
-          href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/tenant-management-api"
+          href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/directory-service"
         >
           See the code
         </a>
