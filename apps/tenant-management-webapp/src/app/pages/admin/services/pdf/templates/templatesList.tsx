@@ -5,8 +5,9 @@ import { PdfTemplate } from '@store/pdf/model';
 
 export interface PdfTemplatesTableProps {
   templates: Record<string, PdfTemplate>;
+  edit?: (PdfTemplate) => void;
 }
-export const PdfTemplatesTable: FunctionComponent<PdfTemplatesTableProps> = ({ templates }) => {
+export const PdfTemplatesTable: FunctionComponent<PdfTemplatesTableProps> = ({ templates, edit }) => {
   return (
     <>
       <DataTable data-testid="pdf-templates-table">
@@ -26,7 +27,7 @@ export const PdfTemplatesTable: FunctionComponent<PdfTemplatesTableProps> = ({ t
         </thead>
         <tbody>
           {Object.keys(templates).map((templateName) => {
-            return <PdfTemplateItem key={templateName} pdfTemplate={templates[templateName]} />;
+            return <PdfTemplateItem key={templateName} pdfTemplate={templates[templateName]} edit={edit} />;
           })}
         </tbody>
       </DataTable>
