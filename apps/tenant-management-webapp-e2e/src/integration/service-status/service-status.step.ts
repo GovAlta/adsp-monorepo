@@ -588,17 +588,21 @@ Then('the user views the status of {string} changed to the first unused status',
 });
 
 Then(
-  'the user views find the event details of {string} application status changed from {string} to {string} for subscriber of {string}',
+  'the user views the event details of {string} application status changed from {string} to {string} for subscriber of {string}',
   function (appName, orgStatus, newStatusInput, email) {
+    let isFound = false;
+    let orgStatusValidationString;
+    let newStatusValidationString;
+
     if (orgStatus != '{original status}') {
-      orgStatus = 'The original status was: ' + orgStatus;
+      orgStatusValidationString = 'The original status was: ' + orgStatus;
     } else {
-      orgStatus = 'The original status was: ' + originalStatus.toLowerCase();
+      orgStatusValidationString = 'The original status was: ' + originalStatus.toLowerCase();
     }
     if (newStatusInput != '{new status}') {
-      newStatusInput = 'The new status is now: ' + newStatusInput;
+      newStatusValidationString = 'The new status is now: ' + newStatusInput;
     } else {
-      newStatusInput = 'The new status is now: ' + newStatus.toLowerCase();
+      newStatusValidationString = 'The new status is now: ' + newStatus.toLowerCase();
     }
 
     tenantAdminObj.eventToggleDetailsIcons().each(($element, $index, $full_array) => {
@@ -609,17 +613,17 @@ Then(
         .invoke('text')
         .then((eventDetails) => {
           //if event log details contains email then verify expect statements else close the event details and continue down the list
-          if (eventDetails.includes(email)) {
-            expect(eventDetails).to.contain(appName);
-            expect(eventDetails).to.contain(orgStatus);
-            expect(eventDetails).to.contain(newStatusInput);
+          if (eventDetails.includes('to": "' + email)) {
+            expect(eventDetails).to.contain(appName + ' status has changed');
+            expect(eventDetails).to.contain(orgStatusValidationString);
+            expect(eventDetails).to.contain(newStatusValidationString);
             cy.wrap($element).click({ force: true });
-            return false;
+            isFound = true;
           } else {
             //clicking eye icon to close event details
             cy.wrap($element).click();
           }
-          if ($index + 1 == $full_array.length) {
+          if (isFound == false && $index + 1 == $full_array.length) {
             expect($index + 1).to.not.eq(
               $full_array.length,
               'No matching email found throughout list of event details'
