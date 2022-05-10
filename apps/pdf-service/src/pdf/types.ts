@@ -15,6 +15,7 @@ export interface FileResult {
 }
 
 export interface FileService {
+  typeExists(tenantId: AdspId, fileType: string): Promise<boolean>;
   upload(tenantId: AdspId, fileType: string, recordId: string, filename: string, content: Buffer): Promise<FileResult>;
 }
 

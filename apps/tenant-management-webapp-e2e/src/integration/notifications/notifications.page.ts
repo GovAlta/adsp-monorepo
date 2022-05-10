@@ -327,11 +327,11 @@ class NotificationsPage {
   }
 
   editContactModalPhone() {
-    return cy.xpath('//input[@name="phoneNumber"]');
+    return cy.get('[data-testid="contact-sms-input"]');
   }
 
   editContactModalInstructions() {
-    return cy.xpath('//*[@name="supportInstruction"]');
+    return cy.get('[data-testid="form-support-instructions"]');
   }
 
   editContactModalSaveBtn() {

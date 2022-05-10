@@ -1,6 +1,5 @@
 import React, { useState, createRef, useEffect } from 'react';
-import styled from 'styled-components';
-import { GoAHeroBanner, GoAButton } from '@abgov/react-components';
+import { GoAHeroBanner } from '@abgov/react-components';
 import { GoACard } from '@abgov/react-components/experimental';
 import bannerBackground from '@assets/BannerBackground.jpg';
 import Header from '@components/AppHeader';
@@ -11,50 +10,25 @@ import { Main } from '@components/Html';
 import GoALinkButton from '@components/LinkButton';
 import ClockIcon from '@assets/icons/clock.png';
 import DashboardScreenIcon from '@assets/icons/dashboard-screenshot.png';
+
 // TODO: replace with ui-components open icon after updated the ui-components
-import { ReactComponent as OpenIcon } from '@assets/icons/open.svg';
+import {
+  Section,
+  CardContent,
+  GrayBox,
+  DashBoardImg,
+  HeroBannerLayout,
+  ServiceLayout,
+  ClockImg,
+  CardLayout,
+  BoldTitle,
+  RedirectButton,
+  H2,
+  Paragraph,
+  ContentFootSeparator,
+} from './LandingComponents';
 
-interface RedirectButtonProps {
-  url: string;
-  name: string;
-  label: string;
-}
-
-const RedirectButton = ({ url, name, label }: RedirectButtonProps): JSX.Element => {
-  const Content = styled.div`
-    display: grid;
-    grid-template-columns: 4fr 1fr;
-    grid-gap: 4px;
-
-    svg {
-      width: 23px;
-      height: 24px;
-      position: relative;
-      top: -4px;
-      stroke: var(--color-primary);
-    }
-  `;
-  const ButtonContainer = styled.div`
-    :hover svg {
-      stroke: var(--color-primary-dark);
-    }
-  `;
-  return (
-    <ButtonContainer>
-      <GoAButton
-        buttonType="tertiary"
-        data-testid={`redirect-button-${name}`}
-        onClick={() => {
-          window.open(url, '_blank');
-        }}
-      >
-        <Content>
-          {label} <OpenIcon />
-        </Content>
-      </GoAButton>
-    </ButtonContainer>
-  );
-};
+import { LandingSample } from './LandingSample';
 
 const LandingPage = (): JSX.Element => {
   const [rowOneMaxHeight, setRowOneMaxHeight] = useState<number>(0);
@@ -105,11 +79,11 @@ const LandingPage = (): JSX.Element => {
               <GridItem md={10}>
                 <Grid>
                   <GridItem md={6}>
-                    <h2>Why ADSP?</h2>
-                    <p>
+                    <H2>Why ADSP?</H2>
+                    <Paragraph>
                       ADSP is a secure in-house cloud-based platform built to enable service teams of the DDI. Users can
                       sign up to take advantage of the platform capabilities within their own products.
-                    </p>
+                    </Paragraph>
                     <p>
                       Check out the quick-start{' '}
                       <a href="https://glowing-parakeet-0563ab2e.pages.github.io">ADSP guide</a>
@@ -158,11 +132,11 @@ const LandingPage = (): JSX.Element => {
               <GridItem md={1} />
               <GridItem md={10}>
                 <ServiceLayout>
-                  <h2>Services we offer</h2>
-                  <p>
+                  <H2>Services we offer</H2>
+                  <Paragraph>
                     The ADSP provides a catalog of services and capabilities for product teams to leverage in delivering
                     digital services to Albertans. Here are a few of our offerings.
-                  </p>
+                  </Paragraph>
                 </ServiceLayout>
               </GridItem>
               <GridItem md={1} />
@@ -221,7 +195,6 @@ const LandingPage = (): JSX.Element => {
                             users to access metadata of or download the file.
                           </div>
                         </CardContent>
-
                         <RedirectButton
                           name="file-service"
                           url="https://glowing-parakeet-0563ab2e.pages.github.io/services/file-service.html"
@@ -232,7 +205,6 @@ const LandingPage = (): JSX.Element => {
                   </GridItem>
                 </Grid>
               </GridItem>
-
               <GridItem md={1} />
             </Grid>
           </Container>
@@ -282,7 +254,10 @@ const LandingPage = (): JSX.Element => {
               <GridItem md={1} />
             </Grid>
           </Container>
+
+          <LandingSample />
         </Section>
+        <ContentFootSeparator />
         <Footer />
       </Main>
     </>
@@ -290,71 +265,3 @@ const LandingPage = (): JSX.Element => {
 };
 
 export default LandingPage;
-
-// *****************
-// Styled Components
-// *****************
-
-interface SectionProps {
-  backgroundColor?: string;
-}
-
-const Section = styled.div<SectionProps>`
-  background-color: ${(props: SectionProps) => props.backgroundColor ?? 'transparent'};
-`;
-
-//display: ${(props: PagePros) => (props.ready === true || props.ready === undefined ? 'flex' : 'none')};
-
-interface CardContentProps {
-  maxHeight: number;
-}
-const CardContent = styled.div`
-  line-height: 1.75em;
-  min-height: ${(props: CardContentProps) => {
-    const width = window.innerWidth;
-    if (width < 768) {
-      return 'initial';
-    }
-    return `${props.maxHeight}px`;
-  }};
-  margin-bottom: 1.75em;
-`;
-const CardLayout = styled.div`
-  padding-top: 0.75em;
-  padding-bottom: 1.5em;
-`;
-
-const BoldTitle = styled.h1`
-  && {
-    font-weight: var(--fw-bold);
-  }
-`;
-
-const GrayBox = styled.div`
-  padding-top: 2.5em;
-  background-color: var(--color-gray-100);
-  padding-bottom: 2.5em;
-`;
-
-const DashBoardImg = styled.img`
-  box-shadow: 1px 5px 28px 0px #00000033;
-`;
-
-const HeroBannerLayout = styled.div`
-  .goa-hero {
-    max-height: 20em !important;
-    background-size: 100% 100%;
-    padding: 0px !important;
-  }
-`;
-
-const ServiceLayout = styled.div`
-  margin-top: 3.5em;
-  margin-bottom: 1.75em;
-`;
-
-const ClockImg = styled.img`
-  margin-top: 1.5em;
-  height: 130px;
-  width: 130px !important;
-`;

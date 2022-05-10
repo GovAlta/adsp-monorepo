@@ -39,10 +39,9 @@ import { getNotices } from '@store/notice/actions';
 import { NoticeList } from './noticeList';
 import SupportLinks from '@components/SupportLinks';
 import { renderNoItem } from '@components/NoItem';
-import { StatusMetrics } from './metrics';
 import { DeleteModal } from '@components/DeleteModal';
 import { createSelector } from 'reselect';
-import { ContactInformation } from './contactInformation/contactInformation';
+import { StatusOverview } from './overview';
 
 const userHealthSubscriptionSelector = createSelector(
   (state: RootState) => state.session.userInfo?.sub,
@@ -105,8 +104,9 @@ function Status(): JSX.Element {
     }
   };
 
-  const addApplication = () => {
-    setShowAddApplicationModal(true);
+  const addApplication = (edit: boolean) => {
+    setActiveIndex(1);
+    setShowAddApplicationModal(edit);
   };
 
   return (
@@ -137,20 +137,7 @@ function Status(): JSX.Element {
         <h1 data-testid="status-title">Status service</h1>
         <Tabs activeIndex={activeIndex}>
           <Tab label="Overview">
-            <OverviewCss>
-              <section>
-                This service allows for easy monitoring of application downtime.
-                <p>
-                  Each application should represent a service that is useful to the end user by itself, such as child
-                  care subsidy and child care certification
-                </p>
-                <GoAButton data-testid="add-application" onClick={addApplication} buttonType="primary">
-                  Add application
-                </GoAButton>
-              </section>
-              <ContactInformation />
-              <StatusMetrics />
-            </OverviewCss>
+            <StatusOverview setActiveEdit={addApplication} setActiveIndex={setActiveIndex} />
           </Tab>
           <Tab label="Applications">
             <p>
@@ -163,7 +150,7 @@ function Status(): JSX.Element {
               subsidy and child care certification
             </p>
             <p>
-              <GoAButton data-testid="add-application" onClick={addApplication} buttonType="primary">
+              <GoAButton data-testid="add-application" onClick={() => addApplication(true)} buttonType="primary">
                 Add application
               </GoAButton>
             </p>
@@ -636,15 +623,4 @@ const AppName = styled.div`
   font-weight: var(--fw-bold);
   text-transform: capitalize;
   margin-top: 1rem;
-`;
-
-const OverviewCss = styled.div`
-  .contact-border {
-    padding: 1rem;
-    border: 1px solid #ccc;
-  }
-
-  .left-float {
-    float: left;
-  }
 `;

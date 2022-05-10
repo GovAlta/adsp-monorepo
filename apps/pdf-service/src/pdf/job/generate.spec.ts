@@ -30,6 +30,7 @@ describe('generate', () => {
   };
 
   const fileServiceMock = {
+    typeExists: jest.fn(),
     upload: jest.fn(),
   };
 

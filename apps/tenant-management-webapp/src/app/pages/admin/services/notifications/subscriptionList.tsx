@@ -3,23 +3,25 @@ import { useSelector, useDispatch } from 'react-redux';
 import { createSelector } from 'reselect';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
-import type { Subscriber, Subscription, SubscriptionSearchCriteria } from '@store/subscription/models';
+import type { Subscriber, Subscription, SubscriptionSearchCriteria, Criteria } from '@store/subscription/models';
 import { UpdateSubscriber, GetTypeSubscriptions } from '@store/subscription/actions';
 import styled from 'styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
 import { SubscriberModalForm } from './editSubscriber';
-import { GoAIcon } from '@abgov/react-components/experimental';
+import { GoAIcon, GoAIconButton } from '@abgov/react-components/experimental';
 import { SubscriptionNextLoader } from './subscriptionNextLoader';
+import { GoAContextMenuIcon } from '@components/ContextMenu';
 
 interface SubscriptionProps {
   subscriber: Subscriber;
+  criteria: Criteria;
   typeId: string;
   readonly?: boolean;
   openModal?: (subscription: Subscription) => void;
   onDelete: (subscription: Subscriber, type: string) => void;
 }
 
-const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscriber, onDelete, typeId }) => {
+const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscriber, criteria, onDelete, typeId }) => {
   function characterLimit(string, limit) {
     if (string?.length > limit) {
       const slicedString = string.slice(0, limit);
@@ -38,47 +40,66 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscribe
     }
   });
 
+  const [showDetails, setShowDetails] = useState(false);
+
   return (
-    <tr>
-      <td headers="userName" data-testid="addressAs">
-        {characterLimit(subscriber?.addressAs, 30)}
-      </td>
-      <td headers="channels" data-testid="channels">
-        {sortedChannels.map((channel, i) => (
-          <div key={`channels-id-${i}`} style={{ display: 'flex' }}>
-            <div>
+    <>
+      <tr>
+        <td headers="userName" data-testid="addressAs">
+          {characterLimit(subscriber?.addressAs, 30)}
+        </td>
+        <td headers="channels" data-testid="channels">
+          {sortedChannels.map((channel, i) => (
+            <div key={`channels-id-${i}`} style={{ display: 'flex' }}>
               <div>
-                {channel.channel === 'email' ? (
-                  <IconsCell>
-                    <GoAIcon data-testid="mail-icon" size="medium" type="mail" />
-                  </IconsCell>
-                ) : channel.channel === 'sms' ? (
-                  <IconsCell>
-                    <GoAIcon data-testid="sms-icon" size="medium" type="phone-portrait" />
-                  </IconsCell>
-                ) : (
-                  `${channel.channel}:`
-                )}{' '}
+                <div>
+                  {channel.channel === 'email' ? (
+                    <IconsCell>
+                      <GoAIcon data-testid="mail-icon" size="medium" type="mail" />
+                    </IconsCell>
+                  ) : channel.channel === 'sms' ? (
+                    <IconsCell>
+                      <GoAIcon data-testid="sms-icon" size="medium" type="phone-portrait" />
+                    </IconsCell>
+                  ) : (
+                    `${channel.channel}:`
+                  )}{' '}
+                </div>
               </div>
+              <div>{characterLimit(channel?.address, 30)}</div>
             </div>
-            <div>{characterLimit(channel?.address, 30)}</div>
+          ))}
+        </td>
+        <td headers="actions" data-testid="actions">
+          <div style={{ display: 'flex', flexDirection: 'row-reverse' }}>
+            <GoAIconButton
+              data-testid={`delete-subscription-${subscriber.id}`}
+              size="medium"
+              type="trash"
+              onClick={() => onDelete(subscriber, typeId)}
+            />
+            {criteria && (criteria.correlationId || criteria.context) && (
+              <GoAContextMenuIcon
+                type={showDetails ? 'eye-off' : 'eye'}
+                onClick={() => {
+                  setShowDetails(!showDetails);
+                }}
+                testId="toggle-details-visibility"
+              />
+            )}
           </div>
-        ))}
-      </td>
-      <td headers="actions" data-testid="actions">
-        <div style={{ display: 'flex', flexDirection: 'row' }}>
-          <a
-            className="flex1"
-            data-testid={`delete-subscription-${subscriber.id}`}
-            onClick={() => onDelete(subscriber, typeId)}
-          >
-            <ButtonBorder>
-              <GoAIcon type="trash" />
-            </ButtonBorder>
-          </a>
-        </div>
-      </td>
-    </tr>
+        </td>
+      </tr>
+      {showDetails && (
+        <tr>
+          <td className="payload-details" colSpan={3}>
+            <div data-testid={`subscriber-1`}>
+              <div data-testid="details">{JSON.stringify(criteria, null, 2)}</div>
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
   );
 };
 
@@ -178,6 +199,7 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
                 <SubscriptionComponent
                   key={`${subscription.subscriber.id}`}
                   subscriber={subscription.subscriber}
+                  criteria={subscription.criteria}
                   openModal={openModalFunction}
                   typeId={subscription.typeId}
                   onDelete={onDelete}
@@ -204,14 +226,6 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
     </div>
   );
 };
-
-const ButtonBorder = styled.div`
-  border: 1px solid #56a0d8;
-  margin: 3px;
-  border-radius: 3px;
-  width: fit-content;
-  padding: 3px;
-`;
 
 export const SubscriptionList = styled(SubscriptionsListComponent)`
   display: flex-inline-table;

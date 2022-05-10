@@ -7,6 +7,31 @@ import { FileResult, FileService } from './pdf';
 class PlatformFileService implements FileService {
   constructor(private logger: Logger, private tokenProvider: TokenProvider, private directory: ServiceDirectory) {}
 
+  async typeExists(tenantId: AdspId, typeId: string): Promise<boolean> {
+    try {
+      const fileServiceUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:file-service`);
+      const filesUrl = new URL(`/file/v1/types/${typeId}`, fileServiceUrl);
+      const token = await this.tokenProvider.getAccessToken();
+
+      const { data } = await axios.get<{ id: string }>(filesUrl.href, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { tenantId: `${tenantId}` },
+      });
+
+      return !!data.id;
+    } catch (err) {
+      this.logger.debug(
+        `File service find file type failed with error. ${
+          axios.isAxiosError(err) ? JSON.stringify(err.toJSON(), null, 2) : err
+        }`,
+        {
+          context: 'PlatformFileService',
+        }
+      );
+      return false;
+    }
+  }
+
   async upload(
     tenantId: AdspId,
     fileType: string,

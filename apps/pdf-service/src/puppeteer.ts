@@ -6,7 +6,7 @@ class PuppeteerPdfService implements PdfService {
     const browser = await puppeteer.launch({ headless: true, args: ['--disable-dev-shm-usage'] });
     try {
       const page = await browser.newPage();
-      await page.setContent(content);
+      await page.setContent(content, { waitUntil: 'load', timeout: 2 * 60 * 1000 });
       return await page.pdf({ printBackground: true });
     } finally {
       await browser.close();

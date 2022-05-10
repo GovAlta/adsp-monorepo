@@ -33,7 +33,7 @@ function uploadFile(fileList, file) {
 
 function deleteFile(fileList, id) {
   return fileList.filter((file) => {
-    return file.id !== id
+    return file.id !== id;
   });
 }
 export default function (state = FILE_INIT, action: ActionTypes): FileService {
@@ -56,7 +56,8 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
     case FETCH_FILE_TYPE_SUCCEEDED:
       return {
         ...state,
-        fileTypes: action.payload.fileInfo.data,
+        fileTypes: action.payload.fileInfo.tenant,
+        coreFileTypes: action.payload.fileInfo.core,
       };
     case DELETE_FILE_TYPE_SUCCEEDED:
       return {

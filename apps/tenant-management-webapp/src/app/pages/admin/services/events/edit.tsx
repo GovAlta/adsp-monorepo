@@ -5,7 +5,7 @@ import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { wordCheck, characterCheck, validationPattern, checkInput, isNotEmptyCheck } from '@lib/checkInput';
-import { ReactInputHandler } from '@lib/ReactInputHandler';
+import { reactInputHandlerFactory } from '@lib/reactInputHandlerFactory';
 import { updateEventDefinition } from '@store/event/actions';
 import { useDispatch } from 'react-redux';
 
@@ -35,7 +35,8 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
   };
   const forbiddenWords = coreNamespaces.concat('platform');
   const checkForConflicts = wordCheck(forbiddenWords);
-  const checkForBadChars = characterCheck(validationPattern.mixedArrowCase);
+  const checkForBadChars = characterCheck(validationPattern.mixedKebabCase);
+  const errorHandler = reactInputHandlerFactory(errors, setErrors);
 
   return (
     <GoAModal testId="definition-form" isOpen={open}>
@@ -52,11 +53,10 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               data-testid="form-namespace"
               aria-label="nameSpace"
               onChange={(e) => {
-                const errorHandler = new ReactInputHandler(errors, setErrors, 'namespace');
                 checkInput(
                   e.target.value,
                   [checkForConflicts, checkForBadChars, isNotEmptyCheck('namespace')],
-                  errorHandler
+                  errorHandler('namespace')
                 );
                 setDefinition({ ...definition, namespace: e.target.value });
               }}
@@ -72,8 +72,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               data-testid="form-name"
               aria-label="name"
               onChange={(e) => {
-                const errorHandler = new ReactInputHandler(errors, setErrors, 'name');
-                checkInput(e.target.value, [checkForBadChars, isNotEmptyCheck('name')], errorHandler);
+                checkInput(e.target.value, [checkForBadChars, isNotEmptyCheck('name')], errorHandler('name'));
                 setDefinition({ ...definition, name: e.target.value });
               }}
             />

@@ -150,8 +150,9 @@ Feature: Notifications
     Then the user views contact information of "<Email>", "<Phone>" and "<Instructions>" on notifications page
     # In the step definition, rnd{} will use a random 4-digit number to attach/replace part of the static strings in {}
     Examples:
-      | Email              | Phone                 | Instructions  |
-      | rnd{abc@gov.ab.ca} | rnd{1 (780) 567-1456} | rnd{autotest} |
+      | Email              | Phone           | Instructions  |
+      | rnd{abc@gov.ab.ca} | rnd{7805671456} | rnd{autotest} |
+
 
   @TEST_CS-1102 @REQ_CS-1130 @regression
   Scenario: As a tenant admin, I can modify a subscriber name and email

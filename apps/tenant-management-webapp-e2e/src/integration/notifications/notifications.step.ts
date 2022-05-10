@@ -412,7 +412,7 @@ Then(
 When(
   'the user clicks delete button of {string}, {string} under {string}',
   function (addressAd, email, notificationType) {
-    notificationsObj.deleteIconForNotificationRecord(notificationType, addressAd, email).click();
+    notificationsObj.deleteIconForNotificationRecord(notificationType, addressAd, email).click({ force: true });
   }
 );
 
@@ -426,7 +426,7 @@ Then('the user views the Delete subscription confirmation message of {string}', 
 });
 
 When('the user clicks Confirm button on Delete subscription modal', function () {
-  notificationsObj.deleteConfirmationModalConfirmBtn().click();
+  notificationsObj.deleteConfirmationModalConfirmBtn().scrollIntoView().click();
 });
 
 Given('a tenant admin user is on notification subscribers page', function () {
@@ -582,8 +582,7 @@ Then('the user views Edit contact information modal', function () {
 When(
   'the user enters {string}, {string} and {string} in Edit contact information modal',
   function (email, phone, instructions) {
-    // Check phone parameter to match 1 (111) 111-1111 format
-    expect(phone).to.match(/1\s\(\d{3}\)\s\d{3}-\d{4}/g);
+    // Check phone parameter to match 1111111 format
     // Generate a random number between 1000 and 2000
     const rand_str = String(Math.floor(Math.random() * 1000 + 1000));
 
@@ -593,31 +592,20 @@ When(
     } else {
       emailInput = (rand_str + email).replace('rnd{', '').replace('}', '');
     }
-
     const editedPhone = phone.match(/(?<=rnd{)[^{}]+(?=})/g);
     if (editedPhone == null) {
       phoneInput = phone;
     } else {
       phoneInput = editedPhone.toString().slice(0, -4) + rand_str;
     }
-
     const editedInstructions = instructions.match(/(?<=rnd{)[^{}]+(?=})/g);
     if (editedInstructions == null) {
       instructionsInput = instructions;
     } else {
       instructionsInput = (rand_str + instructions).replace('rnd{', '').replace('}', '');
     }
-
     notificationsObj.editContactModalEmail().clear().type(emailInput);
-    // Remove (, ), - and spaces and the first number
-    const phoneInputForUI = phoneInput
-      .replace('(', '')
-      .replace(')', '')
-      .replaceAll(' ', '')
-      .replace('-', '')
-      .substring(1);
-
-    notificationsObj.editContactModalPhone().clear().type(phoneInputForUI);
+    notificationsObj.editContactModalPhone().clear().type(phoneInput);
     notificationsObj.editContactModalInstructions().clear().type(instructionsInput);
   }
 );
@@ -636,14 +624,30 @@ Then(
     } else {
       notificationsObj.contactInformationEmail().invoke('text').should('contain', emailInput);
     }
-
     const editedPhone = phone.match(/(?<=rnd{)[^{}]+(?=})/g);
     if (editedPhone == '') {
-      notificationsObj.contactInformationPhone().invoke('text').should('contain', phone);
+      notificationsObj
+        .contactInformationPhone()
+        .invoke('text')
+        .then(($text) => {
+          const phoneNumber = $text
+            .replace(/([^0-9])+/, '')
+            .replace(' ', '')
+            .replace(' ', '');
+          cy.wrap(phoneNumber).should('contain', phoneInput);
+        });
     } else {
-      notificationsObj.contactInformationPhone().invoke('text').should('contain', phoneInput);
+      notificationsObj
+        .contactInformationPhone()
+        .invoke('text')
+        .then(($text) => {
+          const phoneNumber = $text
+            .replace(/([^0-9])+/, '')
+            .replace(' ', '')
+            .replace(' ', '');
+          cy.wrap(phoneNumber).should('contain', phoneInput);
+        });
     }
-
     const editedInstructions = instructions.match(/(?<=rnd{)[^{}]+(?=})/g);
     if (editedInstructions == '') {
       notificationsObj.contactInformationInstructions().invoke('text').should('contain', instructions);
