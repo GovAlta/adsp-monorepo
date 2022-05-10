@@ -52,6 +52,7 @@ export const EntryDetail = styled.div`
   font-size: 12px;
   line-height: 16px;
   text-align: left;
+  padding: 1rem;
 `;
 
 // TODO: use GoABadge after we update the ui-component version
