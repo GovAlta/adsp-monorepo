@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   UploadFileService,
@@ -22,7 +22,7 @@ const FileList = (): JSX.Element => {
   const [selectedFile, setSelectFile] = useState<FileItem>(null);
   const [uploadFileType, setUploadFileType] = useState<string[]>([]);
   const dispatch = useDispatch();
-
+  const fileName = useRef() as React.MutableRefObject<HTMLInputElement>;
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
   const coreFileTypes = useSelector((state: RootState) => state.fileService.coreFileTypes);
@@ -46,6 +46,7 @@ const FileList = (): JSX.Element => {
     dispatch(UploadFileService(fileInfo));
     setUploadFileType([]);
     setSelectFile(null);
+    fileName.current.value = '';
   };
 
   const onChange = (event) => {
@@ -127,7 +128,7 @@ const FileList = (): JSX.Element => {
     <>
       <GoAForm>
         <UploadHeading>Please upload a file</UploadHeading>
-        <input type="file" onChange={onChange} aria-label="file upload" />
+        <input type="file" onChange={onChange} aria-label="file upload" ref={fileName} />
         <FileTypeDropdown>
           <GoADropdown
             name="fileType"
