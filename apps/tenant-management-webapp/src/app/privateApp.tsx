@@ -8,6 +8,7 @@ import { RootState } from '@store/index';
 import { KeycloakCheckSSOWithLogout } from '@store/tenant/actions';
 import { GoAPageLoader } from '@abgov/react-components';
 import { NotificationBanner } from './notificationBanner';
+import styled from 'styled-components';
 
 interface privateAppProps {
   children: ReactNode;
@@ -24,11 +25,12 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
 
   return (
     <HeaderCtx.Provider value={{ setTitle }}>
-      <Header serviceName={title} admin={true} />
-      {/*
+      <ScrollBarFixTop>
+        <Header serviceName={title} admin={true} />
+        {/*
       NOTE: we might need to add the following function in the near feature
       */}
-      {/* <IdleTimer
+        {/* <IdleTimer
         checkInterval={10}
         timeoutFn={() => {
           dispatch(TenantLogout());
@@ -37,8 +39,12 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
           location.reload();
         }}
       /> */}
-      <NotificationBanner />
-      <Container>{children}</Container>
+
+        <NotificationBanner />
+      </ScrollBarFixTop>
+      <ScrollBarFixMain>
+        <Container>{children}</Container>
+      </ScrollBarFixMain>
     </HeaderCtx.Provider>
   );
 }
@@ -56,3 +62,12 @@ export function PrivateRoute({ component: Component, ...rest }): JSX.Element {
 }
 
 export default PrivateApp;
+
+const ScrollBarFixTop = styled.div`
+  margin-right: calc(100% - 100vw); ;
+`;
+
+const ScrollBarFixMain = styled.div`
+  margin-left: calc(100vw - 100%);
+  margin-right: 0;
+`;

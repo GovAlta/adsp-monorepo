@@ -51,7 +51,7 @@ Then('the user views Add notice dialog', function () {
 When(
   'the user enters {string}, {string}, {string}, {string}, {string}, {string} on notice dialog',
   function (desc, app, startDate, startTime, endDate, endTime) {
-    statusObj.noticeModalDescField().clear().type(desc);
+    statusObj.noticeModalDescField().clear({ force: true }).type(desc);
     // Select Application
     if (app == 'All') {
       statusObj.noticeModalAllApplicationsCheckbox().click();

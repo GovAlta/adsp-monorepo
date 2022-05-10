@@ -57,3 +57,4 @@ export const formSchema = new Schema(
 );
 
 formSchema.index({ tenantId: 1, id: 1 }, { unique: true });
+formSchema.index({ tenantId: 1, definitionId: 1, applicantId: 1 }, { unique: true });

@@ -3,6 +3,8 @@ import { Directory, Service, MetadataFetchResponse } from './models';
 import { TenantApi as TenantApiConfig } from '@store/config/models';
 import { toKebabName } from '@lib/kebabName';
 
+const TIME_OUT = 10000;
+
 export class DirectoryApi {
   private http: AxiosInstance;
   private config: TenantApiConfig;
@@ -47,7 +49,7 @@ export class DirectoryApi {
 
   async fetchEntryDetail(service: Service): Promise<MetadataFetchResponse> {
     const url = `${this.config.host}${this.config.endpoints.directory}/namespaces/${service.namespace}/services/${service.service}`;
-    const res = await this.http.get(url, { timeout: 5000 });
+    const res = await this.http.get(url, { timeout: TIME_OUT });
     return res?.data;
   }
 }

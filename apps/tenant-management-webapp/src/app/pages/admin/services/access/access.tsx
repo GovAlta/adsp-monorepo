@@ -90,32 +90,37 @@ export default function (): JSX.Element {
               </a>{' '}
               to your Keycloak admin portal.
             </p>
-
-            <DataTable id="role-information">
-              <thead>
-                <tr>
-                  <th>Role</th>
-                  <th>User count</th>
-                </tr>
-              </thead>
-              <tbody>
-                {roles ? (
-                  roles
-                    .sort((a, b) => (a.userIds?.length > b.userIds?.length ? -1 : 1))
-                    .slice(0, 5)
-                    .map((role) => {
-                      return (
-                        <tr key={role.name}>
-                          <td>{role.name}</td>
-                          <td>{role.userIds?.length ?? 0}</td>
-                        </tr>
-                      );
-                    })
-                ) : (
-                  <PageIndicator />
-                )}
-              </tbody>
-            </DataTable>
+            <TableStyle>
+              <DataTable id="role-information">
+                <thead>
+                  <tr>
+                    <th className="half-width">Role</th>
+                    <th>User count</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {roles ? (
+                    roles
+                      .sort((a, b) => (a.userIds?.length > b.userIds?.length ? -1 : 1))
+                      .slice(0, 5)
+                      .map((role) => {
+                        return (
+                          <tr key={role.name}>
+                            <td>{role.name}</td>
+                            <td>{role.userIds?.length ?? 0}</td>
+                          </tr>
+                        );
+                      })
+                  ) : (
+                    <tr>
+                      <td colSpan={2}>
+                        <PageIndicator />
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </DataTable>
+            </TableStyle>
           </section>
         </div>
       </Main>
@@ -140,6 +145,12 @@ const TitleLinkHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5rem;
+`;
+
+const TableStyle = styled.div`
+  & .half-width {
+    width: 50%;
+  }
 `;
 
 const Title = styled.h2`

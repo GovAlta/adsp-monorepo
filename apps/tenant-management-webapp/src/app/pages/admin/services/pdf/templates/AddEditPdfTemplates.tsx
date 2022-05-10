@@ -6,12 +6,13 @@ import { PdfTemplate } from '@store/pdf/model';
 import { IdField } from '../styled-components';
 import { toKebabName } from '@lib/kebabName';
 import { reactInputHandlerFactory } from '@lib/reactInputHandlerFactory';
-import { characterCheck, validationPattern, checkInput, isNotEmptyCheck } from '@lib/checkInput';
+import { characterCheck, validationPattern, checkInput, isNotEmptyCheck, Validator } from '@lib/checkInput';
 
 interface AddEditPdfTemplateProps {
   open: boolean;
   isEdit: boolean;
   initialValue: PdfTemplate;
+  templates: Record<string, PdfTemplate>;
   onClose: () => void;
   onSave: (template: PdfTemplate) => void;
 }
@@ -21,6 +22,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
   open,
   isEdit,
   onSave,
+  templates,
 }) => {
   const [template, setTemplate] = useState<PdfTemplate>(initialValue);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -30,6 +32,14 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
 
   const hasFormErrors = () => {
     return Object.keys(errors).length !== 0;
+  };
+
+  const isDuplicateTemplateId = (templateId: string): Validator => {
+    return () => {
+      return templates[templateId]
+        ? 'Template ID is duplicate, please use a different name to get a unique Template ID'
+        : '';
+    };
   };
 
   return (
@@ -49,7 +59,8 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
                 aria-label="pdf-template-name"
                 onChange={(e) => {
                   checkInput(e.target.value, [checkForBadChars, isNotEmptyCheck('name')], errorHandler('name'));
-                  setTemplate({ ...template, name: e.target.value, id: toKebabName(e.target.value) });
+                  const templateId = toKebabName(e.target.value);
+                  setTemplate({ ...template, name: e.target.value, id: templateId });
                 }}
               />
             </GoAFormItem>
@@ -88,7 +99,11 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             data-testid="form-save"
             type="submit"
             disabled={!template.name || hasFormErrors()}
-            onClick={() => {
+            onClick={(e) => {
+              if (checkInput(template.id, [isDuplicateTemplateId(template.id)], errorHandler('name'))) {
+                e.stopPropagation();
+                return;
+              }
               onSave(template);
               onClose();
             }}

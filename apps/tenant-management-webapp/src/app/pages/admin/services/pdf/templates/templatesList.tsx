@@ -26,7 +26,7 @@ export const PdfTemplatesTable: FunctionComponent<PdfTemplatesTableProps> = ({ t
         </thead>
         <tbody>
           {Object.keys(templates).map((templateName) => {
-            return <PdfTemplateItem pdfTemplate={templates[templateName]} />;
+            return <PdfTemplateItem key={templateName} pdfTemplate={templates[templateName]} />;
           })}
         </tbody>
       </DataTable>
