@@ -165,11 +165,11 @@ Feature: Notifications
     And the user clicks Save button in Edit contact information modal
     When the user searches subscribers with address as containing "auto test 2" and email containing "auto.test2@gov.ab.ca"
     Then the user "views" the subscriber of "auto test 2", "auto.test2@gov.ab.ca"
-    When the user clicks Edit button of "auto test 2" and "auto.test2@gov.ab.ca" on subscribers page
-    When the user modifies the email from "auto.test2@gov.ab.ca" to "auto.test22@gov.ab.ca"
-    And the user clicks Save button in Edit contact information modal
-    When the user searches subscribers with "email" containing "auto.test22@gov.ab.ca"
-    Then the user "views" the subscriber of "auto test 2", "auto.test2@gov.ab.ca"
+# # When the user clicks Edit button of "auto test 2" and "auto.test2@gov.ab.ca" on subscribers page
+# When the user modifies the email from "auto.test2@gov.ab.ca" to "auto.test22@gov.ab.ca"
+# And the user clicks Save button in Edit contact information modal
+# When the user searches subscribers with "email" containing "auto.test22@gov.ab.ca"
+# Then the user "views" the subscriber of "auto test 2", "auto.test2@gov.ab.ca"
 # When the user clicks Edit button of the subscriber of "auto test 2" and "auto.test22@gov.ab.ca"
 # Then the user views the Edit subscriber modal
 # When the user modifies the name from "auto test 2" to "auto.test2@gov.ab.ca"
