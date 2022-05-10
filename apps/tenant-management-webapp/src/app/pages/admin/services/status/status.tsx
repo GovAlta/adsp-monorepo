@@ -141,15 +141,6 @@ function Status(): JSX.Element {
           </Tab>
           <Tab label="Applications">
             <p>
-              You can use multiple endpoint URLs for a single application, including internal services you depend on, in
-              order to assess which components within an application may be down or malfunctioning (ie. web server,
-              database, storage servers, etc)
-            </p>
-            <p>
-              Each application should represent a service that is useful to the end user by itself, such as child care
-              subsidy and child care certification
-            </p>
-            <p>
               <GoAButton data-testid="add-application" onClick={() => addApplication(true)} buttonType="primary">
                 Add application
               </GoAButton>
@@ -201,23 +192,6 @@ function Status(): JSX.Element {
               Add notice
             </GoAButton>
             <NoticeList />
-          </Tab>
-          <Tab label="Guidelines">
-            <p>Guidelines for choosing a health check endpoint:</p>
-            <ol>
-              <li>A Health check endpoint needs to be publicly accessible over the internet</li>
-              <li>
-                A Health check endpoint needs to return
-                <ul>
-                  <li>A 200 level status code to indicate good health</li>
-                  <li>A non-200 level status code to indicate bad health.</li>
-                </ul>
-              </li>
-              <li>
-                To be most accurate, the health check endpoint should reference a URL that makes comprehensive use of
-                your app, and checks connectivity to any databases, for instance.
-              </li>
-            </ol>
           </Tab>
         </Tabs>
       </Main>
