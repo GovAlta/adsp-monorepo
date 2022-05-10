@@ -208,5 +208,23 @@ class StatusServicePage {
       `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//*[contains(@class, "badge-content")]`
     );
   }
+
+  manualStatusChangeModalItemList() {
+    return cy.xpath(
+      '//*[@class="modal-root" and @data-state="visible"]//*[@class="goa-form-item"]//div/*[@class="goa-radio"]'
+    );
+  }
+
+  manualStatusChangeModalCheckedRadioBtn() {
+    return cy.xpath(
+      '//*[@class="modal-root" and @data-state="visible"]//*[@class="goa-form-item"]//div/*[@class="goa-radio"]//input[@type="radio" and @checked]'
+    );
+  }
+
+  manualStatusChangeModalRadioBtns() {
+    return cy.xpath(
+      '//*[@class="modal-root" and @data-state="visible"]//*[@class="goa-form-item"]//div/*[@class="goa-radio"]//input[@type="radio"]'
+    );
+  }
 }
 export default StatusServicePage;

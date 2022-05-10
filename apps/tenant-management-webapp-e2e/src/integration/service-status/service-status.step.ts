@@ -1,10 +1,14 @@
 import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import commonlib from '../common/common-library';
 import common from '../common/common.page';
-import serviceStatusPage from './service-status.page';
+import ServiceStatusPage from './service-status.page';
+import TenantAdminPage from '../tenant-admin/tenant-admin.page';
 
 const commonObj = new common();
-const statusObj = new serviceStatusPage();
+const statusObj = new ServiceStatusPage();
+const tenantAdminObj = new TenantAdminPage();
+let originalStatus;
+let newStatus;
 
 Given('a service owner user is on service status page', function () {
   commonlib.tenantAdminDirectURLLogin(
@@ -533,3 +537,99 @@ When('the user selects {string} and clicks Save button', function (statusName) {
 Then('the user views the {string} status for {string}', function (statusValue, appName) {
   statusObj.applicationCardStatusBadge(appName).invoke('text').should('eq', statusValue);
 });
+
+Then('the user views current status for {string}', function (appName) {
+  statusObj
+    .applicationCardStatusBadge(appName)
+    .invoke('text')
+    .then((statusValue) => {
+      originalStatus = statusValue;
+      cy.log('Current Status: ' + originalStatus);
+    });
+});
+
+Then('the user changes status to the first unused status', function () {
+  const radioList = ['Operational', 'Maintenance', 'Outage', 'Reported issues'];
+  statusObj.manualStatusChangeModalItemList().should('have.length', 4);
+  statusObj.manualStatusChangeModalItemList().each((item, index) => {
+    expect(Cypress.$(item).text()).to.eq(radioList[index]);
+  });
+  statusObj
+    .manualStatusChangeModalCheckedRadioBtn()
+    .invoke('val')
+    .then(($value) => {
+      const checkedStatus = String($value);
+      statusObj.manualStatusChangeModalRadioBtns().each(($item) => {
+        if ($item.val() != checkedStatus) {
+          $item.trigger('click');
+          newStatus = $item.val();
+          cy.log('New Status: ' + newStatus);
+          return false;
+        }
+      });
+    });
+});
+
+When('the user clicks Save button in Manual status change modal', function () {
+  statusObj.manualStatusChangeModalSaveBtn().click();
+  cy.wait(2000);
+});
+
+Then('the user views the status of {string} changed to the first unused status', function (appName) {
+  statusObj
+    .applicationCardStatusBadge(appName)
+    .invoke('text')
+    .then((statusValue) => {
+      cy.log('Badge Status: ' + statusValue);
+      const badgeValue = String(statusValue.toLowerCase());
+      expect(badgeValue).to.equal(newStatus);
+      expect(badgeValue).not.to.equal(originalStatus.toLowerCase());
+    });
+});
+
+Then(
+  'the user views the event details of {string} application status changed from {string} to {string} for subscriber of {string}',
+  function (appName, orgStatus, newStatusInput, email) {
+    let isFound = false;
+    let orgStatusValidationString;
+    let newStatusValidationString;
+
+    if (orgStatus != '{original status}') {
+      orgStatusValidationString = 'The original status was: ' + orgStatus;
+    } else {
+      orgStatusValidationString = 'The original status was: ' + originalStatus.toLowerCase();
+    }
+    if (newStatusInput != '{new status}') {
+      newStatusValidationString = 'The new status is now: ' + newStatusInput;
+    } else {
+      newStatusValidationString = 'The new status is now: ' + newStatus.toLowerCase();
+    }
+
+    tenantAdminObj.eventToggleDetailsIcons().each(($element, $index, $full_array) => {
+      //clicking each eye-icon in the list to verify event details
+      cy.wrap($element).click();
+      tenantAdminObj
+        .eventDetails()
+        .invoke('text')
+        .then((eventDetails) => {
+          //if event log details contains email then verify expect statements else close the event details and continue down the list
+          if (eventDetails.includes('to": "' + email)) {
+            expect(eventDetails).to.contain(appName + ' status has changed');
+            expect(eventDetails).to.contain(orgStatusValidationString);
+            expect(eventDetails).to.contain(newStatusValidationString);
+            cy.wrap($element).click({ force: true });
+            isFound = true;
+          } else {
+            //clicking eye icon to close event details
+            cy.wrap($element).click();
+          }
+          if (isFound == false && $index + 1 == $full_array.length) {
+            expect($index + 1).to.not.eq(
+              $full_array.length,
+              'No matching email found throughout list of event details'
+            );
+          }
+        });
+    });
+  }
+);

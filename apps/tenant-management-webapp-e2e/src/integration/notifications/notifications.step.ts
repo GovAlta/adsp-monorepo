@@ -384,10 +384,15 @@ When(
   }
 );
 
+When('the user types {string} in Search subscriber email field', function (email) {
+  notificationsObj.searchSubscriberEmail().clear().type(email);
+});
+
 When('the user clicks Search button on notifications page', function () {
   notificationsObj.notificationSearchBtn().click();
 });
 
+//notification type in sentence case, only first letter is upper case
 Then(
   'the user {string} the subscription of {string}, {string} under {string}',
   function (viewOrNot, addressAd, email, notificationType) {
