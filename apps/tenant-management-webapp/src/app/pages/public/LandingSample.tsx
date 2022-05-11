@@ -21,7 +21,7 @@ export const LandingSample = (): JSX.Element => {
           <ServiceLayoutMin>
             <H2>Example apps</H2>
             <Paragraph>
-              With the help of the tech-stack in the ADSP we have built apps than can directly fit the need of your
+              With the help of the tech-stack in the ADSP we have built apps that can directly fit the need of your
               service team. Check out the list of applications.
             </Paragraph>
           </ServiceLayoutMin>
