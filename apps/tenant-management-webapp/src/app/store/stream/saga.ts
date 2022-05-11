@@ -41,7 +41,7 @@ export function* fetchCoreStreams(): SagaIterator {
 
     const response = yield call(
       axios.get,
-      `${baseUrl}/configuration/${API_VERSION}/configuration/platform/${SERVICE_NAME}/latest`,
+      `${baseUrl}/configuration/${API_VERSION}/configuration/platform/${SERVICE_NAME}/latest?core`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
@@ -79,7 +79,7 @@ export function* fetchTenantStreams(): SagaIterator {
     if (tenant !== CORE_TENANT) {
       const response = yield call(
         axios.get,
-        `${baseUrl}/configuration/${API_VERSION}/configuration/${tenant}/${SERVICE_NAME}/latest`,
+        `${baseUrl}/configuration/${API_VERSION}/configuration/platform/${SERVICE_NAME}/latest`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
