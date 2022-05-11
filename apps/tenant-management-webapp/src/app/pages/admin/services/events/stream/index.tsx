@@ -28,11 +28,10 @@ export const EventStreams = (): JSX.Element => {
       {!indicator.show && (
         <>
           <div>
-            <NameDiv>{tenantName}</NameDiv>
-            <StreamTable streams={tenantStreams} namespace={CORE_TENANT} isCore={false} />
+            <StreamTable streams={tenantStreams} namespace={tenantName} isCore={false} />
           </div>
           <div>
-            <NameDiv>{CORE_TENANT}</NameDiv>
+            <NameDiv>Core streams</NameDiv>
             <StreamTable streams={coreStreams} namespace={CORE_TENANT} isCore={true} />
           </div>
         </>

@@ -1,8 +1,7 @@
 import styled from 'styled-components';
 
 export const NameDiv = styled.div`
-  margin-top: 1rem;
-  text-transform: capitalize;
+  margin-top: 1.5rem;
   font-size: var(--fs-xl);
   font-weight: var(--fw-bold);
   padding-left: 0.4rem;
@@ -33,6 +32,10 @@ export const TableWrapper = styled.div`
   tr th:nth-child(3) {
     width: 20%;
   }
+`;
+
+export const NoPaddingTd = styled.td`
+  padding: 0px !important;
 `;
 
 export const Details = styled.div`
