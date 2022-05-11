@@ -572,7 +572,7 @@ When('the user clicks Delete button on Delete subscriber modal', function () {
 });
 
 When('the user clicks edit button for contact information', function () {
-  notificationsObj.contactInformationEdit().click();
+  notificationsObj.contactInformationEdit().click({ force: true });
 });
 
 Then('the user views Edit contact information modal', function () {
