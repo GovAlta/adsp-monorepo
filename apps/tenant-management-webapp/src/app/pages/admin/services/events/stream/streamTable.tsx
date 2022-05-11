@@ -1,7 +1,7 @@
 import DataTable from '@components/DataTable';
 import React, { useState } from 'react';
 import { Streams } from '@store/stream/models';
-import { TableWrapper, EntryDetail } from './styleComponents';
+import { TableWrapper, EntryDetail, NoPaddingTd } from './styleComponents';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { Badge } from './styleComponents';
 import { adspId } from '@lib/adspId';
@@ -75,9 +75,9 @@ export const StreamTable = ({ streams, namespace }: StreamTableProps): JSX.Eleme
                   </tr>
                   {showId === id && (
                     <tr>
-                      <td colSpan={3}>
+                      <NoPaddingTd colSpan={3}>
                         <EntryDetail data-testid={`details-${id}`}>{JSON.stringify(stream, null, 2)}</EntryDetail>
-                      </td>
+                      </NoPaddingTd>
                     </tr>
                   )}
                 </>
