@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   UploadFileService,
@@ -7,7 +7,7 @@ import {
   DeleteFileService,
   DownloadFileService,
 } from '@store/file/actions';
-import { GoAButton, GoARadioGroup, GoARadio } from '@abgov/react-components';
+import { GoAButton, GoADropdown, GoADropdownOption } from '@abgov/react-components';
 import { GoAForm } from '@abgov/react-components/experimental';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
@@ -15,44 +15,38 @@ import { GoAIconButton } from '@abgov/react-components/experimental';
 import { renderNoItem } from '@components/NoItem';
 import { DeleteModal } from '@components/DeleteModal';
 import { FileItem } from '@store/file/models';
+import { PageIndicator } from '@components/Indicator';
+import styled from 'styled-components';
 
 const FileList = (): JSX.Element => {
-  const [selectedFile, setSelectFile] = useState<FileItem>();
-  const [uploadFileType, setUploadFileType] = useState<string>();
+  const [selectedFile, setSelectFile] = useState<FileItem>(null);
+  const [uploadFileType, setUploadFileType] = useState<string[]>([]);
   const dispatch = useDispatch();
-
+  const fileName = useRef() as React.MutableRefObject<HTMLInputElement>;
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
   const coreFileTypes = useSelector((state: RootState) => state.fileService.coreFileTypes);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   const getFileTypesValues = () => {
-    const typeValues = [];
-
-    if (fileTypes === null) {
-      return typeValues;
+    let dropdownFileTypes = [];
+    if (fileTypes && coreFileTypes) {
+      dropdownFileTypes = [...fileTypes, ...coreFileTypes];
     }
-
-    fileTypes.forEach((fileType): void => {
-      const type = {};
-      type['text'] = fileType.name ? fileType.name : fileType.id;
-      type['value'] = fileType.id;
-      typeValues.push(type);
-    });
-
-    coreFileTypes.forEach((coreFileType): void => {
-      const type = {};
-      type['text'] = coreFileType.name ? coreFileType.name : coreFileType.id;
-      type['value'] = coreFileType.id;
-      typeValues.push(type);
-    });
-    return typeValues;
+    return dropdownFileTypes;
   };
 
-  const onFormSubmit = (event) => {
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
+
+  const onUploadSubmit = (event) => {
     event.preventDefault();
-    const fileInfo = { file: selectedFile, type: uploadFileType };
+    const fileInfo = { file: selectedFile, type: uploadFileType[0] };
     dispatch(UploadFileService(fileInfo));
+    setUploadFileType([]);
+    setSelectFile(null);
+    fileName.current.value = '';
   };
 
   const onChange = (event) => {
@@ -71,6 +65,9 @@ const FileList = (): JSX.Element => {
     dispatch(FetchFilesService());
     dispatch(FetchFileTypeService());
   }, [dispatch]);
+
+  // eslint-disable-next-line
+  useEffect(() => {}, [indicator]);
 
   const renderFileTable = () => {
     return (
@@ -111,6 +108,7 @@ const FileList = (): JSX.Element => {
             })}
           </tbody>
         </DataTable>
+
         {showDeleteConfirmation && (
           <DeleteModal
             isOpen={showDeleteConfirmation}
@@ -129,32 +127,44 @@ const FileList = (): JSX.Element => {
   return (
     <>
       <GoAForm>
-        <h2>Please upload a file</h2>
+        <UploadHeading>Please upload a file</UploadHeading>
+        <input type="file" onChange={onChange} aria-label="file upload" ref={fileName} />
+        <FileTypeDropdown>
+          <GoADropdown
+            name="fileType"
+            selectedValues={uploadFileType}
+            multiSelect={false}
+            onChange={(name, values) => {
+              setUploadFileType(values);
+            }}
+          >
+            {getFileTypesValues().map((item) => (
+              <GoADropdownOption label={item.name} value={item.name} key={item.id} data-testid={item.id} />
+            ))}
+          </GoADropdown>
+        </FileTypeDropdown>
 
-        <input type="file" onChange={onChange} aria-label="file upload" />
-        <GoARadioGroup
-          orientation="vertical"
-          name="fileSecurityOptions"
-          value={uploadFileType}
-          onChange={(_name, value) => {
-            setUploadFileType(value);
-          }}
-        >
-          {getFileTypesValues().map((item) => (
-            <GoARadio key={item.value} value={item.value} checked={false}>
-              {item.text}
-            </GoARadio>
-          ))}
-        </GoARadioGroup>
-        <GoAButton type="submit" disabled={!selectedFile} onClick={onFormSubmit}>
+        <GoAButton type="submit" disabled={!(selectedFile && uploadFileType.length > 0)} onClick={onUploadSubmit}>
           Upload
         </GoAButton>
       </GoAForm>
-
-      {fileList?.length === 0 && renderNoItem('file')}
-      {fileList?.length > 0 && renderFileTable()}
+      <br />
+      {!indicator.show && fileList?.length === 0 && renderNoItem('file')}
+      {indicator.show && <PageIndicator />}
+      {!indicator.show && fileList?.length > 0 && renderFileTable()}
     </>
   );
 };
 
 export default FileList;
+
+const FileTypeDropdown = styled.div`
+  margin-bottom: 1rem;
+  margin-top: 1rem;
+  width: '500px';
+`;
+
+const UploadHeading = styled.div`
+  margin-bottom: 1rem;
+  font-weight: var(--fw-bold);
+`;

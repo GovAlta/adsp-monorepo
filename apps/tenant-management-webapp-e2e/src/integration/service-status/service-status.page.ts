@@ -3,10 +3,8 @@ class StatusServicePage {
     return cy.xpath('//h1[contains(text(), "Status")]/following-sibling::div[1]//descendant::div');
   }
 
-  statusTab(text: string) {
-    return cy.xpath(
-      `//h1[contains(text(), "Status")]/following-sibling::div[1]//descendant::div[contains(text(), "${text}")]`
-    );
+  statusTitle() {
+    return cy.get('[data-testid="status-title"]');
   }
 
   guidelinesTitle() {

@@ -35,6 +35,7 @@
     "uiComponentUrl": "https://ui-components-ui-components-dev.os99.gov.ab.ca",
     "fileApi": "http://localhost:3337",
     "valueServiceApiUrl": "http://value-service:3336",
-    "configurationServiceApiUrl": "http://configuration-service:3339"
+    "configurationServiceApiUrl": "http://configuration-service:3339",
+    "directoryServiceApiUrl": "http://directory-service:3331"
   }
 }

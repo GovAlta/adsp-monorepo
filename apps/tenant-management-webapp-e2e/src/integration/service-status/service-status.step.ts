@@ -21,7 +21,7 @@ Given('a service owner user is on service status page', function () {
 });
 
 Then('the user views the health check guidelines', function () {
-  statusObj.statusTab('Guidelines').click();
+  statusObj.statusTitle().invoke('text').should('contain', 'Status service');
   statusObj.guidelinesTitle().then((guidelinesTitle) => {
     expect(guidelinesTitle.length).to.be.gt(0);
   });
@@ -570,7 +570,7 @@ Then('the user changes status to the first unused status', function () {
     });
 });
 
-Then('the user clicks Save button in Manual status change modal', function () {
+When('the user clicks Save button in Manual status change modal', function () {
   statusObj.manualStatusChangeModalSaveBtn().click();
   cy.wait(2000);
 });
@@ -588,22 +588,23 @@ Then('the user views the status of {string} changed to the first unused status',
 });
 
 Then(
-  'the user should find the event details of {string} application status changed from {string} to {string} for subscriber of {string}',
-  function (appName, orgStatusValidationStr, newStatusValidationStr, email) {
-    const orgStatusInput = orgStatusValidationStr.match(/(.*{original status}.*)/g);
-    if (orgStatusInput == null) {
-      orgStatusValidationStr = 'The original status was: ' + orgStatusValidationStr;
+  'the user views the event details of {string} application status changed from {string} to {string} for subscriber of {string}',
+  function (appName, orgStatus, newStatusInput, email) {
+    let isFound = false;
+    let orgStatusValidationString;
+    let newStatusValidationString;
+
+    if (orgStatus != '{original status}') {
+      orgStatusValidationString = 'The original status was: ' + orgStatus;
     } else {
-      orgStatusValidationStr =
-        orgStatusValidationStr.replace('{original status}', 'The original status was: ') + originalStatus.toLowerCase();
+      orgStatusValidationString = 'The original status was: ' + originalStatus.toLowerCase();
     }
-    const newStatusInput = newStatusValidationStr.match(/(.*{new status}.*)/g);
-    if (newStatusInput == null) {
-      newStatusValidationStr = 'The new status is now: ' + newStatusValidationStr;
+    if (newStatusInput != '{new status}') {
+      newStatusValidationString = 'The new status is now: ' + newStatusInput;
     } else {
-      newStatusValidationStr =
-        newStatusValidationStr.replace('{new status}', 'The new status is now: ') + newStatus.toLowerCase();
+      newStatusValidationString = 'The new status is now: ' + newStatus.toLowerCase();
     }
+
     tenantAdminObj.eventToggleDetailsIcons().each(($element, $index, $full_array) => {
       //clicking each eye-icon in the list to verify event details
       cy.wrap($element).click();
@@ -612,17 +613,21 @@ Then(
         .invoke('text')
         .then((eventDetails) => {
           //if event log details contains email then verify expect statements else close the event details and continue down the list
-          if (eventDetails.includes(email)) {
-            expect(eventDetails).to.contain(appName);
-            expect(eventDetails).to.contain(orgStatusValidationStr);
-            expect(eventDetails).to.contain(newStatusValidationStr);
-            cy.wrap($element).click();
+          if (eventDetails.includes('to": "' + email)) {
+            expect(eventDetails).to.contain(appName + ' status has changed');
+            expect(eventDetails).to.contain(orgStatusValidationString);
+            expect(eventDetails).to.contain(newStatusValidationString);
+            cy.wrap($element).click({ force: true });
+            isFound = true;
           } else {
             //clicking eye icon to close event details
             cy.wrap($element).click();
-            if ($index + 1 == $full_array.length) {
-              expect.fail('No matching email found throughout list of event details');
-            }
+          }
+          if (isFound == false && $index + 1 == $full_array.length) {
+            expect($index + 1).to.not.eq(
+              $full_array.length,
+              'No matching email found throughout list of event details'
+            );
           }
         });
     });
