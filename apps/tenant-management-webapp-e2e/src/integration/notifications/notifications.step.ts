@@ -665,9 +665,6 @@ When('the user clicks Edit button of {string} and {string} on subscribers page',
   notificationsObj.subscriberEditIcon(addressAs, email).click();
 });
 
-When('the user modifies the email from {string} to {string}', function (email, editEmail) {
-  notificationsObj.editContactModalEmail().invoke('text').should('contain', email);
-  // notificationsObj.editContactModalEmail().invoke('text');
-  // .should('contain', email);
+When('the user modifies the email to {string}', function (editEmail) {
   notificationsObj.editContactModalEmail().clear().type(editEmail);
 });
