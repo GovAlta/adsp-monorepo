@@ -70,7 +70,7 @@ export class FormEntity implements Form {
   }
 
   canAssess(user: User): boolean {
-    return isAllowedUser(user, this.tenantId, this.definition.assessorRoles);
+    return isAllowedUser(user, this.tenantId, [...this.definition.assessorRoles, FormServiceRoles.Admin]);
   }
 
   private async access(_user: User): Promise<FormEntity> {
@@ -87,7 +87,9 @@ export class FormEntity implements Form {
       throw new UnauthorizedUserError('send code', user);
     }
 
-    await notificationService.sendCode(this.tenantId, this.applicant);
+    if (this.applicant) {
+      await notificationService.sendCode(this.tenantId, this.applicant);
+    }
 
     return this;
   }
@@ -103,7 +105,7 @@ export class FormEntity implements Form {
     }
 
     // Provided code needs to be valid.
-    const verified = await notificationService.verifyCode(this.tenantId, this.applicant, code);
+    const verified = this.applicant && (await notificationService.verifyCode(this.tenantId, this.applicant, code));
     if (!verified) {
       throw new UnauthorizedError('Provided code could not be verified.');
     }
@@ -211,7 +213,9 @@ export class FormEntity implements Form {
       await fileService.delete(this.tenantId, file);
     }
 
-    await notificationService.unsubscribe(this.tenantId, this.applicant.urn);
+    if (this.applicant) {
+      await notificationService.unsubscribe(this.tenantId, this.applicant.urn);
+    }
 
     const deleted = this.repository.delete(this);
     return deleted;
