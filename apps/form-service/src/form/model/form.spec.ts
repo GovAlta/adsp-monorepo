@@ -123,6 +123,11 @@ describe('FormEntity', () => {
       expect(result).toBe(true);
     });
 
+    it('can return true for user with admin role', () => {
+      const result = entity.canAssess({ tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User);
+      expect(result).toBe(true);
+    });
+
     it('can return false for user without assessor role', () => {
       const result = entity.canAssess({ tenantId, id: 'tester', roles: [] } as User);
       expect(result).toBe(false);
@@ -252,6 +257,15 @@ describe('FormEntity', () => {
 
       const before = entity.lastAccessed;
       const result = await submitted.accessByUser({ tenantId, id: 'tester', roles: ['test-assessor'] } as User);
+      expect(result.lastAccessed.valueOf()).toBeGreaterThan(before.valueOf());
+    });
+
+    it('can return true for admin on submitted form', async () => {
+      const submitted = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      submitted.status = FormStatus.Submitted;
+
+      const before = entity.lastAccessed;
+      const result = await submitted.accessByUser({ tenantId, id: 'tester', roles: [FormServiceRoles.Admin] } as User);
       expect(result.lastAccessed.valueOf()).toBeGreaterThan(before.valueOf());
     });
 

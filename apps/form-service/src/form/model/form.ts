@@ -70,7 +70,7 @@ export class FormEntity implements Form {
   }
 
   canAssess(user: User): boolean {
-    return isAllowedUser(user, this.tenantId, this.definition.assessorRoles);
+    return isAllowedUser(user, this.tenantId, [...this.definition.assessorRoles, FormServiceRoles.Admin]);
   }
 
   private async access(_user: User): Promise<FormEntity> {
