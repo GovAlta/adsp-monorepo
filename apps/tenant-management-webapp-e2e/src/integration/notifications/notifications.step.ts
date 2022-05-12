@@ -661,6 +661,11 @@ When('the user modifies the name to {string}', function (name) {
   notificationsObj.notificationTypeModalNameField().clear().type(name);
 });
 
+When('the user modifies the name to {string} and email to {string}', function (name, editEmail) {
+  notificationsObj.notificationTypeModalNameField().clear().type(name);
+  notificationsObj.editContactModalEmail().clear().type(editEmail);
+});
+
 When('the user clicks Edit button of {string} and {string} on subscribers page', function (addressAs, email) {
   notificationsObj.subscriberEditIcon(addressAs, email).click();
 });

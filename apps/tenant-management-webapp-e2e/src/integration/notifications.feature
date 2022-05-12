@@ -155,21 +155,16 @@ Feature: Notifications
   @TEST_CS-1102 @REQ_CS-1130 @regression
   Scenario: As a tenant admin, I can modify a subscriber name and email
     Given a tenant admin user is on notification subscribers page
-    When the user searches subscribers with "email" containing "auto.test2@gov.ab.ca"
-    Then the user views all the subscribers with "email" containing "auto.test2@gov.ab.ca"
-    When the user clicks edit button for contact information
+    When the user searches subscribers with address as containing "auto-test-DO-NOT-DELETE" and email containing "auto.test2@gov.ab.ca"
+    And the user clicks Edit button of "auto-test-DO-NOT-DELETE" and "auto.test2@gov.ab.ca" on subscribers page
     Then the user views Edit contact information modal
-    When the user modifies the name to "auto test 2"
+    When the user modifies the name to "auto-test2-DO-NOT-DELETE" and email to "auto.test22@gov.ab.ca"
     And the user clicks Save button in Edit contact information modal
-    When the user searches subscribers with address as containing "auto test 2" and email containing "auto.test2@gov.ab.ca"
-    Then the user "views" the subscriber of "auto test 2", "auto.test2@gov.ab.ca"
-    When the user clicks Edit button of "auto test 2" and "auto.test2@gov.ab.ca" on subscribers page
-    When the user modifies the email to "auto.test22@gov.ab.ca"
+    When the user searches subscribers with address as containing "auto-test2-DO-NOT-DELETE" and email containing "auto.test22@gov.ab.ca"
+    Then the user "views" the subscriber of "auto-test2-DO-NOT-DELETE", "auto.test22@gov.ab.ca"
+    When the user clicks Edit button of "auto-test2-DO-NOT-DELETE" and "auto.test22@gov.ab.ca" on subscribers page
+    Then the user modifies the name to "auto-test-DO-NOT-DELETE" and email to "auto.test2@gov.ab.ca"
     And the user clicks Save button in Edit contact information modal
-    When the user searches subscribers with "email" containing "auto.test22@gov.ab.ca"
-    Then the user "views" the subscriber of "auto test 2", "auto.test22@gov.ab.ca"
-    When the user clicks Edit button of "auto test 2" and "auto.test22@gov.ab.ca" on subscribers page
-    When the user modifies the name to "auto.test22@gov.ab.ca"
-    When the user modifies the email to "auto.test2@gov.ab.ca"
-    And the user clicks Save button in Edit contact information modal
-    Then the user "views" the subscriber of "auto.test22@gov.ab.ca", "auto.test2@gov.ab.ca"
+    When the user searches subscribers with address as containing "auto-test-DO-NOT-DELETE" and email containing "auto.test2@gov.ab.ca"
+    Then the user "views" the subscriber of "auto-test-DO-NOT-DELETE", "auto.test2@gov.ab.ca"
+
