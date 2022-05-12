@@ -33,6 +33,8 @@ export interface ServiceRegistration {
   eventStreams?: Stream[];
   /** Notifications: Subscribable notification types of the service. */
   notifications?: NotificationType[];
+  /** Service Configurations: Additional configurations for services to apply at registration. */
+  serviceConfigurations?: { serviceId: AdspId; configuration: Record<string, unknown> }[];
 }
 
 interface ServiceRegistrarOptions {

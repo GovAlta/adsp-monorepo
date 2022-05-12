@@ -110,6 +110,12 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
 
       await this.updateConfiguration(adspId`urn:ads:platform:notification-service`, update);
     }
+
+    if (registration.serviceConfigurations) {
+      for (const { serviceId, configuration } of registration.serviceConfigurations) {
+        await this.updateConfiguration(serviceId, configuration);
+      }
+    }
   }
 
   private async updateConfiguration<C extends Record<string, unknown>>(serviceId: AdspId, update: C): Promise<void> {
