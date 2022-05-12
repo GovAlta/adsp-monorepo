@@ -107,7 +107,7 @@ export class MongoFormRepository implements FormRepository {
       id: entity.id,
       formDraftUrl: entity.formDraftUrl,
       definitionId: entity.definition.id,
-      applicantId: entity.applicant.urn.toString(),
+      applicantId: entity.applicant?.urn.toString(),
       status: entity.status,
       created: entity.created,
       createdBy: entity.createdBy,
