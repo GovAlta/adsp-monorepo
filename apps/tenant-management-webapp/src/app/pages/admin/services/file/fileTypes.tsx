@@ -15,7 +15,11 @@ const NoContentContainer = styled.div`
   margin-bottom: 2em;
 `;
 
-export const FileTypes = (): JSX.Element => {
+interface AddFileTypeProps {
+  activeEdit: boolean;
+}
+
+export const FileTypes = ({ activeEdit }: AddFileTypeProps): JSX.Element => {
   const dispatch = useDispatch();
   const roles = useSelector((state: RootState) => state.tenant.realmRoles);
 
@@ -25,7 +29,7 @@ export const FileTypes = (): JSX.Element => {
 
   return (
     <div>
-      {roles && <AddFileType roles={roles} />}
+      {roles && <AddFileType roles={roles} activeEdit={activeEdit} />}
       <FileTypesTableContainer roles={roles} />
     </div>
   );
@@ -38,6 +42,7 @@ interface FileTypesTableContainerProps {
 const FileTypesTableContainer = ({ roles }: FileTypesTableContainerProps): JSX.Element => {
   const dispatch = useDispatch();
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
+  const coreFileTypes = useSelector((state: RootState) => state.fileService.coreFileTypes);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -57,7 +62,12 @@ const FileTypesTableContainer = ({ roles }: FileTypesTableContainerProps): JSX.E
         )}
         {indicator.show && <PageIndicator />}
         {!indicator.show && fileTypes && (
-          <FileTypeTable roles={roles} fileTypes={fileTypes} data-testid="file-type-table" />
+          <FileTypeTable
+            roles={roles}
+            fileTypes={fileTypes}
+            coreFileTypes={coreFileTypes}
+            data-testid="file-type-table"
+          />
         )}
       </div>
     </div>

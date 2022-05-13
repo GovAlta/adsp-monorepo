@@ -4,12 +4,8 @@ import type { EventDefinition } from '@store/event/models';
 import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
-import {
-  reportCleansing,
-  ReactCleansingReporter,
-  serviceItemNameCleanser,
-  serviceNamespaceCleanser,
-} from '@lib/inputCleansers';
+import { wordCheck, characterCheck, validationPattern, checkInput, isNotEmptyCheck } from '@lib/checkInput';
+import { reactInputHandlerFactory } from '@lib/reactInputHandlerFactory';
 import { updateEventDefinition } from '@store/event/actions';
 import { useDispatch } from 'react-redux';
 
@@ -33,11 +29,14 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
   const [definition, setDefinition] = useState<EventDefinition>(initialValue);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
-  const reporter = new ReactCleansingReporter(errors, setErrors);
+
   const hasFormErrors = () => {
     return Object.keys(errors).length !== 0;
   };
-  const forbidden = coreNamespaces.concat('platform');
+  const forbiddenWords = coreNamespaces.concat('platform');
+  const checkForConflicts = wordCheck(forbiddenWords);
+  const checkForBadChars = characterCheck(validationPattern.mixedKebabCase);
+  const errorHandler = reactInputHandlerFactory(errors, setErrors);
 
   return (
     <GoAModal testId="definition-form" isOpen={open}>
@@ -54,8 +53,11 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               data-testid="form-namespace"
               aria-label="nameSpace"
               onChange={(e) => {
-                const notice = serviceNamespaceCleanser(e.target.value, 'namespace', forbidden);
-                reportCleansing(notice, 'namespace', reporter);
+                checkInput(
+                  e.target.value,
+                  [checkForConflicts, checkForBadChars, isNotEmptyCheck('namespace')],
+                  errorHandler('namespace')
+                );
                 setDefinition({ ...definition, namespace: e.target.value });
               }}
             />
@@ -70,7 +72,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               data-testid="form-name"
               aria-label="name"
               onChange={(e) => {
-                reportCleansing(serviceItemNameCleanser(e.target.value), 'name', reporter);
+                checkInput(e.target.value, [checkForBadChars, isNotEmptyCheck('name')], errorHandler('name'));
                 setDefinition({ ...definition, name: e.target.value });
               }}
             />

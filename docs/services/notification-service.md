@@ -64,7 +64,7 @@ Notification types are configured using the [configuration service](configuratio
   }
 
   await fetch(
-    `${configurationServiceUrl}/configuration/v1/configuration/platform/notification-service`,
+    `${configurationServiceUrl}/configuration/v2/configuration/platform/notification-service`,
     {
       method: 'PATCH',
       headers: {

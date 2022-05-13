@@ -39,10 +39,9 @@ import { getNotices } from '@store/notice/actions';
 import { NoticeList } from './noticeList';
 import SupportLinks from '@components/SupportLinks';
 import { renderNoItem } from '@components/NoItem';
-import { StatusMetrics } from './metrics';
 import { DeleteModal } from '@components/DeleteModal';
 import { createSelector } from 'reselect';
-import { ContactInformation } from './contactInformation/contactInformation';
+import { StatusOverview } from './overview';
 
 const userHealthSubscriptionSelector = createSelector(
   (state: RootState) => state.session.userInfo?.sub,
@@ -105,8 +104,9 @@ function Status(): JSX.Element {
     }
   };
 
-  const addApplication = () => {
-    setShowAddApplicationModal(true);
+  const addApplication = (edit: boolean) => {
+    setActiveIndex(1);
+    setShowAddApplicationModal(edit);
   };
 
   return (
@@ -137,33 +137,11 @@ function Status(): JSX.Element {
         <h1 data-testid="status-title">Status service</h1>
         <Tabs activeIndex={activeIndex}>
           <Tab label="Overview">
-            <OverviewCss>
-              <section>
-                This service allows for easy monitoring of application downtime.
-                <p>
-                  Each application should represent a service that is useful to the end user by itself, such as child
-                  care subsidy and child care certification
-                </p>
-                <GoAButton data-testid="add-application" onClick={addApplication} buttonType="primary">
-                  Add application
-                </GoAButton>
-              </section>
-              <ContactInformation />
-              <StatusMetrics />
-            </OverviewCss>
+            <StatusOverview setActiveEdit={addApplication} setActiveIndex={setActiveIndex} />
           </Tab>
           <Tab label="Applications">
             <p>
-              You can use multiple endpoint URLs for a single application, including internal services you depend on, in
-              order to assess which components within an application may be down or malfunctioning (ie. web server,
-              database, storage servers, etc)
-            </p>
-            <p>
-              Each application should represent a service that is useful to the end user by itself, such as child care
-              subsidy and child care certification
-            </p>
-            <p>
-              <GoAButton data-testid="add-application" onClick={addApplication} buttonType="primary">
+              <GoAButton data-testid="add-application" onClick={() => addApplication(true)} buttonType="primary">
                 Add application
               </GoAButton>
             </p>
@@ -214,23 +192,6 @@ function Status(): JSX.Element {
               Add notice
             </GoAButton>
             <NoticeList />
-          </Tab>
-          <Tab label="Guidelines">
-            <p>Guidelines for choosing a health check endpoint:</p>
-            <ol>
-              <li>A Health check endpoint needs to be publicly accessible over the internet</li>
-              <li>
-                A Health check endpoint needs to return
-                <ul>
-                  <li>A 200 level status code to indicate good health</li>
-                  <li>A non-200 level status code to indicate bad health.</li>
-                </ul>
-              </li>
-              <li>
-                To be most accurate, the health check endpoint should reference a URL that makes comprehensive use of
-                your app, and checks connectivity to any databases, for instance.
-              </li>
-            </ol>
           </Tab>
         </Tabs>
       </Main>
@@ -636,15 +597,4 @@ const AppName = styled.div`
   font-weight: var(--fw-bold);
   text-transform: capitalize;
   margin-top: 1rem;
-`;
-
-const OverviewCss = styled.div`
-  .contact-border {
-    padding: 1rem;
-    border: 1px solid #ccc;
-  }
-
-  .left-float {
-    float: left;
-  }
 `;

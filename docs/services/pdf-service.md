@@ -42,7 +42,7 @@ Templates are configured using the [configuration service](configuration-service
   }
 
   await fetch(
-    `${configurationServiceUrl}/configuration/v1/configuration/platform/pdf-service`,
+    `${configurationServiceUrl}/configuration/v2/configuration/platform/pdf-service`,
     {
       method: 'PATCH',
       headers: {

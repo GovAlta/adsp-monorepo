@@ -6,6 +6,8 @@ import { Service } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { createEntry, updateEntry, fetchEntryDetail } from '@store/directory/actions';
 import { RootState } from '@store/index';
+import { characterCheck, validationPattern, checkInput, Validator, isNotEmptyCheck } from '@lib/checkInput';
+import { reactInputHandlerFactory } from '@lib/reactInputHandlerFactory';
 
 interface DirectoryModalProps {
   entry?: Service;
@@ -13,6 +15,26 @@ interface DirectoryModalProps {
   onCancel?: () => void;
   open: boolean;
 }
+const duplicateServiceCheck = (directory: Service[], tenantName: string): Validator => {
+  return (input: string) => {
+    const duplicate = directory.find((s) => !s.api && s.namespace === tenantName && s.service === input);
+    return duplicate ? 'Service duplicate, please use another' : '';
+  };
+};
+
+const duplicateApiCheck = (directory: Service[], tenantName: string): Validator => {
+  return (input: Service) => {
+    const duplicate = directory.find(
+      (s) => s.namespace === tenantName && s.service === input.service && s.api === input.api
+    );
+    return duplicate ? 'Api duplicate, please use another' : '';
+  };
+};
+
+const lowerCaseCheck = characterCheck(validationPattern.lowerKebabCase);
+const checkForBadUrl = characterCheck(validationPattern.validURL);
+const checkServiceExists = isNotEmptyCheck('service');
+const checkUrlExists = isNotEmptyCheck('URL');
 
 export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   const isNew = props.type === 'new';
@@ -24,21 +46,31 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   const { directory } = useSelector((state: RootState) => state.directory);
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const dispatch = useDispatch();
-
-  const checkService = (entry) => {
-    return directory.find((x) => !x.api && x.namespace === tenantName && x.service === entry.service);
+  const hasFormErrors = () => {
+    return Object.keys(errors).length !== 0;
   };
+  const errorHandler = reactInputHandlerFactory(errors, setErrors);
 
-  const checkApi = (entry) => {
-    const hasExist = directory.find(
-      (x) => x.namespace === tenantName && x.service === entry.service && x.api === entry.api
-    );
-
-    if (!isNew && hasExist && hasExist.service === props.entry.service && hasExist.api === props.entry.api) {
-      return false;
+  const duplicateExists = (entry: Service): boolean => {
+    // If we have an API check that it is not a duplicate for the service.
+    if (entry.api) {
+      // If we're editing then the api name will already be in the directory; remove it for duplicate check.
+      const dir = isNew
+        ? directory
+        : directory.slice(0).filter((e) => e.api !== entry.api && e.service === entry.service);
+      if (checkInput(entry, [duplicateApiCheck(dir, tenantName)], errorHandler('api'))) {
+        return true;
+      }
     }
-
-    return hasExist;
+    // If we don't have an API, check that the service is not duplicated.
+    else {
+      // If we're editing then the service name will already be in the directory; remove it for duplicate check.
+      const dir = isNew ? directory : directory.slice(0).filter((e) => e.service === entry.service);
+      if (checkInput(entry.service, [duplicateServiceCheck(dir, tenantName)], errorHandler('service'))) {
+        return true;
+      }
+    }
+    return false;
   };
 
   return (
@@ -53,10 +85,13 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               name="service"
               value={entry.service}
               data-testid={`directory-modal-service-input`}
-              onChange={(e) => setEntry({ ...entry, service: e.target.value })}
               aria-label="service"
               maxLength={50}
               disabled={!isNew || isQuickAdd}
+              onChange={(e) => {
+                checkInput(e.target.value, [lowerCaseCheck, checkServiceExists], errorHandler('service'));
+                setEntry({ ...entry, service: e.target.value });
+              }}
             />
           </GoAFormItem>
           <GoAFormItem error={errors?.['api']}>
@@ -66,10 +101,13 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               name="api"
               value={entry.api}
               data-testid={`directory-modal-api-input`}
-              onChange={(e) => setEntry({ ...entry, api: e.target.value })}
               aria-label="api"
               maxLength={50}
               disabled={!isNew || isQuickAdd}
+              onChange={(e) => {
+                checkInput(e.target.value, [lowerCaseCheck], errorHandler('api'));
+                setEntry({ ...entry, api: e.target.value });
+              }}
             />
           </GoAFormItem>
           <GoAFormItem error={errors?.['url']}>
@@ -79,10 +117,13 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               name="url"
               value={entry.url}
               data-testid={`directory-modal-url-input`}
-              onChange={(e) => setEntry({ ...entry, url: e.target.value })}
               aria-label="name"
               maxLength={1024}
               disabled={isQuickAdd}
+              onChange={(e) => {
+                checkInput(e.target.value, [checkForBadUrl, checkUrlExists], errorHandler('url'));
+                setEntry({ ...entry, url: e.target.value });
+              }}
             />
           </GoAFormItem>
         </GoAForm>
@@ -100,38 +141,21 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
         </GoAButton>
         <GoAButton
           buttonType="primary"
-          disabled={!entry.service || !entry.url}
+          disabled={!entry.service || !entry.url || hasFormErrors()}
           data-testid="directory-modal-save"
-          onClick={() => {
-            const regex = new RegExp(/^[a-z0-9-]+$/);
-
-            if (!regex.test(entry.service)) {
-              setErrors({ ...errors, service: 'Service allowed characters: a-z, 0-9, -' });
-              return;
-            }
-            if (entry.api && !regex.test(entry.api)) {
-              setErrors({ ...errors, api: 'Api allowed characters: a-z, 0-9, -' });
-              return;
-            }
-            const urlReg = new RegExp(/^(http|https):\/\/[^ "]+$/);
-
-            if (!urlReg.test(entry.url)) {
-              setErrors({ ...errors, url: 'Please input right url format' });
-              return;
-            }
-
-            if (entry.api && checkApi(entry) && isNew) {
-              setErrors({ ...errors, api: 'Api duplicate, please use another one' });
-              return;
-            }
-
-            if ((!entry.api || entry.api === '') && checkService(entry) && isNew) {
-              setErrors({ ...errors, service: 'Service duplicate, please use another one' });
+          onClick={(e) => {
+            if (duplicateExists(entry)) {
+              e.stopPropagation();
               return;
             }
             if (isNew) {
               dispatch(createEntry(entry));
-              dispatch(fetchEntryDetail(entry));
+              if (!entry.api) {
+                const fetchTime = setInterval(() => dispatch(fetchEntryDetail(entry)), 1000);
+                setTimeout(() => {
+                  clearInterval(fetchTime);
+                }, 2000);
+              }
             }
             if (isQuickAdd) {
               dispatch(createEntry(entry));

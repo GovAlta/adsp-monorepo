@@ -17,18 +17,18 @@ export function* fetchAccess() {
   const keycloakApi = new KeycloakApi(baseUrl, realm, token);
 
   try {
-    const userCount = yield keycloakApi.getUserCount();
-    const activeUserCount = yield keycloakApi.getUserCount(true);
-    const roles = (yield keycloakApi.getRoles()).filter((role) => role.name !== `default-roles-${realm}`);
-
-    // add userId[] attribute to roles
-
     yield put(
       UpdateIndicator({
         show: true,
         message: 'Loading...',
       })
     );
+    const userCount = yield keycloakApi.getUserCount();
+    const activeUserCount = yield keycloakApi.getUserCount(true);
+    const roles = (yield keycloakApi.getRoles()).filter((role) => role.name !== `default-roles-${realm}`);
+
+    // add userId[] attribute to roles
+
     const rolesWithUsers = yield (async () => {
       const userRoles = roles.map(async (role: Role) => {
         const usersWithRole = await keycloakApi.getUsersByRole(role.name);

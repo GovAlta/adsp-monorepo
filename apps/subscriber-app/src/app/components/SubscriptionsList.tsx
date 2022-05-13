@@ -7,6 +7,7 @@ import { useSelector } from 'react-redux';
 import { ReactComponent as Mail } from '@assets/icons/mail.svg';
 import { ReactComponent as Slack } from '@assets/icons/slack.svg';
 import { ReactComponent as Chat } from '@assets/icons/chat.svg';
+import { ReactComponent as Checkmark } from '@assets/icons/checkmark.svg';
 
 interface SubscriptionsListProps {
   subscriber: Subscriber;
@@ -22,43 +23,69 @@ const ChannelIcons = {
 const AvailableChannelsContainer = styled.div`
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
+  display: flex;
+  position: relative;
   .icon-0 {
-    display: inline-flex;
-    padding-right: 1rem;
-    padding-left: 1.5rem;
+    position: absolute;
+    left: calc(50% - 50px);
+    top: -12px;
+  }
+  .icon-checked-0 {
+    position: absolute;
+    left: calc(50% - 35px);
+    top: -22px;
   }
   .icon-1 {
-    display: inline-flex;
+    position: absolute;
+    left: calc(50% - 6px);
+    top: -12px;
   }
+  .icon-checked-1 {
+    position: absolute;
+    left: calc(50% + 9px);
+    top: -22px;
+  }
+
   .icon-2 {
-    display: inline-flex;
-    padding-right: 1.5rem;
-    padding-left: 1rem;
+    position: absolute;
+    left: calc(50% + 36px);
+    top: -12px;
+  }
+
+  .icon-checked-2 {
+    position: absolute;
+    left: calc(50% + 51px);
+    top: -22px;
   }
 `;
 
 interface AvailableChannelsProps {
-  subscriberChannels: Channel[];
-  typeChannels: Channel[];
+  channels: Channel[];
+  effectiveChannel: Channel | undefined;
 }
 
-const AvailableChannels = ({ subscriberChannels, typeChannels }: AvailableChannelsProps): JSX.Element => {
-  const channels = subscriberChannels.filter((chn) => {
-    return typeChannels.includes(chn);
-  });
-
-  const bot = Channels.bot as Channel;
-
-  if (!subscriberChannels.includes(bot) && typeChannels.includes(bot)) {
-    channels.push(bot);
-  }
+const AvailableChannels = ({ channels, effectiveChannel }: AvailableChannelsProps): JSX.Element => {
+  const channelOrder = Object.keys(Channels) as Channel[];
 
   if (channels) {
     return (
       <AvailableChannelsContainer>
-        {channels.map((chn, index) => {
-          return <div className={`icon-${index}`}>{ChannelIcons[chn]}</div>;
+        {channelOrder.map((chn, index) => {
+          if (channels.includes(chn)) {
+            if (chn === effectiveChannel) {
+              return (
+                <div>
+                  <div className={`icon-${index}`}>{ChannelIcons[chn]}</div>
+                  <div className={`icon-checked-${index}`}>
+                    <Checkmark />
+                  </div>
+                </div>
+              );
+            }
+            return <div className={`icon-${index}`}>{ChannelIcons[chn]}</div>;
+          } else {
+            return <div />;
+          }
         })}
       </AvailableChannelsContainer>
     );
@@ -69,13 +96,7 @@ const AvailableChannels = ({ subscriberChannels, typeChannels }: AvailableChanne
 
 const SubscriptionsList = (props: SubscriptionsListProps): JSX.Element => {
   const subscriptions = props.subscriber.subscriptions;
-  const subscriberChannels = props.subscriber.channels
-    .filter((chn) => {
-      return chn?.address;
-    })
-    .map((chn) => {
-      return chn.channel;
-    }) as Channel[];
+  const effectiveChannel = props.subscriber?.channels[0];
 
   return (
     <>
@@ -85,7 +106,7 @@ const SubscriptionsList = (props: SubscriptionsListProps): JSX.Element => {
           <tr key={`${subscription.typeId}`}>
             <td data-testid="subscription-name">{subscription.type.name}</td>
             <td>
-              <AvailableChannels subscriberChannels={subscriberChannels} typeChannels={typeChannels} />
+              <AvailableChannels channels={typeChannels} effectiveChannel={effectiveChannel?.channel as Channel} />
             </td>
             <ButtonsCell>
               {subscription.type?.manageSubscribe ? (

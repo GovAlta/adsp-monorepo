@@ -22,3 +22,5 @@ export const TENANT_INIT: Tenant = {
   isTenantCreated: null,
   realmRoles: null,
 };
+
+export const CORE_TENANT = 'Platform';

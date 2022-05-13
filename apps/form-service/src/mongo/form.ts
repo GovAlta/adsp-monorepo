@@ -1,5 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { decodeAfter, encodeNext, Results } from '@core-services/core-common';
+import { decodeAfter, encodeNext, InvalidOperationError, Results } from '@core-services/core-common';
 import { Model, model } from 'mongoose';
 import { FormCriteria, FormEntity, FormRepository } from '../form';
 import { FormDefinitionRepository } from '../form';
@@ -75,21 +75,22 @@ export class MongoFormRepository implements FormRepository {
     });
   }
 
-  save(entity: FormEntity): Promise<FormEntity> {
-    return new Promise<FormEntity>((resolve, reject) =>
-      this.model.findOneAndUpdate(
+  async save(entity: FormEntity): Promise<FormEntity> {
+    try {
+      const doc = await this.model.findOneAndUpdate(
         { tenantId: entity.tenantId.toString(), id: entity.id },
         this.toDoc(entity),
-        { upsert: true, new: true, lean: true },
-        (err, doc) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(this.fromDoc(doc));
-          }
-        }
-      )
-    );
+        { upsert: true, new: true, lean: true }
+      );
+
+      return this.fromDoc(doc);
+    } catch (err) {
+      if (err?.code == 11000) {
+        throw new InvalidOperationError('Cannot create duplicate form.');
+      } else {
+        throw err;
+      }
+    }
   }
 
   delete(entity: FormEntity): Promise<boolean> {
@@ -106,7 +107,7 @@ export class MongoFormRepository implements FormRepository {
       id: entity.id,
       formDraftUrl: entity.formDraftUrl,
       definitionId: entity.definition.id,
-      applicantId: entity.applicant.urn.toString(),
+      applicantId: entity.applicant?.urn.toString(),
       status: entity.status,
       created: entity.created,
       createdBy: entity.createdBy,
