@@ -612,13 +612,15 @@ Then(
         .eventDetails()
         .invoke('text')
         .then((eventDetails) => {
-          //if event log details contains email then verify expect statements else close the event details and continue down the list
-          if (eventDetails.includes('to": "' + email)) {
-            expect(eventDetails).to.contain(appName + ' status has changed');
-            expect(eventDetails).to.contain(orgStatusValidationString);
-            expect(eventDetails).to.contain(newStatusValidationString);
-            cy.wrap($element).click({ force: true });
+          // Check if event log details contains expected info
+          if (
+            eventDetails.includes('to": "' + email) &&
+            eventDetails.includes(appName + ' status has changed') &&
+            eventDetails.includes(orgStatusValidationString) &&
+            eventDetails.includes(newStatusValidationString)
+          ) {
             isFound = true;
+            cy.wrap($element).click({ force: true });
           } else {
             //clicking eye icon to close event details
             cy.wrap($element).scrollIntoView().click({ force: true });
