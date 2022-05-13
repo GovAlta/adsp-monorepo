@@ -154,7 +154,7 @@ Feature: Service status
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" "Autotest-addApp Edited" in the application list
 
-  @TEST_CS-996 @regression
+  @TEST_CS-996 @REQ_CS-962 @regression
   Scenario: As a tenant admin, I can trigger application status change event and see the event in the event log
     # Create an application for testing application status chagne events
     Given a tenant admin user is on status applications page
