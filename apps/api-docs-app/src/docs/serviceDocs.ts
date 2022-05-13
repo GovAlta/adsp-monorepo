@@ -10,8 +10,9 @@ interface ServiceDoc {
     id: AdspId;
     name: string;
   };
-  docs: JsonObject;
+  docs?: JsonObject;
   url: string;
+  docUrl?: string;
 }
 
 interface Metadata {
@@ -54,7 +55,18 @@ class ServiceDocsImpl {
     private readonly tokenProvider: TokenProvider
   ) {}
 
-  #retrieveDocs = async (tenant?: string): Promise<Record<string, ServiceDoc>> => {
+  #retrieveDocJson = async (docUrl): Promise<JsonObject | void> => {
+    try {
+      const doc = (await axios.get(docUrl))?.data as JsonObject;
+      if (doc?.openapi) {
+        return doc;
+      }
+    } catch (err) {
+      this.logger.warn(`Failed retrieving doc from ${docUrl}`);
+    }
+  };
+
+  #retrieveDocEntries = async (tenant?: string): Promise<Record<string, ServiceDoc>> => {
     const directoryServiceUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:tenant-service`);
     const docs = {} as Record<string, ServiceDoc>;
 
@@ -75,20 +87,14 @@ class ServiceDocsImpl {
             );
             const { metadata } = (await axios.get<DirectoryServiceResponse>(serviceDirectoryUrl.href)).data;
             if (metadata?._links?.docs?.href) {
-              const docUrl = metadata?._links?.docs.href;
-              this.logger.debug(`Retrieving API docs for service ${id} ...`);
-              const { data: docData } = await axios.get(docUrl);
-              if (docData.openapi) {
-                docData.servers = [{ url }];
-                docs[id.toString()] = {
-                  service: {
-                    id: id,
-                    name: docData?.info?.title || metadata?.displayName || metadata?.name,
-                  },
-                  docs: docData,
-                  url,
-                };
-              }
+              docs[id.toString()] = {
+                service: {
+                  id: id,
+                  name: metadata?.displayName || metadata?.name,
+                },
+                url,
+                docUrl: metadata?._links?.docs?.href,
+              };
             }
           } catch (err) {
             this.logger.warn(`Failed retrieving docs for ${id} with error ${err.message}`);
@@ -107,12 +113,12 @@ class ServiceDocsImpl {
     const docs: Record<string, ServiceDoc> = {};
 
     if (!namespaces.includes(id.namespace)) {
-      const docs = await this.#retrieveDocs(id.namespace);
+      const docs = await this.#retrieveDocEntries(id.namespace);
       this.cache.set(id.namespace, docs);
     }
     // Avoid re-cache of platform
     if (id.namespace !== 'platform' && !namespaces.includes('platform')) {
-      const docs = await this.#retrieveDocs('platform');
+      const docs = await this.#retrieveDocEntries('platform');
       this.cache.set('platform', docs);
     }
 
@@ -129,7 +135,23 @@ class ServiceDocsImpl {
     }
 
     if (id.type === 'service') {
-      docs[id.toString()] = id.toString() in mergedDocs ? mergedDocs[id.toString()] : null;
+      let doc = id.toString() in mergedDocs ? { ...mergedDocs[id.toString()] } : null;
+
+      if (doc) {
+        // metadata has been fetched, but the actual doc swagger has not
+        if (doc?.docUrl && !doc?.docs) {
+          const docJson = await this.#retrieveDocJson(doc.docUrl);
+          if (docJson) {
+            doc = {
+              ...doc,
+              docs: docJson,
+            };
+            mergedDocs[id.toString()] = doc;
+            this.cache.set(id.namespace, { ...mergedDocs });
+          }
+        }
+        docs[id.toString()] = doc;
+      }
       return docs;
     }
     return mergedDocs;
