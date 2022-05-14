@@ -16,3 +16,15 @@ export const createConfigurationHandler =
 
     next();
   };
+
+export const createTenantConfigurationHandler =
+  (tokenProvider: TokenProvider, service: ConfigurationService, serviceId: AdspId, tenantId: AdspId): RequestHandler =>
+  async (req, _res, next) => {
+    req['getConfiguration'] = async <C, R = [C, C]>() => {
+      const token = await tokenProvider.getAccessToken();
+      const config = await service.getConfiguration<C, R>(serviceId, token, tenantId);
+      return config;
+    };
+
+    next();
+  };

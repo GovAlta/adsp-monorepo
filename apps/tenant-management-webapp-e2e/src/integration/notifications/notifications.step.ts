@@ -257,6 +257,7 @@ When('the user enters {string} as subject and {string} as body', function (subje
 
 When('the user clicks Add button in Add an email template page', function () {
   notificationsObj.addAnEmailTemplateModalAddBtn().click();
+  cy.wait(2000);
 });
 
 Then('the user {string} the event of {string} in {string}', function (viewOrNot, event, cardTitle) {
