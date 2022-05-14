@@ -12,5 +12,37 @@ class DirectoryServicePage {
   directoryTable() {
     return cy.get('[data-testid="directory-table"]');
   }
+
+  addEntryButton() {
+    return cy.get('[data-testid="add-directory-btn"]');
+  }
+
+  addApplicationModalTitle() {
+    return cy.get('[data-testid="add-directory-btn"]');
+  }
+
+  addEntryModalTitle() {
+    return cy.xpath(
+      '//div[@class="modal-root" and @data-state="visible"]/div[@class="modal"]/div[@class="modal-container"]/div[@class="modal-title"]'
+    );
+  }
+
+  entryModalServiceField() {
+    return cy.get('[data-testid="directory-modal-service-input"]');
+  }
+
+  entryModalApiField() {
+    return cy.get('[data-testid="directory-modal-api-input"]');
+  }
+
+  entryModalUrlField() {
+    return cy.get('[data-testid="directory-modal-url-input"]');
+  }
+
+  entryModalSaveButton() {
+    return cy.xpath(
+      '//*[@data-testid="directory-modal" and @data-state="visible"]//*[@data-testid="directory-modal-save"]'
+    );
+  }
 }
 export default DirectoryServicePage;
