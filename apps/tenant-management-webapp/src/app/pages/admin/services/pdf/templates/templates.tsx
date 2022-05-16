@@ -44,6 +44,12 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
     return state?.session?.indicator;
   });
 
+  const webappUrl = useSelector((state: RootState) => {
+    return state.config.serviceUrls.tenantManagementWebApp;
+  });
+
+  console.log(JSON.stringify(webappUrl) + '<webapprul');
+
   const getSuggestion = () => {
     if (currentTemplate) {
       const x = [
@@ -174,8 +180,10 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                       generateMessage(
                         getTemplateBody(value, channel === 'Snippet' ? 'pdf' : '', {
                           data: currentTemplate,
+                          serviceUrl: webappUrl,
+                          today: new Date().toDateString(),
                         }),
-                        { data: currentTemplate }
+                        { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() }
                       )
                     );
                   } catch (e) {
@@ -188,8 +196,10 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                       generateMessage(
                         getTemplateBody(body, channel === 'Snippet' ? 'pdf' : '', {
                           data: currentTemplate,
+                          serviceUrl: webappUrl,
+                          today: new Date().toDateString(),
                         }),
-                        { data: currentTemplate }
+                        { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() }
                       )
                     );
                   } catch (e) {

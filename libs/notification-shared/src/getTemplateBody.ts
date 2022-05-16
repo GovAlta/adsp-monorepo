@@ -12,12 +12,11 @@ const hasProperHtmlWrapper = (content: string): boolean => {
 };
 
 export const getTemplateBody = (body: string, channel: string, context?: Record<string, unknown>): string => {
-  console.log(JSON.stringify(context) + '<context');
   if (!hasProperHtmlWrapper(body)) {
     if (channel === 'email') {
       return emailWrapperTemplate({ content: body, ...context });
     } else if (channel === 'pdf') {
-      return pdfWrapperTemplate({ content: body });
+      return pdfWrapperTemplate({ content: body, ...context });
     } else {
       return body;
     }
