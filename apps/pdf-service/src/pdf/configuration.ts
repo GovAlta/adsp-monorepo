@@ -16,8 +16,10 @@ export const configurationSchema = {
       template: {
         type: 'string',
       },
+      useWrapper: {
+        type: 'boolean',
+      },
     },
     required: ['id', 'name', 'template'],
   },
 };
-
