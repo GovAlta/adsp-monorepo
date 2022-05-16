@@ -17,10 +17,19 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
   const [title, setTitle] = useState<string>('');
   const dispatch = useDispatch();
   const urlParams = new URLSearchParams(window.location.search);
-  const realm = urlParams.get('realm') || localStorage.getItem('realm');
+  const realmFromParams = urlParams.get('realm');
+  const realm = realmFromParams || localStorage.getItem('realm');
+
+  if (realmFromParams) {
+    localStorage.setItem('realm', realmFromParams);
+  }
+
+  const { tenantRealm } = useSelector((state: RootState) => ({
+    tenantRealm: state.tenant.realm,
+  }));
 
   useEffect(() => {
-    dispatch(KeycloakCheckSSOWithLogout(realm));
+    dispatch(KeycloakCheckSSOWithLogout(tenantRealm || realm));
   }, []);
 
   return (
