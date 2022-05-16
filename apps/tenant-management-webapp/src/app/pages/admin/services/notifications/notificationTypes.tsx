@@ -677,12 +677,15 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           type.subscriberRoles = type.subscriberRoles || [];
           type.events = type.events || [];
           type.publicSubscribe = type.publicSubscribe || false;
+
+          if (!type.channels.includes('email')) {
+            // Must include email as first channel
+            type.channels = ['email', ...type.channels];
+          }
           const isDuplicatedName =
             notification.notificationTypes &&
             isDuplicatedNotificationName(coreNotification, notification.notificationTypes, selectedType, type.name);
-          if (type.channels.length === 0) {
-            setErrors({ channels: 'Please select at least one channel.' });
-          } else if (isDuplicatedName) {
+          if (isDuplicatedName) {
             setErrors({ name: 'Duplicated name of notification type.' });
           } else {
             dispatch(UpdateNotificationTypeService(type));
