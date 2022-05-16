@@ -176,11 +176,13 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     dispatch(FetchCoreNotificationTypesService());
   }, [notification?.notificationTypes]);
 
-  function reset() {
+  function reset(closeEventModal?: boolean) {
     setShowTemplateForm(false);
     setEventTemplateFormState(addNewEventTemplateContent);
     setEditType(false);
-    setEditEvent(null);
+    if (closeEventModal) {
+      setEditEvent(null);
+    }
     setSelectedType(emptyNotificationType);
     setErrors({});
   }
@@ -703,7 +705,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           setShowTemplateForm(true);
         }}
         onCancel={() => {
-          reset();
+          reset(true);
         }}
         onClickedOutside={() => {
           reset();
