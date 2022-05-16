@@ -202,7 +202,15 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
-          <GoAButton data-testid="form-cancel" buttonType="secondary" type="button" onClick={onCancel}>
+          <GoAButton
+            data-testid="form-cancel"
+            buttonType="secondary"
+            type="button"
+            onClick={() => {
+              setType(initialValue);
+              onCancel();
+            }}
+          >
             Cancel
           </GoAButton>
           <GoAButton
