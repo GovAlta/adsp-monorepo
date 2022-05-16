@@ -3,6 +3,7 @@ export interface PdfTemplate {
   name: string;
   description: string;
   template: string;
+  useWrapper: boolean;
 }
 export interface PdfState {
   pdfTemplates: Record<string, PdfTemplate>;
@@ -13,4 +14,5 @@ export const defaultPdfTemplate: PdfTemplate = {
   name: '',
   description: '',
   template: '',
+  useWrapper: false,
 };
