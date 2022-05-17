@@ -115,6 +115,7 @@ data:
         "valueServiceApiUrl": "https://value-service.adsp-dev.gov.ab.ca",
         "serviceStatusAppUrl": "https://status.adsp-dev.gov.ab.ca",
         "docServiceApiUrl": "https://api.adsp-dev.gov.ab.ca",
-        "configurationServiceApiUrl": "https://configuration-service.adsp-dev.gov.ab.ca"
+        "configurationServiceApiUrl": "https://configuration-service.adsp-dev.gov.ab.ca",
+        "directoryServiceApiUrl": "https://directory-service.adsp-dev.gov.ab.ca"
       }
     }
