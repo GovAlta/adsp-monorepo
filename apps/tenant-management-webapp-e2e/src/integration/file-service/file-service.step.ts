@@ -468,6 +468,7 @@ When(
           fileServiceObj.fileTypeEditButton(rowNumber).click();
           break;
         case 'Delete':
+          cy.wait(1000); // Wait to avoid no modal showing up for delete button clicking
           fileServiceObj.fileTypeDeleteButton(rowNumber).click();
           break;
         default:
