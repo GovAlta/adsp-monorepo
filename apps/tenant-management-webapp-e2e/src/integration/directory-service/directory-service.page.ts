@@ -44,5 +44,29 @@ class DirectoryServicePage {
       '//*[@data-testid="directory-modal" and @data-state="visible"]//*[@data-testid="directory-modal-save"]'
     );
   }
+
+  entryModalCancelButton() {
+    return cy.xpath(
+      '//*[@data-testid="directory-modal" and @data-state="visible"]//*[@data-testid="directory-modal-cancel"]'
+    );
+  }
+
+  entryModalServiceFieldErrorMsg() {
+    return cy.xpath('//input[@data-testid="directory-modal-service-input"]/following-sibling::div[@class="error-msg"]');
+  }
+
+  entryModalApiFieldErrorMsg() {
+    return cy.xpath('//input[@data-testid="directory-modal-api-input"]/following-sibling::div[@class="error-msg"]');
+  }
+
+  entryModalUrlFieldErrorMsg() {
+    return cy.xpath('//input[@data-testid="directory-modal-url-input"]/following-sibling::div[@class="error-msg"]');
+  }
+
+  editEntryButton(service, url) {
+    return cy.xpath(
+      `//div[@[data-testid="directory-table"] and contains(text(), "${service}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${url}")]/following-sibling::td//*[@data-testid="edit-details"]`
+    );
+  }
 }
 export default DirectoryServicePage;
