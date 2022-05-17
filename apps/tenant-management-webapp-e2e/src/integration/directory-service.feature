@@ -27,20 +27,21 @@ Feature: Directory-service
     Then the user views Add entry modal
     When the user enters "autotest-addentry" in Service, "Empty" in API, "https://myServiceEntry.com" in URL
     And the user clicks Save button
-# Then the user views the error message of "autotest-addentry" exists
-# # Test input field restriction
-# When the user enters "autotest-nameUpperCase", "Empty", "https://myServiceEntryAgain.com"
-# And the user clicks Save button
-# Then the user views the error message of "Service allowed characters: a-z, 0-9, -" for service name field
-# When the user enters "autotest-apinaming", "V2", "https://myServiceEntryAgain.com"
-# And the user clicks Save button
-# Then the user views the error message of "Api allowed characters: a-z, 0-9, -" for api field
-# When the user enters "autotest-urlnaming", "Empty", "https://myServiceEntryAgain"
-# And the user clicks Save button
-# Then the user views the error message of "Please input right url format" for URL field
-# When the user clicks Cancel button
-# Then the user should not view Add entry modal
-# # Edit a service entry
+    Then the user views the error message "Service duplicate, please use another" for "Service" field
+    # Test input field restriction
+    When the user enters "autotest-nameUpperCase" in Service, "Empty" in API, "https://myServiceEntry.com" in URL
+    # When the user enters "autotest-nameUpperCase", "Empty", "https://myServiceEntryAgain.com"
+    And the user clicks Save button
+    Then the user views the error message "Allowed characters are: a-z, 0-9, -" for "Service" field
+    When the user enters "autotest-apinaming" in Service, "V2" in API, "https://myServiceEntry.com" in URL
+    And the user clicks Save button
+    Then the user views the error message "Allowed characters are: a-z, 0-9, -" for "Api" field
+    When the user enters "autotest-apinaming" in Service, "Empty" in API, "https://myServiceEntryFormat" in URL
+    And the user clicks Save button
+    Then the user views the error message "Please input right url format" for "Url" field
+    When the user clicks Cancel button on Entry modal
+    Then the user should not view the entry of "autotest-apinaming", "https://myServiceEntryFormat"
+# Edit a service entry
 # When the user clicks "Edit" icon of "autotest-addentry", "https://myServiceEntry.com"
 # Then the user views Edit entry modal
 # When the user enters "autotest-editentry", "v1", "https://myServiceEntry2.com"
