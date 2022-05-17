@@ -167,7 +167,7 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
   const state: RootState = yield select();
   const token = state.session.credentials.token;
   const directoryBaseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
-  const tenantName: string = state.tenant.name;
+
   yield put(
     UpdateElementIndicator({
       show: true,
@@ -177,7 +177,9 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
   try {
     const { data } = yield call(
       axios.get,
-      `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}/services/${action.data.service}`,
+      `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(action.data.namespace)}/services/${
+        action.data.service
+      }`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
