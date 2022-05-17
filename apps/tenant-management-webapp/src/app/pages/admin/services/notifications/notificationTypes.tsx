@@ -280,9 +280,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     }
   };
 
-  const saveAndReset = () => {
+  const saveAndReset = (closeEventModal?: boolean) => {
     saveOrAddEventTemplate();
-    reset();
+    reset(closeEventModal);
   };
 
   const editEventTemplateContent = {
@@ -711,7 +711,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           reset(true);
         }}
         onClickedOutside={() => {
-          reset();
+          reset(true);
         }}
       />
 
@@ -770,7 +770,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 setTemplates(JSON.parse(JSON.stringify(savedTemplates)));
                 reset();
               }}
-              saveAndReset={() => saveAndReset()}
+              saveAndReset={saveAndReset}
               validateEventTemplateFields={() => validateEventTemplateFields()}
               eventSuggestion={getEventSuggestion()}
               savedTemplates={savedTemplates}
