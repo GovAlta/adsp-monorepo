@@ -29,7 +29,7 @@ interface TemplateEditorProps {
   eventTemplateFormState?: { saveOrAddActionText: string; cancelOrBackActionText: string; mainTitle: string };
   savedTemplates: Template;
   initialChannel: string;
-  saveAndReset: () => void;
+  saveAndReset: (closeEventModal?: boolean) => void;
   validateEventTemplateFields: () => boolean;
   actionButtons?: JSX.Element;
   // eslint-disable-next-line
@@ -223,7 +223,9 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             {eventTemplateFormState.cancelOrBackActionText}
           </GoAButton>
           <GoAButton
-            onClick={() => saveAndReset()}
+            onClick={() => {
+              saveAndReset(true);
+            }}
             buttonType="primary"
             data-testid="template-form-save"
             type="submit"
