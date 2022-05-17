@@ -68,5 +68,27 @@ class DirectoryServicePage {
       `//div[@[data-testid="directory-table"] and contains(text(), "${service}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${url}")]/following-sibling::td//*[@data-testid="edit-details"]`
     );
   }
+
+  entryTableBody() {
+    return cy.get('tbody');
+  }
+
+  entryTableServiceColumn() {
+    return cy.get('td[headers="service"]');
+  }
+
+  entryTableUrlColumn() {
+    return cy.get('td[headers="url"]');
+  }
+
+  entryEditIcon(serviceName, url) {
+    return cy.xpath(
+      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${serviceName}")]/following-sibling::*[contains(text(), "${url}")]/parent::*//*[@data-testid="icon-create"]`
+    );
+  }
+
+  entryDeleteIcon() {
+    return cy.xpath('//*[@data-testid="toggle-details-visibility"]/div');
+  }
 }
 export default DirectoryServicePage;
