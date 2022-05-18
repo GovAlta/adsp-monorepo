@@ -63,32 +63,24 @@ class DirectoryServicePage {
     return cy.xpath('//input[@data-testid="directory-modal-url-input"]/following-sibling::div[@class="error-msg"]');
   }
 
-  editEntryButton(service, url) {
-    return cy.xpath(
-      `//div[@[data-testid="directory-table"] and contains(text(), "${service}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${url}")]/following-sibling::td//*[@data-testid="edit-details"]`
-    );
-  }
-
-  entryTableBody() {
-    return cy.get('tbody');
-  }
-
-  entryTableServiceColumn() {
-    return cy.get('td[headers="service"]');
-  }
-
-  entryTableUrlColumn() {
-    return cy.get('td[headers="url"]');
-  }
-
   entryEditIcon(serviceName, url) {
     return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${serviceName}")]/following-sibling::*[contains(text(), "${url}")]/parent::*//*[@data-testid="icon-create"]`
+      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/following-sibling::*[contains(text(), "${url}")]/parent::*//*[@data-testid="icon-create"]`
     );
   }
 
-  entryDeleteIcon() {
-    return cy.xpath('//*[@data-testid="toggle-details-visibility"]/div');
+  entryDeleteIcon(serviceName, url) {
+    return cy.xpath(
+      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/following-sibling::*[contains(text(), "${url}")]/parent::*//*[@data-testid="icon-trash"]`
+    );
+  }
+
+  deleteModalContent() {
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//*[@class="goa-scrollable"]');
+  }
+
+  deleteModalBtn() {
+    return cy.get('[data-testid="delete-confirm"]');
   }
 }
 export default DirectoryServicePage;
