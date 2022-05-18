@@ -126,7 +126,10 @@ Feature: Service status
     And the user selects "Draft" filter by status radio button
     Then the user "views" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     # Delete the notice
-    When the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
+    # Due to notices page refreshs every 30 seconds and our delete step randomly fails at notice deletion, add steps to go off and back to the notices page so that the deletion is done before the next refresh
+    When the user selects "Overview" tab for "Status"
+    And the user selects "Notices" tab for "Status"
+    And the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
     Then the user views delete "notice" confirmation modal for "<Description2>"
     When the user clicks Delete button in delete confirmation modal
     And the user selects "Active" filter by status radio button

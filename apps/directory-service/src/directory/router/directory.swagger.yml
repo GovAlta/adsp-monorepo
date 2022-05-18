@@ -38,25 +38,25 @@ components:
           type: object
           properties:
             self:
-              $ref: "#/components/schemas/Link"
+              $ref: '#/components/schemas/Link'
             api:
               oneOf:
-                - $ref: "#/components/schemas/Link"
+                - $ref: '#/components/schemas/Link'
                 - type: array
                   items:
-                    $ref: "#/components/schemas/Link"
+                    $ref: '#/components/schemas/Link'
             doc:
-              $ref: "#/components/schemas/Link"
+              $ref: '#/components/schemas/Link'
             health:
-              $ref: "#/components/schemas/Link"
+              $ref: '#/components/schemas/Link'
           additionalProperties:
             oneOf:
-              - $ref: "#/components/schemas/Link"
+              - $ref: '#/components/schemas/Link'
               - type: array
                 items:
-                  $ref: "#/components/schemas/Link"
+                  $ref: '#/components/schemas/Link'
 
-"/api/directory/v2/namespaces/{namespace}/entries":
+'/directory/v2/namespaces/{namespace}/entries':
   get:
     tags:
       - Directory service
@@ -76,7 +76,7 @@ components:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/DirectoryEntry"
+                $ref: '#/components/schemas/DirectoryEntry'
   put:
     tags:
       - Directory service
@@ -108,7 +108,7 @@ components:
       401:
         description: Unauthorized
 
-"/api/directory/v2/namespaces/{namespace}/services/{service}":
+'/directory/v2/namespaces/{namespace}/services/{service}':
   get:
     tags:
       - Directory service
@@ -140,7 +140,7 @@ components:
                 host:
                   type: string
                 metadata:
-                  $ref: "#/components/schemas/ServiceMetadata"
+                  $ref: '#/components/schemas/ServiceMetadata'
       401:
         description: Unauthorized
 

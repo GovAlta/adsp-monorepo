@@ -24,12 +24,8 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
     localStorage.setItem('realm', realmFromParams);
   }
 
-  const { tenantRealm } = useSelector((state: RootState) => ({
-    tenantRealm: state.tenant.realm,
-  }));
-
   useEffect(() => {
-    dispatch(KeycloakCheckSSOWithLogout(tenantRealm || realm));
+    dispatch(KeycloakCheckSSOWithLogout(realm));
   }, []);
 
   return (

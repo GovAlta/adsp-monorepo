@@ -39,6 +39,7 @@ const checkUrlExists = isNotEmptyCheck('URL');
 export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   const isNew = props.type === 'new';
   const isQuickAdd = props.type === 'quickAdd';
+  const isEdit = props.type === 'edit';
   const [entry, setEntry] = useState(props.entry);
 
   const title = isNew || isQuickAdd ? 'Add entry' : 'Edit entry';
@@ -144,7 +145,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
           disabled={!entry.service || !entry.url || hasFormErrors()}
           data-testid="directory-modal-save"
           onClick={(e) => {
-            if (duplicateExists(entry)) {
+            if (!isEdit && duplicateExists(entry)) {
               e.stopPropagation();
               return;
             }
@@ -154,7 +155,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
                 const fetchTime = setInterval(() => dispatch(fetchEntryDetail(entry)), 1000);
                 setTimeout(() => {
                   clearInterval(fetchTime);
-                }, 2000);
+                }, 1000);
               }
             }
             if (isQuickAdd) {
