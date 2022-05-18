@@ -45,15 +45,30 @@ Then('the user views Add entry modal', function () {
   directoryObj.addEntryModalTitle().invoke('text').should('eq', 'Add entry');
 });
 
+Then('the user views Edit entry modal', function () {
+  directoryObj.addEntryModalTitle().invoke('text').should('eq', 'Edit entry');
+});
+
+Then('the user views Delete entry modal for {string}', function (serviceName) {
+  directoryObj.addEntryModalTitle().invoke('text').should('eq', 'Delete entry');
+  directoryObj
+    .deleteModalContent()
+    .invoke('text')
+    .should('eq', 'Delete ' + serviceName + '?');
+});
+
 When('the user enters {string} in Service, {string} in API, {string} in URL', function (service, api, url) {
-  directoryObj.entryModalServiceField().type(service);
+  directoryObj.entryModalServiceField().clear().type(service);
   if (api == 'Empty') {
     directoryObj.entryModalApiField().type(api).clear();
   } else {
-    directoryObj.entryModalApiField().type(api);
+    directoryObj.entryModalApiField().clear().type(api);
   }
-  directoryObj.entryModalApiField().type(api).clear();
-  directoryObj.entryModalUrlField().type(url);
+  directoryObj.entryModalUrlField().clear().type(url);
+});
+
+When('the user edits URL field {string}', function (url) {
+  directoryObj.entryModalUrlField().clear().type(url);
 });
 
 Then('the user clicks Save button', function () {
@@ -61,10 +76,53 @@ Then('the user clicks Save button', function () {
   cy.wait(2000);
 });
 
+When('the user clicks Cancel button on Entry modal', function () {
+  directoryObj.entryModalCancelButton().click();
+  cy.wait(2000);
+});
+
 Then('the user views the entry of {string}, {string}', function (directoryName, url) {
   directoryObj.directoryTable().contains('td[data-testid="service"]', directoryName).siblings().contains(url);
 });
 
-Then('the user views the error message of "autotest-addentry" exists', function (service) {
-  // Service duplicate, please use another
+Then('the user views the entry of {string}, {string}, {string}', function (directoryName, api, url) {
+  directoryObj
+    .directoryTable()
+    .contains('td[data-testid="service"]', directoryName)
+    .siblings()
+    .contains(api)
+    .siblings()
+    .contains(url);
+});
+Then('the user should not view the entry of {string}, {string}', function (servicename, url) {
+  directoryObj.directoryTable().contains('td[data-testid="service"]', servicename).should('not.exist');
+  directoryObj.directoryTable().contains('td[data-testid="url"]', url).should('not.exist');
+});
+
+Then('the user views the error message {string} for {string} field', function (errorMsg, field) {
+  switch (field) {
+    case 'Service':
+      directoryObj.entryModalServiceFieldErrorMsg().invoke('text').should('eq', errorMsg);
+      break;
+    case 'Api':
+      directoryObj.entryModalApiFieldErrorMsg().invoke('text').should('eq', errorMsg);
+      break;
+    case 'Url':
+      directoryObj.entryModalUrlFieldErrorMsg().invoke('text').should('eq', errorMsg);
+      break;
+    default:
+      expect(field).to.be.oneOf(['Service', 'Api', 'Url']);
+  }
+});
+When('the user clicks Edit icon of {string}, {string} on entries page', function (serviceName, url) {
+  directoryObj.entryEditIcon(serviceName, url).click();
+});
+
+When('the user clicks Delete icon of {string}, {string} on entries page', function (serviceName, url) {
+  directoryObj.entryDeleteIcon(serviceName, url).click();
+});
+
+When('the user clicks Delete button', function () {
+  directoryObj.deleteModalBtn().scrollIntoView().click();
+  cy.wait(2000);
 });
