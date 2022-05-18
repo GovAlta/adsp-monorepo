@@ -142,6 +142,7 @@ class ServiceDocsImpl {
         if (doc?.docUrl && !doc?.docs) {
           const docJson = await this.#retrieveDocJson(doc.docUrl);
           if (docJson) {
+            docJson.servers = [{ url: doc.url }];
             doc = {
               ...doc,
               docs: docJson,

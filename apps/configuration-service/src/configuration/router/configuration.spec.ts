@@ -354,6 +354,7 @@ describe('router', () => {
         tenantId,
         namespace,
         name,
+        mergeUpdate: jest.fn((update) => ({ ...entity.latest?.configuration, ...update })),
         update: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: { old: 'old' } },
       };
@@ -389,6 +390,7 @@ describe('router', () => {
         tenantId,
         namespace,
         name,
+        mergeUpdate: jest.fn((update) => ({ ...entity.latest?.configuration, ...update })),
         update: jest.fn(() => Promise.resolve(entity)),
         latest: null,
       };
@@ -424,6 +426,7 @@ describe('router', () => {
         tenantId,
         namespace,
         name,
+        mergeUpdate: jest.fn((update) => ({ ...entity.latest?.configuration, ...update })),
         update: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: { old: 'old' } },
       };
@@ -455,6 +458,7 @@ describe('router', () => {
         tenantId,
         namespace,
         name,
+        mergeUpdate: jest.fn((update) => ({ ...entity.latest?.configuration, ...update })),
         update: jest.fn(() => Promise.resolve(entity)),
         latest: { revision: 1, configuration: { value: 'value', other: 'other' } },
       };
