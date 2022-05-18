@@ -58,6 +58,18 @@ const createWebappClientConfig = (id: string): ClientRepresentation => {
     redirectUris: [`${environment.TENANT_WEB_APP_HOST}/*`],
     webOrigins: [environment.TENANT_WEB_APP_HOST],
     description: 'Client created by platform team to support the frontend. Please do not delete it',
+    protocolMappers: [
+      {
+        name: 'tenant-service-aud',
+        protocol: 'openid-connect',
+        protocolMapper: 'oidc-audience-mapper',
+        config: {
+          'included.client.audience': 'urn:ads:platform:tenant-service',
+          'id.token.claim': 'false',
+          'access.token.claim': 'true',
+        },
+      },
+    ],
   };
 
   return config;

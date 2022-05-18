@@ -754,11 +754,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 setBody(value);
               }}
               setPreview={(channel) => {
-                if (templates) {
+                if (templates && templates[channel]) {
                   setBodyPreview(
                     generateMessage(getTemplateBody(templates[channel]?.body, channel, htmlPayload), htmlPayload)
                   );
                   setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
+                } else {
+                  setBodyPreview('');
+                  setSubjectPreview('');
                 }
                 setCurrentChannel(channel);
               }}
