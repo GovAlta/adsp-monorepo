@@ -20,7 +20,7 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     public validationService: ValidationService,
     public latest?: ConfigurationRevision<C>,
     public tenantId?: AdspId,
-    schema?: Record<string, unknown>
+    private schema?: Record<string, unknown>
   ) {
     if (!namespace || !name) {
       throw new InvalidOperationError('Configuration must have a namespace and name.');
@@ -52,6 +52,26 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
       this.tenantId,
       [ConfigurationServiceRoles.ConfiguredService, ConfigurationServiceRoles.ConfigurationAdmin],
       true
+    );
+  }
+
+  public mergeUpdate(update: Partial<C>): C {
+    return Object.entries(update).reduce(
+      (update, [key, value]) => {
+        // If schema indicates this top level property is an object, and current value plus update value are both objects,
+        // then combine them with spread operator.
+        if (
+          this.schema?.properties?.[key].type === 'object' &&
+          typeof update[key] === 'object' &&
+          typeof value === 'object'
+        ) {
+          value = { ...update[key], ...value };
+        }
+
+        update[key] = value;
+        return update;
+      },
+      { ...this.latest?.configuration }
     );
   }
 
