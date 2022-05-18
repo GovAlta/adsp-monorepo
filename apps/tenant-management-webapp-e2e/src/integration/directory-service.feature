@@ -22,33 +22,28 @@ Feature: Directory-service
     When the user enters "autotest-addentry" in Service, "Empty" in API, "https://myServiceEntry.com" in URL
     And the user clicks Save button
     Then the user views the entry of "autotest-addentry", "https://myServiceEntry.com"
-    # Test uniqueness of a service name
+    # Test input field restriction
     When the user clicks Add entry button
     Then the user views Add entry modal
     When the user enters "autotest-addentry" in Service, "Empty" in API, "https://myServiceEntry.com" in URL
     And the user clicks Save button
     Then the user views the error message "Service duplicate, please use another" for "Service" field
-    # Test input field restriction
     When the user enters "autotest-nameUpperCase" in Service, "Empty" in API, "https://myServiceEntry.com" in URL
-    # When the user enters "autotest-nameUpperCase", "Empty", "https://myServiceEntryAgain.com"
-    And the user clicks Save button
     Then the user views the error message "Allowed characters are: a-z, 0-9, -" for "Service" field
     When the user enters "autotest-apinaming" in Service, "V2" in API, "https://myServiceEntry.com" in URL
-    And the user clicks Save button
     Then the user views the error message "Allowed characters are: a-z, 0-9, -" for "Api" field
-    When the user enters "autotest-apinaming" in Service, "Empty" in API, "https://myServiceEntryFormat" in URL
-    And the user clicks Save button
-    Then the user views the error message "Please input right url format" for "Url" field
+    When the user enters "autotest-apinaming" in Service, "Empty" in API, "myServiceEntryFormat" in URL
+    Then the user views the error message "Please enter a valid URL" for "Url" field
     When the user clicks Cancel button on Entry modal
-    Then the user should not view the entry of "autotest-apinaming", "https://myServiceEntryFormat"
-# Edit a service entry
-# When the user clicks "Edit" icon of "autotest-addentry", "https://myServiceEntry.com"
-# Then the user views Edit entry modal
-# When the user enters "autotest-editentry", "v1", "https://myServiceEntry2.com"
-# And the user clicks Save button
-# Then the user "views" the entry of "autotest-editentry:v1", "https://myServiceEntry2.com"
-# # Delete a service entry
-# When the user clicks "Delete" icon of "autotest-editentry:v1", "https://myServiceEntry2.com"
-# Then the user views Delete entry modal for "autotest-editentry"
-# When the user clicks Delete button
-# Then the user "should not view" the entry of "autotest-editentry:v1", "https://myServiceEntry2.com"
+    Then the user should not view the entry of "autotest-apinaming", "myServiceEntryFormat"
+    # Edit a service entry, only url is editable
+    When the user clicks Edit icon of "autotest-addentry", "https://myServiceEntry.com" on entries page
+    Then the user views Edit entry modal
+    When the user edits URL field "https://myServiceEntry-2.ca"
+    And the user clicks Save button
+    Then the user views the entry of "autotest-addentry", "https://myServiceEntry-2.ca"
+    # Delete a service entry
+    When the user clicks Delete icon of "autotest-addentry", "https://myServiceEntry-2.ca" on entries page
+    Then the user views Delete entry modal for "autotest-addentry"
+    When the user clicks Delete button
+    Then the user should not view the entry of "autotest-addentry", "https://myServiceEntry-2.ca"
