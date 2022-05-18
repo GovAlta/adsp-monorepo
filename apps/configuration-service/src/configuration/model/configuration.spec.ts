@@ -220,6 +220,54 @@ describe('ConfigurationEntity', () => {
     });
   });
 
+  describe('mergeUpdate', () => {
+    it('can merge update with latest revision without schema', () => {
+      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, {
+        revision: 2,
+        configuration: {} as unknown,
+      });
+
+      const result = entity.mergeUpdate({ a: '123' });
+      expect(result).toMatchObject({ a: '123' });
+    });
+
+    it('can merge update with latest revision with schema', () => {
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        repositoryMock,
+        validationMock,
+        {
+          revision: 2,
+          configuration: { a: '321', b: '321' } as unknown,
+        },
+        tenantId,
+        { type: 'object', properties: { a: { type: 'string' } } }
+      );
+
+      const result = entity.mergeUpdate({ a: '123' });
+      expect(result).toMatchObject({ a: '123', b: '321' });
+    });
+
+    it('can merge top level property', () => {
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        repositoryMock,
+        validationMock,
+        {
+          revision: 2,
+          configuration: { a: { b: '321' } } as unknown,
+        },
+        tenantId,
+        { type: 'object', properties: { a: { type: 'object' } } }
+      );
+
+      const result = entity.mergeUpdate({ a: { a: '123' } });
+      expect(result).toMatchObject({ a: expect.objectContaining({ a: '123', b: '321' }) });
+    });
+  });
+
   describe('update', () => {
     it('can update first revision', async () => {
       const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock);
