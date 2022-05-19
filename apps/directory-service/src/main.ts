@@ -11,7 +11,7 @@ import { environment } from './environments/environment';
 import { createRepositories } from './mongo';
 import { ServiceRoles, bootstrapDirectory, applyDirectoryV2Middleware } from './directory';
 import { getServiceUrlById, getResourceUrlById } from './directory/router/util/getNamespaceEntries';
-
+import { EntryUpdatedDefinition, EntryDeletedDefinition } from './directory/events';
 const logger = createLogger('directory-service', environment.LOG_LEVEL);
 
 const initializeApp = async (): Promise<express.Application> => {
@@ -34,7 +34,7 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { coreStrategy, tenantStrategy, tenantService, healthCheck } = await initializePlatform(
+  const { coreStrategy, tenantStrategy, tenantService, healthCheck, eventService } = await initializePlatform(
     {
       serviceId,
       displayName: 'Directory service',
@@ -46,7 +46,7 @@ const initializeApp = async (): Promise<express.Application> => {
           inTenantAdmin: true,
         },
       ],
-      events: [],
+      events: [EntryUpdatedDefinition, EntryDeletedDefinition],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
@@ -72,7 +72,7 @@ const initializeApp = async (): Promise<express.Application> => {
   passport.deserializeUser(function (user, done) {
     done(null, user as User);
   });
-  applyDirectoryV2Middleware(app, { ...repositories, logger, tenantService });
+  applyDirectoryV2Middleware(app, { ...repositories, logger, tenantService, eventService });
   app.use(passport.initialize());
   app.use('/directory', passport.authenticate(['core', 'tenant'], { session: false }));
 
