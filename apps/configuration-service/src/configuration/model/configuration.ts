@@ -61,7 +61,7 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
         // If schema indicates this top level property is an object, and current value plus update value are both objects,
         // then combine them with spread operator.
         if (
-          this.schema?.properties?.[key].type === 'object' &&
+          this.schema?.properties?.[key]?.type === 'object' &&
           typeof update[key] === 'object' &&
           typeof value === 'object'
         ) {
