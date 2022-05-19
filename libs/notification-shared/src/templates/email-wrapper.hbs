@@ -1,5 +1,19 @@
 <html>
   <head>
+    <meta name='viewport' content='width=device-width
+      ; initial-scale=1.0; maximum-scale=1.0; user-scalable=no' />
+    <meta name='format-detection' content='telephone=no' />
+    <meta name='format-detection' content='address=no' />
+    <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+    <!-- address the outlook DPI related image resizing issues -->
+    <!--[if gte mso 7
+      ]><xml>
+        <o:OfficeDocumentSettings>
+          <o:AllowPNG />
+          <o:PixelsPerInch>96</o:PixelsPerInch>
+        </o:OfficeDocumentSettings>
+      </xml><!
+    [endif]-->
     <style>
       @font-face {
         font-family: 'acumin-pro-semi-condensed';
@@ -189,11 +203,15 @@
       </div>
       <div id='goa-callout-custom'>
         <div class='title'>
-          {{#if tenant.name}}{{tenant.name}}{{else}}Alberta Digital Service Platform{{/if}}
+          {{#if tenant.name}}
+            {{tenant.name}}
+          {{else}}
+            Alberta Digital Service Platform
+          {{/if}}
         </div>
       </div>
     </header>
-    <div class="email-content">
+    <div class='email-content'>
       {{content}}
     </div>
     <footer>
@@ -201,7 +219,14 @@
         <div class='container'>
           <div class='link'>
             <span>
-              Please do not reply to this email.{{#if managementUrl}} Manage your subscription <a href="{{ managementUrl }}" target="_blank" rel="noopener noreferrer">here</a>.{{/if}}
+              Please do not reply to this email.
+              {{#if managementUrl}}
+                Manage your subscription
+                {{!-- <a href="{{managementUrl}}" target='_blank' rel='noopener noreferrer'>
+                  here
+                </a> --}}
+                .
+              {{/if}}
             </span>
             <br />
           </div>
