@@ -34,6 +34,8 @@ export const mapTask = (apiId: AdspId, entity: TaskEntity): unknown => ({
   context: entity.context,
   definition: entity.definition ? { namespace: entity.definition.namespace, name: entity.definition.name } : null,
   queue: entity.queue ? { namespace: entity.queue.namespace, name: entity.queue.name } : null,
+  recordId: entity.recordId,
+  data: entity.data,
   status: entity.status,
   priority: TaskPriority[entity.priority],
   createdOn: entity.createdOn,
@@ -189,6 +191,7 @@ export function createTaskRouter({
           name: { optional: true, isLength: { options: { min: 1, max: 50 } } },
           description: { optional: true, isString: true },
           context: { optional: true, isObject: true },
+          data: { optional: true, isObject: true },
         },
         ['body']
       )
@@ -196,6 +199,7 @@ export function createTaskRouter({
     getTask(repository),
     updateTask(apiId, eventService)
   );
+
   router.post('/tasks/:id', validateIdHandler, getTask(repository), taskOperation(apiId, eventService));
 
   return router;

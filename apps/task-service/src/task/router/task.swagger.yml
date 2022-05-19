@@ -43,6 +43,8 @@ components:
               - type: string
               - type: number
               - type: boolean
+        data:
+          type: object
         priority:
           type: string
           enum:
@@ -228,6 +230,8 @@ components:
                     - type: string
                     - type: number
                     - type: boolean
+              data:
+                type: object
     responses:
       200:
         description: Request completed successfully.
